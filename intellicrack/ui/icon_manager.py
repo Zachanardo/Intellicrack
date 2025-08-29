@@ -121,7 +121,7 @@ class IconManager:
             icon_path: Optional path to icon resources directory
 
         """
-        self.icon_path = icon_path or Path(__file__).parent / "icons"
+        self.icon_path = icon_path or Path(__file__).parent.parent / "assets" / "icons"
         self._icon_cache = {}
 
     def get_icon(self, icon_name: str, fallback: bool = True) -> QIcon:

@@ -866,3 +866,240 @@ class AdvancedToolDiscovery:
             for tool_name, status in health_results.items()
             if status.get("healthy", False)
         ]
+
+    def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
+        """Enhanced tool discovery with comprehensive fallback mechanisms."""
+        logger.info(f"Starting enhanced discovery for {tool_name} with fallbacks")
+
+        # Start with standard discovery
+        tool_info = self.discover_tool(tool_name, config)
+
+        if tool_info.get("available"):
+            return tool_info
+
+        # Apply fallback strategies
+        fallback_result = self._apply_fallback_strategies(tool_name, config)
+        if fallback_result.get("available"):
+            return fallback_result
+
+        # Try alternative tools if primary tool fails
+        alternatives = self._get_tool_alternatives(tool_name)
+        for alt_tool, alt_config in alternatives.items():
+            logger.info(f"Trying alternative tool: {alt_tool} for {tool_name}")
+            alt_result = self.discover_tool(alt_tool, alt_config)
+            if alt_result.get("available"):
+                alt_result["is_alternative"] = True
+                alt_result["original_tool"] = tool_name
+                alt_result["alternative_for"] = tool_name
+                return alt_result
+
+        return tool_info
+
+    def _apply_fallback_strategies(self, tool_name: str, config: dict) -> dict[str, Any]:
+        """Apply various fallback strategies for tool discovery."""
+        strategies = [
+            self._try_portable_versions,
+            self._try_package_manager_paths,
+            self._try_version_fallbacks,
+            self._try_bundled_tools,
+            self._try_container_tools
+        ]
+
+        for strategy in strategies:
+            try:
+                result = strategy(tool_name, config)
+                if result and result.get("available"):
+                    logger.info(f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}")
+                    return result
+            except Exception as e:
+                logger.debug(f"Fallback strategy '{strategy.__name__}' failed: {e}")
+                continue
+
+        return {"available": False, "path": None}
+
+    def _try_portable_versions(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+        """Try to find portable versions of tools."""
+        portable_paths = [
+            Path.home() / "portable_tools" / tool_name,
+            Path.cwd() / "tools" / tool_name,
+            Path.cwd() / "portable" / tool_name,
+            Path(__file__).parent.parent.parent / "tools" / tool_name
+        ]
+
+        for portable_dir in portable_paths:
+            if portable_dir.exists():
+                for executable in config.get("executables", [tool_name]):
+                    for ext in ["", ".exe", ".bat"]:
+                        exe_path = portable_dir / f"{executable}{ext}"
+                        if exe_path.exists() and os.access(exe_path, os.X_OK):
+                            return self._validate_and_populate(str(exe_path), tool_name)
+
+        return None
+
+    def _try_package_manager_paths(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+        """Try package manager installation paths."""
+        pm_paths = []
+
+        # Windows package managers
+        if sys.platform == "win32":
+            pm_paths.extend([
+                Path.home() / "scoop" / "apps" / tool_name,
+                Path("C:/ProgramData/chocolatey/lib") / tool_name,
+                Path("C:/tools") / tool_name,
+                Path.home() / "AppData/Local/Programs" / tool_name
+            ])
+
+        # Linux package managers
+        elif sys.platform.startswith("linux"):
+            pm_paths.extend([
+                Path("/opt") / tool_name,
+                Path("/usr/local/bin"),
+                Path("/snap/bin"),
+                Path.home() / ".local/bin"
+            ])
+
+        # macOS package managers
+        elif sys.platform == "darwin":
+            pm_paths.extend([
+                Path("/usr/local/bin"),
+                Path("/opt/homebrew/bin"),
+                Path("/Applications") / f"{tool_name}.app/Contents/MacOS"
+            ])
+
+        for pm_path in pm_paths:
+            if pm_path.exists():
+                for executable in config.get("executables", [tool_name]):
+                    for ext in ["", ".exe", ".bat"]:
+                        exe_path = pm_path / f"{executable}{ext}"
+                        if exe_path.exists() and os.access(exe_path, os.X_OK):
+                            return self._validate_and_populate(str(exe_path), tool_name)
+
+        return None
+
+    def _try_version_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+        """Try different versions of the same tool."""
+        version_patterns = [
+            f"{tool_name}3", f"{tool_name}2", f"{tool_name}-dev",
+            f"{tool_name}-stable", f"{tool_name}-latest"
+        ]
+
+        for version_name in version_patterns:
+            path = shutil.which(version_name)
+            if path:
+                result = self._validate_and_populate(path, tool_name)
+                if result.get("available"):
+                    result["version_fallback"] = version_name
+                    return result
+
+        return None
+
+    def _try_bundled_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+        """Try tools bundled with Intellicrack."""
+        bundled_dir = Path(__file__).parent.parent.parent / "bundled_tools" / tool_name
+
+        if bundled_dir.exists():
+            for executable in config.get("executables", [tool_name]):
+                for ext in ["", ".exe", ".bat"]:
+                    exe_path = bundled_dir / f"{executable}{ext}"
+                    if exe_path.exists() and os.access(exe_path, os.X_OK):
+                        result = self._validate_and_populate(str(exe_path), tool_name)
+                        if result.get("available"):
+                            result["bundled"] = True
+                            return result
+
+        return None
+
+    def _try_container_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+        """Try containerized versions of tools."""
+        container_configs = {
+            "radare2": {"image": "radare/radare2:latest", "command": "r2"},
+            "ghidra": {"image": "ghidra/ghidra:latest", "command": "ghidraRun"}
+        }
+
+        if tool_name in container_configs:
+            # Check if Docker is available
+            docker_path = shutil.which("docker")
+            if docker_path:
+                container_cfg = container_configs[tool_name]
+                # Create wrapper script for containerized tool
+                wrapper_script = self._create_container_wrapper(tool_name, container_cfg)
+                if wrapper_script:
+                    return {
+                        "available": True,
+                        "path": wrapper_script,
+                        "containerized": True,
+                        "container_image": container_cfg["image"]
+                    }
+
+        return None
+
+    def _create_container_wrapper(self, tool_name: str, container_cfg: dict) -> str | None:
+        """Create a wrapper script for containerized tools."""
+        wrapper_dir = Path.home() / ".intellicrack" / "container_wrappers"
+        wrapper_dir.mkdir(parents=True, exist_ok=True)
+
+        wrapper_ext = ".bat" if sys.platform == "win32" else ".sh"
+        wrapper_path = wrapper_dir / f"{tool_name}_container{wrapper_ext}"
+
+        if sys.platform == "win32":
+            wrapper_content = f"""@echo off
+docker run --rm -it -v "%cd%":/workspace {container_cfg['image']} {container_cfg['command']} %*
+"""
+        else:
+            wrapper_content = f"""#!/bin/bash
+docker run --rm -it -v "$(pwd)":/workspace {container_cfg['image']} {container_cfg['command']} "$@"
+"""
+
+        try:
+            wrapper_path.write_text(wrapper_content)
+            if sys.platform != "win32":
+                os.chmod(wrapper_path, 0o700)
+            return str(wrapper_path)
+        except Exception as e:
+            logger.debug(f"Failed to create container wrapper: {e}")
+            return None
+
+    def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict]:
+        """Get alternative tools for a given tool."""
+        alternatives = {
+            "ghidra": {
+                "ida_free": {
+                    "executables": ["ida64", "ida"],
+                    "search_strategy": "installation_based",
+                    "description": "IDA Free alternative to Ghidra"
+                },
+                "cutter": {
+                    "executables": ["cutter", "Cutter"],
+                    "search_strategy": "path_based",
+                    "description": "Cutter/Rizin GUI alternative"
+                }
+            },
+            "radare2": {
+                "rizin": {
+                    "executables": ["rz", "rizin"],
+                    "search_strategy": "path_based",
+                    "description": "Rizin fork of Radare2"
+                },
+                "objdump": {
+                    "executables": ["objdump"],
+                    "search_strategy": "path_based",
+                    "description": "GNU objdump fallback"
+                }
+            },
+            "python3": {
+                "python": {
+                    "executables": ["python"],
+                    "search_strategy": "path_based",
+                    "description": "Python 2/3 fallback"
+                }
+            },
+            "frida": {
+                "frida-tools": {
+                    "executables": ["frida-ps", "frida-trace"],
+                    "search_strategy": "path_based",
+                    "description": "Frida tools package"
+                }
+            }
+        }
+
+        return alternatives.get(tool_name, {})

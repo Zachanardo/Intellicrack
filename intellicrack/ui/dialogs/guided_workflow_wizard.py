@@ -43,6 +43,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWizardPage,
 )
 from intellicrack.logger import logger
+from intellicrack.utils.resource_helper import get_resource_path
 
 """
 Guided Workflow Wizard
@@ -98,10 +99,7 @@ class GuidedWorkflowWizard(QWizard):
         self.setWindowTitle("Intellicrack Guided Workflow")
         self.setWizardStyle(QWizard.ModernStyle)
 
-        import intellicrack
-
-        self.base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        icon_path = os.path.join(self.base_path, "intellicrack", "assets", "icon.ico")
+        icon_path = get_resource_path("assets/icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -147,7 +145,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(intro_text)
 
         # Add image if available
-        splash_path = os.path.join(self.base_path, "intellicrack", "assets", "splash.png")
+        splash_path = get_resource_path("assets/splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
             pixmap = QPixmap(splash_path).scaled(

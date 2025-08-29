@@ -91,7 +91,7 @@ try:
         QTextCursor,
         QTextDocument,
         QTextFormat,
-        qrgba,
+        qRgba,
     )
 
     # QtWidgets imports
@@ -593,7 +593,7 @@ except ImportError as e:
         def pyqtSlot(*args, **kwargs):
             """Fallback pyqtSlot decorator implementation when PyQt6 is not available."""
             return lambda *a, **kw: None
-        def qrgba(*args):
+        def qRgba(*args):
             """Fallback RGBA color function when PyQt6 is not available."""
             return None
     else:
@@ -630,7 +630,7 @@ except ImportError as e:
         def pyqtSlot(*args, **kwargs):
             """Fallback pyqtSlot decorator for minimal PyQt6 compatibility."""
             return lambda: None
-        qrgba = None
+        qRgba = None
 
 
 # Export all PyQt6 classes and availability flag
@@ -697,7 +697,7 @@ __all__ = [
     "QTextCursor",
     "QTextDocument",
     "QTextFormat",
-    "qrgba",
+    "qRgba",
     # QtWidgets imports
     "QAbstractItemView",
     "QAbstractScrollArea",

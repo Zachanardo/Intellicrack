@@ -91,14 +91,14 @@ class AnalysisOrchestrator(QObject):
         """
         super().__init__()
 
-        # Initialize analyzers
+        # Initialize analyzers (some will be created lazily)
         self.binary_analyzer = BinaryAnalyzer()
         self.entropy_analyzer = EntropyAnalyzer()
         self.multi_format_analyzer = MultiFormatAnalyzer()
-        self.dynamic_analyzer = DynamicAnalyzer()
+        self.dynamic_analyzer = None  # Will be created when binary_path is available
         self.vulnerability_engine = VulnerabilityEngine()
         self.yara_engine = YaraPatternEngine()
-        self.radare2 = Radare2EnhancedIntegration()
+        self.radare2 = None  # Will be created when binary_path is available
 
         # Initialize Ghidra integration components
         self.ghidra_script_manager = GhidraScriptManager()
@@ -199,6 +199,14 @@ class AnalysisOrchestrator(QObject):
         """Perform static analysis using radare2."""
         try:
             result = {}
+
+            # Initialize radare2 if not already done
+            if self.radare2 is None:
+                from .radare2_enhanced_integration import EnhancedR2Integration as Radare2EnhancedIntegration
+                try:
+                    self.radare2 = Radare2EnhancedIntegration(binary_path)
+                except Exception as init_error:
+                    return {"error": f"Radare2 initialization failed: {init_error}"}
 
             # Run comprehensive analysis using the correct method
             analysis_result = self.radare2.run_comprehensive_analysis(
@@ -611,6 +619,14 @@ class AnalysisOrchestrator(QObject):
     def _perform_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform dynamic analysis if possible."""
         try:
+            # Initialize dynamic analyzer if not already done
+            if self.dynamic_analyzer is None:
+                from .dynamic_analyzer import AdvancedDynamicAnalyzer as DynamicAnalyzer
+                try:
+                    self.dynamic_analyzer = DynamicAnalyzer(binary_path)
+                except Exception as init_error:
+                    return {"status": "skipped", "reason": f"Dynamic analyzer initialization failed: {init_error}"}
+            
             # Check if dynamic analysis is available
             if (
                 hasattr(self.dynamic_analyzer, "is_available")
@@ -649,3 +665,46 @@ class AnalysisOrchestrator(QObject):
 
         summary["key_findings"] = findings
         return summary
+
+
+def run_selected_analysis(binary_path: str, analysis_types: list[str] | None = None) -> dict[str, Any]:
+    """Run selected analysis on a binary file.
+    
+    Args:
+        binary_path: Path to the binary to analyze
+        analysis_types: List of analysis types to run (optional)
+    
+    Returns:
+        Analysis results dictionary
+    """
+    orchestrator = AnalysisOrchestrator(binary_path)
+    
+    # Configure which analyses to run
+    if analysis_types:
+        orchestrator.enabled_phases = []
+        for analysis_type in analysis_types:
+            if analysis_type.lower() == "static":
+                orchestrator.enabled_phases.append(AnalysisPhase.STATIC_ANALYSIS)
+            elif analysis_type.lower() == "dynamic":
+                orchestrator.enabled_phases.append(AnalysisPhase.DYNAMIC_ANALYSIS)
+            elif analysis_type.lower() == "vulnerability":
+                orchestrator.enabled_phases.append(AnalysisPhase.VULNERABILITY_SCAN)
+            elif analysis_type.lower() == "entropy":
+                orchestrator.enabled_phases.append(AnalysisPhase.ENTROPY_ANALYSIS)
+            elif analysis_type.lower() == "pattern":
+                orchestrator.enabled_phases.append(AnalysisPhase.PATTERN_MATCHING)
+            elif analysis_type.lower() == "structure":
+                orchestrator.enabled_phases.append(AnalysisPhase.STRUCTURE_ANALYSIS)
+    
+    # Run the orchestrated analysis
+    result = orchestrator.orchestrate()
+    
+    # Convert result to dictionary
+    return {
+        "success": result.success,
+        "binary_path": result.binary_path,
+        "results": result.results,
+        "phases_completed": [phase.value for phase in result.phases_completed],
+        "errors": result.errors,
+        "warnings": result.warnings
+    }

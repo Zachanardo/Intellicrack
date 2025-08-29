@@ -29,9 +29,9 @@
  */
 
 const BypassSuccessTracker = {
-    name: "Bypass Success Rate Tracker",
-    description: "Comprehensive bypass success rate tracking and analytics system",
-    version: "3.0.0",
+    name: 'Bypass Success Rate Tracker',
+    description: 'Comprehensive bypass success rate tracking and analytics system',
+    version: '3.0.0',
 
     // Configuration for success rate tracking
     config: {
@@ -152,9 +152,9 @@ const BypassSuccessTracker = {
 
     onAttach: function(pid) {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "attaching_to_process",
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'attaching_to_process',
             pid: pid
         });
         this.processId = pid;
@@ -163,9 +163,9 @@ const BypassSuccessTracker = {
 
     run: function() {
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "starting_tracking_system"
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'starting_tracking_system'
         });
 
         // Initialize tracking components
@@ -184,9 +184,9 @@ const BypassSuccessTracker = {
     // === TRACKER INITIALIZATION ===
     initializeTracker: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "initializing_tracker"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'initializing_tracker'
         });
 
         // Initialize tracking maps
@@ -207,9 +207,9 @@ const BypassSuccessTracker = {
         this.initializeCategories();
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "tracker_initialized"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'tracker_initialized'
         });
     },
 
@@ -238,7 +238,7 @@ const BypassSuccessTracker = {
                     successes: 0,
                     failures: 0,
                     successRate: 0.0,
-                    trend: "stable",
+                    trend: 'stable',
                     lastUpdated: Date.now()
                 });
             }
@@ -248,9 +248,9 @@ const BypassSuccessTracker = {
     // === BYPASS TRACKING SETUP ===
     setupBypassTracking: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_bypass_tracking_hooks"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_bypass_tracking_hooks'
         });
 
         // Set up tracking for different bypass types
@@ -266,9 +266,9 @@ const BypassSuccessTracker = {
         this.setupRegistryTracking();
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "bypass_tracking_setup_complete"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'bypass_tracking_setup_complete'
         });
     },
 
@@ -276,20 +276,20 @@ const BypassSuccessTracker = {
         if (!this.config.categories.antiDebugBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_anti_debug_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_anti_debug_tracking'
         });
 
         // Hook common anti-debug APIs to track bypass attempts
         var antiDebugAPIs = [
-            "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
-            "NtQueryInformationProcess", "OutputDebugStringA"
+            'IsDebuggerPresent', 'CheckRemoteDebuggerPresent',
+            'NtQueryInformationProcess', 'OutputDebugStringA'
         ];
 
         for (var i = 0; i < antiDebugAPIs.length; i++) {
-            this.trackBypassAPI("antiDebugBypass", antiDebugAPIs[i], "kernel32.dll");
-            this.trackBypassAPI("antiDebugBypass", antiDebugAPIs[i], "ntdll.dll");
+            this.trackBypassAPI('antiDebugBypass', antiDebugAPIs[i], 'kernel32.dll');
+            this.trackBypassAPI('antiDebugBypass', antiDebugAPIs[i], 'ntdll.dll');
         }
     },
 
@@ -297,19 +297,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.licensingBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_licensing_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_licensing_tracking'
         });
 
         // Track license validation function attempts
         var licensingMethods = [
-            "validateLicense", "checkLicense", "isValidLicense",
-            "authenticateLicense", "verifyLicense"
+            'validateLicense', 'checkLicense', 'isValidLicense',
+            'authenticateLicense', 'verifyLicense'
         ];
 
         for (var i = 0; i < licensingMethods.length; i++) {
-            this.trackGenericBypass("licensingBypass", licensingMethods[i]);
+            this.trackGenericBypass('licensingBypass', licensingMethods[i]);
         }
     },
 
@@ -317,19 +317,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.drmBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_drm_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_drm_tracking'
         });
 
         // Track DRM-related bypass attempts
         var drmMethods = [
-            "HDCP_bypass", "PlayReady_bypass", "Widevine_bypass",
-            "content_decryption", "license_acquisition"
+            'HDCP_bypass', 'PlayReady_bypass', 'Widevine_bypass',
+            'content_decryption', 'license_acquisition'
         ];
 
         for (var i = 0; i < drmMethods.length; i++) {
-            this.trackGenericBypass("drmBypass", drmMethods[i]);
+            this.trackGenericBypass('drmBypass', drmMethods[i]);
         }
     },
 
@@ -337,19 +337,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.integrityBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_integrity_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_integrity_tracking'
         });
 
         // Track integrity check bypass attempts
         var integrityAPIs = [
-            "CryptHashData", "CryptVerifySignature", "MapFileAndCheckSum"
+            'CryptHashData', 'CryptVerifySignature', 'MapFileAndCheckSum'
         ];
 
         for (var i = 0; i < integrityAPIs.length; i++) {
-            this.trackBypassAPI("integrityBypass", integrityAPIs[i], "advapi32.dll");
-            this.trackBypassAPI("integrityBypass", integrityAPIs[i], "imagehlp.dll");
+            this.trackBypassAPI('integrityBypass', integrityAPIs[i], 'advapi32.dll');
+            this.trackBypassAPI('integrityBypass', integrityAPIs[i], 'imagehlp.dll');
         }
     },
 
@@ -357,19 +357,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.virtualizationBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_virtualization_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_virtualization_tracking'
         });
 
         // Track VM detection bypass attempts
         var vmDetectionMethods = [
-            "VMware_detection", "VirtualBox_detection", "Hyper-V_detection",
-            "sandbox_detection", "emulation_detection"
+            'VMware_detection', 'VirtualBox_detection', 'Hyper-V_detection',
+            'sandbox_detection', 'emulation_detection'
         ];
 
         for (var i = 0; i < vmDetectionMethods.length; i++) {
-            this.trackGenericBypass("virtualizationBypass", vmDetectionMethods[i]);
+            this.trackGenericBypass('virtualizationBypass', vmDetectionMethods[i]);
         }
     },
 
@@ -377,18 +377,18 @@ const BypassSuccessTracker = {
         if (!this.config.categories.hardwareBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_hardware_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_hardware_tracking'
         });
 
         // Track hardware-related bypass attempts
         var hardwareAPIs = [
-            "GetSystemInfo", "IsProcessorFeaturePresent", "DeviceIoControl"
+            'GetSystemInfo', 'IsProcessorFeaturePresent', 'DeviceIoControl'
         ];
 
         for (var i = 0; i < hardwareAPIs.length; i++) {
-            this.trackBypassAPI("hardwareBypass", hardwareAPIs[i], "kernel32.dll");
+            this.trackBypassAPI('hardwareBypass', hardwareAPIs[i], 'kernel32.dll');
         }
     },
 
@@ -396,19 +396,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.networkBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_network_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_network_tracking'
         });
 
         // Track network-related bypass attempts
         var networkAPIs = [
-            "WinHttpSendRequest", "HttpSendRequestW", "InternetReadFile"
+            'WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'
         ];
 
         for (var i = 0; i < networkAPIs.length; i++) {
-            this.trackBypassAPI("networkBypass", networkAPIs[i], "winhttp.dll");
-            this.trackBypassAPI("networkBypass", networkAPIs[i], "wininet.dll");
+            this.trackBypassAPI('networkBypass', networkAPIs[i], 'winhttp.dll');
+            this.trackBypassAPI('networkBypass', networkAPIs[i], 'wininet.dll');
         }
     },
 
@@ -416,19 +416,19 @@ const BypassSuccessTracker = {
         if (!this.config.categories.cryptographyBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_cryptography_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_cryptography_tracking'
         });
 
         // Track cryptographic bypass attempts
         var cryptoAPIs = [
-            "CryptEncrypt", "CryptDecrypt", "BCryptEncrypt", "BCryptDecrypt"
+            'CryptEncrypt', 'CryptDecrypt', 'BCryptEncrypt', 'BCryptDecrypt'
         ];
 
         for (var i = 0; i < cryptoAPIs.length; i++) {
-            this.trackBypassAPI("cryptographyBypass", cryptoAPIs[i], "advapi32.dll");
-            this.trackBypassAPI("cryptographyBypass", cryptoAPIs[i], "bcrypt.dll");
+            this.trackBypassAPI('cryptographyBypass', cryptoAPIs[i], 'advapi32.dll');
+            this.trackBypassAPI('cryptographyBypass', cryptoAPIs[i], 'bcrypt.dll');
         }
     },
 
@@ -436,18 +436,18 @@ const BypassSuccessTracker = {
         if (!this.config.categories.memoryBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_memory_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_memory_tracking'
         });
 
         // Track memory protection bypass attempts
         var memoryAPIs = [
-            "VirtualProtect", "VirtualAlloc", "ReadProcessMemory", "WriteProcessMemory"
+            'VirtualProtect', 'VirtualAlloc', 'ReadProcessMemory', 'WriteProcessMemory'
         ];
 
         for (var i = 0; i < memoryAPIs.length; i++) {
-            this.trackBypassAPI("memoryBypass", memoryAPIs[i], "kernel32.dll");
+            this.trackBypassAPI('memoryBypass', memoryAPIs[i], 'kernel32.dll');
         }
     },
 
@@ -455,18 +455,18 @@ const BypassSuccessTracker = {
         if (!this.config.categories.registryBypass) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "setting_up_registry_tracking"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'setting_up_registry_tracking'
         });
 
         // Track registry bypass attempts
         var registryAPIs = [
-            "RegOpenKeyExW", "RegQueryValueExW", "RegSetValueExW"
+            'RegOpenKeyExW', 'RegQueryValueExW', 'RegSetValueExW'
         ];
 
         for (var i = 0; i < registryAPIs.length; i++) {
-            this.trackBypassAPI("registryBypass", registryAPIs[i], "advapi32.dll");
+            this.trackBypassAPI('registryBypass', registryAPIs[i], 'advapi32.dll');
         }
     },
 
@@ -476,7 +476,7 @@ const BypassSuccessTracker = {
             var apiFunc = Module.findExportByName(moduleName, apiName);
             if (!apiFunc) return;
 
-            var trackingKey = category + ":" + apiName;
+            var trackingKey = category + ':' + apiName;
 
             Interceptor.attach(apiFunc, {
                 onEnter: function(args) {
@@ -504,9 +504,9 @@ const BypassSuccessTracker = {
             });
 
             send({
-                type: "info",
-                target: "bypass_success_tracker",
-                action: "tracking_bypass",
+                type: 'info',
+                target: 'bypass_success_tracker',
+                action: 'tracking_bypass',
                 tracking_key: trackingKey
             });
 
@@ -517,7 +517,7 @@ const BypassSuccessTracker = {
 
     trackGenericBypass: function(category, methodName) {
         // Register generic bypass method for tracking
-        var trackingKey = category + ":" + methodName;
+        var trackingKey = category + ':' + methodName;
 
         if (!this.tracker.bypassMethods.has(trackingKey)) {
             this.tracker.bypassMethods.set(trackingKey, {
@@ -533,16 +533,16 @@ const BypassSuccessTracker = {
         }
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "registered_generic_bypass_tracking",
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'registered_generic_bypass_tracking',
             tracking_key: trackingKey
         });
     },
 
     recordBypassAttempt: function(category, method, args) {
         var timestamp = Date.now();
-        var attemptKey = category + ":" + method + ":" + timestamp;
+        var attemptKey = category + ':' + method + ':' + timestamp;
 
         // Record attempt
         this.tracker.attempts.set(attemptKey, {
@@ -562,7 +562,7 @@ const BypassSuccessTracker = {
             categoryStats.lastUpdated = timestamp;
         }
 
-        var methodKey = category + ":" + method;
+        var methodKey = category + ':' + method;
         var bypassMethod = this.tracker.bypassMethods.get(methodKey);
         if (bypassMethod) {
             bypassMethod.attempts++;
@@ -570,9 +570,9 @@ const BypassSuccessTracker = {
         }
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "recorded_bypass_attempt",
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'recorded_bypass_attempt',
             category: category,
             method: method
         });
@@ -580,7 +580,7 @@ const BypassSuccessTracker = {
 
     recordBypassResult: function(category, method, success, duration, returnValue) {
         var timestamp = Date.now();
-        var resultKey = category + ":" + method + ":" + timestamp;
+        var resultKey = category + ':' + method + ':' + timestamp;
 
         // Record result
         var resultData = {
@@ -618,7 +618,7 @@ const BypassSuccessTracker = {
         }
 
         // Update method statistics
-        var methodKey = category + ":" + method;
+        var methodKey = category + ':' + method;
         var bypassMethod = this.tracker.bypassMethods.get(methodKey);
         if (bypassMethod) {
             if (success) {
@@ -650,9 +650,9 @@ const BypassSuccessTracker = {
         this.checkSuccessRateAlerts(category, method);
 
         send({
-            type: success ? "success" : "warning",
-            target: "bypass_success_tracker",
-            action: "recorded_bypass_result",
+            type: success ? 'success' : 'warning',
+            target: 'bypass_success_tracker',
+            action: 'recorded_bypass_result',
             category: category,
             method: method,
             success: success,
@@ -667,38 +667,38 @@ const BypassSuccessTracker = {
             var retVal = returnValue.toInt32();
 
             switch(category) {
-                case "antiDebugBypass":
-                    return this.evaluateAntiDebugSuccess(method, args, retVal);
+            case 'antiDebugBypass':
+                return this.evaluateAntiDebugSuccess(method, args, retVal);
 
-                case "licensingBypass":
-                    return this.evaluateLicensingSuccess(method, args, retVal);
+            case 'licensingBypass':
+                return this.evaluateLicensingSuccess(method, args, retVal);
 
-                case "drmBypass":
-                    return this.evaluateDrmSuccess(method, args, retVal);
+            case 'drmBypass':
+                return this.evaluateDrmSuccess(method, args, retVal);
 
-                case "integrityBypass":
-                    return this.evaluateIntegritySuccess(method, args, retVal);
+            case 'integrityBypass':
+                return this.evaluateIntegritySuccess(method, args, retVal);
 
-                case "virtualizationBypass":
-                    return this.evaluateVirtualizationSuccess(method, args, retVal);
+            case 'virtualizationBypass':
+                return this.evaluateVirtualizationSuccess(method, args, retVal);
 
-                case "hardwareBypass":
-                    return this.evaluateHardwareSuccess(method, args, retVal);
+            case 'hardwareBypass':
+                return this.evaluateHardwareSuccess(method, args, retVal);
 
-                case "networkBypass":
-                    return this.evaluateNetworkSuccess(method, args, retVal);
+            case 'networkBypass':
+                return this.evaluateNetworkSuccess(method, args, retVal);
 
-                case "cryptographyBypass":
-                    return this.evaluateCryptographySuccess(method, args, retVal);
+            case 'cryptographyBypass':
+                return this.evaluateCryptographySuccess(method, args, retVal);
 
-                case "memoryBypass":
-                    return this.evaluateMemorySuccess(method, args, retVal);
+            case 'memoryBypass':
+                return this.evaluateMemorySuccess(method, args, retVal);
 
-                case "registryBypass":
-                    return this.evaluateRegistrySuccess(method, args, retVal);
+            case 'registryBypass':
+                return this.evaluateRegistrySuccess(method, args, retVal);
 
-                default:
-                    return retVal !== 0; // Generic success evaluation
+            default:
+                return retVal !== 0; // Generic success evaluation
             }
         } catch(e) {
             return false; // Default to failure on evaluation error
@@ -708,17 +708,17 @@ const BypassSuccessTracker = {
     evaluateAntiDebugSuccess: function(method, args, returnValue) {
         // Anti-debug bypass is successful if debugger presence is hidden
         switch(method) {
-            case "IsDebuggerPresent":
-                return returnValue === 0; // FALSE = no debugger detected
+        case 'IsDebuggerPresent':
+            return returnValue === 0; // FALSE = no debugger detected
 
-            case "CheckRemoteDebuggerPresent":
-                return returnValue !== 0; // Success in hooking the call
+        case 'CheckRemoteDebuggerPresent':
+            return returnValue !== 0; // Success in hooking the call
 
-            case "NtQueryInformationProcess":
-                return returnValue !== 0; // Success in blocking/modifying the call
+        case 'NtQueryInformationProcess':
+            return returnValue !== 0; // Success in blocking/modifying the call
 
-            default:
-                return returnValue === 0;
+        default:
+            return returnValue === 0;
         }
     },
 
@@ -736,15 +736,15 @@ const BypassSuccessTracker = {
     evaluateIntegritySuccess: function(method, args, returnValue) {
         // Integrity bypass is successful if checks pass or are bypassed
         switch(method) {
-            case "CryptHashData":
-            case "CryptVerifySignature":
-                return returnValue !== 0; // Non-zero = success
+        case 'CryptHashData':
+        case 'CryptVerifySignature':
+            return returnValue !== 0; // Non-zero = success
 
-            case "MapFileAndCheckSum":
-                return returnValue === 0; // Zero = success
+        case 'MapFileAndCheckSum':
+            return returnValue === 0; // Zero = success
 
-            default:
-                return returnValue !== 0;
+        default:
+            return returnValue !== 0;
         }
     },
 
@@ -801,7 +801,7 @@ const BypassSuccessTracker = {
         var categoryStats = this.statistics.byCategory.get(category);
         if (categoryStats && categoryStats.attempts >= this.config.thresholds.minimumAttempts) {
             if (categoryStats.successRate < this.config.reporting.alertThreshold) {
-                this.generateAlert("low_success_rate", {
+                this.generateAlert('low_success_rate', {
                     category: category,
                     method: method,
                     successRate: categoryStats.successRate,
@@ -829,9 +829,9 @@ const BypassSuccessTracker = {
         }
 
         send({
-            type: "warning",
-            target: "bypass_success_tracker",
-            action: "alert_generated",
+            type: 'warning',
+            target: 'bypass_success_tracker',
+            action: 'alert_generated',
             severity: alert.severity,
             message: alert.message
         });
@@ -839,31 +839,31 @@ const BypassSuccessTracker = {
 
     getAlertSeverity: function(successRate) {
         if (successRate < this.config.thresholds.criticalSuccessRate) {
-            return "critical";
+            return 'critical';
         } else if (successRate < this.config.thresholds.warningSuccessRate) {
-            return "warning";
+            return 'warning';
         } else {
-            return "info";
+            return 'info';
         }
     },
 
     generateAlertMessage: function(alertType, data) {
         switch(alertType) {
-            case "low_success_rate":
-                return "Low success rate detected for " + data.category +
-                      ": " + (data.successRate * 100).toFixed(1) + "% (" +
-                      data.attempts + " attempts)";
-            default:
-                return "Alert: " + alertType;
+        case 'low_success_rate':
+            return 'Low success rate detected for ' + data.category +
+                      ': ' + (data.successRate * 100).toFixed(1) + '% (' +
+                      data.attempts + ' attempts)';
+        default:
+            return 'Alert: ' + alertType;
         }
     },
 
     // === ANALYSIS ENGINE ===
     startAnalysisEngine: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "starting_analysis_engine"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'starting_analysis_engine'
         });
 
         // Start periodic analysis
@@ -886,9 +886,9 @@ const BypassSuccessTracker = {
         }
 
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "analysis_engine_started"
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'analysis_engine_started'
         });
     },
 
@@ -910,9 +910,9 @@ const BypassSuccessTracker = {
 
         } catch(e) {
             send({
-                type: "error",
-                target: "bypass_success_tracker",
-                action: "analysis_error",
+                type: 'error',
+                target: 'bypass_success_tracker',
+                action: 'analysis_error',
                 error: e.toString()
             });
         }
@@ -922,7 +922,7 @@ const BypassSuccessTracker = {
         var currentTime = Date.now();
 
         // Update timeframe statistics
-        var timeframes = ["hourly", "daily", "weekly", "monthly"];
+        var timeframes = ['hourly', 'daily', 'weekly', 'monthly'];
 
         for (var i = 0; i < timeframes.length; i++) {
             var timeframe = timeframes[i];
@@ -976,11 +976,11 @@ const BypassSuccessTracker = {
 
     getTimeWindow: function(timeframe) {
         switch(timeframe) {
-            case "hourly": return 3600000; // 1 hour
-            case "daily": return 86400000; // 24 hours
-            case "weekly": return 604800000; // 7 days
-            case "monthly": return 2592000000; // 30 days
-            default: return 3600000;
+        case 'hourly': return 3600000; // 1 hour
+        case 'daily': return 86400000; // 24 hours
+        case 'weekly': return 604800000; // 7 days
+        case 'monthly': return 2592000000; // 30 days
+        default: return 3600000;
         }
     },
 
@@ -1028,9 +1028,9 @@ const BypassSuccessTracker = {
 
     performTrendAnalysis: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "performing_trend_analysis"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'performing_trend_analysis'
         });
 
         this.statistics.byCategory.forEach((categoryStats, category) => {
@@ -1046,7 +1046,7 @@ const BypassSuccessTracker = {
             .filter(point => point.category === category)
             .slice(-20); // Last 20 data points
 
-        if (recentData.length < 5) return "insufficient_data";
+        if (recentData.length < 5) return 'insufficient_data';
 
         // Calculate moving averages
         var windowSize = 5;
@@ -1059,7 +1059,7 @@ const BypassSuccessTracker = {
             movingAverages.push(average);
         }
 
-        if (movingAverages.length < 2) return "stable";
+        if (movingAverages.length < 2) return 'stable';
 
         // Calculate trend direction
         var firstHalf = movingAverages.slice(0, Math.floor(movingAverages.length / 2));
@@ -1071,19 +1071,19 @@ const BypassSuccessTracker = {
         var difference = secondAvg - firstAvg;
 
         if (Math.abs(difference) < 0.05) {
-            return "stable";
+            return 'stable';
         } else if (difference > 0) {
-            return "improving";
+            return 'improving';
         } else {
-            return "declining";
+            return 'declining';
         }
     },
 
     performStatisticalAnalysis: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "performing_statistical_analysis"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'performing_statistical_analysis'
         });
 
         // Perform comparative analysis between categories
@@ -1154,9 +1154,9 @@ const BypassSuccessTracker = {
     performCorrelationAnalysis: function() {
         // Analyze correlations between success rates and other factors
         var correlations = {
-            successRateVsDuration: this.calculateCorrelation("successRate", "duration"),
-            successRateVsAttempts: this.calculateCorrelation("successRate", "attempts"),
-            successRateVsTime: this.calculateCorrelation("successRate", "timestamp")
+            successRateVsDuration: this.calculateCorrelation('successRate', 'duration'),
+            successRateVsAttempts: this.calculateCorrelation('successRate', 'attempts'),
+            successRateVsTime: this.calculateCorrelation('successRate', 'timestamp')
         };
 
         this.statistics.correlations = correlations;
@@ -1176,11 +1176,11 @@ const BypassSuccessTracker = {
 
     getFactorValue: function(item, factor) {
         switch(factor) {
-            case "successRate": return item.successRate;
-            case "duration": return item.avgDuration;
-            case "attempts": return item.attempts;
-            case "timestamp": return item.lastAttempt;
-            default: return 0;
+        case 'successRate': return item.successRate;
+        case 'duration': return item.avgDuration;
+        case 'attempts': return item.attempts;
+        case 'timestamp': return item.lastAttempt;
+        default: return 0;
         }
     },
 
@@ -1208,23 +1208,23 @@ const BypassSuccessTracker = {
             if (stats.attempts >= this.config.thresholds.minimumAttempts) {
                 if (stats.successRate < this.config.thresholds.minimumSuccessRate) {
                     recommendations.push({
-                        type: "improve_category",
-                        priority: "high",
+                        type: 'improve_category',
+                        priority: 'high',
                         category: category,
                         currentRate: stats.successRate,
                         targetRate: this.config.thresholds.minimumSuccessRate,
-                        suggestion: "Focus on improving " + category + " bypass techniques"
+                        suggestion: 'Focus on improving ' + category + ' bypass techniques'
                     });
                 }
 
-                if (stats.trend === "declining") {
+                if (stats.trend === 'declining') {
                     recommendations.push({
-                        type: "address_decline",
-                        priority: "medium",
+                        type: 'address_decline',
+                        priority: 'medium',
                         category: category,
                         currentRate: stats.successRate,
                         trend: stats.trend,
-                        suggestion: "Investigate declining success rate in " + category
+                        suggestion: 'Investigate declining success rate in ' + category
                     });
                 }
             }
@@ -1235,11 +1235,11 @@ const BypassSuccessTracker = {
             if (methodStats.attempts >= this.config.thresholds.minimumAttempts) {
                 if (methodStats.successRate < this.config.thresholds.warningSuccessRate) {
                     recommendations.push({
-                        type: "improve_method",
-                        priority: "medium",
+                        type: 'improve_method',
+                        priority: 'medium',
                         method: methodKey,
                         currentRate: methodStats.successRate,
-                        suggestion: "Consider alternative approach for " + methodKey
+                        suggestion: 'Consider alternative approach for ' + methodKey
                     });
                 }
             }
@@ -1249,9 +1249,9 @@ const BypassSuccessTracker = {
 
         if (recommendations.length > 0) {
             send({
-                type: "info",
-                target: "bypass_success_tracker",
-                action: "generated_optimization_recommendations",
+                type: 'info',
+                target: 'bypass_success_tracker',
+                action: 'generated_optimization_recommendations',
                 count: recommendations.length
             });
         }
@@ -1295,9 +1295,9 @@ const BypassSuccessTracker = {
         if (!this.config.analytics.enableMachineLearning) return;
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "initializing_ml_components"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'initializing_ml_components'
         });
 
         this.mlComponents.successPredictor = this.createSuccessPredictor();
@@ -1311,9 +1311,9 @@ const BypassSuccessTracker = {
         }, this.config.analytics.modelUpdateInterval);
 
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "ml_components_initialized"
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'ml_components_initialized'
         });
     },
 
@@ -1370,17 +1370,17 @@ const BypassSuccessTracker = {
                 this.updatePatternClassifier(trainingData);
 
                 send({
-                    type: "info",
-                    target: "bypass_success_tracker",
-                    action: "ml_models_updated",
+                    type: 'info',
+                    target: 'bypass_success_tracker',
+                    action: 'ml_models_updated',
                     sample_count: trainingData.length
                 });
             }
         } catch(e) {
             send({
-                type: "error",
-                target: "bypass_success_tracker",
-                action: "ml_update_error",
+                type: 'error',
+                target: 'bypass_success_tracker',
+                action: 'ml_update_error',
                 error: e.toString()
             });
         }
@@ -1417,16 +1417,16 @@ const BypassSuccessTracker = {
 
     getCategoryWeight: function(category) {
         var weights = {
-            "antiDebugBypass": 0.9,
-            "licensingBypass": 0.8,
-            "drmBypass": 0.8,
-            "integrityBypass": 0.7,
-            "virtualizationBypass": 0.6,
-            "hardwareBypass": 0.7,
-            "networkBypass": 0.6,
-            "cryptographyBypass": 0.8,
-            "memoryBypass": 0.7,
-            "registryBypass": 0.5
+            'antiDebugBypass': 0.9,
+            'licensingBypass': 0.8,
+            'drmBypass': 0.8,
+            'integrityBypass': 0.7,
+            'virtualizationBypass': 0.6,
+            'hardwareBypass': 0.7,
+            'networkBypass': 0.6,
+            'cryptographyBypass': 0.8,
+            'memoryBypass': 0.7,
+            'registryBypass': 0.5
         };
 
         return weights[category] || 0.5;
@@ -1434,9 +1434,9 @@ const BypassSuccessTracker = {
 
     getMethodComplexity: function(method) {
         // Simplified complexity estimation based on method name
-        if (method.includes("Crypt") || method.includes("Hash")) return 0.8;
-        if (method.includes("Network") || method.includes("Http")) return 0.7;
-        if (method.includes("Registry") || method.includes("Memory")) return 0.6;
+        if (method.includes('Crypt') || method.includes('Hash')) return 0.8;
+        if (method.includes('Network') || method.includes('Http')) return 0.7;
+        if (method.includes('Registry') || method.includes('Memory')) return 0.6;
         return 0.5;
     },
 
@@ -1466,7 +1466,7 @@ const BypassSuccessTracker = {
 
                 // Update weights (simplified gradient descent)
                 for (var j = 0; j < sample.features.length; j++) {
-                    var weightKey = "w" + j;
+                    var weightKey = 'w' + j;
                     if (!predictor.weights.has(weightKey)) {
                         predictor.weights.set(weightKey, Math.random() * 0.1);
                     }
@@ -1496,7 +1496,7 @@ const BypassSuccessTracker = {
         var sum = 0;
 
         for (var i = 0; i < features.length; i++) {
-            var weightKey = "w" + i;
+            var weightKey = 'w' + i;
             var weight = predictor.weights.get(weightKey) || 0;
             sum += features[i] * weight;
         }
@@ -1541,13 +1541,13 @@ const BypassSuccessTracker = {
         // Calculate average features for successful methods
         if (successfulMethods.length > 0) {
             var avgSuccessFeatures = this.calculateAverageFeatures(successfulMethods);
-            classifier.patterns.set("successful", avgSuccessFeatures);
+            classifier.patterns.set('successful', avgSuccessFeatures);
         }
 
         // Calculate average features for failed methods
         if (failedMethods.length > 0) {
             var avgFailedFeatures = this.calculateAverageFeatures(failedMethods);
-            classifier.patterns.set("failed", avgFailedFeatures);
+            classifier.patterns.set('failed', avgFailedFeatures);
         }
     },
 
@@ -1569,9 +1569,9 @@ const BypassSuccessTracker = {
     // === REPORTING SYSTEM ===
     startReportingSystem: function() {
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "starting_reporting_system"
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'starting_reporting_system'
         });
 
         // Start real-time reporting
@@ -1592,16 +1592,16 @@ const BypassSuccessTracker = {
         }, this.config.reporting.summaryReportInterval);
 
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "reporting_system_started"
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'reporting_system_started'
         });
     },
 
     generateRealtimeReport: function() {
         var report = {
             timestamp: Date.now(),
-            type: "realtime",
+            type: 'realtime',
             overall: Object.assign({}, this.statistics.overall),
             topCategories: this.getTopPerformingCategories(3),
             bottomCategories: this.getBottomPerformingCategories(3),
@@ -1613,9 +1613,9 @@ const BypassSuccessTracker = {
 
         if (this.config.tracking.enableDetailedAnalysis) {
             send({
-                type: "info",
-                target: "bypass_success_tracker",
-                action: "realtime_report_generated",
+                type: 'info',
+                target: 'bypass_success_tracker',
+                action: 'realtime_report_generated',
                 overall_success_rate: report.overall.overallSuccessRate,
                 total_attempts: report.overall.totalAttempts
             });
@@ -1625,7 +1625,7 @@ const BypassSuccessTracker = {
     generateDetailedReport: function() {
         var report = {
             timestamp: Date.now(),
-            type: "detailed",
+            type: 'detailed',
             overall: Object.assign({}, this.statistics.overall),
             byCategory: this.getDetailedCategoryStats(),
             byMethod: this.getDetailedMethodStats(),
@@ -1644,9 +1644,9 @@ const BypassSuccessTracker = {
         }
 
         send({
-            type: "info",
-            target: "bypass_success_tracker",
-            action: "detailed_report_generated",
+            type: 'info',
+            target: 'bypass_success_tracker',
+            action: 'detailed_report_generated',
             categories_analyzed: report.byCategory.length,
             methods_analyzed: report.byMethod.length
         });
@@ -1655,15 +1655,15 @@ const BypassSuccessTracker = {
     generateSummaryReport: function() {
         var report = {
             timestamp: Date.now(),
-            type: "summary",
+            type: 'summary',
             timeRange: this.config.reporting.summaryReportInterval,
             overall: Object.assign({}, this.statistics.overall),
             performanceSummary: this.generatePerformanceSummary(),
             trendAnalysis: this.generateTrendSummary(),
             topPerformers: this.getTopPerformingMethods(10),
             bottomPerformers: this.getBottomPerformingMethods(5),
-            criticalAlerts: this.reports.alerts.filter(alert => alert.severity === "critical"),
-            highPriorityRecommendations: this.reports.recommendations.filter(rec => rec.priority === "high"),
+            criticalAlerts: this.reports.alerts.filter(alert => alert.severity === 'critical'),
+            highPriorityRecommendations: this.reports.recommendations.filter(rec => rec.priority === 'high'),
             statisticalSummary: this.generateStatisticalSummary(),
             mlModelStatus: this.getMachineLearningStatus()
         };
@@ -1671,9 +1671,9 @@ const BypassSuccessTracker = {
         this.reports.summary = report;
 
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "summary_report_generated"
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'summary_report_generated'
         });
         this.logSummaryReport(report);
     },
@@ -1821,10 +1821,10 @@ const BypassSuccessTracker = {
 
         return {
             enabled: true,
-            successPredictorStatus: this.mlComponents.successPredictor ? "active" : "inactive",
-            anomalyDetectorStatus: this.mlComponents.anomalyDetector ? "active" : "inactive",
-            patternClassifierStatus: this.mlComponents.patternClassifier ? "active" : "inactive",
-            optimizationEngineStatus: this.mlComponents.optimizationEngine ? "active" : "inactive",
+            successPredictorStatus: this.mlComponents.successPredictor ? 'active' : 'inactive',
+            anomalyDetectorStatus: this.mlComponents.anomalyDetector ? 'active' : 'inactive',
+            patternClassifierStatus: this.mlComponents.patternClassifier ? 'active' : 'inactive',
+            optimizationEngineStatus: this.mlComponents.optimizationEngine ? 'active' : 'inactive',
             modelAccuracy: this.mlComponents.modelAccuracy,
             lastUpdate: Date.now()
         };
@@ -1832,9 +1832,9 @@ const BypassSuccessTracker = {
 
     logSummaryReport: function(report) {
         var summaryData = {
-            type: "summary",
-            target: "bypass_success_tracker",
-            action: "summary_report",
+            type: 'summary',
+            target: 'bypass_success_tracker',
+            action: 'summary_report',
             overall_performance: {
                 total_attempts: report.overall.totalAttempts,
                 total_successes: report.overall.totalSuccesses,
@@ -1934,9 +1934,9 @@ const BypassSuccessTracker = {
         this.recordBypassResult(category, method, success, duration, success ? 1 : 0);
 
         send({
-            type: success ? "success" : "info",
-            target: "bypass_success_tracker",
-            action: "manual_bypass_recorded",
+            type: success ? 'success' : 'info',
+            target: 'bypass_success_tracker',
+            action: 'manual_bypass_recorded',
             category: category,
             method: method,
             success: success
@@ -1949,22 +1949,22 @@ const BypassSuccessTracker = {
             var activeFeatures = [];
 
             if (this.config.tracking.enabled) {
-                activeFeatures.push("Success Rate Tracking");
+                activeFeatures.push('Success Rate Tracking');
             }
             if (this.config.tracking.enableTrendAnalysis) {
-                activeFeatures.push("Trend Analysis");
+                activeFeatures.push('Trend Analysis');
             }
             if (this.config.tracking.enableStatisticalAnalysis) {
-                activeFeatures.push("Statistical Analysis");
+                activeFeatures.push('Statistical Analysis');
             }
             if (this.config.tracking.enablePredictiveAnalysis) {
-                activeFeatures.push("Predictive Analysis");
+                activeFeatures.push('Predictive Analysis');
             }
             if (this.config.analytics.enableMachineLearning) {
-                activeFeatures.push("Machine Learning");
+                activeFeatures.push('Machine Learning');
             }
             if (this.config.reporting.enableAutoReporting) {
-                activeFeatures.push("Automated Reporting");
+                activeFeatures.push('Automated Reporting');
             }
 
             var enabledCategories = [];
@@ -1980,17 +1980,17 @@ const BypassSuccessTracker = {
             if (this.config.analytics.enableMachineLearning) {
                 mlStatus = {
                     enabled: true,
-                    success_predictor: "Neural Network",
-                    anomaly_detection: "Baseline Tracking",
-                    pattern_classifier: "Feature Analysis",
+                    success_predictor: 'Neural Network',
+                    anomaly_detection: 'Baseline Tracking',
+                    pattern_classifier: 'Feature Analysis',
                     model_update_interval_s: this.config.analytics.modelUpdateInterval / 1000
                 };
             }
 
             var summaryData = {
-                type: "summary",
-                target: "bypass_success_tracker",
-                action: "installation_summary",
+                type: 'summary',
+                target: 'bypass_success_tracker',
+                action: 'installation_summary',
                 active_features: activeFeatures,
                 tracked_categories: enabledCategories,
                 analysis_configuration: {
@@ -2015,8 +2015,8 @@ const BypassSuccessTracker = {
                     tracked_categories_count: this.statistics.byCategory.size,
                     tracked_methods_count: this.statistics.byMethod.size
                 },
-                status: "ACTIVE",
-                description: "Bypass success rate tracking system is now actively monitoring and analyzing bypass effectiveness"
+                status: 'ACTIVE',
+                description: 'Bypass success rate tracking system is now actively monitoring and analyzing bypass effectiveness'
             };
 
             send(summaryData);
@@ -2035,9 +2035,9 @@ const BypassSuccessTracker = {
         this.setupAdvancedReporting();
 
         send({
-            type: "status",
-            target: "bypass_success_tracker",
-            action: "v3_enhancements_initialized",
+            type: 'status',
+            target: 'bypass_success_tracker',
+            action: 'v3_enhancements_initialized',
             timestamp: Date.now()
         });
     },
@@ -2394,7 +2394,7 @@ const BypassSuccessTracker = {
                 quantum_advantage_analysis: {
                     current_applicability: 0.0,
                     future_potential: 0.0,
-                    implementation_timeline: "5-10 years"
+                    implementation_timeline: '5-10 years'
                 }
             }
         };
@@ -2447,9 +2447,9 @@ const BypassSuccessTracker = {
 
     generateAdvancedReport: function() {
         const report = {
-            type: "info",
-            target: "bypass_success_tracker_v3",
-            action: "advanced_analytics_report",
+            type: 'info',
+            target: 'bypass_success_tracker_v3',
+            action: 'advanced_analytics_report',
             timestamp: Date.now(),
 
             ml_insights: {
@@ -2473,7 +2473,7 @@ const BypassSuccessTracker = {
 
             recommendations: this.generateStrategicRecommendations(),
 
-            version: "3.0.0"
+            version: '3.0.0'
         };
 
         send(report);
@@ -2570,9 +2570,9 @@ const BypassSuccessTracker = {
         // Implement machine learning model training
         if (this.mlModels.successPrediction.trainingData.length > 100) {
             send({
-                type: "info",
-                target: "bypass_success_tracker_v3",
-                action: "ml_training_initiated",
+                type: 'info',
+                target: 'bypass_success_tracker_v3',
+                action: 'ml_training_initiated',
                 training_samples: this.mlModels.successPrediction.trainingData.length,
                 timestamp: Date.now()
             });

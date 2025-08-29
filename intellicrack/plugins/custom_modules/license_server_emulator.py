@@ -481,8 +481,6 @@ class HASPEmulator:
         self._initialize_real_hasp_memory()
 
         # Crypto keys for HASP envelope encryption
-        import os
-
         # Generate or load device-specific keys
         self.device_id = os.urandom(16)  # Unique device ID
         self.master_key = self._derive_master_key()
@@ -501,8 +499,6 @@ class HASPEmulator:
 
     def _initialize_real_hasp_memory(self):
         """Initialize dongle memory with real HASP data structure."""
-        import struct
-        import time
 
         # HASP memory layout:
         # 0x0000-0x00FF: System area (256 bytes)
@@ -1142,28 +1138,28 @@ class HardwareFingerprintGenerator:
 
     def _safe_subprocess_run(self, cmd_parts, timeout=10):
         """Safely execute subprocess commands with full path validation.
-        
+
         Args:
             cmd_parts: List of command parts [executable, *args]
             timeout: Command timeout in seconds
-            
+
         Returns:
             subprocess.CompletedProcess or None if command unavailable
         """
         if not cmd_parts:
             return None
-            
+
         executable = cmd_parts[0]
-        
+
         # Find full path to executable
         full_path = shutil.which(executable)
         if not full_path:
             self.logger.debug(f"Command not found: {executable}")
             return None
-            
+
         # Use full path for security
         safe_cmd = [full_path] + cmd_parts[1:]
-        
+
         try:
             return subprocess.run(  # nosec S603 - Legitimate subprocess usage with validated full path  # noqa: S603
                 safe_cmd,
@@ -1195,7 +1191,6 @@ class HardwareFingerprintGenerator:
 
     def _get_cpu_id_linux(self) -> str:
         """Get CPU ID on Linux."""
-        import hashlib
 
         try:
             with open("/proc/cpuinfo") as f:
@@ -1206,10 +1201,9 @@ class HardwareFingerprintGenerator:
                         model = line.split(":")[1].strip()
                         return hashlib.sha256(model.encode()).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
-        import platform
         return hashlib.sha256(
             f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
         ).hexdigest()[:16]
@@ -1222,15 +1216,12 @@ class HardwareFingerprintGenerator:
         if result and result.stdout:
             return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
 
-        import platform
         return hashlib.sha256(
             f"{platform.processor()}{platform.machine()}".encode()
         ).hexdigest()[:16]
 
     def _get_cpu_id_default(self) -> str:
         """Get CPU ID for other systems."""
-        import hashlib
-        import platform
 
         return hashlib.sha256(
             f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
@@ -1257,20 +1248,18 @@ class HardwareFingerprintGenerator:
         if result and result.stdout:
             return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.platform()}".encode()
         ).hexdigest()[:16]
 
     def _get_motherboard_id_linux(self) -> str:
         """Get motherboard ID on Linux."""
-        import hashlib
 
         try:
             with open("/sys/class/dmi/id/board_serial") as f:
                 return f.read().strip()
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
         # Fallback to board name + vendor
@@ -1283,10 +1272,9 @@ class HardwareFingerprintGenerator:
             if board_info:
                 return hashlib.sha256(board_info.encode()).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.platform()}".encode()
         ).hexdigest()[:16]
@@ -1305,15 +1293,12 @@ class HardwareFingerprintGenerator:
 
             return hashlib.sha256(result.stdout.encode()).hexdigest()[:16]
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.version()}".encode()
         ).hexdigest()[:16]
 
     def _get_motherboard_id_default(self) -> str:
         """Get motherboard ID for other systems."""
-        import hashlib
-        import platform
 
         return hashlib.sha256(
             f"{platform.node()}{platform.platform()}".encode()
@@ -1339,10 +1324,9 @@ class HardwareFingerprintGenerator:
                 f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
             ).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.system()}disk".encode()
         ).hexdigest()[:16]
@@ -1375,10 +1359,9 @@ class HardwareFingerprintGenerator:
                 f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
             ).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.system()}disk".encode()
         ).hexdigest()[:16]
@@ -1406,7 +1389,7 @@ class HardwareFingerprintGenerator:
                         if serial:
                             return serial
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
         # Fallback to filesystem stats
@@ -1416,19 +1399,15 @@ class HardwareFingerprintGenerator:
                 f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
             ).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
-        import platform
         return hashlib.sha256(
             f"{platform.node()}{platform.system()}disk".encode()
         ).hexdigest()[:16]
 
     def _get_disk_serial_default(self) -> str:
         """Get disk serial for other systems."""
-        import hashlib
-        import os
-        import platform
 
         try:
             stat_info = os.statvfs("/")
@@ -1436,7 +1415,7 @@ class HardwareFingerprintGenerator:
                 f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
             ).hexdigest()[:16]
         except Exception:
-            
+
             self.logger.debug('Exception caught in fallback path', exc_info=False)
 
         return hashlib.sha256(
@@ -1446,7 +1425,6 @@ class HardwareFingerprintGenerator:
     # MAC address handler
     def _get_mac_address(self) -> str:
         """Get MAC address cross-platform."""
-        import uuid
 
         try:
             mac_num = uuid.getnode()
@@ -1470,7 +1448,7 @@ class HardwareFingerprintGenerator:
                         if mac and mac != "00:00:00:00:00:00":
                             return mac.upper()
             except ImportError:
-                
+
                 self.logger.debug('Exception caught in fallback path', exc_info=False)
         except Exception:
                         self.logger.debug('Exception caught in fallback path', exc_info=False)
@@ -1503,7 +1481,7 @@ class HardwareFingerprintGenerator:
                             return int(mem_bytes / (1024**3))
                         except (ValueError, IndexError):
                             pass
-                            
+
         elif platform.system() == "Linux":
             try:
                 with open("/proc/meminfo") as f:
@@ -1513,7 +1491,7 @@ class HardwareFingerprintGenerator:
                             return int(mem_kb / (1024**2))
             except (OSError, ValueError, IndexError):
                 pass
-                
+
         elif platform.system() == "Darwin":
             result = self._safe_subprocess_run(
                 ["sysctl", "-n", "hw.memsize"]
@@ -1531,8 +1509,6 @@ class HardwareFingerprintGenerator:
     # Main refactored method
     def generate_fingerprint(self) -> HardwareFingerprint:
         """Generate hardware fingerprint from system with reduced complexity."""
-        import platform
-        import socket
 
         try:
             fingerprint = HardwareFingerprint()

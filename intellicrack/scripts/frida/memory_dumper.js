@@ -49,9 +49,9 @@ const UniversalUnpacker = require('./universal_unpacker.js');
 const CodeIntegrityBypass = require('./code_integrity_bypass.js');
 
 const AdvancedMemoryDumper = {
-    name: "Advanced Memory Dumper v2.0",
-    description: "Comprehensive memory extraction with modular integration and advanced capabilities",
-    version: "2.0.0",
+    name: 'Advanced Memory Dumper v2.0',
+    description: 'Comprehensive memory extraction with modular integration and advanced capabilities',
+    version: '2.0.0',
 
     // Integrated modules for coordinated operation
     modules: {
@@ -377,7 +377,7 @@ const AdvancedMemoryDumper = {
                 extractionInfrastructure: true
             });
 
-            console.log(`[AdvancedMemoryDumper] Successfully attached with enhanced capabilities`);
+            console.log('[AdvancedMemoryDumper] Successfully attached with enhanced capabilities');
             return true;
 
         } catch (error) {
@@ -444,7 +444,7 @@ const AdvancedMemoryDumper = {
             // Finalize session with comprehensive statistics
             this.finalizeExtractionSession(session);
 
-            console.log(`[AdvancedMemoryDumper] Comprehensive extraction completed`);
+            console.log('[AdvancedMemoryDumper] Comprehensive extraction completed');
             console.log(`[AdvancedMemoryDumper] Session statistics: ${JSON.stringify(session.statistics)}`);
 
             return {
@@ -924,7 +924,7 @@ const AdvancedMemoryDumper = {
                 session.statistics.encryptedSegmentsDecrypted += customEncrypted.length;
             }
 
-            console.log(`[AdvancedMemoryDumper] Encrypted memory handling completed`);
+            console.log('[AdvancedMemoryDumper] Encrypted memory handling completed');
             return encryptedData;
 
         } catch (error) {
@@ -983,7 +983,7 @@ const AdvancedMemoryDumper = {
                 realtimeData.set(pid, monitorData);
             }
 
-            console.log(`[AdvancedMemoryDumper] Real-time monitoring integration completed`);
+            console.log('[AdvancedMemoryDumper] Real-time monitoring integration completed');
             return realtimeData;
 
         } catch (error) {
@@ -1010,7 +1010,7 @@ const AdvancedMemoryDumper = {
 
             session.statistics.forensicEventsTracked = forensicsData.timeline.events.length;
 
-            console.log(`[AdvancedMemoryDumper] Memory forensics analysis completed`);
+            console.log('[AdvancedMemoryDumper] Memory forensics analysis completed');
             return forensicsData;
 
         } catch (error) {
@@ -1036,7 +1036,7 @@ const AdvancedMemoryDumper = {
 
             session.statistics.aiPatternsDetected = aiData.patterns.length;
 
-            console.log(`[AdvancedMemoryDumper] AI analysis completed`);
+            console.log('[AdvancedMemoryDumper] AI analysis completed');
             return aiData;
 
         } catch (error) {
@@ -1059,7 +1059,7 @@ const AdvancedMemoryDumper = {
                 remoteStorage: this.manageRemoteStorage()
             };
 
-            console.log(`[AdvancedMemoryDumper] Cloud analysis coordination completed`);
+            console.log('[AdvancedMemoryDumper] Cloud analysis coordination completed');
             return cloudData;
 
         } catch (error) {
@@ -1085,7 +1085,7 @@ const AdvancedMemoryDumper = {
 
             session.statistics.distributedNodesAnalyzed = distributedData.networkNodes.length;
 
-            console.log(`[AdvancedMemoryDumper] Distributed protection handling completed`);
+            console.log('[AdvancedMemoryDumper] Distributed protection handling completed');
             return distributedData;
 
         } catch (error) {
@@ -1188,11 +1188,11 @@ const AdvancedMemoryDumper = {
                     if (i % 4 === 0) {
                         // PE header detection weights (MZ signature)
                         inputLayerWeights[idx] = (i === 0x4D && j === 0) ? 0.95 :
-                                                (i === 0x5A && j === 1) ? 0.95 : -0.1;
+                            (i === 0x5A && j === 1) ? 0.95 : -0.1;
                     } else if (i % 4 === 1) {
                         // ELF header detection weights (0x7F ELF)
                         inputLayerWeights[idx] = (i === 0x7F && j < 4) ? 0.9 :
-                                                (i === 0x45 && j === 1) ? 0.9 : -0.05;
+                            (i === 0x45 && j === 1) ? 0.9 : -0.05;
                     } else if (i % 4 === 2) {
                         // Crypto signature weights (AES S-box patterns)
                         const aesPattern = [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5];
@@ -1338,18 +1338,18 @@ const AdvancedMemoryDumper = {
 
                 // Categorize by type
                 switch (rangeInfo.type) {
-                    case 'heap':
-                        layout.heapRegions.push(rangeInfo);
-                        break;
-                    case 'stack':
-                        layout.stackRegions.push(rangeInfo);
-                        break;
-                    case 'library':
-                        layout.libraryRegions.push(rangeInfo);
-                        break;
-                    case 'anonymous':
-                        layout.anonymousRegions.push(rangeInfo);
-                        break;
+                case 'heap':
+                    layout.heapRegions.push(rangeInfo);
+                    break;
+                case 'stack':
+                    layout.stackRegions.push(rangeInfo);
+                    break;
+                case 'library':
+                    layout.libraryRegions.push(rangeInfo);
+                    break;
+                case 'anonymous':
+                    layout.anonymousRegions.push(rangeInfo);
+                    break;
                 }
 
                 // Detect memory gaps
@@ -1603,7 +1603,7 @@ const AdvancedMemoryDumper = {
             console.error(`[AdvancedMemoryDumper] Session history storage failed: ${error.message}`);
             return false;
         }
-    }
+    },
 
     // ============= MANAGED RUNTIME DETECTION AND EXTRACTION =============
 
@@ -2292,23 +2292,23 @@ const AdvancedMemoryDumper = {
                 let bypassData = null;
 
                 switch (segment.encryptionType) {
-                    case 'intel_mpx':
-                        bypassData = this.bypassIntelMPX(segment);
-                        break;
-                    case 'intel_cet':
-                        bypassData = this.bypassIntelCET(segment);
-                        break;
-                    case 'arm_pointer_auth':
-                        bypassData = this.bypassARMPointerAuth(segment);
-                        break;
-                    case 'memory_tagging':
-                        bypassData = this.bypassMemoryTagging(segment);
-                        break;
-                    case 'intel_mpk':
-                        bypassData = this.bypassIntelMPK(segment);
-                        break;
-                    default:
-                        bypassData = this.genericHardwareBypass(segment);
+                case 'intel_mpx':
+                    bypassData = this.bypassIntelMPX(segment);
+                    break;
+                case 'intel_cet':
+                    bypassData = this.bypassIntelCET(segment);
+                    break;
+                case 'arm_pointer_auth':
+                    bypassData = this.bypassARMPointerAuth(segment);
+                    break;
+                case 'memory_tagging':
+                    bypassData = this.bypassMemoryTagging(segment);
+                    break;
+                case 'intel_mpk':
+                    bypassData = this.bypassIntelMPK(segment);
+                    break;
+                default:
+                    bypassData = this.genericHardwareBypass(segment);
                 }
 
                 if (bypassData) {
@@ -2367,20 +2367,20 @@ const AdvancedMemoryDumper = {
                 let bypassData = null;
 
                 switch (segment.algorithm) {
-                    case 'aes':
-                        bypassData = this.bypassAESEncryption(segment);
-                        break;
-                    case 'rsa':
-                        bypassData = this.bypassRSAEncryption(segment);
-                        break;
-                    case 'ecc':
-                        bypassData = this.bypassECCEncryption(segment);
-                        break;
-                    case 'xor':
-                        bypassData = this.bypassXOREncryption(segment);
-                        break;
-                    default:
-                        bypassData = this.genericSoftwareBypass(segment);
+                case 'aes':
+                    bypassData = this.bypassAESEncryption(segment);
+                    break;
+                case 'rsa':
+                    bypassData = this.bypassRSAEncryption(segment);
+                    break;
+                case 'ecc':
+                    bypassData = this.bypassECCEncryption(segment);
+                    break;
+                case 'xor':
+                    bypassData = this.bypassXOREncryption(segment);
+                    break;
+                default:
+                    bypassData = this.genericSoftwareBypass(segment);
                 }
 
                 if (bypassData) {
@@ -3186,14 +3186,37 @@ const AdvancedMemoryDumper = {
                 const characteristics = (peBytes[0x16] | (peBytes[0x17] << 8));
                 protection.dep = (characteristics & 0x0100) !== 0; // IMAGE_DLLCHARACTERISTICS_NX_COMPAT
                 protection.aslr = (characteristics & 0x0040) !== 0; // IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
-            } catch (e) {}
+            } catch (e) {
+                send({
+                    type: 'debug',
+                    target: 'memory_dumper',
+                    action: 'pe_header_protection_analysis_failed',
+                    module: module.name,
+                    error: e.toString()
+                });
+            }
 
             // Check for packing by analyzing entropy
             try {
                 const sampleData = Memory.readByteArray(module.base, Math.min(module.size, 0x1000));
                 const entropy = this.calculateRegionEntropy({ base: module.base, size: Math.min(module.size, 0x1000) });
                 protection.packed = entropy > 7.5;
-            } catch (e) {}
+
+                // Use sampleData for additional analysis
+                if (sampleData) {
+                    const dataView = new DataView(sampleData.buffer || sampleData);
+                    protection.hasHighEntropy = entropy > 7.0;
+                    protection.sampleSize = sampleData.byteLength;
+                }
+            } catch (e) {
+                send({
+                    type: 'debug',
+                    target: 'memory_dumper',
+                    action: 'entropy_calculation_failed',
+                    module: module.name,
+                    error: e.toString()
+                });
+            }
 
             return protection;
         } catch (error) {
@@ -3230,8 +3253,8 @@ const AdvancedMemoryDumper = {
                     // Basic signature validation (simplified)
                     if (certBytes[0] === 0x30 && certBytes[1] === 0x82) {
                         signature.valid = true;
-                        signature.issuer = "Certificate Authority";
-                        signature.subject = module.name || "Unknown";
+                        signature.issuer = 'Certificate Authority';
+                        signature.subject = module.name || 'Unknown';
                         signature.timestamp = new Date().toISOString();
                     }
                 }
@@ -3262,13 +3285,13 @@ const AdvancedMemoryDumper = {
             // UPX signature
             if (entryBytes[0] === 0x60 && entryBytes[1] === 0xBE) {
                 packerInfo.packed = true;
-                packerInfo.packer = "UPX";
+                packerInfo.packer = 'UPX';
                 packerInfo.confidence = 0.9;
             }
             // ASPack signature
             else if (entryBytes[0] === 0x60 && entryBytes[1] === 0xE8) {
                 packerInfo.packed = true;
-                packerInfo.packer = "ASPack";
+                packerInfo.packer = 'ASPack';
                 packerInfo.confidence = 0.85;
             }
             // Generic packing detection via entropy
@@ -3276,7 +3299,7 @@ const AdvancedMemoryDumper = {
                 const entropy = this.calculateRegionEntropy({ base: entryPoint, size: 0x100 });
                 if (entropy > 7.5) {
                     packerInfo.packed = true;
-                    packerInfo.packer = "Unknown";
+                    packerInfo.packer = 'Unknown';
                     packerInfo.confidence = 0.7;
                 }
             }
@@ -3552,8 +3575,8 @@ const AdvancedMemoryDumper = {
 
                                         stackTrace.frames.push({
                                             address: possibleRetAddr,
-                                            module: module ? module.name : "unknown",
-                                            function: "unknown",
+                                            module: module ? module.name : 'unknown',
+                                            function: 'unknown',
                                             offset: module ? possibleRetAddr.sub(module.base).toInt32() : 0
                                         });
                                     }
@@ -3581,8 +3604,8 @@ const AdvancedMemoryDumper = {
                                     const module = Process.findModuleByAddress(ptr(instructionPointer.toString()));
                                     stackTrace.frames.push({
                                         address: ptr(instructionPointer.toString()),
-                                        module: module ? module.name : "unknown",
-                                        function: "current_execution",
+                                        module: module ? module.name : 'unknown',
+                                        function: 'current_execution',
                                         offset: module ? ptr(instructionPointer.toString()).sub(module.base).toInt32() : 0
                                     });
                                 }
@@ -3604,7 +3627,7 @@ const AdvancedMemoryDumper = {
                             stackTrace.frames.push({
                                 address: entryPoint,
                                 module: mod.name,
-                                function: "module_entry",
+                                function: 'module_entry',
                                 offset: 0x1000
                             });
                         }
@@ -3896,17 +3919,17 @@ const AdvancedMemoryDumper = {
             allocator.type = type;
 
             switch (type) {
-                case 'windows_ntdll':
-                    allocator.version = 'Windows 10+';
-                    allocator.features = ['guard_pages', 'heap_spraying_protection', 'encode_pointers'];
-                    break;
-                case 'glibc_malloc':
-                    allocator.version = 'glibc 2.27+';
-                    allocator.features = ['chunk_protection', 'tcache', 'safe_unlinking'];
-                    break;
-                case 'custom_allocator':
-                    allocator.features = ['custom_metadata', 'size_classes'];
-                    break;
+            case 'windows_ntdll':
+                allocator.version = 'Windows 10+';
+                allocator.features = ['guard_pages', 'heap_spraying_protection', 'encode_pointers'];
+                break;
+            case 'glibc_malloc':
+                allocator.version = 'glibc 2.27+';
+                allocator.features = ['chunk_protection', 'tcache', 'safe_unlinking'];
+                break;
+            case 'custom_allocator':
+                allocator.features = ['custom_metadata', 'size_classes'];
+                break;
             }
 
             return allocator;
@@ -4355,27 +4378,27 @@ const AdvancedMemoryDumper = {
             const encryptionType = this.identifyEncryptionType(range);
 
             switch (encryptionType) {
-                case 'AES':
-                    algorithm.name = 'AES';
-                    algorithm.keySize = 128; // Default assumption
-                    algorithm.mode = 'CBC'; // Common mode
-                    algorithm.confidence = 0.85;
-                    break;
-                case 'RSA':
-                    algorithm.name = 'RSA';
-                    algorithm.keySize = 2048; // Common size
-                    algorithm.confidence = 0.8;
-                    break;
-                case 'ECC':
-                    algorithm.name = 'ECC';
-                    algorithm.keySize = 256; // Common curve size
-                    algorithm.confidence = 0.75;
-                    break;
-                case 'XOR':
-                    algorithm.name = 'XOR';
-                    algorithm.keySize = 32; // Estimated
-                    algorithm.confidence = 0.9;
-                    break;
+            case 'AES':
+                algorithm.name = 'AES';
+                algorithm.keySize = 128; // Default assumption
+                algorithm.mode = 'CBC'; // Common mode
+                algorithm.confidence = 0.85;
+                break;
+            case 'RSA':
+                algorithm.name = 'RSA';
+                algorithm.keySize = 2048; // Common size
+                algorithm.confidence = 0.8;
+                break;
+            case 'ECC':
+                algorithm.name = 'ECC';
+                algorithm.keySize = 256; // Common curve size
+                algorithm.confidence = 0.75;
+                break;
+            case 'XOR':
+                algorithm.name = 'XOR';
+                algorithm.keySize = 32; // Estimated
+                algorithm.confidence = 0.9;
+                break;
             }
 
             return algorithm;
@@ -4881,16 +4904,16 @@ const AdvancedMemoryDumper = {
 
                 // Determine monitoring frequency based on region type
                 switch (regionType.type) {
-                    case 'executable':
-                    case 'heap':
-                        monitoringFrequency = this.state.monitoring.highFrequencyInterval;
-                        break;
-                    case 'stack':
-                    case 'data':
-                        monitoringFrequency = this.state.monitoring.standardInterval;
-                        break;
-                    default:
-                        monitoringFrequency = this.state.monitoring.lowFrequencyInterval;
+                case 'executable':
+                case 'heap':
+                    monitoringFrequency = this.state.monitoring.highFrequencyInterval;
+                    break;
+                case 'stack':
+                case 'data':
+                    monitoringFrequency = this.state.monitoring.standardInterval;
+                    break;
+                default:
+                    monitoringFrequency = this.state.monitoring.lowFrequencyInterval;
                 }
 
                 // Create region watcher
@@ -5887,21 +5910,21 @@ const AdvancedMemoryDumper = {
                 // Update statistics
                 timeline.statistics.totalEvents++;
                 switch (event.type) {
-                    case 'allocation':
-                        timeline.statistics.memoryAllocations++;
-                        break;
-                    case 'deallocation':
-                        timeline.statistics.memoryDeallocations++;
-                        break;
-                    case 'protection_change':
-                        timeline.statistics.protectionChanges++;
-                        break;
-                    case 'memory_write':
-                        timeline.statistics.memoryWrites++;
-                        break;
-                    case 'memory_read':
-                        timeline.statistics.memoryReads++;
-                        break;
+                case 'allocation':
+                    timeline.statistics.memoryAllocations++;
+                    break;
+                case 'deallocation':
+                    timeline.statistics.memoryDeallocations++;
+                    break;
+                case 'protection_change':
+                    timeline.statistics.protectionChanges++;
+                    break;
+                case 'memory_write':
+                    timeline.statistics.memoryWrites++;
+                    break;
+                case 'memory_read':
+                    timeline.statistics.memoryReads++;
+                    break;
                 }
 
                 // Build temporal map for efficient lookups
@@ -7017,24 +7040,24 @@ const AdvancedMemoryDumper = {
 
             for (const event of events) {
                 switch (event.type) {
-                    case 'memory_read':
-                        categories.reads++;
-                        break;
-                    case 'memory_write':
-                        categories.writes++;
-                        break;
-                    case 'allocation':
-                        categories.allocations++;
-                        break;
-                    case 'deallocation':
-                        categories.deallocations++;
-                        break;
-                    case 'protection_change':
-                        categories.protectionChanges++;
-                        break;
-                    default:
-                        categories.other++;
-                        break;
+                case 'memory_read':
+                    categories.reads++;
+                    break;
+                case 'memory_write':
+                    categories.writes++;
+                    break;
+                case 'allocation':
+                    categories.allocations++;
+                    break;
+                case 'deallocation':
+                    categories.deallocations++;
+                    break;
+                case 'protection_change':
+                    categories.protectionChanges++;
+                    break;
+                default:
+                    categories.other++;
+                    break;
                 }
             }
 
@@ -7390,30 +7413,30 @@ const AdvancedMemoryDumper = {
             };
 
             switch (event.type) {
-                case 'allocation':
-                    change.description = `Allocated ${event.size} bytes`;
-                    change.magnitude = event.size;
-                    change.impact = event.size > 0x100000 ? 'high' : 'medium';
-                    break;
-                case 'deallocation':
-                    change.description = `Deallocated memory`;
-                    change.magnitude = event.size || 0;
-                    change.impact = 'medium';
-                    break;
-                case 'memory_write':
-                    change.description = `Modified memory contents`;
-                    change.magnitude = event.size || 4;
-                    change.impact = 'low';
-                    break;
-                case 'protection_change':
-                    change.description = `Changed memory protection`;
-                    change.magnitude = event.size || 0;
-                    change.impact = 'high';
-                    break;
-                default:
-                    change.description = `Unknown memory operation`;
-                    change.impact = 'unknown';
-                    break;
+            case 'allocation':
+                change.description = `Allocated ${event.size} bytes`;
+                change.magnitude = event.size;
+                change.impact = event.size > 0x100000 ? 'high' : 'medium';
+                break;
+            case 'deallocation':
+                change.description = 'Deallocated memory';
+                change.magnitude = event.size || 0;
+                change.impact = 'medium';
+                break;
+            case 'memory_write':
+                change.description = 'Modified memory contents';
+                change.magnitude = event.size || 4;
+                change.impact = 'low';
+                break;
+            case 'protection_change':
+                change.description = 'Changed memory protection';
+                change.magnitude = event.size || 0;
+                change.impact = 'high';
+                break;
+            default:
+                change.description = 'Unknown memory operation';
+                change.impact = 'unknown';
+                break;
             }
 
             return change;
@@ -9001,31 +9024,6 @@ const AdvancedMemoryDumper = {
                             data: compressed.slice(0, compressedPos),
                             metadata: { originalSize: input.length, compressedSize: compressedPos }
                         };
-                                let matchLength = 0;
-
-                                while (matchLength < 255 &&
-                                       i + matchLength < input.length &&
-                                       input[startPos + matchLength] === input[i + matchLength]) {
-                                    matchLength++;
-                                }
-
-                                if (matchLength > bestMatch.length) {
-                                    bestMatch = { length: matchLength, distance: distance };
-                                }
-                            }
-
-                            if (bestMatch.length > 3) {
-                                // Encode match
-                                compressed[compressedPos++] = 0xFE; // Match marker
-                                compressed[compressedPos++] = bestMatch.length;
-                                compressed[compressedPos++] = bestMatch.distance & 0xFF;
-                                compressed[compressedPos++] = (bestMatch.distance >> 8) & 0xFF;
-                                i += bestMatch.length;
-                            } else {
-                                // Literal byte
-                                compressed[compressedPos++] = input[i++];
-                            }
-                        }
 
                         return {
                             algorithm: 'zstd',
@@ -9550,38 +9548,38 @@ const AdvancedMemoryDumper = {
             const interpolatedView = new Uint8Array(interpolatedData);
 
             switch (interpolationMethod) {
-                case 'null_padding':
-                    // Fill with zeros
-                    interpolatedView.fill(0);
-                    break;
+            case 'null_padding':
+                // Fill with zeros
+                interpolatedView.fill(0);
+                break;
 
-                case 'pattern_repeat':
-                    // Repeat the pattern from before region
-                    const pattern = this.extractPattern(beforeTail);
-                    for (let i = 0; i < gapSize; i++) {
-                        interpolatedView[i] = pattern[i % pattern.length];
-                    }
-                    break;
+            case 'pattern_repeat':
+                // Repeat the pattern from before region
+                const pattern = this.extractPattern(beforeTail);
+                for (let i = 0; i < gapSize; i++) {
+                    interpolatedView[i] = pattern[i % pattern.length];
+                }
+                break;
 
-                case 'linear_progression':
-                    // Linear interpolation between boundary values
-                    const startValue = beforeTail[beforeTail.length - 1];
-                    const endValue = afterHead[0];
-                    const step = (endValue - startValue) / (gapSize + 1);
-                    for (let i = 0; i < gapSize; i++) {
-                        interpolatedView[i] = Math.round(startValue + (step * (i + 1))) & 0xFF;
-                    }
-                    break;
+            case 'linear_progression':
+                // Linear interpolation between boundary values
+                const startValue = beforeTail[beforeTail.length - 1];
+                const endValue = afterHead[0];
+                const step = (endValue - startValue) / (gapSize + 1);
+                for (let i = 0; i < gapSize; i++) {
+                    interpolatedView[i] = Math.round(startValue + (step * (i + 1))) & 0xFF;
+                }
+                break;
 
-                default: // linear
-                    // Simple linear blend
-                    for (let i = 0; i < gapSize; i++) {
-                        const ratio = i / gapSize;
-                        const beforeValue = beforeTail[beforeTail.length - 1] || 0;
-                        const afterValue = afterHead[0] || 0;
-                        interpolatedView[i] = Math.round((1 - ratio) * beforeValue + ratio * afterValue) & 0xFF;
-                    }
-                    break;
+            default: // linear
+                // Simple linear blend
+                for (let i = 0; i < gapSize; i++) {
+                    const ratio = i / gapSize;
+                    const beforeValue = beforeTail[beforeTail.length - 1] || 0;
+                    const afterValue = afterHead[0] || 0;
+                    interpolatedView[i] = Math.round((1 - ratio) * beforeValue + ratio * afterValue) & 0xFF;
+                }
+                break;
             }
 
             return {

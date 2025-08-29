@@ -1287,4 +1287,10 @@ class ConcolicExecutionEngine:
         self.logger.info(f"Target reached at PC: {hex(state.cpu.PC)}")
 
 
-__all__ = ["ConcolicExecutionEngine"]
+def run_concolic_execution(app, target_binary: str) -> dict:
+    """Run concolic execution on a binary."""
+    engine = ConcolicExecutionEngine()
+    return engine.execute(target_binary)
+
+
+__all__ = ["ConcolicExecutionEngine", "run_concolic_execution"]

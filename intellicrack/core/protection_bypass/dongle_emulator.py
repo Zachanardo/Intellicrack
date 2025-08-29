@@ -511,6 +511,81 @@ class HardwareDongleEmulator:
         self.virtual_dongles.clear()
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
+    def get_dongle_config(self, dongle_type: str = "auto") -> dict[str, Any]:
+        """Get configuration for specified dongle type."""
+        config = {
+            "type": dongle_type,
+            "vendor_id": 0x0529,  # Default SafeNet vendor ID
+            "product_id": 0x0001,
+            "serial": "00000000",
+            "features": [],
+            "memory_size": 0,
+            "api_hooks": []
+        }
+
+        # Dongle-specific configurations
+        dongle_configs = {
+            "safenet": {
+                "vendor_id": 0x0529,
+                "product_id": 0x0001,
+                "serial": "SN-12345678",
+                "features": ["AES", "RSA-2048", "HMAC"],
+                "memory_size": 8192,
+                "api_hooks": ["hasp_login", "hasp_logout", "hasp_encrypt", "hasp_decrypt"]
+            },
+            "hasp": {
+                "vendor_id": 0x0529,
+                "product_id": 0x0002,
+                "serial": "HASP-87654321",
+                "features": ["TIME", "NET", "AES-128"],
+                "memory_size": 4096,
+                "api_hooks": ["hasp_login_scope", "hasp_get_info", "hasp_update"]
+            },
+            "codemeter": {
+                "vendor_id": 0x064F,
+                "product_id": 0x03E9,
+                "serial": "CM-11223344",
+                "features": ["CmStick", "CmActLicense", "CmCloud"],
+                "memory_size": 16384,
+                "api_hooks": ["CmGetInfo", "CmGetLicenseInfo", "CmCrypt"]
+            },
+            "wibu": {
+                "vendor_id": 0x064F,
+                "product_id": 0x0BD7,
+                "serial": "WIBU-99887766",
+                "features": ["WibuKey", "CodeMeter"],
+                "memory_size": 32768,
+                "api_hooks": ["WkbOpen", "WkbAccess", "WkbEncrypt"]
+            },
+            "aladdin": {
+                "vendor_id": 0x0529,
+                "product_id": 0x0515,
+                "serial": "HASP-HL-55443322",
+                "features": ["HASP-HL", "NetHASP"],
+                "memory_size": 2048,
+                "api_hooks": ["hasp_login", "hasp_legacy_login", "hasp_read"]
+            },
+            "rainbow": {
+                "vendor_id": 0x04B9,
+                "product_id": 0x0300,
+                "serial": "RB-66778899",
+                "features": ["Sentinel", "SuperPro"],
+                "memory_size": 1024,
+                "api_hooks": ["RNBOsproFormatPacket", "RNBOsproInitialize", "RNBOsproFindFirstUnit"]
+            }
+        }
+
+        # Auto-detect dongle type if needed
+        if dongle_type == "auto":
+            # Try to detect based on loaded DLLs or APIs
+            for dtype, dconfig in dongle_configs.items():
+                config = {**config, **dconfig}
+                break  # Use first available for auto
+        elif dongle_type.lower() in dongle_configs:
+            config = {**config, **dongle_configs[dongle_type.lower()]}
+
+        return config
+
 
 def activate_hardware_dongle_emulation(app: Any, dongle_types: list[str] = None) -> dict[str, Any]:
     """Convenience function to activate hardware dongle emulation.

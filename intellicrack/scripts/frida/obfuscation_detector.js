@@ -28,9 +28,9 @@
  */
 
 const ObfuscationDetector = {
-    name: "Obfuscation Detector",
-    description: "Detect and bypass advanced code obfuscation techniques",
-    version: "1.0.0",
+    name: 'Obfuscation Detector',
+    description: 'Detect and bypass advanced code obfuscation techniques',
+    version: '1.0.0',
 
     // Configuration
     config: {
@@ -88,9 +88,9 @@ const ObfuscationDetector = {
 
     run: function() {
         send({
-            type: "status",
-            target: "obfuscation_detector",
-            action: "initializing_detector",
+            type: 'status',
+            target: 'obfuscation_detector',
+            action: 'initializing_detector',
             version: this.version
         });
 
@@ -109,18 +109,18 @@ const ObfuscationDetector = {
         this.startMonitoring();
 
         send({
-            type: "status",
-            target: "obfuscation_detector",
-            action: "detector_initialized"
+            type: 'status',
+            target: 'obfuscation_detector',
+            action: 'detector_initialized'
         });
     },
 
     // Initialize machine learning
     initializeML: function() {
         send({
-            type: "info",
-            target: "obfuscation_detector",
-            action: "initializing_ml_detection"
+            type: 'info',
+            target: 'obfuscation_detector',
+            action: 'initializing_ml_detection'
         });
 
         // Create feature extractor
@@ -192,7 +192,7 @@ const ObfuscationDetector = {
 
             calculateJumpDensity: function(instructions) {
                 var jumps = 0;
-                var jumpMnemonics = ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"];
+                var jumpMnemonics = ['jmp', 'je', 'jne', 'jz', 'jnz', 'ja', 'jb', 'jg', 'jl'];
 
                 instructions.forEach(function(inst) {
                     if (jumpMnemonics.some(function(j) { return inst.mnemonic.startsWith(j); })) {
@@ -207,7 +207,7 @@ const ObfuscationDetector = {
                 var calls = 0;
 
                 instructions.forEach(function(inst) {
-                    if (inst.mnemonic === "call") {
+                    if (inst.mnemonic === 'call') {
                         calls++;
                     }
                 });
@@ -217,7 +217,7 @@ const ObfuscationDetector = {
 
             countUnusualInstructions: function(instructions) {
                 var unusual = 0;
-                var unusualMnemonics = ["int3", "ud2", "hlt", "in", "out", "rdtsc", "cpuid"];
+                var unusualMnemonics = ['int3', 'ud2', 'hlt', 'in', 'out', 'rdtsc', 'cpuid'];
 
                 instructions.forEach(function(inst) {
                     if (unusualMnemonics.includes(inst.mnemonic)) {
@@ -232,9 +232,9 @@ const ObfuscationDetector = {
                 var stackOps = 0;
 
                 instructions.forEach(function(inst) {
-                    if (inst.mnemonic.includes("push") || inst.mnemonic.includes("pop") ||
-                        (inst.operands && inst.operands.includes("esp")) ||
-                        (inst.operands && inst.operands.includes("rsp"))) {
+                    if (inst.mnemonic.includes('push') || inst.mnemonic.includes('pop') ||
+                        (inst.operands && inst.operands.includes('esp')) ||
+                        (inst.operands && inst.operands.includes('rsp'))) {
                         stackOps++;
                     }
                 });
@@ -246,8 +246,8 @@ const ObfuscationDetector = {
                 var indirect = 0;
 
                 instructions.forEach(function(inst) {
-                    if ((inst.mnemonic === "jmp" || inst.mnemonic === "call") &&
-                        inst.operands && inst.operands.includes("[")) {
+                    if ((inst.mnemonic === 'jmp' || inst.mnemonic === 'call') &&
+                        inst.operands && inst.operands.includes('[')) {
                         indirect++;
                     }
                 });
@@ -278,10 +278,10 @@ const ObfuscationDetector = {
             classifyObfuscationType: function(features) {
                 var types = [];
 
-                if (features.jumpDensity > 0.4) types.push("control_flow_flattening");
-                if (features.indirectBranches > 5) types.push("virtualization");
-                if (features.entropy > 7) types.push("encryption");
-                if (features.unusualInstructions > 3) types.push("anti_analysis");
+                if (features.jumpDensity > 0.4) types.push('control_flow_flattening');
+                if (features.indirectBranches > 5) types.push('virtualization');
+                if (features.entropy > 7) types.push('encryption');
+                if (features.unusualInstructions > 3) types.push('anti_analysis');
 
                 return types;
             }
@@ -293,9 +293,9 @@ const ObfuscationDetector = {
         var self = this;
 
         send({
-            type: "info",
-            target: "obfuscation_detector",
-            action: "analyzing_loaded_modules"
+            type: 'info',
+            target: 'obfuscation_detector',
+            action: 'analyzing_loaded_modules'
         });
 
         Process.enumerateModules().forEach(function(module) {
@@ -303,9 +303,9 @@ const ObfuscationDetector = {
             if (self.isSystemModule(module.name)) return;
 
             send({
-                type: "info",
-                target: "obfuscation_detector",
-                action: "analyzing_module",
+                type: 'info',
+                target: 'obfuscation_detector',
+                action: 'analyzing_module',
                 module_name: module.name
             });
 
@@ -384,7 +384,7 @@ const ObfuscationDetector = {
 
             if (prediction.isObfuscated) {
                 result.obfuscations.push({
-                    type: "ml_detected",
+                    type: 'ml_detected',
                     confidence: prediction.confidence,
                     subtypes: prediction.type
                 });
@@ -403,9 +403,9 @@ const ObfuscationDetector = {
 
         if (result.obfuscations.length > 0) {
             send({
-                type: "warning",
-                target: "obfuscation_detector",
-                action: "obfuscation_detected",
+                type: 'warning',
+                target: 'obfuscation_detector',
+                action: 'obfuscation_detected',
                 function_name: name,
                 obfuscation_types: result.obfuscations.map(function(o) { return o.type; })
             });
@@ -418,7 +418,7 @@ const ObfuscationDetector = {
     // Detect control flow obfuscation
     detectControlFlowObfuscation: function(address) {
         var result = {
-            type: "control_flow_flattening",
+            type: 'control_flow_flattening',
             detected: false,
             patterns: [],
             confidence: 0
@@ -431,7 +431,7 @@ const ObfuscationDetector = {
             // Pattern 1: Switch-based dispatcher
             var switchPattern = [0xFF, 0x24, 0x85]; // jmp [eax*4 + dispatcher_table]
             if (this.findPattern(code, switchPattern)) {
-                result.patterns.push("switch_dispatcher");
+                result.patterns.push('switch_dispatcher');
                 result.confidence += 0.4;
             }
 
@@ -439,7 +439,7 @@ const ObfuscationDetector = {
             var statePattern = [0x83, 0xF8]; // cmp eax, state
             var stateCount = this.countPattern(code, statePattern);
             if (stateCount > 5) {
-                result.patterns.push("state_machine");
+                result.patterns.push('state_machine');
                 result.confidence += 0.3;
             }
 
@@ -453,14 +453,14 @@ const ObfuscationDetector = {
             }
 
             if (jumpCount > code.length * 0.1) {
-                result.patterns.push("excessive_jumps");
+                result.patterns.push('excessive_jumps');
                 result.confidence += 0.3;
             }
 
             result.detected = result.confidence > 0.6;
 
         } catch (e) {
-            console.error("[Obfuscation] Error detecting control flow: " + e);
+            console.error('[Obfuscation] Error detecting control flow: ' + e);
         }
 
         return result;
@@ -469,7 +469,7 @@ const ObfuscationDetector = {
     // Detect opaque predicates
     detectOpaquePredicates: function(address) {
         var result = {
-            type: "opaque_predicates",
+            type: 'opaque_predicates',
             detected: false,
             predicates: [],
             confidence: 0
@@ -483,17 +483,17 @@ const ObfuscationDetector = {
                 // (x^2) >= 0 always true
                 {
                     bytes: [0x0F, 0xAF, 0xC0, 0x79], // imul eax, eax; jns
-                    name: "square_non_negative"
+                    name: 'square_non_negative'
                 },
                 // (x & -x) == x for x = 2^n
                 {
                     bytes: [0x89, 0xC2, 0xF7, 0xD2, 0x21, 0xD0, 0x39, 0xC2],
-                    name: "power_of_two"
+                    name: 'power_of_two'
                 },
                 // ((x * 7) & 1) == (x & 1)
                 {
                     bytes: [0x6B, 0xC0, 0x07, 0x83, 0xE0, 0x01],
-                    name: "modular_arithmetic"
+                    name: 'modular_arithmetic'
                 }
             ];
 
@@ -512,7 +512,7 @@ const ObfuscationDetector = {
             branches.forEach(function(branch) {
                 if (this.isAlwaysTaken(branch)) {
                     result.predicates.push({
-                        type: "always_taken",
+                        type: 'always_taken',
                         address: branch.address
                     });
                     result.confidence += 0.2;
@@ -522,7 +522,7 @@ const ObfuscationDetector = {
             result.detected = result.predicates.length > 0 && result.confidence > 0.5;
 
         } catch (e) {
-            console.error("[Obfuscation] Error detecting opaque predicates: " + e);
+            console.error('[Obfuscation] Error detecting opaque predicates: ' + e);
         }
 
         return result;
@@ -531,9 +531,9 @@ const ObfuscationDetector = {
     // Detect virtualization
     detectVirtualization: function(address) {
         var result = {
-            type: "virtualization",
+            type: 'virtualization',
             detected: false,
-            vmType: "unknown",
+            vmType: 'unknown',
             confidence: 0
         };
 
@@ -574,7 +574,7 @@ const ObfuscationDetector = {
             result.detected = result.confidence > 0.7;
 
         } catch (e) {
-            console.error("[Obfuscation] Error detecting virtualization: " + e);
+            console.error('[Obfuscation] Error detecting virtualization: ' + e);
         }
 
         return result;
@@ -583,7 +583,7 @@ const ObfuscationDetector = {
     // Detect string encryption
     detectStringEncryption: function(address) {
         var result = {
-            type: "string_encryption",
+            type: 'string_encryption',
             detected: false,
             methods: [],
             confidence: 0
@@ -595,17 +595,17 @@ const ObfuscationDetector = {
                 // XOR decryption loop
                 {
                     bytes: [0x80, 0x34, 0x08], // xor byte [eax+ecx], key
-                    name: "xor_loop"
+                    name: 'xor_loop'
                 },
                 // RC4 initialization
                 {
                     bytes: [0x88, 0x04, 0x08, 0x40, 0x3D, 0x00, 0x01],
-                    name: "rc4_init"
+                    name: 'rc4_init'
                 },
                 // Base64 decode
                 {
                     bytes: [0x0F, 0xB6, 0x00, 0x83, 0xE8, 0x41],
-                    name: "base64_decode"
+                    name: 'base64_decode'
                 }
             ];
 
@@ -622,7 +622,7 @@ const ObfuscationDetector = {
             var calls = this.findFunctionCalls(address);
             calls.forEach(function(call) {
                 if (this.isStringDecryptor(call.target)) {
-                    result.methods.push("decryptor_call");
+                    result.methods.push('decryptor_call');
                     result.confidence += 0.3;
                 }
             }.bind(this));
@@ -630,7 +630,7 @@ const ObfuscationDetector = {
             result.detected = result.methods.length > 0 && result.confidence > 0.5;
 
         } catch (e) {
-            console.error("[Obfuscation] Error detecting string encryption: " + e);
+            console.error('[Obfuscation] Error detecting string encryption: ' + e);
         }
 
         return result;
@@ -643,29 +643,29 @@ const ObfuscationDetector = {
 
         obfuscations.forEach(function(obfuscation) {
             switch (obfuscation.type) {
-                case "control_flow_flattening":
-                    if (self.config.bypass.autoDeobfuscate) {
-                        bypassed |= self.bypassControlFlow(address, obfuscation);
-                    }
-                    break;
+            case 'control_flow_flattening':
+                if (self.config.bypass.autoDeobfuscate) {
+                    bypassed |= self.bypassControlFlow(address, obfuscation);
+                }
+                break;
 
-                case "opaque_predicates":
-                    if (self.config.bypass.patchPredicates) {
-                        bypassed |= self.bypassOpaquePredicates(address, obfuscation);
-                    }
-                    break;
+            case 'opaque_predicates':
+                if (self.config.bypass.patchPredicates) {
+                    bypassed |= self.bypassOpaquePredicates(address, obfuscation);
+                }
+                break;
 
-                case "virtualization":
-                    if (self.config.bypass.devirtualize) {
-                        bypassed |= self.bypassVirtualization(address, obfuscation);
-                    }
-                    break;
+            case 'virtualization':
+                if (self.config.bypass.devirtualize) {
+                    bypassed |= self.bypassVirtualization(address, obfuscation);
+                }
+                break;
 
-                case "string_encryption":
-                    if (self.config.bypass.decryptStrings) {
-                        bypassed |= self.bypassStringEncryption(address, obfuscation);
-                    }
-                    break;
+            case 'string_encryption':
+                if (self.config.bypass.decryptStrings) {
+                    bypassed |= self.bypassStringEncryption(address, obfuscation);
+                }
+                break;
             }
         });
 
@@ -675,9 +675,9 @@ const ObfuscationDetector = {
     // Bypass control flow flattening
     bypassControlFlow: function(address, obfuscation) {
         send({
-            type: "bypass",
-            target: "obfuscation_detector",
-            action: "bypassing_control_flow_flattening",
+            type: 'bypass',
+            target: 'obfuscation_detector',
+            action: 'bypassing_control_flow_flattening',
             address: address.toString()
         });
 
@@ -700,7 +700,7 @@ const ObfuscationDetector = {
             }
 
         } catch (e) {
-            console.error("[Obfuscation] Error bypassing control flow: " + e);
+            console.error('[Obfuscation] Error bypassing control flow: ' + e);
         }
 
         return false;
@@ -709,9 +709,9 @@ const ObfuscationDetector = {
     // Bypass opaque predicates
     bypassOpaquePredicates: function(address, obfuscation) {
         send({
-            type: "bypass",
-            target: "obfuscation_detector",
-            action: "bypassing_opaque_predicates",
+            type: 'bypass',
+            target: 'obfuscation_detector',
+            action: 'bypassing_opaque_predicates',
             address: address.toString()
         });
 
@@ -720,31 +720,31 @@ const ObfuscationDetector = {
         obfuscation.predicates.forEach(function(predicate) {
             try {
                 switch (predicate.type) {
-                    case "always_taken":
-                        // Convert conditional jump to unconditional
-                        this.patchToUnconditionalJump(predicate.address);
-                        patched++;
-                        break;
+                case 'always_taken':
+                    // Convert conditional jump to unconditional
+                    this.patchToUnconditionalJump(predicate.address);
+                    patched++;
+                    break;
 
-                    case "never_taken":
-                        // NOP out the jump
-                        this.nopInstruction(predicate.address);
-                        patched++;
-                        break;
+                case 'never_taken':
+                    // NOP out the jump
+                    this.nopInstruction(predicate.address);
+                    patched++;
+                    break;
 
-                    case "square_non_negative":
-                    case "power_of_two":
-                    case "modular_arithmetic":
-                        // Simplify the predicate
-                        this.simplifyPredicate(predicate.address);
-                        patched++;
-                        break;
+                case 'square_non_negative':
+                case 'power_of_two':
+                case 'modular_arithmetic':
+                    // Simplify the predicate
+                    this.simplifyPredicate(predicate.address);
+                    patched++;
+                    break;
                 }
             } catch (e) {
                 send({
-                    type: "error",
-                    target: "obfuscation_detector",
-                    action: "error_patching_predicate",
+                    type: 'error',
+                    target: 'obfuscation_detector',
+                    action: 'error_patching_predicate',
                     error: e.toString()
                 });
             }
@@ -753,9 +753,9 @@ const ObfuscationDetector = {
         if (patched > 0) {
             this.stats.obfuscationsBypassed++;
             send({
-                type: "success",
-                target: "obfuscation_detector",
-                action: "patched_opaque_predicates",
+                type: 'success',
+                target: 'obfuscation_detector',
+                action: 'patched_opaque_predicates',
                 count: patched
             });
         }
@@ -766,31 +766,31 @@ const ObfuscationDetector = {
     // Bypass virtualization
     bypassVirtualization: function(address, obfuscation) {
         send({
-            type: "bypass",
-            target: "obfuscation_detector",
-            action: "bypassing_virtualization",
+            type: 'bypass',
+            target: 'obfuscation_detector',
+            action: 'bypassing_virtualization',
             address: address.toString()
         });
 
         try {
             switch (obfuscation.vmType) {
-                case "vmprotect":
-                    return this.bypassVMProtect(address, obfuscation);
+            case 'vmprotect':
+                return this.bypassVMProtect(address, obfuscation);
 
-                case "themida":
-                    return this.bypassThemida(address, obfuscation);
+            case 'themida':
+                return this.bypassThemida(address, obfuscation);
 
-                case "cv":
-                    return this.bypassCodeVirtualizer(address, obfuscation);
+            case 'cv':
+                return this.bypassCodeVirtualizer(address, obfuscation);
 
-                default:
-                    return this.bypassGenericVM(address, obfuscation);
+            default:
+                return this.bypassGenericVM(address, obfuscation);
             }
         } catch (e) {
             send({
-                type: "error",
-                target: "obfuscation_detector",
-                action: "error_bypassing_virtualization",
+                type: 'error',
+                target: 'obfuscation_detector',
+                action: 'error_bypassing_virtualization',
                 error: e.toString()
             });
         }
@@ -801,9 +801,9 @@ const ObfuscationDetector = {
     // Bypass string encryption
     bypassStringEncryption: function(address, obfuscation) {
         send({
-            type: "bypass",
-            target: "obfuscation_detector",
-            action: "bypassing_string_encryption",
+            type: 'bypass',
+            target: 'obfuscation_detector',
+            action: 'bypassing_string_encryption',
             address: address.toString()
         });
 
@@ -812,27 +812,27 @@ const ObfuscationDetector = {
         obfuscation.methods.forEach(function(method) {
             try {
                 switch (method) {
-                    case "xor_loop":
-                        decrypted += this.decryptXorStrings(address);
-                        break;
+                case 'xor_loop':
+                    decrypted += this.decryptXorStrings(address);
+                    break;
 
-                    case "rc4_init":
-                        decrypted += this.decryptRC4Strings(address);
-                        break;
+                case 'rc4_init':
+                    decrypted += this.decryptRC4Strings(address);
+                    break;
 
-                    case "base64_decode":
-                        decrypted += this.decryptBase64Strings(address);
-                        break;
+                case 'base64_decode':
+                    decrypted += this.decryptBase64Strings(address);
+                    break;
 
-                    case "decryptor_call":
-                        decrypted += this.hookStringDecryptor(address);
-                        break;
+                case 'decryptor_call':
+                    decrypted += this.hookStringDecryptor(address);
+                    break;
                 }
             } catch (e) {
                 send({
-                    type: "error",
-                    target: "obfuscation_detector",
-                    action: "error_decrypting_strings",
+                    type: 'error',
+                    target: 'obfuscation_detector',
+                    action: 'error_decrypting_strings',
                     error: e.toString()
                 });
             }
@@ -842,9 +842,9 @@ const ObfuscationDetector = {
             this.stats.stringsDecrypted += decrypted;
             this.stats.obfuscationsBypassed++;
             send({
-                type: "success",
-                target: "obfuscation_detector",
-                action: "decrypted_strings",
+                type: 'success',
+                target: 'obfuscation_detector',
+                action: 'decrypted_strings',
                 count: decrypted
             });
         }
@@ -876,9 +876,9 @@ const ObfuscationDetector = {
             decrypted++;
 
             send({
-                type: "info",
-                target: "obfuscation_detector",
-                action: "decrypted_xor_string",
+                type: 'info',
+                target: 'obfuscation_detector',
+                action: 'decrypted_xor_string',
                 plaintext: plaintext
             });
         }.bind(this));
@@ -892,7 +892,7 @@ const ObfuscationDetector = {
 
         // Windows
         if (Process.platform === 'windows') {
-            var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
+            var loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibrary) {
                 Interceptor.attach(loadLibrary, {
                     onLeave: function(retval) {
@@ -900,9 +900,9 @@ const ObfuscationDetector = {
                             var module = Process.findModuleByAddress(retval);
                             if (module) {
                                 send({
-                                    type: "info",
-                                    target: "obfuscation_detector",
-                                    action: "new_module_loaded",
+                                    type: 'info',
+                                    target: 'obfuscation_detector',
+                                    action: 'new_module_loaded',
                                     module_name: module.name,
                                     base_address: module.base.toString()
                                 });
@@ -916,7 +916,7 @@ const ObfuscationDetector = {
 
         // Linux
         else if (Process.platform === 'linux') {
-            var dlopen = Module.findExportByName(null, "dlopen");
+            var dlopen = Module.findExportByName(null, 'dlopen');
             if (dlopen) {
                 Interceptor.attach(dlopen, {
                     onEnter: function(args) {
@@ -925,9 +925,9 @@ const ObfuscationDetector = {
                     onLeave: function(retval) {
                         if (!retval.isNull() && this.path) {
                             send({
-                                type: "info",
-                                target: "obfuscation_detector",
-                                action: "new_module_loaded_dlopen",
+                                type: 'info',
+                                target: 'obfuscation_detector',
+                                action: 'new_module_loaded_dlopen',
                                 module_path: this.path
                             });
                             var module = Process.findModuleByName(this.path);
@@ -962,7 +962,7 @@ const ObfuscationDetector = {
         var self = this;
 
         // VirtualAlloc
-        var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
+        var virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
         if (virtualAlloc) {
             Interceptor.attach(virtualAlloc, {
                 onLeave: function(retval) {
@@ -970,9 +970,9 @@ const ObfuscationDetector = {
                         var protection = this.context.r9.toInt32();
                         if (protection & 0x20) { // PAGE_EXECUTE
                             send({
-                                type: "info",
-                                target: "obfuscation_detector",
-                                action: "executable_memory_allocated",
+                                type: 'info',
+                                target: 'obfuscation_detector',
+                                action: 'executable_memory_allocated',
                                 address: retval.toString(),
                                 protection: protection.toString(16)
                             });
@@ -982,7 +982,7 @@ const ObfuscationDetector = {
                                 self.analyzeCodeSection({
                                     base: retval,
                                     size: this.context.rdx.toInt32()
-                                }, "dynamic");
+                                }, 'dynamic');
                             }.bind(this), 100);
                         }
                     }
@@ -1022,8 +1022,8 @@ const ObfuscationDetector = {
 
     isSystemModule: function(name) {
         var systemModules = [
-            "ntdll", "kernel32", "user32", "advapi32", "msvcrt",
-            "libc", "libpthread", "ld-linux"
+            'ntdll', 'kernel32', 'user32', 'advapi32', 'msvcrt',
+            'libc', 'libpthread', 'ld-linux'
         ];
 
         name = name.toLowerCase();
@@ -1039,9 +1039,9 @@ const ObfuscationDetector = {
 
         if (prediction.isObfuscated) {
             send({
-                type: "info",
-                target: "obfuscation_detector",
-                action: "obfuscated_code_section_detected",
+                type: 'info',
+                target: 'obfuscation_detector',
+                action: 'obfuscated_code_section_detected',
                 module_name: moduleName,
                 address: range.base.toString(),
                 confidence: prediction.confidence,
@@ -1127,14 +1127,14 @@ const ObfuscationDetector = {
                         if (self.findPatternWithWildcards(data, sig)) {
                             packer.detected = true;
                             send({
-                                type: "warning",
-                                target: "obfuscation_detector",
-                                action: "packer_detected",
+                                type: 'warning',
+                                target: 'obfuscation_detector',
+                                action: 'packer_detected',
                                 packer: packerName,
                                 module: module.name
                             });
                             self.detectedObfuscations.push({
-                                type: "packer",
+                                type: 'packer',
                                 subtype: packerName,
                                 module: module.name,
                                 address: range.base
@@ -1159,50 +1159,50 @@ const ObfuscationDetector = {
         var obfuscators = {
             confuserEx: {
                 signatures: [
-                    "ConfusedBy",
-                    "ConfuserEx",
-                    "<Module>.cctor",
-                    "Confuser.Core"
+                    'ConfusedBy',
+                    'ConfuserEx',
+                    '<Module>.cctor',
+                    'Confuser.Core'
                 ],
                 detected: false
             },
             eazfuscator: {
                 signatures: [
-                    "Eazfuscator",
-                    "{11111111-2222-3333-4444-555555555555}",
-                    "EazfuscatorNet"
+                    'Eazfuscator',
+                    '{11111111-2222-3333-4444-555555555555}',
+                    'EazfuscatorNet'
                 ],
                 detected: false
             },
             dotfuscator: {
                 signatures: [
-                    "DotfuscatorAttribute",
-                    "PreEmptive.ObfuscationAttribute",
-                    "a\u0001b\u0001c\u0001d"
+                    'DotfuscatorAttribute',
+                    'PreEmptive.ObfuscationAttribute',
+                    'a\u0001b\u0001c\u0001d'
                 ],
                 detected: false
             },
             smartAssembly: {
                 signatures: [
-                    "SmartAssembly",
-                    "PoweredBy",
-                    "{z}",
-                    "SA."
+                    'SmartAssembly',
+                    'PoweredBy',
+                    '{z}',
+                    'SA.'
                 ],
                 detected: false
             },
             cryptoObfuscator: {
                 signatures: [
-                    "CryptoObfuscator",
-                    "LogicNP",
-                    "\u0001\u0002\u0003\u0004\u0005"
+                    'CryptoObfuscator',
+                    'LogicNP',
+                    '\u0001\u0002\u0003\u0004\u0005'
                 ],
                 detected: false
             }
         };
 
         // Check for .NET metadata
-        var clrModule = Process.findModuleByName("clr.dll") || Process.findModuleByName("coreclr.dll");
+        var clrModule = Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
         if (!clrModule) return null;
 
         // Scan for signatures
@@ -1213,9 +1213,9 @@ const ObfuscationDetector = {
                     if (exp.name && exp.name.includes(sig)) {
                         obf.detected = true;
                         send({
-                            type: "warning",
-                            target: "obfuscation_detector",
-                            action: "dotnet_obfuscator_detected",
+                            type: 'warning',
+                            target: 'obfuscation_detector',
+                            action: 'dotnet_obfuscator_detected',
                             obfuscator: obfName,
                             module: module.name
                         });
@@ -1283,9 +1283,9 @@ const ObfuscationDetector = {
 
             if (obf.score > 10) {
                 send({
-                    type: "warning",
-                    target: "obfuscation_detector",
-                    action: "javascript_obfuscation_detected",
+                    type: 'warning',
+                    target: 'obfuscation_detector',
+                    action: 'javascript_obfuscation_detected',
                     type: obfType,
                     score: obf.score
                 });
@@ -1309,13 +1309,13 @@ const ObfuscationDetector = {
         if (Process.platform === 'android') {
             // Check for DexGuard
             var dexguardPatterns = [
-                "dexguard",
-                "o0o0o0o0",
-                "iIiIiI"
+                'dexguard',
+                'o0o0o0o0',
+                'iIiIiI'
             ];
 
             Process.enumerateModules().forEach(function(module) {
-                if (module.name.includes("classes") && module.name.includes(".dex")) {
+                if (module.name.includes('classes') && module.name.includes('.dex')) {
                     dexguardPatterns.forEach(function(pattern) {
                         if (module.name.includes(pattern)) {
                             protections.dexguard = true;
@@ -1340,9 +1340,9 @@ const ObfuscationDetector = {
         if (Process.platform === 'ios') {
             // Check for iXGuard
             var ixguardSymbols = [
-                "_ixguard_check",
-                "_ix_verify",
-                "_guard_init"
+                '_ixguard_check',
+                '_ix_verify',
+                '_guard_init'
             ];
 
             ixguardSymbols.forEach(function(symbol) {
@@ -1355,9 +1355,9 @@ const ObfuscationDetector = {
 
         // Check for Arxan
         var arxanPatterns = [
-            "arxan",
-            "TransformIT",
-            "GuardIT"
+            'arxan',
+            'TransformIT',
+            'GuardIT'
         ];
 
         Process.enumerateModules().forEach(function(module) {
@@ -1426,9 +1426,9 @@ const ObfuscationDetector = {
 
             if (indicators.selfModifying || indicators.polymorphic || indicators.metamorphic) {
                 send({
-                    type: "warning",
-                    target: "obfuscation_detector",
-                    action: "metamorphic_code_detected",
+                    type: 'warning',
+                    target: 'obfuscation_detector',
+                    action: 'metamorphic_code_detected',
                     indicators: indicators
                 });
             }
@@ -1443,7 +1443,7 @@ const ObfuscationDetector = {
         var unpackingIndicators = [];
 
         // Monitor VirtualProtect calls
-        var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
+        var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
                 onEnter: function(args) {
@@ -1456,7 +1456,7 @@ const ObfuscationDetector = {
                         // Check if changing to executable
                         if (this.newProtect & 0x10 || this.newProtect & 0x20 || this.newProtect & 0x40) {
                             unpackingIndicators.push({
-                                type: "protection_change",
+                                type: 'protection_change',
                                 address: this.address,
                                 size: this.size,
                                 protection: this.newProtect
@@ -1473,7 +1473,7 @@ const ObfuscationDetector = {
         }
 
         // Monitor WriteProcessMemory
-        var writeProcessMemory = Module.findExportByName("kernel32.dll", "WriteProcessMemory");
+        var writeProcessMemory = Module.findExportByName('kernel32.dll', 'WriteProcessMemory');
         if (writeProcessMemory) {
             Interceptor.attach(writeProcessMemory, {
                 onEnter: function(args) {
@@ -1485,7 +1485,7 @@ const ObfuscationDetector = {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
                         unpackingIndicators.push({
-                            type: "memory_write",
+                            type: 'memory_write',
                             address: this.address,
                             size: this.size
                         });
@@ -1553,9 +1553,9 @@ const ObfuscationDetector = {
 
         if (iat.resolved > 0) {
             send({
-                type: "info",
-                target: "obfuscation_detector",
-                action: "iat_reconstructed",
+                type: 'info',
+                target: 'obfuscation_detector',
+                action: 'iat_reconstructed',
                 imports_found: iat.resolved,
                 module: module.name
             });
@@ -1583,7 +1583,7 @@ const ObfuscationDetector = {
 
             var node = {
                 address: current,
-                type: "basic_block",
+                type: 'basic_block',
                 successors: []
             };
 
@@ -1593,10 +1593,10 @@ const ObfuscationDetector = {
                 while (offset < size) {
                     var inst = Instruction.parse(current.add(offset));
 
-                    if (inst.mnemonic.startsWith("j") || inst.mnemonic === "call" || inst.mnemonic === "ret") {
+                    if (inst.mnemonic.startsWith('j') || inst.mnemonic === 'call' || inst.mnemonic === 'ret') {
                         node.type = inst.mnemonic;
 
-                        if (inst.mnemonic !== "ret") {
+                        if (inst.mnemonic !== 'ret') {
                             // Extract target
                             var target = this.extractBranchTarget(inst);
                             if (target) {
@@ -1627,7 +1627,7 @@ const ObfuscationDetector = {
 
             if (!hasIncoming && !node.address.equals(address)) {
                 cfg.anomalies.push({
-                    type: "unreachable_code",
+                    type: 'unreachable_code',
                     address: node.address
                 });
             }
@@ -1635,7 +1635,7 @@ const ObfuscationDetector = {
             // Check for excessive branching
             if (node.successors.length > 10) {
                 cfg.anomalies.push({
-                    type: "excessive_branching",
+                    type: 'excessive_branching',
                     address: node.address,
                     branches: node.successors.length
                 });
@@ -1688,9 +1688,9 @@ const ObfuscationDetector = {
 
         if (ropGadgets.length > 20) {
             send({
-                type: "warning",
-                target: "obfuscation_detector",
-                action: "rop_gadgets_detected",
+                type: 'warning',
+                target: 'obfuscation_detector',
+                action: 'rop_gadgets_detected',
                 count: ropGadgets.length,
                 address: address.toString()
             });
@@ -1722,8 +1722,8 @@ const ObfuscationDetector = {
                                 caves.push({
                                     address: range.base.add(caveStart),
                                     size: caveSize,
-                                    type: data[caveStart] === 0x00 ? "null" :
-                                          data[caveStart] === 0x90 ? "nop" : "int3"
+                                    type: data[caveStart] === 0x00 ? 'null' :
+                                        data[caveStart] === 0x90 ? 'nop' : 'int3'
                                 });
                             }
                             caveStart = -1;
@@ -1735,9 +1735,9 @@ const ObfuscationDetector = {
 
         if (caves.length > 0) {
             send({
-                type: "info",
-                target: "obfuscation_detector",
-                action: "code_caves_found",
+                type: 'info',
+                target: 'obfuscation_detector',
+                action: 'code_caves_found',
                 count: caves.length,
                 module: module.name
             });
@@ -1786,9 +1786,9 @@ const ObfuscationDetector = {
 
                     if (callbacks.length > 0) {
                         send({
-                            type: "warning",
-                            target: "obfuscation_detector",
-                            action: "tls_callbacks_detected",
+                            type: 'warning',
+                            target: 'obfuscation_detector',
+                            action: 'tls_callbacks_detected',
                             count: callbacks.length,
                             module: module.name
                         });
@@ -1868,9 +1868,9 @@ const ObfuscationDetector = {
 
                     // Check for fake resource signatures
                     var fakeSignatures = [
-                        "PADDINGX",
-                        "\x00\x00\x00\x00\x00\x00\x00\x00",
-                        "DEADBEEF"
+                        'PADDINGX',
+                        '\x00\x00\x00\x00\x00\x00\x00\x00',
+                        'DEADBEEF'
                     ];
 
                     fakeSignatures.forEach(function(sig) {
@@ -1914,8 +1914,8 @@ const ObfuscationDetector = {
 
                 // Check for known stolen certificates
                 var stolenCertHashes = [
-                    "3E5D1E3B2A1C4F8D9B7A6E5C",
-                    "A9B8C7D6E5F4A3B2C1D0E9F8"
+                    '3E5D1E3B2A1C4F8D9B7A6E5C',
+                    'A9B8C7D6E5F4A3B2C1D0E9F8'
                 ];
 
                 var certHash = this.hashData(certData);
@@ -1963,9 +1963,9 @@ const ObfuscationDetector = {
                 if (overlayData[0] === 0x4D && overlayData[1] === 0x5A) {
                     overlay.hiddenPayload = true;
                     send({
-                        type: "warning",
-                        target: "obfuscation_detector",
-                        action: "hidden_executable_in_overlay",
+                        type: 'warning',
+                        target: 'obfuscation_detector',
+                        action: 'hidden_executable_in_overlay',
                         module: module.name,
                         size: overlay.size
                     });
@@ -1974,9 +1974,9 @@ const ObfuscationDetector = {
                 // Check for encrypted data
                 if (overlay.entropy > 7.8) {
                     send({
-                        type: "warning",
-                        target: "obfuscation_detector",
-                        action: "encrypted_overlay_detected",
+                        type: 'warning',
+                        target: 'obfuscation_detector',
+                        action: 'encrypted_overlay_detected',
                         module: module.name,
                         entropy: overlay.entropy
                     });
@@ -2014,14 +2014,14 @@ const ObfuscationDetector = {
                 if (section.name === '.text' && !(section.characteristics & 0x20000000)) {
                     manipulation.wrongCharacteristics.push({
                         name: section.name,
-                        issue: "text_not_executable"
+                        issue: 'text_not_executable'
                     });
                 }
 
                 if (section.name === '.data' && (section.characteristics & 0x20000000)) {
                     manipulation.wrongCharacteristics.push({
                         name: section.name,
-                        issue: "data_is_executable"
+                        issue: 'data_is_executable'
                     });
                 }
 
@@ -2062,11 +2062,11 @@ const ObfuscationDetector = {
 
         // Monitor time-related API calls
         var timeAPIs = [
-            {name: "GetTickCount", module: "kernel32.dll"},
-            {name: "GetSystemTime", module: "kernel32.dll"},
-            {name: "QueryPerformanceCounter", module: "kernel32.dll"},
-            {name: "time", module: null},
-            {name: "gettimeofday", module: null}
+            {name: 'GetTickCount', module: 'kernel32.dll'},
+            {name: 'GetSystemTime', module: 'kernel32.dll'},
+            {name: 'QueryPerformanceCounter', module: 'kernel32.dll'},
+            {name: 'time', module: null},
+            {name: 'gettimeofday', module: null}
         ];
 
         timeAPIs.forEach(function(api) {
@@ -2096,7 +2096,7 @@ const ObfuscationDetector = {
             if (!self.behaviorsMatch(initialBehavior, laterBehavior)) {
                 timeBased.detected = true;
                 timeBased.behaviors.push({
-                    type: "behavior_change",
+                    type: 'behavior_change',
                     initial: initialBehavior,
                     later: laterBehavior
                 });
@@ -2117,17 +2117,17 @@ const ObfuscationDetector = {
 
         // Monitor environment checks
         var envAPIs = [
-            {name: "GetComputerNameW", check: "computer_name"},
-            {name: "GetUserNameW", check: "user_name"},
-            {name: "GetVolumeInformationW", check: "volume_serial"},
-            {name: "GetSystemInfo", check: "system_info"},
-            {name: "RegQueryValueExW", check: "registry"},
-            {name: "GetEnvironmentVariableW", check: "env_var"}
+            {name: 'GetComputerNameW', check: 'computer_name'},
+            {name: 'GetUserNameW', check: 'user_name'},
+            {name: 'GetVolumeInformationW', check: 'volume_serial'},
+            {name: 'GetSystemInfo', check: 'system_info'},
+            {name: 'RegQueryValueExW', check: 'registry'},
+            {name: 'GetEnvironmentVariableW', check: 'env_var'}
         ];
 
         envAPIs.forEach(function(api) {
-            var addr = Module.findExportByName("kernel32.dll", api.name) ||
-                      Module.findExportByName("advapi32.dll", api.name);
+            var addr = Module.findExportByName('kernel32.dll', api.name) ||
+                      Module.findExportByName('advapi32.dll', api.name);
 
             if (addr) {
                 Interceptor.attach(addr, {
@@ -2147,14 +2147,14 @@ const ObfuscationDetector = {
         });
 
         // Check for domain/IP restrictions
-        var connectAPIs = ["connect", "WSAConnect", "InternetConnectW"];
+        var connectAPIs = ['connect', 'WSAConnect', 'InternetConnectW'];
         connectAPIs.forEach(function(api) {
             var addr = Module.findExportByName(null, api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
                         keying.requirements.push({
-                            type: "network_check",
+                            type: 'network_check',
                             api: api
                         });
                     }
@@ -2176,7 +2176,7 @@ const ObfuscationDetector = {
         };
 
         // Check for GetProcAddress patterns
-        var getProcAddr = Module.findExportByName("kernel32.dll", "GetProcAddress");
+        var getProcAddr = Module.findExportByName('kernel32.dll', 'GetProcAddress');
         if (getProcAddr) {
             Interceptor.attach(getProcAddr, {
                 onEnter: function(args) {
@@ -2188,7 +2188,7 @@ const ObfuscationDetector = {
                         if (procName.toInt32() < 0x10000) {
                             // Ordinal import
                             apiObf.obfuscatedImports.push({
-                                type: "ordinal",
+                                type: 'ordinal',
                                 value: procName.toInt32()
                             });
                         } else {
@@ -2196,7 +2196,7 @@ const ObfuscationDetector = {
                             if (name && !name.match(/^[A-Za-z_][A-Za-z0-9_]*$/)) {
                                 // Obfuscated name
                                 apiObf.obfuscatedImports.push({
-                                    type: "obfuscated_name",
+                                    type: 'obfuscated_name',
                                     value: name
                                 });
                             }
@@ -2246,15 +2246,15 @@ const ObfuscationDetector = {
         // Patterns for stack string construction
         var patterns = [
             // mov byte [esp+X], char
-            {bytes: [0xC6, 0x44, 0x24], name: "stack_byte_mov"},
+            {bytes: [0xC6, 0x44, 0x24], name: 'stack_byte_mov'},
             // mov word [esp+X], chars
-            {bytes: [0x66, 0xC7, 0x44, 0x24], name: "stack_word_mov"},
+            {bytes: [0x66, 0xC7, 0x44, 0x24], name: 'stack_word_mov'},
             // mov dword [esp+X], chars
-            {bytes: [0xC7, 0x44, 0x24], name: "stack_dword_mov"},
+            {bytes: [0xC7, 0x44, 0x24], name: 'stack_dword_mov'},
             // push char sequences
-            {bytes: [0x6A], name: "push_char"},
+            {bytes: [0x6A], name: 'push_char'},
             // mov [ebp-X], char
-            {bytes: [0xC6, 0x45], name: "local_byte_mov"}
+            {bytes: [0xC6, 0x45], name: 'local_byte_mov'}
         ];
 
         patterns.forEach(function(pattern) {
@@ -2277,9 +2277,9 @@ const ObfuscationDetector = {
         if (stackStrings.count > 20) {
             stackStrings.detected = true;
             send({
-                type: "warning",
-                target: "obfuscation_detector",
-                action: "stack_string_construction_detected",
+                type: 'warning',
+                target: 'obfuscation_detector',
+                action: 'stack_string_construction_detected',
                 count: stackStrings.count,
                 address: address.toString()
             });
@@ -2300,20 +2300,20 @@ const ObfuscationDetector = {
 
         // Monitor SEH/VEH registration
         var sehAPIs = [
-            "SetUnhandledExceptionFilter",
-            "AddVectoredExceptionHandler",
-            "RemoveVectoredExceptionHandler"
+            'SetUnhandledExceptionFilter',
+            'AddVectoredExceptionHandler',
+            'RemoveVectoredExceptionHandler'
         ];
 
         sehAPIs.forEach(function(api) {
-            var addr = Module.findExportByName("kernel32.dll", api);
+            var addr = Module.findExportByName('kernel32.dll', api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
                         var caller = this.returnAddress;
                         if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
                             ehObf.detected = true;
-                            if (api.includes("SEH")) {
+                            if (api.includes('SEH')) {
                                 ehObf.sehHandlers.push({handler: args[0], caller: caller});
                             } else {
                                 ehObf.vehHandlers.push({handler: args[1], caller: caller});
@@ -2357,19 +2357,19 @@ const ObfuscationDetector = {
 
         // Check for parent-child debugging relationship
         var debugAPIs = [
-            "CreateProcessW",
-            "DebugActiveProcess",
-            "WaitForDebugEvent",
-            "ContinueDebugEvent"
+            'CreateProcessW',
+            'DebugActiveProcess',
+            'WaitForDebugEvent',
+            'ContinueDebugEvent'
         ];
 
         debugAPIs.forEach(function(api) {
-            var addr = Module.findExportByName("kernel32.dll", api);
+            var addr = Module.findExportByName('kernel32.dll', api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
                         nanomite.debuggerPresent = true;
-                        if (api === "CreateProcessW") {
+                        if (api === 'CreateProcessW') {
                             this.processName = args[1].readUtf16String();
                         }
                     },
@@ -2384,13 +2384,13 @@ const ObfuscationDetector = {
         });
 
         // Monitor for runtime patching
-        var writeAPIs = ["WriteProcessMemory", "VirtualProtect"];
+        var writeAPIs = ['WriteProcessMemory', 'VirtualProtect'];
         writeAPIs.forEach(function(api) {
-            var addr = Module.findExportByName("kernel32.dll", api);
+            var addr = Module.findExportByName('kernel32.dll', api);
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
-                        if (api === "WriteProcessMemory") {
+                        if (api === 'WriteProcessMemory') {
                             this.targetAddr = args[1];
                             this.size = args[3].toInt32();
                         } else {
@@ -2473,12 +2473,12 @@ const ObfuscationDetector = {
 
         // Monitor heap allocations
         var heapAPIs = [
-            {name: "HeapAlloc", module: "kernel32.dll"},
-            {name: "GlobalAlloc", module: "kernel32.dll"},
-            {name: "LocalAlloc", module: "kernel32.dll"},
-            {name: "VirtualAlloc", module: "kernel32.dll"},
-            {name: "malloc", module: null},
-            {name: "calloc", module: null}
+            {name: 'HeapAlloc', module: 'kernel32.dll'},
+            {name: 'GlobalAlloc', module: 'kernel32.dll'},
+            {name: 'LocalAlloc', module: 'kernel32.dll'},
+            {name: 'VirtualAlloc', module: 'kernel32.dll'},
+            {name: 'malloc', module: null},
+            {name: 'calloc', module: null}
         ];
 
         heapAPIs.forEach(function(api) {
@@ -2486,7 +2486,7 @@ const ObfuscationDetector = {
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
-                        this.size = args[api.name.includes("Heap") ? 2 : 1].toInt32();
+                        this.size = args[api.name.includes('Heap') ? 2 : 1].toInt32();
                         this.api = api.name;
                     },
                     onLeave: function(retval) {
@@ -2611,13 +2611,13 @@ const ObfuscationDetector = {
                 instructions.push(inst.mnemonic);
                 offset += inst.size;
 
-                if (inst.mnemonic === "ret") break;
+                if (inst.mnemonic === 'ret') break;
             } catch (e) {
                 break;
             }
         }
 
-        return instructions.join("; ");
+        return instructions.join('; ');
     },
 
     // Parse PE sections
@@ -2648,9 +2648,9 @@ const ObfuscationDetector = {
     // Update run method to include new detection capabilities
     run: function() {
         send({
-            type: "status",
-            target: "obfuscation_detector",
-            action: "initializing_detector",
+            type: 'status',
+            target: 'obfuscation_detector',
+            action: 'initializing_detector',
             version: this.version
         });
 
@@ -2672,9 +2672,9 @@ const ObfuscationDetector = {
         this.startMonitoring();
 
         send({
-            type: "status",
-            target: "obfuscation_detector",
-            action: "detector_initialized"
+            type: 'status',
+            target: 'obfuscation_detector',
+            action: 'detector_initialized'
         });
     },
 
@@ -2725,9 +2725,9 @@ const ObfuscationDetector = {
         this.detectDynamicUnpacking();
 
         send({
-            type: "info",
-            target: "obfuscation_detector",
-            action: "advanced_detection_initialized"
+            type: 'info',
+            target: 'obfuscation_detector',
+            action: 'advanced_detection_initialized'
         });
     },
 
@@ -2748,15 +2748,13 @@ const ObfuscationDetector = {
 // Run the detector
 ObfuscationDetector.run();
 
-};
-
 // Auto-initialize on load
 setTimeout(function() {
     ObfuscationDetector.run();
     send({
-        type: "status",
-        target: "obfuscation_detector",
-        action: "system_now_active"
+        type: 'status',
+        target: 'obfuscation_detector',
+        action: 'system_now_active'
     });
 }, 100);
 

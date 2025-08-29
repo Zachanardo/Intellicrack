@@ -28,9 +28,9 @@
  */
 
 const MlLicenseDetector = {
-    name: "ML License Function Detector",
-    description: "Intelligent license function detection and automatic hook placement",
-    version: "2.0.0",
+    name: 'ML License Function Detector',
+    description: 'Intelligent license function detection and automatic hook placement',
+    version: '2.0.0',
 
     // Configuration for ML-based detection
     config: {
@@ -42,110 +42,110 @@ const MlLicenseDetector = {
             features: {
                 // Function name patterns (weighted importance)
                 name_patterns: {
-                    "license": 0.9,
-                    "activation": 0.85,
-                    "registration": 0.8,
-                    "validate": 0.75,
-                    "verify": 0.75,
-                    "check": 0.7,
-                    "authenticate": 0.8,
-                    "authorize": 0.8,
-                    "trial": 0.85,
-                    "demo": 0.8,
-                    "eval": 0.75,
-                    "expire": 0.9,
-                    "timeout": 0.7,
-                    "genuine": 0.85,
-                    "product": 0.6,
-                    "serial": 0.8,
-                    "key": 0.65,
-                    "unlock": 0.8,
-                    "enable": 0.5,
-                    "disable": 0.6,
-                    "feature": 0.4,
-                    "subscription": 0.85,
-                    "payment": 0.7,
-                    "purchase": 0.75
+                    'license': 0.9,
+                    'activation': 0.85,
+                    'registration': 0.8,
+                    'validate': 0.75,
+                    'verify': 0.75,
+                    'check': 0.7,
+                    'authenticate': 0.8,
+                    'authorize': 0.8,
+                    'trial': 0.85,
+                    'demo': 0.8,
+                    'eval': 0.75,
+                    'expire': 0.9,
+                    'timeout': 0.7,
+                    'genuine': 0.85,
+                    'product': 0.6,
+                    'serial': 0.8,
+                    'key': 0.65,
+                    'unlock': 0.8,
+                    'enable': 0.5,
+                    'disable': 0.6,
+                    'feature': 0.4,
+                    'subscription': 0.85,
+                    'payment': 0.7,
+                    'purchase': 0.75
                 },
 
                 // API call patterns
                 api_patterns: {
-                    "CreateFile": 0.6,
-                    "RegOpenKey": 0.7,
-                    "RegQueryValue": 0.8,
-                    "GetComputerName": 0.7,
-                    "GetVolumeInformation": 0.8,
-                    "CryptHashData": 0.8,
-                    "InternetConnect": 0.85,
-                    "HttpSendRequest": 0.9,
-                    "GetSystemTime": 0.6,
-                    "GetLocalTime": 0.6,
-                    "MessageBox": 0.5,
-                    "ExitProcess": 0.7,
-                    "TerminateProcess": 0.8,
-                    "LoadLibrary": 0.4,
-                    "GetProcAddress": 0.6,
-                    "VirtualProtect": 0.7,
-                    "CreateMutex": 0.6,
-                    "OpenMutex": 0.7,
-                    "CreateEvent": 0.5,
-                    "SetEvent": 0.5,
-                    "WaitForSingleObject": 0.6
+                    'CreateFile': 0.6,
+                    'RegOpenKey': 0.7,
+                    'RegQueryValue': 0.8,
+                    'GetComputerName': 0.7,
+                    'GetVolumeInformation': 0.8,
+                    'CryptHashData': 0.8,
+                    'InternetConnect': 0.85,
+                    'HttpSendRequest': 0.9,
+                    'GetSystemTime': 0.6,
+                    'GetLocalTime': 0.6,
+                    'MessageBox': 0.5,
+                    'ExitProcess': 0.7,
+                    'TerminateProcess': 0.8,
+                    'LoadLibrary': 0.4,
+                    'GetProcAddress': 0.6,
+                    'VirtualProtect': 0.7,
+                    'CreateMutex': 0.6,
+                    'OpenMutex': 0.7,
+                    'CreateEvent': 0.5,
+                    'SetEvent': 0.5,
+                    'WaitForSingleObject': 0.6
                 },
 
                 // String patterns in functions
                 string_patterns: {
-                    "Invalid license": 0.95,
-                    "License expired": 0.95,
-                    "Trial period": 0.9,
-                    "Demo version": 0.9,
-                    "Please register": 0.9,
-                    "Activation failed": 0.9,
-                    "Product key": 0.85,
-                    "Serial number": 0.85,
-                    "Registration": 0.8,
-                    "Authentication": 0.8,
-                    "Unauthorized": 0.85,
-                    "www.": 0.4,
-                    "http://": 0.6,
-                    "https://": 0.6,
-                    ".com": 0.3,
-                    ".exe": 0.2,
-                    ".dll": 0.2,
-                    "Software\\": 0.6,
-                    "HKEY_": 0.7,
-                    "temp": 0.3,
-                    "system32": 0.3,
-                    "program files": 0.3
+                    'Invalid license': 0.95,
+                    'License expired': 0.95,
+                    'Trial period': 0.9,
+                    'Demo version': 0.9,
+                    'Please register': 0.9,
+                    'Activation failed': 0.9,
+                    'Product key': 0.85,
+                    'Serial number': 0.85,
+                    'Registration': 0.8,
+                    'Authentication': 0.8,
+                    'Unauthorized': 0.85,
+                    'www.': 0.4,
+                    'http://': 0.6,
+                    'https://': 0.6,
+                    '.com': 0.3,
+                    '.exe': 0.2,
+                    '.dll': 0.2,
+                    'Software\\': 0.6,
+                    'HKEY_': 0.7,
+                    'temp': 0.3,
+                    'system32': 0.3,
+                    'program files': 0.3
                 },
 
                 // Behavioral patterns
                 behavioral_patterns: {
                     // Function call frequency
-                    "high_api_calls": 0.7,
-                    "registry_access": 0.8,
-                    "file_access": 0.6,
-                    "network_access": 0.9,
-                    "crypto_operations": 0.8,
-                    "time_checks": 0.7,
-                    "system_info": 0.6,
-                    "process_creation": 0.5,
-                    "memory_allocation": 0.4,
-                    "exception_handling": 0.6,
+                    'high_api_calls': 0.7,
+                    'registry_access': 0.8,
+                    'file_access': 0.6,
+                    'network_access': 0.9,
+                    'crypto_operations': 0.8,
+                    'time_checks': 0.7,
+                    'system_info': 0.6,
+                    'process_creation': 0.5,
+                    'memory_allocation': 0.4,
+                    'exception_handling': 0.6,
 
                     // Control flow patterns
-                    "multiple_return_paths": 0.6,
-                    "conditional_branches": 0.7,
-                    "loop_structures": 0.4,
-                    "function_calls": 0.5,
-                    "error_handling": 0.7,
+                    'multiple_return_paths': 0.6,
+                    'conditional_branches': 0.7,
+                    'loop_structures': 0.4,
+                    'function_calls': 0.5,
+                    'error_handling': 0.7,
 
                     // Data flow patterns
-                    "string_operations": 0.6,
-                    "buffer_operations": 0.5,
-                    "arithmetic_operations": 0.3,
-                    "comparison_operations": 0.7,
-                    "logical_operations": 0.5
+                    'string_operations': 0.6,
+                    'buffer_operations': 0.5,
+                    'arithmetic_operations': 0.3,
+                    'comparison_operations': 0.7,
+                    'logical_operations': 0.5
                 }
             }
         },
@@ -200,9 +200,9 @@ const MlLicenseDetector = {
 
     onAttach: function(pid) {
         send({
-            type: "info",
-            target: "ml_license_detector",
-            action: "attaching_to_process",
+            type: 'info',
+            target: 'ml_license_detector',
+            action: 'attaching_to_process',
             process_id: pid
         });
         this.processId = pid;
@@ -211,9 +211,9 @@ const MlLicenseDetector = {
 
     run: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "starting_ml_detection"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'starting_ml_detection'
         });
 
         // Initialize ML detection system
@@ -234,9 +234,9 @@ const MlLicenseDetector = {
     // === ML MODEL INITIALIZATION ===
     initializeModel: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "initializing_ml_model"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'initializing_ml_model'
         });
 
         // Initialize feature weights based on configuration
@@ -257,18 +257,18 @@ const MlLicenseDetector = {
         this.loadSavedModel();
 
         send({
-            type: "info",
-            target: "ml_license_detector",
-            action: "model_initialized",
+            type: 'info',
+            target: 'ml_license_detector',
+            action: 'model_initialized',
             feature_count: Object.keys(this.model.weights).length
         });
     },
 
     initializeMLDetection: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "setting_up_ml_detection_pipeline"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'setting_up_ml_detection_pipeline'
         });
 
         // Set up function discovery hooks
@@ -284,9 +284,9 @@ const MlLicenseDetector = {
     // === FUNCTION ENUMERATION AND ANALYSIS ===
     enumerateAndAnalyzeFunctions: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "enumerating_analyzing_functions"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'enumerating_analyzing_functions'
         });
 
         try {
@@ -302,9 +302,9 @@ const MlLicenseDetector = {
                 }
 
                 send({
-                    type: "info",
-                    target: "ml_license_detector",
-                    action: "analyzing_module",
+                    type: 'info',
+                    target: 'ml_license_detector',
+                    action: 'analyzing_module',
                     module_name: module.name
                 });
                 var functionCount = this.analyzeModuleFunctions(module);
@@ -324,9 +324,9 @@ const MlLicenseDetector = {
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "function_enumeration_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'function_enumeration_error',
                 error: String(e)
             });
         }
@@ -349,9 +349,9 @@ const MlLicenseDetector = {
             return functionCount;
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "module_analysis_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'module_analysis_error',
                 module_name: module.name,
                 error: String(e)
             });
@@ -381,16 +381,16 @@ const MlLicenseDetector = {
                 timestamp: Date.now()
             };
 
-            this.detected_functions[moduleName + "!" + functionName] = detectionResult;
+            this.detected_functions[moduleName + '!' + functionName] = detectionResult;
 
             // Decide on hook placement based on confidence
             this.evaluateHookPlacement(detectionResult);
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "function_analysis_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'function_analysis_error',
                 error: String(e)
             });
         }
@@ -424,9 +424,9 @@ const MlLicenseDetector = {
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "feature_extraction_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'feature_extraction_error',
                 error: String(e)
             });
         }
@@ -489,15 +489,15 @@ const MlLicenseDetector = {
         // Simple heuristics based on function naming patterns
         var nameLower = functionName.toLowerCase();
 
-        if (nameLower.includes("check") || nameLower.includes("validate")) {
+        if (nameLower.includes('check') || nameLower.includes('validate')) {
             score += behavioralPatterns.conditional_branches || 0.0;
         }
 
-        if (nameLower.includes("register") || nameLower.includes("license")) {
+        if (nameLower.includes('register') || nameLower.includes('license')) {
             score += behavioralPatterns.registry_access || 0.0;
         }
 
-        if (nameLower.includes("network") || nameLower.includes("http")) {
+        if (nameLower.includes('network') || nameLower.includes('http')) {
             score += behavioralPatterns.network_access || 0.0;
         }
 
@@ -546,9 +546,9 @@ const MlLicenseDetector = {
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "prediction_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'prediction_error',
                 error: String(e)
             });
             return {
@@ -568,19 +568,19 @@ const MlLicenseDetector = {
             if (strategy.aggressive) {
                 // Hook all detected functions above minimum threshold
                 if (confidence >= thresholds.minimum_confidence) {
-                    this.scheduleHookPlacement(detectionResult, "aggressive");
+                    this.scheduleHookPlacement(detectionResult, 'aggressive');
                 }
             } else if (strategy.conservative) {
                 // Hook only high-confidence functions
                 if (confidence >= thresholds.high_confidence) {
-                    this.scheduleHookPlacement(detectionResult, "conservative");
+                    this.scheduleHookPlacement(detectionResult, 'conservative');
                 }
             } else if (strategy.adaptive) {
                 // Adaptive strategy based on confidence levels
                 if (confidence >= thresholds.high_confidence) {
-                    this.scheduleHookPlacement(detectionResult, "high_priority");
+                    this.scheduleHookPlacement(detectionResult, 'high_priority');
                 } else if (confidence >= thresholds.medium_confidence) {
-                    this.scheduleHookPlacement(detectionResult, "medium_priority");
+                    this.scheduleHookPlacement(detectionResult, 'medium_priority');
                 } else if (confidence >= thresholds.low_confidence) {
                     this.scheduleMonitoring(detectionResult);
                 }
@@ -588,53 +588,53 @@ const MlLicenseDetector = {
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "hook_evaluation_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'hook_evaluation_error',
                 error: String(e)
             });
         }
     },
 
     scheduleHookPlacement: function(detectionResult, priority) {
-        var key = detectionResult.module + "!" + detectionResult.name;
+        var key = detectionResult.module + '!' + detectionResult.name;
 
         this.hooked_functions[key] = {
             detection: detectionResult,
             priority: priority,
-            hook_status: "scheduled",
+            hook_status: 'scheduled',
             scheduled_time: Date.now()
         };
 
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "scheduled_hook",
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'scheduled_hook',
             function_name: detectionResult.name,
             confidence: detectionResult.confidence
-                  " (confidence: " + detectionResult.confidence.toFixed(3) + ", priority: " + priority + ")");
+        });
 
         // Actually place the hook
         this.placeHook(detectionResult);
     },
 
     scheduleMonitoring: function(detectionResult) {
-        var key = detectionResult.module + "!" + detectionResult.name;
+        var key = detectionResult.module + '!' + detectionResult.name;
 
         this.monitored_functions[key] = {
             detection: detectionResult,
-            monitor_status: "active",
+            monitor_status: 'active',
             start_time: Date.now(),
             call_count: 0
         };
 
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "scheduled_monitoring",
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'scheduled_monitoring',
             function_name: detectionResult.name,
             confidence: detectionResult.confidence
-                  " (confidence: " + detectionResult.confidence.toFixed(3) + ")");
+        });
     },
 
     // === HOOK PLACEMENT ===
@@ -646,9 +646,9 @@ const MlLicenseDetector = {
 
             if (!funcAddr || funcAddr.isNull()) {
                 send({
-                    type: "error",
-                    target: "ml_license_detector",
-                    action: "invalid_function_address",
+                    type: 'error',
+                    target: 'ml_license_detector',
+                    action: 'invalid_function_address',
                     function_name: funcName
                 });
                 return;
@@ -657,12 +657,13 @@ const MlLicenseDetector = {
             Interceptor.attach(funcAddr, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "ml_license_detector",
-                        action: "license_function_called",
+                        type: 'detection',
+                        target: 'ml_license_detector',
+                        action: 'license_function_called',
                         function_name: funcName,
-                        timestamp: new Date().toISOString()
-                              " in " + moduleName);
+                        timestamp: new Date().toISOString(),
+                        module_name: moduleName
+                    });
 
                     this.functionName = funcName;
                     this.moduleName = moduleName;
@@ -677,12 +678,13 @@ const MlLicenseDetector = {
                     var duration = exitTime - this.enterTime;
 
                     send({
-                        type: "info",
-                        target: "ml_license_detector",
-                        action: "license_function_returned",
+                        type: 'info',
+                        target: 'ml_license_detector',
+                        action: 'license_function_returned',
                         function_name: this.functionName,
-                        return_value: retval
-                              " (duration: " + duration + "ms, result: " + retval + ")");
+                        return_value: retval,
+                        duration: duration
+                    });
 
                     // Apply bypass if needed
                     var bypassResult = this.parent.parent.applyBypass(this.functionName, this.moduleName, retval);
@@ -690,13 +692,14 @@ const MlLicenseDetector = {
                     if (bypassResult.applied) {
                         retval.replace(bypassResult.new_value);
                         send({
-                            type: "bypass",
-                            target: "ml_license_detector",
-                            action: "bypass_applied",
+                            type: 'bypass',
+                            target: 'ml_license_detector',
+                            action: 'bypass_applied',
                             function_name: this.functionName,
                             original_value: original,
-                            bypassed_value: retval
-                                  ": " + bypassResult.old_value + " -> " + bypassResult.new_value);
+                            bypassed_value: retval,
+                            bypass_details: bypassResult.old_value + ' -> ' + bypassResult.new_value
+                        });
                     }
 
                     // Record bypass result for learning
@@ -705,25 +708,25 @@ const MlLicenseDetector = {
             });
 
             // Update hook status
-            var key = moduleName + "!" + funcName;
+            var key = moduleName + '!' + funcName;
             if (this.hooked_functions[key]) {
-                this.hooked_functions[key].hook_status = "active";
+                this.hooked_functions[key].hook_status = 'active';
                 this.hooked_functions[key].hook_time = Date.now();
             }
 
             send({
-                type: "success",
-                target: "ml_license_detector",
-                action: "hook_placed",
+                type: 'success',
+                target: 'ml_license_detector',
+                action: 'hook_placed',
                 function_name: funcName,
                 module_name: moduleName
             });
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "hook_placement_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'hook_placement_error',
                 function_name: detectionResult.name,
                 error: String(e)
             });
@@ -736,7 +739,7 @@ const MlLicenseDetector = {
             applied: false,
             old_value: originalResult.toInt32(),
             new_value: originalResult.toInt32(),
-            bypass_type: "none"
+            bypass_type: 'none'
         };
 
         try {
@@ -746,30 +749,30 @@ const MlLicenseDetector = {
             if (this.isLicenseValidationFunction(nameLower)) {
                 result.new_value = 1; // TRUE
                 result.applied = true;
-                result.bypass_type = "validation_bypass";
+                result.bypass_type = 'validation_bypass';
             } else if (this.isLicenseCheckFunction(nameLower)) {
                 result.new_value = 1; // TRUE
                 result.applied = true;
-                result.bypass_type = "check_bypass";
+                result.bypass_type = 'check_bypass';
             } else if (this.isTrialFunction(nameLower)) {
                 result.new_value = 0; // FALSE (not trial)
                 result.applied = true;
-                result.bypass_type = "trial_bypass";
+                result.bypass_type = 'trial_bypass';
             } else if (this.isExpirationFunction(nameLower)) {
                 result.new_value = 0; // FALSE (not expired)
                 result.applied = true;
-                result.bypass_type = "expiration_bypass";
+                result.bypass_type = 'expiration_bypass';
             } else if (this.isActivationFunction(nameLower)) {
                 result.new_value = 1; // TRUE (activated)
                 result.applied = true;
-                result.bypass_type = "activation_bypass";
+                result.bypass_type = 'activation_bypass';
             }
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "bypass_application_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'bypass_application_error',
                 error: String(e)
             });
         }
@@ -778,36 +781,36 @@ const MlLicenseDetector = {
     },
 
     isLicenseValidationFunction: function(name) {
-        var patterns = ["validate", "verify", "check", "islicense", "isvalid", "licensevalid"];
+        var patterns = ['validate', 'verify', 'check', 'islicense', 'isvalid', 'licensevalid'];
         return patterns.some(pattern => name.includes(pattern));
     },
 
     isLicenseCheckFunction: function(name) {
-        var patterns = ["checklic", "licensecheck", "checklicense", "verifylicense"];
+        var patterns = ['checklic', 'licensecheck', 'checklicense', 'verifylicense'];
         return patterns.some(pattern => name.includes(pattern));
     },
 
     isTrialFunction: function(name) {
-        var patterns = ["trial", "demo", "eval", "istrial", "isdemo"];
+        var patterns = ['trial', 'demo', 'eval', 'istrial', 'isdemo'];
         return patterns.some(pattern => name.includes(pattern));
     },
 
     isExpirationFunction: function(name) {
-        var patterns = ["expire", "expired", "timeout", "isexpired", "hasexpired"];
+        var patterns = ['expire', 'expired', 'timeout', 'isexpired', 'hasexpired'];
         return patterns.some(pattern => name.includes(pattern));
     },
 
     isActivationFunction: function(name) {
-        var patterns = ["activate", "activation", "isactivated", "activated"];
+        var patterns = ['activate', 'activation', 'isactivated', 'activated'];
         return patterns.some(pattern => name.includes(pattern));
     },
 
     // === BEHAVIORAL MONITORING ===
     setupBehavioralMonitoring: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "setting_up_behavioral_monitoring"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'setting_up_behavioral_monitoring'
         });
 
         // Monitor API calls that are commonly used by license functions
@@ -818,25 +821,25 @@ const MlLicenseDetector = {
     },
 
     monitorRegistryAccess: function() {
-        var regOpenKey = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
+        var regOpenKey = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (regOpenKey) {
             Interceptor.attach(regOpenKey, {
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var keyName = args[1].readUtf16String();
-                        this.parent.parent.recordApiCall("RegOpenKeyExW", {key: keyName});
+                        this.parent.parent.recordApiCall('RegOpenKeyExW', {key: keyName});
                     }
                 }
             });
         }
 
-        var regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+        var regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var valueName = args[1].readUtf16String();
-                        this.parent.parent.recordApiCall("RegQueryValueExW", {value: valueName});
+                        this.parent.parent.recordApiCall('RegQueryValueExW', {value: valueName});
                     }
                 }
             });
@@ -844,13 +847,13 @@ const MlLicenseDetector = {
     },
 
     monitorNetworkAccess: function() {
-        var winHttpConnect = Module.findExportByName("winhttp.dll", "WinHttpConnect");
+        var winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
         if (winHttpConnect) {
             Interceptor.attach(winHttpConnect, {
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var serverName = args[1].readUtf16String();
-                        this.parent.parent.recordApiCall("WinHttpConnect", {server: serverName});
+                        this.parent.parent.recordApiCall('WinHttpConnect', {server: serverName});
                     }
                 }
             });
@@ -858,16 +861,16 @@ const MlLicenseDetector = {
     },
 
     monitorFileAccess: function() {
-        var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
+        var createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFile) {
             Interceptor.attach(createFile, {
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var fileName = args[0].readUtf16String();
-                        if (fileName.toLowerCase().includes("license") ||
-                            fileName.toLowerCase().includes("key") ||
-                            fileName.toLowerCase().includes("activation")) {
-                            this.parent.parent.recordApiCall("CreateFileW", {file: fileName});
+                        if (fileName.toLowerCase().includes('license') ||
+                            fileName.toLowerCase().includes('key') ||
+                            fileName.toLowerCase().includes('activation')) {
+                            this.parent.parent.recordApiCall('CreateFileW', {file: fileName});
                         }
                     }
                 }
@@ -876,11 +879,11 @@ const MlLicenseDetector = {
     },
 
     monitorTimeAccess: function() {
-        var getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
+        var getSystemTime = Module.findExportByName('kernel32.dll', 'GetSystemTime');
         if (getSystemTime) {
             Interceptor.attach(getSystemTime, {
                 onEnter: function(args) {
-                    this.parent.parent.recordApiCall("GetSystemTime", {});
+                    this.parent.parent.recordApiCall('GetSystemTime', {});
                 }
             });
         }
@@ -890,17 +893,17 @@ const MlLicenseDetector = {
     startLearningLoop: function() {
         if (!this.config.learning.enabled) {
             send({
-                type: "warning",
-                target: "ml_license_detector",
-                action: "learning_disabled"
+                type: 'warning',
+                target: 'ml_license_detector',
+                action: 'learning_disabled'
             });
             return;
         }
 
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "starting_learning_loop"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'starting_learning_loop'
         });
 
         // Set up periodic model updates
@@ -913,9 +916,9 @@ const MlLicenseDetector = {
     updateModel: function() {
         try {
             send({
-                type: "status",
-                target: "ml_license_detector",
-                action: "updating_ml_model"
+                type: 'status',
+                target: 'ml_license_detector',
+                action: 'updating_ml_model'
             });
 
             // Collect training data from recent predictions and bypass results
@@ -923,9 +926,9 @@ const MlLicenseDetector = {
 
             if (trainingData.length === 0) {
                 send({
-                    type: "warning",
-                    target: "ml_license_detector",
-                    action: "no_training_data_available"
+                    type: 'warning',
+                    target: 'ml_license_detector',
+                    action: 'no_training_data_available'
                 });
                 return;
             }
@@ -942,17 +945,17 @@ const MlLicenseDetector = {
             }
 
             send({
-                type: "success",
-                target: "ml_license_detector",
-                action: "model_updated",
+                type: 'success',
+                target: 'ml_license_detector',
+                action: 'model_updated',
                 samples_count: trainingData.length
             });
 
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "model_update_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'model_update_error',
                 error: String(e)
             });
         }
@@ -998,8 +1001,8 @@ const MlLicenseDetector = {
             this.model.bias -= learningRate * error;
 
             // Update feature weights (simplified)
-            var featureWeight = this.model.weights["combined"] || 0.0;
-            this.model.weights["combined"] = featureWeight - (learningRate * error * features.combined_score);
+            var featureWeight = this.model.weights['combined'] || 0.0;
+            this.model.weights['combined'] = featureWeight - (learningRate * error * features.combined_score);
         }
     },
 
@@ -1038,18 +1041,18 @@ const MlLicenseDetector = {
 
         var accuracy = total > 0 ? correct / total : 0.0;
         send({
-            type: "info",
-            target: "ml_license_detector",
-            action: "model_accuracy_report",
+            type: 'info',
+            target: 'ml_license_detector',
+            action: 'model_accuracy_report',
             accuracy_percent: (accuracy * 100).toFixed(1),
             correct_predictions: correctPredictions,
             total_predictions: totalPredictions
-                  correct + "/" + total + ")");
+        });
     },
 
     // === DATA RECORDING ===
     recordFunctionCall: function(functionName, moduleName, args) {
-        var key = moduleName + "!" + functionName;
+        var key = moduleName + '!' + functionName;
         var timestamp = Date.now();
 
         // Update call count for monitored functions
@@ -1059,7 +1062,7 @@ const MlLicenseDetector = {
         }
 
         // Record API call patterns for learning
-        this.recordApiCall("FUNCTION_CALL", {
+        this.recordApiCall('FUNCTION_CALL', {
             function: functionName,
             module: moduleName,
             arg_count: args ? Object.keys(args).length : 0
@@ -1067,7 +1070,7 @@ const MlLicenseDetector = {
     },
 
     recordBypassResult: function(functionName, moduleName, bypassResult) {
-        var key = moduleName + "!" + functionName;
+        var key = moduleName + '!' + functionName;
 
         this.bypass_results[key] = {
             detection: this.detected_functions[key],
@@ -1087,9 +1090,9 @@ const MlLicenseDetector = {
 
         // This could be used to build behavioral profiles
         send({
-            type: "info",
-            target: "ml_license_detector",
-            action: "api_call_recorded",
+            type: 'info',
+            target: 'ml_license_detector',
+            action: 'api_call_recorded',
             api_name: apiName
         });
     },
@@ -1104,8 +1107,8 @@ const MlLicenseDetector = {
             var adjustmentFactor = 0.01; // Small adjustment
 
             // This is a simplified immediate learning update
-            if (this.model.weights["combined"]) {
-                this.model.weights["combined"] += adjustmentFactor;
+            if (this.model.weights['combined']) {
+                this.model.weights['combined'] += adjustmentFactor;
             }
         }
     },
@@ -1115,18 +1118,18 @@ const MlLicenseDetector = {
         // Process pending hook placements
         setTimeout(() => {
             send({
-                type: "status",
-                target: "ml_license_detector",
-                action: "processing_function_batch"
+                type: 'status',
+                target: 'ml_license_detector',
+                action: 'processing_function_batch'
             });
         }, this.config.hook_strategy.delay_ms);
     },
 
     isSystemModule: function(moduleName) {
         var systemModules = [
-            "ntdll.dll", "kernel32.dll", "kernelbase.dll", "user32.dll",
-            "gdi32.dll", "advapi32.dll", "msvcrt.dll", "shell32.dll",
-            "ole32.dll", "oleaut32.dll", "wininet.dll", "winhttp.dll"
+            'ntdll.dll', 'kernel32.dll', 'kernelbase.dll', 'user32.dll',
+            'gdi32.dll', 'advapi32.dll', 'msvcrt.dll', 'shell32.dll',
+            'ole32.dll', 'oleaut32.dll', 'wininet.dll', 'winhttp.dll'
         ];
 
         return systemModules.includes(moduleName.toLowerCase());
@@ -1135,40 +1138,40 @@ const MlLicenseDetector = {
     loadSavedModel: function() {
         // In a real implementation, this would load from persistent storage
         send({
-            type: "warning",
-            target: "ml_license_detector",
-            action: "no_saved_model_found_using_default"
+            type: 'warning',
+            target: 'ml_license_detector',
+            action: 'no_saved_model_found_using_default'
         });
     },
 
     saveModel: function() {
         // In a real implementation, this would save to persistent storage
         send({
-            type: "success",
-            target: "ml_license_detector",
-            action: "model_state_saved"
+            type: 'success',
+            target: 'ml_license_detector',
+            action: 'model_state_saved'
         });
     },
 
     // === FUNCTION DISCOVERY HOOKS ===
     hookFunctionDiscovery: function() {
         send({
-            type: "status",
-            target: "ml_license_detector",
-            action: "setting_up_function_discovery_hooks"
+            type: 'status',
+            target: 'ml_license_detector',
+            action: 'setting_up_function_discovery_hooks'
         });
 
         // Hook LoadLibrary to detect new modules
-        var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
+        var loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
         if (loadLibrary) {
             Interceptor.attach(loadLibrary, {
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var libraryName = args[0].readUtf16String();
                         send({
-                            type: "info",
-                            target: "ml_license_detector",
-                            action: "new_library_loaded",
+                            type: 'info',
+                            target: 'ml_license_detector',
+                            action: 'new_library_loaded',
                             library_name: libraryName
                         });
                     }
@@ -1186,13 +1189,13 @@ const MlLicenseDetector = {
         }
 
         // Hook GetProcAddress to detect function lookups
-        var getProcAddress = Module.findExportByName("kernel32.dll", "GetProcAddress");
+        var getProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');
         if (getProcAddress) {
             Interceptor.attach(getProcAddress, {
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var functionName = args[1].readAnsiString();
-                        this.parent.parent.recordApiCall("GetProcAddress", {function: functionName});
+                        this.parent.parent.recordApiCall('GetProcAddress', {function: functionName});
                     }
                 }
             });
@@ -1205,18 +1208,18 @@ const MlLicenseDetector = {
             var module = Process.findModuleByAddress(moduleHandle);
             if (module && !this.isSystemModule(module.name)) {
                 send({
-                    type: "status",
-                    target: "ml_license_detector",
-                    action: "analyzing_newly_loaded_module",
+                    type: 'status',
+                    target: 'ml_license_detector',
+                    action: 'analyzing_newly_loaded_module',
                     module_name: module.name
                 });
                 this.analyzeModuleFunctions(module);
             }
         } catch(e) {
             send({
-                type: "error",
-                target: "ml_license_detector",
-                action: "new_module_analysis_error",
+                type: 'error',
+                target: 'ml_license_detector',
+                action: 'new_module_analysis_error',
                 error: String(e)
             });
         }
@@ -1224,17 +1227,17 @@ const MlLicenseDetector = {
 
     setupPatternMatching: function() {
         send({
-            type: "success",
-            target: "ml_license_detector",
-            action: "pattern_matching_system_ready"
+            type: 'success',
+            target: 'ml_license_detector',
+            action: 'pattern_matching_system_ready'
         });
     },
 
     initializeFeatureExtraction: function() {
         send({
-            type: "success",
-            target: "ml_license_detector",
-            action: "feature_extraction_system_initialized"
+            type: 'success',
+            target: 'ml_license_detector',
+            action: 'feature_extraction_system_initialized'
         });
     },
 
@@ -1242,19 +1245,19 @@ const MlLicenseDetector = {
     installSummary: function() {
         setTimeout(() => {
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_separator"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_separator'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_header"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_header'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_separator"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_separator'
             });
 
             var totalDetected = Object.keys(this.detected_functions).length;
@@ -1262,21 +1265,21 @@ const MlLicenseDetector = {
             var totalMonitored = Object.keys(this.monitored_functions).length;
 
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_functions_analyzed",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_functions_analyzed',
                 count: totalDetected
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_functions_hooked",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_functions_hooked',
                 count: totalHooked
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_functions_monitored",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_functions_monitored',
                 count: totalMonitored
             });
 
@@ -1290,73 +1293,73 @@ const MlLicenseDetector = {
             }
 
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_separator"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_separator'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "confidence_distribution_header"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'confidence_distribution_header'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "confidence_high",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'confidence_high',
                 count: highConf
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "confidence_medium",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'confidence_medium',
                 count: medConf
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "confidence_low",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'confidence_low',
                 count: lowConf
             });
 
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_separator"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_separator'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "ml_model_status_header"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'ml_model_status_header'
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "model_features_count",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'model_features_count',
                 count: Object.keys(this.model.weights).length
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "learning_status",
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'learning_status',
                 enabled: this.config.learning.enabled
             });
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "detection_strategy",
-                strategy: this.config.strategy
-                      (this.config.hook_strategy.aggressive ? "Aggressive" :
-                       this.config.hook_strategy.conservative ? "Conservative" : "Adaptive"));
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'detection_strategy',
+                strategy: this.config.hook_strategy.aggressive ? 'Aggressive' :
+                    this.config.hook_strategy.conservative ? 'Conservative' : 'Adaptive'
+            });
 
             send({
-                type: "info",
-                target: "ml_license_detector",
-                action: "summary_separator"
+                type: 'info',
+                target: 'ml_license_detector',
+                action: 'summary_separator'
             });
             send({
-                type: "success",
-                target: "ml_license_detector",
-                action: "system_active"
+                type: 'success',
+                target: 'ml_license_detector',
+                action: 'system_active'
             });
         }, 100);
     }
@@ -1367,9 +1370,9 @@ const MlLicenseDetector = {
 setTimeout(function() {
     MlLicenseDetector.run();
     send({
-        type: "status",
-        target: "ml_license_detector",
-        action: "system_now_active"
+        type: 'status',
+        target: 'ml_license_detector',
+        action: 'system_now_active'
     });
 }, 100);
 

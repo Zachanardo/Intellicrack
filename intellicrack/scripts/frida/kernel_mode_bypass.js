@@ -28,18 +28,18 @@
  */
 
 const KernelModeBypass = {
-    name: "Kernel Mode Protection Bypass",
-    description: "Advanced kernel-level protection mechanism bypass",
-    version: "2.0.0",
+    name: 'Kernel Mode Protection Bypass',
+    description: 'Advanced kernel-level protection mechanism bypass',
+    version: '2.0.0',
 
     // Configuration for kernel-level operations
     config: {
         // Known protection driver signatures
         protectionDrivers: [
-            "vmprotect", "themida", "enigma", "winlicense", "armadillo",
-            "asprotect", "upx", "pecompact", "obsidium", "morphine",
-            "safengine", "vprotect", "eziriz", "smartassembly", "confuser",
-            "dotfuscator", "codeveil", "spices", "xenocode", "saltarelle"
+            'vmprotect', 'themida', 'enigma', 'winlicense', 'armadillo',
+            'asprotect', 'upx', 'pecompact', 'obsidium', 'morphine',
+            'safengine', 'vprotect', 'eziriz', 'smartassembly', 'confuser',
+            'dotfuscator', 'codeveil', 'spices', 'xenocode', 'saltarelle'
         ],
 
         // System service table modifications
@@ -70,9 +70,9 @@ const KernelModeBypass = {
 
     onAttach: function(pid) {
         send({
-            type: "info",
-            target: "kernel_mode_bypass",
-            action: "attaching_to_process",
+            type: 'info',
+            target: 'kernel_mode_bypass',
+            action: 'attaching_to_process',
             pid: pid
         });
         this.processId = pid;
@@ -80,10 +80,10 @@ const KernelModeBypass = {
 
     run: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            message: "Installing comprehensive kernel protection bypass..."
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            message: 'Installing comprehensive kernel protection bypass...'
         });
 
         // Initialize kernel bypass components
@@ -114,10 +114,10 @@ const KernelModeBypass = {
     // === SYSTEM SERVICE TABLE (SSDT) HOOKS ===
     hookSystemServiceTable: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "ssdt_bypass"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'ssdt_bypass'
         });
 
         // Hook NtQuerySystemInformation to hide SSDT modifications
@@ -134,7 +134,7 @@ const KernelModeBypass = {
     },
 
     hookNtQuerySystemInformation: function() {
-        var ntQuerySystemInfo = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntQuerySystemInfo) {
             Interceptor.attach(ntQuerySystemInfo, {
                 onEnter: function(args) {
@@ -148,9 +148,9 @@ const KernelModeBypass = {
 
                     if (this.isSsdtQuery) {
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "ssdt_query_detected",
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'ssdt_query_detected',
                             information_class: this.systemInformationClass
                         });
                     }
@@ -166,12 +166,12 @@ const KernelModeBypass = {
                 checkSsdtQuery: function(infoClass) {
                     // System information classes related to SSDT
                     var ssdtClasses = {
-                        11: "SystemModuleInformation",      // Can reveal hooked modules
-                        16: "SystemHandleInformation",      // Handle table access
-                        44: "SystemExtendedHandleInformation", // Extended handles
-                        47: "SystemObjectInformation",      // Object manager info
-                        64: "SystemExtendedServiceTableInformation", // SSDT info
-                        78: "SystemServiceDescriptorTableInformation" // Direct SSDT
+                        11: 'SystemModuleInformation',      // Can reveal hooked modules
+                        16: 'SystemHandleInformation',      // Handle table access
+                        44: 'SystemExtendedHandleInformation', // Extended handles
+                        47: 'SystemObjectInformation',      // Object manager info
+                        64: 'SystemExtendedServiceTableInformation', // SSDT info
+                        78: 'SystemServiceDescriptorTableInformation' // Direct SSDT
                     };
 
                     return ssdtClasses.hasOwnProperty(infoClass);
@@ -180,34 +180,34 @@ const KernelModeBypass = {
                 spoofSsdtInformation: function() {
                     try {
                         switch(this.systemInformationClass) {
-                            case 11: // SystemModuleInformation
-                                this.spoofModuleInformation();
-                                break;
+                        case 11: // SystemModuleInformation
+                            this.spoofModuleInformation();
+                            break;
 
-                            case 16: // SystemHandleInformation
-                            case 44: // SystemExtendedHandleInformation
-                                this.spoofHandleInformation();
-                                break;
+                        case 16: // SystemHandleInformation
+                        case 44: // SystemExtendedHandleInformation
+                            this.spoofHandleInformation();
+                            break;
 
-                            case 64: // SystemExtendedServiceTableInformation
-                            case 78: // SystemServiceDescriptorTableInformation
-                                this.spoofSsdtTable();
-                                break;
+                        case 64: // SystemExtendedServiceTableInformation
+                        case 78: // SystemServiceDescriptorTableInformation
+                            this.spoofSsdtTable();
+                            break;
 
-                            default:
-                                send({
-                                    type: "warning",
-                                    target: "kernel_mode_bypass",
-                                    action: "unknown_ssdt_class",
-                                    information_class: this.systemInformationClass
-                                });
-                                break;
+                        default:
+                            send({
+                                type: 'warning',
+                                target: 'kernel_mode_bypass',
+                                action: 'unknown_ssdt_class',
+                                information_class: this.systemInformationClass
+                            });
+                            break;
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "kernel_mode_bypass",
-                            action: "ssdt_spoofing_error",
+                            type: 'error',
+                            target: 'kernel_mode_bypass',
+                            action: 'ssdt_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -240,9 +240,9 @@ const KernelModeBypass = {
 
                                 if (isProtectionDriver) {
                                     send({
-                                        type: "bypass",
-                                        target: "kernel_mode_bypass",
-                                        action: "hiding_protection_driver",
+                                        type: 'bypass',
+                                        target: 'kernel_mode_bypass',
+                                        action: 'hiding_protection_driver',
                                         driver_name: moduleName
                                     });
                                     // Skip this module by not copying it to the output
@@ -267,9 +267,9 @@ const KernelModeBypass = {
                         moduleInfo.writeU32(filteredCount);
 
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "modules_filtered",
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'modules_filtered',
                             original_count: numberOfModules,
                             filtered_count: filteredCount
                         });
@@ -317,9 +317,9 @@ const KernelModeBypass = {
                             filteredCount++;
                         } else {
                             send({
-                                type: "bypass",
-                                target: "kernel_mode_bypass",
-                                action: "handle_type_filtered",
+                                type: 'bypass',
+                                target: 'kernel_mode_bypass',
+                                action: 'handle_type_filtered',
                                 object_type: objectType
                             });
                         }
@@ -332,9 +332,9 @@ const KernelModeBypass = {
                 spoofSsdtTable: function() {
                     // Spoof SSDT table to hide hooks
                     send({
-                        type: "bypass",
-                        target: "kernel_mode_bypass",
-                        action: "spoofing_ssdt_table"
+                        type: 'bypass',
+                        target: 'kernel_mode_bypass',
+                        action: 'spoofing_ssdt_table'
                     });
 
                     if (this.systemInformationLength >= 16) {
@@ -350,9 +350,9 @@ const KernelModeBypass = {
                         ssdtInfo.add(16).writePointer(ptr(0));          // ArgumentTable
 
                         send({
-                            type: "success",
-                            target: "kernel_mode_bypass",
-                            action: "fake_ssdt_installed"
+                            type: 'success',
+                            target: 'kernel_mode_bypass',
+                            action: 'fake_ssdt_installed'
                         });
                     }
                 }
@@ -364,7 +364,7 @@ const KernelModeBypass = {
 
     hookZwQuerySystemInformation: function() {
         // Hook the Zw variant for kernel-mode callers
-        var zwQuerySystemInfo = Module.findExportByName("ntdll.dll", "ZwQuerySystemInformation");
+        var zwQuerySystemInfo = Module.findExportByName('ntdll.dll', 'ZwQuerySystemInformation');
         if (zwQuerySystemInfo) {
             // Similar implementation to NtQuerySystemInformation
             // This ensures both user-mode and kernel-mode queries are handled
@@ -373,9 +373,9 @@ const KernelModeBypass = {
                 onEnter: function(args) {
                     this.systemInformationClass = args[0].toInt32();
                     send({
-                        type: "info",
-                        target: "kernel_mode_bypass",
-                        action: "zwquerysysteminformation_called",
+                        type: 'info',
+                        target: 'kernel_mode_bypass',
+                        action: 'zwquerysysteminformation_called',
                         information_class: this.systemInformationClass
                     });
                 }
@@ -387,10 +387,10 @@ const KernelModeBypass = {
 
     hookSsdtDetection: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            category: "ssdt_detection"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            category: 'ssdt_detection'
         });
 
         // Hook common SSDT detection techniques
@@ -403,14 +403,14 @@ const KernelModeBypass = {
         // We can't hook this in user mode, but we can detect and block attempts
 
         send({
-            type: "info",
-            target: "kernel_mode_bypass",
-            action: "monitoring_started",
-            target_element: "KeServiceDescriptorTable"
+            type: 'info',
+            target: 'kernel_mode_bypass',
+            action: 'monitoring_started',
+            target_element: 'KeServiceDescriptorTable'
         });
 
         // Hook LoadLibrary to detect driver loading
-        var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
+        var loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
         if (loadLibrary) {
             Interceptor.attach(loadLibrary, {
                 onEnter: function(args) {
@@ -418,13 +418,13 @@ const KernelModeBypass = {
                         var libraryName = args[0].readUtf16String().toLowerCase();
 
                         // Check for suspicious driver/library names
-                        var suspiciousLibs = ["ntoskrnl", "hal.dll", "driver", "sys"];
+                        var suspiciousLibs = ['ntoskrnl', 'hal.dll', 'driver', 'sys'];
 
                         if (suspiciousLibs.some(lib => libraryName.includes(lib))) {
                             send({
-                                type: "detection",
-                                target: "kernel_mode_bypass",
-                                action: "suspicious_library_load",
+                                type: 'detection',
+                                target: 'kernel_mode_bypass',
+                                action: 'suspicious_library_load',
                                 library_name: libraryName
                             });
                             // Could potentially block or redirect this load
@@ -440,10 +440,10 @@ const KernelModeBypass = {
     hookSystemCallTable: function() {
         // Hook system call interception attempts
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_protection",
-            protection_type: "system_call_table"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_protection',
+            protection_type: 'system_call_table'
         });
 
         // Monitor for direct system call usage
@@ -453,14 +453,14 @@ const KernelModeBypass = {
     hookDirectSyscalls: function() {
         // Some protection software uses direct system calls to bypass user-mode hooks
         send({
-            type: "info",
-            target: "kernel_mode_bypass",
-            action: "monitoring_started",
-            target_element: "direct_system_calls"
+            type: 'info',
+            target: 'kernel_mode_bypass',
+            action: 'monitoring_started',
+            target_element: 'direct_system_calls'
         });
 
         // Hook functions that might be used to execute direct syscalls
-        var ntAllocateVirtualMemory = Module.findExportByName("ntdll.dll", "NtAllocateVirtualMemory");
+        var ntAllocateVirtualMemory = Module.findExportByName('ntdll.dll', 'NtAllocateVirtualMemory');
         if (ntAllocateVirtualMemory) {
             Interceptor.attach(ntAllocateVirtualMemory, {
                 onEnter: function(args) {
@@ -473,10 +473,10 @@ const KernelModeBypass = {
                     // Check for executable memory allocation (potential syscall stub)
                     if (protect & 0x40) { // PAGE_EXECUTE_READWRITE
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "executable_memory_detected",
-                            context: "potential_syscall_stub"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'executable_memory_detected',
+                            context: 'potential_syscall_stub'
                         });
                         this.isSyscallAllocation = true;
                     }
@@ -485,10 +485,10 @@ const KernelModeBypass = {
                 onLeave: function(retval) {
                     if (this.isSyscallAllocation && retval.toInt32() === 0) {
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "executable_allocation_success",
-                            operation: "monitoring_syscall_patterns"
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'executable_allocation_success',
+                            operation: 'monitoring_syscall_patterns'
                         });
                     }
                 }
@@ -500,30 +500,30 @@ const KernelModeBypass = {
 
     hookShadowSsdt: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_protection",
-            protection_type: "shadow_ssdt"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_protection',
+            protection_type: 'shadow_ssdt'
         });
 
         // Shadow SSDT is used for Win32k.sys functions (GUI subsystem)
         // Protection software may hook this table as well
 
-        var win32k = Module.findBaseAddress("win32k.sys");
+        var win32k = Module.findBaseAddress('win32k.sys');
         if (win32k) {
             send({
-                type: "info",
-                target: "kernel_mode_bypass",
-                action: "win32k_detected",
-                status: "shadow_ssdt_monitoring_active"
+                type: 'info',
+                target: 'kernel_mode_bypass',
+                action: 'win32k_detected',
+                status: 'shadow_ssdt_monitoring_active'
             });
             this.config.ssdt.shadowTableDetected = true;
         } else {
             send({
-                type: "info",
-                target: "kernel_mode_bypass",
-                action: "win32k_not_loaded",
-                status: "gui_subsystem_inactive"
+                type: 'info',
+                target: 'kernel_mode_bypass',
+                action: 'win32k_not_loaded',
+                status: 'gui_subsystem_inactive'
             });
         }
     },
@@ -531,10 +531,10 @@ const KernelModeBypass = {
     // === DRIVER COMMUNICATION HOOKS ===
     hookDriverCommunication: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            category: "driver_communication"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            category: 'driver_communication'
         });
 
         // Hook device object creation and access
@@ -552,14 +552,14 @@ const KernelModeBypass = {
 
     hookDeviceObjects: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "device_object"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'device_object'
         });
 
         // Hook CreateFile for device access
-        var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
+        var createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFile) {
             Interceptor.attach(createFile, {
                 onEnter: function(args) {
@@ -567,23 +567,23 @@ const KernelModeBypass = {
                         var fileName = args[0].readUtf16String();
 
                         // Check for device object access
-                        if (fileName.startsWith("\\\\.\\") || fileName.startsWith("\\Device\\")) {
+                        if (fileName.startsWith('\\\\.\\') || fileName.startsWith('\\Device\\')) {
                             this.isDeviceAccess = true;
                             this.deviceName = fileName;
 
                             send({
-                                type: "detection",
-                                target: "kernel_mode_bypass",
-                                action: "device_access_detected",
+                                type: 'detection',
+                                target: 'kernel_mode_bypass',
+                                action: 'device_access_detected',
                                 file_name: fileName
                             });
 
                             // Check against known protection driver devices
                             if (this.isProtectionDevice(fileName)) {
                                 send({
-                                    type: "bypass",
-                                    target: "kernel_mode_bypass",
-                                    action: "device_access_blocked",
+                                    type: 'bypass',
+                                    target: 'kernel_mode_bypass',
+                                    action: 'device_access_blocked',
                                     file_name: fileName
                                 });
                                 this.blockAccess = true;
@@ -598,9 +598,9 @@ const KernelModeBypass = {
                             // Return invalid handle to block access
                             retval.replace(ptr(0xFFFFFFFF)); // INVALID_HANDLE_VALUE
                             send({
-                                type: "bypass",
-                                target: "kernel_mode_bypass",
-                                action: "device_access_blocked",
+                                type: 'bypass',
+                                target: 'kernel_mode_bypass',
+                                action: 'device_access_blocked',
                                 device_name: this.deviceName
                             });
                         } else if (retval.toInt32() !== -1) {
@@ -608,9 +608,9 @@ const KernelModeBypass = {
                             var config = this.parent.parent.config;
                             config.driverComm.deviceNames.push(this.deviceName);
                             send({
-                                type: "info",
-                                target: "kernel_mode_bypass",
-                                action: "tracking_device_handle",
+                                type: 'info',
+                                target: 'kernel_mode_bypass',
+                                action: 'tracking_device_handle',
                                 device_name: this.deviceName
                             });
                         }
@@ -619,11 +619,11 @@ const KernelModeBypass = {
 
                 isProtectionDevice: function(deviceName) {
                     var protectionDevices = [
-                        "\\Device\\VBoxDrv", "\\Device\\VBoxUSBMon",
-                        "\\Device\\VMwareUser", "\\Device\\vmci",
-                        "\\Device\\Sentinel", "\\Device\\HASP",
-                        "\\Device\\Wibu", "\\Device\\CmStick",
-                        "\\Device\\Dinkey", "\\Device\\Feitian"
+                        '\\Device\\VBoxDrv', '\\Device\\VBoxUSBMon',
+                        '\\Device\\VMwareUser', '\\Device\\vmci',
+                        '\\Device\\Sentinel', '\\Device\\HASP',
+                        '\\Device\\Wibu', '\\Device\\CmStick',
+                        '\\Device\\Dinkey', '\\Device\\Feitian'
                     ];
 
                     return protectionDevices.some(dev =>
@@ -636,7 +636,7 @@ const KernelModeBypass = {
         }
 
         // Hook NtCreateFile for more direct device access
-        var ntCreateFile = Module.findExportByName("ntdll.dll", "NtCreateFile");
+        var ntCreateFile = Module.findExportByName('ntdll.dll', 'NtCreateFile');
         if (ntCreateFile) {
             Interceptor.attach(ntCreateFile, {
                 onEnter: function(args) {
@@ -646,11 +646,11 @@ const KernelModeBypass = {
                         if (objectName && !objectName.isNull()) {
                             try {
                                 var unicodeString = objectName.readUtf16String();
-                                if (unicodeString && unicodeString.includes("\\Device\\")) {
+                                if (unicodeString && unicodeString.includes('\\Device\\')) {
                                     send({
-                                        type: "detection",
-                                        target: "kernel_mode_bypass",
-                                        action: "ntcreatefile_device_access",
+                                        type: 'detection',
+                                        target: 'kernel_mode_bypass',
+                                        action: 'ntcreatefile_device_access',
                                         unicode_string: unicodeString
                                     });
                                 }
@@ -668,23 +668,23 @@ const KernelModeBypass = {
 
     hookDriverOperations: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "driver_operation"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'driver_operation'
         });
 
         // Hook service control manager for driver operations
-        var openSCManager = Module.findExportByName("advapi32.dll", "OpenSCManagerW");
+        var openSCManager = Module.findExportByName('advapi32.dll', 'OpenSCManagerW');
         if (openSCManager) {
             Interceptor.attach(openSCManager, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "scm_opened",
-                            operation: "monitoring_driver_operations"
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'scm_opened',
+                            operation: 'monitoring_driver_operations'
                         });
                         this.scmHandle = retval;
                     }
@@ -695,7 +695,7 @@ const KernelModeBypass = {
         }
 
         // Hook driver loading
-        var createService = Module.findExportByName("advapi32.dll", "CreateServiceW");
+        var createService = Module.findExportByName('advapi32.dll', 'CreateServiceW');
         if (createService) {
             Interceptor.attach(createService, {
                 onEnter: function(args) {
@@ -706,26 +706,26 @@ const KernelModeBypass = {
                     // Check for kernel driver service creation
                     if (serviceType === 1) { // SERVICE_KERNEL_DRIVER
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "kernel_driver_service_creation"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'kernel_driver_service_creation'
                         });
 
                         if (binaryPathName && !binaryPathName.isNull()) {
                             var driverPath = binaryPathName.readUtf16String();
                             send({
-                                type: "info",
-                                target: "kernel_mode_bypass",
-                                action: "driver_path_detected",
+                                type: 'info',
+                                target: 'kernel_mode_bypass',
+                                action: 'driver_path_detected',
                                 driver_path: driverPath
                             });
 
                             // Check if this is a protection driver
                             if (this.isProtectionDriverPath(driverPath)) {
                                 send({
-                                    type: "bypass",
-                                    target: "kernel_mode_bypass",
-                                    action: "protection_driver_blocked",
+                                    type: 'bypass',
+                                    target: 'kernel_mode_bypass',
+                                    action: 'protection_driver_blocked',
                                     driver_path: driverPath
                                 });
                                 this.blockDriverInstall = true;
@@ -754,14 +754,14 @@ const KernelModeBypass = {
 
     hookIrpProcessing: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "irp_processing"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'irp_processing'
         });
 
         // Hook DeviceIoControl for IRP interception
-        var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
+        var deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
                 onEnter: function(args) {
@@ -775,10 +775,10 @@ const KernelModeBypass = {
                     // Track protection-related IOCTL codes
                     if (this.isProtectionIoctl(this.dwIoControlCode)) {
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "protection_ioctl_detected",
-                            ioctl_code: "0x" + this.dwIoControlCode.toString(16).toUpperCase()
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'protection_ioctl_detected',
+                            ioctl_code: '0x' + this.dwIoControlCode.toString(16).toUpperCase()
                         });
                         this.isProtectionCall = true;
                     }
@@ -789,9 +789,9 @@ const KernelModeBypass = {
                         // Simulate successful operation
                         retval.replace(1); // TRUE
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "protection_ioctl_spoofed"
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'protection_ioctl_spoofed'
                         });
                     }
                 },
@@ -816,23 +816,23 @@ const KernelModeBypass = {
 
     hookDriverServices: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "driver_service"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'driver_service'
         });
 
         // Hook service enumeration to hide protection drivers
-        var enumServicesStatus = Module.findExportByName("advapi32.dll", "EnumServicesStatusW");
+        var enumServicesStatus = Module.findExportByName('advapi32.dll', 'EnumServicesStatusW');
         if (enumServicesStatus) {
             Interceptor.attach(enumServicesStatus, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "service_enumeration_detected",
-                            operation: "filtering_protection_drivers"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'service_enumeration_detected',
+                            operation: 'filtering_protection_drivers'
                         });
                         // Would need to filter the returned service list
                     }
@@ -846,10 +846,10 @@ const KernelModeBypass = {
     // === KERNEL DEBUGGER DETECTION HOOKS ===
     hookKernelDebuggerDetection: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            category: "kernel_debugger_detection"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            category: 'kernel_debugger_detection'
         });
 
         // Hook kernel debugger presence checks
@@ -864,14 +864,14 @@ const KernelModeBypass = {
 
     hookKdDebuggerEnabled: function() {
         // Hook checks for KdDebuggerEnabled
-        var ntQuerySystemInfo = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntQuerySystemInfo) {
             // This is already hooked above, but we add kernel debug specific logic
             send({
-                type: "info",
-                target: "kernel_mode_bypass",
-                action: "debugger_detection_integrated",
-                integration: "system_info_hooks"
+                type: 'info',
+                target: 'kernel_mode_bypass',
+                action: 'debugger_detection_integrated',
+                integration: 'system_info_hooks'
             });
         }
 
@@ -881,14 +881,14 @@ const KernelModeBypass = {
 
     hookPebDebugFlags: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "peb_debug_flag"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'peb_debug_flag'
         });
 
         // Hook NtQueryInformationProcess for debug flags
-        var ntQueryInfoProcess = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
+        var ntQueryInfoProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfoProcess) {
             Interceptor.attach(ntQueryInfoProcess, {
                 onEnter: function(args) {
@@ -916,9 +916,9 @@ const KernelModeBypass = {
                         }
 
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "debug_process_info_spoofed"
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'debug_process_info_spoofed'
                         });
                     }
                 }
@@ -930,14 +930,14 @@ const KernelModeBypass = {
 
     hookDebugPrivileges: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "debug_privilege"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'debug_privilege'
         });
 
         // Hook privilege adjustment
-        var adjustTokenPrivileges = Module.findExportByName("advapi32.dll", "AdjustTokenPrivileges");
+        var adjustTokenPrivileges = Module.findExportByName('advapi32.dll', 'AdjustTokenPrivileges');
         if (adjustTokenPrivileges) {
             Interceptor.attach(adjustTokenPrivileges, {
                 onEnter: function(args) {
@@ -958,9 +958,9 @@ const KernelModeBypass = {
                             // Check for SeDebugPrivilege (LUID {20, 0})
                             if (luidLow === 20 && luidHigh === 0) {
                                 send({
-                                    type: "detection",
-                                    target: "kernel_mode_bypass",
-                                    action: "debug_privilege_adjustment"
+                                    type: 'detection',
+                                    target: 'kernel_mode_bypass',
+                                    action: 'debug_privilege_adjustment'
                                 });
                                 this.isDebugPrivilege = true;
                             }
@@ -973,10 +973,10 @@ const KernelModeBypass = {
                         // Always report success for debug privilege
                         retval.replace(1); // TRUE
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "debug_privilege_spoofed",
-                            result: "successful"
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'debug_privilege_spoofed',
+                            result: 'successful'
                         });
                     }
                 }
@@ -988,22 +988,22 @@ const KernelModeBypass = {
 
     hookSystemDebugControl: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "system_debug_control"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'system_debug_control'
         });
 
         // Hook NtSystemDebugControl
-        var ntSystemDebugControl = Module.findExportByName("ntdll.dll", "NtSystemDebugControl");
+        var ntSystemDebugControl = Module.findExportByName('ntdll.dll', 'NtSystemDebugControl');
         if (ntSystemDebugControl) {
             Interceptor.attach(ntSystemDebugControl, {
                 onEnter: function(args) {
                     var command = args[0].toInt32();
                     send({
-                        type: "info",
-                        target: "kernel_mode_bypass",
-                        action: "system_debug_control_called",
+                        type: 'info',
+                        target: 'kernel_mode_bypass',
+                        action: 'system_debug_control_called',
                         command: command
                     });
                     this.debugCommand = command;
@@ -1013,9 +1013,9 @@ const KernelModeBypass = {
                     // Block all debug control operations
                     retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
                     send({
-                        type: "bypass",
-                        target: "kernel_mode_bypass",
-                        action: "system_debug_control_blocked"
+                        type: 'bypass',
+                        target: 'kernel_mode_bypass',
+                        action: 'system_debug_control_blocked'
                     });
                 }
             });
@@ -1027,10 +1027,10 @@ const KernelModeBypass = {
     // === PROCESSOR FEATURE HOOKS ===
     hookProcessorFeatures: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "processor_feature"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'processor_feature'
         });
 
         // Hook hardware feature detection that might affect kernel protection
@@ -1042,7 +1042,7 @@ const KernelModeBypass = {
 
     hookHardwareFeatures: function() {
         // Hook processor feature detection
-        var isProcessorFeature = Module.findExportByName("kernel32.dll", "IsProcessorFeaturePresent");
+        var isProcessorFeature = Module.findExportByName('kernel32.dll', 'IsProcessorFeaturePresent');
         if (isProcessorFeature) {
             Interceptor.attach(isProcessorFeature, {
                 onEnter: function(args) {
@@ -1061,11 +1061,11 @@ const KernelModeBypass = {
                     if (criticalFeatures.includes(this.feature)) {
                         retval.replace(1); // TRUE
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "processor_feature_spoofed",
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'processor_feature_spoofed',
                             feature: this.feature,
-                            result: "present"
+                            result: 'present'
                         });
                     }
                 }
@@ -1077,30 +1077,30 @@ const KernelModeBypass = {
 
     hookVirtualizationFeatures: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            category: "virtualization_detection"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            category: 'virtualization_detection'
         });
 
         // Hook CPUID for virtualization detection (integrates with existing CPUID hooks)
         // This would be handled by our existing enhanced_hardware_spoofer.js
 
         send({
-            type: "info",
-            target: "kernel_mode_bypass",
-            action: "virtualization_detection_integrated",
-            integration: "hardware_spoofer"
+            type: 'info',
+            target: 'kernel_mode_bypass',
+            action: 'virtualization_detection_integrated',
+            integration: 'hardware_spoofer'
         });
     },
 
     // === MEMORY PROTECTION HOOKS ===
     hookMemoryProtection: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "memory_protection"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'memory_protection'
         });
 
         // Hook memory allocation with specific protections
@@ -1114,7 +1114,7 @@ const KernelModeBypass = {
     },
 
     hookProtectedMemoryAllocation: function() {
-        var ntAllocateVirtualMemory = Module.findExportByName("ntdll.dll", "NtAllocateVirtualMemory");
+        var ntAllocateVirtualMemory = Module.findExportByName('ntdll.dll', 'NtAllocateVirtualMemory');
         if (ntAllocateVirtualMemory) {
             Interceptor.attach(ntAllocateVirtualMemory, {
                 onEnter: function(args) {
@@ -1128,9 +1128,9 @@ const KernelModeBypass = {
                     // Monitor for suspicious memory allocations
                     if (protect & 0x40) { // PAGE_EXECUTE_READWRITE
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "executable_memory_monitored"
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'executable_memory_monitored'
                         });
                         this.isExecutableAlloc = true;
                     }
@@ -1138,9 +1138,9 @@ const KernelModeBypass = {
                     // Check for kernel-mode allocations (should not happen from user mode)
                     if (allocationType & 0x20000000) { // MEM_PHYSICAL
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "physical_memory_allocation_detected"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'physical_memory_allocation_detected'
                         });
                         this.isPhysicalAlloc = true;
                     }
@@ -1151,9 +1151,9 @@ const KernelModeBypass = {
                         // Block physical memory allocations
                         retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "physical_memory_allocation_blocked"
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'physical_memory_allocation_blocked'
                         });
                     }
                 }
@@ -1165,14 +1165,14 @@ const KernelModeBypass = {
 
     hookMemoryIntegrityChecks: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_bypass",
-            category: "memory_integrity_check"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_bypass',
+            category: 'memory_integrity_check'
         });
 
         // Hook functions used for memory integrity verification
-        var ntReadVirtualMemory = Module.findExportByName("ntdll.dll", "NtReadVirtualMemory");
+        var ntReadVirtualMemory = Module.findExportByName('ntdll.dll', 'NtReadVirtualMemory');
         if (ntReadVirtualMemory) {
             Interceptor.attach(ntReadVirtualMemory, {
                 onEnter: function(args) {
@@ -1185,10 +1185,10 @@ const KernelModeBypass = {
                     var address = baseAddress.toInt32();
                     if (address >= 0x80000000) { // Kernel space
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "kernel_memory_read_attempt",
-                            address: "0x" + address.toString(16)
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'kernel_memory_read_attempt',
+                            address: '0x' + address.toString(16)
                         });
                         this.isKernelRead = true;
                     }
@@ -1198,9 +1198,9 @@ const KernelModeBypass = {
                     if (this.isKernelRead) {
                         // Allow the read but log it
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "kernel_memory_read_completed"
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'kernel_memory_read_completed'
                         });
                     }
                 }
@@ -1211,7 +1211,7 @@ const KernelModeBypass = {
     },
 
     hookPageProtection: function() {
-        var ntProtectVirtualMemory = Module.findExportByName("ntdll.dll", "NtProtectVirtualMemory");
+        var ntProtectVirtualMemory = Module.findExportByName('ntdll.dll', 'NtProtectVirtualMemory');
         if (ntProtectVirtualMemory) {
             Interceptor.attach(ntProtectVirtualMemory, {
                 onEnter: function(args) {
@@ -1222,18 +1222,18 @@ const KernelModeBypass = {
                     var oldProtect = args[4];
 
                     send({
-                        type: "info",
-                        target: "kernel_mode_bypass",
-                        action: "page_protection_change",
-                        new_protect: "0x" + newProtect.toString(16)
+                        type: 'info',
+                        target: 'kernel_mode_bypass',
+                        action: 'page_protection_change',
+                        new_protect: '0x' + newProtect.toString(16)
                     });
 
                     // Monitor for suspicious protection changes
                     if (newProtect & 0x40) { // PAGE_EXECUTE_READWRITE
                         send({
-                            type: "info",
-                            target: "kernel_mode_bypass",
-                            action: "making_memory_executable"
+                            type: 'info',
+                            target: 'kernel_mode_bypass',
+                            action: 'making_memory_executable'
                         });
                     }
                 }
@@ -1246,10 +1246,10 @@ const KernelModeBypass = {
     // === SYSTEM INFORMATION HOOKS ===
     hookSystemInformation: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "system_information"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'system_information'
         });
 
         // Hook version information queries
@@ -1263,7 +1263,7 @@ const KernelModeBypass = {
     },
 
     hookVersionInformation: function() {
-        var rtlGetVersion = Module.findExportByName("ntdll.dll", "RtlGetVersion");
+        var rtlGetVersion = Module.findExportByName('ntdll.dll', 'RtlGetVersion');
         if (rtlGetVersion) {
             Interceptor.attach(rtlGetVersion, {
                 onLeave: function(retval) {
@@ -1276,10 +1276,10 @@ const KernelModeBypass = {
                             versionInfo.add(12).writeU32(19041); // dwBuildNumber
 
                             send({
-                                type: "bypass",
-                                target: "kernel_mode_bypass",
-                                action: "version_info_spoofed",
-                                spoofed_version: "Windows 10"
+                                type: 'bypass',
+                                target: 'kernel_mode_bypass',
+                                action: 'version_info_spoofed',
+                                spoofed_version: 'Windows 10'
                             });
                         }
                     }
@@ -1292,7 +1292,7 @@ const KernelModeBypass = {
 
     hookSystemTime: function() {
         // Hook time queries that might be used for time bomb detection
-        var ntQuerySystemTime = Module.findExportByName("ntdll.dll", "NtQuerySystemTime");
+        var ntQuerySystemTime = Module.findExportByName('ntdll.dll', 'NtQuerySystemTime');
         if (ntQuerySystemTime) {
             Interceptor.attach(ntQuerySystemTime, {
                 onLeave: function(retval) {
@@ -1304,10 +1304,10 @@ const KernelModeBypass = {
                             systemTime.writeU64(safeTime);
 
                             send({
-                                type: "bypass",
-                                target: "kernel_mode_bypass",
-                                action: "system_time_spoofed",
-                                spoofed_time: "safe_date"
+                                type: 'bypass',
+                                target: 'kernel_mode_bypass',
+                                action: 'system_time_spoofed',
+                                spoofed_time: 'safe_date'
                             });
                         }
                     }
@@ -1319,7 +1319,7 @@ const KernelModeBypass = {
     },
 
     hookPerformanceCounters: function() {
-        var ntQueryPerformanceCounter = Module.findExportByName("ntdll.dll", "NtQueryPerformanceCounter");
+        var ntQueryPerformanceCounter = Module.findExportByName('ntdll.dll', 'NtQueryPerformanceCounter');
         if (ntQueryPerformanceCounter) {
             var baseCounter = Date.now() * 10000; // Convert to 100ns units
 
@@ -1332,9 +1332,9 @@ const KernelModeBypass = {
                             counter.writeU64(currentCounter);
 
                             send({
-                                type: "bypass",
-                                target: "kernel_mode_bypass",
-                                action: "performance_counter_spoofed"
+                                type: 'bypass',
+                                target: 'kernel_mode_bypass',
+                                action: 'performance_counter_spoofed'
                             });
                         }
                     }
@@ -1348,10 +1348,10 @@ const KernelModeBypass = {
     // === PRIVILEGE ESCALATION HOOKS ===
     hookPrivilegeEscalation: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_monitoring",
-            category: "privilege_escalation"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_monitoring',
+            category: 'privilege_escalation'
         });
 
         // Monitor for privilege escalation attempts
@@ -1362,7 +1362,7 @@ const KernelModeBypass = {
     },
 
     hookTokenManipulation: function() {
-        var ntSetInformationToken = Module.findExportByName("ntdll.dll", "NtSetInformationToken");
+        var ntSetInformationToken = Module.findExportByName('ntdll.dll', 'NtSetInformationToken');
         if (ntSetInformationToken) {
             Interceptor.attach(ntSetInformationToken, {
                 onEnter: function(args) {
@@ -1372,18 +1372,18 @@ const KernelModeBypass = {
                     var tokenInformationLength = args[3].toInt32();
 
                     send({
-                        type: "detection",
-                        target: "kernel_mode_bypass",
-                        action: "token_manipulation_detected",
+                        type: 'detection',
+                        target: 'kernel_mode_bypass',
+                        action: 'token_manipulation_detected',
                         information_class: tokenInformationClass
                     });
 
                     // TokenPrivileges = 3
                     if (tokenInformationClass === 3) {
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "token_privilege_modification"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'token_privilege_modification'
                         });
                     }
                 }
@@ -1394,14 +1394,14 @@ const KernelModeBypass = {
     },
 
     hookImpersonation: function() {
-        var ntImpersonateAnonymousToken = Module.findExportByName("ntdll.dll", "NtImpersonateAnonymousToken");
+        var ntImpersonateAnonymousToken = Module.findExportByName('ntdll.dll', 'NtImpersonateAnonymousToken');
         if (ntImpersonateAnonymousToken) {
             Interceptor.attach(ntImpersonateAnonymousToken, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "kernel_mode_bypass",
-                        action: "anonymous_token_impersonation"
+                        type: 'detection',
+                        target: 'kernel_mode_bypass',
+                        action: 'anonymous_token_impersonation'
                     });
                 }
             });
@@ -1413,10 +1413,10 @@ const KernelModeBypass = {
     // === KERNEL OBJECT ACCESS HOOKS ===
     hookKernelObjectAccess: function() {
         send({
-            type: "status",
-            target: "kernel_mode_bypass",
-            action: "installing_hooks",
-            category: "kernel_object_access"
+            type: 'status',
+            target: 'kernel_mode_bypass',
+            action: 'installing_hooks',
+            category: 'kernel_object_access'
         });
 
         // Hook object directory access
@@ -1430,7 +1430,7 @@ const KernelModeBypass = {
     },
 
     hookObjectDirectory: function() {
-        var ntOpenDirectoryObject = Module.findExportByName("ntdll.dll", "NtOpenDirectoryObject");
+        var ntOpenDirectoryObject = Module.findExportByName('ntdll.dll', 'NtOpenDirectoryObject');
         if (ntOpenDirectoryObject) {
             Interceptor.attach(ntOpenDirectoryObject, {
                 onEnter: function(args) {
@@ -1444,18 +1444,18 @@ const KernelModeBypass = {
                             try {
                                 var dirName = objectName.readUtf16String();
                                 send({
-                                    type: "info",
-                                    target: "kernel_mode_bypass",
-                                    action: "object_directory_access",
+                                    type: 'info',
+                                    target: 'kernel_mode_bypass',
+                                    action: 'object_directory_access',
                                     directory_name: dirName
                                 });
 
                                 // Block access to sensitive directories
-                                if (dirName.includes("\\Driver") || dirName.includes("\\Device")) {
+                                if (dirName.includes('\\Driver') || dirName.includes('\\Device')) {
                                     send({
-                                        type: "detection",
-                                        target: "kernel_mode_bypass",
-                                        action: "sensitive_directory_access",
+                                        type: 'detection',
+                                        target: 'kernel_mode_bypass',
+                                        action: 'sensitive_directory_access',
                                         directory_name: dirName
                                     });
                                     this.blockAccess = true;
@@ -1471,9 +1471,9 @@ const KernelModeBypass = {
                     if (this.blockAccess) {
                         retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
                         send({
-                            type: "bypass",
-                            target: "kernel_mode_bypass",
-                            action: "object_directory_access_blocked"
+                            type: 'bypass',
+                            target: 'kernel_mode_bypass',
+                            action: 'object_directory_access_blocked'
                         });
                     }
                 }
@@ -1484,14 +1484,14 @@ const KernelModeBypass = {
     },
 
     hookSymbolicLinks: function() {
-        var ntCreateSymbolicLinkObject = Module.findExportByName("ntdll.dll", "NtCreateSymbolicLinkObject");
+        var ntCreateSymbolicLinkObject = Module.findExportByName('ntdll.dll', 'NtCreateSymbolicLinkObject');
         if (ntCreateSymbolicLinkObject) {
             Interceptor.attach(ntCreateSymbolicLinkObject, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "kernel_mode_bypass",
-                        action: "symbolic_link_creation"
+                        type: 'detection',
+                        target: 'kernel_mode_bypass',
+                        action: 'symbolic_link_creation'
                     });
                     // Could potentially block or monitor symbolic link creation
                 }
@@ -1502,7 +1502,7 @@ const KernelModeBypass = {
     },
 
     hookSectionObjects: function() {
-        var ntCreateSection = Module.findExportByName("ntdll.dll", "NtCreateSection");
+        var ntCreateSection = Module.findExportByName('ntdll.dll', 'NtCreateSection');
         if (ntCreateSection) {
             Interceptor.attach(ntCreateSection, {
                 onEnter: function(args) {
@@ -1517,9 +1517,9 @@ const KernelModeBypass = {
                     // Monitor for executable section creation
                     if (sectionPageProtection & 0x20) { // PAGE_EXECUTE
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "executable_section_creation"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'executable_section_creation'
                         });
                         this.isExecutableSection = true;
                     }
@@ -1527,9 +1527,9 @@ const KernelModeBypass = {
                     // Monitor for image sections
                     if (allocationAttributes & 0x1000000) { // SEC_IMAGE
                         send({
-                            type: "detection",
-                            target: "kernel_mode_bypass",
-                            action: "image_section_creation"
+                            type: 'detection',
+                            target: 'kernel_mode_bypass',
+                            action: 'image_section_creation'
                         });
                     }
                 },
@@ -1537,9 +1537,9 @@ const KernelModeBypass = {
                 onLeave: function(retval) {
                     if (this.isExecutableSection && retval.toInt32() === 0) {
                         send({
-                            type: "success",
-                            target: "kernel_mode_bypass",
-                            action: "executable_section_created"
+                            type: 'success',
+                            target: 'kernel_mode_bypass',
+                            action: 'executable_section_created'
                         });
                     }
                 }
@@ -1553,58 +1553,58 @@ const KernelModeBypass = {
     installSummary: function() {
         setTimeout(() => {
             send({
-                type: "status",
-                target: "kernel_mode_bypass",
-                action: "summary_start",
-                separator: "====================================="
+                type: 'status',
+                target: 'kernel_mode_bypass',
+                action: 'summary_start',
+                separator: '====================================='
             });
             send({
-                type: "status",
-                target: "kernel_mode_bypass",
-                action: "summary_header",
-                message: "Kernel Protection Bypass Summary"
+                type: 'status',
+                target: 'kernel_mode_bypass',
+                action: 'summary_header',
+                message: 'Kernel Protection Bypass Summary'
             });
             send({
-                type: "status",
-                target: "kernel_mode_bypass",
-                action: "separator",
-                separator: "====================================="
+                type: 'status',
+                target: 'kernel_mode_bypass',
+                action: 'separator',
+                separator: '====================================='
             });
 
             var categories = {
-                "SSDT Protection": 0,
-                "Driver Communication": 0,
-                "Kernel Debug Detection": 0,
-                "Memory Protection": 0,
-                "System Information": 0,
-                "Privilege Escalation": 0,
-                "Object Access": 0
+                'SSDT Protection': 0,
+                'Driver Communication': 0,
+                'Kernel Debug Detection': 0,
+                'Memory Protection': 0,
+                'System Information': 0,
+                'Privilege Escalation': 0,
+                'Object Access': 0
             };
 
             for (var hook in this.hooksInstalled) {
-                if (hook.includes("Ssdt") || hook.includes("SSDT") || hook.includes("Syscall")) {
-                    categories["SSDT Protection"]++;
-                } else if (hook.includes("Device") || hook.includes("Driver") || hook.includes("IRP")) {
-                    categories["Driver Communication"]++;
-                } else if (hook.includes("Debug") || hook.includes("PEB")) {
-                    categories["Kernel Debug Detection"]++;
-                } else if (hook.includes("Memory") || hook.includes("Protection") || hook.includes("Page")) {
-                    categories["Memory Protection"]++;
-                } else if (hook.includes("System") || hook.includes("Version") || hook.includes("Time")) {
-                    categories["System Information"]++;
-                } else if (hook.includes("Token") || hook.includes("Privilege") || hook.includes("Impersonate")) {
-                    categories["Privilege Escalation"]++;
-                } else if (hook.includes("Object") || hook.includes("Directory") || hook.includes("Section")) {
-                    categories["Object Access"]++;
+                if (hook.includes('Ssdt') || hook.includes('SSDT') || hook.includes('Syscall')) {
+                    categories['SSDT Protection']++;
+                } else if (hook.includes('Device') || hook.includes('Driver') || hook.includes('IRP')) {
+                    categories['Driver Communication']++;
+                } else if (hook.includes('Debug') || hook.includes('PEB')) {
+                    categories['Kernel Debug Detection']++;
+                } else if (hook.includes('Memory') || hook.includes('Protection') || hook.includes('Page')) {
+                    categories['Memory Protection']++;
+                } else if (hook.includes('System') || hook.includes('Version') || hook.includes('Time')) {
+                    categories['System Information']++;
+                } else if (hook.includes('Token') || hook.includes('Privilege') || hook.includes('Impersonate')) {
+                    categories['Privilege Escalation']++;
+                } else if (hook.includes('Object') || hook.includes('Directory') || hook.includes('Section')) {
+                    categories['Object Access']++;
                 }
             }
 
             for (var category in categories) {
                 if (categories[category] > 0) {
                     send({
-                        type: "info",
-                        target: "kernel_mode_bypass",
-                        action: "category_summary",
+                        type: 'info',
+                        target: 'kernel_mode_bypass',
+                        action: 'category_summary',
                         category: category,
                         hook_count: categories[category]
                     });
@@ -1612,34 +1612,34 @@ const KernelModeBypass = {
             }
 
             send({
-                type: "status",
-                target: "kernel_mode_bypass",
-                action: "separator",
-                separator: "====================================="
+                type: 'status',
+                target: 'kernel_mode_bypass',
+                action: 'separator',
+                separator: '====================================='
             });
             send({
-                type: "info",
-                target: "kernel_mode_bypass",
-                action: "total_hooks_installed",
+                type: 'info',
+                target: 'kernel_mode_bypass',
+                action: 'total_hooks_installed',
                 count: Object.keys(this.hooksInstalled).length
             });
             send({
-                type: "info",
-                target: "kernel_mode_bypass",
-                action: "protection_drivers_monitored",
+                type: 'info',
+                target: 'kernel_mode_bypass',
+                action: 'protection_drivers_monitored',
                 count: this.config.protectionDrivers.length
             });
             send({
-                type: "status",
-                target: "kernel_mode_bypass",
-                action: "separator",
-                separator: "====================================="
+                type: 'status',
+                target: 'kernel_mode_bypass',
+                action: 'separator',
+                separator: '====================================='
             });
             send({
-                type: "success",
-                target: "kernel_mode_bypass",
-                action: "bypass_activated",
-                message: "Advanced kernel protection bypass is now ACTIVE!"
+                type: 'success',
+                target: 'kernel_mode_bypass',
+                action: 'bypass_activated',
+                message: 'Advanced kernel protection bypass is now ACTIVE!'
             });
         }, 100);
     },
@@ -1687,7 +1687,7 @@ const KernelModeBypass = {
                         Memory.copy(decoyPage, checksumRoutine, 0x1000);
                         pgContext.decoyPages.push(decoyPage);
 
-                        Interceptor.replace(checksumRoutine, new NativeCallback: function(function() {
+                        Interceptor.replace(checksumRoutine, new NativeCallback(function() {
                             return 0;
                         }, 'int', []));
                     }
@@ -1940,7 +1940,7 @@ const KernelModeBypass = {
 
                 callbacks.push({ handler, context, index: i });
 
-                const replacement = new NativeCallback: function(function(a1, a2, a3) {
+                const replacement = new NativeCallback(function(a1, a2, a3) {
                     const shouldBlock = this.evaluateCallbackContext(arguments);
                     if (shouldBlock) {
                         return 0;
@@ -1972,7 +1972,7 @@ const KernelModeBypass = {
                 0x90, 0x90, 0x90, 0x90
             ];
 
-            const filterFunction = new NativeCallback: function(function(a1, a2, a3) {
+            const filterFunction = new NativeCallback(function(a1, a2, a3) {
                 const process = Process.getCurrentProcess();
                 if (this.isProtectedProcess(process)) {
                     return 0;
@@ -2018,7 +2018,7 @@ const KernelModeBypass = {
         if (tcpTable) {
             const originalEnum = tcpTable.add(0x10).readPointer();
 
-            Interceptor.replace(originalEnum, new NativeCallback: function(function(table, size) {
+            Interceptor.replace(originalEnum, new NativeCallback(function(table, size) {
                 const result = originalEnum(table, size);
 
                 if (result && table) {
@@ -2060,7 +2060,7 @@ const KernelModeBypass = {
 
             const original = callback.address.readPointer();
 
-            Interceptor.replace(callback.address, new NativeCallback: function(function(a1, a2, a3, a4, a5) {
+            Interceptor.replace(callback.address, new NativeCallback(function(a1, a2, a3, a4, a5) {
                 const fileName = a2 ? a2.readUtf16String() : null;
 
                 if (fileName && Array.from(hiddenFiles).some(f => fileName.includes(f))) {
@@ -2113,13 +2113,22 @@ const KernelModeBypass = {
             debugPortPatterns.forEach(pattern => {
                 try {
                     process.address.add(pattern.offset).writePointer(ptr(pattern.value));
-                } catch (e) {}
+                } catch (e) {
+                    send({
+                        type: 'debug',
+                        target: 'kernel_mode_bypass',
+                        action: 'debug_port_pattern_write_failed',
+                        process: process.name,
+                        pattern: pattern.name,
+                        error: e.toString()
+                    });
+                }
             });
         });
 
         const int3Handler = DebugSymbol.fromName('KiBreakpointTrap');
         if (int3Handler) {
-            const replacement = new NativeCallback: function(function() {
+            const replacement = new NativeCallback(function() {
                 return 0;
             }, 'void', []);
 
@@ -2130,7 +2139,16 @@ const KernelModeBypass = {
         debugRegisters.forEach((reg, index) => {
             try {
                 this.writeMSR(0x500 + index, 0);
-            } catch (e) {}
+            } catch (e) {
+                send({
+                    type: 'debug',
+                    target: 'kernel_mode_bypass',
+                    action: 'debug_register_msr_write_failed',
+                    register: reg,
+                    index: index,
+                    error: e.toString()
+                });
+            }
         });
 
         const ntGlobalFlag = DebugSymbol.fromName('NtGlobalFlag');
@@ -2164,7 +2182,7 @@ const KernelModeBypass = {
         if (wdFilter) {
             const verifyFunction = wdFilter.base.add(0x8A30);
 
-            Interceptor.replace(verifyFunction, new NativeCallback: function(function() {
+            Interceptor.replace(verifyFunction, new NativeCallback(function() {
                 return 0;
             }, 'int', ['pointer', 'uint32']));
         }
@@ -2179,7 +2197,7 @@ const KernelModeBypass = {
             const func = DebugSymbol.fromName(funcName);
             if (!func) return;
 
-            Interceptor.replace(func.address, new NativeCallback: function(function() {
+            Interceptor.replace(func.address, new NativeCallback(function() {
                 return 0;
             }, 'int', ['pointer', 'pointer', 'uint32']));
         });
@@ -2280,7 +2298,7 @@ const KernelModeBypass = {
             stealthContext.hooks.set(api, original);
 
             const detour = Memory.alloc(0x100);
-            const detector = new NativeCallback: function(function() {
+            const detector = new NativeCallback(function() {
                 const caller = this.context.lr || this.context.rip;
 
                 if (this.isAnalysisTool(caller)) {
@@ -2320,9 +2338,9 @@ const KernelModeBypass = {
 setTimeout(function() {
     KernelModeBypass.run();
     send({
-        type: "status",
-        target: "kernel_mode_bypass",
-        action: "system_now_active"
+        type: 'status',
+        target: 'kernel_mode_bypass',
+        action: 'system_now_active'
     });
 }, 100);
 

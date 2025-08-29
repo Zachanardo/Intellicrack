@@ -29,9 +29,9 @@
  */
 
 const CloudLicensingBypass = {
-    name: "Cloud License Server Bypass",
-    description: "Comprehensive cloud-based license verification bypass",
-    version: "3.0.0",
+    name: 'Cloud License Server Bypass',
+    description: 'Comprehensive cloud-based license verification bypass',
+    version: '3.0.0',
 
     // Configuration for cloud license bypass
     config: {
@@ -140,9 +140,9 @@ const CloudLicensingBypass = {
 
     onAttach: function(pid) {
         send({
-            type: "status",
-            target: "cloud_licensing_bypass",
-            action: "attaching_to_process",
+            type: 'status',
+            target: 'cloud_licensing_bypass',
+            action: 'attaching_to_process',
             process_id: pid
         });
         this.processId = pid;
@@ -150,9 +150,9 @@ const CloudLicensingBypass = {
 
     run: function() {
         send({
-            type: "status",
-            target: "cloud_licensing_bypass",
-            action: "installing_hooks"
+            type: 'status',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_hooks'
         });
 
         // Initialize bypass components
@@ -181,9 +181,9 @@ const CloudLicensingBypass = {
     // === HTTP REQUEST HOOKS ===
     hookHttpRequests: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_http_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_http_hooks'
         });
 
         // Hook WinHTTP functions
@@ -201,13 +201,13 @@ const CloudLicensingBypass = {
 
     hookWinHttpFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_winhttp_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_winhttp_hooks'
         });
 
         // Hook WinHttpSendRequest
-        var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function(args) {
@@ -223,18 +223,18 @@ const CloudLicensingBypass = {
 
                     if (this.isLicenseRequest(this.requestDetails)) {
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "winhttp_license_request_intercepted"
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'winhttp_license_request_intercepted'
                         });
                         this.isLicenseReq = true;
                         this.parent.parent.interceptedRequests++;
 
                         if (this.parent.parent.config.networkInterception.blockLicenseChecks) {
                             send({
-                                type: "bypass",
-                                target: "cloud_licensing_bypass",
-                                action: "blocking_license_request"
+                                type: 'bypass',
+                                target: 'cloud_licensing_bypass',
+                                action: 'blocking_license_request'
                             });
                             this.blockRequest = true;
                         }
@@ -247,15 +247,15 @@ const CloudLicensingBypass = {
                         retval.replace(0); // FALSE
                         this.parent.parent.blockedRequests++;
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "winhttp_license_request_blocked"
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'winhttp_license_request_blocked'
                         });
                     } else if (this.isLicenseReq) {
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "winhttp_license_request_allowed_will_spoof"
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'winhttp_license_request_allowed_will_spoof'
                         });
                     }
                 },
@@ -317,7 +317,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook WinHttpReceiveResponse for response manipulation
-        var winHttpReceiveResponse = Module.findExportByName("winhttp.dll", "WinHttpReceiveResponse");
+        var winHttpReceiveResponse = Module.findExportByName('winhttp.dll', 'WinHttpReceiveResponse');
         if (winHttpReceiveResponse) {
             Interceptor.attach(winHttpReceiveResponse, {
                 onLeave: function(retval) {
@@ -325,9 +325,9 @@ const CloudLicensingBypass = {
                         var config = this.parent.parent.config;
                         if (config.networkInterception.spoofResponses) {
                             send({
-                                type: "info",
-                                target: "cloud_licensing_bypass",
-                                action: "winhttp_response_ready_for_spoofing"
+                                type: 'info',
+                                target: 'cloud_licensing_bypass',
+                                action: 'winhttp_response_ready_for_spoofing'
                             });
                         }
                     }
@@ -338,7 +338,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook WinHttpReadData for response content manipulation
-        var winHttpReadData = Module.findExportByName("winhttp.dll", "WinHttpReadData");
+        var winHttpReadData = Module.findExportByName('winhttp.dll', 'WinHttpReadData');
         if (winHttpReadData) {
             Interceptor.attach(winHttpReadData, {
                 onEnter: function(args) {
@@ -376,18 +376,18 @@ const CloudLicensingBypass = {
 
                                 this.parent.parent.spoofedResponses++;
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "winhttp_response_spoofed",
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'winhttp_response_spoofed',
                                     response_preview: spoofedResponse.substring(0, 100)
                                 });
                             }
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "cloud_licensing_bypass",
-                            action: "winhttp_response_spoofing_error",
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'winhttp_response_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -472,13 +472,13 @@ const CloudLicensingBypass = {
 
     hookWinINetFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_wininet_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_wininet_hooks'
         });
 
         // Hook HttpSendRequest
-        var httpSendRequest = Module.findExportByName("wininet.dll", "HttpSendRequestW");
+        var httpSendRequest = Module.findExportByName('wininet.dll', 'HttpSendRequestW');
         if (httpSendRequest) {
             Interceptor.attach(httpSendRequest, {
                 onEnter: function(args) {
@@ -493,9 +493,9 @@ const CloudLicensingBypass = {
                             var headers = this.lpszHeaders.readUtf16String();
                             if (this.isLicenseRequestByHeaders(headers)) {
                                 send({
-                                    type: "info",
-                                    target: "cloud_licensing_bypass",
-                                    action: "wininet_license_request_detected"
+                                    type: 'info',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'wininet_license_request_detected'
                                 });
                                 this.isLicenseReq = true;
                                 this.parent.parent.interceptedRequests++;
@@ -521,7 +521,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook InternetReadFile for response manipulation
-        var internetReadFile = Module.findExportByName("wininet.dll", "InternetReadFile");
+        var internetReadFile = Module.findExportByName('wininet.dll', 'InternetReadFile');
         if (internetReadFile) {
             Interceptor.attach(internetReadFile, {
                 onEnter: function(args) {
@@ -556,17 +556,17 @@ const CloudLicensingBypass = {
 
                                 this.parent.parent.spoofedResponses++;
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "wininet_response_spoofed"
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'wininet_response_spoofed'
                                 });
                             }
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "cloud_licensing_bypass",
-                            action: "wininet_response_spoofing_error",
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'wininet_response_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -603,13 +603,13 @@ const CloudLicensingBypass = {
 
     hookCurlFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_curl_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_curl_hooks'
         });
 
         // Hook curl_easy_setopt for URL monitoring
-        var curlSetopt = Module.findExportByName(null, "curl_easy_setopt");
+        var curlSetopt = Module.findExportByName(null, 'curl_easy_setopt');
         if (curlSetopt) {
             Interceptor.attach(curlSetopt, {
                 onEnter: function(args) {
@@ -623,9 +623,9 @@ const CloudLicensingBypass = {
                             var url = this.parameter.readUtf8String();
                             if (this.isLicenseUrl(url)) {
                                 send({
-                                    type: "info",
-                                    target: "cloud_licensing_bypass",
-                                    action: "curl_license_url_detected",
+                                    type: 'info',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'curl_license_url_detected',
                                     url: url
                                 });
                                 this.parent.parent.interceptedRequests++;
@@ -650,7 +650,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook curl_easy_perform
-        var curlPerform = Module.findExportByName(null, "curl_easy_perform");
+        var curlPerform = Module.findExportByName(null, 'curl_easy_perform');
         if (curlPerform) {
             Interceptor.attach(curlPerform, {
                 onLeave: function(retval) {
@@ -658,9 +658,9 @@ const CloudLicensingBypass = {
                     if (retval.toInt32() !== 0) {
                         // Curl failed - could be our blocking
                         send({
-                            type: "info",
-            target: "cloud_licensing_bypass",
-                            action: "curl_request_result",
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'curl_request_result',
                             result_code: retval.toInt32()
                         });
                     }
@@ -673,9 +673,9 @@ const CloudLicensingBypass = {
 
     hookGenericHttpLibraries: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_generic_http_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_generic_http_hooks'
         });
 
         // Hook common HTTP functions across modules
@@ -720,9 +720,9 @@ const CloudLicensingBypass = {
                 Interceptor.attach(httpFunc, {
                     onEnter: function(args) {
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "generic_http_function_called",
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'generic_http_function_called',
                             function_name: functionName,
                             module_name: moduleName
                         });
@@ -732,9 +732,9 @@ const CloudLicensingBypass = {
 
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
                 send({
-                    type: "info",
-                    target: "cloud_licensing_bypass",
-                    action: "generic_http_function_hooked",
+                    type: 'info',
+                    target: 'cloud_licensing_bypass',
+                    action: 'generic_http_function_hooked',
                     function_name: functionName,
                     module_name: moduleName
                 });
@@ -747,16 +747,16 @@ const CloudLicensingBypass = {
     // === HTTPS REQUEST HOOKS ===
     hookHttpsRequests: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_https_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_https_hooks'
         });
 
         if (!this.config.networkInterception.interceptHttps) {
             send({
-                type: "info",
-                target: "cloud_licensing_bypass",
-                action: "https_interception_disabled"
+                type: 'info',
+                target: 'cloud_licensing_bypass',
+                action: 'https_interception_disabled'
             });
             return;
         }
@@ -773,13 +773,13 @@ const CloudLicensingBypass = {
 
     hookSslFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_ssl_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_ssl_hooks'
         });
 
         // Hook SSL_write for outgoing HTTPS data
-        var sslWrite = Module.findExportByName(null, "SSL_write");
+        var sslWrite = Module.findExportByName(null, 'SSL_write');
         if (sslWrite) {
             Interceptor.attach(sslWrite, {
                 onEnter: function(args) {
@@ -792,9 +792,9 @@ const CloudLicensingBypass = {
                             var data = this.buf.readUtf8String(Math.min(this.num, 1024));
                             if (this.isLicenseHttpsData(data)) {
                                 send({
-                                    type: "info",
-                                    target: "cloud_licensing_bypass",
-                                    action: "https_license_data_detected"
+                                    type: 'info',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'https_license_data_detected'
                                 });
                                 this.parent.parent.interceptedRequests++;
                             }
@@ -825,7 +825,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook SSL_read for incoming HTTPS data
-        var sslRead = Module.findExportByName(null, "SSL_read");
+        var sslRead = Module.findExportByName(null, 'SSL_read');
         if (sslRead) {
             Interceptor.attach(sslRead, {
                 onLeave: function(retval) {
@@ -847,17 +847,17 @@ const CloudLicensingBypass = {
                                 this.buf.writeUtf8String(spoofedResponse);
                                 this.parent.parent.spoofedResponses++;
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "ssl_response_spoofed"
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'ssl_response_spoofed'
                                 });
                             }
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "cloud_licensing_bypass",
-                            action: "ssl_response_spoofing_error",
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'ssl_response_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -925,20 +925,20 @@ const CloudLicensingBypass = {
 
     hookSecureChannelFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_schannel_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_schannel_hooks'
         });
 
         // Hook EncryptMessage
-        var encryptMessage = Module.findExportByName("secur32.dll", "EncryptMessage");
+        var encryptMessage = Module.findExportByName('secur32.dll', 'EncryptMessage');
         if (encryptMessage) {
             Interceptor.attach(encryptMessage, {
                 onEnter: function(args) {
                     send({
-                        type: "info",
-                        target: "cloud_licensing_bypass",
-                        action: "schannel_encrypt_message_called"
+                        type: 'info',
+                        target: 'cloud_licensing_bypass',
+                        action: 'schannel_encrypt_message_called'
                     });
                 }
             });
@@ -947,15 +947,15 @@ const CloudLicensingBypass = {
         }
 
         // Hook DecryptMessage
-        var decryptMessage = Module.findExportByName("secur32.dll", "DecryptMessage");
+        var decryptMessage = Module.findExportByName('secur32.dll', 'DecryptMessage');
         if (decryptMessage) {
             Interceptor.attach(decryptMessage, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // SEC_E_OK
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "schannel_decrypt_message_successful"
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'schannel_decrypt_message_successful'
                         });
                     }
                 }
@@ -968,16 +968,16 @@ const CloudLicensingBypass = {
     // === OAUTH TOKEN HOOKS ===
     hookOAuthTokens: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_oauth_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_oauth_hooks'
         });
 
         if (!this.config.oauth.enabled) {
             send({
-                type: "info",
-                target: "cloud_licensing_bypass",
-                action: "oauth_manipulation_disabled"
+                type: 'info',
+                target: 'cloud_licensing_bypass',
+                action: 'oauth_manipulation_disabled'
             });
             return;
         }
@@ -994,9 +994,9 @@ const CloudLicensingBypass = {
 
     hookTokenGeneration: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_token_generation_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_token_generation_hooks'
         });
 
         // Hook common token generation patterns
@@ -1049,9 +1049,9 @@ const CloudLicensingBypass = {
                                 tokenPtr.writeUtf8String(spoofedToken);
 
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "oauth_token_spoofed",
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'oauth_token_spoofed',
                                     function_name: functionName
                                 });
                             }
@@ -1077,13 +1077,13 @@ const CloudLicensingBypass = {
 
     hookTokenValidation: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_token_validation_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_token_validation_hooks'
         });
 
         // Hook string comparison functions for token validation
-        var strcmp = Module.findExportByName("msvcrt.dll", "strcmp");
+        var strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
         if (strcmp) {
             Interceptor.attach(strcmp, {
                 onEnter: function(args) {
@@ -1093,9 +1093,9 @@ const CloudLicensingBypass = {
 
                         if (this.isTokenComparison(str1, str2)) {
                             send({
-                                type: "info",
-                                target: "cloud_licensing_bypass",
-                                action: "token_comparison_detected"
+                                type: 'info',
+                                target: 'cloud_licensing_bypass',
+                                action: 'token_comparison_detected'
                             });
                             this.spoofTokenComparison = true;
                         }
@@ -1109,9 +1109,9 @@ const CloudLicensingBypass = {
                         // Make comparison succeed
                         retval.replace(0);
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "token_comparison_forced_success"
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'token_comparison_forced_success'
                         });
                     }
                 },
@@ -1138,33 +1138,33 @@ const CloudLicensingBypass = {
 
     hookAuthorizationHeaders: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_authorization_header_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_authorization_header_hooks'
         });
 
         // This integrates with the HTTP hooks above
         // Authorization headers are typically handled in the HTTP request hooks
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "authorization_header_manipulation_integrated"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'authorization_header_manipulation_integrated'
         });
     },
 
     // === JWT TOKEN HOOKS ===
     hookJwtTokens: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_jwt_token_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_jwt_token_hooks'
         });
 
         if (!this.config.jwt.enabled) {
             send({
-                type: "info",
-                target: "cloud_licensing_bypass",
-                action: "jwt_token_manipulation_disabled"
+                type: 'info',
+                target: 'cloud_licensing_bypass',
+                action: 'jwt_token_manipulation_disabled'
             });
             return;
         }
@@ -1181,9 +1181,9 @@ const CloudLicensingBypass = {
 
     hookJwtLibraries: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_jwt_library_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_jwt_library_hooks'
         });
 
         // Hook common JWT function names
@@ -1217,9 +1217,9 @@ const CloudLicensingBypass = {
                             // Make verification succeed
                             retval.replace(1); // TRUE
                             send({
-                                type: "bypass",
-                                target: "cloud_licensing_bypass",
-                                action: "jwt_verification_spoofed_success"
+                                type: 'bypass',
+                                target: 'cloud_licensing_bypass',
+                                action: 'jwt_verification_spoofed_success'
                             });
                         }
                     }
@@ -1234,9 +1234,9 @@ const CloudLicensingBypass = {
 
     hookBase64Functions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_base64_function_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_base64_function_hooks'
         });
 
         // Hook base64 decode functions (used by JWT)
@@ -1268,9 +1268,9 @@ const CloudLicensingBypass = {
                             var input = args[0].readUtf8String();
                             if (input && input.startsWith('eyJ')) {
                                 send({
-                                    type: "info",
-                                    target: "cloud_licensing_bypass",
-                                    action: "jwt_base64_decode_detected"
+                                    type: 'info',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'jwt_base64_decode_detected'
                                 });
                                 this.isJwtDecode = true;
                             }
@@ -1300,16 +1300,16 @@ const CloudLicensingBypass = {
                                 payloadPtr.writeUtf8String(spoofedPayload);
 
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "jwt_payload_spoofed"
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'jwt_payload_spoofed'
                                 });
                             }
                         } catch(e) {
                             send({
-                                type: "error",
-                                target: "cloud_licensing_bypass",
-                                action: "jwt_payload_spoofing_error",
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'jwt_payload_spoofing_error',
                                 error: e.toString()
                             });
                         }
@@ -1325,9 +1325,9 @@ const CloudLicensingBypass = {
 
     hookJsonParsing: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_json_parsing_hooks_for_jwt"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_json_parsing_hooks_for_jwt'
         });
 
         // Hook JSON parsing functions
@@ -1336,18 +1336,18 @@ const CloudLicensingBypass = {
         // This is complex to hook at the JavaScript level
         // Instead, we'll focus on the HTTP response spoofing which handles most JWT cases
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "json_parsing_hooks_integrated_with_http_spoofing"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'json_parsing_hooks_integrated_with_http_spoofing'
         });
     },
 
     // === LICENSE API HOOKS ===
     hookLicenseAPIs: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_license_api_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_license_api_hooks'
         });
 
         // Hook common license API patterns
@@ -1358,9 +1358,9 @@ const CloudLicensingBypass = {
 
     hookLicenseValidationAPIs: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_license_validation_api_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_license_validation_api_hooks'
         });
 
         var validationFunctions = [
@@ -1390,9 +1390,9 @@ const CloudLicensingBypass = {
                         // Make validation always succeed
                         retval.replace(1); // TRUE
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "license_validation_spoofed_success",
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'license_validation_spoofed_success',
                             function_name: functionName
                         });
                     }
@@ -1407,9 +1407,9 @@ const CloudLicensingBypass = {
 
     hookActivationAPIs: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_activation_api_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_activation_api_hooks'
         });
 
         var activationFunctions = [
@@ -1439,9 +1439,9 @@ const CloudLicensingBypass = {
                         // Make activation always succeed
                         retval.replace(1); // TRUE/SUCCESS
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "activation_spoofed_success",
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'activation_spoofed_success',
                             function_name: functionName
                         });
                     }
@@ -1456,9 +1456,9 @@ const CloudLicensingBypass = {
 
     hookSubscriptionAPIs: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_subscription_api_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_subscription_api_hooks'
         });
 
         var subscriptionFunctions = [
@@ -1488,9 +1488,9 @@ const CloudLicensingBypass = {
                         // Make subscription check always succeed
                         retval.replace(1); // TRUE/ACTIVE
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "subscription_check_spoofed_success",
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'subscription_check_spoofed_success',
                             function_name: functionName
                         });
                     }
@@ -1506,9 +1506,9 @@ const CloudLicensingBypass = {
     // === NETWORK CONNECTION HOOKS ===
     hookNetworkConnections: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_network_connection_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_network_connection_hooks'
         });
 
         // Hook socket creation and connection
@@ -1523,21 +1523,21 @@ const CloudLicensingBypass = {
 
     hookSocketFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_socket_function_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_socket_function_hooks'
         });
 
         // Hook socket creation
-        var socket = Module.findExportByName("ws2_32.dll", "socket");
+        var socket = Module.findExportByName('ws2_32.dll', 'socket');
         if (socket) {
             Interceptor.attach(socket, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== -1) { // INVALID_SOCKET
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "socket_created",
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'socket_created',
                             socket_id: retval.toInt32()
                         });
                     }
@@ -1548,15 +1548,15 @@ const CloudLicensingBypass = {
         }
 
         // Hook WSASocket
-        var wsaSocket = Module.findExportByName("ws2_32.dll", "WSASocketW");
+        var wsaSocket = Module.findExportByName('ws2_32.dll', 'WSASocketW');
         if (wsaSocket) {
             Interceptor.attach(wsaSocket, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== -1) {
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "wsa_socket_created",
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'wsa_socket_created',
                             socket_id: retval.toInt32()
                         });
                     }
@@ -1569,13 +1569,13 @@ const CloudLicensingBypass = {
 
     hookConnectFunctions: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_connect_function_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_connect_function_hooks'
         });
 
         // Hook connect
-        var connect = Module.findExportByName("ws2_32.dll", "connect");
+        var connect = Module.findExportByName('ws2_32.dll', 'connect');
         if (connect) {
             Interceptor.attach(connect, {
                 onEnter: function(args) {
@@ -1588,9 +1588,9 @@ const CloudLicensingBypass = {
 
                         if (this.isLicenseServerConnection(this.connectionInfo)) {
                             send({
-                                type: "info",
-                                target: "cloud_licensing_bypass",
-                                action: "license_server_connection_detected"
+                                type: 'info',
+                                target: 'cloud_licensing_bypass',
+                                action: 'license_server_connection_detected'
                             });
                             this.blockConnection = true;
                         }
@@ -1602,9 +1602,9 @@ const CloudLicensingBypass = {
                         // Block connection by returning error
                         retval.replace(-1); // SOCKET_ERROR
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "license_server_connection_blocked"
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'license_server_connection_blocked'
                         });
                         this.parent.parent.blockedRequests++;
                     }
@@ -1618,9 +1618,9 @@ const CloudLicensingBypass = {
                             var port = (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
                             var ip = this.addr.add(4).readU32();
 
-                            var ipStr = ((ip & 0xFF)) + "." +
-                                       ((ip >> 8) & 0xFF) + "." +
-                                       ((ip >> 16) & 0xFF) + "." +
+                            var ipStr = ((ip & 0xFF)) + '.' +
+                                       ((ip >> 8) & 0xFF) + '.' +
+                                       ((ip >> 16) & 0xFF) + '.' +
                                        ((ip >> 24) & 0xFF);
 
                             return {
@@ -1661,13 +1661,13 @@ const CloudLicensingBypass = {
     // === DNS RESOLUTION HOOKS ===
     hookDnsResolution: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_dns_resolution_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_dns_resolution_hooks'
         });
 
         // Hook getaddrinfo
-        var getaddrinfo = Module.findExportByName("ws2_32.dll", "getaddrinfo");
+        var getaddrinfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
                 onEnter: function(args) {
@@ -1681,9 +1681,9 @@ const CloudLicensingBypass = {
                             this.hostname = this.nodename.readAnsiString();
                             if (this.isLicenseServerHostname(this.hostname)) {
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "license_server_dns_lookup_blocked",
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'license_server_dns_lookup_blocked',
                                     hostname: this.hostname
                                 });
                                 this.blockDnsLookup = true;
@@ -1700,9 +1700,9 @@ const CloudLicensingBypass = {
                         retval.replace(11001); // WSAHOST_NOT_FOUND
                         this.parent.parent.blockedRequests++;
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "dns_lookup_blocked",
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'dns_lookup_blocked',
                             hostname: this.hostname
                         });
                     }
@@ -1722,7 +1722,7 @@ const CloudLicensingBypass = {
         }
 
         // Hook gethostbyname (legacy)
-        var gethostbyname = Module.findExportByName("ws2_32.dll", "gethostbyname");
+        var gethostbyname = Module.findExportByName('ws2_32.dll', 'gethostbyname');
         if (gethostbyname) {
             Interceptor.attach(gethostbyname, {
                 onEnter: function(args) {
@@ -1731,9 +1731,9 @@ const CloudLicensingBypass = {
                             var hostname = args[0].readAnsiString();
                             if (this.isLicenseServerHostname(hostname)) {
                                 send({
-                                    type: "bypass",
-                                    target: "cloud_licensing_bypass",
-                                    action: "legacy_dns_lookup_blocked",
+                                    type: 'bypass',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'legacy_dns_lookup_blocked',
                                     hostname: hostname
                                 });
                                 this.blockLegacyDns = true;
@@ -1748,9 +1748,9 @@ const CloudLicensingBypass = {
                     if (this.blockLegacyDns) {
                         retval.replace(ptr(0)); // NULL
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "legacy_dns_lookup_blocked"
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'legacy_dns_lookup_blocked'
                         });
                     }
                 },
@@ -1772,13 +1772,13 @@ const CloudLicensingBypass = {
     // === CERTIFICATE VALIDATION HOOKS ===
     hookCertificateValidation: function() {
         send({
-            type: "info",
-            target: "cloud_licensing_bypass",
-            action: "installing_certificate_validation_hooks"
+            type: 'info',
+            target: 'cloud_licensing_bypass',
+            action: 'installing_certificate_validation_hooks'
         });
 
         // Hook certificate verification functions
-        var certVerifyChain = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
+        var certVerifyChain = Module.findExportByName('crypt32.dll', 'CertVerifyCertificateChainPolicy');
         if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
                 onEnter: function(args) {
@@ -1788,9 +1788,9 @@ const CloudLicensingBypass = {
                     this.pPolicyStatus = args[3];
 
                     send({
-                        type: "info",
-                        target: "cloud_licensing_bypass",
-                        action: "certificate_chain_verification_called"
+                        type: 'info',
+                        target: 'cloud_licensing_bypass',
+                        action: 'certificate_chain_verification_called'
                     });
                 },
 
@@ -1800,9 +1800,9 @@ const CloudLicensingBypass = {
                         this.pPolicyStatus.writeU32(0); // No errors
                         this.pPolicyStatus.add(4).writeU32(0); // No chain errors
                         send({
-                            type: "bypass",
-                            target: "cloud_licensing_bypass",
-                            action: "certificate_validation_forced_success"
+                            type: 'bypass',
+                            target: 'cloud_licensing_bypass',
+                            action: 'certificate_validation_forced_success'
                         });
                     }
                 }
@@ -1812,15 +1812,15 @@ const CloudLicensingBypass = {
         }
 
         // Hook CertGetCertificateChain
-        var certGetChain = Module.findExportByName("crypt32.dll", "CertGetCertificateChain");
+        var certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
         if (certGetChain) {
             Interceptor.attach(certGetChain, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
                         send({
-                            type: "info",
-                            target: "cloud_licensing_bypass",
-                            action: "certificate_chain_retrieved"
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'certificate_chain_retrieved'
                         });
                     }
                 }
@@ -1834,37 +1834,37 @@ const CloudLicensingBypass = {
     installSummary: function() {
         setTimeout(() => {
             send({
-                type: "summary",
-                target: "cloud_licensing_bypass",
-                action: "installation_summary_header"
+                type: 'summary',
+                target: 'cloud_licensing_bypass',
+                action: 'installation_summary_header'
             });
 
             var categories = {
-                "HTTP/HTTPS Interception": 0,
-                "OAuth Token Manipulation": 0,
-                "JWT Token Spoofing": 0,
-                "License API Hooks": 0,
-                "Network Connection Control": 0,
-                "DNS Resolution Blocking": 0,
-                "Certificate Validation": 0
+                'HTTP/HTTPS Interception': 0,
+                'OAuth Token Manipulation': 0,
+                'JWT Token Spoofing': 0,
+                'License API Hooks': 0,
+                'Network Connection Control': 0,
+                'DNS Resolution Blocking': 0,
+                'Certificate Validation': 0
             };
 
             for (var hook in this.hooksInstalled) {
                 if (hook.includes('Http') || hook.includes('SSL') || hook.includes('curl') || hook.includes('Schannel')) {
-                    categories["HTTP/HTTPS Interception"]++;
+                    categories['HTTP/HTTPS Interception']++;
                 } else if (hook.includes('token') || hook.includes('Token') || hook.includes('oauth') || hook.includes('OAuth')) {
-                    categories["OAuth Token Manipulation"]++;
+                    categories['OAuth Token Manipulation']++;
                 } else if (hook.includes('jwt') || hook.includes('JWT') || hook.includes('base64') || hook.includes('Base64')) {
-                    categories["JWT Token Spoofing"]++;
+                    categories['JWT Token Spoofing']++;
                 } else if (hook.includes('License') || hook.includes('license') || hook.includes('Validation') || hook.includes('validation') ||
                           hook.includes('Activation') || hook.includes('activation') || hook.includes('Subscription') || hook.includes('subscription')) {
-                    categories["License API Hooks"]++;
+                    categories['License API Hooks']++;
                 } else if (hook.includes('socket') || hook.includes('Socket') || hook.includes('connect')) {
-                    categories["Network Connection Control"]++;
+                    categories['Network Connection Control']++;
                 } else if (hook.includes('getaddr') || hook.includes('gethostby') || hook.includes('dns') || hook.includes('DNS')) {
-                    categories["DNS Resolution Blocking"]++;
+                    categories['DNS Resolution Blocking']++;
                 } else if (hook.includes('Cert') || hook.includes('cert') || hook.includes('Certificate')) {
-                    categories["Certificate Validation"]++;
+                    categories['Certificate Validation']++;
                 }
             }
 

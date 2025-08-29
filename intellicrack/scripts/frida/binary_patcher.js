@@ -35,9 +35,9 @@ const UniversalUnpacker = require('./universal_unpacker.js');
 const MemoryDumper = require('./memory_dumper.js');
 
 const BinaryPatcher = {
-    name: "Advanced Binary Patcher",
-    description: "Production-ready binary patching with real-time capabilities",
-    version: "2.0.0",
+    name: 'Advanced Binary Patcher',
+    description: 'Production-ready binary patching with real-time capabilities',
+    version: '2.0.0',
 
     // Configuration
     config: {
@@ -108,9 +108,9 @@ const BinaryPatcher = {
     // === INITIALIZATION ===
     initialize: function() {
         send({
-            type: "status",
-            target: "binary_patcher",
-            action: "initializing",
+            type: 'status',
+            target: 'binary_patcher',
+            action: 'initializing',
             version: this.version
         });
 
@@ -125,9 +125,9 @@ const BinaryPatcher = {
         this.initializePerformanceOptimization();
 
         send({
-            type: "status",
-            target: "binary_patcher",
-            action: "initialized",
+            type: 'status',
+            target: 'binary_patcher',
+            action: 'initialized',
             capabilities: Object.keys(this.config)
         });
     },
@@ -148,15 +148,15 @@ const BinaryPatcher = {
             });
 
             send({
-                type: "info",
-                target: "binary_patcher",
-                action: "dependencies_initialized"
+                type: 'info',
+                target: 'binary_patcher',
+                action: 'dependencies_initialized'
             });
         } catch (e) {
             send({
-                type: "error",
-                target: "binary_patcher",
-                action: "dependency_initialization_failed",
+                type: 'error',
+                target: 'binary_patcher',
+                action: 'dependency_initialization_failed',
                 error: e.message
             });
         }
@@ -221,6 +221,11 @@ const BinaryPatcher = {
                                 suspendedThreads.push(thread.id);
                             } catch (e) {
                                 // Thread might have terminated
+                                send({
+                                    type: 'debug',
+                                    message: 'Thread suspension failed: ' + e.message,
+                                    threadId: thread.id
+                                });
                             }
                         }
                     });
@@ -236,6 +241,11 @@ const BinaryPatcher = {
                             Process.resumeThread(threadId);
                         } catch (e) {
                             // Thread might have terminated
+                            send({
+                                type: 'debug',
+                                message: 'Thread resume failed: ' + e.message,
+                                threadId: threadId
+                            });
                         }
                     });
 
@@ -249,7 +259,7 @@ const BinaryPatcher = {
             hotPatch: function(module, offset, patchData) {
                 const moduleBase = Module.findBaseAddress(module);
                 if (!moduleBase) {
-                    throw new Error("Module not found: " + module);
+                    throw new Error('Module not found: ' + module);
                 }
 
                 const targetAddress = moduleBase.add(offset);
@@ -280,9 +290,9 @@ const BinaryPatcher = {
                     BinaryPatcher.updatePerformanceMetrics(patchTime, true);
 
                     send({
-                        type: "success",
-                        target: "binary_patcher",
-                        action: "hot_patch_applied",
+                        type: 'success',
+                        target: 'binary_patcher',
+                        action: 'hot_patch_applied',
                         module: module,
                         offset: offset,
                         time: patchTime
@@ -312,9 +322,9 @@ const BinaryPatcher = {
                     BinaryPatcher.state.activePatches.delete(patchId);
 
                     send({
-                        type: "info",
-                        target: "binary_patcher",
-                        action: "patch_rolled_back",
+                        type: 'info',
+                        target: 'binary_patcher',
+                        action: 'patch_rolled_back',
                         patchId: patchId
                     });
                 }
@@ -329,7 +339,7 @@ const BinaryPatcher = {
         this.architectures = {
             // x86-64 instruction patching
             x86_64: {
-                name: "x86-64",
+                name: 'x86-64',
 
                 // Generate NOP sled of specified size
                 generateNop: function(size) {
@@ -442,7 +452,7 @@ const BinaryPatcher = {
 
             // ARM64 instruction patching
             arm64: {
-                name: "ARM64",
+                name: 'ARM64',
 
                 // Generate NOP instruction
                 generateNop: function(count = 1) {
@@ -464,13 +474,14 @@ const BinaryPatcher = {
                         return this.int32ToBytes(encoded);
                     }
 
-                    // Use ADRP + BR for long jumps
+                    // Use ADRP + ADD + BR for long jumps with page offset
                     const page = (to.toInt64() >> 12) << 12;
                     const pageOffset = to.toInt64() & 0xFFF;
-                    const adrp = 0x90000000 | ((page >> 12) & 0x1FFFFF) << 5;
-                    const br = 0xD61F0000;
+                    const adrp = 0x90000000 | ((page >> 12) & 0x1FFFFF) << 5 | 0x10; // ADRP X16, page
+                    const add = 0x91000000 | (pageOffset << 10) | (0x10 << 5) | 0x10; // ADD X16, X16, #pageOffset
+                    const br = 0xD61F0200; // BR X16
 
-                    return [...this.int32ToBytes(adrp), ...this.int32ToBytes(br)];
+                    return [...this.int32ToBytes(adrp), ...this.int32ToBytes(add), ...this.int32ToBytes(br)];
                 },
 
                 // Generate return instruction
@@ -503,7 +514,7 @@ const BinaryPatcher = {
 
             // WebAssembly bytecode patching
             wasm: {
-                name: "WebAssembly",
+                name: 'WebAssembly',
 
                 // Patch WASM function to return constant
                 patchFunction: function(funcIndex, returnValue) {
@@ -526,7 +537,7 @@ const BinaryPatcher = {
 
             // JVM bytecode patching
             jvm: {
-                name: "JVM Bytecode",
+                name: 'JVM Bytecode',
 
                 // Patch method to return constant
                 patchReturn: function(value) {
@@ -559,7 +570,7 @@ const BinaryPatcher = {
         this.formatHandlers = {
             // PE/PE+ format handler
             pe: {
-                name: "PE/PE+",
+                name: 'PE/PE+',
 
                 // Parse PE headers
                 parseHeaders: function(buffer) {
@@ -641,7 +652,7 @@ const BinaryPatcher = {
                 },
 
                 readString: function(buffer, offset, maxLength) {
-                    let str = "";
+                    let str = '';
                     for (let i = 0; i < maxLength; i++) {
                         const byte = buffer[offset + i];
                         if (byte === 0) break;
@@ -718,7 +729,7 @@ const BinaryPatcher = {
 
             // ELF format handler
             elf: {
-                name: "ELF/ELF64",
+                name: 'ELF/ELF64',
 
                 parseHeaders: function(buffer) {
                     const view = new DataView(buffer);
@@ -776,23 +787,25 @@ const BinaryPatcher = {
 
             // Mach-O format handler
             macho: {
-                name: "Mach-O",
+                name: 'Mach-O',
 
                 parseHeaders: function(buffer) {
                     const view = new DataView(buffer);
                     const magic = view.getUint32(0, false);
 
-                    const is64bit = magic === 0xFEEDFACF;
+                    const is64bit = magic === 0xFEEDFACF || magic === 0xCFFAEDFE;
                     const isLittleEndian = magic === 0xCEFAEDFE || magic === 0xCFFAEDFE;
 
                     const header = {
                         magic: magic,
+                        is64bit: is64bit,
                         cputype: view.getInt32(4, isLittleEndian),
                         cpusubtype: view.getInt32(8, isLittleEndian),
                         filetype: view.getUint32(12, isLittleEndian),
                         ncmds: view.getUint32(16, isLittleEndian),
                         sizeofcmds: view.getUint32(20, isLittleEndian),
-                        flags: view.getUint32(24, isLittleEndian)
+                        flags: view.getUint32(24, isLittleEndian),
+                        reserved: is64bit ? view.getUint32(28, isLittleEndian) : undefined
                     };
 
                     return header;
@@ -801,7 +814,7 @@ const BinaryPatcher = {
                 findCodeSignature: function(buffer) {
                     const header = this.parseHeaders(buffer);
                     const view = new DataView(buffer);
-                    let offset = header.magic === 0xFEEDFACF ? 32 : 28;
+                    let offset = header.is64bit ? 32 : 28;
 
                     for (let i = 0; i < header.ncmds; i++) {
                         const cmd = view.getUint32(offset, true);
@@ -836,14 +849,14 @@ const BinaryPatcher = {
                 const secDirRva = view.getUint32(headers.dos.e_lfanew + 152, true);
                 const secDirSize = view.getUint32(headers.dos.e_lfanew + 156, true);
 
-                if (secDirRva === 0) {
+                if (secDirRva === 0 || secDirSize === 0) {
                     return true; // No signature
                 }
 
                 // Apply patches only to non-signed regions
                 const signedRange = {
-                    start: 0,
-                    end: secDirRva
+                    start: secDirRva,
+                    end: secDirRva + secDirSize
                 };
 
                 const filteredPatches = patches.filter(patch => {
@@ -898,17 +911,17 @@ const BinaryPatcher = {
                 let checksum = 0;
 
                 switch (algorithm) {
-                    case 'crc32':
-                        checksum = this.crc32(buffer, start, end);
-                        break;
-                    case 'sum32':
-                        checksum = this.sum32(buffer, start, end);
-                        break;
-                    case 'xor32':
-                        checksum = this.xor32(buffer, start, end);
-                        break;
-                    default:
-                        checksum = this.sum32(buffer, start, end);
+                case 'crc32':
+                    checksum = this.crc32(buffer, start, end);
+                    break;
+                case 'sum32':
+                    checksum = this.sum32(buffer, start, end);
+                    break;
+                case 'xor32':
+                    checksum = this.xor32(buffer, start, end);
+                    break;
+                default:
+                    checksum = this.sum32(buffer, start, end);
                 }
 
                 return checksum;
@@ -981,19 +994,19 @@ const BinaryPatcher = {
                     // Variant 1: Using different registers
                     variants.push({
                         data: this.substituteRegisters(patch.data),
-                        description: "Register substitution variant"
+                        description: 'Register substitution variant'
                     });
 
                     // Variant 2: Adding junk instructions
                     variants.push({
                         data: this.addJunkInstructions(patch.data),
-                        description: "Junk instruction variant"
+                        description: 'Junk instruction variant'
                     });
 
                     // Variant 3: Instruction reordering
                     variants.push({
                         data: this.reorderInstructions(patch.data),
-                        description: "Reordered variant"
+                        description: 'Reordered variant'
                     });
 
                     return variants;
@@ -1005,7 +1018,7 @@ const BinaryPatcher = {
                     // ARM-specific variants
                     variants.push({
                         data: this.useConditionalExecution(patch.data),
-                        description: "Conditional execution variant"
+                        description: 'Conditional execution variant'
                     });
 
                     return variants;
@@ -1025,12 +1038,23 @@ const BinaryPatcher = {
                         // Check for MOV instructions
                         if (substituted[i] === 0x89 || substituted[i] === 0x8B) {
                             const modRM = substituted[i + 1];
+                            const mod = (modRM >> 6) & 0x03;
                             const reg = (modRM >> 3) & 0x07;
                             const rm = modRM & 0x07;
 
+                            let newModRM = modRM;
+
+                            // Substitute reg field
                             if (regMap[reg] !== undefined) {
-                                substituted[i + 1] = (modRM & 0xC7) | (regMap[reg] << 3);
+                                newModRM = (newModRM & 0xC7) | (regMap[reg] << 3);
                             }
+
+                            // Substitute rm field if it's a register (mod == 11)
+                            if (mod === 0x03 && regMap[rm] !== undefined) {
+                                newModRM = (newModRM & 0xF8) | regMap[rm];
+                            }
+
+                            substituted[i + 1] = newModRM;
                         }
                     }
 
@@ -1120,14 +1144,25 @@ const BinaryPatcher = {
                                     const targetAddr = args[1];
                                     const targetSize = args[2].toInt32();
 
-                                    // Check if reading our patch
-                                    if (targetAddr.compare(address) >= 0 &&
-                                        targetAddr.compare(address.add(size)) < 0) {
+                                    // Check if reading overlaps with our patch
+                                    const targetEnd = targetAddr.add(targetSize);
+                                    const patchEnd = address.add(size);
+
+                                    if (targetAddr.compare(patchEnd) < 0 && targetEnd.compare(address) > 0) {
+                                        // Calculate overlap
+                                        const overlapStart = targetAddr.compare(address) > 0 ? targetAddr : address;
+                                        const overlapEnd = targetEnd.compare(patchEnd) < 0 ? targetEnd : patchEnd;
+                                        const overlapSize = overlapEnd.sub(overlapStart).toInt32();
+
                                         // Redirect to original bytes
                                         const original = BinaryPatcher.state.rollbackData.get(address.toString());
-                                        if (original) {
-                                            args[1] = Memory.alloc(original.length);
-                                            Memory.writeByteArray(args[1], original);
+                                        if (original && overlapSize > 0) {
+                                            const tempBuffer = Memory.alloc(targetSize);
+                                            const offset = overlapStart.sub(address).toInt32();
+                                            Memory.copy(tempBuffer.add(overlapStart.sub(targetAddr)),
+                                                Memory.allocUtf8String(original).add(offset),
+                                                overlapSize);
+                                            args[1] = tempBuffer;
                                         }
                                     }
                                 }
@@ -1242,14 +1277,14 @@ const BinaryPatcher = {
 
                     // Perform SIMD operation
                     switch (operation) {
-                        case 'xor':
-                            return this.simdXor(data);
-                        case 'and':
-                            return this.simdAnd(data);
-                        case 'or':
-                            return this.simdOr(data);
-                        default:
-                            return this.fallbackOperation(operation, data);
+                    case 'xor':
+                        return this.simdXor(data);
+                    case 'and':
+                        return this.simdAnd(data);
+                    case 'or':
+                        return this.simdOr(data);
+                    default:
+                        return this.fallbackOperation(operation, data);
                     }
                 },
 
@@ -1265,6 +1300,11 @@ const BinaryPatcher = {
                         }
                     } catch (e) {
                         // No SIMD support
+                        send({
+                            type: 'debug',
+                            message: 'SIMD check failed: ' + e.message,
+                            arch: Process.arch
+                        });
                     }
                     return false;
                 },
@@ -1308,9 +1348,9 @@ const BinaryPatcher = {
             for (let i = 0; i < patch.data.length; i++) {
                 if (currentBytes[i] !== patch.data[i]) {
                     send({
-                        type: "error",
-                        target: "binary_patcher",
-                        action: "patch_verification_failed",
+                        type: 'error',
+                        target: 'binary_patcher',
+                        action: 'patch_verification_failed',
                         patchId: patchId,
                         mismatchAt: i
                     });
@@ -1319,18 +1359,18 @@ const BinaryPatcher = {
             }
 
             send({
-                type: "success",
-                target: "binary_patcher",
-                action: "patch_verified",
+                type: 'success',
+                target: 'binary_patcher',
+                action: 'patch_verified',
                 patchId: patchId
             });
 
             return true;
         } catch (e) {
             send({
-                type: "error",
-                target: "binary_patcher",
-                action: "patch_verification_error",
+                type: 'error',
+                target: 'binary_patcher',
+                action: 'patch_verification_error',
                 patchId: patchId,
                 error: e.message
             });
@@ -1403,7 +1443,10 @@ const BinaryPatcher = {
                 }
 
                 if (match) {
-                    results.push(patch);
+                    results.push({
+                        ...patch,
+                        id: id
+                    });
                 }
             });
 
@@ -1562,7 +1605,7 @@ const BinaryPatcher = {
             } else if (arch === 'arm64') {
                 patchData = this.architectures.arm64.generateReturn(1);
             } else {
-                throw new Error("Unsupported architecture: " + arch);
+                throw new Error('Unsupported architecture: ' + arch);
             }
 
             // Apply patch with anti-detection
@@ -1594,9 +1637,9 @@ const BinaryPatcher = {
             const elapsed = Date.now() - startTime;
 
             send({
-                type: "success",
-                target: "binary_patcher",
-                action: "patch_applied",
+                type: 'success',
+                target: 'binary_patcher',
+                action: 'patch_applied',
                 patchId: patchId,
                 time: elapsed
             });
@@ -1605,9 +1648,9 @@ const BinaryPatcher = {
 
         } catch (e) {
             send({
-                type: "error",
-                target: "binary_patcher",
-                action: "patch_failed",
+                type: 'error',
+                target: 'binary_patcher',
+                action: 'patch_failed',
                 error: e.message
             });
 
@@ -1668,9 +1711,9 @@ const BinaryPatcher = {
             return true;
         } catch (e) {
             send({
-                type: "error",
-                target: "binary_patcher",
-                action: "import_failed",
+                type: 'error',
+                target: 'binary_patcher',
+                action: 'import_failed',
                 error: e.message
             });
             return false;
@@ -1682,9 +1725,9 @@ const BinaryPatcher = {
 setTimeout(function() {
     BinaryPatcher.initialize();
     send({
-        type: "status",
-        target: "binary_patcher",
-        action: "ready",
+        type: 'status',
+        target: 'binary_patcher',
+        action: 'ready',
         capabilities: {
             architectures: Object.keys(BinaryPatcher.architectures),
             formats: Object.keys(BinaryPatcher.formatHandlers),

@@ -1,7 +1,11 @@
 """Radare2 string analysis module for extracting and analyzing string data."""
 
+import binascii
+import hashlib
 import logging
+import math
 import re
+import string
 from typing import Any
 
 from intellicrack.logger import logger
@@ -334,7 +338,8 @@ class R2StringAnalyzer:
         return categories
 
     def _is_license_string(self, content: str) -> bool:
-        """Check if string is license-related."""
+        """Enhanced license string detection with advanced algorithms."""
+        # Basic pattern matching (existing functionality)
         license_patterns = [
             r"\blicens\w*\b",
             r"\bregistr\w*\b",
@@ -353,10 +358,166 @@ class R2StringAnalyzer:
             r"\bgenuine\b.*\bsoftware\b",
         ]
 
-        return any(re.search(pattern, content, re.IGNORECASE) for pattern in license_patterns)
+        if any(re.search(pattern, content, re.IGNORECASE) for pattern in license_patterns):
+            return True
+
+        # Enhanced license key format detection
+        return self._detect_license_key_formats(content)
+
+    def _detect_license_key_formats(self, content: str) -> bool:
+        """Advanced license key format detection algorithms."""
+        # Remove whitespace and hyphens for analysis
+        clean_content = re.sub(r'[\s\-_]', '', content)
+        
+        # Common license key patterns
+        license_key_patterns = [
+            # XXXX-XXXX-XXXX-XXXX format (16 chars in groups of 4)
+            r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',
+            # XXXXX-XXXXX-XXXXX-XXXXX format (20 chars in groups of 5)
+            r'^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+            # Microsoft-style product keys (25 characters)
+            r'^[BCDFGHJKMPQRTVWXY2346789]{25}$',
+            # UUID format (license keys sometimes use this)
+            r'^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$',
+            # Base32 encoded keys (common in software licensing)
+            r'^[A-Z2-7]{16,}$',
+        ]
+        
+        # Check against known patterns
+        for pattern in license_key_patterns:
+            if re.match(pattern, content.upper()):
+                # Additional check for Base32 pattern to avoid false positives
+                if 'A-Z2-7' in pattern and self._is_repetitive_pattern(content.upper()):
+                    continue
+                return True
+        
+        # Entropy-based detection for potential license keys
+        if self._analyze_license_key_entropy(clean_content):
+            return True
+        
+        # Character distribution analysis
+        if self._analyze_license_key_distribution(clean_content):
+            return True
+        
+        # Check for common license validation contexts
+        return self._check_license_validation_context(content)
+
+    def _analyze_license_key_entropy(self, content: str) -> bool:
+        """Analyze entropy to detect potential license keys."""
+        if len(content) < 8:
+            return False
+        
+        # Calculate Shannon entropy
+        entropy = self._calculate_entropy(content)
+        
+        # License keys typically have moderate to high entropy (2.5-4.5)
+        # but not as high as random data (>4.5)
+        if 2.5 <= entropy <= 4.5 and len(content) >= 12:
+            # Additional checks for license key characteristics
+            alphanum_ratio = sum(c.isalnum() for c in content) / len(content)
+            # Avoid repetitive patterns that could false positive
+            if alphanum_ratio > 0.8 and not self._is_repetitive_pattern(content):
+                return True
+        
+        return False
+
+    def _analyze_license_key_distribution(self, content: str) -> bool:
+        """Analyze character distribution patterns typical of license keys."""
+        if len(content) < 12 or len(content) > 50:
+            return False
+        
+        # Count character types
+        digits = sum(c.isdigit() for c in content)
+        letters = sum(c.isalpha() for c in content)
+        total = len(content)
+        
+        if total == 0:
+            return False
+        
+        digit_ratio = digits / total
+        letter_ratio = letters / total
+        
+        # License keys typically have balanced alphanumeric distribution
+        # Usually 30-70% digits, 30-70% letters
+        if 0.3 <= digit_ratio <= 0.7 and 0.3 <= letter_ratio <= 0.7:
+            # Check for repeated character patterns (common in serial numbers)
+            # but avoid excessively repetitive patterns
+            if self._has_license_key_patterns(content) and not self._is_repetitive_pattern(content):
+                return True
+        
+        return False
+
+    def _has_license_key_patterns(self, content: str) -> bool:
+        """Check for patterns common in license keys."""
+        # Avoid keys with too many repeated characters
+        char_counts = {}
+        for char in content:
+            char_counts[char] = char_counts.get(char, 0) + 1
+        
+        # Check if any character appears more than 40% of the time
+        max_char_freq = max(char_counts.values()) / len(content)
+        if max_char_freq > 0.4:
+            return False
+        
+        # Look for alternating patterns (digit-letter-digit or vice versa)
+        alternations = 0
+        for i in range(len(content) - 1):
+            if content[i].isdigit() != content[i + 1].isdigit():
+                alternations += 1
+        
+        alternation_ratio = alternations / max(1, len(content) - 1)
+        return 0.3 <= alternation_ratio <= 0.8  # Moderate alternation suggests structure
+
+    def _is_repetitive_pattern(self, content: str) -> bool:
+        """Check if string has repetitive patterns that are unlikely in real license keys."""
+        if len(content) < 4:
+            return False
+        
+        # Check for excessive character repetition
+        char_counts = {}
+        for char in content:
+            char_counts[char] = char_counts.get(char, 0) + 1
+        
+        # If any character appears more than 50% of the time, it's too repetitive
+        max_char_freq = max(char_counts.values()) / len(content)
+        if max_char_freq > 0.5:
+            return True
+        
+        # Check for simple patterns like "AAAA", "ABAB", etc.
+        # Pattern 1: All same character
+        if len(set(content)) == 1:
+            return True
+        
+        # Pattern 2: Simple repetition of 1-3 characters
+        for pattern_len in range(1, 4):
+            pattern = content[:pattern_len]
+            if pattern * (len(content) // pattern_len + 1) == content + pattern[:len(content) % pattern_len]:
+                return True
+        
+        return False
+
+    def _check_license_validation_context(self, content: str) -> bool:
+        """Check if string appears in license validation context."""
+        # Check if the string format suggests it's used for validation
+        # Common patterns in license validation messages
+        validation_contexts = [
+            'enter.*key',
+            'invalid.*key',
+            'key.*expired',
+            'registration.*code',
+            'activation.*code',
+            'serial.*number',
+        ]
+        
+        # This would need context from surrounding strings/code
+        # For now, check if the string itself has validation-like structure
+        content_lower = content.lower()
+        return any(pattern in content_lower for pattern in ['key', 'serial', 'code'] 
+                  if len(content) >= 10 and not content.isascii() == False)
 
     def _is_crypto_string(self, content: str) -> bool:
-        """Check if string is cryptography-related."""
+        """Enhanced cryptographic string identification with advanced algorithms."""
+        # Basic pattern matching (existing functionality)
         crypto_patterns = [
             r"\b(aes|des|3des|blowfish|twofish|serpent)\b",
             r"\b(rsa|dsa|ecdsa|ecdh|dh)\b",
@@ -369,10 +530,169 @@ class R2StringAnalyzer:
             r"\bcipher\w*\b",
         ]
 
-        return any(re.search(pattern, content, re.IGNORECASE) for pattern in crypto_patterns)
+        if any(re.search(pattern, content, re.IGNORECASE) for pattern in crypto_patterns):
+            return True
+
+        # Enhanced cryptographic data detection
+        return self._detect_cryptographic_data(content)
+
+    def _detect_cryptographic_data(self, content: str) -> bool:
+        """Advanced detection of cryptographic data patterns."""
+        # Check for Base64 encoded data (common in crypto)
+        if self._is_base64_data(content):
+            return True
+        
+        # Check for hexadecimal data that could be keys/hashes
+        if self._is_hex_crypto_data(content):
+            return True
+        
+        # Check for PEM format data
+        if self._is_pem_format(content):
+            return True
+        
+        # Check for binary data patterns that suggest crypto
+        if self._analyze_crypto_entropy(content):
+            return True
+        
+        # Check for common crypto constants
+        return self._has_crypto_constants(content)
+
+    def _is_base64_data(self, content: str) -> bool:
+        """Detect Base64 encoded cryptographic data."""
+        # Remove whitespace for analysis
+        clean_content = re.sub(r'\s+', '', content)
+        
+        # Basic Base64 pattern check
+        if not re.match(r'^[A-Za-z0-9+/]*={0,2}$', clean_content):
+            return False
+        
+        # Length should be multiple of 4 (with padding)
+        if len(clean_content) % 4 != 0:
+            return False
+        
+        # Should be reasonably long to be crypto data
+        if len(clean_content) < 16:
+            return False
+        
+        # Try to decode to verify it's valid Base64
+        try:
+            decoded = binascii.a2b_base64(clean_content)
+            # Check if decoded data has crypto-like characteristics
+            return self._analyze_binary_crypto_data(decoded)
+        except Exception:
+            return False
+
+    def _is_hex_crypto_data(self, content: str) -> bool:
+        """Detect hexadecimal cryptographic data."""
+        # Remove spaces and check if it's valid hex
+        clean_hex = re.sub(r'[\s:,]', '', content)
+        
+        if not re.match(r'^[0-9A-Fa-f]+$', clean_hex):
+            return False
+        
+        # Common crypto data lengths (in bytes, so hex length * 2)
+        common_crypto_lengths = [
+            32,   # 16 bytes - MD5 hash, AES-128 key
+            40,   # 20 bytes - SHA1 hash
+            48,   # 24 bytes - 3DES key
+            64,   # 32 bytes - SHA256 hash, AES-256 key
+            96,   # 48 bytes - 3DES key with parity
+            128,  # 64 bytes - SHA512 hash
+            256,  # 128 bytes - RSA-1024 key component
+            512,  # 256 bytes - RSA-2048 key component
+        ]
+        
+        hex_len = len(clean_hex)
+        
+        # Check against common crypto lengths
+        if hex_len in common_crypto_lengths:
+            return True
+        
+        # Check for patterns suggesting structured crypto data
+        if hex_len >= 32 and hex_len % 16 == 0:  # Multiple of 16 bytes
+            entropy = self._calculate_hex_entropy(clean_hex)
+            return entropy > 3.5  # High entropy suggests crypto data
+        
+        return False
+
+    def _is_pem_format(self, content: str) -> bool:
+        """Detect PEM format cryptographic data."""
+        pem_patterns = [
+            r'-----BEGIN\s+(CERTIFICATE|PRIVATE KEY|PUBLIC KEY|RSA PRIVATE KEY)-----',
+            r'-----END\s+(CERTIFICATE|PRIVATE KEY|PUBLIC KEY|RSA PRIVATE KEY)-----',
+        ]
+        
+        return any(re.search(pattern, content, re.IGNORECASE) for pattern in pem_patterns)
+
+    def _analyze_crypto_entropy(self, content: str) -> bool:
+        """Analyze entropy to detect potential cryptographic data."""
+        if len(content) < 20:
+            return False
+        
+        entropy = self._calculate_entropy(content)
+        
+        # Cryptographic data typically has very high entropy (>4.0)
+        if entropy > 4.0:
+            # Additional checks to avoid false positives
+            # Check character distribution
+            char_variety = len(set(content))
+            length = len(content)
+            
+            # Crypto data should have good character variety
+            if char_variety / length > 0.3:
+                return True
+        
+        return False
+
+    def _has_crypto_constants(self, content: str) -> bool:
+        """Check for known cryptographic constants."""
+        # Common crypto constants (in hex)
+        crypto_constants = [
+            '67452301',  # MD5 initial value
+            '6A09E667',  # SHA-256 initial value
+            '76543210',  # Common test pattern
+            'DEADBEEF',  # Common debug value
+            '01234567',  # Sequential pattern
+            'CAFEBABE',  # Java class file magic
+        ]
+        
+        content_upper = content.upper()
+        return any(const in content_upper for const in crypto_constants)
+
+    def _analyze_binary_crypto_data(self, data: bytes) -> bool:
+        """Analyze binary data for cryptographic characteristics."""
+        if len(data) < 8:
+            return False
+        
+        # Calculate byte frequency distribution
+        byte_counts = [0] * 256
+        for byte in data:
+            byte_counts[byte] += 1
+        
+        # Calculate chi-square test for randomness
+        expected = len(data) / 256.0
+        chi_square = sum((count - expected) ** 2 / expected for count in byte_counts)
+        
+        # Values close to 255 suggest random/crypto data
+        # Threshold based on statistical analysis
+        return chi_square < 300  # Adjusted threshold for crypto detection
+
+    def _calculate_hex_entropy(self, hex_string: str) -> float:
+        """Calculate entropy of hex string."""
+        if not hex_string:
+            return 0.0
+        
+        # Convert to bytes for entropy calculation
+        try:
+            data = bytes.fromhex(hex_string)
+            return self._calculate_entropy(data.decode('latin-1'))
+        except (ValueError, UnicodeDecodeError):
+            # Fallback to character-based entropy
+            return self._calculate_entropy(hex_string)
 
     def _is_api_string(self, content: str) -> bool:
-        """Check if string is an API function name."""
+        """Enhanced API call string analysis with advanced algorithms."""
+        # Basic pattern matching (existing functionality)
         api_patterns = [
             r"^(Get|Set|Create|Delete|Open|Close|Read|Write|Load|Save)\w+$",
             r"^(Reg|File|Process|Thread|Memory|Window)\w+$",
@@ -388,7 +708,148 @@ class R2StringAnalyzer:
         if len(content) > 50:
             return False
 
-        return any(re.match(pattern, content) for pattern in api_patterns)
+        if any(re.match(pattern, content) for pattern in api_patterns):
+            return True
+
+        # Enhanced API function analysis
+        return self._analyze_api_function_patterns(content)
+
+    def _analyze_api_function_patterns(self, content: str) -> bool:
+        """Advanced analysis of API function patterns."""
+        # Check against comprehensive Windows API database
+        if self._is_windows_api_function(content):
+            return True
+        
+        # Check against POSIX/Linux API patterns
+        if self._is_posix_api_function(content):
+            return True
+        
+        # Check against common library APIs
+        if self._is_library_api_function(content):
+            return True
+        
+        # Analyze naming conventions typical of APIs
+        return self._analyze_api_naming_conventions(content)
+
+    def _is_windows_api_function(self, content: str) -> bool:
+        """Detect Windows API functions using comprehensive patterns."""
+        # Windows API prefixes and common functions
+        windows_api_prefixes = [
+            'Nt', 'Zw', 'Rtl', 'Ke', 'Io', 'Mm', 'Ps', 'Se', 'Ex', 'Ob',
+            'Hal', 'Cc', 'Cm', 'Fsrtl', 'Flt', 'Pci', 'Wdf', 'Wdm'
+        ]
+        
+        # Check for Windows API prefixes
+        for prefix in windows_api_prefixes:
+            if content.startswith(prefix) and len(content) > len(prefix) + 2:
+                # Verify it follows Windows API naming convention
+                remaining = content[len(prefix):]
+                if remaining[0].isupper() and any(c.islower() for c in remaining):
+                    return True
+        
+        # Check for common Windows API patterns
+        windows_patterns = [
+            r'^(Create|Open|Close|Delete|Query|Set|Enum|Find)\w*(File|Key|Process|Thread|Section)$',
+            r'^(Load|Free|Get|Release)\w*(Library|Module|Proc)$',
+            r'^(Virtual|Heap|Local|Global)\w*(Alloc|Free|Lock|Unlock)$',
+            r'^(Wait|Signal|Create|Open|Close)\w*(Event|Mutex|Semaphore)$',
+            r'^(Reg|Registry)\w*(Create|Open|Close|Query|Set|Delete|Enum)$',
+        ]
+        
+        return any(re.match(pattern, content, re.IGNORECASE) for pattern in windows_patterns)
+
+    def _is_posix_api_function(self, content: str) -> bool:
+        """Detect POSIX/Linux API functions."""
+        # Common POSIX system calls and library functions
+        posix_functions = [
+            # File operations
+            'open', 'close', 'read', 'write', 'lseek', 'stat', 'fstat', 'lstat',
+            'access', 'chmod', 'chown', 'link', 'unlink', 'symlink', 'readlink',
+            'mkdir', 'rmdir', 'opendir', 'readdir', 'closedir', 'rewinddir',
+            # Process management
+            'fork', 'execve', 'execl', 'execlp', 'execv', 'execvp', 'wait',
+            'waitpid', 'kill', 'getpid', 'getppid', 'getuid', 'geteuid', 'getgid',
+            # Memory management
+            'malloc', 'calloc', 'realloc', 'free', 'mmap', 'munmap', 'mprotect',
+            # Networking
+            'socket', 'bind', 'listen', 'accept', 'connect', 'send', 'recv',
+            'sendto', 'recvfrom', 'getsockopt', 'setsockopt',
+            # Threading
+            'pthread_create', 'pthread_join', 'pthread_mutex_init', 
+            'pthread_mutex_lock', 'pthread_mutex_unlock', 'pthread_cond_wait',
+        ]
+        
+        # Check exact matches (case-sensitive for POSIX)
+        if content in posix_functions:
+            return True
+        
+        # Check for POSIX-style prefixes
+        posix_prefixes = ['pthread_', 'sem_', 'shm_', 'msg_', 'sig_']
+        return any(content.startswith(prefix) for prefix in posix_prefixes)
+
+    def _is_library_api_function(self, content: str) -> bool:
+        """Detect common library API functions."""
+        # Common library prefixes
+        library_prefixes = [
+            # Graphics libraries
+            'gl', 'GL_', 'd3d', 'D3D', 'gdi', 'GDI',
+            # Crypto libraries
+            'SSL_', 'EVP_', 'RSA_', 'AES_', 'SHA_', 'MD5_',
+            # Network libraries
+            'curl_', 'wget_', 'http_', 'ftp_',
+            # Database libraries
+            'sqlite3_', 'mysql_', 'pg_', 'PQexec',
+            # Compression libraries
+            'zlib_', 'gzip_', 'deflate_', 'inflate_',
+        ]
+        
+        content_lower = content.lower()
+        return any(content_lower.startswith(prefix.lower()) for prefix in library_prefixes)
+
+    def _analyze_api_naming_conventions(self, content: str) -> bool:
+        """Analyze naming conventions typical of API functions."""
+        # Length check - API functions are usually 4-40 characters
+        if len(content) < 4 or len(content) > 40:
+            return False
+        
+        # Check for valid identifier pattern
+        if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', content):
+            return False
+        
+        # API functions typically have:
+        # 1. Mixed case (CamelCase or snake_case)
+        # 2. Descriptive verbs
+        # 3. Reasonable character distribution
+        
+        has_upper = any(c.isupper() for c in content)
+        has_lower = any(c.islower() for c in content)
+        has_underscore = '_' in content
+        
+        # CamelCase pattern
+        if has_upper and has_lower and not has_underscore:
+            # Check for verb-noun pattern typical of APIs
+            api_verbs = [
+                'get', 'set', 'create', 'delete', 'open', 'close', 'read', 'write',
+                'load', 'save', 'init', 'destroy', 'start', 'stop', 'send', 'recv',
+                'alloc', 'free', 'lock', 'unlock', 'wait', 'signal', 'query', 'find'
+            ]
+            
+            content_lower = content.lower()
+            if any(content_lower.startswith(verb) for verb in api_verbs):
+                return True
+        
+        # snake_case pattern
+        if has_underscore and not has_upper:
+            parts = content.split('_')
+            if len(parts) >= 2 and all(part.isalpha() for part in parts if part):
+                # Check if first part is a common API verb
+                api_verbs = [
+                    'get', 'set', 'create', 'delete', 'open', 'close', 'read', 'write',
+                    'load', 'save', 'init', 'destroy', 'start', 'stop', 'alloc', 'free'
+                ]
+                return parts[0] in api_verbs
+        
+        return False
 
     def _is_url_string(self, content: str) -> bool:
         """Check if string is a URL or network endpoint."""

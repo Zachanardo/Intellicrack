@@ -1077,7 +1077,7 @@ const wasmProtectionBypass = {
                 return 'LICENSED';
             case 'null':
             case 'void':
-                return;
+                return null;
             default:
                 return 0;
             }
@@ -1287,6 +1287,7 @@ const wasmProtectionBypass = {
                     if (originalOnMessage) {
                         return originalOnMessage.call(this, event);
                     }
+                    return undefined;
                 };
 
                 return worker;

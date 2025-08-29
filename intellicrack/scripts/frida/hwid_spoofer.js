@@ -173,7 +173,15 @@ class HwidSpooferEnhanced {
                                     }
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'hwid_spoofer',
+                                action: 'wmi_query_read_failed',
+                                address: ptr.toString(),
+                                error: e.toString()
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {

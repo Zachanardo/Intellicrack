@@ -18,7 +18,7 @@ for (let name of targets) {
                 return 1;
             }, 'int', []));
         }
-    } catch (e) {
-        console.log('[-] Failed to patch: ' + name);
+    } catch (error) {
+        console.log('[-] Failed to patch: ' + name + ' - Error: ' + error.message);
     }
 }

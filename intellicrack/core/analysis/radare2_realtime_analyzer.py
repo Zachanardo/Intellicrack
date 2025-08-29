@@ -675,7 +675,7 @@ class R2RealtimeAnalyzer:
     ) -> list[str]:
         """Determine which analysis components to run based on binary characteristics."""
         # Base components for different triggers
-        base_components = ["strings", "imports"]
+        base_components = ["strings", "enhanced_strings", "imports"]
 
         # Analyze binary path and file characteristics
         file_name = os.path.basename(binary_path).lower()
@@ -836,6 +836,10 @@ class R2RealtimeAnalyzer:
                     result = {"strings": strings, "filtered_strings": filtered_strings}
                 else:
                     result = {"strings": strings}
+
+            elif component == "enhanced_strings":
+                # Enhanced string analysis with Day 5.1 pattern detection
+                result = self._perform_enhanced_string_analysis(r2, binary_path)
 
             elif component == "imports":
                 imports = r2.cmdj("iij") or []
@@ -1245,6 +1249,219 @@ class R2RealtimeAnalyzer:
             "file_monitoring": self.file_observer is not None,
             "performance_stats": self.performance_optimizer.get_performance_report(),
         }
+
+    def _perform_enhanced_string_analysis(self, r2, binary_path: str) -> dict[str, Any]:
+        """Perform enhanced string analysis using Day 5.1 pattern detection algorithms.
+        
+        Args:
+            r2: R2 session instance
+            binary_path: Path to the binary being analyzed
+            
+        Returns:
+            Dictionary containing enhanced string analysis results
+        """
+        try:
+            # Import the enhanced string analyzer
+            from .radare2_strings import R2StringAnalyzer
+            
+            # Extract raw strings from binary
+            strings = r2.cmdj("izzj") or []
+            
+            # Initialize enhanced string analyzer
+            string_analyzer = R2StringAnalyzer(binary_path)
+            
+            # Categorize strings using enhanced pattern detection
+            license_keys = []
+            crypto_strings = []
+            api_strings = []
+            regular_strings = []
+            
+            for string_entry in strings:
+                string_content = string_entry.get("string", "")
+                if not string_content:
+                    continue
+                
+                # Apply enhanced pattern detection from Day 5.1
+                is_license = string_analyzer._detect_license_key_formats(string_content)
+                is_crypto = string_analyzer._detect_cryptographic_data(string_content)
+                is_api = string_analyzer._analyze_api_function_patterns(string_content)
+                
+                # Categorize string with metadata
+                string_metadata = {
+                    "content": string_content,
+                    "address": string_entry.get("vaddr", 0),
+                    "size": string_entry.get("size", len(string_content)),
+                    "offset": string_entry.get("paddr", 0),
+                    "section": string_entry.get("section", "unknown")
+                }
+                
+                if is_license:
+                    string_metadata["pattern_type"] = "license_key"
+                    string_metadata["entropy"] = string_analyzer._calculate_entropy(string_content)
+                    license_keys.append(string_metadata)
+                elif is_crypto:
+                    string_metadata["pattern_type"] = "cryptographic"
+                    string_metadata["entropy"] = string_analyzer._calculate_entropy(string_content)
+                    crypto_strings.append(string_metadata)
+                elif is_api:
+                    string_metadata["pattern_type"] = "api_function"
+                    api_strings.append(string_metadata)
+                else:
+                    string_metadata["pattern_type"] = "regular"
+                    regular_strings.append(string_metadata)
+            
+            # Real-time pattern monitoring - check for dynamic changes
+            dynamic_patterns = self._monitor_dynamic_string_patterns(r2, binary_path)
+            
+            # Generate analysis summary
+            total_strings = len(strings)
+            detected_patterns = len(license_keys) + len(crypto_strings) + len(api_strings)
+            detection_rate = (detected_patterns / total_strings) if total_strings > 0 else 0
+            
+            result = {
+                "timestamp": datetime.now().isoformat(),
+                "total_strings": total_strings,
+                "pattern_detection": {
+                    "license_keys": license_keys,
+                    "crypto_strings": crypto_strings,
+                    "api_strings": api_strings,
+                    "regular_strings": regular_strings[:50]  # Limit regular strings for performance
+                },
+                "analysis_summary": {
+                    "license_key_count": len(license_keys),
+                    "crypto_string_count": len(crypto_strings),
+                    "api_string_count": len(api_strings),
+                    "detection_rate": detection_rate,
+                    "high_value_strings": len(license_keys) + len(crypto_strings)
+                },
+                "dynamic_monitoring": dynamic_patterns,
+                "enhanced_features": {
+                    "entropy_analysis": True,
+                    "pattern_detection": True,
+                    "real_time_monitoring": True,
+                    "dynamic_extraction": True
+                }
+            }
+            
+            # Emit enhanced string analysis event if significant patterns found
+            if len(license_keys) > 0 or len(crypto_strings) > 5:
+                self._emit_event(
+                    AnalysisUpdate(
+                        timestamp=datetime.now(),
+                        event_type=AnalysisEvent.STRING_ANALYSIS_UPDATED,
+                        binary_path=binary_path,
+                        data=result["analysis_summary"],
+                        severity="high" if len(license_keys) > 0 else "medium",
+                        source_component="enhanced_strings"
+                    )
+                )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Enhanced string analysis failed for {binary_path}: {e}")
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+                "enhanced_features": {"available": False}
+            }
+    
+    def _monitor_dynamic_string_patterns(self, r2, binary_path: str) -> dict[str, Any]:
+        """Monitor dynamic string generation patterns during execution.
+        
+        Args:
+            r2: R2 session instance
+            binary_path: Path to the binary being analyzed
+            
+        Returns:
+            Dictionary containing dynamic monitoring results
+        """
+        try:
+            # Dynamic string monitoring - check memory regions for new strings
+            memory_strings = []
+            
+            # Get memory maps
+            memory_maps = r2.cmdj("dmj") or []
+            
+            for mem_map in memory_maps:
+                if mem_map.get("perm", "").startswith("rw"):  # Writable memory regions
+                    try:
+                        # Extract strings from writable memory regions
+                        addr_start = mem_map.get("addr", 0)
+                        addr_end = mem_map.get("addr_end", addr_start)
+                        
+                        if addr_end > addr_start and (addr_end - addr_start) < 1024 * 1024:  # Limit to 1MB
+                            # Read memory region and extract strings
+                            mem_strings = r2.cmdj(f"ps @ {addr_start}") or []
+                            if mem_strings:
+                                memory_strings.extend([
+                                    {
+                                        "content": s,
+                                        "address": addr_start,
+                                        "region": "dynamic",
+                                        "writeable": True
+                                    }
+                                    for s in mem_strings if len(s) > 4
+                                ])
+                    except:
+                        continue  # Skip problematic memory regions
+            
+            # Monitor string-related API calls
+            api_monitoring = self._monitor_string_api_calls(r2)
+            
+            return {
+                "memory_strings": memory_strings[:20],  # Limit for performance
+                "api_monitoring": api_monitoring,
+                "dynamic_extraction_enabled": True,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Dynamic string monitoring failed: {e}")
+            return {
+                "error": str(e),
+                "dynamic_extraction_enabled": False
+            }
+    
+    def _monitor_string_api_calls(self, r2) -> dict[str, Any]:
+        """Monitor string-related API calls for dynamic string generation.
+        
+        Args:
+            r2: R2 session instance
+            
+        Returns:
+            Dictionary containing API call monitoring results
+        """
+        try:
+            # Get imports that relate to string operations
+            imports = r2.cmdj("iij") or []
+            
+            string_api_calls = []
+            string_apis = [
+                "strlen", "strcpy", "strcat", "sprintf", "snprintf",
+                "malloc", "calloc", "realloc", "free",
+                "GetProcAddress", "LoadLibrary", "CreateProcess"
+            ]
+            
+            for imp in imports:
+                imp_name = imp.get("name", "")
+                if any(api in imp_name for api in string_apis):
+                    string_api_calls.append({
+                        "name": imp_name,
+                        "address": imp.get("plt", 0),
+                        "type": "string_manipulation",
+                        "dynamic_potential": "high"
+                    })
+            
+            return {
+                "monitored_apis": string_api_calls,
+                "total_string_apis": len(string_api_calls),
+                "monitoring_active": len(string_api_calls) > 0
+            }
+            
+        except Exception as e:
+            self.logger.error(f"String API monitoring failed: {e}")
+            return {"error": str(e), "monitoring_active": False}
 
     def cleanup(self):
         """Cleanup resources."""

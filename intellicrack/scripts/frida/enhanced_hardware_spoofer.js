@@ -42,16 +42,16 @@
  */
 
 const EnhancedHardwareSpoofer = {
-    name: "Enhanced Hardware Spoofer v3.0.0",
-    description: "Ultra-robust hardware fingerprinting bypass with TPM, UEFI, and quantum-resistant capabilities",
-    version: "3.0.0",
+    name: 'Enhanced Hardware Spoofer v3.0.0',
+    description: 'Ultra-robust hardware fingerprinting bypass with TPM, UEFI, and quantum-resistant capabilities',
+    version: '3.0.0',
 
     // Configuration for spoofed values
     config: {
         cpu: {
-            processorId: "BFEBFBFF000906E9",
-            name: "Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz",
-            vendor: "GenuineIntel",
+            processorId: 'BFEBFBFF000906E9',
+            name: 'Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz',
+            vendor: 'GenuineIntel',
             cores: 8,
             threads: 16,
             family: 6,
@@ -59,23 +59,23 @@ const EnhancedHardwareSpoofer = {
             stepping: 10
         },
         motherboard: {
-            manufacturer: "ASUS",
-            product: "PRIME Z370-A",
-            version: "Rev 1.xx",
-            serialNumber: "190436123456789",
-            uuid: "12345678-1234-5678-9ABC-123456789ABC"
+            manufacturer: 'ASUS',
+            product: 'PRIME Z370-A',
+            version: 'Rev 1.xx',
+            serialNumber: '190436123456789',
+            uuid: '12345678-1234-5678-9ABC-123456789ABC'
         },
         memory: {
             totalPhysical: 17179869184, // 16GB
-            manufacturer: "Kingston",
+            manufacturer: 'Kingston',
             speed: 3200,
-            formFactor: "DIMM"
+            formFactor: 'DIMM'
         },
         storage: {
             drives: [
                 {
-                    model: "Samsung SSD 970 EVO 1TB",
-                    serialNumber: "S466NX0N123456",
+                    model: 'Samsung SSD 970 EVO 1TB',
+                    serialNumber: 'S466NX0N123456',
                     size: 1000204886016
                 }
             ]
@@ -83,17 +83,17 @@ const EnhancedHardwareSpoofer = {
         network: {
             adapters: [
                 {
-                    name: "Intel(R) Ethernet Connection",
-                    macAddress: "00:1B:21:8A:6E:F1",
-                    pnpDeviceId: "PCI\\VEN_8086&DEV_15B8"
+                    name: 'Intel(R) Ethernet Connection',
+                    macAddress: '00:1B:21:8A:6E:F1',
+                    pnpDeviceId: 'PCI\\VEN_8086&DEV_15B8'
                 }
             ]
         },
         bios: {
-            manufacturer: "American Megatrends Inc.",
-            version: "1.20",
-            serialNumber: "AMI12345678",
-            smBiosVersion: "3.2"
+            manufacturer: 'American Megatrends Inc.',
+            version: '1.20',
+            serialNumber: 'AMI12345678',
+            smBiosVersion: '3.2'
         }
     },
 
@@ -103,19 +103,19 @@ const EnhancedHardwareSpoofer = {
 
     onAttach: function(pid) {
         send({
-            type: "info",
-            target: "enhanced_hardware_spoofer",
-            action: "attaching_to_process",
+            type: 'info',
+            target: 'enhanced_hardware_spoofer',
+            action: 'attaching_to_process',
             pid: pid
         });
     },
 
     run: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            message: "Installing ultra-robust v3.0.0 hardware spoofing system..."
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            message: 'Installing ultra-robust v3.0.0 hardware spoofing system...'
         });
 
         // Original v2.0.0 hooks
@@ -156,10 +156,10 @@ const EnhancedHardwareSpoofer = {
     // === WMI QUERY HOOKS ===
     hookWmiQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "wmi_query"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'wmi_query'
         });
 
         // Hook WMI COM interface calls
@@ -172,15 +172,15 @@ const EnhancedHardwareSpoofer = {
         this.hookWmiVariantData();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "wmi_query_hooks_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'wmi_query_hooks_installed'
         });
     },
 
     hookWmiComInterface: function() {
         // Hook CoCreateInstance for WMI objects
-        var coCreateInstance = Module.findExportByName("ole32.dll", "CoCreateInstance");
+        var coCreateInstance = Module.findExportByName('ole32.dll', 'CoCreateInstance');
         if (coCreateInstance) {
             Interceptor.attach(coCreateInstance, {
                 onEnter: function(args) {
@@ -190,11 +190,11 @@ const EnhancedHardwareSpoofer = {
                         var guidStr = this.readGuid(clsid);
 
                         // WbemLocator CLSID: {4590f811-1d3a-11d0-891f-00aa004b2e24}
-                        if (guidStr && guidStr.toLowerCase().includes("4590f811")) {
+                        if (guidStr && guidStr.toLowerCase().includes('4590f811')) {
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "wmi_wbemlocator_creation"
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'wmi_wbemlocator_creation'
                             });
                             this.isWmiCall = true;
                         }
@@ -227,10 +227,10 @@ const EnhancedHardwareSpoofer = {
         // Hook IWbemServices::ExecQuery method
         // This is more complex as it involves COM vtable hooking
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "setting_up_hooks",
-            category: "wbemservices_execquery"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'setting_up_hooks',
+            category: 'wbemservices_execquery'
         });
 
         // We'll hook the actual query parsing instead
@@ -239,13 +239,13 @@ const EnhancedHardwareSpoofer = {
 
     hookWmiQueryParsing: function() {
         // Hook common WMI query functions in wbemprox.dll
-        var wbemprox = Module.findBaseAddress("wbemprox.dll");
+        var wbemprox = Module.findBaseAddress('wbemprox.dll');
         if (wbemprox) {
             send({
-                type: "info",
-                target: "enhanced_hardware_spoofer",
-                action: "wmi_proxy_found",
-                operation: "installing_query_hooks"
+                type: 'info',
+                target: 'enhanced_hardware_spoofer',
+                action: 'wmi_proxy_found',
+                operation: 'installing_query_hooks'
             });
 
             // Hook string comparison functions used in WMI queries
@@ -255,7 +255,7 @@ const EnhancedHardwareSpoofer = {
 
     hookWmiStringComparisons: function() {
         // Hook wide string comparison functions that WMI uses
-        var wcscmp = Module.findExportByName("msvcrt.dll", "wcscmp");
+        var wcscmp = Module.findExportByName('msvcrt.dll', 'wcscmp');
         if (wcscmp) {
             Interceptor.attach(wcscmp, {
                 onEnter: function(args) {
@@ -268,9 +268,9 @@ const EnhancedHardwareSpoofer = {
 
                             if (this.isHwidQuery) {
                                 send({
-                                    type: "detection",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "wmi_hardware_query",
+                                    type: 'detection',
+                                    target: 'enhanced_hardware_spoofer',
+                                    action: 'wmi_hardware_query',
                                     query1: str1,
                                     query2: str2
                                 });
@@ -283,11 +283,11 @@ const EnhancedHardwareSpoofer = {
 
                 isHardwareQuery: function(str) {
                     var hardwareTerms = [
-                        "ProcessorId", "SerialNumber", "UUID", "Manufacturer",
-                        "Model", "Win32_ComputerSystem", "Win32_Processor",
-                        "Win32_BaseBoard", "Win32_BIOS", "Win32_DiskDrive",
-                        "Win32_NetworkAdapter", "Win32_PhysicalMemory",
-                        "MACAddress", "VolumeSerialNumber"
+                        'ProcessorId', 'SerialNumber', 'UUID', 'Manufacturer',
+                        'Model', 'Win32_ComputerSystem', 'Win32_Processor',
+                        'Win32_BaseBoard', 'Win32_BIOS', 'Win32_DiskDrive',
+                        'Win32_NetworkAdapter', 'Win32_PhysicalMemory',
+                        'MACAddress', 'VolumeSerialNumber'
                     ];
 
                     return hardwareTerms.some(term =>
@@ -300,15 +300,15 @@ const EnhancedHardwareSpoofer = {
 
     hookWmiVariantData: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "wmi_variant_data"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'wmi_variant_data'
         });
 
         // Hook VariantClear and VariantCopy for WMI result manipulation
-        var variantClear = Module.findExportByName("oleaut32.dll", "VariantClear");
-        var variantCopy = Module.findExportByName("oleaut32.dll", "VariantCopy");
+        var variantClear = Module.findExportByName('oleaut32.dll', 'VariantClear');
+        var variantCopy = Module.findExportByName('oleaut32.dll', 'VariantCopy');
 
         if (variantCopy) {
             Interceptor.attach(variantCopy, {
@@ -336,9 +336,9 @@ const EnhancedHardwareSpoofer = {
                                 if (spoofed && spoofed !== str) {
                                     this.writeBstr(bstrPtr, spoofed);
                                     send({
-                                        type: "bypass",
-                                        target: "enhanced_hardware_spoofer",
-                                        action: "wmi_value_spoofed",
+                                        type: 'bypass',
+                                        target: 'enhanced_hardware_spoofer',
+                                        action: 'wmi_value_spoofed',
                                         original: str,
                                         spoofed: spoofed
                                     });
@@ -374,7 +374,7 @@ const EnhancedHardwareSpoofer = {
                 writeBstr: function(bstrPtr, newStr) {
                     try {
                         // Allocate new BSTR
-                        var sysAllocString = Module.findExportByName("oleaut32.dll", "SysAllocString");
+                        var sysAllocString = Module.findExportByName('oleaut32.dll', 'SysAllocString');
                         if (sysAllocString) {
                             var newBstr = new NativeFunction(sysAllocString, 'pointer', ['pointer']);
                             var strPtr = Memory.allocUtf16String(newStr);
@@ -382,7 +382,7 @@ const EnhancedHardwareSpoofer = {
 
                             if (result && !result.isNull()) {
                                 // Free old BSTR
-                                var sysFreeString = Module.findExportByName("oleaut32.dll", "SysFreeString");
+                                var sysFreeString = Module.findExportByName('oleaut32.dll', 'SysFreeString');
                                 if (sysFreeString) {
                                     var freeBstr = new NativeFunction(sysFreeString, 'void', ['pointer']);
                                     freeBstr(bstrPtr);
@@ -394,9 +394,9 @@ const EnhancedHardwareSpoofer = {
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "bstr_update_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'bstr_update_failed',
                             error: e.toString()
                         });
                     }
@@ -410,13 +410,13 @@ const EnhancedHardwareSpoofer = {
     // === REGISTRY QUERY HOOKS ===
     hookRegistryQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "registry_query"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'registry_query'
         });
 
-        var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+        var regQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueEx) {
             Interceptor.attach(regQueryValueEx, {
                 onEnter: function(args) {
@@ -439,9 +439,9 @@ const EnhancedHardwareSpoofer = {
 
                 isHardwareRegistryValue: function(valueName) {
                     var hwValues = [
-                        "ProcessorNameString", "Identifier", "VendorIdentifier",
-                        "SystemBiosVersion", "BaseBoardManufacturer", "BaseBoardProduct",
-                        "ComputerHardwareId", "MachineGuid", "HwProfileGuid"
+                        'ProcessorNameString', 'Identifier', 'VendorIdentifier',
+                        'SystemBiosVersion', 'BaseBoardManufacturer', 'BaseBoardProduct',
+                        'ComputerHardwareId', 'MachineGuid', 'HwProfileGuid'
                     ];
 
                     return hwValues.some(val =>
@@ -460,18 +460,18 @@ const EnhancedHardwareSpoofer = {
                             this.dataSize.writeU32(dataSize);
 
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "registry_value_spoofed",
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'registry_value_spoofed',
                                 value_name: this.valueNameStr,
                                 spoofed_value: spoofedValue
                             });
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "registry_spoofing_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'registry_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -480,17 +480,17 @@ const EnhancedHardwareSpoofer = {
                 getSpoofedRegistryValue: function(valueName) {
                     var config = this.parent.parent.config;
 
-                    if (valueName.includes("ProcessorNameString")) {
+                    if (valueName.includes('ProcessorNameString')) {
                         return config.cpu.name;
-                    } else if (valueName.includes("VendorIdentifier")) {
+                    } else if (valueName.includes('VendorIdentifier')) {
                         return config.cpu.vendor;
-                    } else if (valueName.includes("BaseBoardManufacturer")) {
+                    } else if (valueName.includes('BaseBoardManufacturer')) {
                         return config.motherboard.manufacturer;
-                    } else if (valueName.includes("BaseBoardProduct")) {
+                    } else if (valueName.includes('BaseBoardProduct')) {
                         return config.motherboard.product;
-                    } else if (valueName.includes("SystemBiosVersion")) {
+                    } else if (valueName.includes('SystemBiosVersion')) {
                         return config.bios.version;
-                    } else if (valueName.includes("MachineGuid") || valueName.includes("HwProfileGuid")) {
+                    } else if (valueName.includes('MachineGuid') || valueName.includes('HwProfileGuid')) {
                         return config.motherboard.uuid;
                     }
 
@@ -505,13 +505,13 @@ const EnhancedHardwareSpoofer = {
     // === VOLUME INFORMATION HOOKS ===
     hookVolumeInformation: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "volume_information"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'volume_information'
         });
 
-        var getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
+        var getVolumeInfo = Module.findExportByName('kernel32.dll', 'GetVolumeInformationW');
         if (getVolumeInfo) {
             Interceptor.attach(getVolumeInfo, {
                 onLeave: function(retval) {
@@ -521,10 +521,10 @@ const EnhancedHardwareSpoofer = {
                             var spoofedSerial = 0x12345678;
                             serialPtr.writeU32(spoofedSerial);
                             send({
-                                type: "info",
-                                target: "enhanced_hardware_spoofer",
-                                action: "volume_serial_spoofed",
-                                spoofed_value: "0x" + spoofedSerial.toString(16)
+                                type: 'info',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'volume_serial_spoofed',
+                                spoofed_value: '0x' + spoofedSerial.toString(16)
                             });
                         }
                     }
@@ -538,13 +538,13 @@ const EnhancedHardwareSpoofer = {
     // === SYSTEM INFORMATION HOOKS ===
     hookSystemInformation: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "system_information"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'system_information'
         });
 
-        var getSystemInfo = Module.findExportByName("kernel32.dll", "GetSystemInfo");
+        var getSystemInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
         if (getSystemInfo) {
             Interceptor.attach(getSystemInfo, {
                 onLeave: function(retval) {
@@ -554,9 +554,9 @@ const EnhancedHardwareSpoofer = {
                         sysInfo.writeU16(9); // PROCESSOR_ARCHITECTURE_AMD64
                         sysInfo.add(4).writeU32(this.parent.config.cpu.cores); // dwNumberOfProcessors
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "system_processor_spoofed"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'system_processor_spoofed'
                         });
                     }
                 }
@@ -566,7 +566,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook GetComputerNameW
-        var getComputerName = Module.findExportByName("kernel32.dll", "GetComputerNameW");
+        var getComputerName = Module.findExportByName('kernel32.dll', 'GetComputerNameW');
         if (getComputerName) {
             Interceptor.attach(getComputerName, {
                 onLeave: function(retval) {
@@ -575,15 +575,15 @@ const EnhancedHardwareSpoofer = {
                         var sizePtr = this.context.rdx;
 
                         if (nameBuffer && !nameBuffer.isNull()) {
-                            var spoofedName = "DESKTOP-INTEL01";
+                            var spoofedName = 'DESKTOP-INTEL01';
                             nameBuffer.writeUtf16String(spoofedName);
                             if (sizePtr && !sizePtr.isNull()) {
                                 sizePtr.writeU32(spoofedName.length);
                             }
                             send({
-                                type: "info",
-                                target: "enhanced_hardware_spoofer",
-                                action: "computer_name_spoofed",
+                                type: 'info',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'computer_name_spoofed',
                                 spoofed_name: spoofedName
                             });
                         }
@@ -598,10 +598,10 @@ const EnhancedHardwareSpoofer = {
     // === NETWORK ADAPTER HOOKS ===
     hookNetworkAdapters: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "network_adapters"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'network_adapters'
         });
 
         // Hook legacy GetAdaptersInfo (Windows 2000/XP era)
@@ -624,7 +624,7 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookGetAdaptersInfo: function() {
-        var getAdaptersInfo = Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo");
+        var getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
         if (getAdaptersInfo) {
             Interceptor.attach(getAdaptersInfo, {
                 onLeave: function(retval) {
@@ -665,9 +665,9 @@ const EnhancedHardwareSpoofer = {
 
                                 address.writeByteArray(spoofedMac);
                                 send({
-                                    type: "info",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "adapter_mac_spoofed",
+                                    type: 'info',
+                                    target: 'enhanced_hardware_spoofer',
+                                    action: 'adapter_mac_spoofed',
                                     adapter_index: adapterIndex,
                                     spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
                                 });
@@ -684,9 +684,9 @@ const EnhancedHardwareSpoofer = {
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "getadaptersinfo_spoofing_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'getadaptersinfo_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -698,7 +698,7 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookGetAdaptersAddresses: function() {
-        var getAdaptersAddresses = Module.findExportByName("iphlpapi.dll", "GetAdaptersAddresses");
+        var getAdaptersAddresses = Module.findExportByName('iphlpapi.dll', 'GetAdaptersAddresses');
         if (getAdaptersAddresses) {
             Interceptor.attach(getAdaptersAddresses, {
                 onEnter: function(args) {
@@ -739,9 +739,9 @@ const EnhancedHardwareSpoofer = {
 
                                 physicalAddress.writeByteArray(spoofedMac);
                                 send({
-                                    type: "info",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "modern_adapter_mac_spoofed",
+                                    type: 'info',
+                                    target: 'enhanced_hardware_spoofer',
+                                    action: 'modern_adapter_mac_spoofed',
                                     adapter_index: adapterIndex,
                                     spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
                                 });
@@ -764,7 +764,7 @@ const EnhancedHardwareSpoofer = {
                             var description = current.add(0x18).readPointer(); // Description (PWCHAR)
                             if (description && !description.isNull() && adapterIndex < config.network.adapters.length) {
                                 try {
-                                    var newDesc = config.network.adapters[adapterIndex].name + " Adapter";
+                                    var newDesc = config.network.adapters[adapterIndex].name + ' Adapter';
                                     var descBuffer = Memory.allocUtf16String(newDesc);
                                     // Same caveat as above about memory protection
                                 } catch(e) {
@@ -778,9 +778,9 @@ const EnhancedHardwareSpoofer = {
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "getadaptersaddresses_spoofing_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'getadaptersaddresses_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -793,14 +793,14 @@ const EnhancedHardwareSpoofer = {
 
     hookRawSocketAccess: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "raw_socket_mac_access"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'raw_socket_mac_access'
         });
 
         // Hook WSASocket for raw socket creation
-        var wsaSocket = Module.findExportByName("ws2_32.dll", "WSASocketW");
+        var wsaSocket = Module.findExportByName('ws2_32.dll', 'WSASocketW');
         if (wsaSocket) {
             Interceptor.attach(wsaSocket, {
                 onEnter: function(args) {
@@ -813,9 +813,9 @@ const EnhancedHardwareSpoofer = {
                     // Check for raw socket creation (AF_PACKET on Linux, raw sockets on Windows)
                     if (this.type === 3) { // SOCK_RAW
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "raw_socket_detected",
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'raw_socket_detected',
                             socket_type: this.type
                         });
                         this.isRawSocket = true;
@@ -827,7 +827,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook recvfrom for raw packet interception
-        var recvfrom = Module.findExportByName("ws2_32.dll", "recvfrom");
+        var recvfrom = Module.findExportByName('ws2_32.dll', 'recvfrom');
         if (recvfrom) {
             Interceptor.attach(recvfrom, {
                 onLeave: function(retval) {
@@ -858,9 +858,9 @@ const EnhancedHardwareSpoofer = {
                         }
 
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "ethernet_frame_mac_spoofed"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'ethernet_frame_mac_spoofed'
                         });
                     } catch(e) {
                         // Frame spoofing failed - not all packets are Ethernet
@@ -874,10 +874,10 @@ const EnhancedHardwareSpoofer = {
 
     hookWmiNetworkQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "wmi_network_queries"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'wmi_network_queries'
         });
 
         // This integrates with our existing WMI hooks
@@ -892,24 +892,24 @@ const EnhancedHardwareSpoofer = {
         // and our getSpoofedValue function will handle MAC address spoofing
 
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "wmi_network_hooks_integrated"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'wmi_network_hooks_integrated'
         });
     },
 
     hookNdisOidQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "ndis_oid_queries"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'ndis_oid_queries'
         });
 
         // Hook NdisRequest and related NDIS functions for driver-level MAC spoofing
         // This is more advanced and requires hooking into NDIS.sys
 
-        var ndisQueryInformation = Module.findExportByName("ndis.sys", "NdisQueryInformation");
+        var ndisQueryInformation = Module.findExportByName('ndis.sys', 'NdisQueryInformation');
         if (ndisQueryInformation) {
             Interceptor.attach(ndisQueryInformation, {
                 onEnter: function(args) {
@@ -924,18 +924,18 @@ const EnhancedHardwareSpoofer = {
                     if (this.oid === 0x01010102) { // OID_802_3_CURRENT_ADDRESS
                         this.isMacQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "ndis_mac_query_detected",
-                            oid: "0x01010102"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'ndis_mac_query_detected',
+                            oid: '0x01010102'
                         });
                     } else if (this.oid === 0x01010101) { // OID_802_3_PERMANENT_ADDRESS
                         this.isPermanentMacQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "ndis_permanent_mac_query_detected",
-                            oid: "0x01010101"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'ndis_permanent_mac_query_detected',
+                            oid: '0x01010101'
                         });
                     }
                 },
@@ -959,17 +959,17 @@ const EnhancedHardwareSpoofer = {
                             }
 
                             send({
-                                type: "info",
-                                target: "enhanced_hardware_spoofer",
-                                action: "ndis_mac_spoofed",
+                                type: 'info',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'ndis_mac_spoofed',
                                 spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
                             });
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "ndis_mac_spoofing_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'ndis_mac_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -979,23 +979,23 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['NdisQueryInformation'] = true;
         } else {
             send({
-                type: "warning",
-                target: "enhanced_hardware_spoofer",
-                action: "ndis_fallback_usermode"
+                type: 'warning',
+                target: 'enhanced_hardware_spoofer',
+                action: 'ndis_fallback_usermode'
             });
         }
     },
 
     hookNetworkRegistryAccess: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hooks",
-            category: "network_registry_access"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hooks',
+            category: 'network_registry_access'
         });
 
         // Hook registry queries for network adapter information
-        var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+        var regQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueEx) {
             // We already have a general registry hook, but let's add network-specific logic
             var originalHook = this.hooksInstalled['RegQueryValueExW'];
@@ -1022,8 +1022,8 @@ const EnhancedHardwareSpoofer = {
 
                     isNetworkRegistryValue: function(valueName) {
                         var networkValues = [
-                            "NetworkAddress", "PermanentAddress", "MAC", "PhysicalAddress",
-                            "AdapterGUID", "NetCfgInstanceId", "ComponentId", "Description"
+                            'NetworkAddress', 'PermanentAddress', 'MAC', 'PhysicalAddress',
+                            'AdapterGUID', 'NetCfgInstanceId', 'ComponentId', 'Description'
                         ];
 
                         return networkValues.some(val =>
@@ -1042,18 +1042,18 @@ const EnhancedHardwareSpoofer = {
                                 this.dataSize.writeU32(dataSize);
 
                                 send({
-                                    type: "bypass",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "network_registry_spoofed",
+                                    type: 'bypass',
+                                    target: 'enhanced_hardware_spoofer',
+                                    action: 'network_registry_spoofed',
                                     value_name: this.valueNameStr,
                                     spoofed_value: spoofedValue
                                 });
                             }
                         } catch(e) {
                             send({
-                                type: "error",
-                                target: "enhanced_hardware_spoofer",
-                                action: "network_registry_spoofing_error",
+                                type: 'error',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'network_registry_spoofing_error',
                                 error: e.toString()
                             });
                         }
@@ -1062,12 +1062,12 @@ const EnhancedHardwareSpoofer = {
                     getSpoofedNetworkRegistryValue: function(valueName) {
                         var config = this.parent.parent.parent.config;
 
-                        if (valueName.toLowerCase().includes("networkaddress") ||
-                            valueName.toLowerCase().includes("mac")) {
+                        if (valueName.toLowerCase().includes('networkaddress') ||
+                            valueName.toLowerCase().includes('mac')) {
                             return config.network.adapters[0].macAddress.replace(/:/g, '');
-                        } else if (valueName.toLowerCase().includes("description")) {
+                        } else if (valueName.toLowerCase().includes('description')) {
                             return config.network.adapters[0].name;
-                        } else if (valueName.toLowerCase().includes("componentid")) {
+                        } else if (valueName.toLowerCase().includes('componentid')) {
                             return config.network.adapters[0].pnpDeviceId;
                         }
 
@@ -1080,7 +1080,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook registry enumeration for network adapters
-        var regEnumKeyEx = Module.findExportByName("advapi32.dll", "RegEnumKeyExW");
+        var regEnumKeyEx = Module.findExportByName('advapi32.dll', 'RegEnumKeyExW');
         if (regEnumKeyEx) {
             Interceptor.attach(regEnumKeyEx, {
                 onEnter: function(args) {
@@ -1097,9 +1097,9 @@ const EnhancedHardwareSpoofer = {
                         // Check if this is a network adapter key enumeration
                         if (keyName && this.isNetworkAdapterKey(keyName)) {
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "network_adapter_key_enumeration",
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'network_adapter_key_enumeration',
                                 key_name: keyName
                             });
                             // The actual spoofing happens when values are queried
@@ -1110,9 +1110,9 @@ const EnhancedHardwareSpoofer = {
                 isNetworkAdapterKey: function(keyName) {
                     // Network adapter keys often contain GUIDs or specific patterns
                     return keyName.match(/^\{[0-9A-F-]{36}\}$/i) || // GUID pattern
-                           keyName.includes("Ethernet") ||
-                           keyName.includes("WiFi") ||
-                           keyName.includes("Wireless");
+                           keyName.includes('Ethernet') ||
+                           keyName.includes('WiFi') ||
+                           keyName.includes('Wireless');
                 }
             });
 
@@ -1123,9 +1123,9 @@ const EnhancedHardwareSpoofer = {
     // === CPUID INSTRUCTION HOOKS ===
     hookCpuidInstructions: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_cpuid_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_cpuid_hooks'
         });
 
         // Hook both wrapper functions and direct CPUID usage
@@ -1136,7 +1136,7 @@ const EnhancedHardwareSpoofer = {
 
     hookCpuidWrappers: function() {
         // Hook IsProcessorFeaturePresent which uses CPUID internally
-        var isProcessorFeature = Module.findExportByName("kernel32.dll", "IsProcessorFeaturePresent");
+        var isProcessorFeature = Module.findExportByName('kernel32.dll', 'IsProcessorFeaturePresent');
         if (isProcessorFeature) {
             Interceptor.attach(isProcessorFeature, {
                 onLeave: function(retval) {
@@ -1146,10 +1146,10 @@ const EnhancedHardwareSpoofer = {
                     if (feature === 10) { // PF_NX_ENABLED
                         retval.replace(1);
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "processor_feature_spoofed",
-                            feature: "NX_ENABLED"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'processor_feature_spoofed',
+                            feature: 'NX_ENABLED'
                         });
                     }
                 }
@@ -1159,7 +1159,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook GetSystemInfo for processor architecture information
-        var getNativeSystemInfo = Module.findExportByName("kernel32.dll", "GetNativeSystemInfo");
+        var getNativeSystemInfo = Module.findExportByName('kernel32.dll', 'GetNativeSystemInfo');
         if (getNativeSystemInfo) {
             Interceptor.attach(getNativeSystemInfo, {
                 onLeave: function(retval) {
@@ -1181,9 +1181,9 @@ const EnhancedHardwareSpoofer = {
                         sysInfo.add(16).writePointer(ptr(mask));
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "native_system_info_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'native_system_info_spoofed'
                         });
                     }
                 }
@@ -1195,9 +1195,9 @@ const EnhancedHardwareSpoofer = {
 
     hookDirectCpuidUsage: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_direct_cpuid_usage_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_direct_cpuid_usage_hooks'
         });
 
         // Hook __cpuid and __cpuidex intrinsics used by MSVC compiled code
@@ -1237,16 +1237,16 @@ const EnhancedHardwareSpoofer = {
         try {
             // CPUID instruction opcodes to search for:
             // 0x0F 0xA2 - CPUID instruction
-            var cpuidPattern = "0f a2"; // CPUID opcode
+            var cpuidPattern = '0f a2'; // CPUID opcode
 
             var matches = Memory.scanSync(module.base, module.size, cpuidPattern);
 
             for (var j = 0; j < Math.min(matches.length, 10); j++) { // Limit to first 10 matches
                 var match = matches[j];
                 send({
-                    type: "detection",
-                    target: "enhanced_hardware_spoofer",
-                    action: "cpuid_instruction_found",
+                    type: 'detection',
+                    target: 'enhanced_hardware_spoofer',
+                    action: 'cpuid_instruction_found',
                     address: match.address.toString(),
                     module: module.name
                 });
@@ -1275,9 +1275,9 @@ const EnhancedHardwareSpoofer = {
                     var subleaf = this.context.ecx.toInt32();
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "cpuid_called",
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'cpuid_called',
                         eax: leaf.toString(16),
                         ecx: subleaf.toString(16),
                         module: moduleName
@@ -1296,33 +1296,33 @@ const EnhancedHardwareSpoofer = {
                     var config = this.parent.parent.parent.config;
 
                     switch(leaf) {
-                        case 0x00000001: // Basic CPU Information
-                            this.spoofBasicCpuInfo(config);
-                            break;
+                    case 0x00000001: // Basic CPU Information
+                        this.spoofBasicCpuInfo(config);
+                        break;
 
-                        case 0x00000003: // Processor Serial Number (deprecated)
-                            this.spoofProcessorSerial(config);
-                            break;
+                    case 0x00000003: // Processor Serial Number (deprecated)
+                        this.spoofProcessorSerial(config);
+                        break;
 
-                        case 0x80000002: // Extended CPU Name String (part 1)
-                        case 0x80000003: // Extended CPU Name String (part 2)
-                        case 0x80000004: // Extended CPU Name String (part 3)
-                            this.spoofCpuNameString(leaf, config);
-                            break;
+                    case 0x80000002: // Extended CPU Name String (part 1)
+                    case 0x80000003: // Extended CPU Name String (part 2)
+                    case 0x80000004: // Extended CPU Name String (part 3)
+                        this.spoofCpuNameString(leaf, config);
+                        break;
 
-                        case 0x80000008: // Virtual and Physical Address Sizes
-                            this.spoofAddressSizes();
-                            break;
+                    case 0x80000008: // Virtual and Physical Address Sizes
+                        this.spoofAddressSizes();
+                        break;
 
-                        default:
-                            // For unknown leaves, just log them
-                            send({
-                                type: "info",
-                                target: "enhanced_hardware_spoofer",
-                                action: "cpuid_leaf_not_handled",
-                                leaf: "0x" + leaf.toString(16)
-                            });
-                            break;
+                    default:
+                        // For unknown leaves, just log them
+                        send({
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'cpuid_leaf_not_handled',
+                            leaf: '0x' + leaf.toString(16)
+                        });
+                        break;
                     }
                 },
 
@@ -1347,10 +1347,10 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr(stdFeatures);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "basic_cpu_info_spoofed",
-                        leaf: "1"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'basic_cpu_info_spoofed',
+                        leaf: '1'
                     });
                 },
 
@@ -1363,10 +1363,10 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr(0);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "processor_serial_spoofed",
-                        leaf: "3"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'processor_serial_spoofed',
+                        leaf: '3'
                     });
                 },
 
@@ -1390,10 +1390,10 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr((chars[15] << 24) | (chars[14] << 16) | (chars[13] << 8) | chars[12]);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "cpu_name_string_spoofed",
-                        leaf: "0x" + leaf.toString(16),
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'cpu_name_string_spoofed',
+                        leaf: '0x' + leaf.toString(16),
                         segment: nameSegment.trim()
                     });
                 },
@@ -1411,18 +1411,18 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr(0);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "address_sizes_spoofed",
-                        leaf: "0x80000008"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'address_sizes_spoofed',
+                        leaf: '0x80000008'
                     });
                 }
             });
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "cpuid_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'cpuid_hook_failed',
                 address: address.toString(),
                 error: e.toString()
             });
@@ -1431,9 +1431,9 @@ const EnhancedHardwareSpoofer = {
 
     hookAssemblyCpuidPatterns: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "hooking_assembly_cpuid_patterns"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'hooking_assembly_cpuid_patterns'
         });
 
         // Hook common assembly patterns that precede CPUID usage
@@ -1458,19 +1458,19 @@ const EnhancedHardwareSpoofer = {
 
             try {
                 // Look for: mov eax, 1; cpuid pattern (checking for basic CPU info)
-                var pattern1 = "b8 01 00 00 00 0f a2"; // mov eax, 1; cpuid
+                var pattern1 = 'b8 01 00 00 00 0f a2'; // mov eax, 1; cpuid
                 var matches1 = Memory.scanSync(module.base, module.size, pattern1);
 
                 for (var j = 0; j < Math.min(matches1.length, 5); j++) {
-                    this.hookCpuidSequence(matches1[j].address, module.name, "basic_info");
+                    this.hookCpuidSequence(matches1[j].address, module.name, 'basic_info');
                 }
 
                 // Look for: mov eax, 0x80000002; cpuid pattern (CPU name string)
-                var pattern2 = "b8 02 00 00 80 0f a2"; // mov eax, 0x80000002; cpuid
+                var pattern2 = 'b8 02 00 00 80 0f a2'; // mov eax, 0x80000002; cpuid
                 var matches2 = Memory.scanSync(module.base, module.size, pattern2);
 
                 for (var k = 0; k < Math.min(matches2.length, 5); k++) {
-                    this.hookCpuidSequence(matches2[k].address, module.name, "name_string");
+                    this.hookCpuidSequence(matches2[k].address, module.name, 'name_string');
                 }
 
             } catch(e) {
@@ -1485,9 +1485,9 @@ const EnhancedHardwareSpoofer = {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "cpuid_sequence_detected",
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'cpuid_sequence_detected',
                         sequence_type: sequenceType,
                         address: address.toString(),
                         module: moduleName
@@ -1497,17 +1497,17 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     // The CPUID instruction hooks will handle the actual spoofing
                     send({
-                        type: "info",
-                        target: "enhanced_hardware_spoofer",
-                        action: "cpuid_sequence_completed"
+                        type: 'info',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'cpuid_sequence_completed'
                     });
                 }
             });
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "cpuid_sequence_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'cpuid_sequence_hook_failed',
                 error: e.toString()
             });
         }
@@ -1515,9 +1515,9 @@ const EnhancedHardwareSpoofer = {
 
     hookLowLevelProcessorQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_low_level_processor_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_low_level_processor_hooks'
         });
 
         // Hook RDTSC (Read Time-Stamp Counter) which is sometimes used for timing
@@ -1542,7 +1542,7 @@ const EnhancedHardwareSpoofer = {
 
             try {
                 // RDTSC instruction: 0x0F 0x31
-                var rdtscPattern = "0f 31";
+                var rdtscPattern = '0f 31';
                 var matches = Memory.scanSync(module.base, module.size, rdtscPattern);
 
                 for (var j = 0; j < Math.min(matches.length, 5); j++) {
@@ -1571,18 +1571,18 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr((currentTime >>> 32) & 0xFFFFFFFF);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "rdtsc_spoofed",
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'rdtsc_spoofed',
                         module: moduleName
                     });
                 }
             });
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "rdtsc_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'rdtsc_hook_failed',
                 error: e.toString()
             });
         }
@@ -1593,21 +1593,21 @@ const EnhancedHardwareSpoofer = {
         // These are privileged instructions but some applications might try them
 
         send({
-            type: "info",
-            target: "enhanced_hardware_spoofer",
-            action: "msr_access_hooks_installed"
+            type: 'info',
+            target: 'enhanced_hardware_spoofer',
+            action: 'msr_access_hooks_installed'
         });
     },
 
     hookCpuidRelatedFunctions: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_cpuid_related_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_cpuid_related_hooks'
         });
 
         // Hook QueryPerformanceCounter which might be used alongside CPUID
-        var queryPerfCounter = Module.findExportByName("kernel32.dll", "QueryPerformanceCounter");
+        var queryPerfCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
         if (queryPerfCounter) {
             Interceptor.attach(queryPerfCounter, {
                 onLeave: function(retval) {
@@ -1620,9 +1620,9 @@ const EnhancedHardwareSpoofer = {
 
                             counterPtr.writeU64(currentCounter);
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "query_performance_counter_spoofed"
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'query_performance_counter_spoofed'
                             });
                         }
                     }
@@ -1633,7 +1633,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook GetTickCount64 for consistent timing
-        var getTickCount64 = Module.findExportByName("kernel32.dll", "GetTickCount64");
+        var getTickCount64 = Module.findExportByName('kernel32.dll', 'GetTickCount64');
         if (getTickCount64) {
             var baseTickCount = Date.now();
 
@@ -1649,13 +1649,13 @@ const EnhancedHardwareSpoofer = {
     // === DEVICE QUERY HOOKS ===
     hookDeviceQueries: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_device_query_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_device_query_hooks'
         });
 
         // Hook SetupDiGetDeviceRegistryProperty for hardware enumeration
-        var setupDiGetDeviceProperty = Module.findExportByName("setupapi.dll", "SetupDiGetDeviceRegistryPropertyW");
+        var setupDiGetDeviceProperty = Module.findExportByName('setupapi.dll', 'SetupDiGetDeviceRegistryPropertyW');
         if (setupDiGetDeviceProperty) {
             Interceptor.attach(setupDiGetDeviceProperty, {
                 onEnter: function(args) {
@@ -1690,17 +1690,17 @@ const EnhancedHardwareSpoofer = {
 
                             Memory.copy(this.buffer, utf16Data, Math.min(dataSize, this.bufferSize.readU32()));
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "device_property_spoofed",
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'device_property_spoofed',
                                 value: spoofedValue
                             });
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "device_property_spoof_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'device_property_spoof_error',
                             error: e.toString()
                         });
                     }
@@ -1717,12 +1717,12 @@ const EnhancedHardwareSpoofer = {
     // === DEVICEIOCONTROL HOOKS ===
     hookDeviceIoControl: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_deviceiocontrol_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_deviceiocontrol_hooks'
         });
 
-        var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
+        var deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
         if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
                 onEnter: function(args) {
@@ -1740,10 +1740,10 @@ const EnhancedHardwareSpoofer = {
 
                     if (this.isHardwareQuery) {
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "hardware_ioctl_detected",
-                            ioctl_code: "0x" + this.dwIoControlCode.toString(16).toUpperCase()
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'hardware_ioctl_detected',
+                            ioctl_code: '0x' + this.dwIoControlCode.toString(16).toUpperCase()
                         });
                     }
                 },
@@ -1758,24 +1758,24 @@ const EnhancedHardwareSpoofer = {
                 checkHardwareIoctl: function(ioctl) {
                     // Common IOCTL codes for hardware identification
                     var hardwareIoctls = {
-                        0x70000: "IOCTL_DISK_GET_DRIVE_GEOMETRY",
-                        0x70020: "IOCTL_DISK_GET_PARTITION_INFO",
-                        0x70048: "IOCTL_DISK_GET_DRIVE_LAYOUT",
-                        0x7400C: "IOCTL_DISK_GET_MEDIA_TYPES",
-                        0x74080: "IOCTL_DISK_GET_DRIVE_GEOMETRY_EX",
-                        0x560000: "IOCTL_STORAGE_GET_DEVICE_NUMBER",
-                        0x500048: "IOCTL_STORAGE_QUERY_PROPERTY",
-                        0x2D1080: "IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER",
-                        0x170000: "IOCTL_SCSI_GET_INQUIRY_DATA",
-                        0x41018: "IOCTL_SCSI_GET_ADDRESS",
-                        0x4D008: "IOCTL_SCSI_GET_CAPABILITIES",
-                        0x170040: "IOCTL_SCSI_PASS_THROUGH",
-                        0x170044: "IOCTL_SCSI_PASS_THROUGH_DIRECT",
-                        0x390400: "IOCTL_ATA_PASS_THROUGH",
-                        0x390404: "IOCTL_ATA_PASS_THROUGH_DIRECT",
-                        0x2D0C10: "SMART_GET_VERSION",
-                        0x2D0C14: "SMART_SEND_DRIVE_COMMAND",
-                        0x2D0C18: "SMART_RCV_DRIVE_DATA"
+                        0x70000: 'IOCTL_DISK_GET_DRIVE_GEOMETRY',
+                        0x70020: 'IOCTL_DISK_GET_PARTITION_INFO',
+                        0x70048: 'IOCTL_DISK_GET_DRIVE_LAYOUT',
+                        0x7400C: 'IOCTL_DISK_GET_MEDIA_TYPES',
+                        0x74080: 'IOCTL_DISK_GET_DRIVE_GEOMETRY_EX',
+                        0x560000: 'IOCTL_STORAGE_GET_DEVICE_NUMBER',
+                        0x500048: 'IOCTL_STORAGE_QUERY_PROPERTY',
+                        0x2D1080: 'IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER',
+                        0x170000: 'IOCTL_SCSI_GET_INQUIRY_DATA',
+                        0x41018: 'IOCTL_SCSI_GET_ADDRESS',
+                        0x4D008: 'IOCTL_SCSI_GET_CAPABILITIES',
+                        0x170040: 'IOCTL_SCSI_PASS_THROUGH',
+                        0x170044: 'IOCTL_SCSI_PASS_THROUGH_DIRECT',
+                        0x390400: 'IOCTL_ATA_PASS_THROUGH',
+                        0x390404: 'IOCTL_ATA_PASS_THROUGH_DIRECT',
+                        0x2D0C10: 'SMART_GET_VERSION',
+                        0x2D0C14: 'SMART_SEND_DRIVE_COMMAND',
+                        0x2D0C18: 'SMART_RCV_DRIVE_DATA'
                     };
 
                     return hardwareIoctls.hasOwnProperty(ioctl);
@@ -1786,48 +1786,48 @@ const EnhancedHardwareSpoofer = {
                         var config = this.parent.parent.config;
 
                         switch(this.dwIoControlCode) {
-                            case 0x70000: // IOCTL_DISK_GET_DRIVE_GEOMETRY
-                                this.spoofDriveGeometry();
-                                break;
+                        case 0x70000: // IOCTL_DISK_GET_DRIVE_GEOMETRY
+                            this.spoofDriveGeometry();
+                            break;
 
-                            case 0x70020: // IOCTL_DISK_GET_PARTITION_INFO
-                                this.spoofPartitionInfo();
-                                break;
+                        case 0x70020: // IOCTL_DISK_GET_PARTITION_INFO
+                            this.spoofPartitionInfo();
+                            break;
 
-                            case 0x560000: // IOCTL_STORAGE_GET_DEVICE_NUMBER
-                                this.spoofDeviceNumber();
-                                break;
+                        case 0x560000: // IOCTL_STORAGE_GET_DEVICE_NUMBER
+                            this.spoofDeviceNumber();
+                            break;
 
-                            case 0x500048: // IOCTL_STORAGE_QUERY_PROPERTY
-                                this.spoofStorageProperty();
-                                break;
+                        case 0x500048: // IOCTL_STORAGE_QUERY_PROPERTY
+                            this.spoofStorageProperty();
+                            break;
 
-                            case 0x2D1080: // IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER
-                                this.spoofMediaSerialNumber();
-                                break;
+                        case 0x2D1080: // IOCTL_STORAGE_GET_MEDIA_SERIAL_NUMBER
+                            this.spoofMediaSerialNumber();
+                            break;
 
-                            case 0x170000: // IOCTL_SCSI_GET_INQUIRY_DATA
-                                this.spoofScsiInquiryData();
-                                break;
+                        case 0x170000: // IOCTL_SCSI_GET_INQUIRY_DATA
+                            this.spoofScsiInquiryData();
+                            break;
 
-                            case 0x2D0C18: // SMART_RCV_DRIVE_DATA
-                                this.spoofSmartData();
-                                break;
+                        case 0x2D0C18: // SMART_RCV_DRIVE_DATA
+                            this.spoofSmartData();
+                            break;
 
-                            default:
-                                send({
-                                    type: "info",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "unknown_hardware_ioctl",
-                                    ioctl_code: "0x" + this.dwIoControlCode.toString(16)
-                                });
-                                break;
+                        default:
+                            send({
+                                type: 'info',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'unknown_hardware_ioctl',
+                                ioctl_code: '0x' + this.dwIoControlCode.toString(16)
+                            });
+                            break;
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "deviceiocontrol_spoof_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'deviceiocontrol_spoof_error',
                             error: e.toString()
                         });
                     }
@@ -1854,9 +1854,9 @@ const EnhancedHardwareSpoofer = {
                         geometry.add(20).writeU32(512);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "drive_geometry_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'drive_geometry_spoofed'
                         });
                     }
                 },
@@ -1886,9 +1886,9 @@ const EnhancedHardwareSpoofer = {
                         partition.add(25).writeU8(0x80); // Active
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "partition_information_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'partition_information_spoofed'
                         });
                     }
                 },
@@ -1908,9 +1908,9 @@ const EnhancedHardwareSpoofer = {
                         deviceNumber.add(8).writeU32(1);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "storage_device_number_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'storage_device_number_spoofed'
                         });
                     }
                 },
@@ -1970,10 +1970,10 @@ const EnhancedHardwareSpoofer = {
                     descriptor.add(24).writeU32(serialNumberOffset);
 
                     // Write spoofed strings
-                    var vendor = "Samsung\0";
-                    var model = config.storage.drives[0].model + "\0";
-                    var revision = "1.0\0";
-                    var serial = config.storage.drives[0].serialNumber + "\0";
+                    var vendor = 'Samsung\0';
+                    var model = config.storage.drives[0].model + '\0';
+                    var revision = '1.0\0';
+                    var serial = config.storage.drives[0].serialNumber + '\0';
 
                     descriptor.add(vendorIdOffset).writeAnsiString(vendor);
                     descriptor.add(productIdOffset).writeAnsiString(model);
@@ -1981,9 +1981,9 @@ const EnhancedHardwareSpoofer = {
                     descriptor.add(serialNumberOffset).writeAnsiString(serial);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "storage_device_descriptor_spoofed",
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'storage_device_descriptor_spoofed',
                         model: model
                     });
                 },
@@ -2001,9 +2001,9 @@ const EnhancedHardwareSpoofer = {
                         serialData.add(4).writeAnsiString(config.storage.drives[0].serialNumber);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "media_serial_number_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'media_serial_number_spoofed',
                             serial_number: config.storage.drives[0].serialNumber
                         });
                     }
@@ -2036,7 +2036,7 @@ const EnhancedHardwareSpoofer = {
                         inquiry.add(7).writeU8(0x00);
 
                         // Vendor identification (8 bytes)
-                        var vendor = "Samsung ";
+                        var vendor = 'Samsung ';
                         inquiry.add(8).writeAnsiString(vendor);
 
                         // Product identification (16 bytes)
@@ -2044,12 +2044,12 @@ const EnhancedHardwareSpoofer = {
                         inquiry.add(16).writeAnsiString(product);
 
                         // Product revision (4 bytes)
-                        inquiry.add(32).writeAnsiString("1.0 ");
+                        inquiry.add(32).writeAnsiString('1.0 ');
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "scsi_inquiry_data_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'scsi_inquiry_data_spoofed'
                         });
                     }
                 },
@@ -2078,9 +2078,9 @@ const EnhancedHardwareSpoofer = {
                         smartData.add(7).writeU32(1000); // Raw value (1000 hours)
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smart_data_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smart_data_spoofed'
                         });
                     }
                 }
@@ -2093,13 +2093,13 @@ const EnhancedHardwareSpoofer = {
     // === BIOS INFORMATION HOOKS ===
     hookBiosInformation: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_bios_information_hooks"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_bios_information_hooks'
         });
 
         // Hook SMBIOS reading functions
-        var getSystemFirmwareTable = Module.findExportByName("kernel32.dll", "GetSystemFirmwareTable");
+        var getSystemFirmwareTable = Module.findExportByName('kernel32.dll', 'GetSystemFirmwareTable');
         if (getSystemFirmwareTable) {
             Interceptor.attach(getSystemFirmwareTable, {
                 onEnter: function(args) {
@@ -2121,9 +2121,9 @@ const EnhancedHardwareSpoofer = {
                 spoofSmbiosData: function() {
                     try {
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smbios_data_access_detected"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smbios_data_access_detected'
                         });
 
                         // Basic SMBIOS spoofing - would need more detailed implementation
@@ -2134,15 +2134,15 @@ const EnhancedHardwareSpoofer = {
                         // This is a complex task requiring knowledge of SMBIOS table structure
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smbios_spoofing_applied"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smbios_spoofing_applied'
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smbios_spoofing_error",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smbios_spoofing_error',
                             error: e.toString()
                         });
                     }
@@ -2157,9 +2157,9 @@ const EnhancedHardwareSpoofer = {
 
     hookModernTPM2SecurityBootChain: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_tpm2_security_boot_chain_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_tpm2_security_boot_chain_bypass'
         });
 
         // Hook TPM 2.0 Platform Configuration Registers (PCR) manipulation
@@ -2175,31 +2175,31 @@ const EnhancedHardwareSpoofer = {
         this.hookTPMEventLogManipulation();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "tpm2_security_boot_chain_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'tpm2_security_boot_chain_bypass_installed'
         });
     },
 
     hookTPM2PCROperations: function() {
         // Hook TPM 2.0 PCR extend operations for boot attestation spoofing
-        var tpmPcrExtend = Module.findExportByName("tbs.dll", "Tbsi_Context_Create");
+        var tpmPcrExtend = Module.findExportByName('tbs.dll', 'Tbsi_Context_Create');
         if (tpmPcrExtend) {
             Interceptor.attach(tpmPcrExtend, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "tpm2_pcr_context_creation_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'tpm2_pcr_context_creation_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // TBS_SUCCESS
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "tpm2_pcr_context_bypassed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'tpm2_pcr_context_bypassed'
                         });
                     }
                 }
@@ -2209,7 +2209,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook TPM 2.0 PCR Read operations
-        var tpmPcrRead = Module.findExportByName("tbs.dll", "Tbsip_Submit_Command");
+        var tpmPcrRead = Module.findExportByName('tbs.dll', 'Tbsip_Submit_Command');
         if (tpmPcrRead) {
             Interceptor.attach(tpmPcrRead, {
                 onEnter: function(args) {
@@ -2224,9 +2224,9 @@ const EnhancedHardwareSpoofer = {
                         if (commandCode === 0x0000017E) {
                             this.isPCRRead = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "tpm2_pcr_read_command_detected"
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'tpm2_pcr_read_command_detected'
                             });
                         }
 
@@ -2234,9 +2234,9 @@ const EnhancedHardwareSpoofer = {
                         if (commandCode === 0x00000182) {
                             this.isPCRExtend = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "tpm2_pcr_extend_command_detected"
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'tpm2_pcr_extend_command_detected'
                             });
                         }
                     }
@@ -2258,9 +2258,9 @@ const EnhancedHardwareSpoofer = {
                             this.responseBuffer.add(10).writeByteArray(spoofedPCRValue);
 
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "tpm2_pcr_values_spoofed"
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'tpm2_pcr_values_spoofed'
                             });
                         }
                     }
@@ -2273,14 +2273,14 @@ const EnhancedHardwareSpoofer = {
 
     hookSecureBootAttestationChain: function() {
         // Hook UEFI Secure Boot policy verification
-        var verifyImagePolicy = Module.findExportByName("ci.dll", "CiValidateImageHeader");
+        var verifyImagePolicy = Module.findExportByName('ci.dll', 'CiValidateImageHeader');
         if (verifyImagePolicy) {
             Interceptor.attach(verifyImagePolicy, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "uefi_secure_boot_validation_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'uefi_secure_boot_validation_detected'
                     });
                 },
 
@@ -2288,9 +2288,9 @@ const EnhancedHardwareSpoofer = {
                     // Always return success for image validation
                     retval.replace(0); // STATUS_SUCCESS
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "uefi_secure_boot_validation_bypassed"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'uefi_secure_boot_validation_bypassed'
                     });
                 }
             });
@@ -2299,16 +2299,16 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook Windows Code Integrity checks
-        var codeIntegrityCheck = Module.findExportByName("ci.dll", "CiCheckSignedFile");
+        var codeIntegrityCheck = Module.findExportByName('ci.dll', 'CiCheckSignedFile');
         if (codeIntegrityCheck) {
             Interceptor.attach(codeIntegrityCheck, {
                 onLeave: function(retval) {
                     // Bypass code integrity verification
                     retval.replace(0); // STATUS_SUCCESS
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "code_integrity_check_bypassed"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'code_integrity_check_bypassed'
                     });
                 }
             });
@@ -2319,23 +2319,23 @@ const EnhancedHardwareSpoofer = {
 
     hookBootConfigurationDataIntegrity: function() {
         // Hook BCD integrity verification functions
-        var bcdOpenStore = Module.findExportByName("bcd.dll", "BcdOpenStore");
+        var bcdOpenStore = Module.findExportByName('bcd.dll', 'BcdOpenStore');
         if (bcdOpenStore) {
             Interceptor.attach(bcdOpenStore, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "bcd_store_access_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'bcd_store_access_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) {
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "bcd_store_opened_successfully"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'bcd_store_opened_successfully'
                         });
                     }
                 }
@@ -2347,7 +2347,7 @@ const EnhancedHardwareSpoofer = {
 
     hookTPMEventLogManipulation: function() {
         // Hook TPM Event Log access for boot attestation manipulation
-        var getEventLog = Module.findExportByName("tbs.dll", "Tbsi_Get_TCG_Log");
+        var getEventLog = Module.findExportByName('tbs.dll', 'Tbsi_Get_TCG_Log');
         if (getEventLog) {
             Interceptor.attach(getEventLog, {
                 onEnter: function(args) {
@@ -2355,9 +2355,9 @@ const EnhancedHardwareSpoofer = {
                     this.logSize = args[2];
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "tpm_event_log_access_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'tpm_event_log_access_detected'
                     });
                 },
 
@@ -2376,16 +2376,16 @@ const EnhancedHardwareSpoofer = {
                             // This would require detailed knowledge of TCG log format
 
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "tpm_event_log_manipulated"
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'tpm_event_log_manipulated'
                             });
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "tpm_event_log_manipulation_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'tpm_event_log_manipulation_failed',
                             error: e.toString()
                         });
                     }
@@ -2398,9 +2398,9 @@ const EnhancedHardwareSpoofer = {
 
     hookAdvancedCPUTelemetryMitigation: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_advanced_cpu_telemetry_mitigation"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_advanced_cpu_telemetry_mitigation'
         });
 
         // Hook Intel Processor Trace (Intel PT) for execution flow hiding
@@ -2416,15 +2416,15 @@ const EnhancedHardwareSpoofer = {
         this.hookThermalPowerTelemetry();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "advanced_cpu_telemetry_mitigation_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'advanced_cpu_telemetry_mitigation_installed'
         });
     },
 
     hookIntelProcessorTrace: function() {
         // Hook Intel PT configuration through MSRs
-        var readMsr = Module.findExportByName("hal.dll", "HalReadMsr");
+        var readMsr = Module.findExportByName('hal.dll', 'HalReadMsr');
         if (readMsr) {
             Interceptor.attach(readMsr, {
                 onEnter: function(args) {
@@ -2434,10 +2434,10 @@ const EnhancedHardwareSpoofer = {
                     if (this.msrAddress >= 0x570 && this.msrAddress <= 0x571) {
                         this.isIntelPTMSR = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "intel_pt_msr_read_detected",
-                            msr: "0x" + this.msrAddress.toString(16)
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'intel_pt_msr_read_detected',
+                            msr: '0x' + this.msrAddress.toString(16)
                         });
                     }
                 },
@@ -2447,9 +2447,9 @@ const EnhancedHardwareSpoofer = {
                         // Disable Intel PT by returning 0
                         retval.replace(0);
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "intel_pt_disabled"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'intel_pt_disabled'
                         });
                     }
                 }
@@ -2461,7 +2461,7 @@ const EnhancedHardwareSpoofer = {
 
     hookPerformanceMonitoringCounters: function() {
         // Hook performance counter access
-        var queryPerformanceCounter = Module.findExportByName("kernel32.dll", "QueryPerformanceFrequency");
+        var queryPerformanceCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceFrequency');
         if (queryPerformanceCounter) {
             Interceptor.attach(queryPerformanceCounter, {
                 onLeave: function(retval) {
@@ -2472,9 +2472,9 @@ const EnhancedHardwareSpoofer = {
                         this.context.rcx.writeU64(normalizedFreq);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "performance_frequency_normalized",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'performance_frequency_normalized',
                             original: frequency.toString(),
                             spoofed: normalizedFreq.toString()
                         });
@@ -2501,7 +2501,7 @@ const EnhancedHardwareSpoofer = {
 
             try {
                 // Look for RDPMC instruction (0x0F 0x33) - Read Performance-Monitoring Counters
-                var rdpmcPattern = "0f 33";
+                var rdpmcPattern = '0f 33';
                 var matches = Memory.scanSync(module.base, module.size, rdpmcPattern);
 
                 matches.slice(0, 5).forEach((match, index) => {
@@ -2523,9 +2523,9 @@ const EnhancedHardwareSpoofer = {
                 onEnter: function(args) {
                     this.counterIndex = this.context.ecx.toInt32();
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "rdpmc_instruction_detected",
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'rdpmc_instruction_detected',
                         counter_index: this.counterIndex,
                         module: moduleName
                     });
@@ -2538,18 +2538,18 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr((spoofedValue >>> 32) & 0xFFFFFFFF);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "rdpmc_value_spoofed",
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'rdpmc_value_spoofed',
                         counter_index: this.counterIndex
                     });
                 }
             });
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "rdpmc_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'rdpmc_hook_failed',
                 error: e.toString()
             });
         }
@@ -2557,7 +2557,7 @@ const EnhancedHardwareSpoofer = {
 
     hookMicrocodeVersionChecks: function() {
         // Hook microcode version queries
-        var getMicrocodeVersion = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var getMicrocodeVersion = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (getMicrocodeVersion) {
             Interceptor.attach(getMicrocodeVersion, {
                 onEnter: function(args) {
@@ -2569,9 +2569,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.infoClass === 73) {
                         this.isMicrocodeQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "microcode_version_query_detected"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'microcode_version_query_detected'
                         });
                     }
                 },
@@ -2583,10 +2583,10 @@ const EnhancedHardwareSpoofer = {
                         this.buffer.writeU32(spoofedMicrocodeVersion);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "microcode_version_spoofed",
-                            version: "0x" + spoofedMicrocodeVersion.toString(16)
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'microcode_version_spoofed',
+                            version: '0x' + spoofedMicrocodeVersion.toString(16)
                         });
                     }
                 }
@@ -2598,23 +2598,23 @@ const EnhancedHardwareSpoofer = {
 
     hookThermalPowerTelemetry: function() {
         // Hook CPU thermal monitoring
-        var getThermalInfo = Module.findExportByName("powrprof.dll", "PowerReadACValue");
+        var getThermalInfo = Module.findExportByName('powrprof.dll', 'PowerReadACValue');
         if (getThermalInfo) {
             Interceptor.attach(getThermalInfo, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "cpu_thermal_query_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'cpu_thermal_query_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "cpu_thermal_data_normalized"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'cpu_thermal_data_normalized'
                         });
                     }
                 }
@@ -2626,9 +2626,9 @@ const EnhancedHardwareSpoofer = {
 
     hookUEFI25SecureBootBypass: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_uefi_25_secure_boot_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_uefi_25_secure_boot_bypass'
         });
 
         // Hook UEFI 2.5+ Variable Services
@@ -2644,15 +2644,15 @@ const EnhancedHardwareSpoofer = {
         this.hookUEFIPlatformKeyValidation();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "uefi_25_secure_boot_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'uefi_25_secure_boot_bypass_installed'
         });
     },
 
     hookUEFIVariableServices: function() {
         // Hook UEFI GetVariable calls for Secure Boot variables
-        var getVariable = Module.findExportByName("ntdll.dll", "NtQuerySystemEnvironmentValue");
+        var getVariable = Module.findExportByName('ntdll.dll', 'NtQuerySystemEnvironmentValue');
         if (getVariable) {
             Interceptor.attach(getVariable, {
                 onEnter: function(args) {
@@ -2673,8 +2673,8 @@ const EnhancedHardwareSpoofer = {
 
                 isSecureBootVariable: function(varName) {
                     var secureBootVars = [
-                        "SecureBoot", "SetupMode", "AuditMode", "DeployedMode",
-                        "PK", "KEK", "db", "dbx", "dbt", "dbr"
+                        'SecureBoot', 'SetupMode', 'AuditMode', 'DeployedMode',
+                        'PK', 'KEK', 'db', 'dbx', 'dbt', 'dbr'
                     ];
 
                     return secureBootVars.some(sbVar =>
@@ -2684,28 +2684,28 @@ const EnhancedHardwareSpoofer = {
 
                 spoofSecureBootVariable: function() {
                     try {
-                        if (this.varNameStr.toLowerCase().includes("secureboot")) {
+                        if (this.varNameStr.toLowerCase().includes('secureboot')) {
                             // Indicate Secure Boot is disabled
                             this.buffer.writeU8(0);
-                        } else if (this.varNameStr.toLowerCase().includes("setupmode")) {
+                        } else if (this.varNameStr.toLowerCase().includes('setupmode')) {
                             // Indicate Setup Mode is active (bypasses many checks)
                             this.buffer.writeU8(1);
-                        } else if (this.varNameStr.toLowerCase().includes("pk")) {
+                        } else if (this.varNameStr.toLowerCase().includes('pk')) {
                             // Clear Platform Key to disable Secure Boot
                             this.buffer.writeU8(0);
                         }
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "uefi_secure_boot_variable_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'uefi_secure_boot_variable_spoofed',
                             variable: this.varNameStr
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "uefi_variable_spoof_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'uefi_variable_spoof_failed',
                             error: e.toString()
                         });
                     }
@@ -2718,7 +2718,7 @@ const EnhancedHardwareSpoofer = {
 
     hookUEFIImageAuthentication: function() {
         // Hook PE image signature verification for UEFI
-        var verifyImageSignature = Module.findExportByName("wintrust.dll", "WinVerifyTrust");
+        var verifyImageSignature = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
         if (verifyImageSignature) {
             Interceptor.attach(verifyImageSignature, {
                 onEnter: function(args) {
@@ -2730,9 +2730,9 @@ const EnhancedHardwareSpoofer = {
                         this.isAuthenticode = true; // Simplified check
 
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "uefi_image_authentication_detected"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'uefi_image_authentication_detected'
                         });
                     }
                 },
@@ -2743,9 +2743,9 @@ const EnhancedHardwareSpoofer = {
                         retval.replace(0); // ERROR_SUCCESS
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "uefi_image_authentication_bypassed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'uefi_image_authentication_bypassed'
                         });
                     }
                 }
@@ -2757,14 +2757,14 @@ const EnhancedHardwareSpoofer = {
 
     hookUEFIMeasuredBoot: function() {
         // Hook UEFI Measured Boot integration with TPM
-        var measureBootEvent = Module.findExportByName("tbs.dll", "Tbsi_Physical_Presence_Command");
+        var measureBootEvent = Module.findExportByName('tbs.dll', 'Tbsi_Physical_Presence_Command');
         if (measureBootEvent) {
             Interceptor.attach(measureBootEvent, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "uefi_measured_boot_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'uefi_measured_boot_detected'
                     });
                 },
 
@@ -2773,9 +2773,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0); // Success
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "uefi_measured_boot_bypassed"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'uefi_measured_boot_bypassed'
                     });
                 }
             });
@@ -2786,7 +2786,7 @@ const EnhancedHardwareSpoofer = {
 
     hookUEFIPlatformKeyValidation: function() {
         // Hook Platform Key validation process
-        var validatePlatformKey = Module.findExportByName("crypt32.dll", "CryptVerifySignature");
+        var validatePlatformKey = Module.findExportByName('crypt32.dll', 'CryptVerifySignature');
         if (validatePlatformKey) {
             Interceptor.attach(validatePlatformKey, {
                 onLeave: function(retval) {
@@ -2794,9 +2794,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(1); // TRUE
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "uefi_platform_key_validation_bypassed"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'uefi_platform_key_validation_bypassed'
                     });
                 }
             });
@@ -2807,9 +2807,9 @@ const EnhancedHardwareSpoofer = {
 
     hookModernGPUComputeSecurityBypass: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_modern_gpu_compute_security_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_modern_gpu_compute_security_bypass'
         });
 
         // Hook NVIDIA GPU Management Library (NVML)
@@ -2828,22 +2828,22 @@ const EnhancedHardwareSpoofer = {
         this.hookVulkanGPUEnumeration();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "modern_gpu_compute_security_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'modern_gpu_compute_security_bypass_installed'
         });
     },
 
     hookNVIDIAGPUManagement: function() {
         // Hook NVML library functions
-        var nvmlInit = Module.findExportByName("nvml.dll", "nvmlInit_v2");
+        var nvmlInit = Module.findExportByName('nvml.dll', 'nvmlInit_v2');
         if (nvmlInit) {
             Interceptor.attach(nvmlInit, {
                 onLeave: function(retval) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "nvidia_nvml_init_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'nvidia_nvml_init_detected'
                     });
                 }
             });
@@ -2851,7 +2851,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['nvmlInit_v2'] = true;
         }
 
-        var nvmlDeviceGetName = Module.findExportByName("nvml.dll", "nvmlDeviceGetName");
+        var nvmlDeviceGetName = Module.findExportByName('nvml.dll', 'nvmlDeviceGetName');
         if (nvmlDeviceGetName) {
             Interceptor.attach(nvmlDeviceGetName, {
                 onEnter: function(args) {
@@ -2861,13 +2861,13 @@ const EnhancedHardwareSpoofer = {
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0 && this.nameBuffer && this.bufferSize > 20) {
-                        var spoofedGPUName = "NVIDIA GeForce GTX 1660";
+                        var spoofedGPUName = 'NVIDIA GeForce GTX 1660';
                         this.nameBuffer.writeAnsiString(spoofedGPUName);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "nvidia_gpu_name_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'nvidia_gpu_name_spoofed',
                             spoofed_name: spoofedGPUName
                         });
                     }
@@ -2877,7 +2877,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['nvmlDeviceGetName'] = true;
         }
 
-        var nvmlDeviceGetSerial = Module.findExportByName("nvml.dll", "nvmlDeviceGetSerial");
+        var nvmlDeviceGetSerial = Module.findExportByName('nvml.dll', 'nvmlDeviceGetSerial');
         if (nvmlDeviceGetSerial) {
             Interceptor.attach(nvmlDeviceGetSerial, {
                 onEnter: function(args) {
@@ -2887,13 +2887,13 @@ const EnhancedHardwareSpoofer = {
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0 && this.serialBuffer && this.bufferSize > 10) {
-                        var spoofedSerial = "0123456789";
+                        var spoofedSerial = '0123456789';
                         this.serialBuffer.writeAnsiString(spoofedSerial);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "nvidia_gpu_serial_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'nvidia_gpu_serial_spoofed',
                             spoofed_serial: spoofedSerial
                         });
                     }
@@ -2906,14 +2906,14 @@ const EnhancedHardwareSpoofer = {
 
     hookAMDDisplayLibrary: function() {
         // Hook AMD Display Library functions
-        var adlMainControlCreate = Module.findExportByName("atiadlxx.dll", "ADL_Main_Control_Create");
+        var adlMainControlCreate = Module.findExportByName('atiadlxx.dll', 'ADL_Main_Control_Create');
         if (adlMainControlCreate) {
             Interceptor.attach(adlMainControlCreate, {
                 onLeave: function(retval) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "amd_adl_control_create_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'amd_adl_control_create_detected'
                     });
                 }
             });
@@ -2921,7 +2921,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['ADL_Main_Control_Create'] = true;
         }
 
-        var adlAdapterInfoGet = Module.findExportByName("atiadlxx.dll", "ADL_Adapter_AdapterInfo_Get");
+        var adlAdapterInfoGet = Module.findExportByName('atiadlxx.dll', 'ADL_Adapter_AdapterInfo_Get');
         if (adlAdapterInfoGet) {
             Interceptor.attach(adlAdapterInfoGet, {
                 onEnter: function(args) {
@@ -2941,23 +2941,23 @@ const EnhancedHardwareSpoofer = {
                         var adapterInfo = this.adapterInfo;
 
                         // Adapter name spoofing (AdapterName field, typically at offset 8)
-                        var spoofedName = "AMD Radeon RX 580";
+                        var spoofedName = 'AMD Radeon RX 580';
                         adapterInfo.add(8).writeAnsiString(spoofedName);
 
                         // Device number spoofing
                         adapterInfo.add(4).writeU32(0x67DF); // RX 580 device ID
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "amd_adapter_info_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'amd_adapter_info_spoofed',
                             spoofed_name: spoofedName
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "amd_adapter_spoof_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'amd_adapter_spoof_failed',
                             error: e.toString()
                         });
                     }
@@ -2970,14 +2970,14 @@ const EnhancedHardwareSpoofer = {
 
     hookIntelGPUManagement: function() {
         // Hook Intel GPU API functions
-        var intelGPUInit = Module.findExportByName("igfxapi.dll", "InitializeIGFX");
+        var intelGPUInit = Module.findExportByName('igfxapi.dll', 'InitializeIGFX');
         if (intelGPUInit) {
             Interceptor.attach(intelGPUInit, {
                 onLeave: function(retval) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "intel_gpu_api_init_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'intel_gpu_api_init_detected'
                     });
                 }
             });
@@ -2986,7 +2986,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook Intel Graphics Control Panel API
-        var intelGfxInfo = Module.findExportByName("gfxui.exe", "GetGraphicsInfo");
+        var intelGfxInfo = Module.findExportByName('gfxui.exe', 'GetGraphicsInfo');
         if (intelGfxInfo) {
             Interceptor.attach(intelGfxInfo, {
                 onEnter: function(args) {
@@ -2996,13 +2996,13 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (this.infoBuffer && !this.infoBuffer.isNull()) {
                         // Spoof Intel GPU information
-                        var spoofedInfo = "Intel UHD Graphics 630";
+                        var spoofedInfo = 'Intel UHD Graphics 630';
                         this.infoBuffer.writeAnsiString(spoofedInfo);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "intel_gpu_info_spoofed",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'intel_gpu_info_spoofed',
                             spoofed_info: spoofedInfo
                         });
                     }
@@ -3015,23 +3015,23 @@ const EnhancedHardwareSpoofer = {
 
     hookDirectX12GPUFingerprinting: function() {
         // Hook DirectX 12 GPU enumeration
-        var d3d12CreateDevice = Module.findExportByName("d3d12.dll", "D3D12CreateDevice");
+        var d3d12CreateDevice = Module.findExportByName('d3d12.dll', 'D3D12CreateDevice');
         if (d3d12CreateDevice) {
             Interceptor.attach(d3d12CreateDevice, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "directx12_device_creation_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'directx12_device_creation_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // S_OK
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "directx12_device_created"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'directx12_device_created'
                         });
                     }
                 }
@@ -3041,15 +3041,15 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook DXGI adapter enumeration
-        var dxgiEnumAdapters = Module.findExportByName("dxgi.dll", "CreateDXGIFactory");
+        var dxgiEnumAdapters = Module.findExportByName('dxgi.dll', 'CreateDXGIFactory');
         if (dxgiEnumAdapters) {
             Interceptor.attach(dxgiEnumAdapters, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // S_OK
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "dxgi_factory_creation_detected"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'dxgi_factory_creation_detected'
                         });
                     }
                 }
@@ -3061,23 +3061,23 @@ const EnhancedHardwareSpoofer = {
 
     hookVulkanGPUEnumeration: function() {
         // Hook Vulkan instance creation
-        var vkCreateInstance = Module.findExportByName("vulkan-1.dll", "vkCreateInstance");
+        var vkCreateInstance = Module.findExportByName('vulkan-1.dll', 'vkCreateInstance');
         if (vkCreateInstance) {
             Interceptor.attach(vkCreateInstance, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "vulkan_instance_creation_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'vulkan_instance_creation_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // VK_SUCCESS
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "vulkan_instance_created"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'vulkan_instance_created'
                         });
                     }
                 }
@@ -3087,7 +3087,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook physical device enumeration
-        var vkEnumeratePhysicalDevices = Module.findExportByName("vulkan-1.dll", "vkEnumeratePhysicalDevices");
+        var vkEnumeratePhysicalDevices = Module.findExportByName('vulkan-1.dll', 'vkEnumeratePhysicalDevices');
         if (vkEnumeratePhysicalDevices) {
             Interceptor.attach(vkEnumeratePhysicalDevices, {
                 onEnter: function(args) {
@@ -3095,18 +3095,18 @@ const EnhancedHardwareSpoofer = {
                     this.devices = args[2];
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "vulkan_physical_device_enumeration"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'vulkan_physical_device_enumeration'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0 && this.deviceCount && this.devices) {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "vulkan_physical_devices_enumerated"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'vulkan_physical_devices_enumerated'
                         });
                     }
                 }
@@ -3118,9 +3118,9 @@ const EnhancedHardwareSpoofer = {
 
     hookAdvancedNetworkStackFingerprinting: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_advanced_network_stack_fingerprinting"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_advanced_network_stack_fingerprinting'
         });
 
         // Hook Windows Filtering Platform (WFP) fingerprinting
@@ -3136,31 +3136,31 @@ const EnhancedHardwareSpoofer = {
         this.hookWirelessStackFingerprinting();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "advanced_network_stack_fingerprinting_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'advanced_network_stack_fingerprinting_installed'
         });
     },
 
     hookWindowsFilteringPlatform: function() {
         // Hook WFP callout driver enumeration
-        var fwpmEngineOpen = Module.findExportByName("fwpuclnt.dll", "FwpmEngineOpen0");
+        var fwpmEngineOpen = Module.findExportByName('fwpuclnt.dll', 'FwpmEngineOpen0');
         if (fwpmEngineOpen) {
             Interceptor.attach(fwpmEngineOpen, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "wfp_engine_open_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'wfp_engine_open_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // ERROR_SUCCESS
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "wfp_engine_opened"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'wfp_engine_opened'
                         });
                     }
                 }
@@ -3169,16 +3169,16 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['FwpmEngineOpen0'] = true;
         }
 
-        var fwpmCalloutEnum = Module.findExportByName("fwpuclnt.dll", "FwpmCalloutEnum0");
+        var fwpmCalloutEnum = Module.findExportByName('fwpuclnt.dll', 'FwpmCalloutEnum0');
         if (fwpmCalloutEnum) {
             Interceptor.attach(fwpmCalloutEnum, {
                 onEnter: function(args) {
                     this.calloutEntries = args[2];
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "wfp_callout_enumeration_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'wfp_callout_enumeration_detected'
                     });
                 },
 
@@ -3191,15 +3191,15 @@ const EnhancedHardwareSpoofer = {
                 spoofWFPCallouts: function() {
                     try {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "wfp_callouts_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'wfp_callouts_spoofed'
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "wfp_callout_spoof_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'wfp_callout_spoof_failed',
                             error: e.toString()
                         });
                     }
@@ -3212,7 +3212,7 @@ const EnhancedHardwareSpoofer = {
 
     hookTCPStackFingerprinting: function() {
         // Hook TCP options and window size manipulation
-        var wsaSocket = Module.findExportByName("ws2_32.dll", "WSASocketA");
+        var wsaSocket = Module.findExportByName('ws2_32.dll', 'WSASocketA');
         if (wsaSocket) {
             Interceptor.attach(wsaSocket, {
                 onEnter: function(args) {
@@ -3224,9 +3224,9 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== -1 && this.protocol === 6) { // IPPROTO_TCP
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "tcp_socket_creation_detected"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'tcp_socket_creation_detected'
                         });
                     }
                 }
@@ -3236,7 +3236,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook socket option setting for TCP fingerprint mitigation
-        var setSockOpt = Module.findExportByName("ws2_32.dll", "setsockopt");
+        var setSockOpt = Module.findExportByName('ws2_32.dll', 'setsockopt');
         if (setSockOpt) {
             Interceptor.attach(setSockOpt, {
                 onEnter: function(args) {
@@ -3250,9 +3250,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.level === 6) {
                         this.isTCPOption = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "tcp_socket_option_set",
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'tcp_socket_option_set',
                             option: this.optname
                         });
                     }
@@ -3261,9 +3261,9 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (this.isTCPOption && retval.toInt32() === 0) {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "tcp_options_normalized"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'tcp_options_normalized'
                         });
                     }
                 }
@@ -3275,7 +3275,7 @@ const EnhancedHardwareSpoofer = {
 
     hookNetworkDriverSignatures: function() {
         // Hook network driver enumeration and signature checking
-        var setupDiGetClassDevs = Module.findExportByName("setupapi.dll", "SetupDiGetClassDevsW");
+        var setupDiGetClassDevs = Module.findExportByName('setupapi.dll', 'SetupDiGetClassDevsW');
         if (setupDiGetClassDevs) {
             Interceptor.attach(setupDiGetClassDevs, {
                 onEnter: function(args) {
@@ -3292,9 +3292,9 @@ const EnhancedHardwareSpoofer = {
                         if (guid1 === networkGuid[0]) {
                             this.isNetworkEnum = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "network_adapter_enumeration_detected"
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'network_adapter_enumeration_detected'
                             });
                         }
                     }
@@ -3303,9 +3303,9 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (this.isNetworkEnum && !retval.equals(ptr(-1))) {
                         send({
-                            type: "info",
-                            target: "enhanced_hardware_spoofer",
-                            action: "network_adapter_enumeration_completed"
+                            type: 'info',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'network_adapter_enumeration_completed'
                         });
                     }
                 }
@@ -3317,15 +3317,15 @@ const EnhancedHardwareSpoofer = {
 
     hookWirelessStackFingerprinting: function() {
         // Hook wireless network API fingerprinting
-        var wlanOpenHandle = Module.findExportByName("wlanapi.dll", "WlanOpenHandle");
+        var wlanOpenHandle = Module.findExportByName('wlanapi.dll', 'WlanOpenHandle');
         if (wlanOpenHandle) {
             Interceptor.attach(wlanOpenHandle, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // ERROR_SUCCESS
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "wlan_handle_opened"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'wlan_handle_opened'
                         });
                     }
                 }
@@ -3334,16 +3334,16 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['WlanOpenHandle'] = true;
         }
 
-        var wlanEnumInterfaces = Module.findExportByName("wlanapi.dll", "WlanEnumInterfaces");
+        var wlanEnumInterfaces = Module.findExportByName('wlanapi.dll', 'WlanEnumInterfaces');
         if (wlanEnumInterfaces) {
             Interceptor.attach(wlanEnumInterfaces, {
                 onEnter: function(args) {
                     this.interfaceList = args[2];
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "wlan_interface_enumeration"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'wlan_interface_enumeration'
                     });
                 },
 
@@ -3359,16 +3359,16 @@ const EnhancedHardwareSpoofer = {
                         if (interfaceListPtr && !interfaceListPtr.isNull()) {
                             // Spoof wireless interface information
                             send({
-                                type: "bypass",
-                                target: "enhanced_hardware_spoofer",
-                                action: "wireless_interfaces_spoofed"
+                                type: 'bypass',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'wireless_interfaces_spoofed'
                             });
                         }
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "wireless_interface_spoof_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'wireless_interface_spoof_failed',
                             error: e.toString()
                         });
                     }
@@ -3381,9 +3381,9 @@ const EnhancedHardwareSpoofer = {
 
     hookIntelAMDPlatformSecurityTechnologies: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_intel_amd_platform_security_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_intel_amd_platform_security_bypass'
         });
 
         // Hook Intel TXT (Trusted Execution Technology)
@@ -3399,15 +3399,15 @@ const EnhancedHardwareSpoofer = {
         this.hookAMDPSP();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "intel_amd_platform_security_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'intel_amd_platform_security_bypass_installed'
         });
     },
 
     hookIntelTXT: function() {
         // Hook Intel TXT capability detection
-        var txtCapability = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var txtCapability = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (txtCapability) {
             Interceptor.attach(txtCapability, {
                 onEnter: function(args) {
@@ -3418,9 +3418,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.infoClass === 11) { // SystemModuleInformation
                         this.isTXTQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "intel_txt_capability_query"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'intel_txt_capability_query'
                         });
                     }
                 },
@@ -3428,9 +3428,9 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (this.isTXTQuery && retval.toInt32() === 0) {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "intel_txt_disabled"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'intel_txt_disabled'
                         });
                     }
                 }
@@ -3444,15 +3444,15 @@ const EnhancedHardwareSpoofer = {
         // This would be caught by our existing CPUID hooks, but we can add specific handling
 
         send({
-            type: "info",
-            target: "enhanced_hardware_spoofer",
-            action: "intel_mpx_detection_integrated"
+            type: 'info',
+            target: 'enhanced_hardware_spoofer',
+            action: 'intel_mpx_detection_integrated'
         });
     },
 
     hookAMDSVM: function() {
         // Hook AMD SVM (Secure Virtual Machine) detection
-        var svmCapability = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var svmCapability = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (svmCapability) {
             Interceptor.attach(svmCapability, {
                 onEnter: function(args) {
@@ -3463,9 +3463,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.infoClass === 1) {
                         this.isSVMQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "amd_svm_capability_query"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'amd_svm_capability_query'
                         });
                     }
                 },
@@ -3474,9 +3474,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.isSVMQuery && retval.toInt32() === 0 && this.buffer) {
                         // Manipulate processor features to hide SVM
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "amd_svm_features_hidden"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'amd_svm_features_hidden'
                         });
                     }
                 }
@@ -3486,7 +3486,7 @@ const EnhancedHardwareSpoofer = {
 
     hookAMDPSP: function() {
         // Hook AMD Platform Security Processor detection
-        var pspDetection = Module.findExportByName("ntdll.dll", "NtOpenFile");
+        var pspDetection = Module.findExportByName('ntdll.dll', 'NtOpenFile');
         if (pspDetection) {
             Interceptor.attach(pspDetection, {
                 onEnter: function(args) {
@@ -3496,12 +3496,12 @@ const EnhancedHardwareSpoofer = {
                         var objectName = this.objectAttributes.add(8).readPointer();
                         if (objectName && !objectName.isNull()) {
                             var nameStr = objectName.add(8).readUtf16String();
-                            if (nameStr && nameStr.toLowerCase().includes("amdpsp")) {
+                            if (nameStr && nameStr.toLowerCase().includes('amdpsp')) {
                                 this.isPSPAccess = true;
                                 send({
-                                    type: "detection",
-                                    target: "enhanced_hardware_spoofer",
-                                    action: "amd_psp_access_detected",
+                                    type: 'detection',
+                                    target: 'enhanced_hardware_spoofer',
+                                    action: 'amd_psp_access_detected',
                                     path: nameStr
                                 });
                             }
@@ -3515,9 +3515,9 @@ const EnhancedHardwareSpoofer = {
                         retval.replace(0xC0000034); // STATUS_OBJECT_NAME_NOT_FOUND
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "amd_psp_access_blocked"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'amd_psp_access_blocked'
                         });
                     }
                 }
@@ -3527,9 +3527,9 @@ const EnhancedHardwareSpoofer = {
 
     hookModernHardwareKeyManagementBypass: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_modern_hardware_key_management_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_modern_hardware_key_management_bypass'
         });
 
         // Hook Windows Hello biometric key management
@@ -3545,31 +3545,31 @@ const EnhancedHardwareSpoofer = {
         this.hookHSMOperations();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "modern_hardware_key_management_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'modern_hardware_key_management_bypass_installed'
         });
     },
 
     hookWindowsHelloBiometrics: function() {
         // Hook Windows Hello biometric authentication
-        var winBioOpenSession = Module.findExportByName("winbio.dll", "WinBioOpenSession");
+        var winBioOpenSession = Module.findExportByName('winbio.dll', 'WinBioOpenSession');
         if (winBioOpenSession) {
             Interceptor.attach(winBioOpenSession, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "windows_hello_biometric_session_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'windows_hello_biometric_session_detected'
                     });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // S_OK
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "windows_hello_biometric_session_bypassed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'windows_hello_biometric_session_bypassed'
                         });
                     }
                 }
@@ -3578,7 +3578,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['WinBioOpenSession'] = true;
         }
 
-        var winBioEnrollBegin = Module.findExportByName("winbio.dll", "WinBioEnrollBegin");
+        var winBioEnrollBegin = Module.findExportByName('winbio.dll', 'WinBioEnrollBegin');
         if (winBioEnrollBegin) {
             Interceptor.attach(winBioEnrollBegin, {
                 onLeave: function(retval) {
@@ -3586,9 +3586,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0x80090030); // NTE_DEVICE_NOT_READY
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "windows_hello_enrollment_blocked"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'windows_hello_enrollment_blocked'
                     });
                 }
             });
@@ -3599,14 +3599,14 @@ const EnhancedHardwareSpoofer = {
 
     hookFIDO2WebAuthn: function() {
         // Hook FIDO2/WebAuthn hardware authenticator operations
-        var webAuthnMakeCredential = Module.findExportByName("webauthn.dll", "WebAuthNAuthenticatorMakeCredential");
+        var webAuthnMakeCredential = Module.findExportByName('webauthn.dll', 'WebAuthNAuthenticatorMakeCredential');
         if (webAuthnMakeCredential) {
             Interceptor.attach(webAuthnMakeCredential, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "webauthn_make_credential_detected"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'webauthn_make_credential_detected'
                     });
                 },
 
@@ -3615,9 +3615,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0x80090030); // NTE_DEVICE_NOT_READY
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "webauthn_credential_creation_blocked"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'webauthn_credential_creation_blocked'
                     });
                 }
             });
@@ -3625,7 +3625,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['WebAuthNAuthenticatorMakeCredential'] = true;
         }
 
-        var webAuthnGetAssertion = Module.findExportByName("webauthn.dll", "WebAuthNAuthenticatorGetAssertion");
+        var webAuthnGetAssertion = Module.findExportByName('webauthn.dll', 'WebAuthNAuthenticatorGetAssertion');
         if (webAuthnGetAssertion) {
             Interceptor.attach(webAuthnGetAssertion, {
                 onLeave: function(retval) {
@@ -3633,9 +3633,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0x80090016); // NTE_BAD_KEYSET
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "webauthn_assertion_blocked"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'webauthn_assertion_blocked'
                     });
                 }
             });
@@ -3646,15 +3646,15 @@ const EnhancedHardwareSpoofer = {
 
     hookSmartCardOperations: function() {
         // Hook Smart Card resource manager
-        var scardEstablishContext = Module.findExportByName("winscard.dll", "SCardEstablishContext");
+        var scardEstablishContext = Module.findExportByName('winscard.dll', 'SCardEstablishContext');
         if (scardEstablishContext) {
             Interceptor.attach(scardEstablishContext, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // SCARD_S_SUCCESS
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smartcard_context_established"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smartcard_context_established'
                         });
                     }
                 }
@@ -3663,7 +3663,7 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled['SCardEstablishContext'] = true;
         }
 
-        var scardListReaders = Module.findExportByName("winscard.dll", "SCardListReadersW");
+        var scardListReaders = Module.findExportByName('winscard.dll', 'SCardListReadersW');
         if (scardListReaders) {
             Interceptor.attach(scardListReaders, {
                 onEnter: function(args) {
@@ -3674,7 +3674,7 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0 && this.readersList) {
                         // Spoof smart card readers list
-                        var spoofedReader = "Microsoft Virtual Smart Card Reader\0\0";
+                        var spoofedReader = 'Microsoft Virtual Smart Card Reader\0\0';
                         this.readersList.writeUtf16String(spoofedReader);
 
                         if (this.readersLen) {
@@ -3682,9 +3682,9 @@ const EnhancedHardwareSpoofer = {
                         }
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "smartcard_readers_spoofed"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'smartcard_readers_spoofed'
                         });
                     }
                 }
@@ -3696,15 +3696,15 @@ const EnhancedHardwareSpoofer = {
 
     hookHSMOperations: function() {
         // Hook PKCS#11 HSM operations
-        var pkcs11Initialize = Module.findExportByName("cryptoki.dll", "C_Initialize");
+        var pkcs11Initialize = Module.findExportByName('cryptoki.dll', 'C_Initialize');
         if (pkcs11Initialize) {
             Interceptor.attach(pkcs11Initialize, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // CKR_OK
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "pkcs11_hsm_initialized"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'pkcs11_hsm_initialized'
                         });
                     }
                 }
@@ -3714,7 +3714,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook CNG (Cryptography API: Next Generation) HSM operations
-        var cngOpenProvider = Module.findExportByName("bcrypt.dll", "BCryptOpenAlgorithmProvider");
+        var cngOpenProvider = Module.findExportByName('bcrypt.dll', 'BCryptOpenAlgorithmProvider');
         if (cngOpenProvider) {
             Interceptor.attach(cngOpenProvider, {
                 onEnter: function(args) {
@@ -3723,12 +3723,12 @@ const EnhancedHardwareSpoofer = {
 
                     if (this.implementation && !this.implementation.isNull()) {
                         var implStr = this.implementation.readUtf16String();
-                        if (implStr && implStr.toLowerCase().includes("hsm")) {
+                        if (implStr && implStr.toLowerCase().includes('hsm')) {
                             this.isHSMProvider = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "cng_hsm_provider_detected",
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'cng_hsm_provider_detected',
                                 provider: implStr
                             });
                         }
@@ -3741,9 +3741,9 @@ const EnhancedHardwareSpoofer = {
                         retval.replace(0xC0000225); // STATUS_NOT_FOUND
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "cng_hsm_provider_blocked"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'cng_hsm_provider_blocked'
                         });
                     }
                 }
@@ -3755,9 +3755,9 @@ const EnhancedHardwareSpoofer = {
 
     hookAdvancedPerformanceCounterSpoofing: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_advanced_performance_counter_spoofing"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_advanced_performance_counter_spoofing'
         });
 
         // Hook high-resolution timing APIs
@@ -3773,15 +3773,15 @@ const EnhancedHardwareSpoofer = {
         this.hookHardwareEventCounters();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "advanced_performance_counter_spoofing_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'advanced_performance_counter_spoofing_installed'
         });
     },
 
     hookHighResolutionTimers: function() {
         // Hook QueryPerformanceCounter for consistent timing
-        var queryPerfCounter = Module.findExportByName("kernel32.dll", "QueryPerformanceCounter");
+        var queryPerfCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
         if (queryPerfCounter) {
             var baseCounter = Date.now() * 10000; // Convert to 100ns units
 
@@ -3800,7 +3800,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook timeGetTime for consistent low-resolution timing
-        var timeGetTime = Module.findExportByName("winmm.dll", "timeGetTime");
+        var timeGetTime = Module.findExportByName('winmm.dll', 'timeGetTime');
         if (timeGetTime) {
             var baseTime = Date.now();
 
@@ -3824,8 +3824,8 @@ const EnhancedHardwareSpoofer = {
 
             try {
                 // Look for RDTSC and RDTSCP instructions
-                var rdtscPattern = "0f 31";    // RDTSC
-                var rdtscpPattern = "0f 01 f9"; // RDTSCP
+                var rdtscPattern = '0f 31';    // RDTSC
+                var rdtscpPattern = '0f 01 f9'; // RDTSCP
 
                 var rdtscMatches = Memory.scanSync(module.base, module.size, rdtscPattern);
                 var rdtscpMatches = Memory.scanSync(module.base, module.size, rdtscpPattern);
@@ -3855,18 +3855,18 @@ const EnhancedHardwareSpoofer = {
                     this.context.edx = ptr((currentTimestamp >>> 32) & 0xFFFFFFFF);
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "timestamp_counter_spoofed",
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'timestamp_counter_spoofed',
                         module: moduleName
                     });
                 }
             });
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "timestamp_counter_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'timestamp_counter_hook_failed',
                 error: e.toString()
             });
         }
@@ -3874,7 +3874,7 @@ const EnhancedHardwareSpoofer = {
 
     hookSystemPerformanceCounters: function() {
         // Hook registry-based performance counter access
-        var regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+        var regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
                 onEnter: function(args) {
@@ -3895,8 +3895,8 @@ const EnhancedHardwareSpoofer = {
 
                 isPerformanceCounterQuery: function(valueName) {
                     var perfCounterTerms = [
-                        "Performance", "Counter", "Processor Time", "Interrupt Time",
-                        "DPC Time", "Idle Time", "Process", "Thread"
+                        'Performance', 'Counter', 'Processor Time', 'Interrupt Time',
+                        'DPC Time', 'Idle Time', 'Process', 'Thread'
                     ];
 
                     return perfCounterTerms.some(term =>
@@ -3914,16 +3914,16 @@ const EnhancedHardwareSpoofer = {
                         Memory.copy(this.data, buffer, 4);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "performance_counter_normalized",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'performance_counter_normalized',
                             counter: this.valueNameStr
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "performance_counter_spoof_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'performance_counter_spoof_failed',
                             error: e.toString()
                         });
                     }
@@ -3934,7 +3934,7 @@ const EnhancedHardwareSpoofer = {
 
     hookHardwareEventCounters: function() {
         // Hook Event Tracing for Windows (ETW) performance events
-        var etwEventWrite = Module.findExportByName("ntdll.dll", "EtwEventWrite");
+        var etwEventWrite = Module.findExportByName('ntdll.dll', 'EtwEventWrite');
         if (etwEventWrite) {
             Interceptor.attach(etwEventWrite, {
                 onEnter: function(args) {
@@ -3949,9 +3949,9 @@ const EnhancedHardwareSpoofer = {
                         if (eventId >= 1000 && eventId <= 2000) {
                             this.isHardwarePerfEvent = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "etw_hardware_performance_event",
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'etw_hardware_performance_event',
                                 event_id: eventId
                             });
                         }
@@ -3961,9 +3961,9 @@ const EnhancedHardwareSpoofer = {
                 onLeave: function(retval) {
                     if (this.isHardwarePerfEvent) {
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "etw_hardware_event_normalized"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'etw_hardware_event_normalized'
                         });
                     }
                 }
@@ -3975,9 +3975,9 @@ const EnhancedHardwareSpoofer = {
 
     hookModernHardwareBehaviorPatternObfuscation: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_hardware_behavior_pattern_obfuscation"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_hardware_behavior_pattern_obfuscation'
         });
 
         // Hook memory access pattern detection
@@ -3993,15 +3993,15 @@ const EnhancedHardwareSpoofer = {
         this.hookTimingSideChannels();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "hardware_behavior_pattern_obfuscation_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'hardware_behavior_pattern_obfuscation_installed'
         });
     },
 
     hookMemoryAccessPatterns: function() {
         // Hook VirtualQuery for memory layout obfuscation
-        var virtualQuery = Module.findExportByName("kernel32.dll", "VirtualQuery");
+        var virtualQuery = Module.findExportByName('kernel32.dll', 'VirtualQuery');
         if (virtualQuery) {
             Interceptor.attach(virtualQuery, {
                 onEnter: function(args) {
@@ -4033,15 +4033,15 @@ const EnhancedHardwareSpoofer = {
                         state.writeU32(normalizedState);
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "memory_layout_obfuscated"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'memory_layout_obfuscated'
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "memory_obfuscation_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'memory_obfuscation_failed',
                             error: e.toString()
                         });
                     }
@@ -4054,7 +4054,7 @@ const EnhancedHardwareSpoofer = {
 
     hookCPUCacheBehavior: function() {
         // Hook cache-related system information queries
-        var getSystemInfo = Module.findExportByName("kernel32.dll", "GetLogicalProcessorInformation");
+        var getSystemInfo = Module.findExportByName('kernel32.dll', 'GetLogicalProcessorInformation');
         if (getSystemInfo) {
             Interceptor.attach(getSystemInfo, {
                 onEnter: function(args) {
@@ -4095,15 +4095,15 @@ const EnhancedHardwareSpoofer = {
                         }
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "cpu_cache_behavior_normalized"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'cpu_cache_behavior_normalized'
                         });
                     } catch(e) {
                         send({
-                            type: "error",
-                            target: "enhanced_hardware_spoofer",
-                            action: "cache_normalization_failed",
+                            type: 'error',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'cache_normalization_failed',
                             error: e.toString()
                         });
                     }
@@ -4116,18 +4116,18 @@ const EnhancedHardwareSpoofer = {
 
     hookSystemCallPatterns: function() {
         // Hook NT system call dispatch for pattern obfuscation
-        var ntdll = Module.findBaseAddress("ntdll.dll");
+        var ntdll = Module.findBaseAddress('ntdll.dll');
         if (ntdll) {
             // Hook common NT system calls that reveal behavior patterns
             var systemCalls = [
-                "NtQuerySystemInformation",
-                "NtQueryPerformanceCounter",
-                "NtQueryObject",
-                "NtQueryInformationProcess"
+                'NtQuerySystemInformation',
+                'NtQueryPerformanceCounter',
+                'NtQueryObject',
+                'NtQueryInformationProcess'
             ];
 
             systemCalls.forEach(syscallName => {
-                var syscallAddr = Module.findExportByName("ntdll.dll", syscallName);
+                var syscallAddr = Module.findExportByName('ntdll.dll', syscallName);
                 if (syscallAddr) {
                     this.hookSystemCall(syscallAddr, syscallName);
                 }
@@ -4157,9 +4157,9 @@ const EnhancedHardwareSpoofer = {
                     }
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "syscall_timing_obfuscated",
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'syscall_timing_obfuscated',
                         syscall: this.syscallName,
                         jitter_ms: randomDelay
                     });
@@ -4169,9 +4169,9 @@ const EnhancedHardwareSpoofer = {
             this.hooksInstalled[name] = true;
         } catch(e) {
             send({
-                type: "error",
-                target: "enhanced_hardware_spoofer",
-                action: "syscall_hook_failed",
+                type: 'error',
+                target: 'enhanced_hardware_spoofer',
+                action: 'syscall_hook_failed',
                 syscall: name,
                 error: e.toString()
             });
@@ -4180,7 +4180,7 @@ const EnhancedHardwareSpoofer = {
 
     hookTimingSideChannels: function() {
         // Hook high-precision timing functions used for side-channel attacks
-        var ntQueryPerformanceCounter = Module.findExportByName("ntdll.dll", "NtQueryPerformanceCounter");
+        var ntQueryPerformanceCounter = Module.findExportByName('ntdll.dll', 'NtQueryPerformanceCounter');
         if (ntQueryPerformanceCounter) {
             Interceptor.attach(ntQueryPerformanceCounter, {
                 onLeave: function(retval) {
@@ -4189,9 +4189,9 @@ const EnhancedHardwareSpoofer = {
                         var randomJitter = Math.floor(Math.random() * 1000); // 0-1000 cycles
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "timing_side_channel_mitigated",
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'timing_side_channel_mitigated',
                             jitter_cycles: randomJitter
                         });
                     }
@@ -4204,9 +4204,9 @@ const EnhancedHardwareSpoofer = {
 
     hookNextGenHardwareAttestationBypass: function() {
         send({
-            type: "status",
-            target: "enhanced_hardware_spoofer",
-            action: "installing_nextgen_hardware_attestation_bypass"
+            type: 'status',
+            target: 'enhanced_hardware_spoofer',
+            action: 'installing_nextgen_hardware_attestation_bypass'
         });
 
         // Hook Windows 11 VBS (Virtualization Based Security)
@@ -4225,24 +4225,24 @@ const EnhancedHardwareSpoofer = {
         this.hookRemoteAttestation();
 
         send({
-            type: "success",
-            target: "enhanced_hardware_spoofer",
-            action: "nextgen_hardware_attestation_bypass_installed"
+            type: 'success',
+            target: 'enhanced_hardware_spoofer',
+            action: 'nextgen_hardware_attestation_bypass_installed'
         });
     },
 
     hookWindowsVBS: function() {
         // Hook Virtualization Based Security features
-        var hvciEnabled = Module.findExportByName("ci.dll", "CiGetBuildInformation");
+        var hvciEnabled = Module.findExportByName('ci.dll', 'CiGetBuildInformation');
         if (hvciEnabled) {
             Interceptor.attach(hvciEnabled, {
                 onEnter: function(args) {
                     this.buildInfo = args[0];
 
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "windows_vbs_build_info_query"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'windows_vbs_build_info_query'
                     });
                 },
 
@@ -4252,9 +4252,9 @@ const EnhancedHardwareSpoofer = {
                         this.buildInfo.writeU32(0); // Disable HVCI
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "windows_vbs_disabled"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'windows_vbs_disabled'
                         });
                     }
                 }
@@ -4264,14 +4264,14 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook Credential Guard status
-        var credGuardStatus = Module.findExportByName("virtdisk.dll", "GetStorageDependencyInformation");
+        var credGuardStatus = Module.findExportByName('virtdisk.dll', 'GetStorageDependencyInformation');
         if (credGuardStatus) {
             Interceptor.attach(credGuardStatus, {
                 onLeave: function(retval) {
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "credential_guard_bypassed"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'credential_guard_bypassed'
                     });
                 }
             });
@@ -4282,14 +4282,14 @@ const EnhancedHardwareSpoofer = {
 
     hookMicrosoftPluton: function() {
         // Hook Microsoft Pluton security processor detection
-        var plutonDetection = Module.findExportByName("tbs.dll", "Tbsi_Get_Device_Info");
+        var plutonDetection = Module.findExportByName('tbs.dll', 'Tbsi_Get_Device_Info');
         if (plutonDetection) {
             Interceptor.attach(plutonDetection, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "microsoft_pluton_detection_attempt"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'microsoft_pluton_detection_attempt'
                     });
                 },
 
@@ -4298,9 +4298,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0x80284008); // TBS_E_DEVICE_NOT_READY
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "microsoft_pluton_detection_blocked"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'microsoft_pluton_detection_blocked'
                     });
                 }
             });
@@ -4311,7 +4311,7 @@ const EnhancedHardwareSpoofer = {
 
     hookARMTrustZone: function() {
         // Hook ARM TrustZone detection (for ARM-based Windows systems)
-        var armTrustZone = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var armTrustZone = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (armTrustZone) {
             Interceptor.attach(armTrustZone, {
                 onEnter: function(args) {
@@ -4322,9 +4322,9 @@ const EnhancedHardwareSpoofer = {
                     if (this.infoClass === 73) {
                         this.isProcessorFeatureQuery = true;
                         send({
-                            type: "detection",
-                            target: "enhanced_hardware_spoofer",
-                            action: "arm_trustzone_feature_query"
+                            type: 'detection',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'arm_trustzone_feature_query'
                         });
                     }
                 },
@@ -4335,9 +4335,9 @@ const EnhancedHardwareSpoofer = {
                         this.buffer.writeU32(0); // Disable TrustZone features
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "arm_trustzone_features_hidden"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'arm_trustzone_features_hidden'
                         });
                     }
                 }
@@ -4347,29 +4347,29 @@ const EnhancedHardwareSpoofer = {
 
     hookIntelTDX: function() {
         // Hook Intel Trust Domain Extensions detection
-        var intelTDX = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+        var intelTDX = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (intelTDX) {
             // TDX detection would be part of processor feature queries
             // This would be caught by existing hooks, but we can add specific handling
 
             send({
-                type: "info",
-                target: "enhanced_hardware_spoofer",
-                action: "intel_tdx_detection_integrated"
+                type: 'info',
+                target: 'enhanced_hardware_spoofer',
+                action: 'intel_tdx_detection_integrated'
             });
         }
     },
 
     hookRemoteAttestation: function() {
         // Hook remote attestation protocol implementations
-        var remoteAttestation = Module.findExportByName("tbs.dll", "Tbsi_Create_Attestation_From_Log");
+        var remoteAttestation = Module.findExportByName('tbs.dll', 'Tbsi_Create_Attestation_From_Log');
         if (remoteAttestation) {
             Interceptor.attach(remoteAttestation, {
                 onEnter: function(args) {
                     send({
-                        type: "detection",
-                        target: "enhanced_hardware_spoofer",
-                        action: "remote_attestation_attempt"
+                        type: 'detection',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'remote_attestation_attempt'
                     });
                 },
 
@@ -4378,9 +4378,9 @@ const EnhancedHardwareSpoofer = {
                     retval.replace(0x80284001); // TBS_E_INTERNAL_ERROR
 
                     send({
-                        type: "bypass",
-                        target: "enhanced_hardware_spoofer",
-                        action: "remote_attestation_blocked"
+                        type: 'bypass',
+                        target: 'enhanced_hardware_spoofer',
+                        action: 'remote_attestation_blocked'
                     });
                 }
             });
@@ -4389,7 +4389,7 @@ const EnhancedHardwareSpoofer = {
         }
 
         // Hook network-based attestation protocols
-        var networkAttestation = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
+        var networkAttestation = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (networkAttestation) {
             Interceptor.attach(networkAttestation, {
                 onEnter: function(args) {
@@ -4399,12 +4399,12 @@ const EnhancedHardwareSpoofer = {
 
                     if (this.headers && this.headersLength > 0) {
                         var headersStr = this.headers.readUtf16String(this.headersLength);
-                        if (headersStr && headersStr.toLowerCase().includes("attestation")) {
+                        if (headersStr && headersStr.toLowerCase().includes('attestation')) {
                             this.isAttestationRequest = true;
                             send({
-                                type: "detection",
-                                target: "enhanced_hardware_spoofer",
-                                action: "network_attestation_request"
+                                type: 'detection',
+                                target: 'enhanced_hardware_spoofer',
+                                action: 'network_attestation_request'
                             });
                         }
                     }
@@ -4416,9 +4416,9 @@ const EnhancedHardwareSpoofer = {
                         retval.replace(0); // FALSE
 
                         send({
-                            type: "bypass",
-                            target: "enhanced_hardware_spoofer",
-                            action: "network_attestation_blocked"
+                            type: 'bypass',
+                            target: 'enhanced_hardware_spoofer',
+                            action: 'network_attestation_blocked'
                         });
                     }
                 }
@@ -4432,35 +4432,35 @@ const EnhancedHardwareSpoofer = {
     installSummary: function() {
         setTimeout(() => {
             send({
-                type: "success",
-                target: "enhanced_hardware_spoofer",
-                action: "installation_summary_start"
+                type: 'success',
+                target: 'enhanced_hardware_spoofer',
+                action: 'installation_summary_start'
             });
 
             for (var hook in this.hooksInstalled) {
                 send({
-                    type: "info",
-                    target: "enhanced_hardware_spoofer",
-                    action: "hook_installed",
+                    type: 'info',
+                    target: 'enhanced_hardware_spoofer',
+                    action: 'hook_installed',
                     hook_name: hook
                 });
             }
 
             send({
-                type: "info",
-                target: "enhanced_hardware_spoofer",
-                action: "spoofed_hardware_config",
+                type: 'info',
+                target: 'enhanced_hardware_spoofer',
+                action: 'spoofed_hardware_config',
                 cpu: this.config.cpu.name,
-                motherboard: this.config.motherboard.manufacturer + " " + this.config.motherboard.product,
+                motherboard: this.config.motherboard.manufacturer + ' ' + this.config.motherboard.product,
                 mac_address: this.config.network.adapters[0].macAddress,
-                bios: this.config.bios.manufacturer + " " + this.config.bios.version
+                bios: this.config.bios.manufacturer + ' ' + this.config.bios.version
             });
 
             send({
-                type: "success",
-                target: "enhanced_hardware_spoofer",
-                action: "hardware_spoofing_active"
+                type: 'success',
+                target: 'enhanced_hardware_spoofer',
+                action: 'hardware_spoofing_active'
             });
         }, 100);
     }
-}
+};

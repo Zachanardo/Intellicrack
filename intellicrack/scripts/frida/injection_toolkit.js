@@ -31,9 +31,9 @@
  */
 
 const InjectionToolkit = {
-    name: "Advanced Injection Toolkit",
-    description: "Comprehensive process injection framework with modern evasion techniques",
-    version: "2.0.0",
+    name: 'Advanced Injection Toolkit',
+    description: 'Comprehensive process injection framework with modern evasion techniques',
+    version: '2.0.0',
 
     // Core configuration
     config: {
@@ -100,9 +100,9 @@ const InjectionToolkit = {
 
     onAttach: function(pid) {
         send({
-            type: "info",
-            target: "injection_toolkit",
-            action: "attaching_to_process",
+            type: 'info',
+            target: 'injection_toolkit',
+            action: 'attaching_to_process',
             pid: pid,
             timestamp: Date.now()
         });
@@ -114,8 +114,8 @@ const InjectionToolkit = {
         this.initializeIntegrationFramework();
 
         send({
-            type: "status",
-            message: "Injection Toolkit attached successfully",
+            type: 'status',
+            message: 'Injection Toolkit attached successfully',
             pid: pid,
             capabilities: Object.keys(this.techniques),
             timestamp: Date.now()
@@ -124,9 +124,9 @@ const InjectionToolkit = {
 
     run: function() {
         send({
-            type: "info",
-            target: "injection_toolkit",
-            action: "starting_injection_framework",
+            type: 'info',
+            target: 'injection_toolkit',
+            action: 'starting_injection_framework',
             timestamp: Date.now()
         });
 
@@ -141,16 +141,16 @@ const InjectionToolkit = {
             this.startMonitoringSystems();
 
             send({
-                type: "success",
-                message: "Injection Toolkit fully operational",
+                type: 'success',
+                message: 'Injection Toolkit fully operational',
                 techniques: Array.from(this.techniques.keys()),
                 timestamp: Date.now()
             });
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Failed to initialize Injection Toolkit",
+                type: 'error',
+                message: 'Failed to initialize Injection Toolkit',
                 error: error.message,
                 stack: error.stack,
                 timestamp: Date.now()
@@ -166,14 +166,14 @@ const InjectionToolkit = {
                 if (typeof antiDebugger !== 'undefined') {
                     this.dependencies.antiDebugger = antiDebugger;
                     send({
-                        type: "info",
-                        message: "Anti-debugger module loaded successfully"
+                        type: 'info',
+                        message: 'Anti-debugger module loaded successfully'
                     });
                 }
             } catch (e) {
                 send({
-                    type: "warning",
-                    message: "Anti-debugger module not available, using builtin fallback"
+                    type: 'warning',
+                    message: 'Anti-debugger module not available, using builtin fallback'
                 });
             }
 
@@ -182,14 +182,14 @@ const InjectionToolkit = {
                 if (typeof EnhancedHardwareSpoofer !== 'undefined') {
                     this.dependencies.hardwareSpoofer = EnhancedHardwareSpoofer;
                     send({
-                        type: "info",
-                        message: "Hardware spoofer module loaded successfully"
+                        type: 'info',
+                        message: 'Hardware spoofer module loaded successfully'
                     });
                 }
             } catch (e) {
                 send({
-                    type: "warning",
-                    message: "Hardware spoofer module not available, using builtin fallback"
+                    type: 'warning',
+                    message: 'Hardware spoofer module not available, using builtin fallback'
                 });
             }
 
@@ -198,14 +198,14 @@ const InjectionToolkit = {
                 if (typeof MemoryIntegrityBypass !== 'undefined') {
                     this.dependencies.memoryBypass = MemoryIntegrityBypass;
                     send({
-                        type: "info",
-                        message: "Memory bypass module loaded successfully"
+                        type: 'info',
+                        message: 'Memory bypass module loaded successfully'
                     });
                 }
             } catch (e) {
                 send({
-                    type: "warning",
-                    message: "Memory bypass module not available, using builtin fallback"
+                    type: 'warning',
+                    message: 'Memory bypass module not available, using builtin fallback'
                 });
             }
 
@@ -220,15 +220,15 @@ const InjectionToolkit = {
             }
 
             send({
-                type: "success",
-                message: "Integration framework initialized",
+                type: 'success',
+                message: 'Integration framework initialized',
                 loadedModules: Object.keys(this.dependencies).filter(k => this.dependencies[k] !== null)
             });
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Failed to initialize integration framework",
+                type: 'error',
+                message: 'Failed to initialize integration framework',
                 error: error.message
             });
             throw error;
@@ -244,7 +244,7 @@ const InjectionToolkit = {
                     module.onAttach(this.processId);
                 } catch (error) {
                     send({
-                        type: "warning",
+                        type: 'warning',
                         message: `Failed to attach module: ${module.name || 'unknown'}`,
                         error: error.message
                     });
@@ -298,8 +298,8 @@ const InjectionToolkit = {
         this.techniques.set('zero_footprint_injection', this.zeroFootprintInjection.bind(this));
 
         send({
-            type: "info",
-            message: "Injection techniques registered",
+            type: 'info',
+            message: 'Injection techniques registered',
             count: this.techniques.size,
             techniques: Array.from(this.techniques.keys())
         });
@@ -326,8 +326,8 @@ const InjectionToolkit = {
     // Create universal unpacker (builtin implementation)
     createUniversalUnpacker: function() {
         return {
-            name: "Universal Unpacker",
-            version: "1.0.0",
+            name: 'Universal Unpacker',
+            version: '1.0.0',
 
             prepare: function(payload) {
                 try {
@@ -367,8 +367,8 @@ const InjectionToolkit = {
 
                 } catch (error) {
                     send({
-                        type: "error",
-                        message: "Failed to prepare payload",
+                        type: 'error',
+                        message: 'Failed to prepare payload',
                         error: error.message
                     });
                     throw error;
@@ -378,14 +378,14 @@ const InjectionToolkit = {
             unpack: function(data, format) {
                 // Implementation for various packing formats
                 switch (format) {
-                    case 'upx':
-                        return this.unpackUPX(data);
-                    case 'themida':
-                        return this.unpackThemida(data);
-                    case 'vmprotect':
-                        return this.unpackVMProtect(data);
-                    default:
-                        return data;
+                case 'upx':
+                    return this.unpackUPX(data);
+                case 'themida':
+                    return this.unpackThemida(data);
+                case 'vmprotect':
+                    return this.unpackVMProtect(data);
+                default:
+                    return data;
                 }
             },
 
@@ -409,16 +409,16 @@ const InjectionToolkit = {
     // Create memory dumper (builtin implementation)
     createMemoryDumper: function() {
         return {
-            name: "Memory Dumper",
-            version: "1.0.0",
+            name: 'Memory Dumper',
+            version: '1.0.0',
 
             extractMemory: function(address, size) {
                 try {
                     return Memory.readByteArray(ptr(address), size);
                 } catch (error) {
                     send({
-                        type: "error",
-                        message: "Failed to extract memory",
+                        type: 'error',
+                        message: 'Failed to extract memory',
                         address: address.toString(16),
                         size: size,
                         error: error.message
@@ -436,8 +436,8 @@ const InjectionToolkit = {
                     });
                 } catch (error) {
                     send({
-                        type: "error",
-                        message: "Failed to scan memory pattern",
+                        type: 'error',
+                        message: 'Failed to scan memory pattern',
                         pattern: pattern,
                         error: error.message
                     });
@@ -461,8 +461,8 @@ const InjectionToolkit = {
                     };
                 } catch (error) {
                     send({
-                        type: "error",
-                        message: "Failed to dump module",
+                        type: 'error',
+                        message: 'Failed to dump module',
                         module: moduleName,
                         error: error.message
                     });
@@ -489,8 +489,8 @@ const InjectionToolkit = {
         this.detectContainerEnvironment();
 
         send({
-            type: "info",
-            message: "Container escape subsystem initialized"
+            type: 'info',
+            message: 'Container escape subsystem initialized'
         });
     },
 
@@ -498,8 +498,8 @@ const InjectionToolkit = {
     detectContainerEnvironment: function() {
         try {
             // Check for Docker container
-            const cgroupFile = "/proc/1/cgroup";
-            const mountinfoFile = "/proc/self/mountinfo";
+            const cgroupFile = '/proc/1/cgroup';
+            const mountinfoFile = '/proc/self/mountinfo';
 
             this.containerEscape.isDocker = false;
             this.containerEscape.isKubernetes = false;
@@ -508,10 +508,10 @@ const InjectionToolkit = {
             // Try to read cgroup information
             try {
                 const cgroupData = File.readAllText(cgroupFile);
-                if (cgroupData.includes("docker") || cgroupData.includes("containerd")) {
+                if (cgroupData.includes('docker') || cgroupData.includes('containerd')) {
                     this.containerEscape.isDocker = true;
                 }
-                if (cgroupData.includes("kubepods")) {
+                if (cgroupData.includes('kubepods')) {
                     this.containerEscape.isKubernetes = true;
                 }
             } catch (e) {
@@ -519,10 +519,10 @@ const InjectionToolkit = {
             }
 
             // Check for Windows container
-            if (Process.platform === "windows") {
+            if (Process.platform === 'windows') {
                 try {
-                    const systemInfo = System.getProperty("os.name");
-                    if (systemInfo && systemInfo.includes("Windows")) {
+                    const systemInfo = System.getProperty('os.name');
+                    if (systemInfo && systemInfo.includes('Windows')) {
                         // Check for container-specific registry keys or files
                         this.containerEscape.isWindowsContainer = this.checkWindowsContainer();
                     }
@@ -533,8 +533,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "warning",
-                message: "Container environment detection failed",
+                type: 'warning',
+                message: 'Container environment detection failed',
                 error: error.message
             });
         }
@@ -545,14 +545,14 @@ const InjectionToolkit = {
         try {
             // Check for Hyper-V container indicators
             const hyperVKeys = [
-                "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Virtualization",
-                "HKLM\\SYSTEM\\CurrentControlSet\\Services\\vmms"
+                'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Virtualization',
+                'HKLM\\SYSTEM\\CurrentControlSet\\Services\\vmms'
             ];
 
             // Check for Docker Desktop indicators
             const dockerPaths = [
-                "C:\\ProgramData\\docker",
-                "C:\\Program Files\\Docker"
+                'C:\\ProgramData\\docker',
+                'C:\\Program Files\\Docker'
             ];
 
             return false; // Basic implementation
@@ -567,8 +567,8 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Attempting Docker container escape injection",
+                type: 'info',
+                message: 'Attempting Docker container escape injection',
                 target: targetProcess
             });
 
@@ -591,11 +591,11 @@ const InjectionToolkit = {
             this.updateInjectionMetrics(true, injectionTime);
 
             send({
-                type: "success",
-                message: "Docker container escape injection completed",
+                type: 'success',
+                message: 'Docker container escape injection completed',
                 target: targetProcess,
                 time: injectionTime,
-                method: "docker_escape"
+                method: 'docker_escape'
             });
 
             return escapeResult;
@@ -605,8 +605,8 @@ const InjectionToolkit = {
             this.updateInjectionMetrics(false, injectionTime);
 
             send({
-                type: "error",
-                message: "Docker container escape injection failed",
+                type: 'error',
+                message: 'Docker container escape injection failed',
                 target: targetProcess,
                 error: error.message,
                 time: injectionTime
@@ -645,7 +645,7 @@ const InjectionToolkit = {
             return {
                 success: false,
                 error: error.message,
-                method: "docker_escape_failed"
+                method: 'docker_escape_failed'
             };
         }
     },
@@ -655,10 +655,10 @@ const InjectionToolkit = {
         try {
             // Check for dangerous capabilities
             const dangerousCaps = [
-                "CAP_SYS_ADMIN",
-                "CAP_SYS_PTRACE",
-                "CAP_SYS_MODULE",
-                "CAP_DAC_OVERRIDE"
+                'CAP_SYS_ADMIN',
+                'CAP_SYS_PTRACE',
+                'CAP_SYS_MODULE',
+                'CAP_DAC_OVERRIDE'
             ];
 
             // Check and exploit dangerous capabilities
@@ -671,7 +671,7 @@ const InjectionToolkit = {
                     this.injectPayloadAtAddress(escapeAddress, payload);
                     return {
                         success: true,
-                        method: "capabilities_escape",
+                        method: 'capabilities_escape',
                         capabilities: hasCapabilities
                     };
                 }
@@ -679,14 +679,14 @@ const InjectionToolkit = {
 
             return {
                 success: false,
-                method: "capabilities_escape",
-                reason: "insufficient_capabilities"
+                method: 'capabilities_escape',
+                reason: 'insufficient_capabilities'
             };
 
         } catch (error) {
             return {
                 success: false,
-                method: "capabilities_escape",
+                method: 'capabilities_escape',
                 error: error.message
             };
         }
@@ -696,7 +696,7 @@ const InjectionToolkit = {
     checkCapabilities: function(targetCaps) {
         try {
             // Read capabilities from /proc/self/status
-            const capFile = "/proc/self/status";
+            const capFile = '/proc/self/status';
             const availableCaps = [];
 
             // Parse capability information from kernel
@@ -713,10 +713,10 @@ const InjectionToolkit = {
                         const capEffValue = parseInt(capEffHex, 16);
 
                         // Check for dangerous capabilities
-                        if (capEffValue & (1 << 19)) availableCaps.push("CAP_SYS_PTRACE");    // bit 19
-                        if (capEffValue & (1 << 16)) availableCaps.push("CAP_SYS_MODULE");    // bit 16
-                        if (capEffValue & (1 << 1))  availableCaps.push("CAP_DAC_OVERRIDE");  // bit 1
-                        if (capEffValue & (1 << 21)) availableCaps.push("CAP_SYS_ADMIN");     // bit 21
+                        if (capEffValue & (1 << 19)) availableCaps.push('CAP_SYS_PTRACE');    // bit 19
+                        if (capEffValue & (1 << 16)) availableCaps.push('CAP_SYS_MODULE');    // bit 16
+                        if (capEffValue & (1 << 1))  availableCaps.push('CAP_DAC_OVERRIDE');  // bit 1
+                        if (capEffValue & (1 << 21)) availableCaps.push('CAP_SYS_ADMIN');     // bit 21
                     }
                 }
             } catch (e) {
@@ -735,10 +735,10 @@ const InjectionToolkit = {
         try {
             // Check if we can access host filesystem
             const hostPaths = [
-                "/host",
-                "/rootfs",
-                "/proc/1/root",
-                "/var/lib/docker"
+                '/host',
+                '/rootfs',
+                '/proc/1/root',
+                '/var/lib/docker'
             ];
 
             for (const hostPath of hostPaths) {
@@ -751,7 +751,7 @@ const InjectionToolkit = {
                         if (injectionResult.success) {
                             return {
                                 success: true,
-                                method: "mount_namespace_escape",
+                                method: 'mount_namespace_escape',
                                 hostPath: hostPath
                             };
                         }
@@ -764,14 +764,14 @@ const InjectionToolkit = {
 
             return {
                 success: false,
-                method: "mount_namespace_escape",
-                reason: "no_host_access"
+                method: 'mount_namespace_escape',
+                reason: 'no_host_access'
             };
 
         } catch (error) {
             return {
                 success: false,
-                method: "mount_namespace_escape",
+                method: 'mount_namespace_escape',
                 error: error.message
             };
         }
@@ -781,7 +781,7 @@ const InjectionToolkit = {
     testHostAccess: function(path) {
         try {
             // Attempt to read a known host file
-            const testFile = path + "/etc/hostname";
+            const testFile = path + '/etc/hostname';
             return File.exists(testFile);
         } catch (error) {
             return false;
@@ -792,7 +792,7 @@ const InjectionToolkit = {
     injectThroughHostAccess: function(targetProcess, payload, hostPath) {
         try {
             // Find target process in host namespace
-            const hostProcPath = hostPath + "/proc";
+            const hostProcPath = hostPath + '/proc';
             const targetPid = this.findHostProcessPid(targetProcess, hostProcPath);
 
             if (targetPid) {
@@ -812,7 +812,7 @@ const InjectionToolkit = {
 
             return {
                 success: false,
-                reason: "host_injection_failed"
+                reason: 'host_injection_failed'
             };
 
         } catch (error) {
@@ -841,8 +841,8 @@ const InjectionToolkit = {
         this.detectDotNetEnvironment();
 
         send({
-            type: "info",
-            message: ".NET injection subsystem initialized"
+            type: 'info',
+            message: '.NET injection subsystem initialized'
         });
     },
 
@@ -851,11 +851,11 @@ const InjectionToolkit = {
         try {
             // Look for .NET modules
             const dotnetModules = [
-                "coreclr.dll",
-                "clr.dll",
-                "mscoree.dll",
-                "hostpolicy.dll",
-                "hostfxr.dll"
+                'coreclr.dll',
+                'clr.dll',
+                'mscoree.dll',
+                'hostpolicy.dll',
+                'hostfxr.dll'
             ];
 
             for (const moduleName of dotnetModules) {
@@ -878,8 +878,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "warning",
-                message: ".NET environment detection failed",
+                type: 'warning',
+                message: '.NET environment detection failed',
                 error: error.message
             });
         }
@@ -912,9 +912,9 @@ const InjectionToolkit = {
         try {
             // Look for AOT-specific symbols or sections
             const aotIndicators = [
-                "__managed_main",
-                "__startup",
-                ".rdata$zzzdbg"
+                '__managed_main',
+                '__startup',
+                '.rdata$zzzdbg'
             ];
 
             // Check for R2R header
@@ -931,7 +931,7 @@ const InjectionToolkit = {
 
             // Look for R2R signature in PE header
             const peBase = this.dotnetInjection.clrModule.base;
-            const r2rSignature = "RTR"; // ReadyToRun signature
+            const r2rSignature = 'RTR'; // ReadyToRun signature
 
             // Scan for R2R header (simplified)
             const scanResult = Memory.scan(peBase, 0x1000, r2rSignature, {
@@ -951,9 +951,9 @@ const InjectionToolkit = {
         try {
             // Check GC configuration through runtime APIs
             // This is a simplified implementation
-            return "workstation"; // Default assumption
+            return 'workstation'; // Default assumption
         } catch (error) {
-            return "unknown";
+            return 'unknown';
         }
     },
 
@@ -963,13 +963,13 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Attempting .NET AOT injection",
+                type: 'info',
+                message: 'Attempting .NET AOT injection',
                 target: targetProcess
             });
 
             if (!this.dotnetInjection.aotDetected) {
-                throw new Error("AOT compilation not detected");
+                throw new Error('AOT compilation not detected');
             }
 
             // Prepare payload for AOT environment
@@ -979,7 +979,7 @@ const InjectionToolkit = {
             const entryPoints = this.findAOTEntryPoints();
 
             if (entryPoints.length === 0) {
-                throw new Error("No suitable AOT entry points found");
+                throw new Error('No suitable AOT entry points found');
             }
 
             // Inject into AOT runtime
@@ -989,8 +989,8 @@ const InjectionToolkit = {
             this.updateInjectionMetrics(true, injectionTime);
 
             send({
-                type: "success",
-                message: ".NET AOT injection completed",
+                type: 'success',
+                message: '.NET AOT injection completed',
                 target: targetProcess,
                 time: injectionTime,
                 entryPoints: entryPoints.length
@@ -1003,8 +1003,8 @@ const InjectionToolkit = {
             this.updateInjectionMetrics(false, injectionTime);
 
             send({
-                type: "error",
-                message: ".NET AOT injection failed",
+                type: 'error',
+                message: '.NET AOT injection failed',
                 target: targetProcess,
                 error: error.message,
                 time: injectionTime
@@ -1075,22 +1075,22 @@ const InjectionToolkit = {
             }
 
             // Look for managed main entry point
-            const managedMainAddress = this.findSymbol("__managed_main");
+            const managedMainAddress = this.findSymbol('__managed_main');
             if (managedMainAddress) {
                 entryPoints.push({
-                    name: "__managed_main",
+                    name: '__managed_main',
                     address: managedMainAddress,
-                    type: "main_entry"
+                    type: 'main_entry'
                 });
             }
 
             // Look for startup entry point
-            const startupAddress = this.findSymbol("__startup");
+            const startupAddress = this.findSymbol('__startup');
             if (startupAddress) {
                 entryPoints.push({
-                    name: "__startup",
+                    name: '__startup',
                     address: startupAddress,
-                    type: "startup_entry"
+                    type: 'startup_entry'
                 });
             }
 
@@ -1161,7 +1161,7 @@ const InjectionToolkit = {
             const thread = Memory.alloc(Process.pointerSize);
 
             // Use CreateThread API on Windows or pthread_create on Linux
-            if (Process.platform === "windows") {
+            if (Process.platform === 'windows') {
                 return this.createWindowsThread(payloadAddress, entryPointAddress);
             } else {
                 return this.createPosixThread(payloadAddress, entryPointAddress);
@@ -1174,9 +1174,9 @@ const InjectionToolkit = {
     // Create Windows thread
     createWindowsThread: function(payloadAddress, entryPointAddress) {
         try {
-            const kernel32 = Module.findExportByName("kernel32.dll", "CreateThread");
+            const kernel32 = Module.findExportByName('kernel32.dll', 'CreateThread');
             if (!kernel32) {
-                throw new Error("CreateThread not found");
+                throw new Error('CreateThread not found');
             }
 
             // Call CreateThread
@@ -1203,9 +1203,9 @@ const InjectionToolkit = {
     createPosixThread: function(payloadAddress, entryPointAddress) {
         try {
             // Use pthread_create for Linux/macOS
-            const pthread = Module.findExportByName(null, "pthread_create");
+            const pthread = Module.findExportByName(null, 'pthread_create');
             if (!pthread) {
-                throw new Error("pthread_create not found");
+                throw new Error('pthread_create not found');
             }
 
             const pthreadCreate = new NativeFunction(pthread, 'int', [
@@ -1251,8 +1251,8 @@ const InjectionToolkit = {
         // Check performance targets
         if (timeTaken > this.config.performance.maxInjectionTime) {
             send({
-                type: "warning",
-                message: "Injection time exceeded target",
+                type: 'warning',
+                message: 'Injection time exceeded target',
                 target: this.config.performance.maxInjectionTime,
                 actual: timeTaken
             });
@@ -1267,8 +1267,8 @@ const InjectionToolkit = {
             // Check if we're approaching max simultaneous injections
             if (activeCount > this.config.performance.maxSimultaneousInjections * 0.8) {
                 send({
-                    type: "warning",
-                    message: "Approaching maximum simultaneous injections",
+                    type: 'warning',
+                    message: 'Approaching maximum simultaneous injections',
                     active: activeCount,
                     max: this.config.performance.maxSimultaneousInjections
                 });
@@ -1283,8 +1283,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Injection monitoring failed",
+                type: 'error',
+                message: 'Injection monitoring failed',
                 error: error.message
             });
         }
@@ -1298,7 +1298,7 @@ const InjectionToolkit = {
                 (this.performance.successCount / this.performance.injectionCount) * 100 : 0;
 
             send({
-                type: "metrics",
+                type: 'metrics',
                 runtime: runtime,
                 totalInjections: this.performance.injectionCount,
                 successCount: this.performance.successCount,
@@ -1310,8 +1310,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Performance metrics update failed",
+                type: 'error',
+                message: 'Performance metrics update failed',
                 error: error.message
             });
         }
@@ -1339,8 +1339,8 @@ const InjectionToolkit = {
             // Log audit results if violations detected
             if (auditResults.unauthorizedAttempts > 0 || auditResults.complianceViolations > 0) {
                 send({
-                    type: "security_alert",
-                    message: "Security audit detected violations",
+                    type: 'security_alert',
+                    message: 'Security audit detected violations',
                     audit: auditResults,
                     timestamp: Date.now()
                 });
@@ -1348,8 +1348,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Security audit failed",
+                type: 'error',
+                message: 'Security audit failed',
                 error: error.message
             });
         }
@@ -1438,7 +1438,7 @@ const InjectionToolkit = {
             for (const procDir of procDirs) {
                 if (/^\d+$/.test(procDir)) {
                     // Check if this PID matches our target
-                    const cmdlinePath = hostProcPath + "/" + procDir + "/cmdline";
+                    const cmdlinePath = hostProcPath + '/' + procDir + '/cmdline';
 
                     try {
                         const cmdline = File.readAllText(cmdlinePath);
@@ -1504,14 +1504,14 @@ const InjectionToolkit = {
 
             return {
                 success: false,
-                method: "cgroup_escape",
-                reason: "unsupported_cgroup_version"
+                method: 'cgroup_escape',
+                reason: 'unsupported_cgroup_version'
             };
 
         } catch (error) {
             return {
                 success: false,
-                method: "cgroup_escape",
+                method: 'cgroup_escape',
                 error: error.message
             };
         }
@@ -1520,9 +1520,9 @@ const InjectionToolkit = {
     // Detect cgroup version
     detectCgroupVersion: function() {
         try {
-            if (File.exists("/sys/fs/cgroup/cgroup.controllers")) {
+            if (File.exists('/sys/fs/cgroup/cgroup.controllers')) {
                 return 2; // cgroup v2
-            } else if (File.exists("/sys/fs/cgroup/memory")) {
+            } else if (File.exists('/sys/fs/cgroup/memory')) {
                 return 1; // cgroup v1
             }
             return 0; // Unknown
@@ -1536,9 +1536,9 @@ const InjectionToolkit = {
         try {
             // Look for writable cgroup directories
             const cgroupPaths = [
-                "/sys/fs/cgroup/memory/cgroup.procs",
-                "/sys/fs/cgroup/pids/cgroup.procs",
-                "/sys/fs/cgroup/systemd/cgroup.procs"
+                '/sys/fs/cgroup/memory/cgroup.procs',
+                '/sys/fs/cgroup/pids/cgroup.procs',
+                '/sys/fs/cgroup/systemd/cgroup.procs'
             ];
 
             for (const cgroupPath of cgroupPaths) {
@@ -1556,14 +1556,14 @@ const InjectionToolkit = {
 
             return {
                 success: false,
-                method: "cgroup_v1_escape",
-                reason: "no_writable_cgroups"
+                method: 'cgroup_v1_escape',
+                reason: 'no_writable_cgroups'
             };
 
         } catch (error) {
             return {
                 success: false,
-                method: "cgroup_v1_escape",
+                method: 'cgroup_v1_escape',
                 error: error.message
             };
         }
@@ -1596,14 +1596,14 @@ const InjectionToolkit = {
 
             return {
                 success: injectionResult.success,
-                method: "cgroup_escape",
+                method: 'cgroup_escape',
                 cgroupPath: cgroupPath
             };
 
         } catch (error) {
             return {
                 success: false,
-                method: "cgroup_escape",
+                method: 'cgroup_escape',
                 error: error.message
             };
         }
@@ -1616,24 +1616,24 @@ const InjectionToolkit = {
             const runtimeType = this.detectContainerRuntime();
 
             switch (runtimeType) {
-                case 'docker':
-                    return this.exploitDockerRuntime(targetProcess, payload);
-                case 'containerd':
-                    return this.exploitContainerdRuntime(targetProcess, payload);
-                case 'cri-o':
-                    return this.exploitCrioRuntime(targetProcess, payload);
-                default:
-                    return {
-                        success: false,
-                        method: "runtime_exploit",
-                        reason: "unsupported_runtime"
-                    };
+            case 'docker':
+                return this.exploitDockerRuntime(targetProcess, payload);
+            case 'containerd':
+                return this.exploitContainerdRuntime(targetProcess, payload);
+            case 'cri-o':
+                return this.exploitCrioRuntime(targetProcess, payload);
+            default:
+                return {
+                    success: false,
+                    method: 'runtime_exploit',
+                    reason: 'unsupported_runtime'
+                };
             }
 
         } catch (error) {
             return {
                 success: false,
-                method: "runtime_exploit",
+                method: 'runtime_exploit',
                 error: error.message
             };
         }
@@ -1668,13 +1668,13 @@ const InjectionToolkit = {
             // Docker-specific runtime exploits
             return {
                 success: false,
-                method: "docker_runtime_exploit",
-                reason: "not_implemented"
+                method: 'docker_runtime_exploit',
+                reason: 'not_implemented'
             };
         } catch (error) {
             return {
                 success: false,
-                method: "docker_runtime_exploit",
+                method: 'docker_runtime_exploit',
                 error: error.message
             };
         }
@@ -1798,8 +1798,8 @@ const InjectionToolkit = {
         const securityFeatures = hardwareInjection.analyzeSecurityFeatures();
 
         send({
-            type: "info",
-            message: "Hardware-specific injection initialized",
+            type: 'info',
+            message: 'Hardware-specific injection initialized',
             details: {
                 cpuVendor: cpuFeatures.vendor,
                 securityFeatures: Object.keys(securityFeatures).filter(key => securityFeatures[key])
@@ -1853,8 +1853,8 @@ const InjectionToolkit = {
         this.setupQuantumThreatAssessment();
 
         send({
-            type: "info",
-            message: "Quantum-resistant injection initialized",
+            type: 'info',
+            message: 'Quantum-resistant injection initialized',
             algorithms: Object.keys(this.quantumResistant.algorithms),
             cipherSuites: this.quantumResistant.cipherSuites.size
         });
@@ -1863,8 +1863,8 @@ const InjectionToolkit = {
     // Quantum-resistant algorithm implementations
     initializeKyberKEM: function() {
         return {
-            name: "CRYSTALS-Kyber",
-            version: "3.0",
+            name: 'CRYSTALS-Kyber',
+            version: '3.0',
             keySize: 3168,
             ciphertextSize: 1568,
             sharedSecretSize: 32,
@@ -1894,7 +1894,7 @@ const InjectionToolkit = {
                         generationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Kyber key generation failed: " + error.message);
+                    throw new Error('Kyber key generation failed: ' + error.message);
                 }
             },
 
@@ -1921,7 +1921,7 @@ const InjectionToolkit = {
                         encapsulationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Kyber encapsulation failed: " + error.message);
+                    throw new Error('Kyber encapsulation failed: ' + error.message);
                 }
             },
 
@@ -1942,7 +1942,7 @@ const InjectionToolkit = {
                         decapsulationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Kyber decapsulation failed: " + error.message);
+                    throw new Error('Kyber decapsulation failed: ' + error.message);
                 }
             }
         };
@@ -1950,8 +1950,8 @@ const InjectionToolkit = {
 
     initializeDilithiumSignature: function() {
         return {
-            name: "CRYSTALS-Dilithium",
-            version: "3.1",
+            name: 'CRYSTALS-Dilithium',
+            version: '3.1',
             privateKeySize: 4896,
             publicKeySize: 1952,
             signatureSize: 3293,
@@ -1979,7 +1979,7 @@ const InjectionToolkit = {
                         generationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Dilithium key generation failed: " + error.message);
+                    throw new Error('Dilithium key generation failed: ' + error.message);
                 }
             },
 
@@ -2008,7 +2008,7 @@ const InjectionToolkit = {
                         signingTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Dilithium signing failed: " + error.message);
+                    throw new Error('Dilithium signing failed: ' + error.message);
                 }
             },
 
@@ -2040,7 +2040,7 @@ const InjectionToolkit = {
                         verificationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("Dilithium verification failed: " + error.message);
+                    throw new Error('Dilithium verification failed: ' + error.message);
                 }
             }
         };
@@ -2048,8 +2048,8 @@ const InjectionToolkit = {
 
     initializeFalconSignature: function() {
         return {
-            name: "FALCON",
-            version: "1.2",
+            name: 'FALCON',
+            version: '1.2',
             privateKeySize: 1281,
             publicKeySize: 897,
             signatureSize: 690,
@@ -2077,7 +2077,7 @@ const InjectionToolkit = {
                         generationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("FALCON key generation failed: " + error.message);
+                    throw new Error('FALCON key generation failed: ' + error.message);
                 }
             },
 
@@ -2102,7 +2102,7 @@ const InjectionToolkit = {
                         signingTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("FALCON signing failed: " + error.message);
+                    throw new Error('FALCON signing failed: ' + error.message);
                 }
             },
 
@@ -2130,7 +2130,7 @@ const InjectionToolkit = {
                         verificationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("FALCON verification failed: " + error.message);
+                    throw new Error('FALCON verification failed: ' + error.message);
                 }
             }
         };
@@ -2138,8 +2138,8 @@ const InjectionToolkit = {
 
     initializeSPHINCSPlus: function() {
         return {
-            name: "SPHINCS+",
-            version: "3.1",
+            name: 'SPHINCS+',
+            version: '3.1',
             privateKeySize: 64,
             publicKeySize: 32,
             signatureSize: 17088,
@@ -2167,7 +2167,7 @@ const InjectionToolkit = {
                         generationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("SPHINCS+ key generation failed: " + error.message);
+                    throw new Error('SPHINCS+ key generation failed: ' + error.message);
                 }
             },
 
@@ -2193,7 +2193,7 @@ const InjectionToolkit = {
                         signingTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("SPHINCS+ signing failed: " + error.message);
+                    throw new Error('SPHINCS+ signing failed: ' + error.message);
                 }
             },
 
@@ -2223,7 +2223,7 @@ const InjectionToolkit = {
                         verificationTime: endTime - startTime
                     };
                 } catch (error) {
-                    throw new Error("SPHINCS+ verification failed: " + error.message);
+                    throw new Error('SPHINCS+ verification failed: ' + error.message);
                 }
             }
         };
@@ -2279,30 +2279,30 @@ const InjectionToolkit = {
 
             selectOptimalAlgorithm: function(threatLevel) {
                 switch (threatLevel) {
-                    case 'critical':
-                        return {
-                            kem: 'kyber',
-                            signature: 'sphincsplus',
-                            encryption: 'aes-256-gcm'
-                        };
-                    case 'high':
-                        return {
-                            kem: 'kyber',
-                            signature: 'dilithium',
-                            encryption: 'aes-256-gcm'
-                        };
-                    case 'medium':
-                        return {
-                            kem: 'kyber',
-                            signature: 'falcon',
-                            encryption: 'chacha20-poly1305'
-                        };
-                    default:
-                        return {
-                            kem: 'kyber',
-                            signature: 'dilithium',
-                            encryption: 'aes-256-gcm'
-                        };
+                case 'critical':
+                    return {
+                        kem: 'kyber',
+                        signature: 'sphincsplus',
+                        encryption: 'aes-256-gcm'
+                    };
+                case 'high':
+                    return {
+                        kem: 'kyber',
+                        signature: 'dilithium',
+                        encryption: 'aes-256-gcm'
+                    };
+                case 'medium':
+                    return {
+                        kem: 'kyber',
+                        signature: 'falcon',
+                        encryption: 'chacha20-poly1305'
+                    };
+                default:
+                    return {
+                        kem: 'kyber',
+                        signature: 'dilithium',
+                        encryption: 'aes-256-gcm'
+                    };
                 }
             }
         };
@@ -2358,8 +2358,8 @@ const InjectionToolkit = {
         this.setupCrossArchitectureCoordination();
 
         send({
-            type: "info",
-            message: "Cross-architecture support initialized",
+            type: 'info',
+            message: 'Cross-architecture support initialized',
             currentArchitecture: this.crossArchitecture.currentArchitecture,
             supportedArchitectures: this.crossArchitecture.supportedArchitectures,
             securityFeatures: Object.keys(this.crossArchitecture.securityFeatures)
@@ -2414,8 +2414,8 @@ const InjectionToolkit = {
     // Initialize ARM64 instruction encoder
     initializeARM64InstructionEncoder: function() {
         return {
-            name: "ARM64 Instruction Encoder",
-            version: "1.0.0",
+            name: 'ARM64 Instruction Encoder',
+            version: '1.0.0',
 
             // ARM64 register mappings
             registers: {
@@ -2429,18 +2429,18 @@ const InjectionToolkit = {
             // Encode basic ARM64 instructions
             encodeInstruction: function(mnemonic, operands) {
                 switch (mnemonic.toLowerCase()) {
-                    case 'mov':
-                        return this.encodeMOV(operands[0], operands[1]);
-                    case 'ldr':
-                        return this.encodeLDR(operands[0], operands[1]);
-                    case 'str':
-                        return this.encodeSTR(operands[0], operands[1]);
-                    case 'bl':
-                        return this.encodeBL(operands[0]);
-                    case 'ret':
-                        return this.encodeRET();
-                    default:
-                        throw new Error("Unsupported ARM64 instruction: " + mnemonic);
+                case 'mov':
+                    return this.encodeMOV(operands[0], operands[1]);
+                case 'ldr':
+                    return this.encodeLDR(operands[0], operands[1]);
+                case 'str':
+                    return this.encodeSTR(operands[0], operands[1]);
+                case 'bl':
+                    return this.encodeBL(operands[0]);
+                case 'ret':
+                    return this.encodeRET();
+                default:
+                    throw new Error('Unsupported ARM64 instruction: ' + mnemonic);
                 }
             },
 
@@ -2488,8 +2488,8 @@ const InjectionToolkit = {
     // Initialize RISC-V instruction encoder
     initializeRISCVInstructionEncoder: function() {
         return {
-            name: "RISC-V Instruction Encoder",
-            version: "1.0.0",
+            name: 'RISC-V Instruction Encoder',
+            version: '1.0.0',
 
             // RISC-V register mappings
             registers: {
@@ -2503,18 +2503,18 @@ const InjectionToolkit = {
             // Encode RISC-V instructions
             encodeInstruction: function(mnemonic, operands) {
                 switch (mnemonic.toLowerCase()) {
-                    case 'addi':
-                        return this.encodeADDI(operands[0], operands[1], operands[2]);
-                    case 'ld':
-                        return this.encodeLD(operands[0], operands[1]);
-                    case 'sd':
-                        return this.encodeSD(operands[0], operands[1]);
-                    case 'jal':
-                        return this.encodeJAL(operands[0], operands[1]);
-                    case 'jalr':
-                        return this.encodeJALR(operands[0], operands[1], operands[2]);
-                    default:
-                        throw new Error("Unsupported RISC-V instruction: " + mnemonic);
+                case 'addi':
+                    return this.encodeADDI(operands[0], operands[1], operands[2]);
+                case 'ld':
+                    return this.encodeLD(operands[0], operands[1]);
+                case 'sd':
+                    return this.encodeSD(operands[0], operands[1]);
+                case 'jal':
+                    return this.encodeJAL(operands[0], operands[1]);
+                case 'jalr':
+                    return this.encodeJALR(operands[0], operands[1], operands[2]);
+                default:
+                    throw new Error('Unsupported RISC-V instruction: ' + mnemonic);
                 }
             },
 
@@ -2573,20 +2573,20 @@ const InjectionToolkit = {
     // Initialize x64 instruction encoder (for reference)
     initializeX64InstructionEncoder: function() {
         return {
-            name: "x64 Instruction Encoder",
-            version: "1.0.0",
+            name: 'x64 Instruction Encoder',
+            version: '1.0.0',
 
             // Basic x64 instruction encoding (simplified)
             encodeInstruction: function(mnemonic, operands) {
                 switch (mnemonic.toLowerCase()) {
-                    case 'mov':
-                        return [0x48, 0xB8]; // MOV RAX, imm64 (simplified)
-                    case 'call':
-                        return [0xE8]; // CALL rel32
-                    case 'ret':
-                        return [0xC3]; // RET
-                    default:
-                        throw new Error("Unsupported x64 instruction: " + mnemonic);
+                case 'mov':
+                    return [0x48, 0xB8]; // MOV RAX, imm64 (simplified)
+                case 'call':
+                    return [0xE8]; // CALL rel32
+                case 'ret':
+                    return [0xC3]; // RET
+                default:
+                    throw new Error('Unsupported x64 instruction: ' + mnemonic);
                 }
             }
         };
@@ -2595,8 +2595,8 @@ const InjectionToolkit = {
     // Initialize TrustZone security handler
     initializeTrustZoneHandler: function() {
         return {
-            name: "ARM TrustZone Handler",
-            version: "1.0.0",
+            name: 'ARM TrustZone Handler',
+            version: '1.0.0',
 
             // Detect TrustZone state
             detectTrustZoneState: function() {
@@ -2606,7 +2606,7 @@ const InjectionToolkit = {
                     return {
                         secure: false, // Assume non-secure world
                         available: true,
-                        version: "ARMv8"
+                        version: 'ARMv8'
                     };
                 } catch (error) {
                     return {
@@ -2623,16 +2623,16 @@ const InjectionToolkit = {
                     // SMC (Secure Monitor Call) instruction would be used here
                     // This is a simulation for security research purposes
                     send({
-                        type: "info",
-                        message: "TrustZone transition simulation",
-                        method: "SMC instruction"
+                        type: 'info',
+                        message: 'TrustZone transition simulation',
+                        method: 'SMC instruction'
                     });
 
                     return {
                         success: true,
-                        method: "secure_monitor_call",
-                        previousState: "non-secure",
-                        newState: "secure"
+                        method: 'secure_monitor_call',
+                        previousState: 'non-secure',
+                        newState: 'secure'
                     };
                 } catch (error) {
                     return {
@@ -2647,8 +2647,8 @@ const InjectionToolkit = {
     // Initialize Pointer Authentication handler
     initializePointerAuthHandler: function() {
         return {
-            name: "ARM Pointer Authentication Handler",
-            version: "1.0.0",
+            name: 'ARM Pointer Authentication Handler',
+            version: '1.0.0',
 
             // Detect Pointer Authentication features
             detectPointerAuth: function() {
@@ -2656,8 +2656,8 @@ const InjectionToolkit = {
                     // Check for PAC (Pointer Authentication Code) support
                     return {
                         available: true,
-                        algorithms: ["QARMA", "IMPLDEF"],
-                        keys: ["APIAKey", "APIBKey", "APDAKey", "APDBKey", "APGAKey"]
+                        algorithms: ['QARMA', 'IMPLDEF'],
+                        keys: ['APIAKey', 'APIBKey', 'APDAKey', 'APDBKey', 'APGAKey']
                     };
                 } catch (error) {
                     return {
@@ -2677,7 +2677,7 @@ const InjectionToolkit = {
                         success: true,
                         originalPointer: authenticatedPointer,
                         strippedPointer: strippedPointer,
-                        method: "XPAC_instruction"
+                        method: 'XPAC_instruction'
                     };
                 } catch (error) {
                     return {
@@ -2692,8 +2692,8 @@ const InjectionToolkit = {
     // Initialize Memory Tagging Extensions handler
     initializeMemoryTaggingHandler: function() {
         return {
-            name: "ARM Memory Tagging Extensions Handler",
-            version: "1.0.0",
+            name: 'ARM Memory Tagging Extensions Handler',
+            version: '1.0.0',
 
             // Detect MTE support
             detectMTE: function() {
@@ -2702,7 +2702,7 @@ const InjectionToolkit = {
                         available: true,
                         granuleSize: 16, // bytes
                         tagSize: 4, // bits
-                        mode: "synchronous"
+                        mode: 'synchronous'
                     };
                 } catch (error) {
                     return {
@@ -2722,7 +2722,7 @@ const InjectionToolkit = {
                         success: true,
                         taggedAddress: taggedAddress,
                         untaggedAddress: untaggedAddress,
-                        method: "tag_stripping"
+                        method: 'tag_stripping'
                     };
                 } catch (error) {
                     return {
@@ -2737,26 +2737,26 @@ const InjectionToolkit = {
     // Initialize Apple Silicon specific handler
     initializeAppleSiliconHandler: function() {
         return {
-            name: "Apple Silicon Security Handler",
-            version: "1.0.0",
+            name: 'Apple Silicon Security Handler',
+            version: '1.0.0',
 
             // Detect Apple Silicon features
             detectAppleSiliconFeatures: function() {
                 try {
                     return {
-                        processor: "Apple Silicon",
+                        processor: 'Apple Silicon',
                         features: [
-                            "Pointer Authentication",
-                            "Memory Tagging Extensions",
-                            "Hardened Runtime",
-                            "System Integrity Protection",
-                            "Secure Enclave"
+                            'Pointer Authentication',
+                            'Memory Tagging Extensions',
+                            'Hardened Runtime',
+                            'System Integrity Protection',
+                            'Secure Enclave'
                         ],
-                        securityLevel: "enhanced"
+                        securityLevel: 'enhanced'
                     };
                 } catch (error) {
                     return {
-                        processor: "unknown",
+                        processor: 'unknown',
                         error: error.message
                     };
                 }
@@ -2775,7 +2775,7 @@ const InjectionToolkit = {
                             pointerAuth: pacBypass.success,
                             memoryTagging: mteBypass.success
                         },
-                        method: "coordinated_bypass"
+                        method: 'coordinated_bypass'
                     };
                 } catch (error) {
                     return {
@@ -2790,8 +2790,8 @@ const InjectionToolkit = {
     // Initialize RISC-V privilege handler
     initializeRISCVPrivilegeHandler: function() {
         return {
-            name: "RISC-V Privilege Level Handler",
-            version: "1.0.0",
+            name: 'RISC-V Privilege Level Handler',
+            version: '1.0.0',
 
             privilegeLevels: {
                 USER: 0,
@@ -2806,7 +2806,7 @@ const InjectionToolkit = {
                     return {
                         current: this.privilegeLevels.USER,
                         available: [0, 1, 3],
-                        mode: "RISC-V"
+                        mode: 'RISC-V'
                     };
                 } catch (error) {
                     return {
@@ -2821,9 +2821,9 @@ const InjectionToolkit = {
                 try {
                     // ECALL instruction simulation for privilege escalation
                     send({
-                        type: "info",
-                        message: "RISC-V privilege escalation simulation",
-                        method: "ECALL instruction",
+                        type: 'info',
+                        message: 'RISC-V privilege escalation simulation',
+                        method: 'ECALL instruction',
                         targetLevel: targetLevel
                     });
 
@@ -2831,7 +2831,7 @@ const InjectionToolkit = {
                         success: true,
                         previousLevel: this.privilegeLevels.USER,
                         newLevel: targetLevel,
-                        method: "environment_call"
+                        method: 'environment_call'
                     };
                 } catch (error) {
                     return {
@@ -2846,8 +2846,8 @@ const InjectionToolkit = {
     // Initialize RISC-V memory handler
     initializeRISCVMemoryHandler: function() {
         return {
-            name: "RISC-V Memory Model Handler",
-            version: "1.0.0",
+            name: 'RISC-V Memory Model Handler',
+            version: '1.0.0',
 
             // Exploit RISC-V memory model differences
             exploitMemoryModel: function() {
@@ -2855,9 +2855,9 @@ const InjectionToolkit = {
                     // RISC-V weak memory model exploitation
                     return {
                         success: true,
-                        memoryModel: "RISC-V-weak",
-                        orderingConstraints: "relaxed",
-                        barriers: ["FENCE", "FENCE.I"]
+                        memoryModel: 'RISC-V-weak',
+                        orderingConstraints: 'relaxed',
+                        barriers: ['FENCE', 'FENCE.I']
                     };
                 } catch (error) {
                     return {
@@ -2872,16 +2872,16 @@ const InjectionToolkit = {
     // Initialize RISC-V extension handler
     initializeRISCVExtensionHandler: function() {
         return {
-            name: "RISC-V Extension Handler",
-            version: "1.0.0",
+            name: 'RISC-V Extension Handler',
+            version: '1.0.0',
 
             // Handle RISC-V ISA extensions
             handleISAExtensions: function() {
                 try {
                     return {
                         success: true,
-                        baseISA: "RV64I",
-                        extensions: ["M", "A", "F", "D", "C"],
+                        baseISA: 'RV64I',
+                        extensions: ['M', 'A', 'F', 'D', 'C'],
                         customExtensions: []
                     };
                 } catch (error) {
@@ -3018,12 +3018,12 @@ const InjectionToolkit = {
         this.startRealTimeMonitoringSystems();
 
         send({
-            type: "info",
-            message: "Real-time monitoring fully initialized",
+            type: 'info',
+            message: 'Real-time monitoring fully initialized',
             components: {
-                liveAnalysis: "active",
-                distributedCoordination: "active",
-                eventSystem: "active",
+                liveAnalysis: 'active',
+                distributedCoordination: 'active',
+                eventSystem: 'active',
                 monitoringIntervals: this.realTimeMonitoring.monitoringIntervals.size
             }
         });
@@ -3032,8 +3032,8 @@ const InjectionToolkit = {
     // Initialize real-time event system
     initializeEventSystem: function() {
         return {
-            name: "Real-Time Event System",
-            version: "1.0.0",
+            name: 'Real-Time Event System',
+            version: '1.0.0',
 
             // Event stream management
             streams: new Map(),
@@ -3060,7 +3060,7 @@ const InjectionToolkit = {
             emit: function(streamId, eventData) {
                 const stream = this.streams.get(streamId);
                 if (!stream) {
-                    throw new Error("Event stream not found: " + streamId);
+                    throw new Error('Event stream not found: ' + streamId);
                 }
 
                 const event = {
@@ -3086,8 +3086,8 @@ const InjectionToolkit = {
                         subscriber(event);
                     } catch (error) {
                         send({
-                            type: "warning",
-                            message: "Event subscriber error",
+                            type: 'warning',
+                            message: 'Event subscriber error',
                             streamId: streamId,
                             error: error.message
                         });
@@ -3101,7 +3101,7 @@ const InjectionToolkit = {
             subscribe: function(streamId, callback) {
                 const stream = this.streams.get(streamId);
                 if (!stream) {
-                    throw new Error("Event stream not found: " + streamId);
+                    throw new Error('Event stream not found: ' + streamId);
                 }
 
                 stream.subscribers.add(callback);
@@ -3144,9 +3144,9 @@ const InjectionToolkit = {
         this.initializeContinuousOptimization();
 
         send({
-            type: "info",
-            message: "Live injection analysis initialized",
-            components: ["success_monitoring", "behavior_analysis", "parameter_adjustment", "anti_detection_adaptation", "continuous_optimization"]
+            type: 'info',
+            message: 'Live injection analysis initialized',
+            components: ['success_monitoring', 'behavior_analysis', 'parameter_adjustment', 'anti_detection_adaptation', 'continuous_optimization']
         });
     },
 
@@ -3205,8 +3205,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Injection event processing failed",
+                type: 'error',
+                message: 'Injection event processing failed',
                 error: error.message
             });
         }
@@ -3242,8 +3242,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Injection success analysis failed",
+                type: 'error',
+                message: 'Injection success analysis failed',
                 error: error.message
             });
         }
@@ -3253,8 +3253,8 @@ const InjectionToolkit = {
     initializePayloadBehaviorAnalysis: function() {
         // Create behavior analysis engine
         this.realTimeMonitoring.behaviorAnalyzers.set('payload_behavior', {
-            name: "Payload Behavior Analyzer",
-            version: "1.0.0",
+            name: 'Payload Behavior Analyzer',
+            version: '1.0.0',
 
             // Behavior pattern database
             patterns: new Map(),
@@ -3277,16 +3277,16 @@ const InjectionToolkit = {
                     return behaviorProfile;
 
                 } catch (error) {
-                    throw new Error("Behavior analysis failed: " + error.message);
+                    throw new Error('Behavior analysis failed: ' + error.message);
                 }
             },
 
             // Extract execution path
             extractExecutionPath: function(injectionData) {
                 return {
-                    entryPoint: injectionData.entryPoint || "unknown",
+                    entryPoint: injectionData.entryPoint || 'unknown',
                     executionTime: injectionData.executionTime || 0,
-                    exitPoint: injectionData.exitPoint || "unknown",
+                    exitPoint: injectionData.exitPoint || 'unknown',
                     branchingPoints: injectionData.branches || [],
                     loopCount: injectionData.loops || 0
                 };
@@ -3329,17 +3329,17 @@ const InjectionToolkit = {
 
                 // Check for unusual execution time
                 if (injectionData.executionTime > 10000) {
-                    anomalies.push("excessive_execution_time");
+                    anomalies.push('excessive_execution_time');
                 }
 
                 // Check for unexpected memory usage
                 if (injectionData.memoryUsage > 100 * 1024 * 1024) { // 100MB
-                    anomalies.push("high_memory_usage");
+                    anomalies.push('high_memory_usage');
                 }
 
                 // Check for suspicious API patterns
                 if (injectionData.suspiciousApis && injectionData.suspiciousApis.length > 0) {
-                    anomalies.push("suspicious_api_usage");
+                    anomalies.push('suspicious_api_usage');
                 }
 
                 return anomalies;
@@ -3422,8 +3422,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Behavior analysis failed",
+                type: 'error',
+                message: 'Behavior analysis failed',
                 error: error.message
             });
         }
@@ -3432,8 +3432,8 @@ const InjectionToolkit = {
     // Initialize dynamic parameter adjustment
     initializeDynamicParameterAdjustment: function() {
         this.realTimeMonitoring.adaptiveEngines.set('parameter_adjustment', {
-            name: "Dynamic Parameter Adjustment Engine",
-            version: "1.0.0",
+            name: 'Dynamic Parameter Adjustment Engine',
+            version: '1.0.0',
 
             // Adjustment parameters
             parameters: {
@@ -3513,7 +3513,7 @@ const InjectionToolkit = {
                     return adjustments;
 
                 } catch (error) {
-                    throw new Error("Parameter adjustment failed: " + error.message);
+                    throw new Error('Parameter adjustment failed: ' + error.message);
                 }
             },
 
@@ -3521,7 +3521,7 @@ const InjectionToolkit = {
             adjustParameter: function(paramName, adjustmentFactor) {
                 const param = this.parameters[paramName];
                 if (!param) {
-                    throw new Error("Unknown parameter: " + paramName);
+                    throw new Error('Unknown parameter: ' + paramName);
                 }
 
                 const oldValue = param.current;
@@ -3591,8 +3591,8 @@ const InjectionToolkit = {
 
             if (Object.keys(adjustments).length > 0) {
                 send({
-                    type: "info",
-                    message: "Dynamic parameter adjustment performed",
+                    type: 'info',
+                    message: 'Dynamic parameter adjustment performed',
                     adjustments: adjustments,
                     feedback: feedback
                 });
@@ -3608,39 +3608,39 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Parameter adjustment failed",
+                type: 'error',
+                message: 'Parameter adjustment failed',
                 error: error.message
             });
         }
     },
 
     initializeAntiDetection: function() {
-        send({ type: "info", message: "Anti-detection techniques initialized" });
+        send({ type: 'info', message: 'Anti-detection techniques initialized' });
     },
 
     initializePayloadManagement: function() {
-        send({ type: "info", message: "Payload management system initialized" });
+        send({ type: 'info', message: 'Payload management system initialized' });
     },
 
     initializeCommunicationChannels: function() {
-        send({ type: "info", message: "Communication channels initialized" });
+        send({ type: 'info', message: 'Communication channels initialized' });
     },
 
     initializeVerificationSystem: function() {
-        send({ type: "info", message: "Verification system initialized" });
+        send({ type: 'info', message: 'Verification system initialized' });
     },
 
     initializePerformanceOptimization: function() {
-        send({ type: "info", message: "Performance optimization initialized" });
+        send({ type: 'info', message: 'Performance optimization initialized' });
     },
 
     initializeDistributedSupport: function() {
-        send({ type: "info", message: "Distributed support initialized" });
+        send({ type: 'info', message: 'Distributed support initialized' });
     },
 
     initializeSecurityCompliance: function() {
-        send({ type: "info", message: "Security compliance framework initialized" });
+        send({ type: 'info', message: 'Security compliance framework initialized' });
     },
 
     kubernetesEscape: function(targetProcess, payload) {
@@ -3861,8 +3861,8 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Starting ARM64 native injection",
+                type: 'info',
+                message: 'Starting ARM64 native injection',
                 target: targetProcess,
                 injectionId: injectionId
             });
@@ -3870,13 +3870,13 @@ const InjectionToolkit = {
             // Detect ARM64 environment and capabilities
             const arm64Detection = this.detectARM64Environment(targetProcess);
             if (!arm64Detection.success) {
-                throw new Error("ARM64 environment detection failed: " + arm64Detection.error);
+                throw new Error('ARM64 environment detection failed: ' + arm64Detection.error);
             }
 
             // Adapt payload for ARM64 architecture
             const adaptedPayload = this.adaptPayloadForARM64(payload);
             if (!adaptedPayload.success) {
-                throw new Error("ARM64 payload adaptation failed: " + adaptedPayload.error);
+                throw new Error('ARM64 payload adaptation failed: ' + adaptedPayload.error);
             }
 
             // Handle ARM64-specific security features
@@ -3897,8 +3897,8 @@ const InjectionToolkit = {
                 (this.crossArchitecture.metrics.successRate['arm64'] || 0) + (injectionResult.success ? 1 : 0);
 
             send({
-                type: "success",
-                message: "ARM64 injection completed",
+                type: 'success',
+                message: 'ARM64 injection completed',
                 injectionId: injectionId,
                 executionTime: totalTime,
                 securityBypasses: securityBypass.bypasses,
@@ -3922,8 +3922,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "error",
-                message: "ARM64 injection failed",
+                type: 'error',
+                message: 'ARM64 injection failed',
                 injectionId: injectionId,
                 error: error.message,
                 executionTime: endTime - startTime
@@ -3944,8 +3944,8 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Starting RISC-V architecture injection",
+                type: 'info',
+                message: 'Starting RISC-V architecture injection',
                 target: targetProcess,
                 injectionId: injectionId
             });
@@ -3953,13 +3953,13 @@ const InjectionToolkit = {
             // Detect RISC-V environment and ISA extensions
             const riscvDetection = this.detectRISCVEnvironment(targetProcess);
             if (!riscvDetection.success) {
-                throw new Error("RISC-V environment detection failed: " + riscvDetection.error);
+                throw new Error('RISC-V environment detection failed: ' + riscvDetection.error);
             }
 
             // Adapt payload for RISC-V architecture
             const adaptedPayload = this.adaptPayloadForRISCV(payload);
             if (!adaptedPayload.success) {
-                throw new Error("RISC-V payload adaptation failed: " + adaptedPayload.error);
+                throw new Error('RISC-V payload adaptation failed: ' + adaptedPayload.error);
             }
 
             // Handle RISC-V privilege level escalation
@@ -3983,8 +3983,8 @@ const InjectionToolkit = {
                 (this.crossArchitecture.metrics.successRate['riscv'] || 0) + (injectionResult.success ? 1 : 0);
 
             send({
-                type: "success",
-                message: "RISC-V injection completed",
+                type: 'success',
+                message: 'RISC-V injection completed',
                 injectionId: injectionId,
                 executionTime: totalTime,
                 privilegeLevel: privilegeEscalation.newLevel,
@@ -4009,8 +4009,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "error",
-                message: "RISC-V injection failed",
+                type: 'error',
+                message: 'RISC-V injection failed',
                 injectionId: injectionId,
                 error: error.message,
                 executionTime: endTime - startTime
@@ -4031,22 +4031,22 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Starting Apple Silicon specific injection",
+                type: 'info',
+                message: 'Starting Apple Silicon specific injection',
                 target: targetProcess,
                 injectionId: injectionId
             });
 
             // Detect Apple Silicon specific features
             const appleSiliconDetection = this.detectAppleSiliconFeatures();
-            if (!appleSiliconDetection.processor.includes("Apple Silicon")) {
-                throw new Error("Apple Silicon processor not detected");
+            if (!appleSiliconDetection.processor.includes('Apple Silicon')) {
+                throw new Error('Apple Silicon processor not detected');
             }
 
             // Handle Apple Silicon security bypasses
             const securityBypass = this.performAppleSiliconSecurityBypass();
             if (!securityBypass.success) {
-                throw new Error("Apple Silicon security bypass failed: " + securityBypass.error);
+                throw new Error('Apple Silicon security bypass failed: ' + securityBypass.error);
             }
 
             // Adapt payload for Apple Silicon specifics
@@ -4070,8 +4070,8 @@ const InjectionToolkit = {
                 (this.crossArchitecture.metrics.successRate['apple_silicon'] || 0) + (injectionResult.success ? 1 : 0);
 
             send({
-                type: "success",
-                message: "Apple Silicon injection completed",
+                type: 'success',
+                message: 'Apple Silicon injection completed',
                 injectionId: injectionId,
                 executionTime: totalTime,
                 securityBypasses: {
@@ -4102,8 +4102,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "error",
-                message: "Apple Silicon injection failed",
+                type: 'error',
+                message: 'Apple Silicon injection failed',
                 injectionId: injectionId,
                 error: error.message,
                 executionTime: endTime - startTime
@@ -4128,7 +4128,7 @@ const InjectionToolkit = {
             if (arch !== 'arm64') {
                 return {
                     success: false,
-                    error: "Target is not ARM64 architecture: " + arch
+                    error: 'Target is not ARM64 architecture: ' + arch
                 };
             }
 
@@ -4190,7 +4190,7 @@ const InjectionToolkit = {
             if (!arch.includes('riscv')) {
                 return {
                     success: false,
-                    error: "Target is not RISC-V architecture: " + arch
+                    error: 'Target is not RISC-V architecture: ' + arch
                 };
             }
 
@@ -4236,7 +4236,7 @@ const InjectionToolkit = {
             // Use ARM64 payload adapter
             const adapter = this.crossArchitecture.payloadAdapters.get('arm64');
             if (!adapter) {
-                throw new Error("ARM64 payload adapter not available");
+                throw new Error('ARM64 payload adapter not available');
             }
 
             const adaptedPayload = adapter.adapt(payload, 'arm64');
@@ -4267,7 +4267,7 @@ const InjectionToolkit = {
             // Use RISC-V payload adapter
             const adapter = this.crossArchitecture.payloadAdapters.get('riscv');
             if (!adapter) {
-                throw new Error("RISC-V payload adapter not available");
+                throw new Error('RISC-V payload adapter not available');
             }
 
             const adaptedPayload = adapter.adapt(payload, 'riscv');
@@ -4338,7 +4338,7 @@ const InjectionToolkit = {
             return instructions.flat();
 
         } catch (error) {
-            throw new Error("ARM64 instruction encoding failed: " + error.message);
+            throw new Error('ARM64 instruction encoding failed: ' + error.message);
         }
     },
 
@@ -4357,7 +4357,7 @@ const InjectionToolkit = {
             return instructions.flat();
 
         } catch (error) {
-            throw new Error("RISC-V instruction encoding failed: " + error.message);
+            throw new Error('RISC-V instruction encoding failed: ' + error.message);
         }
     },
 
@@ -4387,7 +4387,7 @@ const InjectionToolkit = {
             };
 
         } catch (error) {
-            throw new Error("ARM64 injection execution failed: " + error.message);
+            throw new Error('ARM64 injection execution failed: ' + error.message);
         }
     },
 
@@ -4413,7 +4413,7 @@ const InjectionToolkit = {
             };
 
         } catch (error) {
-            throw new Error("RISC-V injection execution failed: " + error.message);
+            throw new Error('RISC-V injection execution failed: ' + error.message);
         }
     },
 
@@ -4421,8 +4421,8 @@ const InjectionToolkit = {
     performCoordinatedARM64Injection: function(targetProcess, encodedInstructions) {
         try {
             send({
-                type: "info",
-                message: "Executing coordinated ARM64 injection",
+                type: 'info',
+                message: 'Executing coordinated ARM64 injection',
                 instructionCount: encodedInstructions.length
             });
 
@@ -4443,8 +4443,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Coordinated ARM64 injection failed",
+                type: 'error',
+                message: 'Coordinated ARM64 injection failed',
                 error: error.message
             });
             return false;
@@ -4455,8 +4455,8 @@ const InjectionToolkit = {
     performCoordinatedRISCVInjection: function(targetProcess, encodedInstructions) {
         try {
             send({
-                type: "info",
-                message: "Executing coordinated RISC-V injection",
+                type: 'info',
+                message: 'Executing coordinated RISC-V injection',
                 instructionCount: encodedInstructions.length
             });
 
@@ -4477,8 +4477,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Coordinated RISC-V injection failed",
+                type: 'error',
+                message: 'Coordinated RISC-V injection failed',
                 error: error.message
             });
             return false;
@@ -4515,7 +4515,7 @@ const InjectionToolkit = {
             return this.crossArchitecture.securityFeatures.arm64.appleSilicon.detectAppleSiliconFeatures();
         } catch (error) {
             return {
-                processor: "unknown",
+                processor: 'unknown',
                 error: error.message
             };
         }
@@ -4574,7 +4574,7 @@ const InjectionToolkit = {
             };
 
         } catch (error) {
-            throw new Error("Apple Silicon injection execution failed: " + error.message);
+            throw new Error('Apple Silicon injection execution failed: ' + error.message);
         }
     },
 
@@ -4590,8 +4590,8 @@ const InjectionToolkit = {
             }
 
             send({
-                type: "info",
-                message: "Executing coordinated Apple Silicon injection",
+                type: 'info',
+                message: 'Executing coordinated Apple Silicon injection',
                 payloadSize: adaptedPayload.data.length
             });
 
@@ -4612,8 +4612,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Coordinated Apple Silicon injection failed",
+                type: 'error',
+                message: 'Coordinated Apple Silicon injection failed',
                 error: error.message
             });
             return false;
@@ -4626,8 +4626,8 @@ const InjectionToolkit = {
 
         try {
             send({
-                type: "info",
-                message: "Starting quantum-resistant injection",
+                type: 'info',
+                message: 'Starting quantum-resistant injection',
                 target: targetProcess,
                 injectionId: injectionId
             });
@@ -4635,13 +4635,13 @@ const InjectionToolkit = {
             // 1. POST-QUANTUM CRYPTOGRAPHY INJECTION
             const keyExchangeResult = this.performPostQuantumKeyExchange(targetProcess);
             if (!keyExchangeResult.success) {
-                throw new Error("Post-quantum key exchange failed: " + keyExchangeResult.error);
+                throw new Error('Post-quantum key exchange failed: ' + keyExchangeResult.error);
             }
 
             // 2. QUANTUM-RESISTANT PAYLOAD ENCRYPTION
             const encryptedPayload = this.applyQuantumResistantEncryption(payload, keyExchangeResult.sharedSecret);
             if (!encryptedPayload.success) {
-                throw new Error("Quantum-resistant encryption failed: " + encryptedPayload.error);
+                throw new Error('Quantum-resistant encryption failed: ' + encryptedPayload.error);
             }
 
             // 3. FUTURE-PROOF INJECTION MECHANISMS
@@ -4663,8 +4663,8 @@ const InjectionToolkit = {
             this.quantumResistant.metrics.encryptionTime.push(totalTime);
 
             send({
-                type: "success",
-                message: "Quantum-resistant injection completed",
+                type: 'success',
+                message: 'Quantum-resistant injection completed',
                 injectionId: injectionId,
                 executionTime: totalTime,
                 algorithms: {
@@ -4690,8 +4690,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "error",
-                message: "Quantum-resistant injection failed",
+                type: 'error',
+                message: 'Quantum-resistant injection failed',
                 injectionId: injectionId,
                 error: error.message,
                 executionTime: endTime - startTime
@@ -4813,22 +4813,22 @@ const InjectionToolkit = {
     // Create future-proof wrapper for algorithm agnostic design
     createFutureProofWrapper: function(encryptedPayload) {
         return {
-            version: "2.0",
-            format: "quantum-resistant",
+            version: '2.0',
+            format: 'quantum-resistant',
             algorithmRegistry: {
                 kem: {
-                    current: "kyber",
-                    supported: ["kyber", "ntru", "saber", "frodokem"],
+                    current: 'kyber',
+                    supported: ['kyber', 'ntru', 'saber', 'frodokem'],
                     futureSlot: null
                 },
                 signature: {
-                    current: "dilithium",
-                    supported: ["dilithium", "falcon", "sphincsplus", "picnic"],
+                    current: 'dilithium',
+                    supported: ['dilithium', 'falcon', 'sphincsplus', 'picnic'],
                     futureSlot: null
                 },
                 encryption: {
-                    current: "aes-256-gcm",
-                    supported: ["aes-256-gcm", "chacha20-poly1305", "xsalsa20"],
+                    current: 'aes-256-gcm',
+                    supported: ['aes-256-gcm', 'chacha20-poly1305', 'xsalsa20'],
                     futureSlot: null
                 }
             },
@@ -4844,28 +4844,28 @@ const InjectionToolkit = {
         return {
             layers: [
                 {
-                    type: "lattice-based",
-                    algorithm: "kyber",
-                    protection: "key-exchange"
+                    type: 'lattice-based',
+                    algorithm: 'kyber',
+                    protection: 'key-exchange'
                 },
                 {
-                    type: "hash-based",
-                    algorithm: "sphincsplus",
-                    protection: "signatures"
+                    type: 'hash-based',
+                    algorithm: 'sphincsplus',
+                    protection: 'signatures'
                 },
                 {
-                    type: "code-based",
-                    algorithm: "classic-mceliece",
-                    protection: "backup-encryption"
+                    type: 'code-based',
+                    algorithm: 'classic-mceliece',
+                    protection: 'backup-encryption'
                 },
                 {
-                    type: "isogeny-based",
-                    algorithm: "sike",
-                    protection: "alternative-kem"
+                    type: 'isogeny-based',
+                    algorithm: 'sike',
+                    protection: 'alternative-kem'
                 }
             ],
             payload: wrappedPayload,
-            quantumResistanceLevel: "maximum",
+            quantumResistanceLevel: 'maximum',
             hybridClassicalQuantum: true
         };
     },
@@ -4900,11 +4900,11 @@ const InjectionToolkit = {
             return {
                 data: finalPayload,
                 time: endTime - startTime,
-                algorithm: "multi-layer-quantum-resistant"
+                algorithm: 'multi-layer-quantum-resistant'
             };
 
         } catch (error) {
-            throw new Error("Advanced cryptographic injection failed: " + error.message);
+            throw new Error('Advanced cryptographic injection failed: ' + error.message);
         }
     },
 
@@ -4921,8 +4921,8 @@ const InjectionToolkit = {
     // Generate cryptographic proof
     generateCryptographicProof: function(payload) {
         return {
-            proofType: "zero-knowledge",
-            algorithm: "quantum-resistant-zkp",
+            proofType: 'zero-knowledge',
+            algorithm: 'quantum-resistant-zkp',
             proof: this.calculatePayloadHash(payload),
             verified: true
         };
@@ -4932,7 +4932,7 @@ const InjectionToolkit = {
     generateIntegrityCheck: function(payload) {
         const checksum = this.calculatePayloadHash(payload);
         return {
-            algorithm: "sha3-256-qr",
+            algorithm: 'sha3-256-qr',
             checksum: checksum,
             timestamp: Date.now()
         };
@@ -4972,7 +4972,7 @@ const InjectionToolkit = {
             };
 
         } catch (error) {
-            throw new Error("Quantum-resistant injection execution failed: " + error.message);
+            throw new Error('Quantum-resistant injection execution failed: ' + error.message);
         }
     },
 
@@ -4984,15 +4984,15 @@ const InjectionToolkit = {
 
             if (verificationResult.valid) {
                 send({
-                    type: "info",
-                    message: "Quantum-resistant injection verification passed",
+                    type: 'info',
+                    message: 'Quantum-resistant injection verification passed',
                     algorithms: verificationResult.algorithms
                 });
                 return true;
             } else {
                 send({
-                    type: "warning",
-                    message: "Quantum-resistant injection verification failed",
+                    type: 'warning',
+                    message: 'Quantum-resistant injection verification failed',
                     reason: verificationResult.reason
                 });
                 return false;
@@ -5000,8 +5000,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Coordinated quantum injection failed",
+                type: 'error',
+                message: 'Coordinated quantum injection failed',
                 error: error.message
             });
             return false;
@@ -5021,7 +5021,7 @@ const InjectionToolkit = {
             if (!verification.valid) {
                 return {
                     valid: false,
-                    reason: "Dilithium signature verification failed"
+                    reason: 'Dilithium signature verification failed'
                 };
             }
 
@@ -5032,20 +5032,20 @@ const InjectionToolkit = {
             if (calculatedHash !== expectedHash) {
                 return {
                     valid: false,
-                    reason: "Payload integrity check failed"
+                    reason: 'Payload integrity check failed'
                 };
             }
 
             return {
                 valid: true,
-                algorithms: ["dilithium", "kyber", "aes-256-gcm"],
+                algorithms: ['dilithium', 'kyber', 'aes-256-gcm'],
                 verificationTime: verification.verificationTime
             };
 
         } catch (error) {
             return {
                 valid: false,
-                reason: "Verification process failed: " + error.message
+                reason: 'Verification process failed: ' + error.message
             };
         }
     },
@@ -5154,8 +5154,8 @@ const InjectionToolkit = {
             };
 
             send({
-                type: "info",
-                message: "Real-time monitoring system initialized",
+                type: 'info',
+                message: 'Real-time monitoring system initialized',
                 streams: Array.from(this.realTimeMonitoring.eventStreams.keys())
             });
 
@@ -5167,8 +5167,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Real-time monitoring initialization failed",
+                type: 'error',
+                message: 'Real-time monitoring initialization failed',
                 error: error.message
             });
 
@@ -5281,8 +5281,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Injection health check failed",
+                type: 'error',
+                message: 'Injection health check failed',
                 injectionId: context.injectionId,
                 error: error.message
             });
@@ -5408,8 +5408,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "warning",
-                message: "Behavior snapshot capture failed",
+                type: 'warning',
+                message: 'Behavior snapshot capture failed',
                 injectionId: context.injectionId,
                 error: error.message
             });
@@ -5424,7 +5424,7 @@ const InjectionToolkit = {
             // Get current injection context
             const injection = this.activeInjections.get(injectionId);
             if (!injection) {
-                throw new Error("Injection not found for parameter adjustment");
+                throw new Error('Injection not found for parameter adjustment');
             }
 
             // Analyze current performance
@@ -5611,10 +5611,10 @@ const InjectionToolkit = {
         networkTopology: null,
         loadBalancer: null,
         coordinationProtocol: {
-            version: "1.0",
-            encryption: "quantum-resistant",
-            authentication: "multi-factor",
-            synchronization: "blockchain-consensus"
+            version: '1.0',
+            encryption: 'quantum-resistant',
+            authentication: 'multi-factor',
+            synchronization: 'blockchain-consensus'
         }
     },
 
@@ -5659,8 +5659,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Multi-machine injection orchestration completed",
+                type: 'info',
+                message: 'Multi-machine injection orchestration completed',
                 orchestrationId: orchestrationId,
                 nodeCount: discoveredNodes.size,
                 successRate: this.calculateOrchestrationSuccessRate(synchronizedResults),
@@ -5941,8 +5941,8 @@ const InjectionToolkit = {
                             callback(eventData);
                         } catch (error) {
                             send({
-                                type: "warning",
-                                message: "Monitoring event callback failed",
+                                type: 'warning',
+                                message: 'Monitoring event callback failed',
                                 error: error.message
                             });
                         }
@@ -5951,8 +5951,8 @@ const InjectionToolkit = {
             }
         } catch (error) {
             send({
-                type: "error",
-                message: "Failed to emit monitoring event",
+                type: 'error',
+                message: 'Failed to emit monitoring event',
                 stream: streamName,
                 error: error.message
             });
@@ -6163,8 +6163,8 @@ const InjectionToolkit = {
     handleInjectionSuccess: function(context) {
         context.status = 'success';
         send({
-            type: "success",
-            message: "Injection monitoring completed successfully",
+            type: 'success',
+            message: 'Injection monitoring completed successfully',
             injectionId: context.injectionId,
             duration: Date.now() - context.startTime
         });
@@ -6173,8 +6173,8 @@ const InjectionToolkit = {
     handleInjectionFailure: function(context) {
         context.status = 'failed';
         send({
-            type: "error",
-            message: "Injection monitoring detected failure",
+            type: 'error',
+            message: 'Injection monitoring detected failure',
             injectionId: context.injectionId,
             duration: Date.now() - context.startTime
         });
@@ -6223,8 +6223,8 @@ const InjectionToolkit = {
             this.antiDetection.zeroFootprint.forensicsResistance = this.createForensicsResistanceEngine();
 
             send({
-                type: "info",
-                message: "Anti-detection system initialized",
+                type: 'info',
+                message: 'Anti-detection system initialized',
                 components: {
                     aiEvasion: Object.keys(this.antiDetection.aiEvasion).length,
                     zeroFootprint: Object.keys(this.antiDetection.zeroFootprint).length
@@ -6239,8 +6239,8 @@ const InjectionToolkit = {
 
         } catch (error) {
             send({
-                type: "error",
-                message: "Anti-detection initialization failed",
+                type: 'error',
+                message: 'Anti-detection initialization failed',
                 error: error.message
             });
 
@@ -6291,8 +6291,8 @@ const InjectionToolkit = {
             this.antiDetection.evasionHistory.set(mimicId, mimicProfile);
 
             send({
-                type: "info",
-                message: "Behavior mimicking applied successfully",
+                type: 'info',
+                message: 'Behavior mimicking applied successfully',
                 mimicId: mimicId,
                 pattern: behaviorAnalysis.dominantPattern,
                 effectiveness: effectivenessMonitor.initialScore,
@@ -6352,8 +6352,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "AI-driven timing optimization applied",
+                type: 'info',
+                message: 'AI-driven timing optimization applied',
                 optimizationId: optimizationId,
                 originalTiming: injectionParams.timing,
                 optimizedTiming: optimizedTiming.finalTiming,
@@ -6414,8 +6414,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Neural network detection evasion applied",
+                type: 'info',
+                message: 'Neural network detection evasion applied',
                 evasionId: evasionId,
                 detectionProbability: detectionAnalysis.originalProbability,
                 evasionProbability: evasionStrategy.evasionProbability,
@@ -6476,8 +6476,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Behavioral pattern randomization applied",
+                type: 'info',
+                message: 'Behavioral pattern randomization applied',
                 randomizationId: randomizationId,
                 originalEntropy: patternAnalysis.entropy,
                 randomizedEntropy: randomizedPatterns.entropy,
@@ -6542,8 +6542,8 @@ const InjectionToolkit = {
             this.antiDetection.adaptiveStrategies.set(adaptationId, adaptationContext);
 
             send({
-                type: "info",
-                message: "Adaptive evasion techniques applied",
+                type: 'info',
+                message: 'Adaptive evasion techniques applied',
                 adaptationId: adaptationId,
                 detectionScore: feedbackAnalysis.detectionScore,
                 adaptationScore: adaptedStrategy.adaptationScore,
@@ -6607,8 +6607,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Memory-resident injection completed",
+                type: 'info',
+                message: 'Memory-resident injection completed',
                 injectionId: injectionId,
                 memoryFootprint: memoryAllocation.footprint,
                 residencyDuration: persistenceMechanisms.duration,
@@ -6668,8 +6668,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Fileless injection completed",
+                type: 'info',
+                message: 'Fileless injection completed',
                 injectionId: injectionId,
                 filelessOperations: filelessContext.filelessOperations.length,
                 streamDeliverySize: streamDelivery.deliverySize,
@@ -6728,8 +6728,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Registry-free injection completed",
+                type: 'info',
+                message: 'Registry-free injection completed',
                 injectionId: injectionId,
                 registryAccess: 'none',
                 alternativeStorageTypes: alternativeStorage.storageTypes.length,
@@ -6788,8 +6788,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Event log evasion injection completed",
+                type: 'info',
+                message: 'Event log evasion injection completed',
                 injectionId: injectionId,
                 logEvents: 'none',
                 evasionTechniques: logEvasionContext.evasionTechniques.length,
@@ -6848,8 +6848,8 @@ const InjectionToolkit = {
             const endTime = performance.now();
 
             send({
-                type: "info",
-                message: "Forensics-resistant injection completed",
+                type: 'info',
+                message: 'Forensics-resistant injection completed',
                 injectionId: injectionId,
                 forensicsEvidence: 'eliminated',
                 antiForensicsTechniques: forensicsContext.antiForensicsTechniques.length,
@@ -7449,27 +7449,27 @@ InjectionToolkit.payloadManagement = {
 
             for (const transformation of strategy.transformations) {
                 switch (transformation.type) {
-                    case 'code-reordering':
-                        transformedPayload = this.reorderCode(transformedPayload, transformation.config);
-                        break;
-                    case 'instruction-substitution':
-                        transformedPayload = this.substituteInstructions(transformedPayload, transformation.config);
-                        break;
-                    case 'register-allocation':
-                        transformedPayload = this.reallocateRegisters(transformedPayload, transformation.config);
-                        break;
-                    case 'nop-insertion':
-                        transformedPayload = this.insertNOPs(transformedPayload, transformation.config);
-                        break;
-                    case 'junk-insertion':
-                        transformedPayload = this.insertJunkCode(transformedPayload, transformation.config);
-                        break;
-                    case 'control-flow-flattening':
-                        transformedPayload = this.flattenControlFlow(transformedPayload, transformation.config);
-                        break;
-                    case 'virtualization':
-                        transformedPayload = this.virtualizePayload(transformedPayload, transformation.config);
-                        break;
+                case 'code-reordering':
+                    transformedPayload = this.reorderCode(transformedPayload, transformation.config);
+                    break;
+                case 'instruction-substitution':
+                    transformedPayload = this.substituteInstructions(transformedPayload, transformation.config);
+                    break;
+                case 'register-allocation':
+                    transformedPayload = this.reallocateRegisters(transformedPayload, transformation.config);
+                    break;
+                case 'nop-insertion':
+                    transformedPayload = this.insertNOPs(transformedPayload, transformation.config);
+                    break;
+                case 'junk-insertion':
+                    transformedPayload = this.insertJunkCode(transformedPayload, transformation.config);
+                    break;
+                case 'control-flow-flattening':
+                    transformedPayload = this.flattenControlFlow(transformedPayload, transformation.config);
+                    break;
+                case 'virtualization':
+                    transformedPayload = this.virtualizePayload(transformedPayload, transformation.config);
+                    break;
                 }
             }
 
@@ -7816,16 +7816,16 @@ InjectionToolkit.communication = {
 
                 generateKeyPair: function(algorithm = 'kyber-1024') {
                     switch (algorithm) {
-                        case 'kyber-1024':
-                            return this.generateKyberKeyPair();
-                        case 'dilithium-5':
-                            return this.generateDilithiumKeyPair();
-                        case 'falcon-1024':
-                            return this.generateFalconKeyPair();
-                        case 'rsa-4096':
-                            return this.generateRSAKeyPair();
-                        default:
-                            return this.generateDefaultKeyPair();
+                    case 'kyber-1024':
+                        return this.generateKyberKeyPair();
+                    case 'dilithium-5':
+                        return this.generateDilithiumKeyPair();
+                    case 'falcon-1024':
+                        return this.generateFalconKeyPair();
+                    case 'rsa-4096':
+                        return this.generateRSAKeyPair();
+                    default:
+                        return this.generateDefaultKeyPair();
                     }
                 },
 
@@ -9125,16 +9125,16 @@ InjectionToolkit.platformSupport = {
                 getOSVersion: function() {
                     try {
                         switch (Process.platform) {
-                            case 'windows':
-                                return this.getWindowsVersion();
-                            case 'linux':
-                                return this.getLinuxVersion();
-                            case 'darwin':
-                                return this.getDarwinVersion();
-                            case 'freebsd':
-                                return this.getFreeBSDVersion();
-                            default:
-                                return 'unknown';
+                        case 'windows':
+                            return this.getWindowsVersion();
+                        case 'linux':
+                            return this.getLinuxVersion();
+                        case 'darwin':
+                            return this.getDarwinVersion();
+                        case 'freebsd':
+                            return this.getFreeBSDVersion();
+                        default:
+                            return 'unknown';
                         }
                     } catch (error) {
                         return 'unknown';
@@ -9260,14 +9260,14 @@ InjectionToolkit.platformSupport = {
                 getCPUInfo: function() {
                     try {
                         switch (Process.platform) {
-                            case 'windows':
-                                return this.getWindowsCPUInfo();
-                            case 'linux':
-                                return this.getLinuxCPUInfo();
-                            case 'darwin':
-                                return this.getDarwinCPUInfo();
-                            default:
-                                return this.getGenericCPUInfo();
+                        case 'windows':
+                            return this.getWindowsCPUInfo();
+                        case 'linux':
+                            return this.getLinuxCPUInfo();
+                        case 'darwin':
+                            return this.getDarwinCPUInfo();
+                        default:
+                            return this.getGenericCPUInfo();
                         }
                     } catch (error) {
                         return { vendor: 'unknown', model: 'unknown', cores: 1 };
@@ -10673,21 +10673,21 @@ InjectionToolkit.distributedProtectionHandling = {
 
                     try {
                         switch (escapeMethod) {
-                            case 'privileged':
-                                escapeExecution.steps.push(this.exploitPrivilegedContainer(containerId));
-                                break;
-                            case 'capability':
-                                escapeExecution.steps.push(this.exploitCapabilities(containerId));
-                                break;
-                            case 'volume_mount':
-                                escapeExecution.steps.push(this.exploitVolumeMounts(containerId));
-                                break;
-                            case 'proc_fs':
-                                escapeExecution.steps.push(this.exploitProcFilesystem(containerId));
-                                break;
-                            case 'kernel_exploit':
-                                escapeExecution.steps.push(this.exploitKernelVulnerabilities(containerId));
-                                break;
+                        case 'privileged':
+                            escapeExecution.steps.push(this.exploitPrivilegedContainer(containerId));
+                            break;
+                        case 'capability':
+                            escapeExecution.steps.push(this.exploitCapabilities(containerId));
+                            break;
+                        case 'volume_mount':
+                            escapeExecution.steps.push(this.exploitVolumeMounts(containerId));
+                            break;
+                        case 'proc_fs':
+                            escapeExecution.steps.push(this.exploitProcFilesystem(containerId));
+                            break;
+                        case 'kernel_exploit':
+                            escapeExecution.steps.push(this.exploitKernelVulnerabilities(containerId));
+                            break;
                         }
 
                         escapeExecution.success = escapeExecution.steps.every(step => step.success);
@@ -10738,21 +10738,21 @@ InjectionToolkit.distributedProtectionHandling = {
 
                     try {
                         switch (injection.method) {
-                            case 'layer_injection':
-                                injection.result = this.injectViaLayer(targetFunction, injectionPayload);
-                                break;
-                            case 'environment_injection':
-                                injection.result = this.injectViaEnvironment(targetFunction, injectionPayload);
-                                break;
-                            case 'dependency_injection':
-                                injection.result = this.injectViaDependency(targetFunction, injectionPayload);
-                                break;
-                            case 'runtime_injection':
-                                injection.result = this.injectViaRuntime(targetFunction, injectionPayload);
-                                break;
-                            case 'cold_start_injection':
-                                injection.result = this.injectViaColdStart(targetFunction, injectionPayload);
-                                break;
+                        case 'layer_injection':
+                            injection.result = this.injectViaLayer(targetFunction, injectionPayload);
+                            break;
+                        case 'environment_injection':
+                            injection.result = this.injectViaEnvironment(targetFunction, injectionPayload);
+                            break;
+                        case 'dependency_injection':
+                            injection.result = this.injectViaDependency(targetFunction, injectionPayload);
+                            break;
+                        case 'runtime_injection':
+                            injection.result = this.injectViaRuntime(targetFunction, injectionPayload);
+                            break;
+                        case 'cold_start_injection':
+                            injection.result = this.injectViaColdStart(targetFunction, injectionPayload);
+                            break;
                         }
 
                         injection.success = injection.result.success;
@@ -11128,7 +11128,7 @@ InjectionToolkit.distributedProtectionHandling = {
                             }
 
                             this.overallValid = Array.from(this.validations.values())
-                                                    .every(v => v.overall);
+                                .every(v => v.overall);
 
                             return this.overallValid;
                         }

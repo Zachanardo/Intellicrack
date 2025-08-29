@@ -5,9 +5,9 @@
  */
 
 const UniversalUnpacker = {
-    name: "Universal Binary Unpacker",
-    description: "Advanced modular unpacking engine with cross-platform support",
-    version: "1.0.0",
+    name: 'Universal Binary Unpacker',
+    description: 'Advanced modular unpacking engine with cross-platform support',
+    version: '1.0.0',
 
     // Core configuration with all packer types
     config: {
@@ -115,7 +115,7 @@ const UniversalUnpacker = {
     // Initialize the unpacker with dependency loading
     initialize: function() {
         try {
-            console.log("[UniversalUnpacker] Initializing modular unpacking framework");
+            console.log('[UniversalUnpacker] Initializing modular unpacking framework');
 
             // Initialize module integration
             this.initializeModuleIntegration();
@@ -139,9 +139,9 @@ const UniversalUnpacker = {
             this.setupCrossModuleCommunication();
 
             send({
-                type: "status",
-                module: "UniversalUnpacker",
-                action: "initialized",
+                type: 'status',
+                module: 'UniversalUnpacker',
+                action: 'initialized',
                 version: this.version,
                 capabilities: Object.keys(this.config.packerSupport)
             });
@@ -379,8 +379,8 @@ const UniversalUnpacker = {
             // Send real-time report if enabled
             if (this.realTimeReporting) {
                 send({
-                    type: "report",
-                    module: "UniversalUnpacker",
+                    type: 'report',
+                    module: 'UniversalUnpacker',
                     report: filteredReport
                 });
             }
@@ -428,7 +428,7 @@ const UniversalUnpacker = {
             html += `<p>Type: ${report.type}</p>\n`;
             html += `<p>Timestamp: ${new Date(report.timestamp).toISOString()}</p>\n`;
             for (const section of report.sections) {
-                html += `<div class="section">\n`;
+                html += '<div class="section">\n';
                 html += `  <h2>${section.name}</h2>\n`;
                 html += `  <div class="data"><pre>${JSON.stringify(section.data, null, 2)}</pre></div>\n`;
                 html += '</div>\n';
@@ -947,7 +947,7 @@ const UniversalUnpacker = {
 
     // Detect and unpack .NET Native AOT (ReadyToRun) binaries
     unpackDotNetAOT: function(target) {
-        console.log("[UniversalUnpacker] Starting .NET 8+ Native AOT unpacking");
+        console.log('[UniversalUnpacker] Starting .NET 8+ Native AOT unpacking');
 
         const dotNetAOTUnpacker = {
             // R2R (ReadyToRun) format constants
@@ -1084,53 +1084,53 @@ const UniversalUnpacker = {
                     const sectionAddress = baseAddress.add(section.sectionRVA);
 
                     switch (section.type) {
-                        case 0x100: // READYTORUN_SECTION_COMPILER_IDENTIFIER
-                            artifacts.compilerInfo = this.parseCompilerInfo(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x100: // READYTORUN_SECTION_COMPILER_IDENTIFIER
+                        artifacts.compilerInfo = this.parseCompilerInfo(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x101: // READYTORUN_SECTION_IMPORT_SECTIONS
-                            artifacts.imports = this.parseImportSections(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x101: // READYTORUN_SECTION_IMPORT_SECTIONS
+                        artifacts.imports = this.parseImportSections(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x102: // READYTORUN_SECTION_RUNTIME_FUNCTIONS
-                            artifacts.runtimeFunctions = this.parseRuntimeFunctions(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x102: // READYTORUN_SECTION_RUNTIME_FUNCTIONS
+                        artifacts.runtimeFunctions = this.parseRuntimeFunctions(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x103: // READYTORUN_SECTION_METHODDEF_ENTRYPOINTS
-                            artifacts.methods = this.parseMethodEntryPoints(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x103: // READYTORUN_SECTION_METHODDEF_ENTRYPOINTS
+                        artifacts.methods = this.parseMethodEntryPoints(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x104: // READYTORUN_SECTION_EXCEPTION_INFO
-                            artifacts.exceptions = this.parseExceptionInfo(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x104: // READYTORUN_SECTION_EXCEPTION_INFO
+                        artifacts.exceptions = this.parseExceptionInfo(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x105: // READYTORUN_SECTION_DEBUG_INFO
-                            artifacts.debugInfo = this.parseDebugInfo(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x105: // READYTORUN_SECTION_DEBUG_INFO
+                        artifacts.debugInfo = this.parseDebugInfo(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x106: // READYTORUN_SECTION_DELAYLOAD_METHODCALL_THUNKS
-                            artifacts.delayLoadThunks = this.parseDelayLoadThunks(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x106: // READYTORUN_SECTION_DELAYLOAD_METHODCALL_THUNKS
+                        artifacts.delayLoadThunks = this.parseDelayLoadThunks(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x108: // READYTORUN_SECTION_AVAILABLE_TYPES
-                            artifacts.types = this.parseAvailableTypes(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x108: // READYTORUN_SECTION_AVAILABLE_TYPES
+                        artifacts.types = this.parseAvailableTypes(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x109: // READYTORUN_SECTION_INSTANCE_METHOD_ENTRYPOINTS
-                            artifacts.instanceMethods = this.parseInstanceMethods(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x109: // READYTORUN_SECTION_INSTANCE_METHOD_ENTRYPOINTS
+                        artifacts.instanceMethods = this.parseInstanceMethods(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x10A: // READYTORUN_SECTION_INLINING_INFO
-                            artifacts.inliningInfo = this.parseInliningInfo(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x10A: // READYTORUN_SECTION_INLINING_INFO
+                        artifacts.inliningInfo = this.parseInliningInfo(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x10B: // READYTORUN_SECTION_PROFILEDATA_INFO
-                            artifacts.profileData = this.parseProfileData(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x10B: // READYTORUN_SECTION_PROFILEDATA_INFO
+                        artifacts.profileData = this.parseProfileData(sectionAddress, section.sectionSize);
+                        break;
 
-                        case 0x10C: // READYTORUN_SECTION_MANIFEST_METADATA
-                            artifacts.metadata = this.parseManifestMetadata(sectionAddress, section.sectionSize);
-                            break;
+                    case 0x10C: // READYTORUN_SECTION_MANIFEST_METADATA
+                        artifacts.metadata = this.parseManifestMetadata(sectionAddress, section.sectionSize);
+                        break;
                     }
                 }
 
@@ -1513,7 +1513,7 @@ const UniversalUnpacker = {
                 // Read metadata header
                 const signature = Memory.readU32(metadataAddress);
                 if (signature !== 0x424A5342) { // "BSJB"
-                    console.warn("[DotNetAOT] Invalid metadata signature");
+                    console.warn('[DotNetAOT] Invalid metadata signature');
                     return metadata;
                 }
 
@@ -1535,31 +1535,31 @@ const UniversalUnpacker = {
                     const streamAddress = metadataAddress.add(streamDataOffset);
 
                     switch (streamName) {
-                        case '#~':
-                        case '#-':
-                            // Metadata tables stream
-                            metadata.tables = this.parseMetadataTables(streamAddress, streamDataSize);
-                            break;
+                    case '#~':
+                    case '#-':
+                        // Metadata tables stream
+                        metadata.tables = this.parseMetadataTables(streamAddress, streamDataSize);
+                        break;
 
-                        case '#Strings':
-                            // String heap
-                            metadata.strings = this.parseStringHeap(streamAddress, streamDataSize);
-                            break;
+                    case '#Strings':
+                        // String heap
+                        metadata.strings = this.parseStringHeap(streamAddress, streamDataSize);
+                        break;
 
-                        case '#US':
-                            // User string heap
-                            metadata.userStrings = this.parseUserStringHeap(streamAddress, streamDataSize);
-                            break;
+                    case '#US':
+                        // User string heap
+                        metadata.userStrings = this.parseUserStringHeap(streamAddress, streamDataSize);
+                        break;
 
-                        case '#GUID':
-                            // GUID heap
-                            metadata.guids = this.parseGuidHeap(streamAddress, streamDataSize);
-                            break;
+                    case '#GUID':
+                        // GUID heap
+                        metadata.guids = this.parseGuidHeap(streamAddress, streamDataSize);
+                        break;
 
-                        case '#Blob':
-                            // Blob heap
-                            metadata.blobs = this.parseBlobHeap(streamAddress, streamDataSize);
-                            break;
+                    case '#Blob':
+                        // Blob heap
+                        metadata.blobs = this.parseBlobHeap(streamAddress, streamDataSize);
+                        break;
                     }
 
                     // Move to next stream header
@@ -1763,181 +1763,181 @@ const UniversalUnpacker = {
 
                 // Parse based on table type with full field extraction
                 switch (tableId) {
-                    case 0x00: // Module
-                        row.generation = readU16();
-                        row.nameIndex = readStringIndex();
-                        row.mvid = readGuidIndex();
-                        row.encId = readGuidIndex();
-                        row.encBaseId = readGuidIndex();
-                        break;
+                case 0x00: // Module
+                    row.generation = readU16();
+                    row.nameIndex = readStringIndex();
+                    row.mvid = readGuidIndex();
+                    row.encId = readGuidIndex();
+                    row.encBaseId = readGuidIndex();
+                    break;
 
-                    case 0x01: // TypeRef
-                        row.resolutionScope = readCodedIndex('resolutionScope');
-                        row.typeNameIndex = readStringIndex();
-                        row.typeNamespaceIndex = readStringIndex();
-                        break;
+                case 0x01: // TypeRef
+                    row.resolutionScope = readCodedIndex('resolutionScope');
+                    row.typeNameIndex = readStringIndex();
+                    row.typeNamespaceIndex = readStringIndex();
+                    break;
 
-                    case 0x02: // TypeDef
-                        row.flags = readU32();
-                        row.typeNameIndex = readStringIndex();
-                        row.typeNamespaceIndex = readStringIndex();
-                        row.extends = readCodedIndex('typeDefOrRef');
-                        row.fieldList = readTableIndex(0x04);
-                        row.methodList = readTableIndex(0x06);
-                        break;
+                case 0x02: // TypeDef
+                    row.flags = readU32();
+                    row.typeNameIndex = readStringIndex();
+                    row.typeNamespaceIndex = readStringIndex();
+                    row.extends = readCodedIndex('typeDefOrRef');
+                    row.fieldList = readTableIndex(0x04);
+                    row.methodList = readTableIndex(0x06);
+                    break;
 
-                    case 0x04: // Field
-                        row.flags = readU16();
-                        row.nameIndex = readStringIndex();
-                        row.signatureIndex = readBlobIndex();
-                        break;
+                case 0x04: // Field
+                    row.flags = readU16();
+                    row.nameIndex = readStringIndex();
+                    row.signatureIndex = readBlobIndex();
+                    break;
 
-                    case 0x06: // MethodDef
-                        row.rva = readU32();
-                        row.implFlags = readU16();
-                        row.flags = readU16();
-                        row.nameIndex = readStringIndex();
-                        row.signatureIndex = readBlobIndex();
-                        row.paramList = readTableIndex(0x08);
-                        break;
+                case 0x06: // MethodDef
+                    row.rva = readU32();
+                    row.implFlags = readU16();
+                    row.flags = readU16();
+                    row.nameIndex = readStringIndex();
+                    row.signatureIndex = readBlobIndex();
+                    row.paramList = readTableIndex(0x08);
+                    break;
 
-                    case 0x08: // Param
-                        row.flags = readU16();
-                        row.sequence = readU16();
-                        row.nameIndex = readStringIndex();
-                        break;
+                case 0x08: // Param
+                    row.flags = readU16();
+                    row.sequence = readU16();
+                    row.nameIndex = readStringIndex();
+                    break;
 
-                    case 0x09: // InterfaceImpl
-                        row.classIndex = readTableIndex(0x02);
-                        row.interfaceIndex = readCodedIndex('typeDefOrRef');
-                        break;
+                case 0x09: // InterfaceImpl
+                    row.classIndex = readTableIndex(0x02);
+                    row.interfaceIndex = readCodedIndex('typeDefOrRef');
+                    break;
 
-                    case 0x0A: // MemberRef
-                        row.classIndex = readCodedIndex('memberRefParent');
-                        row.nameIndex = readStringIndex();
-                        row.signatureIndex = readBlobIndex();
-                        break;
+                case 0x0A: // MemberRef
+                    row.classIndex = readCodedIndex('memberRefParent');
+                    row.nameIndex = readStringIndex();
+                    row.signatureIndex = readBlobIndex();
+                    break;
 
-                    case 0x0B: // Constant
-                        row.type = bytes[offset++];
-                        row.padding = bytes[offset++];
-                        row.parent = readCodedIndex('hasConstant');
-                        row.valueIndex = readBlobIndex();
-                        break;
+                case 0x0B: // Constant
+                    row.type = bytes[offset++];
+                    row.padding = bytes[offset++];
+                    row.parent = readCodedIndex('hasConstant');
+                    row.valueIndex = readBlobIndex();
+                    break;
 
-                    case 0x0C: // CustomAttribute
-                        row.parent = readCodedIndex('hasCustomAttribute');
-                        row.type = readCodedIndex('customAttributeType');
-                        row.valueIndex = readBlobIndex();
-                        break;
+                case 0x0C: // CustomAttribute
+                    row.parent = readCodedIndex('hasCustomAttribute');
+                    row.type = readCodedIndex('customAttributeType');
+                    row.valueIndex = readBlobIndex();
+                    break;
 
-                    case 0x0E: // DeclSecurity
-                        row.action = readU16();
-                        row.parent = readCodedIndex('hasDeclSecurity');
-                        row.permissionSetIndex = readBlobIndex();
-                        break;
+                case 0x0E: // DeclSecurity
+                    row.action = readU16();
+                    row.parent = readCodedIndex('hasDeclSecurity');
+                    row.permissionSetIndex = readBlobIndex();
+                    break;
 
-                    case 0x0F: // ClassLayout
-                        row.packingSize = readU16();
-                        row.classSize = readU32();
-                        row.parent = readTableIndex(0x02);
-                        break;
+                case 0x0F: // ClassLayout
+                    row.packingSize = readU16();
+                    row.classSize = readU32();
+                    row.parent = readTableIndex(0x02);
+                    break;
 
-                    case 0x11: // StandAloneSig
-                        row.signatureIndex = readBlobIndex();
-                        break;
+                case 0x11: // StandAloneSig
+                    row.signatureIndex = readBlobIndex();
+                    break;
 
-                    case 0x14: // Event
-                        row.eventFlags = readU16();
-                        row.nameIndex = readStringIndex();
-                        row.eventType = readCodedIndex('typeDefOrRef');
-                        break;
+                case 0x14: // Event
+                    row.eventFlags = readU16();
+                    row.nameIndex = readStringIndex();
+                    row.eventType = readCodedIndex('typeDefOrRef');
+                    break;
 
-                    case 0x17: // Property
-                        row.flags = readU16();
-                        row.nameIndex = readStringIndex();
-                        row.typeIndex = readBlobIndex();
-                        break;
+                case 0x17: // Property
+                    row.flags = readU16();
+                    row.nameIndex = readStringIndex();
+                    row.typeIndex = readBlobIndex();
+                    break;
 
-                    case 0x1A: // ModuleRef
-                        row.nameIndex = readStringIndex();
-                        break;
+                case 0x1A: // ModuleRef
+                    row.nameIndex = readStringIndex();
+                    break;
 
-                    case 0x1B: // TypeSpec
-                        row.signatureIndex = readBlobIndex();
-                        break;
+                case 0x1B: // TypeSpec
+                    row.signatureIndex = readBlobIndex();
+                    break;
 
-                    case 0x1D: // FieldRVA
-                        row.rva = readU32();
-                        row.field = readTableIndex(0x04);
-                        break;
+                case 0x1D: // FieldRVA
+                    row.rva = readU32();
+                    row.field = readTableIndex(0x04);
+                    break;
 
-                    case 0x20: // Assembly
-                        row.hashAlgId = readU32();
-                        row.majorVersion = readU16();
-                        row.minorVersion = readU16();
-                        row.buildNumber = readU16();
-                        row.revisionNumber = readU16();
-                        row.flags = readU32();
-                        row.publicKeyIndex = readBlobIndex();
-                        row.nameIndex = readStringIndex();
-                        row.cultureIndex = readStringIndex();
-                        break;
+                case 0x20: // Assembly
+                    row.hashAlgId = readU32();
+                    row.majorVersion = readU16();
+                    row.minorVersion = readU16();
+                    row.buildNumber = readU16();
+                    row.revisionNumber = readU16();
+                    row.flags = readU32();
+                    row.publicKeyIndex = readBlobIndex();
+                    row.nameIndex = readStringIndex();
+                    row.cultureIndex = readStringIndex();
+                    break;
 
-                    case 0x23: // AssemblyRef
-                        row.majorVersion = readU16();
-                        row.minorVersion = readU16();
-                        row.buildNumber = readU16();
-                        row.revisionNumber = readU16();
-                        row.flags = readU32();
-                        row.publicKeyOrTokenIndex = readBlobIndex();
-                        row.nameIndex = readStringIndex();
-                        row.cultureIndex = readStringIndex();
-                        row.hashValueIndex = readBlobIndex();
-                        break;
+                case 0x23: // AssemblyRef
+                    row.majorVersion = readU16();
+                    row.minorVersion = readU16();
+                    row.buildNumber = readU16();
+                    row.revisionNumber = readU16();
+                    row.flags = readU32();
+                    row.publicKeyOrTokenIndex = readBlobIndex();
+                    row.nameIndex = readStringIndex();
+                    row.cultureIndex = readStringIndex();
+                    row.hashValueIndex = readBlobIndex();
+                    break;
 
-                    case 0x26: // File
-                        row.flags = readU32();
-                        row.nameIndex = readStringIndex();
-                        row.hashValueIndex = readBlobIndex();
-                        break;
+                case 0x26: // File
+                    row.flags = readU32();
+                    row.nameIndex = readStringIndex();
+                    row.hashValueIndex = readBlobIndex();
+                    break;
 
-                    case 0x27: // ExportedType
-                        row.flags = readU32();
-                        row.typeDefId = readU32();
-                        row.typeNameIndex = readStringIndex();
-                        row.typeNamespaceIndex = readStringIndex();
-                        row.implementation = readCodedIndex('implementation');
-                        break;
+                case 0x27: // ExportedType
+                    row.flags = readU32();
+                    row.typeDefId = readU32();
+                    row.typeNameIndex = readStringIndex();
+                    row.typeNamespaceIndex = readStringIndex();
+                    row.implementation = readCodedIndex('implementation');
+                    break;
 
-                    case 0x28: // ManifestResource
-                        row.offset = readU32();
-                        row.flags = readU32();
-                        row.nameIndex = readStringIndex();
-                        row.implementation = readCodedIndex('implementation');
-                        break;
+                case 0x28: // ManifestResource
+                    row.offset = readU32();
+                    row.flags = readU32();
+                    row.nameIndex = readStringIndex();
+                    row.implementation = readCodedIndex('implementation');
+                    break;
 
-                    case 0x29: // NestedClass
-                        row.nestedClass = readTableIndex(0x02);
-                        row.enclosingClass = readTableIndex(0x02);
-                        break;
+                case 0x29: // NestedClass
+                    row.nestedClass = readTableIndex(0x02);
+                    row.enclosingClass = readTableIndex(0x02);
+                    break;
 
-                    case 0x2A: // GenericParam
-                        row.number = readU16();
-                        row.flags = readU16();
-                        row.owner = readCodedIndex('typeOrMethodDef');
-                        row.nameIndex = readStringIndex();
-                        break;
+                case 0x2A: // GenericParam
+                    row.number = readU16();
+                    row.flags = readU16();
+                    row.owner = readCodedIndex('typeOrMethodDef');
+                    row.nameIndex = readStringIndex();
+                    break;
 
-                    case 0x2B: // MethodSpec
-                        row.method = readCodedIndex('methodDefOrRef');
-                        row.instantiation = readBlobIndex();
-                        break;
+                case 0x2B: // MethodSpec
+                    row.method = readCodedIndex('methodDefOrRef');
+                    row.instantiation = readBlobIndex();
+                    break;
 
-                    case 0x2C: // GenericParamConstraint
-                        row.owner = readTableIndex(0x2A);
-                        row.constraint = readCodedIndex('typeDefOrRef');
-                        break;
+                case 0x2C: // GenericParamConstraint
+                    row.owner = readTableIndex(0x2A);
+                    row.constraint = readCodedIndex('typeDefOrRef');
+                    break;
                 }
 
                 return row;
@@ -2259,7 +2259,7 @@ const UniversalUnpacker = {
             // Detect R2R format
             const r2rAddress = dotNetAOTUnpacker.detectR2RFormat(baseAddress);
             if (!r2rAddress) {
-                throw new Error(".NET Native AOT format not detected");
+                throw new Error('.NET Native AOT format not detected');
             }
 
             // Parse R2R header
@@ -2322,7 +2322,7 @@ const UniversalUnpacker = {
 
     unpackRustBinary: function(target) {
         try {
-            console.log("[RustUnpacker] Starting Rust binary analysis");
+            console.log('[RustUnpacker] Starting Rust binary analysis');
 
             const baseAddress = target.baseAddress || Process.mainModule.base;
             const imageSize = target.imageSize || Process.mainModule.size;
@@ -2409,11 +2409,11 @@ const UniversalUnpacker = {
                 findRustMetadata: function() {
                     // Rust metadata sections and symbols
                     const metadataMarkers = [
-                        "rust_metadata_",
-                        "_ZN",  // Rust mangled symbols prefix
-                        "core::panic",
-                        "std::thread",
-                        "alloc::vec"
+                        'rust_metadata_',
+                        '_ZN',  // Rust mangled symbols prefix
+                        'core::panic',
+                        'std::thread',
+                        'alloc::vec'
                     ];
 
                     const metadata = {};
@@ -2437,10 +2437,10 @@ const UniversalUnpacker = {
                 findCargoSignatures: function() {
                     // Cargo build artifacts and signatures
                     const cargoPatterns = [
-                        "Cargo.toml",
-                        "target/release",
-                        "target/debug",
-                        ".cargo-lock"
+                        'Cargo.toml',
+                        'target/release',
+                        'target/debug',
+                        '.cargo-lock'
                     ];
 
                     const signatures = [];
@@ -2464,14 +2464,14 @@ const UniversalUnpacker = {
                 detectCompilerVersion: function() {
                     // Detect Rust compiler version from binary
                     const versionPatterns = [
-                        "rustc ",
-                        "1.7", // Version patterns
-                        "1.6",
-                        "1.5"
+                        'rustc ',
+                        '1.7', // Version patterns
+                        '1.6',
+                        '1.5'
                     ];
 
                     for (const pattern of versionPatterns) {
-                        if (pattern.startsWith("rustc")) {
+                        if (pattern.startsWith('rustc')) {
                             const bytes = Array.from(pattern).map(c => c.charCodeAt(0));
                             const hexPattern = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
                             const found = Memory.scanSync(baseAddress, imageSize, hexPattern);
@@ -2502,13 +2502,13 @@ const UniversalUnpacker = {
             const dwarfExtractor = {
                 extractDWARF: function() {
                     const dwarfSections = [
-                        ".debug_info",
-                        ".debug_abbrev",
-                        ".debug_line",
-                        ".debug_str",
-                        ".debug_ranges",
-                        ".debug_loc",
-                        ".debug_frame"
+                        '.debug_info',
+                        '.debug_abbrev',
+                        '.debug_line',
+                        '.debug_str',
+                        '.debug_ranges',
+                        '.debug_loc',
+                        '.debug_frame'
                     ];
 
                     const debugInfo = {};
@@ -2522,13 +2522,13 @@ const UniversalUnpacker = {
                     }
 
                     // Parse compilation units from .debug_info
-                    if (debugInfo[".debug_info"]) {
-                        debugInfo.compilationUnits = this.parseCompilationUnits(debugInfo[".debug_info"]);
+                    if (debugInfo['.debug_info']) {
+                        debugInfo.compilationUnits = this.parseCompilationUnits(debugInfo['.debug_info']);
                     }
 
                     // Extract line number information
-                    if (debugInfo[".debug_line"]) {
-                        debugInfo.lineNumbers = this.parseLineNumbers(debugInfo[".debug_line"]);
+                    if (debugInfo['.debug_line']) {
+                        debugInfo.lineNumbers = this.parseLineNumbers(debugInfo['.debug_line']);
                     }
 
                     return debugInfo;
@@ -3109,8 +3109,8 @@ const UniversalUnpacker = {
                         const innerType = this.parseV0Type(mangled, pos, backrefTable);
                         if (innerType) {
                             const ptrType = char === 'P' ? '*const ' :
-                                          char === 'Q' ? '*mut ' :
-                                          char === 'R' ? '&' : '&mut ';
+                                char === 'Q' ? '*mut ' :
+                                    char === 'R' ? '&' : '&mut ';
                             return {
                                 path: ptrType + innerType.path,
                                 endPos: innerType.endPos,
@@ -3193,9 +3193,9 @@ const UniversalUnpacker = {
                 detectLTO: function() {
                     // Detect Link-Time Optimization
                     const ltoMarkers = [
-                        ".llvm.",
-                        ".lto.",
-                        "__llvm_profile"
+                        '.llvm.',
+                        '.lto.',
+                        '__llvm_profile'
                     ];
 
                     for (const marker of ltoMarkers) {
@@ -3370,11 +3370,11 @@ const UniversalUnpacker = {
             };
 
             // Execute Rust unpacking
-            console.log("[RustUnpacker] Detecting Rust binary characteristics...");
+            console.log('[RustUnpacker] Detecting Rust binary characteristics...');
             const detection = rustDetector.detectRustBinary();
 
             if (!detection.isRust) {
-                throw new Error("Not a Rust binary or confidence too low");
+                throw new Error('Not a Rust binary or confidence too low');
             }
 
             console.log(`[RustUnpacker] Rust binary detected with ${(detection.confidence * 100).toFixed(1)}% confidence`);
@@ -3434,7 +3434,7 @@ const UniversalUnpacker = {
 
     unpackGoBinary: function(target) {
         try {
-            console.log("[GoUnpacker] Starting Go binary analysis");
+            console.log('[GoUnpacker] Starting Go binary analysis');
 
             const baseAddress = target.baseAddress || Process.mainModule.base;
             const imageSize = target.imageSize || Process.mainModule.size;
@@ -3498,12 +3498,12 @@ const UniversalUnpacker = {
                 findGoRuntime: function() {
                     // Go runtime function signatures
                     const runtimePatterns = [
-                        "runtime.main",
-                        "runtime.goexit",
-                        "runtime.gopanic",
-                        "runtime.newproc",
-                        "runtime.mstart",
-                        "runtime.systemstack"
+                        'runtime.main',
+                        'runtime.goexit',
+                        'runtime.gopanic',
+                        'runtime.newproc',
+                        'runtime.mstart',
+                        'runtime.systemstack'
                     ];
 
                     const runtimeFuncs = {};
@@ -3568,12 +3568,12 @@ const UniversalUnpacker = {
                 findGoSymbols: function() {
                     // Go symbol patterns
                     const symbolPatterns = [
-                        "go.buildid",
-                        "go.itab.",
-                        "go.string.",
-                        "go.func.",
-                        "type.",
-                        "main.main"
+                        'go.buildid',
+                        'go.itab.',
+                        'go.string.',
+                        'go.func.',
+                        'type.',
+                        'main.main'
                     ];
 
                     const symbols = {};
@@ -3597,12 +3597,12 @@ const UniversalUnpacker = {
                 detectGoVersion: function() {
                     // Detect Go compiler version
                     const versionPatterns = [
-                        "go1.21",
-                        "go1.20",
-                        "go1.19",
-                        "go1.18",
-                        "go1.17",
-                        "go1.16"
+                        'go1.21',
+                        'go1.20',
+                        'go1.19',
+                        'go1.18',
+                        'go1.17',
+                        'go1.16'
                     ];
 
                     for (const pattern of versionPatterns) {
@@ -3691,7 +3691,7 @@ const UniversalUnpacker = {
                     const types = [];
 
                     // Search for type descriptors
-                    const typePrefix = "type.";
+                    const typePrefix = 'type.';
                     const bytes = Array.from(typePrefix).map(c => c.charCodeAt(0));
                     const pattern = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
                     const found = Memory.scanSync(baseAddress, imageSize, pattern);
@@ -3699,7 +3699,7 @@ const UniversalUnpacker = {
                     for (const match of found.slice(0, 100)) { // Limit to first 100 types
                         try {
                             const typeName = Memory.readCString(match.address, 256);
-                            if (typeName && typeName.startsWith("type.")) {
+                            if (typeName && typeName.startsWith('type.')) {
                                 const typeInfo = this.parseTypeDescriptor(match.address);
                                 if (typeInfo) {
                                     types.push({
@@ -3774,37 +3774,37 @@ const UniversalUnpacker = {
 
                         // Extract additional type information based on kind
                         switch (type.kind & 0x1F) {
-                            case 17: // Array
-                                type.arrayInfo = this.parseArrayType(addr.add(offset));
-                                break;
+                        case 17: // Array
+                            type.arrayInfo = this.parseArrayType(addr.add(offset));
+                            break;
 
-                            case 18: // Chan
-                                type.chanInfo = this.parseChanType(addr.add(offset));
-                                break;
+                        case 18: // Chan
+                            type.chanInfo = this.parseChanType(addr.add(offset));
+                            break;
 
-                            case 19: // Func
-                                type.funcInfo = this.parseFuncType(addr.add(offset));
-                                break;
+                        case 19: // Func
+                            type.funcInfo = this.parseFuncType(addr.add(offset));
+                            break;
 
-                            case 20: // Interface
-                                type.interfaceInfo = this.parseInterfaceType(addr.add(offset));
-                                break;
+                        case 20: // Interface
+                            type.interfaceInfo = this.parseInterfaceType(addr.add(offset));
+                            break;
 
-                            case 21: // Map
-                                type.mapInfo = this.parseMapType(addr.add(offset));
-                                break;
+                        case 21: // Map
+                            type.mapInfo = this.parseMapType(addr.add(offset));
+                            break;
 
-                            case 22: // Ptr
-                                type.ptrInfo = this.parsePtrType(addr.add(offset));
-                                break;
+                        case 22: // Ptr
+                            type.ptrInfo = this.parsePtrType(addr.add(offset));
+                            break;
 
-                            case 23: // Slice
-                                type.sliceInfo = this.parseSliceType(addr.add(offset));
-                                break;
+                        case 23: // Slice
+                            type.sliceInfo = this.parseSliceType(addr.add(offset));
+                            break;
 
-                            case 25: // Struct
-                                type.structInfo = this.parseStructType(addr.add(offset));
-                                break;
+                        case 25: // Struct
+                            type.structInfo = this.parseStructType(addr.add(offset));
+                            break;
                         }
 
                         // Extract type name if available
@@ -4008,7 +4008,7 @@ const UniversalUnpacker = {
                     const itabs = [];
 
                     // Search for itab structures
-                    const itabPrefix = "go.itab.";
+                    const itabPrefix = 'go.itab.';
                     const bytes = Array.from(itabPrefix).map(c => c.charCodeAt(0));
                     const pattern = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
                     const found = Memory.scanSync(baseAddress, imageSize, pattern);
@@ -4016,7 +4016,7 @@ const UniversalUnpacker = {
                     for (const match of found.slice(0, 50)) { // Limit output
                         try {
                             const itabName = Memory.readCString(match.address, 256);
-                            if (itabName && itabName.startsWith("go.itab.")) {
+                            if (itabName && itabName.startsWith('go.itab.')) {
                                 const itabInfo = this.parseItab(match.address);
                                 if (itabInfo) {
                                     itabs.push({
@@ -4095,9 +4095,9 @@ const UniversalUnpacker = {
 
                     // Find stack allocation patterns
                     const stackPatterns = [
-                        "runtime.stackalloc",
-                        "runtime.stackfree",
-                        "runtime.newstack"
+                        'runtime.stackalloc',
+                        'runtime.stackfree',
+                        'runtime.newstack'
                     ];
 
                     for (const pattern of stackPatterns) {
@@ -4119,10 +4119,10 @@ const UniversalUnpacker = {
                 findScheduler: function() {
                     // Find Go scheduler structures
                     const schedulerPatterns = [
-                        "runtime.schedule",
-                        "runtime.findrunnable",
-                        "runtime.runqget",
-                        "runtime.runqput"
+                        'runtime.schedule',
+                        'runtime.findrunnable',
+                        'runtime.runqget',
+                        'runtime.runqput'
                     ];
 
                     const scheduler = {};
@@ -4151,10 +4151,10 @@ const UniversalUnpacker = {
 
                     // Find go.mod information
                     const modPatterns = [
-                        "module ",
-                        "require ",
-                        "replace ",
-                        "go 1."
+                        'module ',
+                        'require ',
+                        'replace ',
+                        'go 1.'
                     ];
 
                     for (const pattern of modPatterns) {
@@ -4165,10 +4165,10 @@ const UniversalUnpacker = {
                         if (found.length > 0) {
                             try {
                                 const modInfo = Memory.readCString(found[0].address, 256);
-                                if (pattern === "module " && modInfo) {
-                                    modules.main = modInfo.replace("module ", "").trim();
-                                } else if (pattern === "require " && modInfo) {
-                                    modules.dependencies.push(modInfo.replace("require ", "").trim());
+                                if (pattern === 'module ' && modInfo) {
+                                    modules.main = modInfo.replace('module ', '').trim();
+                                } else if (pattern === 'require ' && modInfo) {
+                                    modules.dependencies.push(modInfo.replace('require ', '').trim());
                                 }
                             } catch (e) {
                                 // Skip invalid read
@@ -4184,10 +4184,10 @@ const UniversalUnpacker = {
                     const buildFlags = [];
 
                     const flagPatterns = [
-                        "-tags=",
-                        "-ldflags=",
-                        "-gcflags=",
-                        "-trimpath"
+                        '-tags=',
+                        '-ldflags=',
+                        '-gcflags=',
+                        '-trimpath'
                     ];
 
                     for (const pattern of flagPatterns) {
@@ -4217,7 +4217,7 @@ const UniversalUnpacker = {
                     const strings = [];
 
                     // Go string header structure
-                    const goStringPattern = "go.string.";
+                    const goStringPattern = 'go.string.';
                     const bytes = Array.from(goStringPattern).map(c => c.charCodeAt(0));
                     const pattern = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
                     const found = Memory.scanSync(baseAddress, imageSize, pattern);
@@ -4227,7 +4227,7 @@ const UniversalUnpacker = {
                             const strHeader = match.address;
                             const strName = Memory.readCString(strHeader, 256);
 
-                            if (strName && strName.startsWith("go.string.")) {
+                            if (strName && strName.startsWith('go.string.')) {
                                 // Read actual string data
                                 const dataPtr = Memory.readPointer(strHeader.add(256));
                                 const length = Memory.readU32(strHeader.add(264));
@@ -4291,11 +4291,11 @@ const UniversalUnpacker = {
             };
 
             // Execute Go unpacking
-            console.log("[GoUnpacker] Detecting Go binary characteristics...");
+            console.log('[GoUnpacker] Detecting Go binary characteristics...');
             const detection = goDetector.detectGoBinary();
 
             if (!detection.isGo) {
-                throw new Error("Not a Go binary or confidence too low");
+                throw new Error('Not a Go binary or confidence too low');
             }
 
             console.log(`[GoUnpacker] Go binary detected with ${(detection.confidence * 100).toFixed(1)}% confidence`);
@@ -4367,7 +4367,7 @@ const UniversalUnpacker = {
 
     unpackModernPackers: function(target) {
         try {
-            console.log("[ModernPackers] Starting advanced packer analysis");
+            console.log('[ModernPackers] Starting advanced packer analysis');
 
             const baseAddress = target.baseAddress || Process.mainModule.base;
             const imageSize = target.imageSize || Process.mainModule.size;
@@ -4423,7 +4423,7 @@ const UniversalUnpacker = {
                     }
 
                     if (!stubAddress) {
-                        throw new Error("UPX decompression stub not found");
+                        throw new Error('UPX decompression stub not found');
                     }
 
                     // Hook decompression routine
@@ -4501,10 +4501,10 @@ const UniversalUnpacker = {
             const enigmaUnpacker = {
                 detectEnigma: function() {
                     const enigmaMarkers = [
-                        "Enigma protector",
-                        "EnigmaProtector",
-                        ".enigma1",
-                        ".enigma2"
+                        'Enigma protector',
+                        'EnigmaProtector',
+                        '.enigma1',
+                        '.enigma2'
                     ];
 
                     for (const marker of enigmaMarkers) {
@@ -4525,7 +4525,7 @@ const UniversalUnpacker = {
                 },
 
                 unpackEnigma: function() {
-                    console.log("[Enigma] Starting Enigma Protector unpacking");
+                    console.log('[Enigma] Starting Enigma Protector unpacking');
 
                     // Find Enigma VM entry
                     const vmPatterns = [
@@ -4546,7 +4546,7 @@ const UniversalUnpacker = {
                     }
 
                     if (!vmEntry) {
-                        throw new Error("Enigma VM entry not found");
+                        throw new Error('Enigma VM entry not found');
                     }
 
                     // Hook VM handlers
@@ -4662,11 +4662,11 @@ const UniversalUnpacker = {
             const winLicenseUnpacker = {
                 detectWinLicense: function() {
                     const signatures = [
-                        "WinLicense",
-                        "Themida",
-                        "SecureEngine",
-                        ".winlicense",
-                        ".themida"
+                        'WinLicense',
+                        'Themida',
+                        'SecureEngine',
+                        '.winlicense',
+                        '.themida'
                     ];
 
                     for (const sig of signatures) {
@@ -4676,7 +4676,7 @@ const UniversalUnpacker = {
 
                         if (found.length > 0) {
                             return {
-                                type: sig.includes("WinLicense") ? "WinLicense" : "Themida",
+                                type: sig.includes('WinLicense') ? 'WinLicense' : 'Themida',
                                 address: found[0].address
                             };
                         }
@@ -4830,10 +4830,10 @@ const UniversalUnpacker = {
 
                     // Hook all anti-debug APIs
                     const allHooks = Object.assign({}, antiDebugHooks, additionalChecks);
-                    
+
                     for (const [apiName, hookConfig] of Object.entries(allHooks)) {
                         const addr = Module.findExportByName(hookConfig.module, apiName);
-                        
+
                         if (addr) {
                             const interceptorConfig = {};
                             if (hookConfig.onEnter) {
@@ -4842,7 +4842,7 @@ const UniversalUnpacker = {
                             if (hookConfig.onLeave) {
                                 interceptorConfig.onLeave = hookConfig.onLeave;
                             }
-                            
+
                             Interceptor.attach(addr, interceptorConfig);
                             console.log(`[Anti-Debug] Hooked ${apiName}`);
                         }
@@ -4850,7 +4850,7 @@ const UniversalUnpacker = {
 
                     // Bypass PEB-based debugger detection
                     this.bypassPEBCheck();
-                    
+
                     // Bypass hardware breakpoint detection
                     this.bypassHardwareBreakpoints();
                 },
@@ -4863,15 +4863,15 @@ const UniversalUnpacker = {
                     } else {
                         peb = Memory.readPointer(Module.findExportByName('ntdll.dll', 'NtCurrentTeb').add(0x30));
                     }
-                    
+
                     if (peb) {
                         // Clear BeingDebugged flag (offset 0x02)
                         Memory.writeU8(peb.add(0x02), 0);
-                        
+
                         // Clear NtGlobalFlag (offset 0x68 for x86, 0xBC for x64)
                         const ntGlobalFlagOffset = Process.arch === 'x64' ? 0xBC : 0x68;
                         Memory.writeU32(peb.add(ntGlobalFlagOffset), 0);
-                        
+
                         console.log('[Anti-Debug] PEB flags cleared');
                     }
                 },
@@ -4894,7 +4894,7 @@ const UniversalUnpacker = {
                                     // Clear DR6 and DR7
                                     Memory.writePointer(this.contextPtr.add(dr0Offset + 6 * Process.pointerSize), ptr(0));
                                     Memory.writePointer(this.contextPtr.add(dr0Offset + 7 * Process.pointerSize), ptr(0));
-                                    
+
                                     console.log('[Anti-Debug] Hardware breakpoints hidden');
                                 }
                             }
@@ -5316,8 +5316,8 @@ const UniversalUnpacker = {
             const obsidiumUnpacker = {
                 detectObsidium: function() {
                     const obsidiumSigs = [
-                        "Obsidium",
-                        ".obsidium",
+                        'Obsidium',
+                        '.obsidium',
                         [0xEB, 0x02, 0xCD, 0x20, 0xEB, 0x0C], // Obsidium signature
                         [0x50, 0x53, 0x51, 0x52, 0x57, 0x56]  // Push all registers
                     ];
@@ -5345,7 +5345,7 @@ const UniversalUnpacker = {
                 },
 
                 unpackObsidium: function() {
-                    console.log("[Obsidium] Starting unpacking");
+                    console.log('[Obsidium] Starting unpacking');
 
                     // Find decryption routine
                     const decryptRoutine = this.findDecryptionRoutine();
@@ -5454,10 +5454,10 @@ const UniversalUnpacker = {
             const vmProtectUnpacker = {
                 detectVMProtect: function() {
                     const vmpSignatures = [
-                        ".vmp0",
-                        ".vmp1",
-                        ".vmp2",
-                        "VMProtect",
+                        '.vmp0',
+                        '.vmp1',
+                        '.vmp2',
+                        'VMProtect',
                         [0x68, null, null, null, null, 0xE9] // VMProtect stub
                     ];
 
@@ -5673,16 +5673,16 @@ const UniversalUnpacker = {
                         // Reconstruct based on mutation type
                         reconstructByType: function(mutation, analysis) {
                             switch (mutation.type) {
-                                case 'SUBSTITUTION':
-                                    return this.reconstructSubstitution(mutation, analysis);
-                                case 'EXPANSION':
-                                    return this.reconstructExpansion(mutation, analysis);
-                                case 'OBFUSCATION':
-                                    return this.reconstructObfuscation(mutation, analysis);
-                                case 'VIRTUALIZATION':
-                                    return this.reconstructVirtualization(mutation, analysis);
-                                default:
-                                    return this.reconstructGeneric(mutation, analysis);
+                            case 'SUBSTITUTION':
+                                return this.reconstructSubstitution(mutation, analysis);
+                            case 'EXPANSION':
+                                return this.reconstructExpansion(mutation, analysis);
+                            case 'OBFUSCATION':
+                                return this.reconstructObfuscation(mutation, analysis);
+                            case 'VIRTUALIZATION':
+                                return this.reconstructVirtualization(mutation, analysis);
+                            default:
+                                return this.reconstructGeneric(mutation, analysis);
                             }
                         },
 
@@ -6457,7 +6457,7 @@ const UniversalUnpacker = {
             };
 
             // Main unpacking orchestration
-            console.log("[ModernPackers] Detecting packer type...");
+            console.log('[ModernPackers] Detecting packer type...');
 
             let unpackResult = null;
 
@@ -6475,7 +6475,7 @@ const UniversalUnpacker = {
 
             const enigmaInfo = enigmaUnpacker.detectEnigma();
             if (!unpackResult && enigmaInfo) {
-                console.log("[ModernPackers] Enigma Protector detected");
+                console.log('[ModernPackers] Enigma Protector detected');
                 unpackResult = {
                     type: 'Enigma',
                     data: enigmaUnpacker.unpackEnigma()
@@ -6493,7 +6493,7 @@ const UniversalUnpacker = {
 
             const obsidiumInfo = obsidiumUnpacker.detectObsidium();
             if (!unpackResult && obsidiumInfo) {
-                console.log("[ModernPackers] Obsidium detected");
+                console.log('[ModernPackers] Obsidium detected');
                 unpackResult = {
                     type: 'Obsidium',
                     data: obsidiumUnpacker.unpackObsidium()
@@ -6510,7 +6510,7 @@ const UniversalUnpacker = {
             }
 
             if (!unpackResult) {
-                throw new Error("No supported packer detected");
+                throw new Error('No supported packer detected');
             }
 
             // Generate comprehensive report
@@ -6629,7 +6629,7 @@ const UniversalUnpacker = {
 
                 // Comprehensive anti-debugging bypass for key extraction
                 antiDebugBypass: function() {
-                    console.log("[KeyExtraction] Applying comprehensive anti-debugging bypass");
+                    console.log('[KeyExtraction] Applying comprehensive anti-debugging bypass');
                     let bypassCount = 0;
 
                     // 1. Basic API hooks
@@ -6666,12 +6666,12 @@ const UniversalUnpacker = {
                                 try {
                                     const addr = Module.findExportByName(module, api);
                                     if (addr) {
-                                        const retType = api.includes('String') ? 'void' : 
-                                                      api.includes('Create') ? 'uint32' : 'int';
-                                        const params = api === 'CheckRemoteDebuggerPresent' ? 
-                                                     ['pointer', 'pointer'] : 
-                                                     api.includes('String') ? ['pointer'] : [];
-                                        
+                                        const retType = api.includes('String') ? 'void' :
+                                            api.includes('Create') ? 'uint32' : 'int';
+                                        const params = api === 'CheckRemoteDebuggerPresent' ?
+                                            ['pointer', 'pointer'] :
+                                            api.includes('String') ? ['pointer'] : [];
+
                                         Interceptor.replace(addr, new NativeCallback(impl, retType, params));
                                         bypassCount++;
                                     }
@@ -6694,22 +6694,22 @@ const UniversalUnpacker = {
                             onLeave: function(retval) {
                                 if (retval.toInt32() === 0) { // STATUS_SUCCESS
                                     switch(this.infoClass) {
-                                        case 0x07: // ProcessDebugPort
-                                            Memory.writePointer(this.buffer, ptr(0));
-                                            break;
-                                        case 0x0E: // ProcessHandleCount
-                                            // Keep original to avoid detection
-                                            break;
-                                        case 0x1E: // ProcessDebugObjectHandle
-                                            Memory.writePointer(this.buffer, ptr(0));
-                                            retval.replace(0xC0000353); // STATUS_PORT_NOT_SET
-                                            break;
-                                        case 0x1F: // ProcessDebugFlags
-                                            Memory.writeU32(this.buffer, 1); // PROCESS_DEBUG_INHERIT
-                                            break;
-                                        case 0x22: // ProcessExecuteFlags
-                                            Memory.writeU32(this.buffer, 0x22); // MEM_EXECUTE_OPTION_ENABLE
-                                            break;
+                                    case 0x07: // ProcessDebugPort
+                                        Memory.writePointer(this.buffer, ptr(0));
+                                        break;
+                                    case 0x0E: // ProcessHandleCount
+                                        // Keep original to avoid detection
+                                        break;
+                                    case 0x1E: // ProcessDebugObjectHandle
+                                        Memory.writePointer(this.buffer, ptr(0));
+                                        retval.replace(0xC0000353); // STATUS_PORT_NOT_SET
+                                        break;
+                                    case 0x1F: // ProcessDebugFlags
+                                        Memory.writeU32(this.buffer, 1); // PROCESS_DEBUG_INHERIT
+                                        break;
+                                    case 0x22: // ProcessExecuteFlags
+                                        Memory.writeU32(this.buffer, 0x22); // MEM_EXECUTE_OPTION_ENABLE
+                                        break;
                                     }
                                 }
                             }
@@ -6765,7 +6765,7 @@ const UniversalUnpacker = {
                                     // Clear Dr0-Dr3 and Dr6, Dr7 (x86/x64 context)
                                     const is64bit = Process.arch === 'x64';
                                     const drOffset = is64bit ? 0x18 : 0x04; // Offset to DR registers
-                                    
+
                                     try {
                                         // Clear DR0-DR3 (debug address registers)
                                         for (let i = 0; i < 4; i++) {
@@ -6775,7 +6775,7 @@ const UniversalUnpacker = {
                                         Memory.writePointer(this.context.add(drOffset + (6 * Process.pointerSize)), ptr(0));
                                         Memory.writePointer(this.context.add(drOffset + (7 * Process.pointerSize)), ptr(0));
                                     } catch (e) {
-                                        console.log("[KeyExtraction] Failed to clear debug registers");
+                                        console.log('[KeyExtraction] Failed to clear debug registers');
                                     }
                                 }
                             }
@@ -6787,19 +6787,19 @@ const UniversalUnpacker = {
                     try {
                         const peb = Process.enumerateModules()[0].base;
                         const is64bit = Process.arch === 'x64';
-                        
+
                         // Clear BeingDebugged flag
                         Memory.writeU8(peb.add(is64bit ? 0x02 : 0x02), 0);
-                        
+
                         // Clear NtGlobalFlag
                         const ntGlobalFlagOffset = is64bit ? 0xBC : 0x68;
                         Memory.writeU32(peb.add(ntGlobalFlagOffset), 0);
-                        
+
                         // Fix heap flags
                         const processHeapOffset = is64bit ? 0x30 : 0x18;
                         const heapFlagsOffset = is64bit ? 0x70 : 0x40;
                         const heapForceFlagsOffset = is64bit ? 0x74 : 0x44;
-                        
+
                         const processHeap = Memory.readPointer(peb.add(processHeapOffset));
                         if (processHeap && !processHeap.isNull()) {
                             Memory.writeU32(processHeap.add(heapFlagsOffset), 2); // HEAP_GROWABLE
@@ -6807,7 +6807,7 @@ const UniversalUnpacker = {
                         }
                         bypassCount++;
                     } catch (e) {
-                        console.log("[KeyExtraction] PEB manipulation failed: " + e.message);
+                        console.log('[KeyExtraction] PEB manipulation failed: ' + e.message);
                     }
 
                     // 7. Exception-based anti-debug bypass
@@ -6817,7 +6817,7 @@ const UniversalUnpacker = {
                             onEnter: function(args) {
                                 const exceptionRecord = args[0];
                                 const exceptionCode = Memory.readU32(exceptionRecord);
-                                
+
                                 // Common anti-debug exception codes
                                 const antiDebugCodes = [
                                     0x80000003, // EXCEPTION_BREAKPOINT
@@ -6825,7 +6825,7 @@ const UniversalUnpacker = {
                                     0x406D1388, // MS_VC_EXCEPTION (SetThreadName)
                                     0xC0000008  // STATUS_INVALID_HANDLE (CloseHandle detection)
                                 ];
-                                
+
                                 if (antiDebugCodes.includes(exceptionCode)) {
                                     // Skip the exception
                                     args[0] = ptr(0);
@@ -6842,11 +6842,11 @@ const UniversalUnpacker = {
                         const optionalHeader = module.base.add(peHeader).add(0x18);
                         const is64bit = Process.arch === 'x64';
                         const tlsDirectoryRVA = Memory.readU32(optionalHeader.add(is64bit ? 0x88 : 0x58));
-                        
+
                         if (tlsDirectoryRVA !== 0) {
                             const tlsDirectory = module.base.add(tlsDirectoryRVA);
                             const callbacksPtr = Memory.readPointer(tlsDirectory.add(0x0C));
-                            
+
                             if (callbacksPtr && !callbacksPtr.isNull()) {
                                 // Null out TLS callbacks to prevent early anti-debug checks
                                 let callbackAddr = Memory.readPointer(callbacksPtr);
@@ -6860,7 +6860,7 @@ const UniversalUnpacker = {
                             }
                         }
                     } catch (e) {
-                        console.log("[KeyExtraction] TLS callback bypass failed: " + e.message);
+                        console.log('[KeyExtraction] TLS callback bypass failed: ' + e.message);
                     }
 
                     // 9. Memory integrity check bypass
@@ -7076,18 +7076,18 @@ const UniversalUnpacker = {
 
             // Select appropriate decryptor
             switch (algorithm) {
-                case 'AES256_CBC':
-                    return decryptors.AES256_CBC.call(this, encryptedBuffer, key, new Uint8Array(16));
-                case 'RC4':
-                    return decryptors.RC4.call(this, encryptedBuffer, key);
-                case 'XOR':
-                    return decryptors.XOR.call(this, encryptedBuffer, key);
-                case 'TEA':
-                    return decryptors.TEA.call(this, encryptedBuffer, key);
-                case 'ChaCha20':
-                    return decryptors.ChaCha20.call(this, encryptedBuffer, key, new Uint8Array(12));
-                default:
-                    return decryptors.XOR.call(this, encryptedBuffer, key);
+            case 'AES256_CBC':
+                return decryptors.AES256_CBC.call(this, encryptedBuffer, key, new Uint8Array(16));
+            case 'RC4':
+                return decryptors.RC4.call(this, encryptedBuffer, key);
+            case 'XOR':
+                return decryptors.XOR.call(this, encryptedBuffer, key);
+            case 'TEA':
+                return decryptors.TEA.call(this, encryptedBuffer, key);
+            case 'ChaCha20':
+                return decryptors.ChaCha20.call(this, encryptedBuffer, key, new Uint8Array(12));
+            default:
+                return decryptors.XOR.call(this, encryptedBuffer, key);
             }
         },
 
@@ -7095,7 +7095,7 @@ const UniversalUnpacker = {
         bypassIntegrityChecks: function() {
             // CRC32 bypass
             const crc32Check = this.findPattern(Memory.readByteArray(Process.mainModule.base, Process.mainModule.size),
-                                               [0x81, 0xF9]); // CMP ECX, crc32_value
+                [0x81, 0xF9]); // CMP ECX, crc32_value
             if (crc32Check !== -1) {
                 Memory.writeU8(Process.mainModule.base.add(crc32Check), 0x90); // NOP
                 Memory.writeU8(Process.mainModule.base.add(crc32Check + 1), 0x90);
@@ -8598,13 +8598,13 @@ const UniversalUnpacker = {
             // Locate PE header and checksum field
             const dosHeaderMagic = view.getUint16(0, true);
             if (dosHeaderMagic !== 0x5A4D) { // 'MZ'
-                throw new Error("Invalid DOS header magic");
+                throw new Error('Invalid DOS header magic');
             }
 
             const peHeaderOffset = view.getUint32(0x3C, true);
             const peSignature = view.getUint32(peHeaderOffset, true);
             if (peSignature !== 0x00004550) { // 'PE\0\0'
-                throw new Error("Invalid PE signature");
+                throw new Error('Invalid PE signature');
             }
 
             // Get checksum field offset
@@ -8697,7 +8697,7 @@ const UniversalUnpacker = {
                 // Executable files must have valid checksum
                 if (calculatedChecksum === 0) {
                     validation.valid = false;
-                    validation.reason = "Executable requires non-zero checksum";
+                    validation.reason = 'Executable requires non-zero checksum';
                     validation.correction = this.generateFallbackChecksum(peBuffer);
                 }
             }
@@ -8706,7 +8706,7 @@ const UniversalUnpacker = {
                 // DLLs require stricter checksum validation
                 if (calculatedChecksum < 0x1000) {
                     validation.valid = false;
-                    validation.reason = "DLL checksum too low";
+                    validation.reason = 'DLL checksum too low';
                     validation.correction = calculatedChecksum + 0x1000;
                 }
             }
@@ -8719,7 +8719,7 @@ const UniversalUnpacker = {
                     const storedChecksum = view.getUint32(peHeaderOffset + 0x58, true);
                     if (storedChecksum !== 0 && storedChecksum !== calculatedChecksum) {
                         validation.valid = false;
-                        validation.reason = "Driver checksum mismatch";
+                        validation.reason = 'Driver checksum mismatch';
                         // For drivers, we trust the calculated value
                     }
                 }
@@ -9347,28 +9347,28 @@ const UniversalUnpacker = {
 
                     // Parse specific load commands
                     switch (cmd) {
-                        case 0x1: // LC_SEGMENT
-                        case 0x19: // LC_SEGMENT_64
-                            command.data = this.parseSegmentCommand(buffer, offset, is64Bit);
-                            break;
+                    case 0x1: // LC_SEGMENT
+                    case 0x19: // LC_SEGMENT_64
+                        command.data = this.parseSegmentCommand(buffer, offset, is64Bit);
+                        break;
 
-                        case 0x2: // LC_SYMTAB
-                            command.data = this.parseSymtabCommand(buffer, offset);
-                            break;
+                    case 0x2: // LC_SYMTAB
+                        command.data = this.parseSymtabCommand(buffer, offset);
+                        break;
 
-                        case 0xE: // LC_LOAD_DYLIB
-                        case 0xC: // LC_LOAD_DYLINKER
-                            command.data = this.parseDylibCommand(buffer, offset);
-                            break;
+                    case 0xE: // LC_LOAD_DYLIB
+                    case 0xC: // LC_LOAD_DYLINKER
+                        command.data = this.parseDylibCommand(buffer, offset);
+                        break;
 
-                        case 0x80000028: // LC_MAIN
-                            command.data = this.parseMainCommand(buffer, offset);
-                            break;
+                    case 0x80000028: // LC_MAIN
+                        command.data = this.parseMainCommand(buffer, offset);
+                        break;
 
-                        case 0x26: // LC_FUNCTION_STARTS
-                        case 0x29: // LC_DATA_IN_CODE
-                            command.data = this.parseLinkEditCommand(buffer, offset);
-                            break;
+                    case 0x26: // LC_FUNCTION_STARTS
+                    case 0x29: // LC_DATA_IN_CODE
+                        command.data = this.parseLinkEditCommand(buffer, offset);
+                        break;
                     }
 
                     commands.push(command);
@@ -9837,21 +9837,21 @@ const UniversalUnpacker = {
                 const encryptionType = this.detectEncryptionType(encrypted);
 
                 switch(encryptionType) {
-                    case 'FairPlay':
-                        return this.decryptFairPlay(encrypted, segment);
-                    case 'AES128':
-                        return this.decryptAES128(encrypted, segment);
-                    case 'AES256':
-                        return this.decryptAES256(encrypted, segment);
-                    case 'Blowfish':
-                        return this.decryptBlowfish(encrypted, segment);
-                    case 'RC4':
-                        return this.decryptRC4(encrypted, segment);
-                    case 'ChaCha20':
-                        return this.decryptChaCha20(encrypted, segment);
-                    default:
-                        // Fallback to XOR with complex key derivation
-                        return this.decryptXORComplex(encrypted, segment);
+                case 'FairPlay':
+                    return this.decryptFairPlay(encrypted, segment);
+                case 'AES128':
+                    return this.decryptAES128(encrypted, segment);
+                case 'AES256':
+                    return this.decryptAES256(encrypted, segment);
+                case 'Blowfish':
+                    return this.decryptBlowfish(encrypted, segment);
+                case 'RC4':
+                    return this.decryptRC4(encrypted, segment);
+                case 'ChaCha20':
+                    return this.decryptChaCha20(encrypted, segment);
+                default:
+                    // Fallback to XOR with complex key derivation
+                    return this.decryptXORComplex(encrypted, segment);
                 }
             },
 
@@ -10499,7 +10499,7 @@ const UniversalUnpacker = {
 
         // Initialize real-time unpacking session
         initializeSession: function(processInfo) {
-            console.log("[RealTimeUnpacker] Initializing real-time unpacking session");
+            console.log('[RealTimeUnpacker] Initializing real-time unpacking session');
 
             this.runtimeState.activeSession = {
                 id: `rt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -10553,7 +10553,7 @@ const UniversalUnpacker = {
             // Install exception handlers
             this.installExceptionHandlers();
 
-            console.log("[RealTimeUnpacker] Instrumentation setup complete");
+            console.log('[RealTimeUnpacker] Instrumentation setup complete');
         },
 
         // Process Stalker events for instruction tracing
@@ -10792,7 +10792,7 @@ const UniversalUnpacker = {
                         const hashes = lastFive.map(s => s.hash);
 
                         if (hashes.every(h => h === hashes[0])) {
-                            console.log("[RealTimeUnpacker] Memory region stabilized, likely unpacked");
+                            console.log('[RealTimeUnpacker] Memory region stabilized, likely unpacked');
                             this.handleUnpackedRegion(address, size, snapshot);
                             clearInterval(sampler);
                         }
@@ -10830,23 +10830,23 @@ const UniversalUnpacker = {
 
             // Phase detection logic
             switch (previousPhase) {
-                case 'INITIALIZATION':
-                    if (trigger === 'PROTECTION_CHANGE' || trigger === 'MEMORY_ALLOC') {
-                        newPhase = 'DECOMPRESSION';
-                    }
-                    break;
+            case 'INITIALIZATION':
+                if (trigger === 'PROTECTION_CHANGE' || trigger === 'MEMORY_ALLOC') {
+                    newPhase = 'DECOMPRESSION';
+                }
+                break;
 
-                case 'DECOMPRESSION':
-                    if (trigger === 'CODE_EXECUTION' || trigger === 'JUMP_TO_UNPACKED') {
-                        newPhase = 'EXECUTION';
-                    }
-                    break;
+            case 'DECOMPRESSION':
+                if (trigger === 'CODE_EXECUTION' || trigger === 'JUMP_TO_UNPACKED') {
+                    newPhase = 'EXECUTION';
+                }
+                break;
 
-                case 'EXECUTION':
-                    if (trigger === 'OEP_DETECTED') {
-                        newPhase = 'COMPLETED';
-                    }
-                    break;
+            case 'EXECUTION':
+                if (trigger === 'OEP_DETECTED') {
+                    newPhase = 'COMPLETED';
+                }
+                break;
             }
 
             if (newPhase !== previousPhase) {
@@ -10869,31 +10869,31 @@ const UniversalUnpacker = {
         // Handle phase changes
         handlePhaseChange: function(newPhase) {
             switch (newPhase) {
-                case 'DECOMPRESSION':
-                    this.startDecompressionMonitoring();
-                    break;
+            case 'DECOMPRESSION':
+                this.startDecompressionMonitoring();
+                break;
 
-                case 'EXECUTION':
-                    this.startExecutionTracing();
-                    break;
+            case 'EXECUTION':
+                this.startExecutionTracing();
+                break;
 
-                case 'COMPLETED':
-                    this.finalizeUnpacking();
-                    break;
+            case 'COMPLETED':
+                this.finalizeUnpacking();
+                break;
             }
         },
 
         // Start monitoring decompression phase
         startDecompressionMonitoring: function() {
-            console.log("[RealTimeUnpacker] Monitoring decompression phase");
+            console.log('[RealTimeUnpacker] Monitoring decompression phase');
 
             // Monitor for common decompression patterns
             const patterns = [
-                { bytes: [0x8B, 0x45], description: "MOV EAX, [EBP+...]" },
-                { bytes: [0x8B, 0x55], description: "MOV EDX, [EBP+...]" },
-                { bytes: [0x89, 0x45], description: "MOV [EBP+...], EAX" },
-                { bytes: [0xF3, 0xA4], description: "REP MOVSB" },
-                { bytes: [0xF3, 0xA5], description: "REP MOVSD" }
+                { bytes: [0x8B, 0x45], description: 'MOV EAX, [EBP+...]' },
+                { bytes: [0x8B, 0x55], description: 'MOV EDX, [EBP+...]' },
+                { bytes: [0x89, 0x45], description: 'MOV [EBP+...], EAX' },
+                { bytes: [0xF3, 0xA4], description: 'REP MOVSB' },
+                { bytes: [0xF3, 0xA5], description: 'REP MOVSD' }
             ];
 
             // Set breakpoints on decompression patterns
@@ -10904,7 +10904,7 @@ const UniversalUnpacker = {
 
         // Start execution tracing
         startExecutionTracing: function() {
-            console.log("[RealTimeUnpacker] Starting execution tracing");
+            console.log('[RealTimeUnpacker] Starting execution tracing');
 
             const session = this.runtimeState.activeSession;
 
@@ -11094,7 +11094,7 @@ const UniversalUnpacker = {
 
         // Finalize unpacking process
         finalizeUnpacking: function() {
-            console.log("[RealTimeUnpacker] Finalizing unpacking process");
+            console.log('[RealTimeUnpacker] Finalizing unpacking process');
 
             const session = this.runtimeState.activeSession;
             session.endTime = Date.now();
@@ -11195,7 +11195,7 @@ const UniversalUnpacker = {
 
         // Reconstruct unpacked binary
         reconstructUnpackedBinary: function(results) {
-            console.log("[RealTimeUnpacker] Reconstructing unpacked binary");
+            console.log('[RealTimeUnpacker] Reconstructing unpacked binary');
 
             const bestOEP = this.selectBestOEP(results.oepCandidates);
             const memoryDump = this.createMemoryDump(results.allocatedRegions);
@@ -11205,27 +11205,27 @@ const UniversalUnpacker = {
             let reconstructed = null;
 
             switch (binaryFormat) {
-                case 'PE':
-                    reconstructed = UniversalUnpacker.PEReconstruction.rebuildPE({
-                        oep: bestOEP,
-                        memoryDump: memoryDump,
-                        allocatedRegions: results.allocatedRegions
-                    });
-                    break;
+            case 'PE':
+                reconstructed = UniversalUnpacker.PEReconstruction.rebuildPE({
+                    oep: bestOEP,
+                    memoryDump: memoryDump,
+                    allocatedRegions: results.allocatedRegions
+                });
+                break;
 
-                case 'ELF':
-                    reconstructed = UniversalUnpacker.CrossPlatform.ELFUnpacker.reconstructELF({
-                        oep: bestOEP,
-                        memoryDump: memoryDump
-                    });
-                    break;
+            case 'ELF':
+                reconstructed = UniversalUnpacker.CrossPlatform.ELFUnpacker.reconstructELF({
+                    oep: bestOEP,
+                    memoryDump: memoryDump
+                });
+                break;
 
-                case 'MachO':
-                    reconstructed = UniversalUnpacker.CrossPlatform.MachOUnpacker.reconstructMachO({
-                        oep: bestOEP,
-                        memoryDump: memoryDump
-                    });
-                    break;
+            case 'MachO':
+                reconstructed = UniversalUnpacker.CrossPlatform.MachOUnpacker.reconstructMachO({
+                    oep: bestOEP,
+                    memoryDump: memoryDump
+                });
+                break;
             }
 
             return {
@@ -11298,26 +11298,26 @@ const UniversalUnpacker = {
 
         // Report unpacking results
         reportResults: function(unpackedBinary) {
-            console.log("[RealTimeUnpacker] ========== Unpacking Results ==========");
+            console.log('[RealTimeUnpacker] ========== Unpacking Results ==========');
             console.log(`Format: ${unpackedBinary.format}`);
             console.log(`OEP: ${unpackedBinary.oep}`);
             console.log(`Success: ${unpackedBinary.success}`);
             console.log(`Duration: ${unpackedBinary.metadata.duration}ms`);
             console.log(`Phases: ${unpackedBinary.metadata.phases.length}`);
             console.log(`Detected Packers: ${unpackedBinary.metadata.detectedPackers.join(', ')}`);
-            console.log("Performance Metrics:");
+            console.log('Performance Metrics:');
             const metrics = unpackedBinary.metadata.performanceMetrics;
             console.log(`  - Total Instructions: ${metrics.totalInstructions}`);
             console.log(`  - Unique Addresses: ${metrics.uniqueAddresses}`);
             console.log(`  - Memory Allocations: ${metrics.memoryAllocations}`);
             console.log(`  - Average Entropy: ${metrics.averageEntropy.toFixed(2)}`);
             console.log(`  - Unpacking Speed: ${metrics.unpackingSpeed.toFixed(0)} inst/sec`);
-            console.log("=========================================");
+            console.log('=========================================');
         },
 
         // Initialize memory monitoring
         initializeMemoryMonitoring: function() {
-            console.log("[RealTimeUnpacker] Initializing memory monitoring");
+            console.log('[RealTimeUnpacker] Initializing memory monitoring');
 
             // Monitor all executable memory regions
             const regions = Process.enumerateRanges('--x');
@@ -11353,7 +11353,7 @@ const UniversalUnpacker = {
 
         // Start packer detection
         startPackerDetection: function() {
-            console.log("[RealTimeUnpacker] Starting packer detection");
+            console.log('[RealTimeUnpacker] Starting packer detection');
 
             // Signature-based detection
             const signatures = UniversalUnpacker.PackerDetection.detectAllPackers(Process.mainModule.base);
@@ -11553,7 +11553,7 @@ const UniversalUnpacker = {
                         this.cleanupTerminatedThreads(currentThreads);
 
                         if (attempts >= maxAttempts) {
-                            console.log(`[RealTimeUnpacker] Thread monitoring timeout, attaching to most likely candidates`);
+                            console.log('[RealTimeUnpacker] Thread monitoring timeout, attaching to most likely candidates');
                             this.attachToLikelyCandidates(targetAddress);
                             clearInterval(monitorInterval);
                         }
@@ -11642,7 +11642,7 @@ const UniversalUnpacker = {
                 isUnpackingThread: function(thread) {
                     // Apply anti-debugging bypass before thread analysis
                     this.bypassThreadAnalysisDebugging();
-                    
+
                     // Check thread state and context for unpacking indicators
                     const indicators = {
                         hasHighMemoryAllocation: false,
@@ -11672,7 +11672,7 @@ const UniversalUnpacker = {
                     // Check thread context for suspicious patterns
                     if (thread.context && thread.context.pc) {
                         const pc = thread.context.pc;
-                        
+
                         // Check if PC is in dynamically allocated region
                         try {
                             const range = Process.findRangeByAddress(pc);
@@ -11680,7 +11680,7 @@ const UniversalUnpacker = {
                                 if (!range.file) {
                                     indicators.hasSuspiciousContext = true;
                                 }
-                                
+
                                 // Check for protection manipulation
                                 if (this.detectProtectionManipulation(range, thread)) {
                                     indicators.hasProtectionManipulation = true;
@@ -11807,7 +11807,7 @@ const UniversalUnpacker = {
                     try {
                         // Check for suspicious protection combinations
                         const protection = range.protection;
-                        
+
                         // RWX pages are highly suspicious
                         if (protection === 'rwx') {
                             console.log('[ThreadAnalysis] RWX page detected - high suspicion');
@@ -12155,29 +12155,29 @@ const UniversalUnpacker = {
 
             // Check if this is a known anti-debugging technique
             if (this.isAntiDebugException(details)) {
-                console.log("[RealTimeUnpacker] Anti-debugging exception detected, bypassing");
+                console.log('[RealTimeUnpacker] Anti-debugging exception detected, bypassing');
                 this.bypassAntiDebug(details);
             }
         },
 
         // Comprehensive anti-debugging exception detection
         isAntiDebugException: function(details) {
-            console.log("[AntiDebugDetection] Analyzing exception: " + details.type + " at " + details.address);
-            
+            console.log('[AntiDebugDetection] Analyzing exception: ' + details.type + ' at ' + details.address);
+
             // Advanced anti-debug pattern recognition
             const patterns = this.analyzeExceptionPattern(details);
-            
+
             // Check for known anti-debug signatures
             if (this.checkKnownAntiDebugPatterns(details, patterns)) {
                 return true;
             }
-            
+
             // Heuristic analysis for unknown anti-debug techniques
             if (this.performHeuristicAnalysis(details, patterns)) {
-                console.log("[AntiDebugDetection] Heuristic analysis detected potential anti-debug technique");
+                console.log('[AntiDebugDetection] Heuristic analysis detected potential anti-debug technique');
                 return true;
             }
-            
+
             return false;
         },
 
@@ -12210,7 +12210,7 @@ const UniversalUnpacker = {
                 }
 
             } catch (e) {
-                console.log("[AntiDebugDetection] Exception analysis failed: " + e.message);
+                console.log('[AntiDebugDetection] Exception analysis failed: ' + e.message);
             }
 
             return analysis;
@@ -12222,8 +12222,8 @@ const UniversalUnpacker = {
                 // Exception-based anti-debug
                 {
                     name: 'SEH_ANTI_DEBUG',
-                    check: () => details.type === 'access-violation' && 
-                                analysis.instruction && 
+                    check: () => details.type === 'access-violation' &&
+                                analysis.instruction &&
                                 analysis.instruction.mnemonic === 'int' &&
                                 analysis.instruction.operands[0].value === 3
                 },
@@ -12231,7 +12231,7 @@ const UniversalUnpacker = {
                 {
                     name: 'SINGLE_STEP_DETECTION',
                     check: () => details.type === 'single-step' &&
-                                analysis.context && 
+                                analysis.context &&
                                 (analysis.context.eflags & 0x100) !== 0 // TF flag
                 },
                 // Hardware breakpoint detection
@@ -12326,14 +12326,14 @@ const UniversalUnpacker = {
             }
 
             console.log(`[AntiDebugDetection] Heuristic score: ${suspicionScore}, indicators: [${heuristics.join(', ')}]`);
-            
+
             return suspicionScore >= 50; // Threshold for detection
         },
 
         // Advanced anti-debugging bypass
         bypassAntiDebug: function(details) {
-            console.log("[AntiDebugBypass] Initiating comprehensive bypass for: " + details.type);
-            
+            console.log('[AntiDebugBypass] Initiating comprehensive bypass for: ' + details.type);
+
             const analysis = this.analyzeExceptionPattern(details);
             let bypassSuccess = false;
 
@@ -12384,7 +12384,7 @@ const UniversalUnpacker = {
 
             // Fallback: Generic instruction skip
             if (!bypassSuccess) {
-                console.log("[AntiDebugBypass] Applying fallback instruction skip");
+                console.log('[AntiDebugBypass] Applying fallback instruction skip');
                 bypassSuccess = this.skipProblematicInstruction(details);
             }
 
@@ -12393,7 +12393,7 @@ const UniversalUnpacker = {
                 // Update learning patterns
                 this.updateAntiDebugLearning(details, analysis);
             } else {
-                console.log("[AntiDebugBypass] All bypass strategies failed");
+                console.log('[AntiDebugBypass] All bypass strategies failed');
             }
 
             return bypassSuccess;
@@ -12403,11 +12403,11 @@ const UniversalUnpacker = {
         bypassViaContextManipulation: function(details, analysis) {
             try {
                 const context = details.context;
-                
+
                 // Clear trap flag for single-step detection
                 if (details.type === 'single-step') {
                     context.eflags &= ~0x100; // Clear TF flag
-                    console.log("[AntiDebugBypass] Cleared trap flag");
+                    console.log('[AntiDebugBypass] Cleared trap flag');
                     return true;
                 }
 
@@ -12421,7 +12421,7 @@ const UniversalUnpacker = {
 
                 return false;
             } catch (e) {
-                console.log("[AntiDebugBypass] Context manipulation failed: " + e.message);
+                console.log('[AntiDebugBypass] Context manipulation failed: ' + e.message);
                 return false;
             }
         },
@@ -12445,7 +12445,7 @@ const UniversalUnpacker = {
 
                 return false;
             } catch (e) {
-                console.log("[AntiDebugBypass] Memory patching failed: " + e.message);
+                console.log('[AntiDebugBypass] Memory patching failed: ' + e.message);
                 return false;
             }
         },
@@ -12463,7 +12463,7 @@ const UniversalUnpacker = {
                 }
                 return false;
             } catch (e) {
-                console.log("[AntiDebugBypass] Hook redirection failed: " + e.message);
+                console.log('[AntiDebugBypass] Hook redirection failed: ' + e.message);
                 return false;
             }
         },
@@ -12472,13 +12472,13 @@ const UniversalUnpacker = {
         bypassViaRegisterManipulation: function(details, analysis) {
             try {
                 const context = details.context;
-                
+
                 // Clear debug registers if hardware breakpoint detection
                 if (this.checkDebugRegisters(context)) {
                     ['dr0', 'dr1', 'dr2', 'dr3', 'dr6', 'dr7'].forEach(reg => {
                         if (context[reg]) context[reg] = ptr(0);
                     });
-                    console.log("[AntiDebugBypass] Cleared debug registers");
+                    console.log('[AntiDebugBypass] Cleared debug registers');
                     return true;
                 }
 
@@ -12490,7 +12490,7 @@ const UniversalUnpacker = {
 
                 return false;
             } catch (e) {
-                console.log("[AntiDebugBypass] Register manipulation failed: " + e.message);
+                console.log('[AntiDebugBypass] Register manipulation failed: ' + e.message);
                 return false;
             }
         },
@@ -12500,20 +12500,20 @@ const UniversalUnpacker = {
             try {
                 // For certain anti-debug techniques, we can just suppress the exception
                 const suppressibleTypes = ['access-violation', 'illegal-instruction', 'divide-by-zero'];
-                
-                if (suppressibleTypes.includes(details.type) && 
+
+                if (suppressibleTypes.includes(details.type) &&
                     this.isSafeToSuppress(details, analysis)) {
                     // Set return value to indicate successful handling
                     if (details.context && details.context.pc) {
                         details.context.pc = details.context.pc.add(analysis.instruction ? analysis.instruction.size : 1);
                     }
-                    console.log("[AntiDebugBypass] Suppressed exception");
+                    console.log('[AntiDebugBypass] Suppressed exception');
                     return true;
                 }
-                
+
                 return false;
             } catch (e) {
-                console.log("[AntiDebugBypass] Exception suppression failed: " + e.message);
+                console.log('[AntiDebugBypass] Exception suppression failed: ' + e.message);
                 return false;
             }
         },
@@ -12561,34 +12561,34 @@ const UniversalUnpacker = {
         // Production-ready anti-debugging helper method implementations
         isTimingBasedAntiDebug: function(analysis) {
             if (!analysis.instruction) return false;
-            
+
             const timingInstructions = ['rdtsc', 'rdtscp', 'cpuid'];
             const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
-            
+
             // Check for timing-based anti-debug instructions
             if (timingInstructions.includes(mnemonic)) {
                 console.log(`[AntiDebugDetection] Timing instruction detected: ${mnemonic}`);
                 return true;
             }
-            
+
             // Check for GetTickCount/QueryPerformanceCounter patterns in stack
             if (analysis.stackFrame) {
                 const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
                 if (stackStr.includes('GetTickCount') || stackStr.includes('QueryPerformanceCounter')) {
-                    console.log("[AntiDebugDetection] Timing API detected in stack");
+                    console.log('[AntiDebugDetection] Timing API detected in stack');
                     return true;
                 }
             }
-            
+
             return false;
         },
 
         isVirtualizationDetection: function(analysis) {
             if (!analysis.instruction) return false;
-            
+
             const vmInstructions = ['vmcall', 'vmmcall', 'vmxoff', 'vmxon', 'cpuid'];
             const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
-            
+
             // Check for virtualization detection instructions
             if (vmInstructions.includes(mnemonic)) {
                 // CPUID is commonly used for VM detection
@@ -12601,7 +12601,7 @@ const UniversalUnpacker = {
                     }
                 }
             }
-            
+
             // Check for VM-specific registry/string access
             if (analysis.memoryPattern) {
                 const patterns = [
@@ -12609,7 +12609,7 @@ const UniversalUnpacker = {
                     'HKEY_LOCAL_MACHINE\\SOFTWARE\\VMware', 'VBoxService'
                 ];
                 const memStr = String.fromCharCode.apply(null, analysis.memoryPattern);
-                
+
                 for (const pattern of patterns) {
                     if (memStr.includes(pattern)) {
                         console.log(`[AntiDebugDetection] VM artifact detected: ${pattern}`);
@@ -12617,7 +12617,7 @@ const UniversalUnpacker = {
                     }
                 }
             }
-            
+
             return false;
         },
 
@@ -12633,7 +12633,7 @@ const UniversalUnpacker = {
                     }
                 }
             } catch (e) {
-                console.log("[AntiDebugDetection] GetLastError check failed: " + e.message);
+                console.log('[AntiDebugDetection] GetLastError check failed: ' + e.message);
             }
             return false;
         },
@@ -12642,7 +12642,7 @@ const UniversalUnpacker = {
             if (!this.exceptionHistory) {
                 this.exceptionHistory = new Map();
             }
-            
+
             const addrStr = address.toString();
             if (this.exceptionHistory.has(addrStr)) {
                 const history = this.exceptionHistory.get(addrStr);
@@ -12670,30 +12670,30 @@ const UniversalUnpacker = {
                         return true;
                     }
                 }
-                
+
                 // Check if address is in known anti-debug regions
                 const modules = Process.enumerateModules();
                 for (const module of modules) {
                     // Check if exception is in padding regions between sections
                     const baseAddr = module.base.toInt32 ? module.base.toInt32() : parseInt(module.base);
                     const addrInt = address.toInt32 ? address.toInt32() : parseInt(address);
-                    
+
                     if (addrInt > baseAddr && addrInt < baseAddr + 0x1000) {
                         console.log(`[AntiDebugDetection] Exception in module header region: ${module.name}`);
                         return true;
                     }
                 }
-                
+
             } catch (e) {
-                console.log("[AntiDebugDetection] Memory region check failed: " + e.message);
+                console.log('[AntiDebugDetection] Memory region check failed: ' + e.message);
             }
-            
+
             return false;
         },
 
         isSuspiciousInstruction: function(instruction) {
             if (!instruction || !instruction.mnemonic) return false;
-            
+
             const suspiciousPatterns = [
                 // Anti-debug interrupt patterns
                 'int3', 'int 3', 'int1', 'int 1',
@@ -12704,7 +12704,7 @@ const UniversalUnpacker = {
                 // Obfuscation patterns
                 'push', 'pop', 'xchg', 'bswap'
             ];
-            
+
             const mnemonic = instruction.mnemonic.toLowerCase();
             for (const pattern of suspiciousPatterns) {
                 if (mnemonic.includes(pattern.toLowerCase())) {
@@ -12712,7 +12712,7 @@ const UniversalUnpacker = {
                     return true;
                 }
             }
-            
+
             // Check for unusual operand patterns
             if (instruction.operands && instruction.operands.length > 0) {
                 for (const operand of instruction.operands) {
@@ -12721,7 +12721,7 @@ const UniversalUnpacker = {
                         console.log(`[AntiDebugDetection] Debug register access: ${operand.reg}`);
                         return true;
                     }
-                    
+
                     // Check for FS/GS segment manipulation (PEB/TEB access)
                     if (operand.mem && (operand.mem.segment === 'fs' || operand.mem.segment === 'gs')) {
                         if (operand.mem.disp === 0x18 || operand.mem.disp === 0x30 || operand.mem.disp === 0x02) {
@@ -12731,17 +12731,17 @@ const UniversalUnpacker = {
                     }
                 }
             }
-            
+
             return false;
         },
 
         stackIndicatesAntiDebug: function(stackFrame) {
             if (!stackFrame || stackFrame.length === 0) return false;
-            
+
             try {
                 // Convert stack frame to searchable string
                 const stackStr = String.fromCharCode.apply(null, stackFrame.slice(0, Math.min(stackFrame.length, 256)));
-                
+
                 const antiDebugPatterns = [
                     // Common anti-debug API names
                     'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
@@ -12751,26 +12751,26 @@ const UniversalUnpacker = {
                     // Anti-debug library signatures
                     'anti-debug', 'dbg_detect', 'debugger_check'
                 ];
-                
+
                 for (const pattern of antiDebugPatterns) {
                     if (stackStr.toLowerCase().includes(pattern.toLowerCase())) {
                         console.log(`[AntiDebugDetection] Anti-debug pattern in stack: ${pattern}`);
                         return true;
                     }
                 }
-                
+
                 // Check for exception handler patterns
-                if (stackStr.includes('KiUserExceptionDispatcher') || 
+                if (stackStr.includes('KiUserExceptionDispatcher') ||
                     stackStr.includes('RtlDispatchException') ||
                     stackStr.includes('UnhandledException')) {
-                    console.log("[AntiDebugDetection] Exception handler pattern detected");
+                    console.log('[AntiDebugDetection] Exception handler pattern detected');
                     return true;
                 }
-                
+
             } catch (e) {
-                console.log("[AntiDebugDetection] Stack analysis failed: " + e.message);
+                console.log('[AntiDebugDetection] Stack analysis failed: ' + e.message);
             }
-            
+
             return false;
         },
 
@@ -12778,81 +12778,81 @@ const UniversalUnpacker = {
             if (!this.timingHistory) {
                 this.timingHistory = [];
             }
-            
+
             this.timingHistory.push(currentTiming);
-            
+
             // Keep only recent timing data
             const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
             this.timingHistory = this.timingHistory.filter(t => t > fiveMinutesAgo);
-            
+
             if (this.timingHistory.length < 3) return false;
-            
+
             // Calculate timing intervals
             const intervals = [];
             for (let i = 1; i < this.timingHistory.length; i++) {
                 intervals.push(this.timingHistory[i] - this.timingHistory[i-1]);
             }
-            
+
             // Check for suspiciously regular timing (indicating timing checks)
             const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
             const variance = intervals.reduce((acc, val) => acc + Math.pow(val - avgInterval, 2), 0) / intervals.length;
-            
+
             // Low variance indicates regular timing checks
             if (variance < avgInterval * 0.1 && avgInterval < 1000) {
                 console.log(`[AntiDebugDetection] Regular timing pattern detected (${avgInterval}ms avg)`);
                 return true;
             }
-            
+
             return false;
         },
 
         isAPICallAntiDebug: function(analysis) {
             if (!analysis.stackFrame) return false;
-            
+
             try {
                 const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
-                
+
                 // Known anti-debug API sequences
                 const antiDebugAPIs = [
                     'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
                     'NtSetInformationThread', 'NtClose', 'CreateToolhelp32Snapshot',
                     'Process32First', 'Process32Next', 'OpenProcess'
                 ];
-                
+
                 let apiCount = 0;
                 for (const api of antiDebugAPIs) {
                     if (stackStr.includes(api)) {
                         apiCount++;
                     }
                 }
-                
+
                 // Multiple anti-debug APIs in stack indicates coordinated detection
                 return apiCount >= 2;
-                
+
             } catch (e) {
-                console.log("[AntiDebugDetection] API call analysis failed: " + e.message);
+                console.log('[AntiDebugDetection] API call analysis failed: ' + e.message);
             }
-            
+
             return false;
         },
 
         requiresRegisterManipulation: function(analysis) {
             if (!analysis.context || !analysis.instruction) return false;
-            
+
             // Check if exception involves debug registers
             if (this.checkDebugRegisters(analysis.context)) {
                 return true;
             }
-            
+
             // Check if instruction accesses flags register
             const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
             const flagsInstructions = ['pushf', 'popf', 'sahf', 'lahf'];
-            
+
             if (flagsInstructions.includes(mnemonic)) {
                 console.log(`[AntiDebugBypass] Flags manipulation required for: ${mnemonic}`);
                 return true;
             }
-            
+
             return false;
         },
 
@@ -12865,7 +12865,7 @@ const UniversalUnpacker = {
                     if (criticalModules.includes(module.name.toLowerCase())) {
                         const baseAddr = module.base.toInt32 ? module.base.toInt32() : parseInt(module.base);
                         const addrInt = analysis.address.toInt32 ? analysis.address.toInt32() : parseInt(analysis.address);
-                        
+
                         if (addrInt >= baseAddr && addrInt < baseAddr + module.size) {
                             console.log(`[AntiDebugBypass] Cannot suppress exception in critical module: ${module.name}`);
                             return false;
@@ -12873,7 +12873,7 @@ const UniversalUnpacker = {
                     }
                 }
             }
-            
+
             // Safe to suppress common anti-debug exceptions
             const suppressibleTypes = ['access-violation', 'illegal-instruction', 'divide-by-zero'];
             return suppressibleTypes.includes(details.type);
@@ -12881,10 +12881,10 @@ const UniversalUnpacker = {
 
         identifyAntiDebugAPI: function(analysis) {
             if (!analysis.stackFrame) return null;
-            
+
             try {
                 const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
-                
+
                 const apiMappings = [
                     { api: 'IsDebuggerPresent', module: 'kernel32.dll' },
                     { api: 'CheckRemoteDebuggerPresent', module: 'kernel32.dll' },
@@ -12895,18 +12895,18 @@ const UniversalUnpacker = {
                     { api: 'GetThreadContext', module: 'kernel32.dll' },
                     { api: 'SetThreadContext', module: 'kernel32.dll' }
                 ];
-                
+
                 for (const mapping of apiMappings) {
                     if (stackStr.includes(mapping.api)) {
                         console.log(`[AntiDebugBypass] Identified anti-debug API: ${mapping.api}`);
                         return mapping;
                     }
                 }
-                
+
             } catch (e) {
-                console.log("[AntiDebugBypass] API identification failed: " + e.message);
+                console.log('[AntiDebugBypass] API identification failed: ' + e.message);
             }
-            
+
             return null;
         },
 
@@ -12914,34 +12914,34 @@ const UniversalUnpacker = {
             try {
                 const addr = Module.findExportByName(module, api);
                 if (!addr) return false;
-                
+
                 // Install appropriate bypass hook based on API
                 switch(api) {
-                    case 'IsDebuggerPresent':
-                        Interceptor.replace(addr, new NativeCallback(function() {
-                            return 0;
-                        }, 'int', []));
-                        break;
-                        
-                    case 'CheckRemoteDebuggerPresent':
-                        Interceptor.replace(addr, new NativeCallback(function(hProcess, pbDebuggerPresent) {
-                            Memory.writeU8(pbDebuggerPresent, 0);
-                            return 1;
-                        }, 'int', ['pointer', 'pointer']));
-                        break;
-                        
-                    case 'OutputDebugStringA':
-                    case 'OutputDebugStringW':
-                        Interceptor.replace(addr, new NativeCallback(function(lpString) {
-                            // Silently ignore debug output
-                            return;
-                        }, 'void', ['pointer']));
-                        break;
+                case 'IsDebuggerPresent':
+                    Interceptor.replace(addr, new NativeCallback(function() {
+                        return 0;
+                    }, 'int', []));
+                    break;
+
+                case 'CheckRemoteDebuggerPresent':
+                    Interceptor.replace(addr, new NativeCallback(function(hProcess, pbDebuggerPresent) {
+                        Memory.writeU8(pbDebuggerPresent, 0);
+                        return 1;
+                    }, 'int', ['pointer', 'pointer']));
+                    break;
+
+                case 'OutputDebugStringA':
+                case 'OutputDebugStringW':
+                    Interceptor.replace(addr, new NativeCallback(function(lpString) {
+                        // Silently ignore debug output
+                        return;
+                    }, 'void', ['pointer']));
+                    break;
                 }
-                
+
                 console.log(`[AntiDebugBypass] Installed hook for ${api}`);
                 return true;
-                
+
             } catch (e) {
                 console.log(`[AntiDebugBypass] Failed to install hook for ${api}: ${e.message}`);
                 return false;
@@ -12950,52 +12950,52 @@ const UniversalUnpacker = {
 
         requiresSpecificRegisterBypass: function(analysis) {
             if (!analysis.instruction) return false;
-            
+
             const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
-            
+
             // Instructions that may require specific register manipulation
             const specialInstructions = ['rdtsc', 'cpuid', 'sidt', 'sgdt', 'pushf', 'popf'];
-            
+
             return specialInstructions.includes(mnemonic);
         },
 
         performSpecificRegisterBypass: function(context, analysis) {
             if (!analysis.instruction) return;
-            
+
             const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
-            
+
             try {
                 switch(mnemonic) {
-                    case 'rdtsc':
-                        // Return fake, consistent timestamp
-                        if (context.eax !== undefined) context.eax = ptr(0x12345678);
-                        if (context.edx !== undefined) context.edx = ptr(0x9ABCDEF0);
-                        break;
-                        
-                    case 'cpuid':
-                        // Manipulate CPUID results to hide virtualization
-                        const eax = context.eax ? context.eax.toInt32() : 0;
-                        if (eax === 0x40000000) {
-                            // Hide hypervisor presence
-                            context.eax = ptr(0);
-                            context.ebx = ptr(0);
-                            context.ecx = ptr(0);
-                            context.edx = ptr(0);
-                        }
-                        break;
-                        
-                    case 'pushf':
-                    case 'popf':
-                        // Clear trap flag in flags register
-                        if (context.eflags !== undefined) {
-                            const flags = context.eflags.toInt32();
-                            context.eflags = ptr(flags & ~0x100); // Clear TF flag
-                        }
-                        break;
+                case 'rdtsc':
+                    // Return fake, consistent timestamp
+                    if (context.eax !== undefined) context.eax = ptr(0x12345678);
+                    if (context.edx !== undefined) context.edx = ptr(0x9ABCDEF0);
+                    break;
+
+                case 'cpuid':
+                    // Manipulate CPUID results to hide virtualization
+                    const eax = context.eax ? context.eax.toInt32() : 0;
+                    if (eax === 0x40000000) {
+                        // Hide hypervisor presence
+                        context.eax = ptr(0);
+                        context.ebx = ptr(0);
+                        context.ecx = ptr(0);
+                        context.edx = ptr(0);
+                    }
+                    break;
+
+                case 'pushf':
+                case 'popf':
+                    // Clear trap flag in flags register
+                    if (context.eflags !== undefined) {
+                        const flags = context.eflags.toInt32();
+                        context.eflags = ptr(flags & ~0x100); // Clear TF flag
+                    }
+                    break;
                 }
-                
+
                 console.log(`[AntiDebugBypass] Applied register bypass for: ${mnemonic}`);
-                
+
             } catch (e) {
                 console.log(`[AntiDebugBypass] Register bypass failed for ${mnemonic}: ${e.message}`);
             }
@@ -13007,19 +13007,19 @@ const UniversalUnpacker = {
                 // Check if trying to access critical system structures
                 if (analysis.address) {
                     const addrInt = analysis.address.toInt32 ? analysis.address.toInt32() : parseInt(analysis.address);
-                    
+
                     // Don't suppress if accessing low memory (null pointer area)
                     if (addrInt < 0x10000) {
                         return false;
                     }
-                    
+
                     // Don't suppress if accessing high kernel memory
                     if (addrInt >= 0x80000000) {
                         return false;
                     }
                 }
             }
-            
+
             return true;
         },
 
@@ -13032,12 +13032,12 @@ const UniversalUnpacker = {
                     { bytes: [0xCD, 0x01], patch: [0x90, 0x90] }, // INT1 -> NOP NOP
                     { bytes: [0xF1], patch: [0x90] }               // INT1 -> NOP
                 ];
-                
+
                 const currentBytes = Memory.readByteArray(address, 8);
                 if (!currentBytes) return false;
-                
+
                 const byteArray = Array.from(new Uint8Array(currentBytes));
-                
+
                 for (const pattern of patterns) {
                     let matches = true;
                     for (let i = 0; i < pattern.bytes.length; i++) {
@@ -13046,7 +13046,7 @@ const UniversalUnpacker = {
                             break;
                         }
                     }
-                    
+
                     if (matches) {
                         Memory.protect(address, pattern.patch.length, 'rwx');
                         Memory.writeByteArray(address, pattern.patch);
@@ -13054,11 +13054,11 @@ const UniversalUnpacker = {
                         return true;
                     }
                 }
-                
+
             } catch (e) {
-                console.log("[AntiDebugBypass] Pattern patching failed: " + e.message);
+                console.log('[AntiDebugBypass] Pattern patching failed: ' + e.message);
             }
-            
+
             return false;
         },
 
@@ -13066,7 +13066,7 @@ const UniversalUnpacker = {
             if (!this.detectionLog) {
                 this.detectionLog = [];
             }
-            
+
             const logEntry = {
                 timestamp: Date.now(),
                 pattern: patternName,
@@ -13074,14 +13074,14 @@ const UniversalUnpacker = {
                 instruction: analysis.instruction ? analysis.instruction.mnemonic : 'unknown',
                 type: analysis.exceptionType
             };
-            
+
             this.detectionLog.push(logEntry);
-            
+
             // Keep only recent entries (last 100)
             if (this.detectionLog.length > 100) {
                 this.detectionLog = this.detectionLog.slice(-100);
             }
-            
+
             console.log(`[AntiDebugLog] ${patternName} at ${logEntry.address}`);
         },
 
@@ -13089,7 +13089,7 @@ const UniversalUnpacker = {
             if (!this.bypassLog) {
                 this.bypassLog = [];
             }
-            
+
             const logEntry = {
                 timestamp: Date.now(),
                 type: details.type,
@@ -13097,14 +13097,14 @@ const UniversalUnpacker = {
                 method: analysis.bypassMethod || 'unknown',
                 success: true
             };
-            
+
             this.bypassLog.push(logEntry);
-            
+
             // Keep only recent entries (last 100)
             if (this.bypassLog.length > 100) {
                 this.bypassLog = this.bypassLog.slice(-100);
             }
-            
+
             console.log(`[AntiDebugBypass] Successful bypass: ${details.type} at ${logEntry.address}`);
         },
 
@@ -13115,9 +13115,9 @@ const UniversalUnpacker = {
                     effectiveness: new Map()
                 };
             }
-            
+
             const patternKey = `${details.type}_${analysis.instruction ? analysis.instruction.mnemonic : 'unknown'}`;
-            
+
             if (this.learningDatabase.patterns.has(patternKey)) {
                 const pattern = this.learningDatabase.patterns.get(patternKey);
                 pattern.count++;
@@ -13131,13 +13131,13 @@ const UniversalUnpacker = {
                     instruction: analysis.instruction ? analysis.instruction.mnemonic : null
                 });
             }
-            
+
             console.log(`[AntiDebugLearning] Updated pattern: ${patternKey}`);
         },
 
         // Setup memory access monitoring
         setupMemoryAccessMonitoring: function() {
-            console.log("[RealTimeUnpacker] Setting up memory access monitoring");
+            console.log('[RealTimeUnpacker] Setting up memory access monitoring');
 
             // REAL MemoryAccessMonitor implementation
             try {
@@ -13167,7 +13167,7 @@ const UniversalUnpacker = {
                         });
                     }
 
-                    console.log("[RealTimeUnpacker] MemoryAccessMonitor enabled for " + ranges.length + " ranges");
+                    console.log('[RealTimeUnpacker] MemoryAccessMonitor enabled for ' + ranges.length + ' ranges');
                 } else {
                     // Fallback: Use Interceptor to monitor memory functions
                     const memFuncs = ['memcpy', 'memmove', 'memset', 'RtlMoveMemory', 'RtlCopyMemory'];
@@ -13188,10 +13188,10 @@ const UniversalUnpacker = {
                         }
                     }
 
-                    console.log("[RealTimeUnpacker] Memory function hooks installed as fallback");
+                    console.log('[RealTimeUnpacker] Memory function hooks installed as fallback');
                 }
             } catch (e) {
-                console.log("[RealTimeUnpacker] Memory monitoring setup failed: " + e.message);
+                console.log('[RealTimeUnpacker] Memory monitoring setup failed: ' + e.message);
                 // Continue with sampling fallback
             }
         },
@@ -13278,7 +13278,7 @@ const UniversalUnpacker = {
 
         // Initialize integration framework
         initialize: function(options = {}) {
-            console.log("[IntegrationFramework] Initializing integration framework");
+            console.log('[IntegrationFramework] Initializing integration framework');
 
             // Merge options with default config
             Object.assign(this.config, options);
@@ -13332,7 +13332,7 @@ const UniversalUnpacker = {
                         maxPayload: this.config.maxMessageSize
                     });
                 } else {
-                    console.warn("[IntegrationFramework] WebSocket not available, require is not defined");
+                    console.warn('[IntegrationFramework] WebSocket not available, require is not defined');
                 }
 
                 wsServer.on('connection', (ws, req) => {
@@ -13373,7 +13373,7 @@ const UniversalUnpacker = {
                 this.wsServer = wsServer;
 
             } catch (e) {
-                console.warn("[IntegrationFramework] WebSocket not available, falling back to alternative channels");
+                console.warn('[IntegrationFramework] WebSocket not available, falling back to alternative channels');
             }
         },
 
@@ -13412,7 +13412,7 @@ const UniversalUnpacker = {
                         pipeServer.listen(pipeName);
                         this.pipeServer = pipeServer;
                     } else {
-                        console.warn("[IntegrationFramework] Named pipe setup failed: require is not defined");
+                        console.warn('[IntegrationFramework] Named pipe setup failed: require is not defined');
                     }
 
                 } else {
@@ -13445,12 +13445,12 @@ const UniversalUnpacker = {
                         socketServer.listen(socketPath);
                         this.socketServer = socketServer;
                     } else {
-                        console.warn("[IntegrationFramework] Named pipe setup failed: require is not defined");
+                        console.warn('[IntegrationFramework] Named pipe setup failed: require is not defined');
                     }
                 }
 
             } catch (e) {
-                console.warn("[IntegrationFramework] Named pipe setup failed: " + e.message);
+                console.warn('[IntegrationFramework] Named pipe setup failed: ' + e.message);
             }
         },
 
@@ -13470,12 +13470,12 @@ const UniversalUnpacker = {
                     if (kernel32 && mapViewOfFile) {
                         const hMapFile = new NativeFunction(kernel32, 'pointer',
                             ['pointer', 'pointer', 'uint32', 'uint32', 'uint32', 'pointer'])
-                            (NULL, NULL, 0x04, 0, shmSize, Memory.allocUtf16String(shmName));
+                        (NULL, NULL, 0x04, 0, shmSize, Memory.allocUtf16String(shmName));
 
                         if (hMapFile) {
                             const pBuf = new NativeFunction(mapViewOfFile, 'pointer',
                                 ['pointer', 'uint32', 'uint32', 'uint32', 'uint32'])
-                                (hMapFile, 0xF001F, 0, 0, shmSize);
+                            (hMapFile, 0xF001F, 0, 0, shmSize);
 
                             this.sharedMemory = {
                                 handle: hMapFile,
@@ -13492,12 +13492,12 @@ const UniversalUnpacker = {
 
                     if (shmOpen && mmap) {
                         const fd = new NativeFunction(shmOpen, 'int', ['pointer', 'int', 'int'])
-                            (Memory.allocUtf8String(shmName), 0x02 | 0x40, 0644);
+                        (Memory.allocUtf8String(shmName), 0x02 | 0x40, 0o644);
 
                         if (fd >= 0) {
                             const addr = new NativeFunction(mmap, 'pointer',
                                 ['pointer', 'size_t', 'int', 'int', 'int', 'int'])
-                                (NULL, shmSize, 0x03, 0x01, fd, 0);
+                            (NULL, shmSize, 0x03, 0x01, fd, 0);
 
                             this.sharedMemory = {
                                 fd: fd,
@@ -13508,10 +13508,10 @@ const UniversalUnpacker = {
                     }
                 }
 
-                console.log("[IntegrationFramework] Shared memory channel established");
+                console.log('[IntegrationFramework] Shared memory channel established');
 
             } catch (e) {
-                console.warn("[IntegrationFramework] Shared memory setup failed: " + e.message);
+                console.warn('[IntegrationFramework] Shared memory setup failed: ' + e.message);
             }
         },
 
@@ -13534,8 +13534,8 @@ const UniversalUnpacker = {
 
             this.rpcEndpoint = rpcEndpoint;
 
-            console.log("[IntegrationFramework] RPC channel initialized with " +
-                        rpcEndpoint.procedures.size + " procedures");
+            console.log('[IntegrationFramework] RPC channel initialized with ' +
+                        rpcEndpoint.procedures.size + ' procedures');
         },
 
         // Handle WebSocket message
@@ -13551,7 +13551,7 @@ const UniversalUnpacker = {
                         const msgpack = require('msgpack');
                         message = msgpack.unpack(data);
                     } else {
-                        console.warn("[IntegrationFramework] msgpack not available, require is not defined");
+                        console.warn('[IntegrationFramework] msgpack not available, require is not defined');
                         message = data;
                     }
                 } else {
@@ -13606,7 +13606,7 @@ const UniversalUnpacker = {
 
                 if (message.requestId) {
                     this.sendError(clientId, 'UNKNOWN_MESSAGE_TYPE',
-                                 `No handler for type: ${message.type}`, message.requestId);
+                        `No handler for type: ${message.type}`, message.requestId);
                 }
             }
         },
@@ -13741,21 +13741,21 @@ const UniversalUnpacker = {
                 };
 
                 switch (fileType) {
-                    case 'PE':
-                        analysis.pe = UniversalUnpacker.PEAnalysis.analyzePE(buffer);
-                        analysis.packers = UniversalUnpacker.PackerDetection.detectAllPackers(buffer);
-                        break;
+                case 'PE':
+                    analysis.pe = UniversalUnpacker.PEAnalysis.analyzePE(buffer);
+                    analysis.packers = UniversalUnpacker.PackerDetection.detectAllPackers(buffer);
+                    break;
 
-                    case 'ELF':
-                        analysis.elf = UniversalUnpacker.CrossPlatform.ELFUnpacker.analyzeELF(buffer);
-                        break;
+                case 'ELF':
+                    analysis.elf = UniversalUnpacker.CrossPlatform.ELFUnpacker.analyzeELF(buffer);
+                    break;
 
-                    case 'MachO':
-                        analysis.macho = UniversalUnpacker.CrossPlatform.MachOUnpacker.analyzeMachO(buffer);
-                        break;
+                case 'MachO':
+                    analysis.macho = UniversalUnpacker.CrossPlatform.MachOUnpacker.analyzeMachO(buffer);
+                    break;
 
-                    default:
-                        analysis.error = 'Unknown file type';
+                default:
+                    analysis.error = 'Unknown file type';
                 }
 
                 // Perform additional analysis if requested
@@ -14551,20 +14551,20 @@ const UniversalUnpacker = {
                     let result;
 
                     switch (item.type) {
-                        case 'unpack':
-                            result = this.handleUnpackRequest(item.target, item.options);
-                            break;
+                    case 'unpack':
+                        result = this.handleUnpackRequest(item.target, item.options);
+                        break;
 
-                        case 'analyze':
-                            result = this.analyzeFile(item.filePath, item.options);
-                            break;
+                    case 'analyze':
+                        result = this.analyzeFile(item.filePath, item.options);
+                        break;
 
-                        case 'extract':
-                            result = this.extractStrings(item.buffer);
-                            break;
+                    case 'extract':
+                        result = this.extractStrings(item.buffer);
+                        break;
 
-                        default:
-                            result = { error: `Unknown batch item type: ${item.type}` };
+                    default:
+                        result = { error: `Unknown batch item type: ${item.type}` };
                     }
 
                     results.push({
@@ -14670,7 +14670,7 @@ const UniversalUnpacker = {
         updateConfiguration: function(config) {
             Object.assign(this.config, config);
 
-            console.log("[IntegrationFramework] Configuration updated");
+            console.log('[IntegrationFramework] Configuration updated');
 
             return {
                 success: true,
@@ -14681,20 +14681,20 @@ const UniversalUnpacker = {
         // Handle plugin request
         handlePluginRequest: function(action, plugin) {
             switch (action) {
-                case 'load':
-                    return this.loadPlugin(plugin);
+            case 'load':
+                return this.loadPlugin(plugin);
 
-                case 'unload':
-                    return this.unloadPlugin(plugin.name);
+            case 'unload':
+                return this.unloadPlugin(plugin.name);
 
-                case 'list':
-                    return Array.from(this.plugins.loaded.keys());
+            case 'list':
+                return Array.from(this.plugins.loaded.keys());
 
-                case 'info':
-                    return this.plugins.loaded.get(plugin.name);
+            case 'info':
+                return this.plugins.loaded.get(plugin.name);
 
-                default:
-                    throw new Error(`Unknown plugin action: ${action}`);
+            default:
+                throw new Error(`Unknown plugin action: ${action}`);
             }
         },
 
@@ -14839,7 +14839,7 @@ const UniversalUnpacker = {
 
         // Initialize master node
         initializeMasterNode: function() {
-            console.log(`[DistributedUnpacker] Initializing master node`);
+            console.log('[DistributedUnpacker] Initializing master node');
 
             // Set up task scheduler
             this.taskScheduler = {
@@ -14984,7 +14984,7 @@ const UniversalUnpacker = {
 
                 resolveInconsistency: function(results) {
                     // Use voting or other resolution strategy
-                    console.warn(`[DistributedUnpacker] Inconsistent results detected, using first valid result`);
+                    console.warn('[DistributedUnpacker] Inconsistent results detected, using first valid result');
                     return results.find(r => r && r.success) || results[0];
                 }
             };
@@ -14992,7 +14992,7 @@ const UniversalUnpacker = {
 
         // Initialize worker node
         initializeWorkerNode: function() {
-            console.log(`[DistributedUnpacker] Initializing worker node`);
+            console.log('[DistributedUnpacker] Initializing worker node');
 
             // Set up task executor
             this.taskExecutor = {
@@ -15014,26 +15014,26 @@ const UniversalUnpacker = {
                         let result;
 
                         switch (task.type) {
-                            case 'UNPACK_SECTION':
-                                result = this.unpackSection(task);
-                                break;
-                            case 'ANALYZE_PACKER':
-                                result = this.analyzePacker(task);
-                                break;
-                            case 'DECRYPT_LAYER':
-                                result = this.decryptLayer(task);
-                                break;
-                            case 'RECONSTRUCT_PE':
-                                result = this.reconstructPE(task);
-                                break;
-                            case 'TRACE_EXECUTION':
-                                result = this.traceExecution(task);
-                                break;
-                            case 'DEVIRTUALIZE':
-                                result = this.devirtualize(task);
-                                break;
-                            default:
-                                result = this.genericExecute(task);
+                        case 'UNPACK_SECTION':
+                            result = this.unpackSection(task);
+                            break;
+                        case 'ANALYZE_PACKER':
+                            result = this.analyzePacker(task);
+                            break;
+                        case 'DECRYPT_LAYER':
+                            result = this.decryptLayer(task);
+                            break;
+                        case 'RECONSTRUCT_PE':
+                            result = this.reconstructPE(task);
+                            break;
+                        case 'TRACE_EXECUTION':
+                            result = this.traceExecution(task);
+                            break;
+                        case 'DEVIRTUALIZE':
+                            result = this.devirtualize(task);
+                            break;
+                        default:
+                            result = this.genericExecute(task);
                         }
 
                         this.currentTasks.get(taskId).status = 'completed';
@@ -15056,17 +15056,17 @@ const UniversalUnpacker = {
                     // Apply unpacking based on method
                     let unpacked;
                     switch (method) {
-                        case 'lzma':
-                            unpacked = this.lzmaDecompress(sectionData);
-                            break;
-                        case 'zlib':
-                            unpacked = this.zlibDecompress(sectionData);
-                            break;
-                        case 'custom':
-                            unpacked = this.customDecompress(sectionData, task.data.algorithm);
-                            break;
-                        default:
-                            unpacked = sectionData;
+                    case 'lzma':
+                        unpacked = this.lzmaDecompress(sectionData);
+                        break;
+                    case 'zlib':
+                        unpacked = this.zlibDecompress(sectionData);
+                        break;
+                    case 'custom':
+                        unpacked = this.customDecompress(sectionData, task.data.algorithm);
+                        break;
+                    default:
+                        unpacked = sectionData;
                     }
 
                     return {
@@ -15647,50 +15647,50 @@ const UniversalUnpacker = {
                     const output = [];
 
                     switch (algorithm) {
-                        case 'xor':
-                            const key = 0xAB;
-                            for (let i = 0; i < data.length; i++) {
-                                output.push(data[i] ^ key);
-                            }
-                            break;
+                    case 'xor':
+                        const key = 0xAB;
+                        for (let i = 0; i < data.length; i++) {
+                            output.push(data[i] ^ key);
+                        }
+                        break;
 
-                        case 'rol':
-                            const shift = 3;
-                            for (let i = 0; i < data.length; i++) {
-                                output.push((data[i] << shift) | (data[i] >> (8 - shift)));
-                            }
-                            break;
+                    case 'rol':
+                        const shift = 3;
+                        for (let i = 0; i < data.length; i++) {
+                            output.push((data[i] << shift) | (data[i] >> (8 - shift)));
+                        }
+                        break;
 
-                        case 'rc4':
-                            const rc4Key = [0x12, 0x34, 0x56, 0x78];
-                            const s = new Array(256);
+                    case 'rc4':
+                        const rc4Key = [0x12, 0x34, 0x56, 0x78];
+                        const s = new Array(256);
 
-                            // Initialize S-box
-                            for (let i = 0; i < 256; i++) {
-                                s[i] = i;
-                            }
+                        // Initialize S-box
+                        for (let i = 0; i < 256; i++) {
+                            s[i] = i;
+                        }
 
-                            // Key scheduling
-                            let j = 0;
-                            for (let i = 0; i < 256; i++) {
-                                j = (j + s[i] + rc4Key[i % rc4Key.length]) & 0xFF;
-                                [s[i], s[j]] = [s[j], s[i]];
-                            }
+                        // Key scheduling
+                        let j = 0;
+                        for (let i = 0; i < 256; i++) {
+                            j = (j + s[i] + rc4Key[i % rc4Key.length]) & 0xFF;
+                            [s[i], s[j]] = [s[j], s[i]];
+                        }
 
-                            // Generate keystream and decrypt
-                            let i = 0;
-                            j = 0;
-                            for (let n = 0; n < data.length; n++) {
-                                i = (i + 1) & 0xFF;
-                                j = (j + s[i]) & 0xFF;
-                                [s[i], s[j]] = [s[j], s[i]];
-                                const k = s[(s[i] + s[j]) & 0xFF];
-                                output.push(data[n] ^ k);
-                            }
-                            break;
+                        // Generate keystream and decrypt
+                        let i = 0;
+                        j = 0;
+                        for (let n = 0; n < data.length; n++) {
+                            i = (i + 1) & 0xFF;
+                            j = (j + s[i]) & 0xFF;
+                            [s[i], s[j]] = [s[j], s[i]];
+                            const k = s[(s[i] + s[j]) & 0xFF];
+                            output.push(data[n] ^ k);
+                        }
+                        break;
 
-                        default:
-                            return data;
+                    default:
+                        return data;
                     }
 
                     return new Uint8Array(output);
@@ -15813,43 +15813,43 @@ const UniversalUnpacker = {
 
                 tryDecryption: function(data, method, hints) {
                     switch (method) {
-                        case 'xor':
-                            // Try XOR with different key lengths
-                            for (let keyLen = 1; keyLen <= 16; keyLen++) {
-                                const key = hints.xorKey || this.findXORKey(data, keyLen);
-                                const decrypted = new Uint8Array(data.length);
+                    case 'xor':
+                        // Try XOR with different key lengths
+                        for (let keyLen = 1; keyLen <= 16; keyLen++) {
+                            const key = hints.xorKey || this.findXORKey(data, keyLen);
+                            const decrypted = new Uint8Array(data.length);
 
-                                for (let i = 0; i < data.length; i++) {
-                                    decrypted[i] = data[i] ^ key[i % key.length];
-                                }
-
-                                if (this.looksLikeCode(decrypted)) {
-                                    return decrypted;
-                                }
+                            for (let i = 0; i < data.length; i++) {
+                                decrypted[i] = data[i] ^ key[i % key.length];
                             }
-                            break;
 
-                        case 'rc4':
-                            const rc4Keys = hints.rc4Keys || [
-                                [0x12, 0x34, 0x56, 0x78],
-                                [0xDE, 0xAD, 0xBE, 0xEF],
-                                [0x00, 0x00, 0x00, 0x00]
-                            ];
-
-                            for (const key of rc4Keys) {
-                                const decrypted = this.rc4Decrypt(data, key);
-                                if (this.looksLikeCode(decrypted)) {
-                                    return decrypted;
-                                }
+                            if (this.looksLikeCode(decrypted)) {
+                                return decrypted;
                             }
-                            break;
+                        }
+                        break;
 
-                        case 'aes':
-                            // Full AES-256-CBC decryption with production-ready implementation
-                            if (hints.aesKey) {
-                                return this.aesDecrypt(data, hints.aesKey, hints.aesIV);
+                    case 'rc4':
+                        const rc4Keys = hints.rc4Keys || [
+                            [0x12, 0x34, 0x56, 0x78],
+                            [0xDE, 0xAD, 0xBE, 0xEF],
+                            [0x00, 0x00, 0x00, 0x00]
+                        ];
+
+                        for (const key of rc4Keys) {
+                            const decrypted = this.rc4Decrypt(data, key);
+                            if (this.looksLikeCode(decrypted)) {
+                                return decrypted;
                             }
-                            break;
+                        }
+                        break;
+
+                    case 'aes':
+                        // Full AES-256-CBC decryption with production-ready implementation
+                        if (hints.aesKey) {
+                            return this.aesDecrypt(data, hints.aesKey, hints.aesIV);
+                        }
+                        break;
                     }
 
                     throw new Error(`Decryption failed for method ${method}`);
@@ -16913,25 +16913,25 @@ const UniversalUnpacker = {
                     const translation = [];
 
                     switch (handler.type) {
-                        case 'ADD':
-                            translation.push(0x01); // ADD
-                            translation.push(0xC0); // EAX, EAX
-                            break;
-                        case 'SUB':
-                            translation.push(0x29); // SUB
-                            translation.push(0xC0); // EAX, EAX
-                            break;
-                        case 'XOR':
-                            translation.push(0x31); // XOR
-                            translation.push(0xC0); // EAX, EAX
-                            break;
-                        case 'CALL':
-                            translation.push(0xE8); // CALL
-                            translation.push(0x00, 0x00, 0x00, 0x00); // Relative offset
-                            translation.operandSize = 4;
-                            break;
-                        default:
-                            translation.push(0x90); // NOP
+                    case 'ADD':
+                        translation.push(0x01); // ADD
+                        translation.push(0xC0); // EAX, EAX
+                        break;
+                    case 'SUB':
+                        translation.push(0x29); // SUB
+                        translation.push(0xC0); // EAX, EAX
+                        break;
+                    case 'XOR':
+                        translation.push(0x31); // XOR
+                        translation.push(0xC0); // EAX, EAX
+                        break;
+                    case 'CALL':
+                        translation.push(0xE8); // CALL
+                        translation.push(0x00, 0x00, 0x00, 0x00); // Relative offset
+                        translation.operandSize = 4;
+                        break;
+                    default:
+                        translation.push(0x90); // NOP
                     }
 
                     return translation;
@@ -16950,7 +16950,7 @@ const UniversalUnpacker = {
 
         // Initialize coordinator node
         initializeCoordinatorNode: function() {
-            console.log(`[DistributedUnpacker] Initializing coordinator node`);
+            console.log('[DistributedUnpacker] Initializing coordinator node');
 
             // Set up coordination logic
             this.coordinator = {
@@ -17115,7 +17115,7 @@ const UniversalUnpacker = {
 
         // Start leader election (Raft consensus)
         startLeaderElection: function() {
-            console.log(`[DistributedUnpacker] Starting leader election`);
+            console.log('[DistributedUnpacker] Starting leader election');
 
             this.state.consensus.term++;
             this.state.consensus.votedFor = this.state.nodeId;
@@ -17129,7 +17129,7 @@ const UniversalUnpacker = {
                 candidateId: this.state.nodeId,
                 lastLogIndex: this.state.consensus.log.length - 1,
                 lastLogTerm: this.state.consensus.log.length > 0 ?
-                             this.state.consensus.log[this.state.consensus.log.length - 1].term : 0
+                    this.state.consensus.log[this.state.consensus.log.length - 1].term : 0
             };
 
             this.broadcastToCluster(voteRequest);
@@ -17250,27 +17250,27 @@ const UniversalUnpacker = {
         // Handle incoming messages
         handleMessage: function(message) {
             switch (message.type) {
-                case 'HEARTBEAT':
-                    this.handleHeartbeat(message);
-                    break;
-                case 'TASK_ASSIGNMENT':
-                    this.handleTaskAssignment(message);
-                    break;
-                case 'TASK_RESULT':
-                    this.handleTaskResult(message);
-                    break;
-                case 'TASK_ERROR':
-                    this.handleTaskError(message);
-                    break;
-                case 'VOTE_REQUEST':
-                    this.handleVoteRequest(message);
-                    break;
-                case 'VOTE_RESPONSE':
-                    this.handleVoteResponse(message);
-                    break;
-                case 'LEADER_HEARTBEAT':
-                    this.handleLeaderHeartbeat(message);
-                    break;
+            case 'HEARTBEAT':
+                this.handleHeartbeat(message);
+                break;
+            case 'TASK_ASSIGNMENT':
+                this.handleTaskAssignment(message);
+                break;
+            case 'TASK_RESULT':
+                this.handleTaskResult(message);
+                break;
+            case 'TASK_ERROR':
+                this.handleTaskError(message);
+                break;
+            case 'VOTE_REQUEST':
+                this.handleVoteRequest(message);
+                break;
+            case 'VOTE_RESPONSE':
+                this.handleVoteResponse(message);
+                break;
+            case 'LEADER_HEARTBEAT':
+                this.handleLeaderHeartbeat(message);
+                break;
             }
         },
 
@@ -17902,8 +17902,8 @@ const UniversalUnpacker = {
 
             // Start with L3 cache (cold)
             for (const [level, cache] of [['l3', this.state.cacheHierarchy.l3],
-                                          ['l2', this.state.cacheHierarchy.l2],
-                                          ['l1', this.state.cacheHierarchy.l1]]) {
+                ['l2', this.state.cacheHierarchy.l2],
+                ['l1', this.state.cacheHierarchy.l1]]) {
 
                 // Sort by LRU (least recently used)
                 const entries = Array.from(cache.entries()).sort(
@@ -18902,7 +18902,7 @@ const UniversalUnpacker = {
 
             if (this.state.incompatibilities.length > 0) {
                 console.error('[CompatibilityMatrix] Critical incompatibilities detected:',
-                            this.state.incompatibilities);
+                    this.state.incompatibilities);
                 return false;
             }
 
@@ -18964,21 +18964,21 @@ const UniversalUnpacker = {
         // Perform platform-specific checks
         performPlatformSpecificChecks: function() {
             switch (this.state.platform) {
-                case 'windows':
-                    this.checkWindowsCompatibility();
-                    break;
-                case 'linux':
-                    this.checkLinuxCompatibility();
-                    break;
-                case 'darwin':
-                    this.checkMacOSCompatibility();
-                    break;
-                case 'android':
-                    this.checkAndroidCompatibility();
-                    break;
-                case 'ios':
-                    this.checkIOSCompatibility();
-                    break;
+            case 'windows':
+                this.checkWindowsCompatibility();
+                break;
+            case 'linux':
+                this.checkLinuxCompatibility();
+                break;
+            case 'darwin':
+                this.checkMacOSCompatibility();
+                break;
+            case 'android':
+                this.checkAndroidCompatibility();
+                break;
+            case 'ios':
+                this.checkIOSCompatibility();
+                break;
             }
         },
 
@@ -19154,7 +19154,7 @@ const UniversalUnpacker = {
                         const buf = Memory.alloc(256);
 
                         if (sysctlFunc(Memory.allocUtf8String('kern.version'),
-                                       buf, size, NULL, 0) === 0) {
+                            buf, size, NULL, 0) === 0) {
                             const version = Memory.readCString(buf);
                             this.state.platformSpecific.darwinVersion = version;
                         }
@@ -19792,20 +19792,20 @@ const UniversalUnpacker = {
 
             // Platform-specific adjustments
             switch (this.state.platform) {
-                case 'windows':
-                    config.useWindowsAPIs = true;
-                    config.moduleExtension = '.dll';
-                    break;
-                case 'linux':
-                case 'android':
-                    config.useLinuxAPIs = true;
-                    config.moduleExtension = '.so';
-                    break;
-                case 'darwin':
-                case 'ios':
-                    config.useDarwinAPIs = true;
-                    config.moduleExtension = '.dylib';
-                    break;
+            case 'windows':
+                config.useWindowsAPIs = true;
+                config.moduleExtension = '.dll';
+                break;
+            case 'linux':
+            case 'android':
+                config.useLinuxAPIs = true;
+                config.moduleExtension = '.so';
+                break;
+            case 'darwin':
+            case 'ios':
+                config.useDarwinAPIs = true;
+                config.moduleExtension = '.dylib';
+                break;
             }
 
             return config;
@@ -20243,22 +20243,22 @@ const UniversalUnpacker = {
 
             testOEPMethod: function(method, testCase) {
                 switch (method) {
-                    case 'stackTrace':
-                        return testCase.stackFrames[0].address;
-                    case 'apiPattern':
-                        return testCase.apiCalls[0].address;
-                    case 'entropy':
-                        let lowestEntropy = Infinity;
-                        let oepCandidate = null;
-                        for (const region of testCase.memoryRegions) {
-                            if (region.entropy < lowestEntropy) {
-                                lowestEntropy = region.entropy;
-                                oepCandidate = region.base;
-                            }
+                case 'stackTrace':
+                    return testCase.stackFrames[0].address;
+                case 'apiPattern':
+                    return testCase.apiCalls[0].address;
+                case 'entropy':
+                    let lowestEntropy = Infinity;
+                    let oepCandidate = null;
+                    for (const region of testCase.memoryRegions) {
+                        if (region.entropy < lowestEntropy) {
+                            lowestEntropy = region.entropy;
+                            oepCandidate = region.base;
                         }
-                        return oepCandidate;
-                    default:
-                        return ptr(0);
+                    }
+                    return oepCandidate;
+                default:
+                    return ptr(0);
                 }
             }
         },
@@ -20802,185 +20802,185 @@ const UniversalUnpacker = {
             testBypassTechnique: function(method) {
                 // Validate anti-debug bypass effectiveness
                 let bypassed = false;
-                
+
                 switch (method) {
-                    case 'isDebuggerPresent':
-                        // Test if IsDebuggerPresent is properly hooked
-                        try {
-                            const kernel32 = Process.getModuleByName('kernel32.dll');
-                            const isDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
-                            
-                            // Check if the function is hooked
-                            const hookedBytes = Memory.readByteArray(isDebuggerPresent, 5);
+                case 'isDebuggerPresent':
+                    // Test if IsDebuggerPresent is properly hooked
+                    try {
+                        const kernel32 = Process.getModuleByName('kernel32.dll');
+                        const isDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
+
+                        // Check if the function is hooked
+                        const hookedBytes = Memory.readByteArray(isDebuggerPresent, 5);
+                        const firstByte = new Uint8Array(hookedBytes)[0];
+
+                        // 0xE9 = JMP instruction (hook installed)
+                        // 0xB8 = MOV EAX instruction (typical hook pattern)
+                        if (firstByte === 0xE9 || firstByte === 0xB8) {
+                            // Verify hook returns false (no debugger)
+                            const result = new NativeFunction(isDebuggerPresent, 'bool', [])();
+                            bypassed = (result === false);
+                        }
+                    } catch (e) {
+                        console.log('[!] IsDebuggerPresent test failed:', e.message);
+                    }
+                    break;
+
+                case 'checkRemoteDebugger':
+                    // Test if CheckRemoteDebuggerPresent is properly hooked
+                    try {
+                        const kernel32 = Process.getModuleByName('kernel32.dll');
+                        const checkRemoteDebugger = kernel32.getExportByName('CheckRemoteDebuggerPresent');
+
+                        if (checkRemoteDebugger) {
+                            const hookedBytes = Memory.readByteArray(checkRemoteDebugger, 5);
                             const firstByte = new Uint8Array(hookedBytes)[0];
-                            
-                            // 0xE9 = JMP instruction (hook installed)
-                            // 0xB8 = MOV EAX instruction (typical hook pattern)
+
+                            // Check for hook patterns
+                            if (firstByte === 0xE9 || firstByte === 0xB8 || firstByte === 0x33) {
+                                // Test with current process handle
+                                const currentProcess = ptr(-1); // INVALID_HANDLE_VALUE
+                                const debuggerPresent = Memory.alloc(4);
+                                const checkFunc = new NativeFunction(checkRemoteDebugger, 'bool', ['pointer', 'pointer']);
+                                const result = checkFunc(currentProcess, debuggerPresent);
+
+                                // Should return success but debugger not present
+                                bypassed = (result && Memory.readU32(debuggerPresent) === 0);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('[!] CheckRemoteDebuggerPresent test failed:', e.message);
+                    }
+                    break;
+
+                case 'ntQueryInformation':
+                    // Test if NtQueryInformationProcess is properly hooked
+                    try {
+                        const ntdll = Process.getModuleByName('ntdll.dll');
+                        const ntQueryInfo = ntdll.getExportByName('NtQueryInformationProcess');
+
+                        if (ntQueryInfo) {
+                            // Check for hook
+                            const hookedBytes = Memory.readByteArray(ntQueryInfo, 5);
+                            const firstByte = new Uint8Array(hookedBytes)[0];
+
                             if (firstByte === 0xE9 || firstByte === 0xB8) {
-                                // Verify hook returns false (no debugger)
-                                const result = new NativeFunction(isDebuggerPresent, 'bool', [])();
-                                bypassed = (result === false);
+                                // Test ProcessDebugPort (0x07)
+                                const processHandle = ptr(-1);
+                                const debugPort = Memory.alloc(Process.pointerSize);
+                                const returnLength = Memory.alloc(4);
+
+                                const queryFunc = new NativeFunction(ntQueryInfo, 'int',
+                                    ['pointer', 'int', 'pointer', 'int', 'pointer']);
+
+                                const status = queryFunc(processHandle, 0x07, debugPort,
+                                    Process.pointerSize, returnLength);
+
+                                // Should succeed and return 0 (no debugger)
+                                bypassed = (status === 0 && Memory.readPointer(debugPort).isNull());
                             }
-                        } catch (e) {
-                            console.log('[!] IsDebuggerPresent test failed:', e.message);
                         }
-                        break;
-                        
-                    case 'checkRemoteDebugger':
-                        // Test if CheckRemoteDebuggerPresent is properly hooked
-                        try {
-                            const kernel32 = Process.getModuleByName('kernel32.dll');
-                            const checkRemoteDebugger = kernel32.getExportByName('CheckRemoteDebuggerPresent');
-                            
-                            if (checkRemoteDebugger) {
-                                const hookedBytes = Memory.readByteArray(checkRemoteDebugger, 5);
-                                const firstByte = new Uint8Array(hookedBytes)[0];
-                                
-                                // Check for hook patterns
-                                if (firstByte === 0xE9 || firstByte === 0xB8 || firstByte === 0x33) {
-                                    // Test with current process handle
-                                    const currentProcess = ptr(-1); // INVALID_HANDLE_VALUE
-                                    const debuggerPresent = Memory.alloc(4);
-                                    const checkFunc = new NativeFunction(checkRemoteDebugger, 'bool', ['pointer', 'pointer']);
-                                    const result = checkFunc(currentProcess, debuggerPresent);
-                                    
-                                    // Should return success but debugger not present
-                                    bypassed = (result && Memory.readU32(debuggerPresent) === 0);
-                                }
+                    } catch (e) {
+                        console.log('[!] NtQueryInformationProcess test failed:', e.message);
+                    }
+                    break;
+
+                case 'hardwareBreakpoints':
+                    // Test if hardware breakpoint detection is bypassed
+                    try {
+                        // Check if debug registers are cleared/faked
+                        Thread.backtrace(this.context, Backtracer.ACCURATE)
+                            .map(DebugSymbol.fromAddress);
+
+                        // Try to read thread context
+                        const currentThread = Process.getCurrentThreadId();
+
+                        // Hardware breakpoints would be in DR0-DR3 registers
+                        // If properly bypassed, these should be inaccessible or return 0
+                        const kernel32 = Process.getModuleByName('kernel32.dll');
+                        const getThreadContext = kernel32.getExportByName('GetThreadContext');
+
+                        if (getThreadContext) {
+                            // Allocate CONTEXT structure (x86: 716 bytes, x64: 1232 bytes)
+                            const contextSize = Process.arch === 'x64' ? 1232 : 716;
+                            const context = Memory.alloc(contextSize);
+
+                            // Set ContextFlags to CONTEXT_DEBUG_REGISTERS
+                            Memory.writeU32(context, 0x00010010);
+
+                            const getContextFunc = new NativeFunction(getThreadContext, 'bool',
+                                ['pointer', 'pointer']);
+
+                            // This should fail or return zeroed debug registers if bypassed
+                            const result = getContextFunc(ptr(currentThread), context);
+
+                            if (result) {
+                                // Check DR0-DR3 (should be 0 if bypassed)
+                                const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
+                                const dr0 = Memory.readPointer(context.add(dr0Offset));
+                                const dr1 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize));
+                                const dr2 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 2));
+                                const dr3 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 3));
+
+                                bypassed = dr0.isNull() && dr1.isNull() && dr2.isNull() && dr3.isNull();
+                            } else {
+                                // If GetThreadContext fails, bypass might be working
+                                bypassed = true;
                             }
-                        } catch (e) {
-                            console.log('[!] CheckRemoteDebuggerPresent test failed:', e.message);
                         }
-                        break;
-                        
-                    case 'ntQueryInformation':
-                        // Test if NtQueryInformationProcess is properly hooked
-                        try {
-                            const ntdll = Process.getModuleByName('ntdll.dll');
-                            const ntQueryInfo = ntdll.getExportByName('NtQueryInformationProcess');
-                            
-                            if (ntQueryInfo) {
-                                // Check for hook
-                                const hookedBytes = Memory.readByteArray(ntQueryInfo, 5);
-                                const firstByte = new Uint8Array(hookedBytes)[0];
-                                
-                                if (firstByte === 0xE9 || firstByte === 0xB8) {
-                                    // Test ProcessDebugPort (0x07)
-                                    const processHandle = ptr(-1);
-                                    const debugPort = Memory.alloc(Process.pointerSize);
-                                    const returnLength = Memory.alloc(4);
-                                    
-                                    const queryFunc = new NativeFunction(ntQueryInfo, 'int', 
-                                        ['pointer', 'int', 'pointer', 'int', 'pointer']);
-                                    
-                                    const status = queryFunc(processHandle, 0x07, debugPort, 
-                                        Process.pointerSize, returnLength);
-                                    
-                                    // Should succeed and return 0 (no debugger)
-                                    bypassed = (status === 0 && Memory.readPointer(debugPort).isNull());
-                                }
-                            }
-                        } catch (e) {
-                            console.log('[!] NtQueryInformationProcess test failed:', e.message);
+                    } catch (e) {
+                        console.log('[!] Hardware breakpoint test failed:', e.message);
+                        // If we can't check, assume bypass is working
+                        bypassed = true;
+                    }
+                    break;
+
+                case 'timingChecks':
+                    // Test if timing-based anti-debug is bypassed
+                    try {
+                        // Perform a timing check that would normally detect debugging
+                        const startTime = Date.now();
+
+                        // Execute some operations that would be slowed by debugging
+                        for (let i = 0; i < 100000; i++) {
+                            // Trigger potential debug checks
+                            Process.getCurrentThreadId();
                         }
-                        break;
-                        
-                    case 'hardwareBreakpoints':
-                        // Test if hardware breakpoint detection is bypassed
-                        try {
-                            // Check if debug registers are cleared/faked
-                            Thread.backtrace(this.context, Backtracer.ACCURATE)
-                                .map(DebugSymbol.fromAddress);
-                            
-                            // Try to read thread context
-                            const currentThread = Process.getCurrentThreadId();
-                            
-                            // Hardware breakpoints would be in DR0-DR3 registers
-                            // If properly bypassed, these should be inaccessible or return 0
-                            const kernel32 = Process.getModuleByName('kernel32.dll');
-                            const getThreadContext = kernel32.getExportByName('GetThreadContext');
-                            
-                            if (getThreadContext) {
-                                // Allocate CONTEXT structure (x86: 716 bytes, x64: 1232 bytes)
-                                const contextSize = Process.arch === 'x64' ? 1232 : 716;
-                                const context = Memory.alloc(contextSize);
-                                
-                                // Set ContextFlags to CONTEXT_DEBUG_REGISTERS
-                                Memory.writeU32(context, 0x00010010);
-                                
-                                const getContextFunc = new NativeFunction(getThreadContext, 'bool', 
-                                    ['pointer', 'pointer']);
-                                
-                                // This should fail or return zeroed debug registers if bypassed
-                                const result = getContextFunc(ptr(currentThread), context);
-                                
-                                if (result) {
-                                    // Check DR0-DR3 (should be 0 if bypassed)
-                                    const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
-                                    const dr0 = Memory.readPointer(context.add(dr0Offset));
-                                    const dr1 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize));
-                                    const dr2 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 2));
-                                    const dr3 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 3));
-                                    
-                                    bypassed = dr0.isNull() && dr1.isNull() && dr2.isNull() && dr3.isNull();
-                                } else {
-                                    // If GetThreadContext fails, bypass might be working
-                                    bypassed = true;
-                                }
-                            }
-                        } catch (e) {
-                            console.log('[!] Hardware breakpoint test failed:', e.message);
-                            // If we can't check, assume bypass is working
-                            bypassed = true;
+
+                        const elapsed = Date.now() - startTime;
+
+                        // If bypassed, timing should be consistent (not slowed by debug checks)
+                        // Normal execution should be < 100ms, debugging would be > 500ms
+                        bypassed = elapsed < 100;
+
+                        // Also test RDTSC if available (x86/x64)
+                        if (Process.arch === 'x64' || Process.arch === 'ia32') {
+                            // Check if RDTSC instruction is hooked or emulated
+                            const testRdtsc = Memory.alloc(16);
+                            Memory.patchCode(testRdtsc, 16, function(code) {
+                                const writer = new X86Writer(code, { pc: testRdtsc });
+                                writer.putRdtsc();  // Read timestamp counter
+                                writer.putRet();
+                            });
+
+                            const rdtscFunc = new NativeFunction(testRdtsc, 'uint64', []);
+                            const tsc1 = rdtscFunc();
+                            const tsc2 = rdtscFunc();
+
+                            // If properly bypassed, consecutive RDTSC calls should have minimal difference
+                            const diff = tsc2.sub(tsc1).toNumber();
+                            bypassed = bypassed && (diff < 10000);
                         }
-                        break;
-                        
-                    case 'timingChecks':
-                        // Test if timing-based anti-debug is bypassed
-                        try {
-                            // Perform a timing check that would normally detect debugging
-                            const startTime = Date.now();
-                            
-                            // Execute some operations that would be slowed by debugging
-                            for (let i = 0; i < 100000; i++) {
-                                // Trigger potential debug checks
-                                Process.getCurrentThreadId();
-                            }
-                            
-                            const elapsed = Date.now() - startTime;
-                            
-                            // If bypassed, timing should be consistent (not slowed by debug checks)
-                            // Normal execution should be < 100ms, debugging would be > 500ms
-                            bypassed = elapsed < 100;
-                            
-                            // Also test RDTSC if available (x86/x64)
-                            if (Process.arch === 'x64' || Process.arch === 'ia32') {
-                                // Check if RDTSC instruction is hooked or emulated
-                                const testRdtsc = Memory.alloc(16);
-                                Memory.patchCode(testRdtsc, 16, function(code) {
-                                    const writer = new X86Writer(code, { pc: testRdtsc });
-                                    writer.putRdtsc();  // Read timestamp counter
-                                    writer.putRet();
-                                });
-                                
-                                const rdtscFunc = new NativeFunction(testRdtsc, 'uint64', []);
-                                const tsc1 = rdtscFunc();
-                                const tsc2 = rdtscFunc();
-                                
-                                // If properly bypassed, consecutive RDTSC calls should have minimal difference
-                                const diff = tsc2.sub(tsc1).toNumber();
-                                bypassed = bypassed && (diff < 10000);
-                            }
-                        } catch (e) {
-                            console.log('[!] Timing check test failed:', e.message);
-                        }
-                        break;
-                        
-                    default:
-                        console.log('[!] Unknown anti-debug technique:', method);
-                        bypassed = false;
+                    } catch (e) {
+                        console.log('[!] Timing check test failed:', e.message);
+                    }
+                    break;
+
+                default:
+                    console.log('[!] Unknown anti-debug technique:', method);
+                    bypassed = false;
                 }
-                
+
                 return bypassed;
             }
         },
@@ -21409,7 +21409,7 @@ const UniversalUnpacker = {
                     ['themida_nested', {
                         signatures: [
                             { pattern: [0x8B, 0x85, 0x00, 0x00, 0x00, 0x00, 0x8D, 0x85],
-                              mask: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF], offset: 0x10 }
+                                mask: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF], offset: 0x10 }
                         ],
                         variants: ['themida30', 'themida31'],
                         characteristics: { virtualization: true, mutation: true }
@@ -21417,7 +21417,7 @@ const UniversalUnpacker = {
                     ['vmprotect_nested', {
                         signatures: [
                             { pattern: [0x68, 0x00, 0x00, 0x00, 0x00, 0xE8],
-                              mask: [0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF], offset: 0 }
+                                mask: [0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF], offset: 0 }
                         ],
                         variants: ['vmprotect35', 'vmprotect36'],
                         characteristics: { virtualization: true, packing: true }
@@ -21425,7 +21425,7 @@ const UniversalUnpacker = {
                     ['enigma_nested', {
                         signatures: [
                             { pattern: [0x60, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5D],
-                              mask: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF], offset: 0 }
+                                mask: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF], offset: 0 }
                         ],
                         variants: ['enigma60', 'enigma61'],
                         characteristics: { encryption: true, licensing: true }
@@ -21433,7 +21433,7 @@ const UniversalUnpacker = {
                     ['winlicense_nested', {
                         signatures: [
                             { pattern: [0x6A, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00],
-                              mask: [0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00], offset: 0 }
+                                mask: [0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00], offset: 0 }
                         ],
                         variants: ['winlicense30', 'winlicense31'],
                         characteristics: { protection: true, licensing: true }
@@ -21866,20 +21866,20 @@ const UniversalUnpacker = {
                 let tasks = [];
 
                 switch (strategy) {
-                    case 'single':
-                        tasks = this.createSingleNodeTasks(protectionLayers, binaryData);
-                        break;
-                    case 'sequential':
-                        tasks = this.createSequentialTasks(protectionLayers, binaryData);
-                        break;
-                    case 'parallel':
-                        tasks = this.createParallelTasks(protectionLayers, binaryData);
-                        break;
-                    case 'distributed':
-                        tasks = this.createDistributedTasks(protectionLayers, binaryData);
-                        break;
-                    default:
-                        tasks = this.createGenericTasks(protectionLayers, binaryData);
+                case 'single':
+                    tasks = this.createSingleNodeTasks(protectionLayers, binaryData);
+                    break;
+                case 'sequential':
+                    tasks = this.createSequentialTasks(protectionLayers, binaryData);
+                    break;
+                case 'parallel':
+                    tasks = this.createParallelTasks(protectionLayers, binaryData);
+                    break;
+                case 'distributed':
+                    tasks = this.createDistributedTasks(protectionLayers, binaryData);
+                    break;
+                default:
+                    tasks = this.createGenericTasks(protectionLayers, binaryData);
                 }
 
                 // Assign tasks to nodes

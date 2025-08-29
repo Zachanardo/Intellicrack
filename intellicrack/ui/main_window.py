@@ -56,6 +56,7 @@ from ..config import CONFIG
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger
+from ..utils.resource_helper import get_resource_path
 from .dialogs.export_dialog import ExportDialog
 from .dialogs.program_selector_dialog import show_program_selector
 from .dialogs.signature_editor_dialog import SignatureEditorDialog
@@ -473,10 +474,7 @@ class IntellicrackMainWindow(QMainWindow):
     def _apply_initial_settings(self):
         """Apply initial application settings."""
         # Set window icon if available
-        import intellicrack
-
-        base_path = os.path.dirname(os.path.dirname(intellicrack.__file__))
-        icon_path = os.path.join(base_path, "intellicrack", "assets", "icon.ico")
+        icon_path = get_resource_path("assets/icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 

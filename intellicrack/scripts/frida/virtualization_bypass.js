@@ -369,6 +369,12 @@ const virtualizationBypass = {
                         }
                     } catch(e) {
                         // Buffer read failed
+                        send({
+                            type: 'debug',
+                            target: 'vm_bypass',
+                            action: 'virtualbox_device_property_read_failed',
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -1576,7 +1582,16 @@ const virtualizationBypass = {
                                     this.blockDockerAccess = true;
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'docker_file_read_failed',
+                                function: 'hookDockerDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -1613,7 +1628,16 @@ const virtualizationBypass = {
                                 });
                                 this.blockWslRegistry = true;
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'wsl_registry_read_failed',
+                                function: 'hookWslDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -1660,7 +1684,16 @@ const virtualizationBypass = {
                                     this.blockK8sAccess = true;
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'kubernetes_file_read_failed',
+                                function: 'hookKubernetesDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -1710,7 +1743,16 @@ const virtualizationBypass = {
                                     this.spoofContainerVar = true;
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'container_env_var_read_failed',
+                                function: 'hookContainerEnvironmentVars',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -1752,7 +1794,16 @@ const virtualizationBypass = {
                                     this.blockWslFile = true;
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'wsl_file_read_failed',
+                                function: 'hookWslSubsystemFiles',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -1791,7 +1842,16 @@ const virtualizationBypass = {
                                 var spoofedData = data.replace(/lxc/g, 'sys').replace(/container/g, 'process');
                                 this.lpBuffer.writeAnsiString(spoofedData);
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'lxc_proc_data_read_failed',
+                                function: 'hookLxcProcDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 }
             });
@@ -2337,7 +2397,16 @@ const virtualizationBypass = {
                                     }
                                 });
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'red_pill_detection_failed',
+                                function: 'hookRedPillDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -2388,7 +2457,16 @@ const virtualizationBypass = {
                                     }
                                 });
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'no_pill_detection_failed',
+                                function: 'hookNoPillDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -2701,7 +2779,16 @@ const virtualizationBypass = {
                                     this.context.edx = (normalizedTsc >> 32) & 0xFFFFFFFF;
                                 }
                             });
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'rdtsc_hook_failed',
+                                function: 'hookRdtscInstructions',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -2725,7 +2812,16 @@ const virtualizationBypass = {
                                     this.context.ecx = 0; // Clear processor ID
                                 }
                             });
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'rdtscp_hook_failed',
+                                function: 'hookRdtscInstructions',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -2766,7 +2862,16 @@ const virtualizationBypass = {
                                     }
                                 }
                             });
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'vmx_svm_hook_failed',
+                                function: 'hookVmxSvmInstructions',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -2916,7 +3021,16 @@ const virtualizationBypass = {
                                 var spoofedData = data.replace(/systemd-nspawn/g, 'systemd');
                                 this.lpBuffer.writeAnsiString(spoofedData);
                             }
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'systemd_nspawn_data_read_failed',
+                                function: 'hookSystemdNspawnDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }
                 }
             });
@@ -3265,7 +3379,16 @@ const virtualizationBypass = {
                                     this.context.eax = 0xFFFFFFFF; // Transaction abort
                                 }
                             });
-                        } catch(e) {}
+                        } catch(e) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'tsx_detection_hook_failed',
+                                function: 'hookTsxDetection',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     },
                     onComplete: () => {}
                 });
@@ -3660,6 +3783,8 @@ const virtualizationBypass = {
                     this.instructionEmulator.sidt.add(2).writeU64(ptr('0xFFFFF80000001000')); // Base
                 }
                 return this.instructionEmulator.sidt;
+            default:
+                return null;
             }
         }.bind(this);
 
@@ -3727,6 +3852,13 @@ const virtualizationBypass = {
         Process.enumerateModules().forEach(function(module) {
             Memory.scan(module.base, module.size, vmreadPattern, {
                 onMatch: function(address, size) {
+                    send({
+                        type: 'debug',
+                        target: 'vm_bypass',
+                        action: 'vmread_instruction_found',
+                        address: address.toString(),
+                        instructionSize: size
+                    });
                     Interceptor.attach(address, {
                         onEnter: function(args) {
                             // Emulate VMREAD to hide nested virtualization
@@ -3764,6 +3896,14 @@ const virtualizationBypass = {
                 if (module.name.indexOf('hv') !== -1 || module.name.indexOf('vm') !== -1) {
                     Memory.scan(module.base, module.size, exitReasonPattern, {
                         onMatch: function(address, size) {
+                            send({
+                                type: 'debug',
+                                target: 'vm_bypass',
+                                action: 'vmexit_pattern_found',
+                                address: address.toString(),
+                                patternSize: size,
+                                module: module.name
+                            });
                             Interceptor.attach(address, {
                                 onEnter: function(args) {
                                     var exitReason = this.context.rax & 0xFFFF;
@@ -3921,6 +4061,7 @@ const virtualizationBypass = {
                                     });
                                     return 'skip';
                                 }
+                                return null;
                             }
                         });
                     }

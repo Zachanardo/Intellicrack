@@ -29,9 +29,9 @@
  */
 
 const modularHookLibrary = {
-    name: "Modular Hook Library",
-    description: "Reusable hook components system for efficient bypass development",
-    version: "2.0.0",
+    name: 'Modular Hook Library',
+    description: 'Reusable hook components system for efficient bypass development',
+    version: '2.0.0',
 
     // Configuration for modular hook system
     config: {
@@ -83,7 +83,7 @@ const modularHookLibrary = {
         // Debugging and logging
         debug: {
             enabled: true,
-            logLevel: "info",
+            logLevel: 'info',
             traceExecution: true,
             measurePerformance: true,
             trackDependencies: true
@@ -115,9 +115,9 @@ const modularHookLibrary = {
 
     onAttach: function(pid) {
         send({
-            type: "status",
-            target: "hook_library",
-            action: "attaching_to_process",
+            type: 'status',
+            target: 'hook_library',
+            action: 'attaching_to_process',
             process_id: pid
         });
         this.processId = pid;
@@ -126,9 +126,9 @@ const modularHookLibrary = {
 
     run: function() {
         send({
-            type: "status",
-            target: "hook_library",
-            action: "initializing_modular_system",
+            type: 'status',
+            target: 'hook_library',
+            action: 'initializing_modular_system',
             timestamp: Date.now()
         });
 
@@ -162,9 +162,9 @@ const modularHookLibrary = {
     // === MODULE SYSTEM INITIALIZATION ===
     initializeModuleSystem: function() {
         send({
-            type: "info",
-            target: "module_system",
-            action: "initializing_module_system",
+            type: 'info',
+            target: 'module_system',
+            action: 'initializing_module_system',
             timestamp: Date.now()
         });
 
@@ -189,9 +189,9 @@ const modularHookLibrary = {
         this.dependencyResolver = this.createDependencyResolver();
 
         send({
-            type: "info",
-            target: "module_system",
-            action: "module_system_initialized",
+            type: 'info',
+            target: 'module_system',
+            action: 'module_system_initialized',
             timestamp: Date.now()
         });
     },
@@ -235,9 +235,9 @@ const modularHookLibrary = {
     // === BUILTIN MODULES REGISTRATION ===
     registerBuiltinModules: function() {
         send({
-            type: "info",
-            target: "builtin_modules",
-            action: "registering_builtin_modules",
+            type: 'info',
+            target: 'builtin_modules',
+            action: 'registering_builtin_modules',
             timestamp: Date.now()
         });
 
@@ -254,44 +254,44 @@ const modularHookLibrary = {
         this.registerRegistryModules();
 
         send({
-            type: "info",
-            target: "builtin_modules",
-            action: "builtin_modules_registered",
+            type: 'info',
+            target: 'builtin_modules',
+            action: 'builtin_modules_registered',
             module_count: this.moduleRegistry.size
         });
     },
 
     registerAntiDebugModules: function() {
         send({
-            type: "info",
-            target: "antidebug_modules",
-            action: "registering_antidebug_modules",
-            category: "antidebug"
+            type: 'info',
+            target: 'antidebug_modules',
+            action: 'registering_antidebug_modules',
+            category: 'antidebug'
         });
 
         // Basic anti-debug module
-        this.registerModule("antidebug.basic", {
-            name: "Basic Anti-Debug",
-            version: "1.0.0",
-            category: "antiDebug",
+        this.registerModule('antidebug.basic', {
+            name: 'Basic Anti-Debug',
+            version: '1.0.0',
+            category: 'antiDebug',
             dependencies: [],
-            description: "Basic debugger detection bypass",
+            description: 'Basic debugger detection bypass',
             hooks: {
-                "IsDebuggerPresent": {
-                    module: "kernel32.dll",
-                    strategy: "replace_return",
+                'IsDebuggerPresent': {
+                    module: 'kernel32.dll',
+                    strategy: 'replace_return',
                     returnValue: 0,
                     priority: 10
                 },
-                "CheckRemoteDebuggerPresent": {
-                    module: "kernel32.dll",
-                    strategy: "manipulate_output",
-                    manipulation: "set_false",
+                'CheckRemoteDebuggerPresent': {
+                    module: 'kernel32.dll',
+                    strategy: 'manipulate_output',
+                    manipulation: 'set_false',
                     priority: 10
                 },
-                "NtQueryInformationProcess": {
-                    module: "ntdll.dll",
-                    strategy: "filter_classes",
+                'NtQueryInformationProcess': {
+                    module: 'ntdll.dll',
+                    strategy: 'filter_classes',
                     classes: [7, 30, 31],
                     priority: 9
                 }
@@ -305,25 +305,25 @@ const modularHookLibrary = {
         });
 
         // Advanced anti-debug module
-        this.registerModule("antidebug.advanced", {
-            name: "Advanced Anti-Debug",
-            version: "1.0.0",
-            category: "antiDebug",
-            dependencies: ["antidebug.basic"],
-            description: "Advanced debugger detection bypass including PEB/TEB manipulation",
+        this.registerModule('antidebug.advanced', {
+            name: 'Advanced Anti-Debug',
+            version: '1.0.0',
+            category: 'antiDebug',
+            dependencies: ['antidebug.basic'],
+            description: 'Advanced debugger detection bypass including PEB/TEB manipulation',
             hooks: {
-                "PEB_Manipulation": {
-                    strategy: "memory_patch",
-                    targets: ["BeingDebugged", "NtGlobalFlag", "HeapFlags"],
+                'PEB_Manipulation': {
+                    strategy: 'memory_patch',
+                    targets: ['BeingDebugged', 'NtGlobalFlag', 'HeapFlags'],
                     priority: 8
                 },
-                "TEB_Manipulation": {
-                    strategy: "memory_patch",
-                    targets: ["NtTib.ArbitraryUserPointer"],
+                'TEB_Manipulation': {
+                    strategy: 'memory_patch',
+                    targets: ['NtTib.ArbitraryUserPointer'],
                     priority: 8
                 },
-                "Exception_Handling": {
-                    strategy: "hook_vectored_handlers",
+                'Exception_Handling': {
+                    strategy: 'hook_vectored_handlers',
                     priority: 7
                 }
             },
@@ -336,24 +336,24 @@ const modularHookLibrary = {
         });
 
         // Hardware anti-debug module
-        this.registerModule("antidebug.hardware", {
-            name: "Hardware Anti-Debug",
-            version: "1.0.0",
-            category: "antiDebug",
-            dependencies: ["antidebug.advanced"],
-            description: "Hardware-level debugging detection bypass",
+        this.registerModule('antidebug.hardware', {
+            name: 'Hardware Anti-Debug',
+            version: '1.0.0',
+            category: 'antiDebug',
+            dependencies: ['antidebug.advanced'],
+            description: 'Hardware-level debugging detection bypass',
             hooks: {
-                "Debug_Registers": {
-                    strategy: "clear_on_access",
-                    registers: ["DR0", "DR1", "DR2", "DR3", "DR6", "DR7"],
+                'Debug_Registers': {
+                    strategy: 'clear_on_access',
+                    registers: ['DR0', 'DR1', 'DR2', 'DR3', 'DR6', 'DR7'],
                     priority: 6
                 },
-                "Hardware_Breakpoints": {
-                    strategy: "prevent_installation",
+                'Hardware_Breakpoints': {
+                    strategy: 'prevent_installation',
                     priority: 6
                 },
-                "Single_Step": {
-                    strategy: "trap_flag_manipulation",
+                'Single_Step': {
+                    strategy: 'trap_flag_manipulation',
                     priority: 5
                 }
             },
@@ -368,32 +368,32 @@ const modularHookLibrary = {
 
     registerLicensingModules: function() {
         send({
-            type: "info",
-            target: "licensing_modules",
-            action: "registering_licensing_modules",
-            category: "licensing"
+            type: 'info',
+            target: 'licensing_modules',
+            action: 'registering_licensing_modules',
+            category: 'licensing'
         });
 
         // Local license module
-        this.registerModule("licensing.local", {
-            name: "Local License Bypass",
-            version: "1.0.0",
-            category: "licensing",
+        this.registerModule('licensing.local', {
+            name: 'Local License Bypass',
+            version: '1.0.0',
+            category: 'licensing',
             dependencies: [],
-            description: "Local license validation bypass",
+            description: 'Local license validation bypass',
             hooks: {
-                "validateLicense": {
-                    strategy: "replace_return",
+                'validateLicense': {
+                    strategy: 'replace_return',
                     returnValue: 1,
                     priority: 10
                 },
-                "checkLicense": {
-                    strategy: "replace_return",
+                'checkLicense': {
+                    strategy: 'replace_return',
                     returnValue: 1,
                     priority: 10
                 },
-                "isValidLicense": {
-                    strategy: "replace_return",
+                'isValidLicense': {
+                    strategy: 'replace_return',
                     returnValue: 1,
                     priority: 10
                 }
@@ -404,20 +404,20 @@ const modularHookLibrary = {
         });
 
         // Network license module
-        this.registerModule("licensing.network", {
-            name: "Network License Bypass",
-            version: "1.0.0",
-            category: "licensing",
-            dependencies: ["networking.http"],
-            description: "Network-based license validation bypass",
+        this.registerModule('licensing.network', {
+            name: 'Network License Bypass',
+            version: '1.0.0',
+            category: 'licensing',
+            dependencies: ['networking.http'],
+            description: 'Network-based license validation bypass',
             hooks: {
-                "HTTP_License_Requests": {
-                    strategy: "intercept_and_spoof",
-                    responses: "license_valid_templates",
+                'HTTP_License_Requests': {
+                    strategy: 'intercept_and_spoof',
+                    responses: 'license_valid_templates',
                     priority: 9
                 },
-                "License_Server_Communication": {
-                    strategy: "block_or_redirect",
+                'License_Server_Communication': {
+                    strategy: 'block_or_redirect',
                     priority: 8
                 }
             },
@@ -427,23 +427,23 @@ const modularHookLibrary = {
         });
 
         // Cloud license module
-        this.registerModule("licensing.cloud", {
-            name: "Cloud License Bypass",
-            version: "1.0.0",
-            category: "licensing",
-            dependencies: ["networking.https", "crypto.jwt", "crypto.oauth"],
-            description: "Cloud-based license validation bypass with OAuth/JWT support",
+        this.registerModule('licensing.cloud', {
+            name: 'Cloud License Bypass',
+            version: '1.0.0',
+            category: 'licensing',
+            dependencies: ['networking.https', 'crypto.jwt', 'crypto.oauth'],
+            description: 'Cloud-based license validation bypass with OAuth/JWT support',
             hooks: {
-                "OAuth_Token_Validation": {
-                    strategy: "spoof_tokens",
+                'OAuth_Token_Validation': {
+                    strategy: 'spoof_tokens',
                     priority: 10
                 },
-                "JWT_Token_Verification": {
-                    strategy: "spoof_verification",
+                'JWT_Token_Verification': {
+                    strategy: 'spoof_verification',
                     priority: 10
                 },
-                "Cloud_API_Responses": {
-                    strategy: "manipulate_json_responses",
+                'Cloud_API_Responses': {
+                    strategy: 'manipulate_json_responses',
                     priority: 9
                 }
             },
@@ -455,30 +455,30 @@ const modularHookLibrary = {
 
     registerDrmModules: function() {
         send({
-            type: "info",
-            target: "drm_modules",
-            action: "registering_drm_modules",
-            category: "drm"
+            type: 'info',
+            target: 'drm_modules',
+            action: 'registering_drm_modules',
+            category: 'drm'
         });
 
         // HDCP module
-        this.registerModule("drm.hdcp", {
-            name: "HDCP Bypass",
-            version: "1.0.0",
-            category: "drm",
+        this.registerModule('drm.hdcp', {
+            name: 'HDCP Bypass',
+            version: '1.0.0',
+            category: 'drm',
             dependencies: [],
-            description: "High-bandwidth Digital Content Protection bypass",
+            description: 'High-bandwidth Digital Content Protection bypass',
             hooks: {
-                "HDCP_Authentication": {
-                    strategy: "force_success",
+                'HDCP_Authentication': {
+                    strategy: 'force_success',
                     priority: 10
                 },
-                "HDCP_Capability_Queries": {
-                    strategy: "spoof_capabilities",
+                'HDCP_Capability_Queries': {
+                    strategy: 'spoof_capabilities',
                     priority: 9
                 },
-                "HDCP_Revocation_Checks": {
-                    strategy: "block_requests",
+                'HDCP_Revocation_Checks': {
+                    strategy: 'block_requests',
                     priority: 8
                 }
             },
@@ -488,23 +488,23 @@ const modularHookLibrary = {
         });
 
         // PlayReady module
-        this.registerModule("drm.playready", {
-            name: "PlayReady Bypass",
-            version: "1.0.0",
-            category: "drm",
-            dependencies: ["crypto.base"],
-            description: "Microsoft PlayReady DRM bypass",
+        this.registerModule('drm.playready', {
+            name: 'PlayReady Bypass',
+            version: '1.0.0',
+            category: 'drm',
+            dependencies: ['crypto.base'],
+            description: 'Microsoft PlayReady DRM bypass',
             hooks: {
-                "PlayReady_License_Acquisition": {
-                    strategy: "spoof_licenses",
+                'PlayReady_License_Acquisition': {
+                    strategy: 'spoof_licenses',
                     priority: 10
                 },
-                "PlayReady_Content_Decryption": {
-                    strategy: "intercept_decryption",
+                'PlayReady_Content_Decryption': {
+                    strategy: 'intercept_decryption',
                     priority: 9
                 },
-                "PlayReady_Security_Level": {
-                    strategy: "spoof_maximum_level",
+                'PlayReady_Security_Level': {
+                    strategy: 'spoof_maximum_level',
                     priority: 8
                 }
             },
@@ -514,23 +514,23 @@ const modularHookLibrary = {
         });
 
         // Widevine module
-        this.registerModule("drm.widevine", {
-            name: "Widevine Bypass",
-            version: "1.0.0",
-            category: "drm",
-            dependencies: ["crypto.base"],
-            description: "Google Widevine DRM bypass",
+        this.registerModule('drm.widevine', {
+            name: 'Widevine Bypass',
+            version: '1.0.0',
+            category: 'drm',
+            dependencies: ['crypto.base'],
+            description: 'Google Widevine DRM bypass',
             hooks: {
-                "Widevine_CDM_Initialization": {
-                    strategy: "force_success",
+                'Widevine_CDM_Initialization': {
+                    strategy: 'force_success',
                     priority: 10
                 },
-                "Widevine_License_Requests": {
-                    strategy: "spoof_licenses",
+                'Widevine_License_Requests': {
+                    strategy: 'spoof_licenses',
                     priority: 9
                 },
-                "Widevine_Content_Decryption": {
-                    strategy: "intercept_decryption",
+                'Widevine_Content_Decryption': {
+                    strategy: 'intercept_decryption',
                     priority: 8
                 }
             },
@@ -542,32 +542,32 @@ const modularHookLibrary = {
 
     registerNetworkingModules: function() {
         send({
-            type: "info",
-            target: "networking_modules",
-            action: "registering_networking_modules",
-            category: "networking"
+            type: 'info',
+            target: 'networking_modules',
+            action: 'registering_networking_modules',
+            category: 'networking'
         });
 
         // HTTP module
-        this.registerModule("networking.http", {
-            name: "HTTP Interception",
-            version: "1.0.0",
-            category: "networking",
+        this.registerModule('networking.http', {
+            name: 'HTTP Interception',
+            version: '1.0.0',
+            category: 'networking',
             dependencies: [],
-            description: "HTTP request/response interception and manipulation",
+            description: 'HTTP request/response interception and manipulation',
             hooks: {
-                "WinHttpSendRequest": {
-                    module: "winhttp.dll",
-                    strategy: "intercept_and_modify",
+                'WinHttpSendRequest': {
+                    module: 'winhttp.dll',
+                    strategy: 'intercept_and_modify',
                     priority: 10
                 },
-                "HttpSendRequestW": {
-                    module: "wininet.dll",
-                    strategy: "intercept_and_modify",
+                'HttpSendRequestW': {
+                    module: 'wininet.dll',
+                    strategy: 'intercept_and_modify',
                     priority: 10
                 },
-                "curl_easy_perform": {
-                    strategy: "intercept_and_modify",
+                'curl_easy_perform': {
+                    strategy: 'intercept_and_modify',
                     priority: 9
                 }
             },
@@ -577,24 +577,24 @@ const modularHookLibrary = {
         });
 
         // HTTPS module
-        this.registerModule("networking.https", {
-            name: "HTTPS Interception",
-            version: "1.0.0",
-            category: "networking",
-            dependencies: ["networking.http", "crypto.ssl"],
-            description: "HTTPS request/response interception with SSL/TLS support",
+        this.registerModule('networking.https', {
+            name: 'HTTPS Interception',
+            version: '1.0.0',
+            category: 'networking',
+            dependencies: ['networking.http', 'crypto.ssl'],
+            description: 'HTTPS request/response interception with SSL/TLS support',
             hooks: {
-                "SSL_write": {
-                    strategy: "intercept_ssl_data",
+                'SSL_write': {
+                    strategy: 'intercept_ssl_data',
                     priority: 10
                 },
-                "SSL_read": {
-                    strategy: "intercept_ssl_data",
+                'SSL_read': {
+                    strategy: 'intercept_ssl_data',
                     priority: 10
                 },
-                "Schannel_Encryption": {
-                    module: "secur32.dll",
-                    strategy: "intercept_schannel",
+                'Schannel_Encryption': {
+                    module: 'secur32.dll',
+                    strategy: 'intercept_schannel',
                     priority: 9
                 }
             },
@@ -604,21 +604,21 @@ const modularHookLibrary = {
         });
 
         // DNS module
-        this.registerModule("networking.dns", {
-            name: "DNS Resolution Control",
-            version: "1.0.0",
-            category: "networking",
+        this.registerModule('networking.dns', {
+            name: 'DNS Resolution Control',
+            version: '1.0.0',
+            category: 'networking',
             dependencies: [],
-            description: "DNS resolution interception and redirection",
+            description: 'DNS resolution interception and redirection',
             hooks: {
-                "getaddrinfo": {
-                    module: "ws2_32.dll",
-                    strategy: "redirect_or_block",
+                'getaddrinfo': {
+                    module: 'ws2_32.dll',
+                    strategy: 'redirect_or_block',
                     priority: 10
                 },
-                "gethostbyname": {
-                    module: "ws2_32.dll",
-                    strategy: "redirect_or_block",
+                'gethostbyname': {
+                    module: 'ws2_32.dll',
+                    strategy: 'redirect_or_block',
                     priority: 9
                 }
             },
@@ -630,33 +630,33 @@ const modularHookLibrary = {
 
     registerCryptographyModules: function() {
         send({
-            type: "info",
-            target: "crypto_modules",
-            action: "registering_cryptography_modules",
-            category: "cryptography"
+            type: 'info',
+            target: 'crypto_modules',
+            action: 'registering_cryptography_modules',
+            category: 'cryptography'
         });
 
         // Base crypto module
-        this.registerModule("crypto.base", {
-            name: "Base Cryptography",
-            version: "1.0.0",
-            category: "cryptography",
+        this.registerModule('crypto.base', {
+            name: 'Base Cryptography',
+            version: '1.0.0',
+            category: 'cryptography',
             dependencies: [],
-            description: "Base cryptographic function hooks",
+            description: 'Base cryptographic function hooks',
             hooks: {
-                "CryptEncrypt": {
-                    module: "advapi32.dll",
-                    strategy: "monitor_and_optionally_bypass",
+                'CryptEncrypt': {
+                    module: 'advapi32.dll',
+                    strategy: 'monitor_and_optionally_bypass',
                     priority: 8
                 },
-                "CryptDecrypt": {
-                    module: "advapi32.dll",
-                    strategy: "monitor_and_optionally_bypass",
+                'CryptDecrypt': {
+                    module: 'advapi32.dll',
+                    strategy: 'monitor_and_optionally_bypass',
                     priority: 8
                 },
-                "CryptHashData": {
-                    module: "advapi32.dll",
-                    strategy: "monitor_and_optionally_spoof",
+                'CryptHashData': {
+                    module: 'advapi32.dll',
+                    strategy: 'monitor_and_optionally_spoof',
                     priority: 7
                 }
             },
@@ -666,23 +666,23 @@ const modularHookLibrary = {
         });
 
         // SSL module
-        this.registerModule("crypto.ssl", {
-            name: "SSL/TLS Cryptography",
-            version: "1.0.0",
-            category: "cryptography",
-            dependencies: ["crypto.base"],
-            description: "SSL/TLS cryptographic function hooks",
+        this.registerModule('crypto.ssl', {
+            name: 'SSL/TLS Cryptography',
+            version: '1.0.0',
+            category: 'cryptography',
+            dependencies: ['crypto.base'],
+            description: 'SSL/TLS cryptographic function hooks',
             hooks: {
-                "SSL_CTX_new": {
-                    strategy: "monitor_ssl_context",
+                'SSL_CTX_new': {
+                    strategy: 'monitor_ssl_context',
                     priority: 9
                 },
-                "SSL_connect": {
-                    strategy: "monitor_ssl_connections",
+                'SSL_connect': {
+                    strategy: 'monitor_ssl_connections',
                     priority: 9
                 },
-                "SSL_verify_callback": {
-                    strategy: "bypass_certificate_validation",
+                'SSL_verify_callback': {
+                    strategy: 'bypass_certificate_validation',
                     priority: 8
                 }
             },
@@ -692,23 +692,23 @@ const modularHookLibrary = {
         });
 
         // JWT module
-        this.registerModule("crypto.jwt", {
-            name: "JWT Token Handling",
-            version: "1.0.0",
-            category: "cryptography",
-            dependencies: ["crypto.base"],
-            description: "JSON Web Token manipulation and spoofing",
+        this.registerModule('crypto.jwt', {
+            name: 'JWT Token Handling',
+            version: '1.0.0',
+            category: 'cryptography',
+            dependencies: ['crypto.base'],
+            description: 'JSON Web Token manipulation and spoofing',
             hooks: {
-                "jwt_decode": {
-                    strategy: "spoof_payload",
+                'jwt_decode': {
+                    strategy: 'spoof_payload',
                     priority: 10
                 },
-                "jwt_verify": {
-                    strategy: "force_verification_success",
+                'jwt_verify': {
+                    strategy: 'force_verification_success',
                     priority: 10
                 },
-                "base64_decode": {
-                    strategy: "spoof_jwt_base64",
+                'base64_decode': {
+                    strategy: 'spoof_jwt_base64',
                     priority: 9
                 }
             },
@@ -718,23 +718,23 @@ const modularHookLibrary = {
         });
 
         // OAuth module
-        this.registerModule("crypto.oauth", {
-            name: "OAuth Token Handling",
-            version: "1.0.0",
-            category: "cryptography",
-            dependencies: ["crypto.base"],
-            description: "OAuth token manipulation and spoofing",
+        this.registerModule('crypto.oauth', {
+            name: 'OAuth Token Handling',
+            version: '1.0.0',
+            category: 'cryptography',
+            dependencies: ['crypto.base'],
+            description: 'OAuth token manipulation and spoofing',
             hooks: {
-                "generateToken": {
-                    strategy: "spoof_token_generation",
+                'generateToken': {
+                    strategy: 'spoof_token_generation',
                     priority: 10
                 },
-                "validateToken": {
-                    strategy: "force_validation_success",
+                'validateToken': {
+                    strategy: 'force_validation_success',
                     priority: 10
                 },
-                "refreshToken": {
-                    strategy: "spoof_token_refresh",
+                'refreshToken': {
+                    strategy: 'spoof_token_refresh',
                     priority: 9
                 }
             },
@@ -746,30 +746,30 @@ const modularHookLibrary = {
 
     registerVirtualizationModules: function() {
         send({
-            type: "info",
-            target: "virtualization_modules",
-            action: "registering_virtualization_modules",
-            category: "virtualization"
+            type: 'info',
+            target: 'virtualization_modules',
+            action: 'registering_virtualization_modules',
+            category: 'virtualization'
         });
 
         // VMware detection bypass
-        this.registerModule("virtualization.vmware", {
-            name: "VMware Detection Bypass",
-            version: "1.0.0",
-            category: "virtualization",
-            dependencies: ["hardware.base"],
-            description: "VMware virtualization detection bypass",
+        this.registerModule('virtualization.vmware', {
+            name: 'VMware Detection Bypass',
+            version: '1.0.0',
+            category: 'virtualization',
+            dependencies: ['hardware.base'],
+            description: 'VMware virtualization detection bypass',
             hooks: {
-                "VMware_Backdoor": {
-                    strategy: "spoof_physical_hardware",
+                'VMware_Backdoor': {
+                    strategy: 'spoof_physical_hardware',
                     priority: 10
                 },
-                "VMware_Registry_Keys": {
-                    strategy: "hide_vm_indicators",
+                'VMware_Registry_Keys': {
+                    strategy: 'hide_vm_indicators',
                     priority: 9
                 },
-                "VMware_Processes": {
-                    strategy: "hide_vm_processes",
+                'VMware_Processes': {
+                    strategy: 'hide_vm_processes',
                     priority: 8
                 }
             },
@@ -779,23 +779,23 @@ const modularHookLibrary = {
         });
 
         // VirtualBox detection bypass
-        this.registerModule("virtualization.virtualbox", {
-            name: "VirtualBox Detection Bypass",
-            version: "1.0.0",
-            category: "virtualization",
-            dependencies: ["hardware.base"],
-            description: "VirtualBox virtualization detection bypass",
+        this.registerModule('virtualization.virtualbox', {
+            name: 'VirtualBox Detection Bypass',
+            version: '1.0.0',
+            category: 'virtualization',
+            dependencies: ['hardware.base'],
+            description: 'VirtualBox virtualization detection bypass',
             hooks: {
-                "VirtualBox_Guest_Additions": {
-                    strategy: "hide_guest_additions",
+                'VirtualBox_Guest_Additions': {
+                    strategy: 'hide_guest_additions',
                     priority: 10
                 },
-                "VirtualBox_Hardware_IDs": {
-                    strategy: "spoof_hardware_ids",
+                'VirtualBox_Hardware_IDs': {
+                    strategy: 'spoof_hardware_ids',
                     priority: 9
                 },
-                "VirtualBox_Services": {
-                    strategy: "hide_vbox_services",
+                'VirtualBox_Services': {
+                    strategy: 'hide_vbox_services',
                     priority: 8
                 }
             },
@@ -807,30 +807,30 @@ const modularHookLibrary = {
 
     registerIntegrityModules: function() {
         send({
-            type: "info",
-            target: "integrity_modules",
-            action: "registering_integrity_modules",
-            category: "integrity"
+            type: 'info',
+            target: 'integrity_modules',
+            action: 'registering_integrity_modules',
+            category: 'integrity'
         });
 
         // Code integrity module
-        this.registerModule("integrity.code", {
-            name: "Code Integrity Bypass",
-            version: "1.0.0",
-            category: "integrity",
-            dependencies: ["crypto.base"],
-            description: "Code integrity check bypass",
+        this.registerModule('integrity.code', {
+            name: 'Code Integrity Bypass',
+            version: '1.0.0',
+            category: 'integrity',
+            dependencies: ['crypto.base'],
+            description: 'Code integrity check bypass',
             hooks: {
-                "PE_Checksum_Validation": {
-                    strategy: "spoof_checksums",
+                'PE_Checksum_Validation': {
+                    strategy: 'spoof_checksums',
                     priority: 10
                 },
-                "Digital_Signature_Verification": {
-                    strategy: "bypass_signature_checks",
+                'Digital_Signature_Verification': {
+                    strategy: 'bypass_signature_checks',
                     priority: 10
                 },
-                "Hash_Verification": {
-                    strategy: "spoof_hash_values",
+                'Hash_Verification': {
+                    strategy: 'spoof_hash_values',
                     priority: 9
                 }
             },
@@ -840,23 +840,23 @@ const modularHookLibrary = {
         });
 
         // Memory integrity module
-        this.registerModule("integrity.memory", {
-            name: "Memory Integrity Bypass",
-            version: "1.0.0",
-            category: "integrity",
-            dependencies: ["memory.base"],
-            description: "Memory integrity check bypass",
+        this.registerModule('integrity.memory', {
+            name: 'Memory Integrity Bypass',
+            version: '1.0.0',
+            category: 'integrity',
+            dependencies: ['memory.base'],
+            description: 'Memory integrity check bypass',
             hooks: {
-                "Memory_Checksum_Validation": {
-                    strategy: "spoof_memory_checksums",
+                'Memory_Checksum_Validation': {
+                    strategy: 'spoof_memory_checksums',
                     priority: 10
                 },
-                "Stack_Canary_Checks": {
-                    strategy: "bypass_stack_protection",
+                'Stack_Canary_Checks': {
+                    strategy: 'bypass_stack_protection',
                     priority: 9
                 },
-                "Heap_Integrity_Checks": {
-                    strategy: "bypass_heap_protection",
+                'Heap_Integrity_Checks': {
+                    strategy: 'bypass_heap_protection',
                     priority: 8
                 }
             },
@@ -868,33 +868,33 @@ const modularHookLibrary = {
 
     registerHardwareModules: function() {
         send({
-            type: "info",
-            target: "hardware_modules",
-            action: "registering_hardware_modules",
-            category: "hardware"
+            type: 'info',
+            target: 'hardware_modules',
+            action: 'registering_hardware_modules',
+            category: 'hardware'
         });
 
         // Base hardware module
-        this.registerModule("hardware.base", {
-            name: "Base Hardware Spoofing",
-            version: "1.0.0",
-            category: "hardware",
+        this.registerModule('hardware.base', {
+            name: 'Base Hardware Spoofing',
+            version: '1.0.0',
+            category: 'hardware',
             dependencies: [],
-            description: "Base hardware information spoofing",
+            description: 'Base hardware information spoofing',
             hooks: {
-                "GetSystemInfo": {
-                    module: "kernel32.dll",
-                    strategy: "spoof_system_info",
+                'GetSystemInfo': {
+                    module: 'kernel32.dll',
+                    strategy: 'spoof_system_info',
                     priority: 10
                 },
-                "IsProcessorFeaturePresent": {
-                    module: "kernel32.dll",
-                    strategy: "spoof_cpu_features",
+                'IsProcessorFeaturePresent': {
+                    module: 'kernel32.dll',
+                    strategy: 'spoof_cpu_features',
                     priority: 9
                 },
-                "GetComputerName": {
-                    module: "kernel32.dll",
-                    strategy: "spoof_computer_name",
+                'GetComputerName': {
+                    module: 'kernel32.dll',
+                    strategy: 'spoof_computer_name',
                     priority: 8
                 }
             },
@@ -904,20 +904,20 @@ const modularHookLibrary = {
         });
 
         // TPM module
-        this.registerModule("hardware.tpm", {
-            name: "TPM Bypass",
-            version: "1.0.0",
-            category: "hardware",
-            dependencies: ["hardware.base"],
-            description: "Trusted Platform Module bypass",
+        this.registerModule('hardware.tpm', {
+            name: 'TPM Bypass',
+            version: '1.0.0',
+            category: 'hardware',
+            dependencies: ['hardware.base'],
+            description: 'Trusted Platform Module bypass',
             hooks: {
-                "Tbsi_Context_Create": {
-                    module: "tbs.dll",
-                    strategy: "spoof_tpm_operations",
+                'Tbsi_Context_Create': {
+                    module: 'tbs.dll',
+                    strategy: 'spoof_tpm_operations',
                     priority: 10
                 },
-                "TpmCreateContext": {
-                    strategy: "spoof_tpm_context",
+                'TpmCreateContext': {
+                    strategy: 'spoof_tpm_context',
                     priority: 9
                 }
             },
@@ -929,33 +929,33 @@ const modularHookLibrary = {
 
     registerMemoryModules: function() {
         send({
-            type: "info",
-            target: "memory_modules",
-            action: "registering_memory_modules",
-            category: "memory"
+            type: 'info',
+            target: 'memory_modules',
+            action: 'registering_memory_modules',
+            category: 'memory'
         });
 
         // Base memory module
-        this.registerModule("memory.base", {
-            name: "Base Memory Operations",
-            version: "1.0.0",
-            category: "memory",
+        this.registerModule('memory.base', {
+            name: 'Base Memory Operations',
+            version: '1.0.0',
+            category: 'memory',
             dependencies: [],
-            description: "Base memory operation hooks",
+            description: 'Base memory operation hooks',
             hooks: {
-                "VirtualAlloc": {
-                    module: "kernel32.dll",
-                    strategy: "monitor_allocations",
+                'VirtualAlloc': {
+                    module: 'kernel32.dll',
+                    strategy: 'monitor_allocations',
                     priority: 8
                 },
-                "VirtualProtect": {
-                    module: "kernel32.dll",
-                    strategy: "monitor_protection_changes",
+                'VirtualProtect': {
+                    module: 'kernel32.dll',
+                    strategy: 'monitor_protection_changes',
                     priority: 8
                 },
-                "ReadProcessMemory": {
-                    module: "kernel32.dll",
-                    strategy: "monitor_memory_reads",
+                'ReadProcessMemory': {
+                    module: 'kernel32.dll',
+                    strategy: 'monitor_memory_reads',
                     priority: 7
                 }
             },
@@ -965,23 +965,23 @@ const modularHookLibrary = {
         });
 
         // Memory protection module
-        this.registerModule("memory.protection", {
-            name: "Memory Protection Bypass",
-            version: "1.0.0",
-            category: "memory",
-            dependencies: ["memory.base"],
-            description: "Memory protection mechanism bypass",
+        this.registerModule('memory.protection', {
+            name: 'Memory Protection Bypass',
+            version: '1.0.0',
+            category: 'memory',
+            dependencies: ['memory.base'],
+            description: 'Memory protection mechanism bypass',
             hooks: {
-                "PAGE_NOACCESS_Protection": {
-                    strategy: "convert_to_readwrite",
+                'PAGE_NOACCESS_Protection': {
+                    strategy: 'convert_to_readwrite',
                     priority: 9
                 },
-                "DEP_Protection": {
-                    strategy: "bypass_dep",
+                'DEP_Protection': {
+                    strategy: 'bypass_dep',
                     priority: 9
                 },
-                "ASLR_Protection": {
-                    strategy: "bypass_aslr",
+                'ASLR_Protection': {
+                    strategy: 'bypass_aslr',
                     priority: 8
                 }
             },
@@ -993,33 +993,33 @@ const modularHookLibrary = {
 
     registerRegistryModules: function() {
         send({
-            type: "info",
-            target: "registry_modules",
-            action: "registering_registry_modules",
-            category: "registry"
+            type: 'info',
+            target: 'registry_modules',
+            action: 'registering_registry_modules',
+            category: 'registry'
         });
 
         // Registry access module
-        this.registerModule("registry.access", {
-            name: "Registry Access Control",
-            version: "1.0.0",
-            category: "registry",
+        this.registerModule('registry.access', {
+            name: 'Registry Access Control',
+            version: '1.0.0',
+            category: 'registry',
             dependencies: [],
-            description: "Registry access interception and control",
+            description: 'Registry access interception and control',
             hooks: {
-                "RegOpenKeyExW": {
-                    module: "advapi32.dll",
-                    strategy: "monitor_and_redirect",
+                'RegOpenKeyExW': {
+                    module: 'advapi32.dll',
+                    strategy: 'monitor_and_redirect',
                     priority: 10
                 },
-                "RegQueryValueExW": {
-                    module: "advapi32.dll",
-                    strategy: "spoof_values",
+                'RegQueryValueExW': {
+                    module: 'advapi32.dll',
+                    strategy: 'spoof_values',
                     priority: 10
                 },
-                "RegSetValueExW": {
-                    module: "advapi32.dll",
-                    strategy: "intercept_writes",
+                'RegSetValueExW': {
+                    module: 'advapi32.dll',
+                    strategy: 'intercept_writes',
                     priority: 9
                 }
             },
@@ -1029,23 +1029,23 @@ const modularHookLibrary = {
         });
 
         // Registry spoofing module
-        this.registerModule("registry.spoofing", {
-            name: "Registry Value Spoofing",
-            version: "1.0.0",
-            category: "registry",
-            dependencies: ["registry.access"],
-            description: "Registry value spoofing for license/activation bypass",
+        this.registerModule('registry.spoofing', {
+            name: 'Registry Value Spoofing',
+            version: '1.0.0',
+            category: 'registry',
+            dependencies: ['registry.access'],
+            description: 'Registry value spoofing for license/activation bypass',
             hooks: {
-                "License_Registry_Keys": {
-                    strategy: "spoof_license_values",
+                'License_Registry_Keys': {
+                    strategy: 'spoof_license_values',
                     priority: 10
                 },
-                "Hardware_Registry_Keys": {
-                    strategy: "spoof_hardware_values",
+                'Hardware_Registry_Keys': {
+                    strategy: 'spoof_hardware_values',
                     priority: 9
                 },
-                "Software_Registry_Keys": {
-                    strategy: "spoof_software_values",
+                'Software_Registry_Keys': {
+                    strategy: 'spoof_software_values',
                     priority: 8
                 }
             },
@@ -1059,20 +1059,20 @@ const modularHookLibrary = {
     registerModule: function(moduleId, moduleDefinition) {
         if (this.moduleRegistry.has(moduleId)) {
             send({
-                type: "warning",
-                target: "hook_library",
-                action: "module_overwrite",
+                type: 'warning',
+                target: 'hook_library',
+                action: 'module_overwrite',
                 module_id: moduleId,
-                message: "Module already registered, overwriting"
+                message: 'Module already registered, overwriting'
             });
         }
 
         // Validate module definition
         if (!this.validateModuleDefinition(moduleDefinition)) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "invalid_module_definition",
+                type: 'error',
+                target: 'hook_library',
+                action: 'invalid_module_definition',
                 module_id: moduleId
             });
             return false;
@@ -1081,13 +1081,13 @@ const modularHookLibrary = {
         // Add metadata
         moduleDefinition.id = moduleId;
         moduleDefinition.registeredAt = Date.now();
-        moduleDefinition.status = "registered";
+        moduleDefinition.status = 'registered';
 
         this.moduleRegistry.set(moduleId, moduleDefinition);
         send({
-            type: "success",
-            target: "hook_library",
-            action: "module_registered",
+            type: 'success',
+            target: 'hook_library',
+            action: 'module_registered',
             module_id: moduleId
         });
 
@@ -1120,9 +1120,9 @@ const modularHookLibrary = {
 
     loadModule: function(moduleId, options) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "loading_module",
+            type: 'info',
+            target: 'hook_library',
+            action: 'loading_module',
             module_id: moduleId
         });
 
@@ -1132,9 +1132,9 @@ const modularHookLibrary = {
             // Check if already loaded
             if (this.loadedModules.has(moduleId)) {
                 send({
-                    type: "info",
-                    target: "hook_library",
-                    action: "module_already_loaded",
+                    type: 'info',
+                    target: 'hook_library',
+                    action: 'module_already_loaded',
                     module_id: moduleId
                 });
                 return this.loadedModules.get(moduleId);
@@ -1143,7 +1143,7 @@ const modularHookLibrary = {
             // Get module definition
             var moduleDefinition = this.moduleRegistry.get(moduleId);
             if (!moduleDefinition) {
-                throw new Error("Module not found: " + moduleId);
+                throw new Error('Module not found: ' + moduleId);
             }
 
             // Check cache first
@@ -1152,9 +1152,9 @@ const modularHookLibrary = {
                 this.loadedModules.set(moduleId, cachedModule);
                 this.stats.cacheHits++;
                 send({
-                    type: "info",
-                    target: "hook_library",
-                    action: "module_loaded_from_cache",
+                    type: 'info',
+                    target: 'hook_library',
+                    action: 'module_loaded_from_cache',
                     module_id: moduleId
                 });
                 return cachedModule;
@@ -1177,7 +1177,7 @@ const modularHookLibrary = {
             if (moduleInstance.install) {
                 var installResult = moduleInstance.install();
                 if (!installResult) {
-                    throw new Error("Module installation failed: " + moduleId);
+                    throw new Error('Module installation failed: ' + moduleId);
                 }
             }
 
@@ -1191,18 +1191,18 @@ const modularHookLibrary = {
             this.stats.modulesLoaded++;
 
             send({
-                type: "success",
-                target: "hook_library",
-                action: "module_loaded_successfully",
+                type: 'success',
+                target: 'hook_library',
+                action: 'module_loaded_successfully',
                 module_id: moduleId
             });
             return moduleInstance;
 
         } catch (e) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "module_load_error",
+                type: 'error',
+                target: 'hook_library',
+                action: 'module_load_error',
                 module_id: moduleId,
                 error: e.message || e.toString()
             });
@@ -1219,7 +1219,7 @@ const modularHookLibrary = {
             category: moduleDefinition.category,
             dependencies: moduleDefinition.dependencies || [],
             hooks: moduleDefinition.hooks || {},
-            status: "loaded",
+            status: 'loaded',
             loadedAt: Date.now(),
             options: options,
 
@@ -1235,11 +1235,11 @@ const modularHookLibrary = {
             },
 
             isInstalled: function() {
-                return this.status === "installed";
+                return this.status === 'installed';
             },
 
             isEnabled: function() {
-                return this.status === "enabled";
+                return this.status === 'enabled';
             }
         };
 
@@ -1248,9 +1248,9 @@ const modularHookLibrary = {
 
     unloadModule: function(moduleId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "module_unloading",
+            type: 'info',
+            target: 'hook_library',
+            action: 'module_unloading',
             module_id: moduleId
         });
 
@@ -1258,9 +1258,9 @@ const modularHookLibrary = {
             var moduleInstance = this.loadedModules.get(moduleId);
             if (!moduleInstance) {
                 send({
-                    type: "warning",
-                    target: "hook_library",
-                    action: "module_not_loaded",
+                    type: 'warning',
+                    target: 'hook_library',
+                    action: 'module_not_loaded',
                     module_id: moduleId
                 });
                 return false;
@@ -1278,18 +1278,18 @@ const modularHookLibrary = {
             this.moduleCache.delete(moduleId);
 
             send({
-                type: "success",
-                target: "hook_library",
-                action: "module_unloaded",
+                type: 'success',
+                target: 'hook_library',
+                action: 'module_unloaded',
                 module_id: moduleId
             });
             return true;
 
         } catch (e) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "module_unload_error",
+                type: 'error',
+                target: 'hook_library',
+                action: 'module_unload_error',
                 module_id: moduleId,
                 error: e.message || e.toString()
             });
@@ -1300,9 +1300,9 @@ const modularHookLibrary = {
 
     reloadModule: function(moduleId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "module_reloading",
+            type: 'info',
+            target: 'hook_library',
+            action: 'module_reloading',
             module_id: moduleId
         });
 
@@ -1323,9 +1323,9 @@ const modularHookLibrary = {
     // === HOOK MANAGEMENT ===
     installHook: function(hookId, hookDefinition, moduleId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_installing",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_installing',
             hook_id: hookId
         });
 
@@ -1335,7 +1335,7 @@ const modularHookLibrary = {
                 definition: hookDefinition,
                 moduleId: moduleId,
                 installedAt: Date.now(),
-                status: "installed",
+                status: 'installed',
                 callCount: 0,
                 successCount: 0,
                 errorCount: 0
@@ -1349,11 +1349,11 @@ const modularHookLibrary = {
                 this.stats.hooksInstalled++;
 
                 send({
-            type: "success",
-            target: "hook_library",
-            action: "hook_installed",
-            hook_id: hookId
-        });
+                    type: 'success',
+                    target: 'hook_library',
+                    action: 'hook_installed',
+                    hook_id: hookId
+                });
                 return true;
             }
 
@@ -1361,9 +1361,9 @@ const modularHookLibrary = {
 
         } catch (e) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "hook_install_error",
+                type: 'error',
+                target: 'hook_library',
+                action: 'hook_install_error',
                 hook_id: hookId,
                 error: e.message || e.toString()
             });
@@ -1378,35 +1378,35 @@ const modularHookLibrary = {
 
         try {
             switch (strategy) {
-                case "replace_return":
-                    return this.createReplaceReturnHook(hookDefinition);
+            case 'replace_return':
+                return this.createReplaceReturnHook(hookDefinition);
 
-                case "intercept_and_modify":
-                    return this.createInterceptModifyHook(hookDefinition);
+            case 'intercept_and_modify':
+                return this.createInterceptModifyHook(hookDefinition);
 
-                case "monitor_and_log":
-                    return this.createMonitorLogHook(hookDefinition);
+            case 'monitor_and_log':
+                return this.createMonitorLogHook(hookDefinition);
 
-                case "spoof_values":
-                    return this.createSpoofValuesHook(hookDefinition);
+            case 'spoof_values':
+                return this.createSpoofValuesHook(hookDefinition);
 
-                case "block_requests":
-                    return this.createBlockRequestsHook(hookDefinition);
+            case 'block_requests':
+                return this.createBlockRequestsHook(hookDefinition);
 
-                default:
-                    send({
-                        type: "warning",
-                        target: "hook_library",
-                        action: "unknown_hook_strategy",
-                        strategy: strategy
-                    });
-                    return null;
+            default:
+                send({
+                    type: 'warning',
+                    target: 'hook_library',
+                    action: 'unknown_hook_strategy',
+                    strategy: strategy
+                });
+                return null;
             }
         } catch (e) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "frida_hook_creation_error",
+                type: 'error',
+                target: 'hook_library',
+                action: 'frida_hook_creation_error',
                 error: e.message || e.toString()
             });
             return null;
@@ -1417,9 +1417,9 @@ const modularHookLibrary = {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             send({
-                type: "warning",
-                target: "hook_library",
-                action: "function_not_found",
+                type: 'warning',
+                target: 'hook_library',
+                action: 'function_not_found',
                 target_function: hookDefinition.target
             });
             return null;
@@ -1427,9 +1427,9 @@ const modularHookLibrary = {
 
         return Interceptor.replace(targetFunc, new NativeCallback(function() {
             send({
-                type: "info",
-                target: "hook_library",
-                action: "hook_executed",
+                type: 'info',
+                target: 'hook_library',
+                action: 'hook_executed',
                 target_function: hookDefinition.target
             });
             return hookDefinition.returnValue || 0;
@@ -1453,9 +1453,9 @@ const modularHookLibrary = {
                     retval.replace(this.hookDef.modifyReturn);
                 }
                 send({
-                    type: "bypass",
-                    target: "hook_library",
-                    action: "intercept_hook_executed",
+                    type: 'bypass',
+                    target: 'hook_library',
+                    action: 'intercept_hook_executed',
                     target_function: this.hookDef.target
                 });
             }
@@ -1471,9 +1471,9 @@ const modularHookLibrary = {
         return Interceptor.attach(targetFunc, {
             onEnter: function(args) {
                 send({
-                    type: "info",
-                    target: "hook_library",
-                    action: "monitor_function_called",
+                    type: 'info',
+                    target: 'hook_library',
+                    action: 'monitor_function_called',
                     target_function: hookDefinition.target
                 });
             }
@@ -1491,9 +1491,9 @@ const modularHookLibrary = {
                 if (hookDefinition.spoofedValues) {
                     // Apply spoofed values based on hook configuration
                     send({
-                        type: "bypass",
-                        target: "hook_library",
-                        action: "values_spoofed",
+                        type: 'bypass',
+                        target: 'hook_library',
+                        action: 'values_spoofed',
                         target_function: hookDefinition.target
                     });
                 }
@@ -1511,9 +1511,9 @@ const modularHookLibrary = {
             onLeave: function(retval) {
                 retval.replace(-1); // Block by returning error
                 send({
-                    type: "bypass",
-                    target: "hook_library",
-                    action: "request_blocked",
+                    type: 'bypass',
+                    target: 'hook_library',
+                    action: 'request_blocked',
                     target_function: hookDefinition.target
                 });
             }
@@ -1522,18 +1522,18 @@ const modularHookLibrary = {
 
     uninstallHook: function(hookId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_uninstalling",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_uninstalling',
             hook_id: hookId
         });
 
         var hookInfo = this.activeHooks.get(hookId);
         if (!hookInfo) {
             send({
-                type: "warning",
-                target: "hook_library",
-                action: "hook_not_found",
+                type: 'warning',
+                target: 'hook_library',
+                action: 'hook_not_found',
                 hook_id: hookId
             });
             return false;
@@ -1547,18 +1547,18 @@ const modularHookLibrary = {
 
             this.activeHooks.delete(hookId);
             send({
-                type: "success",
-                target: "hook_library",
-                action: "hook_uninstalled",
+                type: 'success',
+                target: 'hook_library',
+                action: 'hook_uninstalled',
                 hook_id: hookId
             });
             return true;
 
         } catch (e) {
             send({
-                type: "error",
-                target: "hook_library",
-                action: "hook_uninstall_error",
+                type: 'error',
+                target: 'hook_library',
+                action: 'hook_uninstall_error',
                 hook_id: hookId,
                 error: e.message || e.toString()
             });
@@ -1569,9 +1569,9 @@ const modularHookLibrary = {
     // === HOOK GROUPS AND CHAINS ===
     createHookGroup: function(groupId, hookIds, options) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_group_creating",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_group_creating',
             group_id: groupId
         });
 
@@ -1580,7 +1580,7 @@ const modularHookLibrary = {
             hooks: hookIds,
             options: options || {},
             createdAt: Date.now(),
-            status: "created"
+            status: 'created'
         };
 
         this.hookGroups.set(groupId, group);
@@ -1589,18 +1589,18 @@ const modularHookLibrary = {
 
     executeHookGroup: function(groupId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_group_executing",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_group_executing',
             group_id: groupId
         });
 
         var group = this.hookGroups.get(groupId);
         if (!group) {
             send({
-                type: "warning",
-                target: "hook_library",
-                action: "hook_group_not_found",
+                type: 'warning',
+                target: 'hook_library',
+                action: 'hook_group_not_found',
                 group_id: groupId
             });
             return false;
@@ -1612,11 +1612,11 @@ const modularHookLibrary = {
             var hookInfo = this.activeHooks.get(hookId);
 
             if (hookInfo) {
-                results.push({hookId: hookId, status: "executed"});
+                results.push({hookId: hookId, status: 'executed'});
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
             } else {
-                results.push({hookId: hookId, status: "not_found"});
+                results.push({hookId: hookId, status: 'not_found'});
             }
         }
 
@@ -1625,9 +1625,9 @@ const modularHookLibrary = {
 
     createHookChain: function(chainId, hookIds, options) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_chain_creating",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_chain_creating',
             chain_id: chainId
         });
 
@@ -1636,7 +1636,7 @@ const modularHookLibrary = {
             hooks: hookIds,
             options: options || {},
             createdAt: Date.now(),
-            status: "created"
+            status: 'created'
         };
 
         this.hookChains.set(chainId, chain);
@@ -1645,18 +1645,18 @@ const modularHookLibrary = {
 
     executeHookChain: function(chainId) {
         send({
-            type: "info",
-            target: "hook_library",
-            action: "hook_chain_executing",
+            type: 'info',
+            target: 'hook_library',
+            action: 'hook_chain_executing',
             chain_id: chainId
         });
 
         var chain = this.hookChains.get(chainId);
         if (!chain) {
             send({
-                type: "warning",
-                target: "hook_library",
-                action: "hook_chain_not_found",
+                type: 'warning',
+                target: 'hook_library',
+                action: 'hook_chain_not_found',
                 chain_id: chainId
             });
             return false;
@@ -1670,16 +1670,16 @@ const modularHookLibrary = {
 
             if (hookInfo) {
                 // Check if previous hooks succeeded (if required)
-                if (chain.options.stopOnFailure && results.some(r => r.status === "failed")) {
-                    results.push({hookId: hookId, status: "skipped"});
+                if (chain.options.stopOnFailure && results.some(r => r.status === 'failed')) {
+                    results.push({hookId: hookId, status: 'skipped'});
                     continue;
                 }
 
-                results.push({hookId: hookId, status: "executed"});
+                results.push({hookId: hookId, status: 'executed'});
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
             } else {
-                results.push({hookId: hookId, status: "not_found"});
+                results.push({hookId: hookId, status: 'not_found'});
             }
         }
 
@@ -1689,10 +1689,10 @@ const modularHookLibrary = {
     // === DEPENDENCY MANAGEMENT ===
     setupDependencyManager: function() {
         send({
-            type: "info",
-            target: "dependency_manager",
-            action: "setting_up_dependency_manager",
-            component: "dependency_system"
+            type: 'info',
+            target: 'dependency_manager',
+            action: 'setting_up_dependency_manager',
+            component: 'dependency_system'
         });
 
         if (this.config.library.enableDependencyTracking) {
@@ -1702,10 +1702,10 @@ const modularHookLibrary = {
 
     buildDependencyGraph: function() {
         send({
-            type: "info",
-            target: "dependency_manager",
-            action: "building_dependency_graph",
-            component: "dependency_graph"
+            type: 'info',
+            target: 'dependency_manager',
+            action: 'building_dependency_graph',
+            component: 'dependency_graph'
         });
 
         this.dependencyGraph.clear();
@@ -1719,10 +1719,10 @@ const modularHookLibrary = {
         // Check for circular dependencies
         if (this.detectCircularDependencies()) {
             send({
-                type: "warning",
-                target: "dependency_manager",
-                action: "circular_dependencies_detected",
-                component: "dependency_validation"
+                type: 'warning',
+                target: 'dependency_manager',
+                action: 'circular_dependencies_detected',
+                component: 'dependency_validation'
             });
         }
     },
@@ -1773,7 +1773,7 @@ const modularHookLibrary = {
 
     resolveDependenciesRecursive: function(moduleId, resolved, resolving) {
         if (resolving.has(moduleId)) {
-            throw new Error("Circular dependency detected: " + moduleId);
+            throw new Error('Circular dependency detected: ' + moduleId);
         }
 
         if (resolved.indexOf(moduleId) !== -1) {
@@ -1799,10 +1799,10 @@ const modularHookLibrary = {
     // === HOOK EXECUTOR ===
     setupHookExecutor: function() {
         send({
-            type: "info",
-            target: "hook_executor",
-            action: "setting_up_hook_executor",
-            component: "execution_engine"
+            type: 'info',
+            target: 'hook_executor',
+            action: 'setting_up_hook_executor',
+            component: 'execution_engine'
         });
 
         this.hookExecutor = {
@@ -1817,10 +1817,10 @@ const modularHookLibrary = {
     // === PERFORMANCE MONITORING ===
     setupPerformanceMonitor: function() {
         send({
-            type: "info",
-            target: "performance_monitor",
-            action: "setting_up_performance_monitor",
-            component: "monitoring_system"
+            type: 'info',
+            target: 'performance_monitor',
+            action: 'setting_up_performance_monitor',
+            component: 'monitoring_system'
         });
 
         if (this.config.debug.measurePerformance) {
@@ -1850,10 +1850,10 @@ const modularHookLibrary = {
     // === LIBRARY SERVICES ===
     startLibraryServices: function() {
         send({
-            type: "status",
-            target: "library_services",
-            action: "starting_library_services",
-            component: "service_manager"
+            type: 'status',
+            target: 'library_services',
+            action: 'starting_library_services',
+            component: 'service_manager'
         });
 
         // Auto-load configured modules
@@ -1874,20 +1874,20 @@ const modularHookLibrary = {
 
     autoLoadModules: function() {
         send({
-            type: "info",
-            target: "auto_loader",
-            action: "auto_loading_modules",
-            component: "module_loader"
+            type: 'info',
+            target: 'auto_loader',
+            action: 'auto_loading_modules',
+            component: 'module_loader'
         });
 
         // Load essential modules
         var essentialModules = [
-            "antidebug.basic",
-            "networking.http",
-            "crypto.base",
-            "hardware.base",
-            "memory.base",
-            "registry.access"
+            'antidebug.basic',
+            'networking.http',
+            'crypto.base',
+            'hardware.base',
+            'memory.base',
+            'registry.access'
         ];
 
         for (var i = 0; i < essentialModules.length; i++) {
@@ -1900,28 +1900,28 @@ const modularHookLibrary = {
 
     startConflictDetection: function() {
         send({
-            type: "info",
-            target: "conflict_detection",
-            action: "starting_conflict_detection",
-            component: "conflict_detector"
+            type: 'info',
+            target: 'conflict_detection',
+            action: 'starting_conflict_detection',
+            component: 'conflict_detector'
         });
 
         // This would monitor for conflicting hooks
         // For now, just log that it's started
         send({
-            type: "success",
-            target: "conflict_detection",
-            action: "conflict_detection_service_started",
-            component: "conflict_detector"
+            type: 'success',
+            target: 'conflict_detection',
+            action: 'conflict_detection_service_started',
+            component: 'conflict_detector'
         });
     },
 
     startPerformanceMonitoring: function() {
         send({
-            type: "info",
-            target: "performance_monitoring",
-            action: "starting_performance_monitoring",
-            component: "performance_monitor"
+            type: 'info',
+            target: 'performance_monitoring',
+            action: 'starting_performance_monitoring',
+            component: 'performance_monitor'
         });
 
         setInterval(() => {
@@ -1931,9 +1931,9 @@ const modularHookLibrary = {
 
     logPerformanceMetrics: function() {
         send({
-            type: "info",
-            target: "modular_hook_library",
-            action: "performance_stats",
+            type: 'info',
+            target: 'modular_hook_library',
+            action: 'performance_stats',
             modules_loaded: this.stats.modulesLoaded,
             hooks_installed: this.stats.hooksInstalled,
             hooks_executed: this.stats.hooksExecuted,
@@ -1973,47 +1973,47 @@ const modularHookLibrary = {
     installSummary: function() {
         setTimeout(() => {
             send({
-                type: "status",
-                target: "summary",
-                action: "displaying_library_summary",
-                section: "header"
+                type: 'status',
+                target: 'summary',
+                action: 'displaying_library_summary',
+                section: 'header'
             });
 
             var activeFeatures = [];
 
             if (this.config.library.enabled) {
-                activeFeatures.push("Core Library System");
+                activeFeatures.push('Core Library System');
             }
             if (this.config.library.enableCaching) {
-                activeFeatures.push("Module Caching");
+                activeFeatures.push('Module Caching');
             }
             if (this.config.library.enableDependencyTracking) {
-                activeFeatures.push("Dependency Management");
+                activeFeatures.push('Dependency Management');
             }
             if (this.config.execution.enableAsync) {
-                activeFeatures.push("Async Execution");
+                activeFeatures.push('Async Execution');
             }
             if (this.config.execution.enableBatching) {
-                activeFeatures.push("Hook Batching");
+                activeFeatures.push('Hook Batching');
             }
             if (this.config.performance.enableLazyLoading) {
-                activeFeatures.push("Lazy Loading");
+                activeFeatures.push('Lazy Loading');
             }
 
             for (var i = 0; i < activeFeatures.length; i++) {
                 send({
-                    type: "info",
-                    target: "hook_library",
-                    action: "active_feature_listed",
+                    type: 'info',
+                    target: 'hook_library',
+                    action: 'active_feature_listed',
                     feature: activeFeatures[i]
                 });
             }
 
             send({
-                type: "info",
-                target: "summary",
-                action: "displaying_module_categories",
-                section: "categories"
+                type: 'info',
+                target: 'summary',
+                action: 'displaying_module_categories',
+                section: 'categories'
             });
 
             var categories = Object.keys(this.config.categories);
@@ -2022,9 +2022,9 @@ const modularHookLibrary = {
                 if (this.config.categories[category]) {
                     var moduleCount = this.getModulesByCategory(category).length;
                     send({
-                        type: "info",
-                        target: "hook_library",
-                        action: "category_module_count",
+                        type: 'info',
+                        target: 'hook_library',
+                        action: 'category_module_count',
                         category: category,
                         module_count: moduleCount
                     });
@@ -2032,154 +2032,154 @@ const modularHookLibrary = {
             }
 
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "status_separator"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'status_separator'
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "library_configuration_header"
+                type: 'info',
+                target: 'hook_library',
+                action: 'library_configuration_header'
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "config_auto_load",
+                type: 'info',
+                target: 'hook_library',
+                action: 'config_auto_load',
                 value: this.config.library.autoLoad
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "config_caching",
+                type: 'info',
+                target: 'hook_library',
+                action: 'config_caching',
                 value: this.config.library.enableCaching
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "config_cache_size",
+                type: 'info',
+                target: 'hook_library',
+                action: 'config_cache_size',
                 value: this.config.library.maxCacheSize
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "config_dependency_tracking",
+                type: 'info',
+                target: 'hook_library',
+                action: 'config_dependency_tracking',
                 value: this.config.library.enableDependencyTracking
             });
             send({
-                type: "info",
-                target: "hook_library",
-                action: "config_conflict_detection",
+                type: 'info',
+                target: 'hook_library',
+                action: 'config_conflict_detection',
                 value: this.config.library.enableConflictDetection
             });
 
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "status_separator"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'status_separator'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "execution_settings_header"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'execution_settings_header'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "config_setting",
-                setting: "async_execution",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'config_setting',
+                setting: 'async_execution',
                 value: this.config.execution.enableAsync
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "config_setting",
-                setting: "hook_batching",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'config_setting',
+                setting: 'hook_batching',
                 value: this.config.execution.enableBatching
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "config_setting",
-                setting: "retry_on_failure",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'config_setting',
+                setting: 'retry_on_failure',
                 value: this.config.execution.enableRetry
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "config_setting",
-                setting: "max_retries",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'config_setting',
+                setting: 'max_retries',
                 value: this.config.execution.maxRetries
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "config_setting",
-                setting: "timeout",
-                value: this.config.execution.timeout + "ms"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'config_setting',
+                setting: 'timeout',
+                value: this.config.execution.timeout + 'ms'
             });
 
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "status_separator"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'status_separator'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistics_header"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistics_header'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "registered_modules",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'registered_modules',
                 value: this.moduleRegistry.size
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "loaded_modules",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'loaded_modules',
                 value: this.stats.modulesLoaded
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "installed_hooks",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'installed_hooks',
                 value: this.stats.hooksInstalled
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "cache_hits",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'cache_hits',
                 value: this.stats.cacheHits
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "cache_misses",
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'cache_misses',
                 value: this.stats.cacheMisses
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "runtime_statistic",
-                metric: "cache_hit_rate",
-                value: (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses) * 100).toFixed(1) + "%"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'runtime_statistic',
+                metric: 'cache_hit_rate',
+                value: (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses) * 100).toFixed(1) + '%'
             });
 
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "status_separator"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'status_separator'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "available_modules_header"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'available_modules_header'
             });
 
             var modulesByCategory = {};
@@ -2192,20 +2192,20 @@ const modularHookLibrary = {
 
             for (var category in modulesByCategory) {
                 send({
-                    type: "info",
-                    target: "modular_hook_library",
-                    action: "module_category",
+                    type: 'info',
+                    target: 'modular_hook_library',
+                    action: 'module_category',
                     category: category
                 });
                 var modules = modulesByCategory[category];
                 for (var i = 0; i < modules.length; i++) {
                     var moduleId = modules[i];
                     var isLoaded = this.loadedModules.has(moduleId);
-                    var status = isLoaded ? "loaded" : "available";
+                    var status = isLoaded ? 'loaded' : 'available';
                     send({
-                        type: "info",
-                        target: "modular_hook_library",
-                        action: "module_status",
+                        type: 'info',
+                        target: 'modular_hook_library',
+                        action: 'module_status',
                         module_id: moduleId,
                         status: status
                     });
@@ -2213,19 +2213,19 @@ const modularHookLibrary = {
             }
 
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "status_separator"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'status_separator'
             });
             send({
-                type: "success",
-                target: "modular_hook_library",
-                action: "system_active"
+                type: 'success',
+                target: 'modular_hook_library',
+                action: 'system_active'
             });
             send({
-                type: "info",
-                target: "modular_hook_library",
-                action: "usage_instructions"
+                type: 'info',
+                target: 'modular_hook_library',
+                action: 'usage_instructions'
             });
         }, 100);
     },
@@ -2319,7 +2319,7 @@ const modularHookLibrary = {
             });
 
             // Monitor new module loads
-            Interceptor.attach(Module.findExportByName(null, "dlopen"), {
+            Interceptor.attach(Module.findExportByName(null, 'dlopen'), {
                 onEnter: function(args) {
                     this.path = args[0].readUtf8String();
                 },
@@ -2333,7 +2333,7 @@ const modularHookLibrary = {
             });
 
             // Windows module monitoring
-            var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
+            var loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibrary) {
                 Interceptor.attach(loadLibrary, {
                     onEnter: function(args) {
@@ -2540,18 +2540,18 @@ const modularHookLibrary = {
         composer.setupAntiDetectionChain = function() {
             var antiDebugChain = [
                 {
-                    module: "kernel32.dll",
-                    function: "IsDebuggerPresent",
+                    module: 'kernel32.dll',
+                    function: 'IsDebuggerPresent',
                     onLeave: function(retval, ctx) {
                         retval.replace(0);
                         ctx.flags.debuggerCheckBypassed = true;
                     },
-                    sets: ["debuggerCheckBypassed"]
+                    sets: ['debuggerCheckBypassed']
                 },
                 {
-                    module: "kernel32.dll",
-                    function: "CheckRemoteDebuggerPresent",
-                    requires: ["debuggerCheckBypassed"],
+                    module: 'kernel32.dll',
+                    function: 'CheckRemoteDebuggerPresent',
+                    requires: ['debuggerCheckBypassed'],
                     onEnter: function(args, ctx) {
                         this.pDebuggerPresent = args[1];
                     },
@@ -2563,8 +2563,8 @@ const modularHookLibrary = {
                     }
                 },
                 {
-                    module: "ntdll.dll",
-                    function: "NtQueryInformationProcess",
+                    module: 'ntdll.dll',
+                    function: 'NtQueryInformationProcess',
                     onEnter: function(args, ctx) {
                         this.infoClass = args[1].toInt32();
                         this.buffer = args[2];
@@ -2577,7 +2577,7 @@ const modularHookLibrary = {
                 }
             ];
 
-            return this.createHookChain("antiDebug", antiDebugChain);
+            return this.createHookChain('antiDebug', antiDebugChain);
         };
 
         this.hookComposer = composer;
@@ -2881,9 +2881,9 @@ const modularHookLibrary = {
 
                     if (currentChecksum !== expectedChecksum) {
                         send({
-                            type: "warning",
-                            target: "code_integrity",
-                            action: "tampering_detected",
+                            type: 'warning',
+                            target: 'code_integrity',
+                            action: 'tampering_detected',
                             address: address.toString(),
                             expected: expectedChecksum,
                             actual: currentChecksum
@@ -2910,18 +2910,18 @@ const modularHookLibrary = {
 
         // Decrypt and load module on demand
         encryption.loadProtectedModule = function(moduleId) {
-            var protected = this.protectedCode.get(moduleId);
+            var protectedData = this.protectedCode.get(moduleId);
             var keys = this.encryptionKeys.get(moduleId);
 
-            if (!protected || !keys) return null;
+            if (!protectedData || !keys) return null;
 
             // Decrypt code
             var decrypted = [];
             var counter = 0;
-            for (var i = 0; i < protected.encrypted.length; i += 64) {
+            for (var i = 0; i < protectedData.encrypted.length; i += 64) {
                 var keystream = this.chacha20Block(keys.key, counter++, keys.nonce);
-                for (var j = 0; j < 64 && i + j < protected.encrypted.length; j++) {
-                    decrypted.push(protected.encrypted[i + j] ^ (keystream[Math.floor(j / 4)] >>> ((j % 4) * 8) & 0xFF));
+                for (var j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
+                    decrypted.push(protectedData.encrypted[i + j] ^ (keystream[Math.floor(j / 4)] >>> ((j % 4) * 8) & 0xFF));
                 }
             }
 
@@ -2929,7 +2929,7 @@ const modularHookLibrary = {
             var code = String.fromCharCode.apply(null, decrypted);
 
             // Allocate protected memory for code
-            var codeSize = protected.originalLength;
+            var codeSize = protectedData.originalLength;
             var codePage = Memory.alloc(Process.pageSize);
             Memory.protect(codePage, Process.pageSize, 'rwx');
 
@@ -2943,7 +2943,7 @@ const modularHookLibrary = {
         this.moduleEncryption = encryption;
 
         // Protect critical system hooks
-        var criticalHooks = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"];
+        var criticalHooks = ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess'];
         criticalHooks.forEach(function(hookName) {
             var addr = Module.findExportByName(null, hookName);
             if (addr) {
@@ -3047,7 +3047,7 @@ const modularHookLibrary = {
                         if (!visited.has(dep)) {
                             if (hasCycle(dep)) return true;
                         } else if (recursionStack.has(dep)) {
-                            resolver.circularDeps.add(module + " <-> " + dep);
+                            resolver.circularDeps.add(module + ' <-> ' + dep);
                             return true;
                         }
                     }

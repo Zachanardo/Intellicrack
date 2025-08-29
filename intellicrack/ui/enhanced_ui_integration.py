@@ -51,6 +51,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ..utils.logger import get_logger
+from ..utils.resource_helper import get_resource_path
 from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget
 
 logger = get_logger(__name__)
@@ -428,7 +429,7 @@ class EnhancedMainWindow(QMainWindow):
         self.setGeometry(100, 100, 1600, 1000)
 
         # Set application icon
-        self.setWindowIcon(QIcon("icons/intellicrack.png"))  # If icon exists
+        self.setWindowIcon(QIcon(get_resource_path("assets/icon.ico")))
 
         # Central widget
         self.dashboard = EnhancedAnalysisDashboard(self)
@@ -508,7 +509,7 @@ class EnhancedMainWindow(QMainWindow):
 
         # File operations
         open_action = QAction("Open", self)
-        open_action.setIcon(QIcon("icons/open.png"))  # If icon exists
+        open_action.setIcon(QIcon(get_resource_path("assets/icons/file_open.svg")))
         open_action.triggered.connect(self._open_file)
         toolbar.addAction(open_action)
 
@@ -516,12 +517,12 @@ class EnhancedMainWindow(QMainWindow):
 
         # Analysis operations
         analyze_action = QAction("Analyze", self)
-        analyze_action.setIcon(QIcon("icons/analyze.png"))  # If icon exists
+        analyze_action.setIcon(QIcon(get_resource_path("assets/icons/binary_exe.svg")))
         analyze_action.triggered.connect(lambda: self._start_analysis("comprehensive"))
         toolbar.addAction(analyze_action)
 
         vuln_action = QAction("Vulnerabilities", self)
-        vuln_action.setIcon(QIcon("icons/vulnerability.png"))  # If icon exists
+        vuln_action.setIcon(QIcon(get_resource_path("assets/icons/security_warning.svg")))
         vuln_action.triggered.connect(lambda: self._start_analysis("vulnerability"))
         toolbar.addAction(vuln_action)
 
@@ -529,7 +530,7 @@ class EnhancedMainWindow(QMainWindow):
 
         # Export operations
         export_action = QAction("Export", self)
-        export_action.setIcon(QIcon("icons/export.png"))  # If icon exists
+        export_action.setIcon(QIcon(get_resource_path("assets/icons/db_export.svg")))
         export_action.triggered.connect(self._export_report)
         toolbar.addAction(export_action)
 

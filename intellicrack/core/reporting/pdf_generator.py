@@ -27,6 +27,7 @@ import traceback
 from typing import Any
 
 from intellicrack.logger import logger
+from intellicrack.utils.resource_helper import get_resource_path
 
 from ...handlers.matplotlib_handler import MATPLOTLIB_AVAILABLE, plt
 from ...handlers.pdfkit_handler import PDFKIT_AVAILABLE, pdfkit
@@ -129,10 +130,7 @@ class PDFReportGenerator:
         self.title = "Intellicrack Security Analysis Report"
         self.author = "Intellicrack Security Team"
         self.company = "Intellicrack Security"
-        import intellicrack
-
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        self.logo_path = os.path.join(base_path, "intellicrack", "assets", "icon.ico")
+        self.logo_path = get_resource_path("assets", "icon.ico")
 
         # Default configuration
         self.report_config = {

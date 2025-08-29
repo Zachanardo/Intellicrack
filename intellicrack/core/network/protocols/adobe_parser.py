@@ -25,7 +25,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from ...utils.logger import get_logger
+from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

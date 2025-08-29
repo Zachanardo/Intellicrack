@@ -405,6 +405,10 @@ const websocketInterceptor = {
             }
         } catch(e) {
             // Not in browser context
+            send({
+                type: 'debug',
+                message: 'Browser WebSocket hook failed: ' + e.message
+            });
         }
 
         // Native WebSocket implementations
@@ -711,13 +715,22 @@ const websocketInterceptor = {
                     var url = args[1];
 
                     if (url && url.toString().match(/socket\.io|engine\.io/i)) {
+                        // Track HTTP method for Socket.IO fallback
+                        this.httpMethod = method ? method.toString() : 'GET';
                         send({
                             type: 'info',
                             target: 'websocket_interceptor',
                             action: 'socketio_request_detected',
-                            url: url
+                            url: url,
+                            method: this.httpMethod
                         });
                         this.isSocketIO = true;
+
+                        // Use self to access parent object methods
+                        if (self.shouldInterceptUrl(url.toString())) {
+                            this.interceptedUrl = url;
+                            self.stats.interceptedConnections++;
+                        }
                     }
                 }
             });
@@ -735,17 +748,31 @@ const websocketInterceptor = {
                 Interceptor.attach(messageWebSocket['- connectAsync:'], {
                     onEnter: function(args) {
                         var uri = new ObjC.Object(args[2]);
+                        var uriStr = uri.toString();
+
                         send({
                             type: 'info',
                             target: 'websocket_interceptor',
                             action: 'uwp_websocket_connecting',
-                            uri: uri.toString()
+                            uri: uriStr
                         });
+
+                        // Use self to check if we should intercept this connection
+                        if (self.shouldInterceptUrl(uriStr)) {
+                            this.interceptedUri = uriStr;
+                            self.stats.interceptedConnections++;
+                        }
                     }
                 });
             }
         } catch(e) {
             // Not a UWP app
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'uwp_websocket_check_failed',
+                error: e.toString()
+            });
         }
     },
 
@@ -783,7 +810,15 @@ const websocketInterceptor = {
                 return buffer.readUtf8String(length);
             }
         } catch(e) {
-            return '<read error>';
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'buffer_read_failed',
+                bufferType: bufferType,
+                length: length,
+                error: e.toString()
+            });
+            return '<read error: ' + e.message + '>';
         }
     },
 
@@ -887,6 +922,13 @@ const websocketInterceptor = {
             return JSON.stringify(parsed);
         } catch(e) {
             // Return generic success response
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'verify_response_parse_failed',
+                error: e.toString(),
+                originalMessage: originalMessage.substring(0, 100)
+            });
             return JSON.stringify(this.config.spoofedResponses.verify);
         }
     },
@@ -897,6 +939,12 @@ const websocketInterceptor = {
             Object.assign(parsed, this.config.spoofedResponses.license);
             return JSON.stringify(parsed);
         } catch(e) {
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'license_response_parse_failed',
+                error: e.toString()
+            });
             return JSON.stringify(this.config.spoofedResponses.license);
         }
     },
@@ -907,6 +955,12 @@ const websocketInterceptor = {
             Object.assign(parsed, this.config.spoofedResponses.validate);
             return JSON.stringify(parsed);
         } catch(e) {
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'validate_response_parse_failed',
+                error: e.toString()
+            });
             return JSON.stringify(this.config.spoofedResponses.validate);
         }
     },
@@ -917,6 +971,12 @@ const websocketInterceptor = {
             Object.assign(parsed, this.config.spoofedResponses.auth);
             return JSON.stringify(parsed);
         } catch(e) {
+            send({
+                type: 'debug',
+                target: 'websocket_interceptor',
+                action: 'auth_response_parse_failed',
+                error: e.toString()
+            });
             return JSON.stringify(this.config.spoofedResponses.auth);
         }
     },
@@ -2007,6 +2067,7 @@ const websocketInterceptor = {
                                 // Continue reading streams
                                 return transport.incomingUnidirectionalStreams.getReader().read().then(processStream);
                             }
+                            return null;
                         }).catch(function(error) {
                             send({
                                 type: 'error',
@@ -2030,6 +2091,7 @@ const websocketInterceptor = {
                                 self.hookWebTransportStream(stream, 'bidirectional');
                                 return transport.incomingBidirectionalStreams.getReader().read().then(processStream);
                             }
+                            return null;
                         }).catch(function(error) {
                             send({
                                 type: 'error',
@@ -2100,6 +2162,7 @@ const websocketInterceptor = {
                                 self.interceptedMessages++;
                                 return transport.datagrams.readable.getReader().read().then(processDatagram);
                             }
+                            return null;
                         }).catch(function(error) {
                             send({
                                 type: 'error',
@@ -2167,6 +2230,7 @@ const websocketInterceptor = {
                         self.interceptedMessages++;
                         return stream.readable.getReader().read().then(processData);
                     }
+                    return null;
                 }).catch(function(error) {
                     send({
                         type: 'error',
@@ -4890,3 +4954,29 @@ const websocketInterceptor = {
         }
     }
 };
+
+// Initialize the WebSocket interceptor
+if (typeof websocketInterceptor !== 'undefined') {
+    send({
+        type: 'info',
+        message: 'Initializing WebSocket Interceptor v' + websocketInterceptor.version
+    });
+
+    // Start interception
+    WebSocketInterceptor.init();
+
+    // Export for external access
+    rpc.exports = {
+        getStats: function() {
+            return {
+                intercepted: WebSocketInterceptor.stats.interceptedConnections,
+                messages: WebSocketInterceptor.stats.interceptedMessages,
+                spoofed: WebSocketInterceptor.stats.spoofedResponses
+            };
+        },
+        setConfig: function(config) {
+            Object.assign(websocketInterceptor.config, config);
+            WebSocketInterceptor.init(); // Reinitialize with new config
+        }
+    };
+}

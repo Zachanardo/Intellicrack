@@ -267,6 +267,14 @@ const antiDebugger = {
                     var threadHandle = args[0];
                     var infoClass = args[1].toInt32();
 
+                    // Log thread handle for debugging purposes
+                    send({
+                        type: 'debug',
+                        target: 'NtSetInformationThread',
+                        threadHandle: threadHandle.toString(),
+                        infoClass: infoClass
+                    });
+
                     if (infoClass === 17) { // ThreadHideFromDebugger
                         send({
                             type: 'bypass',
@@ -288,10 +296,14 @@ const antiDebugger = {
         if (ntCreateThreadEx) {
             Interceptor.attach(ntCreateThreadEx, {
                 onEnter: function(args) {
+                    var threadHandle = args[0];
+                    var desiredAccess = args[1];
                     send({
                         type: 'info',
                         target: 'NtCreateThreadEx',
-                        message: 'Thread creation detected - monitoring for debug threads'
+                        message: 'Thread creation detected - monitoring for debug threads',
+                        threadHandle: threadHandle.toString(),
+                        desiredAccess: desiredAccess.toString()
                     });
                 }
             });
@@ -312,7 +324,13 @@ const antiDebugger = {
         var outputDebugStringA = Module.findExportByName('kernel32.dll', 'OutputDebugStringA');
         if (outputDebugStringA) {
             Interceptor.replace(outputDebugStringA, new NativeCallback(function(lpOutputString) {
-                // Silently consume debug output
+                // Log suppressed debug output for analysis
+                var debugMessage = Memory.readUtf8String(lpOutputString);
+                send({
+                    type: 'debug_suppressed',
+                    target: 'OutputDebugStringA',
+                    message: debugMessage
+                });
                 return;
             }, 'void', ['pointer']));
 
@@ -322,7 +340,13 @@ const antiDebugger = {
         var outputDebugStringW = Module.findExportByName('kernel32.dll', 'OutputDebugStringW');
         if (outputDebugStringW) {
             Interceptor.replace(outputDebugStringW, new NativeCallback(function(lpOutputString) {
-                // Silently consume debug output
+                // Log suppressed debug output for analysis
+                var debugMessage = Memory.readUtf16String(lpOutputString);
+                send({
+                    type: 'debug_suppressed',
+                    target: 'OutputDebugStringW',
+                    message: debugMessage
+                });
                 return;
             }, 'void', ['pointer']));
 
@@ -426,8 +450,13 @@ const antiDebugger = {
                                 cleared_registers: ['DR0', 'DR1', 'DR2', 'DR3', 'DR6', 'DR7']
                             });
                         }
-                    } catch(e) {
+                    } catch(error) {
                         // Context manipulation failed - this is expected in some cases
+                        send({
+                            type: 'warning',
+                            target: 'GetThreadContext',
+                            message: 'Failed to clear debug registers: ' + error.message
+                        });
                     }
                 }
             });
@@ -470,8 +499,13 @@ const antiDebugger = {
                                 });
                             }
                         }
-                    } catch(e) {
+                    } catch(error) {
                         // Context access failed
+                        send({
+                            type: 'warning',
+                            target: 'SetThreadContext',
+                            message: 'Failed to prevent hardware breakpoint installation: ' + error.message
+                        });
                     }
                 }
             });
@@ -498,8 +532,13 @@ const antiDebugger = {
                                     context.add(0xB0).writeU64(0); // DR6
                                     context.add(0xB8).writeU64(0); // DR7
                                 }
-                            } catch(e) {
+                            } catch(error) {
                                 // Expected - some contexts may be read-only
+                                send({
+                                    type: 'debug',
+                                    target: 'ContinueDebugEvent_context_clear',
+                                    message: 'Context read-only: ' + error.message
+                                });
                             }
                         }
                     }
@@ -557,7 +596,12 @@ const antiDebugger = {
                     this.hooksInstalled['RDTSC_' + module.name] = matches.length;
                 }
 
-            } catch(e) {
+            } catch(error) {
+                send({
+                    type: 'warning',
+                    target: 'hookRdtscInstructions',
+                    message: 'Failed to hook RDTSC in module ' + module.name + ': ' + error.message
+                });
                 continue;
             }
         }
@@ -569,9 +613,19 @@ const antiDebugger = {
                 onLeave: function(retval) {
                     var config = this.parent.parent.config;
                     if (config.timingProtection.enabled && config.timingProtection.rdtscSpoofing) {
+                        // Store original timing value for analysis
+                        var originalValue = retval.toNumber();
+
                         // Provide consistent timing to prevent timing-based detection
                         var baseTime = 0x123456789ABC;
                         var currentTime = baseTime + (Date.now() % 1000000) * 1000;
+
+                        send({
+                            type: 'timing_spoofed',
+                            target: 'RDTSC',
+                            original: originalValue,
+                            spoofed: currentTime
+                        });
 
                         this.context.eax = ptr(currentTime & 0xFFFFFFFF);
                         this.context.edx = ptr((currentTime >>> 32) & 0xFFFFFFFF);
@@ -586,8 +640,13 @@ const antiDebugger = {
                     }
                 }
             });
-        } catch(e) {
+        } catch(error) {
             // Hook failed - continue with other RDTSC instructions
+            send({
+                type: 'warning',
+                target: 'hookRdtscInstruction',
+                message: 'Failed to hook RDTSC at ' + address + ': ' + error.message
+            });
         }
     },
 
@@ -830,8 +889,8 @@ const antiDebugger = {
                                 });
                             }
                         }
-                    } catch(e) {
-                        // Process entry manipulation failed
+                    } catch(error) {
+                        send({ type: 'error', target: 'PEB_manipulation', message: 'Process entry manipulation failed: ' + error.message });
                     }
                 }
             });
@@ -1055,7 +1114,8 @@ const antiDebugger = {
                         type: 'info',
                         target: 'AddVectoredExceptionHandler',
                         message: 'Vectored exception handler registered',
-                        first: first === 1
+                        first: first === 1,
+                        handler_address: handler.toString()
                     });
 
                     var config = this.parent.parent.config;
@@ -1091,7 +1151,8 @@ const antiDebugger = {
                     send({
                         type: 'bypass',
                         target: 'anti_debugger',
-                        action: 'unhandled_exception_filter_set'
+                        action: 'unhandled_exception_filter_set',
+                        filter_address: lpTopLevelExceptionFilter.toString()
                     });
 
                     var config = this.parent.parent.config;
@@ -1129,7 +1190,8 @@ const antiDebugger = {
                 send({
                     type: 'bypass',
                     target: 'DebugBreakProcess',
-                    action: 'debug_break_process_blocked'
+                    action: 'debug_break_process_blocked',
+                    process_handle: process.toString()
                 });
                 return 1; // TRUE - fake success
             }, 'int', ['pointer']));
@@ -1199,7 +1261,9 @@ const antiDebugger = {
                 send({
                     type: 'bypass',
                     target: 'anti_debugger',
-                    action: 'wait_for_debug_event_blocked'
+                    action: 'wait_for_debug_event_blocked',
+                    debug_event_ptr: lpDebugEvent.toString(),
+                    timeout_ms: dwMilliseconds
                 });
                 return 0; // FALSE - no debug events
             }, 'int', ['pointer', 'uint32']));
@@ -1213,7 +1277,10 @@ const antiDebugger = {
                 send({
                     type: 'bypass',
                     target: 'anti_debugger',
-                    action: 'continue_debug_event_blocked'
+                    action: 'continue_debug_event_blocked',
+                    process_id: dwProcessId,
+                    thread_id: dwThreadId,
+                    continue_status: dwContinueStatus
                 });
                 return 1; // TRUE - fake success
             }, 'int', ['uint32', 'uint32', 'uint32']));
@@ -1244,7 +1311,8 @@ const antiDebugger = {
                 send({
                     type: 'bypass',
                     target: 'anti_debugger',
-                    action: 'debug_active_process_stop_intercepted'
+                    action: 'debug_active_process_stop_intercepted',
+                    process_id: dwProcessId
                 });
                 return 1; // TRUE - fake success
             }, 'int', ['uint32']));
@@ -1501,7 +1569,8 @@ const antiDebugger = {
                                 var libraryName = '';
                                 try {
                                     libraryName = args[0].readUtf8String() || args[0].readUtf16String() || '';
-                                } catch(e) {
+                                } catch(error) {
+                                    send({ type: 'error', target: 'VM_API_hook', message: 'Library name read failed: ' + error.message });
                                     return;
                                 }
 
@@ -1688,7 +1757,8 @@ const antiDebugger = {
                                 break;
                             }
                         }
-                    } catch(e) {
+                    } catch(error) {
+                        send({ type: 'debug', target: 'heap_flag_check', message: 'Heap flag analysis failed: ' + error.message });
                         continue;
                     }
                 }
@@ -1767,8 +1837,8 @@ const antiDebugger = {
                         BYPASS_STATS.amsi_patches_applied++;
                     }
                 }
-            } catch(e) {
-                // AMSI patching failed, hooks should still work
+            } catch(error) {
+                send({ type: 'warning', target: 'AMSI_patching', message: 'AMSI patching failed, hooks should still work: ' + error.message });
             }
         } catch(e) {
             send({
@@ -1858,14 +1928,15 @@ const antiDebugger = {
                                     endbr32_count: matches32.length
                                 });
                             }
-                        } catch(e) {
+                        } catch(error) {
+                            send({ type: 'debug', target: 'CET_analysis', message: 'CET instruction analysis failed: ' + error.message });
                             continue;
                         }
                         break; // Only check main executable
                     }
                 }
-            } catch(e) {
-                // CET instruction scanning failed
+            } catch(error) {
+                send({ type: 'warning', target: 'CET_scan', message: 'CET instruction scanning failed: ' + error.message });
             }
         } catch(e) {
             send({
@@ -2012,6 +2083,26 @@ const antiDebugger = {
                 this.hooksInstalled['NtQuerySystemInformation_PatchGuard'] = true;
             }
 
+            // Hook remaining integrity APIs
+            for (var api of integrityApis) {
+                if (api.func !== 'NtQuerySystemInformation') { // Already hooked above
+                    var addr = Module.findExportByName(api.module, api.func);
+                    if (addr) {
+                        Interceptor.attach(addr, {
+                            onEnter: function() {
+                                send({
+                                    type: 'bypass',
+                                    target: 'integrity_check',
+                                    action: 'integrity_api_intercepted',
+                                    api: api.func
+                                });
+                            }
+                        });
+                        this.hooksInstalled[api.func + '_integrity'] = true;
+                    }
+                }
+            }
+
             // Hook timer-related functions used by PatchGuard
             var timerApis = [
                 { module: 'ntdll.dll', func: 'NtCreateTimer' },
@@ -2057,8 +2148,8 @@ const antiDebugger = {
                         });
                         this.hooksInstalled[api.func + '_PG'] = true;
                     }
-                } catch(e) {
-                    // Kernel module not accessible from user mode
+                } catch(error) {
+                    send({ type: 'debug', target: 'PG_hook', message: 'Kernel module not accessible from user mode: ' + error.message });
                     continue;
                 }
             }
@@ -2165,6 +2256,30 @@ const antiDebugger = {
                             }
                             return Math.random() > 0.9 ? 0x8000 : 0; // Occasionally simulate key press
                         }, 'short', ['int']));
+                    } else if (api.func === 'GetTickCount') {
+                        Interceptor.replace(addr, new NativeCallback(function() {
+                            var elapsed = Date.now() - baseTime;
+                            var fakeTickCount = (baseTime + elapsed * 0.8) & 0xFFFFFFFF; // Slower timing
+                            send({
+                                type: 'bypass',
+                                target: 'GetTickCount',
+                                action: 'timing_manipulation_ml',
+                                fake_tick_count: fakeTickCount
+                            });
+                            return fakeTickCount;
+                        }, 'uint32', []));
+                    } else if (api.func === 'GetTickCount64') {
+                        Interceptor.replace(addr, new NativeCallback(function() {
+                            var elapsed = Date.now() - baseTime;
+                            var fakeTickCount64 = baseTime + elapsed * 0.8; // Slower timing
+                            send({
+                                type: 'bypass',
+                                target: 'GetTickCount64',
+                                action: 'timing_manipulation_ml',
+                                fake_tick_count64: fakeTickCount64
+                            });
+                            return fakeTickCount64;
+                        }, 'uint64', []));
                     }
                     this.hooksInstalled[api.func + '_ML'] = true;
                 }

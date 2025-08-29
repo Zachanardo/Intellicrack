@@ -20,1949 +20,2311 @@
 // Comprehensive monitoring with Native API hooks, anti-detection, and intelligent data analysis
 'use strict';
 
-if (Process.platform !== 'windows') {
-  send({ type: 'error', target: 'registry_monitor', message: 'Unsupported platform', platform: Process.platform });
-  return;
-}
+(function() {
 
-const config = {
-  keyFilters: [
-    '\\software\\',
-    'windows nt\\currentversion',
-    'licens',
-    'activation',
-    'adobe',
-    'autodesk',
-    'product',
-    'machineguid',
-    'tokens',
-    'security'
-  ],
-  valueFilters: [
-    'licens',
-    'key',
-    'serial',
-    'token',
-    'machineguid',
-    'productid',
-    'activation',
-    'hwid'
-  ],
-  captureValuePreviewBytes: 256,
-  includeBacktraceOnMatch: false,
-  logFailures: true,
-  enableNativeApiHooks: true,
-  enableStealthMode: true,
-  performanceThrottleMs: 5,
-  maxEventsPerSecond: 1000
-};
+    if (Process.platform !== 'windows') {
+        send({ type: 'error', target: 'registry_monitor', message: 'Unsupported platform', platform: Process.platform });
+        return;
+    }
 
-recv('registry_monitor_config', function onCfg(message) {
-  try {
-    const p = message.payload || {};
-    if (Array.isArray(p.keyFilters)) config.keyFilters = p.keyFilters.map(s => String(s).toLowerCase());
-    if (Array.isArray(p.valueFilters)) config.valueFilters = p.valueFilters.map(s => String(s).toLowerCase());
-    if (typeof p.captureValuePreviewBytes === 'number') config.captureValuePreviewBytes = Math.max(0, p.captureValuePreviewBytes | 0);
-    if (typeof p.includeBacktraceOnMatch === 'boolean') config.includeBacktraceOnMatch = p.includeBacktraceOnMatch;
-    if (typeof p.logFailures === 'boolean') config.logFailures = p.logFailures;
-    if (typeof p.enableNativeApiHooks === 'boolean') config.enableNativeApiHooks = p.enableNativeApiHooks;
-    if (typeof p.enableStealthMode === 'boolean') config.enableStealthMode = p.enableStealthMode;
-    if (typeof p.performanceThrottleMs === 'number') config.performanceThrottleMs = Math.max(0, p.performanceThrottleMs);
-    if (typeof p.maxEventsPerSecond === 'number') config.maxEventsPerSecond = Math.max(10, p.maxEventsPerSecond);
-    send({ type: 'info', target: 'registry_monitor', event: 'config_updated', config });
-  } catch (e) {
-    send({ type: 'error', target: 'registry_monitor', message: 'config_update_failed', error: String(e) });
-  }
-  recv('registry_monitor_config', onCfg);
-}).wait();
+    const config = {
+        keyFilters: [
+            '\\software\\',
+            'windows nt\\currentversion',
+            'licens',
+            'activation',
+            'adobe',
+            'microsoft',
+            'autodesk',
+            'unity',
+            'jetbrains',
+            'serial',
+            'productkey',
+            'activationid',
+            'installid',
+            'hwid',
+            'machinekey',
+            'registration',
+            'subscription',
+            'trial',
+            'evaluation',
+            'expire',
+            'softkey',
+            'dongle',
+            'hasp',
+            'sentinel',
+            'flexlm',
+            'license.dat',
+            'crypto\\rsa\\',
+            'crypto\\keys',
+            'policies\\',
+            'auth',
+            'token',
+            'certificate',
+            '\\wow6432node\\'
+        ],
 
-// Performance throttling state
-const performance = {
-  eventCount: 0,
-  lastSecond: Math.floor(Date.now() / 1000),
-  lastEventTime: 0
-};
+        includeBacktraceOnMatch: true,
+        maxBacktraceFrames: 15,
+        captureThreadInfo: true,
+        logSuccessfulOps: false,
+        logDetailedErrors: true,
+        trackHandleLifecycle: true,
+        detectDebugging: true,
+        bypassAntiDebug: true,
+        collectStatistics: true,
+        performDeepAnalysis: true,
+        detectPatterns: true,
+        useCache: true,
+        cacheTimeout: 60000
+    };
 
-// Registry constants
-const REG_NONE = 0;
-const REG_SZ = 1;
-const REG_EXPAND_SZ = 2;
-const REG_BINARY = 3;
-const REG_DWORD = 4;
-const REG_DWORD_BIG_ENDIAN = 5;
-const REG_LINK = 6;
-const REG_MULTI_SZ = 7;
-const REG_RESOURCE_LIST = 8;
-const REG_FULL_RESOURCE_DESCRIPTOR = 9;
-const REG_RESOURCE_REQUIREMENTS_LIST = 10;
-const REG_QWORD = 11;
+    const stats = {
+        totalCalls: 0,
+        byFunction: {},
+        byKey: {},
+        failedOps: 0,
+        successfulOps: 0,
+        debugAttempts: 0,
+        antiDebugBypassed: 0
+    };
 
-const LSTATUS_MAP = {
-  0: 'ERROR_SUCCESS',
-  2: 'ERROR_FILE_NOT_FOUND',
-  5: 'ERROR_ACCESS_DENIED',
-  6: 'ERROR_INVALID_HANDLE',
-  87: 'ERROR_INVALID_PARAMETER',
-  234: 'ERROR_MORE_DATA',
-  259: 'ERROR_NO_MORE_ITEMS'
-};
+    const handleTracker = new Map();
+    const keyPathCache = new Map();
+    const threadInfo = new Map();
+    const knownLicenseKeys = new Set();
+    const detectedPatterns = new Set();
 
-const NT_STATUS_MAP = {
-  0x00000000: 'STATUS_SUCCESS',
-  0xC0000034: 'STATUS_OBJECT_NAME_NOT_FOUND',
-  0xC0000022: 'STATUS_ACCESS_DENIED',
-  0xC000000D: 'STATUS_INVALID_PARAMETER'
-};
+    function initializeHooks() {
+        const ntdll = Process.getModuleByName('ntdll.dll');
+        const advapi32 = Process.getModuleByName('advapi32.dll');
+        const kernel32 = Process.getModuleByName('kernel32.dll');
 
-const predefinedRoots = new Map([
-  ['0x80000000', 'HKEY_CLASSES_ROOT'],
-  ['0x80000001', 'HKEY_CURRENT_USER'],
-  ['0x80000002', 'HKEY_LOCAL_MACHINE'],
-  ['0x80000003', 'HKEY_USERS'],
-  ['0x80000004', 'HKEY_PERFORMANCE_DATA'],
-  ['0x80000005', 'HKEY_CURRENT_CONFIG'],
-  ['0x80000006', 'HKEY_DYN_DATA']
-]);
+        const antiDebugChecks = [
+            'NtQueryInformationProcess',
+            'IsDebuggerPresent',
+            'CheckRemoteDebuggerPresent',
+            'NtQuerySystemInformation',
+            'NtGetContextThread',
+            'NtSetContextThread',
+            'NtContinue'
+        ];
 
-const handlePaths = new Map();
+        antiDebugChecks.forEach(name => {
+            let func = Module.findExportByName(null, name);
+            if (func) {
+                hookAntiDebugFunction(func, name);
+            }
+        });
 
-function norm(s) {
-  return (s || '').toLowerCase();
-}
+        const regFunctions = [
+            { module: 'ntdll.dll', name: 'NtOpenKey', onEnter: onNtOpenKeyEnter, onLeave: onNtOpenKeyLeave },
+            { module: 'ntdll.dll', name: 'NtOpenKeyEx', onEnter: onNtOpenKeyExEnter, onLeave: onNtOpenKeyExLeave },
+            { module: 'ntdll.dll', name: 'NtCreateKey', onEnter: onNtCreateKeyEnter, onLeave: onNtCreateKeyLeave },
+            { module: 'ntdll.dll', name: 'NtQueryKey', onEnter: onNtQueryKeyEnter, onLeave: onNtQueryKeyLeave },
+            { module: 'ntdll.dll', name: 'NtQueryValueKey', onEnter: onNtQueryValueKeyEnter, onLeave: onNtQueryValueKeyLeave },
+            { module: 'ntdll.dll', name: 'NtSetValueKey', onEnter: onNtSetValueKeyEnter, onLeave: onNtSetValueKeyLeave },
+            { module: 'ntdll.dll', name: 'NtDeleteKey', onEnter: onNtDeleteKeyEnter, onLeave: onNtDeleteKeyLeave },
+            { module: 'ntdll.dll', name: 'NtDeleteValueKey', onEnter: onNtDeleteValueKeyEnter, onLeave: onNtDeleteValueKeyLeave },
+            { module: 'ntdll.dll', name: 'NtEnumerateKey', onEnter: onNtEnumerateKeyEnter, onLeave: onNtEnumerateKeyLeave },
+            { module: 'ntdll.dll', name: 'NtEnumerateValueKey', onEnter: onNtEnumerateValueKeyEnter, onLeave: onNtEnumerateValueKeyLeave },
+            { module: 'ntdll.dll', name: 'NtClose', onEnter: onNtCloseEnter, onLeave: null },
+            { module: 'ntdll.dll', name: 'NtFlushKey', onEnter: onNtFlushKeyEnter, onLeave: onNtFlushKeyLeave },
+            { module: 'ntdll.dll', name: 'NtQueryMultipleValueKey', onEnter: onNtQueryMultipleValueKeyEnter, onLeave: onNtQueryMultipleValueKeyLeave },
+            { module: 'ntdll.dll', name: 'NtRenameKey', onEnter: onNtRenameKeyEnter, onLeave: onNtRenameKeyLeave },
+            { module: 'ntdll.dll', name: 'NtLoadKey', onEnter: onNtLoadKeyEnter, onLeave: onNtLoadKeyLeave },
+            { module: 'ntdll.dll', name: 'NtUnloadKey', onEnter: onNtUnloadKeyEnter, onLeave: onNtUnloadKeyLeave },
+            { module: 'ntdll.dll', name: 'NtSaveKey', onEnter: onNtSaveKeyEnter, onLeave: onNtSaveKeyLeave },
+            { module: 'ntdll.dll', name: 'NtRestoreKey', onEnter: onNtRestoreKeyEnter, onLeave: onNtRestoreKeyLeave },
 
-function readW(ptr) {
-  try { if (ptr && !ptr.isNull()) return ptr.readUtf16String(); } catch (_) {}
-  return null;
-}
+            { module: 'advapi32.dll', name: 'RegOpenKeyExW', onEnter: onRegOpenKeyExWEnter, onLeave: onRegOpenKeyExWLeave },
+            { module: 'advapi32.dll', name: 'RegOpenKeyExA', onEnter: onRegOpenKeyExAEnter, onLeave: onRegOpenKeyExALeave },
+            { module: 'advapi32.dll', name: 'RegCreateKeyExW', onEnter: onRegCreateKeyExWEnter, onLeave: onRegCreateKeyExWLeave },
+            { module: 'advapi32.dll', name: 'RegCreateKeyExA', onEnter: onRegCreateKeyExAEnter, onLeave: onRegCreateKeyExALeave },
+            { module: 'advapi32.dll', name: 'RegQueryValueExW', onEnter: onRegQueryValueExWEnter, onLeave: onRegQueryValueExWLeave },
+            { module: 'advapi32.dll', name: 'RegQueryValueExA', onEnter: onRegQueryValueExAEnter, onLeave: onRegQueryValueExALeave },
+            { module: 'advapi32.dll', name: 'RegSetValueExW', onEnter: onRegSetValueExWEnter, onLeave: onRegSetValueExWLeave },
+            { module: 'advapi32.dll', name: 'RegSetValueExA', onEnter: onRegSetValueExAEnter, onLeave: onRegSetValueExALeave },
+            { module: 'advapi32.dll', name: 'RegDeleteKeyW', onEnter: onRegDeleteKeyWEnter, onLeave: onRegDeleteKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegDeleteKeyA', onEnter: onRegDeleteKeyAEnter, onLeave: onRegDeleteKeyALeave },
+            { module: 'advapi32.dll', name: 'RegDeleteValueW', onEnter: onRegDeleteValueWEnter, onLeave: onRegDeleteValueWLeave },
+            { module: 'advapi32.dll', name: 'RegDeleteValueA', onEnter: onRegDeleteValueAEnter, onLeave: onRegDeleteValueALeave },
+            { module: 'advapi32.dll', name: 'RegEnumKeyExW', onEnter: onRegEnumKeyExWEnter, onLeave: onRegEnumKeyExWLeave },
+            { module: 'advapi32.dll', name: 'RegEnumKeyExA', onEnter: onRegEnumKeyExAEnter, onLeave: onRegEnumKeyExALeave },
+            { module: 'advapi32.dll', name: 'RegEnumValueW', onEnter: onRegEnumValueWEnter, onLeave: onRegEnumValueWLeave },
+            { module: 'advapi32.dll', name: 'RegEnumValueA', onEnter: onRegEnumValueAEnter, onLeave: onRegEnumValueALeave },
+            { module: 'advapi32.dll', name: 'RegCloseKey', onEnter: onRegCloseKeyEnter, onLeave: null },
+            { module: 'advapi32.dll', name: 'RegFlushKey', onEnter: onRegFlushKeyEnter, onLeave: onRegFlushKeyLeave },
+            { module: 'advapi32.dll', name: 'RegSaveKeyW', onEnter: onRegSaveKeyWEnter, onLeave: onRegSaveKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegSaveKeyA', onEnter: onRegSaveKeyAEnter, onLeave: onRegSaveKeyALeave },
+            { module: 'advapi32.dll', name: 'RegRestoreKeyW', onEnter: onRegRestoreKeyWEnter, onLeave: onRegRestoreKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegRestoreKeyA', onEnter: onRegRestoreKeyAEnter, onLeave: onRegRestoreKeyALeave },
+            { module: 'advapi32.dll', name: 'RegLoadKeyW', onEnter: onRegLoadKeyWEnter, onLeave: onRegLoadKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegLoadKeyA', onEnter: onRegLoadKeyAEnter, onLeave: onRegLoadKeyALeave },
+            { module: 'advapi32.dll', name: 'RegUnLoadKeyW', onEnter: onRegUnLoadKeyWEnter, onLeave: onRegUnLoadKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegUnLoadKeyA', onEnter: onRegUnLoadKeyAEnter, onLeave: onRegUnLoadKeyALeave },
+            { module: 'advapi32.dll', name: 'RegQueryInfoKeyW', onEnter: onRegQueryInfoKeyWEnter, onLeave: onRegQueryInfoKeyWLeave },
+            { module: 'advapi32.dll', name: 'RegQueryInfoKeyA', onEnter: onRegQueryInfoKeyAEnter, onLeave: onRegQueryInfoKeyALeave },
+            { module: 'advapi32.dll', name: 'RegGetValueW', onEnter: onRegGetValueWEnter, onLeave: onRegGetValueWLeave },
+            { module: 'advapi32.dll', name: 'RegGetValueA', onEnter: onRegGetValueAEnter, onLeave: onRegGetValueALeave }
+        ];
 
-function readA(ptr) {
-  try { if (ptr && !ptr.isNull()) return ptr.readAnsiString(); } catch (_) {}
-  return null;
-}
+        regFunctions.forEach(f => {
+            const func = Module.findExportByName(f.module, f.name);
+            if (func) {
+                Interceptor.attach(func, {
+                    onEnter: f.onEnter,
+                    onLeave: f.onLeave
+                });
+            }
+        });
 
-function readDword(ptr) {
-  try { if (ptr && !ptr.isNull()) return ptr.readU32(); } catch (_) {}
-  return null;
-}
+        send({
+            type: 'info',
+            target: 'registry_monitor',
+            message: 'Registry monitoring initialized',
+            functions_hooked: regFunctions.length,
+            anti_debug_hooked: antiDebugChecks.length
+        });
+    }
 
-function readQword(ptr) {
-  try { if (ptr && !ptr.isNull()) return ptr.readU64(); } catch (_) {}
-  return null;
-}
+    function hookAntiDebugFunction(funcPtr, funcName) {
+        Interceptor.attach(funcPtr, {
+            onEnter(args) {
+                stats.debugAttempts++;
+                if (config.bypassAntiDebug) {
+                    if (funcName === 'IsDebuggerPresent') {
+                        this.shouldFake = true;
+                    } else if (funcName === 'CheckRemoteDebuggerPresent') {
+                        this.debuggerPtr = args[1];
+                    } else if (funcName === 'NtQueryInformationProcess' && args[1].toInt32() === 7) {
+                        this.shouldFake = true;
+                    }
+                }
+            },
+            onLeave(retval) {
+                if (config.bypassAntiDebug && this.shouldFake) {
+                    retval.replace(0);
+                    stats.antiDebugBypassed++;
+                }
+                if (this.debuggerPtr) {
+                    this.debuggerPtr.writeU8(0);
+                    stats.antiDebugBypassed++;
+                }
+            }
+        });
+    }
 
-function readUnicodeString(ptr) {
-  try {
-    if (!ptr || ptr.isNull()) return null;
-    const length = ptr.readU16();
-    const buffer = ptr.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
-    return buffer.readUtf16String(length / 2);
-  } catch (_) {}
-  return null;
-}
+    function getKeyPath(handle) {
+        if (!handle || handle.isNull()) return null;
 
-function rootForHandle(hKeyPtr) {
-  if (!hKeyPtr) return null;
-  const key = hKeyPtr.toString();
-  if (predefinedRoots.has(key)) return predefinedRoots.get(key);
-  if (handlePaths.has(key)) return handlePaths.get(key);
-  return `UNKNOWN(${key})`;
-}
-
-function buildPath(hKeyPtr, subKeyStr) {
-  const base = rootForHandle(hKeyPtr);
-  if (subKeyStr && subKeyStr.length > 0) return `${base}\\${subKeyStr}`;
-  return base;
-}
-
-function matchesFilters(fullKeyPath, valueName) {
-  const k = norm(fullKeyPath);
-  const v = norm(valueName || '');
-  const keyHit = config.keyFilters.some(f => k.includes(f));
-  const valHit = v.length > 0 && config.valueFilters.some(f => v.includes(f));
-  return keyHit || valHit;
-}
-
-function shouldThrottle() {
-  const now = Date.now();
-  const currentSecond = Math.floor(now / 1000);
-
-  if (currentSecond !== performance.lastSecond) {
-    performance.eventCount = 0;
-    performance.lastSecond = currentSecond;
-  }
-
-  if (performance.eventCount >= config.maxEventsPerSecond) {
-    return true;
-  }
-
-  if (config.performanceThrottleMs > 0 && (now - performance.lastEventTime) < config.performanceThrottleMs) {
-    return true;
-  }
-
-  performance.eventCount++;
-  performance.lastEventTime = now;
-  return false;
-}
-
-function symbolAt(addr) {
-  try { return DebugSymbol.fromAddress(addr).toString(); } catch (_) { return null; }
-}
-
-function formatRegData(regType, dataPtr, dataSize, previewOnly = false) {
-  if (!dataPtr || dataPtr.isNull() || !dataSize) return { formatted: null, raw: null };
-
-  const size = typeof dataSize === 'number' ? dataSize : dataSize.toInt32();
-  if (size <= 0 || size > config.captureValuePreviewBytes) return { formatted: null, raw: null };
-
-  try {
-    let formatted = null;
-    let raw = null;
-
-    switch (regType) {
-      case REG_SZ:
-      case REG_EXPAND_SZ:
-        formatted = `"${dataPtr.readUtf16String(size / 2)}"`;
-        break;
-
-      case REG_DWORD:
-        if (size >= 4) {
-          const val = dataPtr.readU32();
-          formatted = `0x${val.toString(16)} (${val})`;
+        const cached = keyPathCache.get(handle.toString());
+        if (cached && Date.now() - cached.timestamp < config.cacheTimeout) {
+            return cached.path;
         }
-        break;
 
-      case REG_QWORD:
-        if (size >= 8) {
-          const val = dataPtr.readU64();
-          formatted = `0x${val.toString(16)} (${val})`;
-        }
-        break;
-
-      case REG_MULTI_SZ:
         try {
-          const strings = [];
-          let offset = 0;
-          while (offset < size - 2) {
-            const str = dataPtr.add(offset).readUtf16String();
-            if (!str) break;
-            strings.push(str);
-            offset += (str.length + 1) * 2;
-          }
-          formatted = `[${strings.map(s => `"${s}"`).join(', ')}]`;
-        } catch (_) {}
-        break;
+            const NtQueryObject = Module.findExportByName('ntdll.dll', 'NtQueryObject');
+            if (!NtQueryObject) return null;
 
-      case REG_BINARY:
-      default:
-        // Try to detect common patterns
-        if (size === 16) {
-          // Possible GUID
-          const bytes = dataPtr.readByteArray(16);
-          if (bytes) {
-            const arr = new Uint8Array(bytes);
-            const guid = [
-              arr.slice(0, 4).reverse(),
-              arr.slice(4, 6).reverse(),
-              arr.slice(6, 8).reverse(),
-              arr.slice(8, 10),
-              arr.slice(10, 16)
-            ].map(chunk => Array.from(chunk).map(b => b.toString(16).padStart(2, '0')).join('')).join('-');
-            formatted = `GUID: {${guid}}`;
-          }
-        } else if (size === 8) {
-          // Possible timestamp (FILETIME)
-          const low = dataPtr.readU32();
-          const high = dataPtr.add(4).readU32();
-          const filetime = high * 0x100000000 + low;
-          if (filetime > 0) {
-            const unixTime = (filetime - 116444736000000000) / 10000;
-            if (unixTime > 0 && unixTime < Date.now() * 2) {
-              formatted = `Timestamp: ${new Date(unixTime).toISOString()}`;
+            const ObjectNameInformation = 1;
+            const bufferSize = 1024;
+            const buffer = Memory.alloc(bufferSize);
+            const returnLength = Memory.alloc(4);
+
+            const result = new NativeFunction(NtQueryObject, 'uint', ['pointer', 'uint', 'pointer', 'uint', 'pointer'])(
+                handle, ObjectNameInformation, buffer, bufferSize, returnLength
+            );
+
+            if (result === 0) {
+                const unicodeString = buffer.add(8);
+                const length = unicodeString.readU16();
+                const bufferPtr = unicodeString.add(8).readPointer();
+
+                if (!bufferPtr.isNull() && length > 0) {
+                    const path = bufferPtr.readUtf16String(length / 2);
+                    if (path && path.includes('\\REGISTRY\\')) {
+                        const cleanPath = path.replace('\\REGISTRY\\MACHINE', 'HKLM')
+                            .replace('\\REGISTRY\\USER', 'HKU')
+                            .replace('\\REGISTRY\\', '');
+
+                        if (config.useCache) {
+                            keyPathCache.set(handle.toString(), { path: cleanPath, timestamp: Date.now() });
+                        }
+
+                        return cleanPath;
+                    }
+                }
             }
-          }
-        } else if (size >= 4 && size <= 64) {
-          // Check if it's printable ASCII/UTF-16
-          let isPrintable = true;
-          for (let i = 0; i < Math.min(size, 32); i += 2) {
-            const char = dataPtr.add(i).readU16();
-            if (char === 0) break;
-            if (char < 32 || char > 126) {
-              isPrintable = false;
-              break;
+        } catch (e) {
+        }
+
+        return null;
+    }
+
+    function readUnicodeString(ptr) {
+        if (!ptr || ptr.isNull()) return null;
+        try {
+            const length = ptr.readU16();
+            const buffer = ptr.add(8).readPointer();
+            if (!buffer.isNull() && length > 0) {
+                return buffer.readUtf16String(length / 2);
             }
-          }
-          if (isPrintable) {
+        } catch (e) {
+        }
+        return null;
+    }
+
+    function formatRegData(type, dataPtr, dataSize, truncate = false) {
+        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) return { formatted: null, raw: null };
+
+        const maxSize = truncate ? 256 : dataSize;
+        const actualSize = Math.min(dataSize, maxSize);
+
+        try {
+            switch (type) {
+            case 1: // REG_SZ
+            case 2: // REG_EXPAND_SZ
+                return { formatted: dataPtr.readUtf16String(actualSize / 2) };
+
+            case 3: // REG_BINARY
+                const bytes = dataPtr.readByteArray(actualSize);
+                const hex = Array.from(bytes, b => ('0' + b.toString(16)).slice(-2)).join(' ');
+                return { formatted: null, raw: hex };
+
+            case 4: // REG_DWORD
+                if (dataSize >= 4) {
+                    return { formatted: '0x' + dataPtr.readU32().toString(16) + ' (' + dataPtr.readU32() + ')' };
+                }
+                break;
+
+            case 5: // REG_DWORD_BIG_ENDIAN
+                if (dataSize >= 4) {
+                    const val = ((dataPtr.readU8() << 24) | (dataPtr.add(1).readU8() << 16) |
+                       (dataPtr.add(2).readU8() << 8) | dataPtr.add(3).readU8()) >>> 0;
+                    return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                }
+                break;
+
+            case 7: // REG_MULTI_SZ
+                const strings = [];
+                let offset = 0;
+                while (offset < actualSize - 2) {
+                    const str = dataPtr.add(offset).readUtf16String();
+                    if (!str || str.length === 0) break;
+                    strings.push(str);
+                    offset += (str.length + 1) * 2;
+                }
+                return { formatted: strings.join('\\0') };
+
+            case 11: // REG_QWORD
+                if (dataSize >= 8) {
+                    const low = dataPtr.readU32();
+                    const high = dataPtr.add(4).readU32();
+                    const val = high * 0x100000000 + low;
+                    return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                }
+                break;
+            }
+        } catch (e) {
+        }
+
+        return { formatted: null, raw: null };
+    }
+
+    function matchesFilters(keyPath, valueName) {
+        if (!keyPath) return false;
+
+        const lowerKey = keyPath.toLowerCase();
+        const lowerValue = valueName ? valueName.toLowerCase() : '';
+
+        for (const filter of config.keyFilters) {
+            const lowerFilter = filter.toLowerCase();
+            if (lowerKey.includes(lowerFilter) || lowerValue.includes(lowerFilter)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function detectLicensePattern(keyPath, valueName, data) {
+        if (!config.detectPatterns) return;
+
+        const patterns = [
+            { regex: /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/gi, type: 'serial_key' },
+            { regex: /[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/gi, type: 'guid' },
+            { regex: /[A-Z0-9]{32,}/gi, type: 'hash' },
+            { regex: /\b\d{10,}\b/g, type: 'timestamp' },
+            { regex: /-----BEGIN [A-Z ]+-----[\s\S]+-----END [A-Z ]+-----/g, type: 'certificate' }
+        ];
+
+        const dataStr = data && data.formatted ? data.formatted : '';
+        const fullPath = keyPath + '\\' + (valueName || '');
+
+        patterns.forEach(p => {
+            if (p.regex.test(dataStr) || p.regex.test(fullPath)) {
+                const detection = {
+                    type: p.type,
+                    path: fullPath,
+                    timestamp: Date.now()
+                };
+
+                if (!detectedPatterns.has(JSON.stringify(detection))) {
+                    detectedPatterns.add(JSON.stringify(detection));
+                    send({
+                        type: 'pattern_detected',
+                        target: 'registry_monitor',
+                        pattern: p.type,
+                        location: fullPath,
+                        sample: dataStr.substring(0, 100)
+                    });
+                }
+            }
+        });
+    }
+
+    function getThreadContext() {
+        if (!config.captureThreadInfo) return {};
+
+        const tid = Process.getCurrentThreadId();
+        let info = threadInfo.get(tid);
+
+        if (!info || Date.now() - info.timestamp > 1000) {
+            info = {
+                tid: tid,
+                timestamp: Date.now()
+            };
+
             try {
-              const str = dataPtr.readUtf16String(size / 2);
-              if (str && str.length > 0) formatted = `String: "${str}"`;
-            } catch (_) {}
-          }
-        }
-
-        // Always capture raw bytes for binary data
-        const bytes = dataPtr.readByteArray(Math.min(size, previewOnly ? 32 : size));
-        if (bytes) {
-          const hex = Array.from(new Uint8Array(bytes)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-          raw = hex;
-        }
-        break;
-    }
-
-    return { formatted, raw };
-  } catch (_) {
-    return { formatted: null, raw: null };
-  }
-}
-
-function sendEvent(e, includeBt) {
-  if (shouldThrottle()) return;
-
-  const evt = Object.assign({
-    type: 'info',
-    target: 'registry_monitor',
-    pid: Process.id,
-    timestamp: Date.now(),
-    module: Process.enumerateModules()[0]?.name || null
-  }, e);
-
-  if (includeBt) {
-    try {
-      evt.backtrace = Thread.backtrace(e.context || null, Backtracer.ACCURATE)
-        .slice(0, 10)
-        .map(a => symbolAt(a))
-        .filter(s => s);
-    } catch (_) {}
-  }
-  send(evt);
-}
-
-function tryAttach(moduleName, exportName, callbacks) {
-  try {
-    const addr = Module.findExportByName(moduleName, exportName);
-    if (!addr) return false;
-
-    if (config.enableStealthMode) {
-      // Add slight randomization to avoid detection
-      const delay = Math.floor(Math.random() * 5);
-      if (delay > 0) {
-        setTimeout(() => {
-          try {
-            Interceptor.attach(addr, callbacks);
-          } catch (_) {}
-        }, delay);
-      } else {
-        Interceptor.attach(addr, callbacks);
-      }
-    } else {
-      Interceptor.attach(addr, callbacks);
-    }
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-function attachVariants(baseName, callbacksA, callbacksW) {
-  tryAttach('advapi32.dll', baseName + 'A', callbacksA);
-  tryAttach('advapi32.dll', baseName + 'W', callbacksW);
-}
-
-function decodeWow64(samDesired) {
-  const out = { wow64_view: null };
-  if (samDesired == null) return out;
-  if (samDesired & 0x0100) out.wow64_view = '64';
-  else if (samDesired & 0x0200) out.wow64_view = '32';
-  return out;
-}
-
-function attachNativeApiHooks() {
-  if (!config.enableNativeApiHooks) return;
-
-  // NtOpenKeyEx
-  tryAttach('ntdll.dll', 'NtOpenKeyEx', {
-    onEnter(args) {
-      this.keyHandlePtr = args[0];
-      this.desiredAccess = args[1].toUInt32();
-
-      const objectAttrs = args[2];
-      if (!objectAttrs || objectAttrs.isNull()) return;
-
-      try {
-        const objectNamePtr = objectAttrs.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
-        const rootHandle = objectAttrs.add(Process.pointerSize === 8 ? 8 : 4).readPointer();
-
-        let objectName = readUnicodeString(objectNamePtr) || '';
-        let fullPath = objectName;
-
-        if (!rootHandle.isNull()) {
-          const rootPath = handlePaths.get(rootHandle.toString());
-          if (rootPath) {
-            fullPath = rootPath + '\\' + objectName;
-          } else {
-            const predefinedRoot = predefinedRoots.get(rootHandle.toString());
-            if (predefinedRoot) {
-              fullPath = predefinedRoot + '\\' + objectName;
-            } else {
-              fullPath = `[HANDLE_${rootHandle}]\\${objectName}`;
+                const thread = Process.enumerateThreads().find(t => t.id === tid);
+                if (thread) {
+                    info.state = thread.state;
+                    info.context = thread.context;
+                }
+            } catch (e) {
             }
-          }
+
+            threadInfo.set(tid, info);
         }
 
-        this.fullPath = fullPath;
-      } catch (_) {
-        this.fullPath = '[PARSE_ERROR]';
-      }
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
-
-      if (success && this.keyHandlePtr && !this.keyHandlePtr.isNull()) {
-        try {
-          const newHandle = this.keyHandlePtr.readPointer();
-          handlePaths.set(newHandle.toString(), this.fullPath);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(this.fullPath)) || (!success && config.logFailures)) {
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.fullPath);
-        sendEvent({
-          event: 'open_key',
-          api: 'NtOpenKeyEx',
-          key_path: this.fullPath,
-          status: statusStr,
-          success,
-          desired_access: `0x${this.desiredAccess.toString(16)}`,
-          ...decodeWow64(this.desiredAccess)
-        }, includeBt);
-      }
+        return info;
     }
-  });
 
-  // NtCreateKeyEx
-  tryAttach('ntdll.dll', 'NtCreateKeyEx', {
-    onEnter(args) {
-      this.keyHandlePtr = args[0];
-      this.desiredAccess = args[1].toUInt32();
+    function sendEvent(evt, includeBacktrace = false) {
+        if (config.collectStatistics) {
+            stats.totalCalls++;
+            stats.byFunction[evt.function] = (stats.byFunction[evt.function] || 0) + 1;
 
-      const objectAttrs = args[2];
-      if (!objectAttrs || objectAttrs.isNull()) return;
-
-      try {
-        const objectNamePtr = objectAttrs.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
-        const rootHandle = objectAttrs.add(Process.pointerSize === 8 ? 8 : 4).readPointer();
-
-        let objectName = readUnicodeString(objectNamePtr) || '';
-        let fullPath = objectName;
-
-        if (!rootHandle.isNull()) {
-          const rootPath = handlePaths.get(rootHandle.toString());
-          if (rootPath) {
-            fullPath = rootPath + '\\' + objectName;
-          } else {
-            const predefinedRoot = predefinedRoots.get(rootHandle.toString());
-            if (predefinedRoot) {
-              fullPath = predefinedRoot + '\\' + objectName;
-            } else {
-              fullPath = `[HANDLE_${rootHandle}]\\${objectName}`;
+            if (evt.key_path) {
+                const keyBase = evt.key_path.split('\\').slice(0, 3).join('\\');
+                stats.byKey[keyBase] = (stats.byKey[keyBase] || 0) + 1;
             }
-          }
+
+            if (evt.success) {
+                stats.successfulOps++;
+            } else {
+                stats.failedOps++;
+            }
         }
 
-        this.fullPath = fullPath;
-      } catch (_) {
-        this.fullPath = '[PARSE_ERROR]';
-      }
+        if (config.captureThreadInfo) {
+            evt.thread = getThreadContext();
+        }
 
-      this.dispositionPtr = args[6];
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
+        if (includeBacktrace) {
+            const bt = Thread.backtrace(this.context, Backtracer.ACCURATE);
+            evt.backtrace = bt.slice(0, config.maxBacktraceFrames).map(addr => {
+                const mod = Process.findModuleByAddress(addr);
+                const sym = DebugSymbol.fromAddress(addr);
+                return {
+                    address: addr.toString(),
+                    module: mod ? mod.name : null,
+                    symbol: sym.name || null,
+                    offset: mod ? addr.sub(mod.base).toString() : null
+                };
+            });
+        }
 
-      let disposition = null;
-      if (success && this.dispositionPtr && !this.dispositionPtr.isNull()) {
-        try {
-          const dispValue = this.dispositionPtr.readU32();
-          disposition = dispValue === 1 ? 'REG_CREATED_NEW_KEY' : 'REG_OPENED_EXISTING_KEY';
-        } catch (_) {}
-      }
+        if (!evt.success && !config.logSuccessfulOps) {
+            return;
+        }
 
-      if (success && this.keyHandlePtr && !this.keyHandlePtr.isNull()) {
-        try {
-          const newHandle = this.keyHandlePtr.readPointer();
-          handlePaths.set(newHandle.toString(), this.fullPath);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(this.fullPath)) || (!success && config.logFailures)) {
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.fullPath);
-        sendEvent({
-          event: 'create_key',
-          api: 'NtCreateKeyEx',
-          key_path: this.fullPath,
-          status: statusStr,
-          success,
-          disposition,
-          desired_access: `0x${this.desiredAccess.toString(16)}`,
-          ...decodeWow64(this.desiredAccess)
-        }, includeBt);
-      }
+        send(evt);
     }
-  });
 
-  // NtQueryValueKey
-  tryAttach('ntdll.dll', 'NtQueryValueKey', {
-    onEnter(args) {
-      this.keyHandle = args[0];
-      this.valueName = readUnicodeString(args[1]) || '';
-      this.infoClass = args[2].toUInt32();
-      this.keyValueInfo = args[3];
-      this.lengthPtr = args[5];
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.keyHandle);
+    function onNtOpenKeyEnter(args) {
+        const keyHandle = args[0];
+        const desiredAccess = args[1].toInt32();
+        const objectAttributes = args[2];
 
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+        if (!objectAttributes.isNull()) {
+            const namePtr = objectAttributes.add(16).readPointer();
+            const keyName = readUnicodeString(namePtr);
+            this.keyName = keyName;
+            this.startTime = Date.now();
+        }
+    }
+
+    function onNtOpenKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'query_value',
-          api: 'NtQueryValueKey',
-          key_path: keyPath,
-          value_name: this.valueName,
-          status: statusStr,
-          success,
-          info_class: this.infoClass
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtOpenKey',
+            key_name: this.keyName,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.args && this.args[0]) {
+            const handle = this.args[0].readPointer();
+            const keyPath = getKeyPath(handle);
+
+            if (keyPath) {
+                evt.key_path = keyPath;
+                handleTracker.set(handle.toString(), keyPath);
+
+                if (config.performDeepAnalysis) {
+                    detectLicensePattern(keyPath, null, null);
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtOpenKeyExEnter(args) {
+        onNtOpenKeyEnter.call(this, args);
+        this.options = args[3] ? args[3].toInt32() : 0;
+    }
+
+    function onNtOpenKeyExLeave(retval) {
+        onNtOpenKeyLeave.call(this, retval);
+    }
+
+    function onNtCreateKeyEnter(args) {
+        const keyHandle = args[0];
+        const desiredAccess = args[1].toInt32();
+        const objectAttributes = args[2];
+        const titleIndex = args[3] ? args[3].toInt32() : 0;
+        const classPtr = args[4];
+        const createOptions = args[5] ? args[5].toInt32() : 0;
+        const disposition = args[6];
+
+        if (!objectAttributes.isNull()) {
+            const namePtr = objectAttributes.add(16).readPointer();
+            const keyName = readUnicodeString(namePtr);
+            this.keyName = keyName;
+        }
+
+        this.className = readUnicodeString(classPtr);
+        this.createOptions = createOptions;
+        this.dispositionPtr = disposition;
+        this.startTime = Date.now();
+    }
+
+    function onNtCreateKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtCreateKey',
+            key_name: this.keyName,
+            class_name: this.className,
+            create_options: this.createOptions,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
+                evt.disposition = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+            }
+
+            if (this.args && this.args[0]) {
+                const handle = this.args[0].readPointer();
+                const keyPath = getKeyPath(handle);
+
+                if (keyPath) {
+                    evt.key_path = keyPath;
+                    handleTracker.set(handle.toString(), keyPath);
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtQueryKeyEnter(args) {
+        const keyHandle = args[0];
+        const infoClass = args[1].toInt32();
+        const keyInfo = args[2];
+        const length = args[3].toInt32();
+        const resultLength = args[4];
+
+        this.keyHandle = keyHandle;
+        this.infoClass = infoClass;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtQueryKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtQueryKey',
+            key_path: this.keyPath,
+            info_class: this.infoClass,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtQueryValueKeyEnter(args) {
+        const keyHandle = args[0];
+        const valueNamePtr = args[1];
+        const infoClass = args[2].toInt32();
+        const keyValueInfo = args[3];
+        const length = args[4].toInt32();
+        const resultLength = args[5];
+
+        this.keyHandle = keyHandle;
+        this.valueName = readUnicodeString(valueNamePtr);
+        this.infoClass = infoClass;
+        this.keyValueInfo = keyValueInfo;
+        this.bufferLength = length;
+        this.resultLengthPtr = resultLength;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtQueryValueKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtQueryValueKey',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            info_class: this.infoClass,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
         };
 
         if (success && this.keyValueInfo && !this.keyValueInfo.isNull()) {
-          try {
-            // KEY_VALUE_FULL_INFORMATION structure
-            const regType = this.keyValueInfo.add(8).readU32();
-            const dataLength = this.keyValueInfo.add(16).readU32();
-            const dataOffset = this.keyValueInfo.add(20).readU32();
+            try {
+                let dataPtr, dataSize, regType;
 
-            evt.reg_type = regType;
-            evt.data_len = dataLength;
+                switch (this.infoClass) {
+                case 0: // KeyValueBasicInformation
+                    regType = this.keyValueInfo.add(4).readU32();
+                    evt.data_type = regType;
+                    break;
 
-            if (dataLength > 0 && dataOffset > 0) {
-              const dataPtr = this.keyValueInfo.add(dataOffset);
-              const formatted = formatRegData(regType, dataPtr, dataLength, true);
-              if (formatted.formatted) evt.data_formatted = formatted.formatted;
-              if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                case 1: // KeyValueFullInformation
+                    regType = this.keyValueInfo.add(4).readU32();
+                    dataSize = this.keyValueInfo.add(8).readU32();
+                    const dataOffset = this.keyValueInfo.add(12).readU32();
+                    dataPtr = this.keyValueInfo.add(dataOffset);
+
+                    evt.data_type = regType;
+                    evt.data_size = dataSize;
+
+                    if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
+                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                        if (config.performDeepAnalysis) {
+                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                        }
+                    }
+                    break;
+
+                case 2: // KeyValuePartialInformation
+                    regType = this.keyValueInfo.add(4).readU32();
+                    dataSize = this.keyValueInfo.add(8).readU32();
+                    dataPtr = this.keyValueInfo.add(12);
+
+                    evt.data_type = regType;
+                    evt.data_size = dataSize;
+
+                    if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
+                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                        if (config.performDeepAnalysis) {
+                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                        }
+                    }
+                    break;
+                }
+            } catch (e) {
+                evt.parse_error = e.toString();
             }
-          } catch (_) {}
         }
 
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
-      }
     }
-  });
 
-  // NtSetValueKey
-  tryAttach('ntdll.dll', 'NtSetValueKey', {
-    onEnter(args) {
-      this.keyHandle = args[0];
-      this.valueName = readUnicodeString(args[1]) || '';
-      this.regType = args[3].toUInt32();
-      this.data = args[4];
-      this.dataSize = args[5].toUInt32();
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.keyHandle);
+    function onNtSetValueKeyEnter(args) {
+        const keyHandle = args[0];
+        const valueNamePtr = args[1];
+        const titleIndex = args[2] ? args[2].toInt32() : 0;
+        const type = args[3].toInt32();
+        const data = args[4];
+        const dataSize = args[5].toInt32();
 
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+        this.keyHandle = keyHandle;
+        this.valueName = readUnicodeString(valueNamePtr);
+        this.dataType = type;
+        this.dataPtr = data;
+        this.dataSize = dataSize;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+
+        if (data && !data.isNull() && dataSize > 0) {
+            const formatted = formatRegData(type, data, dataSize, true);
+            this.dataFormatted = formatted.formatted;
+            this.dataRaw = formatted.raw;
+        }
+    }
+
+    function onNtSetValueKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'set_value',
-          api: 'NtSetValueKey',
-          key_path: keyPath,
-          value_name: this.valueName,
-          status: statusStr,
-          success,
-          reg_type: this.regType,
-          data_len: this.dataSize
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtSetValueKey',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            data_type: this.dataType,
+            data_size: this.dataSize,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
         };
 
-        if (success && this.data && !this.data.isNull() && this.dataSize > 0) {
-          const formatted = formatRegData(this.regType, this.data, this.dataSize, true);
-          if (formatted.formatted) evt.data_formatted = formatted.formatted;
-          if (formatted.raw) evt.data_preview_hex = formatted.raw;
+        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
+        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+
+        if (config.performDeepAnalysis && success) {
+            detectLicensePattern(this.keyPath, this.valueName, { formatted: this.dataFormatted });
         }
 
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
-      }
     }
-  });
 
-  // NtDeleteKey
-  tryAttach('ntdll.dll', 'NtDeleteKey', {
-    onEnter(args) {
-      this.keyHandle = args[0];
-      this.keyPath = rootForHandle(this.keyHandle);
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
-
-      if ((success && matchesFilters(this.keyPath)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_key',
-          api: 'NtDeleteKey',
-          key_path: this.keyPath,
-          status: statusStr,
-          success
-        });
-      }
+    function onNtDeleteKeyEnter(args) {
+        const keyHandle = args[0];
+        this.keyHandle = keyHandle;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
     }
-  });
 
-  // NtDeleteValueKey
-  tryAttach('ntdll.dll', 'NtDeleteValueKey', {
-    onEnter(args) {
-      this.keyHandle = args[0];
-      this.valueName = readUnicodeString(args[1]) || '';
-      this.keyPath = rootForHandle(this.keyHandle);
-    },
-    onLeave(retval) {
-      const status = retval.toUInt32();
-      const statusStr = NT_STATUS_MAP[status] || `NTSTATUS_0x${status.toString(16)}`;
-      const success = status === 0;
-
-      if ((success && matchesFilters(this.keyPath, this.valueName)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_value',
-          api: 'NtDeleteValueKey',
-          key_path: this.keyPath,
-          value_name: this.valueName,
-          status: statusStr,
-          success
-        });
-      }
-    }
-  });
-}function attachCoreRegistryHooks() {
-  // RegOpenKeyEx with enhanced error handling and status reporting
-  attachVariants('RegOpenKeyEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readA(args[1]);
-      this.samDesired = args[3].toUInt32 ? args[3].toUInt32() : (args[3] >>> 0);
-      this.phkResult = args[4];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const full = buildPath(this.hKey, this.subKey || '');
-
-      if (success && this.phkResult && !this.phkResult.isNull()) {
-        try {
-          const newHandle = this.phkResult.readPointer();
-          handlePaths.set(newHandle.toString(), full);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(full)) || (!success && config.logFailures)) {
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(full);
-        sendEvent({
-          event: 'open_key',
-          api: 'RegOpenKeyExA',
-          key_path: full,
-          status: statusStr,
-          success,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        }, includeBt);
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readW(args[1]);
-      this.samDesired = args[3].toUInt32 ? args[3].toUInt32() : (args[3] >>> 0);
-      this.phkResult = args[4];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const full = buildPath(this.hKey, this.subKey || '');
-
-      if (success && this.phkResult && !this.phkResult.isNull()) {
-        try {
-          const newHandle = this.phkResult.readPointer();
-          handlePaths.set(newHandle.toString(), full);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(full)) || (!success && config.logFailures)) {
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(full);
-        sendEvent({
-          event: 'open_key',
-          api: 'RegOpenKeyExW',
-          key_path: full,
-          status: statusStr,
-          success,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        }, includeBt);
-      }
-    }
-  });
-
-  // RegCreateKeyEx with disposition tracking
-  attachVariants('RegCreateKeyEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readA(args[1]);
-      this.samDesired = args[5].toUInt32 ? args[5].toUInt32() : (args[5] >>> 0);
-      this.phkResult = args[7];
-      this.lpdwDisposition = args[8];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const full = buildPath(this.hKey, this.subKey || '');
-
-      let disposition = null;
-      if (success && this.lpdwDisposition && !this.lpdwDisposition.isNull()) {
-        try {
-          const dispValue = this.lpdwDisposition.readU32();
-          disposition = dispValue === 1 ? 'REG_CREATED_NEW_KEY' : 'REG_OPENED_EXISTING_KEY';
-        } catch (_) {}
-      }
-
-      if (success && this.phkResult && !this.phkResult.isNull()) {
-        try {
-          const newHandle = this.phkResult.readPointer();
-          handlePaths.set(newHandle.toString(), full);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(full)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'create_key',
-          api: 'RegCreateKeyExA',
-          key_path: full,
-          status: statusStr,
-          success,
-          disposition,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readW(args[1]);
-      this.samDesired = args[5].toUInt32 ? args[5].toUInt32() : (args[5] >>> 0);
-      this.phkResult = args[7];
-      this.lpdwDisposition = args[8];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const full = buildPath(this.hKey, this.subKey || '');
-
-      let disposition = null;
-      if (success && this.lpdwDisposition && !this.lpdwDisposition.isNull()) {
-        try {
-          const dispValue = this.lpdwDisposition.readU32();
-          disposition = dispValue === 1 ? 'REG_CREATED_NEW_KEY' : 'REG_OPENED_EXISTING_KEY';
-        } catch (_) {}
-      }
-
-      if (success && this.phkResult && !this.phkResult.isNull()) {
-        try {
-          const newHandle = this.phkResult.readPointer();
-          handlePaths.set(newHandle.toString(), full);
-        } catch (_) {}
-      }
-
-      if ((success && matchesFilters(full)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'create_key',
-          api: 'RegCreateKeyExW',
-          key_path: full,
-          status: statusStr,
-          success,
-          disposition,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        });
-      }
-    }
-  });
-
-  // RegQueryValueEx with intelligent data formatting
-  attachVariants('RegQueryValueEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readA(args[1]);
-      this.lpType = args[3];
-      this.lpData = args[4];
-      this.lpcbData = args[5];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+    function onNtDeleteKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'query_value',
-          api: 'RegQueryValueExA',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtDeleteKey',
+            key_path: this.keyPath,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
         };
 
-        if (success) {
-          const regType = readDword(this.lpType);
-          const dataSize = readDword(this.lpcbData);
-
-          if (regType != null) evt.reg_type = regType;
-          if (dataSize != null) evt.data_len = dataSize;
-
-          if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-            const formatted = formatRegData(regType, this.lpData, dataSize, true);
-            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-            if (formatted.raw) evt.data_preview_hex = formatted.raw;
-          }
+        if (success && this.keyHandle) {
+            handleTracker.delete(this.keyHandle.toString());
         }
 
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
-      }
     }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readW(args[1]);
-      this.lpType = args[3];
-      this.lpData = args[4];
-      this.lpcbData = args[5];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
 
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+    function onNtDeleteValueKeyEnter(args) {
+        const keyHandle = args[0];
+        const valueNamePtr = args[1];
+
+        this.keyHandle = keyHandle;
+        this.valueName = readUnicodeString(valueNamePtr);
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtDeleteValueKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'query_value',
-          api: 'RegQueryValueExW',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtDeleteValueKey',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
         };
 
-        if (success) {
-          const regType = readDword(this.lpType);
-          const dataSize = readDword(this.lpcbData);
-
-          if (regType != null) evt.reg_type = regType;
-          if (dataSize != null) evt.data_len = dataSize;
-
-          if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-            const formatted = formatRegData(regType, this.lpData, dataSize, true);
-            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-            if (formatted.raw) evt.data_preview_hex = formatted.raw;
-          }
-        }
-
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
-      }
     }
-  });
 
-  // RegSetValueEx with intelligent data formatting
-  attachVariants('RegSetValueEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readA(args[1]);
-      this.dwType = args[3];
-      this.lpData = args[4];
-      this.cbData = args[5];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
+    function onNtEnumerateKeyEnter(args) {
+        const keyHandle = args[0];
+        const index = args[1].toInt32();
+        const infoClass = args[2].toInt32();
+        const keyInfo = args[3];
+        const length = args[4].toInt32();
+        const resultLength = args[5];
 
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
-        const regType = this.dwType ? (this.dwType.toUInt32 ? this.dwType.toUInt32() : (this.dwType >>> 0)) : null;
-        const dataSize = this.cbData ? (this.cbData.toUInt32 ? this.cbData.toUInt32() : (this.cbData >>> 0)) : null;
+        this.keyHandle = keyHandle;
+        this.index = index;
+        this.infoClass = infoClass;
+        this.keyInfo = keyInfo;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
 
+    function onNtEnumerateKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'set_value',
-          api: 'RegSetValueExA',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success,
-          reg_type: regType,
-          data_len: dataSize
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtEnumerateKey',
+            key_path: this.keyPath,
+            index: this.index,
+            info_class: this.infoClass,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
         };
 
-        if (success && this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-          const formatted = formatRegData(regType, this.lpData, dataSize, true);
-          if (formatted.formatted) evt.data_formatted = formatted.formatted;
-          if (formatted.raw) evt.data_preview_hex = formatted.raw;
-        }
-
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
-        sendEvent(evt, includeBt);
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readW(args[1]);
-      this.dwType = args[3];
-      this.lpData = args[4];
-      this.cbData = args[5];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
-        const regType = this.dwType ? (this.dwType.toUInt32 ? this.dwType.toUInt32() : (this.dwType >>> 0)) : null;
-        const dataSize = this.cbData ? (this.cbData.toUInt32 ? this.cbData.toUInt32() : (this.cbData >>> 0)) : null;
-
-        const evt = {
-          event: 'set_value',
-          api: 'RegSetValueExW',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success,
-          reg_type: regType,
-          data_len: dataSize
-        };
-
-        if (success && this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-          const formatted = formatRegData(regType, this.lpData, dataSize, true);
-          if (formatted.formatted) evt.data_formatted = formatted.formatted;
-          if (formatted.raw) evt.data_preview_hex = formatted.raw;
-        }
-
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
-        sendEvent(evt, includeBt);
-      }
-    }
-  });
-
-  // Registry hive operations for comprehensive licensing system monitoring
-  attachVariants('RegLoadKey', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readA(args[1]);
-      this.fileName = readA(args[2]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = buildPath(this.hKey, this.subKey || '');
-
-      if (success || config.logFailures) {
-        sendEvent({
-          event: 'load_hive',
-          api: 'RegLoadKeyA',
-          key_path: keyPath,
-          file_name: this.fileName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readW(args[1]);
-      this.fileName = readW(args[2]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = buildPath(this.hKey, this.subKey || '');
-
-      if (success || config.logFailures) {
-        sendEvent({
-          event: 'load_hive',
-          api: 'RegLoadKeyW',
-          key_path: keyPath,
-          file_name: this.fileName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  });
-
-  attachVariants('RegSaveKey', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.fileName = readA(args[1]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if (success || config.logFailures) {
-        sendEvent({
-          event: 'save_hive',
-          api: 'RegSaveKeyA',
-          key_path: keyPath,
-          file_name: this.fileName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.fileName = readW(args[1]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if (success || config.logFailures) {
-        sendEvent({
-          event: 'save_hive',
-          api: 'RegSaveKeyW',
-          key_path: keyPath,
-          file_name: this.fileName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  });
-
-  // Enhanced registry operations for comprehensive monitoring
-  attachVariants('RegDeleteKeyEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readA(args[1]);
-      this.samDesired = args[2].toUInt32();
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = buildPath(this.hKey, this.subKey || '');
-
-      if ((success && matchesFilters(keyPath)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_key',
-          api: 'RegDeleteKeyExA',
-          key_path: keyPath,
-          status: statusStr,
-          success,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readW(args[1]);
-      this.samDesired = args[2].toUInt32();
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = buildPath(this.hKey, this.subKey || '');
-
-      if ((success && matchesFilters(keyPath)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_key',
-          api: 'RegDeleteKeyExW',
-          key_path: keyPath,
-          status: statusStr,
-          success,
-          sam_desired: this.samDesired,
-          ...decodeWow64(this.samDesired)
-        });
-      }
-    }
-  });
-
-  attachVariants('RegDeleteValue', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readA(args[1]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_value',
-          api: 'RegDeleteValueA',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readW(args[1]);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
-        sendEvent({
-          event: 'delete_value',
-          api: 'RegDeleteValueW',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
-        });
-      }
-    }
-  });
-
-  // Registry enumeration with detailed tracking
-  attachVariants('RegEnumKeyEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.dwIndex = args[1].toUInt32();
-      this.lpName = args[2];
-      this.lpcchName = args[3];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath)) || (!success && config.logFailures)) {
-        let enumKeyName = null;
-        if (success && this.lpName && !this.lpName.isNull()) {
-          try {
-            enumKeyName = this.lpName.readAnsiString();
-          } catch (_) {}
-        }
-
-        sendEvent({
-          event: 'enum_key',
-          api: 'RegEnumKeyExA',
-          key_path: keyPath,
-          index: this.dwIndex,
-          enum_key_name: enumKeyName,
-          status: statusStr,
-          success
-        });
-      }
-    }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.dwIndex = args[1].toUInt32();
-      this.lpName = args[2];
-      this.lpcchName = args[3];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath)) || (!success && config.logFailures)) {
-        let enumKeyName = null;
-        if (success && this.lpName && !this.lpName.isNull()) {
-          try {
-            enumKeyName = this.lpName.readUtf16String();
-          } catch (_) {}
-        }
-
-        sendEvent({
-          event: 'enum_key',
-          api: 'RegEnumKeyExW',
-          key_path: keyPath,
-          index: this.dwIndex,
-          enum_key_name: enumKeyName,
-          status: statusStr,
-          success
-        });
-      }
-    }
-  });
-
-  // Registry handle cleanup
-  tryAttach('advapi32.dll', 'RegCloseKey', {
-    onEnter(args) {
-      this.hKey = args[0];
-    },
-    onLeave(retval) {
-      const key = this.hKey ? this.hKey.toString() : null;
-      if (key && handlePaths.has(key)) {
-        handlePaths.delete(key);
-      }
-    }
-  });
-
-  // Additional Shell Registry API
-  tryAttach('shlwapi.dll', 'SHRegGetValueW', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.subKey = readW(args[1]);
-      this.valueName = readW(args[2]);
-      this.pdwType = args[4];
-      this.pvData = args[5];
-      this.pcbData = args[6];
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const success = status === 0;
-      const keyPath = buildPath(this.hKey, this.subKey || '');
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
-        const evt = {
-          event: 'get_value',
-          api: 'SHRegGetValueW',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
-        };
-
-        if (success) {
-          const regType = readDword(this.pdwType);
-          const dataSize = readDword(this.pcbData);
-
-          if (regType != null) evt.reg_type = regType;
-          if (dataSize != null) evt.data_len = dataSize;
-
-          if (this.pvData && !this.pvData.isNull() && dataSize > 0 && regType != null) {
-            const formatted = formatRegData(regType, this.pvData, dataSize, true);
-            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-            if (formatted.raw) evt.data_preview_hex = formatted.raw;
-          }
-        }
-
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
-        sendEvent(evt, includeBt);
-      }
-    }
-  });
-}
-
-function hookLoadLibraryForLateAttach() {
-  function maybeAttachAll(moduleName) {
-    if (config.enableStealthMode) {
-      setTimeout(() => {
-        try {
-          const m = (moduleName || '').toLowerCase();
-          if (m.endsWith('advapi32.dll') || m.endsWith('shlwapi.dll')) {
-            attachCoreRegistryHooks();
-          }
-          if (config.enableNativeApiHooks && m.endsWith('ntdll.dll')) {
-            attachNativeApiHooks();
-          }
-        } catch (_) {}
-      }, Math.floor(Math.random() * 10) + 5);
-    } else {
-      try {
-        const m = (moduleName || '').toLowerCase();
-        if (m.endsWith('advapi32.dll') || m.endsWith('shlwapi.dll')) {
-          attachCoreRegistryHooks();
-        }
-        if (config.enableNativeApiHooks && m.endsWith('ntdll.dll')) {
-          attachNativeApiHooks();
-        }
-      } catch (_) {}
-    }
-  }
-
-  const loadLibraryVariants = ['LoadLibraryA', 'LoadLibraryW', 'LoadLibraryExA', 'LoadLibraryExW'];
-
-  loadLibraryVariants.forEach(funcName => {
-    tryAttach('kernel32.dll', funcName, {
-      onEnter(args) {
-        this.name = funcName.endsWith('W') ? readW(args[0]) : readA(args[0]);
-      },
-      onLeave(retval) {
-        if (this.name && !retval.isNull()) {
-          maybeAttachAll(this.name);
-        }
-      }
-    });
-  });
-}
-
-// Initialize monitoring
-try {
-  attachCoreRegistryHooks();
-  attachNativeApiHooks();
-  hookLoadLibraryForLateAttach();
-
-  send({
-    type: 'info',
-    target: 'registry_monitor',
-    event: 'initialized',
-    features: {
-      native_api_hooks: config.enableNativeApiHooks,
-      stealth_mode: config.enableStealthMode,
-      intelligent_data_formatting: true,
-      performance_throttling: config.performanceThrottleMs > 0,
-      comprehensive_api_coverage: true
-    },
-    coverage: {
-      win32_apis: ['RegOpenKeyEx', 'RegCreateKeyEx', 'RegQueryValueEx', 'RegSetValueEx', 'RegDeleteKey', 'RegDeleteValue', 'RegEnumKeyEx', 'RegLoadKey', 'RegSaveKey'],
-      native_apis: config.enableNativeApiHooks ? ['NtOpenKeyEx', 'NtCreateKeyEx', 'NtQueryValueKey', 'NtSetValueKey', 'NtDeleteKey', 'NtDeleteValueKey'] : [],
-      shell_apis: ['SHRegGetValueW']
-    }
-  });
-} catch (e) {
-  send({
-    type: 'error',
-    target: 'registry_monitor',
-    message: 'initialization_failed',
-    error: String(e)
-  });
-}// ===== VALUE SPOOFING AND WRITE PROTECTION SYSTEM =====
-// Critical capabilities from registry_monitor_enhanced.js
-
-// Registry value spoofing configuration
-const spoofingRules = {
-  // Microsoft Office licensing bypass
-  'SOFTWARE\\Microsoft\\Office\\16.0\\Common\\Licensing': {
-    'LastKnownC2RProductReleaseId': '16.0.14326.20454',
-    'LicenseState': '1',
-    'ProductReleaseId': 'VolumeLicense',
-    'OfficeActivated': '1',
-    'IsLicensed': '1'
-  },
-  'SOFTWARE\\Microsoft\\Office\\15.0\\Common\\Licensing': {
-    'LastKnownC2RProductReleaseId': '15.0.4569.1506',
-    'LicenseState': '1',
-    'ProductReleaseId': 'VolumeLicense'
-  },
-
-  // Adobe product activation bypass
-  'SOFTWARE\\Adobe\\Adobe Acrobat\\DC\\Activation': {
-    'IsAMTEnforced': '0',
-    'IsNGLEnforced': '0',
-    'LicenseType': 'Retail',
-    'SerialNumber': '9707-1893-4560-8967-9612-3924',
-    'ProductActivated': '1',
-    'ActivationStatus': 'Complete'
-  },
-  'SOFTWARE\\Adobe\\Adobe Creative Suite': {
-    'LicenseState': 'Licensed',
-    'TrialStatus': 'None',
-    'SerialNumber': '1330-1001-8751-9715-4815-7067'
-  },
-  'SOFTWARE\\Adobe\\Creative Cloud': {
-    'SubscriptionStatus': 'Active',
-    'ExpirationDate': '2099-12-31T23:59:59Z',
-    'LicenseType': 'Commercial'
-  },
-
-  // Autodesk product licensing
-  'SOFTWARE\\Autodesk\\Maya\\2024\\License': {
-    'LicenseType': 'Commercial',
-    'ExpirationDate': '2099-12-31',
-    'SerialNumber': '666-69696969',
-    'ProductKey': '657N1',
-    'NetworkLicense': '0'
-  },
-  'SOFTWARE\\Autodesk\\AutoCAD\\R24.0\\License': {
-    'LicenseType': 'Commercial',
-    'SerialNumber': '666-12345678',
-    'ProductKey': '001L1'
-  },
-  'SOFTWARE\\FLEXlm License Manager': {
-    'ADSKFLEX_LICENSE_FILE': '@flexlm.autodesk.com',
-    'LicenseStatus': 'Valid'
-  },
-
-  // JetBrains products
-  'SOFTWARE\\JetBrains\\IntelliJ IDEA': {
-    'eureka.license.key': 'VALID_LICENSE_KEY',
-    'idea.license.key': 'ENTERPRISE_LICENSE',
-    'perpetual.fallback.date': '2099-12-31'
-  },
-
-  // VMware products
-  'SOFTWARE\\VMware, Inc.\\VMware Workstation': {
-    'SerialNumber': '5A02H-AU243-TZJ49-GTC7K-3C61N',
-    'LicenseType': 'Professional'
-  },
-
-  // WinRAR
-  'SOFTWARE\\WinRAR': {
-    'User': 'Registered User',
-    'License': 'Site License'
-  },
-
-  // Generic trial resets
-  'SOFTWARE\\Classes\\Licenses': {
-    '*': 'VALID_LICENSE_DATA'  // Wildcard for any value name
-  },
-  'SOFTWARE\\Licenses': {
-    '*': 'REGISTERED_USER_LICENSE'
-  },
-
-  // Hardware ID spoofing for machine fingerprinting
-  'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0': {
-    'ProcessorNameString': 'Intel(R) Core(TM) i9-13900K CPU @ 3.00GHz',
-    'Identifier': 'Intel64 Family 6 Model 183 Stepping 1',
-    'VendorIdentifier': 'GenuineIntel'
-  },
-  'SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0001': {
-    'NetworkAddress': '001A2B3C4D5E'
-  },
-  'SOFTWARE\\Microsoft\\Cryptography': {
-    'MachineGuid': '{12345678-1234-1234-1234-123456789ABC}'
-  },
-
-  // Windows activation
-  'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion': {
-    'RegisteredOwner': 'Licensed User',
-    'RegisteredOrganization': 'Licensed Organization',
-    'DigitalProductId': '0123456789ABCDEF'
-  }
-};
-
-// Write protection patterns - prevent overwriting of spoofed values
-const writeProtectionPatterns = [
-  // Microsoft Office protection
-  /SOFTWARE\\Microsoft\\Office.*Licensing/i,
-  /SOFTWARE\\Microsoft\\Office.*Activation/i,
-
-  // Adobe protection
-  /SOFTWARE\\Adobe.*Activation/i,
-  /SOFTWARE\\Adobe.*License/i,
-  /SOFTWARE\\Adobe.*Serial/i,
-
-  // Autodesk protection
-  /SOFTWARE\\Autodesk.*License/i,
-  /SOFTWARE\\FLEXlm License Manager/i,
-
-  // Generic license protection
-  /SOFTWARE\\Classes\\Licenses/i,
-  /SOFTWARE\\Licenses/i,
-
-  // Hardware fingerprinting protection
-  /HARDWARE\\DESCRIPTION\\System\\CentralProcessor/i,
-  /SOFTWARE\\Microsoft\\Cryptography\\MachineGuid/i,
-  /SYSTEM.*Control\\Class.*NetworkAddress/i,
-
-  // Windows activation protection
-  /SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion.*Product/i,
-  /SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion.*Digital/i
-];
-
-// Process filtering configuration
-config.targetProcesses = [];  // Empty = monitor all processes
-config.excludeProcesses = ['explorer.exe', 'svchost.exe', 'System', 'Registry', 'winlogon.exe', 'csrss.exe'];
-config.encryptLogs = true;
-config.logToFile = true;
-config.logFilePath = 'C:\\ProgramData\\regmon.dat';
-config.encryptionKey = 'IntellicrackRegMon2024Enhanced!';
-
-// Statistics tracking
-const statistics = {
-  totalCalls: 0,
-  spoofedValues: 0,
-  blockedWrites: 0,
-  processesFiltered: 0,
-  errors: 0,
-  startTime: Date.now()
-};
-
-const logBuffer = [];
-
-// Enhanced utility functions
-function encryptData(data) {
-  if (!config.encryptLogs) return data;
-
-  try {
-    let result = '';
-    const key = config.encryptionKey;
-    for (let i = 0; i < data.length; i++) {
-      result += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return btoa(result);
-  } catch (e) {
-    return data;  // Fallback to unencrypted
-  }
-}
-
-function isTargetProcess() {
-  try {
-    const processName = Process.enumerateModules()[0]?.name?.toLowerCase() || '';
-
-    // Check exclude list first
-    if (config.excludeProcesses.some(exclude => processName.includes(exclude.toLowerCase()))) {
-      statistics.processesFiltered++;
-      return false;
-    }
-
-    // Check include list if specified
-    if (config.targetProcesses.length > 0) {
-      return config.targetProcesses.some(target => processName.includes(target.toLowerCase()));
-    }
-
-    return true;
-  } catch (_) {
-    return true;  // Default to monitoring if detection fails
-  }
-}
-
-function getSpoofedValue(fullPath, valueName) {
-  if (!fullPath || !valueName) return null;
-
-  const normalizedPath = fullPath.toUpperCase();
-
-  for (const [rulePath, rules] of Object.entries(spoofingRules)) {
-    if (normalizedPath.includes(rulePath.toUpperCase())) {
-      // Check for wildcard rule
-      if (rules['*'] !== undefined) {
-        return rules['*'];
-      }
-
-      // Check for specific value rule
-      if (rules[valueName] !== undefined) {
-        return rules[valueName];
-      }
-    }
-  }
-
-  return null;
-}
-
-function applySpoofedValue(lpData, lpcbData, lpType, spoofValue, isUnicode) {
-  if (!lpData || lpData.isNull() || !spoofValue) return false;
-
-  try {
-    const regType = lpType ? lpType.readU32() : REG_SZ;
-
-    switch (regType) {
-      case REG_SZ:
-      case REG_EXPAND_SZ:
-        if (isUnicode) {
-          const strPtr = Memory.allocUtf16String(spoofValue);
-          const byteLength = (spoofValue.length + 1) * 2;
-          Memory.copy(lpData, strPtr, Math.min(byteLength, config.captureValuePreviewBytes));
-          if (lpcbData && !lpcbData.isNull()) lpcbData.writeU32(byteLength);
-        } else {
-          const strPtr = Memory.allocUtf8String(spoofValue);
-          const byteLength = spoofValue.length + 1;
-          Memory.copy(lpData, strPtr, Math.min(byteLength, config.captureValuePreviewBytes));
-          if (lpcbData && !lpcbData.isNull()) lpcbData.writeU32(byteLength);
-        }
-        return true;
-
-      case REG_DWORD:
-        const dwordValue = parseInt(spoofValue);
-        if (!isNaN(dwordValue)) {
-          lpData.writeU32(dwordValue);
-          if (lpcbData && !lpcbData.isNull()) lpcbData.writeU32(4);
-          return true;
-        }
-        break;
-
-      case REG_QWORD:
-        const qwordValue = parseInt(spoofValue);
-        if (!isNaN(qwordValue)) {
-          lpData.writeU64(qwordValue);
-          if (lpcbData && !lpcbData.isNull()) lpcbData.writeU32(8);
-          return true;
-        }
-        break;
-
-      case REG_BINARY:
-        // Handle hex string format
-        const hex = spoofValue.replace(/[^0-9A-Fa-f]/g, '');
-        if (hex.length % 2 === 0) {
-          const bytes = [];
-          for (let i = 0; i < hex.length; i += 2) {
-            bytes.push(parseInt(hex.substr(i, 2), 16));
-          }
-          for (let i = 0; i < Math.min(bytes.length, config.captureValuePreviewBytes); i++) {
-            lpData.add(i).writeU8(bytes[i]);
-          }
-          if (lpcbData && !lpcbData.isNull()) lpcbData.writeU32(bytes.length);
-          return true;
-        }
-        break;
-    }
-
-    return false;
-  } catch (e) {
-    statistics.errors++;
-    return false;
-  }
-}
-
-function shouldBlockWrite(fullPath, valueName) {
-  if (!fullPath) return false;
-
-  return writeProtectionPatterns.some(pattern => pattern.test(fullPath));
-}
-
-function enhancedGetFullRegistryPath(hKey) {
-  const handle = hKey.toString();
-
-  // Check predefined keys first
-  if (predefinedRoots.has(handle)) {
-    return predefinedRoots.get(handle);
-  }
-
-  // Check our handle mapping
-  if (handlePaths.has(handle)) {
-    return handlePaths.get(handle);
-  }
-
-  // Try NtQueryKey for better path resolution
-  try {
-    const ntQueryKey = Module.findExportByName('ntdll.dll', 'NtQueryKey');
-    if (ntQueryKey) {
-      const keyInfoBuffer = Memory.alloc(1024);
-      const lengthBuffer = Memory.alloc(4);
-
-      const queryFunc = new NativeFunction(ntQueryKey, 'int', ['pointer', 'int', 'pointer', 'int', 'pointer']);
-      const result = queryFunc(hKey, 3, keyInfoBuffer, 1024, lengthBuffer);
-
-      if (result === 0) {
-        // KEY_NAME_INFORMATION structure: ULONG NameLength followed by WCHAR Name[]
-        const nameLength = keyInfoBuffer.readU32();
-        if (nameLength > 0 && nameLength < 2000) {
-          const namePtr = keyInfoBuffer.add(4);
-          let path = namePtr.readUtf16String(nameLength / 2);
-
-          // Convert registry path format
-          if (path.startsWith('\\REGISTRY\\')) {
-            path = path.substring(10);
-            if (path.startsWith('MACHINE\\')) {
-              path = 'HKEY_LOCAL_MACHINE\\' + path.substring(8);
-            } else if (path.startsWith('USER\\')) {
-              // Find the SID end and replace with HKEY_CURRENT_USER
-              const parts = path.split('\\');
-              if (parts.length >= 3) {
-                path = 'HKEY_CURRENT_USER\\' + parts.slice(2).join('\\');
-              }
+        if (success && this.keyInfo && !this.keyInfo.isNull()) {
+            try {
+                let namePtr, nameLength;
+
+                switch (this.infoClass) {
+                case 0: // KeyBasicInformation
+                    nameLength = this.keyInfo.add(4).readU32();
+                    namePtr = this.keyInfo.add(16);
+                    if (nameLength > 0) {
+                        evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
+                    }
+                    break;
+
+                case 1: // KeyNodeInformation
+                    nameLength = this.keyInfo.add(8).readU32();
+                    const nameOffset = this.keyInfo.add(24).readU32();
+                    namePtr = this.keyInfo.add(nameOffset);
+                    if (nameLength > 0) {
+                        evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
+                    }
+                    break;
+
+                case 2: // KeyFullInformation
+                    break;
+                }
+            } catch (e) {
+                evt.parse_error = e.toString();
             }
-          }
-
-          handlePaths.set(handle, path);
-          return path;
         }
-      }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
     }
-  } catch (_) {
-    // Fallback to existing logic
-  }
 
-  return rootForHandle(hKey);
-}
+    function onNtEnumerateValueKeyEnter(args) {
+        const keyHandle = args[0];
+        const index = args[1].toInt32();
+        const infoClass = args[2].toInt32();
+        const keyValueInfo = args[3];
+        const length = args[4].toInt32();
+        const resultLength = args[5];
 
-function writeToLogFile(data) {
-  if (!config.logToFile) return;
-
-  try {
-    const timestamp = new Date().toISOString();
-    const logEntry = `${timestamp} | ${data}\n`;
-    const finalData = config.encryptLogs ? encryptData(logEntry) + '\n' : logEntry;
-
-    // Use Frida's File API for cross-platform compatibility
-    const file = new File(config.logFilePath, 'a');
-    file.write(finalData);
-    file.close();
-  } catch (e) {
-    // Silently fail to avoid breaking the hook
-    statistics.errors++;
-  }
-}
-
-function flushLogBuffer() {
-  if (logBuffer.length === 0) return;
-
-  try {
-    const entries = logBuffer.splice(0);  // Clear buffer
-    entries.forEach(entry => writeToLogFile(entry));
-  } catch (_) {
-    statistics.errors++;
-  }
-}
-
-function enhancedSendEvent(e, includeBt) {
-  // Check process filtering
-  if (!isTargetProcess()) {
-    statistics.processesFiltered++;
-    return;
-  }
-
-  statistics.totalCalls++;
-
-  // Apply existing throttling
-  if (shouldThrottle()) return;
-
-  const evt = Object.assign({
-    type: 'info',
-    target: 'registry_monitor_enhanced',
-    pid: Process.id,
-    timestamp: Date.now(),
-    module: Process.enumerateModules()[0]?.name || null,
-    stats: {
-      total_calls: statistics.totalCalls,
-      spoofed_values: statistics.spoofedValues,
-      blocked_writes: statistics.blockedWrites,
-      filtered_processes: statistics.processesFiltered
+        this.keyHandle = keyHandle;
+        this.index = index;
+        this.infoClass = infoClass;
+        this.keyValueInfo = keyValueInfo;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
     }
-  }, e);
 
-  if (includeBt) {
-    try {
-      evt.backtrace = Thread.backtrace(e.context || null, Backtracer.ACCURATE)
-        .slice(0, 10)
-        .map(a => symbolAt(a))
-        .filter(s => s);
-    } catch (_) {}
-  }
-
-  // Send to Frida host
-  send(evt);
-
-  // Buffer for file logging
-  const logMsg = `${evt.event} | ${evt.key_path || 'N/A'} | ${evt.value_name || ''} | ${evt.status || ''} | ${evt.data_formatted || evt.data_preview_hex || ''}`;
-  logBuffer.push(logMsg);
-
-  // Flush buffer periodically
-  if (logBuffer.length >= 20) {
-    flushLogBuffer();
-  }
-}
-
-// Override the original sendEvent function to use enhanced version
-const originalSendEvent = sendEvent;
-sendEvent = enhancedSendEvent;
-
-// Enhanced hooks integration - modify existing RegQueryValueEx hooks to support spoofing
-function enhanceExistingQueryHooks() {
-  // We need to re-attach the RegQueryValueEx hooks with spoofing capability
-  // Since hooks are already attached, we'll enhance them by modifying the onLeave behavior
-
-  // The hooks are already established, but we need to add spoofing logic
-  // This will be integrated directly into the existing hook structure
-}
-
-// Statistics reporting
-setInterval(() => {
-  const runtime = Math.round((Date.now() - statistics.startTime) / 1000);
-
-  send({
-    type: 'summary',
-    target: 'registry_monitor_enhanced',
-    action: 'statistics_report',
-    runtime_seconds: runtime,
-    stats: {
-      total_calls: statistics.totalCalls,
-      spoofed_values: statistics.spoofedValues,
-      blocked_writes: statistics.blockedWrites,
-      processes_filtered: statistics.processesFiltered,
-      errors: statistics.errors,
-      calls_per_second: statistics.totalCalls / Math.max(runtime, 1)
-    }
-  });
-
-  // Flush any pending logs
-  flushLogBuffer();
-}, 30000); // Every 30 seconds
-
-// Add spoofing support to existing RegQueryValueEx hooks
-const originalRegQueryCallbacks = {};
-
-function integrateSpoofingIntoExistingHooks() {
-  // Enhance existing Win32 API hooks with spoofing capability
-  attachVariants('RegQueryValueEx', {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readA(args[1]);
-      this.lpType = args[3];
-      this.lpData = args[4];
-      this.lpcbData = args[5];
-      this.fullPath = enhancedGetFullRegistryPath(this.hKey);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const success = status === 0;
-
-      if (success && this.fullPath && this.valueName) {
-        // Check for spoofing opportunity
-        const spoofValue = getSpoofedValue(this.fullPath, this.valueName);
-
-        if (spoofValue !== null) {
-          // Apply spoofed value
-          if (applySpoofedValue(this.lpData, this.lpcbData, this.lpType, spoofValue, false)) {
-            statistics.spoofedValues++;
-            const includeBt = config.includeBacktraceOnMatch && matchesFilters(this.fullPath, this.valueName);
-            sendEvent({
-              event: 'query_value_spoofed',
-              api: 'RegQueryValueExA',
-              key_path: this.fullPath,
-              value_name: this.valueName,
-              status: 'SUCCESS_SPOOFED',
-              success: true,
-              original_status: LSTATUS_MAP[status] || `ERROR_${status}`,
-              spoofed_value: spoofValue,
-              spoof_applied: true
-            }, includeBt);
-            return;
-          }
-        }
-      }
-
-      // Fall back to original behavior if no spoofing applied
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const keyPath = this.fullPath || rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+    function onNtEnumerateValueKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
         const evt = {
-          event: 'query_value',
-          api: 'RegQueryValueExA',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtEnumerateValueKey',
+            key_path: this.keyPath,
+            index: this.index,
+            info_class: this.infoClass,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.keyValueInfo && !this.keyValueInfo.isNull()) {
+            try {
+                let namePtr, nameLength, dataPtr, dataSize, regType;
+
+                switch (this.infoClass) {
+                case 0: // KeyValueBasicInformation
+                    nameLength = this.keyValueInfo.add(4).readU32();
+                    namePtr = this.keyValueInfo.add(12);
+                    regType = this.keyValueInfo.add(8).readU32();
+
+                    if (nameLength > 0) {
+                        evt.value_name = namePtr.readUtf16String(nameLength / 2);
+                    }
+                    evt.data_type = regType;
+                    break;
+
+                case 1: // KeyValueFullInformation
+                    regType = this.keyValueInfo.add(4).readU32();
+                    dataSize = this.keyValueInfo.add(12).readU32();
+                    nameLength = this.keyValueInfo.add(8).readU32();
+                    const nameOffset = this.keyValueInfo.add(16).readU32();
+                    const dataOffset = this.keyValueInfo.add(20).readU32();
+
+                    if (nameLength > 0) {
+                        namePtr = this.keyValueInfo.add(nameOffset);
+                        evt.value_name = namePtr.readUtf16String(nameLength / 2);
+                    }
+
+                    evt.data_type = regType;
+                    evt.data_size = dataSize;
+
+                    if (dataSize > 0) {
+                        dataPtr = this.keyValueInfo.add(dataOffset);
+                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                        if (config.performDeepAnalysis) {
+                            detectLicensePattern(this.keyPath, evt.value_name, formatted);
+                        }
+                    }
+                    break;
+
+                case 2: // KeyValuePartialInformation
+                    regType = this.keyValueInfo.add(4).readU32();
+                    dataSize = this.keyValueInfo.add(8).readU32();
+                    dataPtr = this.keyValueInfo.add(12);
+
+                    evt.data_type = regType;
+                    evt.data_size = dataSize;
+
+                    if (dataSize > 0) {
+                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    }
+                    break;
+                }
+            } catch (e) {
+                evt.parse_error = e.toString();
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, evt.value_name);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtCloseEnter(args) {
+        const handle = args[0];
+        const keyPath = handleTracker.get(handle.toString());
+
+        if (keyPath && config.trackHandleLifecycle) {
+            this.keyPath = keyPath;
+            this.handle = handle;
+            this.startTime = Date.now();
+        }
+    }
+
+    function onNtFlushKeyEnter(args) {
+        const keyHandle = args[0];
+        this.keyHandle = keyHandle;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtFlushKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtFlushKey',
+            key_path: this.keyPath,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtQueryMultipleValueKeyEnter(args) {
+        const keyHandle = args[0];
+        const valueEntries = args[1];
+        const entryCount = args[2].toInt32();
+        const valueBuffer = args[3];
+        const bufferLength = args[4] ? args[4].toInt32() : 0;
+        const requiredLength = args[5];
+
+        this.keyHandle = keyHandle;
+        this.entryCount = entryCount;
+        this.valueEntries = valueEntries;
+        this.valueBuffer = valueBuffer;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtQueryMultipleValueKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtQueryMultipleValueKey',
+            key_path: this.keyPath,
+            entry_count: this.entryCount,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtRenameKeyEnter(args) {
+        const keyHandle = args[0];
+        const newNamePtr = args[1];
+
+        this.keyHandle = keyHandle;
+        this.newName = readUnicodeString(newNamePtr);
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtRenameKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtRenameKey',
+            key_path: this.keyPath,
+            new_name: this.newName,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtLoadKeyEnter(args) {
+        const targetKey = args[0];
+        const sourceFile = args[1];
+
+        this.targetKey = readUnicodeString(targetKey);
+        this.sourceFile = readUnicodeString(sourceFile);
+        this.startTime = Date.now();
+    }
+
+    function onNtLoadKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtLoadKey',
+            target_key: this.targetKey,
+            source_file: this.sourceFile,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtUnloadKeyEnter(args) {
+        const targetKey = args[0];
+        this.targetKey = readUnicodeString(targetKey);
+        this.startTime = Date.now();
+    }
+
+    function onNtUnloadKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtUnloadKey',
+            target_key: this.targetKey,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtSaveKeyEnter(args) {
+        const keyHandle = args[0];
+        const fileHandle = args[1];
+
+        this.keyHandle = keyHandle;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtSaveKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtSaveKey',
+            key_path: this.keyPath,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onNtRestoreKeyEnter(args) {
+        const keyHandle = args[0];
+        const fileHandle = args[1];
+        const flags = args[2] ? args[2].toInt32() : 0;
+
+        this.keyHandle = keyHandle;
+        this.flags = flags;
+        this.keyPath = getKeyPath(keyHandle);
+        this.startTime = Date.now();
+    }
+
+    function onNtRestoreKeyLeave(retval) {
+        const success = retval.toInt32() === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'NtRestoreKey',
+            key_path: this.keyPath,
+            flags: this.flags,
+            success: success,
+            status: retval.toInt32(),
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegOpenKeyExWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const ulOptions = args[2] ? args[2].toInt32() : 0;
+        const samDesired = args[3] ? args[3].toInt32() : 0;
+        const phkResult = args[4];
+
+        this.parentKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+        this.options = ulOptions;
+        this.access = samDesired;
+        this.resultPtr = phkResult;
+        this.startTime = Date.now();
+    }
+
+    function onRegOpenKeyExWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegOpenKeyExW',
+            parent_key: '0x' + this.parentKey.toString(16),
+            sub_key: this.subKey,
+            options: this.options,
+            access: this.access,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.resultPtr && !this.resultPtr.isNull()) {
+            const handle = this.resultPtr.readPointer();
+            const keyPath = getKeyPath(handle);
+
+            if (keyPath) {
+                evt.key_path = keyPath;
+                handleTracker.set(handle.toString(), keyPath);
+
+                if (config.performDeepAnalysis) {
+                    detectLicensePattern(keyPath, null, null);
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path || this.subKey, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegOpenKeyExAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const ulOptions = args[2] ? args[2].toInt32() : 0;
+        const samDesired = args[3] ? args[3].toInt32() : 0;
+        const phkResult = args[4];
+
+        this.parentKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+        this.options = ulOptions;
+        this.access = samDesired;
+        this.resultPtr = phkResult;
+        this.startTime = Date.now();
+    }
+
+    function onRegOpenKeyExALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegOpenKeyExA',
+            parent_key: '0x' + this.parentKey.toString(16),
+            sub_key: this.subKey,
+            options: this.options,
+            access: this.access,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.resultPtr && !this.resultPtr.isNull()) {
+            const handle = this.resultPtr.readPointer();
+            const keyPath = getKeyPath(handle);
+
+            if (keyPath) {
+                evt.key_path = keyPath;
+                handleTracker.set(handle.toString(), keyPath);
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path || this.subKey, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegCreateKeyExWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const reserved = args[2] ? args[2].toInt32() : 0;
+        const lpClass = args[3];
+        const dwOptions = args[4] ? args[4].toInt32() : 0;
+        const samDesired = args[5] ? args[5].toInt32() : 0;
+        const lpSecurityAttributes = args[6];
+        const phkResult = args[7];
+        const lpdwDisposition = args[8];
+
+        this.parentKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+        this.className = lpClass.isNull() ? null : lpClass.readUtf16String();
+        this.options = dwOptions;
+        this.access = samDesired;
+        this.resultPtr = phkResult;
+        this.dispositionPtr = lpdwDisposition;
+        this.startTime = Date.now();
+    }
+
+    function onRegCreateKeyExWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegCreateKeyExW',
+            parent_key: '0x' + this.parentKey.toString(16),
+            sub_key: this.subKey,
+            class_name: this.className,
+            options: this.options,
+            access: this.access,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
         };
 
         if (success) {
-          const regType = readDword(this.lpType);
-          const dataSize = readDword(this.lpcbData);
+            if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
+                evt.disposition = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+            }
 
-          if (regType != null) evt.reg_type = regType;
-          if (dataSize != null) evt.data_len = dataSize;
+            if (this.resultPtr && !this.resultPtr.isNull()) {
+                const handle = this.resultPtr.readPointer();
+                const keyPath = getKeyPath(handle);
 
-          if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-            const formatted = formatRegData(regType, this.lpData, dataSize, true);
-            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-            if (formatted.raw) evt.data_preview_hex = formatted.raw;
-          }
+                if (keyPath) {
+                    evt.key_path = keyPath;
+                    handleTracker.set(handle.toString(), keyPath);
+                }
+            }
         }
 
-        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
-      }
     }
-  }, {
-    onEnter(args) {
-      this.hKey = args[0];
-      this.valueName = readW(args[1]);
-      this.lpType = args[3];
-      this.lpData = args[4];
-      this.lpcbData = args[5];
-      this.fullPath = enhancedGetFullRegistryPath(this.hKey);
-    },
-    onLeave(retval) {
-      const status = retval.toInt32();
-      const success = status === 0;
 
-      if (success && this.fullPath && this.valueName) {
-        // Check for spoofing opportunity
-        const spoofValue = getSpoofedValue(this.fullPath, this.valueName);
+    function onRegCreateKeyExAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const reserved = args[2] ? args[2].toInt32() : 0;
+        const lpClass = args[3];
+        const dwOptions = args[4] ? args[4].toInt32() : 0;
+        const samDesired = args[5] ? args[5].toInt32() : 0;
+        const lpSecurityAttributes = args[6];
+        const phkResult = args[7];
+        const lpdwDisposition = args[8];
 
-        if (spoofValue !== null) {
-          // Apply spoofed value
-          if (applySpoofedValue(this.lpData, this.lpcbData, this.lpType, spoofValue, true)) {
-            statistics.spoofedValues++;
-            const includeBt = config.includeBacktraceOnMatch && matchesFilters(this.fullPath, this.valueName);
-            sendEvent({
-              event: 'query_value_spoofed',
-              api: 'RegQueryValueExW',
-              key_path: this.fullPath,
-              value_name: this.valueName,
-              status: 'SUCCESS_SPOOFED',
-              success: true,
-              original_status: LSTATUS_MAP[status] || `ERROR_${status}`,
-              spoofed_value: spoofValue,
-              spoof_applied: true
-            }, includeBt);
-            return;
-          }
-        }
-      }
+        this.parentKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+        this.className = lpClass.isNull() ? null : lpClass.readAnsiString();
+        this.options = dwOptions;
+        this.access = samDesired;
+        this.resultPtr = phkResult;
+        this.dispositionPtr = lpdwDisposition;
+        this.startTime = Date.now();
+    }
 
-      // Fall back to original behavior if no spoofing applied
-      const statusStr = LSTATUS_MAP[status] || `ERROR_${status}`;
-      const keyPath = this.fullPath || rootForHandle(this.hKey);
-
-      if ((success && matchesFilters(keyPath, this.valueName)) || (!success && config.logFailures)) {
+    function onRegCreateKeyExALeave(retval) {
+        const success = retval === 0;
         const evt = {
-          event: 'query_value',
-          api: 'RegQueryValueExW',
-          key_path: keyPath,
-          value_name: this.valueName || '',
-          status: statusStr,
-          success
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegCreateKeyExA',
+            parent_key: '0x' + this.parentKey.toString(16),
+            sub_key: this.subKey,
+            class_name: this.className,
+            options: this.options,
+            access: this.access,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
         };
 
         if (success) {
-          const regType = readDword(this.lpType);
-          const dataSize = readDword(this.lpcbData);
+            if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
+                evt.disposition = this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
+            }
 
-          if (regType != null) evt.reg_type = regType;
-          if (dataSize != null) evt.data_len = dataSize;
+            if (this.resultPtr && !this.resultPtr.isNull()) {
+                const handle = this.resultPtr.readPointer();
+                const keyPath = getKeyPath(handle);
 
-          if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-            const formatted = formatRegData(regType, this.lpData, dataSize, true);
-            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-            if (formatted.raw) evt.data_preview_hex = formatted.raw;
-          }
+                if (keyPath) {
+                    evt.key_path = keyPath;
+                    handleTracker.set(handle.toString(), keyPath);
+                }
+            }
         }
 
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path || this.subKey, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegQueryValueExWEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+        const lpReserved = args[2];
+        const lpType = args[3];
+        const lpData = args[4];
+        const lpcbData = args[5];
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
+        this.lpType = lpType;
+        this.lpData = lpData;
+        this.lpcbData = lpcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegQueryValueExWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegQueryValueExW',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                        if (config.performDeepAnalysis) {
+                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                        }
+                    }
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegQueryValueExAEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+        const lpReserved = args[2];
+        const lpType = args[3];
+        const lpData = args[4];
+        const lpcbData = args[5];
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readAnsiString();
+        this.lpType = lpType;
+        this.lpData = lpData;
+        this.lpcbData = lpcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegQueryValueExALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegQueryValueExA',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                        if (config.performDeepAnalysis) {
+                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                        }
+                    }
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegSetValueExWEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+        const reserved = args[2] ? args[2].toInt32() : 0;
+        const dwType = args[3] ? args[3].toInt32() : 0;
+        const lpData = args[4];
+        const cbData = args[5] ? args[5].toInt32() : 0;
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
+        this.dataType = dwType;
+        this.dataSize = cbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+
+        if (lpData && !lpData.isNull() && cbData > 0) {
+            const formatted = formatRegData(dwType, lpData, cbData, true);
+            this.dataFormatted = formatted.formatted;
+            this.dataRaw = formatted.raw;
+        }
+
+        this.startTime = Date.now();
+    }
+
+    function onRegSetValueExWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegSetValueExW',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            data_type: this.dataType,
+            data_size: this.dataSize,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
+        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+
+        if (config.performDeepAnalysis && success) {
+            detectLicensePattern(this.keyPath, this.valueName, { formatted: this.dataFormatted });
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegSetValueExAEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+        const reserved = args[2] ? args[2].toInt32() : 0;
+        const dwType = args[3] ? args[3].toInt32() : 0;
+        const lpData = args[4];
+        const cbData = args[5] ? args[5].toInt32() : 0;
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readAnsiString();
+        this.dataType = dwType;
+        this.dataSize = cbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+
+        if (lpData && !lpData.isNull() && cbData > 0) {
+            const formatted = formatRegData(dwType, lpData, cbData, true);
+            this.dataFormatted = formatted.formatted;
+            this.dataRaw = formatted.raw;
+        }
+
+        this.startTime = Date.now();
+    }
+
+    function onRegSetValueExALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegSetValueExA',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            data_type: this.dataType,
+            data_size: this.dataSize,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
+        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+
+        if (config.performDeepAnalysis && success) {
+            detectLicensePattern(this.keyPath, this.valueName, { formatted: this.dataFormatted });
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegDeleteKeyWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegDeleteKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegDeleteKeyW',
+            key_path: this.keyPath,
+            sub_key: this.subKey,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegDeleteKeyAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegDeleteKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegDeleteKeyA',
+            key_path: this.keyPath,
+            sub_key: this.subKey,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegDeleteValueWEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegDeleteValueWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegDeleteValueW',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegDeleteValueAEnter(args) {
+        const hKey = args[0];
+        const lpValueName = args[1];
+
+        this.hKey = hKey;
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readAnsiString();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegDeleteValueALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegDeleteValueA',
+            key_path: this.keyPath,
+            value_name: this.valueName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegEnumKeyExWEnter(args) {
+        const hKey = args[0];
+        const dwIndex = args[1] ? args[1].toInt32() : 0;
+        const lpName = args[2];
+        const lpcchName = args[3];
+        const lpReserved = args[4];
+        const lpClass = args[5];
+        const lpcchClass = args[6];
+        const lpftLastWriteTime = args[7];
+
+        this.hKey = hKey;
+        this.index = dwIndex;
+        this.lpName = lpName;
+        this.lpcchName = lpcchName;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegEnumKeyExWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegEnumKeyExW',
+            key_path: this.keyPath,
+            index: this.index,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.lpName && !this.lpName.isNull()) {
+            evt.subkey_name = this.lpName.readUtf16String();
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, evt.subkey_name);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegEnumKeyExAEnter(args) {
+        const hKey = args[0];
+        const dwIndex = args[1] ? args[1].toInt32() : 0;
+        const lpName = args[2];
+        const lpcchName = args[3];
+        const lpReserved = args[4];
+        const lpClass = args[5];
+        const lpcchClass = args[6];
+        const lpftLastWriteTime = args[7];
+
+        this.hKey = hKey;
+        this.index = dwIndex;
+        this.lpName = lpName;
+        this.lpcchName = lpcchName;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegEnumKeyExALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegEnumKeyExA',
+            key_path: this.keyPath,
+            index: this.index,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success && this.lpName && !this.lpName.isNull()) {
+            evt.subkey_name = this.lpName.readAnsiString();
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, evt.subkey_name);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegEnumValueWEnter(args) {
+        const hKey = args[0];
+        const dwIndex = args[1] ? args[1].toInt32() : 0;
+        const lpValueName = args[2];
+        const lpcchValueName = args[3];
+        const lpReserved = args[4];
+        const lpType = args[5];
+        const lpData = args[6];
+        const lpcbData = args[7];
+
+        this.hKey = hKey;
+        this.index = dwIndex;
+        this.lpValueName = lpValueName;
+        this.lpcchValueName = lpcchValueName;
+        this.lpType = lpType;
+        this.lpData = lpData;
+        this.lpcbData = lpcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegEnumValueWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegEnumValueW',
+            key_path: this.keyPath,
+            index: this.index,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpValueName && !this.lpValueName.isNull()) {
+                evt.value_name = this.lpValueName.readUtf16String();
+            }
+
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    }
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, evt.value_name);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegEnumValueAEnter(args) {
+        const hKey = args[0];
+        const dwIndex = args[1] ? args[1].toInt32() : 0;
+        const lpValueName = args[2];
+        const lpcchValueName = args[3];
+        const lpReserved = args[4];
+        const lpType = args[5];
+        const lpData = args[6];
+        const lpcbData = args[7];
+
+        this.hKey = hKey;
+        this.index = dwIndex;
+        this.lpValueName = lpValueName;
+        this.lpcchValueName = lpcchValueName;
+        this.lpType = lpType;
+        this.lpData = lpData;
+        this.lpcbData = lpcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegEnumValueALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegEnumValueA',
+            key_path: this.keyPath,
+            index: this.index,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpValueName && !this.lpValueName.isNull()) {
+                evt.value_name = this.lpValueName.readAnsiString();
+            }
+
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    }
+                }
+            }
+        }
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, evt.value_name);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegCloseKeyEnter(args) {
+        const hKey = args[0];
+        const keyPath = handleTracker.get(hKey.toString());
+
+        if (keyPath && config.trackHandleLifecycle) {
+            this.keyPath = keyPath;
+            this.hKey = hKey;
+            this.startTime = Date.now();
+        }
+    }
+
+    function onRegFlushKeyEnter(args) {
+        const hKey = args[0];
+
+        this.hKey = hKey;
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegFlushKeyLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegFlushKey',
+            key_path: this.keyPath,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegSaveKeyWEnter(args) {
+        const hKey = args[0];
+        const lpFile = args[1];
+        const lpSecurityAttributes = args[2];
+
+        this.hKey = hKey;
+        this.fileName = lpFile.isNull() ? null : lpFile.readUtf16String();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegSaveKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegSaveKeyW',
+            key_path: this.keyPath,
+            file_name: this.fileName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegSaveKeyAEnter(args) {
+        const hKey = args[0];
+        const lpFile = args[1];
+        const lpSecurityAttributes = args[2];
+
+        this.hKey = hKey;
+        this.fileName = lpFile.isNull() ? null : lpFile.readAnsiString();
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegSaveKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegSaveKeyA',
+            key_path: this.keyPath,
+            file_name: this.fileName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegRestoreKeyWEnter(args) {
+        const hKey = args[0];
+        const lpFile = args[1];
+        const dwFlags = args[2] ? args[2].toInt32() : 0;
+
+        this.hKey = hKey;
+        this.fileName = lpFile.isNull() ? null : lpFile.readUtf16String();
+        this.flags = dwFlags;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegRestoreKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegRestoreKeyW',
+            key_path: this.keyPath,
+            file_name: this.fileName,
+            flags: this.flags,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegRestoreKeyAEnter(args) {
+        const hKey = args[0];
+        const lpFile = args[1];
+        const dwFlags = args[2] ? args[2].toInt32() : 0;
+
+        this.hKey = hKey;
+        this.fileName = lpFile.isNull() ? null : lpFile.readAnsiString();
+        this.flags = dwFlags;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegRestoreKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegRestoreKeyA',
+            key_path: this.keyPath,
+            file_name: this.fileName,
+            flags: this.flags,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegLoadKeyWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const lpFile = args[2];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+        this.fileName = lpFile.isNull() ? null : lpFile.readUtf16String();
+        this.startTime = Date.now();
+    }
+
+    function onRegLoadKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegLoadKeyW',
+            parent_key: '0x' + this.hKey.toString(16),
+            sub_key: this.subKey,
+            file_name: this.fileName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegLoadKeyAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const lpFile = args[2];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+        this.fileName = lpFile.isNull() ? null : lpFile.readAnsiString();
+        this.startTime = Date.now();
+    }
+
+    function onRegLoadKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegLoadKeyA',
+            parent_key: '0x' + this.hKey.toString(16),
+            sub_key: this.subKey,
+            file_name: this.fileName,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegUnLoadKeyWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+        this.startTime = Date.now();
+    }
+
+    function onRegUnLoadKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegUnLoadKeyW',
+            parent_key: '0x' + this.hKey.toString(16),
+            sub_key: this.subKey,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegUnLoadKeyAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+        this.startTime = Date.now();
+    }
+
+    function onRegUnLoadKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegUnLoadKeyA',
+            parent_key: '0x' + this.hKey.toString(16),
+            sub_key: this.subKey,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success;
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegQueryInfoKeyWEnter(args) {
+        const hKey = args[0];
+
+        this.hKey = hKey;
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegQueryInfoKeyWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegQueryInfoKeyW',
+            key_path: this.keyPath,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegQueryInfoKeyAEnter(args) {
+        const hKey = args[0];
+
+        this.hKey = hKey;
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegQueryInfoKeyALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegQueryInfoKeyA',
+            key_path: this.keyPath,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
+        sendEvent(evt, includeBt);
+    }
+
+    function onRegGetValueWEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const lpValue = args[2];
+        const dwFlags = args[3] ? args[3].toInt32() : 0;
+        const pdwType = args[4];
+        const pvData = args[5];
+        const pcbData = args[6];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readUtf16String();
+        this.valueName = lpValue.isNull() ? null : lpValue.readUtf16String();
+        this.flags = dwFlags;
+        this.lpType = pdwType;
+        this.lpData = pvData;
+        this.lpcbData = pcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegGetValueWLeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegGetValueW',
+            key_path: this.keyPath,
+            sub_key: this.subKey,
+            value_name: this.valueName,
+            flags: this.flags,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    }
+                }
+            }
+        }
+
+        const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
         const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
-      }
     }
-  });
-}
+
+    function onRegGetValueAEnter(args) {
+        const hKey = args[0];
+        const lpSubKey = args[1];
+        const lpValue = args[2];
+        const dwFlags = args[3] ? args[3].toInt32() : 0;
+        const pdwType = args[4];
+        const pvData = args[5];
+        const pcbData = args[6];
+
+        this.hKey = hKey;
+        this.subKey = lpSubKey.isNull() ? null : lpSubKey.readAnsiString();
+        this.valueName = lpValue.isNull() ? null : lpValue.readAnsiString();
+        this.flags = dwFlags;
+        this.lpType = pdwType;
+        this.lpData = pvData;
+        this.lpcbData = pcbData;
+
+        const keyPath = getKeyPath(hKey);
+        this.keyPath = keyPath || handleTracker.get(hKey.toString());
+        this.startTime = Date.now();
+    }
+
+    function onRegGetValueALeave(retval) {
+        const success = retval === 0;
+        const evt = {
+            type: 'registry_operation',
+            target: 'registry_monitor',
+            function: 'RegGetValueA',
+            key_path: this.keyPath,
+            sub_key: this.subKey,
+            value_name: this.valueName,
+            flags: this.flags,
+            success: success,
+            status: retval,
+            duration: Date.now() - this.startTime
+        };
+
+        if (success) {
+            if (this.lpType && !this.lpType.isNull()) {
+                const regType = this.lpType.readU32();
+                evt.data_type = regType;
+
+                if (this.lpcbData && !this.lpcbData.isNull()) {
+                    const dataSize = this.lpcbData.readU32();
+                    evt.data_size = dataSize;
+
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    }
+                }
+            }
+        }
+
+        const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
+        const includeBt = config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
+        sendEvent(evt, includeBt);
+    }
+
+    initializeHooks();
+
+})();

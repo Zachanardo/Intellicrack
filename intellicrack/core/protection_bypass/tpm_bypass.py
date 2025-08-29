@@ -1142,7 +1142,7 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
                     {
                         "type": "api_call",
                         "location": f"Call to {indicator}",
-                        "patch": "Replace with NOP or return success",
+                        "patch": b"\x31\xC0\x40\xC3",  # xor eax,eax; inc eax; ret (return 1/success)
                     }
                 )
 
@@ -1279,6 +1279,88 @@ def tpm_research_tools() -> dict[str, Any]:
             "Runtime bypass",
         ],
     }
+
+    def get_available_bypass_methods(self) -> list[str]:
+        """Get list of available TPM bypass methods."""
+        return [
+            "api_hooking",
+            "virtual_tpm",
+            "binary_patching",
+            "registry_manipulation",
+            "pcr_manipulation",
+            "key_extraction",
+            "attestation_bypass",
+            "seal_unseal_bypass"
+        ]
+
+    def activate_bypass(self, method: str = "auto", target_info: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Activate specified TPM bypass method."""
+        result = {
+            "success": False,
+            "method": method,
+            "details": {},
+            "notes": []
+        }
+
+        # Auto-select method if needed
+        if method == "auto":
+            if self._has_frida_support():
+                method = "api_hooking"
+            elif self._can_patch_binary():
+                method = "binary_patching"
+            else:
+                method = "virtual_tpm"
+
+        # Execute bypass based on method
+        if method == "api_hooking":
+            try:
+                self._hook_tpm_apis()
+                result["success"] = True
+                result["details"] = {"hooked_apis": self.hooked_apis}
+                result["notes"].append("TPM APIs successfully hooked")
+            except Exception as e:
+                result["notes"].append(f"API hooking failed: {e}")
+                
+        elif method == "virtual_tpm":
+            try:
+                self._create_virtual_tpm()
+                result["success"] = True
+                result["details"] = {"virtual_tpm": self.virtual_tpm}
+                result["notes"].append("Virtual TPM created successfully")
+            except Exception as e:
+                result["notes"].append(f"Virtual TPM creation failed: {e}")
+                
+        elif method == "binary_patching":
+            if self.binary_path:
+                success = self._patch_tpm_calls(self.binary_path)
+                result["success"] = success
+                if success:
+                    result["notes"].append("Binary successfully patched")
+                else:
+                    result["notes"].append("Binary patching failed")
+            else:
+                result["notes"].append("No binary path specified")
+                
+        elif method == "registry_manipulation":
+            try:
+                self._manipulate_tpm_registry()
+                result["success"] = True
+                result["notes"].append("Registry manipulation successful")
+            except Exception as e:
+                result["notes"].append(f"Registry manipulation failed: {e}")
+                
+        else:
+            result["notes"].append(f"Unknown bypass method: {method}")
+
+        return result
+
+    def _has_frida_support(self) -> bool:
+        """Check if Frida is available for API hooking."""
+        return FRIDA_AVAILABLE
+
+    def _can_patch_binary(self) -> bool:
+        """Check if binary patching is possible."""
+        return self.binary_path and os.path.exists(self.binary_path)
 
 
 # Export the main classes and functions
