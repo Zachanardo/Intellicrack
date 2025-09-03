@@ -124,12 +124,8 @@ class VirtualizationDetectionBypass:
 
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(
-                os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name
-            ),
-            os.path.join(
-                os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name
-            ),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -736,12 +732,8 @@ class VMDetector:
 
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(
-                os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name
-            ),
-            os.path.join(
-                os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name
-            ),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -778,7 +770,7 @@ class VMDetector:
                         capture_output=True,
                         text=True,
                         check=False,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                     if "virtual" in result.stdout.lower():
                         indicators.append("CPU name contains 'virtual'")
@@ -972,9 +964,7 @@ class VMDetector:
                 "implementation_script": script_content,
                 "stealth_level": "high" if len(bypass_techniques) > 5 else "medium",
                 "estimated_duration": f"{len(bypass_techniques) * 2}-{len(bypass_techniques) * 5} minutes",
-                "risk_level": "high"
-                if "registry" in str(registry_modifications).lower()
-                else "medium",
+                "risk_level": "high" if "registry" in str(registry_modifications).lower() else "medium",
             }
 
         except Exception as e:
@@ -989,9 +979,7 @@ class VMDetector:
                 "stealth_level": "none",
             }
 
-    def _generate_bypass_script(
-        self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]
-    ) -> str:
+    def _generate_bypass_script(self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]) -> str:
         """Generate implementation script for VM detection bypass."""
         script_lines = [
             f"# VM Detection Bypass Script for {vm_type}",
@@ -1066,9 +1054,7 @@ class VMDetector:
             )
             for reg_key in registry_mods[:3]:  # Limit to first 3 for safety
                 script_lines.append(f"        # Hide/modify {reg_key}")
-                script_lines.append(
-                    f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')"
-                )
+                script_lines.append(f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')")
             script_lines.extend(
                 [
                     "    except Exception as e:",

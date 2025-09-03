@@ -13,7 +13,7 @@ def test_radare2_direct():
     """Test radare2 binary directly."""
     radare2_path = r"C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
-    
+
     try:
         # Test direct radare2 execution
         result = subprocess.run(
@@ -22,7 +22,7 @@ def test_radare2_direct():
             text=True,
             timeout=10
         )
-        
+
         if result.returncode == 0:
             print("✓ Radare2 binary execution successful")
             print(f"Version: {result.stdout.strip()}")
@@ -30,7 +30,7 @@ def test_radare2_direct():
         else:
             print(f"ERROR: Radare2 execution failed - {result.stderr}")
             return False
-            
+
     except Exception as e:
         print(f"ERROR: Failed to execute radare2 - {e}")
         return False
@@ -39,16 +39,16 @@ def test_r2pipe_simple():
     """Test r2pipe with minimal configuration."""
     radare2_path = r"C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
-    
+
     # Add radare2 bin directory to PATH
     bin_dir = os.path.dirname(radare2_path)
     current_path = os.environ.get("PATH", "")
     os.environ["PATH"] = f"{bin_dir};{current_path}"
-    
+
     try:
         # Use r2pipe.open with the executable path
         r2 = r2pipe.open(radare2_path + " -q0 " + f'"{test_binary}"')
-        
+
         # Test basic command
         info = r2.cmd('i')
         if info and len(info.strip()) > 0:
@@ -60,7 +60,7 @@ def test_r2pipe_simple():
             print("ERROR: No output from r2pipe")
             r2.quit()
             return False
-            
+
     except Exception as e:
         print(f"ERROR: r2pipe test failed - {e}")
         return False
@@ -68,17 +68,17 @@ def test_r2pipe_simple():
 def main():
     print("Testing Radare2 Integration - Step 1.2")
     print("=" * 50)
-    
+
     # Test 1: Direct radare2 execution
     print("\nTest 1: Direct Radare2 Execution")
     if not test_radare2_direct():
         return False
-    
+
     # Test 2: r2pipe integration
     print("\nTest 2: r2pipe Integration")
     if not test_r2pipe_simple():
         return False
-    
+
     print("\n✓ ALL TESTS PASSED - Radare2 integration verified")
     return True
 

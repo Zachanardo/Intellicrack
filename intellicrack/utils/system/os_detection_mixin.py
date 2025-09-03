@@ -19,6 +19,7 @@ OS Detection Mixin
 Shared mixin for classes that need OS detection functionality.
 Eliminates code duplication across multiple classes.
 """
+
 from .os_detection import detect_operating_system
 
 

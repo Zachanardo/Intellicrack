@@ -295,17 +295,13 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                 try:
                                     data_rva = resource_lang.data.struct.OffsetToData
                                     size = resource_lang.data.struct.Size
-                                    icon_data = pe.get_memory_mapped_image()[
-                                        data_rva : data_rva + size
-                                    ]
+                                    icon_data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
 
                                     # Create image from icon data
                                     icon_image = create_image_from_icon_data(icon_data)
                                     if icon_image:
                                         # Save icon
-                                        icon_path = os.path.join(
-                                            output_dir, f"{base_name}_icon_{icon_index}.png"
-                                        )
+                                        icon_path = os.path.join(output_dir, f"{base_name}_icon_{icon_index}.png")
                                         icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
@@ -440,23 +436,18 @@ class PEAnalyzer:
         imports = []
 
         try:
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', errors='ignore')
+                    dll_name = entry.dll.decode("utf-8", errors="ignore")
                     functions = []
 
                     for imp in entry.imports:
                         if imp.name:
-                            functions.append({
-                                "name": imp.name.decode('utf-8', errors='ignore'),
-                                "address": imp.address,
-                                "ordinal": imp.ordinal
-                            })
+                            functions.append(
+                                {"name": imp.name.decode("utf-8", errors="ignore"), "address": imp.address, "ordinal": imp.ordinal}
+                            )
 
-                    imports.append({
-                        "dll": dll_name,
-                        "functions": functions
-                    })
+                    imports.append({"dll": dll_name, "functions": functions})
         except Exception as e:
             self.logger.debug(f"Import extraction failed: {e}")
 
@@ -467,13 +458,15 @@ class PEAnalyzer:
         exports = []
 
         try:
-            if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                    exports.append({
-                        "name": exp.name.decode('utf-8', errors='ignore') if exp.name else None,
-                        "address": exp.address,
-                        "ordinal": exp.ordinal
-                    })
+                    exports.append(
+                        {
+                            "name": exp.name.decode("utf-8", errors="ignore") if exp.name else None,
+                            "address": exp.address,
+                            "ordinal": exp.ordinal,
+                        }
+                    )
         except Exception as e:
             self.logger.debug(f"Export extraction failed: {e}")
 
@@ -518,15 +511,14 @@ class PEAnalyzer:
         resources = {"has_resources": False, "resource_types": [], "total_resources": 0}
 
         try:
-            if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+            if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 resources["has_resources"] = True
 
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-                    if hasattr(resource_type, 'id'):
-                        resources["resource_types"].append({
-                            "type_id": resource_type.id,
-                            "name": resource_type.name if hasattr(resource_type, 'name') else None
-                        })
+                    if hasattr(resource_type, "id"):
+                        resources["resource_types"].append(
+                            {"type_id": resource_type.id, "name": resource_type.name if hasattr(resource_type, "name") else None}
+                        )
                         resources["total_resources"] += 1
         except Exception as e:
             self.logger.debug(f"Resource extraction failed: {e}")
@@ -538,7 +530,7 @@ class PEAnalyzer:
         certs = {"has_certificates": False, "certificate_count": 0}
 
         try:
-            if hasattr(pe, 'DIRECTORY_ENTRY_SECURITY'):
+            if hasattr(pe, "DIRECTORY_ENTRY_SECURITY"):
                 certs["has_certificates"] = True
                 certs["certificate_count"] = len(pe.DIRECTORY_ENTRY_SECURITY)
         except Exception as e:
@@ -551,13 +543,13 @@ class PEAnalyzer:
         try:
             machine_type = pe.FILE_HEADER.Machine
 
-            if machine_type == 0x014c:  # IMAGE_FILE_MACHINE_I386
+            if machine_type == 0x014C:  # IMAGE_FILE_MACHINE_I386
                 return "x86"
             elif machine_type == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
                 return "x64"
-            elif machine_type == 0x01c0:  # IMAGE_FILE_MACHINE_ARM
+            elif machine_type == 0x01C0:  # IMAGE_FILE_MACHINE_ARM
                 return "ARM"
-            elif machine_type == 0xaa64:  # IMAGE_FILE_MACHINE_ARM64
+            elif machine_type == 0xAA64:  # IMAGE_FILE_MACHINE_ARM64
                 return "ARM64"
             else:
                 return f"Unknown (0x{machine_type:04x})"

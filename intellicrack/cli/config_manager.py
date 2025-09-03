@@ -46,9 +46,7 @@ class ConfigManager:
     def _migrate_if_needed(self):
         """One-time migration from old JSON file to central config."""
         # Check if we need to migrate
-        if self.config_file.exists() and not self.central_config.get(
-            "cli_configuration.migrated", False
-        ):
+        if self.config_file.exists() and not self.central_config.get("cli_configuration.migrated", False):
             try:
                 logger.info(f"Migrating CLI config from {self.config_file} to central config")
 

@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 class ProductionReadinessCheckpoint7:
     """Validates enterprise license system analysis and testing framework"""
-    
+
     def __init__(self):
         self.checkpoint_results = {
             "timestamp": datetime.now().isoformat(),
@@ -27,58 +27,58 @@ class ProductionReadinessCheckpoint7:
             "overall_pass": False,
             "critical_failures": []
         }
-    
+
     def test_commercial_license_analyzer(self) -> bool:
         """Test commercial license analyzer functionality"""
         print("[*] Testing commercial license analyzer...")
-        
+
         try:
             from intellicrack.core.analysis.commercial_license_analyzer import CommercialLicenseAnalyzer
-            
+
             analyzer = CommercialLicenseAnalyzer()
-            
+
             # Test FlexLM detection
             flexlm_test = self._create_test_binary_with_strings([
                 b"FLEXlm License Manager",
                 b"lc_checkout",
                 b"vendor daemon"
             ])
-            
+
             result = analyzer.analyze_binary(flexlm_test)
             if "FlexLM" not in result.get("detected_systems", []):
                 self.checkpoint_results["critical_failures"].append(
                     "FlexLM detection failed"
                 )
                 return False
-            
-            # Test HASP detection  
+
+            # Test HASP detection
             hasp_test = self._create_test_binary_with_strings([
                 b"HASP HL",
                 b"hasp_login",
                 b"Sentinel LDK"
             ])
-            
+
             result = analyzer.analyze_binary(hasp_test)
             if "HASP" not in result.get("detected_systems", []):
                 self.checkpoint_results["critical_failures"].append(
                     "HASP detection failed"
                 )
                 return False
-            
+
             # Test CodeMeter detection
             codemeter_test = self._create_test_binary_with_strings([
                 b"CodeMeter",
                 b"CmAccess",
                 b"WIBU"
             ])
-            
+
             result = analyzer.analyze_binary(codemeter_test)
             if "CodeMeter" not in result.get("detected_systems", []):
                 self.checkpoint_results["critical_failures"].append(
                     "CodeMeter detection failed"
                 )
                 return False
-            
+
             # Test bypass generation
             flexlm_result = analyzer._generate_flexlm_bypass()
             if not flexlm_result.get("patches"):
@@ -86,24 +86,24 @@ class ProductionReadinessCheckpoint7:
                     "FlexLM bypass generation failed"
                 )
                 return False
-            
+
             hasp_result = analyzer._generate_hasp_bypass()
             if not hasp_result.get("api_hooks"):
                 self.checkpoint_results["critical_failures"].append(
                     "HASP bypass generation failed"
                 )
                 return False
-            
+
             codemeter_result = analyzer._generate_codemeter_bypass()
             if not codemeter_result.get("frida_script"):
                 self.checkpoint_results["critical_failures"].append(
                     "CodeMeter bypass generation failed"
                 )
                 return False
-            
+
             print("    ✓ Commercial license analyzer tests passed")
             return True
-            
+
         except ImportError as e:
             self.checkpoint_results["critical_failures"].append(
                 f"Import error: {e}"
@@ -114,16 +114,16 @@ class ProductionReadinessCheckpoint7:
                 f"Commercial license analyzer test failed: {e}"
             )
             return False
-    
+
     def test_real_world_testing_framework(self) -> bool:
         """Test real-world testing framework"""
         print("[*] Testing real-world testing framework...")
-        
+
         try:
             from tests.framework.real_world_testing_framework import RealWorldTestingFramework
-            
+
             framework = RealWorldTestingFramework()
-            
+
             # Test binary generation
             test_types = ["basic_serial", "flexlm", "hasp"]
             for test_type in test_types:
@@ -131,13 +131,13 @@ class ProductionReadinessCheckpoint7:
                     f"test_{test_type}.exe",
                     test_type
                 )
-                
+
                 if not binary_path.exists():
                     self.checkpoint_results["critical_failures"].append(
                         f"Failed to create {test_type} test binary"
                     )
                     return False
-                
+
                 # Verify binary structure
                 with open(binary_path, "rb") as f:
                     header = f.read(2)
@@ -146,7 +146,7 @@ class ProductionReadinessCheckpoint7:
                             f"Invalid PE header for {test_type} binary"
                         )
                         return False
-            
+
             # Test sandbox creation
             sandbox_path = framework._create_sandbox(binary_path)
             if not sandbox_path.exists():
@@ -154,7 +154,7 @@ class ProductionReadinessCheckpoint7:
                     "Sandbox creation failed"
                 )
                 return False
-            
+
             # Test bypass safety validation
             test_bypass = {
                 "patches": [
@@ -162,34 +162,34 @@ class ProductionReadinessCheckpoint7:
                     {"offset": 0x200, "data": b"\x31\xC0\xC3"}  # xor eax,eax; ret
                 ]
             }
-            
+
             safety_result = framework.validate_bypass_safety(test_bypass)
             if not safety_result.get("safe"):
                 self.checkpoint_results["critical_failures"].append(
                     "Safety validation incorrectly failed safe bypass"
                 )
                 return False
-            
+
             # Test dangerous bypass detection
             dangerous_bypass = {
                 "patches": [
                     {"offset": 0x100, "data": b"\xCC"},  # INT3 breakpoint
                 ]
             }
-            
+
             safety_result = framework.validate_bypass_safety(dangerous_bypass)
             if safety_result.get("safe"):
                 self.checkpoint_results["critical_failures"].append(
                     "Safety validation failed to detect dangerous bypass"
                 )
                 return False
-            
+
             # Cleanup
             framework._cleanup_sandbox(sandbox_path)
-            
+
             print("    ✓ Real-world testing framework tests passed")
             return True
-            
+
         except ImportError as e:
             self.checkpoint_results["critical_failures"].append(
                 f"Import error: {e}"
@@ -200,20 +200,20 @@ class ProductionReadinessCheckpoint7:
                 f"Testing framework test failed: {e}"
             )
             return False
-    
+
     def test_frida_script_generation(self) -> bool:
         """Test Frida script generation for license bypasses"""
         print("[*] Testing Frida script generation...")
-        
+
         try:
             from intellicrack.core.analysis.commercial_license_analyzer import CommercialLicenseAnalyzer
-            
+
             analyzer = CommercialLicenseAnalyzer()
-            
+
             # Test FlexLM Frida script
             flexlm_bypass = analyzer._generate_flexlm_bypass()
             frida_script = flexlm_bypass.get("frida_script", "")
-            
+
             # Verify script has required components
             required_components = [
                 "Interceptor.attach",
@@ -221,67 +221,67 @@ class ProductionReadinessCheckpoint7:
                 "retval.replace",
                 "console.log"
             ]
-            
+
             for component in required_components:
                 if component not in frida_script:
                     self.checkpoint_results["critical_failures"].append(
                         f"FlexLM Frida script missing: {component}"
                     )
                     return False
-            
+
             # Test HASP Frida script
             hasp_bypass = analyzer._generate_hasp_bypass()
             frida_script = hasp_bypass.get("frida_script", "")
-            
+
             required_components = [
                 "hasp_login",
                 "hasp_get_info",
                 "Memory.alloc"
             ]
-            
+
             for component in required_components:
                 if component not in frida_script:
                     self.checkpoint_results["critical_failures"].append(
                         f"HASP Frida script missing: {component}"
                     )
                     return False
-            
+
             print("    ✓ Frida script generation tests passed")
             return True
-            
+
         except Exception as e:
             self.checkpoint_results["critical_failures"].append(
                 f"Frida script generation test failed: {e}"
             )
             return False
-    
+
     def test_integration_with_radare2(self) -> bool:
         """Test integration between commercial analyzer and radare2"""
         print("[*] Testing radare2 integration...")
-        
+
         try:
             from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
-            
+
             # Use a test binary
             test_binary = self._create_test_binary_with_strings([b"test"])
             engine = R2VulnerabilityEngine(test_binary)
-            
+
             # Check if commercial license analyzer is integrated
             if not hasattr(engine, "commercial_analyzer"):
                 self.checkpoint_results["critical_failures"].append(
                     "Commercial analyzer not integrated with radare2"
                 )
                 return False
-            
+
             # Test that analyze_vulnerabilities includes commercial analysis
             # Check method structure without running full analysis (radare2 may not be available)
             test_binary2 = self._create_test_binary_with_strings([
                 b"FLEXlm License Manager",
                 b"lc_checkout"
             ])
-            
+
             engine2 = R2VulnerabilityEngine(test_binary2)
-            
+
             # Verify commercial analyzer can analyze the binary
             if hasattr(engine2, 'commercial_license_analyzer'):
                 license_result = engine2.commercial_license_analyzer.analyze_binary()
@@ -290,7 +290,7 @@ class ProductionReadinessCheckpoint7:
                         "Commercial license analyzer failed to produce results"
                     )
                     return False
-            
+
             # Check that the method structure would include commercial licenses
             try:
                 # Try to call analyze_vulnerabilities but catch radare2 failures
@@ -311,58 +311,58 @@ class ProductionReadinessCheckpoint7:
                         return False
                 else:
                     raise
-            
+
             print("    ✓ Radare2 integration tests passed")
             return True
-            
+
         except Exception as e:
             self.checkpoint_results["critical_failures"].append(
                 f"Radare2 integration test failed: {e}"
             )
             return False
-    
+
     def test_success_rate_requirements(self) -> bool:
         """Test that bypass success rate meets requirements"""
         print("[*] Testing success rate requirements...")
-        
+
         try:
             from tests.framework.real_world_testing_framework import RealWorldTestingFramework
-            
+
             framework = RealWorldTestingFramework()
-            
+
             # Simulate successful bypasses
             framework.test_metrics["total_tests"] = 10
             framework.test_metrics["successful_bypasses"] = 8
             framework.test_metrics["partial_bypasses"] = 1
             framework.test_metrics["failed_bypasses"] = 1
-            
-            success_rate = (framework.test_metrics["successful_bypasses"] / 
+
+            success_rate = (framework.test_metrics["successful_bypasses"] /
                           framework.test_metrics["total_tests"] * 100)
-            
+
             if success_rate < 70:
                 self.checkpoint_results["critical_failures"].append(
                     f"Success rate {success_rate:.1f}% below 70% requirement"
                 )
                 return False
-            
+
             print(f"    ✓ Success rate {success_rate:.1f}% meets requirements")
             return True
-            
+
         except Exception as e:
             self.checkpoint_results["critical_failures"].append(
                 f"Success rate test failed: {e}"
             )
             return False
-    
+
     def _create_test_binary_with_strings(self, strings: list[bytes]) -> str:
         """Create a test binary with specific strings"""
         import tempfile
-        
+
         # Create minimal PE file
         pe_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
         dos_stub = b"This program cannot be run in DOS mode.\r\r\n$" + b"\x00" * 7
         pe_sig = b"PE\x00\x00"
-        
+
         # Simple COFF header
         coff = struct.pack("<H", 0x014C)  # Machine (x86)
         coff += struct.pack("<H", 1)  # Number of sections
@@ -371,11 +371,11 @@ class ProductionReadinessCheckpoint7:
         coff += struct.pack("<I", 0)  # Number of symbols
         coff += struct.pack("<H", 224)  # Optional header size
         coff += struct.pack("<H", 0x0102)  # Characteristics
-        
+
         # Minimal optional header
         opt = struct.pack("<H", 0x010B)  # Magic (PE32)
         opt += b"\x00" * 222  # Rest of optional header
-        
+
         # Section header
         section = b".text\x00\x00\x00"
         section += struct.pack("<I", 0x1000)  # Virtual size
@@ -384,33 +384,33 @@ class ProductionReadinessCheckpoint7:
         section += struct.pack("<I", 0x200)  # Pointer to raw data
         section += b"\x00" * 12  # Relocations and line numbers
         section += struct.pack("<I", 0x60000020)  # Characteristics
-        
+
         # Combine headers
         headers = pe_header + b"\x00" * (0x80 - len(pe_header))
         headers += pe_sig + coff + opt + section
         headers += b"\x00" * (0x200 - len(headers))
-        
+
         # Add strings to text section
         text_section = b""
         for s in strings:
             text_section += s + b"\x00"
         text_section += b"\x00" * (0x200 - len(text_section))
-        
+
         # Combine binary
         binary = headers + text_section
-        
+
         # Write to temp file
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as f:
             f.write(binary)
             return f.name
-    
+
     def run_all_tests(self) -> bool:
         """Run all checkpoint tests"""
         print("\n" + "=" * 60)
         print("PRODUCTION READINESS CHECKPOINT 7")
         print("Enterprise License System Analysis Validation")
         print("=" * 60 + "\n")
-        
+
         tests = [
             ("Commercial License Analyzer", self.test_commercial_license_analyzer),
             ("Real-World Testing Framework", self.test_real_world_testing_framework),
@@ -418,20 +418,20 @@ class ProductionReadinessCheckpoint7:
             ("Radare2 Integration", self.test_integration_with_radare2),
             ("Success Rate Requirements", self.test_success_rate_requirements)
         ]
-        
+
         all_passed = True
-        
+
         for test_name, test_func in tests:
             try:
                 result = test_func()
                 self.checkpoint_results["tests"][test_name] = result
-                
+
                 if not result:
                     all_passed = False
                     print(f"✗ {test_name}: FAILED")
                 else:
                     print(f"✓ {test_name}: PASSED")
-                    
+
             except Exception as e:
                 self.checkpoint_results["tests"][test_name] = False
                 self.checkpoint_results["critical_failures"].append(
@@ -439,14 +439,14 @@ class ProductionReadinessCheckpoint7:
                 )
                 all_passed = False
                 print(f"✗ {test_name}: EXCEPTION - {e}")
-        
+
         self.checkpoint_results["overall_pass"] = all_passed
-        
+
         # Generate report
         self._generate_report(all_passed)
-        
+
         return all_passed
-    
+
     def _generate_report(self, passed: bool):
         """Generate checkpoint report"""
         report = f"""
@@ -481,13 +481,13 @@ Generated: {self.checkpoint_results['timestamp']}
 
 ### Critical Failures
 """
-        
+
         if self.checkpoint_results['critical_failures']:
             for failure in self.checkpoint_results['critical_failures']:
                 report += f"- {failure}\n"
         else:
             report += "None detected\n"
-        
+
         report += f"""
 ### Overall Status
 Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len(self.checkpoint_results['tests'])} ({sum(1 for v in self.checkpoint_results['tests'].values() if v) / len(self.checkpoint_results['tests']) * 100:.1f}%)
@@ -495,7 +495,7 @@ Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len
 
 ## Certification Statement
 """
-        
+
         if passed:
             report += """This checkpoint certifies that:
 1. Commercial license protocol analysis is fully functional
@@ -515,16 +515,16 @@ Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len
 
 **Deployment Decision**: NOT APPROVED ❌
 """
-        
+
         # Save report
         report_file = Path(__file__).parent.parent / "results" / "CHECKPOINT_7_REPORT.md"
         report_file.parent.mkdir(exist_ok=True, parents=True)
-        
+
         with open(report_file, "w", encoding="utf-8") as f:
             f.write(report)
-        
+
         print(f"\nReport saved to: {report_file}")
-        
+
         # Also save to main directory for visibility
         main_report = Path(__file__).parent.parent.parent / "CHECKPOINT_7_REPORT.md"
         with open(main_report, "w", encoding="utf-8") as f:
@@ -535,7 +535,7 @@ def main():
     """Main checkpoint validation"""
     checkpoint = ProductionReadinessCheckpoint7()
     passed = checkpoint.run_all_tests()
-    
+
     if passed:
         print("\n" + "=" * 60)
         print("✅ CHECKPOINT 7 PASSED - READY FOR DAY 8")

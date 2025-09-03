@@ -24,9 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_hex_dump(
-    data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0
-) -> str:
+def create_hex_dump(data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0) -> str:
     """Create a formatted hex dump of binary data.
 
     Args:
@@ -112,7 +110,7 @@ def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = Fal
     if format_style == "\\x":
         return "\\x".join([""] + [hex_str[i : i + 2] for i in range(0, len(hex_str), 2)])
     if format_style == "c_array":
-        hex_bytes = [f"0x{hex_str[i:i+2]}" for i in range(0, len(hex_str), 2)]
+        hex_bytes = [f"0x{hex_str[i : i + 2]}" for i in range(0, len(hex_str), 2)]
         return ", ".join(hex_bytes)
     return hex_str
 

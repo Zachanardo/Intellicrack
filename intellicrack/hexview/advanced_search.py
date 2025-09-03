@@ -140,9 +140,7 @@ class SearchHistory:
         }
 
         # Remove duplicate if exists
-        self.entries = [
-            e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value
-        ]
+        self.entries = [e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value]
 
         # Add to front
         self.entries.insert(0, entry)
@@ -153,9 +151,7 @@ class SearchHistory:
 
         self.save_history()
 
-    def get_recent_searches(
-        self, search_type: SearchType | None = None, limit: int = 10
-    ) -> list[str]:
+    def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
@@ -345,9 +341,7 @@ class SearchEngine:
 
         return list(reversed(replaced_ranges))
 
-    def _compile_pattern(
-        self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool
-    ) -> bytes | re.Pattern | None:
+    def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | re.Pattern | None:
         """Compile pattern based on search type."""
         try:
             if search_type == SearchType.HEX:
@@ -392,9 +386,7 @@ class SearchEngine:
 
         return None
 
-    def _search_forward(
-        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
-    ) -> SearchResult | None:
+    def _search_forward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search forward from ``start_offset``."""
         file_size = self.file_handler.get_file_size()
         offset = start_offset
@@ -423,9 +415,7 @@ class SearchEngine:
 
         return None
 
-    def _search_backward(
-        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
-    ) -> SearchResult | None:
+    def _search_backward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search backward from ``start_offset``."""
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
@@ -476,9 +466,7 @@ class SearchEngine:
                     if pos == -1:
                         break
 
-                    if not whole_words or self._is_whole_word_match(
-                        chunk_data, pos, len(compiled_pattern)
-                    ):
+                    if not whole_words or self._is_whole_word_match(chunk_data, pos, len(compiled_pattern)):
                         # Get context around the match
                         context_start = max(0, pos - 16)
                         context_end = min(len(chunk_data), pos + len(compiled_pattern) + 16)
@@ -571,6 +559,7 @@ class SearchEngine:
             True if the match is a whole word, False otherwise
 
         """
+
         def is_word_char(byte_val: int) -> bool:
             """Check if a byte value is a word character.
 
@@ -581,14 +570,14 @@ class SearchEngine:
             - underscore (95)
             """
             return (
-                (48 <= byte_val <= 57) or  # 0-9
-                (65 <= byte_val <= 90) or  # A-Z
-                (97 <= byte_val <= 122) or  # a-z
-                (byte_val == 95)  # underscore
+                (48 <= byte_val <= 57)  # 0-9
+                or (65 <= byte_val <= 90)  # A-Z
+                or (97 <= byte_val <= 122)  # a-z
+                or (byte_val == 95)  # underscore
             )
 
         # Check if match itself contains only word characters
-        match_data = data[pos:pos + length]
+        match_data = data[pos : pos + length]
         if not all(is_word_char(b) for b in match_data):
             # If the match contains non-word characters, it's not a "word"
             # But we still check boundaries for mixed content
@@ -618,7 +607,7 @@ class SearchEngine:
         if pos > 0:
             prev_char = data[pos - 1]
             # Common word delimiters in binary files
-            if prev_char in b'()[]{},"\'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ':
+            if prev_char in b"()[]{},\"'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ":
                 # This is a good word boundary
                 pass
             elif is_word_char(prev_char):
@@ -633,7 +622,7 @@ class SearchEngine:
         if pos + length < len(data):
             next_char = data[pos + length]
             # Common word delimiters
-            if next_char in b'()[]{},"\'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ':
+            if next_char in b"()[]{},\"'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ":
                 # This is a good word boundary
                 pass
             elif is_word_char(next_char):
@@ -1041,9 +1030,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 if result:
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(
-                        result.offset, result.offset + result.length
-                    )
+                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1073,9 +1060,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 if result:
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(
-                        result.offset, result.offset + result.length
-                    )
+                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1236,21 +1221,13 @@ class FindAllDialog(QDialog):
         self.results_table.setRowCount(len(self.results))
         for i, result in enumerate(self.results):
             self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:08X}"))
-            self.results_table.setItem(
-                i, 1, QTableWidgetItem(result.data.hex() if result.data else "")
-            )
-            ascii_text = (
-                "".join(chr(b) if 32 <= b < 127 else "." for b in result.data)
-                if result.data
-                else ""
-            )
+            self.results_table.setItem(i, 1, QTableWidgetItem(result.data.hex() if result.data else ""))
+            ascii_text = "".join(chr(b) if 32 <= b < 127 else "." for b in result.data) if result.data else ""
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             self.results_table.setItem(
                 i,
                 3,
-                QTableWidgetItem(
-                    str(result.context_before) + " [MATCH] " + str(result.context_after)
-                ),
+                QTableWidgetItem(str(result.context_before) + " [MATCH] " + str(result.context_after)),
             )
 
         layout.addWidget(self.results_table)

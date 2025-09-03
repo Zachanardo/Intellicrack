@@ -179,7 +179,7 @@ else:
             self.repositories = {
                 "Official Repository": "https://api.github.com/repos/intellicrack/plugins/contents",
                 "Community Repository": "https://api.github.com/repos/intellicrack-community/plugins/contents",
-                "Local Repository": self.plugins_dir
+                "Local Repository": self.plugins_dir,
             }
 
             # Plugin management
@@ -214,9 +214,7 @@ else:
             self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
 
             # Check for updates on startup
-            if hasattr(self.app_context, "config") and self.app_context.config.get(
-                "plugin_auto_update", True
-            ):
+            if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_update", True):
                 QTimer.singleShot(2000, self.check_for_updates)
 
             logger.info("Plugin Manager Dialog initialized")
@@ -273,12 +271,12 @@ else:
         def setup_connections(self):
             """Set up signal-slot connections."""
             # Repository selection changes
-            if hasattr(self, 'repo_combo'):
+            if hasattr(self, "repo_combo"):
                 self.repo_combo.currentTextChanged.connect(self.on_repository_changed)
 
             # Auto-refresh timer
-            if hasattr(self, 'auto_refresh_timer'):
-                if hasattr(self.app_context, 'config') and self.app_context.config.get('plugin_auto_refresh', False):
+            if hasattr(self, "auto_refresh_timer"):
+                if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_refresh", False):
                     self.auto_refresh_timer.start(300000)  # 5 minutes
 
         def on_repository_changed(self, repository_name):
@@ -314,14 +312,14 @@ else:
                 update_details = []
 
                 # Get list of installed plugins
-                if not hasattr(self, 'installed_plugins'):
+                if not hasattr(self, "installed_plugins"):
                     self.load_installed_plugins()
 
                 # Check each installed plugin for updates
                 for plugin_info in self.installed_plugins:
                     try:
-                        plugin_name = plugin_info.get('name', '')
-                        current_version = plugin_info.get('version', '1.0.0')
+                        plugin_name = plugin_info.get("name", "")
+                        current_version = plugin_info.get("version", "1.0.0")
 
                         # Try to determine repository URL from plugin metadata or use defaults
                         repo_url = self._get_plugin_repository_url(plugin_info)
@@ -333,19 +331,21 @@ else:
                             latest_version_info = self._fetch_latest_version(repo_url, plugin_name)
 
                             if latest_version_info:
-                                latest_version = latest_version_info.get('version', current_version)
+                                latest_version = latest_version_info.get("version", current_version)
 
                                 # Compare versions using semantic versioning
                                 try:
                                     if version.parse(latest_version) > version.parse(current_version):
                                         updates_available += 1
-                                        update_details.append({
-                                            'name': plugin_name,
-                                            'current': current_version,
-                                            'latest': latest_version,
-                                            'description': latest_version_info.get('description', ''),
-                                            'url': repo_url
-                                        })
+                                        update_details.append(
+                                            {
+                                                "name": plugin_name,
+                                                "current": current_version,
+                                                "latest": latest_version,
+                                                "description": latest_version_info.get("description", ""),
+                                                "url": repo_url,
+                                            }
+                                        )
                                         logger.info(f"Update available for {plugin_name}: {current_version} -> {latest_version}")
                                 except Exception as version_error:
                                     logger.debug(f"Version comparison failed for {plugin_name}: {version_error}")
@@ -364,17 +364,9 @@ else:
 
                     update_message += "\nUse the repository tab to update plugins."
 
-                    QMessageBox.information(
-                        self,
-                        "Updates Available",
-                        update_message
-                    )
+                    QMessageBox.information(self, "Updates Available", update_message)
                 else:
-                    QMessageBox.information(
-                        self,
-                        "Updates Check",
-                        "All plugins are up to date!"
-                    )
+                    QMessageBox.information(self, "Updates Check", "All plugins are up to date!")
 
             except Exception as e:
                 logger.warning(f"Update check failed: {e}")
@@ -382,27 +374,27 @@ else:
         def _get_plugin_repository_url(self, plugin_info):
             """Determine repository URL for a plugin."""
             try:
-                plugin_name = plugin_info.get('name', '')
-                plugin_path = plugin_info.get('path', '')
+                plugin_name = plugin_info.get("name", "")
+                plugin_path = plugin_info.get("path", "")
 
                 # Try to read repository URL from plugin metadata
-                if plugin_path.endswith('.py') and os.path.exists(plugin_path):
-                    with open(plugin_path, 'r', encoding='utf-8') as f:
+                if plugin_path.endswith(".py") and os.path.exists(plugin_path):
+                    with open(plugin_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # Look for repository URL in comments
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for line in lines[:30]:  # Check first 30 lines
                         line = line.strip()
-                        if line.startswith('# Repository:') or line.startswith('# Repo:'):
-                            return line.split(':', 1)[1].strip()
-                        elif line.startswith('# URL:'):
-                            return line.split(':', 1)[1].strip()
+                        if line.startswith("# Repository:") or line.startswith("# Repo:"):
+                            return line.split(":", 1)[1].strip()
+                        elif line.startswith("# URL:"):
+                            return line.split(":", 1)[1].strip()
 
                 # Default repository URLs for known plugins
                 default_repos = {
-                    'intellicrack-plugins': 'https://api.github.com/repos/intellicrack/plugins',
-                    'community-plugins': 'https://api.github.com/repos/intellicrack-community/plugins',
+                    "intellicrack-plugins": "https://api.github.com/repos/intellicrack/plugins",
+                    "community-plugins": "https://api.github.com/repos/intellicrack-community/plugins",
                 }
 
                 # Check if plugin name matches any default repository
@@ -411,7 +403,7 @@ else:
                         return repo_url
 
                 # Fallback to main Intellicrack plugin repository
-                return 'https://api.github.com/repos/intellicrack/community-plugins'
+                return "https://api.github.com/repos/intellicrack/community-plugins"
 
             except Exception as e:
                 logger.debug(f"Failed to determine repository URL for plugin {plugin_info.get('name', 'unknown')}: {e}")
@@ -420,15 +412,14 @@ else:
         def _fetch_latest_version(self, repo_url, plugin_name):
             """Fetch latest version information from repository."""
             try:
-
                 import requests
 
                 # Try different API endpoints based on repository type
-                if 'github.com' in repo_url:
+                if "github.com" in repo_url:
                     # GitHub API approach
-                    if not repo_url.startswith('https://api.github.com'):
+                    if not repo_url.startswith("https://api.github.com"):
                         # Convert regular GitHub URL to API URL
-                        repo_url = repo_url.replace('github.com/', 'api.github.com/repos/')
+                        repo_url = repo_url.replace("github.com/", "api.github.com/repos/")
 
                     # Try to get latest release
                     release_url = f"{repo_url}/releases/latest"
@@ -437,9 +428,9 @@ else:
                     if response.status_code == 200:
                         release_data = response.json()
                         return {
-                            'version': release_data.get('tag_name', '').lstrip('v'),
-                            'description': release_data.get('name', ''),
-                            'published_at': release_data.get('published_at', '')
+                            "version": release_data.get("tag_name", "").lstrip("v"),
+                            "description": release_data.get("name", ""),
+                            "published_at": release_data.get("published_at", ""),
                         }
 
                     # Fallback: try to get tags if no releases
@@ -451,9 +442,9 @@ else:
                         if tags_data:
                             latest_tag = tags_data[0]
                             return {
-                                'version': latest_tag.get('name', '').lstrip('v'),
-                                'description': f"Latest tag: {latest_tag.get('name', '')}",
-                                'published_at': ''
+                                "version": latest_tag.get("name", "").lstrip("v"),
+                                "description": f"Latest tag: {latest_tag.get('name', '')}",
+                                "published_at": "",
                             }
 
                     # Fallback: try to get plugin manifest file
@@ -463,15 +454,15 @@ else:
                     if response.status_code == 200:
                         manifest_data = response.json()
                         return {
-                            'version': manifest_data.get('version', '1.0.0'),
-                            'description': manifest_data.get('description', ''),
-                            'published_at': manifest_data.get('updated', '')
+                            "version": manifest_data.get("version", "1.0.0"),
+                            "description": manifest_data.get("description", ""),
+                            "published_at": manifest_data.get("updated", ""),
                         }
 
                 else:
                     # Generic approach for other repository types
                     # Try to fetch a manifest.json or version.json file
-                    for file_name in ['manifest.json', 'version.json', 'plugin.json']:
+                    for file_name in ["manifest.json", "version.json", "plugin.json"]:
                         try:
                             version_url = f"{repo_url.rstrip('/')}/{plugin_name}/{file_name}"
                             response = requests.get(version_url, timeout=10)
@@ -479,9 +470,9 @@ else:
                             if response.status_code == 200:
                                 version_data = response.json()
                                 return {
-                                    'version': version_data.get('version', '1.0.0'),
-                                    'description': version_data.get('description', ''),
-                                    'published_at': version_data.get('updated', '')
+                                    "version": version_data.get("version", "1.0.0"),
+                                    "description": version_data.get("description", ""),
+                                    "published_at": version_data.get("updated", ""),
                                 }
                         except Exception as file_error:
                             logger.debug(f"Failed to fetch {file_name} for {plugin_name}: {file_error}")
@@ -515,16 +506,16 @@ else:
         def load_settings(self):
             """Load plugin manager settings."""
             try:
-                if hasattr(self.app_context, 'config'):
+                if hasattr(self.app_context, "config"):
                     config = self.app_context.config
 
                     # Load plugin configurations
-                    if 'plugin_configs' in config:
-                        self.plugin_configs = config['plugin_configs'].copy()
+                    if "plugin_configs" in config:
+                        self.plugin_configs = config["plugin_configs"].copy()
 
                     # Load repository settings
-                    if 'plugin_repositories' in config:
-                        self.repositories.update(config['plugin_repositories'])
+                    if "plugin_repositories" in config:
+                        self.repositories.update(config["plugin_repositories"])
 
             except Exception as e:
                 logger.debug(f"Failed to load plugin settings: {e}")
@@ -577,8 +568,6 @@ else:
 
             # Connect selection change
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
-
-
 
         def setup_install_tab(self, tab):
             """Setup the install from file tab."""
@@ -719,12 +708,6 @@ else:
             except Exception as e:
                 logger.error(f"Error loading installed plugins: {e}")
 
-
-
-
-
-
-
         def get_plugin_info(self, plugin_path):
             """Extract information about a plugin."""
             info = {
@@ -765,13 +748,13 @@ else:
             current_item = self.installed_list.currentItem()
             if current_item:
                 plugin_info = current_item.data(0)
-                info_text = f"""Plugin: {plugin_info['name']}
-Version: {plugin_info.get('version', 'Unknown')}
-Type: {plugin_info['type']}
-Path: {plugin_info['path']}
-Status: {'Enabled' if plugin_info.get('enabled', True) else 'Disabled'}
+                info_text = f"""Plugin: {plugin_info["name"]}
+Version: {plugin_info.get("version", "Unknown")}
+Type: {plugin_info["type"]}
+Path: {plugin_info["path"]}
+Status: {"Enabled" if plugin_info.get("enabled", True) else "Disabled"}
 
-Description: {plugin_info.get('description', 'No description available')}"""
+Description: {plugin_info.get("description", "No description available")}"""
                 self.plugin_info.setPlainText(info_text)
             else:
                 self.plugin_info.clear()
@@ -834,7 +817,7 @@ Description: {plugin_info.get('description', 'No description available')}"""
             current_item = self.installed_list.currentItem()
             if current_item:
                 plugin_info = current_item.data(0)
-                plugin_name = plugin_info['name']
+                plugin_name = plugin_info["name"]
 
                 # Create configuration dialog
                 config_dialog = QDialog(self)
@@ -863,25 +846,31 @@ Description: {plugin_info.get('description', 'No description available')}"""
                 ]
 
                 # Add plugin-specific options based on category
-                category = plugin_info.get('category', 'Utilities').lower()
-                if category == 'analysis':
-                    config_options.extend([
-                        ("deep_scan", "Deep Analysis", "checkbox", plugin_config.get("deep_scan", False)),
-                        ("entropy_threshold", "Entropy Threshold", "spinbox", plugin_config.get("entropy_threshold", 7.5)),
-                        ("scan_sections", "Scan All Sections", "checkbox", plugin_config.get("scan_sections", True))
-                    ])
-                elif category == 'exploitation':
-                    config_options.extend([
-                        ("safe_mode", "Safe Mode", "checkbox", plugin_config.get("safe_mode", True)),
-                        ("backup_target", "Backup Target", "checkbox", plugin_config.get("backup_target", True)),
-                        ("max_attempts", "Max Attempts", "spinbox", plugin_config.get("max_attempts", 3))
-                    ])
-                elif category == 'network':
-                    config_options.extend([
-                        ("capture_packets", "Capture Packets", "checkbox", plugin_config.get("capture_packets", False)),
-                        ("interface", "Network Interface", "text", plugin_config.get("interface", "auto")),
-                        ("port_range", "Port Range", "text", plugin_config.get("port_range", "1-65535"))
-                    ])
+                category = plugin_info.get("category", "Utilities").lower()
+                if category == "analysis":
+                    config_options.extend(
+                        [
+                            ("deep_scan", "Deep Analysis", "checkbox", plugin_config.get("deep_scan", False)),
+                            ("entropy_threshold", "Entropy Threshold", "spinbox", plugin_config.get("entropy_threshold", 7.5)),
+                            ("scan_sections", "Scan All Sections", "checkbox", plugin_config.get("scan_sections", True)),
+                        ]
+                    )
+                elif category == "exploitation":
+                    config_options.extend(
+                        [
+                            ("safe_mode", "Safe Mode", "checkbox", plugin_config.get("safe_mode", True)),
+                            ("backup_target", "Backup Target", "checkbox", plugin_config.get("backup_target", True)),
+                            ("max_attempts", "Max Attempts", "spinbox", plugin_config.get("max_attempts", 3)),
+                        ]
+                    )
+                elif category == "network":
+                    config_options.extend(
+                        [
+                            ("capture_packets", "Capture Packets", "checkbox", plugin_config.get("capture_packets", False)),
+                            ("interface", "Network Interface", "text", plugin_config.get("interface", "auto")),
+                            ("port_range", "Port Range", "text", plugin_config.get("port_range", "1-65535")),
+                        ]
+                    )
 
                 # Create widgets for each option
                 for key, label, widget_type, default_value in config_options:
@@ -928,11 +917,11 @@ Description: {plugin_info.get('description', 'No description available')}"""
                 info_text.setReadOnly(True)
                 info_text.setMaximumHeight(100)
 
-                plugin_info_text = f"""Name: {plugin_info['name']}
-Version: {plugin_info.get('version', 'Unknown')}
-Author: {plugin_info.get('author', 'Unknown')}
-Type: {plugin_info.get('type', 'file')}
-Path: {plugin_info.get('path', 'Unknown')}"""
+                plugin_info_text = f"""Name: {plugin_info["name"]}
+Version: {plugin_info.get("version", "Unknown")}
+Author: {plugin_info.get("author", "Unknown")}
+Type: {plugin_info.get("type", "file")}
+Path: {plugin_info.get("path", "Unknown")}"""
                 info_text.setPlainText(plugin_info_text)
                 info_layout.addWidget(info_text)
                 layout.addWidget(info_group)
@@ -942,6 +931,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 
                 # Reset to defaults button
                 reset_btn = QPushButton("Reset to Defaults")
+
                 def reset_defaults():
                     for key, _label, widget_type, default_value in config_options:
                         widget = config_widgets[key]
@@ -984,16 +974,17 @@ Path: {plugin_info.get('path', 'Unknown')}"""
                     self.plugin_configs[plugin_name] = new_config
 
                     # Save to file if app_context is available
-                    if hasattr(self.app_context, 'config'):
-                        if 'plugin_configs' not in self.app_context.config:
-                            self.app_context.config['plugin_configs'] = {}
-                        self.app_context.config['plugin_configs'][plugin_name] = new_config
+                    if hasattr(self.app_context, "config"):
+                        if "plugin_configs" not in self.app_context.config:
+                            self.app_context.config["plugin_configs"] = {}
+                        self.app_context.config["plugin_configs"][plugin_name] = new_config
 
                         # Save configuration to file
                         try:
                             config_file = os.path.join(self.plugins_dir, f"{plugin_name}_config.json")
                             import json
-                            with open(config_file, 'w') as f:
+
+                            with open(config_file, "w") as f:
                                 json.dump(new_config, f, indent=2)
                         except Exception as e:
                             logger.warning(f"Failed to save plugin configuration: {e}")
@@ -1024,38 +1015,49 @@ Path: {plugin_info.get('path', 'Unknown')}"""
             for dep in dependencies:
                 try:
                     # Try to import the dependency
-                    if dep == 'numpy':
+                    if dep == "numpy":
                         import numpy
+
                         _ = numpy.__name__  # Verify numpy scientific computing library is available
-                    elif dep == 'scipy':
+                    elif dep == "scipy":
                         import scipy
+
                         _ = scipy.__name__  # Verify scipy scientific computing library is available
-                    elif dep == 'pefile':
+                    elif dep == "pefile":
                         import pefile
+
                         _ = pefile.__name__  # Verify pefile PE analysis library is available
-                    elif dep == 'yara-python':
+                    elif dep == "yara-python":
                         import yara
+
                         _ = yara.__name__  # Verify yara pattern matching engine is available
-                    elif dep == 'frida':
+                    elif dep == "frida":
                         import frida
+
                         _ = frida.__name__  # Verify frida dynamic instrumentation toolkit is available
-                    elif dep == 'psutil':
+                    elif dep == "psutil":
                         import psutil
+
                         _ = psutil.__name__  # Verify psutil system monitoring library is available
-                    elif dep == 'capstone':
+                    elif dep == "capstone":
                         import capstone
+
                         _ = capstone.__name__  # Verify capstone disassembly engine is available
-                    elif dep == 'unicorn':
+                    elif dep == "unicorn":
                         import unicorn
+
                         _ = unicorn.__name__  # Verify unicorn CPU emulator engine is available
-                    elif dep == 'scapy':
+                    elif dep == "scapy":
                         import scapy
+
                         _ = scapy.__name__  # Verify scapy network packet manipulation library is available
-                    elif dep == 'pyshark':
+                    elif dep == "pyshark":
                         import pyshark
+
                         _ = pyshark.__name__  # Verify pyshark Wireshark packet capture library is available
-                    elif dep == 'regex':
+                    elif dep == "regex":
                         import regex
+
                         _ = regex.__name__  # Verify regex enhanced regular expression library is available
                     # Add more dependency checks as needed
                 except ImportError:
@@ -1067,12 +1069,12 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 
         def _start_remote_plugin_installation(self, plugin_info):
             """Start the remote plugin installation process."""
-            plugin_name = plugin_info['name']
-            source = plugin_info.get('source', 'remote')
+            plugin_name = plugin_info["name"]
+            source = plugin_info.get("source", "remote")
 
-            if source == 'local':
+            if source == "local":
                 # Copy local plugin
-                src_path = plugin_info.get('install_path')
+                src_path = plugin_info.get("install_path")
                 if not src_path or not os.path.exists(src_path):
                     QMessageBox.critical(self, "Error", "Local plugin file not found")
                     return
@@ -1085,7 +1087,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
                         shutil.copy2(src_path, dest_path)
                     else:
                         # Copy directory
-                        dest_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(' ', '_'))
+                        dest_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(" ", "_"))
                         if os.path.exists(dest_dir):
                             shutil.rmtree(dest_dir)
                         shutil.copytree(src_path, dest_dir)
@@ -1098,7 +1100,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 
             else:
                 # Download and install remote plugin
-                download_url = plugin_info.get('download_url')
+                download_url = plugin_info.get("download_url")
 
                 if not download_url:
                     # Create a realistic plugin file for fallback plugins
@@ -1180,18 +1182,18 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 
         def _create_fallback_plugin(self, plugin_info):
             """Create a realistic plugin file for fallback plugins."""
-            plugin_name = plugin_info['name']
-            plugin_version = plugin_info.get('version', '1.0.0')
-            plugin_author = plugin_info.get('author', 'Unknown')
-            plugin_desc = plugin_info.get('description', 'No description available')
-            plugin_category = plugin_info.get('category', 'Utilities')
+            plugin_name = plugin_info["name"]
+            plugin_version = plugin_info.get("version", "1.0.0")
+            plugin_author = plugin_info.get("author", "Unknown")
+            plugin_desc = plugin_info.get("description", "No description available")
+            plugin_category = plugin_info.get("category", "Utilities")
 
             # Generate plugin code based on category
-            if plugin_category.lower() == 'analysis':
+            if plugin_category.lower() == "analysis":
                 plugin_code = self._generate_analysis_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
-            elif plugin_category.lower() == 'exploitation':
+            elif plugin_category.lower() == "exploitation":
                 plugin_code = self._generate_exploitation_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
-            elif plugin_category.lower() == 'network':
+            elif plugin_category.lower() == "network":
                 plugin_code = self._generate_network_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
             else:
                 plugin_code = self._generate_generic_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
@@ -1201,7 +1203,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
             filepath = os.path.join(self.plugins_dir, filename)
 
             try:
-                with open(filepath, 'w', encoding='utf-8') as f:
+                with open(filepath, "w", encoding="utf-8") as f:
                     f.write(plugin_code)
                 logger.info(f"Created fallback plugin: {filepath}")
             except Exception as e:
@@ -1210,7 +1212,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 
         def _generate_analysis_plugin_code(self, name, version, author, description):
             """Generate analysis plugin code."""
-            class_name = name.replace(' ', '').replace('-', '')
+            class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
 {name} - Analysis Plugin for Intellicrack
@@ -1508,7 +1510,7 @@ PLUGIN_INFO = {{
 
         def _generate_exploitation_plugin_code(self, name, version, author, description):
             """Generate exploitation plugin code."""
-            class_name = name.replace(' ', '').replace('-', '')
+            class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
 {name} - Exploitation Plugin for Intellicrack
@@ -1574,7 +1576,7 @@ PLUGIN_INFO = {{
 
         def _generate_network_plugin_code(self, name, version, author, description):
             """Generate network plugin code."""
-            class_name = name.replace(' ', '').replace('-', '')
+            class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
 {name} - Network Plugin for Intellicrack
@@ -1635,7 +1637,7 @@ PLUGIN_INFO = {{
 
         def _generate_generic_plugin_code(self, name, version, author, description):
             """Generate generic plugin code."""
-            class_name = name.replace(' ', '').replace('-', '')
+            class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
 {name} - Generic Plugin for Intellicrack
@@ -1867,9 +1869,7 @@ def create_plugin():
                 return
 
             # Start installation thread
-            install_dir = os.path.join(
-                self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0]
-            )
+            install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
             os.makedirs(install_dir, exist_ok=True)
 
             self.install_thread = PluginInstallThread(plugin_file, install_dir)
@@ -1927,7 +1927,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-class {plugin_name.replace(' ', '')}Plugin:
+class {plugin_name.replace(" ", "")}Plugin:
     \"\"\"
     {plugin_name} plugin implementation.
     \"\"\"
@@ -2399,7 +2399,7 @@ class {plugin_name.replace(' ', '')}Plugin:
 # Plugin entry point
 def create_plugin():
     \"\"\"Factory function to create plugin instance.\"\"\"
-    return {plugin_name.replace(' ', '')}Plugin()
+    return {plugin_name.replace(" ", "")}Plugin()
 
 def register():
     \"\"\"Register function for plugin system compatibility.\"\"\"

@@ -1,4 +1,18 @@
 repos:
+  # Rust Quality Assurance (New Intellicrack Launcher)
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: cargo-check
+        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml"]
+        name: Rust cargo check
+      - id: fmt
+        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "--check"]
+        name: Rust code formatting
+      - id: clippy
+        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "-D", "warnings"]
+        name: Rust clippy linting
+
   # Test hooks re-enabled after fixing import issues
   - repo: local
     hooks:
@@ -11,8 +25,8 @@ repos:
         stages: [pre-commit]
 
       - id: no-mock-validation
-        name: Verify no mock/fake data in tests
-        entry: C:/Intellicrack/mamba_env/python.exe tests/utils/verify_no_mocks.py
+        name: Verify no mock/fake data in tests (Production-Ready Enforcement)
+        entry: C:/Intellicrack/mamba_env/python.exe tests/utils/verify_no_mocks.py --ci
         language: system
         pass_filenames: false
         always_run: true
@@ -25,32 +39,32 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-  # Code Quality - Advanced Linting & Formatting
+  # Code Quality - Advanced Linting & Formatting (Updated to Latest)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.12.11
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
-  # Security - Secret Scanning
+  # Security - Secret Scanning (Up to date)
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
 
-  # Security - Vulnerability Scanning
+  # Security - Vulnerability Scanning (Updated)
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.10
+    rev: 1.8.3
     hooks:
       - id: bandit
         args: ['-r', 'intellicrack/', '-f', 'json', '-o', 'bandit-report.json']
         exclude: ^tests/
 
-  # Basic Git Hygiene
+  # Basic Git Hygiene (Updated to Latest)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer

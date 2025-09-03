@@ -186,9 +186,7 @@ class KernelInjector:
         struct.pack_into("<I", coff_header, 8, 0)  # Pointer to symbol table
         struct.pack_into("<I", coff_header, 12, 0)  # Number of symbols
         struct.pack_into("<H", coff_header, 16, 0xF0)  # Size of optional header
-        struct.pack_into(
-            "<H", coff_header, 18, 0x22
-        )  # Characteristics (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE)
+        struct.pack_into("<H", coff_header, 18, 0x22)  # Characteristics (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE)
 
         # Optional Header (240 bytes for PE32+)
         opt_header = bytearray(240)
@@ -247,9 +245,7 @@ class KernelInjector:
         struct.pack_into("<I", text_section, 28, 0)  # Pointer to line numbers
         struct.pack_into("<H", text_section, 32, 0)  # Number of relocations
         struct.pack_into("<H", text_section, 34, 0)  # Number of line numbers
-        struct.pack_into(
-            "<I", text_section, 36, 0x60000020
-        )  # Characteristics (CODE | EXECUTE | READ)
+        struct.pack_into("<I", text_section, 36, 0x60000020)  # Characteristics (CODE | EXECUTE | READ)
         sections.extend(text_section)
 
         # .data section
@@ -259,9 +255,7 @@ class KernelInjector:
         struct.pack_into("<I", data_section, 12, 0x2000)  # Virtual address
         struct.pack_into("<I", data_section, 16, 0x200)  # Size of raw data
         struct.pack_into("<I", data_section, 20, 0xC00)  # Pointer to raw data
-        struct.pack_into(
-            "<I", data_section, 36, 0xC0000040
-        )  # Characteristics (INITIALIZED_DATA | READ | WRITE)
+        struct.pack_into("<I", data_section, 36, 0xC0000040)  # Characteristics (INITIALIZED_DATA | READ | WRITE)
         sections.extend(data_section)
 
         # .rdata section (exports/imports)
@@ -271,9 +265,7 @@ class KernelInjector:
         struct.pack_into("<I", rdata_section, 12, 0x3000)  # Virtual address
         struct.pack_into("<I", rdata_section, 16, 0x200)  # Size of raw data
         struct.pack_into("<I", rdata_section, 20, 0xE00)  # Pointer to raw data
-        struct.pack_into(
-            "<I", rdata_section, 36, 0x40000040
-        )  # Characteristics (INITIALIZED_DATA | READ)
+        struct.pack_into("<I", rdata_section, 36, 0x40000040)  # Characteristics (INITIALIZED_DATA | READ)
         sections.extend(rdata_section)
 
         # Padding to file alignment

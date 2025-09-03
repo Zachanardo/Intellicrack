@@ -173,7 +173,7 @@ except ImportError as e:
             for dim in reversed(self._shape[1:]):
                 temp = []
                 for i in range(0, len(result), dim):
-                    temp.append(result[i:i+dim])
+                    temp.append(result[i : i + dim])
                 result = temp
             return result[0] if len(result) == 1 else result
 
@@ -377,8 +377,7 @@ except ImportError as e:
                 xx.append(i)
                 yy.append(j)
 
-        return [FallbackArray(xx, shape=(len(y.data), len(x.data))),
-                FallbackArray(yy, shape=(len(y.data), len(x.data)))]
+        return [FallbackArray(xx, shape=(len(y.data), len(x.data))), FallbackArray(yy, shape=(len(y.data), len(x.data)))]
 
     # Math operations
     def sqrt(x):
@@ -396,7 +395,7 @@ except ImportError as e:
     def round(x, decimals=0):
         """Round to decimals."""
         if isinstance(x, FallbackArray):
-            factor = 10 ** decimals
+            factor = 10**decimals
             return FallbackArray([round(val * factor) / factor for val in x.data], x.dtype, x.shape)
         return round(x, decimals)
 
@@ -527,7 +526,7 @@ except ImportError as e:
                 grad = data[-1] - data[-2]
             else:
                 # Central difference
-                grad = (data[i+1] - data[i-1]) / 2
+                grad = (data[i + 1] - data[i - 1]) / 2
             result.append(grad)
 
         return FallbackArray(result)
@@ -542,7 +541,7 @@ except ImportError as e:
         for _ in range(n):
             result = []
             for i in range(1, len(data)):
-                result.append(data[i] - data[i-1])
+                result.append(data[i] - data[i - 1])
             data = result
 
         return FallbackArray(data)
@@ -636,7 +635,7 @@ except ImportError as e:
         result = [
             a_data[1] * b_data[2] - a_data[2] * b_data[1],
             a_data[2] * b_data[0] - a_data[0] * b_data[2],
-            a_data[0] * b_data[1] - a_data[1] * b_data[0]
+            a_data[0] * b_data[1] - a_data[1] * b_data[0],
         ]
         return FallbackArray(result)
 
@@ -810,13 +809,13 @@ except ImportError as e:
                     data = x
 
                 if ord is None or ord == 2:
-                    return math.sqrt(sum(val ** 2 for val in data))
+                    return math.sqrt(sum(val**2 for val in data))
                 elif ord == 1:
                     return sum(abs(val) for val in data)
-                elif ord == float('inf'):
+                elif ord == float("inf"):
                     return max(abs(val) for val in data)
                 else:
-                    return sum(abs(val) ** ord for val in data) ** (1/ord)
+                    return sum(abs(val) ** ord for val in data) ** (1 / ord)
 
             @staticmethod
             def inv(a):
@@ -830,10 +829,7 @@ except ImportError as e:
                     if abs(det) < 1e-10:
                         raise ValueError("Matrix is singular")
 
-                    inv_data = [
-                        a.data[3] / det, -a.data[1] / det,
-                        -a.data[2] / det, a.data[0] / det
-                    ]
+                    inv_data = [a.data[3] / det, -a.data[1] / det, -a.data[2] / det, a.data[0] / det]
                     return FallbackArray(inv_data, a.dtype, (2, 2))
 
                 raise ValueError("Input must be a 2x2 FallbackArray")
@@ -926,7 +922,7 @@ except ImportError as e:
                     low = 0
 
                 if size is None:
-                    return _random.randint(low, high-1)  # noqa: S311 - NumPy fallback mathematical random generation
+                    return _random.randint(low, high - 1)  # noqa: S311 - NumPy fallback mathematical random generation
 
                 if isinstance(size, int):
                     size = (size,)
@@ -935,7 +931,7 @@ except ImportError as e:
                 for dim in size:
                     total *= dim
 
-                data = [_random.randint(low, high-1) for _ in range(total)]  # noqa: S311 - NumPy fallback mathematical random generation
+                data = [_random.randint(low, high - 1) for _ in range(total)]  # noqa: S311 - NumPy fallback mathematical random generation
                 return FallbackArray(data, int, size)
 
             @staticmethod
@@ -992,32 +988,73 @@ except ImportError as e:
 # Export all NumPy objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_NUMPY", "NUMPY_VERSION",
+    "HAS_NUMPY",
+    "NUMPY_VERSION",
     # Main numpy references
-    "np", "numpy",
+    "np",
+    "numpy",
     # Array creation
-    "array", "zeros", "ones", "empty", "full", "eye",
-    "arange", "linspace", "meshgrid",
+    "array",
+    "zeros",
+    "ones",
+    "empty",
+    "full",
+    "eye",
+    "arange",
+    "linspace",
+    "meshgrid",
     # Data types
-    "ndarray", "dtype", "float32", "float64", "int32", "int64",
-    "uint8", "uint16", "uint32",
+    "ndarray",
+    "dtype",
+    "float32",
+    "float64",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
     # Array manipulation
-    "reshape", "transpose", "concatenate", "stack",
+    "reshape",
+    "transpose",
+    "concatenate",
+    "stack",
     # Mathematical operations
-    "sum", "mean", "std", "var", "min", "max", "argmin", "argmax",
-    "dot", "cross",
+    "sum",
+    "mean",
+    "std",
+    "var",
+    "min",
+    "max",
+    "argmin",
+    "argmax",
+    "dot",
+    "cross",
     # Submodules
-    "linalg", "fft", "random",
+    "linalg",
+    "fft",
+    "random",
     # Mathematical functions
-    "sqrt", "abs", "round", "floor", "ceil",
+    "sqrt",
+    "abs",
+    "round",
+    "floor",
+    "ceil",
     # Logical operations
-    "where", "unique", "sort", "argsort",
+    "where",
+    "unique",
+    "sort",
+    "argsort",
     # Comparison
-    "allclose", "array_equal",
+    "allclose",
+    "array_equal",
     # Array conversion
     "asarray",
     # Calculus
-    "gradient", "diff", "cumsum",
+    "gradient",
+    "diff",
+    "cumsum",
     # Statistics
-    "histogram", "percentile", "median",
+    "histogram",
+    "percentile",
+    "median",
 ]

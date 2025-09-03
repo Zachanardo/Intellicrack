@@ -160,6 +160,7 @@ class AdvancedDemoPlugin(BasePlugin):
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
         import math
+
         if not data:
             return 0.0
 
@@ -310,9 +311,7 @@ class AdvancedDemoPlugin(BasePlugin):
             update_progress("Detecting packers...")
             packer_info = self._detect_packer(binary_path)
             if packer_info["detected"]:
-                results.append(
-                    f"📦 Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})"
-                )
+                results.append(f"📦 Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})")
             else:
                 results.append("📦 No common packers detected")
 
@@ -321,20 +320,16 @@ class AdvancedDemoPlugin(BasePlugin):
             strings = self._extract_strings(binary_path)
             results.append(f"📝 Extracted {len(strings)} strings (showing first 10):")
             for i, string in enumerate(strings[:10]):
-                results.append(f"  {i+1:2d}. {string[:50]}{'...' if len(string) > 50 else ''}")
+                results.append(f"  {i + 1:2d}. {string[:50]}{'...' if len(string) > 50 else ''}")
 
             # Step 7: Advanced analysis (if available)
             update_progress("Performing advanced analysis...")
-            if self.available_libs.get("pefile", False) and binary_path.lower().endswith(
-                (".exe", ".dll")
-            ):
+            if self.available_libs.get("pefile", False) and binary_path.lower().endswith((".exe", ".dll")):
                 results.append("🔍 PE analysis available (pefile installed)")
             elif self.available_libs.get("lief", False):
                 results.append("🔍 Advanced analysis available (LIEF installed)")
             else:
-                results.append(
-                    "🔍 Advanced analysis unavailable (install pefile/lief for more features)"
-                )
+                results.append("🔍 Advanced analysis unavailable (install pefile/lief for more features)")
 
             # Analysis summary
             analysis_time = time.time() - start_time

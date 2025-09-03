@@ -134,9 +134,7 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def generate_correlation_matrix(
-        items: list[dict[str, Any]], attributes: list[str]
-    ) -> dict[str, dict[str, float]]:
+    def generate_correlation_matrix(items: list[dict[str, Any]], attributes: list[str]) -> dict[str, dict[str, float]]:
         """Generate correlation matrix between numeric attributes.
 
         Args:
@@ -191,9 +189,7 @@ class AnalysisStatsGenerator:
             mean2 = sum(values2) / len(values2)
 
             # Calculate correlation components
-            numerator = sum(
-                (x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False)
-            )
+            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False))
             sum_sq1 = sum((x - mean1) ** 2 for x in values1)
             sum_sq2 = sum((y - mean2) ** 2 for y in values2)
 
@@ -270,9 +266,7 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def safe_stats_generation(
-        stats_function: Callable[[], Any], default_return: Any | None = None
-    ) -> Any:
+    def safe_stats_generation(stats_function: Callable[[], Any], default_return: Any | None = None) -> Any:
         """Safely execute a statistics generation function with error handling.
 
         Args:
@@ -290,9 +284,7 @@ class AnalysisStatsGenerator:
             return default_return
 
     @staticmethod
-    def generate_summary_report(
-        items: list[dict[str, Any]], title: str = "Analysis Summary"
-    ) -> str:
+    def generate_summary_report(items: list[dict[str, Any]], title: str = "Analysis Summary") -> str:
         """Generate a text summary report.
 
         Args:
@@ -447,9 +439,7 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(
-        values: list[int | float], percentiles: list[int] = None
-    ) -> dict[int, float]:
+    def generate_percentiles(values: list[int | float], percentiles: list[int] = None) -> dict[int, float]:
         """Calculate percentiles for a list of values.
 
         Args:
@@ -483,10 +473,7 @@ class AnalysisStatsGenerator:
                         upper_idx = min(lower_idx + 1, n - 1)
                         weight = index - lower_idx
 
-                        result[p] = (
-                            sorted_values[lower_idx] * (1 - weight)
-                            + sorted_values[upper_idx] * weight
-                        )
+                        result[p] = sorted_values[lower_idx] * (1 - weight) + sorted_values[upper_idx] * weight
 
             return result
 

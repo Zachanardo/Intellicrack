@@ -18,6 +18,7 @@ Common process handling utilities.
 
 This module consolidates process creation and management patterns.
 """
+
 import logging
 import subprocess
 from typing import Any
@@ -25,9 +26,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess_safely(
-    cmd: list[str], timeout: int = 30, capture_output: bool = True
-) -> subprocess.CompletedProcess:
+def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
     """Run a subprocess with common safety patterns.
 
     Args:
@@ -77,9 +76,7 @@ def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
     return subprocess.Popen(cmd, **defaults)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
 
-def create_suspended_process_with_context(
-    create_func, get_context_func, target_exe: str, logger_instance=None
-) -> dict[str, Any]:
+def create_suspended_process_with_context(create_func, get_context_func, target_exe: str, logger_instance=None) -> dict[str, Any]:
     """Common pattern for creating suspended process and getting thread context.
 
     Args:

@@ -96,11 +96,7 @@ except ImportError:
             if not script:
                 return {"length": 0, "type": "empty"}
 
-            script_info = {
-                "length": len(script),
-                "lines": len(script.split('\n')),
-                "type": "unknown"
-            }
+            script_info = {"length": len(script), "lines": len(script.split("\n")), "type": "unknown"}
 
             # Detect script type based on content patterns
             if "Java.perform" in script or "Java.use" in script:
@@ -116,19 +112,13 @@ except ImportError:
 
         def _analyze_script_fallback(self, script, target_binary, vm_config):
             """Perform fallback script analysis without VM execution."""
-            analysis = {
-                "analysis_summary": "",
-                "detected_functions": [],
-                "api_calls": [],
-                "hooks": [],
-                "potential_issues": []
-            }
+            analysis = {"analysis_summary": "", "detected_functions": [], "api_calls": [], "hooks": [], "potential_issues": []}
 
             if not script:
                 analysis["analysis_summary"] = "Empty script provided"
                 return analysis
 
-            lines = script.split('\n')
+            lines = script.split("\n")
 
             # Analyze Frida patterns
             for i, line in enumerate(lines):
@@ -136,15 +126,15 @@ except ImportError:
 
                 # Detect function hooks
                 if "Interceptor.attach" in line:
-                    analysis["hooks"].append(f"Hook detected at line {i+1}: {line[:50]}...")
+                    analysis["hooks"].append(f"Hook detected at line {i + 1}: {line[:50]}...")
 
                 # Detect API calls
                 if "Module.findExportByName" in line or "Module.getExportByName" in line:
-                    analysis["api_calls"].append(f"API lookup at line {i+1}: {line[:50]}...")
+                    analysis["api_calls"].append(f"API lookup at line {i + 1}: {line[:50]}...")
 
                 # Detect potential issues
                 if "eval(" in line:
-                    analysis["potential_issues"].append(f"Dynamic code execution at line {i+1}")
+                    analysis["potential_issues"].append(f"Dynamic code execution at line {i + 1}")
                 if "setTimeout" in line and "while(true)" in script:
                     analysis["potential_issues"].append("Potential infinite loop detected")
 
@@ -163,11 +153,7 @@ except ImportError:
 
         def _validate_script_syntax(self, script):
             """Validate script syntax and structure."""
-            validation = {
-                "valid": True,
-                "errors": [],
-                "warnings": []
-            }
+            validation = {"valid": True, "errors": [], "warnings": []}
 
             if not script:
                 validation["valid"] = False
@@ -181,11 +167,11 @@ except ImportError:
                     validation["warnings"].append("Java.perform usage may be incorrect")
 
                 # Check for proper callback structure
-                if script.count('(') != script.count(')'):
+                if script.count("(") != script.count(")"):
                     validation["valid"] = False
                     validation["errors"].append("Mismatched parentheses")
 
-                if script.count('{') != script.count('}'):
+                if script.count("{") != script.count("}"):
                     validation["valid"] = False
                     validation["errors"].append("Mismatched braces")
 
@@ -597,9 +583,7 @@ class IntegrationManager:
                         failed_tasks[task_id] = task
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(
-                    f"Workflow {workflow_id} did not complete within {timeout} seconds"
-                )
+                raise TimeoutError(f"Workflow {workflow_id} did not complete within {timeout} seconds")
 
             time.sleep(0.1)
 
@@ -662,16 +646,8 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(
-                1
-                for tid in task_ids
-                if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed"
-            )
-            failed = sum(
-                1
-                for tid in task_ids
-                if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed"
-            )
+            completed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
+            failed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
             running = sum(1 for tid in task_ids if tid in self.active_tasks)
             pending = len(task_ids) - completed - failed - running
 
@@ -719,9 +695,7 @@ class IntegrationManager:
             except Exception as e:
                 logger.error(f"Error in event handler: {e}")
 
-    def create_bypass_workflow(
-        self, target_binary: str, bypass_type: str = "license_validation"
-    ) -> str:
+    def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
         """Create a complete bypass workflow."""
         workflow_def = {
             "name": "Complete Bypass Workflow",
@@ -837,9 +811,7 @@ class IntegrationManager:
         if exc_type:
             logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                logger.debug(
-                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                logger.debug(f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.stop()
         return False  # Don't suppress exceptions
 

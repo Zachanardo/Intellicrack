@@ -155,9 +155,7 @@ class MemoryForensicsTool:
                 profile = AnalysisProfile.AUTO_DETECT
 
             # Run memory forensics analysis
-            analysis_result = self.engine.analyze_memory_dump(
-                dump_path=dump_path, profile=profile, deep_analysis=deep_analysis
-            )
+            analysis_result = self.engine.analyze_memory_dump(dump_path=dump_path, profile=profile, deep_analysis=deep_analysis)
 
             if analysis_result.error:
                 return {"success": False, "error": analysis_result.error}
@@ -176,30 +174,20 @@ class MemoryForensicsTool:
 
             # Add process analysis if requested
             if analyze_processes and analysis_result.processes:
-                result["processes"] = self._format_processes(
-                    analysis_result.processes, security_focus
-                )
+                result["processes"] = self._format_processes(analysis_result.processes, security_focus)
                 result["process_summary"] = {
                     "total_processes": len(analysis_result.processes),
                     "hidden_processes": analysis_result.hidden_process_count,
-                    "suspicious_processes": sum(
-                        1 for p in analysis_result.processes if p.suspicious_indicators
-                    ),
+                    "suspicious_processes": sum(1 for p in analysis_result.processes if p.suspicious_indicators),
                 }
 
             # Add network analysis if requested
             if analyze_network and analysis_result.network_connections:
-                result["network_connections"] = self._format_network_connections(
-                    analysis_result.network_connections, security_focus
-                )
+                result["network_connections"] = self._format_network_connections(analysis_result.network_connections, security_focus)
                 result["network_summary"] = {
                     "total_connections": len(analysis_result.network_connections),
                     "external_connections": len(
-                        [
-                            c
-                            for c in analysis_result.network_connections
-                            if not c.remote_addr.startswith(("127.", "192.168.", "10."))
-                        ]
+                        [c for c in analysis_result.network_connections if not c.remote_addr.startswith(("127.", "192.168.", "10."))]
                     ),
                 }
 
@@ -208,16 +196,12 @@ class MemoryForensicsTool:
                 result["modules"] = self._format_modules(analysis_result.modules, security_focus)
                 result["module_summary"] = {
                     "total_modules": len(analysis_result.modules),
-                    "suspicious_modules": sum(
-                        1 for m in analysis_result.modules if m.is_suspicious
-                    ),
+                    "suspicious_modules": sum(1 for m in analysis_result.modules if m.is_suspicious),
                 }
 
             # Add security findings
             if security_focus and analysis_result.security_findings:
-                result["security_findings"] = self._format_security_findings(
-                    analysis_result.security_findings
-                )
+                result["security_findings"] = self._format_security_findings(analysis_result.security_findings)
                 result["security_assessment"] = self._assess_security_posture(analysis_result)
 
             # Add detailed analysis if requested
@@ -275,9 +259,7 @@ class MemoryForensicsTool:
             if command_line:
                 process_data["command_line"] = command_line
 
-            suspicious_indicators: Optional[List[str]] = getattr(
-                process, "suspicious_indicators", None
-            )
+            suspicious_indicators: Optional[List[str]] = getattr(process, "suspicious_indicators", None)
             if suspicious_indicators:
                 process_data["suspicious_indicators"] = suspicious_indicators
 
@@ -287,9 +269,7 @@ class MemoryForensicsTool:
 
         return formatted_processes
 
-    def _format_network_connections(
-        self, connections: List[Any], security_focus: bool
-    ) -> List[Dict[str, Any]]:
+    def _format_network_connections(self, connections: List[Any], security_focus: bool) -> List[Dict[str, Any]]:
         """Format network connection information for LLM consumption"""
         formatted_connections = []
 
@@ -377,16 +357,12 @@ class MemoryForensicsTool:
 
         # Assess risk factors
         if analysis_result.hidden_process_count > 0:
-            assessment["risk_factors"].append(
-                f"{analysis_result.hidden_process_count} hidden processes detected"
-            )
+            assessment["risk_factors"].append(f"{analysis_result.hidden_process_count} hidden processes detected")
             risk_score += 3
 
         suspicious_processes = sum(1 for p in analysis_result.processes if p.suspicious_indicators)
         if suspicious_processes > 0:
-            assessment["risk_factors"].append(
-                f"{suspicious_processes} suspicious processes detected"
-            )
+            assessment["risk_factors"].append(f"{suspicious_processes} suspicious processes detected")
             risk_score += 2
 
         suspicious_modules = sum(1 for m in analysis_result.modules if m.is_suspicious)
@@ -395,16 +371,10 @@ class MemoryForensicsTool:
             risk_score += 2
 
         external_connections = len(
-            [
-                c
-                for c in analysis_result.network_connections
-                if not c.remote_addr.startswith(("127.", "192.168.", "10."))
-            ]
+            [c for c in analysis_result.network_connections if not c.remote_addr.startswith(("127.", "192.168.", "10."))]
         )
         if external_connections > 10:
-            assessment["risk_factors"].append(
-                f"{external_connections} external network connections"
-            )
+            assessment["risk_factors"].append(f"{external_connections} external network connections")
             risk_score += 1
 
         # Determine overall risk
@@ -417,19 +387,13 @@ class MemoryForensicsTool:
 
         # Generate recommendations
         if analysis_result.hidden_process_count > 0:
-            assessment["recommendations"].append(
-                "Investigate hidden processes for potential rootkit activity"
-            )
+            assessment["recommendations"].append("Investigate hidden processes for potential rootkit activity")
 
         if suspicious_processes > 0:
-            assessment["recommendations"].append(
-                "Analyze suspicious processes for malware indicators"
-            )
+            assessment["recommendations"].append("Analyze suspicious processes for malware indicators")
 
         if external_connections > 5:
-            assessment["recommendations"].append(
-                "Review external network connections for data exfiltration"
-            )
+            assessment["recommendations"].append("Review external network connections for data exfiltration")
 
         return assessment
 
@@ -448,9 +412,7 @@ class MemoryForensicsTool:
             if not is_volatility3_available() or not self.engine:
                 return {"success": False, "error": "Memory forensics engine not available"}
 
-            process_analysis: Optional[Dict[str, Any]] = self.engine.analyze_process_memory(
-                process_id, dump_path
-            )
+            process_analysis: Optional[Dict[str, Any]] = self.engine.analyze_process_memory(process_id, dump_path)
 
             if process_analysis is None:
                 return {"success": False, "error": f"Failed to analyze process {process_id}"}

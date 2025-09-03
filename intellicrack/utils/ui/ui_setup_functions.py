@@ -67,6 +67,7 @@ logger = setup_logger(__name__)
 try:
     from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, matplotlib
     from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as FigureCanvas
+
     if HAS_MATPLOTLIB:
         matplotlib.use("qtagg")
 except ImportError as e:

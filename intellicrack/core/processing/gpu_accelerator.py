@@ -169,9 +169,7 @@ class GPUAccelerationManager:
                 return self._cupy_pattern_matching(data, patterns)
             if self._torch:
                 return self._torch_pattern_matching(data, patterns)
-            self.logger.warning(
-                "Pattern matching not implemented for backend: %s", self.gpu_backend
-            )
+            self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
             return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
             self.logger.error("GPU pattern matching failed: %s", e)
@@ -203,9 +201,7 @@ class GPUAccelerationManager:
 
         for pattern in patterns:
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
-            pattern_tensor = self._torch.tensor(
-                pattern_np, dtype=self._torch.uint8, device=self.device
-            )
+            pattern_tensor = self._torch.tensor(pattern_np, dtype=self._torch.uint8, device=self.device)
 
             # Use convolution for pattern matching
             if len(pattern) <= len(data):
@@ -275,16 +271,10 @@ class GPUAccelerationManager:
             match_count = np.zeros(1, dtype=np.int32)
 
             mf = self.cl.mem_flags
-            data_buffer = self.cl.Buffer(
-                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array
-            )
-            pattern_buffer = self.cl.Buffer(
-                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array
-            )
+            data_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array)
+            pattern_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array)
             matches_buffer = self.cl.Buffer(self.context, mf.WRITE_ONLY, matches_array.nbytes)
-            count_buffer = self.cl.Buffer(
-                self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count
-            )
+            count_buffer = self.cl.Buffer(self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count)
 
             global_size = (len(data_array),)
             local_size = None
@@ -309,9 +299,7 @@ class GPUAccelerationManager:
             if num_matches > 0:
                 all_matches.extend(matches_array[: min(num_matches, max_matches)].tolist())
 
-            self.logger.debug(
-                f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}"
-            )
+            self.logger.debug(f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}")
 
         return sorted(all_matches)
 
@@ -383,9 +371,7 @@ class GPUAccelerationManager:
                 matches_cpu = matches_gpu[: min(num_matches, max_matches)].get()
                 all_matches.extend(matches_cpu.tolist())
 
-            self.logger.debug(
-                f"CUDA found {num_matches} matches for pattern of size {len(pattern)}"
-            )
+            self.logger.debug(f"CUDA found {num_matches} matches for pattern of size {len(pattern)}")
 
         return sorted(all_matches)
 

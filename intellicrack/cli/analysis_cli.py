@@ -61,9 +61,7 @@ class AnalysisCLI:
         # File handler
         log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
-        file_handler = logging.FileHandler(
-            log_dir / f"analysis_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        )
+        file_handler = logging.FileHandler(log_dir / f"analysis_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
         file_handler.setLevel(logging.DEBUG)
 
         # Formatter
@@ -188,9 +186,7 @@ class AnalysisCLI:
                 if "security_features" in elf_results:
                     for feature, enabled in elf_results["security_features"].items():
                         if not enabled:
-                            results["recommendations"].append(
-                                f"Enable {feature} for improved security"
-                            )
+                            results["recommendations"].append(f"Enable {feature} for improved security")
             except Exception as e:
                 self.logger.error(f"ELF analysis failed: {e}")
 
@@ -352,22 +348,18 @@ class AnalysisCLI:
         """Generate analysis report."""
         self.logger.info(f"Generating {format} report...")
 
-        report_path = self.report_generator.generate_report(
-            results, format=format, output_file=output_file
-        )
+        report_path = self.report_generator.generate_report(results, format=format, output_file=output_file)
 
         self.logger.info(f"Report saved to: {report_path}")
         return report_path
 
-    def run_batch_analysis(
-        self, file_list: List[str], options: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def run_batch_analysis(self, file_list: List[str], options: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Run analysis on multiple files."""
         results = []
 
         for file_path in file_list:
             try:
-                self.logger.info(f"Analyzing {file_path} ({len(results)+1}/{len(file_list)})")
+                self.logger.info(f"Analyzing {file_path} ({len(results) + 1}/{len(file_list)})")
                 result = self.analyze_binary(file_path, options)
                 results.append(result)
             except Exception as e:
@@ -404,13 +396,9 @@ def main():
 
     parser.add_argument("--no-binary-analysis", action="store_true", help="Skip binary analysis")
 
-    parser.add_argument(
-        "--no-protection-analysis", action="store_true", help="Skip protection analysis"
-    )
+    parser.add_argument("--no-protection-analysis", action="store_true", help="Skip protection analysis")
 
-    parser.add_argument(
-        "--no-vulnerability-scan", action="store_true", help="Skip vulnerability scanning"
-    )
+    parser.add_argument("--no-vulnerability-scan", action="store_true", help="Skip vulnerability scanning")
 
     parser.add_argument("--no-pe-analysis", action="store_true", help="Skip PE-specific analysis")
 
@@ -418,13 +406,9 @@ def main():
 
     parser.add_argument("--no-strings", action="store_true", help="Skip string extraction")
 
-    parser.add_argument(
-        "-b", "--batch", action="store_true", help="Batch mode - analyze all files in directory"
-    )
+    parser.add_argument("-b", "--batch", action="store_true", help="Batch mode - analyze all files in directory")
 
-    parser.add_argument(
-        "-r", "--recursive", action="store_true", help="Recursively analyze files in subdirectories"
-    )
+    parser.add_argument("-r", "--recursive", action="store_true", help="Recursively analyze files in subdirectories")
 
     parser.add_argument(
         "--extensions",
@@ -437,9 +421,7 @@ def main():
 
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress output except errors")
 
-    parser.add_argument(
-        "--json-output", action="store_true", help="Output results as JSON to stdout"
-    )
+    parser.add_argument("--json-output", action="store_true", help="Output results as JSON to stdout")
 
     args = parser.parse_args()
 
@@ -497,9 +479,7 @@ def main():
                 # Generate batch report
                 for i, result in enumerate(results):
                     if "error" not in result:
-                        output_file = (
-                            f"report_{i+1}_{Path(result['target_file']).stem}.{args.format}"
-                        )
+                        output_file = f"report_{i + 1}_{Path(result['target_file']).stem}.{args.format}"
                         cli.generate_report(result, args.format, output_file)
 
                 print(f"Analysis complete. {len(results)} files processed.")

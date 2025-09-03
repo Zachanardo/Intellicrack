@@ -252,9 +252,7 @@ class TerminalHexViewer:
         modified_str = "*" if self.modified else ""
 
         status = f" {mode_str}({edit_type}) | Offset: 0x{self.cursor_offset:08X} | "
-        status += (
-            f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
-        )
+        status += f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
 
         # Truncate if too long
         if len(status) > self.screen_width:
@@ -673,7 +671,7 @@ class TerminalHexViewer:
                         self._adjust_display()
                         status = f"Jumped to offset 0x{offset:X}"
                     else:
-                        status = f"Offset out of range (0-0x{self.file_size-1:X})"
+                        status = f"Offset out of range (0-0x{self.file_size - 1:X})"
 
                 except ValueError:
                     status = "Invalid offset format"

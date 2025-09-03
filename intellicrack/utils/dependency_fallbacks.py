@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 Dependency fallbacks for Intellicrack
 Provides safe imports and fallback implementations when dependencies are missing or incompatible
 """
+
 import logging
 import sys
 
@@ -122,6 +123,7 @@ def safe_import_pyelftools():
             bytes2str,
             maxint,
         )
+
         if not HAS_PYELFTOOLS:
             raise ImportError("pyelftools not available")
 
@@ -131,9 +133,7 @@ def safe_import_pyelftools():
         test_max = maxint  # Just reference it to ensure it's valid
 
         # Log successful import with usage verification
-        logger.debug(
-            f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}"
-        )
+        logger.debug(f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}")
 
         PYELFTOOLS_AVAILABLE = True
         return True
@@ -155,17 +155,10 @@ def _create_randn_fallback(shape):
     if len(shape) == 2:
         return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
     if len(shape) == 3:
-        return [
-            [[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])]
-            for _ in range(shape[0])
-        ]
+        return [[[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
     if len(shape) == 4:
         return [
-            [
-                [[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])]
-                for _ in range(shape[1])
-            ]
-            for _ in range(shape[0])
+            [[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])
         ]
     raise ValueError("Too many dimensions for fallback randn")
 
@@ -369,9 +362,7 @@ def create_sklearn_fallback():
 
         def fit(self, X, y):
             """Fit the model (fallback does nothing)."""
-            logger.debug(
-                f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels"
-            )
+            logger.debug(f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels")
             return self
 
         def predict(self, X):
@@ -521,15 +512,9 @@ def initialize_safe_imports():
     except Exception as e:
         logger.warning(f"sklearn issue detected: {e}")
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
-        _module_replacer.replace_module(
-            "sklearn.ensemble", lambda: create_sklearn_fallback().ensemble
-        )
-        _module_replacer.replace_module(
-            "sklearn.cluster", lambda: create_sklearn_fallback().cluster
-        )
-        _module_replacer.replace_module(
-            "sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing
-        )
+        _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
+        _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
+        _module_replacer.replace_module("sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing)
 
     logger.info("Safe import initialization complete")
 

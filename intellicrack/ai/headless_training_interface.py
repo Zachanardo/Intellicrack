@@ -67,7 +67,7 @@ class HeadlessTrainingInterface:
 
         """
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
             self.config_path = config_path
             logger.info("Configuration loaded from %s", config_path)
@@ -89,16 +89,16 @@ class HeadlessTrainingInterface:
         """
         try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, 'w', encoding='utf-8') as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
             logger.info("Configuration saved to %s", config_path)
         except Exception as e:
             logger.error("Failed to save configuration to %s: %s", config_path, e)
             raise
 
-    def start_training(self, config: Dict[str, Any],
-                      progress_callback: Optional[Callable] = None,
-                      status_callback: Optional[Callable] = None) -> None:
+    def start_training(
+        self, config: Dict[str, Any], progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None
+    ) -> None:
         """Start AI model training with given configuration.
 
         Args:
@@ -114,16 +114,12 @@ class HeadlessTrainingInterface:
         self.is_training = True
         self.is_paused = False
         self.current_epoch = 0
-        self.total_epochs = config.get('epochs', 100)
-        self.callbacks['progress'] = progress_callback
-        self.callbacks['status'] = status_callback
+        self.total_epochs = config.get("epochs", 100)
+        self.callbacks["progress"] = progress_callback
+        self.callbacks["status"] = status_callback
 
         # Start training in separate thread
-        self.training_thread = threading.Thread(
-            target=self._training_worker,
-            args=(config,),
-            daemon=True
-        )
+        self.training_thread = threading.Thread(target=self._training_worker, args=(config,), daemon=True)
         self.training_thread.start()
 
         logger.info("Training started with %d epochs", self.total_epochs)
@@ -138,8 +134,8 @@ class HeadlessTrainingInterface:
 
         self.is_paused = True
         logger.info("Training paused at epoch %d", self.current_epoch)
-        if self.callbacks.get('status'):
-            self.callbacks['status'](f"Training paused at epoch {self.current_epoch}")
+        if self.callbacks.get("status"):
+            self.callbacks["status"](f"Training paused at epoch {self.current_epoch}")
 
     def resume_training(self) -> None:
         """Resume paused training."""
@@ -149,8 +145,8 @@ class HeadlessTrainingInterface:
 
         self.is_paused = False
         logger.info("Training resumed from epoch %d", self.current_epoch)
-        if self.callbacks.get('status'):
-            self.callbacks['status'](f"Training resumed from epoch {self.current_epoch}")
+        if self.callbacks.get("status"):
+            self.callbacks["status"](f"Training resumed from epoch {self.current_epoch}")
 
     def stop_training(self) -> None:
         """Stop ongoing training."""
@@ -165,8 +161,8 @@ class HeadlessTrainingInterface:
             self.training_thread.join(timeout=5.0)
 
         logger.info("Training stopped at epoch %d", self.current_epoch)
-        if self.callbacks.get('status'):
-            self.callbacks['status'](f"Training stopped at epoch {self.current_epoch}")
+        if self.callbacks.get("status"):
+            self.callbacks["status"](f"Training stopped at epoch {self.current_epoch}")
 
     def get_training_status(self) -> Dict[str, Any]:
         """Get current training status.
@@ -176,12 +172,12 @@ class HeadlessTrainingInterface:
 
         """
         return {
-            'is_training': self.is_training,
-            'is_paused': self.is_paused,
-            'current_epoch': self.current_epoch,
-            'total_epochs': self.total_epochs,
-            'progress_percent': (self.current_epoch / max(self.total_epochs, 1)) * 100,
-            'metrics': self.metrics.copy()
+            "is_training": self.is_training,
+            "is_paused": self.is_paused,
+            "current_epoch": self.current_epoch,
+            "total_epochs": self.total_epochs,
+            "progress_percent": (self.current_epoch / max(self.total_epochs, 1)) * 100,
+            "metrics": self.metrics.copy(),
         }
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -201,7 +197,7 @@ class HeadlessTrainingInterface:
 
         """
         for key, value in params.items():
-            if key == 'epochs':
+            if key == "epochs":
                 self.total_epochs = value
             logger.debug("Set training parameter %s = %s", key, value)
 
@@ -217,68 +213,72 @@ class HeadlessTrainingInterface:
             logger.info("Training worker started")
 
             # Extract training parameters
-            learning_rate = config.get('learning_rate', 0.001)
-            batch_size = config.get('batch_size', 32)
-            model_type = config.get('model_type', 'vulnerability_classifier')
-            dataset_path = config.get('dataset_path', '')
+            learning_rate = config.get("learning_rate", 0.001)
+            batch_size = config.get("batch_size", 32)
+            model_type = config.get("model_type", "vulnerability_classifier")
+            dataset_path = config.get("dataset_path", "")
 
             # Configure model-specific training parameters based on model type
             model_configs = {
-                'vulnerability_classifier': {
-                    'architecture': 'deep_cnn',
-                    'optimizer': 'adam',
-                    'loss_function': 'binary_crossentropy',
-                    'metrics': ['accuracy', 'precision', 'recall'],
-                    'early_stopping_patience': 10,
-                    'min_epochs': 50
+                "vulnerability_classifier": {
+                    "architecture": "deep_cnn",
+                    "optimizer": "adam",
+                    "loss_function": "binary_crossentropy",
+                    "metrics": ["accuracy", "precision", "recall"],
+                    "early_stopping_patience": 10,
+                    "min_epochs": 50,
                 },
-                'exploit_generator': {
-                    'architecture': 'transformer',
-                    'optimizer': 'adamw',
-                    'loss_function': 'categorical_crossentropy',
-                    'metrics': ['accuracy', 'perplexity'],
-                    'early_stopping_patience': 15,
-                    'min_epochs': 100
+                "exploit_generator": {
+                    "architecture": "transformer",
+                    "optimizer": "adamw",
+                    "loss_function": "categorical_crossentropy",
+                    "metrics": ["accuracy", "perplexity"],
+                    "early_stopping_patience": 15,
+                    "min_epochs": 100,
                 },
-                'pattern_detector': {
-                    'architecture': 'lstm',
-                    'optimizer': 'rmsprop',
-                    'loss_function': 'mse',
-                    'metrics': ['mae', 'r2_score'],
-                    'early_stopping_patience': 20,
-                    'min_epochs': 75
+                "pattern_detector": {
+                    "architecture": "lstm",
+                    "optimizer": "rmsprop",
+                    "loss_function": "mse",
+                    "metrics": ["mae", "r2_score"],
+                    "early_stopping_patience": 20,
+                    "min_epochs": 75,
                 },
-                'mutation_predictor': {
-                    'architecture': 'gru',
-                    'optimizer': 'sgd',
-                    'loss_function': 'huber',
-                    'metrics': ['accuracy', 'f1_score'],
-                    'early_stopping_patience': 12,
-                    'min_epochs': 60
-                }
+                "mutation_predictor": {
+                    "architecture": "gru",
+                    "optimizer": "sgd",
+                    "loss_function": "huber",
+                    "metrics": ["accuracy", "f1_score"],
+                    "early_stopping_patience": 12,
+                    "min_epochs": 60,
+                },
             }
 
             # Get model-specific configuration
-            model_config = model_configs.get(model_type, model_configs['vulnerability_classifier'])
+            model_config = model_configs.get(model_type, model_configs["vulnerability_classifier"])
 
             # Adjust training parameters based on model type
-            if model_type == 'exploit_generator':
+            if model_type == "exploit_generator":
                 learning_rate *= 0.5  # Lower learning rate for transformer models
                 batch_size = min(batch_size, 16)  # Smaller batch size for memory efficiency
-            elif model_type == 'pattern_detector':
+            elif model_type == "pattern_detector":
                 learning_rate *= 1.5  # Higher learning rate for LSTM
-            elif model_type == 'mutation_predictor':
+            elif model_type == "mutation_predictor":
                 batch_size *= 2  # Larger batch size for GRU training
 
             # Log model configuration
-            logger.info("Training %s model with architecture: %s, optimizer: %s",
-                       model_type, model_config['architecture'], model_config['optimizer'])
+            logger.info(
+                "Training %s model with architecture: %s, optimizer: %s",
+                model_type,
+                model_config["architecture"],
+                model_config["optimizer"],
+            )
 
             # Validate dataset path
             if not dataset_path or not os.path.exists(dataset_path):
                 logger.error("Invalid dataset path: %s", dataset_path)
-                if self.callbacks.get('status'):
-                    self.callbacks['status']("Error: Invalid dataset path")
+                if self.callbacks.get("status"):
+                    self.callbacks["status"]("Error: Invalid dataset path")
                 return
 
             # Execute production ML training with comprehensive metrics tracking
@@ -297,48 +297,57 @@ class HeadlessTrainingInterface:
 
                 # Perform real training epoch with actual data processing
                 train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(
-                    epoch, config.get('dataset_path'), model_config, config
+                    epoch, config.get("dataset_path"), model_config, config
                 )
 
                 # Update metrics with model-specific information
-                self.metrics.update({
-                    'epoch': epoch,
-                    'model_type': model_type,
-                    'architecture': model_config['architecture'],
-                    'train_loss': round(train_loss, 4),
-                    'val_loss': round(val_loss, 4),
-                    'train_accuracy': round(train_acc, 4),
-                    'val_accuracy': round(val_acc, 4),
-                    'learning_rate': learning_rate,
-                    'batch_size': batch_size,
-                    'optimizer': model_config['optimizer'],
-                    'loss_function': model_config['loss_function'],
-                    'elapsed_time': round(time.time() - start_time, 2),
-                    'estimated_time_remaining': round(
-                        (time.time() - start_time) / epoch * (self.total_epochs - epoch), 2
-                    ) if epoch > 0 else 0
-                })
+                self.metrics.update(
+                    {
+                        "epoch": epoch,
+                        "model_type": model_type,
+                        "architecture": model_config["architecture"],
+                        "train_loss": round(train_loss, 4),
+                        "val_loss": round(val_loss, 4),
+                        "train_accuracy": round(train_acc, 4),
+                        "val_accuracy": round(val_acc, 4),
+                        "learning_rate": learning_rate,
+                        "batch_size": batch_size,
+                        "optimizer": model_config["optimizer"],
+                        "loss_function": model_config["loss_function"],
+                        "elapsed_time": round(time.time() - start_time, 2),
+                        "estimated_time_remaining": round((time.time() - start_time) / epoch * (self.total_epochs - epoch), 2)
+                        if epoch > 0
+                        else 0,
+                    }
+                )
 
                 # Progress callback
-                if self.callbacks.get('progress'):
+                if self.callbacks.get("progress"):
                     progress = (epoch / self.total_epochs) * 100
-                    self.callbacks['progress'](progress)
+                    self.callbacks["progress"](progress)
 
                 # Status callback
-                if self.callbacks.get('status'):
-                    status = (f"Epoch {epoch}/{self.total_epochs} - "
-                             f"Loss: {train_loss:.4f} - "
-                             f"Acc: {train_acc:.4f} - "
-                             f"Val Loss: {val_loss:.4f} - "
-                             f"Val Acc: {val_acc:.4f}")
-                    self.callbacks['status'](status)
+                if self.callbacks.get("status"):
+                    status = (
+                        f"Epoch {epoch}/{self.total_epochs} - "
+                        f"Loss: {train_loss:.4f} - "
+                        f"Acc: {train_acc:.4f} - "
+                        f"Val Loss: {val_loss:.4f} - "
+                        f"Val Acc: {val_acc:.4f}"
+                    )
+                    self.callbacks["status"](status)
 
                 # Log progress periodically
                 if epoch % 10 == 0 or epoch == self.total_epochs:
-                    logger.info("Epoch %d/%d - Train Loss: %.4f - Train Acc: %.4f - "
-                               "Val Loss: %.4f - Val Acc: %.4f",
-                               epoch, self.total_epochs, train_loss, train_acc,
-                               val_loss, val_acc)
+                    logger.info(
+                        "Epoch %d/%d - Train Loss: %.4f - Train Acc: %.4f - Val Loss: %.4f - Val Acc: %.4f",
+                        epoch,
+                        self.total_epochs,
+                        train_loss,
+                        train_acc,
+                        val_loss,
+                        val_acc,
+                    )
 
                 # Real epoch duration based on actual processing time
                 # (Duration is automatically determined by actual training computation)
@@ -347,8 +356,8 @@ class HeadlessTrainingInterface:
             total_time = time.time() - start_time
             if self.is_training:  # Completed normally
                 logger.info("Training completed in %.2f seconds", total_time)
-                if self.callbacks.get('status'):
-                    self.callbacks['status'](f"Training completed - {total_time:.2f}s")
+                if self.callbacks.get("status"):
+                    self.callbacks["status"](f"Training completed - {total_time:.2f}s")
 
                 # Save trained model to disk
                 model_path = self._save_trained_model(config)
@@ -356,14 +365,15 @@ class HeadlessTrainingInterface:
 
         except Exception as e:
             logger.error("Training worker error: %s", e)
-            if self.callbacks.get('status'):
-                self.callbacks['status'](f"Training error: {str(e)}")
+            if self.callbacks.get("status"):
+                self.callbacks["status"](f"Training error: {str(e)}")
         finally:
             self.is_training = False
             self.is_paused = False
 
-    def _execute_training_epoch(self, epoch: int, dataset_path: str, model_config: Dict[str, Any],
-                               training_config: Dict[str, Any]) -> tuple[float, float, float, float]:
+    def _execute_training_epoch(
+        self, epoch: int, dataset_path: str, model_config: Dict[str, Any], training_config: Dict[str, Any]
+    ) -> tuple[float, float, float, float]:
         """Execute a real training epoch with actual data processing.
 
         Args:
@@ -378,9 +388,9 @@ class HeadlessTrainingInterface:
         """
         try:
             # Get training parameters
-            learning_rate = training_config.get('learning_rate', 0.001)
-            batch_size = training_config.get('batch_size', 32)
-            validation_split = training_config.get('validation_split', 0.2)
+            learning_rate = training_config.get("learning_rate", 0.001)
+            batch_size = training_config.get("batch_size", 32)
+            validation_split = training_config.get("validation_split", 0.2)
 
             # Load and process training data
             train_data, val_data = self._load_training_data(dataset_path, validation_split)
@@ -403,9 +413,7 @@ class HeadlessTrainingInterface:
                 batch_data = train_data[start_idx:end_idx]
 
                 # Forward pass and loss computation
-                batch_loss, batch_correct, batch_total = self._process_training_batch(
-                    batch_data, model_config, learning_rate, epoch
-                )
+                batch_loss, batch_correct, batch_total = self._process_training_batch(batch_data, model_config, learning_rate, epoch)
 
                 train_losses.append(batch_loss)
                 train_correct += batch_correct
@@ -424,9 +432,7 @@ class HeadlessTrainingInterface:
                     batch_data = val_data[start_idx:end_idx]
 
                     # Validation forward pass (no gradient updates)
-                    batch_loss, batch_correct, batch_total = self._process_validation_batch(
-                        batch_data, model_config, epoch
-                    )
+                    batch_loss, batch_correct, batch_total = self._process_validation_batch(batch_data, model_config, epoch)
 
                     val_losses.append(batch_loss)
                     val_correct += batch_correct
@@ -440,7 +446,7 @@ class HeadlessTrainingInterface:
             val_accuracy = val_correct / val_total if val_total > 0 else train_accuracy * 0.95
 
             # Apply learning rate decay and regularization effects
-            decay_factor = (1.0 - learning_rate * 0.1)
+            decay_factor = 1.0 - learning_rate * 0.1
             avg_train_loss *= decay_factor
             avg_val_loss *= decay_factor
 
@@ -449,7 +455,7 @@ class HeadlessTrainingInterface:
         except Exception as e:
             logger.error(f"Training epoch {epoch} failed: {e}")
             # Return reasonable fallback values
-            base_loss = max(0.5, 2.0 * (0.9 ** epoch))
+            base_loss = max(0.5, 2.0 * (0.9**epoch))
             base_acc = min(0.8, 0.4 + 0.3 * epoch / 100)
             return base_loss, base_acc, base_loss * 1.1, base_acc * 0.95
 
@@ -469,22 +475,23 @@ class HeadlessTrainingInterface:
                 return [], []
 
             # Handle different dataset formats
-            if dataset_path.endswith('.json'):
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+            if dataset_path.endswith(".json"):
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-            elif dataset_path.endswith('.csv'):
+            elif dataset_path.endswith(".csv"):
                 # Simple CSV parsing
                 import csv
+
                 data = []
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         data.append(row)
             else:
                 # Try to read as text file with simple format
-                with open(dataset_path, 'r', encoding='utf-8') as f:
+                with open(dataset_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
-                    data = [{'text': line.strip(), 'label': i % 2} for i, line in enumerate(lines)]
+                    data = [{"text": line.strip(), "label": i % 2} for i, line in enumerate(lines)]
 
             # Split into train and validation
             if validation_split > 0 and data:
@@ -519,19 +526,15 @@ class HeadlessTrainingInterface:
                     (i * 0.02) % 1.0,  # Feature 2: linear progression
                     ((i * 17) % 13) * 0.077,  # Feature 3: pseudo-random
                     (i / num_samples),  # Feature 4: normalized position
-                    ((i ** 2) % 50) * 0.02,  # Feature 5: quadratic pattern
-                    (1.0 / (i + 1)) if i < num_samples // 2 else (0.3 / (num_samples - i + 1))  # Feature 6: inverse
+                    ((i**2) % 50) * 0.02,  # Feature 5: quadratic pattern
+                    (1.0 / (i + 1)) if i < num_samples // 2 else (0.3 / (num_samples - i + 1)),  # Feature 6: inverse
                 ]
 
                 # Create label based on feature combinations for consistent learning
                 feature_sum = sum(features[:3])
                 label = 1 if feature_sum > 0.4 else 0
 
-                sample = {
-                    'features': features,
-                    'label': label,
-                    'sample_id': i
-                }
+                sample = {"features": features, "label": label, "sample_id": i}
                 samples.append(sample)
 
             return samples
@@ -539,8 +542,9 @@ class HeadlessTrainingInterface:
         except Exception:
             return []
 
-    def _process_training_batch(self, batch_data: list, model_config: Dict[str, Any],
-                               learning_rate: float, epoch: int) -> tuple[float, int, int]:
+    def _process_training_batch(
+        self, batch_data: list, model_config: Dict[str, Any], learning_rate: float, epoch: int
+    ) -> tuple[float, int, int]:
         """Process a training batch with forward and backward passes.
 
         Args:
@@ -560,8 +564,8 @@ class HeadlessTrainingInterface:
 
             for sample in batch_data:
                 # Extract features and label
-                features = sample.get('features', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-                label = sample.get('label', 0)
+                features = sample.get("features", [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+                label = sample.get("label", 0)
 
                 # Forward pass
                 prediction = self._forward_pass(features, model_config, epoch)
@@ -589,8 +593,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Training batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _process_validation_batch(self, batch_data: list, model_config: Dict[str, Any],
-                                 epoch: int) -> tuple[float, int, int]:
+    def _process_validation_batch(self, batch_data: list, model_config: Dict[str, Any], epoch: int) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
 
         Args:
@@ -609,8 +612,8 @@ class HeadlessTrainingInterface:
 
             for sample in batch_data:
                 # Extract features and label
-                features = sample.get('features', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-                label = sample.get('label', 0)
+                features = sample.get("features", [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+                label = sample.get("label", 0)
 
                 # Forward pass (validation mode)
                 prediction = self._forward_pass(features, model_config, epoch, validation=True)
@@ -636,8 +639,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Validation batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _forward_pass(self, features: list, model_config: Dict[str, Any],
-                     epoch: int, validation: bool = False) -> float:
+    def _forward_pass(self, features: list, model_config: Dict[str, Any], epoch: int, validation: bool = False) -> float:
         """Perform forward pass through the neural network model.
 
         Args:
@@ -664,9 +666,9 @@ class HeadlessTrainingInterface:
             normalized_features = [f / feature_sum for f in features if isinstance(f, (int, float))]
 
             # Get model architecture parameters
-            num_layers = model_config.get('num_layers', 3)
-            layer_size = model_config.get('layer_size', 64)
-            dropout_rate = model_config.get('dropout_rate', 0.1) if not validation else 0.0
+            num_layers = model_config.get("num_layers", 3)
+            layer_size = model_config.get("layer_size", 64)
+            dropout_rate = model_config.get("dropout_rate", 0.1) if not validation else 0.0
 
             # Multi-layer forward pass
             current_activations = normalized_features[:6]  # Use first 6 features
@@ -677,7 +679,7 @@ class HeadlessTrainingInterface:
                 next_activations = []
 
                 # Compute layer activations
-                num_neurons = min(layer_size // (2 ** layer_idx), len(current_activations) * 2)
+                num_neurons = min(layer_size // (2**layer_idx), len(current_activations) * 2)
                 num_neurons = max(1, num_neurons)  # Ensure at least 1 neuron
 
                 for neuron_idx in range(num_neurons):
@@ -727,27 +729,26 @@ class HeadlessTrainingInterface:
             Path where model was saved
 
         """
-        output_dir = config.get('output_directory',
-                               os.path.join(os.path.dirname(__file__), '..', 'models', 'trained'))
+        output_dir = config.get("output_directory", os.path.join(os.path.dirname(__file__), "..", "models", "trained"))
         os.makedirs(output_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        model_name = config.get('model_name', 'intellicrack_model')
-        model_type = config.get('model_type', 'vulnerability_classifier')
+        model_name = config.get("model_name", "intellicrack_model")
+        model_type = config.get("model_type", "vulnerability_classifier")
         # Include model type in filename for better organization
         model_path = os.path.join(output_dir, f"{model_name}_{model_type}_{timestamp}.json")
 
         # Save model metadata and metrics
         model_data = {
-            'model_name': model_name,
-            'model_type': config.get('model_type', 'vulnerability_classifier'),
-            'training_config': config,
-            'final_metrics': self.metrics,
-            'timestamp': timestamp,
-            'training_completed': True
+            "model_name": model_name,
+            "model_type": config.get("model_type", "vulnerability_classifier"),
+            "training_config": config,
+            "final_metrics": self.metrics,
+            "timestamp": timestamp,
+            "training_completed": True,
         }
 
-        with open(model_path, 'w', encoding='utf-8') as f:
+        with open(model_path, "w", encoding="utf-8") as f:
             json.dump(model_data, f, indent=2)
 
         return model_path
@@ -777,11 +778,7 @@ class ConsoleTrainingManager:
             print()
 
             # Start training with console callbacks
-            self.interface.start_training(
-                config,
-                progress_callback=self._progress_callback,
-                status_callback=self._status_callback
-            )
+            self.interface.start_training(config, progress_callback=self._progress_callback, status_callback=self._status_callback)
 
             # Interactive control loop
             print("Training started. Commands: 'pause', 'resume', 'stop', 'status', 'quit'")
@@ -828,27 +825,27 @@ class ConsoleTrainingManager:
             command: User command
 
         """
-        if command == 'pause':
+        if command == "pause":
             self.interface.pause_training()
-        elif command == 'resume':
+        elif command == "resume":
             self.interface.resume_training()
-        elif command == 'stop':
+        elif command == "stop":
             self.interface.stop_training()
             self.running = False
-        elif command == 'status':
+        elif command == "status":
             status = self.interface.get_training_status()
             print("Training Status:")
             print(f"  Active: {status['is_training']}")
             print(f"  Paused: {status['is_paused']}")
             print(f"  Epoch: {status['current_epoch']}/{status['total_epochs']}")
             print(f"  Progress: {status['progress_percent']:.1f}%")
-            if status['metrics']:
+            if status["metrics"]:
                 print(f"  Current Loss: {status['metrics'].get('train_loss', 'N/A')}")
                 print(f"  Current Accuracy: {status['metrics'].get('train_accuracy', 'N/A')}")
-        elif command == 'quit':
+        elif command == "quit":
             self.interface.stop_training()
             self.running = False
-        elif command == 'help':
+        elif command == "help":
             print("Available commands:")
             print("  pause  - Pause training")
             print("  resume - Resume training")

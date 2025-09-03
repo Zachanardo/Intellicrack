@@ -319,9 +319,7 @@ def check_suspicious_pe_sections(pe_obj) -> list:
                 section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
 
                 # Check if section is both writable and executable (security risk)
-                if (section.Characteristics & 0x20000000) and (
-                    section.Characteristics & 0x80000000
-                ):
+                if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
                     suspicious_sections.append(section_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error checking PE sections: %s", e)

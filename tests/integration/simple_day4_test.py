@@ -68,15 +68,15 @@ def _generate_memory_write_instructions(address: str, value: int) -> str:
             addr_int = int(address, 16)
         else:
             addr_int = int(address, 16)
-        
+
         # Generate x86 machine code for memory write
         addr_bytes = struct.pack("<I", addr_int)  # Little-endian 4 bytes
         value_bytes = struct.pack("<I", value & 0xFFFFFFFF)  # Little-endian 4 bytes
-        
+
         # Construct complete instruction bytes
         instruction_bytes = b"\xC7\x05" + addr_bytes + value_bytes
         return instruction_bytes.hex().upper()
-        
+
     except (ValueError, struct.error):
         # Fallback: Generate relative address instruction
         return f"B8{address.replace('0x', '').zfill(8)}C700{value:08X}"
@@ -85,11 +85,11 @@ def test_enhanced_patch_instructions():
     """Test enhanced patch instruction generation."""
     print("DAY 4.1 VALIDATION: Enhanced Patch Instruction Generation")
     print("=" * 60)
-    
+
     # Test enhanced instruction generation
     test_methods = [
         "force_return_true",
-        "force_return_false", 
+        "force_return_false",
         "license_check_bypass",
         "debug_detection_bypass",
         "crc_check_bypass",
@@ -97,27 +97,27 @@ def test_enhanced_patch_instructions():
         "control_flow_redirect",
         "memory_override"
     ]
-    
+
     print("✓ Testing patch instruction generation:")
     for method in test_methods:
         instruction = _generate_patch_instruction(method)
         bytes_code = _generate_patch_bytes_for_method(method)
         print(f"  {method}: {instruction} -> {bytes_code}")
-    
+
     print()
-    
+
     # Test memory write instruction generation
     print("✓ Testing memory write instruction generation:")
     test_addresses = ["0x401000", "401000"]
     test_value = 1
-    
+
     for address in test_addresses:
         try:
             instruction_bytes = _generate_memory_write_instructions(address, test_value)
             print(f"  mov dword ptr [{address}], {test_value}: {instruction_bytes}")
         except Exception as e:
             print(f"  Error with address {address}: {e}")
-    
+
     print()
     print("🎯 VALIDATION RESULTS:")
     print("✅ Template patch instructions replaced with production-ready implementations")
@@ -125,7 +125,7 @@ def test_enhanced_patch_instructions():
     print("✅ Real machine code generation for x86/x64 architectures")
     print("✅ Proper memory write instruction generation with struct packing")
     print("✅ Comprehensive bypass method coverage (license, time, CRC, debug)")
-    
+
     return True
 
 def main():

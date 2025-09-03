@@ -279,9 +279,7 @@ class CacheManager:
             value_size = self._calculate_size(value)
 
             # Check if we need to evict items
-            while (
-                len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory
-            ):
+            while len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory:
                 if not self._evict_least_valuable():
                     return False  # Cannot evict more items
 
@@ -359,9 +357,7 @@ class ThreadPoolOptimizer:
     def submit(self, fn: Callable, *args, **kwargs):
         """Submit task and collect metrics."""
         start_time = time.time()
-        queue_depth = len(self.executor._threads) - len(
-            [t for t in self.executor._threads if not t._tstate_lock.acquire(False)]
-        )
+        queue_depth = len(self.executor._threads) - len([t for t in self.executor._threads if not t._tstate_lock.acquire(False)])
 
         with self.lock:
             self.queue_depths.append(queue_depth)
@@ -397,9 +393,7 @@ class ThreadPoolOptimizer:
         # Where L = average number in system, λ = arrival rate, W = average response time
         # Use queue depth to adjust for system utilization
         utilization_factor = min(avg_queue_depth / 10.0, 1.0)  # Scale based on queue depth
-        optimal_workers = int(
-            arrival_rate * avg_response_time * (1.2 + utilization_factor)
-        )  # Dynamic buffer based on queue depth
+        optimal_workers = int(arrival_rate * avg_response_time * (1.2 + utilization_factor))  # Dynamic buffer based on queue depth
 
         # Apply constraints
         optimal_workers = max(self.min_workers, min(self.max_workers, optimal_workers))
@@ -420,9 +414,7 @@ class ThreadPoolOptimizer:
             return {
                 "current_workers": self.executor._max_workers,
                 "avg_queue_depth": np.mean(list(self.queue_depths)) if self.queue_depths else 0,
-                "avg_response_time": np.mean(list(self.response_times))
-                if self.response_times
-                else 0,
+                "avg_response_time": np.mean(list(self.response_times)) if self.response_times else 0,
                 "min_workers": self.min_workers,
                 "max_workers": self.max_workers,
             }
@@ -596,9 +588,7 @@ class IOOptimizer:
 
         # Analyze access patterns
         recent_patterns = patterns[-10:]
-        avg_chunk_size = np.mean(
-            [p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")]
-        )
+        avg_chunk_size = np.mean([p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")])
 
         if avg_chunk_size > 0:
             # Set read-ahead to 2x average chunk size
@@ -714,9 +704,7 @@ class DatabaseOptimizer:
                 for query in table_queries:
                     # Simple WHERE clause extraction (basic implementation)
                     if "WHERE" in query.upper():
-                        where_part = (
-                            query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
-                        )
+                        where_part = query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
                         # Extract column names (simplified)
                         words = where_part.split()
                         for i, word in enumerate(words):
@@ -727,9 +715,7 @@ class DatabaseOptimizer:
                 for column in where_columns:
                     index_name = f"idx_{table}_{column}"
                     try:
-                        cursor.execute(
-                            f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})"
-                        )
+                        cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
                     except sqlite3.Error:
                         pass  # Index might already exist or column might not exist
 
@@ -749,14 +735,7 @@ class DatabaseOptimizer:
             "avg_execution_time": avg_execution_time,
             "cache_size": len(self.query_cache),
             "connection_pool_size": len(self.connection_pool),
-            "slow_queries": len(
-                [
-                    s
-                    for stats in self.query_stats.values()
-                    for s in stats
-                    if s["execution_time"] > 1.0
-                ]
-            ),
+            "slow_queries": len([s for stats in self.query_stats.values() for s in stats if s["execution_time"] > 1.0]),
         }
 
 
@@ -838,9 +817,7 @@ class PerformanceProfiler:
                 gpu_stats = {}
                 if TORCH_AVAILABLE and torch.cuda.is_available():
                     for device_id in range(torch.cuda.device_count()):
-                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(
-                            device_id
-                        )
+                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(device_id)
 
                 timestamp = time.time()
 

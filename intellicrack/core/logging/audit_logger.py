@@ -381,9 +381,7 @@ class AuditLogger:
             ),
         )
 
-    def log_binary_analysis(
-        self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
-    ):
+    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
         """Log binary analysis results."""
         self.log_event(
             AuditEvent(
@@ -401,9 +399,7 @@ class AuditLogger:
             ),
         )
 
-    def log_vm_operation(
-        self, operation: str, vm_name: str, success: bool = True, error: str | None = None
-    ):
+    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None):
         """Log VM-related operations."""
         event_map = {
             "start": AuditEventType.VM_START,
@@ -428,12 +424,33 @@ class AuditLogger:
             ),
         )
 
-    def log_credential_access(self, credential_type: str, purpose: str, success: bool = True):
-        """Log credential access attempts."""
+    def log_credential_access(self, credential_type: str, purpose: str, success: bool = True, severity: AuditSeverity = None):
+        """Log credential access attempts.
+
+        Args:
+            credential_type: Type of credential being accessed
+            purpose: Purpose for credential access
+            success: Whether access was successful
+            severity: Override default severity level (defaults to context-appropriate level)
+        """
+        # Determine appropriate severity level based on context
+        if severity is None:
+            # Lower severity for routine system initialization operations
+            if any(init_term in purpose.lower() for init_term in ["initialization", "setup", "startup", "generation"]):
+                severity = AuditSeverity.LOW
+            # Medium severity for operational credential access
+            elif any(op_term in purpose.lower() for op_term in ["retrieval", "access", "usage"]):
+                severity = AuditSeverity.LOW  # Changed from MEDIUM to LOW for routine operations
+            # High severity for suspicious or failure cases
+            elif not success or any(warn_term in purpose.lower() for warn_term in ["failed", "unauthorized", "invalid"]):
+                severity = AuditSeverity.HIGH
+            else:
+                severity = AuditSeverity.MEDIUM
+
         self.log_event(
             AuditEvent(
                 event_type=AuditEventType.CREDENTIAL_ACCESS,
-                severity=AuditSeverity.MEDIUM,
+                severity=severity,
                 description=f"Credential access: {credential_type} for {purpose}",
                 details={
                     "credential_type": credential_type,
@@ -604,9 +621,7 @@ class AuditLogger:
 
         return results
 
-    def generate_report(
-        self, start_time: datetime, end_time: datetime, output_file: Path | None = None
-    ) -> str:
+    def generate_report(self, start_time: datetime, end_time: datetime, output_file: Path | None = None) -> str:
         """Generate an audit report for a time period."""
         events = self.search_events(start_time=start_time, end_time=end_time)
 
@@ -764,9 +779,7 @@ class PerformanceMonitor:
                         "p50": sorted_values[int(0.5 * length)],
                         "p90": sorted_values[int(0.9 * length)],
                         "p95": sorted_values[int(0.95 * length)],
-                        "p99": sorted_values[int(0.99 * length)]
-                        if length > 10
-                        else sorted_values[-1],
+                        "p99": sorted_values[int(0.99 * length)] if length > 10 else sorted_values[-1],
                     }
 
             summary["percentiles"] = percentiles
@@ -959,8 +972,7 @@ class TelemetryCollector:
             resource_health = resource_mgmt.get("health", {})
             if resource_health.get("status") != "healthy":
                 logger.warning(
-                    f"Resource manager health: {resource_health.get('status')} - "
-                    f"Issues: {resource_health.get('issues', [])}",
+                    f"Resource manager health: {resource_health.get('status')} - Issues: {resource_health.get('issues', [])}",
                 )
 
         except Exception as e:
@@ -1139,9 +1151,7 @@ def log_exploit_attempt(target: str, exploit_type: str, **kwargs):
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
-def log_binary_analysis(
-    file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
-):
+def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
     """Convenience function to log binary analysis."""
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 

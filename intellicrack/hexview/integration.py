@@ -83,9 +83,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(
-    app_instance, file_path: str | None = None, read_only: bool = True
-) -> QDialog:
+def show_enhanced_hex_viewer(app_instance, file_path: str | None = None, read_only: bool = True) -> QDialog:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -249,9 +247,7 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None):
 
     # Add view action (read-only)
     enhanced_hex_action = QAction("Hex Viewer (View)", app_instance)
-    enhanced_hex_action.triggered.connect(
-        lambda: show_enhanced_hex_viewer(app_instance, None, True)
-    )
+    enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, True))
     enhanced_hex_action.setStatusTip("Open binary in read-only hex viewer")
     menu.addAction(enhanced_hex_action)
 

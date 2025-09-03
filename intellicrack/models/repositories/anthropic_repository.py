@@ -227,7 +227,5 @@ class AnthropicRepository(APIRepositoryBase):
             Always returns (False, "Anthropic doesn't support model downloads")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "Anthropic doesn't support model downloads"

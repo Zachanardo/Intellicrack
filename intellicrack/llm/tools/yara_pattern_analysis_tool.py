@@ -164,13 +164,9 @@ class YARAPatternAnalysisTool:
                 "scan_time": analysis_result.scan_time,
                 "total_matches": len(analysis_result.matches),
                 "total_rules": analysis_result.total_rules,
-                "pattern_matches": self._format_pattern_matches(
-                    analysis_result.matches, include_strings
-                ),
+                "pattern_matches": self._format_pattern_matches(analysis_result.matches, include_strings),
                 "security_assessment": self._assess_security_findings(analysis_result.matches),
-                "bypass_recommendations": self._generate_bypass_recommendations(
-                    analysis_result.matches
-                ),
+                "bypass_recommendations": self._generate_bypass_recommendations(analysis_result.matches),
                 "from_cache": False,
             }
 
@@ -197,18 +193,14 @@ class YARAPatternAnalysisTool:
             logger.error(f"YARA pattern analysis error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _format_pattern_matches(
-        self, matches: List[Any], include_strings: bool
-    ) -> List[Dict[str, Any]]:
+    def _format_pattern_matches(self, matches: List[Any], include_strings: bool) -> List[Dict[str, Any]]:
         """Format pattern matches for LLM consumption"""
         formatted_matches = []
 
         for match in matches:
             match_data = {
                 "rule_name": match.rule_name,
-                "category": match.category.value
-                if hasattr(match.category, "value")
-                else str(match.category),
+                "category": match.category.value if hasattr(match.category, "value") else str(match.category),
                 "confidence": match.confidence,
                 "description": match.description,
                 "severity": match.severity,
@@ -220,9 +212,7 @@ class YARAPatternAnalysisTool:
                 match_data["matched_strings"] = [
                     {
                         "identifier": s.identifier,
-                        "value": s.value[:100]
-                        if len(s.value) > 100
-                        else s.value,  # Limit string length
+                        "value": s.value[:100] if len(s.value) > 100 else s.value,  # Limit string length
                         "offset": s.offset,
                         "length": s.length,
                     }
@@ -276,9 +266,7 @@ class YARAPatternAnalysisTool:
                 total_score += 1.0
 
             # Categorize findings
-            category = (
-                match.category.value if hasattr(match.category, "value") else str(match.category)
-            )
+            category = match.category.value if hasattr(match.category, "value") else str(match.category)
             if category in protection_categories:
                 protection_categories[category] += 1
 
@@ -313,9 +301,7 @@ class YARAPatternAnalysisTool:
         # Generate findings summary
         for category, count in protection_categories.items():
             if count > 0:
-                assessment["findings_summary"].append(
-                    f"{count} {category.lower()} patterns detected"
-                )
+                assessment["findings_summary"].append(f"{count} {category.lower()} patterns detected")
 
         return assessment
 
@@ -325,9 +311,7 @@ class YARAPatternAnalysisTool:
         processed_categories = set()
 
         for match in matches:
-            category = (
-                match.category.value if hasattr(match.category, "value") else str(match.category)
-            )
+            category = match.category.value if hasattr(match.category, "value") else str(match.category)
 
             # Avoid duplicate recommendations for same category
             if category in processed_categories:
@@ -401,9 +385,7 @@ class YARAPatternAnalysisTool:
         categories = {}
 
         for match in matches:
-            category = (
-                match.category.value if hasattr(match.category, "value") else str(match.category)
-            )
+            category = match.category.value if hasattr(match.category, "value") else str(match.category)
             if category not in categories:
                 categories[category] = []
             categories[category].append(match.rule_name)
@@ -433,9 +415,7 @@ class YARAPatternAnalysisTool:
         for match in matches:
             if match.confidence >= 0.7:  # Only high-confidence threats
                 indicator = {
-                    "type": match.category.value
-                    if hasattr(match.category, "value")
-                    else str(match.category),
+                    "type": match.category.value if hasattr(match.category, "value") else str(match.category),
                     "name": match.rule_name,
                     "severity": match.severity,
                     "confidence": match.confidence,
@@ -468,9 +448,7 @@ class YARAPatternAnalysisTool:
         }
 
         for match in matches:
-            category = (
-                match.category.value if hasattr(match.category, "value") else str(match.category)
-            )
+            category = match.category.value if hasattr(match.category, "value") else str(match.category)
 
             if category == "PACKER" and not layers["packing_layer"]:
                 layers["packing_layer"] = True

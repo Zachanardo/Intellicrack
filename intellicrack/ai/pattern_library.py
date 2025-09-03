@@ -520,10 +520,7 @@ for crypto_func in crypto_functions:
         for pattern in self.patterns.values():
             match_score = 0
             for indicator in indicators:
-                if any(
-                    pattern_indicator.lower() in indicator.lower()
-                    for pattern_indicator in pattern.indicators
-                ):
+                if any(pattern_indicator.lower() in indicator.lower() for pattern_indicator in pattern.indicators):
                     match_score += 1
 
             if match_score > 0:
@@ -641,9 +638,7 @@ for crypto_func in crypto_functions:
             current_rate = self.patterns[pattern_name].success_rate
             self.patterns[pattern_name].success_rate = 0.7 * current_rate + 0.3 * new_rate
 
-            logger.info(
-                f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}"
-            )
+            logger.info(f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}")
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get statistics about pattern usage and success rates."""
@@ -671,12 +666,8 @@ for crypto_func in crypto_functions:
                 stats["average_success_rate"] = sum(success_rates) / len(success_rates)
 
                 # Find most and least successful
-                best_pattern = max(
-                    stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"]
-                )
-                worst_pattern = min(
-                    stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"]
-                )
+                best_pattern = max(stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"])
+                worst_pattern = min(stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"])
 
                 stats["most_successful"] = best_pattern[0]
                 stats["least_successful"] = worst_pattern[0]

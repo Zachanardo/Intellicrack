@@ -179,13 +179,9 @@ class HexViewerWidget(QAbstractScrollArea):
         self.header_text_color = QColor(self.config.get("hex_viewer.ui.text_color", "#D4D4D4"))
         self.address_bg_color = QColor(self.config.get("hex_viewer.ui.bg_color", "#1E1E1E"))
         self.address_text_color = QColor(self.config.get("hex_viewer.ui.address_color", "#608B4E"))
-        self.selection_color = QColor(
-            self.config.get("hex_viewer.ui.selection_bg_color", "#264F78")
-        )
+        self.selection_color = QColor(self.config.get("hex_viewer.ui.selection_bg_color", "#264F78"))
         self.selection_color.setAlpha(160)  # Maintain transparency
-        self.highlight_selection_color = QColor(
-            self.config.get("hex_viewer.ui.highlight_color", "#FFD700")
-        )
+        self.highlight_selection_color = QColor(self.config.get("hex_viewer.ui.highlight_color", "#FFD700"))
         self.highlight_selection_color.setAlpha(160)  # Maintain transparency
         self.modified_color = QColor(self.config.get("hex_viewer.ui.modified_color", "#D16969"))
 
@@ -433,9 +429,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Set horizontal scrollbar range based on view mode
         if self.view_mode == ViewMode.HEX:
             # Calculate width based on bytes per row
-            hex_width = (
-                self.address_width + self.gutter_width + self.bytes_per_row * 3 * self.char_width
-            )
+            hex_width = self.address_width + self.gutter_width + self.bytes_per_row * 3 * self.char_width
             ascii_width = self.bytes_per_row * self.char_width
             total_width = hex_width + self.gutter_width * 2 + ascii_width
 
@@ -447,9 +441,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 self.horizontalScrollBar().setRange(0, 0)
         elif self.view_mode == ViewMode.BINARY:
             # Binary view needs more horizontal space
-            binary_width = (
-                self.address_width + self.gutter_width + self.bytes_per_row * 9 * self.char_width
-            )
+            binary_width = self.address_width + self.gutter_width + self.bytes_per_row * 9 * self.char_width
 
             viewport_width = self.viewport().width()
             if binary_width > viewport_width:
@@ -537,9 +529,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Calculate rows and offsets safely
         try:
-            end_row = min(
-                start_row + visible_rows, (file_size + self.bytes_per_row - 1) // self.bytes_per_row
-            )
+            end_row = min(start_row + visible_rows, (file_size + self.bytes_per_row - 1) // self.bytes_per_row)
             end_offset = min(end_row * self.bytes_per_row, file_size)
             size = end_offset - start_offset
 
@@ -624,11 +614,9 @@ class HexViewerWidget(QAbstractScrollArea):
                 # If folded, draw placeholder and skip to next visible row
                 if is_folded and folded_region:
                     # Draw folded region indicator only for the first row of the fold
-                    if row_offset == folded_region.start or (row > start_row and
-                        row_offset - self.bytes_per_row < folded_region.start):
+                    if row_offset == folded_region.start or (row > start_row and row_offset - self.bytes_per_row < folded_region.start):
                         painter.setPen(self.text_color)
-                        painter.fillRect(0, y, self.viewport().width(), self.char_height,
-                                       QColor(100, 100, 100, 50))
+                        painter.fillRect(0, y, self.viewport().width(), self.char_height, QColor(100, 100, 100, 50))
                         fold_text = f"[Folded: {folded_region.size} bytes"
                         if folded_region.name:
                             fold_text += f" - {folded_region.name}"
@@ -643,9 +631,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 try:
                     start_idx = row_offset - start_offset
                     if start_idx < 0 or start_idx >= len(data):
-                        logger.warning(
-                            f"Invalid row data index: {start_idx}, data length: {len(data)}"
-                        )
+                        logger.warning(f"Invalid row data index: {start_idx}, data length: {len(data)}")
                         continue
 
                     row_data = data[start_idx : start_idx + row_size]
@@ -710,9 +696,7 @@ class HexViewerWidget(QAbstractScrollArea):
             x = self.hex_offset_x
             for i in range(self.bytes_per_row):
                 header_text = f"{i:X}"
-                header_rect = QRect(
-                    x + i * 3 * self.char_width, 0, 2 * self.char_width, self.header_height
-                )
+                header_rect = QRect(x + i * 3 * self.char_width, 0, 2 * self.char_width, self.header_height)
 
                 # Draw white background for each header cell
                 painter.fillRect(header_rect, QColor(255, 255, 255))
@@ -727,9 +711,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 painter.drawRect(header_rect)
 
             # Draw ASCII column header
-            ascii_header_rect = QRect(
-                self.ascii_offset_x, 0, self.bytes_per_row * self.char_width, self.header_height
-            )
+            ascii_header_rect = QRect(self.ascii_offset_x, 0, self.bytes_per_row * self.char_width, self.header_height)
 
             # Draw white background
             painter.fillRect(ascii_header_rect, QColor(255, 255, 255))
@@ -748,9 +730,7 @@ class HexViewerWidget(QAbstractScrollArea):
             x = self.hex_offset_x
             for i in range(self.bytes_per_row):
                 header_text = f"{i}"
-                header_rect = QRect(
-                    x + i * 4 * self.char_width, 0, 3 * self.char_width, self.header_height
-                )
+                header_rect = QRect(x + i * 4 * self.char_width, 0, 3 * self.char_width, self.header_height)
                 painter.drawText(header_rect, Qt.AlignCenter, header_text)
 
         elif self.view_mode == ViewMode.BINARY:
@@ -758,15 +738,11 @@ class HexViewerWidget(QAbstractScrollArea):
             x = self.hex_offset_x
             for i in range(min(self.bytes_per_row, 8)):  # Limit to 8 bytes per row for binary view
                 header_text = f"{i}"
-                header_rect = QRect(
-                    x + i * 9 * self.char_width, 0, 8 * self.char_width, self.header_height
-                )
+                header_rect = QRect(x + i * 9 * self.char_width, 0, 8 * self.char_width, self.header_height)
                 painter.drawText(header_rect, Qt.AlignCenter, header_text)
 
         # Draw bottom border
-        painter.drawLine(
-            0, self.header_height - 1, self.viewport().width() + h_scroll, self.header_height - 1
-        )
+        painter.drawLine(0, self.header_height - 1, self.viewport().width() + h_scroll, self.header_height - 1)
 
     def draw_hex_row(self, painter: QPainter, data: bytes, offset: int, y: int):
         """Draw a row in hex view mode."""
@@ -792,9 +768,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             # Draw the address text with clear margins
             addr_text_rect = addr_rect.adjusted(5, 0, -5, 0)
-            painter.drawText(
-                addr_text_rect, Qt.AlignRight | Qt.AlignVCenter | Qt.TextDontClip, f"{offset:08X}"
-            )
+            painter.drawText(addr_text_rect, Qt.AlignRight | Qt.AlignVCenter | Qt.TextDontClip, f"{offset:08X}")
 
             # Draw separator with better visibility
             painter.setPen(QPen(Qt.GlobalColor.darkGray, 1, Qt.SolidLine))
@@ -937,11 +911,7 @@ class HexViewerWidget(QAbstractScrollArea):
     ):
         """Draw highlights for a specific byte."""
         # Check if the byte is selected
-        is_selected = (
-            self.selection_start >= 0
-            and self.selection_end >= 0
-            and self.selection_start <= byte_offset < self.selection_end
-        )
+        is_selected = self.selection_start >= 0 and self.selection_end >= 0 and self.selection_start <= byte_offset < self.selection_end
 
         if is_selected:
             # Draw selection highlight
@@ -1211,11 +1181,7 @@ class HexViewerWidget(QAbstractScrollArea):
             Selected data as bytes, or None if no selection
 
         """
-        if (
-            not self.file_handler
-            or self.selection_start < 0
-            or self.selection_end <= self.selection_start
-        ):
+        if not self.file_handler or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return None
 
         size = self.selection_end - self.selection_start
@@ -1406,12 +1372,7 @@ class HexViewerWidget(QAbstractScrollArea):
             data: New data to write
 
         """
-        if (
-            not self.file_handler
-            or self.file_handler.read_only
-            or self.selection_start < 0
-            or self.selection_end <= self.selection_start
-        ):
+        if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return False
 
         # Ensure the new data is the same size as the selection
@@ -1473,9 +1434,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = view_mode_menu.addAction(mode.name.capitalize())
             action.setCheckable(True)
             action.setChecked(mode == self.view_mode)
-            action.triggered.connect(
-                lambda checked, m=mode: self.set_view_mode(m) if checked else None
-            )
+            action.triggered.connect(lambda checked, m=mode: self.set_view_mode(m) if checked else None)
 
         # Bytes per row submenu
         bytes_row_menu = menu.addMenu("Bytes per Row")
@@ -1483,9 +1442,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = bytes_row_menu.addAction(str(bpr))
             action.setCheckable(True)
             action.setChecked(bpr == self.bytes_per_row)
-            action.triggered.connect(
-                lambda checked, b=bpr: self.set_bytes_per_row(b) if checked else None
-            )
+            action.triggered.connect(lambda checked, b=bpr: self.set_bytes_per_row(b) if checked else None)
 
         # Grouping submenu
         group_menu = menu.addMenu("Byte Grouping")
@@ -1493,9 +1450,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = group_menu.addAction(str(gs))
             action.setCheckable(True)
             action.setChecked(gs == self.group_size)
-            action.triggered.connect(
-                lambda checked, g=gs: self.set_group_size(g) if checked else None
-            )
+            action.triggered.connect(lambda checked, g=gs: self.set_group_size(g) if checked else None)
 
         menu.addSeparator()
 
@@ -1622,22 +1577,18 @@ class HexViewerWidget(QAbstractScrollArea):
     def show_search_dialog(self):
         """Show advanced search dialog for searching patterns."""
         if not self.file_handler or not self.search_engine:
-            QMessageBox.warning(
-                self,
-                "Search Unavailable",
-                "Please load a file before searching."
-            )
+            QMessageBox.warning(self, "Search Unavailable", "Please load a file before searching.")
             return
 
         # Create and show the advanced search dialog
         dialog = AdvancedSearchDialog(self, self.search_engine)
 
         # Connect search result signals to handle navigation
-        if hasattr(dialog, 'search_result_selected'):
+        if hasattr(dialog, "search_result_selected"):
             dialog.search_result_selected.connect(self.goto_offset)
 
         # Set the current offset as the starting point for searches
-        if hasattr(self.search_engine, 'set_current_offset'):
+        if hasattr(self.search_engine, "set_current_offset"):
             self.search_engine.set_current_offset(self.current_offset)
 
         # Show the dialog (non-modal so users can interact with both)
@@ -1747,9 +1698,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Format as C array
         hex_values = [f"0x{b:02X}" for b in data]
         array_str = "unsigned char data[] = {\n    "
-        array_str += ",\n    ".join(
-            ", ".join(hex_values[i : i + 8]) for i in range(0, len(hex_values), 8)
-        )
+        array_str += ",\n    ".join(", ".join(hex_values[i : i + 8]) for i in range(0, len(hex_values), 8))
         array_str += "\n};"
 
         # Add length define
@@ -1775,9 +1724,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 hex_values.append(f"0x{b:02X}")
 
         array_str = "byte[] data = {\n    "
-        array_str += ",\n    ".join(
-            ", ".join(hex_values[i : i + 8]) for i in range(0, len(hex_values), 8)
-        )
+        array_str += ",\n    ".join(", ".join(hex_values[i : i + 8]) for i in range(0, len(hex_values), 8))
         array_str += "\n};"
 
         # Copy to clipboard
@@ -1797,7 +1744,7 @@ class HexViewerWidget(QAbstractScrollArea):
         if len(hex_str) > 60:
             lines = []
             for i in range(0, len(hex_str), 60):
-                lines.append(hex_str[i:i+60])
+                lines.append(hex_str[i : i + 60])
             python_str = 'data = b"' + '"\\\n       b"'.join(lines) + '"'
         else:
             python_str = f'data = b"{hex_str}"'
@@ -1815,7 +1762,7 @@ class HexViewerWidget(QAbstractScrollArea):
             return
 
         # Encode as Base64
-        b64_str = base64.b64encode(data).decode('ascii')
+        b64_str = base64.b64encode(data).decode("ascii")
 
         # Copy to clipboard
         clipboard = QApplication.clipboard()
@@ -1833,19 +1780,19 @@ class HexViewerWidget(QAbstractScrollArea):
         mime_type = "application/octet-stream"  # Default
 
         if len(data) >= 4:
-            if data[:4] == b'\x89PNG':
+            if data[:4] == b"\x89PNG":
                 mime_type = "image/png"
-            elif data[:3] == b'\xff\xd8\xff':
+            elif data[:3] == b"\xff\xd8\xff":
                 mime_type = "image/jpeg"
-            elif data[:6] in (b'GIF87a', b'GIF89a'):
+            elif data[:6] in (b"GIF87a", b"GIF89a"):
                 mime_type = "image/gif"
-            elif data[:4] == b'%PDF':
+            elif data[:4] == b"%PDF":
                 mime_type = "application/pdf"
-            elif data[:2] == b'MZ':
+            elif data[:2] == b"MZ":
                 mime_type = "application/x-msdownload"
 
         # Create data URI
-        b64_str = base64.b64encode(data).decode('ascii')
+        b64_str = base64.b64encode(data).decode("ascii")
         data_uri = f"data:{mime_type};base64,{b64_str}"
 
         # Copy to clipboard
@@ -1929,7 +1876,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Format the data
             result = []
             for i in range(0, len(data), bytes_per_line):
-                line_data = data[i:i+bytes_per_line]
+                line_data = data[i : i + bytes_per_line]
                 if uppercase:
                     hex_values = [f"{prefix}{b:02X}" for b in line_data]
                 else:
@@ -1958,12 +1905,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def fill_selection(self):
         """Fill the selected range with a repeated value."""
-        if (
-            not self.file_handler
-            or self.file_handler.read_only
-            or self.selection_start < 0
-            or self.selection_end <= self.selection_start
-        ):
+        if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
         # Get fill value
@@ -2001,12 +1943,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def edit_selection_dialog(self):
         """Show dialog for editing the selected data."""
-        if (
-            not self.file_handler
-            or self.file_handler.read_only
-            or self.selection_start < 0
-            or self.selection_end <= self.selection_start
-        ):
+        if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
         # Get the selected data
@@ -2054,8 +1991,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 QMessageBox.warning(
                     self,
                     "Invalid Edit",
-                    f"Edited data size ({len(edited_data)}) does not match "
-                    f"selection size ({len(data)}).",
+                    f"Edited data size ({len(edited_data)}) does not match selection size ({len(data)}).",
                 )
                 return
 

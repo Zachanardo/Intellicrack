@@ -1,0 +1,187 @@
+{
+  "phase": "2.5.2.4",
+  "requirement": "Success rate must be \u2265 90% across versions or documented why not",
+  "software": "TestSoft",
+  "protection": "FlexLM",
+  "verification_timestamp": "2025-09-02T19:07:49.550011",
+  "compliance_status": "BELOW_THRESHOLD",
+  "success_rate_analysis": {
+    "overall_success_rate": "88.5%",
+    "meets_90_percent_threshold": false,
+    "versions_tested": 4,
+    "total_test_attempts": 78,
+    "statistical_confidence": "High"
+  },
+  "detailed_findings": {
+    "phase_2_5_2_4_compliance": {
+      "required_threshold": "90%",
+      "actual_success_rate": "88.5%",
+      "threshold_met": false,
+      "total_test_runs": 78,
+      "versions_tested": 4
+    },
+    "statistical_analysis": {
+      "mean": 0.8733333333333333,
+      "median": 0.8666666666666667,
+      "stdev": 0.0711805216802087,
+      "min": 0.8,
+      "max": 0.96
+    },
+    "failure_breakdown": {
+      "Anti-Debugging": [
+        {
+          "version": "v11.16.2",
+          "reason": "Anti-debugging detection in 1 run"
+        }
+      ],
+      "Memory Protection": [
+        {
+          "version": "v11.16.1",
+          "reason": "Memory protection bypass failed in 2 runs"
+        }
+      ],
+      "Cryptographic Analysis": [
+        {
+          "version": "v11.15.0",
+          "reason": "Crypto analysis failed in 3 runs - older encryption method"
+        }
+      ],
+      "API/Legacy Issues": [
+        {
+          "version": "v11.14.5",
+          "reason": "Legacy API differences caused 3 failures"
+        }
+      ]
+    },
+    "version_specific_performance": [
+      {
+        "version": "v11.16.2",
+        "success_rate": 0.96,
+        "failure_count": 1,
+        "primary_failure_reasons": [
+          "Anti-debugging detection in 1 run"
+        ]
+      },
+      {
+        "version": "v11.16.1",
+        "success_rate": 0.9,
+        "failure_count": 2,
+        "primary_failure_reasons": [
+          "Memory protection bypass failed in 2 runs"
+        ]
+      },
+      {
+        "version": "v11.15.0",
+        "success_rate": 0.8,
+        "failure_count": 3,
+        "primary_failure_reasons": [
+          "Crypto analysis failed in 3 runs - older encryption method"
+        ]
+      },
+      {
+        "version": "v11.14.5",
+        "success_rate": 0.8333333333333334,
+        "failure_count": 3,
+        "primary_failure_reasons": [
+          "Legacy API differences caused 3 failures"
+        ]
+      }
+    ]
+  },
+  "failure_analysis": {
+    "overall_success_rate": 0.8846153846153846,
+    "success_rate_statistics": {
+      "mean": 0.8733333333333333,
+      "median": 0.8666666666666667,
+      "stdev": 0.0711805216802087,
+      "min": 0.8,
+      "max": 0.96
+    },
+    "failure_categories": {
+      "Anti-Debugging": [
+        {
+          "version": "v11.16.2",
+          "reason": "Anti-debugging detection in 1 run"
+        }
+      ],
+      "Memory Protection": [
+        {
+          "version": "v11.16.1",
+          "reason": "Memory protection bypass failed in 2 runs"
+        }
+      ],
+      "Cryptographic Analysis": [
+        {
+          "version": "v11.15.0",
+          "reason": "Crypto analysis failed in 3 runs - older encryption method"
+        }
+      ],
+      "API/Legacy Issues": [
+        {
+          "version": "v11.14.5",
+          "reason": "Legacy API differences caused 3 failures"
+        }
+      ]
+    },
+    "version_performance": [
+      {
+        "version": "v11.16.2",
+        "success_rate": 0.96,
+        "failure_count": 1,
+        "primary_failure_reasons": [
+          "Anti-debugging detection in 1 run"
+        ]
+      },
+      {
+        "version": "v11.16.1",
+        "success_rate": 0.9,
+        "failure_count": 2,
+        "primary_failure_reasons": [
+          "Memory protection bypass failed in 2 runs"
+        ]
+      },
+      {
+        "version": "v11.15.0",
+        "success_rate": 0.8,
+        "failure_count": 3,
+        "primary_failure_reasons": [
+          "Crypto analysis failed in 3 runs - older encryption method"
+        ]
+      },
+      {
+        "version": "v11.14.5",
+        "success_rate": 0.8333333333333334,
+        "failure_count": 3,
+        "primary_failure_reasons": [
+          "Legacy API differences caused 3 failures"
+        ]
+      }
+    ],
+    "problematic_versions": [
+      "v11.15.0",
+      "v11.14.5"
+    ]
+  },
+  "recommendations": [
+    "CRITICAL: Overall success rate 88.5% is below 90% threshold",
+    "Improve anti-debugging bypass techniques",
+    "Enhance cryptographic analysis capabilities",
+    "Strengthen memory protection bypass methods",
+    "Version v11.15.0: 80.0% success rate needs improvement",
+    "Version v11.14.5: 83.3% success rate needs improvement"
+  ],
+  "improvement_plan": [
+    "Immediate action required: Success rate below 90% threshold",
+    "Conduct root cause analysis of failure patterns",
+    "Implement targeted fixes for identified issues",
+    "Increase test coverage for problematic versions",
+    "Re-test after improvements to verify compliance"
+  ],
+  "compliance_documentation": {
+    "threshold_requirement": "\u2265 90%",
+    "actual_achievement": "88.5%",
+    "documentation_complete": true,
+    "failure_reasons_documented": true,
+    "improvement_plan_provided": true
+  }
+}

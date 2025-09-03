@@ -302,14 +302,10 @@ class OpenAIAdapter(AIModelAdapter):
                 return self.interface.suggest_patches(parameters["binary_path"])
 
             elif tool_name == "apply_patch":
-                return self.interface.apply_patch(
-                    parameters["binary_path"], parameters["patch_file"]
-                )
+                return self.interface.apply_patch(parameters["binary_path"], parameters["patch_file"])
 
             elif tool_name == "execute_cli_command":
-                return self.interface.execute_command(
-                    parameters["args"], parameters["description"], parameters.get("reasoning", "")
-                )
+                return self.interface.execute_command(parameters["args"], parameters["description"], parameters.get("reasoning", ""))
 
             elif tool_name == "generate_frida_script":
                 return self.interface.generate_frida_script(

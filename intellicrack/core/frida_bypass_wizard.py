@@ -826,9 +826,7 @@ class FridaBypassWizard:
                 if success:
                     success_count += 1
                     self.metrics["scripts_loaded"] += 1
-                    logger.info(
-                        f"Successfully loaded {script_name} for {strategy.protection_type.value}"
-                    )
+                    logger.info(f"Successfully loaded {script_name} for {strategy.protection_type.value}")
                 else:
                     logger.warning(f"Failed to load {script_name}")
 
@@ -1198,14 +1196,10 @@ class FridaBypassWizard:
                             verify_success = await self._verify_bypass(prot_type)
 
                             if verify_success:
-                                logger.info(
-                                    f"Alternative strategy successful for {prot_type.value}"
-                                )
+                                logger.info(f"Alternative strategy successful for {prot_type.value}")
                                 self.metrics["retry_successes"] += 1
                             else:
-                                logger.warning(
-                                    f"Alternative strategy failed verification for {prot_type.value}"
-                                )
+                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
                                 self.metrics["retry_failures"] += 1
                         else:
                             self.metrics["retry_failures"] += 1

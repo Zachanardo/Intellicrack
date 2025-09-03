@@ -115,9 +115,7 @@ class ResponseLineParser:
         return categories
 
     @staticmethod
-    def extract_structured_content(
-        response: str, patterns: list[str], section_separators: list[str] | None = None
-    ) -> list[dict[str, str]]:
+    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str]]:
         """Extract structured content using regex patterns.
 
         Args:
@@ -181,9 +179,7 @@ class ResponseLineParser:
         return None
 
     @staticmethod
-    def clean_and_filter_lines(
-        lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None
-    ) -> list[str]:
+    def clean_and_filter_lines(lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None) -> list[str]:
         """Clean and filter lines based on criteria.
 
         Args:

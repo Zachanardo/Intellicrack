@@ -29,7 +29,7 @@ class TestUtilsImport:
     def test_utils_basic_functionality(self):
         """Test basic utils functions are available."""
         import intellicrack.utils
-        
+
         # Test basic functionality
         assert hasattr(intellicrack.utils, 'logger') or hasattr(intellicrack.utils, 'get_logger')
         # At least one logging method should be available

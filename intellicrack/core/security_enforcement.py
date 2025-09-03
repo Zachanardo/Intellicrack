@@ -194,9 +194,7 @@ def _secure_subprocess_check_output(*args, **kwargs):
     shell = kwargs.get("shell", False)
     if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
         logger.warning(f"Blocked subprocess.check_output with shell=True: {args}")
-        raise SecurityError(
-            "subprocess.check_output with shell=True is disabled by security policy"
-        )
+        raise SecurityError("subprocess.check_output with shell=True is disabled by security policy")
 
     logger.debug(f"subprocess.check_output: {args}")
     return _security._original_functions["subprocess.check_output"](*args, **kwargs)
@@ -206,9 +204,7 @@ def _secure_subprocess_check_output(*args, **kwargs):
 def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_callback=None):
     """Secure wrapper for pickle.dump."""
     if _security._bypass_security:
-        return _security._original_functions["pickle.dump"](
-            obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-        )
+        return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dump attempted with restrict_pickle=True, consider using JSON")
@@ -225,17 +221,13 @@ def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_ca
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
 
     logger.debug(f"pickle.dump: object type={type(obj).__name__}")
-    return _security._original_functions["pickle.dump"](
-        obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-    )
+    return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 
 def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None):
     """Secure wrapper for pickle.dumps."""
     if _security._bypass_security:
-        return _security._original_functions["pickle.dumps"](
-            obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-        )
+        return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dumps attempted with restrict_pickle=True, consider using JSON")
@@ -249,9 +241,7 @@ def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callbac
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
 
     logger.debug(f"pickle.dumps: object type={type(obj).__name__}")
-    return _security._original_functions["pickle.dumps"](
-        obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-    )
+    return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 
 def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None):
@@ -276,14 +266,10 @@ def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="str
                 file.seek(0)
 
     logger.warning("Loading pickle data - ensure source is trusted!")
-    return _security._original_functions["pickle.load"](
-        file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
-    )
+    return _security._original_functions["pickle.load"](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 
-def _secure_pickle_loads(
-    data, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None
-):
+def _secure_pickle_loads(data, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None):
     """Secure wrapper for pickle.loads."""
     if _security._bypass_security:
         return _security._original_functions["pickle.loads"](
@@ -304,9 +290,7 @@ def _secure_pickle_loads(
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
 
     logger.warning("Loading pickle data - ensure source is trusted!")
-    return _security._original_functions["pickle.loads"](
-        data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
-    )
+    return _security._original_functions["pickle.loads"](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 
 # Hashlib Security
@@ -315,15 +299,11 @@ class SecureHash:
 
     def __init__(self, name, data=b""):
         self.name = name
-        allow_md5 = _security.security_config.get("hashing", {}).get(
-            "allow_md5_for_security", False
-        )
+        allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
 
         if name.lower() in ["md5"] and not allow_md5 and not _security._bypass_security:
             logger.warning("MD5 hash requested but not allowed for security purposes")
-            default_algo = _security.security_config.get("hashing", {}).get(
-                "default_algorithm", "sha256"
-            )
+            default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
             logger.info(f"Using {default_algo} instead of MD5")
             name = default_algo
 
@@ -370,9 +350,7 @@ def _secure_hashlib_new(name, data=b"", **kwargs):
 
     if name.lower() in ["md5"] and not allow_md5:
         logger.warning(f"hashlib.new('{name}') requested but not allowed for security")
-        default_algo = _security.security_config.get("hashing", {}).get(
-            "default_algorithm", "sha256"
-        )
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         name = default_algo
 
@@ -389,9 +367,7 @@ def _secure_hashlib_md5(data=b"", **kwargs):
 
     if not allow_md5:
         logger.warning("hashlib.md5() requested but not allowed for security")
-        default_algo = _security.security_config.get("hashing", {}).get(
-            "default_algorithm", "sha256"
-        )
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         return getattr(hashlib, default_algo)(data, **kwargs)
 
@@ -475,20 +451,14 @@ def _monkey_patch_subprocess():
                 return
 
             shell = kwargs.get("shell", False)
-            if shell and not _security.security_config.get("subprocess", {}).get(
-                "allow_shell_true", False
-            ):
+            if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
                 logger.warning(f"Blocked subprocess.Popen with shell=True: {args}")
-                raise SecurityError(
-                    "subprocess.Popen with shell=True is disabled by security policy"
-                )
+                raise SecurityError("subprocess.Popen with shell=True is disabled by security policy")
 
             logger.debug(f"subprocess.Popen: {args}")
 
             if shell:
-                whitelist = _security.security_config.get("subprocess", {}).get(
-                    "shell_whitelist", []
-                )
+                whitelist = _security.security_config.get("subprocess", {}).get("shell_whitelist", [])
                 cmd = args[0] if args else kwargs.get("args", "")
                 cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
 

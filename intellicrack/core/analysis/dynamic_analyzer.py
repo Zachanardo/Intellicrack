@@ -63,9 +63,7 @@ class AdvancedDynamicAnalyzer:
                  runtime analysis, and process behavior information
 
         """
-        self.logger.info(
-            f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}"
-        )
+        self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
 
         analysis_results = {
             "subprocess_execution": self._subprocess_analysis(),
@@ -579,9 +577,7 @@ class AdvancedDynamicAnalyzer:
             self.logger.error("Process behavior analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
-    def scan_memory_for_keywords(
-        self, keywords: list[str], target_process: str | None = None
-    ) -> dict[str, Any]:
+    def scan_memory_for_keywords(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Scan process memory for specific keywords.
 
         Performs real-time memory scanning of the target process or a specified process
@@ -611,9 +607,7 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _frida_memory_scan(
-        self, keywords: list[str], target_process: str | None = None
-    ) -> dict[str, Any]:
+    def _frida_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Perform memory scanning using Frida instrumentation."""
         try:
             # Get process to attach to
@@ -755,9 +749,7 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _psutil_memory_scan(
-        self, keywords: list[str], target_process: str | None = None
-    ) -> dict[str, Any]:
+    def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Perform basic memory scanning using psutil (limited functionality)."""
         try:
             process_name = target_process or Path(self.binary_path).name
@@ -792,15 +784,11 @@ class AdvancedDynamicAnalyzer:
             # Basic memory information (limited on most systems)
             try:
                 memory_info = target_proc.memory_info()
-                memory_maps = (
-                    target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
-                )
+                memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
 
                 # Simulate memory scanning with process environment and command line
                 cmdline = " ".join(target_proc.cmdline()) if hasattr(target_proc, "cmdline") else ""
-                environ_vars = (
-                    list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
-                )
+                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
 
                 search_text = (cmdline + " " + " ".join(environ_vars)).lower()
 
@@ -845,9 +833,7 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _fallback_memory_scan(
-        self, keywords: list[str], target_process: str | None = None
-    ) -> dict[str, Any]:
+    def _fallback_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Fallback memory scanning using binary file analysis."""
         try:
             if target_process:
@@ -909,9 +895,7 @@ class AdvancedDynamicAnalyzer:
 
 
 # Convenience functions for application integration
-def run_dynamic_analysis(
-    app, binary_path: str | Path | None = None, payload: bytes | None = None
-) -> dict[str, Any]:
+def run_dynamic_analysis(app, binary_path: str | Path | None = None, payload: bytes | None = None) -> dict[str, Any]:
     """Run dynamic analysis on a binary with app integration.
 
     Args:
@@ -960,26 +944,16 @@ def run_dynamic_analysis(
         if frida_result.get("success"):
             analysis_data = frida_result.get("analysis_data", {})
             app.analyze_results.append("\nRuntime Analysis:")
-            app.analyze_results.append(
-                f"  File Operations: {len(analysis_data.get('file_access', []))}"
-            )
-            app.analyze_results.append(
-                f"  Registry Operations: {len(analysis_data.get('registry_access', []))}"
-            )
-            app.analyze_results.append(
-                f"  Network Connections: {len(analysis_data.get('network_activity', []))}"
-            )
-            app.analyze_results.append(
-                f"  License Functions: {len(analysis_data.get('license_function', []))}"
-            )
+            app.analyze_results.append(f"  File Operations: {len(analysis_data.get('file_access', []))}")
+            app.analyze_results.append(f"  Registry Operations: {len(analysis_data.get('registry_access', []))}")
+            app.analyze_results.append(f"  Network Connections: {len(analysis_data.get('network_activity', []))}")
+            app.analyze_results.append(f"  License Functions: {len(analysis_data.get('license_function', []))}")
 
             # Show some details
             if analysis_data.get("license_function"):
                 app.analyze_results.append("\n  Detected License Functions:")
                 for func in analysis_data["license_function"][:5]:
-                    app.analyze_results.append(
-                        f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}"
-                    )
+                    app.analyze_results.append(f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}")
 
     # Process behavior
     if "process_behavior_analysis" in results:
@@ -990,9 +964,7 @@ def run_dynamic_analysis(
             app.analyze_results.append(f"  Threads: {behavior.get('threads', 0)}")
             if behavior.get("memory_info"):
                 mem = behavior["memory_info"]
-                app.analyze_results.append(
-                    f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB"
-                )
+                app.analyze_results.append(f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB")
 
     return results
 

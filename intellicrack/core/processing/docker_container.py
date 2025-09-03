@@ -290,9 +290,7 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("Error in docker_container: %s", e)
             return False
 
-    def execute_command(
-        self, command: str, timeout: int = 60, working_dir: str | None = None
-    ) -> str:
+    def execute_command(self, command: str, timeout: int = 60, working_dir: str | None = None) -> str:
         """Execute a command in the Docker container.
 
         Args:
@@ -383,9 +381,7 @@ class DockerContainer(BaseSnapshotHandler):
                 return False
 
             # Verify file was copied
-            verify_result = self.execute_command(
-                f"test -f {dest_path} && echo 'SUCCESS' || echo 'FAILED'"
-            )
+            verify_result = self.execute_command(f"test -f {dest_path} && echo 'SUCCESS' || echo 'FAILED'")
             if "SUCCESS" not in verify_result:
                 self.logger.error("File copy verification failed: %s", verify_result)
                 return False
@@ -469,9 +465,7 @@ class DockerContainer(BaseSnapshotHandler):
         # Use base class functionality to eliminate duplicate code
         return self.compare_snapshots_base(snapshot1, snapshot2)
 
-    def _perform_platform_specific_comparison(
-        self, s1: dict[str, Any], s2: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
         """Perform Docker-specific snapshot comparison logic.
 
         Args:
@@ -569,8 +563,7 @@ class DockerContainer(BaseSnapshotHandler):
 
             # Check for recently modified files
             modified_files = self.execute_command(
-                "find / -type f -mtime -1 -not -path '/proc/*' -not -path '/sys/*' "
-                "-not -path '/dev/*' 2>/dev/null | head -50",
+                "find / -type f -mtime -1 -not -path '/proc/*' -not -path '/sys/*' -not -path '/dev/*' 2>/dev/null | head -50",
             )
 
             # Check for log entries
@@ -690,9 +683,7 @@ class DockerContainer(BaseSnapshotHandler):
         if exc_type:
             self.logger.error(f"Docker container exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.cleanup()
 
 

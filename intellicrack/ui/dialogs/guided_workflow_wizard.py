@@ -125,9 +125,7 @@ class GuidedWorkflowWizard(QWizard):
         """Create the introduction page."""
         page = QWizardPage()
         page.setTitle("Welcome to Intellicrack")
-        page.setSubTitle(
-            "This wizard will guide you through analyzing and patching your first binary"
-        )
+        page.setSubTitle("This wizard will guide you through analyzing and patching your first binary")
 
         layout = QVBoxLayout()
 
@@ -148,9 +146,7 @@ class GuidedWorkflowWizard(QWizard):
         splash_path = get_resource_path("assets/splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
-            pixmap = QPixmap(splash_path).scaled(
-                400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
-            )
+            pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             image_label.setPixmap(pixmap)
             image_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(image_label)
@@ -304,9 +300,7 @@ class GuidedWorkflowWizard(QWizard):
         self.dynamic_analysis_cb.setToolTip("Analyze the binary during execution")
 
         self.symbolic_execution_cb = QCheckBox("Symbolic Execution")
-        self.symbolic_execution_cb.setToolTip(
-            "Use symbolic execution to explore multiple code paths"
-        )
+        self.symbolic_execution_cb.setToolTip("Use symbolic execution to explore multiple code paths")
 
         self.ml_analysis_cb = QCheckBox("ML-assisted Analysis")
         self.ml_analysis_cb.setToolTip("Use machine learning to identify potential vulnerabilities")
@@ -523,9 +517,7 @@ class GuidedWorkflowWizard(QWizard):
         self.static_vuln_scan_cb.setChecked(True)
 
         self.ml_vuln_prediction_cb = QCheckBox("ML-Based Vulnerability Prediction")
-        self.ml_vuln_prediction_cb.setToolTip(
-            "Use machine learning models to predict vulnerabilities"
-        )
+        self.ml_vuln_prediction_cb.setToolTip("Use machine learning models to predict vulnerabilities")
 
         self.buffer_overflow_cb = QCheckBox("Buffer Overflow Detection")
         self.buffer_overflow_cb.setChecked(True)
@@ -734,7 +726,6 @@ class GuidedWorkflowWizard(QWizard):
         page.setLayout(layout)
         return page
 
-
     def _build_protection_section(self) -> str:
         """Build the Protection Detection section."""
         protection_fields = [
@@ -899,7 +890,6 @@ class GuidedWorkflowWizard(QWizard):
             return "<h3>AI & Machine Learning</h3>\n<ul>\n" + "".join(items) + "</ul>"
         return "<h3>AI & Machine Learning</h3>\n<ul>\n</ul>"
 
-
     def update_summary(self) -> None:
         """Update the summary text with the selected options."""
         binary_path = self.field("binary_path")
@@ -962,9 +952,7 @@ class GuidedWorkflowWizard(QWizard):
                     try:
                         timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
-                        info_text += (
-                            f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
-                        )
+                        info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Error in guided_workflow_wizard: %s", e)
 
@@ -1058,8 +1046,7 @@ class GuidedWorkflowWizard(QWizard):
                 QMessageBox.information(
                     self.parent,
                     "Guided Workflow",
-                    "The guided workflow has been set up and started.\n"
-                    "You can monitor the analysis progress in the output panel.",
+                    "The guided workflow has been set up and started.\nYou can monitor the analysis progress in the output panel.",
                 )
 
     def get_settings(self) -> dict[str, Any]:

@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
 import platform
 from typing import Any
 
@@ -210,9 +211,7 @@ class TPMProtectionBypass:
             self.logger.warning(f"Invalid TPM tag: 0x{tag:04X}")
 
         if size != len(command_data):
-            self.logger.debug(
-                f"TPM command size mismatch: expected {size}, got {len(command_data)}"
-            )
+            self.logger.debug(f"TPM command size mismatch: expected {size}, got {len(command_data)}")
             # Use actual command data length for processing
             size = len(command_data)
 
@@ -616,9 +615,7 @@ class TPMProtectionBypass:
                         if context:
                             # Check if context string is nearby (within 1KB)
                             context_found = False
-                            for ctx_offset in range(
-                                max(0, offset - 512), min(len(binary_data), offset + 512)
-                            ):
+                            for ctx_offset in range(max(0, offset - 512), min(len(binary_data), offset + 512)):
                                 if binary_data[ctx_offset : ctx_offset + len(context)] == context:
                                     context_found = True
                                     break
@@ -1066,9 +1063,7 @@ class TPMAnalyzer:
         # Add implementation details
         bypass_config["implementation"]["hook_script"] = self._generate_hook_script(tpm_version)
         bypass_config["implementation"]["patch_locations"] = self._identify_patch_points()
-        bypass_config["implementation"]["emulator_config"] = self._generate_emulator_config(
-            tpm_version
-        )
+        bypass_config["implementation"]["emulator_config"] = self._generate_emulator_config(tpm_version)
 
         # Add risk assessment
         bypass_config["risks"] = [
@@ -1142,7 +1137,7 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
                     {
                         "type": "api_call",
                         "location": f"Call to {indicator}",
-                        "patch": b"\x31\xC0\x40\xC3",  # xor eax,eax; inc eax; ret (return 1/success)
+                        "patch": b"\x31\xc0\x40\xc3",  # xor eax,eax; inc eax; ret (return 1/success)
                     }
                 )
 
@@ -1239,9 +1234,7 @@ def detect_tpm_usage(process_name: str | None = None) -> bool:
                 )
                 if process_name.lower() in tasklist_result.stdout.lower():
                     # Further check if using TPM provider specifically
-                    logger.debug(
-                        f"Process '{process_name}' has ncrypt.dll loaded, checking TPM usage"
-                    )
+                    logger.debug(f"Process '{process_name}' has ncrypt.dll loaded, checking TPM usage")
                     # This is a heuristic - processes with ncrypt.dll might use TPM
                     return True
 
@@ -1290,17 +1283,12 @@ def tpm_research_tools() -> dict[str, Any]:
             "pcr_manipulation",
             "key_extraction",
             "attestation_bypass",
-            "seal_unseal_bypass"
+            "seal_unseal_bypass",
         ]
 
     def activate_bypass(self, method: str = "auto", target_info: dict[str, Any] | None = None) -> dict[str, Any]:
         """Activate specified TPM bypass method."""
-        result = {
-            "success": False,
-            "method": method,
-            "details": {},
-            "notes": []
-        }
+        result = {"success": False, "method": method, "details": {}, "notes": []}
 
         # Auto-select method if needed
         if method == "auto":
@@ -1320,7 +1308,7 @@ def tpm_research_tools() -> dict[str, Any]:
                 result["notes"].append("TPM APIs successfully hooked")
             except Exception as e:
                 result["notes"].append(f"API hooking failed: {e}")
-                
+
         elif method == "virtual_tpm":
             try:
                 self._create_virtual_tpm()
@@ -1329,7 +1317,7 @@ def tpm_research_tools() -> dict[str, Any]:
                 result["notes"].append("Virtual TPM created successfully")
             except Exception as e:
                 result["notes"].append(f"Virtual TPM creation failed: {e}")
-                
+
         elif method == "binary_patching":
             if self.binary_path:
                 success = self._patch_tpm_calls(self.binary_path)
@@ -1340,7 +1328,7 @@ def tpm_research_tools() -> dict[str, Any]:
                     result["notes"].append("Binary patching failed")
             else:
                 result["notes"].append("No binary path specified")
-                
+
         elif method == "registry_manipulation":
             try:
                 self._manipulate_tpm_registry()
@@ -1348,7 +1336,7 @@ def tpm_research_tools() -> dict[str, Any]:
                 result["notes"].append("Registry manipulation successful")
             except Exception as e:
                 result["notes"].append(f"Registry manipulation failed: {e}")
-                
+
         else:
             result["notes"].append(f"Unknown bypass method: {method}")
 

@@ -85,9 +85,7 @@ class DongleSpec:
     def __post_init__(self):
         """Initialize dongle specification with generated serial number if not provided."""
         if not self.serial_number:
-            self.serial_number = (
-                f"{self.vendor_id:04X}{self.product_id:04X}{random.randint(1000, 9999)}"  # noqa: S311 - Hardware dongle emulation serial number simulation
-            )
+            self.serial_number = f"{self.vendor_id:04X}{self.product_id:04X}{random.randint(1000, 9999)}"  # noqa: S311 - Hardware dongle emulation serial number simulation
 
 
 @dataclass
@@ -580,9 +578,7 @@ class USBDongleDriver:
             del self.dongles[device_id]
             self.logger.info(f"Unregistered USB dongle {device_id}")
 
-    def find_dongles(
-        self, vendor_id: int | None = None, product_id: int | None = None
-    ) -> list[BaseDongleEmulator]:
+    def find_dongles(self, vendor_id: int | None = None, product_id: int | None = None) -> list[BaseDongleEmulator]:
         """Find USB dongles matching criteria."""
         found = []
 
@@ -702,18 +698,14 @@ class USBDongleDriver:
             # Real hardware ID from USB device
             if hasattr(dongle, "_usb_device") and dongle._usb_device:
                 device = dongle._usb_device
-                hw_id = (
-                    f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
-                )
+                hw_id = f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
                 return hw_id.encode()
             return b"EMULATED:0000:0000:00:00"
 
         else:
             return b"\xff"  # Unknown request
 
-    def bulk_transfer(
-        self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0
-    ) -> bytes:
+    def bulk_transfer(self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0) -> bytes:
         """Perform USB bulk transfer for high-speed data."""
         dongles = self.find_dongles(vendor_id, product_id)
         if not dongles:
@@ -1057,14 +1049,10 @@ class DongleRegistryManager:
 
         try:
             # Create device key
-            key = winreg.CreateKey(
-                winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
-            )
+            key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
 
             # Set device description
-            winreg.SetValueEx(
-                key, "DeviceDesc", 0, winreg.REG_SZ, f"{spec.dongle_type.value} Dongle"
-            )
+            winreg.SetValueEx(key, "DeviceDesc", 0, winreg.REG_SZ, f"{spec.dongle_type.value} Dongle")
 
             # Set hardware ID
             winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_MULTI_SZ, [device_key])
@@ -1082,17 +1070,13 @@ class DongleRegistryManager:
         try:
             # HASP entries
             if spec.dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
-                hasp_key = winreg.CreateKey(
-                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP"
-                )
+                hasp_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP")
                 winreg.SetValueEx(hasp_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(hasp_key)
 
             # Sentinel entries
             elif spec.dongle_type.value.startswith("Sentinel"):
-                sent_key = winreg.CreateKey(
-                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Rainbow Technologies\Sentinel"
-                )
+                sent_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Rainbow Technologies\Sentinel")
                 winreg.SetValueEx(sent_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(sent_key)
 
@@ -1106,9 +1090,7 @@ class DongleRegistryManager:
 
             # Remove USB entries
             try:
-                winreg.DeleteKey(
-                    winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
-                )
+                winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
             except FileNotFoundError:
                 pass
 
@@ -1587,9 +1569,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Hardware Dongle Emulator")
-    parser.add_argument(
-        "--create", choices=[dt.value for dt in DongleType], help="Create dongle emulation"
-    )
+    parser.add_argument("--create", choices=[dt.value for dt in DongleType], help="Create dongle emulation")
     parser.add_argument("--list", action="store_true", help="List active dongles")
     parser.add_argument("--test", help="Test dongle by ID")
     parser.add_argument("--export", help="Export dongle configurations")

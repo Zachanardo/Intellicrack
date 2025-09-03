@@ -332,9 +332,7 @@ class PluginDebugger:
                 "function": frame.f_code.co_name,
                 "file": frame.f_code.co_filename,
                 "line": frame.f_lineno,
-                "return_value": repr(arg)
-                if not isinstance(arg, (bytes, bytearray))
-                else f"<{type(arg).__name__}: {len(arg)} bytes>",
+                "return_value": repr(arg) if not isinstance(arg, (bytes, bytearray)) else f"<{type(arg).__name__}: {len(arg)} bytes>",
                 "type": type(arg).__name__,
             }
 
@@ -350,9 +348,7 @@ class PluginDebugger:
             if hasattr(self, "watched_returns"):
                 for pattern in self.watched_returns:
                     if pattern in str(arg) or pattern == frame.f_code.co_name:
-                        self.output_queue.put(
-                            ("watched_return", {"pattern": pattern, "value": return_info})
-                        )
+                        self.output_queue.put(("watched_return", {"pattern": pattern, "value": return_info}))
 
         # Handle step out
         if self.state == DebuggerState.STEPPING and self.step_mode == "out":
@@ -548,16 +544,12 @@ class PluginDebugger:
     def _evaluate_expression(self, expression: str):
         """Evaluate expression in current context"""
         if not self.current_frame:
-            self.output_queue.put(
-                ("eval_result", {"expression": expression, "error": "No active frame"})
-            )
+            self.output_queue.put(("eval_result", {"expression": expression, "error": "No active frame"}))
             return
 
         try:
             result = eval(expression, self.current_frame.f_globals, self.current_frame.f_locals)
-            self.output_queue.put(
-                ("eval_result", {"expression": expression, "value": self._serialize_value(result)})
-            )
+            self.output_queue.put(("eval_result", {"expression": expression, "value": self._serialize_value(result)}))
         except Exception as e:
             self.logger.error("Exception in plugin_debugger: %s", e)
             self.output_queue.put(("eval_result", {"expression": expression, "error": str(e)}))
@@ -577,9 +569,7 @@ class PluginDebugger:
             else:
                 self.current_frame.f_globals[name] = parsed_value
 
-            self.output_queue.put(
-                ("variable_set", {"name": name, "value": self._serialize_value(parsed_value)})
-            )
+            self.output_queue.put(("variable_set", {"name": name, "value": self._serialize_value(parsed_value)}))
 
             # Update watches
             self._update_watched_variables()
@@ -624,9 +614,7 @@ class PluginDebugger:
         else:
             return repr(value)
 
-    def get_source_code(
-        self, filename: str, start_line: int = 1, end_line: int = None
-    ) -> List[str]:
+    def get_source_code(self, filename: str, start_line: int = 1, end_line: int = None) -> List[str]:
         """Get source code lines"""
         lines = []
 
@@ -642,10 +630,7 @@ class PluginDebugger:
                     {
                         "line": i + 1,
                         "code": all_lines[i].rstrip(),
-                        "breakpoint": any(
-                            bp.file == filename and bp.line == i + 1 and bp.enabled
-                            for bp in self.breakpoints.values()
-                        ),
+                        "breakpoint": any(bp.file == filename and bp.line == i + 1 and bp.enabled for bp in self.breakpoints.values()),
                     }
                 )
 

@@ -136,9 +136,7 @@ class QuantizationManager:
             gpu_info = get_gpu_info()
             if gpu_info["available"] and gpu_info["info"].get("device_count", 1) > 1:
                 self.sharding_manager = get_sharding_manager()
-                logger.info(
-                    f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices"
-                )
+                logger.info(f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices")
         elif HAS_TORCH and torch.cuda.device_count() > 1:
             self.sharding_manager = get_sharding_manager()
             logger.info(f"Multi-GPU sharding enabled with {torch.cuda.device_count()} devices")
@@ -589,9 +587,7 @@ class QuantizationManager:
             return self.sharding_manager.get_device_info()
         gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
         return {
-            "cuda_available": gpu_info.get("available", False)
-            if GPU_AUTOLOADER_AVAILABLE
-            else torch.cuda.is_available(),
+            "cuda_available": gpu_info.get("available", False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
             "device_count": gpu_info.get("info", {}).get("device_count", 0)
             if GPU_AUTOLOADER_AVAILABLE
             else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
@@ -617,9 +613,7 @@ class QuantizationManager:
 
         return supported_types
 
-    def quantize_model_with_bnb(
-        self, model: Any, quantization_bits: int = 8, **kwargs
-    ) -> Any | None:
+    def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Any | None:
         """Quantize a model using bitsandbytes (bnb) library.
 
         Args:
@@ -749,9 +743,7 @@ class QuantizationManager:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
 
-    def prepare_model_for_gptq_quantization(
-        self, model_path: str | Path, config: Any = None, **kwargs
-    ) -> Any | None:
+    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: Any = None, **kwargs) -> Any | None:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:

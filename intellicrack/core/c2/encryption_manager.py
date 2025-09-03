@@ -331,20 +331,14 @@ class EncryptionManager:
 
             # Clean up old session keys (older than 1 hour)
             cutoff_time = current_time - 3600
-            expired_sessions = [
-                session_id
-                for session_id, info in self.session_keys.items()
-                if info["created_at"] < cutoff_time
-            ]
+            expired_sessions = [session_id for session_id, info in self.session_keys.items() if info["created_at"] < cutoff_time]
 
             for session_id in expired_sessions:
                 del self.session_keys[session_id]
 
             self.last_key_rotation = current_time
 
-            self.logger.info(
-                f"Rotated encryption keys, removed {len(expired_sessions)} expired sessions"
-            )
+            self.logger.info(f"Rotated encryption keys, removed {len(expired_sessions)} expired sessions")
 
         except Exception as e:
             self.logger.error(f"Key rotation failed: {e}")
@@ -396,9 +390,7 @@ class EncryptionManager:
             self.logger.error(f"File encryption failed: {e}")
             raise
 
-    def decrypt_file(
-        self, encrypted_file_path: str, output_path: str = None, session_id: str = None
-    ) -> str:
+    def decrypt_file(self, encrypted_file_path: str, output_path: str = None, session_id: str = None) -> str:
         """Decrypt a file using AES-256.
 
         Args:
@@ -515,9 +507,7 @@ class EncryptionManager:
                 "active_sessions": 0,
                 "total_encryptions": 0,
                 "last_key_rotation": self.last_key_rotation,
-                "time_until_rotation": max(
-                    0, self.key_rotation_interval - (current_time - self.last_key_rotation)
-                ),
+                "time_until_rotation": max(0, self.key_rotation_interval - (current_time - self.last_key_rotation)),
             }
 
             # Calculate active sessions and usage
@@ -538,11 +528,7 @@ class EncryptionManager:
             current_time = time.time()
             cutoff_time = current_time - 3600  # 1 hour expiry
 
-            expired_sessions = [
-                session_id
-                for session_id, info in self.session_keys.items()
-                if info["created_at"] < cutoff_time
-            ]
+            expired_sessions = [session_id for session_id, info in self.session_keys.items() if info["created_at"] < cutoff_time]
 
             for session_id in expired_sessions:
                 del self.session_keys[session_id]

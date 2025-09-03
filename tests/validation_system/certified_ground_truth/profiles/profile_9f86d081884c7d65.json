@@ -1,0 +1,19 @@
+{
+  "id": "profile_9f86d081884c7d65",
+  "name": "FlexNet License Manager",
+  "type": "license_manager",
+  "version": "11.16.5",
+  "confidence": 0.9,
+  "detection_methods": [
+    "scanner:PEiD",
+    "analyzer:IDA Pro"
+  ],
+  "bypass_methods": [
+    "api_hooking:license_check_bypass"
+  ],
+  "metadata": {
+    "test": true
+  },
+  "timestamp": "2025-08-28T22:36:30.795157",
+  "hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+}

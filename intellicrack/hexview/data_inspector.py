@@ -363,10 +363,8 @@ class DataInterpreter:
         """Handle GUID data type."""
         if len(data) >= 16:
             guid_parts = struct.unpack("<IHH8B", data[:16])
-            return (
-                f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-"
-                f"{guid_parts[3]:02X}{guid_parts[4]:02X}-"
-                + "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
+            return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-{guid_parts[3]:02X}{guid_parts[4]:02X}-" + "".join(
+                f"{guid_parts[_i]:02X}" for _i in range(5, 11)
             )
         return "Insufficient data"
 
@@ -391,7 +389,6 @@ class DataInterpreter:
         if len(data) >= 6:
             return ":".join(f"{_b:02X}" for _b in data[:6])
         return "Insufficient data"
-
 
     @staticmethod
     def interpret(data: bytes, data_type: DataType) -> str:

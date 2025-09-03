@@ -59,10 +59,6 @@ from ..widgets.syntax_highlighters import JavaScriptHighlighter, PythonHighlight
 logger = get_logger(__name__)
 
 
-
-
-
-
 class FileTreeWidget(QTreeWidget):
     """Enhanced file tree widget with project navigation."""
 
@@ -342,14 +338,10 @@ class ChatWidget(QWidget):
         actions_layout = QHBoxLayout()
 
         self.explain_button = QPushButton("Explain Code")
-        self.explain_button.clicked.connect(
-            lambda: self.send_quick_message("Explain the selected code")
-        )
+        self.explain_button.clicked.connect(lambda: self.send_quick_message("Explain the selected code"))
 
         self.optimize_button = QPushButton("Optimize")
-        self.optimize_button.clicked.connect(
-            lambda: self.send_quick_message("Optimize the selected code")
-        )
+        self.optimize_button.clicked.connect(lambda: self.send_quick_message("Optimize the selected code"))
 
         self.debug_button = QPushButton("Debug")
         self.debug_button.clicked.connect(lambda: self.send_quick_message("Help debug this code"))
@@ -709,9 +701,7 @@ class AICodingAssistantDialog(QDialog):
         gen_layout.addWidget(QLabel("Code Generation"))
 
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems(
-            ["Frida Script", "Ghidra Script", "Python Tool", "General Code"]
-        )
+        self.script_type_combo.addItems(["Frida Script", "Ghidra Script", "Python Tool", "General Code"])
         gen_layout.addWidget(self.script_type_combo)
 
         generate_btn = QPushButton("Generate Code")
@@ -996,9 +986,7 @@ def example_function():
         current_editor.insert_text_at_cursor(generated_code)
 
         # Add to chat
-        self.chat_widget.add_message(
-            "AI", f"Generated {script_type} code and inserted into editor."
-        )
+        self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
 
     def run_current_script(self):
         """Run the current script with optional QEMU testing."""
@@ -1022,9 +1010,7 @@ def example_function():
         elif file_path.suffix == ".js":
             script_type = "frida"
         else:
-            QMessageBox.information(
-                self, "Info", f"Don't know how to run {file_path.suffix} files."
-            )
+            QMessageBox.information(self, "Info", f"Don't know how to run {file_path.suffix} files.")
             return
 
         # Read script content
@@ -1098,9 +1084,7 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message(
-                "System", "Node.js not found. Cannot run JavaScript files."
-            )
+            self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
@@ -1119,9 +1103,7 @@ def example_function():
         if file_path and file_path.suffix == ".py":
             self.format_python_code(current_editor)
         else:
-            QMessageBox.information(
-                self, "Info", "Code formatting not supported for this file type."
-            )
+            QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
 
     def format_python_code(self, editor: CodeEditor):
         """Format Python code using black if available."""
@@ -1156,9 +1138,7 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message(
-                "System", "Black formatter not found. Please install: pip install black"
-            )
+            self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
         except Exception as e:
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
@@ -1225,9 +1205,7 @@ def example_function():
         lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
         lines.append(f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(
-            f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
-        )
+        lines.append(f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
         lines.append("")
 
         # Insights
@@ -1281,15 +1259,11 @@ def example_function():
             logger.warning(f"Security issue detected: {issue}")
 
         # Show a warning dialog if there are critical security issues
-        if any(
-            "critical" in issue.lower() or "vulnerability" in issue.lower()
-            for issue in security_issues
-        ):
+        if any("critical" in issue.lower() or "vulnerability" in issue.lower() for issue in security_issues):
             QMessageBox.warning(
                 self,
                 "Security Issues Detected",
-                f"Found {len(security_issues)} security issue(s) in the code.\n"
-                "Please review the analysis results in the chat panel.",
+                f"Found {len(security_issues)} security issue(s) in the code.\nPlease review the analysis results in the chat panel.",
             )
 
     def generate_script_dialog(self):

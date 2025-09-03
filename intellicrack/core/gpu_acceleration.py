@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
 import time
 from typing import Any
 
@@ -30,34 +31,72 @@ logger = logging.getLogger(__name__)
 PYCUDA_AVAILABLE = False
 CUPY_AVAILABLE = False
 NUMBA_CUDA_AVAILABLE = False
+IPEX_AVAILABLE = False
+PYTORCH_AVAILABLE = False
 
-# Try importing GPU frameworks
-try:
-    import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
-    import pycuda.driver as cuda
-    from pycuda import compiler, gpuarray
+# Check if CUDA is disabled via environment
+CUDA_DISABLED = os.environ.get("CUDA_VISIBLE_DEVICES") == "-1"
+INTEL_GPU_PREFERRED = os.environ.get("INTELLICRACK_GPU_TYPE") == "intel"
 
-    PYCUDA_AVAILABLE = True
-    logger.info("PyCUDA initialized successfully")
-except ImportError:
-    logger.debug("PyCUDA not available")
+# Try importing Intel Extension for PyTorch first if preferred
+if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
+    try:
+        import torch
 
-try:
-    import cupy as cp
+        PYTORCH_AVAILABLE = True
+        logger.debug("PyTorch available")
 
-    CUPY_AVAILABLE = True
-    logger.info("CuPy initialized successfully")
-except ImportError:
-    logger.debug("CuPy not available")
+        try:
+            import intel_extension_for_pytorch as ipex
 
-try:
-    import numba
-    from numba import cuda as numba_cuda
+            if torch.xpu.is_available():
+                IPEX_AVAILABLE = True
+                logger.info(f"Intel Extension for PyTorch initialized successfully - {torch.xpu.device_count()} XPU device(s) found")
+                for i in range(torch.xpu.device_count()):
+                    logger.info(f"XPU Device {i}: {torch.xpu.get_device_name(i)}")
+            else:
+                logger.debug("Intel XPU not available")
+        except ImportError:
+            logger.debug("Intel Extension for PyTorch not available")
+    except ImportError:
+        logger.debug("PyTorch not available")
 
-    NUMBA_CUDA_AVAILABLE = True
-    logger.info("Numba CUDA initialized successfully")
-except ImportError:
-    logger.debug("Numba CUDA not available")
+# Try importing CUDA frameworks only if not disabled
+if not CUDA_DISABLED:
+    try:
+        import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
+        import pycuda.driver as cuda
+        from pycuda import compiler, gpuarray
+
+        PYCUDA_AVAILABLE = True
+        logger.info("PyCUDA initialized successfully")
+    except ImportError:
+        logger.debug("PyCUDA not available")
+    except Exception as e:
+        logger.debug(f"PyCUDA initialization failed: {e}")
+
+    try:
+        import cupy as cp
+
+        CUPY_AVAILABLE = True
+        logger.info("CuPy initialized successfully")
+    except ImportError:
+        logger.debug("CuPy not available")
+    except Exception as e:
+        logger.debug(f"CuPy initialization failed: {e}")
+
+    try:
+        import numba
+        from numba import cuda as numba_cuda
+
+        NUMBA_CUDA_AVAILABLE = True
+        logger.info("Numba CUDA initialized successfully")
+    except ImportError:
+        logger.debug("Numba CUDA not available")
+    except Exception as e:
+        logger.debug(f"Numba CUDA initialization failed: {e}")
+else:
+    logger.debug("CUDA disabled via CUDA_VISIBLE_DEVICES=-1")
 
 
 class GPUAccelerator:
@@ -71,19 +110,52 @@ class GPUAccelerator:
 
     def _detect_best_framework(self) -> str:
         """Detect the best available GPU framework."""
+        # Prioritize Intel GPU if preferred or only option available
+        if INTEL_GPU_PREFERRED and IPEX_AVAILABLE:
+            return "ipex"
+
+        # If CUDA is disabled, check Intel GPU first
+        if CUDA_DISABLED:
+            if IPEX_AVAILABLE:
+                return "ipex"
+            return "cpu"
+
+        # Standard priority order for CUDA frameworks
         if CUPY_AVAILABLE:
             return "cupy"
         if NUMBA_CUDA_AVAILABLE:
             return "numba"
         if PYCUDA_AVAILABLE:
             return "pycuda"
+
+        # Fall back to Intel GPU if available
+        if IPEX_AVAILABLE:
+            return "ipex"
+
         return "cpu"
 
     def _get_device_info(self) -> dict[str, Any]:
         """Get GPU device information."""
         info = {}
 
-        if self.framework == "cupy" and CUPY_AVAILABLE:
+        if self.framework == "ipex" and IPEX_AVAILABLE:
+            try:
+                device_count = torch.xpu.device_count()
+                if device_count > 0:
+                    device_name = torch.xpu.get_device_name(0)
+                    memory_info = torch.xpu.memory_stats(0) if hasattr(torch.xpu, "memory_stats") else {}
+                    info = {
+                        "name": device_name,
+                        "device_type": "Intel XPU",
+                        "device_count": device_count,
+                        "driver_version": getattr(torch.xpu, "version", "Unknown"),
+                        "memory_allocated": memory_info.get("allocated_bytes.all.current", 0),
+                        "memory_reserved": memory_info.get("reserved_bytes.all.current", 0),
+                    }
+            except Exception as e:
+                logger.debug(f"Failed to get Intel XPU device info: {e}")
+
+        elif self.framework == "cupy" and CUPY_AVAILABLE:
             try:
                 device = cp.cuda.Device()
                 info = {
@@ -94,7 +166,7 @@ class GPUAccelerator:
                     "multiprocessor_count": device.attributes["MultiProcessorCount"],
                 }
             except Exception as e:
-                logger.error(f"Failed to get CuPy device info: {e}")
+                logger.debug(f"Failed to get CuPy device info: {e}")
 
         elif self.framework == "pycuda" and PYCUDA_AVAILABLE:
             try:
@@ -107,7 +179,7 @@ class GPUAccelerator:
                     "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT],
                 }
             except Exception as e:
-                logger.error(f"Failed to get PyCUDA device info: {e}")
+                logger.debug(f"Failed to get PyCUDA device info: {e}")
 
         elif self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
             try:
@@ -119,7 +191,7 @@ class GPUAccelerator:
                     "memory_free": device.get_memory_info()[0],
                 }
             except Exception as e:
-                logger.error(f"Failed to get Numba device info: {e}")
+                logger.debug(f"Failed to get Numba device info: {e}")
 
         return info
 
@@ -136,7 +208,9 @@ class GPUAccelerator:
         """
         start_time = time.time()
 
-        if self.framework == "cupy" and CUPY_AVAILABLE:
+        if self.framework == "ipex" and IPEX_AVAILABLE:
+            result = self._ipex_pattern_search(data, pattern)
+        elif self.framework == "cupy" and CUPY_AVAILABLE:
             result = self._cupy_pattern_search(data, pattern)
         elif self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
             result = self._numba_pattern_search(data, pattern)
@@ -148,6 +222,76 @@ class GPUAccelerator:
         result["execution_time"] = time.time() - start_time
         result["framework"] = self.framework
         return result
+
+    def _ipex_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
+        """Intel Extension for PyTorch implementation of pattern search."""
+        try:
+            # Apply IPEX optimizations for Intel GPU
+            torch.xpu.empty_cache()  # Clear XPU cache for optimal performance
+
+            # Enable IPEX optimizations
+            with torch.xpu.device(0):
+                ipex.optimize_for_inference()  # Apply IPEX inference optimizations
+
+                # Convert data to PyTorch tensors on Intel XPU
+                data_np = np.frombuffer(data, dtype=np.uint8)
+                pattern_np = np.frombuffer(pattern, dtype=np.uint8)
+
+                # Use IPEX-optimized tensor creation
+                data_tensor = torch.from_numpy(data_np).to(device="xpu:0", dtype=torch.uint8)
+                pattern_tensor = torch.from_numpy(pattern_np).to(device="xpu:0", dtype=torch.uint8)
+
+                # Apply IPEX memory optimizations
+                if hasattr(ipex, "optimize_memory_allocation"):
+                    ipex.optimize_memory_allocation(data_tensor)
+                    ipex.optimize_memory_allocation(pattern_tensor)
+
+            # Efficient pattern matching using sliding window approach
+            data_len = data_tensor.size(0)
+            pattern_len = pattern_tensor.size(0)
+
+            if pattern_len > data_len:
+                return {
+                    "match_count": 0,
+                    "positions": [],
+                    "method": "ipex_xpu",
+                }
+
+            # Create sliding windows of data for comparison
+            matches = []
+            window_size = pattern_len
+
+            # Use unfold to create sliding windows efficiently on GPU
+            windows = data_tensor.unfold(0, window_size, 1)
+
+            # Compare each window with the pattern
+            pattern_expanded = pattern_tensor.unsqueeze(0).expand(windows.size(0), -1)
+            matches_mask = torch.all(windows == pattern_expanded, dim=1)
+
+            # Get positions of matches
+            match_indices = torch.nonzero(matches_mask, as_tuple=False).squeeze(1)
+            positions = match_indices.cpu().numpy().tolist()
+
+            # Store actual matched data for analysis
+            for idx in match_indices:
+                if len(matches) < 1000:  # Limit for performance
+                    matched_data = windows[idx].cpu().numpy().tolist()
+                    matches.append({"position": idx.item(), "data": matched_data})
+
+            # Limit to first 1000 matches for consistency
+            if len(positions) > 1000:
+                positions = positions[:1000]
+
+            return {
+                "match_count": len(positions),
+                "positions": positions,
+                "matches": matches,
+                "method": "ipex_xpu",
+            }
+
+        except Exception as e:
+            logger.error(f"Intel XPU pattern search failed: {e}")
+            return self._cpu_pattern_search(data, pattern)
 
     def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """CuPy implementation of pattern search."""
@@ -366,7 +510,9 @@ class GPUAccelerator:
         """
         start_time = time.time()
 
-        if self.framework == "cupy" and CUPY_AVAILABLE:
+        if self.framework == "ipex" and IPEX_AVAILABLE:
+            result = self._ipex_entropy(data, block_size)
+        elif self.framework == "cupy" and CUPY_AVAILABLE:
             result = self._cupy_entropy(data, block_size)
         elif self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
             result = self._numba_entropy(data, block_size)
@@ -376,6 +522,51 @@ class GPUAccelerator:
         result["execution_time"] = time.time() - start_time
         result["framework"] = self.framework
         return result
+
+    def _ipex_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
+        """Intel Extension for PyTorch implementation of entropy calculation."""
+        try:
+            data_np = np.frombuffer(data, dtype=np.uint8)
+            num_blocks = len(data_np) // block_size
+            entropies = []
+
+            # Process blocks on Intel XPU
+            for i in range(num_blocks):
+                block = data_np[i * block_size : (i + 1) * block_size]
+                block_tensor = torch.from_numpy(block).to(device="xpu:0", dtype=torch.uint8)
+
+                # Calculate histogram using bincount on XPU
+                hist = torch.bincount(block_tensor, minlength=256).float()
+                hist = hist / block_size
+
+                # Calculate entropy: -sum(p * log2(p)) for p > 0
+                hist_nonzero = hist[hist > 0]
+                if len(hist_nonzero) > 0:
+                    entropy = -torch.sum(hist_nonzero * torch.log2(hist_nonzero))
+                    entropies.append(float(entropy.cpu().item()))
+                else:
+                    entropies.append(0.0)
+
+            if entropies:
+                return {
+                    "block_entropies": entropies,
+                    "average_entropy": float(np.mean(entropies)),
+                    "max_entropy": float(np.max(entropies)),
+                    "min_entropy": float(np.min(entropies)),
+                    "method": "ipex_xpu",
+                }
+            else:
+                return {
+                    "block_entropies": [],
+                    "average_entropy": 0.0,
+                    "max_entropy": 0.0,
+                    "min_entropy": 0.0,
+                    "method": "ipex_xpu",
+                }
+
+        except Exception as e:
+            logger.error(f"Intel XPU entropy calculation failed: {e}")
+            return self._cpu_entropy(data, block_size)
 
     def _cupy_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """CuPy implementation of entropy calculation."""

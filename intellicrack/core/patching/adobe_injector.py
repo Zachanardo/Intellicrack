@@ -828,9 +828,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Exception during DLL injection: %s", e)
             return False
 
-    def _create_remote_thread(
-        self, process_handle: int, start_address: int, parameter: int = 0
-    ) -> bool:
+    def _create_remote_thread(self, process_handle: int, start_address: int, parameter: int = 0) -> bool:
         """Create a remote thread in the target process.
 
         Args:
@@ -996,9 +994,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Manual mapping failed: %s", e)
             return False
 
-    def _map_sections(
-        self, process_handle: int, pe: Any, dll_data: bytes, remote_base: int
-    ) -> bool:
+    def _map_sections(self, process_handle: int, pe: Any, dll_data: bytes, remote_base: int) -> bool:
         """Map PE sections to target process."""
         try:
             # Write PE headers
@@ -1020,9 +1016,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             # Write each section
             for section in pe.sections:
                 section_addr = remote_base + section.VirtualAddress
-                section_data = dll_data[
-                    section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData
-                ]
+                section_data = dll_data[section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData]
 
                 if section_data:
                     success = KERNEL32.WriteProcessMemory(
@@ -1079,10 +1073,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         process_handle,
                         reloc_addr,
                         ctypes.byref(current_value),
-                        8
-                        if getattr(pe, "PE_TYPE", 0)
-                        == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
-                        else 4,
+                        8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B) else 4,
                         ctypes.byref(bytes_read),
                     )
 
@@ -1142,9 +1133,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 for imp in entry.imports:
                     # Get function address
                     if imp.ordinal:
-                        func_addr = KERNEL32.GetProcAddress(
-                            dll_handle, ctypes.c_char_p(imp.ordinal)
-                        )
+                        func_addr = KERNEL32.GetProcAddress(dll_handle, ctypes.c_char_p(imp.ordinal))
                     else:
                         func_addr = KERNEL32.GetProcAddress(dll_handle, imp.name.encode("utf-8"))
 
@@ -1155,10 +1144,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     # Write to IAT
                     iat_addr = remote_base + imp.address
                     addr_bytes = struct.pack(
-                        "<Q"
-                        if getattr(pe, "PE_TYPE", 0)
-                        == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
-                        else "<I",
+                        "<Q" if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B) else "<I",
                         func_addr,
                     )
                     bytes_written = ctypes.c_size_t(0)
@@ -1200,10 +1186,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     process_handle,
                     remote_base + callback_addr - getattr(pe.OPTIONAL_HEADER, "ImageBase", 0),
                     ctypes.byref(addr_value),
-                    8
-                    if getattr(pe, "PE_TYPE", 0)
-                    == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
-                    else 4,
+                    8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B) else 4,
                     ctypes.byref(bytes_read),
                 )
 
@@ -1217,12 +1200,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     remote_base,
                 )
 
-                callback_addr += (
-                    8
-                    if getattr(pe, "PE_TYPE", 0)
-                    == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
-                    else 4
-                )
+                callback_addr += 8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B) else 4
 
         except Exception as e:
             logger.debug("TLS callback execution error (non-critical): %s", e)
@@ -1369,9 +1347,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                 # Validate architecture compatibility
                 if process_is_64bit != dll_is_64bit:
-                    logger.error(
-                        "Architecture mismatch: Cannot inject 32-bit DLL into 64-bit process or vice versa"
-                    )
+                    logger.error("Architecture mismatch: Cannot inject 32-bit DLL into 64-bit process or vice versa")
                     return False
 
                 # Handle different scenarios
@@ -1733,9 +1709,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.debug("Failed to get 64-bit LoadLibraryA address: %s", e)
             return 0
 
-    def _execute_heavens_gate_shellcode(
-        self, process_handle: int, remote_memory: int, load_library_addr: int
-    ) -> bool:
+    def _execute_heavens_gate_shellcode(self, process_handle: int, remote_memory: int, load_library_addr: int) -> bool:
         """Execute Heaven's Gate shellcode for thread creation."""
         try:
             # Generate shellcode for creating thread via Heaven's Gate
@@ -1852,9 +1826,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         return bytes(shellcode)
 
-    def verify_injection(
-        self, target_name: str, dll_name: str = None, check_hooks: bool = True
-    ) -> dict[str, Any]:
+    def verify_injection(self, target_name: str, dll_name: str = None, check_hooks: bool = True) -> dict[str, Any]:
         """Verify that DLL was successfully injected and hooks are active.
 
         Args:
@@ -1955,11 +1927,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                             {
                                 "name": me32.szModule.decode("utf-8", errors="ignore"),
                                 "path": me32.szExePath.decode("utf-8", errors="ignore"),
-                                "base": hex(
-                                    ctypes.addressof(me32.modBaseAddr.contents)
-                                    if me32.modBaseAddr
-                                    else 0
-                                ),
+                                "base": hex(ctypes.addressof(me32.modBaseAddr.contents) if me32.modBaseAddr else 0),
                                 "size": me32.modBaseSize,
                             }
                         )
@@ -2129,9 +2097,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         return inline_hooks
 
-    def inject_setwindowshookex(
-        self, target_name: str, dll_path: str, hook_type: int = None
-    ) -> bool:
+    def inject_setwindowshookex(self, target_name: str, dll_path: str, hook_type: int = None) -> bool:
         """Inject DLL using SetWindowsHookEx - bypasses some AV solutions.
 
         Args:
@@ -2286,9 +2252,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 nonlocal window_handle
                 window_handle = hwnd
                 # Log lparam for debugging injection context
-                logger.debug(
-                    "Enumerating window %s with lparam %s for thread %s", hwnd, lparam, thread_id
-                )
+                logger.debug("Enumerating window %s with lparam %s for thread %s", hwnd, lparam, thread_id)
                 return False  # Stop enumeration
 
             # Create callback
@@ -2325,9 +2289,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 self.logger.error("Error in adobe_injector: %s", e)
         self._active_hooks.clear()
 
-    def inject_apc_queue(
-        self, target_name: str, dll_path: str, wait_for_alertable: bool = True
-    ) -> bool:
+    def inject_apc_queue(self, target_name: str, dll_path: str, wait_for_alertable: bool = True) -> bool:
         """Inject DLL using APC (Asynchronous Procedure Call) queue
         More stealthy than CreateRemoteThread.
 
@@ -3637,19 +3599,13 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Unlink from all three lists
                 success = True
                 success &= self._unlink_from_list(process_handle, target_module, "InLoadOrderLinks")
-                success &= self._unlink_from_list(
-                    process_handle, target_module, "InMemoryOrderLinks"
-                )
-                success &= self._unlink_from_list(
-                    process_handle, target_module, "InInitializationOrderLinks"
-                )
+                success &= self._unlink_from_list(process_handle, target_module, "InMemoryOrderLinks")
+                success &= self._unlink_from_list(process_handle, target_module, "InInitializationOrderLinks")
 
                 if success:
                     logger.info("Successfully unlinked %s from PEB", dll_name)
                 else:
-                    logger.warning(
-                        "Partial PEB unlinking - some lists may still contain the module"
-                    )
+                    logger.warning("Partial PEB unlinking - some lists may still contain the module")
 
                 return success
 
@@ -3824,9 +3780,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     ctypes.byref(bytes_read),
                 )
 
-                module_name = name_buffer.raw[: name_length.value].decode(
-                    "utf-16-le", errors="ignore"
-                )
+                module_name = name_buffer.raw[: name_length.value].decode("utf-16-le", errors="ignore")
             else:
                 module_name = "Unknown"
 

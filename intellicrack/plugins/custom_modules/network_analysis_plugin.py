@@ -192,9 +192,7 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def scan_ports(
-        self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5
-    ) -> list[dict[str, Any]]:
+    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
         """Scan ports on target host using sockets."""
         open_ports = []
 
@@ -292,12 +290,8 @@ class NetworkAnalysisPlugin:
                                     {
                                         "timestamp": time.time(),
                                         "type": "new_connection",
-                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}"
-                                        if conn.laddr
-                                        else "N/A",
-                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}"
-                                        if conn.raddr
-                                        else "N/A",
+                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
+                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                                         "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                                     }
                                 )
@@ -325,9 +319,7 @@ class NetworkAnalysisPlugin:
             result["statistics"] = {
                 "total_events": len(connection_log),
                 "new_connections": sum(1 for c in connection_log if c["type"] == "new_connection"),
-                "closed_connections": sum(
-                    1 for c in connection_log if c["type"] == "closed_connection"
-                ),
+                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection"),
             }
 
         # Start monitoring in a separate thread
@@ -380,9 +372,7 @@ class NetworkAnalysisPlugin:
 
             # Identify patterns
             if port_frequency:
-                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[
-                    :5
-                ]
+                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
                 result["patterns"].append(
                     {
                         "type": "port_usage",
@@ -392,9 +382,7 @@ class NetworkAnalysisPlugin:
                 )
 
             if ip_frequency:
-                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[
-                    :5
-                ]
+                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
                 result["patterns"].append(
                     {
                         "type": "ip_connections",
@@ -436,9 +424,7 @@ class NetworkAnalysisPlugin:
     def monitor_traffic(self, target_process=None):
         """Monitor network traffic and connections."""
         results = []
-        results.append(
-            f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."
-        )
+        results.append(f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}...")
 
         try:
             import socket
@@ -484,9 +470,7 @@ class NetworkAnalysisPlugin:
                 results.append(f"Found {len(active_connections)} active network connections:")
                 for i, conn in enumerate(active_connections[:10]):  # Show max 10
                     host_info = f" [{conn['remote_host']}]" if conn["remote_host"] else ""
-                    results.append(
-                        f"  {i+1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})"
-                    )
+                    results.append(f"  {i + 1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})")
                 if len(active_connections) > 10:
                     results.append(f"  ... and {len(active_connections) - 10} more connections")
             else:
@@ -507,7 +491,7 @@ class NetworkAnalysisPlugin:
             if listening_ports:
                 results.append(f"\nListening ports ({len(listening_ports)}):")
                 for i, port in enumerate(listening_ports[:5]):  # Show max 5
-                    results.append(f"  {i+1}. {port['address']} (PID: {port['pid']})")
+                    results.append(f"  {i + 1}. {port['address']} (PID: {port['pid']})")
                 if len(listening_ports) > 5:
                     results.append(f"  ... and {len(listening_ports) - 5} more listening ports")
 

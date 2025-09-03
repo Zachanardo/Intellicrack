@@ -120,9 +120,7 @@ def configure_pybind11_environment():
     os.environ.setdefault("NDEBUG", "1")
 
     # Additional pybind11 safety flags
-    os.environ.setdefault(
-        "PYBIND11_DISABLE_GIL_CHECKS", "1"
-    )  # Not standard but some builds check this
+    os.environ.setdefault("PYBIND11_DISABLE_GIL_CHECKS", "1")  # Not standard but some builds check this
 
     # Ensure single-threaded execution for critical libraries
     os.environ.setdefault("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1")
@@ -158,8 +156,7 @@ def initialize_gil_safety():
         import warnings
 
         warnings.warn(
-            "GIL safety initialization called from non-main thread. "
-            "This may cause pybind11 errors.",
+            "GIL safety initialization called from non-main thread. This may cause pybind11 errors.",
             RuntimeWarning,
             stacklevel=2,
         )

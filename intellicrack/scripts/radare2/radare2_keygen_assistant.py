@@ -498,9 +498,7 @@ class R2KeygenAssistant:
                         "exponent": exponent,
                     }
 
-                    print(
-                        f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}"
-                    )
+                    print(f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}")
 
     def _extract_aes_keys(self):
         """Extract AES keys from binary."""
@@ -559,13 +557,13 @@ class R2KeygenAssistant:
                     if "AES" not in self.extracted_keys:
                         self.extracted_keys["AES"] = {}
 
-                    self.extracted_keys["AES"][f"key_{key_size*8}"] = {
+                    self.extracted_keys["AES"][f"key_{key_size * 8}"] = {
                         "address": addr,
                         "value": key_data.hex(),
                         "size": key_size * 8,
                     }
 
-                    print(f"[+] Found potential AES-{key_size*8} key at 0x{addr:x}")
+                    print(f"[+] Found potential AES-{key_size * 8} key at 0x{addr:x}")
 
     def _is_high_entropy(self, data: bytes) -> bool:
         """Check if data has high entropy (potential key material)."""
@@ -685,9 +683,7 @@ class R2KeygenAssistant:
         # Add more languages as needed
         return None
 
-    def _generate_python_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_python_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Python keygen."""
         code = []
         dependencies = []
@@ -729,17 +725,17 @@ class R2KeygenAssistant:
         # Build algorithm chain
         for i, algo in enumerate(algo_chain):
             if algo == CryptoAlgorithm.MD5:
-                code.append(f"    # Step {i+1}: MD5 hash")
+                code.append(f"    # Step {i + 1}: MD5 hash")
                 code.append("    hash_obj = hashlib.md5()")
                 code.append("    hash_obj.update(name.encode('utf-8'))")
                 code.append("    digest = hash_obj.digest()")
 
             elif algo == CryptoAlgorithm.SHA256:
-                code.append(f"    # Step {i+1}: SHA-256 hash")
+                code.append(f"    # Step {i + 1}: SHA-256 hash")
                 code.append("    digest = hashlib.sha256(name.encode('utf-8')).digest()")
 
             elif algo == CryptoAlgorithm.CUSTOM_XOR:
-                code.append(f"    # Step {i+1}: XOR encryption")
+                code.append(f"    # Step {i + 1}: XOR encryption")
                 if self.extracted_keys.get("XOR"):
                     xor_key = self.extracted_keys["XOR"][0]["key"]
                     code.append(f"    xor_key = 0x{xor_key:08x}")
@@ -753,7 +749,7 @@ class R2KeygenAssistant:
                 code.append("    digest = b''.join(result)")
 
             elif algo == CryptoAlgorithm.AES:
-                code.append(f"    # Step {i+1}: AES encryption")
+                code.append(f"    # Step {i + 1}: AES encryption")
                 if "AES" in self.extracted_keys:
                     # Use extracted key
                     key_info = list(self.extracted_keys["AES"].values())[0]
@@ -844,9 +840,7 @@ class R2KeygenAssistant:
             # Generic hex format
             code.append("    serial = digest.hex().upper()[:16]")
 
-    def _generate_cpp_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_cpp_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate C++ keygen."""
         code = []
         dependencies = []
@@ -888,15 +882,13 @@ class R2KeygenAssistant:
 
         for i, algo in enumerate(algo_chain):
             if algo == CryptoAlgorithm.MD5:
-                code.append(f"    // Step {i+1}: MD5 hash")
+                code.append(f"    // Step {i + 1}: MD5 hash")
                 code.append("    unsigned char md5_digest[MD5_DIGEST_LENGTH];")
-                code.append(
-                    f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);"
-                )
+                code.append(f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);")
                 current_var = "md5_digest"
 
             elif algo == CryptoAlgorithm.CUSTOM_XOR:
-                code.append(f"    // Step {i+1}: XOR encryption")
+                code.append(f"    // Step {i + 1}: XOR encryption")
                 if self.extracted_keys.get("XOR"):
                     xor_key = self.extracted_keys["XOR"][0]["key"]
                     code.append(f"    uint32_t xor_key = 0x{xor_key:08x};")
@@ -970,9 +962,7 @@ class R2KeygenAssistant:
             code.append("};")
             code.append("")
 
-    def _generate_java_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_java_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Java keygen."""
         code = []
         dependencies = []
@@ -1006,19 +996,19 @@ class R2KeygenAssistant:
 
         for i, algo in enumerate(algo_chain):
             if algo == CryptoAlgorithm.MD5:
-                code.append(f"        // Step {i+1}: MD5 hash")
+                code.append(f"        // Step {i + 1}: MD5 hash")
                 code.append('        MessageDigest md = MessageDigest.getInstance("MD5");')
                 code.append(f"        byte[] digest = md.digest({current_var});")
                 current_var = "digest"
 
             elif algo == CryptoAlgorithm.SHA256:
-                code.append(f"        // Step {i+1}: SHA-256 hash")
+                code.append(f"        // Step {i + 1}: SHA-256 hash")
                 code.append('        MessageDigest sha = MessageDigest.getInstance("SHA-256");')
                 code.append(f"        byte[] digest = sha.digest({current_var});")
                 current_var = "digest"
 
             elif algo == CryptoAlgorithm.CUSTOM_XOR:
-                code.append(f"        // Step {i+1}: XOR encryption")
+                code.append(f"        // Step {i + 1}: XOR encryption")
                 if self.extracted_keys.get("XOR"):
                     xor_key = self.extracted_keys["XOR"][0]["key"]
                     code.append(f"        int xorKey = 0x{xor_key:08x};")
@@ -1028,9 +1018,7 @@ class R2KeygenAssistant:
                 code.append(f"        byte[] xorResult = new byte[{current_var}.length];")
                 code.append(f"        for (int i = 0; i < {current_var}.length; i += 4) {{")
                 code.append("            int chunk = 0;")
-                code.append(
-                    "            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {"
-                )
+                code.append("            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {")
                 code.append(f"                chunk |= ({current_var}[i+j] & 0xFF) << (j*8);")
                 code.append("            }")
                 code.append("            chunk ^= xorKey;")
@@ -1048,15 +1036,11 @@ class R2KeygenAssistant:
         if flow.serial_format == "4x4":
             code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
             code.append("            if (i > 0 && i % 2 == 0) serial.append('-');")
-            code.append(
-                f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));'
-            )
+            code.append(f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));')
             code.append("        }")
         else:
             code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
-            code.append(
-                f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));'
-            )
+            code.append(f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));')
             code.append("        }")
 
         code.append("        return serial.toString();")
@@ -1116,7 +1100,7 @@ class R2KeygenAssistant:
             }
 
             ext = ext_map.get(template.language, ".txt")
-            filename = f"keygen_{i+1}{ext}"
+            filename = f"keygen_{i + 1}{ext}"
             filepath = os.path.join(output_dir, filename)
 
             with open(filepath, "w") as f:
@@ -1125,9 +1109,9 @@ class R2KeygenAssistant:
             print(f"[+] Exported {template.language.value} keygen to {filepath}")
 
             # Write usage instructions
-            readme_path = os.path.join(output_dir, f"README_{i+1}.txt")
+            readme_path = os.path.join(output_dir, f"README_{i + 1}.txt")
             with open(readme_path, "w") as f:
-                f.write(f"Keygen {i+1} - {template.language.value}\n")
+                f.write(f"Keygen {i + 1} - {template.language.value}\n")
                 f.write("=" * 50 + "\n\n")
                 f.write("Algorithm Chain:\n")
                 f.writelines(f"  - {algo.value}\n" for algo in template.algorithm_chain)
@@ -1143,9 +1127,7 @@ class R2KeygenAssistant:
         print("\n[*] Analyzing license functions for keygen generation...")
 
         # Convert to addresses
-        target_addrs = [
-            int(f["address"], 16) for f in license_functions if f.get("confidence", 0) > 0.7
-        ]
+        target_addrs = [int(f["address"], 16) for f in license_functions if f.get("confidence", 0) > 0.7]
 
         # Analyze validation flows
         self.analyze_validation(target_addrs)

@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
+
     _ = Template.__name__  # Verify Template class is available for template processing
     HAS_JINJA2 = True
 except ImportError:
@@ -35,6 +36,7 @@ except ImportError:
 
 try:
     import markdown
+
     _ = markdown.__name__  # Verify markdown module is available for text processing
     HAS_MARKDOWN = True
 except ImportError:
@@ -96,15 +98,11 @@ class ReportGenerator:
 
         # Initialize Jinja2 environment if available
         if HAS_JINJA2:
-            self.jinja_env = Environment(
-                loader=FileSystemLoader(str(self.template_dir)),
-                autoescape=True
-            )
+            self.jinja_env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True)
         else:
             self.jinja_env = None
 
-    def generate_report(self, analysis_data: Dict[str, Any], format: str = "json",
-                       output_file: Optional[str] = None) -> str:
+    def generate_report(self, analysis_data: Dict[str, Any], format: str = "json", output_file: Optional[str] = None) -> str:
         """Generate report in specified format."""
         result = self._prepare_analysis_result(analysis_data)
 
@@ -143,14 +141,14 @@ class ReportGenerator:
             metadata=data.get("metadata", {}),
             vulnerabilities=data.get("vulnerabilities", []),
             protections=data.get("protections", []),
-            recommendations=data.get("recommendations", [])
+            recommendations=data.get("recommendations", []),
         )
 
     def _generate_json_report(self, result: AnalysisResult, output_path: Path) -> str:
         """Generate JSON format report."""
         report_data = asdict(result)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2, ensure_ascii=False)
 
         return str(output_path)
@@ -164,7 +162,7 @@ class ReportGenerator:
             # Generate HTML without template
             html_content = self._generate_html_without_template(result)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_content)
 
         return str(output_path)
@@ -213,12 +211,12 @@ class ReportGenerator:
 
     <h2>Key Findings</h2>
     <ul>
-        {"".join(f'<li>{f.get("description", "")}</li>' for f in result.findings)}
+        {"".join(f"<li>{f.get('description', '')}</li>" for f in result.findings)}
     </ul>
 
     <h2>Recommendations</h2>
     <ul>
-        {"".join(f'<li>{r}</li>' for r in result.recommendations)}
+        {"".join(f"<li>{r}</li>" for r in result.recommendations)}
     </ul>
 </body>
 </html>"""
@@ -228,7 +226,7 @@ class ReportGenerator:
         """Generate PDF format report."""
         if not HAS_REPORTLAB:
             # Fallback to HTML if ReportLab not available
-            html_path = output_path.with_suffix('.html')
+            html_path = output_path.with_suffix(".html")
             self._generate_html_report(result, html_path)
             return str(html_path)
 
@@ -238,93 +236,105 @@ class ReportGenerator:
 
         # Title
         title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=24,
-            textColor=colors.HexColor('#333333'),
-            spaceAfter=30
+            "CustomTitle", parent=styles["Heading1"], fontSize=24, textColor=colors.HexColor("#333333"), spaceAfter=30
         )
         story.append(Paragraph("Binary Analysis Report", title_style))
         story.append(Spacer(1, 12))
 
         # File Information
-        story.append(Paragraph("File Information", styles['Heading2']))
+        story.append(Paragraph("File Information", styles["Heading2"]))
         file_data = [
             ["Target File:", result.target_file],
             ["File Hash:", result.file_hash],
             ["File Size:", f"{result.file_size:,} bytes"],
             ["Analysis Type:", result.analysis_type],
-            ["Timestamp:", result.timestamp]
+            ["Timestamp:", result.timestamp],
         ]
 
-        file_table = Table(file_data, colWidths=[2*inch, 4*inch])
-        file_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.beige),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
+        file_table = Table(file_data, colWidths=[2 * inch, 4 * inch])
+        file_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.beige),
+                    ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+        )
         story.append(file_table)
         story.append(Spacer(1, 20))
 
         # Vulnerabilities
         if result.vulnerabilities:
-            story.append(Paragraph("Vulnerabilities Found", styles['Heading2']))
+            story.append(Paragraph("Vulnerabilities Found", styles["Heading2"]))
             vuln_data = [["Type", "Severity", "Description"]]
             for v in result.vulnerabilities:
-                vuln_data.append([
-                    v.get("type", "Unknown"),
-                    v.get("severity", "Unknown"),
-                    v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", "")
-                ])
+                vuln_data.append(
+                    [
+                        v.get("type", "Unknown"),
+                        v.get("severity", "Unknown"),
+                        v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", ""),
+                    ]
+                )
 
-            vuln_table = Table(vuln_data, colWidths=[1.5*inch, 1.5*inch, 3*inch])
-            vuln_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
+            vuln_table = Table(vuln_data, colWidths=[1.5 * inch, 1.5 * inch, 3 * inch])
+            vuln_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, 0), 12),
+                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ]
+                )
+            )
             story.append(vuln_table)
             story.append(Spacer(1, 20))
 
         # Protections
         if result.protections:
-            story.append(Paragraph("Protection Mechanisms", styles['Heading2']))
+            story.append(Paragraph("Protection Mechanisms", styles["Heading2"]))
             prot_data = [["Type", "Status", "Details"]]
             for p in result.protections:
-                prot_data.append([
-                    p.get("type", "Unknown"),
-                    p.get("status", "Unknown"),
-                    p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", "")
-                ])
+                prot_data.append(
+                    [
+                        p.get("type", "Unknown"),
+                        p.get("status", "Unknown"),
+                        p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", ""),
+                    ]
+                )
 
-            prot_table = Table(prot_data, colWidths=[2*inch, 1.5*inch, 2.5*inch])
-            prot_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
+            prot_table = Table(prot_data, colWidths=[2 * inch, 1.5 * inch, 2.5 * inch])
+            prot_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, 0), 12),
+                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgreen),
+                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ]
+                )
+            )
             story.append(prot_table)
             story.append(Spacer(1, 20))
 
         # Recommendations
         if result.recommendations:
-            story.append(Paragraph("Recommendations", styles['Heading2']))
+            story.append(Paragraph("Recommendations", styles["Heading2"]))
             for rec in result.recommendations:
-                story.append(Paragraph(f"• {rec}", styles['Normal']))
+                story.append(Paragraph(f"• {rec}", styles["Normal"]))
             story.append(Spacer(1, 12))
 
         doc.build(story)
@@ -373,13 +383,13 @@ class ReportGenerator:
             ET.SubElement(recs, "Recommendation").text = r
 
         tree = ET.ElementTree(root)
-        tree.write(str(output_path), encoding='utf-8', xml_declaration=True)
+        tree.write(str(output_path), encoding="utf-8", xml_declaration=True)
 
         return str(output_path)
 
     def _generate_csv_report(self, result: AnalysisResult, output_path: Path) -> str:
         """Generate CSV format report."""
-        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
 
             # Write file information
@@ -395,23 +405,14 @@ class ReportGenerator:
             writer.writerow(["Vulnerabilities"])
             writer.writerow(["Type", "Severity", "Description", "Location"])
             for v in result.vulnerabilities:
-                writer.writerow([
-                    v.get("type", "Unknown"),
-                    v.get("severity", "Unknown"),
-                    v.get("description", ""),
-                    v.get("location", "")
-                ])
+                writer.writerow([v.get("type", "Unknown"), v.get("severity", "Unknown"), v.get("description", ""), v.get("location", "")])
             writer.writerow([])
 
             # Write protections
             writer.writerow(["Protection Mechanisms"])
             writer.writerow(["Type", "Status", "Details"])
             for p in result.protections:
-                writer.writerow([
-                    p.get("type", "Unknown"),
-                    p.get("status", "Unknown"),
-                    p.get("details", "")
-                ])
+                writer.writerow([p.get("type", "Unknown"), p.get("status", "Unknown"), p.get("details", "")])
             writer.writerow([])
 
             # Write recommendations
@@ -440,7 +441,9 @@ class ReportGenerator:
 """
 
         for v in result.vulnerabilities:
-            md_content += f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
+            md_content += (
+                f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
+            )
 
         md_content += """
 ## Protection Mechanisms
@@ -460,7 +463,7 @@ class ReportGenerator:
         for r in result.recommendations:
             md_content += f"- {r}\n"
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(md_content)
 
         return str(output_path)
@@ -468,7 +471,7 @@ class ReportGenerator:
     def _generate_text_report(self, result: AnalysisResult, output_path: Path) -> str:
         """Generate plain text format report."""
         text_content = f"""BINARY ANALYSIS REPORT
-{'='*50}
+{"=" * 50}
 
 FILE INFORMATION
 ----------------
@@ -484,11 +487,11 @@ VULNERABILITIES FOUND
 
         for v in result.vulnerabilities:
             text_content += f"""
-Type: {v.get('type', 'Unknown')}
-Severity: {v.get('severity', 'Unknown')}
-Description: {v.get('description', '')}
-Location: {v.get('location', '')}
-{'-'*30}
+Type: {v.get("type", "Unknown")}
+Severity: {v.get("severity", "Unknown")}
+Description: {v.get("description", "")}
+Location: {v.get("location", "")}
+{"-" * 30}
 """
 
         text_content += """
@@ -498,10 +501,10 @@ PROTECTION MECHANISMS
 
         for p in result.protections:
             text_content += f"""
-Type: {p.get('type', 'Unknown')}
-Status: {p.get('status', 'Unknown')}
-Details: {p.get('details', '')}
-{'-'*30}
+Type: {p.get("type", "Unknown")}
+Status: {p.get("status", "Unknown")}
+Details: {p.get("details", "")}
+{"-" * 30}
 """
 
         text_content += """
@@ -518,13 +521,12 @@ RECOMMENDATIONS
         for r in result.recommendations:
             text_content += f"• {r}\n"
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(text_content)
 
         return str(output_path)
 
-    def generate_batch_report(self, analysis_results: List[Dict[str, Any]],
-                            format: str = "json") -> str:
+    def generate_batch_report(self, analysis_results: List[Dict[str, Any]], format: str = "json") -> str:
         """Generate report for multiple analysis results."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         batch_dir = self.output_dir / f"batch_{timestamp}"
@@ -532,17 +534,13 @@ RECOMMENDATIONS
 
         report_files = []
         for i, data in enumerate(analysis_results):
-            output_file = f"report_{i+1}.{format}"
-            report_path = self.generate_report(
-                data,
-                format=format,
-                output_file=str(batch_dir / output_file)
-            )
+            output_file = f"report_{i + 1}.{format}"
+            report_path = self.generate_report(data, format=format, output_file=str(batch_dir / output_file))
             report_files.append(report_path)
 
         # Create archive
         archive_path = self.output_dir / f"batch_reports_{timestamp}.zip"
-        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for file_path in report_files:
                 zf.write(file_path, Path(file_path).name)
 
@@ -556,7 +554,7 @@ RECOMMENDATIONS
 
         archive_path = self.output_dir / archive_name
 
-        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for path in report_paths:
                 if os.path.exists(path):
                     zf.write(path, os.path.basename(path))
@@ -573,8 +571,7 @@ class ComparisonReportGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.base_generator = ReportGenerator(output_dir)
 
-    def generate_comparison(self, results: List[Dict[str, Any]],
-                          format: str = "html") -> str:
+    def generate_comparison(self, results: List[Dict[str, Any]], format: str = "html") -> str:
         """Generate comparison report."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"comparison_{timestamp}.{format}"
@@ -599,23 +596,21 @@ class ComparisonReportGenerator:
             "unique_vulnerabilities": {},
             "common_protections": [],
             "unique_protections": {},
-            "similarity_score": 0.0
+            "similarity_score": 0.0,
         }
 
         # Extract file information
         for r in results:
-            comparison["files_compared"].append({
-                "file": r.get("target_file", "Unknown"),
-                "hash": r.get("file_hash", ""),
-                "size": r.get("file_size", 0)
-            })
+            comparison["files_compared"].append(
+                {"file": r.get("target_file", "Unknown"), "hash": r.get("file_hash", ""), "size": r.get("file_size", 0)}
+            )
 
         # Find common and unique vulnerabilities
         all_vulns = []
         for i, r in enumerate(results):
             vulns = r.get("vulnerabilities", [])
             all_vulns.append(set(v.get("type", "") for v in vulns))
-            comparison["unique_vulnerabilities"][f"file_{i+1}"] = vulns
+            comparison["unique_vulnerabilities"][f"file_{i + 1}"] = vulns
 
         if all_vulns:
             common = set.intersection(*all_vulns) if all_vulns else set()
@@ -654,7 +649,7 @@ class ComparisonReportGenerator:
     <h2>Files Compared</h2>
     <table>
         <tr><th>File</th><th>Hash</th><th>Size</th></tr>
-        {"".join(f'<tr><td>{f["file"]}</td><td>{f["hash"]}</td><td>{f["size"]:,}</td></tr>' for f in data["files_compared"])}
+        {"".join(f"<tr><td>{f['file']}</td><td>{f['hash']}</td><td>{f['size']:,}</td></tr>" for f in data["files_compared"])}
     </table>
 
     <h2>Similarity Score</h2>
@@ -662,7 +657,7 @@ class ComparisonReportGenerator:
 
     <h2>Common Vulnerabilities</h2>
     <ul class="common">
-        {"".join(f'<li>{v}</li>' for v in data["common_vulnerabilities"])}
+        {"".join(f"<li>{v}</li>" for v in data["common_vulnerabilities"])}
     </ul>
 
     <h2>Unique Vulnerabilities</h2>
@@ -671,29 +666,26 @@ class ComparisonReportGenerator:
 </body>
 </html>"""
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(html)
 
         return str(output_path)
 
     def _generate_json_comparison(self, data: Dict[str, Any], output_path: Path) -> str:
         """Generate JSON comparison report."""
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
         return str(output_path)
 
 
-def generate_report(analysis_data: Dict[str, Any], format: str = "html",
-                   output_dir: str = "reports") -> str:
+def generate_report(analysis_data: Dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
     """Convenience function to generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
 
-def generate_comparison_report(results: List[Dict[str, Any]],
-                              format: str = "html",
-                              output_dir: str = "reports/comparisons") -> str:
+def generate_comparison_report(results: List[Dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
     """Convenience function to generate a comparison report."""
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

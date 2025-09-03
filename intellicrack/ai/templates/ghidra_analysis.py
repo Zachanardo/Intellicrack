@@ -83,11 +83,7 @@ def analyze_license_functions():
                         "pattern_matched": pattern,
                     }
                 )
-                log(
-                    "Found license function: {} at {}".format(
-                        function.getName(), function.getEntryPoint()
-                    )
-                )
+                log("Found license function: {} at {}".format(function.getName(), function.getEntryPoint()))
                 break
 
     return license_functions
@@ -130,11 +126,7 @@ def analyze_strings():
                                 "pattern_matched": pattern,
                             }
                         )
-                        log(
-                            "Found license string: '{}' at {}".format(
-                                string_value, data.getAddress()
-                            )
-                        )
+                        log("Found license string: '{}' at {}".format(string_value, data.getAddress()))
                         break
 
     return license_strings
@@ -174,11 +166,7 @@ def analyze_imports():
                         "pattern_matched": pattern,
                     }
                 )
-                log(
-                    "Found relevant import: {} from {}".format(
-                        symbol.getName(), symbol.getParentNamespace().getName()
-                    )
-                )
+                log("Found relevant import: {} from {}".format(symbol.getName(), symbol.getParentNamespace().getName()))
                 break
 
     return license_imports
@@ -216,11 +204,7 @@ def find_crypto_functions():
                         "crypto_type": pattern,
                     }
                 )
-                log(
-                    "Found crypto function: {} at {}".format(
-                        function.getName(), function.getEntryPoint()
-                    )
-                )
+                log("Found crypto function: {} at {}".format(function.getName(), function.getEntryPoint()))
                 break
 
     return crypto_functions
@@ -301,11 +285,7 @@ def main():
         for i, rec in enumerate(recommendations, 1):
             log("{}. {}: {}".format(i, rec["type"], rec["description"]))
             log("   Method: {}".format(rec["method"]))
-            log(
-                "   Targets: {}".format(
-                    ", ".join(rec["targets"][:3]) + ("..." if len(rec["targets"]) > 3 else "")
-                )
-            )
+            log("   Targets: {}".format(", ".join(rec["targets"][:3]) + ("..." if len(rec["targets"]) > 3 else "")))
 
     log("\nAnalysis complete!")
     return analysis_results, recommendations

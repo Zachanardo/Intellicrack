@@ -64,14 +64,10 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> int | 
                     proc_name_lower = proc.info["name"].lower()
                     if exact_match:
                         if proc_name_lower == target_name:
-                            logger.info(
-                                f"Found exact process match: {process_name} with PID: {proc.info['pid']}"
-                            )
+                            logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
                             return proc.info["pid"]
                     elif target_name in proc_name_lower:
-                        logger.info(
-                            f"Found process match: {process_name} with PID: {proc.info['pid']}"
-                        )
+                        logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
                         return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
@@ -128,9 +124,7 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
         return []
 
     try:
-        running_processes = [
-            p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]
-        ]
+        running_processes = [p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]]
         target_names_lower = [name.lower() for name in target_names]
 
         matches = []
@@ -342,9 +336,7 @@ def detect_hardware_dongles(app=None) -> list[str]:
             results.append("winreg not available - cannot check registry")
 
     if found_dongles:
-        results.append(
-            f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}"
-        )
+        results.append(f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}")
     else:
         results.append("No hardware dongles detected")
 
@@ -409,9 +401,7 @@ def detect_tpm_protection() -> dict[str, Any]:
         if psutil:
             tpm_processes = ["tpm2-abrmd", "tcsd", "trousers"]
             for proc in psutil.process_iter(["name"]):
-                if proc.info["name"] and any(
-                    tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes
-                ):
+                if proc.info["name"] and any(tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes):
                     results["detection_methods"].append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux
@@ -494,7 +484,11 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
 
         process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             shlex.split(command) if isinstance(command, str) else command,
-            capture_output=True, text=True, timeout=timeout, check=False, shell=False  # Explicitly secure - using list format prevents shell injection
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+            shell=False,  # Explicitly secure - using list format prevents shell injection
         )
 
         result["success"] = process.returncode == 0

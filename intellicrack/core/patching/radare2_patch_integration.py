@@ -23,10 +23,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import shutil
-from pathlib import Path
 from typing import Any
 
-from ...utils.patching.patch_utils import parse_patch_instructions
 from ...plugins.custom_modules.binary_patcher_plugin import BinaryPatch, BinaryPatcherPlugin
 from ..analysis.radare2_bypass_generator import R2BypassGenerator
 
@@ -35,37 +33,33 @@ logger = logging.getLogger(__name__)
 
 class R2PatchIntegrator:
     """Integrates Radare2 bypass generation with binary modification capabilities."""
-    
+
     def __init__(self):
         """Initialize the R2 patch integrator."""
         self.bypass_generator = R2BypassGenerator()
         self.binary_patcher = BinaryPatcherPlugin()
         self.patch_cache = {}
-        
-    def generate_integrated_patches(
-        self, 
-        binary_path: str, 
-        license_analysis: dict[str, Any]
-    ) -> dict[str, Any]:
+
+    def generate_integrated_patches(self, binary_path: str, license_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate patches using R2 bypass generator and convert to binary patches.
-        
+
         Args:
             binary_path: Path to the binary file
             license_analysis: License analysis results from R2
-            
+
         Returns:
             Dictionary containing integrated patch results
         """
         try:
             # Generate R2 bypass patches using enhanced instruction generation
             bypass_result = self._generate_r2_bypass_patches(binary_path, license_analysis)
-            
+
             # Convert R2 patches to binary patch format
             binary_patches = self._convert_r2_to_binary_patches(bypass_result)
-            
+
             # Validate patches using existing binary patcher
             validated_patches = self._validate_patches_with_binary_patcher(binary_patches)
-            
+
             # Create integrated result
             integrated_result = {
                 "success": True,
@@ -77,83 +71,71 @@ class R2PatchIntegrator:
                 "integration_metadata": {
                     "r2_generator_version": "enhanced_v4.1",
                     "binary_patcher_integration": True,
-                    "validation_passed": True
-                }
+                    "validation_passed": True,
+                },
             }
-            
+
             logger.info(f"Generated {len(validated_patches)} integrated patches for {binary_path}")
             return integrated_result
-            
+
         except Exception as e:
             logger.error(f"Error generating integrated patches: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "binary_path": binary_path,
-                "binary_patches": []
+                "binary_patches": [],
             }
-    
-    def _generate_r2_bypass_patches(
-        self, 
-        binary_path: str, 
-        license_analysis: dict[str, Any]
-    ) -> dict[str, Any]:
+
+    def _generate_r2_bypass_patches(self, binary_path: str, license_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate bypass patches using the enhanced R2 bypass generator."""
         try:
             # Use the existing R2 bypass generator with enhanced patch instructions
             with self.bypass_generator._get_r2_session(binary_path) as r2:
                 # Generate automated patches with enhanced instructions
                 bypass_result = {
-                    "automated_patches": self.bypass_generator._generate_automated_patches(
-                        r2, license_analysis
-                    ),
-                    "memory_patches": self.bypass_generator._generate_memory_patches(
-                        r2, license_analysis
-                    )
+                    "automated_patches": self.bypass_generator._generate_automated_patches(r2, license_analysis),
+                    "memory_patches": self.bypass_generator._generate_memory_patches(r2, license_analysis),
                 }
-                
+
                 return bypass_result
-                
+
         except Exception as e:
             logger.error(f"Error generating R2 bypass patches: {e}")
             return {"automated_patches": [], "memory_patches": []}
-    
+
     def _convert_r2_to_binary_patches(self, r2_result: dict[str, Any]) -> list[BinaryPatch]:
         """Convert R2 patch format to binary patch format.
-        
+
         Args:
             r2_result: Results from R2 bypass generator
-            
+
         Returns:
             List of BinaryPatch objects
         """
         binary_patches = []
-        
+
         # Process automated patches
         for patch in r2_result.get("automated_patches", []):
             binary_patch = self._create_binary_patch_from_r2(patch, "automated")
             if binary_patch:
                 binary_patches.append(binary_patch)
-        
+
         # Process memory patches
         for patch in r2_result.get("memory_patches", []):
             binary_patch = self._create_binary_patch_from_r2(patch, "memory")
             if binary_patch:
                 binary_patches.append(binary_patch)
-                
+
         return binary_patches
-    
-    def _create_binary_patch_from_r2(
-        self, 
-        r2_patch: dict[str, Any], 
-        patch_category: str
-    ) -> BinaryPatch | None:
+
+    def _create_binary_patch_from_r2(self, r2_patch: dict[str, Any], patch_category: str) -> BinaryPatch | None:
         """Create a BinaryPatch from R2 patch data.
-        
+
         Args:
             r2_patch: R2 patch dictionary
             patch_category: Category of patch (automated/memory)
-            
+
         Returns:
             BinaryPatch object or None if conversion fails
         """
@@ -167,7 +149,7 @@ class R2PatchIntegrator:
                     offset = int(address_str, 16)  # Assume hex
             else:
                 offset = int(address_str)
-            
+
             # Extract patch bytes
             patch_bytes_str = r2_patch.get("patch_bytes", "")
             if patch_bytes_str:
@@ -180,7 +162,7 @@ class R2PatchIntegrator:
             else:
                 # Fallback: NOP instruction
                 patched_bytes = b"\x90"
-            
+
             # Extract original bytes (if available)
             original_bytes_str = r2_patch.get("original_bytes", "")
             if original_bytes_str:
@@ -191,36 +173,33 @@ class R2PatchIntegrator:
             else:
                 # Create placeholder original bytes of same length
                 original_bytes = b"\x00" * len(patched_bytes)
-            
+
             # Create description
             description = r2_patch.get("patch_description", f"{patch_category}_patch_at_{hex(offset)}")
-            
+
             return BinaryPatch(
                 offset=offset,
                 original_bytes=original_bytes,
                 patched_bytes=patched_bytes,
                 description=description,
-                patch_type="license_bypass"
+                patch_type="license_bypass",
             )
-            
+
         except (ValueError, TypeError) as e:
             logger.error(f"Error converting R2 patch to binary patch: {e}")
             return None
-    
-    def _validate_patches_with_binary_patcher(
-        self, 
-        patches: list[BinaryPatch]
-    ) -> list[BinaryPatch]:
+
+    def _validate_patches_with_binary_patcher(self, patches: list[BinaryPatch]) -> list[BinaryPatch]:
         """Validate patches using the existing binary patcher plugin.
-        
+
         Args:
             patches: List of BinaryPatch objects
-            
+
         Returns:
             List of validated BinaryPatch objects
         """
         validated_patches = []
-        
+
         for patch in patches:
             # Basic validation: check that patch has valid data
             if self._is_valid_patch(patch):
@@ -229,78 +208,73 @@ class R2PatchIntegrator:
                 validated_patches.append(patch)
             else:
                 logger.warning(f"Invalid patch at offset {hex(patch.offset)}: {patch.description}")
-        
+
         logger.info(f"Validated {len(validated_patches)}/{len(patches)} patches")
         return validated_patches
-    
+
     def _is_valid_patch(self, patch: BinaryPatch) -> bool:
         """Validate a single binary patch.
-        
+
         Args:
             patch: BinaryPatch to validate
-            
+
         Returns:
             True if patch is valid, False otherwise
         """
         # Check offset is valid
         if patch.offset < 0:
             return False
-            
+
         # Check that patched bytes exist
         if not patch.patched_bytes:
             return False
-            
+
         # Check that original and patched bytes have compatible lengths
         if len(patch.original_bytes) > 0 and len(patch.patched_bytes) > len(patch.original_bytes) * 2:
             # Patched bytes shouldn't be excessively larger
             return False
-            
+
         # Check for reasonable patch size (prevent extremely large patches)
         if len(patch.patched_bytes) > 1024:  # 1KB limit
             return False
-            
+
         return True
-    
-    def apply_integrated_patches(
-        self, 
-        binary_path: str, 
-        patches: list[BinaryPatch],
-        output_path: str | None = None
-    ) -> dict[str, Any]:
+
+    def apply_integrated_patches(self, binary_path: str, patches: list[BinaryPatch], output_path: str | None = None) -> dict[str, Any]:
         """Apply integrated patches to a binary file.
-        
+
         Args:
             binary_path: Path to the original binary
             patches: List of BinaryPatch objects to apply
             output_path: Output path for patched binary (optional)
-            
+
         Returns:
             Dictionary containing application results
         """
         try:
             if not output_path:
                 output_path = f"{binary_path}.patched"
-            
+
             # Create backup of original binary
             backup_path = f"{binary_path}.backup"
             shutil.copy2(binary_path, backup_path)
-            
+
             # Copy to output location
             shutil.copy2(binary_path, output_path)
-            
+
             # Apply patches to the copied binary
             patches_applied = 0
             failed_patches = []
-            
+
             with open(output_path, "r+b") as binary_file:
                 for patch in patches:
                     try:
                         # Seek to patch location
                         binary_file.seek(patch.offset)
-                        
+
                         # Read current bytes for verification
                         current_bytes = binary_file.read(len(patch.original_bytes))
-                        
+
                         # Verify original bytes match (if specified and non-zero)
                         if patch.original_bytes and patch.original_bytes != b"\x00" * len(patch.original_bytes):
                             if current_bytes != patch.original_bytes:
@@ -308,45 +282,42 @@ class R2PatchIntegrator:
                                     f"Original bytes mismatch at {hex(patch.offset)}: "
                                     f"expected {patch.original_bytes.hex()}, found {current_bytes.hex()}"
                                 )
-                        
+
                         # Apply patch
                         binary_file.seek(patch.offset)
                         binary_file.write(patch.patched_bytes)
                         patches_applied += 1
-                        
+
                         logger.debug(f"Applied patch at {hex(patch.offset)}: {patch.description}")
-                        
+
                     except Exception as e:
                         logger.error(f"Failed to apply patch at {hex(patch.offset)}: {e}")
-                        failed_patches.append({
-                            "patch": patch,
-                            "error": str(e)
-                        })
-            
+                        failed_patches.append({"patch": patch, "error": str(e)})
+
             result = {
                 "success": True,
                 "output_path": output_path,
                 "backup_path": backup_path,
                 "patches_applied": patches_applied,
                 "patches_failed": len(failed_patches),
-                "failed_patches": failed_patches
+                "failed_patches": failed_patches,
             }
-            
+
             logger.info(f"Applied {patches_applied}/{len(patches)} patches to {output_path}")
             return result
-            
+
         except Exception as e:
             logger.error(f"Error applying integrated patches: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "output_path": output_path,
-                "patches_applied": 0
+                "patches_applied": 0,
             }
-    
+
     def get_integration_status(self) -> dict[str, Any]:
         """Get the current integration status.
-        
+
         Returns:
             Dictionary containing integration status information
         """
@@ -354,14 +325,11 @@ class R2PatchIntegrator:
             "r2_bypass_generator": {
                 "available": self.bypass_generator is not None,
                 "enhanced_instructions": True,
-                "version": "4.1_enhanced"
+                "version": "4.1_enhanced",
             },
             "binary_patcher": {
                 "available": self.binary_patcher is not None,
-                "patches_loaded": len(self.binary_patcher.patches)
+                "patches_loaded": len(self.binary_patcher.patches),
             },
-            "integration": {
-                "active": True,
-                "cache_entries": len(self.patch_cache)
-            }
+            "integration": {"active": True, "cache_entries": len(self.patch_cache)},
         }

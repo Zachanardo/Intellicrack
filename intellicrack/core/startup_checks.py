@@ -66,9 +66,7 @@ def check_dependencies() -> dict[str, bool]:
         import os
 
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = (
-            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        )
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
@@ -95,9 +93,7 @@ def check_dependencies() -> dict[str, bool]:
             logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: ✓)")
         else:
             dependencies["TensorFlow"] = False
-            logger.error(
-                f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}"
-            )
+            logger.error(f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}")
             return dependencies
 
         # Check if models can be loaded
@@ -212,9 +208,7 @@ def check_qemu_setup() -> bool:
 
     # Check for existing images
     qemu_dir = get_qemu_images_dir()
-    existing_images = (
-        list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
-    )
+    existing_images = list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
 
     if existing_images:
         logger.info(f"Found {len(existing_images)} QEMU images")
@@ -317,9 +311,7 @@ def validate_tensorflow_models() -> dict[str, any]:
         import os
 
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = (
-            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        )
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
@@ -368,9 +360,7 @@ def validate_tensorflow_models() -> dict[str, any]:
                     tf_info["model_prediction_test"] = f"✗ Invalid output range: {output_value}"
             else:
                 tf_info["model_building"] = False
-                tf_info["model_prediction_test"] = (
-                    f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
-                )
+                tf_info["model_prediction_test"] = f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
         else:
             tf_info["model_building"] = False
             tf_info["model_prediction_test"] = "✗ No valid output"
@@ -545,9 +535,7 @@ def get_system_health_report() -> dict[str, any]:
         import os
 
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = (
-            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        )
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"

@@ -348,9 +348,7 @@ class LazyModelManager:
             except Exception as e:
                 logger.warning(f"Error in load callback: {e}")
 
-    def register_model(
-        self, model_id: str, backend_class: type[LLMBackend], config: LLMConfig
-    ) -> LazyModelWrapper:
+    def register_model(self, model_id: str, backend_class: type[LLMBackend], config: LLMConfig) -> LazyModelWrapper:
         """Register a model for lazy loading."""
         with self._access_lock:
             preload = self.loading_strategy.should_preload(config)
@@ -452,11 +450,7 @@ class LazyModelManager:
 
         with self._access_lock:
             for model_id, wrapper in list(self.models.items()):
-                if (
-                    wrapper.is_loaded
-                    and wrapper.last_access_time
-                    and current_time - wrapper.last_access_time > self.idle_unload_time
-                ):
+                if wrapper.is_loaded and wrapper.last_access_time and current_time - wrapper.last_access_time > self.idle_unload_time:
                     wrapper.unload()
                     logger.info(f"Auto-unloaded idle model: {model_id}")
 
@@ -489,9 +483,7 @@ def configure_lazy_loading(
         manager.loading_strategy = loading_strategy
 
 
-def register_lazy_model(
-    model_id: str, backend_class: type[LLMBackend], config: LLMConfig
-) -> LazyModelWrapper:
+def register_lazy_model(model_id: str, backend_class: type[LLMBackend], config: LLMConfig) -> LazyModelWrapper:
     """Register a model for lazy loading."""
     return get_lazy_manager().register_model(model_id, backend_class, config)
 

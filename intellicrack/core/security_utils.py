@@ -54,9 +54,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
-def secure_subprocess(
-    command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs
-) -> subprocess.CompletedProcess:
+def secure_subprocess(command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs) -> subprocess.CompletedProcess:
     """Execute a subprocess command securely.
 
     Args:
@@ -74,7 +72,7 @@ def secure_subprocess(
     """
     if shell:
         raise SecurityError(
-            "shell=True is not allowed for security reasons. " "Use a list of arguments instead.",
+            "shell=True is not allowed for security reasons. Use a list of arguments instead.",
         )
 
     if isinstance(command, str):

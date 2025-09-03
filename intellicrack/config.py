@@ -91,9 +91,7 @@ def find_tool(tool_name: str, required_executables=None) -> str | None:
 
     """
     if required_executables:
-        logger.debug(
-            "Tool search for %s with required executables: %s", tool_name, required_executables
-        )
+        logger.debug("Tool search for %s with required executables: %s", tool_name, required_executables)
     try:
         config = _get_modern_config()
         return config.get_tool_path(tool_name)
@@ -338,9 +336,7 @@ class ConfigManager:
         if key == "output_dir":
             return str(self._modern_config.get_output_dir())
         if key == "temp_dir":
-            return self._modern_config.get(
-                "directories.temp", str(self._modern_config.get_cache_dir())
-            )
+            return self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
 
         # Try modern config first, then legacy structure
         result = self._modern_config.get(key, None)

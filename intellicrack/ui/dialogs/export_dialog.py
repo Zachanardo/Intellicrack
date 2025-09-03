@@ -127,15 +127,9 @@ class ExportWorker(QThread):
             if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
                 icp_dict = {
-                    "is_protected": icp_data.is_protected
-                    if hasattr(icp_data, "is_protected")
-                    else False,
-                    "file_type": icp_data.file_type
-                    if hasattr(icp_data, "file_type")
-                    else "Unknown",
-                    "architecture": icp_data.architecture
-                    if hasattr(icp_data, "architecture")
-                    else "Unknown",
+                    "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
+                    "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
+                    "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
                     "detections": [],
                 }
 
@@ -144,9 +138,7 @@ class ExportWorker(QThread):
                         det_dict = {
                             "name": detection.name if hasattr(detection, "name") else "Unknown",
                             "type": detection.type if hasattr(detection, "type") else "Unknown",
-                            "confidence": detection.confidence
-                            if hasattr(detection, "confidence")
-                            else 0.0,
+                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
                             "version": detection.version if hasattr(detection, "version") else "",
                         }
                         icp_dict["detections"].append(det_dict)
@@ -236,9 +228,7 @@ class ExportWorker(QThread):
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError as e:
             self.logger.error("Import error in export_dialog: %s", e)
-            raise ImportError(
-                "ReportLab is required for PDF export. Install with: pip install reportlab"
-            ) from None
+            raise ImportError("ReportLab is required for PDF export. Install with: pip install reportlab") from None
 
         self.progress_update.emit(30, "Building PDF report...")
 
@@ -266,11 +256,7 @@ class ExportWorker(QThread):
         story.append(Spacer(1, 20))
 
         # Metadata
-        story.append(
-            Paragraph(
-                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]
-            )
-        )
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]))
         story.append(Spacer(1, 20))
 
         # File Information
@@ -307,9 +293,9 @@ class ExportWorker(QThread):
 
             # Summary
             summary_text = f"""
-            File Type: {getattr(icp_data, 'file_type', 'Unknown')}<br/>
-            Architecture: {getattr(icp_data, 'architecture', 'Unknown')}<br/>
-            Protected: {'Yes' if getattr(icp_data, 'is_protected', False) else 'No'}<br/>
+            File Type: {getattr(icp_data, "file_type", "Unknown")}<br/>
+            Architecture: {getattr(icp_data, "architecture", "Unknown")}<br/>
+            Protected: {"Yes" if getattr(icp_data, "is_protected", False) else "No"}<br/>
             """
 
             story.append(Paragraph(summary_text, styles["Normal"]))
@@ -331,9 +317,7 @@ class ExportWorker(QThread):
                         ]
                     )
 
-                detection_table = Table(
-                    detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch]
-                )
+                detection_table = Table(detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch])
                 detection_table.setStyle(
                     TableStyle(
                         [
@@ -387,7 +371,7 @@ class ExportWorker(QThread):
 <body>
     <div class="container">
         <h1>Intellicrack Protection Analysis Report</h1>
-        <p class="timestamp">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p class="timestamp">Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 
 """
 
@@ -769,9 +753,7 @@ class ExportDialog(BaseDialog):
 </intellicrack_analysis>"""
 
             elif preview_format == "csv":
-                preview_text = (
-                    "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
-                )
+                preview_text = "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
                 if "icp_analysis" in filtered_results:
                     icp_data = filtered_results["icp_analysis"]
                     if hasattr(icp_data, "all_detections"):
@@ -790,7 +772,7 @@ class ExportDialog(BaseDialog):
 </head>
 <body>
     <h1>Intellicrack Protection Analysis Report</h1>
-    <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     <!-- Analysis results would be here -->
 </body>
 </html>"""
@@ -954,11 +936,11 @@ def main():
 
     # Generate actual file for analysis
     test_file_path = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
-    with open(test_file_path, 'wb') as f:
-        f.write(b'MZ\x90\x00' + b'\x00' * 1000)  # Minimal PE header
+    with open(test_file_path, "wb") as f:
+        f.write(b"MZ\x90\x00" + b"\x00" * 1000)  # Minimal PE header
 
     # Calculate real hashes
-    with open(test_file_path, 'rb') as f:
+    with open(test_file_path, "rb") as f:
         file_content = f.read()
         md5_hash = hashlib.md5(file_content).hexdigest()  # noqa: S324 - MD5 for file fingerprinting in security analysis
         sha256_hash = hashlib.sha256(file_content).hexdigest()
@@ -970,12 +952,7 @@ def main():
             "md5": md5_hash,
             "sha256": sha256_hash,
         },
-        "icp_analysis": ICPAnalysisResult(
-            file_type="PE32",
-            architecture="x86",
-            is_protected=True,
-            all_detections=real_detections
-        ),
+        "icp_analysis": ICPAnalysisResult(file_type="PE32", architecture="x86", is_protected=True, all_detections=real_detections),
     }
 
     dialog = ExportDialog(analysis_results)

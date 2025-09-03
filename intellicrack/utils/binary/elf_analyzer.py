@@ -30,7 +30,7 @@ class ELFAnalyzer:
     EI_OSABI = 7
     EI_ABIVERSION = 8
 
-    ELFMAG = b'\x7fELF'
+    ELFMAG = b"\x7fELF"
     ELFCLASS32 = 1
     ELFCLASS64 = 2
     ELFDATA2LSB = 1
@@ -63,7 +63,7 @@ class ELFAnalyzer:
         self.segments: List[Dict[str, Any]] = []
         self.symbols: List[Dict[str, Any]] = []
         self.is_64bit: bool = False
-        self.endian: str = 'little'
+        self.endian: str = "little"
 
     def load_binary(self) -> bool:
         """Load and validate ELF binary.
@@ -73,7 +73,7 @@ class ELFAnalyzer:
 
         """
         try:
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 self.data = f.read()
 
             if not self._validate_elf():
@@ -111,17 +111,17 @@ class ELFAnalyzer:
         ei_osabi = self.data[self.EI_OSABI]
         ei_abiversion = self.data[self.EI_ABIVERSION]
 
-        self.is_64bit = (ei_class == self.ELFCLASS64)
-        self.endian = 'little' if ei_data == self.ELFDATA2LSB else 'big'
+        self.is_64bit = ei_class == self.ELFCLASS64
+        self.endian = "little" if ei_data == self.ELFDATA2LSB else "big"
 
         # Parse main header based on architecture
-        fmt_prefix = '<' if self.endian == 'little' else '>'
+        fmt_prefix = "<" if self.endian == "little" else ">"
 
         if self.is_64bit:
-            header_fmt = f'{fmt_prefix}HHIQQQIHHHHHH'
+            header_fmt = f"{fmt_prefix}HHIQQQIHHHHHH"
             header_size = 64
         else:
-            header_fmt = f'{fmt_prefix}HHIIIIIHHHHHH'
+            header_fmt = f"{fmt_prefix}HHIIIIIHHHHHH"
             header_size = 52
 
         if len(self.data) < header_size:
@@ -131,24 +131,24 @@ class ELFAnalyzer:
         header_data = struct.unpack(header_fmt, self.data[16:header_size])
 
         self.header = {
-            'ei_class': ei_class,
-            'ei_data': ei_data,
-            'ei_version': ei_version,
-            'ei_osabi': ei_osabi,
-            'ei_abiversion': ei_abiversion,
-            'e_type': header_data[0],
-            'e_machine': header_data[1],
-            'e_version': header_data[2],
-            'e_entry': header_data[3],
-            'e_phoff': header_data[4],
-            'e_shoff': header_data[5],
-            'e_flags': header_data[6],
-            'e_ehsize': header_data[7],
-            'e_phentsize': header_data[8],
-            'e_phnum': header_data[9],
-            'e_shentsize': header_data[10],
-            'e_shnum': header_data[11],
-            'e_shstrndx': header_data[12]
+            "ei_class": ei_class,
+            "ei_data": ei_data,
+            "ei_version": ei_version,
+            "ei_osabi": ei_osabi,
+            "ei_abiversion": ei_abiversion,
+            "e_type": header_data[0],
+            "e_machine": header_data[1],
+            "e_version": header_data[2],
+            "e_entry": header_data[3],
+            "e_phoff": header_data[4],
+            "e_shoff": header_data[5],
+            "e_flags": header_data[6],
+            "e_ehsize": header_data[7],
+            "e_phentsize": header_data[8],
+            "e_phnum": header_data[9],
+            "e_shentsize": header_data[10],
+            "e_shnum": header_data[11],
+            "e_shstrndx": header_data[12],
         }
 
     def analyze_sections(self) -> List[Dict[str, Any]]:
@@ -162,19 +162,19 @@ class ELFAnalyzer:
             return []
 
         sections = []
-        shoff = self.header['e_shoff']
-        shentsize = self.header['e_shentsize']
-        shnum = self.header['e_shnum']
+        shoff = self.header["e_shoff"]
+        shentsize = self.header["e_shentsize"]
+        shnum = self.header["e_shnum"]
 
         if shoff == 0 or shnum == 0:
             return sections
 
-        fmt_prefix = '<' if self.endian == 'little' else '>'
+        fmt_prefix = "<" if self.endian == "little" else ">"
 
         if self.is_64bit:
-            section_fmt = f'{fmt_prefix}IIQQQQIIQQ'
+            section_fmt = f"{fmt_prefix}IIQQQQIIQQ"
         else:
-            section_fmt = f'{fmt_prefix}IIIIIIIIII'
+            section_fmt = f"{fmt_prefix}IIIIIIIIII"
 
         for i in range(shnum):
             try:
@@ -182,20 +182,20 @@ class ELFAnalyzer:
                 if offset + shentsize > len(self.data):
                     break
 
-                section_data = struct.unpack(section_fmt, self.data[offset:offset + shentsize])
+                section_data = struct.unpack(section_fmt, self.data[offset : offset + shentsize])
 
                 section = {
-                    'index': i,
-                    'sh_name': section_data[0],
-                    'sh_type': section_data[1],
-                    'sh_flags': section_data[2],
-                    'sh_addr': section_data[3],
-                    'sh_offset': section_data[4],
-                    'sh_size': section_data[5],
-                    'sh_link': section_data[6],
-                    'sh_info': section_data[7],
-                    'sh_addralign': section_data[8],
-                    'sh_entsize': section_data[9] if len(section_data) > 9 else 0
+                    "index": i,
+                    "sh_name": section_data[0],
+                    "sh_type": section_data[1],
+                    "sh_flags": section_data[2],
+                    "sh_addr": section_data[3],
+                    "sh_offset": section_data[4],
+                    "sh_size": section_data[5],
+                    "sh_link": section_data[6],
+                    "sh_info": section_data[7],
+                    "sh_addralign": section_data[8],
+                    "sh_entsize": section_data[9] if len(section_data) > 9 else 0,
                 }
 
                 sections.append(section)
@@ -218,19 +218,19 @@ class ELFAnalyzer:
             return []
 
         segments = []
-        phoff = self.header['e_phoff']
-        phentsize = self.header['e_phentsize']
-        phnum = self.header['e_phnum']
+        phoff = self.header["e_phoff"]
+        phentsize = self.header["e_phentsize"]
+        phnum = self.header["e_phnum"]
 
         if phoff == 0 or phnum == 0:
             return segments
 
-        fmt_prefix = '<' if self.endian == 'little' else '>'
+        fmt_prefix = "<" if self.endian == "little" else ">"
 
         if self.is_64bit:
-            segment_fmt = f'{fmt_prefix}IIQQQQQQ'
+            segment_fmt = f"{fmt_prefix}IIQQQQQQ"
         else:
-            segment_fmt = f'{fmt_prefix}IIIIIIII'
+            segment_fmt = f"{fmt_prefix}IIIIIIII"
 
         for i in range(phnum):
             try:
@@ -238,18 +238,18 @@ class ELFAnalyzer:
                 if offset + phentsize > len(self.data):
                     break
 
-                segment_data = struct.unpack(segment_fmt, self.data[offset:offset + phentsize])
+                segment_data = struct.unpack(segment_fmt, self.data[offset : offset + phentsize])
 
                 segment = {
-                    'index': i,
-                    'p_type': segment_data[0],
-                    'p_flags': segment_data[1] if self.is_64bit else segment_data[6],
-                    'p_offset': segment_data[2] if self.is_64bit else segment_data[1],
-                    'p_vaddr': segment_data[3] if self.is_64bit else segment_data[2],
-                    'p_paddr': segment_data[4] if self.is_64bit else segment_data[3],
-                    'p_filesz': segment_data[5] if self.is_64bit else segment_data[4],
-                    'p_memsz': segment_data[6] if self.is_64bit else segment_data[5],
-                    'p_align': segment_data[7] if self.is_64bit else segment_data[7]
+                    "index": i,
+                    "p_type": segment_data[0],
+                    "p_flags": segment_data[1] if self.is_64bit else segment_data[6],
+                    "p_offset": segment_data[2] if self.is_64bit else segment_data[1],
+                    "p_vaddr": segment_data[3] if self.is_64bit else segment_data[2],
+                    "p_paddr": segment_data[4] if self.is_64bit else segment_data[3],
+                    "p_filesz": segment_data[5] if self.is_64bit else segment_data[4],
+                    "p_memsz": segment_data[6] if self.is_64bit else segment_data[5],
+                    "p_align": segment_data[7] if self.is_64bit else segment_data[7],
                 }
 
                 segments.append(segment)
@@ -275,7 +275,7 @@ class ELFAnalyzer:
 
         for section in self.sections:
             # Symbol table sections (SHT_SYMTAB = 2, SHT_DYNSYM = 11)
-            if section['sh_type'] not in (2, 11):
+            if section["sh_type"] not in (2, 11):
                 continue
 
             try:
@@ -298,20 +298,20 @@ class ELFAnalyzer:
         if not self.data:
             return
 
-        offset = section['sh_offset']
-        size = section['sh_size']
-        entsize = section['sh_entsize']
+        offset = section["sh_offset"]
+        size = section["sh_size"]
+        entsize = section["sh_entsize"]
 
         if entsize == 0:
             entsize = 24 if self.is_64bit else 16
 
         num_symbols = size // entsize
-        fmt_prefix = '<' if self.endian == 'little' else '>'
+        fmt_prefix = "<" if self.endian == "little" else ">"
 
         if self.is_64bit:
-            symbol_fmt = f'{fmt_prefix}IBBHQQ'
+            symbol_fmt = f"{fmt_prefix}IBBHQQ"
         else:
-            symbol_fmt = f'{fmt_prefix}IIIBBH'
+            symbol_fmt = f"{fmt_prefix}IIIBBH"
 
         for i in range(num_symbols):
             try:
@@ -319,25 +319,25 @@ class ELFAnalyzer:
                 if sym_offset + entsize > len(self.data):
                     break
 
-                symbol_data = struct.unpack(symbol_fmt, self.data[sym_offset:sym_offset + entsize])
+                symbol_data = struct.unpack(symbol_fmt, self.data[sym_offset : sym_offset + entsize])
 
                 if self.is_64bit:
                     symbol = {
-                        'st_name': symbol_data[0],
-                        'st_info': symbol_data[1],
-                        'st_other': symbol_data[2],
-                        'st_shndx': symbol_data[3],
-                        'st_value': symbol_data[4],
-                        'st_size': symbol_data[5]
+                        "st_name": symbol_data[0],
+                        "st_info": symbol_data[1],
+                        "st_other": symbol_data[2],
+                        "st_shndx": symbol_data[3],
+                        "st_value": symbol_data[4],
+                        "st_size": symbol_data[5],
                     }
                 else:
                     symbol = {
-                        'st_name': symbol_data[0],
-                        'st_value': symbol_data[1],
-                        'st_size': symbol_data[2],
-                        'st_info': symbol_data[3],
-                        'st_other': symbol_data[4],
-                        'st_shndx': symbol_data[5]
+                        "st_name": symbol_data[0],
+                        "st_value": symbol_data[1],
+                        "st_size": symbol_data[2],
+                        "st_info": symbol_data[3],
+                        "st_other": symbol_data[4],
+                        "st_shndx": symbol_data[5],
                     }
 
                 symbols.append(symbol)
@@ -353,41 +353,34 @@ class ELFAnalyzer:
             Dictionary containing security feature analysis
 
         """
-        features = {
-            'nx_bit': False,
-            'stack_canary': False,
-            'pie': False,
-            'relro': False,
-            'fortify': False,
-            'stripped': True
-        }
+        features = {"nx_bit": False, "stack_canary": False, "pie": False, "relro": False, "fortify": False, "stripped": True}
 
         if not self.header:
             return features
 
         # Check for PIE (Position Independent Executable)
-        features['pie'] = self.header['e_type'] == self.ET_DYN
+        features["pie"] = self.header["e_type"] == self.ET_DYN
 
         # Check for symbols (not stripped if symbol table exists)
-        if self.symbols or any(s['sh_type'] == 2 for s in self.sections):
-            features['stripped'] = False
+        if self.symbols or any(s["sh_type"] == 2 for s in self.sections):
+            features["stripped"] = False
 
         # Check for stack canary symbols
         symbol_names = self._get_symbol_names()
-        canary_symbols = ['__stack_chk_fail', '__stack_chk_guard']
-        features['stack_canary'] = any(name in symbol_names for name in canary_symbols)
+        canary_symbols = ["__stack_chk_fail", "__stack_chk_guard"]
+        features["stack_canary"] = any(name in symbol_names for name in canary_symbols)
 
         # Check for FORTIFY symbols
-        fortify_symbols = ['__sprintf_chk', '__strcpy_chk', '__memcpy_chk']
-        features['fortify'] = any(name in symbol_names for name in fortify_symbols)
+        fortify_symbols = ["__sprintf_chk", "__strcpy_chk", "__memcpy_chk"]
+        features["fortify"] = any(name in symbol_names for name in fortify_symbols)
 
         # Check program headers for NX bit and RELRO
         for segment in self.segments:
             # PT_GNU_STACK = 0x6474e551, PT_GNU_RELRO = 0x6474e552
-            if segment['p_type'] == 0x6474e551:  # GNU_STACK
-                features['nx_bit'] = (segment['p_flags'] & 1) == 0  # Not executable
-            elif segment['p_type'] == 0x6474e552:  # GNU_RELRO
-                features['relro'] = True
+            if segment["p_type"] == 0x6474E551:  # GNU_STACK
+                features["nx_bit"] = (segment["p_flags"] & 1) == 0  # Not executable
+            elif segment["p_type"] == 0x6474E552:  # GNU_RELRO
+                features["relro"] = True
 
         return features
 
@@ -401,21 +394,21 @@ class ELFAnalyzer:
         names = []
 
         # Find string table sections
-        string_tables = [s for s in self.sections if s['sh_type'] == 3]  # SHT_STRTAB = 3
+        string_tables = [s for s in self.sections if s["sh_type"] == 3]  # SHT_STRTAB = 3
 
         for strtab in string_tables:
             try:
-                offset = strtab['sh_offset']
-                size = strtab['sh_size']
+                offset = strtab["sh_offset"]
+                size = strtab["sh_size"]
 
                 if offset + size > len(self.data):
                     continue
 
-                strtab_data = self.data[offset:offset + size]
+                strtab_data = self.data[offset : offset + size]
 
                 # Extract null-terminated strings
-                strings = strtab_data.split(b'\x00')
-                names.extend([s.decode('utf-8', errors='ignore') for s in strings if s])
+                strings = strtab_data.split(b"\x00")
+                names.extend([s.decode("utf-8", errors="ignore") for s in strings if s])
 
             except Exception as e:
                 logger.debug(f"Error reading string table: {e}")
@@ -431,17 +424,17 @@ class ELFAnalyzer:
 
         """
         if not self.load_binary():
-            return {'error': 'Failed to load binary'}
+            return {"error": "Failed to load binary"}
 
         analysis = {
-            'file_path': str(self.file_path),
-            'header': self.header,
-            'architecture': self._get_architecture(),
-            'sections': self.analyze_sections(),
-            'segments': self.analyze_segments(),
-            'symbols': self.find_symbols(),
-            'security_features': self.get_security_features(),
-            'file_size': len(self.data) if self.data else 0
+            "file_path": str(self.file_path),
+            "header": self.header,
+            "architecture": self._get_architecture(),
+            "sections": self.analyze_sections(),
+            "segments": self.analyze_segments(),
+            "symbols": self.find_symbols(),
+            "security_features": self.get_security_features(),
+            "file_size": len(self.data) if self.data else 0,
         }
 
         return analysis
@@ -454,21 +447,16 @@ class ELFAnalyzer:
 
         """
         if not self.header:
-            return 'unknown'
+            return "unknown"
 
-        machine = self.header['e_machine']
-        arch_map = {
-            self.EM_386: 'x86',
-            self.EM_X86_64: 'x86_64',
-            self.EM_ARM: 'ARM',
-            self.EM_AARCH64: 'AArch64'
-        }
+        machine = self.header["e_machine"]
+        arch_map = {self.EM_386: "x86", self.EM_X86_64: "x86_64", self.EM_ARM: "ARM", self.EM_AARCH64: "AArch64"}
 
-        arch = arch_map.get(machine, f'unknown_{machine}')
-        bits = '64' if self.is_64bit else '32'
-        endian = 'LE' if self.endian == 'little' else 'BE'
+        arch = arch_map.get(machine, f"unknown_{machine}")
+        bits = "64" if self.is_64bit else "32"
+        endian = "LE" if self.endian == "little" else "BE"
 
-        return f'{arch}_{bits}_{endian}'
+        return f"{arch}_{bits}_{endian}"
 
 
 def analyze_elf_file(file_path: Union[str, Path]) -> Dict[str, Any]:
@@ -496,7 +484,7 @@ def is_elf_file(file_path: Union[str, Path]) -> bool:
 
     """
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             magic = f.read(4)
             return magic == ELFAnalyzer.ELFMAG
     except Exception:
@@ -515,23 +503,23 @@ def extract_elf_strings(file_path: Union[str, Path], min_length: int = 4) -> Lis
 
     """
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             data = f.read()
 
         strings = []
-        current_string = b''
+        current_string = b""
 
         for byte in data:
             if 32 <= byte <= 126:  # Printable ASCII
                 current_string += bytes([byte])
             else:
                 if len(current_string) >= min_length:
-                    strings.append(current_string.decode('ascii'))
-                current_string = b''
+                    strings.append(current_string.decode("ascii"))
+                current_string = b""
 
         # Don't forget the last string
         if len(current_string) >= min_length:
-            strings.append(current_string.decode('ascii'))
+            strings.append(current_string.decode("ascii"))
 
         return strings
 

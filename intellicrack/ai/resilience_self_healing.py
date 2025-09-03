@@ -388,11 +388,7 @@ class HealthMonitor:
             component_status["performance_monitor"] = "failing"
 
         return {
-            "status": "critical"
-            if any(s == "failing" for s in component_status.values())
-            else "warning"
-            if issues
-            else "healthy",
+            "status": "critical" if any(s == "failing" for s in component_status.values()) else "warning" if issues else "healthy",
             "component_status": component_status,
             "issues": issues,
         }
@@ -536,9 +532,7 @@ class HealthMonitor:
                     "high" if status == "critical" else "medium",
                 )
 
-    def _record_failure(
-        self, failure_type: FailureType, component: str, description: str, severity: str
-    ):
+    def _record_failure(self, failure_type: FailureType, component: str, description: str, severity: str):
         """Record a failure event."""
         failure = FailureEvent(
             failure_id=str(uuid.uuid4()),
@@ -567,9 +561,7 @@ class HealthMonitor:
             overall_status = HealthStatus.WARNING
 
         # Recent failures
-        recent_failures = [
-            f for f in self.failure_history if f.timestamp > datetime.now() - timedelta(hours=1)
-        ]
+        recent_failures = [f for f in self.failure_history if f.timestamp > datetime.now() - timedelta(hours=1)]
 
         critical_failures = [f for f in recent_failures if f.severity == "critical"]
 
@@ -728,11 +720,7 @@ class RecoverySystem:
 
     def _is_recovery_in_progress(self, component: str) -> bool:
         """Check if recovery is already in progress for component."""
-        recent_recoveries = [
-            r
-            for r in self.recovery_history
-            if r.get("component") == component and r.get("status") == "in_progress"
-        ]
+        recent_recoveries = [r for r in self.recovery_history if r.get("component") == component and r.get("status") == "in_progress"]
         return len(recent_recoveries) > 0
 
     def _is_in_cooldown(self, component: str) -> bool:
@@ -741,14 +729,11 @@ class RecoverySystem:
             r
             for r in self.recovery_history
             if r.get("component") == component
-            and r.get("timestamp", datetime.min)
-            > datetime.now() - timedelta(seconds=self.recovery_cooldown)
+            and r.get("timestamp", datetime.min) > datetime.now() - timedelta(seconds=self.recovery_cooldown)
         ]
         return len(recent_recoveries) >= self.max_recovery_attempts
 
-    def _select_recovery_strategy(
-        self, strategies: list[RecoveryAction], failure: FailureEvent
-    ) -> RecoveryAction | None:
+    def _select_recovery_strategy(self, strategies: list[RecoveryAction], failure: FailureEvent) -> RecoveryAction | None:
         """Select the best recovery strategy for the failure."""
         if not strategies:
             return None
@@ -1192,9 +1177,7 @@ class StateManager:
 
         # Resource usage trends
         cpu_values = [s.resource_usage.get("cpu_percent", 0) for s in states if s.resource_usage]
-        memory_values = [
-            s.resource_usage.get("memory_percent", 0) for s in states if s.resource_usage
-        ]
+        memory_values = [s.resource_usage.get("memory_percent", 0) for s in states if s.resource_usage]
 
         return {
             "total_states": len(states),
@@ -1264,9 +1247,7 @@ class ResilienceSelfHealingSystem:
             "system_uptime": self._get_system_uptime(),
         }
 
-    def _calculate_resilience_score(
-        self, health_status: dict[str, Any], recovery_stats: dict[str, Any]
-    ) -> float:
+    def _calculate_resilience_score(self, health_status: dict[str, Any], recovery_stats: dict[str, Any]) -> float:
         """Calculate overall resilience score (0-100)."""
         score = 100.0
 

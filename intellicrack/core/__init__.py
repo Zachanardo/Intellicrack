@@ -38,6 +38,7 @@ from . import analysis, network, patching, processing, protection_bypass, report
 # Import protection analyzer
 try:
     from .protection_analyzer import ProtectionAnalyzer
+
     PROTECTION_ANALYZER_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Protection analyzer not available: {e}")

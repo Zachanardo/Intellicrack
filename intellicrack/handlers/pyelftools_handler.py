@@ -30,6 +30,7 @@ implementations for essential operations used in Intellicrack.
 # PyElfTools availability detection and import handling
 try:
     from elftools.common.exceptions import DWARFError, ELFError, ELFParseError
+
     # Try to import py3compat but handle if it doesn't exist
     try:
         from elftools.common.py3compat import bytes2str, str2bytes
@@ -37,11 +38,11 @@ try:
         # Fallback for newer versions without py3compat
         def bytes2str(b):
             """Convert bytes to string."""
-            return b.decode('utf-8', errors='replace') if isinstance(b, bytes) else b
+            return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
         def str2bytes(s):
             """Convert string to bytes."""
-            return s.encode('utf-8') if isinstance(s, str) else s
+            return s.encode("utf-8") if isinstance(s, str) else s
 
     from elftools.construct import Container, Struct
 
@@ -80,7 +81,8 @@ try:
 
     HAS_PYELFTOOLS = True
     import elftools
-    PYELFTOOLS_VERSION = getattr(elftools, '__version__', 'unknown')
+
+    PYELFTOOLS_VERSION = getattr(elftools, "__version__", "unknown")
 
 except ImportError as e:
     logger.error("PyElfTools not available, using fallback implementations: %s", e)
@@ -197,13 +199,13 @@ except ImportError as e:
     def bytes2str(data):
         """Convert bytes to string."""
         if isinstance(data, bytes):
-            return data.decode('latin-1')
+            return data.decode("latin-1")
         return data
 
     def str2bytes(data):
         """Convert string to bytes."""
         if isinstance(data, str):
-            return data.encode('latin-1')
+            return data.encode("latin-1")
         return data
 
     # Container class for construct compatibility
@@ -251,7 +253,7 @@ except ImportError as e:
             if len(e_ident) < 16:
                 raise ELFParseError("Invalid ELF file: too short")
 
-            if e_ident[:4] != b'\x7fELF':
+            if e_ident[:4] != b"\x7fELF":
                 raise ELFParseError("Invalid ELF magic")
 
             # Parse EI_CLASS (32 or 64 bit)
@@ -265,10 +267,10 @@ except ImportError as e:
             # Parse EI_DATA (endianness)
             if e_ident[5] == 1:
                 self.little_endian = True
-                endian = '<'
+                endian = "<"
             elif e_ident[5] == 2:
                 self.little_endian = False
-                endian = '>'
+                endian = ">"
             else:
                 raise ELFParseError(f"Invalid EI_DATA: {e_ident[5]}")
 
@@ -279,20 +281,42 @@ except ImportError as e:
                 if len(header_data) < 36:
                     raise ELFParseError("Incomplete ELF header")
 
-                (e_type, e_machine, e_version, e_entry, e_phoff, e_shoff,
-                 e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize,
-                 e_shnum, e_shstrndx) = struct.unpack(
-                    f'{endian}HHIIIIIHHHHHH', header_data)
+                (
+                    e_type,
+                    e_machine,
+                    e_version,
+                    e_entry,
+                    e_phoff,
+                    e_shoff,
+                    e_flags,
+                    e_ehsize,
+                    e_phentsize,
+                    e_phnum,
+                    e_shentsize,
+                    e_shnum,
+                    e_shstrndx,
+                ) = struct.unpack(f"{endian}HHIIIIIHHHHHH", header_data)
             else:
                 # 64-bit ELF header
                 header_data = self.stream.read(48)  # e_ident already read
                 if len(header_data) < 48:
                     raise ELFParseError("Incomplete ELF header")
 
-                (e_type, e_machine, e_version, e_entry, e_phoff, e_shoff,
-                 e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize,
-                 e_shnum, e_shstrndx) = struct.unpack(
-                    f'{endian}HHIQQQIHHHHHH', header_data)
+                (
+                    e_type,
+                    e_machine,
+                    e_version,
+                    e_entry,
+                    e_phoff,
+                    e_shoff,
+                    e_flags,
+                    e_ehsize,
+                    e_phentsize,
+                    e_phnum,
+                    e_shentsize,
+                    e_shnum,
+                    e_shstrndx,
+                ) = struct.unpack(f"{endian}HHIQQQIHHHHHH", header_data)
 
             self.header = Container(
                 e_ident=e_ident,
@@ -308,7 +332,7 @@ except ImportError as e:
                 e_phnum=e_phnum,
                 e_shentsize=e_shentsize,
                 e_shnum=e_shnum,
-                e_shstrndx=e_shstrndx
+                e_shstrndx=e_shstrndx,
             )
 
         def _parse_program_headers(self):
@@ -317,7 +341,7 @@ except ImportError as e:
                 return
 
             self.stream.seek(self.header.e_phoff)
-            endian = '<' if self.little_endian else '>'
+            endian = "<" if self.little_endian else ">"
 
             for _i in range(self.header.e_phnum):
                 if self.elfclass == 32:
@@ -326,18 +350,14 @@ except ImportError as e:
                     if len(ph_data) < 32:
                         break
 
-                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz,
-                     p_memsz, p_flags, p_align) = struct.unpack(
-                        f'{endian}IIIIIIII', ph_data)
+                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align) = struct.unpack(f"{endian}IIIIIIII", ph_data)
                 else:
                     # 64-bit program header
                     ph_data = self.stream.read(56)
                     if len(ph_data) < 56:
                         break
 
-                    (p_type, p_flags, p_offset, p_vaddr, p_paddr,
-                     p_filesz, p_memsz, p_align) = struct.unpack(
-                        f'{endian}IIQQQQQQ', ph_data)
+                    (p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align) = struct.unpack(f"{endian}IIQQQQQQ", ph_data)
 
                 ph = Container(
                     p_type=p_type,
@@ -347,7 +367,7 @@ except ImportError as e:
                     p_filesz=p_filesz,
                     p_memsz=p_memsz,
                     p_flags=p_flags,
-                    p_align=p_align
+                    p_align=p_align,
                 )
                 self._program_headers.append(ph)
 
@@ -361,7 +381,7 @@ except ImportError as e:
                 return
 
             self.stream.seek(self.header.e_shoff)
-            endian = '<' if self.little_endian else '>'
+            endian = "<" if self.little_endian else ">"
 
             for _i in range(self.header.e_shnum):
                 if self.elfclass == 32:
@@ -370,18 +390,18 @@ except ImportError as e:
                     if len(sh_data) < 40:
                         break
 
-                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset,
-                     sh_size, sh_link, sh_info, sh_addralign,
-                     sh_entsize) = struct.unpack(f'{endian}IIIIIIIIII', sh_data)
+                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
+                        f"{endian}IIIIIIIIII", sh_data
+                    )
                 else:
                     # 64-bit section header
                     sh_data = self.stream.read(64)
                     if len(sh_data) < 64:
                         break
 
-                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset,
-                     sh_size, sh_link, sh_info, sh_addralign,
-                     sh_entsize) = struct.unpack(f'{endian}IIQQQQIIQQ', sh_data)
+                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
+                        f"{endian}IIQQQQIIQQ", sh_data
+                    )
 
                 sh = Container(
                     sh_name=sh_name,
@@ -393,7 +413,7 @@ except ImportError as e:
                     sh_link=sh_link,
                     sh_info=sh_info,
                     sh_addralign=sh_addralign,
-                    sh_entsize=sh_entsize
+                    sh_entsize=sh_entsize,
                 )
                 self._section_headers.append(sh)
 
@@ -427,11 +447,11 @@ except ImportError as e:
             if not self._string_table or offset >= len(self._string_table):
                 return ""
 
-            end = self._string_table.find(b'\x00', offset)
+            end = self._string_table.find(b"\x00", offset)
             if end == -1:
                 end = len(self._string_table)
 
-            return self._string_table[offset:end].decode('latin-1', errors='ignore')
+            return self._string_table[offset:end].decode("latin-1", errors="ignore")
 
         def num_sections(self):
             """Get number of sections."""
@@ -471,7 +491,7 @@ except ImportError as e:
         def has_dwarf_info(self):
             """Check if file has DWARF debug info."""
             for section in self._sections:
-                if section.name.startswith('.debug_'):
+                if section.name.startswith(".debug_"):
                     return True
             return False
 
@@ -486,15 +506,7 @@ except ImportError as e:
             if not self.header:
                 return "unknown"
 
-            arch_map = {
-                0x03: "x86",
-                0x3E: "x64",
-                0x28: "ARM",
-                0xB7: "AArch64",
-                0x08: "MIPS",
-                0x14: "PowerPC",
-                0x02: "SPARC"
-            }
+            arch_map = {0x03: "x86", 0x3E: "x64", 0x28: "ARM", 0xB7: "AArch64", 0x08: "MIPS", 0x14: "PowerPC", 0x02: "SPARC"}
             return arch_map.get(self.header.e_machine, f"Unknown({self.header.e_machine})")
 
     class FallbackSection:
@@ -512,7 +524,7 @@ except ImportError as e:
             if self._data is None and self.header.sh_type != ENUM_SH_TYPE.SHT_NOBITS:
                 self.stream.seek(self.header.sh_offset)
                 self._data = self.stream.read(self.header.sh_size)
-            return self._data or b''
+            return self._data or b""
 
         def is_null(self):
             """Check if section is null."""
@@ -537,11 +549,11 @@ except ImportError as e:
             if offset >= len(data):
                 return ""
 
-            end = data.find(b'\x00', offset)
+            end = data.find(b"\x00", offset)
             if end == -1:
                 end = len(data)
 
-            return data[offset:end].decode('latin-1', errors='ignore')
+            return data[offset:end].decode("latin-1", errors="ignore")
 
     class FallbackSymbol:
         """Symbol representation."""
@@ -569,7 +581,7 @@ except ImportError as e:
                 st_size=self.st_size,
                 st_info=self.st_info,
                 st_other=self.st_other,
-                st_shndx=self.st_shndx
+                st_shndx=self.st_shndx,
             )
 
     class FallbackSymbolTableSection(FallbackSection):
@@ -593,25 +605,27 @@ except ImportError as e:
             if self.header.sh_link < len(self.elffile._sections):
                 strtab = self.elffile._sections[self.header.sh_link]
 
-            endian = '<' if self.elffile.little_endian else '>'
+            endian = "<" if self.elffile.little_endian else ">"
 
             if self.elffile.elfclass == 32:
                 # 32-bit symbol entry
                 entry_size = 16
-                entry_format = f'{endian}IIIBBH'
+                entry_format = f"{endian}IIIBBH"
             else:
                 # 64-bit symbol entry
                 entry_size = 24
-                entry_format = f'{endian}IBBHQQ'
+                entry_format = f"{endian}IBBHQQ"
 
             offset = 0
             while offset + entry_size <= len(data):
                 if self.elffile.elfclass == 32:
-                    (st_name, st_value, st_size, st_info,
-                     st_other, st_shndx) = struct.unpack(entry_format, data[offset:offset+entry_size])
+                    (st_name, st_value, st_size, st_info, st_other, st_shndx) = struct.unpack(
+                        entry_format, data[offset : offset + entry_size]
+                    )
                 else:
-                    (st_name, st_info, st_other, st_shndx,
-                     st_value, st_size) = struct.unpack(entry_format, data[offset:offset+entry_size])
+                    (st_name, st_info, st_other, st_shndx, st_value, st_size) = struct.unpack(
+                        entry_format, data[offset : offset + entry_size]
+                    )
 
                 # Get symbol name
                 name = ""
@@ -656,11 +670,7 @@ except ImportError as e:
         @property
         def entry(self):
             """Get relocation entry."""
-            return Container(
-                r_offset=self.r_offset,
-                r_info=self.r_info,
-                r_addend=self.r_addend
-            )
+            return Container(r_offset=self.r_offset, r_info=self.r_info, r_addend=self.r_addend)
 
     class FallbackRelocationSection(FallbackSection):
         """Relocation section."""
@@ -678,24 +688,24 @@ except ImportError as e:
             if not data:
                 return
 
-            endian = '<' if self.elffile.little_endian else '>'
+            endian = "<" if self.elffile.little_endian else ">"
             is_rela = self.header.sh_type == ENUM_SH_TYPE.SHT_RELA
 
             if self.elffile.elfclass == 32:
                 # 32-bit relocation entry
                 entry_size = 12 if is_rela else 8
-                entry_format = f'{endian}II' + ('i' if is_rela else '')
+                entry_format = f"{endian}II" + ("i" if is_rela else "")
             else:
                 # 64-bit relocation entry
                 entry_size = 24 if is_rela else 16
-                entry_format = f'{endian}QQ' + ('q' if is_rela else '')
+                entry_format = f"{endian}QQ" + ("q" if is_rela else "")
 
             offset = 0
             while offset + entry_size <= len(data):
                 if is_rela:
-                    r_offset, r_info, r_addend = struct.unpack(entry_format, data[offset:offset+entry_size])
+                    r_offset, r_info, r_addend = struct.unpack(entry_format, data[offset : offset + entry_size])
                 else:
-                    r_offset, r_info = struct.unpack(entry_format, data[offset:offset+entry_size])
+                    r_offset, r_info = struct.unpack(entry_format, data[offset : offset + entry_size])
                     r_addend = 0
 
                 reloc = FallbackRelocation(r_offset, r_info, r_addend)
@@ -745,20 +755,20 @@ except ImportError as e:
             if not data:
                 return
 
-            endian = '<' if self.elffile.little_endian else '>'
+            endian = "<" if self.elffile.little_endian else ">"
 
             if self.elffile.elfclass == 32:
                 # 32-bit dynamic entry
                 entry_size = 8
-                entry_format = f'{endian}II'
+                entry_format = f"{endian}II"
             else:
                 # 64-bit dynamic entry
                 entry_size = 16
-                entry_format = f'{endian}QQ'
+                entry_format = f"{endian}QQ"
 
             offset = 0
             while offset + entry_size <= len(data):
-                d_tag, d_val = struct.unpack(entry_format, data[offset:offset+entry_size])
+                d_tag, d_val = struct.unpack(entry_format, data[offset : offset + entry_size])
 
                 if d_tag == ENUM_D_TAG.DT_NULL:
                     break
@@ -791,22 +801,22 @@ except ImportError as e:
                     break
 
                 # Parse note header
-                n_namesz, n_descsz, n_type = struct.unpack('<III', data[offset:offset+12])
+                n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
                 # Read name
                 if n_namesz:
-                    name = data[offset:offset+n_namesz].rstrip(b'\x00')
+                    name = data[offset : offset + n_namesz].rstrip(b"\x00")
                     offset += (n_namesz + 3) & ~3  # Align to 4 bytes
                 else:
-                    name = b''
+                    name = b""
 
                 # Read descriptor
                 if n_descsz:
-                    desc = data[offset:offset+n_descsz]
+                    desc = data[offset : offset + n_descsz]
                     offset += (n_descsz + 3) & ~3  # Align to 4 bytes
                 else:
-                    desc = b''
+                    desc = b""
 
                 yield Container(n_type=n_type, n_name=name, n_desc=desc)
 
@@ -824,7 +834,7 @@ except ImportError as e:
             if self._data is None and self.header.p_filesz > 0:
                 self.stream.seek(self.header.p_offset)
                 self._data = self.stream.read(self.header.p_filesz)
-            return self._data or b''
+            return self._data or b""
 
         @property
         def p_type(self):
@@ -873,7 +883,7 @@ except ImportError as e:
             """Get interpreter name."""
             data = self.data()
             if data:
-                return data.rstrip(b'\x00').decode('latin-1', errors='ignore')
+                return data.rstrip(b"\x00").decode("latin-1", errors="ignore")
             return ""
 
     class FallbackNoteSegment(FallbackSegment):
@@ -889,22 +899,22 @@ except ImportError as e:
                     break
 
                 # Parse note header
-                n_namesz, n_descsz, n_type = struct.unpack('<III', data[offset:offset+12])
+                n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
                 # Read name
                 if n_namesz:
-                    name = data[offset:offset+n_namesz].rstrip(b'\x00')
+                    name = data[offset : offset + n_namesz].rstrip(b"\x00")
                     offset += (n_namesz + 3) & ~3  # Align to 4 bytes
                 else:
-                    name = b''
+                    name = b""
 
                 # Read descriptor
                 if n_descsz:
-                    desc = data[offset:offset+n_descsz]
+                    desc = data[offset : offset + n_descsz]
                     offset += (n_descsz + 3) & ~3  # Align to 4 bytes
                 else:
-                    desc = b''
+                    desc = b""
 
                 yield Container(n_type=n_type, n_name=name, n_desc=desc)
 
@@ -947,22 +957,13 @@ except ImportError as e:
             ENUM_E_TYPE.ET_REL: "REL (Relocatable file)",
             ENUM_E_TYPE.ET_EXEC: "EXEC (Executable file)",
             ENUM_E_TYPE.ET_DYN: "DYN (Shared object file)",
-            ENUM_E_TYPE.ET_CORE: "CORE (Core file)"
+            ENUM_E_TYPE.ET_CORE: "CORE (Core file)",
         }
         return types.get(e_type, f"Unknown type {e_type}")
 
     def describe_p_type(p_type):
         """Describe program header type."""
-        types = {
-            0: "PT_NULL",
-            1: "PT_LOAD",
-            2: "PT_DYNAMIC",
-            3: "PT_INTERP",
-            4: "PT_NOTE",
-            5: "PT_SHLIB",
-            6: "PT_PHDR",
-            7: "PT_TLS"
-        }
+        types = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
         return types.get(p_type, f"Unknown type {p_type}")
 
     def describe_sh_type(sh_type):
@@ -979,7 +980,7 @@ except ImportError as e:
             ENUM_SH_TYPE.SHT_NOBITS: "NOBITS",
             ENUM_SH_TYPE.SHT_REL: "REL",
             ENUM_SH_TYPE.SHT_SHLIB: "SHLIB",
-            ENUM_SH_TYPE.SHT_DYNSYM: "DYNSYM"
+            ENUM_SH_TYPE.SHT_DYNSYM: "DYNSYM",
         }
         return types.get(sh_type, f"Unknown type {sh_type}")
 
@@ -1015,7 +1016,7 @@ except ImportError as e:
 
 # Ensure exports are available at module level
 if not HAS_PYELFTOOLS:
-    elftools = elftools if 'elftools' in locals() else None
+    elftools = elftools if "elftools" in locals() else None
     elffile = ELFFile
 else:
     # When pyelftools is available, create compatibility references
@@ -1024,22 +1025,48 @@ else:
 # Export all pyelftools objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_PYELFTOOLS", "PYELFTOOLS_VERSION",
+    "HAS_PYELFTOOLS",
+    "PYELFTOOLS_VERSION",
     # Module reference
-    "elftools", "elffile",
+    "elftools",
+    "elffile",
     # Main classes
-    "ELFFile", "Section", "StringTableSection", "SymbolTableSection",
-    "Symbol", "RelocationSection", "Relocation", "DynamicSection",
-    "Dynamic", "NoteSection", "Segment", "InterpSegment", "NoteSegment",
-    "DynamicSegment", "DWARFInfo", "DIE",
+    "ELFFile",
+    "Section",
+    "StringTableSection",
+    "SymbolTableSection",
+    "Symbol",
+    "RelocationSection",
+    "Relocation",
+    "DynamicSection",
+    "Dynamic",
+    "NoteSection",
+    "Segment",
+    "InterpSegment",
+    "NoteSegment",
+    "DynamicSegment",
+    "DWARFInfo",
+    "DIE",
     # Constants
-    "E_FLAGS", "P_FLAGS", "SH_FLAGS", "SHN_INDICES",
-    "ENUM_E_TYPE", "ENUM_SH_TYPE", "ENUM_D_TAG",
+    "E_FLAGS",
+    "P_FLAGS",
+    "SH_FLAGS",
+    "SHN_INDICES",
+    "ENUM_E_TYPE",
+    "ENUM_SH_TYPE",
+    "ENUM_D_TAG",
     "DW_TAG_compile_unit",
     # Exceptions
-    "ELFError", "ELFParseError", "DWARFError",
+    "ELFError",
+    "ELFParseError",
+    "DWARFError",
     # Utilities
-    "bytes2str", "str2bytes", "Container", "Struct",
+    "bytes2str",
+    "str2bytes",
+    "Container",
+    "Struct",
     # Description functions
-    "describe_e_type", "describe_p_type", "describe_sh_type",
+    "describe_e_type",
+    "describe_p_type",
+    "describe_sh_type",
 ]

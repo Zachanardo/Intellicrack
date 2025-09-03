@@ -48,6 +48,7 @@ class ServiceHealthChecker:
         if self._config is None:
             try:
                 from intellicrack.core.config_manager import get_config
+
                 self._config = get_config()
             except ImportError as e:
                 logger.warning(f"Could not import config manager: {e}")
@@ -111,9 +112,7 @@ class ServiceHealthChecker:
         try:
             start_time = time.time()
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url, timeout=aiohttp.ClientTimeout(total=timeout)
-                ) as response:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as response:
                     result["status_code"] = response.status
                     result["response_time"] = time.time() - start_time
                     result["healthy"] = 200 <= response.status < 400
@@ -284,11 +283,7 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [
-            service_name
-            for service_name, status in health_data.items()
-            if status.get("healthy", False)
-        ]
+        return [service_name for service_name, status in health_data.items() if status.get("healthy", False)]
 
     def get_unhealthy_services(self) -> list[str]:
         """Get list of services that failed health checks.
@@ -298,15 +293,9 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [
-            service_name
-            for service_name, status in health_data.items()
-            if not status.get("healthy", False)
-        ]
+        return [service_name for service_name, status in health_data.items() if not status.get("healthy", False)]
 
-    async def wait_for_service(
-        self, service_name: str, timeout: float = 30.0, check_interval: float = 2.0
-    ) -> bool:
+    async def wait_for_service(self, service_name: str, timeout: float = 30.0, check_interval: float = 2.0) -> bool:
         """Wait for a service to become available.
 
         Args:
@@ -347,8 +336,7 @@ class ServiceHealthChecker:
         url = self.get_service_url(service_name)
         if not url:
             raise ConfigurationError(
-                f"Service '{service_name}' URL not configured. "
-                f"Please set 'service_urls.{service_name}' in configuration.",
+                f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration.",
                 service_name=service_name,
                 config_key=f"service_urls.{service_name}",
             )
@@ -405,5 +393,3 @@ async def check_all_services_health() -> dict[str, dict[str, Any]]:
     """
     checker = get_health_checker()
     return await checker.check_all_services()
-
-

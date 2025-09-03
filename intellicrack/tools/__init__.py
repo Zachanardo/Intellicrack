@@ -76,9 +76,7 @@ except ImportError as e:
 __all__ = []
 
 if PluginTestGenerator is not None:
-    __all__.extend(
-        ["PluginTestGenerator", "TestCoverageAnalyzer", "MockDataGenerator", "PluginTestRunner"]
-    )
+    __all__.extend(["PluginTestGenerator", "TestCoverageAnalyzer", "MockDataGenerator", "PluginTestRunner"])
 
 if CICDPipeline is not None:
     __all__.extend(["CICDPipeline", "GitHubActionsGenerator"])

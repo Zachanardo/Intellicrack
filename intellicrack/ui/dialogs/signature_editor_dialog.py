@@ -732,13 +732,13 @@ class SignatureEditorDialog(QDialog):
 
     def _update_signature_info(self, sig_data: dict):
         """Update signature info display."""
-        info_text = f"""Name: {sig_data['name']}
-Type: {sig_data['type']}
-Version: {sig_data['version']}
-Description: {sig_data['description']}
+        info_text = f"""Name: {sig_data["name"]}
+Type: {sig_data["type"]}
+Version: {sig_data["version"]}
+Description: {sig_data["description"]}
 
 Content Preview:
-{sig_data['content'][:200]}{'...' if len(sig_data['content']) > 200 else ''}"""
+{sig_data["content"][:200]}{"..." if len(sig_data["content"]) > 200 else ""}"""
 
         self.sig_info_text.setPlainText(info_text)
 
@@ -960,9 +960,7 @@ ep:
                 self._category_selections = {}
             if selected_template:
                 self._category_selections[previous_category] = selected_template
-                logger.debug(
-                    f"Saved template selection '{selected_template}' for category '{previous_category}'"
-                )
+                logger.debug(f"Saved template selection '{selected_template}' for category '{previous_category}'")
 
         category = current_item.text()
         self.template_list.clear()
@@ -979,9 +977,7 @@ ep:
                 if self.template_list.item(i).text() == previous_selection:
                     self.template_list.setCurrentRow(i)
                     self._update_template_preview()
-                    logger.debug(
-                        f"Restored template selection '{previous_selection}' for category '{category}'"
-                    )
+                    logger.debug(f"Restored template selection '{previous_selection}' for category '{category}'")
                     return
 
         # Load first template preview if no previous selection
@@ -1192,7 +1188,7 @@ ep:
                 matches += 1
 
         self.test_summary_label.setText(
-            f"Tests completed: {matches}/{total_tests} matches ({matches/total_tests*100:.1f}%)"
+            f"Tests completed: {matches}/{total_tests} matches ({matches / total_tests * 100:.1f}%)"
             if total_tests > 0
             else "No tests completed",
         )

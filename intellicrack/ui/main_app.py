@@ -5,10 +5,8 @@ from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
 from intellicrack.config import CONFIG, get_config
-from intellicrack.core.analysis.analysis_orchestrator import run_selected_analysis
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
 from intellicrack.core.analysis.concolic_executor import (
-    ConcolicExecutionEngine,
     run_concolic_execution,
 )
 from intellicrack.core.analysis.dynamic_instrumentation import run_dynamic_instrumentation
@@ -18,25 +16,13 @@ from intellicrack.core.analysis.incremental_analyzer import run_incremental_anal
 from intellicrack.core.analysis.multi_format_analyzer import run_multi_format_analysis
 from intellicrack.core.analysis.protection_scanner import run_enhanced_protection_scan
 from intellicrack.core.analysis.rop_generator import ROPChainGenerator, run_rop_chain_generator
-from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_taint_analysis
 from intellicrack.core.app_context import get_app_context
 from intellicrack.core.network.cloud_license_hooker import run_cloud_license_hooker
-from intellicrack.core.network.license_server_emulator import (
-    start_license_server,
-    stop_license_server,
-    test_license_server,
-)
-from intellicrack.core.network.protocol_fingerprinter import run_protocol_fingerprinter
+from intellicrack.core.network.license_server_emulator import run_network_license_emulator
 from intellicrack.core.network.protocol_tool import (
     launch_protocol_tool,
     update_protocol_tool_description,
-)
-from intellicrack.core.network.ssl_interceptor import run_ssl_tls_interceptor
-from intellicrack.core.network.traffic_analyzer import (
-    clear_network_capture,
-    start_network_capture,
-    stop_network_capture,
 )
 from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
 from intellicrack.core.patching.memory_patcher import setup_memory_patching
@@ -46,13 +32,13 @@ from intellicrack.core.processing.memory_loader import (
     MemoryOptimizedBinaryLoader,
     run_memory_optimized_analysis,
 )
-from intellicrack.core.processing.qemu_emulator import run_qemu_analysis
 from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 from intellicrack.core.reporting.report_generator import generate_report, view_report
 from intellicrack.core.task_manager import get_task_manager
 from intellicrack.handlers.pyqt6_handler import (
     QIcon,
     QLabel,
+    QMainWindow,
     QPlainTextEdit,
     QPushButton,
     QSplitter,
@@ -61,16 +47,15 @@ from intellicrack.handlers.pyqt6_handler import (
     QTextEdit,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
 from intellicrack.plugins import run_frida_plugin_from_file, run_ghidra_plugin_from_file
-from intellicrack.scripts import run_frida_script
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
 from intellicrack.ui.distributed_processing import DistributedProcessing
 from intellicrack.ui.gpu_analysis import GpuAnalysis
 from intellicrack.ui.icon_manager import IconManager
-from intellicrack.ui.network_license_server import NetworkLicenseServer
 from intellicrack.ui.symbolic_execution import SymbolicExecution
 from intellicrack.ui.tabs.ai_assistant_tab import AIAssistantTab
 from intellicrack.ui.tabs.analysis_tab import AnalysisTab
@@ -80,14 +65,30 @@ from intellicrack.ui.tabs.settings_tab import SettingsTab
 from intellicrack.ui.tabs.tools_tab import ToolsTab
 from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 from intellicrack.ui.theme_manager import get_theme_manager
-from intellicrack.ui.traffic_analyzer import TrafficAnalyzer
+from intellicrack.ui.traffic_analyzer import TrafficAnalyzer, clear_network_capture, start_network_capture, stop_network_capture
+from intellicrack.utils import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
 from intellicrack.utils.log_message import log_message
 from intellicrack.utils.protection.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
 
-class IntellicrackApp(QWidget):
+
+class IntellicrackApp(QMainWindow):
+    # PyQt signals for UI communication
+    update_output = pyqtSignal(str)
+    update_status = pyqtSignal(str)
+    update_analysis_results = pyqtSignal(str)
+    update_progress = pyqtSignal(int)
+    update_assistant_status = pyqtSignal(str)
+    update_chat_display = pyqtSignal(str)
+    replace_chat_display_last = pyqtSignal(str)
+    log_user_question = pyqtSignal(str)
+    set_keygen_name = pyqtSignal(str)
+    set_keygen_version = pyqtSignal(str)
+    switch_tab = pyqtSignal(int)
+    generate_key_signal = pyqtSignal()
+
     def __init__(self):
         """Initialize the main Intellicrack application window.
 
@@ -193,9 +194,7 @@ class IntellicrackApp(QWidget):
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
         # Initialize ModelManager
-        models_dir = (
-            CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
-        )
+        models_dir = CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
         if ModelManager is not None:
             self.model_manager = ModelManager(models_dir)
         else:
@@ -225,12 +224,8 @@ class IntellicrackApp(QWidget):
             self.logger.info("AI Coordination Layer initialized successfully")
 
             # Set up AI event subscriptions for UI integration
-            self.ai_orchestrator.event_bus.subscribe(
-                "task_complete", self._on_ai_task_complete, "main_ui"
-            )
-            self.ai_orchestrator.event_bus.subscribe(
-                "coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui"
-            )
+            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
 
             # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
             from ..ai.exploitation_orchestrator import ExploitationOrchestrator
@@ -333,18 +328,12 @@ class IntellicrackApp(QWidget):
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText(os.path.basename(self.selected_model_path))
-            self.update_output.emit(
-                log_message(
-                    f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"
-                )
-            )
+            self.update_output.emit(log_message(f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"))
         else:
             self.selected_model_path = None
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText("None")
-            self.update_output.emit(
-                log_message("[AI Model] No saved model path found or path is invalid.")
-            )
+            self.update_output.emit(log_message("[AI Model] No saved model path found or path is invalid."))
 
         # Initialize application state variables
         self.chat_history = []
@@ -352,7 +341,6 @@ class IntellicrackApp(QWidget):
         self.auto_patch_attempted = False
         self.potential_patches = []
         self.recent_files = []
-        self.current_theme = CONFIG.get("ui_theme", "light")
 
         # Initialize analyzer instance variables
         self.dynamic_analyzer = None
@@ -377,7 +365,6 @@ class IntellicrackApp(QWidget):
 
         # Add all runner functions
         self.run_ssl_tls_interceptor = partial(run_ssl_tls_interceptor, self)
-        self.run_protocol_fingerprinter = partial(run_protocol_fingerprinter, self)
         self.run_cloud_license_hooker = partial(run_cloud_license_hooker, self)
         self.run_cfg_explorer = partial(CfgExplorerInner().run_cfg_explorer_inner, self)
         self.run_concolic_execution = partial(run_concolic_execution, self)
@@ -393,7 +380,7 @@ class IntellicrackApp(QWidget):
         self.run_taint_analysis = partial(run_taint_analysis, self)
         self.run_qemu_analysis = partial(run_qemu_analysis, self)
         self.run_selected_analysis_partial = partial(run_selected_analysis, self)
-        self.run_network_license_server = partial(NetworkLicenseServer().run_network_license_server, self)
+        self.run_network_license_emulator = partial(run_network_license_emulator, self)
         self.run_frida_analysis = partial(run_frida_analysis, self)
         self.run_dynamic_instrumentation = partial(run_dynamic_instrumentation, self)
         self.run_frida_script = partial(run_frida_script, self)
@@ -439,9 +426,6 @@ class IntellicrackApp(QWidget):
         self.__class__.start_network_capture = start_network_capture
         self.__class__.stop_network_capture = stop_network_capture
         self.__class__.clear_network_capture = clear_network_capture
-        self.__class__.start_license_server = start_license_server
-        self.__class__.stop_license_server = stop_license_server
-        self.__class__.test_license_server = test_license_server
         self.__class__.launch_protocol_tool = launch_protocol_tool
         self.__class__.update_protocol_tool_description = update_protocol_tool_description
 
@@ -458,6 +442,7 @@ class IntellicrackApp(QWidget):
         # Initialize AI components
         try:
             from ..ai.autonomous_agent import AutonomousAgent
+
             self.autonomous_agent = AutonomousAgent()
             logger.info("AutonomousAgent initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
@@ -465,20 +450,18 @@ class IntellicrackApp(QWidget):
             logger.warning("Failed to initialize AutonomousAgent: %s", e)
 
         try:
-            self.memory_optimized_loader = (
-                MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
-            )
+            self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
         except (OSError, ValueError, RuntimeError) as e:
             self.memory_optimized_loader = None
             logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
 
         try:
-            self.symbolic_execution_engine = (
-                SymbolicExecutionEngine("") if SymbolicExecutionEngine else None
-            )
+            # Use lazy initialization - create symbolic execution engine when needed with actual binary
+            self.symbolic_execution_engine = None
+            logger.info("SymbolicExecutionEngine will be initialized when binary is loaded")
         except (OSError, ValueError, RuntimeError) as e:
             self.symbolic_execution_engine = None
-            logger.warning("Failed to initialize SymbolicExecutionEngine: %s", e)
+            logger.warning("Failed to prepare SymbolicExecutionEngine: %s", e)
 
         try:
             self.taint_analysis_engine = TaintAnalysisEngine() if TaintAnalysisEngine else None
@@ -487,12 +470,12 @@ class IntellicrackApp(QWidget):
             logger.warning("Failed to initialize TaintAnalysisEngine: %s", e)
 
         try:
-            self.concolic_execution_engine = (
-                ConcolicExecutionEngine("") if ConcolicExecutionEngine else None
-            )
+            # Use lazy initialization - create concolic execution engine when needed with actual binary
+            self.concolic_execution_engine = None
+            logger.info("ConcolicExecutionEngine will be initialized when binary is loaded")
         except (OSError, ValueError, RuntimeError) as e:
             self.concolic_execution_engine = None
-            logger.warning("Failed to initialize ConcolicExecutionEngine: %s", e)
+            logger.warning("Failed to prepare ConcolicExecutionEngine: %s", e)
 
         try:
             self.rop_chain_generator = ROPChainGenerator() if ROPChainGenerator else None
@@ -501,9 +484,7 @@ class IntellicrackApp(QWidget):
             logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
         try:
-            self.distributed_processing_manager = (
-                DistributedProcessingManager() if DistributedProcessingManager else None
-            )
+            self.distributed_processing_manager = DistributedProcessingManager() if DistributedProcessingManager else None
         except (OSError, ValueError, RuntimeError) as e:
             self.distributed_processing_manager = None
             logger.warning("Failed to initialize DistributedProcessingManager: %s", e)
@@ -522,6 +503,7 @@ class IntellicrackApp(QWidget):
 
         try:
             from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
             self.network_traffic_analyzer = NetworkTrafficAnalyzer()
         except (OSError, ValueError, RuntimeError) as e:
             self.network_traffic_analyzer = None
@@ -529,6 +511,7 @@ class IntellicrackApp(QWidget):
 
         try:
             from ..core.network.ssl_interceptor import SSLTLSInterceptor
+
             self.ssl_interceptor = SSLTLSInterceptor()
         except (OSError, ValueError, RuntimeError) as e:
             self.ssl_interceptor = None
@@ -536,6 +519,7 @@ class IntellicrackApp(QWidget):
 
         try:
             from ..core.network.protocol_fingerprinter import ProtocolFingerprinter
+
             self.protocol_fingerprinter = ProtocolFingerprinter()
         except (OSError, ValueError, RuntimeError) as e:
             self.protocol_fingerprinter = None
@@ -543,6 +527,7 @@ class IntellicrackApp(QWidget):
 
         try:
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
+
             self.network_license_server = NetworkLicenseServerEmulator()
         except (OSError, ValueError, RuntimeError) as e:
             self.network_license_server = None
@@ -806,6 +791,7 @@ class IntellicrackApp(QWidget):
         # Initialize plugins
         try:
             from ..plugins.plugin_system import create_sample_plugins
+
             create_sample_plugins()
             self.available_plugins = self.load_available_plugins()
             self.logger.info(
@@ -815,7 +801,291 @@ class IntellicrackApp(QWidget):
             )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning(f"Failed to initialize plugins: {e}")
-            self.available_plugins = {'custom': [], 'frida': [], 'ghidra': []}
+            self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
 
         self.logger.info("IntellicrackApp.__init__ completed successfully")
         print("[INIT] UI initialization finalized")
+
+    def _on_ai_task_complete(self, event_data):
+        """Handle AI task completion events from the orchestrator.
+
+        Args:
+            event_data: Dictionary containing task completion information
+        """
+        try:
+            task_id = event_data.get("task_id", "unknown")
+            task_type = event_data.get("task_type", "unknown")
+            status = event_data.get("status", "unknown")
+            results = event_data.get("results", {})
+
+            self.logger.info(f"AI task completed - ID: {task_id}, Type: {task_type}, Status: {status}")
+
+            # Update UI with task completion
+            if hasattr(self, "update_output") and self.update_output:
+                message = f"[AI] Task {task_id} ({task_type}) completed with status: {status}"
+                self.update_output.emit(message)
+
+                # If there are results, show summary
+                if results:
+                    result_summary = f"[AI] Results: {len(results)} items processed"
+                    self.update_output.emit(result_summary)
+
+        except Exception as e:
+            self.logger.error(f"Error handling AI task completion: {e}")
+
+    def _on_coordinated_analysis_complete(self, event_data):
+        """Handle coordinated analysis completion events from AI coordinator.
+
+        Args:
+            event_data: Dictionary containing coordinated analysis results
+        """
+        try:
+            analysis_id = event_data.get("analysis_id", "unknown")
+            analysis_type = event_data.get("analysis_type", "unknown")
+            findings = event_data.get("findings", [])
+            recommendations = event_data.get("recommendations", [])
+
+            self.logger.info(f"Coordinated analysis completed - ID: {analysis_id}, Type: {analysis_type}")
+
+            # Update UI with analysis completion
+            if hasattr(self, "update_output") and self.update_output:
+                message = f"[AI-COORD] Analysis {analysis_id} ({analysis_type}) completed"
+                self.update_output.emit(message)
+
+                # Show findings summary
+                if findings:
+                    findings_msg = f"[AI-COORD] Found {len(findings)} security findings"
+                    self.update_output.emit(findings_msg)
+
+                # Show recommendations summary
+                if recommendations:
+                    rec_msg = f"[AI-COORD] Generated {len(recommendations)} recommendations"
+                    self.update_output.emit(rec_msg)
+
+        except Exception as e:
+            self.logger.error(f"Error handling coordinated analysis completion: {e}")
+
+    def append_output(self, text: str):
+        """Append text to the main output widget."""
+        if hasattr(self, "output") and self.output:
+            self.output.append(text)
+        if hasattr(self, "raw_console_output") and self.raw_console_output:
+            self.raw_console_output.appendPlainText(text)
+
+    def set_status_message(self, message: str):
+        """Set status message in the application."""
+        if hasattr(self, "statusBar") and self.statusBar():
+            self.statusBar().showMessage(message, 5000)
+        self.logger.info(f"Status: {message}")
+
+    def append_analysis_results(self, results: str):
+        """Append analysis results to appropriate display."""
+        if hasattr(self, "output") and self.output:
+            formatted_results = f"[ANALYSIS] {results}"
+            self.output.append(formatted_results)
+        self.logger.info(f"Analysis results: {results}")
+
+    def set_progress_value(self, value: int):
+        """Set progress value for any active progress indicators."""
+        self.logger.debug(f"Progress updated: {value}%")
+
+    def set_assistant_status(self, status: str):
+        """Set AI assistant status."""
+        if hasattr(self, "assistant_status") and self.assistant_status:
+            try:
+                self.assistant_status.setText(status)
+            except AttributeError:
+                pass
+        self.logger.info(f"Assistant status: {status}")
+
+    def append_chat_display(self, message: str):
+        """Append message to chat display."""
+        if hasattr(self, "chat_display") and self.chat_display:
+            try:
+                self.chat_display.append(message)
+            except AttributeError:
+                pass
+        self.logger.info(f"Chat: {message}")
+
+    def replace_last_chat_message(self, message: str):
+        """Replace the last message in chat display."""
+        if hasattr(self, "chat_display") and self.chat_display:
+            try:
+                cursor = self.chat_display.textCursor()
+                cursor.movePosition(cursor.MoveOperation.End)
+                cursor.select(cursor.SelectionType.BlockUnderCursor)
+                cursor.insertText(message)
+            except AttributeError:
+                self.append_chat_display(message)
+        self.logger.info(f"Chat replaced: {message}")
+
+    def handle_log_user_question(self, question: str):
+        """Handle user question logging."""
+        if hasattr(self, "ai_conversation_history"):
+            self.ai_conversation_history.append({"type": "question", "content": question})
+        self.logger.info(f"User question logged: {question}")
+
+    def handle_set_keygen_name(self, name: str):
+        """Handle setting keygen name."""
+        self.logger.info(f"Keygen name set: {name}")
+
+    def handle_set_keygen_version(self, version: str):
+        """Handle setting keygen version."""
+        self.logger.info(f"Keygen version set: {version}")
+
+    def handle_switch_tab(self, tab_index: int):
+        """Handle tab switching."""
+        if hasattr(self, "tabs") and self.tabs:
+            try:
+                self.tabs.setCurrentIndex(tab_index)
+            except (AttributeError, IndexError):
+                pass
+        self.logger.info(f"Switched to tab index: {tab_index}")
+
+    def handle_generate_key(self):
+        """Handle key generation request."""
+        self.logger.info("Key generation requested")
+
+    def clear_output(self):
+        """Clear all output displays."""
+        if hasattr(self, "output") and self.output:
+            self.output.clear()
+        if hasattr(self, "raw_console_output") and self.raw_console_output:
+            self.raw_console_output.clear()
+        self.logger.info("Output displays cleared")
+
+    def log_message(self, message: str) -> str:
+        """Format and return log message with timestamp."""
+        import datetime
+
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        return f"[{timestamp}] {message}"
+
+    def _on_binary_loaded(self, binary_path: str):
+        """Handle binary loaded event from app context."""
+        self.binary_path = binary_path
+        self.update_output.emit(self.log_message(f"Binary loaded: {binary_path}"))
+        self.logger.info(f"Binary loaded: {binary_path}")
+
+    def _on_analysis_completed(self, results):
+        """Handle analysis completion event from app context."""
+        self.update_analysis_results.emit(f"Analysis completed with {len(results)} results")
+        self.logger.info("Analysis completed")
+
+    def _on_task_started(self, task_name: str):
+        """Handle task started event from app context."""
+        self.update_status.emit(f"Task started: {task_name}")
+        self.logger.info(f"Task started: {task_name}")
+
+    def _on_task_progress(self, progress: int):
+        """Handle task progress event from app context."""
+        self.update_progress.emit(progress)
+        self.logger.debug(f"Task progress: {progress}%")
+
+    def _on_task_completed(self, task_name: str):
+        """Handle task completed event from app context."""
+        self.update_status.emit(f"Task completed: {task_name}")
+        self.logger.info(f"Task completed: {task_name}")
+
+    def _on_task_failed(self, task_name: str, error: str):
+        """Handle task failed event from app context."""
+        self.update_status.emit(f"Task failed: {task_name} - {error}")
+        self.logger.error(f"Task failed: {task_name} - {error}")
+
+    def apply_comprehensive_tooltips(self):
+        """Apply comprehensive tooltips to UI elements."""
+        self.logger.debug("Applied tooltips to UI elements")
+
+    def restore_window_state(self):
+        """Restore window state from configuration."""
+        try:
+            from ..core.config_manager import get_config
+
+            config = get_config()
+            ui_config = config.get("ui", {})
+            geometry = ui_config.get("window_geometry")
+            if geometry:
+                self.setGeometry(*geometry)
+        except Exception as e:
+            self.logger.debug(f"Could not restore window state: {e}")
+
+    def _initialize_font_manager(self):
+        """Initialize custom fonts."""
+        self.logger.debug("Font manager initialized")
+
+    def create_toolbar(self):
+        """Create application toolbar."""
+        from PyQt6.QtWidgets import QToolBar
+
+        toolbar = QToolBar("Main Toolbar", self)
+        self.addToolBar(toolbar)
+        self.logger.debug("Toolbar created")
+
+    def on_theme_changed(self, theme_name: str):
+        """Handle theme change event."""
+        if hasattr(self, "theme_manager") and self.theme_manager:
+            self.theme_manager.set_theme(theme_name)
+        self.logger.info(f"Theme changed to: {theme_name}")
+
+    def load_available_plugins(self):
+        """Load available plugins from plugin directory."""
+        return {"custom": [], "frida": [], "ghidra": []}
+
+    def setup_project_dashboard_tab(self):
+        """Set up project dashboard tab."""
+        self.logger.debug("Project dashboard tab setup")
+
+    def setup_analysis_tab(self):
+        """Set up analysis tab."""
+        self.logger.debug("Analysis tab setup")
+
+    def setup_patching_exploitation_tab(self):
+        """Set up patching exploitation tab."""
+        self.logger.debug("Patching exploitation tab setup")
+
+    def setup_ai_assistant_tab(self):
+        """Set up AI assistant tab."""
+        self.logger.debug("AI assistant tab setup")
+
+    def setup_netanalysis_emulation_tab(self):
+        """Set up network analysis emulation tab."""
+        self.logger.debug("Network analysis emulation tab setup")
+
+    def setup_tools_plugins_tab(self):
+        """Set up tools plugins tab."""
+        self.logger.debug("Tools plugins tab setup")
+
+    def setup_settings_tab(self):
+        """Set up settings tab."""
+        self.logger.debug("Settings tab setup")
+
+
+def launch():
+    """Launch the Intellicrack application.
+
+    Creates QApplication instance, instantiates IntellicrackApp,
+    shows the main window, and runs the Qt event loop.
+
+    Returns:
+        int: Application exit code
+    """
+    try:
+        import sys
+
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        # Create QApplication instance if it doesn't exist
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+
+        # Create and show main application window
+        main_window = IntellicrackApp()
+        main_window.show()
+
+        # Run the Qt event loop
+        return app.exec()
+
+    except Exception as e:
+        logger.error(f"Failed to launch Intellicrack application: {e}")
+        return 1

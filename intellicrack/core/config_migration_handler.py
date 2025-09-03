@@ -265,9 +265,7 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(
-        self, config_data: Dict[str, Any], migrations: Dict[str, callable]
-    ) -> Dict[str, Any]:
+    def handle_partial_migration(self, config_data: Dict[str, Any], migrations: Dict[str, callable]) -> Dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -290,16 +288,12 @@ class ConfigMigrationHandler:
                 current_data = migrated_data
             else:
                 failed_migrations.append(name)
-                self.log_migration(
-                    f"Continuing with partial migration after {name} failed", level="warning"
-                )
+                self.log_migration(f"Continuing with partial migration after {name} failed", level="warning")
 
         if failed_migrations:
             self.migration_status = MigrationStatus.PARTIAL
             self.log_migration(
-                f"Partial migration completed. "
-                f"Successful: {successful_migrations}, "
-                f"Failed: {failed_migrations}",
+                f"Partial migration completed. Successful: {successful_migrations}, Failed: {failed_migrations}",
                 level="warning",
             )
 
@@ -361,9 +355,7 @@ class SafeMigrationWrapper:
     """Wrapper to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(
-        migration_func: callable, config_data: Dict[str, Any], timeout: int = 30
-    ) -> Dict[str, Any]:
+    def migrate_with_timeout(migration_func: callable, config_data: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:
@@ -423,9 +415,6 @@ class SafeMigrationWrapper:
         migrated_size = len(json.dumps(migrated))
 
         if migrated_size < original_size * 0.5:
-            logger.warning(
-                f"Configuration size reduced by more than 50% "
-                f"({original_size} -> {migrated_size} bytes)"
-            )
+            logger.warning(f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)")
 
         return True

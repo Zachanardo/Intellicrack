@@ -96,8 +96,7 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                 }
             )
             logger.info(
-                f"Parsed instruction: Address=0x{address:X}, "
-                f"Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
+                f"Parsed instruction: Address=0x{address:X}, Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
             )
 
         except ValueError as e:
@@ -113,16 +112,13 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
         logger.warning("No lines matching patch format were found")
     else:
         logger.info(
-            f"Found {len(instructions)} valid patch instruction(s) "
-            f"out of {potential_matches} potential matches",
+            f"Found {len(instructions)} valid patch instruction(s) out of {potential_matches} potential matches",
         )
 
     return instructions
 
 
-def create_patch(
-    original_data: bytes, modified_data: bytes, base_address: int = 0
-) -> list[dict[str, Any]]:
+def create_patch(original_data: bytes, modified_data: bytes, base_address: int = 0) -> list[dict[str, Any]]:
     """Create patch instructions by comparing original and modified data.
 
     Args:
@@ -146,10 +142,7 @@ def create_patch(
             start = i
             changed_bytes = bytearray()
 
-            while (
-                i < min(len(original_data), len(modified_data))
-                and original_data[i] != modified_data[i]
-            ):
+            while i < min(len(original_data), len(modified_data)) and original_data[i] != modified_data[i]:
                 changed_bytes.append(modified_data[i])
                 i += 1
 
@@ -167,9 +160,7 @@ def create_patch(
     return patches
 
 
-def apply_patch(
-    file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True
-) -> tuple[bool, str | None]:
+def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True) -> tuple[bool, str | None]:
     """Apply patches to a binary file.
 
     Args:
@@ -218,7 +209,7 @@ def apply_patch(
                 description = patch.get("description", "")
 
                 if not new_bytes:
-                    logger.warning(f"Patch {i+1}: No bytes to write")
+                    logger.warning(f"Patch {i + 1}: No bytes to write")
                     continue
 
                 try:
@@ -226,11 +217,10 @@ def apply_patch(
                     f.write(new_bytes)
                     applied_count += 1
                     logger.info(
-                        f"Applied patch {i+1}: {len(new_bytes)} bytes "
-                        f"at 0x{address:X} - {description}",
+                        f"Applied patch {i + 1}: {len(new_bytes)} bytes at 0x{address:X} - {description}",
                     )
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Failed to apply patch {i+1}: {e}")
+                    logger.error(f"Failed to apply patch {i + 1}: {e}")
 
         if applied_count > 0:
             logger.info("Successfully applied %s patches to %s", applied_count, patched_path)
@@ -276,11 +266,10 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
 
                 if actual_bytes != expected_bytes:
                     logger.error(
-                        f"Patch {i+1} validation failed at 0x{address:X}: "
-                        f"Expected {expected_bytes.hex()}, got {actual_bytes.hex()}",
+                        f"Patch {i + 1} validation failed at 0x{address:X}: Expected {expected_bytes.hex()}, got {actual_bytes.hex()}",
                     )
                     return False
-                logger.debug(f"Patch {i+1} validated successfully")
+                logger.debug(f"Patch {i + 1} validated successfully")
 
         logger.info("All patches validated successfully")
         return True
@@ -380,8 +369,7 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, 
 
     if remainder != 0:
         logger.warning(
-            f"Length {length} not divisible by NOP size {len(nop)} for {arch}. "
-            f"Padding with {remainder} extra bytes.",
+            f"Length {length} not divisible by NOP size {len(nop)} for {arch}. Padding with {remainder} extra bytes.",
         )
 
     return {

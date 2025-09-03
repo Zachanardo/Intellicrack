@@ -144,9 +144,7 @@ def get_autodesk_response_templates():
 
     # Generate realistic user info
     username = getpass.getuser()
-    machine_hash = hashlib.sha256(
-        f"{username}_{os.environ.get('COMPUTERNAME', 'unknown')}".encode()
-    ).hexdigest()[:16]
+    machine_hash = hashlib.sha256(f"{username}_{os.environ.get('COMPUTERNAME', 'unknown')}".encode()).hexdigest()[:16]
 
     # Check for actual Autodesk installations
     detected_products = []
@@ -180,9 +178,7 @@ def get_autodesk_response_templates():
 
     # Calculate expiry based on license type
     if license_type == "NETWORK":
-        expiry_date = current_time + datetime.timedelta(
-            days=365
-        )  # Network licenses typically annual
+        expiry_date = current_time + datetime.timedelta(days=365)  # Network licenses typically annual
         user_type = "PREMIUM"
     else:
         expiry_date = current_time + datetime.timedelta(days=30)  # Trial licenses
@@ -261,12 +257,8 @@ def get_jetbrains_response_templates():
     if os.path.exists(user_jetbrains_path):
         try:
             for item in os.listdir(user_jetbrains_path):
-                if "IntelliJ" in item and ("II", "IntelliJ IDEA") not in [
-                    (p["code"], p["name"]) for p in detected_products
-                ]:
-                    detected_products.append(
-                        {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"}
-                    )
+                if "IntelliJ" in item and ("II", "IntelliJ IDEA") not in [(p["code"], p["name"]) for p in detected_products]:
+                    detected_products.append({"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"})
         except (OSError, PermissionError) as e:
             logger.error("Error in license_response_templates: %s", e)
 
@@ -373,9 +365,7 @@ def get_microsoft_response_templates():
             except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
                 logger.error("Error in license_response_templates: %s", e)
                 # Windows activation check failed
-                detected_products.append(
-                    {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"}
-                )
+                detected_products.append({"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"})
                 error_code = 1
                 error_message = "Unable to check Windows activation status"
 
@@ -409,10 +399,7 @@ def get_microsoft_response_templates():
                                     timeout=30,
                                     check=False,
                                 )
-                                if (
-                                    result.returncode == 0
-                                    and "license status: ---licensed---" in result.stdout.lower()
-                                ):
+                                if result.returncode == 0 and "license status: ---licensed---" in result.stdout.lower():
                                     office_licensed = True
                                     break
                             except (subprocess.TimeoutExpired, OSError) as e:
@@ -423,9 +410,7 @@ def get_microsoft_response_templates():
                     if not any(p["id"] == product_id for p in detected_products):
                         detected_products.append({"id": product_id, "name": name, "status": status})
                         if office_licensed and license_status != "licensed":
-                            license_status = (
-                                "licensed" if license_status == "unlicensed" else license_status
-                            )
+                            license_status = "licensed" if license_status == "unlicensed" else license_status
 
                 except (OSError, subprocess.SubprocessError) as e:
                     logger.error("Error in license_response_templates: %s", e)
@@ -482,9 +467,7 @@ def get_generic_response_templates():
     current_time = datetime.datetime.now()
 
     # Generate machine-specific validation
-    machine_info = (
-        f"{platform.system()}_{platform.machine()}_{os.environ.get('COMPUTERNAME', 'unknown')}"
-    )
+    machine_info = f"{platform.system()}_{platform.machine()}_{os.environ.get('COMPUTERNAME', 'unknown')}"
     machine_hash = hashlib.sha256(machine_info.encode()).hexdigest()[:16]
 
     # Basic license validity check based on system characteristics

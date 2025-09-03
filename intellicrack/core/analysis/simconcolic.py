@@ -85,9 +85,7 @@ class Plugin:
                 "timestamp": time.time(),
                 "state_address": state.address,
                 "fork_number": self.fork_count,
-                "parent_constraints": len(state.constraints)
-                if hasattr(state, "constraints")
-                else 0,
+                "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0,
             }
         )
 
@@ -135,9 +133,7 @@ class Plugin:
         # Update total states analyzed
         self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
 
-        logger.debug(
-            f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})"
-        )
+        logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
 
     def _get_memory_usage(self):
         """Get current memory usage in MB."""
@@ -318,9 +314,7 @@ class BinaryAnalyzer:
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
                 forked_state = State(forked_address, self, fork_state_id)
-                forked_state.input_symbols["stdin"] = (
-                    f"fork_input_for_addr_{forked_address:x}".encode()
-                )
+                forked_state.input_symbols["stdin"] = f"fork_input_for_addr_{forked_address:x}".encode()
                 forked_state.input_symbols["argv"] = [
                     b"./program",
                     f"fork_arg_for_addr_{forked_address:x}".encode(),

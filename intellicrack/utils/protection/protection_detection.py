@@ -73,9 +73,7 @@ def detect_virtualization_protection(binary_path: str | None = None) -> dict[str
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
-            running_processes = [
-                _p.info["name"].lower() for _p in psutil.process_iter(["name"]) if _p.info["name"]
-            ]
+            running_processes = [_p.info["name"].lower() for _p in psutil.process_iter(["name"]) if _p.info["name"]]
 
             for _indicator in vm_indicators:
                 if any(_indicator.lower() in _proc for _proc in running_processes):
@@ -123,9 +121,7 @@ def detect_virtualization_protection(binary_path: str | None = None) -> dict[str
                         content = f.read().lower()
                         for _indicator in vm_indicators:
                             if _indicator.lower() in content:
-                                results["indicators"].append(
-                                    f"VM indicator in {_vm_file}: {_indicator}"
-                                )
+                                results["indicators"].append(f"VM indicator in {_vm_file}: {_indicator}")
                                 results["virtualization_detected"] = True
                 except Exception as e:
                     logger.error("Exception in protection_detection: %s", e)
@@ -209,10 +205,7 @@ def detect_commercial_protections(binary_path: str) -> dict[str, Any]:
                 "VMProtect": [".vmp0", ".vmp1", ".vmp2"],
             }
 
-            section_names = [
-                section.Name.decode("utf-8", errors="ignore").strip("\x00")
-                for section in pe.sections
-            ]
+            section_names = [section.Name.decode("utf-8", errors="ignore").strip("\x00") for section in pe.sections]
 
             for protection, sections in protection_sections.items():
                 for section in sections:
@@ -228,9 +221,7 @@ def detect_commercial_protections(binary_path: str) -> dict[str, Any]:
         except (OSError, ValueError, RuntimeError) as e:
             logger.debug("PE analysis failed: %s", e)
 
-        logger.info(
-            f"Commercial protection detection complete: {len(results['protections_found'])} found"
-        )
+        logger.info(f"Commercial protection detection complete: {len(results['protections_found'])} found")
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in commercial protection detection: %s", e)
@@ -472,9 +463,7 @@ def detect_obfuscation(binary_path: str) -> dict[str, Any]:
         for indicator in obfuscation_indicators:
             if indicator in binary_data:
                 api_count += 1
-                results["indicators"].append(
-                    f"Obfuscation API: {indicator.decode('utf-8', errors='ignore')}"
-                )
+                results["indicators"].append(f"Obfuscation API: {indicator.decode('utf-8', errors='ignore')}")
 
         if api_count > 3:
             results["obfuscation_detected"] = True
@@ -636,9 +625,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> dict[str, Any]:
         for exception_api in exception_apis:
             if exception_api in binary_data:
                 exception_count += 1
-                results["indicators"].append(
-                    f"Exception handling API: {exception_api.decode('utf-8', errors='ignore')}"
-                )
+                results["indicators"].append(f"Exception handling API: {exception_api.decode('utf-8', errors='ignore')}")
 
         if exception_count >= 2:
             results["techniques"].append("Exception-based Detection")
@@ -745,10 +732,7 @@ def scan_for_bytecode_protectors(binary_path):
         high_entropy_sections = []
 
         if pe:
-            section_names = [
-                pe_section.Name.decode("utf-8", "ignore").strip("\x00")
-                for pe_section in pe.sections
-            ]
+            section_names = [pe_section.Name.decode("utf-8", "ignore").strip("\x00") for pe_section in pe.sections]
 
             # Check for high entropy sections (common in packed/protected executables)
             for pe_section in pe.sections:
@@ -786,12 +770,7 @@ def scan_for_bytecode_protectors(binary_path):
                     # Find section and calculate entropy if PE parsing is available
                     if pe:
                         matching_section = next(
-                            (
-                                s
-                                for s in pe.sections
-                                if sig_section.lower()
-                                in s.Name.decode("utf-8", "ignore").strip("\x00").lower()
-                            ),
+                            (s for s in pe.sections if sig_section.lower() in s.Name.decode("utf-8", "ignore").strip("\x00").lower()),
                             None,
                         )
                         if matching_section:
@@ -824,9 +803,7 @@ def scan_for_bytecode_protectors(binary_path):
             results[protector_name] = detection_info
 
         # Additional generic detection based on entropy
-        if high_entropy_sections and not any(
-            result_info.get("detected", False) for result_info in results.values()
-        ):
+        if high_entropy_sections and not any(result_info.get("detected", False) for result_info in results.values()):
             results["Generic Packer/Protector"] = {
                 "detected": True,
                 "note": "High entropy sections detected, possible unknown protector",
@@ -928,7 +905,239 @@ def detect_self_healing(binary_path: str) -> dict[str, Any]:
     return detect_self_healing_code(binary_path)
 
 
-# Export all functions
+class ProtectionDetector:
+    """Unified protection detection interface for binary analysis."""
+
+    def __init__(self):
+        """Initialize protection detector."""
+        self.logger = logger
+
+    def detect_protections(self, binary_path: str, detection_types: list[str] = None) -> dict[str, Any]:
+        """Detect all protections in a binary file.
+
+        Args:
+            binary_path: Path to binary file to analyze
+            detection_types: Optional list of specific detection types to run
+
+        Returns:
+            Comprehensive protection detection results
+        """
+        if not binary_path or not os.path.exists(binary_path):
+            return {"error": "Invalid binary path or file does not exist"}
+
+        results = {
+            "binary_path": binary_path,
+            "total_protections_found": 0,
+            "protection_categories": {},
+            "summary": [],
+            "detailed_results": {},
+            "confidence_score": 0.0,
+        }
+
+        try:
+            self.logger.info(f"Starting comprehensive protection analysis: {binary_path}")
+
+            # Run comprehensive scan as primary analysis
+            comprehensive_results = run_comprehensive_protection_scan(binary_path)
+            results["detailed_results"]["comprehensive"] = comprehensive_results
+            results["total_protections_found"] = comprehensive_results.get("total_protections", 0)
+
+            # Run individual detection methods for detailed analysis
+            all_detection_methods = {
+                "virtualization": detect_virtualization_protection,
+                "commercial": detect_commercial_protections,
+                "anti_debugging": detect_anti_debugging_techniques,
+                "obfuscation": detect_obfuscation,
+                "self_healing": detect_self_healing_code,
+                "checksum": detect_checksum_verification,
+                "tpm": detect_tpm_protection,
+                "packing": scan_for_bytecode_protectors,
+            }
+
+            # Filter methods based on detection_types if specified
+            if detection_types:
+                # Map GUI detection names to method names
+                type_mapping = {
+                    "Virtualization Detection": "virtualization",
+                    "Commercial Protectors": "commercial",
+                    "Anti-Debugging": "anti_debugging",
+                    "Code Obfuscation": "obfuscation",
+                    "Self-Modifying Code": "self_healing",
+                    "Checksum Verification": "checksum",
+                    "TPM Protection": "tpm",
+                    "License Checks": "packing",  # Use packing as closest match
+                }
+
+                detection_methods = {}
+                for detection_type in detection_types:
+                    method_name = type_mapping.get(detection_type)
+                    if method_name and method_name in all_detection_methods:
+                        detection_methods[method_name] = all_detection_methods[method_name]
+
+                # If no matches found, run all methods
+                if not detection_methods:
+                    detection_methods = all_detection_methods
+            else:
+                detection_methods = all_detection_methods
+
+            protection_count = 0
+            confidence_scores = []
+
+            for method_name, detection_func in detection_methods.items():
+                try:
+                    method_results = detection_func(binary_path)
+                    results["detailed_results"][method_name] = method_results
+
+                    # Analyze results and update summary
+                    if self._analyze_method_results(method_name, method_results, results):
+                        protection_count += 1
+
+                    # Extract confidence scores where available
+                    if "confidence" in method_results:
+                        if isinstance(method_results["confidence"], (int, float)):
+                            confidence_scores.append(method_results["confidence"])
+
+                except Exception as e:
+                    self.logger.error(f"Error in {method_name} detection: {e}")
+                    results["detailed_results"][method_name] = {"error": str(e)}
+
+            # Calculate overall confidence
+            if confidence_scores:
+                results["confidence_score"] = sum(confidence_scores) / len(confidence_scores)
+
+            # Update total if individual methods found more
+            results["total_protections_found"] = max(results["total_protections_found"], protection_count)
+
+            self.logger.info(f"Protection analysis complete: {results['total_protections_found']} protections found")
+
+        except Exception as e:
+            self.logger.error(f"Error in protection detection: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def _analyze_method_results(self, method_name: str, method_results: dict, main_results: dict) -> bool:
+        """Analyze individual method results and update main results."""
+        protection_found = False
+
+        try:
+            if method_name == "virtualization":
+                if method_results.get("virtualization_detected"):
+                    main_results["protection_categories"]["Virtualization Protection"] = True
+                    main_results["summary"].append(f"VM detection: {len(method_results.get('indicators', []))} indicators")
+                    protection_found = True
+
+            elif method_name == "commercial":
+                protections = method_results.get("protections_found", [])
+                if protections:
+                    main_results["protection_categories"]["Commercial Protections"] = protections
+                    main_results["summary"].append(f"Commercial protectors: {', '.join(protections)}")
+                    protection_found = True
+
+            elif method_name == "anti_debugging":
+                if method_results.get("anti_debug_detected"):
+                    techniques = method_results.get("techniques", [])
+                    main_results["protection_categories"]["Anti-Debugging"] = techniques
+                    main_results["summary"].append(f"Anti-debug techniques: {len(techniques)} found")
+                    protection_found = True
+
+            elif method_name == "obfuscation":
+                if method_results.get("obfuscation_detected"):
+                    techniques = method_results.get("techniques", [])
+                    entropy = method_results.get("entropy_score", 0)
+                    main_results["protection_categories"]["Obfuscation"] = {
+                        "techniques": techniques,
+                        "entropy": entropy,
+                    }
+                    main_results["summary"].append(f"Obfuscation detected (entropy: {entropy:.2f})")
+                    protection_found = True
+
+            elif method_name == "self_healing":
+                if method_results.get("self_healing_detected"):
+                    techniques = method_results.get("techniques", [])
+                    main_results["protection_categories"]["Self-Modifying Code"] = techniques
+                    main_results["summary"].append(f"Self-modifying code: {len(techniques)} techniques")
+                    protection_found = True
+
+            elif method_name == "checksum":
+                if method_results.get("checksum_verification_detected"):
+                    algorithms = method_results.get("algorithms_found", [])
+                    main_results["protection_categories"]["Checksum Verification"] = algorithms
+                    main_results["summary"].append(f"Checksum verification: {', '.join(algorithms)}")
+                    protection_found = True
+
+            elif method_name == "tpm":
+                if method_results.get("tmp_detected"):
+                    indicators = method_results.get("indicators", [])
+                    main_results["protection_categories"]["TPM Protection"] = indicators
+                    main_results["summary"].append(f"TPM protection: {len(indicators)} indicators")
+                    protection_found = True
+
+            elif method_name == "packing":
+                detected_protectors = []
+                for protector, info in method_results.items():
+                    if isinstance(info, dict) and info.get("detected"):
+                        detected_protectors.append(protector)
+
+                if detected_protectors:
+                    main_results["protection_categories"]["Packers/Protectors"] = detected_protectors
+                    main_results["summary"].append(f"Packers found: {', '.join(detected_protectors)}")
+                    protection_found = True
+
+        except Exception as e:
+            self.logger.error(f"Error analyzing {method_name} results: {e}")
+
+        return protection_found
+
+    def detect_specific_protection(self, binary_path: str, protection_type: str) -> dict[str, Any]:
+        """Detect specific type of protection.
+
+        Args:
+            binary_path: Path to binary file
+            protection_type: Type of protection to detect
+
+        Returns:
+            Specific protection detection results
+        """
+        protection_methods = {
+            "virtualization": detect_virtualization_protection,
+            "vm": detect_virtualization_protection,
+            "commercial": detect_commercial_protections,
+            "anti_debug": detect_anti_debugging_techniques,
+            "anti_debugging": detect_anti_debugging_techniques,
+            "obfuscation": detect_obfuscation,
+            "self_healing": detect_self_healing_code,
+            "checksum": detect_checksum_verification,
+            "tpm": detect_tpm_protection,
+            "packing": scan_for_bytecode_protectors,
+            "packers": scan_for_bytecode_protectors,
+        }
+
+        method = protection_methods.get(protection_type.lower())
+        if not method:
+            return {"error": f"Unknown protection type: {protection_type}"}
+
+        try:
+            return method(binary_path)
+        except Exception as e:
+            self.logger.error(f"Error detecting {protection_type}: {e}")
+            return {"error": str(e)}
+
+    def get_available_detectors(self) -> list[str]:
+        """Get list of available protection detectors."""
+        return [
+            "virtualization",
+            "commercial",
+            "anti_debugging",
+            "obfuscation",
+            "self_healing",
+            "checksum",
+            "tpm",
+            "packing",
+        ]
+
+
+# Export all functions and classes
 __all__ = [
     "detect_all_protections",
     "detect_anti_debug",
@@ -947,4 +1156,5 @@ __all__ = [
     "generate_checksum",
     "run_comprehensive_protection_scan",
     "scan_for_bytecode_protectors",
+    "ProtectionDetector",
 ]

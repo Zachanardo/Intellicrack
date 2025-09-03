@@ -113,9 +113,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
         # Convenience methods
         self.convenience_check = QCheckBox("Use convenience methods")
         self.convenience_check.setChecked(True)
-        self.convenience_check.setToolTip(
-            "Use built-in convenience methods instead of task queue for common operations"
-        )
+        self.convenience_check.setToolTip("Use built-in convenience methods instead of task queue for common operations")
         processing_layout.addRow("", self.convenience_check)
 
         processing_group.setLayout(processing_layout)
@@ -167,9 +165,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
 
         self.custom_patterns_edit = QLineEdit()
         self.custom_patterns_edit.setPlaceholder("Custom patterns (comma-separated)")
-        self.custom_patterns_edit.setToolTip(
-            "Enter custom patterns to search for, separated by commas"
-        )
+        self.custom_patterns_edit.setToolTip("Enter custom patterns to search for, separated by commas")
         pattern_layout.addWidget(self.custom_patterns_edit)
 
         pattern_group.setLayout(pattern_layout)
@@ -180,8 +176,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
 
         # Performance hint
         perf_hint = QLabel(
-            "<i>Tip: For large binaries (>100MB), consider using Ray or Dask backends "
-            "with smaller chunk sizes for better performance.</i>",
+            "<i>Tip: For large binaries (>100MB), consider using Ray or Dask backends with smaller chunk sizes for better performance.</i>",
         )
         perf_hint.setWordWrap(True)
         layout.addWidget(perf_hint)
@@ -316,9 +311,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
         return analysis_selected
 
 
-def create_distributed_config_dialog(
-    binary_path: str, parent=None
-) -> DistributedProcessingConfigDialog:
+def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
     """Factory function to create a DistributedProcessingConfigDialog.
 
     Args:

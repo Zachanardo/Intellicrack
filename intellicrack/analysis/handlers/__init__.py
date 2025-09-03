@@ -13,15 +13,15 @@ _available_handlers = {}
 
 # Handler modules with descriptions
 _handler_modules = [
-    ('llm_handler', 'Large Language Model integration handler'),
-    ('report_generation_handler', 'Analysis report generation handler'),
-    ('script_generation_handler', 'Dynamic script generation handler'),
+    ("llm_handler", "Large Language Model integration handler"),
+    ("report_generation_handler", "Analysis report generation handler"),
+    ("script_generation_handler", "Dynamic script generation handler"),
 ]
 
 # Load handlers with error tolerance
 for module_name, description in _handler_modules:
     try:
-        module = __import__(f'{__name__}.{module_name}', fromlist=[module_name])
+        module = __import__(f"{__name__}.{module_name}", fromlist=[module_name])
         _available_handlers[module_name] = module
         logger.debug("Loaded analysis handler: %s (%s)", module_name, description)
     except ImportError as e:
@@ -29,9 +29,11 @@ for module_name, description in _handler_modules:
     except Exception as e:
         logger.warning("Error loading analysis handler %s: %s", module_name, e)
 
+
 def get_available_handlers():
     """Get list of successfully loaded analysis handlers."""
     return list(_available_handlers.keys())
+
 
 def get_handler(handler_name):
     """Get a specific handler module if available.
@@ -45,6 +47,7 @@ def get_handler(handler_name):
     """
     return _available_handlers.get(handler_name)
 
+
 def is_handler_available(handler_name):
     """Check if a specific handler is available.
 
@@ -57,8 +60,9 @@ def is_handler_available(handler_name):
     """
     return handler_name in _available_handlers
 
+
 __all__ = [
-    'get_available_handlers',
-    'get_handler',
-    'is_handler_available',
+    "get_available_handlers",
+    "get_handler",
+    "is_handler_available",
 ] + list(_available_handlers.keys())

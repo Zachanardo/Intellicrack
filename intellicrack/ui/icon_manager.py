@@ -27,7 +27,6 @@ class IconManager:
         "file_close": "❌",
         "file_export": "📤",
         "file_import": "📥",
-
         # Edit operations
         "edit_copy": "📋",
         "edit_paste": "📋",
@@ -37,7 +36,6 @@ class IconManager:
         "edit_delete": "🗑️",
         "edit_search": "🔍",
         "edit_replace": "🔄",
-
         # Navigation
         "nav_back": "⬅️",
         "nav_forward": "➡️",
@@ -45,7 +43,6 @@ class IconManager:
         "nav_down": "⬇️",
         "nav_home": "🏠",
         "nav_refresh": "🔄",
-
         # Actions
         "action_run": "▶️",
         "action_stop": "⏹️",
@@ -57,7 +54,6 @@ class IconManager:
         "action_test": "🧪",
         "action_build": "🔨",
         "action_deploy": "🚀",
-
         # Status
         "status_success": "✅",
         "status_error": "❌",
@@ -67,7 +63,6 @@ class IconManager:
         "status_loading": "⏳",
         "status_ready": "✓",
         "status_idle": "⏸️",
-
         # Tools
         "tool_settings": "⚙️",
         "tool_preferences": "🔧",
@@ -77,7 +72,6 @@ class IconManager:
         "tool_log": "📝",
         "tool_monitor": "📊",
         "tool_network": "🌐",
-
         # Security
         "security_lock": "🔒",
         "security_unlock": "🔓",
@@ -85,14 +79,12 @@ class IconManager:
         "security_shield": "🛡️",
         "security_warning": "⚠️",
         "security_scan": "🔍",
-
         # AI/ML
         "ai_brain": "🧠",
         "ai_robot": "🤖",
         "ai_generate": "✨",
         "ai_analyze": "📊",
         "ai_model": "🧮",
-
         # Binary Analysis
         "binary_exe": "🔷",
         "binary_dll": "📦",
@@ -100,13 +92,11 @@ class IconManager:
         "binary_hex": "🔢",
         "binary_disasm": "📜",
         "binary_memory": "💾",
-
         # Database
         "db_connect": "🔗",
         "db_disconnect": "🔗",
         "db_query": "📊",
         "db_table": "📋",
-
         # Help
         "help_about": "ℹ️",
         "help_documentation": "📚",

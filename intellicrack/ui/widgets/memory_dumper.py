@@ -112,9 +112,7 @@ class MemoryDumperWidget(QWidget):
         # Regions table
         self.regions_table = QTableWidget()
         self.regions_table.setColumnCount(5)
-        self.regions_table.setHorizontalHeaderLabels(
-            ["Address", "Size", "Protection", "Type", "Path"]
-        )
+        self.regions_table.setHorizontalHeaderLabels(["Address", "Size", "Protection", "Type", "Path"])
         self.regions_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         regions_layout.addWidget(self.regions_table)
 
@@ -221,11 +219,7 @@ class MemoryDumperWidget(QWidget):
                     return
 
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [tasklist_path, "/fo", "csv"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    shell=False
+                    [tasklist_path, "/fo", "csv"], check=False, capture_output=True, text=True, shell=False
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
@@ -355,12 +349,8 @@ class MemoryDumperWidget(QWidget):
                         row = self.regions_table.rowCount()
                         self.regions_table.insertRow(row)
 
-                        self.regions_table.setItem(
-                            row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}")
-                        )
-                        self.regions_table.setItem(
-                            row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes")
-                        )
+                        self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}"))
+                        self.regions_table.setItem(row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes"))
                         self.regions_table.setItem(row, 2, QTableWidgetItem(protection))
                         self.regions_table.setItem(row, 3, QTableWidgetItem(region_type))
                         self.regions_table.setItem(row, 4, QTableWidgetItem(""))
@@ -395,17 +385,11 @@ class MemoryDumperWidget(QWidget):
                             row = self.regions_table.rowCount()
                             self.regions_table.insertRow(row)
 
-                            self.regions_table.setItem(
-                                row, 0, QTableWidgetItem(f"0x{start_addr:016X}")
-                            )
+                            self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{start_addr:016X}"))
                             self.regions_table.setItem(row, 1, QTableWidgetItem(f"{size:,} bytes"))
                             self.regions_table.setItem(row, 2, QTableWidgetItem(perms))
-                            self.regions_table.setItem(
-                                row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else "")
-                            )
-                            self.regions_table.setItem(
-                                row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else "")
-                            )
+                            self.regions_table.setItem(row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else ""))
+                            self.regions_table.setItem(row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else ""))
 
             self.output_log.append(f"Found {self.regions_table.rowCount()} memory regions")
 

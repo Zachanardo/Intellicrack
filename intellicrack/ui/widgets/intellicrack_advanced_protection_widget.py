@@ -68,9 +68,7 @@ class AdvancedAnalysisThread(QThread):
     #: message, percentage (type: str, int)
     analysis_progress = pyqtSignal(str, int)
 
-    def __init__(
-        self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool
-    ):
+    def __init__(self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool):
         """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
         super().__init__()
         self.file_path = file_path
@@ -723,7 +721,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 <strong>Path:</strong> {analysis.file_path}<br>
                 <strong>Type:</strong> {analysis.file_type}<br>
                 <strong>Architecture:</strong> {analysis.architecture}<br>
-                <strong>Compiler:</strong> {analysis.compiler or 'Unknown'}<br>
+                <strong>Compiler:</strong> {analysis.compiler or "Unknown"}<br>
             </div>
 
             <h3>Protection Status</h3>
@@ -762,7 +760,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             html += f"""
             <div class="info">
                 <strong>Import Hash:</strong> {analysis.import_hash.imphash}<br>
-                <strong>Similarity Hash:</strong> {analysis.similarity_hash or 'N/A'}<br>
+                <strong>Similarity Hash:</strong> {analysis.similarity_hash or "N/A"}<br>
             </div>
             """
 
@@ -882,9 +880,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if not analysis.heuristic_detections:
             heuristics_text += "No heuristic detections found.\n"
         else:
-            heuristics_text += (
-                f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
-            )
+            heuristics_text += f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
 
             for i, detection in enumerate(analysis.heuristic_detections, 1):
                 heuristics_text += f"{i}. {detection.name}\n"
@@ -925,9 +921,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             return
 
         # Get detection
-        all_detections = (
-            self.current_analysis.detections + self.current_analysis.heuristic_detections
-        )
+        all_detections = self.current_analysis.detections + self.current_analysis.heuristic_detections
         if current_row < len(all_detections):
             detection = all_detections[current_row]
 
@@ -1027,5 +1021,3 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             # Auto-analyze if configured
             if hasattr(self, "auto_analyze") and self.auto_analyze:
                 self.on_analyze_clicked()
-
-

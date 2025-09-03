@@ -300,11 +300,7 @@ class ModelBatchTester:
                     pattern_matches[pattern] = pattern.lower() in output.lower()
 
                 all_patterns_found = all(pattern_matches.values())
-                passed_validation = (
-                    all_patterns_found
-                    if passed_validation is None
-                    else (passed_validation and all_patterns_found)
-                )
+                passed_validation = all_patterns_found if passed_validation is None else (passed_validation and all_patterns_found)
                 validation_details["pattern_matches"] = pattern_matches
 
             return TestResult(
@@ -467,14 +463,9 @@ class ModelBatchTester:
                 "success": sum(1 for r in model_results if r.success),
                 "failed": sum(1 for r in model_results if not r.success),
                 "validation_passed": sum(1 for r in model_results if r.passed_validation is True),
-                "avg_inference_time": sum(r.inference_time for r in model_results)
-                / len(model_results)
-                if model_results
-                else 0,
+                "avg_inference_time": sum(r.inference_time for r in model_results) / len(model_results) if model_results else 0,
                 "avg_tokens_per_second": sum(
-                    r.tokens_generated / r.inference_time
-                    for r in model_results
-                    if r.success and r.inference_time > 0
+                    r.tokens_generated / r.inference_time for r in model_results if r.success and r.inference_time > 0
                 )
                 / len([r for r in model_results if r.success])
                 if any(r.success for r in model_results)
@@ -526,12 +517,8 @@ class ModelBatchTester:
         for model_id in model_ids:
             model_summary = report.summary["models"][model_id]
             comparison["models"][model_id] = {
-                "success_rate": model_summary["success"] / model_summary["total"]
-                if model_summary["total"] > 0
-                else 0,
-                "validation_rate": model_summary["validation_passed"] / model_summary["success"]
-                if model_summary["success"] > 0
-                else 0,
+                "success_rate": model_summary["success"] / model_summary["total"] if model_summary["total"] > 0 else 0,
+                "validation_rate": model_summary["validation_passed"] / model_summary["success"] if model_summary["success"] > 0 else 0,
                 "avg_inference_time": model_summary["avg_inference_time"],
                 "avg_tokens_per_second": model_summary["avg_tokens_per_second"],
             }
@@ -655,11 +642,11 @@ class ModelBatchTester:
     <div class="summary">
         <h2>Summary</h2>
         <p><strong>Test Suite:</strong> {report.test_suite_id}</p>
-        <p><strong>Date:</strong> {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p><strong>Date:</strong> {report.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
         <p><strong>Duration:</strong> {report.duration:.2f} seconds</p>
-        <p><strong>Total Tests:</strong> {report.summary['total_tests']}</p>
-        <p><strong>Successful:</strong> <span class="success">{report.summary['successful_tests']}</span></p>
-        <p><strong>Failed:</strong> <span class="failed">{report.summary['failed_tests']}</span></p>
+        <p><strong>Total Tests:</strong> {report.summary["total_tests"]}</p>
+        <p><strong>Successful:</strong> <span class="success">{report.summary["successful_tests"]}</span></p>
+        <p><strong>Failed:</strong> <span class="failed">{report.summary["failed_tests"]}</span></p>
     </div>
 
     <h2>Model Performance</h2>
@@ -675,17 +662,15 @@ class ModelBatchTester:
 
         for model_id, stats in report.summary["models"].items():
             success_rate = (stats["success"] / stats["total"] * 100) if stats["total"] > 0 else 0
-            validation_rate = (
-                (stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
-            )
+            validation_rate = (stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
 
             html += f"""
         <tr>
             <td>{model_id}</td>
             <td>{success_rate:.1f}%</td>
             <td>{validation_rate:.1f}%</td>
-            <td>{stats['avg_inference_time']:.3f}s</td>
-            <td>{stats['avg_tokens_per_second']:.1f}</td>
+            <td>{stats["avg_inference_time"]:.3f}s</td>
+            <td>{stats["avg_tokens_per_second"]:.1f}</td>
         </tr>
 """
 
@@ -707,16 +692,8 @@ class ModelBatchTester:
         for result in report.results:
             status_class = "success" if result.success else "failed"
             status_text = "Success" if result.success else "Failed"
-            validation_text = (
-                "✓"
-                if result.passed_validation
-                else "✗"
-                if result.passed_validation is False
-                else "-"
-            )
-            output_preview = (
-                result.output[:100] + "..." if len(result.output) > 100 else result.output
-            )
+            validation_text = "✓" if result.passed_validation else "✗" if result.passed_validation is False else "-"
+            output_preview = result.output[:100] + "..." if len(result.output) > 100 else result.output
             output_preview = output_preview.replace("\n", " ")
 
             html += f"""

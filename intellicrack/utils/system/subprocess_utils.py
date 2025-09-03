@@ -18,6 +18,7 @@ Shared subprocess utilities for Intellicrack.
 
 This module provides common subprocess execution patterns.
 """
+
 import logging
 import subprocess
 
@@ -117,9 +118,7 @@ def run_subprocess_check(
         raise
 
 
-def create_popen_with_encoding(
-    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
-) -> tuple[int, str, str]:
+def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout: int | None = None) -> tuple[int, str, str]:
     """Create Popen process with encoding and error handling.
 
     Common pattern for process creation with output capture and encoding.

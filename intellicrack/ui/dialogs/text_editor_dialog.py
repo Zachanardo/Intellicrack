@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 
 
 if HAS_PYQT and QSyntaxHighlighter:
+
     class PythonSyntaxHighlighter(QSyntaxHighlighter):
         """Syntax highlighter for Python code."""
 
@@ -146,6 +147,7 @@ if HAS_PYQT and QSyntaxHighlighter:
                     self.setFormat(start, length, text_format)
 
 else:
+
     class PythonSyntaxHighlighter:
         """Fallback syntax highlighter when PyQt6 is not available."""
 
@@ -167,6 +169,7 @@ else:
 
 
 if HAS_PYQT and QDialog:
+
     class FindReplaceDialog(QDialog):
         """Find and replace dialog."""
 
@@ -260,13 +263,12 @@ if HAS_PYQT and QDialog:
     def replace_all(self):
         """Replace all occurrences."""
         if self.text_editor and hasattr(self.text_editor, "replace_all_text"):
-            count = self.text_editor.replace_all_text(
-                self.find_edit.text(), self.replace_edit.text()
-            )
+            count = self.text_editor.replace_all_text(self.find_edit.text(), self.replace_edit.text())
             if HAS_PYQT:
                 QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
 
 else:
+
     class FindReplaceDialog:
         """Fallback find and replace dialog when PyQt6 is not available."""
 
@@ -282,7 +284,9 @@ else:
             """Hide dialog (no-op in fallback)."""
             pass
 
+
 if HAS_PYQT and QDialog:
+
     class TextEditorDialog(QDialog):
         """Advanced text editor dialog for Intellicrack."""
 
@@ -751,9 +755,7 @@ if HAS_PYQT and QDialog:
                 with open(file_path, "w", encoding="utf-8") as f:
                     if include_line_numbers:
                         lines = content.split("\n")
-                        numbered_content = "\n".join(
-                            f"{i+1:4d}: {line}" for i, line in enumerate(lines)
-                        )
+                        numbered_content = "\n".join(f"{i + 1:4d}: {line}" for i, line in enumerate(lines))
                         f.write(numbered_content)
                     else:
                         f.write(content)
@@ -797,8 +799,7 @@ if HAS_PYQT and QDialog:
         elif include_line_numbers:
             lines = content.split("\n")
             formatted_content = "\n".join(
-                f'<span class="line-number">{i+1:4d}:</span> {self._escape_html(line)}'
-                for i, line in enumerate(lines)
+                f'<span class="line-number">{i + 1:4d}:</span> {self._escape_html(line)}' for i, line in enumerate(lines)
             )
         else:
             formatted_content = self._escape_html(content)
@@ -810,7 +811,6 @@ if HAS_PYQT and QDialog:
         """Export content to PDF format."""
         try:
             from intellicrack.handlers.pyqt6_handler import QPrinter, QTextDocument
-
 
             printer = QPrinter(QPrinter.PrinterMode.HighResolution)
             printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
@@ -825,7 +825,7 @@ if HAS_PYQT and QDialog:
             # Format content
             if include_line_numbers:
                 lines = content.split("\n")
-                formatted_content = "\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+                formatted_content = "\n".join(f"{i + 1:4d}: {line}" for i, line in enumerate(lines))
             else:
                 formatted_content = content
 
@@ -858,7 +858,7 @@ if HAS_PYQT and QDialog:
 
         if include_line_numbers:
             lines = rtf_content.split("\\par\n")
-            rtf_content = "\\par\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+            rtf_content = "\\par\n".join(f"{i + 1:4d}: {line}" for i, line in enumerate(lines))
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(rtf_header + rtf_content + rtf_footer)
@@ -941,17 +941,13 @@ if HAS_PYQT and QDialog:
             content,
             flags=re.MULTILINE,
         )
-        content = re.sub(
-            r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content
-        )
+        content = re.sub(r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content)
         content = re.sub(r"\b\d+\b", lambda m: f'<span class="number">{m.group()}</span>', content)
         content = re.sub(r"\bdef\s+(\w+)", r'def <span class="function">\1</span>', content)
 
         if include_line_numbers:
             lines = content.split("\n")
-            content = "\n".join(
-                f'<span class="line-number">{i+1:4d}:</span> {line}' for i, line in enumerate(lines)
-            )
+            content = "\n".join(f'<span class="line-number">{i + 1:4d}:</span> {line}' for i, line in enumerate(lines))
 
         return content
 
@@ -1082,6 +1078,7 @@ if HAS_PYQT and QDialog:
             event.ignore()
 
 else:
+
     class TextEditorDialog:
         """Fallback text editor dialog when PyQt6 is not available."""
 

@@ -226,9 +226,7 @@ class AnalysisExporter:
         vulns = result.get("vulnerabilities", [])
         stats = result.get("statistics", {})
 
-        logger.debug(
-            "Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats
-        )
+        logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats)
 
         # Count by severity
         high_count = len([v for v in vulns if v.get("severity") == "high"])
@@ -241,12 +239,12 @@ class AnalysisExporter:
             severity = vuln.get("severity", "low")
             vuln_html += f"""
             <div class="vulnerability {severity}">
-                <h3>{vuln.get('type', 'Unknown')}</h3>
-                <p><strong>File:</strong> {vuln.get('file', 'N/A')}</p>
-                <p><strong>Line:</strong> {vuln.get('line', 'N/A')}</p>
+                <h3>{vuln.get("type", "Unknown")}</h3>
+                <p><strong>File:</strong> {vuln.get("file", "N/A")}</p>
+                <p><strong>Line:</strong> {vuln.get("line", "N/A")}</p>
                 <p><strong>Severity:</strong> {severity.upper()}</p>
-                <p><strong>Confidence:</strong> {vuln.get('confidence', 'N/A')}</p>
-                <p><strong>Description:</strong> {vuln.get('description', 'No description available')}</p>
+                <p><strong>Confidence:</strong> {vuln.get("confidence", "N/A")}</p>
+                <p><strong>Description:</strong> {vuln.get("description", "No description available")}</p>
             </div>
             """
 
@@ -313,20 +311,14 @@ class AnalysisExporter:
         diff_html = ""
         for diff in diffs:
             diff_type = diff.get("type", "unknown")
-            css_class = (
-                "added"
-                if "added" in diff_type
-                else "removed"
-                if "removed" in diff_type
-                else "modified"
-            )
+            css_class = "added" if "added" in diff_type else "removed" if "removed" in diff_type else "modified"
 
             diff_html += f"""
             <div class="difference {css_class}">
-                <h3>{diff.get('type', 'Unknown').replace('_', ' ').title()}</h3>
-                <p><strong>Description:</strong> {diff.get('description', 'No description available')}</p>
-                <p><strong>Old Value:</strong> {diff.get('old_value', 'N/A')}</p>
-                <p><strong>New Value:</strong> {diff.get('new_value', 'N/A')}</p>
+                <h3>{diff.get("type", "Unknown").replace("_", " ").title()}</h3>
+                <p><strong>Description:</strong> {diff.get("description", "No description available")}</p>
+                <p><strong>Old Value:</strong> {diff.get("old_value", "N/A")}</p>
+                <p><strong>New Value:</strong> {diff.get("new_value", "N/A")}</p>
             </div>
             """
 
@@ -358,7 +350,7 @@ class AnalysisExporter:
 <body>
     <div class="header">
         <h1>Analysis Report</h1>
-        <p>Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <h2>Results</h2>

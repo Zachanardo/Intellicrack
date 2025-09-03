@@ -1,0 +1,670 @@
+"""Report generator for Intellicrack analysis results.
+
+This module provides comprehensive report generation and viewing capabilities
+for binary analysis results, protection assessments, and security findings.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
+"""
+
+import json
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+import webbrowser
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from intellicrack.logger import logger
+
+try:
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
+    PYQT_AVAILABLE = True
+except ImportError:
+    PYQT_AVAILABLE = False
+    logger.warning("PyQt6 not available, file dialogs will use fallback methods")
+
+try:
+    from jinja2 import Environment, FileSystemLoader, Template
+
+    JINJA_AVAILABLE = True
+except ImportError:
+    JINJA_AVAILABLE = False
+    logger.warning("Jinja2 not available, HTML reports will use basic formatting")
+
+
+class ReportGenerator:
+    """Comprehensive report generator for Intellicrack analysis results."""
+
+    def __init__(self):
+        """Initialize the report generator."""
+        self.logger = logging.getLogger(__name__)
+        self.reports_dir = self._get_reports_directory()
+        self.templates_dir = self._get_templates_directory()
+
+        if JINJA_AVAILABLE and self.templates_dir.exists():
+            self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
+        else:
+            self.jinja_env = None
+
+    def _get_reports_directory(self) -> Path:
+        """Get or create the reports directory.
+
+        Returns:
+            Path to the reports directory
+        """
+        try:
+            from intellicrack.utils.core.plugin_paths import get_reports_dir
+
+            reports_dir = get_reports_dir()
+        except ImportError:
+            # Fallback to default location
+            reports_dir = Path.home() / ".intellicrack" / "reports"
+
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        return reports_dir
+
+    def _get_templates_directory(self) -> Path:
+        """Get the templates directory.
+
+        Returns:
+            Path to the templates directory
+        """
+        # Check multiple possible locations
+        possible_paths = [
+            Path(__file__).parent / "templates",
+            Path(__file__).parent.parent.parent / "resources" / "templates",
+            Path.cwd() / "templates",
+        ]
+
+        for path in possible_paths:
+            if path.exists() and path.is_dir():
+                return path
+
+        # Create default templates directory
+        default_path = Path(__file__).parent / "templates"
+        default_path.mkdir(parents=True, exist_ok=True)
+        return default_path
+
+    def generate_html_report(self, data: Dict[str, Any]) -> str:
+        """Generate an HTML report from analysis data.
+
+        Args:
+            data: Analysis results data
+
+        Returns:
+            HTML content as string
+        """
+        if self.jinja_env:
+            try:
+                # Try to load template
+                template = self.jinja_env.get_template("report_template.html")
+                return template.render(data=data, timestamp=datetime.now())
+            except Exception as e:
+                # Fall back to basic HTML generation
+                logger.debug(f"Template loading failed, using basic HTML generation: {e}")
+
+        # Basic HTML generation without templates
+        html_parts = [
+            "<!DOCTYPE html>",
+            "<html>",
+            "<head>",
+            "<title>Intellicrack Analysis Report</title>",
+            "<style>",
+            self._get_default_css(),
+            "</style>",
+            "</head>",
+            "<body>",
+            "<div class='container'>",
+            "<h1>Intellicrack Analysis Report</h1>",
+            f"<p class='timestamp'>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>",
+        ]
+
+        # Add analysis summary
+        if "summary" in data:
+            html_parts.append("<section class='summary'>")
+            html_parts.append("<h2>Summary</h2>")
+            html_parts.append(f"<p>{data['summary']}</p>")
+            html_parts.append("</section>")
+
+        # Add binary information
+        if "binary_info" in data:
+            html_parts.append("<section class='binary-info'>")
+            html_parts.append("<h2>Binary Information</h2>")
+            html_parts.append("<table>")
+            for key, value in data["binary_info"].items():
+                html_parts.append(f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>")
+            html_parts.append("</table>")
+            html_parts.append("</section>")
+
+        # Add protection analysis
+        if "protections" in data:
+            html_parts.append("<section class='protections'>")
+            html_parts.append("<h2>Protection Analysis</h2>")
+            html_parts.append("<ul>")
+            for protection in data["protections"]:
+                status = "✓" if protection.get("bypassed") else "✗"
+                html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
+            html_parts.append("</ul>")
+            html_parts.append("</section>")
+
+        # Add vulnerabilities
+        if "vulnerabilities" in data:
+            html_parts.append("<section class='vulnerabilities'>")
+            html_parts.append("<h2>Vulnerabilities Found</h2>")
+            html_parts.append("<table>")
+            html_parts.append("<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>")
+            for vuln in data["vulnerabilities"]:
+                severity_class = vuln.get("severity", "unknown").lower()
+                html_parts.append(f"<tr class='severity-{severity_class}'>")
+                html_parts.append(f"<td>{vuln.get('severity', 'Unknown')}</td>")
+                html_parts.append(f"<td>{vuln.get('type', 'Unknown')}</td>")
+                html_parts.append(f"<td>{vuln.get('description', '')}</td>")
+                html_parts.append(f"<td>{vuln.get('location', 'N/A')}</td>")
+                html_parts.append("</tr>")
+            html_parts.append("</table>")
+            html_parts.append("</section>")
+
+        # Add exploitation results
+        if "exploitation" in data:
+            html_parts.append("<section class='exploitation'>")
+            html_parts.append("<h2>Exploitation Results</h2>")
+            for exploit in data["exploitation"]:
+                html_parts.append("<div class='exploit-result'>")
+                html_parts.append(f"<h3>{exploit.get('technique', 'Unknown Technique')}</h3>")
+                html_parts.append(f"<p><strong>Status:</strong> {exploit.get('status', 'Unknown')}</p>")
+                if exploit.get("payload"):
+                    html_parts.append(f"<p><strong>Payload:</strong> <code>{exploit['payload'][:100]}...</code></p>")
+                if exploit.get("output"):
+                    html_parts.append(f"<pre class='output'>{exploit['output']}</pre>")
+                html_parts.append("</div>")
+            html_parts.append("</section>")
+
+        # Add recommendations
+        if "recommendations" in data:
+            html_parts.append("<section class='recommendations'>")
+            html_parts.append("<h2>Security Recommendations</h2>")
+            html_parts.append("<ol>")
+            for rec in data["recommendations"]:
+                html_parts.append(f"<li>{rec}</li>")
+            html_parts.append("</ol>")
+            html_parts.append("</section>")
+
+        html_parts.extend(["</div>", "</body>", "</html>"])
+
+        return "\n".join(html_parts)
+
+    def _get_default_css(self) -> str:
+        """Get default CSS styles for HTML reports.
+
+        Returns:
+            CSS styles as string
+        """
+        return """
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #7f8c8d;
+        }
+        .timestamp {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .severity-critical { background: #ffcccc; }
+        .severity-high { background: #ffe6cc; }
+        .severity-medium { background: #ffffcc; }
+        .severity-low { background: #e6ffcc; }
+        code {
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        section {
+            margin-bottom: 30px;
+        }
+        .exploit-result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+            border-radius: 5px;
+        }
+        """
+
+    def generate_json_report(self, data: Dict[str, Any]) -> str:
+        """Generate a JSON report from analysis data.
+
+        Args:
+            data: Analysis results data
+
+        Returns:
+            JSON content as string
+        """
+        # Add metadata
+        report_data = {
+            "metadata": {
+                "generator": "Intellicrack Report Generator",
+                "version": "2.0.0",
+                "timestamp": datetime.now().isoformat(),
+            },
+            "data": data,
+        }
+
+        return json.dumps(report_data, indent=2, default=str)
+
+    def generate_text_report(self, data: Dict[str, Any]) -> str:
+        """Generate a text report from analysis data.
+
+        Args:
+            data: Analysis results data
+
+        Returns:
+            Text content as string
+        """
+        lines = []
+        lines.append("=" * 80)
+        lines.append("INTELLICRACK ANALYSIS REPORT")
+        lines.append("=" * 80)
+        lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append("")
+
+        # Add sections
+        if "summary" in data:
+            lines.append("SUMMARY")
+            lines.append("-" * 40)
+            lines.append(data["summary"])
+            lines.append("")
+
+        if "binary_info" in data:
+            lines.append("BINARY INFORMATION")
+            lines.append("-" * 40)
+            for key, value in data["binary_info"].items():
+                lines.append(f"  {key}: {value}")
+            lines.append("")
+
+        if "protections" in data:
+            lines.append("PROTECTION ANALYSIS")
+            lines.append("-" * 40)
+            for protection in data["protections"]:
+                status = "[BYPASSED]" if protection.get("bypassed") else "[ACTIVE]"
+                lines.append(f"  {status} {protection.get('name', 'Unknown')}")
+                if protection.get("description"):
+                    lines.append(f"    {protection['description']}")
+            lines.append("")
+
+        if "vulnerabilities" in data:
+            lines.append("VULNERABILITIES FOUND")
+            lines.append("-" * 40)
+            for vuln in data["vulnerabilities"]:
+                lines.append(f"  [{vuln.get('severity', 'UNKNOWN')}] {vuln.get('type', 'Unknown')}")
+                lines.append(f"    {vuln.get('description', 'No description')}")
+                lines.append(f"    Location: {vuln.get('location', 'N/A')}")
+            lines.append("")
+
+        if "exploitation" in data:
+            lines.append("EXPLOITATION RESULTS")
+            lines.append("-" * 40)
+            for exploit in data["exploitation"]:
+                lines.append(f"  Technique: {exploit.get('technique', 'Unknown')}")
+                lines.append(f"  Status: {exploit.get('status', 'Unknown')}")
+                if exploit.get("output"):
+                    lines.append(f"  Output: {exploit['output'][:200]}")
+            lines.append("")
+
+        if "recommendations" in data:
+            lines.append("SECURITY RECOMMENDATIONS")
+            lines.append("-" * 40)
+            for i, rec in enumerate(data["recommendations"], 1):
+                lines.append(f"  {i}. {rec}")
+            lines.append("")
+
+        lines.append("=" * 80)
+        lines.append("END OF REPORT")
+        lines.append("=" * 80)
+
+        return "\n".join(lines)
+
+    def save_report(self, content: str, format: str, filename: Optional[str] = None) -> str:
+        """Save report content to file.
+
+        Args:
+            content: Report content
+            format: Report format (html, json, txt)
+            filename: Optional custom filename
+
+        Returns:
+            Path to saved report file
+        """
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"intellicrack_report_{timestamp}.{format}"
+
+        filepath = self.reports_dir / filename
+
+        # Write content to file
+        mode = "w" if format in ["html", "json", "txt"] else "wb"
+        encoding = "utf-8" if format in ["html", "json", "txt"] else None
+
+        with open(filepath, mode, encoding=encoding) as f:
+            f.write(content)
+
+        self.logger.info(f"Report saved to: {filepath}")
+        return str(filepath)
+
+    def create_temporary_report(self, content: str, format: str) -> str:
+        """Create a temporary report file for preview or processing.
+
+        Args:
+            content: Report content
+            format: Report format extension
+
+        Returns:
+            Path to temporary report file
+        """
+        # Use tempfile to create secure temporary file
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=f".{format}",
+            prefix="intellicrack_temp_",
+            delete=False,
+            encoding="utf-8" if format in ["html", "json", "txt"] else None,
+        ) as temp_file:
+            temp_file.write(content)
+            temp_path = temp_file.name
+
+        self.logger.debug(f"Temporary report created: {temp_path}")
+        return temp_path
+
+    def get_supported_formats(self) -> List[str]:
+        """Get list of supported report formats.
+
+        Returns:
+            List of supported format extensions
+        """
+        basic_formats: List[str] = ["html", "json", "txt"]
+
+        # Add PDF if available
+        try:
+            from .pdf_generator import PDFGenerator  # noqa: F401
+
+            return basic_formats + ["pdf"]
+        except ImportError:
+            return basic_formats
+
+    def get_format_mime_types(self) -> Dict[str, Union[str, List[str]]]:
+        """Get MIME types for supported formats.
+
+        Returns:
+            Dictionary mapping formats to MIME types
+        """
+        return {"html": "text/html", "json": "application/json", "txt": "text/plain", "pdf": "application/pdf"}
+
+    def create_template_from_string(self, template_string: str) -> Optional["Template"]:
+        """Create a Jinja2 template from string content.
+
+        Args:
+            template_string: Template content as string
+
+        Returns:
+            Jinja2 Template object or None if creation fails
+        """
+        if JINJA_AVAILABLE:
+            try:
+                from jinja2 import Template
+
+                return Template(template_string)
+            except Exception as e:
+                self.logger.warning(f"Failed to create template from string: {e}")
+        return None
+
+
+def generate_report(app_instance, format: str = "html", save: bool = True, filename: Optional[str] = None) -> Optional[str]:
+    """Generate an analysis report in the specified format.
+
+    Args:
+        app_instance: The Intellicrack application instance
+        format: Report format (html, json, txt, pdf)
+        save: Whether to save the report to file
+        filename: Optional custom filename
+
+    Returns:
+        Path to saved report or report content if not saved
+    """
+    try:
+        generator = ReportGenerator()
+
+        # Collect analysis data from app instance
+        data = {}
+
+        # Get analysis results
+        if hasattr(app_instance, "analyze_results"):
+            results = app_instance.analyze_results
+            if isinstance(results, list):
+                data["summary"] = "\n".join(results[:5]) if results else "No analysis results available"
+                data["full_results"] = results
+            elif isinstance(results, dict):
+                data.update(results)
+
+        # Get binary information
+        if hasattr(app_instance, "binary_path") and app_instance.binary_path:
+            data["binary_info"] = {
+                "Path": app_instance.binary_path,
+                "Size": os.path.getsize(app_instance.binary_path) if os.path.exists(app_instance.binary_path) else "Unknown",
+            }
+
+        # Get protection analysis
+        if hasattr(app_instance, "protections_detected"):
+            data["protections"] = app_instance.protections_detected
+
+        # Get vulnerabilities
+        if hasattr(app_instance, "vulnerabilities"):
+            data["vulnerabilities"] = app_instance.vulnerabilities
+
+        # Get exploitation results
+        if hasattr(app_instance, "exploitation_results"):
+            data["exploitation"] = app_instance.exploitation_results
+
+        # Get recommendations
+        if hasattr(app_instance, "recommendations"):
+            data["recommendations"] = app_instance.recommendations
+        else:
+            # Generate default recommendations
+            data["recommendations"] = [
+                "Implement stronger anti-debugging mechanisms",
+                "Use code obfuscation and virtualization",
+                "Implement integrity checks throughout the application",
+                "Use hardware-based protection where possible",
+                "Regularly update protection mechanisms",
+            ]
+
+        # Generate report content based on format
+        if format == "html":
+            content = generator.generate_html_report(data)
+        elif format == "json":
+            content = generator.generate_json_report(data)
+        elif format == "txt":
+            content = generator.generate_text_report(data)
+        elif format == "pdf":
+            # Generate HTML first, then convert to PDF if possible
+            html_content = generator.generate_html_report(data)
+            try:
+                from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
+
+                pdf_gen = PDFReportGenerator()
+                pdf_path = pdf_gen.generate_from_html(html_content)
+                return pdf_path
+            except ImportError:
+                logger.warning("PDF generation not available, saving as HTML instead")
+                format = "html"
+                content = html_content
+        else:
+            logger.error(f"Unsupported report format: {format}")
+            return None
+
+        # Save or return content
+        if save:
+            filepath = generator.save_report(content, format, filename)
+
+            # Update UI if available
+            if hasattr(app_instance, "update_output"):
+                app_instance.update_output.emit(f"Report saved to: {filepath}")
+
+            return filepath
+        else:
+            return content
+
+    except Exception as e:
+        logger.error(f"Error generating report: {e}")
+        if hasattr(app_instance, "update_output"):
+            app_instance.update_output.emit(f"Error generating report: {e}")
+        return None
+
+
+def view_report(app_instance, filepath: Optional[str] = None) -> bool:
+    """View a generated report in the appropriate viewer.
+
+    Args:
+        app_instance: The Intellicrack application instance
+        filepath: Path to report file, or None to browse
+
+    Returns:
+        True if report was opened successfully
+    """
+    try:
+        # If no filepath provided, show file dialog
+        if filepath is None:
+            if PYQT_AVAILABLE and hasattr(app_instance, "window"):
+                filepath, _ = QFileDialog.getOpenFileName(
+                    app_instance,
+                    "Select Report to View",
+                    str(Path.home() / ".intellicrack" / "reports"),
+                    "Report Files (*.html *.json *.txt *.pdf);;All Files (*.*)",
+                )
+
+                if not filepath:
+                    return False
+            else:
+                # Use last generated report if available
+                if hasattr(app_instance, "last_report_path"):
+                    filepath = app_instance.last_report_path
+                else:
+                    logger.error("No report file specified")
+                    return False
+
+        # Check if file exists
+        if not os.path.exists(filepath):
+            logger.error(f"Report file not found: {filepath}")
+            if PYQT_AVAILABLE and hasattr(app_instance, "window"):
+                QMessageBox.critical(app_instance, "Error", f"Report file not found: {filepath}")
+            return False
+
+        # Determine file type and open appropriately
+        file_ext = Path(filepath).suffix.lower()
+
+        if file_ext in [".html", ".htm"]:
+            # Open in web browser
+            webbrowser.open(f"file://{os.path.abspath(filepath)}")
+        elif file_ext == ".pdf":
+            # Open with system PDF viewer
+            if os.name == "nt":  # Windows
+                os.startfile(filepath)
+            elif os.name == "posix":  # macOS and Linux
+                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+        elif file_ext in [".json", ".txt"]:
+            # Open with system text editor
+            if os.name == "nt":  # Windows
+                os.startfile(filepath)
+            else:
+                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+        else:
+            logger.warning(f"Unknown report format: {file_ext}")
+            # Try to open with system default
+            if os.name == "nt":
+                os.startfile(filepath)
+            else:
+                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+
+        logger.info(f"Opened report: {filepath}")
+
+        # Update UI if available
+        if hasattr(app_instance, "update_output"):
+            app_instance.update_output.emit(f"Viewing report: {filepath}")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Error viewing report: {e}")
+        if PYQT_AVAILABLE and hasattr(app_instance, "window"):
+            QMessageBox.critical(app_instance, "Error", f"Failed to open report: {e}")
+        return False
+
+
+__all__ = ["ReportGenerator", "generate_report", "view_report"]

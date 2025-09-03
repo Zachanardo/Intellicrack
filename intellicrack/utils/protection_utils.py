@@ -745,9 +745,7 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
             "Win32_BaseBoard": {"SerialNumber": f"MB-{target_hwid[:12].upper()}"},
             "Win32_Processor": {"ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"},
             "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
-            "Win32_NetworkAdapter": {
-                "MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"
-            },
+            "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"},
         },
         "implementation_script": f"""
 # HWID Spoofing Script
@@ -944,22 +942,13 @@ if (time_func) {
 
         # Add recommendations
         if config["time_checks_found"] > 3:
-            config["recommendations"].append(
-                "Multiple time checks detected - comprehensive bypass recommended"
-            )
+            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
 
-        if any(
-            "critical" in result.get("severity", "")
-            for result in config["analysis_results"].values()
-        ):
-            config["recommendations"].append(
-                "Critical time bomb detected - immediate patching required"
-            )
+        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
+            config["recommendations"].append("Critical time bomb detected - immediate patching required")
 
         if config["patches"]:
-            config["recommendations"].append(
-                f"Apply {len(config['patches'])} binary patches for permanent fix"
-            )
+            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
 
         config["recommendations"].extend(
             [
@@ -1085,7 +1074,7 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
     for domain in blocked_domains[:10]:  # Limit to 10 most important
         config["firewall_rules"].append(
             {
-                "name": f'Block_{domain.replace(".", "_")}',
+                "name": f"Block_{domain.replace('.', '_')}",
                 "direction": "out",
                 "action": "block",
                 "remoteip": domain,
@@ -1170,12 +1159,12 @@ echo Setting up telemetry blocker for {app_name}...
 :: Add hosts entries
 echo.
 echo Adding hosts file entries...
-{"".join(f'echo {entry} >> %WINDIR%' + chr(92) + 'System32' + chr(92) + 'drivers' + chr(92) + 'etc' + chr(92) + 'hosts' + chr(10) for entry in config['hosts_entries'][:5])}
+{"".join(f"echo {entry} >> %WINDIR%" + chr(92) + "System32" + chr(92) + "drivers" + chr(92) + "etc" + chr(92) + "hosts" + chr(10) for entry in config["hosts_entries"][:5])}
 
 :: Add firewall rules
 echo.
 echo Adding firewall rules...
-{chr(10).join(rule['command'] for rule in config['firewall_rules'][:3])}
+{chr(10).join(rule["command"] for rule in config["firewall_rules"][:3])}
 
 echo.
 echo Telemetry blocker setup complete!
@@ -1187,7 +1176,7 @@ pause
 echo Removing telemetry blocker for {app_name}...
 
 :: Remove firewall rules
-{chr(10).join(f'netsh advfirewall firewall delete rule name="{rule["name"]}"' for rule in config['firewall_rules'][:3])}
+{chr(10).join(f'netsh advfirewall firewall delete rule name="{rule["name"]}"' for rule in config["firewall_rules"][:3])}
 
 echo.
 echo Telemetry blocker removed!

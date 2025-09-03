@@ -41,9 +41,7 @@ except ImportError:
     import platform
 
     if platform.system() != "Windows":
-        logger.warning(
-            "Manticore not available on Linux/Unix - install with: pip install manticore"
-        )
+        logger.warning("Manticore not available on Linux/Unix - install with: pip install manticore")
 
     # Try to use simconcolic as a fallback
     try:
@@ -202,9 +200,7 @@ except ImportError:
                             opt_header_offset = pe_offset + 24
                             if opt_header_offset + 16 < len(self.binary_data):
                                 entry_point = int.from_bytes(
-                                    self.binary_data[
-                                        opt_header_offset + 16 : opt_header_offset + 20
-                                    ],
+                                    self.binary_data[opt_header_offset + 16 : opt_header_offset + 20],
                                     "little",
                                 )
                                 return entry_point + 0x400000  # Add image base
@@ -445,21 +441,15 @@ except ImportError:
 
             def will_run_callback(self, executor, *args, **kwargs):
                 """Callback before execution starts."""
-                self.logger.debug(
-                    f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
-                )
+                self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def did_finish_run_callback(self, executor, *args, **kwargs):
                 """Callback after execution completes."""
-                self.logger.debug(
-                    f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
-                )
+                self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
                 """Callback before state fork."""
-                self.logger.debug(
-                    f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}"
-                )
+                self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
 
             def will_execute_instruction_callback(self, state, pc, insn):
                 """Callback before instruction execution."""
@@ -468,9 +458,7 @@ except ImportError:
         import platform
 
         if platform.system() == "Windows":
-            logging.getLogger(__name__).info(
-                "Using angr for symbolic execution on Windows (manticore is Linux-only)"
-            )
+            logging.getLogger(__name__).info("Using angr for symbolic execution on Windows (manticore is Linux-only)")
         else:
             logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
@@ -520,9 +508,7 @@ class ConcolicExecutionEngine:
 
         self.logger.info(f"Concolic execution engine initialized for {binary_path}")
 
-    def explore_paths(
-        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
-    ) -> dict[str, Any]:
+    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Perform concolic execution to explore program paths.
 
         Args:
@@ -570,21 +556,15 @@ class ConcolicExecutionEngine:
 
                 def will_run_callback(self, *args, **kwargs):
                     """Called when path exploration is about to start."""
-                    self.logger.info(
-                        f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs"
-                    )
+                    self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
-                        self.logger.debug(
-                            f"Exploration args: {[type(arg).__name__ for arg in args]}"
-                        )
+                        self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
                         self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
                 def did_finish_run_callback(self, *args, **kwargs):
                     """Called when path exploration has finished execution."""
-                    self.logger.info(
-                        f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs"
-                    )
+                    self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
@@ -597,9 +577,7 @@ class ConcolicExecutionEngine:
                         state: The state that will be forked
 
                     """
-                    self.logger.debug(
-                        f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs"
-                    )
+                    self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Fork args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
@@ -631,20 +609,13 @@ class ConcolicExecutionEngine:
                     results["inputs"].append(
                         {
                             "id": state_id,
-                            "stdin": stdin_data.hex()
-                            if isinstance(stdin_data, bytes)
-                            else str(stdin_data),
-                            "argv": [
-                                _arg.hex() if isinstance(_arg, bytes) else str(_arg)
-                                for _arg in argv_data
-                            ],
+                            "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
+                            "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
                             "termination_reason": state.termination_reason,
                         }
                     )
 
-            self.logger.info(
-                "Concolic execution completed. Explored %d paths.", results["paths_explored"]
-            )
+            self.logger.info("Concolic execution completed. Explored %d paths.", results["paths_explored"])
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -686,9 +657,7 @@ class ConcolicExecutionEngine:
             import platform
 
             if platform.system() == "Windows":
-                return {
-                    "error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."
-                }
+                return {"error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
             return {"error": "Required dependencies not available"}
 
         try:
@@ -797,9 +766,7 @@ class ConcolicExecutionEngine:
                     if isinstance(license_check_address, int)
                     else license_check_address,
                     "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                    "argv": [
-                        _arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data
-                    ],
+                    "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
                     "description": "Found input that bypasses license check",
                 }
             return {
@@ -850,13 +817,10 @@ class ConcolicExecutionEngine:
                         string_offset = matches[0].start()
                         # Heuristic: look for potential function boundaries before the string
                         potential_func_start = max(0, string_offset - 0x1000)  # Look back 4KB
-                        potential_func_start = (
-                            potential_func_start // 0x10
-                        ) * 0x10  # Align to 16 bytes
+                        potential_func_start = (potential_func_start // 0x10) * 0x10  # Align to 16 bytes
 
                         self.logger.info(
-                            "Found potential license string at offset 0x%x, "
-                            "estimated function at 0x%x",
+                            "Found potential license string at offset 0x%x, estimated function at 0x%x",
                             string_offset,
                             potential_func_start,
                         )
@@ -909,9 +873,7 @@ class ConcolicExecutionEngine:
             if isinstance(target, int):
                 m.add_hook(target, lambda s: self._target_reached(s, analysis_data))
             else:
-                self.logger.debug(
-                    f"Target function {target} specified but name resolution not implemented"
-                )
+                self.logger.debug(f"Target function {target} specified but name resolution not implemented")
 
         for avoid in avoid_functions:
             if isinstance(avoid, int):
@@ -958,17 +920,13 @@ class ConcolicExecutionEngine:
         # Calculate coverage
         if analysis_data["covered_blocks"]:
             total_blocks_estimate = 1000
-            processed_results["coverage"] = (
-                len(analysis_data["covered_blocks"]) / total_blocks_estimate
-            ) * 100
+            processed_results["coverage"] = (len(analysis_data["covered_blocks"]) / total_blocks_estimate) * 100
         else:
             processed_results["coverage"] = 0.0
 
         processed_results["vulnerabilities"] = analysis_data["vulnerabilities"]
         processed_results["constraints"] = list(analysis_data["constraints"].values())
-        processed_results["interesting_addresses"] = [
-            hex(addr) for addr in analysis_data["interesting_addresses"]
-        ]
+        processed_results["interesting_addresses"] = [hex(addr) for addr in analysis_data["interesting_addresses"]]
 
         if find_license_checks:
             license_results = self.find_license_bypass()
@@ -1047,9 +1005,7 @@ class ConcolicExecutionEngine:
             self.logger.info("Running concolic execution...")
             m.run(procs=4)
 
-            all_states = (
-                list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
-            )
+            all_states = list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
             results["paths_explored"] = len(all_states)
 
             if params["generate_test_cases"]:
@@ -1077,6 +1033,7 @@ class ConcolicExecutionEngine:
 
     def _create_analysis_plugin(self, analysis_data: dict, find_vulnerabilities: bool):
         """Create the comprehensive analysis plugin."""
+
         class ComprehensiveAnalysisPlugin(Plugin):
             """Plugin for comprehensive concolic analysis."""
 
@@ -1104,13 +1061,7 @@ class ConcolicExecutionEngine:
                 vuln = None
 
                 try:
-                    stack_ptr = (
-                        state.cpu.RSP
-                        if hasattr(state.cpu, "RSP")
-                        else state.cpu.ESP
-                        if hasattr(state.cpu, "ESP")
-                        else None
-                    )
+                    stack_ptr = state.cpu.RSP if hasattr(state.cpu, "RSP") else state.cpu.ESP if hasattr(state.cpu, "ESP") else None
 
                     if hasattr(insn, "mnemonic") and insn.mnemonic == "call":
                         call_target = None
@@ -1125,7 +1076,7 @@ class ConcolicExecutionEngine:
                             "address": hex(pc),
                             "call_target": hex(call_target) if call_target else "indirect",
                             "stack_ptr": hex(stack_ptr) if stack_ptr else "unknown",
-                            "description": f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}',
+                            "description": f"Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else 'unknown'}",
                         }
 
                     elif hasattr(insn, "mnemonic") and insn.mnemonic in [
@@ -1181,9 +1132,7 @@ class ConcolicExecutionEngine:
 
             def did_run_callback(self):
                 """Finalize analysis after execution."""
-                self.logger.info(
-                    f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks"
-                )
+                self.logger.info(f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks")
 
         return ComprehensiveAnalysisPlugin(analysis_data)
 
@@ -1226,16 +1175,10 @@ class ConcolicExecutionEngine:
             for i, state in enumerate(terminated_states[:10]):
                 test_case = {
                     "id": i,
-                    "input": state.input_symbols.get("stdin", b"").hex()
-                    if hasattr(state, "input_symbols")
-                    else "",
+                    "input": state.input_symbols.get("stdin", b"").hex() if hasattr(state, "input_symbols") else "",
                     "triggers": [],
-                    "path_length": len(state.execution_trace)
-                    if hasattr(state, "execution_trace")
-                    else 0,
-                    "termination_reason": state.termination_reason
-                    if hasattr(state, "termination_reason")
-                    else "unknown",
+                    "path_length": len(state.execution_trace) if hasattr(state, "execution_trace") else 0,
+                    "termination_reason": state.termination_reason if hasattr(state, "termination_reason") else "unknown",
                 }
                 results["test_cases"].append(test_case)
 
@@ -1289,7 +1232,7 @@ class ConcolicExecutionEngine:
 
 def run_concolic_execution(app, target_binary: str) -> dict:
     """Run concolic execution on a binary."""
-    engine = ConcolicExecutionEngine()
+    engine = ConcolicExecutionEngine(target_binary)
     return engine.execute(target_binary)
 
 

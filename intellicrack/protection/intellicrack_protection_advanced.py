@@ -499,9 +499,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
                     det_result = DetectionResult(
                         name=name,
-                        type=ProtectionType.PROTECTOR
-                        if det_type == "protector"
-                        else ProtectionType.PACKER,
+                        type=ProtectionType.PROTECTOR if det_type == "protector" else ProtectionType.PACKER,
                         confidence=80.0,  # Default confidence for text parsing
                         details={"raw": line},
                     )
@@ -566,9 +564,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 for line in result.stdout.split("\n"):
                     if line and len(line) < max_length:
                         # Check if string is suspicious
-                        is_suspicious = any(
-                            pattern.lower() in line.lower() for pattern in suspicious_patterns
-                        )
+                        is_suspicious = any(pattern.lower() in line.lower() for pattern in suspicious_patterns)
 
                         if is_suspicious:
                             string_info = StringInfo(
@@ -604,18 +600,10 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             import_list = []
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = (
-                        entry.dll.decode("utf-8").lower()
-                        if isinstance(entry.dll, bytes)
-                        else entry.dll.lower()
-                    )
+                    dll_name = entry.dll.decode("utf-8").lower() if isinstance(entry.dll, bytes) else entry.dll.lower()
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = (
-                                imp.name.decode("utf-8")
-                                if isinstance(imp.name, bytes)
-                                else imp.name
-                            )
+                            func_name = imp.name.decode("utf-8") if isinstance(imp.name, bytes) else imp.name
                             import_list.append(f"{dll_name}.{func_name}")
 
             # Create sorted imphash
@@ -662,9 +650,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             optional_header_offset = pe_offset + 24
 
             # Determine if PE32 or PE32+
-            magic = int.from_bytes(
-                data[optional_header_offset : optional_header_offset + 2], "little"
-            )
+            magic = int.from_bytes(data[optional_header_offset : optional_header_offset + 2], "little")
             is_pe32plus = magic == 0x20B
 
             # Get import directory RVA
@@ -677,9 +663,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return None
 
             import_rva = int.from_bytes(data[import_dir_offset : import_dir_offset + 4], "little")
-            import_size = int.from_bytes(
-                data[import_dir_offset + 4 : import_dir_offset + 8], "little"
-            )
+            import_size = int.from_bytes(data[import_dir_offset + 4 : import_dir_offset + 8], "little")
 
             # Build import string for hashing
             import_strings = []
@@ -937,9 +921,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         return results
 
-    def create_custom_signature(
-        self, name: str, pattern: bytes, offset: int = 0, description: str = ""
-    ) -> bool:
+    def create_custom_signature(self, name: str, pattern: bytes, offset: int = 0, description: str = "") -> bool:
         """Create custom signature for protection analysis.
 
         Args:
@@ -1039,9 +1021,7 @@ function detect(bShowType, bShowVersion, bShowOptions)
             if high_entropy_sections:
                 strings_section.append("        // High entropy sections detected")
                 for section in high_entropy_sections[:3]:  # Limit to 3
-                    strings_section.append(
-                        f"        // Section {section.section_name}: entropy={section.entropy:.2f}"
-                    )
+                    strings_section.append(f"        // Section {section.section_name}: entropy={section.entropy:.2f}")
 
         # Add import hash if available
         if analysis.import_hash:
@@ -1063,10 +1043,10 @@ rule {main_rule_name}_Protection_Detection {{
         generated_by = "Intellicrack Advanced Protection Analysis"
 
     strings:
-{chr(10).join(strings_section) if strings_section else '        // No specific strings patterns'}
+{chr(10).join(strings_section) if strings_section else "        // No specific strings patterns"}
 
     condition:
-        {' and '.join(conditions_list[:3]) if conditions_list else 'uint32(0) == 0x00'}
+        {" and ".join(conditions_list[:3]) if conditions_list else "uint32(0) == 0x00"}
 }}"""
 
         yara_rules.append(main_rule)
@@ -1085,10 +1065,10 @@ rule {rule_name}_Specific {{
         description = "Specific detection for {detection.name}"
         type = "{detection.type.value}"
         confidence = {detection.confidence}
-        version = "{detection.version if detection.version else 'unknown'}"
+        version = "{detection.version if detection.version else "unknown"}"
 
     strings:
-{chr(10).join(['        ' + p for p in detection_patterns]) if detection_patterns else '        // Detection-specific patterns'}
+{chr(10).join(["        " + p for p in detection_patterns]) if detection_patterns else "        // Detection-specific patterns"}
 
     condition:
         {self._generate_detection_condition(detection)}
@@ -1136,20 +1116,14 @@ rule {rule_name}_Specific {{
         # Add generic patterns if no specific match
         if not patterns:
             if detection.type == ProtectionType.PACKER:
-                patterns.append(
-                    "$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern"
-                )
+                patterns.append("$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern")
             elif detection.type == ProtectionType.PROTECTOR:
                 patterns.append("$anti_debug = { 64 A1 30 00 00 00 }  // Check PEB for debugging")
                 patterns.append("$is_debugger = { FF 15 ?? ?? ?? ?? 85 C0 }  // IsDebuggerPresent")
             elif detection.type == ProtectionType.OBFUSCATOR:
-                patterns.append(
-                    "$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation"
-                )
+                patterns.append("$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation")
             elif detection.type == ProtectionType.CRYPTOR:
-                patterns.append(
-                    "$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop"
-                )
+                patterns.append("$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop")
 
         return patterns
 
@@ -1245,9 +1219,7 @@ rule Heuristic_Protection_Detection {
 
 
 # Convenience function for advanced analysis
-def advanced_analyze(
-    file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True
-) -> AdvancedProtectionAnalysis:
+def advanced_analyze(file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True) -> AdvancedProtectionAnalysis:
     """Quick advanced analysis function."""
     analyzer = IntellicrackAdvancedProtection()
     return analyzer.detect_protections_advanced(
@@ -1255,4 +1227,3 @@ def advanced_analyze(
         scan_mode=scan_mode,
         enable_heuristic=enable_heuristic,
     )
-

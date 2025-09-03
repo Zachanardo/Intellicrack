@@ -95,7 +95,7 @@ class AnalysisTab(BaseTab):
         self.comparison_results = []
 
         # Connect to binary loading signal to automatically embed hex viewer
-        if shared_context and hasattr(shared_context, 'binary_loaded'):
+        if shared_context and hasattr(shared_context, "binary_loaded"):
             shared_context.binary_loaded.connect(self.embed_hex_viewer)
 
     def setup_content(self):
@@ -403,9 +403,7 @@ class AnalysisTab(BaseTab):
         # Text results display
         self.results_display = QTextEdit()
         self.results_display.setReadOnly(True)
-        self.results_display.setText(
-            "No analysis results available.\n\nLoad a binary and select an analysis profile to begin."
-        )
+        self.results_display.setText("No analysis results available.\n\nLoad a binary and select an analysis profile to begin.")
         self.results_tabs.addTab(self.results_display, "Analysis Output")
 
         # Hex view tab
@@ -426,6 +424,7 @@ class AnalysisTab(BaseTab):
         # Try to create entropy visualizer
         try:
             from intellicrack.ui.widgets.entropy_visualizer import EntropyVisualizer
+
             self.entropy_visualizer = EntropyVisualizer()
             entropy_layout.addWidget(self.entropy_visualizer)
 
@@ -458,6 +457,7 @@ class AnalysisTab(BaseTab):
         # Try to create structure visualizer
         try:
             from intellicrack.ui.widgets.structure_visualizer import StructureVisualizerWidget
+
             self.structure_visualizer = StructureVisualizerWidget()
             structure_layout.addWidget(self.structure_visualizer)
 
@@ -490,36 +490,36 @@ class AnalysisTab(BaseTab):
                 "static": {"disassembly": False, "strings": True, "imports": True, "entropy": False, "signatures": True},
                 "dynamic": {"api": False, "memory": False, "file": False, "network": False},
                 "protection": {"packer": True, "obfuscation": False, "antidebug": False, "vm": False, "license": True},
-                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": False}
+                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": False},
             },
             "Static Analysis": {
                 "description": "Complete static analysis without execution. Includes disassembly, strings, imports, entropy, and signatures.",
                 "static": {"disassembly": True, "strings": True, "imports": True, "entropy": True, "signatures": True},
                 "dynamic": {"api": False, "memory": False, "file": False, "network": False},
                 "protection": {"packer": True, "obfuscation": True, "antidebug": True, "vm": True, "license": True},
-                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": False}
+                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": False},
             },
             "Dynamic Analysis": {
                 "description": "Behavioral analysis during execution. Monitors API calls, file operations, and network activity.",
                 "static": {"disassembly": False, "strings": False, "imports": False, "entropy": False, "signatures": False},
                 "dynamic": {"api": True, "memory": True, "file": True, "network": True},
                 "protection": {"packer": False, "obfuscation": False, "antidebug": True, "vm": False, "license": False},
-                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": True}
+                "engines": {"symbolic": False, "concolic": False, "emulation": False, "sandbox": True},
             },
             "Full Analysis": {
                 "description": "Comprehensive analysis using all available techniques. May take significant time.",
                 "static": {"disassembly": True, "strings": True, "imports": True, "entropy": True, "signatures": True},
                 "dynamic": {"api": True, "memory": True, "file": True, "network": True},
                 "protection": {"packer": True, "obfuscation": True, "antidebug": True, "vm": True, "license": True},
-                "engines": {"symbolic": True, "concolic": False, "emulation": True, "sandbox": True}
+                "engines": {"symbolic": True, "concolic": False, "emulation": True, "sandbox": True},
             },
             "Custom": {
                 "description": "Custom configuration. Manually select the analysis options you need.",
                 "static": None,  # Don't change settings for custom
                 "dynamic": None,
                 "protection": None,
-                "engines": None
-            }
+                "engines": None,
+            },
         }
 
         profile = profiles.get(profile_name, profiles["Custom"])
@@ -560,8 +560,8 @@ class AnalysisTab(BaseTab):
         """Run analysis based on current settings."""
         if not self.current_binary:
             # Try to get binary from app context
-            if hasattr(self, 'app_context') and self.app_context:
-                if hasattr(self.app_context, 'binary_path') and self.app_context.binary_path:
+            if hasattr(self, "app_context") and self.app_context:
+                if hasattr(self.app_context, "binary_path") and self.app_context.binary_path:
                     self.current_binary = self.app_context.binary_path
                     self.current_file_path = self.app_context.binary_path
                 else:
@@ -588,16 +588,28 @@ class AnalysisTab(BaseTab):
         self.results_display.setText(f"Starting {profile}...\n\n")
 
         # Determine what analysis to run based on selected options
-        run_static = (self.disassembly_cb.isChecked() or self.string_analysis_cb.isChecked() or
-                     self.imports_analysis_cb.isChecked() or self.entropy_analysis_cb.isChecked() or
-                     self.signature_analysis_cb.isChecked())
+        run_static = (
+            self.disassembly_cb.isChecked()
+            or self.string_analysis_cb.isChecked()
+            or self.imports_analysis_cb.isChecked()
+            or self.entropy_analysis_cb.isChecked()
+            or self.signature_analysis_cb.isChecked()
+        )
 
-        run_dynamic = (self.api_monitoring_cb.isChecked() or self.memory_monitoring_cb.isChecked() or
-                      self.file_monitoring_cb.isChecked() or self.network_monitoring_cb.isChecked())
+        run_dynamic = (
+            self.api_monitoring_cb.isChecked()
+            or self.memory_monitoring_cb.isChecked()
+            or self.file_monitoring_cb.isChecked()
+            or self.network_monitoring_cb.isChecked()
+        )
 
-        run_protection = (self.packer_detection_cb.isChecked() or self.obfuscation_detection_cb.isChecked() or
-                         self.anti_debug_detection_cb.isChecked() or self.vm_detection_cb.isChecked() or
-                         self.license_check_detection_cb.isChecked())
+        run_protection = (
+            self.packer_detection_cb.isChecked()
+            or self.obfuscation_detection_cb.isChecked()
+            or self.anti_debug_detection_cb.isChecked()
+            or self.vm_detection_cb.isChecked()
+            or self.license_check_detection_cb.isChecked()
+        )
 
         # Run selected analyses
         if run_static:
@@ -623,27 +635,19 @@ class AnalysisTab(BaseTab):
 
         # This would integrate with the actual analysis modules
         if self.task_manager and self.app_context:
+
             def run_static_analysis(task=None):
                 try:
-                    results = {
-                        "binary": self.current_binary,
-                        "file_name": os.path.basename(self.current_binary)
-                    }
+                    results = {"binary": self.current_binary, "file_name": os.path.basename(self.current_binary)}
 
                     if self.disassembly_cb.isChecked():
                         results["disassembly"] = {"functions": 42, "imports": 156, "exports": 3}
 
                     if self.string_analysis_cb.isChecked():
-                        results["strings"] = {
-                            "total": 523,
-                            "suspicious": ["license_key", "trial_expired", "activation_code"]
-                        }
+                        results["strings"] = {"total": 523, "suspicious": ["license_key", "trial_expired", "activation_code"]}
 
                     if self.imports_analysis_cb.isChecked():
-                        results["imports"] = {
-                            "total": 156,
-                            "dlls": ["kernel32.dll", "user32.dll", "advapi32.dll"]
-                        }
+                        results["imports"] = {"total": 156, "dlls": ["kernel32.dll", "user32.dll", "advapi32.dll"]}
 
                     if self.entropy_analysis_cb.isChecked():
                         results["entropy"] = {"overall": 7.2, "high_entropy_sections": 3}
@@ -658,8 +662,7 @@ class AnalysisTab(BaseTab):
 
             # Submit task
             task_id = self.task_manager.submit_callable(
-                run_static_analysis,
-                description=f"Static analysis of {os.path.basename(self.current_binary)}"
+                run_static_analysis, description=f"Static analysis of {os.path.basename(self.current_binary)}"
             )
             self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
         else:
@@ -687,13 +690,11 @@ class AnalysisTab(BaseTab):
         # Perform actual dynamic analysis
         try:
             from ...core.analysis.dynamic_analyzer import DynamicAnalyzer
+
             analyzer = DynamicAnalyzer()
 
-            if hasattr(self, 'current_file_path') and self.current_file_path:
-                results = analyzer.analyze(
-                    binary_path=self.current_file_path,
-                    monitoring_options=monitoring
-                )
+            if hasattr(self, "current_file_path") and self.current_file_path:
+                results = analyzer.analyze(binary_path=self.current_file_path, monitoring_options=monitoring)
 
                 if results:
                     self.results_display.append("Dynamic Analysis Results:\n")
@@ -706,7 +707,7 @@ class AnalysisTab(BaseTab):
 
         except ImportError:
             # Fallback dynamic analysis using basic file operations
-            if hasattr(self, 'current_file_path') and self.current_file_path:
+            if hasattr(self, "current_file_path") and self.current_file_path:
                 import os
                 import subprocess
 
@@ -719,21 +720,20 @@ class AnalysisTab(BaseTab):
                     self.results_display.append(f"  • Last modified: {stat_info.st_mtime}\n")
 
                 # Check if file is executable
-                if self.current_file_path.endswith(('.exe', '.dll', '.sys')):
+                if self.current_file_path.endswith((".exe", ".dll", ".sys")):
                     self.results_display.append("  • Windows PE executable detected\n")
 
                     # Try to run strings command for basic analysis
                     try:
-                        strings_path = shutil.which('strings')
+                        strings_path = shutil.which("strings")
                         if not strings_path:
                             self.results_display.append("  • strings command not available\n")
                         else:
                             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                [strings_path, self.current_file_path],
-                                capture_output=True, text=True, timeout=10, shell=False
+                                [strings_path, self.current_file_path], capture_output=True, text=True, timeout=10, shell=False
                             )
                             if result.stdout:
-                                strings_count = len(result.stdout.split('\n'))
+                                strings_count = len(result.stdout.split("\n"))
                                 self.results_display.append(f"  • Found {strings_count} strings\n")
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         self.results_display.append("  • String analysis not available\n")
@@ -776,13 +776,11 @@ class AnalysisTab(BaseTab):
         # Perform actual protection detection
         try:
             from ...utils.protection.protection_detection import ProtectionDetector
+
             detector = ProtectionDetector()
 
-            if hasattr(self, 'current_file_path') and self.current_file_path:
-                results = detector.detect_protections(
-                    binary_path=self.current_file_path,
-                    detection_types=detections
-                )
+            if hasattr(self, "current_file_path") and self.current_file_path:
+                results = detector.detect_protections(binary_path=self.current_file_path, detection_types=detections)
 
                 if results:
                     self.results_display.append("Protection Detection Results:\n")
@@ -795,24 +793,24 @@ class AnalysisTab(BaseTab):
 
         except ImportError:
             # Fallback protection detection using basic analysis
-            if hasattr(self, 'current_file_path') and self.current_file_path:
+            if hasattr(self, "current_file_path") and self.current_file_path:
                 import os
 
                 self.results_display.append("Basic Protection Detection Results:\n")
 
                 # Basic file analysis
                 if os.path.exists(self.current_file_path):
-                    with open(self.current_file_path, 'rb') as f:
+                    with open(self.current_file_path, "rb") as f:
                         header = f.read(1024)
 
                     # Check for common signatures
-                    if b'UPX' in header:
+                    if b"UPX" in header:
                         self.results_display.append("  • UPX packer detected\n")
-                    if b'This program cannot be run in DOS mode' in header:
+                    if b"This program cannot be run in DOS mode" in header:
                         self.results_display.append("  • Standard PE executable\n")
-                    if b'VMProtect' in header:
+                    if b"VMProtect" in header:
                         self.results_display.append("  • VMProtect detected\n")
-                    if b'Themida' in header:
+                    if b"Themida" in header:
                         self.results_display.append("  • Themida protection detected\n")
 
                     # Simulate detection based on selected types
@@ -875,6 +873,7 @@ class AnalysisTab(BaseTab):
 
         try:
             from intellicrack.hexview.hex_dialog import HexViewerDialog
+
             hex_dialog = HexViewerDialog(self.current_binary, parent=self)
             hex_dialog.setWindowTitle(f"Hex Viewer - {os.path.basename(self.current_binary)}")
             hex_dialog.show()
@@ -908,7 +907,7 @@ class AnalysisTab(BaseTab):
             if self.embedded_hex_viewer.load_file(self.current_binary):
                 layout.addWidget(self.embedded_hex_viewer)
                 # Hide status label since hex viewer is now loaded
-                if hasattr(self, 'hex_status_label'):
+                if hasattr(self, "hex_status_label"):
                     self.hex_status_label.hide()
                 self.results_tabs.setCurrentWidget(self.hex_view_container)
                 self.log_activity("Hex viewer embedded successfully")
@@ -950,27 +949,20 @@ class AnalysisTab(BaseTab):
             # Framework selection
             framework = self.hooking_framework_combo.currentText()
             QMessageBox.information(
-                self, "Process Attachment",
-                f"Would attach to process {pid_text} using {framework}\n\nThis feature requires framework integration."
+                self,
+                "Process Attachment",
+                f"Would attach to process {pid_text} using {framework}\n\nThis feature requires framework integration.",
             )
 
     def take_system_snapshot(self):
         """Take a system snapshot for differential analysis."""
         import time
 
-        snapshot_name, ok = QInputDialog.getText(
-            self,
-            "System Snapshot",
-            "Enter snapshot name:",
-            text=f"snapshot_{int(time.time())}"
-        )
+        snapshot_name, ok = QInputDialog.getText(self, "System Snapshot", "Enter snapshot name:", text=f"snapshot_{int(time.time())}")
 
         if ok and snapshot_name:
             self.log_activity(f"Taking system snapshot: {snapshot_name}")
-            self.snapshots[snapshot_name] = {
-                "timestamp": time.time(),
-                "data": {"files": [], "registry": [], "processes": []}
-            }
+            self.snapshots[snapshot_name] = {"timestamp": time.time(), "data": {"files": [], "registry": [], "processes": []}}
             QMessageBox.information(
                 self, "Snapshot", f"System snapshot '{snapshot_name}' created.\n\nSnapshot functionality will capture system state."
             )
@@ -986,7 +978,7 @@ class AnalysisTab(BaseTab):
 
             block_size = self.entropy_block_size.value()
 
-            if hasattr(self, 'entropy_visualizer'):
+            if hasattr(self, "entropy_visualizer"):
                 self.entropy_visualizer.load_data(file_data, block_size)
 
                 # Check for suspicious regions
@@ -1003,7 +995,7 @@ class AnalysisTab(BaseTab):
             return
 
         try:
-            if hasattr(self, 'structure_visualizer'):
+            if hasattr(self, "structure_visualizer"):
                 # Parse the binary file structure
                 import struct
 
@@ -1013,43 +1005,40 @@ class AnalysisTab(BaseTab):
                 try:
                     pe = pefile.PE(self.current_file_path)
                     structure_data = {
-                        'format': 'PE',
-                        'architecture': pe.FILE_HEADER.Machine,
-                        'sections': [],
-                        'imports': [],
-                        'exports': [],
-                        'headers': {}
+                        "format": "PE",
+                        "architecture": pe.FILE_HEADER.Machine,
+                        "sections": [],
+                        "imports": [],
+                        "exports": [],
+                        "headers": {},
                     }
 
                     # Extract sections
                     for section in pe.sections:
                         section_data = {
-                            'name': section.Name.decode('utf-8', errors='ignore').strip('\x00'),
-                            'virtual_address': section.VirtualAddress,
-                            'virtual_size': section.Misc_VirtualSize,
-                            'raw_size': section.SizeOfRawData,
-                            'characteristics': section.Characteristics,
-                            'entropy': section.get_entropy()
+                            "name": section.Name.decode("utf-8", errors="ignore").strip("\x00"),
+                            "virtual_address": section.VirtualAddress,
+                            "virtual_size": section.Misc_VirtualSize,
+                            "raw_size": section.SizeOfRawData,
+                            "characteristics": section.Characteristics,
+                            "entropy": section.get_entropy(),
                         }
-                        structure_data['sections'].append(section_data)
+                        structure_data["sections"].append(section_data)
 
                     # Extract imports
-                    if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+                    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                         for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            dll_imports = {
-                                'dll': entry.dll.decode('utf-8', errors='ignore'),
-                                'functions': []
-                            }
+                            dll_imports = {"dll": entry.dll.decode("utf-8", errors="ignore"), "functions": []}
                             for imp in entry.imports:
                                 if imp.name:
-                                    dll_imports['functions'].append(imp.name.decode('utf-8', errors='ignore'))
-                            structure_data['imports'].append(dll_imports)
+                                    dll_imports["functions"].append(imp.name.decode("utf-8", errors="ignore"))
+                            structure_data["imports"].append(dll_imports)
 
                     # Extract exports
-                    if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+                    if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                         for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                             if exp.name:
-                                structure_data['exports'].append(exp.name.decode('utf-8', errors='ignore'))
+                                structure_data["exports"].append(exp.name.decode("utf-8", errors="ignore"))
 
                     # Load the structure into visualizer
                     self.structure_visualizer.load_structure(structure_data)
@@ -1058,43 +1047,43 @@ class AnalysisTab(BaseTab):
                 except Exception:
                     # Try to parse as ELF file
                     try:
-                        with open(self.current_file_path, 'rb') as f:
+                        with open(self.current_file_path, "rb") as f:
                             elf_header = f.read(64)
 
                         # Check ELF magic
-                        if elf_header[:4] == b'\x7fELF':
+                        if elf_header[:4] == b"\x7fELF":
                             structure_data = {
-                                'format': 'ELF',
-                                'architecture': 'Unknown',
-                                'sections': [],
-                                'imports': [],
-                                'exports': [],
-                                'headers': {}
+                                "format": "ELF",
+                                "architecture": "Unknown",
+                                "sections": [],
+                                "imports": [],
+                                "exports": [],
+                                "headers": {},
                             }
 
                             # Basic ELF parsing (simplified)
                             ei_class = elf_header[4]
                             ei_data = elf_header[5]
-                            e_machine = struct.unpack('<H' if ei_data == 1 else '>H', elf_header[18:20])[0]
+                            e_machine = struct.unpack("<H" if ei_data == 1 else ">H", elf_header[18:20])[0]
 
-                            structure_data['architecture'] = f"Machine type: {e_machine}"
-                            structure_data['headers']['EI_CLASS'] = '64-bit' if ei_class == 2 else '32-bit'
-                            structure_data['headers']['EI_DATA'] = 'Little-endian' if ei_data == 1 else 'Big-endian'
+                            structure_data["architecture"] = f"Machine type: {e_machine}"
+                            structure_data["headers"]["EI_CLASS"] = "64-bit" if ei_class == 2 else "32-bit"
+                            structure_data["headers"]["EI_DATA"] = "Little-endian" if ei_data == 1 else "Big-endian"
 
                             self.structure_visualizer.load_structure(structure_data)
                             self.log_activity("Loaded ELF structure")
                         else:
                             # Unknown format - show raw structure
                             structure_data = {
-                                'format': 'Unknown',
-                                'architecture': 'Unknown',
-                                'sections': [],
-                                'imports': [],
-                                'exports': [],
-                                'headers': {
-                                    'File Size': len(open(self.current_file_path, 'rb').read()),
-                                    'Magic Bytes': elf_header[:4].hex()
-                                }
+                                "format": "Unknown",
+                                "architecture": "Unknown",
+                                "sections": [],
+                                "imports": [],
+                                "exports": [],
+                                "headers": {
+                                    "File Size": len(open(self.current_file_path, "rb").read()),
+                                    "Magic Bytes": elf_header[:4].hex(),
+                                },
                             }
                             self.structure_visualizer.load_structure(structure_data)
                             self.log_activity("Loaded unknown binary format")
@@ -1121,17 +1110,18 @@ class AnalysisTab(BaseTab):
             self,
             "Export Analysis Results",
             f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            "JSON Files (*.json);;Text Files (*.txt);;All Files (*)"
+            "JSON Files (*.json);;Text Files (*.txt);;All Files (*)",
         )
 
         if file_path:
             try:
-                if file_path.endswith('.json'):
+                if file_path.endswith(".json"):
                     import json
-                    with open(file_path, 'w') as f:
+
+                    with open(file_path, "w") as f:
                         json.dump(self.analysis_results, f, indent=2, default=str)
                 else:
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         f.write(self.results_display.toPlainText())
 
                 self.log_activity(f"Results exported to {file_path}")

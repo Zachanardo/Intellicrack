@@ -18,6 +18,7 @@ Snapshot comparison utilities for Intellicrack.
 
 This module provides shared utilities for comparing system snapshots.
 """
+
 import logging
 from typing import Any
 

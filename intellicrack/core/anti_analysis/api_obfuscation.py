@@ -215,9 +215,7 @@ class APIObfuscator:
                 return None
 
             if num_names > num_functions:
-                self.logger.warning(
-                    f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption"
-                )
+                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
@@ -228,9 +226,7 @@ class APIObfuscator:
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                self.logger.info(
-                    f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)"
-                )
+                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
                 return None
 
             names_array = h_module + names_rva
@@ -674,9 +670,7 @@ if (p{api_name}) {{
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)
 
-            self.logger.info(
-                f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings"
-            )
+            self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
 
         except Exception as e:
             self.logger.error(f"Failed to load API databases: {e}")
@@ -708,24 +702,20 @@ if (p{api_name}) {{
             # Look for common encrypted string patterns
             for i in range(len(code) - 4):
                 # Check for potential encrypted string markers
-                if code[i:i+2] == b'\x68':  # PUSH instruction
+                if code[i : i + 2] == b"\x68":  # PUSH instruction
                     # Extract potential encrypted string address
-                    addr = int.from_bytes(code[i+1:i+5], 'little')
+                    addr = int.from_bytes(code[i + 1 : i + 5], "little")
 
                     # Try to decrypt
                     if addr in self.encrypted_strings_db:
                         decrypted = self.encrypted_strings_db[addr]
-                        encrypted_patterns.append({
-                            "offset": i,
-                            "encrypted": hex(addr),
-                            "decrypted": decrypted
-                        })
+                        encrypted_patterns.append({"offset": i, "encrypted": hex(addr), "decrypted": decrypted})
 
             return bytes(resolved_code), {
                 "method": "string_encryption",
                 "key": key,
                 "resolved_count": len(encrypted_patterns),
-                "patterns": encrypted_patterns
+                "patterns": encrypted_patterns,
             }
 
         except Exception as e:
@@ -750,22 +740,14 @@ if (p{api_name}) {{
             # Look for GetProcAddress patterns
             for i in range(len(code) - 8):
                 # Check for GetProcAddress call pattern
-                if code[i:i+2] == b'\xFF\x15':  # CALL DWORD PTR
+                if code[i : i + 2] == b"\xff\x15":  # CALL DWORD PTR
                     # Extract potential API name
-                    api_addr = int.from_bytes(code[i+2:i+6], 'little')
+                    api_addr = int.from_bytes(code[i + 2 : i + 6], "little")
                     if api_addr in self.api_hash_db:
                         api_name = self.api_hash_db[api_addr]
-                        dynamic_imports.append({
-                            "offset": i,
-                            "api": api_name,
-                            "method": "GetProcAddress"
-                        })
+                        dynamic_imports.append({"offset": i, "api": api_name, "method": "GetProcAddress"})
 
-            return bytes(resolved_code), {
-                "method": "dynamic_loading",
-                "resolved_count": len(dynamic_imports),
-                "imports": dynamic_imports
-            }
+            return bytes(resolved_code), {"method": "dynamic_loading", "resolved_count": len(dynamic_imports), "imports": dynamic_imports}
 
         except Exception as e:
             self.logger.error(f"Failed to resolve dynamic imports: {e}")
@@ -790,23 +772,18 @@ if (p{api_name}) {{
             for i in range(len(code) - 5):
                 # Check for JMP pattern
                 if code[i] == 0xE9:  # JMP rel32
-                    offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    offset = int.from_bytes(code[i + 1 : i + 5], "little", signed=True)
                     target = i + 5 + offset
 
                     # Check if target is a known API
                     if target in self.api_hash_db:
                         api_name = self.api_hash_db[target]
-                        redirected_apis.append({
-                            "offset": i,
-                            "api": api_name,
-                            "method": "JMP redirection",
-                            "target": hex(target)
-                        })
+                        redirected_apis.append({"offset": i, "api": api_name, "method": "JMP redirection", "target": hex(target)})
 
             return bytes(resolved_code), {
                 "method": "api_redirection",
                 "resolved_count": len(redirected_apis),
-                "redirections": redirected_apis
+                "redirections": redirected_apis,
             }
 
         except Exception as e:
@@ -832,7 +809,7 @@ if (p{api_name}) {{
             for i in range(len(code) - 5):
                 # Check for direct CALL instruction
                 if code[i] == 0xE8:  # CALL rel32
-                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_offset = int.from_bytes(code[i + 1 : i + 5], "little", signed=True)
                     call_target = i + 5 + call_offset
 
                     # Check if this calls a known API
@@ -843,9 +820,9 @@ if (p{api_name}) {{
                         # MOV EAX, [API_ADDR]
                         # CALL EAX
                         indirect_sequence = bytearray()
-                        indirect_sequence.extend(b'\xA1')  # MOV EAX, [addr32]
-                        indirect_sequence.extend(call_target.to_bytes(4, 'little'))
-                        indirect_sequence.extend(b'\xFF\xD0')  # CALL EAX
+                        indirect_sequence.extend(b"\xa1")  # MOV EAX, [addr32]
+                        indirect_sequence.extend(call_target.to_bytes(4, "little"))
+                        indirect_sequence.extend(b"\xff\xd0")  # CALL EAX
 
                         # Pad with NOPs if needed
                         while len(indirect_sequence) < 5:
@@ -853,43 +830,31 @@ if (p{api_name}) {{
 
                         # Replace direct call with indirect call
                         if len(indirect_sequence) <= 5:
-                            modified_code[i:i+5] = indirect_sequence[:5]
+                            modified_code[i : i + 5] = indirect_sequence[:5]
 
-                            indirect_calls.append({
-                                "offset": i,
-                                "api": api_name,
-                                "original": "CALL direct",
-                                "replacement": "CALL indirect"
-                            })
+                            indirect_calls.append({"offset": i, "api": api_name, "original": "CALL direct", "replacement": "CALL indirect"})
 
                 # Check for CALL DWORD PTR [addr] pattern
-                if code[i:i+2] == b'\xFF\x15':  # CALL DWORD PTR [addr32]
-                    import_addr = int.from_bytes(code[i+2:i+6], 'little')
+                if code[i : i + 2] == b"\xff\x15":  # CALL DWORD PTR [addr32]
+                    import_addr = int.from_bytes(code[i + 2 : i + 6], "little")
 
                     # Generate double-indirect call
                     # MOV EAX, [import_addr]
                     # MOV EBX, [EAX]
                     # CALL EBX
                     indirect_sequence = bytearray()
-                    indirect_sequence.extend(b'\xA1')  # MOV EAX, [addr32]
-                    indirect_sequence.extend(import_addr.to_bytes(4, 'little'))
-                    indirect_sequence.extend(b'\x8B\x18')  # MOV EBX, [EAX]
-                    indirect_sequence.extend(b'\xFF\xD3')  # CALL EBX
+                    indirect_sequence.extend(b"\xa1")  # MOV EAX, [addr32]
+                    indirect_sequence.extend(import_addr.to_bytes(4, "little"))
+                    indirect_sequence.extend(b"\x8b\x18")  # MOV EBX, [EAX]
+                    indirect_sequence.extend(b"\xff\xd3")  # CALL EBX
 
                     # This sequence is longer, so we need to handle it differently
                     # For now, mark it for later expansion
-                    indirect_calls.append({
-                        "offset": i,
-                        "type": "import_table_call",
-                        "import_addr": hex(import_addr),
-                        "needs_expansion": True
-                    })
+                    indirect_calls.append(
+                        {"offset": i, "type": "import_table_call", "import_addr": hex(import_addr), "needs_expansion": True}
+                    )
 
-            return bytes(modified_code), {
-                "method": "indirect_calls",
-                "modified_count": len(indirect_calls),
-                "calls": indirect_calls
-            }
+            return bytes(modified_code), {"method": "indirect_calls", "modified_count": len(indirect_calls), "calls": indirect_calls}
 
         except Exception as e:
             self.logger.error(f"Failed to generate indirect calls: {e}")
@@ -915,31 +880,28 @@ if (p{api_name}) {{
             # Look for API calls to redirect through trampolines
             for i in range(len(code) - 5):
                 if code[i] == 0xE8:  # CALL rel32
-                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_offset = int.from_bytes(code[i + 1 : i + 5], "little", signed=True)
                     call_target = i + 5 + call_offset
 
                     # Create a trampoline
                     trampoline = bytearray()
 
                     # Push return address manipulation
-                    trampoline.extend(b'\x68')  # PUSH imm32
-                    trampoline.extend((i + 5).to_bytes(4, 'little'))  # Return address
+                    trampoline.extend(b"\x68")  # PUSH imm32
+                    trampoline.extend((i + 5).to_bytes(4, "little"))  # Return address
 
                     # Jump to actual target
-                    trampoline.extend(b'\xE9')  # JMP rel32
+                    trampoline.extend(b"\xe9")  # JMP rel32
                     jmp_offset = call_target - (trampoline_offset + len(trampoline) + 4)
-                    trampoline.extend(jmp_offset.to_bytes(4, 'little', signed=True))
+                    trampoline.extend(jmp_offset.to_bytes(4, "little", signed=True))
 
                     # Update call to point to trampoline
                     new_call_offset = trampoline_offset - (i + 5)
-                    modified_code[i+1:i+5] = new_call_offset.to_bytes(4, 'little', signed=True)
+                    modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(4, "little", signed=True)
 
-                    trampolines.append({
-                        "offset": trampoline_offset,
-                        "size": len(trampoline),
-                        "target": hex(call_target),
-                        "original_call": hex(i)
-                    })
+                    trampolines.append(
+                        {"offset": trampoline_offset, "size": len(trampoline), "target": hex(call_target), "original_call": hex(i)}
+                    )
 
                     # Append trampoline to code
                     modified_code.extend(trampoline)
@@ -949,7 +911,7 @@ if (p{api_name}) {{
                 "method": "trampoline_calls",
                 "trampoline_count": len(trampolines),
                 "trampolines": trampolines,
-                "new_size": len(modified_code)
+                "new_size": len(modified_code),
             }
 
         except Exception as e:
@@ -971,71 +933,94 @@ if (p{api_name}) {{
         stub = bytearray()
 
         # Save registers
-        stub.extend([
-            0x50,               # PUSH EAX
-            0x53,               # PUSH EBX
-            0x51,               # PUSH ECX
-            0x52,               # PUSH EDX
-            0x56,               # PUSH ESI
-            0x57,               # PUSH EDI
-        ])
+        stub.extend(
+            [
+                0x50,  # PUSH EAX
+                0x53,  # PUSH EBX
+                0x51,  # PUSH ECX
+                0x52,  # PUSH EDX
+                0x56,  # PUSH ESI
+                0x57,  # PUSH EDI
+            ]
+        )
 
         # Set up decryption loop
         # Load address of encrypted section
-        stub.extend([
-            0xE8, 0x00, 0x00, 0x00, 0x00,  # CALL $+5 (get EIP)
-            0x5E,                           # POP ESI (ESI = current EIP)
-        ])
+        stub.extend(
+            [
+                0xE8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # CALL $+5 (get EIP)
+                0x5E,  # POP ESI (ESI = current EIP)
+            ]
+        )
 
         # Calculate actual address of encrypted section
         # Offset from current position to encrypted section
         relative_offset = offset + 15  # Account for stub instructions so far
 
         # ADD ESI, relative_offset to point to encrypted section
-        stub.extend([
-            0x81, 0xC6,         # ADD ESI, imm32
-        ])
-        stub.extend(struct.pack('<I', relative_offset))
+        stub.extend(
+            [
+                0x81,
+                0xC6,  # ADD ESI, imm32
+            ]
+        )
+        stub.extend(struct.pack("<I", relative_offset))
 
         # Set up loop counter
-        stub.extend([
-            0xB9,               # MOV ECX, imm32 (size)
-        ])
-        stub.extend(struct.pack('<I', size))
+        stub.extend(
+            [
+                0xB9,  # MOV ECX, imm32 (size)
+            ]
+        )
+        stub.extend(struct.pack("<I", size))
 
         # Load XOR key
-        stub.extend([
-            0xB0,               # MOV AL, imm8 (key)
-            key & 0xFF
-        ])
+        stub.extend(
+            [
+                0xB0,  # MOV AL, imm8 (key)
+                key & 0xFF,
+            ]
+        )
 
         # Decryption loop label
         len(stub)
 
         # XOR byte at [ESI] with key
-        stub.extend([
-            0x30, 0x06,         # XOR [ESI], AL
-            0x46,               # INC ESI
-            0xE2, 0xFC,         # LOOP -4 (back to XOR instruction)
-        ])
+        stub.extend(
+            [
+                0x30,
+                0x06,  # XOR [ESI], AL
+                0x46,  # INC ESI
+                0xE2,
+                0xFC,  # LOOP -4 (back to XOR instruction)
+            ]
+        )
 
         # Restore registers
-        stub.extend([
-            0x5F,               # POP EDI
-            0x5E,               # POP ESI
-            0x5A,               # POP EDX
-            0x59,               # POP ECX
-            0x5B,               # POP EBX
-            0x58,               # POP EAX
-        ])
+        stub.extend(
+            [
+                0x5F,  # POP EDI
+                0x5E,  # POP ESI
+                0x5A,  # POP EDX
+                0x59,  # POP ECX
+                0x5B,  # POP EBX
+                0x58,  # POP EAX
+            ]
+        )
 
         # Jump to decrypted code
-        stub.extend([
-            0xE9,               # JMP rel32
-        ])
+        stub.extend(
+            [
+                0xE9,  # JMP rel32
+            ]
+        )
         # Calculate jump offset to skip the stub and execute decrypted code
         jmp_offset = -(len(stub) + 4)  # Jump back to original position
-        stub.extend(struct.pack('<i', jmp_offset))
+        stub.extend(struct.pack("<i", jmp_offset))
 
         return stub
 
@@ -1059,7 +1044,7 @@ if (p{api_name}) {{
             # Find and encrypt API call sequences
             for i in range(len(code) - 10):
                 # Look for common API call patterns
-                if code[i] == 0xE8 or code[i:i+2] == b'\xFF\x15':  # CALL patterns
+                if code[i] == 0xE8 or code[i : i + 2] == b"\xff\x15":  # CALL patterns
                     # Encrypt the next 5-10 bytes
                     section_size = min(10, len(code) - i)
 
@@ -1074,20 +1059,22 @@ if (p{api_name}) {{
                     # The stub will decrypt the code at runtime before execution
                     modified_code = bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
 
-                    encrypted_sections.append({
-                        "offset": i + len(decrypt_stub),  # Adjust offset for inserted stub
-                        "size": section_size,
-                        "key": key,
-                        "stub_size": len(decrypt_stub),
-                        "stub_offset": i,
-                        "decryption_type": "xor_inline"
-                    })
+                    encrypted_sections.append(
+                        {
+                            "offset": i + len(decrypt_stub),  # Adjust offset for inserted stub
+                            "size": section_size,
+                            "key": key,
+                            "stub_size": len(decrypt_stub),
+                            "stub_offset": i,
+                            "decryption_type": "xor_inline",
+                        }
+                    )
 
             return bytes(modified_code), {
                 "method": "encrypted_payloads",
                 "encryption_key": key,
                 "encrypted_count": len(encrypted_sections),
-                "sections": encrypted_sections
+                "sections": encrypted_sections,
             }
 
         except Exception as e:
@@ -1112,11 +1099,11 @@ if (p{api_name}) {{
             # Generate random instruction sequences that achieve the same result
             polymorphic_variants = [
                 # Variant 1: Use different registers
-                [b'\x50', b'\x53', b'\x51'],  # PUSH EAX, PUSH EBX, PUSH ECX
+                [b"\x50", b"\x53", b"\x51"],  # PUSH EAX, PUSH EBX, PUSH ECX
                 # Variant 2: Use LEA instead of MOV
-                [b'\x8D\x05', b'\x8D\x1D', b'\x8D\x0D'],  # LEA variants
+                [b"\x8d\x05", b"\x8d\x1d", b"\x8d\x0d"],  # LEA variants
                 # Variant 3: Use arithmetic to obfuscate
-                [b'\x83\xC0\x00', b'\x83\xE8\x00'],  # ADD EAX, 0; SUB EAX, 0
+                [b"\x83\xc0\x00", b"\x83\xe8\x00"],  # ADD EAX, 0; SUB EAX, 0
             ]
 
             # Select random variant
@@ -1132,23 +1119,20 @@ if (p{api_name}) {{
                     wrapper.extend(secrets.choice(variant))
 
                     # Add the actual call
-                    wrapper.extend(code[i:i+5])
+                    wrapper.extend(code[i : i + 5])
 
                     # Add cleanup junk
-                    wrapper.extend(b'\x90' * (secrets.randbelow(3) + 1))  # Random NOPs
+                    wrapper.extend(b"\x90" * (secrets.randbelow(3) + 1))  # Random NOPs
 
-                    wrappers.append({
-                        "offset": i,
-                        "variant_used": polymorphic_variants.index(variant),
-                        "wrapper_size": len(wrapper),
-                        "original_size": 5
-                    })
+                    wrappers.append(
+                        {"offset": i, "variant_used": polymorphic_variants.index(variant), "wrapper_size": len(wrapper), "original_size": 5}
+                    )
 
             return bytes(modified_code), {
                 "method": "polymorphic_wrappers",
                 "wrapper_count": len(wrappers),
                 "wrappers": wrappers,
-                "variants_available": len(polymorphic_variants)
+                "variants_available": len(polymorphic_variants),
             }
 
         except Exception as e:
@@ -1173,8 +1157,8 @@ if (p{api_name}) {{
             # Look for delayed import table patterns
             for i in range(len(code) - 8):
                 # Check for delayed import thunk patterns
-                if code[i:i+2] == b'\xFF\x25':  # JMP DWORD PTR [addr]
-                    import_addr = int.from_bytes(code[i+2:i+6], 'little')
+                if code[i : i + 2] == b"\xff\x25":  # JMP DWORD PTR [addr]
+                    import_addr = int.from_bytes(code[i + 2 : i + 6], "little")
 
                     # Check if this is a delayed import thunk
                     if import_addr & 0x80000000:  # High bit set indicates delayed import
@@ -1183,55 +1167,47 @@ if (p{api_name}) {{
                         # Try to resolve the delayed import
                         if actual_addr in self.api_hash_db:
                             api_name = self.api_hash_db[actual_addr]
-                            delayed_imports.append({
-                                "offset": i,
-                                "api": api_name,
-                                "method": "Delayed import",
-                                "thunk_addr": hex(import_addr)
-                            })
+                            delayed_imports.append(
+                                {"offset": i, "api": api_name, "method": "Delayed import", "thunk_addr": hex(import_addr)}
+                            )
 
                 # Check for LoadLibrary patterns for delayed loading
-                if code[i:i+4] == b'\x68':  # PUSH imm32
-                    lib_name_addr = int.from_bytes(code[i+1:i+5], 'little')
+                if code[i : i + 4] == b"\x68":  # PUSH imm32
+                    lib_name_addr = int.from_bytes(code[i + 1 : i + 5], "little")
 
                     # Check if followed by LoadLibrary call
-                    if i + 5 < len(code) - 5 and code[i+5:i+7] == b'\xFF\x15':  # CALL DWORD PTR
-                        call_target = int.from_bytes(code[i+7:i+11], 'little')
+                    if i + 5 < len(code) - 5 and code[i + 5 : i + 7] == b"\xff\x15":  # CALL DWORD PTR
+                        call_target = int.from_bytes(code[i + 7 : i + 11], "little")
 
                         # Check if this calls LoadLibrary
                         if call_target in self.api_hash_db:
                             api_name = self.api_hash_db[call_target]
-                            if 'LoadLibrary' in api_name:
-                                delayed_imports.append({
-                                    "offset": i,
-                                    "api": "LoadLibrary (delayed)",
-                                    "method": "Runtime loading",
-                                    "lib_addr": hex(lib_name_addr)
-                                })
+                            if "LoadLibrary" in api_name:
+                                delayed_imports.append(
+                                    {
+                                        "offset": i,
+                                        "api": "LoadLibrary (delayed)",
+                                        "method": "Runtime loading",
+                                        "lib_addr": hex(lib_name_addr),
+                                    }
+                                )
 
             # Look for delay-load helper patterns
             for i in range(len(code) - 12):
                 # Check for __delayLoadHelper2 pattern
                 if code[i] == 0xE8:  # CALL rel32
-                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_offset = int.from_bytes(code[i + 1 : i + 5], "little", signed=True)
                     call_target = i + 5 + call_offset
 
                     # Check if target looks like delay load helper
                     if 0 <= call_target < len(code) - 8:
                         # Check for characteristic delay load helper prologue
-                        if code[call_target:call_target+3] == b'\x55\x8B\xEC':  # push ebp; mov ebp, esp
-                            delayed_imports.append({
-                                "offset": i,
-                                "api": "Delay load helper",
-                                "method": "__delayLoadHelper2",
-                                "helper_addr": hex(call_target)
-                            })
+                        if code[call_target : call_target + 3] == b"\x55\x8b\xec":  # push ebp; mov ebp, esp
+                            delayed_imports.append(
+                                {"offset": i, "api": "Delay load helper", "method": "__delayLoadHelper2", "helper_addr": hex(call_target)}
+                            )
 
-            return bytes(resolved_code), {
-                "method": "delayed_loading",
-                "resolved_count": len(delayed_imports),
-                "imports": delayed_imports
-            }
+            return bytes(resolved_code), {"method": "delayed_loading", "resolved_count": len(delayed_imports), "imports": delayed_imports}
 
         except Exception as e:
             self.logger.error(f"Failed to resolve delayed imports: {e}")

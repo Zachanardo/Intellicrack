@@ -79,13 +79,7 @@ except ImportError:
 
                 # Set up VM configuration
                 if vm_config is None:
-                    vm_config = {
-                        "memory": "512M",
-                        "cpu": "qemu64",
-                        "timeout": 30,
-                        "network": False,
-                        "snapshot": True
-                    }
+                    vm_config = {"memory": "512M", "cpu": "qemu64", "timeout": 30, "network": False, "snapshot": True}
 
                 # Create isolated test environment
                 with tempfile.TemporaryDirectory() as test_env:
@@ -100,6 +94,7 @@ except ImportError:
                     target_file = test_dir / "target_binary"
                     if Path(target_binary).exists():
                         import shutil
+
                         shutil.copy2(target_binary, target_file)
                         os.chmod(target_file, 0o700)  # Owner-only executable for security analysis
                     else:
@@ -107,9 +102,7 @@ except ImportError:
                         self._create_test_binary(target_file)
 
                     # Execute script testing based on type
-                    execution_result = self._execute_script_in_environment(
-                        script, script_file, target_file, vm_config, test_dir
-                    )
+                    execution_result = self._execute_script_in_environment(script, script_file, target_file, vm_config, test_dir)
 
                     # Calculate execution time
                     runtime_ms = int((time.time() - start_time) * 1000)
@@ -163,7 +156,7 @@ except ImportError:
                 script_lower = script.lower()
                 analysis_result = {
                     "length": len(script),
-                    "lines": len(script.split('\n')),
+                    "lines": len(script.split("\n")),
                     "features": [],
                     "analysis": "",
                 }
@@ -199,10 +192,10 @@ except ImportError:
                 # Generate analysis summary
                 analysis_result["analysis"] = f"""
 Script Analysis:
-- Type: {analysis_result['type']}
-- Size: {analysis_result['length']} bytes ({analysis_result['lines']} lines)
-- Features: {', '.join(analysis_result['features']) if analysis_result['features'] else 'basic'}
-- Complexity: {'high' if analysis_result['lines'] > 50 else 'medium' if analysis_result['lines'] > 20 else 'simple'}
+- Type: {analysis_result["type"]}
+- Size: {analysis_result["length"]} bytes ({analysis_result["lines"]} lines)
+- Features: {", ".join(analysis_result["features"]) if analysis_result["features"] else "basic"}
+- Complexity: {"high" if analysis_result["lines"] > 50 else "medium" if analysis_result["lines"] > 20 else "simple"}
 """
 
                 return analysis_result
@@ -213,7 +206,7 @@ Script Analysis:
                     "type": "unknown",
                     "extension": "txt",
                     "length": len(script) if script else 0,
-                    "analysis": f"Analysis failed: {analysis_error}"
+                    "analysis": f"Analysis failed: {analysis_error}",
                 }
 
         def _create_test_binary(self, target_path):
@@ -223,8 +216,8 @@ Script Analysis:
                 pe_header = (
                     b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00"
                     b"\xb8\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00"
-                    + b"\x00" * 32 +
-                    b"PE\x00\x00\x4c\x01\x02\x00"  # PE signature + basic COFF header
+                    + b"\x00" * 32
+                    + b"PE\x00\x00\x4c\x01\x02\x00"  # PE signature + basic COFF header
                     + b"\x00" * 200  # Minimal sections
                 )
 
@@ -266,7 +259,7 @@ Script Analysis:
                     "output": f"Script execution failed: {execution_error}",
                     "error": str(execution_error),
                     "exit_code": 1,
-                    "method": "error_fallback"
+                    "method": "error_fallback",
                 }
 
         def _try_qemu_execution(self, script_file, target_file, vm_config):
@@ -277,8 +270,10 @@ Script Analysis:
                 # Build QEMU command
                 qemu_cmd = [
                     "qemu-x86_64" if os.name != "nt" else "qemu-system-x86_64",
-                    "-cpu", vm_config.get("cpu", "qemu64"),
-                    "-m", vm_config.get("memory", "512M"),
+                    "-cpu",
+                    vm_config.get("cpu", "qemu64"),
+                    "-m",
+                    vm_config.get("memory", "512M"),
                 ]
 
                 if os.name == "nt":
@@ -290,7 +285,7 @@ Script Analysis:
                     text=True,
                     timeout=vm_config.get("timeout", 30),
                     cwd=script_file.parent,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
                 return {
@@ -298,7 +293,7 @@ Script Analysis:
                     "output": f"QEMU execution:\n{result.stdout}\n{result.stderr}",
                     "error": result.stderr if result.returncode != 0 else "",
                     "exit_code": result.returncode,
-                    "method": "qemu"
+                    "method": "qemu",
                 }
 
             except (FileNotFoundError, subprocess.TimeoutExpired) as qemu_error:
@@ -325,7 +320,7 @@ Script Analysis:
                     text=True,
                     timeout=15,
                     cwd=test_dir,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
                 return {
@@ -333,7 +328,7 @@ Script Analysis:
                     "output": f"Native execution:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}",
                     "error": result.stderr if result.returncode != 0 else "",
                     "exit_code": result.returncode,
-                    "method": "native"
+                    "method": "native",
                 }
 
             except Exception as native_error:
@@ -368,13 +363,7 @@ Script Analysis:
                 except Exception as validation_error:
                     validation_results.append(f"⚠️  Validation warning: {validation_error}")
 
-                return {
-                    "success": True,
-                    "output": "\n".join(validation_results),
-                    "error": "",
-                    "exit_code": 0,
-                    "method": "validation"
-                }
+                return {"success": True, "output": "\n".join(validation_results), "error": "", "exit_code": 0, "method": "validation"}
 
             except Exception as validation_error:
                 return {
@@ -382,7 +371,7 @@ Script Analysis:
                     "output": f"Script validation failed: {validation_error}",
                     "error": str(validation_error),
                     "exit_code": 1,
-                    "method": "validation_failed"
+                    "method": "validation_failed",
                 }
 
 
@@ -791,9 +780,7 @@ class IntegrationManager:
                         failed_tasks[task_id] = task
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(
-                    f"Workflow {workflow_id} did not complete within {timeout} seconds"
-                )
+                raise TimeoutError(f"Workflow {workflow_id} did not complete within {timeout} seconds")
 
             time.sleep(0.1)
 
@@ -856,16 +843,8 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(
-                1
-                for tid in task_ids
-                if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed"
-            )
-            failed = sum(
-                1
-                for tid in task_ids
-                if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed"
-            )
+            completed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
+            failed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
             running = sum(1 for tid in task_ids if tid in self.active_tasks)
             pending = len(task_ids) - completed - failed - running
 
@@ -913,9 +892,7 @@ class IntegrationManager:
             except Exception as e:
                 logger.error(f"Error in event handler: {e}")
 
-    def create_bypass_workflow(
-        self, target_binary: str, bypass_type: str = "license_validation"
-    ) -> str:
+    def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
         """Create a complete bypass workflow."""
         workflow_def = {
             "name": "Complete Bypass Workflow",
@@ -1031,9 +1008,7 @@ class IntegrationManager:
         if exc_type:
             logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                logger.debug(
-                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                logger.debug(f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.stop()
         return False  # Don't suppress exceptions
 

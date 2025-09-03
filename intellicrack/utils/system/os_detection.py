@@ -18,6 +18,7 @@ Operating System Detection Utilities
 
 Shared OS detection functions to eliminate code duplication across the codebase.
 """
+
 import logging
 import os
 import platform
@@ -134,20 +135,19 @@ def detect_file_type(file_path: str) -> str:
         return "unknown"
 
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             header = f.read(4)
 
             # Check for PE (Windows executable)
-            if header[:2] == b'MZ':
+            if header[:2] == b"MZ":
                 return "pe"
 
             # Check for ELF (Linux executable)
-            if header == b'\x7fELF':
+            if header == b"\x7fELF":
                 return "elf"
 
             # Check for Mach-O (macOS executable)
-            if header in [b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
-                         b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe']:
+            if header in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
                 return "macho"
 
     except Exception as e:

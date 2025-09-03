@@ -112,7 +112,7 @@ class StatisticsDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, 'selection_start'):
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
             if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
                 self.selection_radio.setEnabled(True)
                 selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
@@ -205,8 +205,8 @@ class StatisticsDialog(QDialog):
                 return
         else:
             # Use entire file
-            if self.hex_viewer and hasattr(self.hex_viewer, 'file_handler'):
-                if hasattr(self.hex_viewer.file_handler, 'file_path'):
+            if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+                if hasattr(self.hex_viewer.file_handler, "file_path"):
                     file_path = self.hex_viewer.file_handler.file_path
                 else:
                     # Read entire file into memory
@@ -259,7 +259,7 @@ class StatisticsDialog(QDialog):
                 end = self.hex_viewer.selection_end
                 overview += f"Data: Selection (offset {start:#x} to {end:#x})\n"
         else:
-            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, 'file_path'):
+            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
                 overview += f"File: {self.hex_viewer.file_handler.file_path}\n"
 
         overview += f"Size: {results['size']} bytes\n\n"
@@ -327,7 +327,7 @@ class StatisticsDialog(QDialog):
             file_type += "No specific file type characteristics detected.\n"
 
         file_type += "\n\nEntropy Analysis:\n"
-        entropy_val = results.get('entropy', 0)
+        entropy_val = results.get("entropy", 0)
         if entropy_val > 7.5:
             file_type += "  Very high entropy - likely encrypted or compressed\n"
         elif entropy_val > 6.5:
@@ -373,6 +373,7 @@ class StatisticsDialog(QDialog):
 
         if text:
             from PyQt6.QtWidgets import QApplication
+
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
 

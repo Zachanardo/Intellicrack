@@ -111,14 +111,13 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
     if len(potential_pids) == 1:
         pid_info = potential_pids[0]
         logger.info(
-            f"[PID Finder] Found unique process: {pid_info['name']} "
-            f"(PID: {pid_info['pid']}, Match: {pid_info['match']})",
+            f"[PID Finder] Found unique process: {pid_info['name']} (PID: {pid_info['pid']}, Match: {pid_info['match']})",
         )
         return pid_info["pid"]
     # Multiple processes found - in a library context, just return the first
     # In the full application, this would prompt the user
     logger.warning(
-        f"[PID Finder] Found {len(potential_pids)} potential processes. " f"Returning first match.",
+        f"[PID Finder] Found {len(potential_pids)} potential processes. Returning first match.",
     )
     return potential_pids[0]["pid"]
 
@@ -389,9 +388,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 command = " ".join(command)
 
             # Use PowerShell to run with elevated privileges
-            ps_command = (
-                f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
-            )
+            ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             powershell_path = shutil.which("powershell")
             if not powershell_path:
                 logger.error("PowerShell not found in PATH")
@@ -402,7 +399,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 capture_output=True,
                 text=True,
                 check=False,
-                shell=False  # Explicitly secure - using list format prevents shell injection
+                shell=False,  # Explicitly secure - using list format prevents shell injection
             )
             return result.returncode == 0
         # On Unix-like systems, use sudo

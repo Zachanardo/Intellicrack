@@ -92,13 +92,9 @@ class FridaOperationLogger:
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Different log files for different types of operations
-        self.operation_log = (
-            self.log_dir / f"operations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        )
+        self.operation_log = self.log_dir / f"operations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         self.hook_log = self.log_dir / f"hooks_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        self.performance_log = (
-            self.log_dir / f"performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        )
+        self.performance_log = self.log_dir / f"performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         self.bypass_log = self.log_dir / f"bypasses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
         # In-memory buffers for real-time analysis
@@ -178,9 +174,7 @@ class FridaOperationLogger:
         self.bypass_logger.addHandler(bypass_handler)
         self.bypass_logger.setLevel(logging.INFO)
 
-    def log_operation(
-        self, operation: str, details: dict[str, Any], success: bool = True, error: str = None
-    ):
+    def log_operation(self, operation: str, details: dict[str, Any], success: bool = True, error: str = None):
         """Log a Frida operation with comprehensive details.
 
         Records operation details to both file and in-memory buffer,
@@ -288,9 +282,7 @@ class FridaOperationLogger:
         entry["readable_msg"] = f"Hook: {module}!{function_name} | Modified: {modified}"
         self.hook_logger.log(level, json.dumps(entry, default=str))
 
-    def log_performance(
-        self, metric_name: str, value: float, unit: str = "ms", metadata: dict = None
-    ):
+    def log_performance(self, metric_name: str, value: float, unit: str = "ms", metadata: dict = None):
         """Log performance metrics.
 
         Records performance measurements for analysis and optimization.
@@ -420,15 +412,11 @@ class FridaOperationLogger:
         # Calculate success rates
         if stats["total_operations"] > 0:
             stats["operation_success_rate"] = (
-                (stats["total_operations"] - stats.get("failed_operations", 0))
-                / stats["total_operations"]
-                * 100
+                (stats["total_operations"] - stats.get("failed_operations", 0)) / stats["total_operations"] * 100
             )
 
         if stats["bypasses_attempted"] > 0:
-            stats["bypass_success_rate"] = (
-                stats["bypasses_successful"] / stats["bypasses_attempted"] * 100
-            )
+            stats["bypass_success_rate"] = stats["bypasses_successful"] / stats["bypasses_attempted"] * 100
 
         # Add performance averages
         for metric, values in self.performance_metrics.items():
@@ -669,9 +657,7 @@ class ProtectionDetector:
                         0x04,
                     ]:
                         detected.add(ProtectionType.MEMORY_PROTECTION)
-                        self.detected_protections[ProtectionType.MEMORY_PROTECTION].add(
-                            f"Memory protection flag: {hex(arg)}"
-                        )
+                        self.detected_protections[ProtectionType.MEMORY_PROTECTION].add(f"Memory protection flag: {hex(arg)}")
 
         return detected
 
@@ -707,10 +693,7 @@ class ProtectionDetector:
 
     def get_detected_protections(self) -> dict[str, list[str]]:
         """Get all detected protections with evidence."""
-        return {
-            prot_type.value: list(evidence)
-            for prot_type, evidence in self.detected_protections.items()
-        }
+        return {prot_type.value: list(evidence) for prot_type, evidence in self.detected_protections.items()}
 
 
 class HookBatcher:
@@ -825,10 +808,7 @@ class HookBatcher:
         """Get batching statistics."""
         return {
             "pending_hooks": self.hook_queue.qsize(),
-            "categories": {
-                cat.name: sum(1 for h in list(self.hook_queue.queue) if h.get("category") == cat)
-                for cat in HookCategory
-            },
+            "categories": {cat.name: sum(1 for h in list(self.hook_queue.queue) if h.get("category") == cat) for cat in HookCategory},
         }
 
 
@@ -1013,24 +993,19 @@ class FridaPerformanceOptimizer:
 
         if usage["memory_mb"] > 1000:
             recommendations.append(
-                "High memory usage detected. Consider reducing hook scope or "
-                "enabling selective instrumentation.",
+                "High memory usage detected. Consider reducing hook scope or enabling selective instrumentation.",
             )
 
         if usage["cpu_percent"] > 70:
             recommendations.append(
-                "High CPU usage detected. Enable hook batching and consider "
-                "disabling non-essential monitoring hooks.",
+                "High CPU usage detected. Enable hook batching and consider disabling non-essential monitoring hooks.",
             )
 
         # Check for hot functions
-        hot_functions = [
-            (k, v) for k, v in self.selective_hooks.items() if v.get("call_rate", 0) > 5000
-        ]
+        hot_functions = [(k, v) for k, v in self.selective_hooks.items() if v.get("call_rate", 0) > 5000]
         if hot_functions:
             recommendations.append(
-                f"Found {len(hot_functions)} frequently called functions. "
-                "Consider optimizing or selectively hooking these.",
+                f"Found {len(hot_functions)} frequently called functions. Consider optimizing or selectively hooking these.",
             )
 
         return recommendations
@@ -1083,9 +1058,7 @@ class FridaManager:
 
         """
         if not FRIDA_AVAILABLE:
-            raise ImportError(
-                "Frida is not available. Please install frida-tools: pip install frida-tools"
-            )
+            raise ImportError("Frida is not available. Please install frida-tools: pip install frida-tools")
 
         self.logger = FridaOperationLogger(log_dir)
         self.detector = ProtectionDetector()
@@ -1296,9 +1269,7 @@ class FridaManager:
 
         return scripts
 
-    def load_script(
-        self, session_id: str, script_name: str, options: dict[str, Any] = None
-    ) -> bool:
+    def load_script(self, session_id: str, script_name: str, options: dict[str, Any] = None) -> bool:
         """Load and inject a Frida script with optimization."""
         try:
             start_time = time.time()
@@ -1362,9 +1333,7 @@ class FridaManager:
 
             # Log performance
             load_time = (time.time() - start_time) * 1000
-            self.logger.log_performance(
-                "script_load_time", load_time, "ms", {"script": script_name}
-            )
+            self.logger.log_performance("script_load_time", load_time, "ms", {"script": script_name})
 
             return True
 
@@ -1586,9 +1555,7 @@ class FridaManager:
                 elif payload_type == "batch":
                     # Handle batched messages
                     for item in payload.get("data", []):
-                        self._on_script_message(
-                            session_id, script_name, {"type": "send", "payload": item}, None
-                        )
+                        self._on_script_message(session_id, script_name, {"type": "send", "payload": item}, None)
 
         elif msg_type == "error":
             # Log script errors
@@ -1854,9 +1821,7 @@ class FridaManager:
             {"method": "usermode_emulation"},
         )
 
-    def _handle_memory_dump(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_memory_dump(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle memory dump data from Frida scripts."""
         # Extract metadata from payload
         address = payload.get("address", "0x0")
@@ -1895,9 +1860,7 @@ class FridaManager:
         except Exception as e:
             logger.error(f"Failed to save memory dump: {e}")
 
-    def _handle_screenshot_data(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_screenshot_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle screenshot data from Frida scripts."""
         # Extract metadata
         window_title = payload.get("window_title", "unknown")
@@ -1918,9 +1881,7 @@ class FridaManager:
 
         # Save screenshot
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        screenshot_file = (
-            self.logger.log_dir / f"screenshot_{window_title}_{timestamp}.{format_type}"
-        )
+        screenshot_file = self.logger.log_dir / f"screenshot_{window_title}_{timestamp}.{format_type}"
 
         try:
             with open(screenshot_file, "wb") as f:
@@ -1933,9 +1894,7 @@ class FridaManager:
         except Exception as e:
             logger.error(f"Failed to save screenshot: {e}")
 
-    def _handle_file_content(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_file_content(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle file content intercepted by Frida scripts."""
         # Extract file information
         file_path = payload.get("file_path", "unknown")
@@ -1957,17 +1916,13 @@ class FridaManager:
         # Analyze file content for patterns
         if operation == "read":
             # Check for license files, config files, etc.
-            if any(
-                pattern in file_path.lower() for pattern in ["license", "key", "config", "serial"]
-            ):
+            if any(pattern in file_path.lower() for pattern in ["license", "key", "config", "serial"]):
                 self._analyze_license_file(data, file_path, payload)
         elif operation == "write":
             # Monitor for persistence or modification attempts
             self._analyze_file_write(data, file_path, payload)
 
-    def _handle_network_packet(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_network_packet(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle network packet data from Frida scripts."""
         # Extract packet information
         direction = payload.get("direction", "unknown")  # send/recv
@@ -1997,9 +1952,7 @@ class FridaManager:
             # Potential license server communication
             self._analyze_license_traffic(data, payload)
 
-    def _handle_encrypted_data(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_encrypted_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle encrypted data intercepted by Frida scripts."""
         # Extract encryption information
         algorithm = payload.get("algorithm", "unknown")
@@ -2036,9 +1989,7 @@ class FridaManager:
         except Exception as e:
             logger.error(f"Failed to save crypto data: {e}")
 
-    def _handle_generic_binary_data(
-        self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]
-    ):
+    def _handle_generic_binary_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
         """Handle generic binary data from Frida scripts."""
         # Extract any available metadata
         data_type = payload.get("data_type", "binary")
@@ -2307,9 +2258,7 @@ class FridaManager:
         except Exception as e:
             logger.debug(f"Failed to analyze decrypted data: {e}")
 
-    def create_selective_instrumentation(
-        self, target_apis: list[str], analysis_requirements: dict[str, Any]
-    ) -> str:
+    def create_selective_instrumentation(self, target_apis: list[str], analysis_requirements: dict[str, Any]) -> str:
         """Create selective instrumentation based on analysis requirements."""
         script_parts = []
 
@@ -2501,9 +2450,7 @@ class FridaManager:
         self.sessions.clear()
         self.scripts.clear()
 
-    def _handle_structured_message(
-        self, session_id: str, script_name: str, payload: dict[str, Any]
-    ):
+    def _handle_structured_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
         """Handle structured messages from updated Frida scripts."""
         msg_type = payload.get("type")
         target = payload.get("target", script_name)
@@ -2550,9 +2497,7 @@ class FridaManager:
             {
                 "session_id": session_id,
                 "action": action,
-                "details": {
-                    k: v for k, v in payload.items() if k not in ["type", "target", "action"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action"]},
             },
             success=True,
         )
@@ -2574,9 +2519,7 @@ class FridaManager:
             {
                 "session_id": session_id,
                 "action": action,
-                "details": {
-                    k: v for k, v in payload.items() if k not in ["type", "target", "action"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action"]},
             },
             success=True,
         )
@@ -2600,11 +2543,7 @@ class FridaManager:
                 "session_id": session_id,
                 "action": action,
                 "error": error_details,
-                "details": {
-                    k: v
-                    for k, v in payload.items()
-                    if k not in ["type", "target", "action", "error"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action", "error"]},
             },
             success=False,
             error=str(error_details),
@@ -2627,11 +2566,7 @@ class FridaManager:
                 "session_id": session_id,
                 "action": action,
                 "status": status,
-                "details": {
-                    k: v
-                    for k, v in payload.items()
-                    if k not in ["type", "target", "action", "status"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action", "status"]},
             },
             success=True,
         )
@@ -2659,11 +2594,7 @@ class FridaManager:
                 "session_id": session_id,
                 "target": target,
                 "action": action,
-                "details": {
-                    k: v
-                    for k, v in payload.items()
-                    if k not in ["type", "target", "action", "technique", "success"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action", "technique", "success"]},
             },
         )
 
@@ -2694,9 +2625,7 @@ class FridaManager:
             {
                 "session_id": session_id,
                 "action": action,
-                "details": {
-                    k: v for k, v in payload.items() if k not in ["type", "target", "action"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action"]},
             },
             success=True,
         )
@@ -2721,11 +2650,7 @@ class FridaManager:
                 "session_id": session_id,
                 "action": action,
                 "detected": detected_item,
-                "details": {
-                    k: v
-                    for k, v in payload.items()
-                    if k not in ["type", "target", "action", "detected"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action", "detected"]},
             },
             success=True,
         )
@@ -2745,9 +2670,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("detection", session_id, script_name, payload)
 
-    def _handle_notification_message(
-        self, session_id: str, script_name: str, payload: dict[str, Any]
-    ):
+    def _handle_notification_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
         """Handle notification messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "notification")
@@ -2758,9 +2681,7 @@ class FridaManager:
             {
                 "session_id": session_id,
                 "action": action,
-                "details": {
-                    k: v for k, v in payload.items() if k not in ["type", "target", "action"]
-                },
+                "details": {k: v for k, v in payload.items() if k not in ["type", "target", "action"]},
             },
             success=True,
         )
@@ -2769,9 +2690,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("notification", session_id, script_name, payload)
 
-    def _infer_protection_type(
-        self, target: str, action: str, payload: dict[str, Any]
-    ) -> ProtectionType:
+    def _infer_protection_type(self, target: str, action: str, payload: dict[str, Any]) -> ProtectionType:
         """Infer protection type from message context."""
         # Check target module name for protection type hints
         target_lower = target.lower()

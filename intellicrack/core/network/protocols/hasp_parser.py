@@ -489,9 +489,7 @@ class HASPSentinelParser:
             )
 
         # Check if feature is already in use (simulate concurrent user limit)
-        active_users = len(
-            [s for s in self.active_sessions.values() if s.get("feature_id") == request.feature_id]
-        )
+        active_users = len([s for s in self.active_sessions.values() if s.get("feature_id") == request.feature_id])
 
         if active_users >= feature["max_users"]:
             return HASPResponse(

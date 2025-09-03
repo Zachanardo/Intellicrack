@@ -75,10 +75,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
             if isinstance(node.body[0].value, ast.Constant):
                 docstring = node.body[0].value.value
                 if isinstance(docstring, str):
-                    return any(
-                        word in docstring.lower()
-                        for word in ["deprecated", "unused", "legacy", "old", "migration only"]
-                    )
+                    return any(word in docstring.lower() for word in ["deprecated", "unused", "legacy", "old", "migration only"])
         return False
 
 
@@ -158,10 +155,7 @@ def generate_cleanup_report(results: dict) -> str:
 
     total_files = len(results)
     total_issues = sum(
-        len(info["unused_imports"])
-        + len(info["unused_methods"])
-        + len(info["qsettings_usage"])
-        + len(info["legacy_patterns"])
+        len(info["unused_imports"]) + len(info["unused_methods"]) + len(info["qsettings_usage"]) + len(info["legacy_patterns"])
         for info in results.values()
     )
 

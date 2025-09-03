@@ -95,9 +95,7 @@ class ProtectionDetector:
         """
         return self.engine.get_quick_summary(file_path)
 
-    def analyze_directory(
-        self, directory: str, recursive: bool = True, deep_scan: bool = False
-    ) -> list[ProtectionAnalysis]:
+    def analyze_directory(self, directory: str, recursive: bool = True, deep_scan: bool = False) -> list[ProtectionAnalysis]:
         """Analyze all executable files in a directory.
 
         Args:
@@ -148,9 +146,7 @@ class ProtectionDetector:
         result = self.engine.analyze(file_path)
         return result.bypass_strategies
 
-    def _convert_to_legacy_format(
-        self, unified_result: UnifiedProtectionResult
-    ) -> ProtectionAnalysis:
+    def _convert_to_legacy_format(self, unified_result: UnifiedProtectionResult) -> ProtectionAnalysis:
         """Convert unified result to legacy ProtectionAnalysis format.
 
         This ensures backward compatibility with existing code.

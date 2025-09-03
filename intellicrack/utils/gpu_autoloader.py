@@ -49,12 +49,14 @@ class GPUAutoLoader:
         else:
             logger.info("Skipping Intel XPU due to environment variable")
 
-        methods.extend([
-            self._try_nvidia_cuda,
-            self._try_amd_rocm,
-            self._try_directml,
-            self._try_cpu_fallback,
-        ])
+        methods.extend(
+            [
+                self._try_nvidia_cuda,
+                self._try_amd_rocm,
+                self._try_directml,
+                self._try_cpu_fallback,
+            ]
+        )
 
         for method in methods:
             try:
@@ -82,14 +84,10 @@ class GPUAutoLoader:
             # First check if we have a conda environment with Intel Extension
             conda_envs = self._find_conda_envs_with_ipex()
             if conda_envs:
-                logger.info(
-                    f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch"
-                )
+                logger.info(f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch")
                 # Try to use the first one
                 conda_env = conda_envs[0]
-                python_path = os.path.join(
-                    conda_env["path"], "python.exe" if sys.platform == "win32" else "python"
-                )
+                python_path = os.path.join(conda_env["path"], "python.exe" if sys.platform == "win32" else "python")
 
                 # Test if we can import from that environment
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
@@ -110,6 +108,7 @@ class GPUAutoLoader:
 
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
+
             torch = safe_torch_import()
             if torch is None:
                 return False
@@ -119,9 +118,30 @@ class GPUAutoLoader:
             # Check for Intel Extension with GIL safety handling
             try:
                 # Import with caution due to potential GIL issues
-                import intel_extension_for_pytorch as ipex
-                self._ipex = ipex
-                logger.debug("Intel Extension for PyTorch imported successfully")
+                # Suppress C++ kernel override warnings during Intel Extension import
+                import warnings
+
+                # Set environment variable to suppress PyTorch C++ warnings
+                old_cpp_min_log_level = os.environ.get("TORCH_CPP_LOG_LEVEL")
+                os.environ["TORCH_CPP_LOG_LEVEL"] = "3"  # Only show errors
+
+                # Suppress Python warnings during import
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=UserWarning, message=".*operator.*overridden.*")
+                    warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*deprecated.*")
+                    warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*pkg_resources.*")
+
+                    import intel_extension_for_pytorch as ipex
+
+                    self._ipex = ipex
+                    logger.debug("Intel Extension for PyTorch imported successfully")
+
+                # Restore original C++ log level
+                if old_cpp_min_log_level is not None:
+                    os.environ["TORCH_CPP_LOG_LEVEL"] = old_cpp_min_log_level
+                else:
+                    os.environ.pop("TORCH_CPP_LOG_LEVEL", None)
+
             except (ImportError, RuntimeError) as e:
                 logger.debug(f"Intel Extension for PyTorch not available or failed to load: {e}")
                 # Continue with regular PyTorch without IPEX optimizations
@@ -141,9 +161,7 @@ class GPUAutoLoader:
                         self.gpu_info = {
                             "device_count": device_count,
                             "backend": "Intel Extension for PyTorch",
-                            "driver_version": torch.xpu.get_driver_version()
-                            if hasattr(torch.xpu, "get_driver_version")
-                            else "Unknown",
+                            "driver_version": torch.xpu.get_driver_version() if hasattr(torch.xpu, "get_driver_version") else "Unknown",
                         }
 
                         # Get info for first device
@@ -152,9 +170,7 @@ class GPUAutoLoader:
                                 self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
                                 props = torch.xpu.get_device_properties(0)
                                 self.gpu_info["total_memory"] = (
-                                    f"{props.total_memory / (1024**3):.1f} GB"
-                                    if hasattr(props, "total_memory")
-                                    else "Unknown"
+                                    f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
                                 )
                             except Exception as e:
                                 logger.debug(f"Failed to get XPU device info: {e}")
@@ -182,13 +198,14 @@ class GPUAutoLoader:
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
+
             torch = safe_torch_import()
             if torch is None:
                 return False
 
             self._torch = torch
 
-            if hasattr(torch, 'cuda') and torch.cuda.is_available():
+            if hasattr(torch, "cuda") and torch.cuda.is_available():
                 self.gpu_available = True
                 self.gpu_type = "nvidia_cuda"
                 self._device = torch.device("cuda")
@@ -222,6 +239,7 @@ class GPUAutoLoader:
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
+
             torch = safe_torch_import()
             if torch is None:
                 return False
@@ -240,9 +258,7 @@ class GPUAutoLoader:
                 self.gpu_info = {
                     "device_count": device_count,
                     "backend": "AMD ROCm",
-                    "hip_version": torch.version.hip
-                    if hasattr(torch.version, "hip")
-                    else "Unknown",
+                    "hip_version": torch.version.hip if hasattr(torch.version, "hip") else "Unknown",
                 }
 
                 # Get info for first device
@@ -250,9 +266,7 @@ class GPUAutoLoader:
                     self.gpu_info["device_name"] = torch.hip.get_device_name(0)
                     props = torch.hip.get_device_properties(0)
                     self.gpu_info["total_memory"] = (
-                        f"{props.total_memory / (1024**3):.1f} GB"
-                        if hasattr(props, "total_memory")
-                        else "Unknown"
+                        f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
                     )
 
                 return True
@@ -268,6 +282,7 @@ class GPUAutoLoader:
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
+
             torch = safe_torch_import()
             if torch is None:
                 return False
@@ -295,6 +310,7 @@ class GPUAutoLoader:
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
+
             torch = safe_torch_import()
 
             # In fallback mode (no PyTorch), just set CPU config without torch
@@ -346,9 +362,7 @@ class GPUAutoLoader:
                     env_path = os.path.join(envs_dir, env_name)
                     # Check for Intel Extension for PyTorch
                     ipex_indicators = [
-                        os.path.join(
-                            env_path, "Lib", "site-packages", "intel_extension_for_pytorch"
-                        ),
+                        os.path.join(env_path, "Lib", "site-packages", "intel_extension_for_pytorch"),
                         os.path.join(
                             env_path,
                             "lib",
@@ -509,3 +523,165 @@ def to_device(tensor_or_model: Any) -> Any:
 def optimize_for_gpu(model: Any) -> Any:
     """Optimize model for current GPU backend."""
     return gpu_autoloader.optimize_model(model)
+
+
+def detect_gpu_frameworks() -> dict[str, Any]:
+    """Detect available GPU frameworks on the system.
+
+    Returns:
+        Dictionary containing framework availability and information
+    """
+    frameworks = {
+        "cuda": False,
+        "cuda_version": None,
+        "rocm": False,
+        "rocm_version": None,
+        "opencl": False,
+        "opencl_version": None,
+        "directml": False,
+        "intel_xpu": False,
+        "ipex_version": None,
+        "vulkan": False,
+        "metal": False,
+        "available_frameworks": [],
+        "gpu_devices": [],
+    }
+
+    # Check for CUDA
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            frameworks["cuda"] = True
+            frameworks["cuda_version"] = torch.version.cuda
+            frameworks["available_frameworks"].append("CUDA")
+            for i in range(torch.cuda.device_count()):
+                frameworks["gpu_devices"].append(
+                    {
+                        "type": "CUDA",
+                        "index": i,
+                        "name": torch.cuda.get_device_name(i),
+                        "memory": torch.cuda.get_device_properties(i).total_memory,
+                    }
+                )
+    except (ImportError, AttributeError):
+        pass
+
+    # Check for ROCm
+    try:
+        import torch
+
+        if hasattr(torch, "hip") and torch.hip.is_available():
+            frameworks["rocm"] = True
+            frameworks["available_frameworks"].append("ROCm")
+            # Try to get ROCm version
+            try:
+                import shutil
+
+                rocm_smi_path = shutil.which("rocm-smi")
+                if not rocm_smi_path:
+                    raise FileNotFoundError("rocm-smi not found in PATH")
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [rocm_smi_path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    shell=False,  # Explicitly secure - no shell injection
+                    check=False,
+                )
+                if result.returncode == 0:
+                    frameworks["rocm_version"] = result.stdout.strip()
+            except Exception as e:
+                logger.debug(f"Failed to get ROCm version: {e}")
+    except (ImportError, AttributeError):
+        pass
+
+    # Check for OpenCL
+    try:
+        import pyopencl as cl
+
+        platforms = cl.get_platforms()
+        if platforms:
+            frameworks["opencl"] = True
+            frameworks["available_frameworks"].append("OpenCL")
+            for platform in platforms:
+                devices = platform.get_devices()
+                for device in devices:
+                    frameworks["gpu_devices"].append(
+                        {"type": "OpenCL", "name": device.name, "vendor": device.vendor, "memory": device.global_mem_size}
+                    )
+            # Get OpenCL version from first platform
+            if platforms:
+                frameworks["opencl_version"] = platforms[0].version.strip()
+    except ImportError:
+        pass
+
+    # Check for DirectML (Windows)
+    if sys.platform == "win32":
+        try:
+            import torch_directml
+
+            frameworks["directml"] = True
+            frameworks["available_frameworks"].append("DirectML")
+            # Try to enumerate DirectML devices
+            try:
+                device_count = torch_directml.device_count()
+                for i in range(device_count):
+                    device_name = torch_directml.device_name(i)
+                    frameworks["gpu_devices"].append({"type": "DirectML", "index": i, "name": device_name})
+            except Exception as e:
+                logger.debug(f"Failed to enumerate DirectML devices: {e}")
+        except ImportError:
+            pass
+
+    # Check for Intel XPU
+    try:
+        import intel_extension_for_pytorch as ipex
+        import torch
+
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            frameworks["intel_xpu"] = True
+            frameworks["ipex_version"] = ipex.__version__
+            frameworks["available_frameworks"].append("Intel XPU")
+            # Get XPU device info
+            for i in range(torch.xpu.device_count()):
+                frameworks["gpu_devices"].append({"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)})
+    except ImportError:
+        pass
+
+    # Check for Vulkan compute
+    try:
+        # Simple check for Vulkan availability
+        import shutil
+
+        vulkaninfo_path = shutil.which("vulkaninfo")
+        if not vulkaninfo_path:
+            raise FileNotFoundError("vulkaninfo not found in PATH")
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            [vulkaninfo_path, "--summary"],
+            capture_output=True,
+            text=True,
+            shell=False,  # Explicitly secure - no shell injection
+            check=False,
+        )
+        if result.returncode == 0:
+            frameworks["vulkan"] = True
+            frameworks["available_frameworks"].append("Vulkan")
+    except Exception as e:
+        logger.debug(f"Failed to check Vulkan availability: {e}")
+
+    # Check for Metal (macOS)
+    if sys.platform == "darwin":
+        try:
+            import torch
+
+            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+                frameworks["metal"] = True
+                frameworks["available_frameworks"].append("Metal")
+        except (ImportError, AttributeError):
+            pass
+
+    # Add summary information
+    frameworks["gpu_count"] = len(frameworks["gpu_devices"])
+    frameworks["primary_framework"] = frameworks["available_frameworks"][0] if frameworks["available_frameworks"] else None
+
+    return frameworks

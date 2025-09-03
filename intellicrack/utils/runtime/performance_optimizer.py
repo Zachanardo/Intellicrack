@@ -145,9 +145,7 @@ class BinaryChunker:
             offset += current_chunk_size
             chunk_id += 1
 
-        logger.info(
-            f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size//1024//1024}MB each"
-        )
+        logger.info(f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size // 1024 // 1024}MB each")
         return chunks
 
     def read_chunk(self, chunk_info: dict[str, Any]) -> bytes:
@@ -160,9 +158,7 @@ class BinaryChunker:
             logger.error(f"Error reading chunk {chunk_info['id']}: {e}")
             return b""
 
-    def analyze_chunk_parallel(
-        self, chunks: list[dict[str, Any]], analysis_func, max_workers: int = 4
-    ) -> list[dict[str, Any]]:
+    def analyze_chunk_parallel(self, chunks: list[dict[str, Any]], analysis_func, max_workers: int = 4) -> list[dict[str, Any]]:
         """Analyze chunks in parallel with controlled concurrency.
 
         Args:
@@ -421,9 +417,7 @@ class PerformanceOptimizer:
         self.binary_chunker = BinaryChunker(self.memory_manager)
         self.adaptive_analyzer = AdaptiveAnalyzer(self.memory_manager, self.cache_manager)
 
-    def optimize_analysis(
-        self, file_path: str, analysis_functions: list[callable]
-    ) -> dict[str, Any]:
+    def optimize_analysis(self, file_path: str, analysis_functions: list[callable]) -> dict[str, Any]:
         """Perform optimized analysis of a large binary.
 
         Args:
@@ -510,9 +504,7 @@ class PerformanceOptimizer:
 
         return results
 
-    def _run_chunked_analysis(
-        self, file_path: str, analysis_func: callable, strategy: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _run_chunked_analysis(self, file_path: str, analysis_func: callable, strategy: dict[str, Any]) -> dict[str, Any]:
         """Run analysis on binary chunks."""
         chunk_size = int(strategy["chunk_size_mb"] * 1024 * 1024)
         chunks = self.binary_chunker.chunk_binary(file_path, chunk_size)
@@ -546,9 +538,7 @@ class PerformanceOptimizer:
 
         return aggregated_result
 
-    def _run_standard_analysis(
-        self, file_path: str, analysis_func: callable, strategy: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _run_standard_analysis(self, file_path: str, analysis_func: callable, strategy: dict[str, Any]) -> dict[str, Any]:
         """Run standard analysis on entire file."""
         _ = strategy
         try:
@@ -563,9 +553,7 @@ class PerformanceOptimizer:
                 data = f.read()
                 return analysis_func(data)
 
-    def _aggregate_chunk_results(
-        self, chunk_results: list[dict[str, Any]], analysis_name: str
-    ) -> dict[str, Any]:
+    def _aggregate_chunk_results(self, chunk_results: list[dict[str, Any]], analysis_name: str) -> dict[str, Any]:
         """Aggregate results from multiple chunks."""
         aggregated = {
             "analysis_type": analysis_name,
@@ -593,9 +581,7 @@ class PerformanceOptimizer:
         return aggregated
 
 
-def create_performance_optimizer(
-    max_memory_mb: int = 2048, cache_dir: str = "cache"
-) -> PerformanceOptimizer:
+def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "cache") -> PerformanceOptimizer:
     """Factory function to create a performance optimizer."""
     return PerformanceOptimizer(max_memory_mb, cache_dir)
 

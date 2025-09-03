@@ -370,11 +370,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
         num_instructions = int(num_instructions)
 
         logger.info("Disassembling address: 0x%d, %s instructions", address, num_instructions)
-        app_instance.update_output.emit(
-            log_message(
-                f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"
-            )
-        )
+        app_instance.update_output.emit(log_message(f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"))
 
         if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             logger.warning("Disassemble attempt failed: No binary loaded.")
@@ -385,9 +381,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
             "status": "success",
             "address": f"0x{address:x}",
             "num_instructions": num_instructions,
-            "disassembly": [
-                f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)
-            ],
+            "disassembly": [f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)],
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -757,7 +751,7 @@ def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
                         patches.append(
                             {
                                 "type": "string_modification",
-                                "description": f'Modify license string: {string.decode("utf-8", errors="ignore")[:50]}',
+                                "description": f"Modify license string: {string.decode('utf-8', errors='ignore')[:50]}",
                                 "address": hex(0x400000 + offset),
                                 "file_offset": offset,
                                 "original_bytes": string.hex()[:20],  # Limit display
@@ -914,7 +908,7 @@ def _convert_vulnerabilities_to_patches(vulnerabilities: List[Dict]) -> List[Dic
         patches.append(
             {
                 "type": "vulnerability_fix",
-                "description": f'Address vulnerability: {vuln.get("type", "unknown")}',
+                "description": f"Address vulnerability: {vuln.get('type', 'unknown')}",
                 "address": vuln.get("address", "0x0"),
                 "vulnerability": vuln.get("type", "unknown"),
                 "severity": vuln.get("severity", "medium"),
@@ -994,11 +988,7 @@ def _get_binary_info(binary_path: str) -> Dict[str, Any]:
 
         return {
             "size": stat.st_size,
-            "format": "PE"
-            if header[:2] == b"MZ"
-            else "ELF"
-            if header[:4] == b"\x7fELF"
-            else "Unknown",
+            "format": "PE" if header[:2] == b"MZ" else "ELF" if header[:4] == b"\x7fELF" else "Unknown",
             "modified": stat.st_mtime,
             "path": binary_path,
         }
@@ -1075,9 +1065,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
         filter_type = parameters.get("filter_type", "all")
         include_metadata = parameters.get("include_metadata", True)
 
-        app_instance.update_output.emit(
-            log_message(f"[Tool] Getting proposed patches (filter: {filter_type})")
-        )
+        app_instance.update_output.emit(log_message(f"[Tool] Getting proposed patches (filter: {filter_type})"))
         logger.info("Getting proposed patches with filter: %s", filter_type)
 
         # Get patches from app instance if available
@@ -1085,11 +1073,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
 
         # Filter patches based on parameters
         if filter_type != "all":
-            filtered_patches = [
-                patch
-                for patch in all_patches
-                if patch.get("type", "").lower() == filter_type.lower()
-            ]
+            filtered_patches = [patch for patch in all_patches if patch.get("type", "").lower() == filter_type.lower()]
         else:
             filtered_patches = all_patches
 
@@ -1097,10 +1081,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
         if include_metadata:
             result_patches = filtered_patches
         else:
-            result_patches = [
-                {k: v for k, v in patch.items() if k in ["address", "description", "type"]}
-                for patch in filtered_patches
-            ]
+            result_patches = [{k: v for k, v in patch.items() if k in ["address", "description", "type"]} for patch in filtered_patches]
 
         return {
             "status": "success",
@@ -1169,9 +1150,7 @@ def wrapper_generate_launcher_script(app_instance, parameters: Dict[str, Any]) -
     output_path = parameters.get("output_path", "launcher.bat")
 
     try:
-        app_instance.update_output.emit(
-            log_message(f"[Tool] Generating launcher script: {output_path}")
-        )
+        app_instance.update_output.emit(log_message(f"[Tool] Generating launcher script: {output_path}"))
         logger.info("Generating launcher script: %s", output_path)
 
         if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
@@ -1253,9 +1232,7 @@ def run_external_tool(args):
 
     try:
         # Run the command
-        with subprocess.Popen(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8"
-        ) as process:
+        with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8") as process:
             logger.info("Subprocess started: %s (PID: %s)", args, process.pid)
 
             # Get output
@@ -1482,9 +1459,7 @@ def run_ghidra_headless(
         # Try to find in PATH
         if not ghidra_executable:
             try:
-                result = subprocess.run(
-                    ["which", "analyzeHeadless"], capture_output=True, text=True, check=False
-                )
+                result = subprocess.run(["which", "analyzeHeadless"], capture_output=True, text=True, check=False)
                 if result.returncode == 0:
                     ghidra_executable = result.stdout.strip()
             except (OSError, subprocess.SubprocessError) as e:
@@ -1492,9 +1467,7 @@ def run_ghidra_headless(
 
         if not ghidra_executable:
             results["status"] = "error"
-            results["errors"].append(
-                "Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable."
-            )
+            results["errors"].append("Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable.")
             return results
 
         # Setup project directory
@@ -1541,9 +1514,7 @@ def run_ghidra_headless(
         # Create comprehensive analysis script if none provided
         analysis_script_path = script_path
         if not analysis_script_path:
-            analysis_script_path = _create_comprehensive_analysis_script(
-                output_dir, export_format, export_selection, script_params
-            )
+            analysis_script_path = _create_comprehensive_analysis_script(output_dir, export_format, export_selection, script_params)
 
         # Add post-analysis script
         if analysis_script_path and os.path.exists(analysis_script_path):
@@ -1562,9 +1533,7 @@ def run_ghidra_headless(
 
         logger.info(f"Running Ghidra headless analysis: {' '.join(cmd)}")
 
-        process = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout, cwd=output_dir, check=False
-        )
+        process = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=output_dir, check=False)
 
         analysis_time = time.time() - start_time
         results["analysis_results"]["analysis_time"] = analysis_time
@@ -1593,9 +1562,7 @@ def run_ghidra_headless(
             results = _load_analysis_exports(results, output_dir, export_format)
 
         if process.returncode != 0:
-            results["status"] = (
-                "warning" if results["warnings"] and not results["errors"] else "error"
-            )
+            results["status"] = "warning" if results["warnings"] and not results["errors"] else "error"
 
         # Cleanup temporary script if created
         if not script_path and analysis_script_path and os.path.exists(analysis_script_path):
@@ -1623,13 +1590,9 @@ def run_ghidra_headless(
     return results
 
 
-def _create_comprehensive_analysis_script(
-    output_dir: str, export_format: str, export_selection: list, params: dict
-) -> str:
+def _create_comprehensive_analysis_script(output_dir: str, export_format: str, export_selection: list, params: dict) -> str:
     """Create a comprehensive Ghidra analysis script."""
-    logger.debug(
-        f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}"
-    )
+    logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
     script_content = (
         """
 // Comprehensive Ghidra Analysis Script

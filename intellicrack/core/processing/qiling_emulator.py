@@ -353,10 +353,7 @@ class QilingEmulator:
         )
 
         # Check for suspicious patterns
-        if any(
-            keyword in str(params).lower()
-            for keyword in ["license", "serial", "key", "trial", "activation", "registration"]
-        ):
+        if any(keyword in str(params).lower() for keyword in ["license", "serial", "key", "trial", "activation", "registration"]):
             self.license_checks.append(
                 {
                     "api": api_name,
@@ -930,10 +927,7 @@ class QilingEmulator:
                     format_info["imports"].append(
                         {
                             "dll": dll_name,
-                            "functions": [
-                                imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
-                                for imp in entry.imports
-                            ],
+                            "functions": [imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}" for imp in entry.imports],
                         },
                     )
 

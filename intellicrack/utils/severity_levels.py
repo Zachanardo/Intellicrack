@@ -102,9 +102,7 @@ def get_threat_from_score(score: float) -> ThreatLevel:
     return ThreatLevel.NONE
 
 
-def calculate_risk_score(
-    severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel
-) -> float:
+def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel) -> float:
     """Calculate overall risk score from severity, threat, and confidence."""
     severity_score = SEVERITY_SCORES.get(severity, 1.0)
     threat_score = THREAT_SCORES.get(threat, 0.0)

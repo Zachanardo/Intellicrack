@@ -18,6 +18,7 @@ Common driver path utilities for Intellicrack.
 
 This module provides utilities for finding Windows driver paths.
 """
+
 import logging
 import os
 

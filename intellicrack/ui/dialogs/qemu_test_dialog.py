@@ -37,9 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
 class QEMUTestDialog(QDialog):
     """Dialog asking user if they want to test script in QEMU first."""
 
-    def __init__(
-        self, script_type: str, target_binary: str, script_preview: str = "", parent=None
-    ) -> None:
+    def __init__(self, script_type: str, target_binary: str, script_preview: str = "", parent=None) -> None:
         """Initialize the QEMUTestDialog with default values."""
         super().__init__(parent)
         self.script_type = script_type

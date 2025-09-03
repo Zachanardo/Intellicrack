@@ -97,9 +97,7 @@ class ProtocolFingerprinter:
 
                 self.logger.info(f"Loaded {len(self.signatures)} protocol signatures")
             else:
-                self.logger.info(
-                    "Signature database not found, initializing with built-in signatures"
-                )
+                self.logger.info("Signature database not found, initializing with built-in signatures")
                 self._initialize_signatures()
                 self._save_signatures()
 
@@ -111,9 +109,7 @@ class ProtocolFingerprinter:
         """Save protocol signatures to database."""
         try:
             # Create directory if it doesn't exist
-            os.makedirs(
-                os.path.dirname(os.path.abspath(self.config["signature_db_path"])), exist_ok=True
-            )
+            os.makedirs(os.path.dirname(os.path.abspath(self.config["signature_db_path"])), exist_ok=True)
 
             # Save signatures
             with open(self.config["signature_db_path"], "w", encoding="utf-8") as f:
@@ -254,9 +250,7 @@ class ProtocolFingerprinter:
         freq = {byte: count / length for byte, count in counts.items()}
         return freq
 
-    def analyze_traffic(
-        self, packet_data: bytes | bytearray, port: int | None = None
-    ) -> dict[str, Any] | None:
+    def analyze_traffic(self, packet_data: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
         """Analyze network traffic to identify license protocols.
 
         Args:
@@ -281,11 +275,13 @@ class ProtocolFingerprinter:
         if not self.config["learning_mode"]:
             return
 
-        self.traffic_samples.append({
-            "data": packet_data,
-            "port": port,
-            "timestamp": time.time(),
-        })
+        self.traffic_samples.append(
+            {
+                "data": packet_data,
+                "port": port,
+                "timestamp": time.time(),
+            }
+        )
 
         if len(self.traffic_samples) > 1000:
             self.traffic_samples = self.traffic_samples[-1000:]
@@ -298,14 +294,16 @@ class ProtocolFingerprinter:
             confidence = self._calculate_protocol_confidence(packet_data, port, signature)
 
             if confidence >= self.config["min_confidence"]:
-                results.append({
-                    "protocol_id": protocol_id,
-                    "name": signature["name"],
-                    "description": signature["description"],
-                    "confidence": confidence,
-                    "header_format": signature["header_format"],
-                    "response_templates": signature["response_templates"],
-                })
+                results.append(
+                    {
+                        "protocol_id": protocol_id,
+                        "name": signature["name"],
+                        "description": signature["description"],
+                        "confidence": confidence,
+                        "header_format": signature["header_format"],
+                        "response_templates": signature["response_templates"],
+                    }
+                )
 
         return results
 
@@ -388,7 +386,7 @@ class ProtocolFingerprinter:
             return 0.0
 
         if pattern.get("mask") is None:
-            if packet_data[offset:offset + len(pattern["bytes"])] == pattern["bytes"]:
+            if packet_data[offset : offset + len(pattern["bytes"])] == pattern["bytes"]:
                 return pattern.get("weight", 0.2)
         else:
             if self._match_masked_pattern(packet_data, pattern, offset):
@@ -426,7 +424,9 @@ class ProtocolFingerprinter:
         else:
             return 0.3 * match_ratio
 
-    def _process_analysis_results(self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None) -> dict[str, Any] | None:
+    def _process_analysis_results(
+        self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None
+    ) -> dict[str, Any] | None:
         """Process analysis results and return best match or learn new signature."""
         results.sort(key=lambda x: x["confidence"], reverse=True)
 
@@ -443,9 +443,7 @@ class ProtocolFingerprinter:
 
         return None
 
-    def fingerprint_packet(
-        self, packet_data: bytes | bytearray, port: int | None = None
-    ) -> dict[str, Any] | None:
+    def fingerprint_packet(self, packet_data: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
         """Fingerprint a single packet for protocol identification.
 
         Args:
@@ -457,9 +455,7 @@ class ProtocolFingerprinter:
 
         """
         try:
-            self.logger.debug(
-                "Fingerprinting packet of %d bytes on port %s", len(packet_data), port
-            )
+            self.logger.debug("Fingerprinting packet of %d bytes on port %s", len(packet_data), port)
 
             # Use the existing analyze_traffic method for actual fingerprinting
             result = self.analyze_traffic(packet_data, port)
@@ -496,9 +492,7 @@ class ProtocolFingerprinter:
             if len(packet_data) > 0:
                 byte_counts = [packet_data.count(i) for i in range(256)]
                 analysis["packet_entropy"] = -sum(
-                    (count / len(packet_data)) * math.log2(count / len(packet_data))
-                    for count in byte_counts
-                    if count > 0
+                    (count / len(packet_data)) * math.log2(count / len(packet_data)) for count in byte_counts if count > 0
                 )
 
             # Calculate ASCII ratio
@@ -524,9 +518,7 @@ class ProtocolFingerprinter:
 
         return analysis
 
-    def parse_packet(
-        self, protocol_id: str, packet_data: bytes | bytearray
-    ) -> dict[str, Any] | None:
+    def parse_packet(self, protocol_id: str, packet_data: bytes | bytearray) -> dict[str, Any] | None:
         """Parse a packet according to the protocol's header format.
 
         Args:
@@ -558,15 +550,9 @@ class ProtocolFingerprinter:
                 if field_type == "uint8":
                     result[field_name] = packet_data[offset]
                 elif field_type == "uint16" or field_type == "uint32":
-                    result[field_name] = int.from_bytes(
-                        packet_data[offset : offset + field_length], byteorder="big"
-                    )
+                    result[field_name] = int.from_bytes(packet_data[offset : offset + field_length], byteorder="big")
                 elif field_type == "string":
-                    result[field_name] = (
-                        packet_data[offset : offset + field_length]
-                        .decode("utf-8", errors="ignore")
-                        .rstrip("\x00")
-                    )
+                    result[field_name] = packet_data[offset : offset + field_length].decode("utf-8", errors="ignore").rstrip("\x00")
                 elif field_type == "bytes":
                     result[field_name] = packet_data[offset : offset + field_length]
 
@@ -582,9 +568,7 @@ class ProtocolFingerprinter:
             self.logger.error("Error parsing packet: %s", e)
             return None
 
-    def generate_response(
-        self, protocol_id: str, request_packet: bytes | bytearray, response_type: str = "license_ok"
-    ) -> bytes | None:
+    def generate_response(self, protocol_id: str, request_packet: bytes | bytearray, response_type: str = "license_ok") -> bytes | None:
         """Generate a response packet for a license check request.
 
         Args:
@@ -633,9 +617,7 @@ class ProtocolFingerprinter:
                 # Copy signature and version fields
                 response[0:5] = request_packet[0:5]
 
-            elif (
-                protocol_id == "microsoft_kms" and len(response) >= 12 and len(request_packet) >= 12
-            ):
+            elif protocol_id == "microsoft_kms" and len(response) >= 12 and len(request_packet) >= 12:
                 # Copy signature and protocol fields
                 response[0:10] = request_packet[0:10]
 
@@ -850,9 +832,7 @@ class ProtocolFingerprinter:
                                         if protocol_id not in results["fingerprints"]:
                                             results["fingerprints"][protocol_id] = {
                                                 "name": fingerprint_result.get("name", protocol_id),
-                                                "confidence": fingerprint_result.get(
-                                                    "confidence", 0
-                                                ),
+                                                "confidence": fingerprint_result.get("confidence", 0),
                                                 "packets": 0,
                                                 "ports": set(),
                                                 "sample_data": [],
@@ -889,9 +869,7 @@ class ProtocolFingerprinter:
                 results["summary"]["license_packets"] = license_packets
                 results["summary"]["identified_protocols"] = len(results["protocols"])
 
-                self.logger.info(
-                    f"PCAP analysis complete: {packets_analyzed} packets, {len(results['protocols'])} protocols identified"
-                )
+                self.logger.info(f"PCAP analysis complete: {packets_analyzed} packets, {len(results['protocols'])} protocols identified")
 
             except ImportError:
                 # Fallback to basic PCAP parsing
@@ -1081,9 +1059,7 @@ class ProtocolFingerprinter:
 
             # 5. Calculate summary
             results["summary"]["has_network_code"] = len(results["network_functions"]) > 0
-            results["summary"]["likely_license_client"] = (
-                len(results["protocols"]) > 0 or len(results["license_indicators"]) > 0
-            )
+            results["summary"]["likely_license_client"] = len(results["protocols"]) > 0 or len(results["license_indicators"]) > 0
 
             # Calculate confidence
             confidence = 0.0

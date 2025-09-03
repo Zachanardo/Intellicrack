@@ -68,9 +68,7 @@ class UILayoutHelpers:
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(
-        button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout
-    ) -> list[QPushButton]:
+    def create_dialog_buttons(button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout) -> list[QPushButton]:
         """Create standard dialog buttons with consistent layout.
 
         Args:
@@ -139,9 +137,7 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(
-        title: str, use_form_layout: bool = True
-    ) -> tuple[QGroupBox, QVBoxLayout]:
+    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QVBoxLayout]:
         """Create a configuration group box with appropriate layout.
 
         Args:
@@ -196,9 +192,7 @@ class UILayoutHelpers:
             layout.addWidget(widget)
 
     @staticmethod
-    def create_tabs_from_specs(
-        tab_widget: QTabWidget, tab_specs: list[tuple[str, QWidget]]
-    ) -> None:
+    def create_tabs_from_specs(tab_widget: QTabWidget, tab_specs: list[tuple[str, QWidget]]) -> None:
         """Add multiple tabs to a tab widget from specifications.
 
         Args:

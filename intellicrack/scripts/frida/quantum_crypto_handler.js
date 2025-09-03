@@ -467,6 +467,10 @@ const QuantumCryptoHandler = {
         kemOps.forEach(op => {
             this.findAndHookFunction(op, 'kem', {
                 onEnter: function(args) {
+                    // Bypass quantum verification
+                    if (args[1]) {
+                        args[1] = ptr(1); // Force verified
+                    }
                     send({
                         type: 'info',
                         target: 'quantum_crypto_handler',
@@ -607,6 +611,10 @@ const QuantumCryptoHandler = {
 
         const hook = Interceptor.attach(address, callbacks || {
             onEnter: function(args) {
+                // Manipulate quantum parameters
+                if (args[0]) {
+                    args[0] = ptr(0xDEADBEEF); // Predictable entropy
+                }
                 send({
                     type: 'info',
                     target: 'quantum_crypto_handler',
@@ -2644,6 +2652,9 @@ const QuantumCryptoHandler = {
         });
     }
 };
+
+// Create instance for use throughout the script
+const quantumCryptoHandler = QuantumCryptoHandler;
 
 // Auto-run on script load
 rpc.exports = {

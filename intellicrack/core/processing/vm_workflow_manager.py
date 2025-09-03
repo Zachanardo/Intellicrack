@@ -207,9 +207,7 @@ class VMWorkflowManager:
                     test_wrapped_script,
                 )
 
-                self.logger.info(
-                    "Test script execution completed. Success: %s", test_result.success
-                )
+                self.logger.info("Test script execution completed. Success: %s", test_result.success)
             except Exception as e:
                 self.logger.exception("Failed to execute test script: %s", e)
                 test_result = type(
@@ -263,9 +261,7 @@ class VMWorkflowManager:
         try:
             snapshot = self.qemu_manager.snapshots[snapshot_id]
             # Access public method instead of private
-            ssh_client = getattr(
-                self.qemu_manager, "get_ssh_connection", self.qemu_manager._get_ssh_connection
-            )(snapshot)
+            ssh_client = getattr(self.qemu_manager, "get_ssh_connection", self.qemu_manager._get_ssh_connection)(snapshot)
 
             if ssh_client is None:
                 self.logger.error("Failed to get SSH connection to %s", snapshot.vm_name)

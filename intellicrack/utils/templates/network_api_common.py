@@ -16,6 +16,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Common network API analysis utilities to avoid code duplication.
 """
+
 from collections import defaultdict
 from typing import Any
 
@@ -159,9 +160,7 @@ def summarize_network_capabilities(detected_apis):
 
     # Add capability flags
     summary["has_ssl"] = bool(detected_apis.get("ssl", []))
-    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(
-        detected_apis.get("http", [])
-    )
+    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
     summary["has_dns"] = bool(detected_apis.get("dns", []))
 
     return summary

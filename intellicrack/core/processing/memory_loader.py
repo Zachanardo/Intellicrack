@@ -39,7 +39,7 @@ except ImportError as e:
     logger.error("Import error in memory_loader: %s", e)
     HAS_PSUTIL = False
 
-__all__ = ["MemoryOptimizedBinaryLoader"]
+__all__ = ["MemoryOptimizedBinaryLoader", "run_memory_optimized_analysis"]
 
 
 class MemoryOptimizedBinaryLoader:
@@ -157,9 +157,7 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
-    def read_section(
-        self, section_name: str, section_offset: int, section_size: int
-    ) -> bytes | None:
+    def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
         """Read a section from the file with caching.
 
         Args:
@@ -312,9 +310,7 @@ class MemoryOptimizedBinaryLoader:
         if exc_type:
             self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.close()
 
     def __del__(self):
@@ -322,9 +318,189 @@ class MemoryOptimizedBinaryLoader:
         self.close()
 
 
-def create_memory_loader(
-    chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
-) -> MemoryOptimizedBinaryLoader:
+def run_memory_optimized_analysis(
+    file_path: str, analysis_type: str = "full", chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
+) -> dict[str, Any]:
+    """Run memory-optimized analysis on a binary file.
+
+    This function performs comprehensive analysis on large binaries while
+    maintaining optimal memory usage through chunked processing and caching.
+
+    Args:
+        file_path: Path to the binary file to analyze
+        analysis_type: Type of analysis to perform:
+            - "full": Complete analysis including entropy, sections, and heuristics
+            - "quick": Basic analysis with file info and entropy
+            - "sections": Focus on section analysis
+            - "entropy": Entropy-focused analysis for packed detection
+        chunk_size: Size of data chunks in bytes (default: 1MB)
+        max_memory: Maximum memory usage in bytes (default: 1GB)
+
+    Returns:
+        Dictionary containing analysis results including:
+            - file_info: Basic file information
+            - entropy: File entropy metrics
+            - packed_probability: Likelihood of packing/compression
+            - sections: Section-level analysis (if applicable)
+            - anomalies: Detected anomalies and suspicious patterns
+    """
+    results = {
+        "file_path": file_path,
+        "analysis_type": analysis_type,
+        "status": "pending",
+        "file_info": {},
+        "entropy": {},
+        "packed_probability": 0.0,
+        "sections": [],
+        "anomalies": [],
+        "performance": {},
+    }
+
+    import time
+
+    start_time = time.time()
+
+    try:
+        # Create memory-optimized loader
+        loader = create_memory_loader(chunk_size, max_memory)
+
+        # Load the binary file
+        if not loader.load_file(file_path):
+            results["status"] = "failed"
+            results["error"] = f"Failed to load file: {file_path}"
+            return results
+
+        # Get basic file information
+        results["file_info"] = loader.get_file_info()
+
+        # Calculate entropy for packing detection
+        overall_entropy = loader.calculate_entropy()
+        results["entropy"]["overall"] = overall_entropy
+        results["entropy"]["bits_per_byte"] = overall_entropy
+
+        # Determine packed probability based on entropy
+        if overall_entropy > 7.5:
+            results["packed_probability"] = 0.95
+            results["anomalies"].append(
+                {
+                    "type": "high_entropy",
+                    "severity": "high",
+                    "description": f"Very high entropy ({overall_entropy:.2f} bits/byte) indicates likely packing/encryption",
+                }
+            )
+        elif overall_entropy > 7.0:
+            results["packed_probability"] = 0.75
+            results["anomalies"].append(
+                {
+                    "type": "elevated_entropy",
+                    "severity": "medium",
+                    "description": f"Elevated entropy ({overall_entropy:.2f} bits/byte) suggests possible compression",
+                }
+            )
+        elif overall_entropy > 6.5:
+            results["packed_probability"] = 0.50
+        else:
+            results["packed_probability"] = 0.10
+
+        # Perform type-specific analysis
+        if analysis_type in ["full", "sections"]:
+            # Analyze sections in chunks
+            section_entropies = []
+            suspicious_sections = []
+
+            for offset, chunk in loader.iterate_file(chunk_size):
+                chunk_entropy = loader.calculate_entropy(chunk)
+                section_info = {
+                    "offset": offset,
+                    "size": len(chunk),
+                    "entropy": chunk_entropy,
+                    "entropy_ratio": chunk_entropy / 8.0,
+                }
+
+                # Detect anomalies in sections
+                if chunk_entropy > 7.8:
+                    section_info["flags"] = ["packed", "encrypted"]
+                    suspicious_sections.append(offset)
+                elif chunk_entropy < 1.0:
+                    section_info["flags"] = ["padding", "zeros"]
+                elif chunk_entropy > 7.0:
+                    section_info["flags"] = ["compressed"]
+                else:
+                    section_info["flags"] = []
+
+                section_entropies.append(section_info)
+
+                # Limit section analysis for memory optimization
+                if len(section_entropies) >= 100:
+                    break
+
+            results["sections"] = section_entropies
+
+            # Check for section anomalies
+            if suspicious_sections:
+                results["anomalies"].append(
+                    {
+                        "type": "suspicious_sections",
+                        "severity": "medium",
+                        "description": f"Found {len(suspicious_sections)} sections with suspicious entropy patterns",
+                        "offsets": suspicious_sections[:10],  # Limit to first 10
+                    }
+                )
+
+        # Perform entropy distribution analysis
+        if analysis_type in ["full", "entropy"]:
+            entropy_samples = []
+            sample_count = min(100, results["file_info"].get("file_size", 0) // chunk_size)
+
+            for i, (offset, chunk) in enumerate(loader.iterate_file(chunk_size)):
+                if i >= sample_count:
+                    break
+                entropy_samples.append(loader.calculate_entropy(chunk))
+
+            if entropy_samples:
+                import statistics
+
+                results["entropy"]["mean"] = statistics.mean(entropy_samples)
+                results["entropy"]["stdev"] = statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
+                results["entropy"]["min"] = min(entropy_samples)
+                results["entropy"]["max"] = max(entropy_samples)
+
+                # Detect entropy anomalies
+                if results["entropy"]["stdev"] < 0.5 and results["entropy"]["mean"] > 7.0:
+                    results["anomalies"].append(
+                        {
+                            "type": "uniform_high_entropy",
+                            "severity": "high",
+                            "description": "Uniform high entropy across file indicates strong encryption/packing",
+                        }
+                    )
+                elif results["entropy"]["stdev"] > 2.5:
+                    results["anomalies"].append(
+                        {
+                            "type": "variable_entropy",
+                            "severity": "low",
+                            "description": "Variable entropy suggests mixed content (code + data)",
+                        }
+                    )
+
+        # Close the loader to free resources
+        loader.close()
+
+        # Record performance metrics
+        end_time = time.time()
+        results["performance"]["analysis_time"] = end_time - start_time
+        results["performance"]["memory_used"] = loader.get_memory_usage()
+        results["status"] = "completed"
+
+    except Exception as e:
+        logger.error(f"Error during memory-optimized analysis: {e}")
+        results["status"] = "error"
+        results["error"] = str(e)
+
+    return results
+
+
+def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
     """Factory function to create a MemoryOptimizedBinaryLoader.
 
     Args:

@@ -84,9 +84,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
-            logger.info(
-                f"Commercial protection scan complete: {len(results.get('protections_found', []))} found"
-            )
+            logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {e!s}"
@@ -198,9 +196,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
-            logger.info(
-                f"Checksum detection complete: Detected={results['checksum_verification_detected']}"
-            )
+            logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {e!s}"
@@ -246,9 +242,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
-            logger.info(
-                f"Self-healing code detection complete: Detected={results['self_healing_detected']}"
-            )
+            logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {e!s}"

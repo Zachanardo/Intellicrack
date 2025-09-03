@@ -607,8 +607,6 @@ class StringExtractionWidget(QWidget):
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
             if offset_item:
-
-
                 QApplication.clipboard().setText(offset_item.text())
 
     def _copy_selected_row(self):
@@ -623,8 +621,6 @@ class StringExtractionWidget(QWidget):
                         row_data.append(item.data(Qt.UserRole))
                     else:
                         row_data.append(item.text())
-
-
 
             QApplication.clipboard().setText("\t".join(row_data))
 

@@ -18,6 +18,7 @@ Common reporting utilities for generating analysis reports.
 
 Common report generation utilities to avoid code duplication.
 """
+
 from intellicrack.logger import logger
 
 

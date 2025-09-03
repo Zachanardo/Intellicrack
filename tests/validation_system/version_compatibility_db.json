@@ -1,0 +1,192 @@
+{
+  "format_version": "1.0",
+  "last_updated": "2025-09-02T18:59:45.118379",
+  "supported_protections": {
+    "FlexLM": {
+      "officially_supported_versions": {
+        "v11.16.2": {
+          "status": "fully_supported",
+          "features": [
+            "license_detection",
+            "key_extraction",
+            "bypass_generation",
+            "anti_debug_detection",
+            "crypto_analysis",
+            "protection_analysis"
+          ],
+          "limitations": [],
+          "success_rate": 0.95,
+          "notes": "Latest version with full feature support"
+        },
+        "v11.16.1": {
+          "status": "fully_supported",
+          "features": [
+            "license_detection",
+            "key_extraction",
+            "bypass_generation",
+            "anti_debug_detection",
+            "crypto_analysis",
+            "protection_analysis"
+          ],
+          "limitations": [
+            "Minor crypto differences from v11.16.2"
+          ],
+          "success_rate": 0.92,
+          "notes": "Stable support with minor limitations"
+        },
+        "v11.15.0": {
+          "status": "partially_supported",
+          "features": [
+            "license_detection",
+            "key_extraction",
+            "protection_analysis"
+          ],
+          "limitations": [
+            "Limited bypass generation",
+            "Older crypto methods",
+            "Some anti-debug features not detected"
+          ],
+          "success_rate": 0.78,
+          "notes": "Older version with reduced capabilities"
+        }
+      },
+      "version_patterns": [
+        "flexlm.*v?11\\.16\\.2",
+        "flexlm.*v?11\\.16\\.1",
+        "flexlm.*v?11\\.15\\.0",
+        "FLEXLM.*11\\.16\\.[0-2]",
+        "FLEXnet.*11\\.1[56]\\.[0-2]"
+      ]
+    },
+    "Adobe Licensing": {
+      "officially_supported_versions": {
+        "v7": {
+          "status": "fully_supported",
+          "features": [
+            "license_detection",
+            "activation_bypass",
+            "trial_reset",
+            "creative_suite_analysis",
+            "amt_analysis",
+            "protection_analysis"
+          ],
+          "limitations": [],
+          "success_rate": 0.89,
+          "notes": "Current Creative Suite licensing"
+        },
+        "v6": {
+          "status": "fully_supported",
+          "features": [
+            "license_detection",
+            "activation_bypass",
+            "trial_reset",
+            "creative_suite_analysis",
+            "protection_analysis"
+          ],
+          "limitations": [
+            "AMT analysis limited"
+          ],
+          "success_rate": 0.85,
+          "notes": "Previous generation with good support"
+        },
+        "v5": {
+          "status": "partially_supported",
+          "features": [
+            "license_detection",
+            "basic_bypass",
+            "protection_analysis"
+          ],
+          "limitations": [
+            "No modern AMT support",
+            "Limited activation bypass",
+            "Older encryption methods only"
+          ],
+          "success_rate": 0.72,
+          "notes": "Legacy version with basic support"
+        }
+      },
+      "version_patterns": [
+        "adobe.*licensing.*v?7",
+        "adobe.*licensing.*v?6",
+        "adobe.*licensing.*v?5",
+        "creative.*suite.*[567]",
+        "amt.*[567]\\."
+      ]
+    },
+    "Sentinel HASP": {
+      "officially_supported_versions": {
+        "current": {
+          "status": "fully_supported",
+          "features": [
+            "dongle_detection",
+            "hardware_emulation",
+            "key_analysis",
+            "protection_bypass",
+            "anti_debug_detection",
+            "crypto_analysis"
+          ],
+          "limitations": [],
+          "success_rate": 0.91,
+          "notes": "Latest HASP protection with full support"
+        },
+        "previous_1": {
+          "status": "fully_supported",
+          "features": [
+            "dongle_detection",
+            "hardware_emulation",
+            "key_analysis",
+            "protection_bypass",
+            "crypto_analysis"
+          ],
+          "limitations": [
+            "Some newer anti-debug features missing"
+          ],
+          "success_rate": 0.88,
+          "notes": "Previous version with strong support"
+        },
+        "previous_2": {
+          "status": "partially_supported",
+          "features": [
+            "dongle_detection",
+            "basic_emulation",
+            "key_analysis"
+          ],
+          "limitations": [
+            "Limited hardware emulation",
+            "Older crypto only",
+            "Reduced bypass success",
+            "No modern anti-debug detection"
+          ],
+          "success_rate": 0.75,
+          "notes": "Older version with basic functionality"
+        }
+      },
+      "version_patterns": [
+        "sentinel.*hasp.*current",
+        "sentinel.*hasp.*latest",
+        "hasp.*current",
+        "sentinel.*hasp.*previous.*1",
+        "sentinel.*hasp.*previous.*2"
+      ]
+    }
+  },
+  "unsupported_patterns": {
+    "versions_too_old": [
+      "flexlm.*v?1[01]\\.",
+      "flexlm.*v?[0-9]\\.",
+      "adobe.*licensing.*v?[1-4]",
+      "sentinel.*hasp.*v?[1-3]\\."
+    ],
+    "versions_too_new": [
+      "flexlm.*v?1[23456789]\\.",
+      "adobe.*licensing.*v?[89]",
+      "sentinel.*hasp.*v?[6789]\\."
+    ],
+    "beta_unstable": [
+      ".*beta.*",
+      ".*alpha.*",
+      ".*rc\\d+.*",
+      ".*dev.*"
+    ]
+  }
+}

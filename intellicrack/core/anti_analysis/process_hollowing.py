@@ -156,9 +156,7 @@ class ProcessHollowing:
             },
         }
 
-    def hollow_process(
-        self, target_process: str, payload: bytes, payload_entry_point: int = 0
-    ) -> tuple[bool, dict[str, Any]]:
+    def hollow_process(self, target_process: str, payload: bytes, payload_entry_point: int = 0) -> tuple[bool, dict[str, Any]]:
         """Perform process hollowing.
 
         Args:
@@ -294,9 +292,7 @@ class ProcessHollowing:
 
         return None
 
-    def _perform_hollowing(
-        self, process_info: dict[str, Any], payload: bytes, entry_point_offset: int
-    ) -> bool:
+    def _perform_hollowing(self, process_info: dict[str, Any], payload: bytes, entry_point_offset: int) -> bool:
         """Perform the actual hollowing operation."""
         try:
             import platform
@@ -335,11 +331,7 @@ class ProcessHollowing:
             try:
                 # Read SizeOfImage from PE header (at offset pe_header_offset + 0x50)
                 image_size_bytes = payload[pe_header_offset + 0x50 : pe_header_offset + 0x54]
-                image_size = (
-                    struct.unpack("<I", image_size_bytes)[0]
-                    if len(image_size_bytes) == 4
-                    else 0x10000
-                )
+                image_size = struct.unpack("<I", image_size_bytes)[0] if len(image_size_bytes) == 4 else 0x10000
             except Exception:
                 image_size = 0x10000  # Default size
 

@@ -197,11 +197,7 @@ class ModelComparison:
 
             inference_time = time.time() - start_time
             output = response.content
-            tokens_generated = (
-                response.usage.get("completion_tokens", 0)
-                if response.usage
-                else len(output.split())
-            )
+            tokens_generated = response.usage.get("completion_tokens", 0) if response.usage else len(output.split())
 
             # End performance tracking
             perf_metrics = self.performance_monitor.end_inference(
@@ -278,9 +274,7 @@ class ModelComparison:
 
         analysis["performance"]["fastest_model"] = results[fastest_idx].model_id
         analysis["performance"]["slowest_model"] = results[slowest_idx].model_id
-        analysis["performance"]["speed_difference"] = (
-            inference_times[slowest_idx] / inference_times[fastest_idx]
-        )
+        analysis["performance"]["speed_difference"] = inference_times[slowest_idx] / inference_times[fastest_idx]
         analysis["performance"]["avg_tokens_per_second"] = np.mean(tokens_per_second)
         analysis["performance"]["avg_memory_usage_mb"] = np.mean(memory_usage)
 
@@ -301,9 +295,7 @@ class ModelComparison:
             common_words &= set(output.split())
 
         analysis["consistency"]["common_words"] = len(common_words)
-        analysis["consistency"]["avg_word_overlap"] = len(common_words) / np.mean(
-            [len(o.split()) for o in all_outputs]
-        )
+        analysis["consistency"]["avg_word_overlap"] = len(common_words) / np.mean([len(o.split()) for o in all_outputs])
 
         return analysis
 
@@ -328,9 +320,7 @@ class ModelComparison:
                 result.similarity_scores = {}
                 for j, other_result in enumerate(results):
                     if i != j:
-                        result.similarity_scores[other_result.model_id] = float(
-                            similarity_matrix[i][j]
-                        )
+                        result.similarity_scores[other_result.model_id] = float(similarity_matrix[i][j])
 
         except ImportError:
             logger.warning("scikit-learn not available for similarity calculation")
@@ -470,8 +460,7 @@ class ModelComparison:
             benchmark_results["models"][model_id] = {
                 "test_performance": {
                     "success_rate": model_stats.get("success", 0) / model_stats.get("total", 1),
-                    "validation_rate": model_stats.get("validation_passed", 0)
-                    / model_stats.get("success", 1),
+                    "validation_rate": model_stats.get("validation_passed", 0) / model_stats.get("success", 1),
                     "avg_inference_time": model_stats.get("avg_inference_time", 0),
                     "avg_tokens_per_second": model_stats.get("avg_tokens_per_second", 0),
                 },
@@ -497,9 +486,7 @@ class ModelComparison:
                 if metric in ["success_rate", "avg_tokens_per_second"]:
                     value = benchmark_results["models"][model_id]["test_performance"].get(metric, 0)
                 else:
-                    value = benchmark_results["models"][model_id]["resource_usage"].get(
-                        metric, float("inf")
-                    )
+                    value = benchmark_results["models"][model_id]["resource_usage"].get(metric, float("inf"))
                 values.append((model_id, value))
 
             values.sort(key=lambda x: x[1], reverse=higher_better)
@@ -606,7 +593,7 @@ class ModelComparison:
 <body>
     <div class="header">
         <h1>Model Comparison Report</h1>
-        <p>Generated: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Generated: {report.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <div class="section">
@@ -657,9 +644,9 @@ class ModelComparison:
         html += f"""
         <h3>Summary</h3>
         <ul>
-            <li><strong>Fastest Model:</strong> {report.analysis['performance']['fastest_model']}</li>
-            <li><strong>Most Efficient:</strong> {report.analysis['performance']['efficiency_ranking'][0]}</li>
-            <li><strong>Speed Difference:</strong> {report.analysis['performance']['speed_difference']:.1f}x</li>
+            <li><strong>Fastest Model:</strong> {report.analysis["performance"]["fastest_model"]}</li>
+            <li><strong>Most Efficient:</strong> {report.analysis["performance"]["efficiency_ranking"][0]}</li>
+            <li><strong>Speed Difference:</strong> {report.analysis["performance"]["speed_difference"]:.1f}x</li>
         </ul>
     </div>
 """
@@ -669,7 +656,7 @@ class ModelComparison:
     <div class="section">
         <h2>Output Similarity</h2>
         <img src="{embedded_images["similarity_chart"]}" alt="Similarity Matrix">
-        <p>Common word overlap: {report.analysis['consistency']['avg_word_overlap']:.1%}</p>
+        <p>Common word overlap: {report.analysis["consistency"]["avg_word_overlap"]:.1%}</p>
     </div>
 """
 

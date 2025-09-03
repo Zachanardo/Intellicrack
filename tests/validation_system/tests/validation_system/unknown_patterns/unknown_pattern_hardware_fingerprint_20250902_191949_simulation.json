@@ -1,0 +1,118 @@
+{
+  "scenario_id": "unknown_pattern_hardware_fingerprint_20250902_191949",
+  "pattern_type": "hardware_fingerprint",
+  "simulation_timestamp": "2025-09-02T19:19:49.622159",
+  "binary_characteristics": {
+    "file_type": "PE32 executable",
+    "size_bytes": 182775,
+    "entry_point": "0x004e6e36",
+    "sections": [
+      {
+        "name": ".text",
+        "virtual_address": "0x00401000",
+        "size": "0x10000",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".data",
+        "virtual_address": "0x00411000",
+        "size": "0x5000",
+        "characteristics": "readable_writable"
+      },
+      {
+        "name": ".rsrc",
+        "virtual_address": "0x00416000",
+        "size": "0x3000",
+        "characteristics": "readable"
+      }
+    ],
+    "imports": [
+      {
+        "dll": "kernel32.dll",
+        "functions": [
+          "CreateThread",
+          "GetTickCount",
+          "Sleep"
+        ]
+      },
+      {
+        "dll": "user32.dll",
+        "functions": [
+          "MessageBoxA",
+          "GetWindowTextA"
+        ]
+      },
+      {
+        "dll": "advapi32.dll",
+        "functions": [
+          "RegOpenKeyExA",
+          "RegQueryValueExA"
+        ]
+      },
+      {
+        "dll": "setupapi.dll",
+        "functions": [
+          "SetupDiGetDeviceRegistryPropertyA",
+          "SetupDiEnumDeviceInfo"
+        ]
+      },
+      {
+        "dll": "wmi.dll",
+        "functions": [
+          "IWbemServices_ExecQuery",
+          "IWbemClassObject_Get"
+        ]
+      },
+      {
+        "dll": "iphlpapi.dll",
+        "functions": [
+          "GetAdaptersInfo",
+          "GetAdaptersAddresses"
+        ]
+      }
+    ],
+    "exports": [
+      "MainEntryPoint"
+    ]
+  },
+  "protection_implementation": {
+    "fingerprint_components": [
+      "CPU model and features",
+      "Memory configuration",
+      "Storage device serial numbers",
+      "Network adapter MAC addresses",
+      "Graphics card information",
+      "Motherboard UUID"
+    ],
+    "fingerprint_algorithm": "SHA-256 hash of normalized hardware data",
+    "license_binding": "Hardware fingerprint encrypted into license file",
+    "tolerance_mechanism": "Allow minor hardware changes (1-2 components)",
+    "validation_frequency": "Every application startup + periodic checks",
+    "anti_vm_detection": "Virtualization environment detection"
+  },
+  "behavioral_patterns": {
+    "network_activity": [],
+    "file_operations": [],
+    "registry_operations": [],
+    "process_operations": [],
+    "hardware_enumeration": [
+      "CPU identification via CPUID instruction",
+      "Memory configuration from GetPhysicallyInstalledSystemMemory",
+      "Storage device enumeration via WMI queries",
+      "Network adapter MAC address collection"
+    ],
+    "fingerprint_generation": "SHA-256 of normalized hardware data",
+    "anti_vm_checks": [
+      "VMware detection",
+      "VirtualBox detection",
+      "Hyper-V detection"
+    ]
+  },
+  "detection_challenges": [
+    "Hardware-specific behavior difficult to simulate",
+    "Anti-VM detection may interfere with analysis environment",
+    "Fingerprint algorithm requires reverse engineering",
+    "Hardware dependency makes portable analysis challenging"
+  ],
+  "analysis_notes": "Unknown pattern: License tied to unique hardware fingerprint"
+}

@@ -35,9 +35,7 @@ class APIClient:
         self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
         self.timeout = int(get_secret("API_TIMEOUT", "60"))
         self.retry_attempts = int(get_secret("API_RETRY_ATTEMPTS", "3"))
-        self.retry_delay = (
-            int(get_secret("API_RETRY_DELAY", "1000")) / 1000
-        )  # Convert ms to seconds
+        self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
         self.session = None
 
     async def __aenter__(self):
@@ -145,9 +143,7 @@ class APIClient:
         raise RuntimeError("Max retry attempts exceeded")
 
 
-async def make_api_call(
-    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
-) -> dict[str, Any]:
+async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Convenience function for making API calls.
 
     Args:
@@ -164,9 +160,7 @@ async def make_api_call(
 
 
 # Synchronous wrapper for compatibility
-def sync_api_call(
-    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def sync_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Synchronous wrapper for API calls.
 
     Args:

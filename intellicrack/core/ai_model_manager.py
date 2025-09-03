@@ -50,7 +50,7 @@ class AIModelManager:
         """Load model configuration from file."""
         if os.path.exists(self.config_path):
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path, "r") as f:
                     self.config = json.load(f)
                 logger.info(f"Loaded model configuration from {self.config_path}")
             except Exception as e:
@@ -63,7 +63,7 @@ class AIModelManager:
     def _save_configuration(self):
         """Save model configuration to file."""
         try:
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump(self.config, f, indent=2)
             logger.info(f"Saved model configuration to {self.config_path}")
         except Exception as e:
@@ -73,46 +73,16 @@ class AIModelManager:
         """Get default model configuration."""
         return {
             "models": {
-                "gpt-4": {
-                    "provider": "openai",
-                    "enabled": False,
-                    "api_key": "",
-                    "max_tokens": 4096,
-                    "temperature": 0.7
-                },
-                "claude-3": {
-                    "provider": "anthropic",
-                    "enabled": False,
-                    "api_key": "",
-                    "max_tokens": 4096,
-                    "temperature": 0.7
-                },
-                "gemini-pro": {
-                    "provider": "google",
-                    "enabled": False,
-                    "api_key": "",
-                    "max_tokens": 4096,
-                    "temperature": 0.7
-                },
-                "llama3": {
-                    "provider": "local",
-                    "enabled": True,
-                    "model_path": "",
-                    "max_tokens": 2048,
-                    "temperature": 0.7
-                },
-                "codellama": {
-                    "provider": "local",
-                    "enabled": True,
-                    "model_path": "",
-                    "max_tokens": 2048,
-                    "temperature": 0.7
-                }
+                "gpt-4": {"provider": "openai", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
+                "claude-3": {"provider": "anthropic", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
+                "gemini-pro": {"provider": "google", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
+                "llama3": {"provider": "local", "enabled": True, "model_path": "", "max_tokens": 2048, "temperature": 0.7},
+                "codellama": {"provider": "local", "enabled": True, "model_path": "", "max_tokens": 2048, "temperature": 0.7},
             },
             "default_model": "llama3",
             "cache_enabled": True,
             "cache_size_mb": 1024,
-            "performance_monitoring": True
+            "performance_monitoring": True,
         }
 
     def _initialize_models(self):
@@ -155,7 +125,7 @@ class AIModelManager:
         self.models[name] = {
             "provider": provider,
             "config": config,
-            "instance": None  # Lazy load actual model
+            "instance": None,  # Lazy load actual model
         }
 
     def _setup_openai_model(self, name: str, config: Dict[str, Any]):
@@ -169,7 +139,7 @@ class AIModelManager:
             model_name=name,
             api_key=api_key,
             max_tokens=config.get("max_tokens", 4096),
-            temperature=config.get("temperature", 0.7)
+            temperature=config.get("temperature", 0.7),
         )
 
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
@@ -185,7 +155,7 @@ class AIModelManager:
             model_name=name,
             api_key=api_key,
             max_tokens=config.get("max_tokens", 4096),
-            temperature=config.get("temperature", 0.7)
+            temperature=config.get("temperature", 0.7),
         )
 
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
@@ -201,7 +171,7 @@ class AIModelManager:
             model_name=name,
             api_key=api_key,
             max_tokens=config.get("max_tokens", 4096),
-            temperature=config.get("temperature", 0.7)
+            temperature=config.get("temperature", 0.7),
         )
 
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)

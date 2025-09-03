@@ -122,7 +122,9 @@ class AIAssistantWidget(QWidget):
         # Chat history
         self.chat_history = QTextEdit()
         self.chat_history.setReadOnly(True)
-        self.chat_history.setText("Welcome to AI Assistant!\n\nAsk me anything about:\n• Code explanation\n• Bug fixing\n• Optimization\n• Vulnerability analysis\n• Exploit development\n• Protection bypassing\n")
+        self.chat_history.setText(
+            "Welcome to AI Assistant!\n\nAsk me anything about:\n• Code explanation\n• Bug fixing\n• Optimization\n• Vulnerability analysis\n• Exploit development\n• Protection bypassing\n"
+        )
         layout.addWidget(self.chat_history)
 
         # Context indicator
@@ -200,18 +202,20 @@ class AIAssistantWidget(QWidget):
         type_layout.addWidget(QLabel("Script Type:"))
 
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems([
-            "Frida Hook Script",
-            "Ghidra Analysis Script",
-            "IDA Pro Script",
-            "x64dbg Script",
-            "Binary Ninja Plugin",
-            "Radare2 Script",
-            "GDB Script",
-            "WinDbg Script",
-            "Unicorn Emulation",
-            "Angr Symbolic Execution"
-        ])
+        self.script_type_combo.addItems(
+            [
+                "Frida Hook Script",
+                "Ghidra Analysis Script",
+                "IDA Pro Script",
+                "x64dbg Script",
+                "Binary Ninja Plugin",
+                "Radare2 Script",
+                "GDB Script",
+                "WinDbg Script",
+                "Unicorn Emulation",
+                "Angr Symbolic Execution",
+            ]
+        )
         type_layout.addWidget(self.script_type_combo)
         type_layout.addStretch()
         layout.addLayout(type_layout)
@@ -230,7 +234,9 @@ class AIAssistantWidget(QWidget):
         purpose_layout.addWidget(QLabel("Purpose:"))
 
         self.purpose_text = QPlainTextEdit()
-        self.purpose_text.setPlaceholderText("Describe what the script should do...\nE.g., Hook license check, bypass anti-debug, dump memory...")
+        self.purpose_text.setPlaceholderText(
+            "Describe what the script should do...\nE.g., Hook license check, bypass anti-debug, dump memory..."
+        )
         self.purpose_text.setMaximumHeight(100)
         purpose_layout.addWidget(self.purpose_text)
         layout.addLayout(purpose_layout)
@@ -311,16 +317,18 @@ class AIAssistantWidget(QWidget):
         type_layout.addWidget(QLabel("Analysis Type:"))
 
         self.analysis_type_combo = QComboBox()
-        self.analysis_type_combo.addItems([
-            "Vulnerability Scan",
-            "Code Quality Review",
-            "Performance Analysis",
-            "Security Audit",
-            "License Detection",
-            "Anti-Pattern Detection",
-            "Complexity Analysis",
-            "Dependency Analysis"
-        ])
+        self.analysis_type_combo.addItems(
+            [
+                "Vulnerability Scan",
+                "Code Quality Review",
+                "Performance Analysis",
+                "Security Audit",
+                "License Detection",
+                "Anti-Pattern Detection",
+                "Complexity Analysis",
+                "Dependency Analysis",
+            ]
+        )
         type_layout.addWidget(self.analysis_type_combo)
         type_layout.addStretch()
         layout.addLayout(type_layout)
@@ -378,16 +386,18 @@ class AIAssistantWidget(QWidget):
         algo_layout.addWidget(QLabel("Algorithm Type:"))
 
         self.keygen_algo_combo = QComboBox()
-        self.keygen_algo_combo.addItems([
-            "Name/Serial",
-            "Hardware ID",
-            "Time-based",
-            "RSA Key Pair",
-            "Elliptic Curve",
-            "Custom Algorithm",
-            "License File",
-            "Activation Code"
-        ])
+        self.keygen_algo_combo.addItems(
+            [
+                "Name/Serial",
+                "Hardware ID",
+                "Time-based",
+                "RSA Key Pair",
+                "Elliptic Curve",
+                "Custom Algorithm",
+                "License File",
+                "Activation Code",
+            ]
+        )
         algo_layout.addWidget(self.keygen_algo_combo)
         algo_layout.addStretch()
         layout.addLayout(algo_layout)
@@ -397,8 +407,7 @@ class AIAssistantWidget(QWidget):
 
         self.keygen_details = QPlainTextEdit()
         self.keygen_details.setPlaceholderText(
-            "Describe the key generation algorithm...\n"
-            "E.g., XOR with 0xDEADBEEF, MD5 hash of name, etc."
+            "Describe the key generation algorithm...\nE.g., XOR with 0xDEADBEEF, MD5 hash of name, etc."
         )
         self.keygen_details.setMaximumHeight(150)
         layout.addWidget(self.keygen_details)
@@ -526,12 +535,7 @@ class AIAssistantWidget(QWidget):
                 full_prompt = f"Context: {context}\n\nQuestion: {message}"
 
             # Generate response using the selected model
-            response = ai_manager.generate_response(
-                prompt=full_prompt,
-                model=model,
-                temperature=temperature,
-                max_tokens=1000
-            )
+            response = ai_manager.generate_response(prompt=full_prompt, model=model, temperature=temperature, max_tokens=1000)
 
             if response and response.strip():
                 response = response.strip()
@@ -554,44 +558,54 @@ class AIAssistantWidget(QWidget):
         message_lower = message.lower()
 
         # Pattern-based responses for common security research queries
-        if any(word in message_lower for word in ['vulnerability', 'exploit', 'bypass']):
-            return (f"For vulnerability analysis using {model}:\n"
-                   f"1. Start with static analysis to identify attack surface\n"
-                   f"2. Use dynamic analysis for runtime behavior\n"
-                   f"3. Apply fuzzing techniques for input validation testing\n"
-                   f"4. Review protection mechanisms and potential bypasses")
+        if any(word in message_lower for word in ["vulnerability", "exploit", "bypass"]):
+            return (
+                f"For vulnerability analysis using {model}:\n"
+                f"1. Start with static analysis to identify attack surface\n"
+                f"2. Use dynamic analysis for runtime behavior\n"
+                f"3. Apply fuzzing techniques for input validation testing\n"
+                f"4. Review protection mechanisms and potential bypasses"
+            )
 
-        elif any(word in message_lower for word in ['reverse', 'disassemble', 'analyze']):
-            return (f"Binary analysis approach with {model}:\n"
-                   f"1. Load binary in disassembler (Ghidra, IDA, etc.)\n"
-                   f"2. Identify entry points and critical functions\n"
-                   f"3. Analyze control flow and data structures\n"
-                   f"4. Look for anti-analysis techniques")
+        elif any(word in message_lower for word in ["reverse", "disassemble", "analyze"]):
+            return (
+                f"Binary analysis approach with {model}:\n"
+                f"1. Load binary in disassembler (Ghidra, IDA, etc.)\n"
+                f"2. Identify entry points and critical functions\n"
+                f"3. Analyze control flow and data structures\n"
+                f"4. Look for anti-analysis techniques"
+            )
 
-        elif any(word in message_lower for word in ['debug', 'trace', 'monitor']):
-            return (f"Dynamic analysis with {model}:\n"
-                   f"1. Set up controlled debugging environment\n"
-                   f"2. Use process monitors and API trackers\n"
-                   f"3. Analyze runtime behavior and memory access\n"
-                   f"4. Document findings and potential attack vectors")
+        elif any(word in message_lower for word in ["debug", "trace", "monitor"]):
+            return (
+                f"Dynamic analysis with {model}:\n"
+                f"1. Set up controlled debugging environment\n"
+                f"2. Use process monitors and API trackers\n"
+                f"3. Analyze runtime behavior and memory access\n"
+                f"4. Document findings and potential attack vectors"
+            )
 
-        elif any(word in message_lower for word in ['protect', 'secure', 'harden']):
-            return ("Security hardening recommendations:\n"
-                   "1. Implement input validation and sanitization\n"
-                   "2. Use memory protection techniques (ASLR, DEP)\n"
-                   "3. Apply code obfuscation and anti-tampering\n"
-                   "4. Regular security audits and penetration testing")
+        elif any(word in message_lower for word in ["protect", "secure", "harden"]):
+            return (
+                "Security hardening recommendations:\n"
+                "1. Implement input validation and sanitization\n"
+                "2. Use memory protection techniques (ASLR, DEP)\n"
+                "3. Apply code obfuscation and anti-tampering\n"
+                "4. Regular security audits and penetration testing"
+            )
 
         else:
             # Generic intelligent response
-            return (f"Analysis using {model} (temp={temperature}):\n"
-                   f"Your question: '{message}'\n\n"
-                   f"For comprehensive security research, consider:\n"
-                   f"• Static analysis of target binaries\n"
-                   f"• Dynamic runtime analysis\n"
-                   f"• Network traffic monitoring\n"
-                   f"• Vulnerability assessment\n\n"
-                   f"{'Context considered: ' + context if context else 'No additional context provided'}")
+            return (
+                f"Analysis using {model} (temp={temperature}):\n"
+                f"Your question: '{message}'\n\n"
+                f"For comprehensive security research, consider:\n"
+                f"• Static analysis of target binaries\n"
+                f"• Dynamic runtime analysis\n"
+                f"• Network traffic monitoring\n"
+                f"• Vulnerability assessment\n\n"
+                f"{'Context considered: ' + context if context else 'No additional context provided'}"
+            )
 
     def clear_chat(self):
         """Clear the chat history."""
@@ -646,6 +660,7 @@ class AIAssistantWidget(QWidget):
     def copy_script(self):
         """Copy generated script to clipboard."""
         from PyQt6.QtWidgets import QApplication
+
         clipboard = QApplication.clipboard()
         clipboard.setText(self.script_output.toPlainText())
         logger.info("Script copied to clipboard")
@@ -655,13 +670,11 @@ class AIAssistantWidget(QWidget):
         from PyQt6.QtWidgets import QFileDialog
 
         script_type = self.script_type_combo.currentText().lower().replace(" ", "_")
-        file_name, _ = QFileDialog.getSaveFileName(
-            self, "Save Script", f"{script_type}.js", "All Files (*)"
-        )
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Script", f"{script_type}.js", "All Files (*)")
 
         if file_name:
             try:
-                with open(file_name, 'w') as f:
+                with open(file_name, "w") as f:
                     f.write(self.script_output.toPlainText())
                 logger.info(f"Script saved to {file_name}")
             except Exception as e:
@@ -726,6 +739,7 @@ class AIAssistantWidget(QWidget):
     def copy_keygen(self):
         """Copy keygen code to clipboard."""
         from PyQt6.QtWidgets import QApplication
+
         clipboard = QApplication.clipboard()
         clipboard.setText(self.keygen_output.toPlainText())
         logger.info("Keygen code copied to clipboard")
@@ -735,22 +749,14 @@ class AIAssistantWidget(QWidget):
         from PyQt6.QtWidgets import QFileDialog
 
         language = self.keygen_lang_combo.currentText().lower()
-        extensions = {
-            "python": ".py",
-            "c++": ".cpp",
-            "c": ".c",
-            "javascript": ".js",
-            "assembly": ".asm"
-        }
+        extensions = {"python": ".py", "c++": ".cpp", "c": ".c", "javascript": ".js", "assembly": ".asm"}
         ext = extensions.get(language, ".txt")
 
-        file_name, _ = QFileDialog.getSaveFileName(
-            self, "Save Keygen", f"keygen{ext}", "All Files (*)"
-        )
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Keygen", f"keygen{ext}", "All Files (*)")
 
         if file_name:
             try:
-                with open(file_name, 'w') as f:
+                with open(file_name, "w") as f:
                     f.write(self.keygen_output.toPlainText())
                 logger.info(f"Keygen saved to {file_name}")
             except Exception as e:

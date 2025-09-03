@@ -19,9 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
-def get_default_window_size(
-    width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600
-):
+def get_default_window_size(width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600):
     """Calculate appropriate window size based on screen dimensions.
 
     Args:

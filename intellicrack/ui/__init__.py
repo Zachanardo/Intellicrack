@@ -61,9 +61,7 @@ except ImportError as e:
 
             # Log to output if available
             if hasattr(main_app, "update_output"):
-                main_app.update_output.emit(
-                    "[Error] Radare2 comprehensive integration module not found"
-                )
+                main_app.update_output.emit("[Error] Radare2 comprehensive integration module not found")
 
             # Show message box if Qt is available
             try:
@@ -72,8 +70,7 @@ except ImportError as e:
                 QMessageBox.warning(
                     main_app,
                     "Integration Not Available",
-                    "The Radare2 comprehensive integration module is not available.\n"
-                    "Please check that all dependencies are installed.",
+                    "The Radare2 comprehensive integration module is not available.\nPlease check that all dependencies are installed.",
                 )
             except ImportError as e:
                 logger.error("Import error in __init__: %s", e)

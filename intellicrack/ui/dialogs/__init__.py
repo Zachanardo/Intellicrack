@@ -164,9 +164,7 @@ if GuidedWorkflowWizard is not None:
     __all__.append("GuidedWorkflowWizard")
 
 if ModelFinetuningDialog is not None:
-    __all__.extend(
-        ["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"]
-    )
+    __all__.extend(["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"])
 
 if PluginManagerDialog is not None:
     __all__.append("PluginManagerDialog")
@@ -214,9 +212,7 @@ if DebuggerDialog is not None:
     __all__.append("DebuggerDialog")
 
 if ProgramSelectorDialog is not None:
-    __all__.extend(
-        ["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"]
-    )
+    __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
 
 # Package metadata
 __version__ = "0.1.0"

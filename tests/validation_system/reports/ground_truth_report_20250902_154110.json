@@ -1,0 +1,23 @@
+{
+  "report_generated": "2025-09-02T15:41:10.190299",
+  "ground_truths": [],
+  "external_tools_available": {
+    "protection_scanners": {
+      "peid": false,
+      "die": false,
+      "protectionid": false,
+      "exeinfope": false
+    },
+    "binary_analyzers": {
+      "x64dbg": false,
+      "ghidra": false,
+      "ida": false,
+      "radare2": false
+    },
+    "signature_matchers": {
+      "yara": false,
+      "binwalk": true
+    }
+  },
+  "intellicrack_not_used": true
+}

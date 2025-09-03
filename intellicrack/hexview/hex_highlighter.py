@@ -74,9 +74,7 @@ class HexHighlight:
         if start < 0 or end < 0 or start >= end:
             raise ValueError("Invalid range: start must be >= 0 and end must be > start")
 
-        logger.debug(
-            f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}"
-        )
+        logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
 
     @property
     def size(self) -> int:
@@ -127,10 +125,7 @@ class HexHighlight:
 
     def __repr__(self) -> str:
         """Get a string representation of the highlight."""
-        return (
-            f"HexHighlight(start={self.start}, end={self.end}, "
-            f"type={self.highlight_type.name}, color={self.color})"
-        )
+        return f"HexHighlight(start={self.start}, end={self.end}, type={self.highlight_type.name}, color={self.color})"
 
 
 class HexHighlighter:
@@ -178,9 +173,7 @@ class HexHighlighter:
         highlight = HexHighlight(start, end, highlight_type, color, alpha, description, metadata)
         self.highlights.append(highlight)
 
-        logger.debug(
-            "Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name
-        )
+        logger.debug("Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name)
         return highlight.id
 
     def remove_highlight(self, highlight_id: int) -> bool:
@@ -305,9 +298,7 @@ class HexHighlighter:
         logger.debug("Updated highlight ID %s with %s", highlight_id, kwargs)
         return True
 
-    def add_bookmark(
-        self, offset: int, size: int = 1, description: str = "", color: str = "#0000FF"
-    ) -> int:
+    def add_bookmark(self, offset: int, size: int = 1, description: str = "", color: str = "#0000FF") -> int:
         """Add a bookmark highlight.
 
         Args:
@@ -329,9 +320,7 @@ class HexHighlighter:
             metadata={"bookmark": True},
         )
 
-    def add_search_result(
-        self, start: int, end: int, query: str = "", color: str = "#00FF00"
-    ) -> int:
+    def add_search_result(self, start: int, end: int, query: str = "", color: str = "#00FF00") -> int:
         """Add a search result highlight.
 
         Args:

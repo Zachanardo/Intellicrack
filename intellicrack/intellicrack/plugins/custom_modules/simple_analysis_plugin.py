@@ -5,6 +5,7 @@ Basic template for straightforward binary analysis tasks.
 
 class SimpleAnalysisPlugin:
     """Simple plugin template for straightforward binary analysis tasks."""
+
     def __init__(self):
         """Initialize simple analysis plugin with basic metadata."""
         self.name = "Simple Analysis Plugin"

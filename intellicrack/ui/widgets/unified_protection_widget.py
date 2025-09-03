@@ -265,9 +265,7 @@ class UnifiedProtectionWidget(QWidget):
 
         # Native ICP Features button
         self.icp_features_btn = QPushButton("ICP Analysis...")
-        self.icp_features_btn.setToolTip(
-            "Access advanced ICP Engine features directly in the interface"
-        )
+        self.icp_features_btn.setToolTip("Access advanced ICP Engine features directly in the interface")
         self.icp_features_btn.clicked.connect(self.show_icp_features_dialog)
         self.icp_features_btn.setEnabled(False)  # Disabled until file is loaded
         title_layout.addWidget(self.icp_features_btn)
@@ -438,20 +436,11 @@ class UnifiedProtectionWidget(QWidget):
 
             if main_window and hasattr(main_window.ai_coordinator, "suggest_strategy"):
                 analysis_type = "complex_patterns" if deep_scan else "quick_check"
-                suggested_strategy = main_window.ai_coordinator.suggest_strategy(
-                    file_path, analysis_type
-                )
-                logger.info(
-                    f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}"
-                )
+                suggested_strategy = main_window.ai_coordinator.suggest_strategy(file_path, analysis_type)
+                logger.info(f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}")
 
                 # Update status to show strategy
-                strategy_text = (
-                    str(suggested_strategy)
-                    .replace("AnalysisStrategy.", "")
-                    .replace("_", " ")
-                    .title()
-                )
+                strategy_text = str(suggested_strategy).replace("AnalysisStrategy.", "").replace("_", " ").title()
                 self.status_label.setText(f"Using {strategy_text} strategy for analysis")
             else:
                 self.status_label.setText("Starting analysis...")
@@ -573,7 +562,7 @@ Analysis Time: {result.analysis_time:.2f}s</p>
 Architecture: {result.architecture}<br>
 Protections Found: {len(result.protections)}<br>
 Overall Confidence: {result.confidence_score:.0f}%</p>
-<p>Protection Types: {', '.join(protection_types)}</p>
+<p>Protection Types: {", ".join(protection_types)}</p>
 """
 
             if result.is_packed:
@@ -613,11 +602,11 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
     def show_protection_details(self, protection: dict[str, Any]):
         """Show detailed information for a protection."""
         details = f"""
-=== {protection['name']} ===
+=== {protection["name"]} ===
 
-Type: {protection['type']}
-Confidence: {protection.get('confidence', 0):.0f}%
-Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
+Type: {protection["type"]}
+Confidence: {protection.get("confidence", 0):.0f}%
+Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
 """
 
@@ -657,9 +646,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
                 child.widget().deleteLater()
 
         if not result.bypass_strategies:
-            no_strategies = QLabel(
-                "No specific bypass strategies available for detected protections."
-            )
+            no_strategies = QLabel("No specific bypass strategies available for detected protections.")
             no_strategies.setStyleSheet("color: #666; padding: 20px;")
             self.strategies_layout.addWidget(no_strategies)
             return
@@ -894,9 +881,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
         guide += "## Notes\n\n"
         guide += "This guide is generated based on automated analysis. "
         guide += "Actual bypass methods may vary depending on specific implementation details. "
-        guide += (
-            "Always ensure you have proper authorization before attempting to bypass protections.\n"
-        )
+        guide += "Always ensure you have proper authorization before attempting to bypass protections.\n"
 
         return guide
 
@@ -1034,9 +1019,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
                 sig_content += "No packers detected\n"
 
             sig_content += f"\nPacked: {'Yes' if analysis_data.get('is_packed', False) else 'No'}\n"
-            sig_content += (
-                f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
-            )
+            sig_content += f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
 
             sig_text.setPlainText(sig_content)
 
@@ -1046,7 +1029,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
             section_content += f"Total Sections: {len(sections)}\n\n"
 
             for i, section in enumerate(sections):
-                section_content += f"Section {i+1}: {section.get('name', 'Unknown')}\n"
+                section_content += f"Section {i + 1}: {section.get('name', 'Unknown')}\n"
                 section_content += f"  Virtual Address: 0x{section.get('virtual_address', 0):08X}\n"
                 section_content += f"  Virtual Size: {section.get('virtual_size', 0)} bytes\n"
                 section_content += f"  Raw Size: {section.get('raw_size', 0)} bytes\n"
@@ -1126,7 +1109,6 @@ Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
             return
 
         # Create a simple dialog to choose script type
-
 
         script_type, ok = QInputDialog.getItem(
             self,

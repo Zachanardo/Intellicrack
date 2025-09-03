@@ -120,10 +120,7 @@ class BatchAnalysisWorker(QThread):
             # Use ThreadPoolExecutor for parallel processing
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 # Submit all tasks
-                future_to_path = {
-                    executor.submit(self._analyze_file, file_path): file_path
-                    for file_path in self.file_paths
-                }
+                future_to_path = {executor.submit(self._analyze_file, file_path): file_path for file_path in self.file_paths}
 
                 # Process completed tasks
                 for future in as_completed(future_to_path):
@@ -657,8 +654,7 @@ class BatchAnalysisWidget(QWidget):
         failed = sum(1 for r in results if not r.success)
 
         self.status_label.setText(
-            f"Analysis complete: {total} files, {protected} protected, "
-            f"{packed} packed, {failed} failed",
+            f"Analysis complete: {total} files, {protected} protected, {packed} packed, {failed} failed",
         )
 
     @pyqtSlot(str)
@@ -759,7 +755,7 @@ class BatchAnalysisWidget(QWidget):
         # Summary tab
         summary = f"File: {os.path.basename(result.file_path)}\n"
         summary += f"Path: {result.file_path}\n"
-        summary += f"Size: {result.file_size:,} bytes ({result.file_size/(1024*1024):.2f} MB)\n"
+        summary += f"Size: {result.file_size:,} bytes ({result.file_size / (1024 * 1024):.2f} MB)\n"
         summary += f"Type: {result.file_type}\n"
         summary += f"Architecture: {result.architecture}\n"
         summary += f"Status: {result.status}\n"
@@ -817,11 +813,7 @@ class BatchAnalysisWidget(QWidget):
         failed = total - successful
 
         avg_time = sum(r.analysis_time for r in self.results) / total if total > 0 else 0
-        avg_confidence = (
-            sum(r.confidence_score for r in self.results if r.success) / successful
-            if successful > 0
-            else 0
-        )
+        avg_confidence = sum(r.confidence_score for r in self.results if r.success) / successful if successful > 0 else 0
 
         return {
             "total_files": total,

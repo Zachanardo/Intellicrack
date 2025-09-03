@@ -50,20 +50,24 @@ except ImportError:
 try:
     from ..utils.system.os_detection import detect_file_type
 except ImportError:
+
     def detect_file_type(file_path):
         """Fallback file type detection."""
         _, ext = os.path.splitext(file_path)
         return ext.lower() or "unknown"
 
+
 try:
     from ..utils.protection.protection_utils import calculate_entropy
 except ImportError:
+
     def calculate_entropy(data: bytes) -> float:
         """Calculate entropy of binary data."""
         if not data:
             return 0.0
 
         import math
+
         byte_counts = [0] * 256
         for byte in data:
             byte_counts[byte] += 1
@@ -77,6 +81,7 @@ except ImportError:
                 entropy -= probability * math.log2(probability)
 
         return entropy
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,15 +103,23 @@ class BinaryAnalyzer:
 
         # Supported file types
         self.supported_formats = [
-            'exe', 'dll', 'sys', 'scr',  # PE formats
-            'elf', 'so', 'a',            # ELF formats
-            'dylib', 'bundle',           # Mach-O formats
-            'apk', 'jar', 'dex',         # Android/Java formats
-            'msi', 'com'                 # Other formats
+            "exe",
+            "dll",
+            "sys",
+            "scr",  # PE formats
+            "elf",
+            "so",
+            "a",  # ELF formats
+            "dylib",
+            "bundle",  # Mach-O formats
+            "apk",
+            "jar",
+            "dex",  # Android/Java formats
+            "msi",
+            "com",  # Other formats
         ]
 
-    def analyze(self, file_path: Union[str, Path],
-                analysis_options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def analyze(self, file_path: Union[str, Path], analysis_options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze a binary file comprehensively.
 
         Args:
@@ -151,7 +164,7 @@ class BinaryAnalyzer:
             "metadata": {},
             "recommendations": [],
             "warnings": [],
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -199,8 +212,7 @@ class BinaryAnalyzer:
         stat = file_path.stat()
         return f"{file_path}_{stat.st_size}_{stat.st_mtime}"
 
-    def _analyze_basic_info(self, file_path: Path, results: Dict[str, Any],
-                           options: Optional[Dict[str, Any]]):
+    def _analyze_basic_info(self, file_path: Path, results: Dict[str, Any], options: Optional[Dict[str, Any]]):
         """Analyze basic file information."""
         try:
             stat_info = file_path.stat()
@@ -212,7 +224,7 @@ class BinaryAnalyzer:
                 "access_time": datetime.datetime.fromtimestamp(stat_info.st_atime).isoformat(),
                 "permissions": oct(stat_info.st_mode)[-3:],
                 "is_executable": os.access(file_path, os.X_OK),
-                "mime_type": mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+                "mime_type": mimetypes.guess_type(str(file_path))[0] or "application/octet-stream",
             }
 
         except Exception as e:
@@ -223,41 +235,40 @@ class BinaryAnalyzer:
         """Detect file type using multiple methods."""
         try:
             # Magic byte detection
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 magic_bytes = f.read(16)
 
             file_type_info = {
                 "magic_bytes": magic_bytes.hex(),
                 "detected_type": detect_file_type(str(file_path)),
                 "extension": file_path.suffix.lower(),
-                "is_supported": file_path.suffix.lower().lstrip('.') in self.supported_formats
+                "is_supported": file_path.suffix.lower().lstrip(".") in self.supported_formats,
             }
 
             # Detailed magic byte analysis
-            if magic_bytes.startswith(b'MZ'):
+            if magic_bytes.startswith(b"MZ"):
                 file_type_info["format"] = "PE"
                 file_type_info["description"] = "Windows Portable Executable"
-            elif magic_bytes.startswith(b'\x7fELF'):
+            elif magic_bytes.startswith(b"\x7fELF"):
                 file_type_info["format"] = "ELF"
                 file_type_info["description"] = "Linux Executable and Linkable Format"
-            elif magic_bytes[:4] in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf',
-                                   b'\xce\xfa\xed\xfe', b'\xcf\xfa\xed\xfe']:
+            elif magic_bytes[:4] in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"]:
                 file_type_info["format"] = "Mach-O"
                 file_type_info["description"] = "macOS Mach-O executable"
-            elif magic_bytes.startswith(b'dex\n'):
+            elif magic_bytes.startswith(b"dex\n"):
                 file_type_info["format"] = "DEX"
                 file_type_info["description"] = "Android Dalvik Executable"
-            elif magic_bytes.startswith(b'PK\x03\x04'):
+            elif magic_bytes.startswith(b"PK\x03\x04"):
                 file_type_info["format"] = "ZIP"
-                if file_path.suffix.lower() == '.apk':
+                if file_path.suffix.lower() == ".apk":
                     file_type_info["format"] = "APK"
                     file_type_info["description"] = "Android Package"
-                elif file_path.suffix.lower() == '.jar':
+                elif file_path.suffix.lower() == ".jar":
                     file_type_info["format"] = "JAR"
                     file_type_info["description"] = "Java Archive"
                 else:
                     file_type_info["description"] = "ZIP Archive"
-            elif magic_bytes.startswith(b'\xca\xfe\xba\xbe'):
+            elif magic_bytes.startswith(b"\xca\xfe\xba\xbe"):
                 file_type_info["format"] = "CLASS"
                 file_type_info["description"] = "Java Class File"
             else:
@@ -274,28 +285,24 @@ class BinaryAnalyzer:
         """Calculate various hash values for the file."""
         try:
             hash_algos = {
-                'sha256': hashlib.sha256(),
-                'sha512': hashlib.sha512(),
-                'sha3_256': hashlib.sha3_256(),
-                'blake2b': hashlib.blake2b()
+                "sha256": hashlib.sha256(),
+                "sha512": hashlib.sha512(),
+                "sha3_256": hashlib.sha3_256(),
+                "blake2b": hashlib.blake2b(),
             }
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 while chunk := f.read(8192):
                     for hasher in hash_algos.values():
                         hasher.update(chunk)
 
-            results["file_hashes"] = {
-                name: hasher.hexdigest()
-                for name, hasher in hash_algos.items()
-            }
+            results["file_hashes"] = {name: hasher.hexdigest() for name, hasher in hash_algos.items()}
 
         except Exception as e:
             self.logger.error(f"Hash calculation failed: {e}")
             results["warnings"].append(f"Hash calculation failed: {str(e)}")
 
-    def _analyze_format_specific(self, file_path: Path, results: Dict[str, Any],
-                               options: Optional[Dict[str, Any]]):
+    def _analyze_format_specific(self, file_path: Path, results: Dict[str, Any], options: Optional[Dict[str, Any]]):
         """Perform format-specific analysis."""
         try:
             if not self.multi_format_analyzer:
@@ -324,8 +331,7 @@ class BinaryAnalyzer:
             self.logger.error(f"Format-specific analysis failed: {e}")
             results["warnings"].append(f"Format-specific analysis failed: {str(e)}")
 
-    def _extract_strings(self, file_path: Path, results: Dict[str, Any],
-                        options: Optional[Dict[str, Any]]):
+    def _extract_strings(self, file_path: Path, results: Dict[str, Any], options: Optional[Dict[str, Any]]):
         """Extract printable strings from the binary."""
         try:
             min_length = 4
@@ -338,7 +344,7 @@ class BinaryAnalyzer:
 
             strings = []
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
 
             # Extract ASCII strings
@@ -348,63 +354,82 @@ class BinaryAnalyzer:
                     current.append(chr(byte))
                 else:
                     if len(current) >= min_length:
-                        strings.append(''.join(current))
+                        strings.append("".join(current))
                         if len(strings) >= max_strings:
                             break
                     current = []
 
             if len(current) >= min_length and len(strings) < max_strings:
-                strings.append(''.join(current))
+                strings.append("".join(current))
 
             # Extract Unicode strings (simplified)
             if len(strings) < max_strings:
                 current = []
                 for i in range(0, len(data) - 1, 2):
-                    if data[i+1] == 0 and 32 <= data[i] <= 126:
+                    if data[i + 1] == 0 and 32 <= data[i] <= 126:
                         current.append(chr(data[i]))
                     else:
                         if len(current) >= min_length:
-                            strings.append(''.join(current))
+                            strings.append("".join(current))
                             if len(strings) >= max_strings:
                                 break
                         current = []
 
                 if len(current) >= min_length and len(strings) < max_strings:
-                    strings.append(''.join(current))
+                    strings.append("".join(current))
 
             # Analyze strings for interesting patterns
             interesting_strings = []
             suspicious_patterns = [
-                "password", "passwd", "license", "serial", "crack",
-                "patch", "keygen", "http://", "https://", "ftp://",
-                "cmd.exe", "powershell", "bash", "sh", "/bin/",
-                "admin", "administrator", "root", "sudo",
-                "token", "api_key", "secret", "key",
-                "SELECT", "INSERT", "UPDATE", "DELETE",
-                "CreateFile", "WriteFile", "ReadFile",
-                "VirtualAlloc", "VirtualProtect", "CreateProcess"
+                "password",
+                "passwd",
+                "license",
+                "serial",
+                "crack",
+                "patch",
+                "keygen",
+                "http://",
+                "https://",
+                "ftp://",
+                "cmd.exe",
+                "powershell",
+                "bash",
+                "sh",
+                "/bin/",
+                "admin",
+                "administrator",
+                "root",
+                "sudo",
+                "token",
+                "api_key",
+                "secret",
+                "key",
+                "SELECT",
+                "INSERT",
+                "UPDATE",
+                "DELETE",
+                "CreateFile",
+                "WriteFile",
+                "ReadFile",
+                "VirtualAlloc",
+                "VirtualProtect",
+                "CreateProcess",
             ]
 
             for string in strings:
                 string_lower = string.lower()
                 for pattern in suspicious_patterns:
                     if pattern in string_lower:
-                        interesting_strings.append({
-                            "string": string,
-                            "pattern": pattern,
-                            "category": self._categorize_string_pattern(pattern)
-                        })
+                        interesting_strings.append(
+                            {"string": string, "pattern": pattern, "category": self._categorize_string_pattern(pattern)}
+                        )
                         break
 
             results["strings"] = {
                 "total_count": len(strings),
                 "sample": strings[:50],  # First 50 strings
                 "interesting": interesting_strings,
-                "analysis": {
-                    "min_length": min_length,
-                    "max_extracted": max_strings,
-                    "truncated": len(strings) >= max_strings
-                }
+                "analysis": {"min_length": min_length, "max_extracted": max_strings, "truncated": len(strings) >= max_strings},
             }
 
         except Exception as e:
@@ -419,7 +444,7 @@ class BinaryAnalyzer:
             "network": ["http://", "https://", "ftp://"],
             "system": ["cmd.exe", "powershell", "bash", "sh", "/bin/", "CreateFile", "WriteFile", "ReadFile"],
             "memory": ["VirtualAlloc", "VirtualProtect", "CreateProcess"],
-            "database": ["SELECT", "INSERT", "UPDATE", "DELETE"]
+            "database": ["SELECT", "INSERT", "UPDATE", "DELETE"],
         }
 
         for category, patterns in categories.items():
@@ -431,7 +456,7 @@ class BinaryAnalyzer:
     def _analyze_entropy(self, file_path: Path, results: Dict[str, Any]):
         """Analyze entropy of file sections."""
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 data = f.read()
 
             # Overall file entropy
@@ -443,8 +468,8 @@ class BinaryAnalyzer:
                 "analysis": {
                     "high_entropy_threshold": 7.0,
                     "is_high_entropy": overall_entropy > 7.0,
-                    "interpretation": self._interpret_entropy(overall_entropy)
-                }
+                    "interpretation": self._interpret_entropy(overall_entropy),
+                },
             }
 
             # Section-wise entropy analysis
@@ -454,22 +479,19 @@ class BinaryAnalyzer:
                     # to extract actual section data based on file format
                     section_entropy = {
                         "name": section.get("name", "unknown"),
-                        "entropy": section.get("entropy", 0.0) if "entropy" in section else None
+                        "entropy": section.get("entropy", 0.0) if "entropy" in section else None,
                     }
                     entropy_info["sections"].append(section_entropy)
             else:
                 # Analyze file in chunks if no sections available
                 chunk_size = 8192
-                for i in range(0, min(len(data), 64*1024), chunk_size):  # First 64KB
-                    chunk = data[i:i+chunk_size]
+                for i in range(0, min(len(data), 64 * 1024), chunk_size):  # First 64KB
+                    chunk = data[i : i + chunk_size]
                     if len(chunk) > 0:
                         chunk_entropy = calculate_entropy(chunk)
-                        entropy_info["sections"].append({
-                            "name": f"chunk_{i//chunk_size}",
-                            "offset": i,
-                            "size": len(chunk),
-                            "entropy": chunk_entropy
-                        })
+                        entropy_info["sections"].append(
+                            {"name": f"chunk_{i // chunk_size}", "offset": i, "size": len(chunk), "entropy": chunk_entropy}
+                        )
 
             results["entropy"] = entropy_info
 
@@ -495,11 +517,7 @@ class BinaryAnalyzer:
     def _analyze_protections(self, file_path: Path, results: Dict[str, Any]):
         """Analyze protection mechanisms."""
         try:
-            protections = {
-                "detected": [],
-                "indicators": [],
-                "analysis": {}
-            }
+            protections = {"detected": [], "indicators": [], "analysis": {}}
 
             # Check for common protection indicators
             file_type = results.get("file_type", {}).get("format", "Unknown")
@@ -538,10 +556,7 @@ class BinaryAnalyzer:
 
             # Check imports for protection APIs
             imports = results.get("imports", [])
-            protection_apis = [
-                "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
-                "VirtualProtect", "VirtualAlloc", "CreateRemoteThread"
-            ]
+            protection_apis = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "VirtualProtect", "VirtualAlloc", "CreateRemoteThread"]
 
             for imp_dll in imports:
                 if isinstance(imp_dll, dict) and "functions" in imp_dll:
@@ -577,23 +592,29 @@ class BinaryAnalyzer:
 
         # Format-specific recommendations
         if file_type == "PE":
-            recommendations.extend([
-                "Use PE analysis tools like PEview, CFF Explorer, or ICP Analysis",
-                "Check for digital signatures and certificate validity",
-                "Analyze imports and exports for suspicious API usage"
-            ])
+            recommendations.extend(
+                [
+                    "Use PE analysis tools like PEview, CFF Explorer, or ICP Analysis",
+                    "Check for digital signatures and certificate validity",
+                    "Analyze imports and exports for suspicious API usage",
+                ]
+            )
         elif file_type == "ELF":
-            recommendations.extend([
-                "Use ELF analysis tools like readelf, objdump, or nm",
-                "Check for stripped symbols and debug information",
-                "Analyze dynamic dependencies and RPATH settings"
-            ])
+            recommendations.extend(
+                [
+                    "Use ELF analysis tools like readelf, objdump, or nm",
+                    "Check for stripped symbols and debug information",
+                    "Analyze dynamic dependencies and RPATH settings",
+                ]
+            )
         elif file_type in ["APK", "DEX"]:
-            recommendations.extend([
-                "Use Android analysis tools like JADX, dex2jar, or APKTool",
-                "Check AndroidManifest.xml for permissions and components",
-                "Analyze native libraries for potential security issues"
-            ])
+            recommendations.extend(
+                [
+                    "Use Android analysis tools like JADX, dex2jar, or APKTool",
+                    "Check AndroidManifest.xml for permissions and components",
+                    "Analyze native libraries for potential security issues",
+                ]
+            )
 
         # Protection-based recommendations
         protection_info = results.get("protection_info", {})
@@ -611,15 +632,17 @@ class BinaryAnalyzer:
             recommendations.append("Interesting strings found - investigate for credentials or sensitive data")
 
         # Generic recommendations
-        recommendations.extend([
-            "Perform dynamic analysis in a controlled environment",
-            "Check file against threat intelligence databases",
-            "Consider behavioral analysis with sandbox tools"
-        ])
+        recommendations.extend(
+            [
+                "Perform dynamic analysis in a controlled environment",
+                "Check file against threat intelligence databases",
+                "Consider behavioral analysis with sandbox tools",
+            ]
+        )
 
         results["recommendations"] = recommendations
 
-    def create_binary_info(self, file_path: Union[str, Path]) -> Optional['BinaryInfo']:
+    def create_binary_info(self, file_path: Union[str, Path]) -> Optional["BinaryInfo"]:
         """Create BinaryInfo object from file analysis."""
         if not BinaryInfo:
             return None
@@ -648,7 +671,7 @@ class BinaryAnalyzer:
                 exports=analysis_results.get("exports", {}),
                 strings=analysis_results.get("strings", {}).get("sample", []),
                 md5=hashes.get("md5", ""),
-                sha256=hashes.get("sha256", "")
+                sha256=hashes.get("sha256", ""),
             )
 
         except Exception as e:
@@ -662,7 +685,7 @@ class BinaryAnalyzer:
     def is_supported_format(self, file_path: Union[str, Path]) -> bool:
         """Check if file format is supported."""
         file_path = Path(file_path)
-        extension = file_path.suffix.lower().lstrip('.')
+        extension = file_path.suffix.lower().lstrip(".")
         return extension in self.supported_formats
 
     def clear_cache(self):
@@ -674,7 +697,5 @@ class BinaryAnalyzer:
         """Get cache statistics."""
         return {
             "cached_files": len(self.analysis_cache),
-            "cache_memory_mb": sum(
-                len(str(results)) for results in self.analysis_cache.values()
-            ) // (1024 * 1024)
+            "cache_memory_mb": sum(len(str(results)) for results in self.analysis_cache.values()) // (1024 * 1024),
         }

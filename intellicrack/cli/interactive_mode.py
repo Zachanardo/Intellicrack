@@ -99,9 +99,7 @@ class IntellicrackShell(cmd.Cmd):
             if results and results.get("vulnerabilities"):
                 print(f"\nFound {len(results['vulnerabilities'])} vulnerabilities:")
                 for vuln in results["vulnerabilities"]:
-                    print(
-                        f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}"
-                    )
+                    print(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}")
                     print(f"    Severity: {vuln.get('severity', 'Unknown')}")
             else:
                 print("No vulnerabilities found.")

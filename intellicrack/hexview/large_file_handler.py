@@ -139,8 +139,7 @@ class FileCache:
             region.ref_count = 1
 
             logger.debug(
-                f"Cached region: offset=0x{region.offset:X}, size={region.size}, "
-                f"total_memory={self.total_memory / (1024*1024):.1f}MB"
+                f"Cached region: offset=0x{region.offset:X}, size={region.size}, total_memory={self.total_memory / (1024 * 1024):.1f}MB"
             )
             return True
 
@@ -250,9 +249,7 @@ class MemoryMonitor:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()
-                    _ = memory_info.rss / (
-                        1024 * 1024
-                    )  # Memory in MB not used in current implementation
+                    _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implementation
 
                     # Get system memory
                     system_memory = psutil.virtual_memory()
@@ -342,9 +339,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
 
-                            logger.debug(
-                                f"Background loaded: offset=0x{offset:X}, size={len(data)}"
-                            )
+                            logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
 
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Background load error: %s", e)
@@ -379,13 +374,10 @@ class LargeFileHandler:
         if config is None:
             self.config = MemoryConfig(
                 max_memory_mb=app_config.get("hex_viewer.performance.max_memory_mb", 500),
-                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024
-                or 1,  # Convert KB to MB
+                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024 or 1,  # Convert KB to MB
                 cache_size_mb=app_config.get("hex_viewer.performance.cache_size_mb", 100),
                 memory_threshold=0.8,  # Not in config, keeping default
-                enable_compression=app_config.get(
-                    "hex_viewer.performance.compress_undo_data", True
-                ),
+                enable_compression=app_config.get("hex_viewer.performance.compress_undo_data", True),
                 prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3),
             )
         else:
@@ -605,11 +597,7 @@ class LargeFileHandler:
 
     def _prefetch_chunks(self, next_offset: int):
         """Prefetch chunks for better performance."""
-        if (
-            self.config.prefetch_chunks > 0
-            and self.background_loader
-            and self.loading_strategy == LoadingStrategy.PROGRESSIVE
-        ):
+        if self.config.prefetch_chunks > 0 and self.background_loader and self.loading_strategy == LoadingStrategy.PROGRESSIVE:
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
 
             for i in range(self.config.prefetch_chunks):
@@ -635,8 +623,7 @@ class LargeFileHandler:
                 self.cache.clear()
 
             logger.warning(
-                f"Memory pressure detected: {memory_usage:.1%}, "
-                f"reduced cache from {old_size}MB to {self.config.cache_size_mb}MB"
+                f"Memory pressure detected: {memory_usage:.1%}, reduced cache from {old_size}MB to {self.config.cache_size_mb}MB"
             )
 
     def _periodic_cleanup(self):
@@ -680,8 +667,7 @@ class LargeFileHandler:
             "cache_stats": cache_stats,
             "access_patterns": len(self.access_patterns),
             "sequential_ratio": sequential_ratio,
-            "background_loader_active": self.background_loader is not None
-            and self.background_loader.isAlive()
+            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive()
             if hasattr(self.background_loader, "isAlive")
             else False,
         }

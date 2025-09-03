@@ -129,9 +129,7 @@ class FirmwareAnalysisTool:
                 "signatures_found": len(analysis_result.signatures),
                 "security_findings": len(analysis_result.security_findings),
                 "firmware_signatures": self._format_signatures(analysis_result.signatures),
-                "security_assessment": self._assess_security_findings(
-                    analysis_result.security_findings
-                ),
+                "security_assessment": self._assess_security_findings(analysis_result.security_findings),
                 "extraction_summary": self._format_extraction_summary(analysis_result.extractions),
                 "bypass_recommendations": self._generate_bypass_recommendations(analysis_result),
                 "from_cache": False,
@@ -141,29 +139,21 @@ class FirmwareAnalysisTool:
             if detailed_output:
                 result["detailed_analysis"] = {
                     "entropy_analysis": analysis_result.entropy_analysis,
-                    "embedded_components": self._analyze_embedded_components(
-                        analysis_result.signatures
-                    ),
+                    "embedded_components": self._analyze_embedded_components(analysis_result.signatures),
                     "firmware_classification": self._classify_firmware(analysis_result),
                     "attack_surface": self._analyze_attack_surface(analysis_result),
                 }
 
             # Add extraction details if files were extracted
             if analysis_result.has_extractions:
-                result["extracted_files"] = self._format_extracted_files(
-                    analysis_result.extractions.extracted_files
-                )
+                result["extracted_files"] = self._format_extracted_files(analysis_result.extractions.extracted_files)
 
                 if include_strings:
-                    result["interesting_strings"] = self._extract_interesting_strings(
-                        analysis_result.extractions.extracted_files
-                    )
+                    result["interesting_strings"] = self._extract_interesting_strings(analysis_result.extractions.extracted_files)
 
             # Add security findings details
             if analysis_result.security_findings:
-                result["security_findings_detailed"] = self._format_security_findings(
-                    analysis_result.security_findings
-                )
+                result["security_findings_detailed"] = self._format_security_findings(analysis_result.security_findings)
 
             # Generate ICP supplemental data
             if self.analyzer:
@@ -529,9 +519,7 @@ class FirmwareAnalysisTool:
                         }
                     )
             classification["encryption_details"] = encryption_details
-            classification["security_features"] = classification.get("security_features", []) + [
-                "encryption"
-            ]
+            classification["security_features"] = classification.get("security_features", []) + ["encryption"]
 
         # Determine complexity
         component_count = len(analysis_result.signatures)
@@ -583,11 +571,7 @@ class FirmwareAnalysisTool:
                             attack_surface["potential_vulnerabilities"].append("Debug interface")
 
         # Assess overall risk
-        total_interfaces = (
-            attack_surface["network_interfaces"]
-            + attack_surface["web_interfaces"]
-            + attack_surface["debug_interfaces"]
-        )
+        total_interfaces = attack_surface["network_interfaces"] + attack_surface["web_interfaces"] + attack_surface["debug_interfaces"]
 
         if total_interfaces > 5:
             attack_surface["risk_assessment"] = "high"

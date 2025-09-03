@@ -19,7 +19,7 @@ import logging
 import os
 from typing import Any
 
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
@@ -216,7 +216,5 @@ class LMStudioRepository(APIRepositoryBase):
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "LMStudio doesn't support model downloads through API"

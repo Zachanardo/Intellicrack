@@ -96,9 +96,7 @@ class R2ScriptingEngine:
                         result["errors"].append(f"Command {i}: {command} failed: {e}")
 
                 result["execution_time"] = time.time() - start_time
-                result["analysis_summary"] = self._generate_analysis_summary(
-                    result["command_results"]
-                )
+                result["analysis_summary"] = self._generate_analysis_summary(result["command_results"])
 
         except R2Exception as e:
             result["error"] = str(e)
@@ -235,19 +233,13 @@ class R2ScriptingEngine:
             workflow_result["crypto_usage"] = self._extract_crypto_usage(command_results)
 
             # Identify validation mechanisms
-            workflow_result["validation_mechanisms"] = self._identify_validation_mechanisms(
-                command_results
-            )
+            workflow_result["validation_mechanisms"] = self._identify_validation_mechanisms(command_results)
 
             # Find bypass opportunities
-            workflow_result["bypass_opportunities"] = self._find_bypass_opportunities(
-                workflow_result
-            )
+            workflow_result["bypass_opportunities"] = self._find_bypass_opportunities(workflow_result)
 
             # Calculate confidence
-            workflow_result["analysis_confidence"] = self._calculate_analysis_confidence(
-                workflow_result
-            )
+            workflow_result["analysis_confidence"] = self._calculate_analysis_confidence(workflow_result)
 
         except Exception as e:
             workflow_result["error"] = str(e)
@@ -282,30 +274,18 @@ class R2ScriptingEngine:
             command_results = execution_result.get("command_results", [])
 
             # Analyze for different vulnerability types
-            workflow_result["buffer_overflow_risks"] = self._analyze_buffer_overflow_risks(
-                command_results
-            )
-            workflow_result["format_string_risks"] = self._analyze_format_string_risks(
-                command_results
-            )
-            workflow_result["memory_corruption_risks"] = self._analyze_memory_corruption_risks(
-                command_results
-            )
+            workflow_result["buffer_overflow_risks"] = self._analyze_buffer_overflow_risks(command_results)
+            workflow_result["format_string_risks"] = self._analyze_format_string_risks(command_results)
+            workflow_result["memory_corruption_risks"] = self._analyze_memory_corruption_risks(command_results)
             workflow_result["injection_risks"] = self._analyze_injection_risks(command_results)
-            workflow_result["privilege_escalation_risks"] = (
-                self._analyze_privilege_escalation_risks(command_results)
-            )
-            workflow_result["network_security_risks"] = self._analyze_network_security_risks(
-                command_results
-            )
+            workflow_result["privilege_escalation_risks"] = self._analyze_privilege_escalation_risks(command_results)
+            workflow_result["network_security_risks"] = self._analyze_network_security_risks(command_results)
 
             # Calculate overall risk score
             workflow_result["overall_risk_score"] = self._calculate_risk_score(workflow_result)
 
             # Generate security recommendations
-            workflow_result["security_recommendations"] = self._generate_security_recommendations(
-                workflow_result
-            )
+            workflow_result["security_recommendations"] = self._generate_security_recommendations(workflow_result)
 
         except Exception as e:
             workflow_result["error"] = str(e)
@@ -313,9 +293,7 @@ class R2ScriptingEngine:
 
         return workflow_result
 
-    def create_custom_r2_script(
-        self, script_name: str, commands: list[str], description: str = ""
-    ) -> str:
+    def create_custom_r2_script(self, script_name: str, commands: list[str], description: str = "") -> str:
         """Create custom r2 script file."""
         script_content = f"""#!/usr/bin/env r2
 # {script_name}
@@ -441,17 +419,11 @@ class R2ScriptingEngine:
                 elif command == "afvj":
                     result["variables"] = cmd_output if isinstance(cmd_output, list) else []
                 elif command == "agfj":
-                    result["control_flow_graph"] = (
-                        cmd_output if isinstance(cmd_output, dict) else {}
-                    )
+                    result["control_flow_graph"] = cmd_output if isinstance(cmd_output, dict) else {}
                 elif command == "axtj":
-                    result["cross_references_to"] = (
-                        cmd_output if isinstance(cmd_output, list) else []
-                    )
+                    result["cross_references_to"] = cmd_output if isinstance(cmd_output, list) else []
                 elif command == "axfj":
-                    result["cross_references_from"] = (
-                        cmd_output if isinstance(cmd_output, list) else []
-                    )
+                    result["cross_references_from"] = cmd_output if isinstance(cmd_output, list) else []
 
             # Generate analysis insights
             result["analysis_insights"] = self._generate_function_insights(result)
@@ -475,7 +447,7 @@ class R2ScriptingEngine:
         for i, patch in enumerate(patches):
             address = patch.get("address", "0x0")
             patch_bytes = patch.get("patch_bytes", "")
-            description = patch.get("description", f"Patch {i+1}")
+            description = patch.get("description", f"Patch {i + 1}")
 
             script_commands.extend(
                 [
@@ -495,9 +467,7 @@ class R2ScriptingEngine:
             ]
         )
 
-        return self.create_custom_r2_script(
-            "autopatcher", script_commands, "Automated binary patcher"
-        )
+        return self.create_custom_r2_script("autopatcher", script_commands, "Automated binary patcher")
 
     def create_license_validator_script(self, validation_points: list[dict[str, Any]]) -> str:
         """Create license validation analysis script."""
@@ -559,9 +529,7 @@ class R2ScriptingEngine:
             ]
         )
 
-        return self.create_custom_r2_script(
-            "license_analyzer", script_commands, "License validation analysis"
-        )
+        return self.create_custom_r2_script("license_analyzer", script_commands, "License validation analysis")
 
     # Helper methods for result processing
     def _generate_analysis_summary(self, command_results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -577,9 +545,7 @@ class R2ScriptingEngine:
             "commands_with_results": len([r for r in successful_commands if r.get("result")]),
         }
 
-    def _extract_license_functions(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _extract_license_functions(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract license-related functions from command results."""
         license_functions = []
 
@@ -590,10 +556,7 @@ class R2ScriptingEngine:
             if isinstance(functions, list):
                 for func in functions:
                     func_name = func.get("name", "").lower()
-                    if any(
-                        keyword in func_name
-                        for keyword in ["license", "valid", "check", "trial", "register"]
-                    ):
+                    if any(keyword in func_name for keyword in ["license", "valid", "check", "trial", "register"]):
                         license_functions.append(
                             {
                                 "name": func.get("name", ""),
@@ -605,9 +568,7 @@ class R2ScriptingEngine:
 
         return license_functions
 
-    def _extract_license_strings(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _extract_license_strings(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract license-related strings from command results."""
         license_strings = []
 
@@ -623,9 +584,7 @@ class R2ScriptingEngine:
         ]
 
         for keyword in license_keywords:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {keyword}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {keyword}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list):
@@ -640,9 +599,7 @@ class R2ScriptingEngine:
 
         return license_strings
 
-    def _extract_license_imports(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _extract_license_imports(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract license-related imports from command results."""
         license_imports = []
 
@@ -673,9 +630,7 @@ class R2ScriptingEngine:
         crypto_keywords = ["crypt", "encrypt", "decrypt", "hash"]
 
         for keyword in crypto_keywords:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {keyword}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {keyword}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -683,9 +638,7 @@ class R2ScriptingEngine:
                         {
                             "algorithm_type": keyword,
                             "occurrences": len(results),
-                            "addresses": [
-                                hex(r.get("offset", 0)) for r in results[:5]
-                            ],  # Limit to 5
+                            "addresses": [hex(r.get("offset", 0)) for r in results[:5]],  # Limit to 5
                         }
                     )
 
@@ -697,37 +650,26 @@ class R2ScriptingEngine:
 
         # Check for registry operations
         if any(
-            r.get("command") in ["/j RegOpenKey", "/j RegQueryValue", "/j RegSetValue"]
-            and r.get("success")
-            and r.get("result")
+            r.get("command") in ["/j RegOpenKey", "/j RegQueryValue", "/j RegSetValue"] and r.get("success") and r.get("result")
             for r in command_results
         ):
             mechanisms.append("registry_validation")
 
         # Check for time operations
         if any(
-            r.get("command") in ["/j GetSystemTime", "/j GetLocalTime"]
-            and r.get("success")
-            and r.get("result")
-            for r in command_results
+            r.get("command") in ["/j GetSystemTime", "/j GetLocalTime"] and r.get("success") and r.get("result") for r in command_results
         ):
             mechanisms.append("time_based_validation")
 
         # Check for hardware fingerprinting
         if any(
-            r.get("command") in ["/j GetVolumeInformation", "/j GetComputerName"]
-            and r.get("success")
-            and r.get("result")
+            r.get("command") in ["/j GetVolumeInformation", "/j GetComputerName"] and r.get("success") and r.get("result")
             for r in command_results
         ):
             mechanisms.append("hardware_fingerprinting")
 
         # Check for crypto validation
-        crypto_results = [
-            r
-            for r in command_results
-            if "/j crypt" in r.get("command", "") and r.get("success") and r.get("result")
-        ]
+        crypto_results = [r for r in command_results if "/j crypt" in r.get("command", "") and r.get("success") and r.get("result")]
         if crypto_results:
             mechanisms.append("cryptographic_validation")
 
@@ -798,18 +740,14 @@ class R2ScriptingEngine:
         # Average confidence
         return sum(confidence_factors) / max(1, len(confidence_factors))
 
-    def _analyze_buffer_overflow_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_buffer_overflow_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze buffer overflow risks from command results."""
         risks = []
 
         dangerous_functions = ["strcpy", "strcat", "sprintf", "gets", "scanf", "memcpy"]
 
         for func_name in dangerous_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -824,18 +762,14 @@ class R2ScriptingEngine:
 
         return risks
 
-    def _analyze_format_string_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_format_string_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze format string risks from command results."""
         risks = []
 
         format_functions = ["printf", "fprintf", "snprintf"]
 
         for func_name in format_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -850,18 +784,14 @@ class R2ScriptingEngine:
 
         return risks
 
-    def _analyze_memory_corruption_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_memory_corruption_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze memory corruption risks from command results."""
         risks = []
 
         memory_functions = ["malloc", "free", "realloc", "calloc"]
 
         for func_name in memory_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -876,18 +806,14 @@ class R2ScriptingEngine:
 
         return risks
 
-    def _analyze_injection_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_injection_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze code injection risks from command results."""
         risks = []
 
         injection_functions = ["VirtualAllocEx", "WriteProcessMemory", "CreateRemoteThread"]
 
         for func_name in injection_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -902,18 +828,14 @@ class R2ScriptingEngine:
 
         return risks
 
-    def _analyze_privilege_escalation_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_privilege_escalation_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze privilege escalation risks from command results."""
         risks = []
 
         priv_functions = ["AdjustTokenPrivileges", "ImpersonateLoggedOnUser"]
 
         for func_name in priv_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -928,18 +850,14 @@ class R2ScriptingEngine:
 
         return risks
 
-    def _analyze_network_security_risks(
-        self, command_results: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _analyze_network_security_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Analyze network security risks from command results."""
         risks = []
 
         network_functions = ["socket", "connect", "send", "recv"]
 
         for func_name in network_functions:
-            search_result = next(
-                (r for r in command_results if r.get("command") == f"/j {func_name}"), None
-            )
+            search_result = next((r for r in command_results if r.get("command") == f"/j {func_name}"), None)
             if search_result and search_result.get("success"):
                 results = search_result.get("result", [])
                 if isinstance(results, list) and results:
@@ -1051,9 +969,7 @@ class R2ScriptingEngine:
         return insights
 
 
-def execute_license_analysis_script(
-    binary_path: str, radare2_path: str | None = None
-) -> dict[str, Any]:
+def execute_license_analysis_script(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Execute license analysis workflow on a binary.
 
     Args:
@@ -1068,9 +984,7 @@ def execute_license_analysis_script(
     return engine.execute_license_analysis_workflow()
 
 
-def execute_vulnerability_analysis_script(
-    binary_path: str, radare2_path: str | None = None
-) -> dict[str, Any]:
+def execute_vulnerability_analysis_script(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Execute vulnerability analysis workflow on a binary.
 
     Args:

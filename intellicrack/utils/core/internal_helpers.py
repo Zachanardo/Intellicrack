@@ -98,9 +98,7 @@ logger = setup_logger(__name__)
 # === Protocol and Network Helpers ===
 
 
-def _add_protocol_fingerprinter_results(
-    results: dict[str, Any], fingerprints: dict[str, Any]
-) -> None:
+def _add_protocol_fingerprinter_results(results: dict[str, Any], fingerprints: dict[str, Any]) -> None:
     """Add protocol fingerprinter results to analysis results.
 
     Args:
@@ -667,12 +665,8 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         "support_level": support_level,
         "billing_cycle": billing_cycle,
         "cost_per_month": cost_per_month,
-        "seat_utilization": f"{(current_users / max_users * 100):.1f}%"
-        if max_users > 0
-        else "0.0%",
-        "compliance_status": "compliant"
-        if status == "active" and current_users <= max_users
-        else "non_compliant",
+        "seat_utilization": f"{(current_users / max_users * 100):.1f}%" if max_users > 0 else "0.0%",
+        "compliance_status": "compliant" if status == "active" and current_users <= max_users else "non_compliant",
         "license_server": f"license-server-{int(license_hash[22:24], 16) % 10 + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
         "contact_email": f"{user_id}@{organization.lower().replace(' ', '')}.com",
         "notes": f"License {license_id} - {status.title()} {license_type} license",
@@ -801,7 +795,7 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             expiry_date = base_date + timedelta(days=200)
 
         # Generate user information
-        user_id = f"{user_type}_{i+1:04d}"
+        user_id = f"{user_type}_{i + 1:04d}"
         if user_filter and user_filter.lower() not in user_id.lower():
             continue
 
@@ -814,15 +808,11 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Generate license ID with realistic format
-        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[
-            :8
-        ]
-        license_id = f"LIC-{license_hash.upper()}-{i+1:04d}"
+        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
+        license_id = f"LIC-{license_hash.upper()}-{i + 1:04d}"
 
         # Calculate usage statistics
-        current_users = min(
-            template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1)
-        )
+        current_users = min(template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1))
 
         license_data = {
             "id": license_id,
@@ -838,18 +828,12 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             "features": template["features"],
             "organization": f"{user_type.title()} Organization {(i % 10) + 1}",
             "license_server": f"license-{(i % 5) + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime("%Y-%m-%d %H:%M:%S"),
             "version": f"{((i % 5) + 1)}.{(i % 10)}.{(i % 20)}",
             "platform": ["Windows", "macOS", "Linux"][i % 3],
             "maintenance_expires": (expiry_date + timedelta(days=90)).strftime("%Y-%m-%d"),
-            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%"
-            if template["max_users"] > 0
-            else "0.0%",
-            "compliance_status": "compliant"
-            if license_status == "active" and current_users <= template["max_users"]
-            else "non_compliant",
+            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%" if template["max_users"] > 0 else "0.0%",
+            "compliance_status": "compliant" if license_status == "active" and current_users <= template["max_users"] else "non_compliant",
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
@@ -923,32 +907,22 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         release_reason = "normal_user_logout"
 
     # Calculate billing information for the session
-    cost_per_hour = current_license.get("cost_per_month", 99.99) / (
-        30 * 24
-    )  # Approximate hourly cost
+    cost_per_hour = current_license.get("cost_per_month", 99.99) / (30 * 24)  # Approximate hourly cost
     session_cost = round(session_hours * cost_per_hour, 4)
 
     # Generate compliance and audit information
     compliance_check = {
         "license_valid": current_license.get("status") == "active",
-        "within_user_limit": current_license.get("current_users", 0)
-        <= current_license.get("max_users", 1),
-        "features_authorized": all(
-            feature in current_license.get("features", []) for feature in features_used
-        ),
-        "maintenance_current": datetime.strptime(
-            current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
-        )
-        > release_datetime,
+        "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
+        "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
+        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") > release_datetime,
     }
 
     compliance_status = "compliant" if all(compliance_check.values()) else "violation_detected"
 
     # Generate next available license slot information
     max_users = current_license.get("max_users", 1)
-    current_users = max(
-        0, current_license.get("current_users", 1) - 1
-    )  # Decrease by 1 after release
+    current_users = max(0, current_license.get("current_users", 1) - 1)  # Decrease by 1 after release
 
     return {
         "id": license_id,
@@ -970,9 +944,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             "seats_available": max_users - current_users,
             "seats_total": max_users,
             "seats_used": current_users,
-            "utilization_percentage": round((current_users / max_users * 100), 1)
-            if max_users > 0
-            else 0,
+            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0,
         },
         "user_information": {
             "user_id": current_license.get("user_id", "unknown"),
@@ -991,12 +963,8 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(
-                current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
-            )
-            < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0))
-            < release_datetime + timedelta(days=30),
+            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") < release_datetime,
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0)) < release_datetime + timedelta(days=30),
         },
         "confirmation": {
             "message": f"License {license_id} has been successfully released",
@@ -1238,9 +1206,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 # === Analysis and Comparison Helpers ===
 
 
-def _analyze_snapshot_differences(
-    snapshot1: dict[str, Any], snapshot2: dict[str, Any]
-) -> dict[str, Any]:
+def _analyze_snapshot_differences(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> dict[str, Any]:
     """Analyze differences between two snapshots.
 
     Args:
@@ -1289,8 +1255,7 @@ def _compare_filesystem_state(state1: dict[str, Any], state2: dict[str, Any]) ->
         "modified_files": [
             f
             for f in state1.get("files", [])
-            if f in state2.get("files", [])
-            and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
+            if f in state2.get("files", []) and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
         ],
     }
 
@@ -1325,12 +1290,8 @@ def _compare_mmap_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[
 
     """
     return {
-        "new_mappings": [
-            m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])
-        ],
-        "removed_mappings": [
-            m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])
-        ],
+        "new_mappings": [m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])],
+        "removed_mappings": [m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])],
     }
 
 
@@ -2131,9 +2092,7 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
-        pattern_tensor = tf.expand_dims(
-            tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1
-        )
+        pattern_tensor = tf.expand_dims(tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1)
 
         # Perform 1D convolution
         convolution_result = tf.nn.conv1d(
@@ -2954,9 +2913,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
     return thread
 
 
-def _run_report_generation_thread(
-    report_func: Callable, report_data: dict[str, Any]
-) -> threading.Thread:
+def _run_report_generation_thread(report_func: Callable, report_data: dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:

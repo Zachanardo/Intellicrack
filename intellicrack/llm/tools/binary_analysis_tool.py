@@ -126,9 +126,7 @@ class BinaryAnalysisTool:
 
         if analysis_type in ["imports", "full"]:
             result["imports"] = self._format_imports(pe_info.get("imports", {}))
-            result["import_count"] = sum(
-                len(funcs) for funcs in pe_info.get("imports", {}).values()
-            )
+            result["import_count"] = sum(len(funcs) for funcs in pe_info.get("imports", {}).values())
 
         if analysis_type in ["exports", "full"]:
             exports = pe_info.get("exports", [])

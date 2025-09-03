@@ -491,12 +491,7 @@ class BaseDialog(QDialog):
         """
         self.cancel_button.setText(text)
 
-    def add_custom_button(
-        self,
-        text: str,
-        callback,
-        button_type: str = "default"
-    ) -> QPushButton:
+    def add_custom_button(self, text: str, callback, button_type: str = "default") -> QPushButton:
         """Add a custom button to the button box.
 
         Args:
@@ -554,6 +549,7 @@ class BaseDialog(QDialog):
         """Handle help button click."""
         if self._help_text:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.information(self, "Help", self._help_text)
 
     def get_result(self) -> dict:

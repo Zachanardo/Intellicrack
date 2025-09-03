@@ -89,6 +89,7 @@ This tool is developed for **defensive security research** to help software deve
 
 ### Implementation Standards
 
+- **ALL CODE MUST BE WRITTEN FOR FULL COMPATIBLITY WITH WINDOWS PLATFORMS AS A PRIORITY.**
 - **NO STUBS, MOCKS, OR PLACEHOLDERS** - ALL code must be FULLY FUNCTIONAL
 - **NO TODO COMMENTS** - Implement REAL functionality immediately
 - **NO SIMULATION MODES** - Real exploitation tool only
@@ -103,9 +104,10 @@ This tool is developed for **defensive security research** to help software deve
 - **NEVER write placeholder, stub, mock, fake, or simulated code under ANY circumstances**
 - **ALL code must be production-ready and fully functional**
 - **NO TODO comments or unimplemented sections**
-- **NO mock data, dummy data, or hardcoded test values**
+- **NO mock data, dummy data, or hardcoded values**
 - **NO placeholder functions or methods that don't actually work**
 - **NO "example" implementations that would need to be replaced**
+- **NO simple implementations that would be ineffective in real world scenarios**
 - **NEVER use scripting to automate fixes unless explicitly requested by the user**
 
 **When writing code, Claude must:**
@@ -142,20 +144,6 @@ This tool is developed for **defensive security research** to help software deve
 ### MCP Configuration
 
 **Config location**: `~/.claude.json`
-**Add new server**:
-
-```json
-{
-  "mcpServers": {
-    "server-name": {
-      "command": "command-to-run",
-      "args": ["arg1", "arg2"]
-    }
-  }
-}
-```
-
-**Troubleshooting**: Check PATH, permissions, restart Claude Code after config changes
 
 ## SPECIALIZED TASK AGENTS
 

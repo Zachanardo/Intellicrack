@@ -219,9 +219,7 @@ class PatternGene:
 
         return bytes(byte_list)
 
-    def _mutate_api_sequence(
-        self, data: list[str], mutation_type: MutationType, rate: float
-    ) -> list[str]:
+    def _mutate_api_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
         """Mutate API sequence pattern based on mutation rate."""
         api_list = data.copy()
 
@@ -285,9 +283,7 @@ class PatternGene:
 
         return data
 
-    def _mutate_opcode_sequence(
-        self, data: list[str], mutation_type: MutationType, rate: float
-    ) -> list[str]:
+    def _mutate_opcode_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
         """Mutate opcode sequence pattern based on mutation rate."""
         opcode_list = data.copy()
 
@@ -332,9 +328,7 @@ class PatternGene:
 
         return opcode_list
 
-    def crossover(
-        self, other: "PatternGene", crossover_point: int | None = None
-    ) -> tuple["PatternGene", "PatternGene"]:
+    def crossover(self, other: "PatternGene", crossover_point: int | None = None) -> tuple["PatternGene", "PatternGene"]:
         """Perform crossover with another gene."""
         if self.type != other.type:
             # Can't crossover different types
@@ -417,9 +411,7 @@ class QLearningAgent:
         state_key = self.get_state_key(state)
         return np.argmax(self.q_table[state_key])
 
-    def remember(
-        self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool
-    ):
+    def remember(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool):
         """Store experience in replay buffer."""
         self.memory.append((state, action, reward, next_state, done))
 
@@ -439,9 +431,7 @@ class QLearningAgent:
                 target = reward + self.discount_factor * np.max(self.q_table[next_state_key])
 
             # Q-learning update
-            self.q_table[state_key][action] = (1 - self.learning_rate) * self.q_table[state_key][
-                action
-            ] + self.learning_rate * target
+            self.q_table[state_key][action] = (1 - self.learning_rate) * self.q_table[state_key][action] + self.learning_rate * target
 
         # Decay epsilon
         if self.epsilon > self.epsilon_min:
@@ -508,9 +498,7 @@ class PatternStorage:
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_patterns_type ON patterns(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_patterns_fitness ON patterns(fitness)")
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metrics_pattern ON pattern_metrics(pattern_id)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_pattern ON pattern_metrics(pattern_id)")
 
             self.conn.commit()
 
@@ -596,9 +584,7 @@ class PatternStorage:
 
             return pattern
 
-    def get_top_patterns(
-        self, pattern_type: PatternType | None = None, limit: int = 10
-    ) -> list[PatternGene]:
+    def get_top_patterns(self, pattern_type: PatternType | None = None, limit: int = 10) -> list[PatternGene]:
         """Get top performing patterns."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -627,9 +613,7 @@ class PatternStorage:
 
         return [self.load_pattern(pid) for pid in pattern_ids if pid]
 
-    def update_metrics(
-        self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float
-    ):
+    def update_metrics(self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float):
         """Update pattern performance metrics."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -647,9 +631,7 @@ class PatternStorage:
             # Update pattern fitness based on metrics
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0
             recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-            f1_score = (
-                2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-            )
+            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
             # Factor in speed (bonus for faster detection)
             speed_factor = 1.0 / (1.0 + detection_time_ms / 1000.0)  # Normalize to ~0-1
@@ -867,9 +849,7 @@ class PatternEvolutionTracker:
         self.q_agent = QLearningAgent(state_size=50, action_size=10)
 
         # Pattern populations by type
-        self.populations: dict[PatternType, list[PatternGene]] = {
-            ptype: [] for ptype in PatternType
-        }
+        self.populations: dict[PatternType, list[PatternGene]] = {ptype: [] for ptype in PatternType}
 
         # Observers for pattern updates
         self.observers = []
@@ -1105,9 +1085,7 @@ class PatternEvolutionTracker:
 
         return min(1.0, final_fitness)
 
-    def _tournament_selection(
-        self, population: list[PatternGene], tournament_size: int = 3
-    ) -> PatternGene:
+    def _tournament_selection(self, population: list[PatternGene], tournament_size: int = 3) -> PatternGene:
         """Tournament selection for genetic algorithm."""
         tournament = random.sample(population, min(tournament_size, len(population)))  # noqa: S311 - ML genetic algorithm tournament selection
         return max(tournament, key=lambda p: p.fitness)
@@ -1204,13 +1182,9 @@ class PatternEvolutionTracker:
 
         # Update metrics
         if correct:
-            self.storage.update_metrics(
-                pattern_id, tp=1, fp=0, tn=0, fn=0, detection_time_ms=detection_time_ms
-            )
+            self.storage.update_metrics(pattern_id, tp=1, fp=0, tn=0, fn=0, detection_time_ms=detection_time_ms)
         else:
-            self.storage.update_metrics(
-                pattern_id, tp=0, fp=1, tn=0, fn=0, detection_time_ms=detection_time_ms
-            )
+            self.storage.update_metrics(pattern_id, tp=0, fp=1, tn=0, fn=0, detection_time_ms=detection_time_ms)
             self.stats["false_positives"] += 1
 
         # Reload pattern with updated fitness
@@ -1287,6 +1261,7 @@ class PatternEvolutionTracker:
                     pattern_data_parsed = bytes.fromhex(pattern_data["pattern_data"])
                 elif pattern_type in [PatternType.API_SEQUENCE, PatternType.OPCODE_SEQUENCE]:
                     import ast
+
                     pattern_data_parsed = ast.literal_eval(pattern_data["pattern_data"])  # List
                 else:
                     pattern_data_parsed = pattern_data["pattern_data"]  # String
@@ -1337,9 +1312,7 @@ class PatternEvolutionTracker:
 
         return stats
 
-    def cluster_patterns(
-        self, pattern_type: PatternType, min_samples: int = 5
-    ) -> dict[int, list[PatternGene]]:
+    def cluster_patterns(self, pattern_type: PatternType, min_samples: int = 5) -> dict[int, list[PatternGene]]:
         """Cluster similar patterns using DBSCAN."""
         population = self.populations[pattern_type]
         if len(population) < min_samples:
@@ -1350,9 +1323,7 @@ class PatternEvolutionTracker:
         for pattern in population:
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Use byte histogram as features
-                hist = np.bincount(
-                    np.frombuffer(pattern.pattern_data, dtype=np.uint8), minlength=256
-                )
+                hist = np.bincount(np.frombuffer(pattern.pattern_data, dtype=np.uint8), minlength=256)
                 features.append(hist / hist.sum())
             else:
                 # Use fitness and generation as simple features
@@ -1383,11 +1354,7 @@ class PatternUpdateObserver:
     def on_patterns_updated(self, tracker: PatternEvolutionTracker):
         """Called when patterns are updated."""
         stats = tracker.get_statistics()
-        print(
-            f"Generation {stats['generations']}: "
-            f"Best fitness: {stats.get('best_fitness', 0):.3f}, "
-            f"Detections: {stats['detections']}"
-        )
+        print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
 
 
 def main():
@@ -1415,7 +1382,7 @@ def main():
             print(f"Running {args.evolve} evolution generations...")
             for i in range(args.evolve):
                 tracker.evolve_generation()
-                print(f"Generation {i+1} complete")
+                print(f"Generation {i + 1} complete")
 
         if args.detect:
             print(f"Detecting patterns in {args.detect}...")
@@ -1428,10 +1395,7 @@ def main():
             print(f"  Patterns matched: {len(results['patterns_matched'])}")
 
             for detection in results["detections"]:
-                print(
-                    f"  - {detection['type']}: {detection['confidence']:.3f} "
-                    f"(gen {detection['generation']})"
-                )
+                print(f"  - {detection['type']}: {detection['confidence']:.3f} (gen {detection['generation']})")
 
         if args.export:
             tracker.export_patterns(args.export)

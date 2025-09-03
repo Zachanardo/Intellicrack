@@ -85,9 +85,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             payload_pe = pefile.PE(data=payload_data)
 
             # Create suspended process and handle result
-            success, process_info, context = self.create_and_handle_suspended_process(
-                target_exe, logger
-            )
+            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
             if not success:
                 return False
 
@@ -333,9 +331,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to allocate memory: {e}")
             return 0
 
-    def _write_headers(
-        self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
-    ) -> bool:
+    def _write_headers(self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any) -> bool:
         """Write PE headers to target process."""
         try:
             headers_size = payload_pe.OPTIONAL_HEADER.SizeOfHeaders
@@ -355,16 +351,12 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to write headers: {e}")
             return False
 
-    def _write_sections(
-        self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
-    ) -> bool:
+    def _write_sections(self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any) -> bool:
         """Write PE sections to target process."""
         try:
             for section in payload_pe.sections:
                 section_addr = base_addr + section.VirtualAddress
-                section_data = payload_data[
-                    section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData
-                ]
+                section_data = payload_data[section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData]
 
                 if section_data:
                     bytes_written = ctypes.c_size_t(0)

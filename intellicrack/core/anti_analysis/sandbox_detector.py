@@ -144,13 +144,9 @@ class SandboxDetector(BaseDetector):
                 results["sandbox_type"] = self._identify_sandbox_type(results["detections"])
 
             # Calculate evasion difficulty
-            results["evasion_difficulty"] = self._calculate_evasion_difficulty(
-                results["detections"]
-            )
+            results["evasion_difficulty"] = self._calculate_evasion_difficulty(results["detections"])
 
-            self.logger.info(
-                f"Sandbox detection complete: {results['is_sandbox']} (confidence: {results['confidence']:.2f})"
-            )
+            self.logger.info(f"Sandbox detection complete: {results['is_sandbox']} (confidence: {results['confidence']:.2f})")
             return results
 
         except Exception as e:
@@ -187,9 +183,7 @@ class SandboxDetector(BaseDetector):
             # Get suspicious computer names from environment or use defaults
             suspicious_computers_env = os.environ.get("SANDBOX_SUSPICIOUS_COMPUTERS", "")
             if suspicious_computers_env:
-                suspicious_computers = [
-                    name.strip().lower() for name in suspicious_computers_env.split(",")
-                ]
+                suspicious_computers = [name.strip().lower() for name in suspicious_computers_env.split(",")]
             else:
                 suspicious_computers = [
                     "sandbox",
@@ -349,7 +343,7 @@ class SandboxDetector(BaseDetector):
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                 else:
                     result = None
@@ -361,7 +355,7 @@ class SandboxDetector(BaseDetector):
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                 else:
                     result = None
@@ -383,9 +377,7 @@ class SandboxDetector(BaseDetector):
                 for sandbox_type, sigs in self.sandbox_signatures.items():
                     for network in sigs.get("network", []):
                         if self._ip_in_network(local_ip, network):
-                            details["network_anomalies"].append(
-                                f"Sandbox network: {network} ({sandbox_type})"
-                            )
+                            details["network_anomalies"].append(f"Sandbox network: {network} ({sandbox_type})")
 
             except Exception as e:
                 self.logger.debug(f"Error checking network configuration: {e}")
@@ -429,9 +421,7 @@ class SandboxDetector(BaseDetector):
                 if os.path.exists(recent_path):
                     recent_files = os.listdir(recent_path)
                     if len(recent_files) < 5:
-                        details["interaction_signs"].append(
-                            f"Few recent files: {len(recent_files)}"
-                        )
+                        details["interaction_signs"].append(f"Few recent files: {len(recent_files)}")
 
             # Check browser history/cookies
             browser_paths = {
@@ -439,9 +429,7 @@ class SandboxDetector(BaseDetector):
                     os.environ.get("LOCALAPPDATA", ""),
                     "Google\\Chrome\\User Data\\Default\\History",
                 ),
-                "firefox": os.path.join(
-                    os.environ.get("APPDATA", ""), "Mozilla\\Firefox\\Profiles"
-                ),
+                "firefox": os.path.join(os.environ.get("APPDATA", ""), "Mozilla\\Firefox\\Profiles"),
             }
 
             browser_found = False
@@ -747,7 +735,7 @@ class SandboxDetector(BaseDetector):
                                 ("left", ctypes.c_long),
                                 ("top", ctypes.c_long),
                                 ("right", ctypes.c_long),
-                                ("bottom", ctypes.c_long)
+                                ("bottom", ctypes.c_long),
                             ]
 
                             def __repr__(self):
@@ -772,7 +760,7 @@ class SandboxDetector(BaseDetector):
                                 ("wHour", ctypes.c_uint16),
                                 ("wMinute", ctypes.c_uint16),
                                 ("wSecond", ctypes.c_uint16),
-                                ("wMilliseconds", ctypes.c_uint16)
+                                ("wMilliseconds", ctypes.c_uint16),
                             ]
 
                         class MEMORYSTATUSEX(ctypes.Structure):
@@ -787,7 +775,7 @@ class SandboxDetector(BaseDetector):
                                 ("ullAvailPageFile", ctypes.c_uint64),
                                 ("ullTotalVirtual", ctypes.c_uint64),
                                 ("ullAvailVirtual", ctypes.c_uint64),
-                                ("ullAvailExtendedVirtual", ctypes.c_uint64)
+                                ("ullAvailExtendedVirtual", ctypes.c_uint64),
                             ]
 
                             def __init__(self):
@@ -808,7 +796,7 @@ class SandboxDetector(BaseDetector):
                                 ("wServicePackMinor", ctypes.c_uint16),
                                 ("wSuiteMask", ctypes.c_uint16),
                                 ("wProductType", ctypes.c_uint8),
-                                ("wReserved", ctypes.c_uint8)
+                                ("wReserved", ctypes.c_uint8),
                             ]
 
                             def __init__(self):

@@ -40,7 +40,6 @@ try:
         HTTPError,
         Response,
         Session,
-        TimeoutError,
         delete,
         get,
         head,
@@ -48,7 +47,6 @@ try:
         patch,
         post,
         put,
-        request,
     )
     from requests import (
         RequestException as RequestError,
@@ -57,13 +55,19 @@ try:
     from requests.auth import HTTPBasicAuth, HTTPDigestAuth
     from requests.cookies import RequestsCookieJar
     from requests.exceptions import (
-        ConnectTimeoutError,
+        ConnectTimeout,
         InvalidURL,
         ProxyError,
-        ReadTimeoutError,
+        ReadTimeout,
         SSLError,
-        TooManyRedirectsError,
+        TooManyRedirects,
     )
+    from requests.exceptions import Timeout as TimeoutError
+
+    # Create aliases for backward compatibility
+    ConnectTimeoutError = ConnectTimeout
+    ReadTimeoutError = ReadTimeout
+    TooManyRedirectsError = TooManyRedirects
     from requests.models import PreparedRequest
     from requests.packages.urllib3.util.retry import Retry
     from requests.structures import CaseInsensitiveDict
@@ -170,7 +174,7 @@ except ImportError as e:
         def iter_content(self, chunk_size=1024):
             """Iterate over response content."""
             for i in range(0, len(self.content), chunk_size):
-                yield self.content[i:i + chunk_size]
+                yield self.content[i : i + chunk_size]
 
         def iter_lines(self, chunk_size=512, decode_unicode=True):
             """Iterate over response lines."""
@@ -228,8 +232,9 @@ except ImportError as e:
             self.body = None
             self.hooks = {}
 
-        def prepare(self, method=None, url=None, headers=None, files=None,
-                   data=None, params=None, auth=None, cookies=None, hooks=None, json=None):
+        def prepare(
+            self, method=None, url=None, headers=None, files=None, data=None, params=None, auth=None, cookies=None, hooks=None, json=None
+        ):
             """Prepare the request."""
             self.method = method or self.method
             self.url = url or self.url
@@ -246,14 +251,14 @@ except ImportError as e:
                 self.url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
             if json is not None:
-                self.body = json_module.dumps(json).encode('utf-8')
-                self.headers['Content-Type'] = 'application/json'
+                self.body = json_module.dumps(json).encode("utf-8")
+                self.headers["Content-Type"] = "application/json"
             elif data is not None:
                 if isinstance(data, dict):
-                    self.body = urllib.parse.urlencode(data).encode('utf-8')
-                    self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                    self.body = urllib.parse.urlencode(data).encode("utf-8")
+                    self.headers["Content-Type"] = "application/x-www-form-urlencoded"
                 else:
-                    self.body = data if isinstance(data, bytes) else str(data).encode('utf-8')
+                    self.body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
     # Session class
     class Session:
@@ -277,31 +282,31 @@ except ImportError as e:
 
         def get(self, url, **kwargs):
             """Send GET request."""
-            return self.request('GET', url, **kwargs)
+            return self.request("GET", url, **kwargs)
 
         def post(self, url, data=None, json=None, **kwargs):
             """Send POST request."""
-            return self.request('POST', url, data=data, json=json, **kwargs)
+            return self.request("POST", url, data=data, json=json, **kwargs)
 
         def put(self, url, data=None, **kwargs):
             """Send PUT request."""
-            return self.request('PUT', url, data=data, **kwargs)
+            return self.request("PUT", url, data=data, **kwargs)
 
         def patch(self, url, data=None, **kwargs):
             """Send PATCH request."""
-            return self.request('PATCH', url, data=data, **kwargs)
+            return self.request("PATCH", url, data=data, **kwargs)
 
         def delete(self, url, **kwargs):
             """Send DELETE request."""
-            return self.request('DELETE', url, **kwargs)
+            return self.request("DELETE", url, **kwargs)
 
         def head(self, url, **kwargs):
             """Send HEAD request."""
-            return self.request('HEAD', url, **kwargs)
+            return self.request("HEAD", url, **kwargs)
 
         def options(self, url, **kwargs):
             """Send OPTIONS request."""
-            return self.request('OPTIONS', url, **kwargs)
+            return self.request("OPTIONS", url, **kwargs)
 
         def close(self):
             """Close session."""
@@ -356,18 +361,18 @@ except ImportError as e:
     def request(method, url, **kwargs):
         """Send HTTP request using urllib."""
         # Extract parameters
-        params = kwargs.get('params')
-        data = kwargs.get('data')
-        json_data = kwargs.get('json')
-        headers = kwargs.get('headers', {})
-        cookies = kwargs.get('cookies')
-        auth = kwargs.get('auth')
-        timeout = kwargs.get('timeout', 30)
-        kwargs.get('allow_redirects', True)
-        kwargs.get('stream', False)
-        verify = kwargs.get('verify', True)
-        kwargs.get('cert')
-        session = kwargs.get('session')
+        params = kwargs.get("params")
+        data = kwargs.get("data")
+        json_data = kwargs.get("json")
+        headers = kwargs.get("headers", {})
+        cookies = kwargs.get("cookies")
+        auth = kwargs.get("auth")
+        timeout = kwargs.get("timeout", 30)
+        kwargs.get("allow_redirects", True)
+        kwargs.get("stream", False)
+        verify = kwargs.get("verify", True)
+        kwargs.get("cert")
+        session = kwargs.get("session")
 
         # Build URL with params
         if params:
@@ -386,32 +391,33 @@ except ImportError as e:
 
         # Handle cookies
         if session and session.cookies:
-            cookie_header = '; '.join(f'{k}={v}' for k, v in session.cookies.items())
+            cookie_header = "; ".join(f"{k}={v}" for k, v in session.cookies.items())
             if cookie_header:
-                req_headers['Cookie'] = cookie_header
+                req_headers["Cookie"] = cookie_header
         if cookies:
-            cookie_header = '; '.join(f'{k}={v}' for k, v in cookies.items())
+            cookie_header = "; ".join(f"{k}={v}" for k, v in cookies.items())
             if cookie_header:
-                req_headers['Cookie'] = req_headers.get('Cookie', '') + '; ' + cookie_header
+                req_headers["Cookie"] = req_headers.get("Cookie", "") + "; " + cookie_header
 
         # Prepare data
         body = None
         if json_data is not None:
-            body = json_module.dumps(json_data).encode('utf-8')
-            req_headers['Content-Type'] = 'application/json'
+            body = json_module.dumps(json_data).encode("utf-8")
+            req_headers["Content-Type"] = "application/json"
         elif data is not None:
             if isinstance(data, dict):
-                body = urllib.parse.urlencode(data).encode('utf-8')
-                req_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                body = urllib.parse.urlencode(data).encode("utf-8")
+                req_headers["Content-Type"] = "application/x-www-form-urlencoded"
             else:
-                body = data if isinstance(data, bytes) else str(data).encode('utf-8')
+                body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
         # Handle auth
         if auth:
             import base64
+
             credentials = f"{auth.username}:{auth.password}"
             encoded = base64.b64encode(credentials.encode()).decode()
-            req_headers['Authorization'] = f'Basic {encoded}'
+            req_headers["Authorization"] = f"Basic {encoded}"
 
         # Create request
         req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
@@ -435,21 +441,21 @@ except ImportError as e:
                 resp.headers = CaseInsensitiveDict(dict(response.headers))
 
                 # Detect encoding
-                content_type = resp.headers.get('content-type', '')
-                if 'charset=' in content_type:
-                    resp.encoding = content_type.split('charset=')[-1].split(';')[0].strip()
+                content_type = resp.headers.get("content-type", "")
+                if "charset=" in content_type:
+                    resp.encoding = content_type.split("charset=")[-1].split(";")[0].strip()
                 else:
-                    resp.encoding = 'utf-8'
+                    resp.encoding = "utf-8"
 
                 try:
                     resp.text = resp.content.decode(resp.encoding)
                 except UnicodeDecodeError:
-                    resp.text = resp.content.decode('utf-8', errors='replace')
+                    resp.text = resp.content.decode("utf-8", errors="replace")
 
                 # Parse cookies from response
-                if 'Set-Cookie' in response.headers:
-                    for cookie in response.headers.get_all('Set-Cookie'):
-                        parts = cookie.split(';')[0].split('=', 1)
+                if "Set-Cookie" in response.headers:
+                    for cookie in response.headers.get_all("Set-Cookie"):
+                        parts = cookie.split(";")[0].split("=", 1)
                         if len(parts) == 2:
                             resp.cookies[parts[0]] = parts[1]
                             if session:
@@ -463,13 +469,13 @@ except ImportError as e:
             resp.status_code = e.code
             resp.reason = e.reason
             resp.url = url
-            resp.content = e.read() if hasattr(e, 'read') else b''
-            resp.headers = CaseInsensitiveDict(dict(e.headers)) if hasattr(e, 'headers') else CaseInsensitiveDict()
+            resp.content = e.read() if hasattr(e, "read") else b""
+            resp.headers = CaseInsensitiveDict(dict(e.headers)) if hasattr(e, "headers") else CaseInsensitiveDict()
 
             try:
-                resp.text = resp.content.decode('utf-8')
+                resp.text = resp.content.decode("utf-8")
             except Exception:
-                resp.text = resp.content.decode('utf-8', errors='replace')
+                resp.text = resp.content.decode("utf-8", errors="replace")
 
             return resp
 
@@ -488,31 +494,31 @@ except ImportError as e:
     # Convenience functions
     def get(url, **kwargs):
         """Send GET request."""
-        return request('GET', url, **kwargs)
+        return request("GET", url, **kwargs)
 
     def post(url, data=None, json=None, **kwargs):
         """Send POST request."""
-        return request('POST', url, data=data, json=json, **kwargs)
+        return request("POST", url, data=data, json=json, **kwargs)
 
     def put(url, data=None, **kwargs):
         """Send PUT request."""
-        return request('PUT', url, data=data, **kwargs)
+        return request("PUT", url, data=data, **kwargs)
 
     def patch(url, data=None, **kwargs):
         """Send PATCH request."""
-        return request('PATCH', url, data=data, **kwargs)
+        return request("PATCH", url, data=data, **kwargs)
 
     def delete(url, **kwargs):
         """Send DELETE request."""
-        return request('DELETE', url, **kwargs)
+        return request("DELETE", url, **kwargs)
 
     def head(url, **kwargs):
         """Send HEAD request."""
-        return request('HEAD', url, **kwargs)
+        return request("HEAD", url, **kwargs)
 
     def options(url, **kwargs):
         """Send OPTIONS request."""
-        return request('OPTIONS', url, **kwargs)
+        return request("OPTIONS", url, **kwargs)
 
     # Create module-like object
     class FallbackRequests:
@@ -536,10 +542,7 @@ except ImportError as e:
         HTTPAdapter = HTTPAdapter
 
         # Auth
-        auth = type('auth', (), {
-            'HTTPBasicAuth': HTTPBasicAuth,
-            'HTTPDigestAuth': HTTPDigestAuth
-        })()
+        auth = type("auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth})()
 
         # Exceptions
         RequestException = RequestError
@@ -553,39 +556,35 @@ except ImportError as e:
         SSLError = SSLError
         ProxyError = ProxyError
 
-        exceptions = type('exceptions', (), {
-            'RequestException': RequestError,
-            'ConnectionError': ConnectionError,
-            'HTTPError': HTTPError,
-            'Timeout': Timeout,
-            'TooManyRedirects': TooManyRedirects,
-            'InvalidURL': InvalidURL,
-            'ConnectTimeout': ConnectTimeout,
-            'ReadTimeout': ReadTimeout,
-            'SSLError': SSLError,
-            'ProxyError': ProxyError
-        })()
+        exceptions = type(
+            "exceptions",
+            (),
+            {
+                "RequestException": RequestError,
+                "ConnectionError": ConnectionError,
+                "HTTPError": HTTPError,
+                "Timeout": Timeout,
+                "TooManyRedirects": TooManyRedirects,
+                "InvalidURL": InvalidURL,
+                "ConnectTimeout": ConnectTimeout,
+                "ReadTimeout": ReadTimeout,
+                "SSLError": SSLError,
+                "ProxyError": ProxyError,
+            },
+        )()
 
         # Structures
-        structures = type('structures', (), {
-            'CaseInsensitiveDict': CaseInsensitiveDict
-        })()
+        structures = type("structures", (), {"CaseInsensitiveDict": CaseInsensitiveDict})()
 
         # Adapters
-        adapters = type('adapters', (), {
-            'HTTPAdapter': HTTPAdapter
-        })()
+        adapters = type("adapters", (), {"HTTPAdapter": HTTPAdapter})()
 
         # Packages
-        packages = type('packages', (), {
-            'urllib3': type('urllib3', (), {
-                'util': type('util', (), {
-                    'retry': type('retry', (), {
-                        'Retry': Retry
-                    })()
-                })()
-            })()
-        })()
+        packages = type(
+            "packages",
+            (),
+            {"urllib3": type("urllib3", (), {"util": type("util", (), {"retry": type("retry", (), {"Retry": Retry})()})()})()},
+        )()
 
     requests = FallbackRequests()
 
@@ -593,20 +592,40 @@ except ImportError as e:
 # Export all requests objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_REQUESTS", "REQUESTS_VERSION",
+    "HAS_REQUESTS",
+    "REQUESTS_VERSION",
     # Main module
     "requests",
     # Functions
-    "request", "get", "post", "put", "patch", "delete", "head", "options",
+    "request",
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "head",
+    "options",
     # Classes
-    "Response", "Session", "PreparedRequest", "RequestsCookieJar",
-    "HTTPAdapter", "Retry",
+    "Response",
+    "Session",
+    "PreparedRequest",
+    "RequestsCookieJar",
+    "HTTPAdapter",
+    "Retry",
     # Auth
-    "HTTPBasicAuth", "HTTPDigestAuth",
+    "HTTPBasicAuth",
+    "HTTPDigestAuth",
     # Exceptions
-    "RequestError", "ConnectionError", "HTTPError", "TimeoutError",
-    "TooManyRedirectsError", "InvalidURLError", "ConnectTimeoutError", "ReadTimeoutError",
-    "SSLError", "ProxyError",
+    "RequestError",
+    "ConnectionError",
+    "HTTPError",
+    "TimeoutError",
+    "TooManyRedirectsError",
+    "InvalidURLError",
+    "ConnectTimeoutError",
+    "ReadTimeoutError",
+    "SSLError",
+    "ProxyError",
     # Structures
     "CaseInsensitiveDict",
 ]

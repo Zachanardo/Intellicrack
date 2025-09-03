@@ -308,9 +308,7 @@ class RuntimeMonitor:
                 return
 
             action_type = rule.get("action_type", "log")
-            logger.info(
-                f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}"
-            )
+            logger.info(f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}")
 
             # Execute the adaptation action
             if action_type == "adjust_threshold":
@@ -339,11 +337,7 @@ class RuntimeMonitor:
             return {"trend": "unknown", "data_points": 0}
 
         cutoff_time = datetime.now() - timedelta(minutes=window_minutes)
-        recent_data = [
-            (timestamp, value)
-            for timestamp, value in self.metric_history[metric_name]
-            if timestamp >= cutoff_time
-        ]
+        recent_data = [(timestamp, value) for timestamp, value in self.metric_history[metric_name] if timestamp >= cutoff_time]
 
         if len(recent_data) < 2:
             return {"trend": "insufficient_data", "data_points": len(recent_data)}
@@ -444,15 +438,11 @@ class DynamicHookManager:
         """
         self.active_hooks: dict[str, dict[str, Any]] = {}
         self.hook_registry: dict[str, Callable] = {}
-        self.hook_statistics: dict[str, dict[str, int]] = defaultdict(
-            lambda: {"calls": 0, "modifications": 0}
-        )
+        self.hook_statistics: dict[str, dict[str, int]] = defaultdict(lambda: {"calls": 0, "modifications": 0})
 
         logger.info("Dynamic hook manager initialized")
 
-    def register_hook_point(
-        self, hook_id: str, target_function: Callable, hook_type: str = "around"
-    ):
+    def register_hook_point(self, hook_id: str, target_function: Callable, hook_type: str = "around"):
         """Register a hook point."""
         self.hook_registry[hook_id] = {
             "target": target_function,
@@ -515,9 +505,7 @@ class DynamicHookManager:
 
         return False
 
-    def _create_modified_function(
-        self, original_function: Callable, modification: dict[str, Any]
-    ) -> Callable:
+    def _create_modified_function(self, original_function: Callable, modification: dict[str, Any]) -> Callable:
         """Create modified function based on modification specification."""
 
         def modified_wrapper(*args, **kwargs):
@@ -559,9 +547,7 @@ class DynamicHookManager:
 
         return modified_wrapper
 
-    def _apply_parameter_modification(
-        self, args: tuple, kwargs: dict, modification: dict[str, Any]
-    ) -> tuple:
+    def _apply_parameter_modification(self, args: tuple, kwargs: dict, modification: dict[str, Any]) -> tuple:
         """Apply parameter modification."""
         mod_type = modification.get("type", "")
 
@@ -605,9 +591,7 @@ class DynamicHookManager:
 
         return result
 
-    def _install_function_hook(
-        self, target_function: Callable, modified_function: Callable
-    ) -> bool:
+    def _install_function_hook(self, target_function: Callable, modified_function: Callable) -> bool:
         """Install function hook using monkey patching."""
         try:
             # This is a simplified implementation
@@ -629,9 +613,7 @@ class DynamicHookManager:
 
         return False
 
-    def _restore_original_function(
-        self, target_function: Callable, original_function: Callable
-    ) -> bool:
+    def _restore_original_function(self, target_function: Callable, original_function: Callable) -> bool:
         """Restore original function."""
         try:
             module = target_function.__module__
@@ -674,9 +656,7 @@ class LiveDebuggingSystem:
 
         logger.info("Live debugging system initialized")
 
-    def start_debug_session(
-        self, session_id: str, target_component: str, debug_level: str = "info"
-    ) -> bool:
+    def start_debug_session(self, session_id: str, target_component: str, debug_level: str = "info") -> bool:
         """Start a live debugging session."""
         if session_id in self.active_debug_sessions:
             logger.warning(f"Debug session {session_id} already active")
@@ -843,26 +823,27 @@ class LiveDebuggingSystem:
                 # Safe condition checking with restricted operations
                 try:
                     # Parse and validate the condition
-                    condition = watch['alert_condition'].strip()
-                    value = watch['last_value']
+                    condition = watch["alert_condition"].strip()
+                    value = watch["last_value"]
 
                     # Only allow safe comparison operators
                     safe_operators = {
-                        '==': lambda x, y: x == y,
-                        '!=': lambda x, y: x != y,
-                        '<': lambda x, y: x < y,
-                        '<=': lambda x, y: x <= y,
-                        '>': lambda x, y: x > y,
-                        '>=': lambda x, y: x >= y,
+                        "==": lambda x, y: x == y,
+                        "!=": lambda x, y: x != y,
+                        "<": lambda x, y: x < y,
+                        "<=": lambda x, y: x <= y,
+                        ">": lambda x, y: x > y,
+                        ">=": lambda x, y: x >= y,
                     }
 
                     result = False
                     for op in safe_operators:
                         if condition.startswith(op):
                             try:
-                                threshold_str = condition[len(op):].strip()
+                                threshold_str = condition[len(op) :].strip()
                                 # Use ast.literal_eval for safe parsing of the threshold value
                                 import ast
+
                                 threshold = ast.literal_eval(threshold_str)
                                 result = safe_operators[op](value, threshold)
                                 break
@@ -1042,9 +1023,7 @@ class RealTimeAdaptationEngine:
         relevant_metrics = condition_map.get(rule.condition, [])
 
         # Check if metric is relevant to this rule
-        metric_matches = any(
-            relevant_metric in metric.metric_name.lower() for relevant_metric in relevant_metrics
-        )
+        metric_matches = any(relevant_metric in metric.metric_name.lower() for relevant_metric in relevant_metrics)
 
         if not metric_matches:
             return False
@@ -1060,9 +1039,7 @@ class RealTimeAdaptationEngine:
         start_time = time.time()
 
         try:
-            logger.info(
-                f"Triggering adaptation: {rule.name} (trigger: {trigger_metric.metric_name}={trigger_metric.value})"
-            )
+            logger.info(f"Triggering adaptation: {rule.name} (trigger: {trigger_metric.metric_name}={trigger_metric.value})")
 
             # Execute adaptation action
             success = self._execute_adaptation_action(rule, trigger_metric, adaptation_id)
@@ -1140,9 +1117,7 @@ class RealTimeAdaptationEngine:
 
             logger.error(f"Adaptation failed: {rule.name} - {e}")
 
-    def _execute_adaptation_action(
-        self, rule: AdaptationRule, trigger_metric: RuntimeMetric, adaptation_id: str
-    ) -> bool:
+    def _execute_adaptation_action(self, rule: AdaptationRule, trigger_metric: RuntimeMetric, adaptation_id: str) -> bool:
         """Execute the adaptation action."""
         action = rule.action
 
@@ -1289,11 +1264,7 @@ class RealTimeAdaptationEngine:
         if trigger_metric.metric_name in current_aggregates:
             current_value = current_aggregates[trigger_metric.metric_name]["last"]
             impact["metric_change"] = current_value - trigger_metric.value
-            impact["metric_change_percent"] = (
-                impact["metric_change"] / trigger_metric.value * 100
-                if trigger_metric.value > 0
-                else 0
-            )
+            impact["metric_change_percent"] = impact["metric_change"] / trigger_metric.value * 100 if trigger_metric.value > 0 else 0
 
         # Add other relevant metrics
         impact["system_cpu"] = current_aggregates.get("system.cpu_usage", {}).get("last", 0)
@@ -1308,11 +1279,7 @@ class RealTimeAdaptationEngine:
             "adaptation_rules": len(self.adaptation_rules),
             "active_adaptations": len(self.active_adaptations),
             "recent_adaptations": len(
-                [
-                    event
-                    for event in self.adaptation_history
-                    if event.timestamp > datetime.now() - timedelta(hours=1)
-                ]
+                [event for event in self.adaptation_history if event.timestamp > datetime.now() - timedelta(hours=1)]
             ),
             "statistics": self.adaptation_stats.copy(),
             "rule_status": [
@@ -1322,9 +1289,7 @@ class RealTimeAdaptationEngine:
                     "enabled": rule.enabled,
                     "trigger_count": rule.trigger_count,
                     "success_count": rule.success_count,
-                    "last_triggered": rule.last_triggered.isoformat()
-                    if rule.last_triggered
-                    else None,
+                    "last_triggered": rule.last_triggered.isoformat() if rule.last_triggered else None,
                 }
                 for rule in self.adaptation_rules
             ],
@@ -1359,19 +1324,13 @@ class RealTimeAdaptationEngine:
         success_rate = self.adaptation_stats["successful_adaptations"] / max(1, total_adaptations)
 
         if success_rate < 0.7:
-            insights["recommendations"].append(
-                "Low adaptation success rate - review rule thresholds"
-            )
+            insights["recommendations"].append("Low adaptation success rate - review rule thresholds")
 
         if total_adaptations > 100:
-            insights["recommendations"].append(
-                "High adaptation frequency - consider optimizing triggers"
-            )
+            insights["recommendations"].append("High adaptation frequency - consider optimizing triggers")
 
         # Pattern analysis
-        recent_events = [
-            e for e in self.adaptation_history if e.timestamp > datetime.now() - timedelta(hours=24)
-        ]
+        recent_events = [e for e in self.adaptation_history if e.timestamp > datetime.now() - timedelta(hours=24)]
 
         if recent_events:
             trigger_patterns = defaultdict(int)

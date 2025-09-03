@@ -6,11 +6,13 @@ from intellicrack.utils.log_message import log_message
 
 logger = logging.getLogger(__name__)
 
+
 class CfgExplorerInner:
     def run_cfg_explorer_inner(self, app, *args, **kwargs):
         """Run CFG explorer for visual control flow analysis when explorer not available"""
         try:
             from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer
+
             return core_cfg_explorer(app, *args, **kwargs)
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
@@ -37,7 +39,6 @@ class CfgExplorerInner:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", explorer_error)
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
-
 
     def _initialize_cfg_explorer_config(self, app):
         """Initialize CFG explorer configuration"""
@@ -66,6 +67,7 @@ class CfgExplorerInner:
         """Set up NetworkX graph analysis integration"""
         try:
             import networkx
+
             app.cfg_analysis_tools["networkx_available"] = True
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] NetworkX available for graph analysis"))
@@ -157,7 +159,11 @@ class CfgExplorerInner:
                         node_sizes.append(max(size, 300))
 
                     networkx.draw_networkx_nodes(
-                        app.cfg_graph, pos, node_color=node_colors, node_size=node_sizes, alpha=0.8,
+                        app.cfg_graph,
+                        pos,
+                        node_color=node_colors,
+                        node_size=node_sizes,
+                        alpha=0.8,
                     )
 
                     # Draw edges with different styles
@@ -176,7 +182,12 @@ class CfgExplorerInner:
                             edge_styles.append("solid")
 
                     networkx.draw_networkx_edges(
-                        app.cfg_graph, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6,
+                        app.cfg_graph,
+                        pos,
+                        edge_color=edge_colors,
+                        arrows=True,
+                        arrowsize=20,
+                        alpha=0.6,
                     )
 
                     # Draw labels
@@ -212,6 +223,7 @@ class CfgExplorerInner:
         """Set up Radare2 binary analysis integration"""
         try:
             import r2pipe
+
             app.cfg_analysis_tools["radare2_available"] = True
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] Radare2 available for binary analysis"))
@@ -232,32 +244,38 @@ class CfgExplorerInner:
                     func_edges = []
 
                     for func in functions[:50]:
-                        func_nodes.append({
-                            "address": hex(func.get("offset", 0)),
-                            "name": func.get("name", "unknown"),
-                            "size": func.get("size", 0),
-                            "type": "function",
-                            "confidence": 0.9,
-                        })
+                        func_nodes.append(
+                            {
+                                "address": hex(func.get("offset", 0)),
+                                "name": func.get("name", "unknown"),
+                                "size": func.get("size", 0),
+                                "type": "function",
+                                "confidence": 0.9,
+                            }
+                        )
 
-                        calls = r2.cmdj(f'axfj @ {func.get("offset", 0)}')
+                        calls = r2.cmdj(f"axfj @ {func.get('offset', 0)}")
                         for call in calls:
                             if call.get("type") == "call":
-                                func_edges.append({
-                                    "from": hex(func.get("offset", 0)),
-                                    "to": hex(call.get("to", 0)),
-                                    "type": "call",
-                                })
+                                func_edges.append(
+                                    {
+                                        "from": hex(func.get("offset", 0)),
+                                        "to": hex(call.get("to", 0)),
+                                        "type": "call",
+                                    }
+                                )
 
                     license_strings = []
                     for s in strings:
                         string_val = s.get("string", "").lower()
                         if any(kw in string_val for kw in ["license", "key", "serial", "activation", "trial"]):
-                            license_strings.append({
-                                "address": hex(s.get("vaddr", 0)),
-                                "string": s.get("string", ""),
-                                "type": "license_related",
-                            })
+                            license_strings.append(
+                                {
+                                    "address": hex(s.get("vaddr", 0)),
+                                    "string": s.get("string", ""),
+                                    "type": "license_related",
+                                }
+                            )
 
                     result = {
                         "status": "success",
@@ -288,6 +306,7 @@ class CfgExplorerInner:
         """Set up Capstone disassembler integration"""
         try:
             from intellicrack.handlers.capstone_handler import capstone
+
             app.cfg_analysis_tools["capstone_available"] = True
 
             def disassemble_with_capstone(binary_data, offset=0, arch="x86", mode="64"):
@@ -323,11 +342,13 @@ class CfgExplorerInner:
                         if insn.mnemonic in ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]:
                             insn_dict["is_control_flow"] = True
                             if current_block:
-                                basic_blocks.append({
-                                    "start": current_block[0]["address"],
-                                    "end": insn_dict["address"],
-                                    "instructions": current_block + [insn_dict],
-                                })
+                                basic_blocks.append(
+                                    {
+                                        "start": current_block[0]["address"],
+                                        "end": insn_dict["address"],
+                                        "instructions": current_block + [insn_dict],
+                                    }
+                                )
                                 current_block = []
                         else:
                             current_block.append(insn_dict)
@@ -341,11 +362,13 @@ class CfgExplorerInner:
                             break
 
                     if current_block:
-                        basic_blocks.append({
-                            "start": current_block[0]["address"],
-                            "end": current_block[-1]["address"],
-                            "instructions": current_block,
-                        })
+                        basic_blocks.append(
+                            {
+                                "start": current_block[0]["address"],
+                                "end": current_block[-1]["address"],
+                                "instructions": current_block,
+                            }
+                        )
 
                     return {
                         "status": "success",
@@ -378,18 +401,49 @@ class CfgExplorerInner:
         if not hasattr(app, "license_patterns"):
             app.license_patterns = {
                 "keywords": [
-                    "license", "licens", "key", "serial", "activation", "activate",
-                    "register", "registr", "valid", "check", "verify", "auth",
-                    "trial", "demo", "expire", "expir", "cracked", "crack",
+                    "license",
+                    "licens",
+                    "key",
+                    "serial",
+                    "activation",
+                    "activate",
+                    "register",
+                    "registr",
+                    "valid",
+                    "check",
+                    "verify",
+                    "auth",
+                    "trial",
+                    "demo",
+                    "expire",
+                    "expir",
+                    "cracked",
+                    "crack",
                 ],
                 "api_calls": [
-                    "GetTickCount", "GetSystemTime", "GetLocalTime", "timeGetTime",
-                    "CreateMutex", "OpenMutex", "RegOpenKey", "RegQueryValue",
-                    "GetVolumeInformation", "GetUserName", "GetComputerName",
+                    "GetTickCount",
+                    "GetSystemTime",
+                    "GetLocalTime",
+                    "timeGetTime",
+                    "CreateMutex",
+                    "OpenMutex",
+                    "RegOpenKey",
+                    "RegQueryValue",
+                    "GetVolumeInformation",
+                    "GetUserName",
+                    "GetComputerName",
                 ],
                 "crypto_functions": [
-                    "CryptHashData", "CryptCreateHash", "MD5", "SHA1", "SHA256",
-                    "AES_Encrypt", "DES_Encrypt", "RSA_", "encrypt", "decrypt",
+                    "CryptHashData",
+                    "CryptCreateHash",
+                    "MD5",
+                    "SHA1",
+                    "SHA256",
+                    "AES_Encrypt",
+                    "DES_Encrypt",
+                    "RSA_",
+                    "encrypt",
+                    "decrypt",
                 ],
             }
 
@@ -407,21 +461,15 @@ class CfgExplorerInner:
                 app.cfg_detected_functions = function_patterns[:20]
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        log_message(f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions")
-                    )
+                    app.update_output.emit(log_message(f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions"))
 
                 license_hits = self._search_license_patterns(app, binary_data)
                 app.cfg_license_hits = license_hits[:10]
 
                 if license_hits and hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        log_message(f"[CFG Explorer] Found {len(license_hits)} license-related keywords")
-                    )
+                    app.update_output.emit(log_message(f"[CFG Explorer] Found {len(license_hits)} license-related keywords"))
                     for hit in license_hits[:3]:
-                        app.update_output.emit(
-                            log_message(f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}")
-                        )
+                        app.update_output.emit(log_message(f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}"))
 
             except (OSError, ValueError, RuntimeError) as cfg_error:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error)
@@ -453,15 +501,18 @@ class CfgExplorerInner:
         function_patterns = []
         if binary_format == "PE":
             from ..utils.analysis.pattern_search import find_function_prologues
+
             found_funcs = find_function_prologues(binary_data, base_address=0x400000)
 
             for func in found_funcs:
-                function_patterns.append({
-                    "address": hex(func["address"]),
-                    "pattern": func["pattern_hex"],
-                    "type": func["type"],
-                    "confidence": func["confidence"],
-                })
+                function_patterns.append(
+                    {
+                        "address": hex(func["address"]),
+                        "pattern": func["pattern_hex"],
+                        "type": func["type"],
+                        "confidence": func["confidence"],
+                    }
+                )
         return function_patterns
 
     def _search_license_patterns(self, app, binary_data):
@@ -470,11 +521,13 @@ class CfgExplorerInner:
         for keyword in app.license_patterns["keywords"]:
             if keyword.encode("ascii", errors="ignore") in binary_data:
                 pos = binary_data.find(keyword.encode("ascii", errors="ignore"))
-                license_hits.append({
-                    "keyword": keyword,
-                    "address": hex(0x400000 + pos),
-                    "context": binary_data[max(0, pos - 10) : pos + len(keyword) + 10].hex(),
-                })
+                license_hits.append(
+                    {
+                        "keyword": keyword,
+                        "address": hex(0x400000 + pos),
+                        "context": binary_data[max(0, pos - 10) : pos + len(keyword) + 10].hex(),
+                    }
+                )
         return license_hits
 
     def _initialize_graph_visualization_data(self, app):
@@ -496,13 +549,15 @@ class CfgExplorerInner:
             sample_edges = []
 
             for i, func in enumerate(app.cfg_detected_functions[:10]):
-                sample_nodes.append({
-                    "id": f"func_{i}",
-                    "label": f"Function at {func['address']}",
-                    "address": func["address"],
-                    "type": "function",
-                    "confidence": func.get("confidence", 0.5),
-                })
+                sample_nodes.append(
+                    {
+                        "id": f"func_{i}",
+                        "label": f"Function at {func['address']}",
+                        "address": func["address"],
+                        "type": "function",
+                        "confidence": func.get("confidence", 0.5),
+                    }
+                )
 
             sample_edges = self._perform_real_cfg_analysis(app, sample_nodes)
 
@@ -530,9 +585,7 @@ class CfgExplorerInner:
         if hasattr(app, "cfg_detected_functions"):
             app.analyze_results.append(f"\nDetected functions: {len(app.cfg_detected_functions)}")
             for func in app.cfg_detected_functions[:5]:
-                app.analyze_results.append(
-                    f"- Function at {func['address']} (confidence: {func['confidence']:.2f})"
-                )
+                app.analyze_results.append(f"- Function at {func['address']} (confidence: {func['confidence']:.2f})")
             if len(app.cfg_detected_functions) > 5:
                 app.analyze_results.append(f"- ... and {len(app.cfg_detected_functions) - 5} more")
 

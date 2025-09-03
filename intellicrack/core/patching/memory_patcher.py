@@ -37,6 +37,7 @@ logger = get_logger(__name__)
 
 def _create_dword_type(ctypes):
     """Create Windows DWORD type implementation."""
+
     class DWORD(ctypes.c_uint32):
         """Real Windows DWORD type implementation."""
 
@@ -56,7 +57,7 @@ def _create_dword_type(ctypes):
                 val = 0
             elif val > 0xFFFFFFFF:
                 val = 0xFFFFFFFF
-            super().__setattr__('value', val)
+            super().__setattr__("value", val)
 
         def __str__(self):
             return f"DWORD(0x{self.value:08X})"
@@ -69,6 +70,7 @@ def _create_dword_type(ctypes):
 
 def _create_bool_type(ctypes):
     """Create Windows BOOL type implementation."""
+
     class BOOL(ctypes.c_int32):
         """Real Windows BOOL type implementation."""
 
@@ -84,7 +86,7 @@ def _create_bool_type(ctypes):
         @value.setter
         def value(self, val):
             """Set the BOOL value."""
-            super().__setattr__('value', 1 if val else 0)
+            super().__setattr__("value", 1 if val else 0)
 
         def __bool__(self):
             return bool(super().value)
@@ -100,6 +102,7 @@ def _create_bool_type(ctypes):
 
 def _create_word_type(ctypes):
     """Create Windows WORD type implementation."""
+
     class WORD(ctypes.c_uint16):
         """Real Windows WORD type implementation."""
 
@@ -118,6 +121,7 @@ def _create_word_type(ctypes):
 
 def _create_byte_type(ctypes):
     """Create Windows BYTE type implementation."""
+
     class BYTE(ctypes.c_uint8):
         """Real Windows BYTE type implementation."""
 
@@ -136,6 +140,7 @@ def _create_byte_type(ctypes):
 
 def _create_handle_types(ctypes):
     """Create Windows HANDLE and related types."""
+
     class HANDLE(ctypes.c_void_p):
         """Real Windows HANDLE type implementation."""
 
@@ -188,6 +193,7 @@ def _create_handle_types(ctypes):
 
 def _create_pointer_types(ctypes):
     """Create Windows pointer types."""
+
     class LPVOID(ctypes.c_void_p):
         """Real Windows LPVOID type implementation."""
 
@@ -222,6 +228,7 @@ def _get_wintypes():
     """Get wintypes module or create production-ready replacement."""
     try:
         from ctypes import wintypes
+
         return wintypes, True
     except ImportError as e:
         logger.warning("Windows API not available, implementing comprehensive Windows types: %s", e)
@@ -478,9 +485,7 @@ if __name__ == "__main__":
     for _patch in app.potential_patches:
         patch_dict = {
             "address": _patch.get("address", 0),
-            "new_bytes": list(_patch.get("new_bytes", b""))
-            if isinstance(_patch.get("new_bytes"), bytes)
-            else _patch.get("new_bytes", []),
+            "new_bytes": list(_patch.get("new_bytes", b"")) if isinstance(_patch.get("new_bytes"), bytes) else _patch.get("new_bytes", []),
             "description": _patch.get("description", "Unknown patch"),
         }
         patches_formatted.append(patch_dict)
@@ -500,9 +505,7 @@ if __name__ == "__main__":
         if sys.platform != "win32":
             os.chmod(launcher_path, 0o700)  # Owner-only executable launcher
 
-        app.update_output.emit(
-            log_message(f"[Launcher] Successfully created launcher script: {launcher_path}")
-        )
+        app.update_output.emit(log_message(f"[Launcher] Successfully created launcher script: {launcher_path}"))
 
         # Show instructions
         msg = f"Launcher script created: {launcher_path}\\n\\n"
@@ -557,9 +560,7 @@ def setup_memory_patching(app: Any) -> None:
         app.update_output.emit(log_message("[Memory Patch] Detected: Code obfuscation"))
 
     if not protections:
-        app.update_output.emit(
-            log_message("[Memory Patch] No special protections detected. Static patching may work.")
-        )
+        app.update_output.emit(log_message("[Memory Patch] No special protections detected. Static patching may work."))
 
         response = QMessageBox.question(
             app,
@@ -573,11 +574,7 @@ def setup_memory_patching(app: Any) -> None:
         if response != QMessageBox.Yes:
             return
     else:
-        app.update_output.emit(
-            log_message(
-                f"[Memory Patch] Found {len(protections)} protection(s): {', '.join(protections)}"
-            )
-        )
+        app.update_output.emit(log_message(f"[Memory Patch] Found {len(protections)} protection(s): {', '.join(protections)}"))
 
         msg = "The following protections were detected:\\n\\n"
         for _p in protections:
@@ -598,14 +595,11 @@ def setup_memory_patching(app: Any) -> None:
 
     # Check if we have patches to apply
     if not hasattr(app, "potential_patches") or not app.potential_patches:
-        app.update_output.emit(
-            log_message("[Memory Patch] No patches available. Run analysis first.")
-        )
+        app.update_output.emit(log_message("[Memory Patch] No patches available. Run analysis first."))
         QMessageBox.warning(
             app,
             "No Patches",
-            "No patches are available to apply.\\n\\n"
-            "Please run analysis to identify patches first.",
+            "No patches are available to apply.\\n\\nPlease run analysis to identify patches first.",
         )
         return
 
@@ -618,9 +612,7 @@ def setup_memory_patching(app: Any) -> None:
         app.update_output.emit(log_message("[Memory Patch] Memory patching setup complete!"))
         app.update_output.emit(log_message(f"[Memory Patch] Launcher created: {launcher_path}"))
     else:
-        app.update_output.emit(
-            log_message("[Memory Patch] Failed to create memory patching launcher.")
-        )
+        app.update_output.emit(log_message("[Memory Patch] Failed to create memory patching launcher."))
 
 
 # Export functions
@@ -694,9 +686,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
 
         if success:
             logger.info(f"Successfully changed memory protection at {hex(address)}")
-            logger.info(
-                f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}"
-            )
+            logger.info(f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}")
             return True
         error = ctypes.get_last_error()
         logger.error(f"VirtualProtect failed with error code: {error}")
@@ -902,9 +892,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                     mem_file.write(data)
                     mem_file.flush()
 
-                logger.info(
-                    f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem"
-                )
+                logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem")
                 return True
 
             except OSError as e:
@@ -1110,9 +1098,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
 
         # Calculate the full range that needs to be handled
         end_address = address + size
-        logger.debug(
-            f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)"
-        )
+        logger.debug(f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)")
 
         # On Unix, guard pages are typically implemented differently
         # We'll check /proc/self/maps for memory regions
@@ -1139,9 +1125,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                             or (address <= start_addr < end_address)
                         ):
                             perms = parts[1]
-                            logger.info(
-                                f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}"
-                            )
+                            logger.info(f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}")
 
                             # Check if it's a guard page (no permissions)
                             if perms == "---p":
@@ -1159,9 +1143,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 aligned_end = (end_address + page_size - 1) & ~(page_size - 1)
                                 aligned_size = aligned_end - aligned_addr
 
-                                logger.debug(
-                                    f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)"
-                                )
+                                logger.debug(f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)")
 
                                 # Set read/write permissions
                                 PROT_READ = 0x1
@@ -1174,9 +1156,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 )
 
                                 if result == 0:
-                                    logger.info(
-                                        f"Successfully removed guard page protection for {aligned_size} bytes"
-                                    )
+                                    logger.info(f"Successfully removed guard page protection for {aligned_size} bytes")
                                     return True
                                 logger.error("Failed to change guard page permissions")
                                 return False

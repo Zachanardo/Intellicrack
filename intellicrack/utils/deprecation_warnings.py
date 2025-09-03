@@ -28,8 +28,7 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             warnings.warn(
-                f"{func.__name__} is deprecated and will be removed in version {version}. "
-                f"Use {replacement} instead.",
+                f"{func.__name__} is deprecated and will be removed in version {version}. Use {replacement} instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -200,8 +199,7 @@ def check_deprecated_import(module_name: str) -> None:
 
     if module_name in deprecated_modules:
         warnings.warn(
-            f"Import of '{module_name}' for configuration is deprecated. "
-            f"{deprecated_modules[module_name]}",
+            f"Import of '{module_name}' for configuration is deprecated. {deprecated_modules[module_name]}",
             DeprecationWarning,
             stacklevel=2,
         )

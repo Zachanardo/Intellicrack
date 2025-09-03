@@ -99,9 +99,7 @@ class UnifiedProtectionEngine:
         else:
             self.cache = get_analysis_cache()
 
-    def analyze(
-        self, file_path: str, deep_scan: bool = True, timeout: int = 60
-    ) -> UnifiedProtectionResult:
+    def analyze(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:
         """Perform unified protection analysis.
 
         Args:
@@ -202,9 +200,7 @@ class UnifiedProtectionEngine:
 
         return result
 
-    def _run_protection_analysis(
-        self, file_path: str, deep_scan: bool
-    ) -> AdvancedProtectionAnalysis | None:
+    def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
         """Run protection analysis."""
         try:
             scan_mode = ScanMode.DEEP if deep_scan else ScanMode.NORMAL
@@ -296,9 +292,7 @@ class UnifiedProtectionEngine:
             logger.error(f"Heuristic analysis error: {e}")
             return None
 
-    def _merge_protection_results(
-        self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis
-    ):
+    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis):
         """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
@@ -324,10 +318,7 @@ class UnifiedProtectionEngine:
                 result.has_anti_debug = True
             elif "vm" in detection.type.value.lower():
                 result.has_anti_vm = True
-            elif (
-                "license" in detection.type.value.lower()
-                or "dongle" in detection.type.value.lower()
-            ):
+            elif "license" in detection.type.value.lower() or "dongle" in detection.type.value.lower():
                 result.has_licensing = True
 
     def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]):
@@ -588,9 +579,7 @@ class UnifiedProtectionEngine:
             return {
                 "protected": bool(cached_result.protections),
                 "protection_count": len(cached_result.protections),
-                "main_protection": cached_result.protections[0]["name"]
-                if cached_result.protections
-                else None,
+                "main_protection": cached_result.protections[0]["name"] if cached_result.protections else None,
                 "confidence": cached_result.confidence_score,
             }
 
@@ -619,9 +608,7 @@ class UnifiedProtectionEngine:
             "confidence": 0.0,
         }
 
-    def analyze_file(
-        self, file_path: str, deep_scan: bool = True, timeout: int = 60
-    ) -> UnifiedProtectionResult:
+    def analyze_file(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:
         """Backward-compatible alias for analyze method.
 
         Args:

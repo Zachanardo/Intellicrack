@@ -113,9 +113,7 @@ class ProtectionAnalysisWorkflow:
         # Supplemental analysis engines
         self.yara_engine = get_yara_engine() if get_yara_engine else None
         self.firmware_analyzer = get_firmware_analyzer() if get_firmware_analyzer else None
-        self.memory_forensics = (
-            get_memory_forensics_engine() if get_memory_forensics_engine else None
-        )
+        self.memory_forensics = get_memory_forensics_engine() if get_memory_forensics_engine else None
 
         # Workflow callbacks
         self.progress_callback: Callable[[str, int], None] | None = None
@@ -146,9 +144,7 @@ class ProtectionAnalysisWorkflow:
 
             if not quick_summary["protected"]:
                 result.success = True
-                result.recommendations = [
-                    "No protections detected. The binary appears to be unprotected."
-                ]
+                result.recommendations = ["No protections detected. The binary appears to be unprotected."]
                 result.confidence = 100.0
                 return result
 
@@ -218,9 +214,7 @@ class ProtectionAnalysisWorkflow:
                         "scan_time": yara_result.scan_time,
                         "supplemental_data": yara_supplemental,
                     }
-                    logger.debug(
-                        f"YARA analysis complete: {len(yara_result.matches)} matches found"
-                    )
+                    logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
                 else:
                     logger.warning(f"YARA analysis failed: {yara_result.error}")
 
@@ -238,9 +232,7 @@ class ProtectionAnalysisWorkflow:
                     extraction_depth=1,
                 )
                 if not firmware_result.error:
-                    firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(
-                        firmware_result
-                    )
+                    firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(firmware_result)
                     supplemental_data["firmware_analysis"] = {
                         "signatures_found": len(firmware_result.signatures),
                         "security_findings": len(firmware_result.security_findings),
@@ -248,9 +240,7 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": firmware_result.analysis_time,
                         "supplemental_data": firmware_supplemental,
                     }
-                    logger.debug(
-                        f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found"
-                    )
+                    logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
                 else:
                     logger.warning(f"Binwalk analysis failed: {firmware_result.error}")
 
@@ -259,21 +249,14 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # Volatility3 memory forensics (for memory dumps)
-            if (
-                self.memory_forensics
-                and is_volatility3_available
-                and is_volatility3_available()
-                and self._is_memory_dump(file_path)
-            ):
+            if self.memory_forensics and is_volatility3_available and is_volatility3_available() and self._is_memory_dump(file_path):
                 logger.debug("Running Volatility3 memory forensics...")
                 memory_result = self.memory_forensics.analyze_memory_dump(
                     dump_path=file_path,
                     deep_analysis=False,  # Quick analysis for workflow performance
                 )
                 if not memory_result.error:
-                    memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(
-                        memory_result
-                    )
+                    memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(memory_result)
                     supplemental_data["memory_analysis"] = {
                         "artifacts_found": sum(memory_result.artifacts_found.values()),
                         "analysis_profile": memory_result.analysis_profile,
@@ -281,9 +264,7 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": memory_result.analysis_time,
                         "supplemental_data": memory_supplemental,
                     }
-                    logger.debug(
-                        f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found"
-                    )
+                    logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
                 else:
                     logger.warning(f"Volatility3 analysis failed: {memory_result.error}")
 
@@ -377,9 +358,7 @@ class ProtectionAnalysisWorkflow:
 
         # Supplemental analysis recommendations
         if hasattr(analysis, "supplemental_data") and analysis.supplemental_data:
-            supplemental_recs = self._generate_supplemental_recommendations(
-                analysis.supplemental_data
-            )
+            supplemental_recs = self._generate_supplemental_recommendations(analysis.supplemental_data)
             recommendations.extend(supplemental_recs)
 
         # AI assistance
@@ -390,9 +369,7 @@ class ProtectionAnalysisWorkflow:
 
         return recommendations
 
-    def _generate_supplemental_recommendations(
-        self, supplemental_data: dict[str, Any]
-    ) -> list[str]:
+    def _generate_supplemental_recommendations(self, supplemental_data: dict[str, Any]) -> list[str]:
         """Generate recommendations based on supplemental analysis results.
 
         Args:
@@ -491,9 +468,7 @@ class ProtectionAnalysisWorkflow:
 
         return recommendations
 
-    def _generate_bypass_scripts(
-        self, analysis: UnifiedProtectionResult, target_protections: list[str] | None = None
-    ) -> dict[str, str]:
+    def _generate_bypass_scripts(self, analysis: UnifiedProtectionResult, target_protections: list[str] | None = None) -> dict[str, str]:
         """Generate bypass scripts for detected protections."""
         scripts = {}
 
@@ -513,9 +488,7 @@ class ProtectionAnalysisWorkflow:
 
         return scripts
 
-    def _generate_single_bypass_script(
-        self, analysis: UnifiedProtectionResult, protection: dict[str, Any]
-    ) -> str | None:
+    def _generate_single_bypass_script(self, analysis: UnifiedProtectionResult, protection: dict[str, Any]) -> str | None:
         """Generate bypass script for a single protection."""
         context = {
             "file_path": analysis.file_path,
@@ -552,20 +525,20 @@ class ProtectionAnalysisWorkflow:
         """Build prompt for AI bypass script generation."""
         return f"""Generate a Frida script to bypass the following protection:
 
-Protection: {context['protection_name']}
-Type: {context['protection_type']}
-File Type: {context['file_type']}
-Architecture: {context['architecture']}
+Protection: {context["protection_name"]}
+Type: {context["protection_type"]}
+File Type: {context["file_type"]}
+Architecture: {context["architecture"]}
 
 Bypass recommendations:
-{chr(10).join('- ' + rec for rec in context.get('bypass_recommendations', ['No specific recommendations']))}
+{chr(10).join("- " + rec for rec in context.get("bypass_recommendations", ["No specific recommendations"]))}
 
 Generate a practical, working Frida script that implements these bypass techniques.
 Include comments explaining each bypass method used."""
 
     def _generate_unpacking_script(self, context: dict[str, Any]) -> str:
         """Generate unpacking script."""
-        return f"""// Unpacking script for {context['protection_name']}
+        return f"""// Unpacking script for {context["protection_name"]}
 // Generated by Intellicrack
 
 // Hook common unpacking points
@@ -611,12 +584,12 @@ var signatures = [
     {{pattern: "EB 02 ?? ?? E8", name: "Jump obfuscation"}}
 ];
 
-console.log("[*] Unpacking monitor active for {context['protection_name']}");
+console.log("[*] Unpacking monitor active for {context["protection_name"]}");
 """
 
     def _generate_antidebug_script(self, context: dict[str, Any]) -> str:
         """Generate anti-debug bypass script."""
-        return f"""// Anti-debug bypass script for {context['protection_name']}
+        return f"""// Anti-debug bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
 // Bypass IsDebuggerPresent
@@ -662,12 +635,12 @@ var beingDebuggedOffset = Process.pointerSize === 8 ? 0x2 : 0x2;
 peb.add(beingDebuggedOffset).writeU8(0);
 console.log("[*] PEB.BeingDebugged patched");
 
-console.log("[+] Anti-debug bypasses active for {context['protection_name']}");
+console.log("[+] Anti-debug bypasses active for {context["protection_name"]}");
 """
 
     def _generate_license_bypass_script(self, context: dict[str, Any]) -> str:
         """Generate license bypass script."""
-        return f"""// License bypass script for {context['protection_name']}
+        return f"""// License bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
 // Common license check patterns
@@ -729,16 +702,16 @@ if (advapi32) {{
     }}
 }}
 
-console.log("[+] License bypass hooks active for {context['protection_name']}");
+console.log("[+] License bypass hooks active for {context["protection_name"]}");
 """
 
     def _generate_generic_bypass_script(self, context: dict[str, Any]) -> str:
         """Generate generic bypass script."""
-        return f"""// Generic bypass script for {context['protection_name']}
+        return f"""// Generic bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
 // Monitor for protection checks
-var protectionName = "{context['protection_name']}";
+var protectionName = "{context["protection_name"]}";
 var targetModule = Process.enumerateModules()[0];
 
 console.log("[*] Monitoring for " + protectionName + " protection checks");
@@ -864,11 +837,11 @@ def generate_protection_report(file_path: str) -> str:
     report = f"""# Protection Analysis Report
 
 **File:** {os.path.basename(file_path)}
-**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Date:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Summary
 
-- **Protected:** {'Yes' if result.protection_analysis and result.protection_analysis.protections else 'No'}
+- **Protected:** {"Yes" if result.protection_analysis and result.protection_analysis.protections else "No"}
 - **Confidence:** {result.confidence:.0f}%
 
 """

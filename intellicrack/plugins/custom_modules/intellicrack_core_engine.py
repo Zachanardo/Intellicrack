@@ -357,9 +357,7 @@ class LoggingManager:
             },
         )
 
-    def log_plugin_operation(
-        self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None
-    ):
+    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None):
         """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
@@ -878,9 +876,7 @@ class GhidraPlugin(AbstractPlugin):
 
             raise
 
-    async def _execute_ghidra_script(
-        self, binary_path: str, operation: str, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _execute_ghidra_script(self, binary_path: str, operation: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Execute Ghidra script in subprocess."""
         ghidra_path = self.config.get("ghidra_path")
         java_path = self.config.get("java_path", "java")
@@ -1045,6 +1041,7 @@ class FridaPlugin(AbstractPlugin):
         """Initialize Frida plugin."""
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+
             _ = HAS_FRIDA  # Verify frida availability flag is imported for initialization checks
 
             self.status = PluginStatus.INITIALIZING
@@ -1160,9 +1157,7 @@ class FridaPlugin(AbstractPlugin):
 
             raise
 
-    async def _attach_to_process(
-        self, target: str | int, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _attach_to_process(self, target: str | int, parameters: dict[str, Any]) -> dict[str, Any]:
         """Attach to target process."""
         try:
             from intellicrack.handlers.frida_handler import frida
@@ -1584,9 +1579,7 @@ class EventBus:
             self.subscribers[event_type] = []
 
         self.subscribers[event_type].append(handler)
-        self.stats["subscribers_count"] = sum(
-            len(handlers) for handlers in self.subscribers.values()
-        )
+        self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
 
         if self.logger:
             self.logger.debug(f"New subscriber for event type: {event_type}")
@@ -1599,9 +1592,7 @@ class EventBus:
             if not self.subscribers[event_type]:
                 del self.subscribers[event_type]
 
-            self.stats["subscribers_count"] = sum(
-                len(handlers) for handlers in self.subscribers.values()
-            )
+            self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
 
             if self.logger:
                 self.logger.debug(f"Unsubscribed from event type: {event_type}")
@@ -1929,9 +1920,7 @@ class PluginManager:
                 line = line.strip()
                 if line.startswith("//") or line.startswith("*"):
                     if "description:" in line.lower():
-                        metadata["description"] = (
-                            line.split("description:")[-1].strip().strip("\"'")
-                        )
+                        metadata["description"] = line.split("description:")[-1].strip().strip("\"'")
                     elif "author:" in line.lower():
                         metadata["author"] = line.split("author:")[-1].strip().strip("\"'")
                     elif "version:" in line.lower():
@@ -2068,9 +2057,7 @@ class PluginManager:
             self.logger.error(f"Failed to load plugin {plugin_name}: {e}")
             return False
 
-    async def _create_plugin_instance(
-        self, plugin_name: str, metadata: PluginMetadata
-    ) -> AbstractPlugin | None:
+    async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
         """Create plugin instance based on type."""
         try:
             # Find plugin file
@@ -2288,36 +2275,16 @@ class PluginManager:
 
     def get_plugin_stats(self) -> dict[str, Any]:
         """Get plugin statistics."""
-        active_plugins = [
-            name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE
-        ]
+        active_plugins = [name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE]
 
         return {
             **self.stats,
             "total_discovered": len(self.plugin_metadata),
             "active_plugins": active_plugins,
             "plugin_types": {
-                "ghidra": len(
-                    [
-                        p
-                        for p in self.plugin_metadata.values()
-                        if p.component_type == ComponentType.GHIDRA_SCRIPT
-                    ]
-                ),
-                "frida": len(
-                    [
-                        p
-                        for p in self.plugin_metadata.values()
-                        if p.component_type == ComponentType.FRIDA_SCRIPT
-                    ]
-                ),
-                "python": len(
-                    [
-                        p
-                        for p in self.plugin_metadata.values()
-                        if p.component_type == ComponentType.CUSTOM_MODULE
-                    ]
-                ),
+                "ghidra": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.GHIDRA_SCRIPT]),
+                "frida": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.FRIDA_SCRIPT]),
+                "python": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.CUSTOM_MODULE]),
             },
         }
 
@@ -2603,9 +2570,7 @@ class WorkflowEngine:
             # Find steps ready to execute
             ready_steps = []
             for step in workflow.steps:
-                if step.step_id not in executed_steps and all(
-                    dep in executed_steps for dep in step.dependencies
-                ):
+                if step.step_id not in executed_steps and all(dep in executed_steps for dep in step.dependencies):
                     # Check condition
                     if step.condition and not self._evaluate_condition(step.condition, context):
                         executed_steps.add(step.step_id)  # Mark as done (skipped)
@@ -2639,9 +2604,7 @@ class WorkflowEngine:
                         raise
 
         # Log completion of all tasks
-        self.logger.info(
-            f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}"
-        )
+        self.logger.info(f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}")
 
         # Clean up any remaining tasks
         for task in tasks:
@@ -2672,9 +2635,7 @@ class WorkflowEngine:
             }
 
             # Log evaluation context for debugging
-            self.logger.debug(
-                f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}"
-            )
+            self.logger.debug(f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}")
 
             # Simple condition evaluation (could be enhanced with proper parser)
             # For now, support basic property checks
@@ -2770,13 +2731,8 @@ class WorkflowEngine:
                     "completed_steps": workflow_record["completed_steps"],
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
-                    "end_time": workflow_record["end_time"].isoformat()
-                    if workflow_record["end_time"]
-                    else None,
-                    "duration": (
-                        (workflow_record["end_time"] or datetime.utcnow())
-                        - workflow_record["start_time"]
-                    ).total_seconds(),
+                    "end_time": workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None,
+                    "duration": ((workflow_record["end_time"] or datetime.utcnow()) - workflow_record["start_time"]).total_seconds(),
                 }
 
         return None
@@ -3100,9 +3056,7 @@ class AnalysisCoordinator:
                         data={
                             "analysis_id": analysis_id,
                             "results": results,
-                            "duration": (
-                                context["end_time"] - context["start_time"]
-                            ).total_seconds(),
+                            "duration": (context["end_time"] - context["start_time"]).total_seconds(),
                         },
                     )
                 )
@@ -3148,9 +3102,7 @@ class AnalysisCoordinator:
                 "status": context["status"],
                 "progress": context["progress"],
                 "start_time": context["start_time"].isoformat(),
-                "end_time": context.get("end_time", {}).isoformat()
-                if context.get("end_time")
-                else None,
+                "end_time": context.get("end_time", {}).isoformat() if context.get("end_time") else None,
                 "workflow_execution_id": context.get("workflow_execution_id"),
                 "results": context.get("results", {}),
                 "error": context.get("error"),
@@ -3160,9 +3112,7 @@ class AnalysisCoordinator:
 
     def get_active_analyses(self) -> list[dict[str, Any]]:
         """Get all active analyses."""
-        return [
-            self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses.keys()
-        ]
+        return [self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses.keys()]
 
 
 class ResourceManager:
@@ -3334,9 +3284,7 @@ class ResourceManager:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.thread_pool, func, *args, **kwargs)
 
-    async def start_external_process(
-        self, cmd: list[str], cwd: str = None, timeout: int = 300
-    ) -> subprocess.Popen:
+    async def start_external_process(self, cmd: list[str], cwd: str = None, timeout: int = 300) -> subprocess.Popen:
         """Start external process with tracking."""
         try:
             process = await asyncio.create_subprocess_exec(
@@ -3668,9 +3616,7 @@ class IntellicrackcoreEngine:
         return {
             "engine_status": "running" if self.running else "stopped",
             "startup_time": self.startup_time.isoformat() if self.startup_time else None,
-            "uptime": (datetime.utcnow() - self.startup_time).total_seconds()
-            if self.startup_time
-            else 0,
+            "uptime": (datetime.utcnow() - self.startup_time).total_seconds() if self.startup_time else 0,
             "plugin_stats": self.plugin_manager.get_plugin_stats(),
             "resource_stats": self.resource_manager.get_resource_stats(),
             "event_stats": self.event_bus.get_stats(),

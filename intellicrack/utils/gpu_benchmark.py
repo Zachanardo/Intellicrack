@@ -109,8 +109,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
 
             if high_entropy_blocks and hasattr(app, "update_output"):
                 app.update_output.emit(
-                    f"[GPU] Found {len(high_entropy_blocks)} high-entropy blocks "
-                    "(likely encrypted/compressed)",
+                    f"[GPU] Found {len(high_entropy_blocks)} high-entropy blocks (likely encrypted/compressed)",
                 )
 
         # Perform hash computation
@@ -147,12 +146,11 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(
-                    f"[GPU] Total GPU time: {total_gpu_time:.3f}s, "
-                    f"Estimated speedup: {speedup:.1f}x",
+                    f"[GPU] Total GPU time: {total_gpu_time:.3f}s, Estimated speedup: {speedup:.1f}x",
                 )
                 app.update_output.emit(
                     f"[GPU] Processed {results['performance']['data_processed_mb']:.1f} MB "
-                    f"at {results['performance']['data_processed_mb']/total_gpu_time:.1f} MB/s",
+                    f"at {results['performance']['data_processed_mb'] / total_gpu_time:.1f} MB/s",
                 )
 
     except ImportError as e:
@@ -242,9 +240,7 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             numba_cuda.synchronize()
             search_time = time.time() - search_start
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-            framework_results["results_found"] = (
-                framework_results.get("results_found", 0) + result_count
-            )
+            framework_results["results_found"] = framework_results.get("results_found", 0) + result_count
 
     except Exception as e:
         logger.error(f"Numba benchmark failed: {e}")

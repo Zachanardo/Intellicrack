@@ -161,42 +161,42 @@ def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[st
     # Check for common file signatures (magic bytes)
     if size >= 4:
         # PE executable
-        if data[:2] == b'MZ':
+        if data[:2] == b"MZ":
             hints.append("PE executable (MZ header)")
         # ELF
-        elif data[:4] == b'\x7fELF':
+        elif data[:4] == b"\x7fELF":
             hints.append("ELF executable")
         # PDF
-        elif data[:4] == b'%PDF':
+        elif data[:4] == b"%PDF":
             hints.append("PDF document")
         # ZIP/JAR/Office
-        elif data[:4] == b'PK\x03\x04':
+        elif data[:4] == b"PK\x03\x04":
             hints.append("ZIP archive (or Office/JAR file)")
         # PNG
-        elif data[:8] == b'\x89PNG\r\n\x1a\n':
+        elif data[:8] == b"\x89PNG\r\n\x1a\n":
             hints.append("PNG image")
         # JPEG
-        elif data[:3] == b'\xff\xd8\xff':
+        elif data[:3] == b"\xff\xd8\xff":
             hints.append("JPEG image")
         # GIF
-        elif data[:6] in (b'GIF87a', b'GIF89a'):
+        elif data[:6] in (b"GIF87a", b"GIF89a"):
             hints.append("GIF image")
         # RAR
-        elif data[:7] == b'Rar!\x1a\x07\x00':
+        elif data[:7] == b"Rar!\x1a\x07\x00":
             hints.append("RAR archive")
         # 7z
-        elif data[:6] == b'7z\xbc\xaf\x27\x1c':
+        elif data[:6] == b"7z\xbc\xaf\x27\x1c":
             hints.append("7-Zip archive")
 
     # Check for UTF-8 BOM
-    if size >= 3 and data[:3] == b'\xef\xbb\xbf':
+    if size >= 3 and data[:3] == b"\xef\xbb\xbf":
         hints.append("UTF-8 with BOM")
 
     # Check for UTF-16 BOM
     if size >= 2:
-        if data[:2] == b'\xff\xfe':
+        if data[:2] == b"\xff\xfe":
             hints.append("UTF-16 LE with BOM")
-        elif data[:2] == b'\xfe\xff':
+        elif data[:2] == b"\xfe\xff":
             hints.append("UTF-16 BE with BOM")
 
     return hints
@@ -232,7 +232,7 @@ def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
         if end - start == 1:
             label = f"{start:02X}"
         else:
-            label = f"{start:02X}-{end-1:02X}"
+            label = f"{start:02X}-{end - 1:02X}"
 
         histogram.append((label, count))
 
@@ -260,7 +260,7 @@ def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> L
     # Look for patterns of various lengths
     for pattern_len in range(min_length, min(data_len // 2, 32)):
         for i in range(data_len - pattern_len + 1):
-            pattern = data[i:i + pattern_len]
+            pattern = data[i : i + pattern_len]
             # Only count patterns that appear more than once
             if data.count(pattern) > 1:
                 patterns[pattern] = data.count(pattern)

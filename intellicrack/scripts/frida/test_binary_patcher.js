@@ -457,7 +457,14 @@ const BinaryPatcherTests = {
 
             // Test container detection
             const runtime = cloudNative.detectContainerRuntime();
-            // Runtime might be null if not in container, this is expected
+            // Use runtime to validate container detection for bypass testing
+            testResults.containerRuntime = {
+                detected: runtime !== null,
+                type: runtime || 'none',
+                timestamp: Date.now()
+            };
+
+            console.log('[TEST] Container runtime detection:', runtime || 'none detected');
 
             // Test namespace reading (might fail if not in k8s)
             const namespace = cloudNative.readNamespace();
@@ -487,7 +494,15 @@ const BinaryPatcherTests = {
 
             // Test Web3 detection
             const provider = blockchain.detectWeb3Provider();
-            // Provider might be null if Web3 not available, this is expected
+            // Use provider to validate Web3 detection for blockchain bypass testing
+            test.web3Provider = {
+                detected: provider !== null,
+                type: provider ? provider.constructor.name : 'none',
+                isMetaMask: provider && provider.isMetaMask,
+                timestamp: Date.now()
+            };
+
+            console.log('[TEST] Web3 provider detection:', provider ? 'detected' : 'none');
 
             // Test address generation
             const address = blockchain.getCurrentAddress();

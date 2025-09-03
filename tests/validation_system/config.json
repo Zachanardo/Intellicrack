@@ -1,30 +1,36 @@
 {
   "global_settings": {
-    "qemu_snapshot_name": "clean_state_validation",
+    "qemu_snapshot_name": "clean_win11_snapshot",
     "statistical_confidence_level": 0.99,
     "minimum_test_runs": 10,
     "required_success_rate": 0.95,
-    "validation_mode": "production",
-    "allow_placeholders": false,
-    "enforce_real_binaries": true,
-    "timestamp": "2024-01-26T00:00:00Z"
+    "validation_timeout_seconds": 3600,
+    "parallel_test_threads": 4,
+    "report_format": "json",
+    "enable_verbose_logging": true,
+    "preserve_evidence_on_failure": true
   },
   "security_settings": {
-    "gpg_key_id": "validation_system_key",
+    "gpg_key_id": "VALIDATION_SYSTEM_GPG_KEY",
     "allowed_binary_hashes": [],
     "network_isolation": true,
     "process_monitoring": {
       "enabled": true,
       "detect_debuggers": true,
       "detect_vm_escapes": true,
-      "detect_tampering": true
+      "detect_suspicious_apis": true,
+      "log_all_process_creation": true
     },
     "forensic_collection_level": "comprehensive",
-    "evidence_signing": true,
-    "tamper_detection": {
-      "check_binary_integrity": true,
-      "check_memory_integrity": true,
-      "check_process_injection": true
+    "evidence_signing": {
+      "enabled": true,
+      "algorithm": "sha256-rsa",
+      "timestamp_authority": "http://timestamp.digicert.com"
+    },
+    "anti_tampering": {
+      "binary_integrity_checks": true,
+      "memory_integrity_monitoring": true,
+      "code_injection_detection": true
     }
   },
   "test_cases": [
@@ -33,34 +39,44 @@
       "enabled": true,
       "binary_path": "C:\\Intellicrack\\tests\\validation_system\\commercial_binaries\\Adobe_Creative_Cloud_2024\\Adobe Creative Cloud.exe",
       "binary_sha256": null,
-      "ground_truth_profile": "C:\\Intellicrack\\tests\\validation_system\\certified_ground_truth\\Adobe_Creative_Cloud_2024.json",
+      "ground_truth_profile": "certified_ground_truth/adobe_cc_2024.json",
       "validation_steps": {
         "detection": {
-          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
-          "cross_validation_sources": ["peid", "die", "yara"],
-          "minimum_confidence_score": 0.8
+          "required_evidence": [
+            "memory_addresses",
+            "disassembly",
+            "imports",
+            "signatures"
+          ],
+          "cross_validation_sources": [
+            "peid",
+            "die",
+            "protectionid",
+            "pesieve"
+          ],
+          "minimum_confidence_score": 0.85
         },
         "exploitation": {
           "negative_control": {
             "verify_protection_active": true,
-            "test_without_bypass": true,
-            "expected_failure": true
+            "test_with_invalid_license": true,
+            "expected_failure_behavior": "license_check_fail"
           },
           "functional_verification": {
-            "test_core_features": true,
-            "verify_no_crashes": true,
-            "check_performance": true
+            "core_features_test": true,
+            "premium_features_test": true,
+            "persistence_test": true
           },
           "challenge_generation": {
-            "random_inputs": true,
+            "random_input_count": 100,
             "time_based_challenges": true,
-            "cryptographic_nonces": true
+            "cryptographic_seed": true
           },
           "forensic_verification": {
-            "capture_memory_dump": true,
-            "monitor_network_traffic": true,
-            "track_registry_changes": true,
-            "record_api_calls": true
+            "memory_dump": true,
+            "network_capture": true,
+            "registry_snapshot": true,
+            "api_trace": true
           }
         }
       }
@@ -70,164 +86,48 @@
       "enabled": true,
       "binary_path": "C:\\Intellicrack\\tests\\validation_system\\commercial_binaries\\AutoCAD_2024\\acad.exe",
       "binary_sha256": null,
-      "ground_truth_profile": "C:\\Intellicrack\\tests\\validation_system\\certified_ground_truth\\AutoCAD_2024.json",
+      "ground_truth_profile": "certified_ground_truth/autocad_2024.json",
       "validation_steps": {
         "detection": {
-          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
-          "cross_validation_sources": ["peid", "die", "yara"],
-          "minimum_confidence_score": 0.8
+          "required_evidence": [
+            "memory_addresses",
+            "disassembly",
+            "imports",
+            "signatures",
+            "flexlm_artifacts"
+          ],
+          "cross_validation_sources": [
+            "peid",
+            "die",
+            "protectionid",
+            "ida_pro"
+          ],
+          "minimum_confidence_score": 0.90
         },
         "exploitation": {
           "negative_control": {
             "verify_protection_active": true,
-            "test_without_bypass": true,
-            "expected_failure": true
+            "test_with_invalid_license": true,
+            "expected_failure_behavior": "flexlm_error"
           },
           "functional_verification": {
-            "test_core_features": true,
-            "verify_no_crashes": true,
-            "check_performance": true
+            "core_features_test": true,
+            "drawing_operations": true,
+            "license_server_bypass": true
           },
           "challenge_generation": {
-            "random_inputs": true,
+            "random_input_count": 150,
             "time_based_challenges": true,
-            "cryptographic_nonces": true
+            "hardware_id_rotation": true
           },
           "forensic_verification": {
-            "capture_memory_dump": true,
-            "monitor_network_traffic": true,
-            "track_registry_changes": true,
-            "record_api_calls": true
-          }
-        }
-      }
-    },
-    {
-      "name": "MATLAB R2024a",
-      "enabled": true,
-      "binary_path": "C:\\Intellicrack\\tests\\validation_system\\commercial_binaries\\MATLAB_R2024a\\matlab.exe",
-      "binary_sha256": null,
-      "ground_truth_profile": "C:\\Intellicrack\\tests\\validation_system\\certified_ground_truth\\MATLAB_R2024a.json",
-      "validation_steps": {
-        "detection": {
-          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
-          "cross_validation_sources": ["peid", "die", "yara"],
-          "minimum_confidence_score": 0.8
-        },
-        "exploitation": {
-          "negative_control": {
-            "verify_protection_active": true,
-            "test_without_bypass": true,
-            "expected_failure": true
-          },
-          "functional_verification": {
-            "test_core_features": true,
-            "verify_no_crashes": true,
-            "check_performance": true
-          },
-          "challenge_generation": {
-            "random_inputs": true,
-            "time_based_challenges": true,
-            "cryptographic_nonces": true
-          },
-          "forensic_verification": {
-            "capture_memory_dump": true,
-            "monitor_network_traffic": true,
-            "track_registry_changes": true,
-            "record_api_calls": true
-          }
-        }
-      }
-    },
-    {
-      "name": "SolidWorks 2024",
-      "enabled": true,
-      "binary_path": "C:\\Intellicrack\\tests\\validation_system\\commercial_binaries\\SolidWorks_2024\\SLDWORKS.exe",
-      "binary_sha256": null,
-      "ground_truth_profile": "C:\\Intellicrack\\tests\\validation_system\\certified_ground_truth\\SolidWorks_2024.json",
-      "validation_steps": {
-        "detection": {
-          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
-          "cross_validation_sources": ["peid", "die", "yara"],
-          "minimum_confidence_score": 0.8
-        },
-        "exploitation": {
-          "negative_control": {
-            "verify_protection_active": true,
-            "test_without_bypass": true,
-            "expected_failure": true
-          },
-          "functional_verification": {
-            "test_core_features": true,
-            "verify_no_crashes": true,
-            "check_performance": true
-          },
-          "challenge_generation": {
-            "random_inputs": true,
-            "time_based_challenges": true,
-            "cryptographic_nonces": true
-          },
-          "forensic_verification": {
-            "capture_memory_dump": true,
-            "monitor_network_traffic": true,
-            "track_registry_changes": true,
-            "record_api_calls": true
-          }
-        }
-      }
-    },
-    {
-      "name": "VMware Workstation Pro",
-      "enabled": true,
-      "binary_path": "C:\\Intellicrack\\tests\\validation_system\\commercial_binaries\\VMware_Workstation_Pro\\vmware.exe",
-      "binary_sha256": null,
-      "ground_truth_profile": "C:\\Intellicrack\\tests\\validation_system\\certified_ground_truth\\VMware_Workstation_Pro.json",
-      "validation_steps": {
-        "detection": {
-          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
-          "cross_validation_sources": ["peid", "die", "yara"],
-          "minimum_confidence_score": 0.8
-        },
-        "exploitation": {
-          "negative_control": {
-            "verify_protection_active": true,
-            "test_without_bypass": true,
-            "expected_failure": true
-          },
-          "functional_verification": {
-            "test_core_features": true,
-            "verify_no_crashes": true,
-            "check_performance": true
-          },
-          "challenge_generation": {
-            "random_inputs": true,
-            "time_based_challenges": true,
-            "cryptographic_nonces": true
-          },
-          "forensic_verification": {
-            "capture_memory_dump": true,
-            "monitor_network_traffic": true,
-            "track_registry_changes": true,
-            "record_api_calls": true
+            "memory_dump": true,
+            "network_capture": true,
+            "registry_snapshot": true,
+            "file_access_monitoring": true
           }
         }
       }
     }
-  ],
-  "validation_requirements": {
-    "minimum_sources_for_consensus": 3,
-    "require_vendor_documentation": true,
-    "require_cryptographic_proof": true,
-    "require_forensic_evidence": true,
-    "require_video_recording": false,
-    "require_bare_metal_test": false,
-    "anti_gaming_checks": {
-      "binary_integrity_before": true,
-      "binary_integrity_after": true,
-      "memory_integrity_checks": true,
-      "timing_anomaly_detection": true,
-      "debugger_detection": true,
-      "vm_detection": true
-    }
-  }
+  ]
 }

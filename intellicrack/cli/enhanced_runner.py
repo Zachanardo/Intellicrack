@@ -146,6 +146,7 @@ class EnhancedCLIRunner:
                 try:
                     # Get file size and basic stats
                     import os
+
                     stat_info = os.stat(binary_path)
                     results["file_size"] = stat_info.st_size
                     results["last_modified"] = stat_info.st_mtime
@@ -181,7 +182,7 @@ class EnhancedCLIRunner:
                 ("Analyzing buffer overflow risks", 40),
                 ("Detecting format string issues", 60),
                 ("Scanning for injection vulnerabilities", 80),
-                ("Finalizing vulnerability assessment", 100)
+                ("Finalizing vulnerability assessment", 100),
             ]
 
             for step_name, progress in scan_steps:
@@ -229,7 +230,7 @@ class EnhancedCLIRunner:
                 ("Analyzing entropy patterns", 40),
                 ("Detecting anti-debug techniques", 60),
                 ("Scanning for obfuscation", 80),
-                ("Completing protection analysis", 100)
+                ("Completing protection analysis", 100),
             ]
 
             for step_name, progress in detection_steps:
@@ -270,13 +271,7 @@ class EnhancedCLIRunner:
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run dynamic analysis with real behavioral monitoring."""
-        results = {
-            "behavior": [],
-            "syscalls": [],
-            "network": [],
-            "files_accessed": [],
-            "registry_keys": []
-        }
+        results = {"behavior": [], "syscalls": [], "network": [], "files_accessed": [], "registry_keys": []}
 
         steps = [
             ("Setting up sandbox environment", 15),
@@ -291,10 +286,8 @@ class EnhancedCLIRunner:
             if step_name == "Setting up sandbox environment":
                 # Verify system has monitoring capabilities
                 import psutil
-                results["system_info"] = {
-                    "cpu_count": psutil.cpu_count(),
-                    "memory_total": psutil.virtual_memory().total
-                }
+
+                results["system_info"] = {"cpu_count": psutil.cpu_count(), "memory_total": psutil.virtual_memory().total}
 
             elif step_name == "Loading binary in emulator":
                 # Basic file analysis before emulation
@@ -322,6 +315,7 @@ class EnhancedCLIRunner:
             elif step_name == "Tracking file operations":
                 # Monitor file system for changes
                 import os
+
                 try:
                     temp_files = []
                     temp_dir = os.path.expandvars(r"%TEMP%")
@@ -371,14 +365,14 @@ class EnhancedCLIRunner:
                 "endpoints": [],
                 "suspicious": False,
                 "analyzer_info": f"Analysis by {type(analyzer).__name__}",
-                "network_indicators": []
+                "network_indicators": [],
             }
 
             analysis_steps = [
                 ("Scanning for network strings", 25),
                 ("Analyzing protocol usage", 50),
                 ("Detecting suspicious endpoints", 75),
-                ("Finalizing network assessment", 100)
+                ("Finalizing network assessment", 100),
             ]
 
             for step_name, progress in analysis_steps:
@@ -412,7 +406,7 @@ class EnhancedCLIRunner:
                             # Add environment variable endpoints
                             env_endpoints = [
                                 os.environ.get("API_SERVER_URL", "").split("//")[-1],
-                                os.environ.get("LICENSE_SERVER_URL", "").split("//")[-1]
+                                os.environ.get("LICENSE_SERVER_URL", "").split("//")[-1],
                             ]
                             endpoints.extend([e for e in env_endpoints if e])
                             results["endpoints"] = endpoints or ["None detected"]

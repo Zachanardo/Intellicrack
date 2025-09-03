@@ -280,10 +280,7 @@ class R2LicenseAnalyzer:
         # Phase 6: Pattern matching
         self._pattern_matching()
 
-        # Phase 7: Machine learning scoring
-        self._ml_scoring()
-
-        # Phase 8: Generate bypass strategies
+        # Phase 7: Generate bypass strategies
         self._generate_bypass_strategies()
 
         # Sort by confidence
@@ -474,11 +471,7 @@ class R2LicenseAnalyzer:
             return False
 
         # Look for multiple return paths
-        return_blocks = [
-            b
-            for b in blocks
-            if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)
-        ]
+        return_blocks = [b for b in blocks if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)]
 
         # License functions often have multiple returns (success/failure)
         return len(return_blocks) >= 2
@@ -501,9 +494,7 @@ class R2LicenseAnalyzer:
         # Update license functions with crypto info
         for lic_func in self.license_functions:
             for _crypto_type, locations in self.crypto_locations.items():
-                if any(
-                    lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations
-                ):
+                if any(lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE
                     lic_func.protection_level = ProtectionLevel.ADVANCED
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
@@ -602,49 +593,6 @@ class R2LicenseAnalyzer:
                     )
                     self.license_functions.append(lic_func)
 
-    def _ml_scoring(self):
-        """Apply machine learning-based scoring."""
-        print("[*] Applying ML-based scoring...")
-
-        for lic_func in self.license_functions:
-            features = self._extract_ml_features(lic_func)
-
-            # Simple neural network simulation
-            score = self._neural_network_score(features)
-
-            # Combine with existing confidence
-            lic_func.confidence = lic_func.confidence * 0.7 + score * 0.3
-
-    def _extract_ml_features(self, lic_func: LicenseFunction) -> dict[str, float]:
-        """Extract features for ML scoring."""
-        features = {
-            "name_score": self._calculate_name_score(lic_func.name),
-            "string_score": self._calculate_string_score(lic_func.strings),
-            "api_score": self._calculate_api_score(lic_func.api_calls),
-            "has_crypto": 1.0 if lic_func.type == LicenseType.CRYPTO_SIGNATURE else 0.0,
-            "cross_refs": min(1.0, len(lic_func.cross_refs) / 10),
-            "complexity": min(1.0, lic_func.size / 1000),
-        }
-
-        return features
-
-    def _neural_network_score(self, features: dict[str, float]) -> float:
-        """Simulate neural network scoring."""
-        # Weights learned from training data
-        weights = {
-            "name_score": 0.25,
-            "string_score": 0.3,
-            "api_score": 0.2,
-            "has_crypto": 0.1,
-            "cross_refs": 0.1,
-            "complexity": 0.05,
-        }
-
-        score = sum(features.get(k, 0) * w for k, w in weights.items())
-
-        # Apply sigmoid activation
-        return 1 / (1 + 2.71828 ** (-score))
-
     def _generate_bypass_strategies(self):
         """Generate bypass strategies for each license function."""
         print("[*] Generating bypass strategies...")
@@ -653,9 +601,7 @@ class R2LicenseAnalyzer:
             strategies = []
 
             # Basic patching strategies
-            strategies.append(
-                f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional"
-            )
+            strategies.append(f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional")
             strategies.append(f"NOP critical validation code at 0x{lic_func.address:x}")
 
             # Type-specific strategies
@@ -777,7 +723,7 @@ class R2LicenseAnalyzer:
         print("-" * 80)
 
         for i, lic_func in enumerate(self.license_functions):
-            print(f"{i+1}. 0x{lic_func.address:08x} - {lic_func.name}")
+            print(f"{i + 1}. 0x{lic_func.address:08x} - {lic_func.name}")
             print(f"   Type: {lic_func.type.value}")
             print(f"   Confidence: {lic_func.confidence:.2%}")
             print(f"   Protection: {lic_func.protection_level.name}")

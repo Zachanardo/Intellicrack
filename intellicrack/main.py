@@ -19,10 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import sys
+import warnings
+
+# Suppress pkg_resources deprecation warning from capstone
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
 
 # Initialize GIL safety measures at the very start
 try:
     from intellicrack.utils.torch_gil_safety import initialize_gil_safety
+
     initialize_gil_safety()
 except ImportError:
     # Fallback environment variables
@@ -41,7 +46,6 @@ except ImportError as e:
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow
 os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import conflict
-
 
 
 # Set Qt to offscreen mode for WSL/headless environments if no display

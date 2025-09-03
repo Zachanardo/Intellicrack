@@ -388,10 +388,7 @@ class ModelPerformanceMonitor:
                 total_mem = memory_reserved()
                 return (used_mem / total_mem) * 100 if total_mem > 0 else 0
             if HAS_TORCH and torch.cuda.is_available():
-                total_mem = sum(
-                    torch.cuda.get_device_properties(i).total_memory
-                    for i in range(torch.cuda.device_count())
-                )
+                total_mem = sum(torch.cuda.get_device_properties(i).total_memory for i in range(torch.cuda.device_count()))
                 used_mem = torch.cuda.memory_allocated()
                 return (used_mem / total_mem) * 100 if total_mem > 0 else 0
             return 0.0
@@ -426,24 +423,14 @@ class ModelPerformanceMonitor:
         self.benchmarks[model_id] = ModelBenchmark(
             model_id=model_id,
             avg_tokens_per_second=(
-                np.mean(tokens_per_second)
-                if HAS_NUMPY and tokens_per_second
-                else sum(tokens_per_second) / len(tokens_per_second)
+                np.mean(tokens_per_second) if HAS_NUMPY and tokens_per_second else sum(tokens_per_second) / len(tokens_per_second)
             )
             if tokens_per_second
             else 0,
-            avg_inference_time=(
-                np.mean(inference_times)
-                if HAS_NUMPY
-                else sum(inference_times) / len(inference_times)
-            )
+            avg_inference_time=(np.mean(inference_times) if HAS_NUMPY else sum(inference_times) / len(inference_times))
             if inference_times
             else 0,
-            avg_memory_mb=(
-                np.mean(memory_usage) if HAS_NUMPY else sum(memory_usage) / len(memory_usage)
-            )
-            if memory_usage
-            else 0,
+            avg_memory_mb=(np.mean(memory_usage) if HAS_NUMPY else sum(memory_usage) / len(memory_usage)) if memory_usage else 0,
             p50_latency=latencies[p50_idx] if p50_idx < len(latencies) else 0,
             p95_latency=latencies[p95_idx] if p95_idx < len(latencies) else 0,
             p99_latency=latencies[p99_idx] if p99_idx < len(latencies) else 0,
@@ -483,24 +470,12 @@ class ModelPerformanceMonitor:
             "model_id": model_id,
             "total_inferences": len(history),
             "recent_performance": {
-                "avg_tokens_per_second": (
-                    np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps) / len(recent_tps)
-                )
-                if recent_tps
-                else 0,
-                "avg_latency": (
-                    np.mean(recent_latency)
-                    if HAS_NUMPY
-                    else sum(recent_latency) / len(recent_latency)
-                )
+                "avg_tokens_per_second": (np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps) / len(recent_tps)) if recent_tps else 0,
+                "avg_latency": (np.mean(recent_latency) if HAS_NUMPY else sum(recent_latency) / len(recent_latency))
                 if recent_latency
                 else 0,
-                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency))
-                if recent_latency
-                else 0,
-                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency))
-                if recent_latency
-                else 0,
+                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency)) if recent_latency else 0,
+                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency)) if recent_latency else 0,
             },
         }
 

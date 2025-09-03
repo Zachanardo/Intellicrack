@@ -311,7 +311,7 @@ class GPUStatusWidget(QWidget):
 
     def set_refresh_interval(self, interval_ms: int):
         """Set the refresh interval for GPU monitoring."""
-        if hasattr(self, 'monitor_worker'):
+        if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
     def update_gpu_data(self, data: dict[str, Any]):

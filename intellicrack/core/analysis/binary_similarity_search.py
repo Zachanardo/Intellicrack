@@ -213,9 +213,7 @@ class BinarySimilaritySearch:
 
         return extract_ascii_strings(data, min_length)
 
-    def search_similar_binaries(
-        self, binary_path: str, threshold: float = 0.7
-    ) -> list[dict[str, Any]]:
+    def search_similar_binaries(self, binary_path: str, threshold: float = 0.7) -> list[dict[str, Any]]:
         """Search for binaries similar to the given binary.
 
         Args:
@@ -278,30 +276,22 @@ class BinarySimilaritySearch:
             similarity_scores = {}
 
             # 1. Structural Similarity Analysis
-            similarity_scores["structural"] = self._calculate_structural_similarity(
-                features1, features2
-            )
+            similarity_scores["structural"] = self._calculate_structural_similarity(features1, features2)
 
             # 2. Content Similarity Analysis
             similarity_scores["content"] = self._calculate_content_similarity(features1, features2)
 
             # 3. Statistical Similarity Analysis
-            similarity_scores["statistical"] = self._calculate_statistical_similarity(
-                features1, features2
-            )
+            similarity_scores["statistical"] = self._calculate_statistical_similarity(features1, features2)
 
             # 4. Advanced Algorithm-based Similarity
-            similarity_scores["advanced"] = self._calculate_advanced_similarity(
-                features1, features2
-            )
+            similarity_scores["advanced"] = self._calculate_advanced_similarity(features1, features2)
 
             # 5. Fuzzy Hash Similarity (if available)
             similarity_scores["fuzzy"] = self._calculate_fuzzy_hash_similarity(features1, features2)
 
             # 6. Control Flow Similarity
-            similarity_scores["control_flow"] = self._calculate_control_flow_similarity(
-                features1, features2
-            )
+            similarity_scores["control_flow"] = self._calculate_control_flow_similarity(features1, features2)
 
             # 7. Opcode Sequence Similarity
             similarity_scores["opcode"] = self._calculate_opcode_similarity(features1, features2)
@@ -309,10 +299,7 @@ class BinarySimilaritySearch:
             # Calculate weighted overall similarity with adaptive weights
             weights = self._calculate_adaptive_weights(features1, features2)
 
-            weighted_similarity = sum(
-                similarity_scores[component] * weights.get(component, 0.1)
-                for component in similarity_scores
-            )
+            weighted_similarity = sum(similarity_scores[component] * weights.get(component, 0.1) for component in similarity_scores)
 
             return min(1.0, max(0.0, weighted_similarity))
 
@@ -321,9 +308,7 @@ class BinarySimilaritySearch:
             # Fallback to basic similarity calculation
             return self._calculate_basic_similarity(features1, features2)
 
-    def _calculate_section_similarity(
-        self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]
-    ) -> float:
+    def _calculate_section_similarity(self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]) -> float:
         """Calculate similarity between two sets of sections.
 
         Args:
@@ -352,12 +337,8 @@ class BinarySimilaritySearch:
                 # Calculate average entropy difference
                 min_len = min(len(entropies1), len(entropies2))
                 if min_len > 0:
-                    entropy_diff = (
-                        sum(abs(entropies1[_i] - entropies2[_i]) for _i in range(min_len)) / min_len
-                    )
-                    entropy_similarity = max(
-                        0.0, 1.0 - entropy_diff / 8.0
-                    )  # Normalize by max entropy
+                    entropy_diff = sum(abs(entropies1[_i] - entropies2[_i]) for _i in range(min_len)) / min_len
+                    entropy_similarity = max(0.0, 1.0 - entropy_diff / 8.0)  # Normalize by max entropy
 
             return name_similarity * 0.6 + entropy_similarity * 0.4
 
@@ -394,9 +375,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error calculating list similarity: %s", e)
             return 0.0
 
-    def _calculate_basic_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_basic_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Fallback basic similarity calculation."""
         try:
             # Calculate section similarity
@@ -457,9 +436,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in basic similarity calculation: %s", e)
             return 0.0
 
-    def _calculate_structural_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_structural_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate structural similarity using section layout and metadata."""
         try:
             # Section similarity with enhanced comparison
@@ -482,20 +459,13 @@ class BinarySimilaritySearch:
             # PE header similarity
             header_similarity = self._calculate_pe_header_similarity(features1, features2)
 
-            return (
-                section_similarity * 0.4
-                + import_similarity * 0.3
-                + export_similarity * 0.2
-                + header_similarity * 0.1
-            )
+            return section_similarity * 0.4 + import_similarity * 0.3 + export_similarity * 0.2 + header_similarity * 0.1
 
         except Exception as e:
             self.logger.error("Error in structural similarity: %s", e)
             return 0.0
 
-    def _calculate_content_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_content_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate content similarity using string analysis and n-grams."""
         try:
             # Enhanced string similarity with fuzzy matching
@@ -511,21 +481,15 @@ class BinarySimilaritySearch:
             )
 
             # Entropy-based content analysis
-            entropy_pattern_similarity = self._calculate_entropy_pattern_similarity(
-                features1, features2
-            )
+            entropy_pattern_similarity = self._calculate_entropy_pattern_similarity(features1, features2)
 
-            return (
-                string_similarity * 0.5 + ngram_similarity * 0.3 + entropy_pattern_similarity * 0.2
-            )
+            return string_similarity * 0.5 + ngram_similarity * 0.3 + entropy_pattern_similarity * 0.2
 
         except Exception as e:
             self.logger.error("Error in content similarity: %s", e)
             return 0.0
 
-    def _calculate_statistical_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_statistical_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate statistical similarity using file metrics."""
         try:
             # File size similarity with logarithmic scaling
@@ -546,19 +510,13 @@ class BinarySimilaritySearch:
                 features2.get("sections", []),
             )
 
-            return (
-                size_similarity * 0.4
-                + entropy_similarity * 0.3
-                + section_distribution_similarity * 0.3
-            )
+            return size_similarity * 0.4 + entropy_similarity * 0.3 + section_distribution_similarity * 0.3
 
         except Exception as e:
             self.logger.error("Error in statistical similarity: %s", e)
             return 0.0
 
-    def _calculate_advanced_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_advanced_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate similarity using advanced algorithms like LSH and edit distance."""
         try:
             # Locality Sensitive Hashing for large feature sets
@@ -582,9 +540,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in advanced similarity: %s", e)
             return 0.0
 
-    def _calculate_fuzzy_hash_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_fuzzy_hash_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate similarity using fuzzy hashing (SSDEEP-like algorithm)."""
         try:
             # Generate simple rolling hash for each binary's content
@@ -602,9 +558,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in fuzzy hash similarity: %s", e)
             return 0.0
 
-    def _calculate_control_flow_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_control_flow_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate similarity based on control flow patterns."""
         try:
             # Analyze section characteristics for control flow indicators
@@ -629,9 +583,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in control flow similarity: %s", e)
             return 0.0
 
-    def _calculate_opcode_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_opcode_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate similarity based on opcode sequence patterns."""
         try:
             # Use import patterns as proxy for opcode patterns
@@ -665,19 +617,13 @@ class BinarySimilaritySearch:
                     similarity = len(funcs1.intersection(funcs2)) / len(funcs1.union(funcs2))
                     pattern_similarities.append(similarity)
 
-            return (
-                sum(pattern_similarities) / len(pattern_similarities)
-                if pattern_similarities
-                else 0.0
-            )
+            return sum(pattern_similarities) / len(pattern_similarities) if pattern_similarities else 0.0
 
         except Exception as e:
             self.logger.error("Error in opcode similarity: %s", e)
             return 0.0
 
-    def _calculate_adaptive_weights(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> dict[str, float]:
+    def _calculate_adaptive_weights(self, features1: dict[str, Any], features2: dict[str, Any]) -> dict[str, float]:
         """Calculate adaptive weights based on feature availability and quality."""
         weights = {
             "structural": 0.25,
@@ -747,9 +693,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in weighted API similarity: %s", e)
             return 0.0
 
-    def _calculate_pe_header_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_pe_header_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate PE header metadata similarity."""
         try:
             similarity_scores = []
@@ -864,9 +808,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in n-gram similarity: %s", e)
             return 0.0
 
-    def _calculate_entropy_pattern_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_entropy_pattern_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate similarity based on entropy distribution patterns."""
         try:
             sections1 = features1.get("sections", [])
@@ -943,9 +885,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in entropy similarity: %s", e)
             return 0.0
 
-    def _calculate_section_distribution_similarity(
-        self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]
-    ) -> float:
+    def _calculate_section_distribution_similarity(self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]) -> float:
         """Calculate similarity based on section size distribution."""
         try:
             if not sections1 or not sections2:
@@ -990,9 +930,7 @@ class BinarySimilaritySearch:
                 for i in range(num_hashes):
                     hash_val = 0
                     for feature in features:
-                        feature_hash = int(
-                            hashlib.sha256(f"{feature}_{i}".encode()).hexdigest()[:8], 16
-                        )
+                        feature_hash = int(hashlib.sha256(f"{feature}_{i}".encode()).hexdigest()[:8], 16)
                         hash_val = min(hash_val, feature_hash) if hash_val > 0 else feature_hash
                     signature.append(hash_val)
                 return signature
@@ -1008,9 +946,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in LSH similarity: %s", e)
             return 0.0
 
-    def _calculate_edit_distance_similarity(
-        self, strings1: list[str], strings2: list[str]
-    ) -> float:
+    def _calculate_edit_distance_similarity(self, strings1: list[str], strings2: list[str]) -> float:
         """Calculate similarity using edit distance on string sequences."""
         try:
             if not strings1 or not strings2:
@@ -1049,9 +985,7 @@ class BinarySimilaritySearch:
             self.logger.error("Error in edit distance similarity: %s", e)
             return 0.0
 
-    def _calculate_cosine_similarity(
-        self, features1: dict[str, Any], features2: dict[str, Any]
-    ) -> float:
+    def _calculate_cosine_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
         """Calculate cosine similarity for feature vectors."""
         try:
             # Create feature vectors from various attributes
@@ -1165,9 +1099,7 @@ class BinarySimilaritySearch:
         """
         try:
             original_count = len(self.database["binaries"])
-            self.database["binaries"] = [
-                _b for _b in self.database["binaries"] if _b["path"] != binary_path
-            ]
+            self.database["binaries"] = [_b for _b in self.database["binaries"] if _b["path"] != binary_path]
 
             if len(self.database["binaries"]) < original_count:
                 self._save_database()

@@ -196,9 +196,7 @@ class LLMConfigManager:
             },
         }
 
-    @deprecated_config_method(
-        "IntellicrackConfig.set('llm_configuration.models.{model_id}', config)"
-    )
+    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.models.{model_id}', config)")
     def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None):
         """Save a model configuration.
 
@@ -364,9 +362,7 @@ class LLMConfigManager:
         logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
         return loaded, failed
 
-    @deprecated_config_method(
-        "IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)"
-    )
+    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)")
     def save_profile(self, profile_id: str, profile_data: dict[str, Any]):
         """Save a model profile.
 

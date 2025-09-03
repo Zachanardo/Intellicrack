@@ -469,9 +469,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to merge adapters: {e}")
             return False
 
-    def compare_adapter_configs(
-        self, config1_path: str | Path, config2_path: str | Path
-    ) -> dict[str, Any]:
+    def compare_adapter_configs(self, config1_path: str | Path, config2_path: str | Path) -> dict[str, Any]:
         """Compare two PEFT adapter configurations.
 
         Args:
@@ -693,9 +691,7 @@ class LoRAAdapterManager:
             if hasattr(peft_config, "r"):
                 results["config_details"]["rank"] = peft_config.r
                 if peft_config.r > 64:
-                    results["warnings"].append(
-                        f"Very high LoRA rank ({peft_config.r}) may use excessive memory"
-                    )
+                    results["warnings"].append(f"Very high LoRA rank ({peft_config.r}) may use excessive memory")
 
             if hasattr(peft_config, "target_modules"):
                 results["config_details"]["target_modules"] = peft_config.target_modules

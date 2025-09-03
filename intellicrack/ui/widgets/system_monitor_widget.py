@@ -385,9 +385,7 @@ class SystemMonitorWidget(QWidget):
         try:
             # Get top processes by CPU usage
             processes = []
-            for proc in psutil.process_iter(
-                ["pid", "name", "cpu_percent", "memory_percent", "status"]
-            ):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
                 try:
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
@@ -405,9 +403,7 @@ class SystemMonitorWidget(QWidget):
                 self.process_table.setItem(row, 0, QTableWidgetItem(str(proc["pid"])))
                 self.process_table.setItem(row, 1, QTableWidgetItem(proc["name"]))
                 self.process_table.setItem(row, 2, QTableWidgetItem(f"{proc['cpu_percent']:.1f}"))
-                self.process_table.setItem(
-                    row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}")
-                )
+                self.process_table.setItem(row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
                 self.process_table.setItem(row, 4, QTableWidgetItem(proc["status"]))
 
                 # Highlight high usage
@@ -507,9 +503,9 @@ class SystemMonitorWidget(QWidget):
     def set_refresh_interval(self, interval_ms: int):
         """Set the refresh interval for monitoring."""
         self.update_interval = interval_ms
-        if hasattr(self, 'interval_spin'):
+        if hasattr(self, "interval_spin"):
             self.interval_spin.setValue(interval_ms)
-        if hasattr(self, 'monitor_worker'):
+        if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
     def export_metrics(self, filepath: str):

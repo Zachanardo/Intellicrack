@@ -108,9 +108,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             logger.error(f"Early Bird injection failed: {e}")
             return False
 
-    def inject_early_bird_shellcode(
-        self, target_exe: str, shellcode: bytes, command_line: str = None
-    ) -> bool:
+    def inject_early_bird_shellcode(self, target_exe: str, shellcode: bytes, command_line: str = None) -> bool:
         """Inject shellcode using Early Bird technique.
 
         Args:
@@ -165,9 +163,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             logger.error(f"Early Bird shellcode injection failed: {e}")
             return False
 
-    def inject_early_bird_with_context(
-        self, target_exe: str, dll_path: str, modify_entry_point: bool = True
-    ) -> bool:
+    def inject_early_bird_with_context(self, target_exe: str, dll_path: str, modify_entry_point: bool = True) -> bool:
         """Advanced Early Bird with entry point modification.
 
         Args:
@@ -181,9 +177,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
         """
         try:
             # Create suspended process and handle result
-            success, process_info, context = self.create_and_handle_suspended_process(
-                target_exe, logger
-            )
+            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
             if not success:
                 return False
 

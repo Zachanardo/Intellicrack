@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 try:
     import torch  # pylint: disable=import-error
     from torch import nn  # pylint: disable=import-error
+
     HAS_TORCH = True
 except ImportError:
     torch = None
@@ -67,6 +68,7 @@ try:
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+
     keras = tf.keras
 
     HAS_TENSORFLOW = True
@@ -107,17 +109,13 @@ class ModelBackend(ABC):
     def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using the model."""
         # Implementation should use both model and input_data for predictions
-        raise NotImplementedError(
-            f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}"
-        )
+        raise NotImplementedError(f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}")
 
     @abstractmethod
     def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get information about the model."""
         # Implementation should extract information from the model object
-        raise NotImplementedError(
-            f"Subclasses must implement get_model_info for model {type(model)}"
-        )
+        raise NotImplementedError(f"Subclasses must implement get_model_info for model {type(model)}")
 
 
 class PyTorchBackend(ModelBackend):
@@ -353,9 +351,7 @@ class ModelCache:
 
         """
         self.logger = logging.getLogger(__name__ + ".ModelCache")
-        self.cache_dir = cache_dir or os.path.join(
-            os.path.expanduser("~"), ".intellicrack", "model_cache"
-        )
+        self.cache_dir = cache_dir or os.path.join(os.path.expanduser("~"), ".intellicrack", "model_cache")
         self.max_cache_size = max_cache_size
         self.cache = {}
         self.access_times = {}
@@ -650,9 +646,16 @@ class ModelManager:
 
                     # Vulnerability classes
                     self.vulnerability_types = [
-                        "buffer_overflow", "format_string", "integer_overflow",
-                        "use_after_free", "null_dereference", "race_condition",
-                        "command_injection", "path_traversal", "weak_crypto", "hardcoded_keys"
+                        "buffer_overflow",
+                        "format_string",
+                        "integer_overflow",
+                        "use_after_free",
+                        "null_dereference",
+                        "race_condition",
+                        "command_injection",
+                        "path_traversal",
+                        "weak_crypto",
+                        "hardcoded_keys",
                     ]
 
                 def forward(self, x):
@@ -674,10 +677,7 @@ class ModelManager:
                                 vuln_idx = top_k.indices[i][j].item()
                                 confidence = top_k.values[i][j].item()
                                 if confidence > 0.3:  # Confidence threshold
-                                    vulns.append({
-                                        "type": self.vulnerability_types[vuln_idx],
-                                        "confidence": confidence
-                                    })
+                                    vulns.append({"type": self.vulnerability_types[vuln_idx], "confidence": confidence})
                             results.append(vulns)
                         return results
 
@@ -689,19 +689,22 @@ class ModelManager:
         if HAS_JOBLIB:
             from sklearn.ensemble import RandomForestClassifier
 
-            model = RandomForestClassifier(
-                n_estimators=100,
-                max_depth=20,
-                random_state=42
-            )
+            model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
             # Pre-train with synthetic data for demonstration
             X_train = np.random.randn(1000, 1024)
             y_train = np.random.randint(0, 10, 1000)
             model.fit(X_train, y_train)
             model.vulnerability_types = [
-                "buffer_overflow", "format_string", "integer_overflow",
-                "use_after_free", "null_dereference", "race_condition",
-                "command_injection", "path_traversal", "weak_crypto", "hardcoded_keys"
+                "buffer_overflow",
+                "format_string",
+                "integer_overflow",
+                "use_after_free",
+                "null_dereference",
+                "race_condition",
+                "command_injection",
+                "path_traversal",
+                "weak_crypto",
+                "hardcoded_keys",
             ]
             return model
 
@@ -728,11 +731,21 @@ class ModelManager:
                     self.dropout = nn.Dropout(0.3)
 
                     self.protection_types = [
-                        "anti_debug", "anti_vm", "packing", "obfuscation",
-                        "license_check", "hardware_lock", "time_trial",
-                        "network_validation", "integrity_check", "anti_tamper",
-                        "encryption", "code_virtualization", "anti_dump",
-                        "api_hooking", "self_modification"
+                        "anti_debug",
+                        "anti_vm",
+                        "packing",
+                        "obfuscation",
+                        "license_check",
+                        "hardware_lock",
+                        "time_trial",
+                        "network_validation",
+                        "integrity_check",
+                        "anti_tamper",
+                        "encryption",
+                        "code_virtualization",
+                        "anti_dump",
+                        "api_hooking",
+                        "self_modification",
                     ]
 
                 def forward(self, x):
@@ -752,10 +765,7 @@ class ModelManager:
                         detected = []
                         for i in range(predictions.shape[1]):
                             if predictions[0][i] > 0.5:  # Detection threshold
-                                detected.append({
-                                    "type": self.protection_types[i],
-                                    "confidence": predictions[0][i].item()
-                                })
+                                detected.append({"type": self.protection_types[i], "confidence": predictions[0][i].item()})
                         return detected
 
             model = ProtectionClassifier()
@@ -779,10 +789,7 @@ class ModelManager:
                 for protection, patterns in self.protection_patterns.items():
                     for pattern in patterns:
                         if pattern in binary_data:
-                            detected.append({
-                                "type": protection,
-                                "confidence": 0.8
-                            })
+                            detected.append({"type": protection, "confidence": 0.8})
                             break
                 return detected
 
@@ -800,8 +807,7 @@ class ModelManager:
                 def __init__(self, vocab_size=10000, embedding_dim=256, hidden_dim=512):
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
-                    self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2,
-                                        batch_first=True, dropout=0.2)
+                    self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
                     self.fc = nn.Linear(hidden_dim, vocab_size)
 
                     # Common script patterns
@@ -821,7 +827,7 @@ var addr = Module.findBaseAddress('{module}');
 var offset = {offset};
 var patch_addr = addr.add(offset);
 Memory.protect(patch_addr, {size}, 'rwx');
-Memory.writeByteArray(patch_addr, {bytes});"""
+Memory.writeByteArray(patch_addr, {bytes});""",
                     }
 
                 def forward(self, x, hidden=None):
@@ -836,13 +842,13 @@ Memory.writeByteArray(patch_addr, {bytes});"""
                         return self.script_templates["frida_hook"].format(
                             function="CheckLicense",
                             modifications="args[0] = ptr(1); // Force valid license",
-                            retval_mod="retval.replace(1); // Always return success"
+                            retval_mod="retval.replace(1); // Always return success",
                         )
                     elif protection_type == "anti_debug":
                         return self.script_templates["frida_hook"].format(
                             function="IsDebuggerPresent",
                             modifications="// Log detection attempt",
-                            retval_mod="retval.replace(0); // No debugger detected"
+                            retval_mod="retval.replace(0); // No debugger detected",
                         )
                     return "// Custom script needed for: " + protection_type
 
@@ -891,8 +897,7 @@ Memory.writeByteArray(patch_addr, {bytes});"""
 
                     self.architectures = ["x86", "x64", "ARM", "MIPS"]
                     self.compilers = ["GCC", "MSVC", "Clang", "ICC", "Borland", "Unknown"]
-                    self.packers = ["UPX", "ASPack", "PECompact", "Themida", "VMProtect",
-                                   "Enigma", "MPRESS", "FSG", "NSPack", "None"]
+                    self.packers = ["UPX", "ASPack", "PECompact", "Themida", "VMProtect", "Enigma", "MPRESS", "FSG", "NSPack", "None"]
 
                 def forward(self, x):
                     # Extract features
@@ -972,6 +977,7 @@ Memory.writeByteArray(patch_addr, {bytes});"""
             return False
 
         import urllib.request
+
         model_url = model_zoo_urls[model_id]
         model_filename = model_id + (".onnx" if "onnx" in model_url else ".pth")
         model_path = os.path.join(self.models_dir, model_filename)
@@ -985,7 +991,7 @@ Memory.writeByteArray(patch_addr, {bytes});"""
                 model_id=model_id,
                 model_path=model_path,
                 model_type=self._detect_model_type(model_path),
-                metadata={"source": "model_zoo", "url": model_url}
+                metadata={"source": "model_zoo", "url": model_url},
             )
             return True
         except Exception as e:
@@ -1000,18 +1006,15 @@ Memory.writeByteArray(patch_addr, {bytes});"""
             if model_type == "pytorch":
                 if HAS_TORCH:
                     import torch.nn as nn
+
                     # Create a simple neural network as fallback
-                    model = nn.Sequential(
-                        nn.Linear(100, 50),
-                        nn.ReLU(),
-                        nn.Linear(50, 10),
-                        nn.Softmax(dim=1)
-                    )
+                    model = nn.Sequential(nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10), nn.Softmax(dim=1))
                     logger.info(f"Created default PyTorch model for {model_id}")
                     return model
             elif model_type == "sklearn":
                 if HAS_JOBLIB:
                     from sklearn.ensemble import RandomForestClassifier
+
                     model = RandomForestClassifier(n_estimators=10, random_state=42)
                     logger.info(f"Created default sklearn model for {model_id}")
                     return model
@@ -1048,13 +1051,12 @@ Memory.writeByteArray(patch_addr, {bytes});"""
         if model_type == "pytorch" and HAS_TORCH:
             try:
                 import torch
+
                 if hasattr(model, "eval"):
                     model.eval()
                     # Apply dynamic quantization for CPU inference
                     if not next(model.parameters()).is_cuda:
-                        quantized = torch.quantization.quantize_dynamic(
-                            model, {torch.nn.Linear}, dtype=torch.qint8
-                        )
+                        quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
                         logger.info(f"Applied quantization to {model_id}")
                         return quantized
             except Exception as e:
@@ -1144,31 +1146,45 @@ Memory.writeByteArray(patch_addr, {bytes});"""
 
             # Buffer overflow detection - look for unsafe function calls
             buffer_overflow_indicators = [
-                b"strcpy", b"strcat", b"gets", b"sprintf", b"scanf",
-                b"vsprintf", b"realpath", b"getopt", b"getpass", b"streadd",
-                b"strecpy", b"strtrns", b"getwd"
+                b"strcpy",
+                b"strcat",
+                b"gets",
+                b"sprintf",
+                b"scanf",
+                b"vsprintf",
+                b"realpath",
+                b"getopt",
+                b"getpass",
+                b"streadd",
+                b"strecpy",
+                b"strtrns",
+                b"getwd",
             ]
             unsafe_func_count = sum(1 for func in buffer_overflow_indicators if func in binary)
             if unsafe_func_count > 0:
                 confidence = min(0.95, 0.3 + (unsafe_func_count * 0.15))
-                vulnerabilities.append({
-                    "type": "buffer_overflow",
-                    "confidence": confidence,
-                    "severity": self._calculate_severity("buffer_overflow", confidence),
-                    "cve_similar": self._find_similar_cves("buffer_overflow"),
-                })
+                vulnerabilities.append(
+                    {
+                        "type": "buffer_overflow",
+                        "confidence": confidence,
+                        "severity": self._calculate_severity("buffer_overflow", confidence),
+                        "cve_similar": self._find_similar_cves("buffer_overflow"),
+                    }
+                )
 
             # Format string detection - look for format string functions without proper validation
             format_string_indicators = [b"printf", b"fprintf", b"sprintf", b"snprintf", b"vprintf"]
             format_funcs = sum(1 for func in format_string_indicators if func in binary)
             if format_funcs > 0 and b"%s" in binary and b"%n" in binary:
                 confidence = min(0.85, 0.4 + (format_funcs * 0.1))
-                vulnerabilities.append({
-                    "type": "format_string",
-                    "confidence": confidence,
-                    "severity": self._calculate_severity("format_string", confidence),
-                    "cve_similar": self._find_similar_cves("format_string"),
-                })
+                vulnerabilities.append(
+                    {
+                        "type": "format_string",
+                        "confidence": confidence,
+                        "severity": self._calculate_severity("format_string", confidence),
+                        "cve_similar": self._find_similar_cves("format_string"),
+                    }
+                )
 
             # Integer overflow detection - look for arithmetic operations without bounds checking
             if b"malloc" in binary or b"calloc" in binary or b"realloc" in binary:
@@ -1177,12 +1193,14 @@ Memory.writeByteArray(patch_addr, {bytes});"""
                 overflow_risk = sum(1 for pattern in alloc_patterns if pattern in binary)
                 if overflow_risk > 0:
                     confidence = min(0.7, 0.3 + (overflow_risk * 0.1))
-                    vulnerabilities.append({
-                        "type": "integer_overflow",
-                        "confidence": confidence,
-                        "severity": self._calculate_severity("integer_overflow", confidence),
-                        "cve_similar": self._find_similar_cves("integer_overflow"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": "integer_overflow",
+                            "confidence": confidence,
+                            "severity": self._calculate_severity("integer_overflow", confidence),
+                            "cve_similar": self._find_similar_cves("integer_overflow"),
+                        }
+                    )
 
             # Use-after-free detection - look for free() followed by dereference patterns
             if b"free" in binary:
@@ -1191,22 +1209,26 @@ Memory.writeByteArray(patch_addr, {bytes});"""
                 if any(pattern in binary for pattern in uaf_patterns):
                     # Conservative detection since static analysis is limited
                     confidence = 0.4
-                    vulnerabilities.append({
-                        "type": "use_after_free",
-                        "confidence": confidence,
-                        "severity": self._calculate_severity("use_after_free", confidence),
-                        "cve_similar": self._find_similar_cves("use_after_free"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": "use_after_free",
+                            "confidence": confidence,
+                            "severity": self._calculate_severity("use_after_free", confidence),
+                            "cve_similar": self._find_similar_cves("use_after_free"),
+                        }
+                    )
 
             # Null dereference detection - check for pointer operations without validation
             if b"mov" in binary and (b"NULL" in binary or b"\x00\x00\x00\x00" in binary):
                 confidence = 0.35
-                vulnerabilities.append({
-                    "type": "null_dereference",
-                    "confidence": confidence,
-                    "severity": self._calculate_severity("null_dereference", confidence),
-                    "cve_similar": self._find_similar_cves("null_dereference"),
-                })
+                vulnerabilities.append(
+                    {
+                        "type": "null_dereference",
+                        "confidence": confidence,
+                        "severity": self._calculate_severity("null_dereference", confidence),
+                        "cve_similar": self._find_similar_cves("null_dereference"),
+                    }
+                )
 
             # Race condition detection - look for threading/locking issues
             thread_indicators = [b"pthread", b"mutex", b"lock", b"thread", b"atomic"]
@@ -1216,12 +1238,14 @@ Memory.writeByteArray(patch_addr, {bytes});"""
                 has_sync = any(pattern in binary for pattern in sync_patterns)
                 if not has_sync:
                     confidence = 0.5
-                    vulnerabilities.append({
-                        "type": "race_condition",
-                        "confidence": confidence,
-                        "severity": self._calculate_severity("race_condition", confidence),
-                        "cve_similar": self._find_similar_cves("race_condition"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": "race_condition",
+                            "confidence": confidence,
+                            "severity": self._calculate_severity("race_condition", confidence),
+                            "cve_similar": self._find_similar_cves("race_condition"),
+                        }
+                    )
 
         # Calculate overall security score
         if vulnerabilities:
@@ -1357,7 +1381,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
         # Entropy features
         for i in range(0, min(len(binary_data), 10000), 1000):
-            chunk = binary_data[i:i+1000]
+            chunk = binary_data[i : i + 1000]
             features.append(self._calculate_entropy(chunk))
 
         # String features
@@ -1395,10 +1419,10 @@ Interceptor.attach(IsDebuggerPresent, {
         import re
 
         # Find ASCII strings
-        ascii_pattern = rb'[\x20-\x7E]{' + str(min_length).encode() + rb',}'
+        ascii_pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
         strings = re.findall(ascii_pattern, data)
 
-        return [s.decode('ascii', errors='ignore') for s in strings]
+        return [s.decode("ascii", errors="ignore") for s in strings]
 
     def _calculate_severity(self, vuln_type: str, confidence: float) -> str:
         """Calculate vulnerability severity."""
@@ -1528,33 +1552,43 @@ Interceptor.attach(IsDebuggerPresent, {
         # Simple PE header check
         if binary_data[:2] == b"MZ":
             # This is a simplified section analysis
-            sections.append({
-                "name": ".text",
-                "size": 0x1000,
-                "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
-                "executable": True,
-            })
-            sections.append({
-                "name": ".data",
-                "size": 0x500,
-                "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
-                "executable": False,
-            })
+            sections.append(
+                {
+                    "name": ".text",
+                    "size": 0x1000,
+                    "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
+                    "executable": True,
+                }
+            )
+            sections.append(
+                {
+                    "name": ".data",
+                    "size": 0x500,
+                    "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
+                    "executable": False,
+                }
+            )
 
         return sections
 
     def _find_suspicious_imports(self, binary_data: bytes) -> list[str]:
         """Find suspicious API imports in binary."""
         suspicious_apis = [
-            b"VirtualAlloc", b"WriteProcessMemory", b"CreateRemoteThread",
-            b"SetWindowsHookEx", b"RegOpenKeyEx", b"IsDebuggerPresent",
-            b"GetTickCount", b"GetSystemTime", b"CheckRemoteDebuggerPresent",
+            b"VirtualAlloc",
+            b"WriteProcessMemory",
+            b"CreateRemoteThread",
+            b"SetWindowsHookEx",
+            b"RegOpenKeyEx",
+            b"IsDebuggerPresent",
+            b"GetTickCount",
+            b"GetSystemTime",
+            b"CheckRemoteDebuggerPresent",
         ]
 
         found = []
         for api in suspicious_apis:
             if api in binary_data:
-                found.append(api.decode('ascii'))
+                found.append(api.decode("ascii"))
 
         return found
 
@@ -1587,12 +1621,14 @@ Interceptor.attach(IsDebuggerPresent, {
         if analysis.get("likely_packed"):
             steps.append("Unpack the binary first")
 
-        steps.extend([
-            "Analyze entry point",
-            "Map imported functions",
-            "Identify key algorithms",
-            "Trace execution flow",
-        ])
+        steps.extend(
+            [
+                "Analyze entry point",
+                "Map imported functions",
+                "Identify key algorithms",
+                "Trace execution flow",
+            ]
+        )
 
         return steps
 
@@ -1871,9 +1907,7 @@ Interceptor.attach(IsDebuggerPresent, {
                         stratify=y if len(np.unique(y)) > 1 else None,
                     )
 
-                    logger.info(
-                        f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples"
-                    )
+                    logger.info(f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples")
 
                     # Create and train model
                     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -2019,8 +2053,8 @@ Interceptor.attach(IsDebuggerPresent, {
                         val_acc = 100 * val_correct / val_total
 
                         logger.info(
-                            f"Epoch [{epoch+1}/{num_epochs}], "
-                            f"Train Loss: {train_loss/len(train_loader):.4f}, "
+                            f"Epoch [{epoch + 1}/{num_epochs}], "
+                            f"Train Loss: {train_loss / len(train_loader):.4f}, "
                             f"Train Acc: {train_acc:.2f}%, "
                             f"Val Acc: {val_acc:.2f}%"
                         )
@@ -2059,6 +2093,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 # TensorFlow/Keras training implementation
                 try:
                     from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+
                     keras = tf.keras
                     from tensorflow.keras import layers
 
@@ -2143,10 +2178,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     # Get final validation accuracy
                     val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
 
-                    logger.info(
-                        f"TensorFlow training completed - "
-                        f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}"
-                    )
+                    logger.info(f"TensorFlow training completed - Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
 
                     # Store trained model
                     model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
@@ -2762,9 +2794,7 @@ class ModelFineTuner:
             "metrics": history.history,
         }
 
-    def _fine_tune_sklearn(
-        self, model: Any, training_data: Any, validation_data: Any, callback: Callable
-    ) -> dict[str, Any]:
+    def _fine_tune_sklearn(self, model: Any, training_data: Any, validation_data: Any, callback: Callable) -> dict[str, Any]:
         """Fine-tune a scikit-learn model."""
         # For sklearn, we typically retrain on new data
         X_train, y_train = training_data
@@ -2793,9 +2823,7 @@ class ModelFineTuner:
         return self.training_history.get(model_id)
 
 
-def import_custom_model(
-    model_path: str, model_type: str = None, model_id: str = None
-) -> dict[str, Any]:
+def import_custom_model(model_path: str, model_type: str = None, model_id: str = None) -> dict[str, Any]:
     """Import a custom AI model into the system.
 
     Args:

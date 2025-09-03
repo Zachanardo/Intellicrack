@@ -88,9 +88,7 @@ class FileSelectionPage(QWizardPage):
         self.browse_btn = QPushButton("Browse...")
         self.browse_btn.clicked.connect(self.browse_for_file)
         if HAS_PYQT:
-            self.browse_btn.setIcon(
-                self.style().standardIcon(QStyle.SP_FileDialogDetailedView)
-            )
+            self.browse_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -106,7 +104,7 @@ class FileSelectionPage(QWizardPage):
             self,
             "Select Program File",
             "",
-            "All Executables (*.exe *.dll *.so *.dylib *.bin);;Windows (*.exe *.dll *.sys);;Linux (*.so *.bin);;macOS (*.dylib *.app);;All Files (*)"
+            "All Executables (*.exe *.dll *.so *.dylib *.bin);;Windows (*.exe *.dll *.sys);;Linux (*.so *.bin);;macOS (*.dylib *.app);;All Files (*)",
         )
 
         if file_path:
@@ -173,9 +171,7 @@ class AnalysisPage(QWizardPage):
         licensing_group = QGroupBox("Licensing Files Analysis")
         licensing_layout = QVBoxLayout()
 
-        licensing_info = QLabel(
-            "The following licensing-related files were found in the installation folder:"
-        )
+        licensing_info = QLabel("The following licensing-related files were found in the installation folder:")
         licensing_layout.addWidget(licensing_info)
 
         # Licensing files tree
@@ -247,15 +243,11 @@ class AnalysisPage(QWizardPage):
                                 "name": file_path.name,
                                 "type": info["type"],
                                 "priority": info["priority"],
-                                "size": file_path.stat().st_size
+                                "size": file_path.stat().st_size,
                             }
                             self.licensing_files.append(file_info)
 
-                            self.add_licensing_file_to_tree(
-                                file_path,
-                                info["type"],
-                                info["priority"]
-                            )
+                            self.add_licensing_file_to_tree(file_path, info["type"], info["priority"])
                             break
 
         except Exception as e:
@@ -267,12 +259,7 @@ class AnalysisPage(QWizardPage):
             file_path = Path(file_path)
             file_size = self.format_file_size(file_path.stat().st_size)
 
-            item = QTreeWidgetItem([
-                str(file_path.name),
-                file_type,
-                file_size,
-                f"Priority {priority}"
-            ])
+            item = QTreeWidgetItem([str(file_path.name), file_type, file_size, f"Priority {priority}"])
 
             # Store full path for opening
             item.setData(0, Qt.UserRole, str(file_path))
@@ -291,7 +278,7 @@ class AnalysisPage(QWizardPage):
 
     def format_file_size(self, size):
         """Format file size in human readable format."""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
@@ -306,16 +293,16 @@ class AnalysisPage(QWizardPage):
         try:
             file_path = item.data(0, Qt.UserRole)
             if file_path and os.path.exists(file_path):
-                if sys.platform.startswith('win'):
+                if sys.platform.startswith("win"):
                     os.startfile(file_path)  # noqa: S606  # Legitimate program file opening for security research target selection
-                elif sys.platform.startswith('darwin'):
-                    open_path = shutil.which('open')
+                elif sys.platform.startswith("darwin"):
+                    open_path = shutil.which("open")
                     if open_path:
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [open_path, file_path], shell=False
                         )
                 else:
-                    xdg_open_path = shutil.which('xdg-open')
+                    xdg_open_path = shutil.which("xdg-open")
                     if xdg_open_path:
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [xdg_open_path, file_path], shell=False

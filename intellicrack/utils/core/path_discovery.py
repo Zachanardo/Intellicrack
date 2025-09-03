@@ -315,9 +315,7 @@ class PathDiscovery:
             "startup": self._get_startup_dir,
         }
 
-    def find_tool(
-        self, tool_name: str, required_executables: list[str] | None = None
-    ) -> str | None:
+    def find_tool(self, tool_name: str, required_executables: list[str] | None = None) -> str | None:
         """Find a tool using multiple discovery strategies.
 
         Args:
@@ -381,9 +379,7 @@ class PathDiscovery:
 
         return None
 
-    def _generic_tool_search(
-        self, tool_name: str, executables: list[str] | None = None
-    ) -> str | None:
+    def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
         """Generic search for tools not in specification."""
         if not executables:
             executables = [tool_name]
@@ -441,9 +437,7 @@ class PathDiscovery:
                 if os.path.isdir(path):
                     # Look for executable in directory
                     for file in os.listdir(path):
-                        if os.path.isfile(os.path.join(path, file)) and os.access(
-                            os.path.join(path, file), os.X_OK
-                        ):
+                        if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
                             return os.path.join(path, file)
         return None
 
@@ -503,17 +497,11 @@ class PathDiscovery:
                                     try:
                                         name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in name.lower():
-                                            install_location = winreg.QueryValueEx(
-                                                subkey, "InstallLocation"
-                                            )[0]
-                                            if install_location and os.path.exists(
-                                                install_location
-                                            ):
+                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            if install_location and os.path.exists(install_location):
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
-                                                executables = spec.get("executables", {}).get(
-                                                    "win32", [tool_name + ".exe"]
-                                                )
+                                                executables = spec.get("executables", {}).get("win32", [tool_name + ".exe"])
 
                                                 for exe in executables:
                                                     exe_path = os.path.join(install_location, exe)
@@ -521,9 +509,7 @@ class PathDiscovery:
                                                         return exe_path
 
                                                     # Check bin subdirectory
-                                                    bin_path = os.path.join(
-                                                        install_location, "bin", exe
-                                                    )
+                                                    bin_path = os.path.join(install_location, "bin", exe)
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
                                     except OSError as e:
@@ -617,9 +603,7 @@ class PathDiscovery:
         if self.is_windows:
             appdata = self._get_appdata_dir()
             if appdata:
-                return os.path.join(
-                    appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
-                )
+                return os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
         return None
 
     # Validation methods
@@ -747,11 +731,7 @@ class PathDiscovery:
                     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
                     if msg.exec() == QMessageBox.Yes:
-                        file_filter = (
-                            "Executable files (*.exe *.bat);;All files (*.*)"
-                            if self.is_windows
-                            else "All files (*)"
-                        )
+                        file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
                         path, _ = QFileDialog.getOpenFileName(
                             parent_widget,
                             f"Select {tool_name} executable",
@@ -781,9 +761,7 @@ class PathDiscovery:
                     # Validate path exists and is safe
                     if os.path.exists(path) and os.path.isfile(path):
                         # Additional validation: ensure it's an executable or expected file type
-                        if os.access(path, os.X_OK) or path.endswith(
-                            (".exe", ".bat", ".sh", ".py")
-                        ):
+                        if os.access(path, os.X_OK) or path.endswith((".exe", ".bat", ".sh", ".py")):
                             self.cache[tool_name] = path
                             if self.config_manager:
                                 self.config_manager.set(f"{tool_name}_path", path)

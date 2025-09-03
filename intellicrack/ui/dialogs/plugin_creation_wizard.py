@@ -127,26 +127,26 @@ class PluginCreationWizard(QWizard):
         """Generate Python plugin code."""
         _ = template
         code = f'''"""
-{info['name']}
-{info['description']}
+{info["name"]}
+{info["description"]}
 
-Author: {info['author']}
-Version: {info['version']}
-Created: {datetime.now().strftime('%Y-%m-%d')}
+Author: {info["author"]}
+Version: {info["version"]}
+Created: {datetime.now().strftime("%Y-%m-%d")}
 """
 
 import os
 import sys
 from typing import Dict, Any, List
 
-class {info['name'].replace(' ', '')}Plugin:
-    """Main plugin class for {info['name']}"""
+class {info["name"].replace(" ", "")}Plugin:
+    """Main plugin class for {info["name"]}"""
 
     def __init__(self):
-        self.name = "{info['name']}"
-        self.version = "{info['version']}"
-        self.description = "{info['description']}"
-        self.author = "{info['author']}"
+        self.name = "{info["name"]}"
+        self.version = "{info["version"]}"
+        self.description = "{info["description"]}"
+        self.author = "{info["author"]}"
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return plugin metadata"""
@@ -180,7 +180,7 @@ class {info['name'].replace(' ', '')}Plugin:
 # Plugin registration
 def get_plugin():
     """Return plugin instance for the system"""
-    return {info['name'].replace(' ', '')}Plugin()
+    return {info["name"].replace(" ", "")}Plugin()
 '''
         return code
 
@@ -188,18 +188,18 @@ def get_plugin():
         """Generate Frida script code."""
         _ = template
         code = f"""/*
- * {info['name']}
- * {info['description']}
+ * {info["name"]}
+ * {info["description"]}
  *
- * Author: {info['author']}
- * Version: {info['version']}
+ * Author: {info["author"]}
+ * Version: {info["version"]}
  */
 
 // Plugin metadata
 const PLUGIN_INFO = {{
-    name: "{info['name']}",
-    version: "{info['version']}",
-    description: "{info['description']}"
+    name: "{info["name"]}",
+    version: "{info["version"]}",
+    description: "{info["description"]}"
 }};
 
 // Main instrumentation logic
@@ -226,22 +226,22 @@ function hexdump(buffer, options) {{
     def generate_ghidra_code(self, info, template, features):
         """Generate Ghidra script code."""
         _ = template
-        code = f'''# {info['name']}
-# {info['description']}
+        code = f'''# {info["name"]}
+# {info["description"]}
 #
-# @author {info['author']}
-# @version {info['version']}
+# @author {info["author"]}
+# @version {info["version"]}
 # @category Analysis
 
 from ghidra.app.script import GhidraScript
 from ghidra.program.model.address import Address
 from ghidra.program.model.listing import Function
 
-class {info['name'].replace(' ', '')}(GhidraScript):
+class {info["name"].replace(" ", "")}(GhidraScript):
 
     def run(self):
         """Main script execution"""
-        print("Running {info['name']} v{info['version']}")
+        print("Running {info["name"]} v{info["version"]}")
 
         # Get current program
         program = getCurrentProgram()
@@ -254,7 +254,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         print("Analysis complete")
 
 # Script entry point
-{info['name'].replace(' ', '')}().run()
+{info["name"].replace(" ", "")}().run()
 '''
         return code
 
@@ -730,18 +730,18 @@ class SummaryPage(QWizardPage):
         """Update the summary display."""
         summary = f"""
 <h3>Plugin Summary</h3>
-<p><b>Name:</b> {info['name']}<br>
-<b>Version:</b> {info['version']}<br>
-<b>Author:</b> {info['author']}<br>
-<b>Category:</b> {info['category']}</p>
+<p><b>Name:</b> {info["name"]}<br>
+<b>Version:</b> {info["version"]}<br>
+<b>Author:</b> {info["author"]}<br>
+<b>Category:</b> {info["category"]}</p>
 
 <p><b>Description:</b><br>
-{info['description']}</p>
+{info["description"]}</p>
 
-<p><b>Template:</b> {template['name'] if template else 'None'}</p>
+<p><b>Template:</b> {template["name"] if template else "None"}</p>
 
 <p><b>Features:</b><br>
-{'<br>'.join('• ' + f for f in features) if features else 'None selected'}</p>
+{"<br>".join("• " + f for f in features) if features else "None selected"}</p>
 
 <p><b>Code Preview:</b><br>
 <pre>{code[:500]}...</pre></p>

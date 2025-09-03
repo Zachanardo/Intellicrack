@@ -51,8 +51,8 @@ try:
     except ImportError:
         # Try alternative import locations
         try:
-            DeviceManager = frida.DeviceManager if hasattr(frida, 'DeviceManager') else None
-            ScriptMessage = frida.ScriptMessage if hasattr(frida, 'ScriptMessage') else None
+            DeviceManager = frida.DeviceManager if hasattr(frida, "DeviceManager") else None
+            ScriptMessage = frida.ScriptMessage if hasattr(frida, "ScriptMessage") else None
         except Exception:
             DeviceManager = None
             ScriptMessage = None
@@ -92,13 +92,13 @@ except ImportError as e:
                             capture_output=True,
                             text=True,
                             timeout=5,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                     else:
                         result = None
 
                     if result and result.returncode == 0:
-                        lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                        lines = result.stdout.strip().split("\n")[1:]  # Skip header
                         for line in lines:
                             parts = line.strip().split()
                             if len(parts) >= 2:
@@ -119,13 +119,13 @@ except ImportError as e:
                             capture_output=True,
                             text=True,
                             timeout=5,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                     else:
                         result = None
 
                     if result and result.returncode == 0:
-                        lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                        lines = result.stdout.strip().split("\n")[1:]  # Skip header
                         for line in lines:
                             parts = line.split(None, 10)
                             if len(parts) >= 11:
@@ -173,6 +173,7 @@ except ImportError as e:
 
             # Handle environment
             import os
+
             process_env = os.environ.copy()
             if env:
                 process_env.update(env)
@@ -187,7 +188,7 @@ except ImportError as e:
                     env=process_env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
                 # Give it a moment to start
@@ -208,7 +209,7 @@ except ImportError as e:
             """Resume a spawned process."""
             if pid in self._attached_sessions:
                 session = self._attached_sessions[pid]
-                if hasattr(session.process, '_subprocess'):
+                if hasattr(session.process, "_subprocess"):
                     # Process was spawned, just mark as resumed
                     session.process._resumed = True
             return None
@@ -222,11 +223,12 @@ except ImportError as e:
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [taskkill_path, "/F", "/PID", str(pid)],
                             check=False,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                 else:
                     import os
                     import signal
+
                     os.kill(pid, signal.SIGKILL)
             except Exception as e:
                 logger.error("Failed to kill process %d: %s", pid, e)
@@ -264,7 +266,7 @@ except ImportError as e:
             params = {
                 "arch": "x64" if sys.maxsize > 2**32 else "x86",
                 "platform": sys.platform,
-                "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin"
+                "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin",
             }
             return params
 
@@ -300,16 +302,16 @@ except ImportError as e:
 
             # Check for basic JavaScript patterns
             js_patterns = [
-                r'function\s+\w+\s*\(',
-                r'const\s+\w+\s*=',
-                r'let\s+\w+\s*=',
-                r'var\s+\w+\s*=',
-                r'Interceptor\.',
-                r'Module\.',
-                r'Process\.',
-                r'Memory\.',
-                r'send\(',
-                r'recv\('
+                r"function\s+\w+\s*\(",
+                r"const\s+\w+\s*=",
+                r"let\s+\w+\s*=",
+                r"var\s+\w+\s*=",
+                r"Interceptor\.",
+                r"Module\.",
+                r"Process\.",
+                r"Memory\.",
+                r"send\(",
+                r"recv\(",
             ]
 
             has_js = any(re.search(pattern, source) for pattern in js_patterns)
@@ -371,10 +373,7 @@ except ImportError as e:
             self._parse_script()
 
             # Send load confirmation
-            self._send_internal_message({
-                "type": "send",
-                "payload": {"type": "ready", "script": self.name}
-            })
+            self._send_internal_message({"type": "send", "payload": {"type": "ready", "script": self.name}})
 
         def unload(self):
             """Unload the script."""
@@ -411,20 +410,20 @@ except ImportError as e:
             import re
 
             # Extract Interceptor.attach patterns
-            interceptor_pattern = r'Interceptor\.attach\s*\(\s*([^,]+),\s*{([^}]+)}'
+            interceptor_pattern = r"Interceptor\.attach\s*\(\s*([^,]+),\s*{([^}]+)}"
             matches = re.findall(interceptor_pattern, self.source)
 
             for target, _implementation in matches:
                 logger.debug("Found interceptor for: %s", target.strip())
 
             # Extract RPC exports
-            rpc_pattern = r'rpc\.exports\s*=\s*{([^}]+)}'
+            rpc_pattern = r"rpc\.exports\s*=\s*{([^}]+)}"
             rpc_match = re.search(rpc_pattern, self.source)
 
             if rpc_match:
                 # Parse RPC methods
                 methods_text = rpc_match.group(1)
-                method_pattern = r'(\w+)\s*:\s*function'
+                method_pattern = r"(\w+)\s*:\s*function"
                 methods = re.findall(method_pattern, methods_text)
 
                 for method in methods:
@@ -432,6 +431,7 @@ except ImportError as e:
 
         def _create_rpc_method(self, method_name):
             """Create an RPC method callable."""
+
             def rpc_method(*args, **kwargs):
                 logger.info("RPC call to %s with args: %s, kwargs: %s", method_name, args, kwargs)
                 # Return simulated response
@@ -661,14 +661,26 @@ if not HAS_FRIDA:
 # Export all Frida objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_FRIDA", "FRIDA_VERSION",
+    "HAS_FRIDA",
+    "FRIDA_VERSION",
     # Main frida module
     "frida",
     # Core classes
-    "Device", "Process", "Session", "Script", "DeviceManager",
-    "FileMonitor", "ScriptMessage",
+    "Device",
+    "Process",
+    "Session",
+    "Script",
+    "DeviceManager",
+    "FileMonitor",
+    "ScriptMessage",
     # Functions
-    "get_local_device", "get_remote_device", "get_usb_device",
-    "get_device_manager", "attach", "spawn", "resume", "kill",
+    "get_local_device",
+    "get_remote_device",
+    "get_usb_device",
+    "get_device_manager",
+    "attach",
+    "spawn",
+    "resume",
+    "kill",
     "enumerate_devices",
 ]

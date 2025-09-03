@@ -35,11 +35,11 @@ def test_enhanced_patch_instruction_generation():
     """Test enhanced patch instruction generation from Day 4.1."""
     print("Test 1: Enhanced Patch Instruction Generation Validation")
     print("-" * 55)
-    
+
     # Test comprehensive bypass methods
     bypass_methods = [
         "force_return_true",
-        "force_return_false", 
+        "force_return_false",
         "license_check_bypass",
         "debug_detection_bypass",
         "crc_check_bypass",
@@ -52,7 +52,7 @@ def test_enhanced_patch_instruction_generation():
         "stack_manipulation",
         "return_value_injection"
     ]
-    
+
     # Mock instruction generation (enhanced version from Day 4.1)
     instruction_map = {
         "nop_conditional": "NOP",
@@ -75,7 +75,7 @@ def test_enhanced_patch_instruction_generation():
         "crc_check_bypass": "XOR EAX, EAX; RET",
         "debug_detection_bypass": "XOR EAX, EAX; NOP; NOP"
     }
-    
+
     # Mock byte generation (enhanced version from Day 4.1)
     byte_map = {
         "nop_conditional": "90",
@@ -98,30 +98,30 @@ def test_enhanced_patch_instruction_generation():
         "crc_check_bypass": "31C0C3",
         "debug_detection_bypass": "31C09090"
     }
-    
+
     # Test all bypass methods
     successful_instructions = 0
     successful_bytes = 0
-    
+
     print(f"  Testing {len(bypass_methods)} enhanced bypass methods:")
     for method in bypass_methods:
         instruction = instruction_map.get(method, "NOP")
         bytes_code = byte_map.get(method, "90")
-        
+
         if instruction and instruction != "NOP":
             successful_instructions += 1
         if bytes_code and bytes_code != "90":
             successful_bytes += 1
-            
+
         print(f"    ✓ {method}: {instruction[:30]}... -> {bytes_code[:16]}...")
-    
+
     print(f"  ✓ Enhanced instructions: {successful_instructions}/{len(bypass_methods)}")
     print(f"  ✓ Enhanced byte codes: {successful_bytes}/{len(bypass_methods)}")
-    
+
     # Validation criteria: Should have significantly more than basic 4 methods
     success = successful_instructions >= 10 and successful_bytes >= 10
     print(f"  Enhanced patch generation: {'✓ PASSED' if success else '❌ FAILED'}")
-    
+
     return success
 
 
@@ -129,7 +129,7 @@ def test_memory_write_instruction_generation():
     """Test enhanced memory write instruction generation from Day 4.1."""
     print("\nTest 2: Enhanced Memory Write Instruction Generation")
     print("-" * 50)
-    
+
     def generate_memory_write_instructions(address: str, value: int) -> str:
         """Enhanced memory write instruction generation."""
         try:
@@ -138,26 +138,26 @@ def test_memory_write_instruction_generation():
                 addr_int = int(address, 16)
             else:
                 addr_int = int(address, 16)
-            
+
             # Generate x86 machine code for memory write
             addr_bytes = struct.pack("<I", addr_int)
             value_bytes = struct.pack("<I", value & 0xFFFFFFFF)
-            
+
             # Construct complete instruction bytes
             instruction_bytes = b"\xC7\x05" + addr_bytes + value_bytes
             return instruction_bytes.hex().upper()
-            
+
         except (ValueError, struct.error):
             # Fallback: Generate relative address instruction
             return f"B8{address.replace('0x', '').zfill(8)}C700{value:08X}"
-    
+
     # Test memory write generation
     test_addresses = ["0x401000", "401000", "0x12345678"]
     test_value = 1
-    
+
     successful_generations = 0
     print("  Testing memory write instruction generation:")
-    
+
     for address in test_addresses:
         try:
             result = generate_memory_write_instructions(address, test_value)
@@ -168,10 +168,10 @@ def test_memory_write_instruction_generation():
                 print(f"    ❌ {address} -> {result}")
         except Exception as e:
             print(f"    ❌ {address} -> Error: {e}")
-    
+
     success = successful_generations >= 2  # At least 2/3 should work
     print(f"  Enhanced memory write generation: {'✓ PASSED' if success else '❌ FAILED'}")
-    
+
     return success
 
 
@@ -179,7 +179,7 @@ def test_r2_to_binary_patch_integration():
     """Test R2 to binary patch integration from Day 4.2."""
     print("\nTest 3: R2 to Binary Patch Integration")
     print("-" * 40)
-    
+
     def convert_r2_to_binary_patch(r2_patch: dict, patch_category: str) -> BinaryPatch | None:
         """Convert R2 patch to binary patch format."""
         try:
@@ -192,7 +192,7 @@ def test_r2_to_binary_patch_integration():
                     offset = int(address_str, 16)
             else:
                 offset = int(address_str)
-            
+
             # Extract patch bytes
             patch_bytes_str = r2_patch.get("patch_bytes", "")
             if patch_bytes_str:
@@ -202,7 +202,7 @@ def test_r2_to_binary_patch_integration():
                 patched_bytes = bytes.fromhex(clean_hex)
             else:
                 patched_bytes = b"\x90"
-            
+
             # Extract original bytes
             original_bytes_str = r2_patch.get("original_bytes", "")
             if original_bytes_str:
@@ -212,9 +212,9 @@ def test_r2_to_binary_patch_integration():
                 original_bytes = bytes.fromhex(clean_orig_hex)
             else:
                 original_bytes = b"\x00" * len(patched_bytes)
-            
+
             description = r2_patch.get("patch_description", f"{patch_category}_patch_at_{hex(offset)}")
-            
+
             return BinaryPatch(
                 offset=offset,
                 original_bytes=original_bytes,
@@ -222,10 +222,10 @@ def test_r2_to_binary_patch_integration():
                 description=description,
                 patch_type="license_bypass"
             )
-            
+
         except (ValueError, TypeError):
             return None
-    
+
     # Test R2 patch data
     r2_patches = [
         {
@@ -235,7 +235,7 @@ def test_r2_to_binary_patch_integration():
             "patch_description": "Force return true for license check"
         },
         {
-            "address": "0x402000", 
+            "address": "0x402000",
             "patch_bytes": "31C0C3",  # xor eax, eax; ret
             "description": "Clear return value patch"
         },
@@ -245,10 +245,10 @@ def test_r2_to_binary_patch_integration():
             "description": "Skip validation jump"
         }
     ]
-    
+
     successful_conversions = 0
     print("  Testing R2 to binary patch conversions:")
-    
+
     for i, r2_patch in enumerate(r2_patches):
         binary_patch = convert_r2_to_binary_patch(r2_patch, "automated")
         if binary_patch:
@@ -256,10 +256,10 @@ def test_r2_to_binary_patch_integration():
             print(f"    ✓ Patch {i+1}: {hex(binary_patch.offset)} - {binary_patch.description[:40]}...")
         else:
             print(f"    ❌ Patch {i+1}: Conversion failed")
-    
+
     success = successful_conversions >= 2  # At least 2/3 should convert successfully
     print(f"  R2 integration conversion: {'✓ PASSED' if success else '❌ FAILED'}")
-    
+
     return success
 
 
@@ -267,7 +267,7 @@ def test_binary_patch_application():
     """Test binary patch application from Day 4.2."""
     print("\nTest 4: Binary Patch Application")
     print("-" * 35)
-    
+
     def apply_patch_to_binary(binary_path: str, patch: BinaryPatch) -> bool:
         """Apply patch to binary file."""
         try:
@@ -277,16 +277,16 @@ def test_binary_patch_application():
             return True
         except Exception:
             return False
-    
+
     # Create temporary test binary
     test_binary = Path(tempfile.mktemp(suffix=".test"))
     original_content = b"\xB8\x00\x00\x00\x00\xC3" + b"\x90" * 100  # mov eax, 0; ret + NOPs
-    
+
     try:
         # Write test binary
         with open(test_binary, "wb") as f:
             f.write(original_content)
-        
+
         # Create test patch
         patch = BinaryPatch(
             offset=0,
@@ -295,30 +295,30 @@ def test_binary_patch_application():
             description="License bypass patch",
             patch_type="license_bypass"
         )
-        
+
         print("  Testing binary patch application:")
         print(f"    Original bytes: {original_content[:6].hex().upper()}")
         print(f"    Patch bytes:    {patch.patched_bytes.hex().upper()}")
-        
+
         # Apply patch
         apply_success = apply_patch_to_binary(str(test_binary), patch)
-        
+
         if not apply_success:
             print("    ❌ Patch application failed")
             return False
-        
+
         # Verify patch was applied
         with open(test_binary, "rb") as f:
             patched_content = f.read()
-        
+
         verification_success = patched_content[:6] == patch.patched_bytes
-        
+
         print(f"    Patched bytes:  {patched_content[:6].hex().upper()}")
         print(f"    ✓ Patch applied: {'SUCCESS' if apply_success else 'FAILED'}")
         print(f"    ✓ Verification:  {'SUCCESS' if verification_success else 'FAILED'}")
-        
+
         return apply_success and verification_success
-        
+
     except Exception as e:
         print(f"    ❌ Binary patching test error: {e}")
         return False
@@ -331,7 +331,7 @@ def test_comprehensive_forbidden_patterns():
     """Test for any remaining forbidden patterns in patch generation."""
     print("\nTest 5: Comprehensive Forbidden Pattern Scan")
     print("-" * 45)
-    
+
     # Patterns that should NOT exist in production-ready code
     forbidden_patterns = [
         "TODO:",
@@ -346,7 +346,7 @@ def test_comprehensive_forbidden_patterns():
         "fake_",
         "dummy_"
     ]
-    
+
     # Mock scan of radare2_bypass_generator.py content
     # This simulates scanning the actual file for forbidden patterns
     mock_file_content = """
@@ -357,7 +357,7 @@ def test_comprehensive_forbidden_patterns():
             "debug_detection_bypass": "XOR EAX, EAX; NOP; NOP"
         }
         return instruction_map.get(bypass_method, "NOP")
-        
+
     def _generate_memory_write_instructions(self, address: str, value: int) -> str:
         try:
             addr_int = int(address, 16)
@@ -368,21 +368,21 @@ def test_comprehensive_forbidden_patterns():
         except (ValueError, struct.error):
             return f"B8{address.replace('0x', '').zfill(8)}C700{value:08X}"
     """
-    
+
     violations_found = 0
     print("  Scanning for forbidden patterns:")
-    
+
     for pattern in forbidden_patterns:
         if pattern.lower() in mock_file_content.lower():
             violations_found += 1
             print(f"    ❌ Found: {pattern}")
-    
+
     if violations_found == 0:
         print("    ✓ No forbidden patterns detected")
-    
+
     success = violations_found == 0
     print(f"  Forbidden pattern scan: {'✓ PASSED' if success else '❌ FAILED'}")
-    
+
     return success
 
 
@@ -392,7 +392,7 @@ def main():
     print("=" * 50)
     print("PATCH INSTRUCTION GENERATION & BINARY MODIFICATION INTEGRATION")
     print()
-    
+
     # Run all validation tests
     tests = [
         test_enhanced_patch_instruction_generation,
@@ -401,7 +401,7 @@ def main():
         test_binary_patch_application,
         test_comprehensive_forbidden_patterns
     ]
-    
+
     results = []
     for test_func in tests:
         try:
@@ -410,14 +410,14 @@ def main():
         except Exception as e:
             print(f"❌ Test {test_func.__name__} failed with error: {e}")
             results.append(False)
-    
+
     passed = sum(results)
     total = len(results)
-    
+
     print(f"\n{'=' * 50}")
     print("PRODUCTION READINESS CHECKPOINT 4 RESULTS")
     print("=" * 50)
-    
+
     if passed == total:
         print("✅ CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
         print()
@@ -431,9 +431,9 @@ def main():
         print()
         print("✅ FUNCTIONAL PROOFS:")
         print("  • Enhanced instruction generation: Production-ready")
-        print("  • Binary modification integration: Fully operational") 
+        print("  • Binary modification integration: Fully operational")
         print("  • Patch application pipeline: End-to-end functional")
-        
+
         # Save results
         results_data = {
             "checkpoint": "Day 4.3 Production Readiness Checkpoint 4",
@@ -453,14 +453,14 @@ def main():
                 "End-to-end patch application validated"
             ]
         }
-        
+
         with open("day4_checkpoint4_results.json", "w") as f:
             json.dump(results_data, f, indent=2)
-        
+
         print(f"\n✅ Results saved to: day4_checkpoint4_results.json")
         print("✅ AUTHORIZED TO PROCEED TO DAY 5.1")
         return 0
-        
+
     else:
         print("❌ CHECKPOINT FAILED - CRITICAL VALIDATIONS INCOMPLETE")
         print(f"❌ {total - passed} validation(s) failed")

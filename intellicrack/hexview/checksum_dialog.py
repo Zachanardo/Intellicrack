@@ -130,7 +130,7 @@ class ChecksumDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, 'selection_start'):
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
             if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
                 self.selection_radio.setEnabled(True)
                 selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
@@ -279,8 +279,8 @@ class ChecksumDialog(QDialog):
                 return
         else:
             # Use entire file
-            if self.hex_viewer and hasattr(self.hex_viewer, 'file_handler'):
-                if hasattr(self.hex_viewer.file_handler, 'file_path'):
+            if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+                if hasattr(self.hex_viewer.file_handler, "file_path"):
                     file_path = self.hex_viewer.file_handler.file_path
                 else:
                     # Read entire file into memory
@@ -335,7 +335,7 @@ class ChecksumDialog(QDialog):
                 text += f"Data: Selection (offset {start:#x} to {end:#x})\n"
                 text += f"Size: {end - start} bytes\n\n"
         else:
-            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, 'file_path'):
+            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
                 text += f"File: {self.hex_viewer.file_handler.file_path}\n"
                 text += f"Size: {self.hex_viewer.file_handler.file_size} bytes\n\n"
 
@@ -368,6 +368,7 @@ class ChecksumDialog(QDialog):
         text = self.results_text.toPlainText()
         if text:
             from PyQt6.QtWidgets import QApplication
+
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
 

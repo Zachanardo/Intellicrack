@@ -69,12 +69,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             logger.warning(f"Unsupported language: {self.language}, using default")
             self._setup_default_rules()
 
-    def _create_format(
-        self,
-        color: str,
-        bold: bool = False,
-        italic: bool = False
-    ) -> QTextCharFormat:
+    def _create_format(self, color: str, bold: bool = False, italic: bool = False) -> QTextCharFormat:
         """Create a text format with specified properties.
 
         Args:
@@ -101,13 +96,41 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
-            "\\bFalse\\b", "\\bNone\\b", "\\bTrue\\b", "\\band\\b", "\\bas\\b",
-            "\\bassert\\b", "\\basync\\b", "\\bawait\\b", "\\bbreak\\b", "\\bclass\\b",
-            "\\bcontinue\\b", "\\bdef\\b", "\\bdel\\b", "\\belif\\b", "\\belse\\b",
-            "\\bexcept\\b", "\\bfinally\\b", "\\bfor\\b", "\\bfrom\\b", "\\bglobal\\b",
-            "\\bif\\b", "\\bimport\\b", "\\bin\\b", "\\bis\\b", "\\blambda\\b",
-            "\\bnonlocal\\b", "\\bnot\\b", "\\bor\\b", "\\bpass\\b", "\\braise\\b",
-            "\\breturn\\b", "\\btry\\b", "\\bwhile\\b", "\\bwith\\b", "\\byield\\b"
+            "\\bFalse\\b",
+            "\\bNone\\b",
+            "\\bTrue\\b",
+            "\\band\\b",
+            "\\bas\\b",
+            "\\bassert\\b",
+            "\\basync\\b",
+            "\\bawait\\b",
+            "\\bbreak\\b",
+            "\\bclass\\b",
+            "\\bcontinue\\b",
+            "\\bdef\\b",
+            "\\bdel\\b",
+            "\\belif\\b",
+            "\\belse\\b",
+            "\\bexcept\\b",
+            "\\bfinally\\b",
+            "\\bfor\\b",
+            "\\bfrom\\b",
+            "\\bglobal\\b",
+            "\\bif\\b",
+            "\\bimport\\b",
+            "\\bin\\b",
+            "\\bis\\b",
+            "\\blambda\\b",
+            "\\bnonlocal\\b",
+            "\\bnot\\b",
+            "\\bor\\b",
+            "\\bpass\\b",
+            "\\braise\\b",
+            "\\breturn\\b",
+            "\\btry\\b",
+            "\\bwhile\\b",
+            "\\bwith\\b",
+            "\\byield\\b",
         ]
         for keyword in keywords:
             self.rules.append((re.compile(keyword), keyword_format))
@@ -115,20 +138,72 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Built-in functions
         builtin_format = self._create_format("#8be9fd")
         builtins = [
-            "\\babs\\b", "\\ball\\b", "\\bany\\b", "\\bbin\\b", "\\bbool\\b",
-            "\\bbytearray\\b", "\\bbytes\\b", "\\bcallable\\b", "\\bchr\\b",
-            "\\bclassmethod\\b", "\\bcompile\\b", "\\bcomplex\\b", "\\bdelattr\\b",
-            "\\bdict\\b", "\\bdir\\b", "\\bdivmod\\b", "\\benumerate\\b", "\\beval\\b",
-            "\\bexec\\b", "\\bfilter\\b", "\\bfloat\\b", "\\bformat\\b", "\\bfrozenset\\b",
-            "\\bgetattr\\b", "\\bglobals\\b", "\\bhasattr\\b", "\\bhash\\b", "\\bhelp\\b",
-            "\\bhex\\b", "\\bid\\b", "\\binput\\b", "\\bint\\b", "\\bisinstance\\b",
-            "\\bissubclass\\b", "\\biter\\b", "\\blen\\b", "\\blist\\b", "\\blocals\\b",
-            "\\bmap\\b", "\\bmax\\b", "\\bmemoryview\\b", "\\bmin\\b", "\\bnext\\b",
-            "\\bobject\\b", "\\boct\\b", "\\bopen\\b", "\\bord\\b", "\\bpow\\b",
-            "\\bprint\\b", "\\bproperty\\b", "\\brange\\b", "\\brepr\\b", "\\breversed\\b",
-            "\\bround\\b", "\\bset\\b", "\\bsetattr\\b", "\\bslice\\b", "\\bsorted\\b",
-            "\\bstaticmethod\\b", "\\bstr\\b", "\\bsum\\b", "\\bsuper\\b", "\\btuple\\b",
-            "\\btype\\b", "\\bvars\\b", "\\bzip\\b"
+            "\\babs\\b",
+            "\\ball\\b",
+            "\\bany\\b",
+            "\\bbin\\b",
+            "\\bbool\\b",
+            "\\bbytearray\\b",
+            "\\bbytes\\b",
+            "\\bcallable\\b",
+            "\\bchr\\b",
+            "\\bclassmethod\\b",
+            "\\bcompile\\b",
+            "\\bcomplex\\b",
+            "\\bdelattr\\b",
+            "\\bdict\\b",
+            "\\bdir\\b",
+            "\\bdivmod\\b",
+            "\\benumerate\\b",
+            "\\beval\\b",
+            "\\bexec\\b",
+            "\\bfilter\\b",
+            "\\bfloat\\b",
+            "\\bformat\\b",
+            "\\bfrozenset\\b",
+            "\\bgetattr\\b",
+            "\\bglobals\\b",
+            "\\bhasattr\\b",
+            "\\bhash\\b",
+            "\\bhelp\\b",
+            "\\bhex\\b",
+            "\\bid\\b",
+            "\\binput\\b",
+            "\\bint\\b",
+            "\\bisinstance\\b",
+            "\\bissubclass\\b",
+            "\\biter\\b",
+            "\\blen\\b",
+            "\\blist\\b",
+            "\\blocals\\b",
+            "\\bmap\\b",
+            "\\bmax\\b",
+            "\\bmemoryview\\b",
+            "\\bmin\\b",
+            "\\bnext\\b",
+            "\\bobject\\b",
+            "\\boct\\b",
+            "\\bopen\\b",
+            "\\bord\\b",
+            "\\bpow\\b",
+            "\\bprint\\b",
+            "\\bproperty\\b",
+            "\\brange\\b",
+            "\\brepr\\b",
+            "\\breversed\\b",
+            "\\bround\\b",
+            "\\bset\\b",
+            "\\bsetattr\\b",
+            "\\bslice\\b",
+            "\\bsorted\\b",
+            "\\bstaticmethod\\b",
+            "\\bstr\\b",
+            "\\bsum\\b",
+            "\\bsuper\\b",
+            "\\btuple\\b",
+            "\\btype\\b",
+            "\\bvars\\b",
+            "\\bzip\\b",
         ]
         for builtin in builtins:
             self.rules.append((re.compile(builtin), builtin_format))
@@ -171,14 +246,43 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
-            "\\bbreak\\b", "\\bcase\\b", "\\bcatch\\b", "\\bclass\\b", "\\bconst\\b",
-            "\\bcontinue\\b", "\\bdebugger\\b", "\\bdefault\\b", "\\bdelete\\b", "\\bdo\\b",
-            "\\belse\\b", "\\bexport\\b", "\\bextends\\b", "\\bfinally\\b", "\\bfor\\b",
-            "\\bfunction\\b", "\\bif\\b", "\\bimport\\b", "\\bin\\b", "\\binstanceof\\b",
-            "\\blet\\b", "\\bnew\\b", "\\breturn\\b", "\\bsuper\\b", "\\bswitch\\b",
-            "\\bthis\\b", "\\bthrow\\b", "\\btry\\b", "\\btypeof\\b", "\\bvar\\b",
-            "\\bvoid\\b", "\\bwhile\\b", "\\bwith\\b", "\\byield\\b", "\\basync\\b",
-            "\\bawait\\b", "\\bstatic\\b"
+            "\\bbreak\\b",
+            "\\bcase\\b",
+            "\\bcatch\\b",
+            "\\bclass\\b",
+            "\\bconst\\b",
+            "\\bcontinue\\b",
+            "\\bdebugger\\b",
+            "\\bdefault\\b",
+            "\\bdelete\\b",
+            "\\bdo\\b",
+            "\\belse\\b",
+            "\\bexport\\b",
+            "\\bextends\\b",
+            "\\bfinally\\b",
+            "\\bfor\\b",
+            "\\bfunction\\b",
+            "\\bif\\b",
+            "\\bimport\\b",
+            "\\bin\\b",
+            "\\binstanceof\\b",
+            "\\blet\\b",
+            "\\bnew\\b",
+            "\\breturn\\b",
+            "\\bsuper\\b",
+            "\\bswitch\\b",
+            "\\bthis\\b",
+            "\\bthrow\\b",
+            "\\btry\\b",
+            "\\btypeof\\b",
+            "\\bvar\\b",
+            "\\bvoid\\b",
+            "\\bwhile\\b",
+            "\\bwith\\b",
+            "\\byield\\b",
+            "\\basync\\b",
+            "\\bawait\\b",
+            "\\bstatic\\b",
         ]
         for keyword in keywords:
             self.rules.append((re.compile(keyword), keyword_format))
@@ -186,11 +290,30 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Built-in objects and values
         builtin_format = self._create_format("#8be9fd")
         builtins = [
-            "\\btrue\\b", "\\bfalse\\b", "\\bnull\\b", "\\bundefined\\b",
-            "\\bArray\\b", "\\bBoolean\\b", "\\bDate\\b", "\\bError\\b", "\\bFunction\\b",
-            "\\bJSON\\b", "\\bMath\\b", "\\bNumber\\b", "\\bObject\\b", "\\bRegExp\\b",
-            "\\bString\\b", "\\bSymbol\\b", "\\bPromise\\b", "\\bMap\\b", "\\bSet\\b",
-            "\\bWeakMap\\b", "\\bWeakSet\\b", "\\bconsole\\b", "\\bwindow\\b", "\\bdocument\\b"
+            "\\btrue\\b",
+            "\\bfalse\\b",
+            "\\bnull\\b",
+            "\\bundefined\\b",
+            "\\bArray\\b",
+            "\\bBoolean\\b",
+            "\\bDate\\b",
+            "\\bError\\b",
+            "\\bFunction\\b",
+            "\\bJSON\\b",
+            "\\bMath\\b",
+            "\\bNumber\\b",
+            "\\bObject\\b",
+            "\\bRegExp\\b",
+            "\\bString\\b",
+            "\\bSymbol\\b",
+            "\\bPromise\\b",
+            "\\bMap\\b",
+            "\\bSet\\b",
+            "\\bWeakMap\\b",
+            "\\bWeakSet\\b",
+            "\\bconsole\\b",
+            "\\bwindow\\b",
+            "\\bdocument\\b",
         ]
         for builtin in builtins:
             self.rules.append((re.compile(builtin), builtin_format))
@@ -246,12 +369,36 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Instructions
         instruction_format = self._create_format("#ff79c6", bold=True)
         instructions = [
-            "\\bmov\\b", "\\bpush\\b", "\\bpop\\b", "\\blea\\b", "\\badd\\b",
-            "\\bsub\\b", "\\bmul\\b", "\\bdiv\\b", "\\binc\\b", "\\bdec\\b",
-            "\\band\\b", "\\bor\\b", "\\bxor\\b", "\\bnot\\b", "\\bshl\\b",
-            "\\bshr\\b", "\\bjmp\\b", "\\bje\\b", "\\bjne\\b", "\\bjg\\b",
-            "\\bjge\\b", "\\bjl\\b", "\\bjle\\b", "\\bcall\\b", "\\bret\\b",
-            "\\bnop\\b", "\\bint\\b", "\\bcmp\\b", "\\btest\\b", "\\bxchg\\b"
+            "\\bmov\\b",
+            "\\bpush\\b",
+            "\\bpop\\b",
+            "\\blea\\b",
+            "\\badd\\b",
+            "\\bsub\\b",
+            "\\bmul\\b",
+            "\\bdiv\\b",
+            "\\binc\\b",
+            "\\bdec\\b",
+            "\\band\\b",
+            "\\bor\\b",
+            "\\bxor\\b",
+            "\\bnot\\b",
+            "\\bshl\\b",
+            "\\bshr\\b",
+            "\\bjmp\\b",
+            "\\bje\\b",
+            "\\bjne\\b",
+            "\\bjg\\b",
+            "\\bjge\\b",
+            "\\bjl\\b",
+            "\\bjle\\b",
+            "\\bcall\\b",
+            "\\bret\\b",
+            "\\bnop\\b",
+            "\\bint\\b",
+            "\\bcmp\\b",
+            "\\btest\\b",
+            "\\bxchg\\b",
         ]
         for inst in instructions:
             self.rules.append((re.compile(inst, re.IGNORECASE), instruction_format))
@@ -259,13 +406,38 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Registers
         register_format = self._create_format("#8be9fd")
         registers = [
-            "\\beax\\b", "\\bebx\\b", "\\becx\\b", "\\bedx\\b", "\\besi\\b",
-            "\\bedi\\b", "\\bebp\\b", "\\besp\\b", "\\brax\\b", "\\brbx\\b",
-            "\\brcx\\b", "\\brdx\\b", "\\brsi\\b", "\\brdi\\b", "\\brbp\\b",
-            "\\brsp\\b", "\\br8\\b", "\\br9\\b", "\\br10\\b", "\\br11\\b",
-            "\\br12\\b", "\\br13\\b", "\\br14\\b", "\\br15\\b", "\\bal\\b",
-            "\\bah\\b", "\\bbl\\b", "\\bbh\\b", "\\bcl\\b", "\\bch\\b",
-            "\\bdl\\b", "\\bdh\\b"
+            "\\beax\\b",
+            "\\bebx\\b",
+            "\\becx\\b",
+            "\\bedx\\b",
+            "\\besi\\b",
+            "\\bedi\\b",
+            "\\bebp\\b",
+            "\\besp\\b",
+            "\\brax\\b",
+            "\\brbx\\b",
+            "\\brcx\\b",
+            "\\brdx\\b",
+            "\\brsi\\b",
+            "\\brdi\\b",
+            "\\brbp\\b",
+            "\\brsp\\b",
+            "\\br8\\b",
+            "\\br9\\b",
+            "\\br10\\b",
+            "\\br11\\b",
+            "\\br12\\b",
+            "\\br13\\b",
+            "\\br14\\b",
+            "\\br15\\b",
+            "\\bal\\b",
+            "\\bah\\b",
+            "\\bbl\\b",
+            "\\bbh\\b",
+            "\\bcl\\b",
+            "\\bch\\b",
+            "\\bdl\\b",
+            "\\bdh\\b",
         ]
         for reg in registers:
             self.rules.append((re.compile(reg, re.IGNORECASE), register_format))
@@ -292,16 +464,57 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
-            "\\bauto\\b", "\\bbreak\\b", "\\bcase\\b", "\\bchar\\b", "\\bconst\\b",
-            "\\bcontinue\\b", "\\bdefault\\b", "\\bdo\\b", "\\bdouble\\b", "\\belse\\b",
-            "\\benum\\b", "\\bextern\\b", "\\bfloat\\b", "\\bfor\\b", "\\bgoto\\b",
-            "\\bif\\b", "\\bint\\b", "\\blong\\b", "\\bregister\\b", "\\breturn\\b",
-            "\\bshort\\b", "\\bsigned\\b", "\\bsizeof\\b", "\\bstatic\\b", "\\bstruct\\b",
-            "\\bswitch\\b", "\\btypedef\\b", "\\bunion\\b", "\\bunsigned\\b", "\\bvoid\\b",
-            "\\bvolatile\\b", "\\bwhile\\b", "\\bclass\\b", "\\bnamespace\\b", "\\btemplate\\b",
-            "\\bpublic\\b", "\\bprivate\\b", "\\bprotected\\b", "\\bvirtual\\b", "\\bfriend\\b",
-            "\\binline\\b", "\\boperator\\b", "\\bthis\\b", "\\bnew\\b", "\\bdelete\\b",
-            "\\btry\\b", "\\bcatch\\b", "\\bthrow\\b", "\\busing\\b", "\\btrue\\b", "\\bfalse\\b"
+            "\\bauto\\b",
+            "\\bbreak\\b",
+            "\\bcase\\b",
+            "\\bchar\\b",
+            "\\bconst\\b",
+            "\\bcontinue\\b",
+            "\\bdefault\\b",
+            "\\bdo\\b",
+            "\\bdouble\\b",
+            "\\belse\\b",
+            "\\benum\\b",
+            "\\bextern\\b",
+            "\\bfloat\\b",
+            "\\bfor\\b",
+            "\\bgoto\\b",
+            "\\bif\\b",
+            "\\bint\\b",
+            "\\blong\\b",
+            "\\bregister\\b",
+            "\\breturn\\b",
+            "\\bshort\\b",
+            "\\bsigned\\b",
+            "\\bsizeof\\b",
+            "\\bstatic\\b",
+            "\\bstruct\\b",
+            "\\bswitch\\b",
+            "\\btypedef\\b",
+            "\\bunion\\b",
+            "\\bunsigned\\b",
+            "\\bvoid\\b",
+            "\\bvolatile\\b",
+            "\\bwhile\\b",
+            "\\bclass\\b",
+            "\\bnamespace\\b",
+            "\\btemplate\\b",
+            "\\bpublic\\b",
+            "\\bprivate\\b",
+            "\\bprotected\\b",
+            "\\bvirtual\\b",
+            "\\bfriend\\b",
+            "\\binline\\b",
+            "\\boperator\\b",
+            "\\bthis\\b",
+            "\\bnew\\b",
+            "\\bdelete\\b",
+            "\\btry\\b",
+            "\\bcatch\\b",
+            "\\bthrow\\b",
+            "\\busing\\b",
+            "\\btrue\\b",
+            "\\bfalse\\b",
         ]
         for keyword in keywords:
             self.rules.append((re.compile(keyword), keyword_format))
@@ -353,11 +566,30 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
-            "\\bif\\b", "\\bthen\\b", "\\belse\\b", "\\belif\\b", "\\bfi\\b",
-            "\\bfor\\b", "\\bwhile\\b", "\\bdo\\b", "\\bdone\\b", "\\bcase\\b",
-            "\\besac\\b", "\\bfunction\\b", "\\breturn\\b", "\\bin\\b", "\\bselect\\b",
-            "\\buntil\\b", "\\bbreak\\b", "\\bcontinue\\b", "\\bexit\\b", "\\bexport\\b",
-            "\\breadonly\\b", "\\blocal\\b", "\\bunset\\b", "\\bshift\\b"
+            "\\bif\\b",
+            "\\bthen\\b",
+            "\\belse\\b",
+            "\\belif\\b",
+            "\\bfi\\b",
+            "\\bfor\\b",
+            "\\bwhile\\b",
+            "\\bdo\\b",
+            "\\bdone\\b",
+            "\\bcase\\b",
+            "\\besac\\b",
+            "\\bfunction\\b",
+            "\\breturn\\b",
+            "\\bin\\b",
+            "\\bselect\\b",
+            "\\buntil\\b",
+            "\\bbreak\\b",
+            "\\bcontinue\\b",
+            "\\bexit\\b",
+            "\\bexport\\b",
+            "\\breadonly\\b",
+            "\\blocal\\b",
+            "\\bunset\\b",
+            "\\bshift\\b",
         ]
         for keyword in keywords:
             self.rules.append((re.compile(keyword), keyword_format))
@@ -365,11 +597,31 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Built-in commands
         builtin_format = self._create_format("#8be9fd")
         builtins = [
-            "\\becho\\b", "\\bprintf\\b", "\\bread\\b", "\\bcd\\b", "\\bpwd\\b",
-            "\\bls\\b", "\\bmkdir\\b", "\\brm\\b", "\\bcp\\b", "\\bmv\\b",
-            "\\btouch\\b", "\\bcat\\b", "\\bgrep\\b", "\\bsed\\b", "\\bawk\\b",
-            "\\bfind\\b", "\\bsort\\b", "\\buniq\\b", "\\bcut\\b", "\\btr\\b",
-            "\\bwc\\b", "\\bhead\\b", "\\btail\\b", "\\btee\\b", "\\bxargs\\b"
+            "\\becho\\b",
+            "\\bprintf\\b",
+            "\\bread\\b",
+            "\\bcd\\b",
+            "\\bpwd\\b",
+            "\\bls\\b",
+            "\\bmkdir\\b",
+            "\\brm\\b",
+            "\\bcp\\b",
+            "\\bmv\\b",
+            "\\btouch\\b",
+            "\\bcat\\b",
+            "\\bgrep\\b",
+            "\\bsed\\b",
+            "\\bawk\\b",
+            "\\bfind\\b",
+            "\\bsort\\b",
+            "\\buniq\\b",
+            "\\bcut\\b",
+            "\\btr\\b",
+            "\\bwc\\b",
+            "\\bhead\\b",
+            "\\btail\\b",
+            "\\btee\\b",
+            "\\bxargs\\b",
         ]
         for builtin in builtins:
             self.rules.append((re.compile(builtin), builtin_format))
@@ -392,9 +644,21 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         # Keywords (generic)
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
-            "\\bif\\b", "\\belse\\b", "\\bfor\\b", "\\bwhile\\b", "\\breturn\\b",
-            "\\bfunction\\b", "\\bclass\\b", "\\bstruct\\b", "\\benum\\b", "\\btry\\b",
-            "\\bcatch\\b", "\\bthrow\\b", "\\bpublic\\b", "\\bprivate\\b", "\\bstatic\\b"
+            "\\bif\\b",
+            "\\belse\\b",
+            "\\bfor\\b",
+            "\\bwhile\\b",
+            "\\breturn\\b",
+            "\\bfunction\\b",
+            "\\bclass\\b",
+            "\\bstruct\\b",
+            "\\benum\\b",
+            "\\btry\\b",
+            "\\bcatch\\b",
+            "\\bthrow\\b",
+            "\\bpublic\\b",
+            "\\bprivate\\b",
+            "\\bstatic\\b",
         ]
         for keyword in keywords:
             self.rules.append((re.compile(keyword, re.IGNORECASE), keyword_format))
@@ -445,10 +709,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
-def create_highlighter(
-    document: QTextDocument,
-    language: str = "python"
-) -> SyntaxHighlighter:
+def create_highlighter(document: QTextDocument, language: str = "python") -> SyntaxHighlighter:
     """Factory function to create a syntax highlighter.
 
     Args:
@@ -469,20 +730,7 @@ def get_supported_languages() -> List[str]:
         List of supported language names
 
     """
-    return [
-        "python",
-        "javascript",
-        "js",
-        "json",
-        "assembly",
-        "asm",
-        "c",
-        "cpp",
-        "xml",
-        "html",
-        "shell",
-        "bash"
-    ]
+    return ["python", "javascript", "js", "json", "assembly", "asm", "c", "cpp", "xml", "html", "shell", "bash"]
 
 
 def detect_language(code: str) -> str:
@@ -509,6 +757,7 @@ def detect_language(code: str) -> str:
     if code.strip().startswith("{") and code.strip().endswith("}"):
         try:
             import json
+
             json.loads(code)
             return "json"
         except (json.JSONDecodeError, ValueError, TypeError, ImportError) as e:

@@ -217,9 +217,7 @@ class BinaryAnalyzer:
                 {
                     "machine": f"0x{machine:04x}",
                     "num_sections": num_sections,
-                    "timestamp": datetime.fromtimestamp(timestamp).isoformat()
-                    if timestamp > 0
-                    else "N/A",
+                    "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
                     "characteristics": f"0x{characteristics:04x}",
                     "sections": [],
                 }
@@ -234,9 +232,7 @@ class BinaryAnalyzer:
 
                 section_data = data[section_offset : section_offset + 40]
                 name = section_data[:8].decode("utf-8", errors="ignore").rstrip("\x00")
-                virtual_size, virtual_address, raw_size, raw_address = struct.unpack(
-                    "<IIII", section_data[8:24]
-                )
+                virtual_size, virtual_address, raw_size, raw_address = struct.unpack("<IIII", section_data[8:24])
 
                 pe_info["sections"].append(
                     {
@@ -281,21 +277,15 @@ class BinaryAnalyzer:
 
             # Parse program headers (segments)
             if ei_class == 2:  # 64-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack(
-                    "<HHIQQQQ", data[16:48]
-                )[:6]
+                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", data[16:48])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[54:58])
             else:  # 32-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack(
-                    "<HHIIII", data[16:36]
-                )[:6]
+                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIIII", data[16:36])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[42:46])
 
             elf_info.update(
                 {
-                    "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(
-                        e_type, f"Unknown({e_type})"
-                    ),
+                    "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
                     "machine": f"0x{e_machine:04x}",
                     "entry_point": f"0x{e_entry:08x}",
                 }
@@ -308,12 +298,12 @@ class BinaryAnalyzer:
                     break
 
                 if ei_class == 2:  # 64-bit
-                    p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = (
-                        struct.unpack("<IIQQQQQQ", data[ph_offset : ph_offset + 56])
+                    p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
+                        "<IIQQQQQQ", data[ph_offset : ph_offset + 56]
                     )
                 else:  # 32-bit
-                    p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = (
-                        struct.unpack("<IIIIIIII", data[ph_offset : ph_offset + 32])
+                    p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = struct.unpack(
+                        "<IIIIIIII", data[ph_offset : ph_offset + 32]
                     )
 
                 segment_types = {
@@ -385,14 +375,10 @@ class BinaryAnalyzer:
 
             # Parse header
             if is_64:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(
-                    endian + "IIIIII", data[4:28]
-                )
+                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 32
             else:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(
-                    endian + "IIIIII", data[4:28]
-                )
+                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 28
 
             macho_info.update(
@@ -470,9 +456,7 @@ class BinaryAnalyzer:
                     try:
                         str_offset_addr = string_ids_off + (i * 4)
                         if str_offset_addr + 4 <= len(data):
-                            str_offset = struct.unpack(
-                                "<I", data[str_offset_addr : str_offset_addr + 4]
-                            )[0]
+                            str_offset = struct.unpack("<I", data[str_offset_addr : str_offset_addr + 4])[0]
                             if str_offset < len(data):
                                 # Simple ULEB128 decoding for string length
                                 length = 0
@@ -487,9 +471,7 @@ class BinaryAnalyzer:
                                     shift += 7
 
                                 if pos + length <= len(data):
-                                    string = data[pos : pos + length].decode(
-                                        "utf-8", errors="ignore"
-                                    )
+                                    string = data[pos : pos + length].decode("utf-8", errors="ignore")
                                     dex_info["strings"].append(string)
                     except (UnicodeDecodeError, IndexError, struct.error):
                         continue
@@ -538,9 +520,7 @@ class BinaryAnalyzer:
 
                 # Calculate compression ratio
                 if archive_info["uncompressed_size"] > 0:
-                    archive_info["compression_ratio"] = (
-                        1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]
-                    ) * 100
+                    archive_info["compression_ratio"] = (1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]) * 100
 
             return archive_info
 

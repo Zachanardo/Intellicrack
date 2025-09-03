@@ -7,6 +7,7 @@ import shutil
 
 class BinaryPatcherPlugin:
     """Plugin for applying defensive security patches to binary executables for protection research."""
+
     def __init__(self):
         """Initialize the binary patcher plugin with defensive security research capabilities."""
         self.name = "Binary Patcher Plugin"

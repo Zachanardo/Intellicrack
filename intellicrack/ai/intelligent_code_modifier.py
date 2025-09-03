@@ -139,9 +139,7 @@ class CodeAnalyzer:
                 from .ai_file_tools import get_ai_file_tools
 
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(
-                    file_path, purpose="Code analysis for intelligent modification"
-                )
+                file_data = ai_file_tools.read_file(file_path, purpose="Code analysis for intelligent modification")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
@@ -475,9 +473,7 @@ class IntelligentCodeModifier:
         self.backup_directory = Path.home() / ".intellicrack" / "code_backups"
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
-    def gather_project_context(
-        self, project_root: str, target_files: list[str] = None
-    ) -> dict[str, CodeContext]:
+    def gather_project_context(self, project_root: str, target_files: list[str] = None) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
         logger.info(f"Gathering project context from: {project_root}")
 
@@ -486,9 +482,7 @@ class IntelligentCodeModifier:
 
         # Find relevant files
         if target_files:
-            files_to_analyze = [
-                project_path / f for f in target_files if (project_path / f).exists()
-            ]
+            files_to_analyze = [project_path / f for f in target_files if (project_path / f).exists()]
         else:
             files_to_analyze = []
             for ext in self.analyzer.supported_extensions.keys():
@@ -562,9 +556,7 @@ class IntelligentCodeModifier:
         logger.info(f"Generated {len(changes)} code changes")
         return changes
 
-    def _create_modification_prompt(
-        self, request: ModificationRequest, context: CodeContext
-    ) -> str:
+    def _create_modification_prompt(self, request: ModificationRequest, context: CodeContext) -> str:
         """Create a prompt for AI modification."""
         prompt = f"""
 # Code Modification Request
@@ -575,9 +567,9 @@ class IntelligentCodeModifier:
 ## Target File Information
 - **File**: {context.file_path}
 - **Language**: {context.language}
-- **Functions**: {', '.join(context.functions)}
-- **Classes**: {', '.join(context.classes)}
-- **Imports**: {', '.join(context.imports)}
+- **Functions**: {", ".join(context.functions)}
+- **Classes**: {", ".join(context.classes)}
+- **Imports**: {", ".join(context.imports)}
 
 ## Requirements
 {chr(10).join(f"- {req}" for req in request.requirements)}
@@ -639,9 +631,7 @@ Requirements:
             logger.error(f"Failed to get AI response: {e}")
             return ""
 
-    def _parse_modification_response(
-        self, response: str, file_path: str, request: ModificationRequest
-    ) -> list[CodeChange]:
+    def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
         """Parse AI response into CodeChange objects."""
         changes = []
 
@@ -820,9 +810,7 @@ Requirements:
                 from .ai_file_tools import get_ai_file_tools
 
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(
-                    file_path, purpose="Read file for applying code modifications"
-                )
+                file_data = ai_file_tools.read_file(file_path, purpose="Read file for applying code modifications")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):

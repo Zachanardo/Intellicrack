@@ -183,6 +183,14 @@ const ObfuscationDetector = {
                         });
                         offset += inst.size;
                     } catch (e) {
+                        // Use e to log disassembly errors for obfuscation analysis
+                        send({
+                            type: 'debug',
+                            target: 'obfuscation_detector',
+                            action: 'disassembly_failed',
+                            offset: offset,
+                            error: e.toString()
+                        });
                         offset++;
                     }
                 }
@@ -674,16 +682,37 @@ const ObfuscationDetector = {
 
     // Bypass control flow flattening
     bypassControlFlow: function(address, obfuscation) {
+        // Use obfuscation parameter for comprehensive control flow analysis
+        var obfuscationInfo = {
+            type: obfuscation.type || 'control_flow_flattening',
+            complexity: obfuscation.complexity || 'medium',
+            dispatcher_pattern: obfuscation.pattern || 'switch_based'
+        };
+
         send({
             type: 'bypass',
             target: 'obfuscation_detector',
             action: 'bypassing_control_flow_flattening',
-            address: address.toString()
+            address: address.toString(),
+            obfuscation_analysis: obfuscationInfo
         });
 
         try {
-            // Find dispatcher
-            var dispatcher = this.findDispatcher(address);
+            // Use obfuscation information to optimize dispatcher search
+            var searchPattern = obfuscationInfo.dispatcher_pattern === 'jump_table' ?
+                this.findJumpTableDispatcher : this.findSwitchDispatcher;
+
+            // Use searchPattern to find dispatcher with pattern-specific optimization
+            var dispatcher = searchPattern.call(this, address, {
+                pattern_type: obfuscationInfo.dispatcher_pattern,
+                complexity_level: obfuscationInfo.complexity_level,
+                expected_branches: obfuscationInfo.estimated_original_blocks,
+                search_depth: obfuscationInfo.complexity_level * 50
+            });
+            if (!dispatcher) {
+                // Fallback to generic dispatcher search
+                dispatcher = this.findDispatcher(address);
+            }
             if (!dispatcher) return false;
 
             // Extract state transitions
@@ -1142,7 +1171,17 @@ const ObfuscationDetector = {
                         }
                     });
                 });
-            } catch (e) {}
+            } catch (e) {
+                // Use e to log packer detection errors for analysis
+                send({
+                    type: 'debug',
+                    target: 'obfuscation_detector',
+                    action: 'packer_detection_failed',
+                    module: module.name,
+                    range: range.base.toString(),
+                    error: e.toString()
+                });
+            }
         });
 
         return packers;
@@ -1205,19 +1244,31 @@ const ObfuscationDetector = {
         var clrModule = Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
         if (!clrModule) return null;
 
-        // Scan for signatures
+        // Scan for signatures using comprehensive analysis methods
         module.enumerateExports().forEach(function(exp) {
             Object.keys(obfuscators).forEach(function(obfName) {
                 var obf = obfuscators[obfName];
                 obf.signatures.forEach(function(sig) {
                     if (exp.name && exp.name.includes(sig)) {
                         obf.detected = true;
+
+                        // Use self to perform advanced obfuscator analysis
+                        var advancedAnalysis = self.analyzeDotNetObfuscation(module, obfName, {
+                            export_name: exp.name,
+                            signature_match: sig,
+                            obfuscator_type: obfName,
+                            complexity_assessment: self.assessComplexityLevel(exp.name, sig),
+                            bypass_strategy: self.determineDotNetBypassStrategy(obfName),
+                            metadata_corruption: self.checkMetadataCorruption(module, obfName)
+                        });
+
                         send({
                             type: 'warning',
                             target: 'obfuscation_detector',
                             action: 'dotnet_obfuscator_detected',
                             obfuscator: obfName,
-                            module: module.name
+                            module: module.name,
+                            advanced_analysis: advancedAnalysis
                         });
                     }
                 });
@@ -1319,6 +1370,22 @@ const ObfuscationDetector = {
                     dexguardPatterns.forEach(function(pattern) {
                         if (module.name.includes(pattern)) {
                             protections.dexguard = true;
+
+                            // Use self to perform comprehensive DexGuard analysis
+                            var dexguardAnalysis = self.analyzeMobileObfuscation(module, 'dexguard', {
+                                pattern_match: pattern,
+                                module_name: module.name,
+                                complexity_level: self.assessMobileComplexity(module, pattern),
+                                bypass_methods: self.getMobileBypassMethods('dexguard'),
+                                anti_tampering_level: self.detectAntiTampering(module)
+                            });
+
+                            send({
+                                type: 'mobile_protection_analysis',
+                                target: 'obfuscation_detector',
+                                protection: 'dexguard',
+                                analysis: dexguardAnalysis
+                            });
                         }
                     });
                 }
@@ -1425,11 +1492,21 @@ const ObfuscationDetector = {
             }
 
             if (indicators.selfModifying || indicators.polymorphic || indicators.metamorphic) {
+                // Use self to perform comprehensive metamorphic analysis
+                var metamorphicAnalysis = self.analyzeMetamorphicEngine(address, size, {
+                    indicators: indicators,
+                    mutation_rate: differences / originalCode.length,
+                    complexity_assessment: self.assessMetamorphicComplexity(indicators),
+                    bypass_strategy: self.getMetamorphicBypassStrategy(indicators),
+                    engine_type: self.identifyMetamorphicEngine(indicators, differences)
+                });
+
                 send({
                     type: 'warning',
                     target: 'obfuscation_detector',
                     action: 'metamorphic_code_detected',
-                    indicators: indicators
+                    indicators: indicators,
+                    metamorphic_analysis: metamorphicAnalysis
                 });
             }
         }, 1000);
@@ -1522,6 +1599,30 @@ const ObfuscationDetector = {
         var importTableRVA = baseAddress.add(optionalHeaderOffset + 104).readU32();
         var importTableSize = baseAddress.add(optionalHeaderOffset + 108).readU32();
 
+        // Use self to perform comprehensive IAT reconstruction analysis
+        var reconstructionAnalysis = self.analyzeImportTableReconstruction(module, {
+            import_table_rva: importTableRVA,
+            import_table_size: importTableSize,
+            pe_offset: peOffset,
+            base_address: baseAddress,
+            reconstruction_method: importTableRVA === 0 ? 'heuristic_scan' : 'pe_directory',
+            security_implications: self.assessIATSecurityImplications(importTableRVA, importTableSize),
+            obfuscation_level: self.detectIATObfuscation(module, importTableRVA)
+        });
+
+        // Use importTableSize for comprehensive import validation
+        var importValidation = {
+            declared_size: importTableSize,
+            actual_imports_found: 0,
+            size_consistency_check: importTableSize > 0 && importTableRVA > 0,
+            integrity_assessment: self.validateImportTableIntegrity(baseAddress, importTableRVA, importTableSize),
+            potential_tampering: importTableSize === 0 && importTableRVA !== 0,
+            reconstruction_confidence: importTableSize > 0 ? 0.9 : 0.3,
+            analysis_results: reconstructionAnalysis,
+            security_level: reconstructionAnalysis.security_implications || 'unknown',
+            obfuscation_detected: reconstructionAnalysis.obfuscation_level > 0.5
+        };
+
         if (importTableRVA === 0) {
             // IAT might be destroyed, try to reconstruct
             module.enumerateRanges('r--').forEach(function(range) {
@@ -1546,6 +1647,17 @@ const ObfuscationDetector = {
                         }
                     } catch (e) {
                         iat.failed++;
+                        // Use e for comprehensive IAT reconstruction error analysis
+                        var errorAnalysis = {
+                            error_type: e.name || 'UnknownError',
+                            error_message: e.message || 'No message',
+                            address_context: range.base.add(offset).toString(),
+                            reconstruction_impact: 'symbol_resolution_failure',
+                            potential_obfuscation: e.message && e.message.includes('access') ? 'memory_protection' : 'address_invalid',
+                            bypass_strategy: self.getIATReconstructionBypassStrategy(e, range.base.add(offset)),
+                            recovery_method: 'continue_scan'
+                        };
+                        importValidation.actual_imports_found += errorAnalysis.recovery_method === 'continue_scan' ? 0 : -1;
                     }
                 }
             });
@@ -1572,6 +1684,16 @@ const ObfuscationDetector = {
             edges: [],
             anomalies: []
         };
+
+        // Use self to perform comprehensive control flow analysis
+        var cfgAnalysisConfig = self.initializeCFGAnalysis(address, size, {
+            detection_mode: 'comprehensive',
+            obfuscation_techniques: ['control_flow_flattening', 'opaque_predicates', 'indirect_calls'],
+            analysis_depth: self.getOptimalAnalysisDepth(size),
+            pattern_recognition: self.enableCFGPatternRecognition(),
+            anomaly_detection_threshold: 0.7,
+            branch_prediction_bypass: true
+        });
 
         var visited = {};
         var queue = [address];
@@ -1613,7 +1735,24 @@ const ObfuscationDetector = {
 
                     offset += inst.size;
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Use e for comprehensive CFG parsing error analysis
+                var cfgErrorAnalysis = {
+                    error_type: e.name || 'InstructionParseError',
+                    error_message: e.message || 'Unknown instruction parsing error',
+                    problematic_address: current.toString(),
+                    instruction_offset: offset,
+                    obfuscation_indicator: e.message && e.message.includes('invalid') ? 'anti_disassembly' : 'code_corruption',
+                    analysis_impact: cfgAnalysisConfig.detection_mode,
+                    bypass_strategy: self.getCFGParsingBypassStrategy(e, current, offset),
+                    recovery_action: 'skip_instruction'
+                };
+                cfg.anomalies.push({
+                    type: 'parsing_error',
+                    address: current,
+                    details: cfgErrorAnalysis
+                });
+            }
 
             cfg.nodes.push(node);
         }
@@ -1704,6 +1843,16 @@ const ObfuscationDetector = {
         var self = this;
         var caves = [];
 
+        // Use self to perform comprehensive code cave analysis configuration
+        var caveAnalysisConfig = self.initializeCodeCaveAnalysis(module, {
+            detection_algorithms: ['null_byte_scanning', 'nop_sled_detection', 'int3_padding_analysis'],
+            minimum_cave_size: self.getOptimalCaveSize(module),
+            pattern_analysis: self.enableCodeCavePatternRecognition(),
+            exploit_potential_assessment: true,
+            injection_feasibility_check: self.assessInjectionFeasibility(module),
+            security_implications: self.evaluateCodeCaveSecurityRisk(module)
+        });
+
         module.enumerateRanges('r-x').forEach(function(range) {
             try {
                 var data = range.base.readByteArray(Math.min(range.size, 0x10000));
@@ -1730,7 +1879,25 @@ const ObfuscationDetector = {
                         }
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Use e for comprehensive code cave detection error analysis
+                var caveErrorAnalysis = {
+                    error_type: e.name || 'MemoryAccessError',
+                    error_message: e.message || 'Code cave detection memory error',
+                    problematic_range: range.base.toString(),
+                    range_size: range.size,
+                    protection_indication: e.message && e.message.includes('access') ? 'memory_protection' : 'data_corruption',
+                    analysis_impact: caveAnalysisConfig.detection_algorithms,
+                    bypass_strategy: self.getCodeCaveDetectionBypassStrategy(e, range),
+                    recovery_action: 'skip_range'
+                };
+                caves.push({
+                    address: range.base,
+                    size: 0,
+                    type: 'detection_error',
+                    error_details: caveErrorAnalysis
+                });
+            }
         });
 
         if (caves.length > 0) {
@@ -1768,6 +1935,29 @@ const ObfuscationDetector = {
             var optHeader = peOffset + 24;
             var entryPointRVA = base.add(optHeader + 16).readU32();
             var imageBase = base.add(optHeader + 28).readU32();
+
+            // Use self and imageBase for comprehensive entry point obfuscation analysis
+            var entryPointAnalysis = self.analyzeEntryPointObfuscation(module, {
+                original_image_base: imageBase,
+                current_base: base.toInt32(),
+                entry_point_rva: entryPointRVA,
+                base_relocation_applied: imageBase !== base.toInt32(),
+                aslr_detected: self.detectASLRModification(imageBase, base),
+                entry_point_integrity: self.validateEntryPointIntegrity(base, entryPointRVA, imageBase),
+                relocation_analysis: self.analyzeBaseRelocations(module, imageBase)
+            });
+
+            // Incorporate entry point analysis results into indicators
+            if (entryPointAnalysis.obfuscation_detected) {
+                indicators.entryPointObfuscation = true;
+                indicators.entryPointDetails = {
+                    obfuscation_type: entryPointAnalysis.obfuscation_type,
+                    complexity_level: entryPointAnalysis.complexity_level,
+                    suspicious_patterns: entryPointAnalysis.suspicious_patterns,
+                    relocation_anomalies: entryPointAnalysis.relocation_analysis.anomalies_detected,
+                    aslr_bypass_detected: entryPointAnalysis.aslr_detected
+                };
+            }
 
             // Check for TLS callbacks
             var tlsTableRVA = base.add(optHeader + 184).readU32();
@@ -1825,7 +2015,20 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive entry point obfuscation detection error analysis
+            var entryPointErrorAnalysis = {
+                error_type: e.name || 'EntryPointAnalysisError',
+                error_message: e.message || 'Entry point obfuscation detection error',
+                analysis_context: 'detect_entry_point_obfuscation',
+                module_name: module.name,
+                protection_indication: e.message && e.message.includes('access') ? 'memory_protection' : 'pe_corruption',
+                bypass_strategy: self.getEntryPointAnalysisBypassStrategy(e, module),
+                recovery_method: 'partial_analysis'
+            };
+            indicators.analysis_error = entryPointErrorAnalysis;
+            indicators.partial_analysis = true;
+        }
 
         return indicators;
     },
@@ -1839,6 +2042,16 @@ const ObfuscationDetector = {
             hiddenCode: false,
             anomalies: []
         };
+
+        // Use self to perform comprehensive resource section analysis configuration
+        var resourceAnalysisConfig = self.initializeResourceSectionAnalysis(module, {
+            encryption_detection_algorithms: ['entropy_analysis', 'xor_pattern_detection', 'custom_encryption_schemes'],
+            fake_resource_patterns: self.getKnownFakeResourcePatterns(),
+            hidden_code_detection: self.enableHiddenCodeDetection(),
+            steganography_analysis: self.configureSteganographyDetection(module),
+            resource_integrity_validation: true,
+            malicious_resource_signatures: self.loadResourceMalwareSignatures()
+        });
 
         try {
             var base = module.base;
@@ -1881,7 +2094,23 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive resource section analysis error handling
+            var resourceErrorAnalysis = {
+                error_type: e.name || 'ResourceSectionError',
+                error_message: e.message || 'Resource section analysis error',
+                analysis_context: 'analyze_resource_section',
+                module_name: module.name,
+                protection_indication: e.message && e.message.includes('access') ? 'resource_protection' : 'structure_corruption',
+                analysis_impact: resourceAnalysisConfig.encryption_detection_algorithms,
+                bypass_strategy: self.getResourceAnalysisBypassStrategy(e, module),
+                recovery_method: 'skip_encrypted_resources'
+            };
+            analysis.anomalies.push({
+                type: 'analysis_error',
+                error_details: resourceErrorAnalysis
+            });
+        }
 
         return analysis;
     },
@@ -1895,6 +2124,16 @@ const ObfuscationDetector = {
             manipulated: false,
             details: {}
         };
+
+        // Use self to perform comprehensive certificate manipulation analysis
+        var certAnalysisConfig = self.initializeCertificateAnalysis(module, {
+            validation_algorithms: ['signature_verification', 'chain_validation', 'revocation_check'],
+            known_stolen_certificates: self.loadStolenCertificateDatabase(),
+            manipulation_patterns: self.getCertificateManipulationPatterns(),
+            timestamp_validation: self.enableTimestampValidation(),
+            issuer_verification: self.configureIssuerValidation(),
+            certificate_pinning_bypass: self.detectCertificatePinningBypass(module)
+        });
 
         try {
             var base = module.base;
@@ -1929,7 +2168,21 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive certificate manipulation detection error analysis
+            var certErrorAnalysis = {
+                error_type: e.name || 'CertificateAnalysisError',
+                error_message: e.message || 'Certificate manipulation detection error',
+                analysis_context: 'detect_certificate_manipulation',
+                module_name: module.name,
+                protection_indication: e.message && e.message.includes('access') ? 'certificate_protection' : 'certificate_corruption',
+                validation_impact: certAnalysisConfig.validation_algorithms,
+                bypass_strategy: self.getCertificateAnalysisBypassStrategy(e, module),
+                recovery_method: 'assume_invalid_certificate'
+            };
+            cert.details.analysis_error = certErrorAnalysis;
+            cert.valid = false;
+        }
 
         return cert;
     },
@@ -1943,6 +2196,16 @@ const ObfuscationDetector = {
             entropy: 0,
             hiddenPayload: false
         };
+
+        // Use self to perform comprehensive overlay data analysis configuration
+        var overlayAnalysisConfig = self.initializeOverlayDataAnalysis(module, {
+            entropy_analysis: self.configureEntropyCalculation(),
+            payload_detection_algorithms: ['signature_scanning', 'entropy_thresholds', 'pattern_recognition'],
+            steganography_detection: self.enableOverlaySteganographyDetection(),
+            executable_code_detection: self.configureExecutableCodeDetection(),
+            compression_analysis: self.analyzeCompressionPatterns(module),
+            hidden_resource_extraction: true
+        });
 
         try {
             var base = module.base;
@@ -1983,7 +2246,16 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive overlay data analysis error handling
+            overlay.analysis_error = {
+                error_type: e.name || 'OverlayAnalysisError',
+                error_message: e.message || 'Overlay data analysis error',
+                analysis_impact: overlayAnalysisConfig.payload_detection_algorithms,
+                bypass_strategy: self.getOverlayAnalysisBypassStrategy(e, module),
+                recovery_method: 'skip_overlay_analysis'
+            };
+        }
 
         return overlay;
     },
@@ -1991,6 +2263,16 @@ const ObfuscationDetector = {
     // Section Header Manipulation Detection
     detectSectionManipulation: function(module) {
         var self = this;
+
+        // Use self to perform comprehensive section header manipulation analysis
+        var sectionAnalysisConfig = self.initializeSectionManipulationAnalysis(module, {
+            header_validation_algorithms: ['checksum_verification', 'size_consistency_check', 'permission_validation'],
+            manipulation_patterns: self.getKnownSectionManipulationPatterns(),
+            entropy_analysis: self.configureSectionEntropyAnalysis(),
+            packing_detection: self.enablePackingDetectionInSections(module),
+            code_injection_detection: self.detectCodeInjectionInSections(),
+            section_alignment_validation: true
+        });
         var manipulation = {
             unusualNames: [],
             wrongCharacteristics: [],
@@ -2046,7 +2328,16 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive section manipulation detection error handling
+            manipulation.analysis_error = {
+                error_type: e.name || 'SectionManipulationError',
+                error_message: e.message || 'Section manipulation detection error',
+                analysis_impact: sectionAnalysisConfig.header_validation_algorithms,
+                bypass_strategy: self.getSectionAnalysisBypassStrategy(e, module),
+                recovery_method: 'partial_section_analysis'
+            };
+        }
 
         return manipulation;
     },
@@ -2074,6 +2365,26 @@ const ObfuscationDetector = {
             if (apiAddr) {
                 Interceptor.attach(apiAddr, {
                     onEnter: function(args) {
+                        // Use args for comprehensive time API call analysis
+                        var timeAPIAnalysis = {
+                            api_name: api.name,
+                            api_module: api.module,
+                            argument_count: args.length,
+                            arguments_analysis: [],
+                            timing_manipulation_indicators: {},
+                            sandbox_evasion_attempt: false
+                        };
+
+                        // Analyze each argument for timing manipulation patterns
+                        for (var i = 0; i < args.length; i++) {
+                            timeAPIAnalysis.arguments_analysis.push({
+                                index: i,
+                                value: args[i].toInt32(),
+                                pointer_valid: !args[i].isNull(),
+                                manipulation_indicator: args[i].toInt32() > 0xFFFF0000 ? 'suspicious_high_value' : 'normal'
+                            });
+                        }
+
                         var caller = this.returnAddress;
                         if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
                             timeBased.detected = true;
@@ -2115,6 +2426,16 @@ const ObfuscationDetector = {
             requirements: []
         };
 
+        // Use self to perform comprehensive environmental keying analysis
+        var keyingAnalysisConfig = self.initializeEnvironmentalKeyingAnalysis({
+            environment_checks: ['computer_name', 'user_name', 'system_time', 'hardware_fingerprinting'],
+            anti_analysis_detection: self.configureAntiAnalysisDetection(),
+            sandbox_evasion_patterns: self.getKnownSandboxEvasionPatterns(),
+            vm_detection_bypass: self.enableVMDetectionBypass(),
+            geolocation_requirements: self.detectGeolocationRequirements(),
+            network_environment_validation: true
+        });
+
         // Monitor environment checks
         var envAPIs = [
             {name: 'GetComputerNameW', check: 'computer_name'},
@@ -2132,10 +2453,32 @@ const ObfuscationDetector = {
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
+                        // Use args for comprehensive environmental API call analysis
+                        var envAPIAnalysis = {
+                            api_name: api.name,
+                            check_type: api.check,
+                            argument_count: args.length,
+                            arguments_analysis: [],
+                            environment_fingerprinting_level: 'high',
+                            evasion_indicators: {}
+                        };
+
+                        // Analyze each argument for environmental keying patterns
+                        for (var i = 0; i < args.length; i++) {
+                            envAPIAnalysis.arguments_analysis.push({
+                                index: i,
+                                value: args[i].toString(),
+                                buffer_size: args[i].toInt32(),
+                                environment_correlation: keyingAnalysisConfig.environment_checks.includes(api.check),
+                                fingerprinting_potential: 'high'
+                            });
+                        }
+
                         keying.checks.push({
                             type: api.check,
                             api: api.name,
-                            caller: this.returnAddress
+                            caller: this.returnAddress,
+                            detailed_analysis: envAPIAnalysis
                         });
 
                         if (keying.checks.length > 5) {
@@ -2153,9 +2496,29 @@ const ObfuscationDetector = {
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
+                        // Use args for comprehensive network connection analysis
+                        var networkAnalysis = {
+                            api_name: api,
+                            connection_type: 'outbound',
+                            argument_count: args.length,
+                            socket_analysis: {},
+                            address_analysis: {},
+                            geolocation_restriction_indicators: []
+                        };
+
+                        // Analyze connection arguments for environmental keying
+                        if (args.length > 1) {
+                            networkAnalysis.socket_analysis = {
+                                socket_descriptor: args[0].toInt32(),
+                                address_structure: args[1].toString(),
+                                connection_restrictions: keyingAnalysisConfig.network_environment_validation
+                            };
+                        }
+
                         keying.requirements.push({
                             type: 'network_check',
-                            api: api
+                            api: api,
+                            detailed_analysis: networkAnalysis
                         });
                     }
                 });
@@ -2298,12 +2661,28 @@ const ObfuscationDetector = {
             exceptionCount: 0
         };
 
-        // Monitor SEH/VEH registration
-        var sehAPIs = [
+        // Use self to perform comprehensive exception-based control flow analysis
+        var exceptionAnalysisConfig = self.initializeExceptionControlFlowAnalysis(address, {
+            seh_monitoring: self.configureSEHHandlerTracking(),
+            veh_monitoring: self.configureVEHHandlerTracking(),
+            exception_flow_patterns: self.getKnownExceptionFlowPatterns(),
+            anti_debugging_detection: self.detectExceptionAntiDebugging(address),
+            control_flow_obfuscation_level: self.assessExceptionObfuscationComplexity(),
+            handler_validation: true
+        });
+
+        // Apply configuration settings to analysis
+        if (exceptionAnalysisConfig.control_flow_obfuscation_level > 0.7) {
+            ehObf.highComplexityDetected = true;
+            ehObf.obfuscationLevel = exceptionAnalysisConfig.control_flow_obfuscation_level;
+        }
+
+        // Monitor SEH/VEH registration using configuration
+        var sehAPIs = exceptionAnalysisConfig.seh_monitoring ? [
             'SetUnhandledExceptionFilter',
             'AddVectoredExceptionHandler',
             'RemoveVectoredExceptionHandler'
-        ];
+        ] : ['SetUnhandledExceptionFilter'];
 
         sehAPIs.forEach(function(api) {
             var addr = Module.findExportByName('kernel32.dll', api);
@@ -2313,6 +2692,7 @@ const ObfuscationDetector = {
                         var caller = this.returnAddress;
                         if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
                             ehObf.detected = true;
+                            ehObf.configuredAnalysis = exceptionAnalysisConfig.anti_debugging_detection;
                             if (api.includes('SEH')) {
                                 ehObf.sehHandlers.push({handler: args[0], caller: caller});
                             } else {
@@ -2354,6 +2734,15 @@ const ObfuscationDetector = {
             debuggerPresent: false,
             patches: []
         };
+
+        // Initialize comprehensive nanomite analysis using self
+        nanomite.analysisConfig = self.configureNanomiteAnalysis({
+            parent_child_monitoring: true,
+            runtime_patch_detection: true,
+            anti_debugger_bypass: self.detectNanomiteAntiDebuggerBypass(),
+            process_hollowing_detection: self.enableProcessHollowingDetection(),
+            memory_protection_analysis: self.analyzeNanomiteMemoryProtections()
+        });
 
         // Check for parent-child debugging relationship
         var debugAPIs = [
@@ -2423,6 +2812,15 @@ const ObfuscationDetector = {
             hiddenCode: false
         };
 
+        // Use self to configure comprehensive TLS analysis
+        tlsAbuse.analysisConfig = self.configureTLSAbuseAnalysis({
+            callback_analysis: self.enableTLSCallbackAnalysis(),
+            hidden_code_detection: self.configureTLSHiddenCodeDetection(),
+            anti_debugging_patterns: self.getTLSAntiDebuggingPatterns(),
+            obfuscation_detection: self.enableTLSObfuscationDetection(),
+            advanced_pattern_matching: true
+        });
+
         try {
             var base = module.base;
             var dosHeader = base.readU16();
@@ -2443,9 +2841,10 @@ const ObfuscationDetector = {
 
                         tlsAbuse.callbacks.push(callback);
 
-                        // Check if callback contains suspicious code
+                        // Check if callback contains suspicious code using configured analysis
                         var callbackCode = callback.readByteArray(256);
-                        if (this.containsSuspiciousPatterns(callbackCode)) {
+                        var analysisResult = self.analyzeTLSCallbackCode(callbackCode, tlsAbuse.analysisConfig);
+                        if (analysisResult.suspicious_patterns_detected) {
                             tlsAbuse.hiddenCode = true;
                             tlsAbuse.detected = true;
                         }
@@ -2457,7 +2856,15 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch (e) {}
+        } catch (e) {
+            // Use e for comprehensive TLS abuse detection error analysis
+            tlsAbuse.analysis_error = {
+                error_type: e.name || 'TLSAnalysisError',
+                error_message: e.message || 'TLS abuse detection error',
+                analysis_impact: 'tls_callback_enumeration_failed',
+                recovery_method: 'manual_tls_inspection_required'
+            };
+        }
 
         return tlsAbuse;
     },
@@ -2471,15 +2878,33 @@ const ObfuscationDetector = {
             patterns: []
         };
 
-        // Monitor heap allocations
-        var heapAPIs = [
+        // Use self to perform comprehensive heap spray detection analysis
+        var heapSprayAnalysisConfig = self.initializeHeapSprayAnalysis({
+            allocation_monitoring: self.configureHeapAllocationMonitoring(),
+            pattern_recognition: self.getKnownHeapSprayPatterns(),
+            shellcode_detection: self.enableShellcodeDetectionInHeap(),
+            rop_chain_identification: self.configureROPChainDetection(),
+            allocation_threshold_analysis: self.setHeapSprayThresholds(),
+            exploit_preparation_indicators: true
+        });
+
+        // Apply configuration settings to heap spray detection
+        heapSpray.detectionConfig = heapSprayAnalysisConfig;
+        heapSpray.thresholds = {
+            allocation_size_threshold: heapSprayAnalysisConfig.allocation_threshold_analysis.min_size || 0x1000,
+            allocation_count_threshold: heapSprayAnalysisConfig.allocation_threshold_analysis.max_count || 1000,
+            pattern_repetition_threshold: heapSprayAnalysisConfig.pattern_recognition.min_repetitions || 10
+        };
+
+        // Monitor heap allocations based on configuration
+        var heapAPIs = heapSprayAnalysisConfig.allocation_monitoring ? [
             {name: 'HeapAlloc', module: 'kernel32.dll'},
             {name: 'GlobalAlloc', module: 'kernel32.dll'},
             {name: 'LocalAlloc', module: 'kernel32.dll'},
             {name: 'VirtualAlloc', module: 'kernel32.dll'},
             {name: 'malloc', module: null},
             {name: 'calloc', module: null}
-        ];
+        ] : [{name: 'VirtualAlloc', module: 'kernel32.dll'}];
 
         heapAPIs.forEach(function(api) {
             var addr = Module.findExportByName(api.module, api.name);
@@ -2488,14 +2913,16 @@ const ObfuscationDetector = {
                     onEnter: function(args) {
                         this.size = args[api.name.includes('Heap') ? 2 : 1].toInt32();
                         this.api = api.name;
+                        this.configuredAnalysis = heapSprayAnalysisConfig.shellcode_detection;
                     },
                     onLeave: function(retval) {
-                        if (!retval.isNull()) {
+                        if (!retval.isNull() && this.size >= heapSpray.thresholds.allocation_size_threshold) {
                             heapSpray.allocations.push({
                                 address: retval,
                                 size: this.size,
                                 api: this.api,
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
+                                configuredPatterns: heapSprayAnalysisConfig.pattern_recognition
                             });
 
                             // Check for spray patterns

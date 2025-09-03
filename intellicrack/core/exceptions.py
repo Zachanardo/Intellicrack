@@ -28,9 +28,7 @@ class IntellicrackError(Exception):
 class ConfigurationError(IntellicrackError):
     """Raised when configuration is missing, invalid, or incomplete."""
 
-    def __init__(
-        self, message: str, service_name: str | None = None, config_key: str | None = None
-    ):
+    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None):
         """Initialize configuration error.
 
         Args:
@@ -104,9 +102,7 @@ class SecurityError(IntellicrackError):
 class AnalysisError(IntellicrackError):
     """Raised when binary analysis fails."""
 
-    def __init__(
-        self, message: str, binary_path: str | None = None, analysis_type: str | None = None
-    ):
+    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None):
         """Initialize analysis error.
 
         Args:

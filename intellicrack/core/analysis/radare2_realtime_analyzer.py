@@ -193,9 +193,7 @@ class R2RealtimeAnalyzer:
         self.analysis_queue = queue.Queue(maxsize=100)
 
         # Event system
-        self.event_callbacks: dict[AnalysisEvent, list[Callable]] = {
-            event: [] for event in AnalysisEvent
-        }
+        self.event_callbacks: dict[AnalysisEvent, list[Callable]] = {event: [] for event in AnalysisEvent}
 
         # File watching
         self.file_observer = None
@@ -207,9 +205,7 @@ class R2RealtimeAnalyzer:
         self.update_thread = None
 
         # Performance optimization
-        self.performance_optimizer = create_performance_optimizer(
-            OptimizationStrategy.SPEED_OPTIMIZED
-        )
+        self.performance_optimizer = create_performance_optimizer(OptimizationStrategy.SPEED_OPTIMIZED)
 
         # Results storage
         self.latest_results: dict[str, dict[str, Any]] = {}
@@ -473,9 +469,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Error handling file change for {file_path}: {e}")
 
-    def _schedule_analysis(
-        self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal"
-    ):
+    def _schedule_analysis(self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal"):
         """Schedule analysis for binary."""
         try:
             # Check if analysis is already running for this binary
@@ -600,21 +594,15 @@ class R2RealtimeAnalyzer:
                     # Run specific analysis components
                     for component in analysis_components:
                         try:
-                            component_result = self._run_analysis_component(
-                                r2, component, binary_path
-                            )
+                            component_result = self._run_analysis_component(r2, component, binary_path)
                             if component_result:
                                 results[component] = component_result
 
                                 # Check for significant findings
-                                self._check_for_significant_findings(
-                                    binary_path, component, component_result
-                                )
+                                self._check_for_significant_findings(binary_path, component, component_result)
 
                         except Exception as e:
-                            self.logger.error(
-                                f"Component {component} failed for {binary_path}: {e}"
-                            )
+                            self.logger.error(f"Component {component} failed for {binary_path}: {e}")
                             results[component] = {"error": str(e)}
 
             # Calculate analysis duration
@@ -670,9 +658,7 @@ class R2RealtimeAnalyzer:
                 )
             )
 
-    def _determine_analysis_components(
-        self, binary_path: str, trigger_event: AnalysisEvent
-    ) -> list[str]:
+    def _determine_analysis_components(self, binary_path: str, trigger_event: AnalysisEvent) -> list[str]:
         """Determine which analysis components to run based on binary characteristics."""
         # Base components for different triggers
         base_components = ["strings", "enhanced_strings", "imports"]
@@ -688,9 +674,7 @@ class R2RealtimeAnalyzer:
             self.logger.error("Exception in radare2_realtime_analyzer: %s", e)
 
         # Check if this binary has been analyzed before
-        is_initial_analysis = (
-            binary_path not in self.latest_results or not self.latest_results[binary_path]
-        )
+        is_initial_analysis = binary_path not in self.latest_results or not self.latest_results[binary_path]
 
         # Determine components based on file type and characteristics
         components = []
@@ -767,17 +751,13 @@ class R2RealtimeAnalyzer:
             recent_events = self.result_history[binary_path][-5:]  # Last 5 events
 
             # If vulnerabilities were found before, prioritize vulnerability scanning
-            if any(
-                event.event_type == AnalysisEvent.VULNERABILITY_DETECTED for event in recent_events
-            ):
+            if any(event.event_type == AnalysisEvent.VULNERABILITY_DETECTED for event in recent_events):
                 if "vulnerabilities" not in components:
                     components.append("vulnerabilities")
                 components.append("exploit_detection")
 
             # If license patterns were found, add detailed license analysis
-            if any(
-                event.event_type == AnalysisEvent.LICENSE_PATTERN_FOUND for event in recent_events
-            ):
+            if any(event.event_type == AnalysisEvent.LICENSE_PATTERN_FOUND for event in recent_events):
                 if "license_analysis" not in components:
                     components.append("license_analysis")
                 components.append("string_analysis_deep")
@@ -800,9 +780,7 @@ class R2RealtimeAnalyzer:
 
         return unique_components
 
-    def _run_analysis_component(
-        self, r2, component: str, binary_path: str
-    ) -> dict[str, Any] | None:
+    def _run_analysis_component(self, r2, component: str, binary_path: str) -> dict[str, Any] | None:
         """Run specific analysis component with context awareness."""
         try:
             # Get binary context information
@@ -828,10 +806,7 @@ class R2RealtimeAnalyzer:
                     filtered_strings = [
                         s
                         for s in strings
-                        if any(
-                            keyword in s.get("string", "").lower()
-                            for keyword in ["license", "key", "serial", "activation", "trial"]
-                        )
+                        if any(keyword in s.get("string", "").lower() for keyword in ["license", "key", "serial", "activation", "trial"])
                     ]
                     result = {"strings": strings, "filtered_strings": filtered_strings}
                 else:
@@ -854,11 +829,7 @@ class R2RealtimeAnalyzer:
                         "WriteProcessMemory",
                         "CreateRemoteThread",
                     ]
-                    suspicious_imports = [
-                        imp
-                        for imp in imports
-                        if any(pattern in imp.get("name", "") for pattern in suspicious_patterns)
-                    ]
+                    suspicious_imports = [imp for imp in imports if any(pattern in imp.get("name", "") for pattern in suspicious_patterns)]
 
                 result = {
                     "imports": imports,
@@ -884,10 +855,7 @@ class R2RealtimeAnalyzer:
                     suspicious_funcs = [
                         f
                         for f in functions
-                        if any(
-                            pattern in f.get("name", "").lower()
-                            for pattern in ["decrypt", "unpack", "inject", "hook"]
-                        )
+                        if any(pattern in f.get("name", "").lower() for pattern in ["decrypt", "unpack", "inject", "hook"])
                     ]
 
                     result = {
@@ -931,20 +899,14 @@ class R2RealtimeAnalyzer:
                 elif "net" in file_name or "sock" in file_name:
                     vuln_patterns.extend(["recv", "recvfrom"])
 
-                vuln_imports = [
-                    imp
-                    for imp in imports
-                    if any(vuln in imp.get("name", "").lower() for vuln in vuln_patterns)
-                ]
+                vuln_imports = [imp for imp in imports if any(vuln in imp.get("name", "").lower() for vuln in vuln_patterns)]
 
                 # Check for specific vulnerability patterns in functions
                 functions = r2.cmdj("aflj") or []
                 vuln_functions = []
                 for func in functions[:100]:  # Check first 100 functions
                     func_name = func.get("name", "").lower()
-                    if any(
-                        pattern in func_name for pattern in ["overflow", "vulnerable", "exploit"]
-                    ):
+                    if any(pattern in func_name for pattern in ["overflow", "vulnerable", "exploit"]):
                         vuln_functions.append(func)
 
                 result = {
@@ -961,19 +923,13 @@ class R2RealtimeAnalyzer:
                 license_strings = [
                     s
                     for s in strings
-                    if any(
-                        keyword in s.get("string", "").lower()
-                        for keyword in ["license", "serial", "activation", "trial", "expire"]
-                    )
+                    if any(keyword in s.get("string", "").lower() for keyword in ["license", "serial", "activation", "trial", "expire"])
                 ]
 
                 license_imports = [
                     imp
                     for imp in imports
-                    if any(
-                        api in imp.get("name", "").lower()
-                        for api in ["regquery", "regopen", "getvolume", "getsystem"]
-                    )
+                    if any(api in imp.get("name", "").lower() for api in ["regquery", "regopen", "getvolume", "getsystem"])
                 ]
 
                 result = {
@@ -988,20 +944,14 @@ class R2RealtimeAnalyzer:
                 network_imports = [
                     imp
                     for imp in imports
-                    if any(
-                        api in imp.get("name", "").lower()
-                        for api in ["socket", "connect", "send", "recv", "internet", "http"]
-                    )
+                    if any(api in imp.get("name", "").lower() for api in ["socket", "connect", "send", "recv", "internet", "http"])
                 ]
 
                 strings = r2.cmdj("izzj") or []
                 url_strings = [
                     s
                     for s in strings
-                    if any(
-                        pattern in s.get("string", "")
-                        for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"]
-                    )
+                    if any(pattern in s.get("string", "") for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"])
                 ]
 
                 result = {
@@ -1016,20 +966,12 @@ class R2RealtimeAnalyzer:
                 crypto_imports = [
                     imp
                     for imp in imports
-                    if any(
-                        api in imp.get("name", "").lower()
-                        for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"]
-                    )
+                    if any(api in imp.get("name", "").lower() for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"])
                 ]
 
                 strings = r2.cmdj("izzj") or []
                 crypto_strings = [
-                    s
-                    for s in strings
-                    if any(
-                        pattern in s.get("string", "").lower()
-                        for pattern in ["aes", "rsa", "sha", "md5", "encrypt"]
-                    )
+                    s for s in strings if any(pattern in s.get("string", "").lower() for pattern in ["aes", "rsa", "sha", "md5", "encrypt"])
                 ]
 
                 result = {
@@ -1052,10 +994,7 @@ class R2RealtimeAnalyzer:
                 for section in sections:
                     # Check for suspicious section names
                     name = section.get("name", "").lower()
-                    if (
-                        any(pattern in name for pattern in ["upx", "pack", ".0", "crypt"])
-                        or section.get("entropy", 0) > 7.5
-                    ):
+                    if any(pattern in name for pattern in ["upx", "pack", ".0", "crypt"]) or section.get("entropy", 0) > 7.5:
                         anomalous_sections.append(section)
 
                 result = {
@@ -1079,9 +1018,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Analysis component {component} failed for {binary_path}: {e}")
             return None
 
-    def _check_for_significant_findings(
-        self, binary_path: str, component: str, result: dict[str, Any]
-    ):
+    def _check_for_significant_findings(self, binary_path: str, component: str, result: dict[str, Any]):
         """Check analysis results for significant findings and emit events."""
         try:
             if component == "vulnerabilities" and result.get("potential_vulnerabilities"):
@@ -1100,11 +1037,7 @@ class R2RealtimeAnalyzer:
                 strings = result.get("strings", [])
                 license_keywords = ["license", "copyright", "patent", "proprietary"]
 
-                license_strings = [
-                    s
-                    for s in strings
-                    if any(keyword in s.get("string", "").lower() for keyword in license_keywords)
-                ]
+                license_strings = [s for s in strings if any(keyword in s.get("string", "").lower() for keyword in license_keywords)]
 
                 if license_strings:
                     self._emit_event(
@@ -1213,9 +1146,7 @@ class R2RealtimeAnalyzer:
 
             # Keep only last 100 updates
             if len(self.result_history[update.binary_path]) > 100:
-                self.result_history[update.binary_path] = self.result_history[update.binary_path][
-                    -100:
-                ]
+                self.result_history[update.binary_path] = self.result_history[update.binary_path][-100:]
 
             # Call registered callbacks
             callbacks = self.event_callbacks.get(update.event_type, [])
@@ -1252,49 +1183,49 @@ class R2RealtimeAnalyzer:
 
     def _perform_enhanced_string_analysis(self, r2, binary_path: str) -> dict[str, Any]:
         """Perform enhanced string analysis using Day 5.1 pattern detection algorithms.
-        
+
         Args:
             r2: R2 session instance
             binary_path: Path to the binary being analyzed
-            
+
         Returns:
             Dictionary containing enhanced string analysis results
         """
         try:
             # Import the enhanced string analyzer
             from .radare2_strings import R2StringAnalyzer
-            
+
             # Extract raw strings from binary
             strings = r2.cmdj("izzj") or []
-            
+
             # Initialize enhanced string analyzer
             string_analyzer = R2StringAnalyzer(binary_path)
-            
+
             # Categorize strings using enhanced pattern detection
             license_keys = []
             crypto_strings = []
             api_strings = []
             regular_strings = []
-            
+
             for string_entry in strings:
                 string_content = string_entry.get("string", "")
                 if not string_content:
                     continue
-                
+
                 # Apply enhanced pattern detection from Day 5.1
                 is_license = string_analyzer._detect_license_key_formats(string_content)
                 is_crypto = string_analyzer._detect_cryptographic_data(string_content)
                 is_api = string_analyzer._analyze_api_function_patterns(string_content)
-                
+
                 # Categorize string with metadata
                 string_metadata = {
                     "content": string_content,
                     "address": string_entry.get("vaddr", 0),
                     "size": string_entry.get("size", len(string_content)),
                     "offset": string_entry.get("paddr", 0),
-                    "section": string_entry.get("section", "unknown")
+                    "section": string_entry.get("section", "unknown"),
                 }
-                
+
                 if is_license:
                     string_metadata["pattern_type"] = "license_key"
                     string_metadata["entropy"] = string_analyzer._calculate_entropy(string_content)
@@ -1309,15 +1240,15 @@ class R2RealtimeAnalyzer:
                 else:
                     string_metadata["pattern_type"] = "regular"
                     regular_strings.append(string_metadata)
-            
+
             # Real-time pattern monitoring - check for dynamic changes
             dynamic_patterns = self._monitor_dynamic_string_patterns(r2, binary_path)
-            
+
             # Generate analysis summary
             total_strings = len(strings)
             detected_patterns = len(license_keys) + len(crypto_strings) + len(api_strings)
             detection_rate = (detected_patterns / total_strings) if total_strings > 0 else 0
-            
+
             result = {
                 "timestamp": datetime.now().isoformat(),
                 "total_strings": total_strings,
@@ -1325,24 +1256,24 @@ class R2RealtimeAnalyzer:
                     "license_keys": license_keys,
                     "crypto_strings": crypto_strings,
                     "api_strings": api_strings,
-                    "regular_strings": regular_strings[:50]  # Limit regular strings for performance
+                    "regular_strings": regular_strings[:50],  # Limit regular strings for performance
                 },
                 "analysis_summary": {
                     "license_key_count": len(license_keys),
                     "crypto_string_count": len(crypto_strings),
                     "api_string_count": len(api_strings),
                     "detection_rate": detection_rate,
-                    "high_value_strings": len(license_keys) + len(crypto_strings)
+                    "high_value_strings": len(license_keys) + len(crypto_strings),
                 },
                 "dynamic_monitoring": dynamic_patterns,
                 "enhanced_features": {
                     "entropy_analysis": True,
                     "pattern_detection": True,
                     "real_time_monitoring": True,
-                    "dynamic_extraction": True
-                }
+                    "dynamic_extraction": True,
+                },
             }
-            
+
             # Emit enhanced string analysis event if significant patterns found
             if len(license_keys) > 0 or len(crypto_strings) > 5:
                 self._emit_event(
@@ -1352,113 +1283,125 @@ class R2RealtimeAnalyzer:
                         binary_path=binary_path,
                         data=result["analysis_summary"],
                         severity="high" if len(license_keys) > 0 else "medium",
-                        source_component="enhanced_strings"
+                        source_component="enhanced_strings",
                     )
                 )
-            
+
             return result
-            
+
         except Exception as e:
             self.logger.error(f"Enhanced string analysis failed for {binary_path}: {e}")
             return {
                 "error": str(e),
                 "timestamp": datetime.now().isoformat(),
-                "enhanced_features": {"available": False}
+                "enhanced_features": {"available": False},
             }
-    
+
     def _monitor_dynamic_string_patterns(self, r2, binary_path: str) -> dict[str, Any]:
         """Monitor dynamic string generation patterns during execution.
-        
+
         Args:
             r2: R2 session instance
             binary_path: Path to the binary being analyzed
-            
+
         Returns:
             Dictionary containing dynamic monitoring results
         """
         try:
             # Dynamic string monitoring - check memory regions for new strings
             memory_strings = []
-            
+
             # Get memory maps
             memory_maps = r2.cmdj("dmj") or []
-            
+
             for mem_map in memory_maps:
                 if mem_map.get("perm", "").startswith("rw"):  # Writable memory regions
                     try:
                         # Extract strings from writable memory regions
                         addr_start = mem_map.get("addr", 0)
                         addr_end = mem_map.get("addr_end", addr_start)
-                        
+
                         if addr_end > addr_start and (addr_end - addr_start) < 1024 * 1024:  # Limit to 1MB
                             # Read memory region and extract strings
                             mem_strings = r2.cmdj(f"ps @ {addr_start}") or []
                             if mem_strings:
-                                memory_strings.extend([
-                                    {
-                                        "content": s,
-                                        "address": addr_start,
-                                        "region": "dynamic",
-                                        "writeable": True
-                                    }
-                                    for s in mem_strings if len(s) > 4
-                                ])
-                    except:
+                                memory_strings.extend(
+                                    [
+                                        {
+                                            "content": s,
+                                            "address": addr_start,
+                                            "region": "dynamic",
+                                            "writeable": True,
+                                        }
+                                        for s in mem_strings
+                                        if len(s) > 4
+                                    ]
+                                )
+                    except Exception as e:
+                        logger.debug(f"Skipping problematic memory region: {e}")
                         continue  # Skip problematic memory regions
-            
+
             # Monitor string-related API calls
             api_monitoring = self._monitor_string_api_calls(r2)
-            
+
             return {
                 "memory_strings": memory_strings[:20],  # Limit for performance
                 "api_monitoring": api_monitoring,
                 "dynamic_extraction_enabled": True,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             self.logger.error(f"Dynamic string monitoring failed: {e}")
-            return {
-                "error": str(e),
-                "dynamic_extraction_enabled": False
-            }
-    
+            return {"error": str(e), "dynamic_extraction_enabled": False}
+
     def _monitor_string_api_calls(self, r2) -> dict[str, Any]:
         """Monitor string-related API calls for dynamic string generation.
-        
+
         Args:
             r2: R2 session instance
-            
+
         Returns:
             Dictionary containing API call monitoring results
         """
         try:
             # Get imports that relate to string operations
             imports = r2.cmdj("iij") or []
-            
+
             string_api_calls = []
             string_apis = [
-                "strlen", "strcpy", "strcat", "sprintf", "snprintf",
-                "malloc", "calloc", "realloc", "free",
-                "GetProcAddress", "LoadLibrary", "CreateProcess"
+                "strlen",
+                "strcpy",
+                "strcat",
+                "sprintf",
+                "snprintf",
+                "malloc",
+                "calloc",
+                "realloc",
+                "free",
+                "GetProcAddress",
+                "LoadLibrary",
+                "CreateProcess",
             ]
-            
+
             for imp in imports:
                 imp_name = imp.get("name", "")
                 if any(api in imp_name for api in string_apis):
-                    string_api_calls.append({
-                        "name": imp_name,
-                        "address": imp.get("plt", 0),
-                        "type": "string_manipulation",
-                        "dynamic_potential": "high"
-                    })
-            
+                    string_api_calls.append(
+                        {
+                            "name": imp_name,
+                            "address": imp.get("plt", 0),
+                            "type": "string_manipulation",
+                            "dynamic_potential": "high",
+                        }
+                    )
+
             return {
                 "monitored_apis": string_api_calls,
                 "total_string_apis": len(string_api_calls),
-                "monitoring_active": len(string_api_calls) > 0
+                "monitoring_active": len(string_api_calls) > 0,
             }
-            
+
         except Exception as e:
             self.logger.error(f"String API monitoring failed: {e}")
             return {"error": str(e), "monitoring_active": False}

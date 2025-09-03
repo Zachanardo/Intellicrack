@@ -273,9 +273,7 @@ def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0
 # === Core Utility Functions ===
 
 
-def accelerate_hash_calculation(
-    data: bytes, algorithm: str = "sha256", use_gpu: bool = False
-) -> str:
+def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256", use_gpu: bool = False) -> str:
     """Calculate hash with optional GPU acceleration.
 
     Args:
@@ -507,9 +505,7 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, Any]]:
         for request in captured_requests:
             _enhance_request_metadata(request)
 
-        logger.info(
-            "Retrieved %d captured network requests from %d sources", len(captured_requests), 4
-        )
+        logger.info("Retrieved %d captured network requests from %d sources", len(captured_requests), 4)
 
         return captured_requests
 
@@ -671,9 +667,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
 
         data_dir = get_data_dir()
         cache_locations = [
-            os.path.join(
-                os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"
-            ),
+            os.path.join(os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"),
             str(data_dir / "captures" / "network_log.json"),
             os.path.join(tempfile.gettempdir(), "intellicrack_network.json"),
         ]
@@ -762,9 +756,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
                                         "timestamp": time.time() - 5,
                                         "source": "Process_Monitor",
                                         "type": "process_connection",
-                                        "protocol": "TCP"
-                                        if conn.type == socket.SOCK_STREAM
-                                        else "UDP",
+                                        "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
                                         "src_ip": conn.laddr.ip if conn.laddr else "unknown",
                                         "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
                                         "dst_port": conn.raddr.port if conn.raddr else 0,
@@ -800,7 +792,7 @@ def _generate_realistic_request_data(req_type: str, protocol: str) -> str:
     if protocol == "http":
         return f"GET /api/license/check HTTP/1.1\\nHost: {os.environ.get('LICENSE_SERVER_HOST', 'license.internal')}\\nUser-Agent: {req_type}_Client/1.0\\n\\n"
     if protocol == "https":
-        return f"POST /auth/activate HTTP/1.1\\nHost: {os.environ.get('SECURE_SERVER_HOST', 'secure.internal')}\\nContent-Type: application/json\\n\\n{{\"key\": \"sample_key\", \"type\": \"{req_type}\"}}"
+        return f'POST /auth/activate HTTP/1.1\\nHost: {os.environ.get("SECURE_SERVER_HOST", "secure.internal")}\\nContent-Type: application/json\\n\\n{{"key": "sample_key", "type": "{req_type}"}}'
     if protocol == "tcp":
         return f"{req_type}_PROTOCOL_REQUEST\\nVERSION: 1.0\\nCOMMAND: CHECK\\n"
     return f"{req_type}_UDP_PACKET\\x00\\x01\\x02\\x03"
@@ -907,9 +899,7 @@ def _analyze_protocol(protocol: str, request: dict[str, Any]) -> dict[str, Any]:
         analysis["encrypted"] = protocol == "https"
         # Check for common license-related endpoints
         request_data = request.get("request_data", "")
-        if any(
-            term in request_data.lower() for term in ["license", "auth", "activate", "validate"]
-        ):
+        if any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
             analysis["license_related"] = True
     elif protocol == "tcp":
         analysis["connection_oriented"] = True
@@ -945,9 +935,7 @@ def _assess_request_security(request: dict[str, Any]) -> list[str]:
     request_data = request.get("request_data", "").lower()
     response_data = request.get("response_data", "").lower()
 
-    if any(
-        term in request_data + response_data for term in ["license", "key", "activate", "validate"]
-    ):
+    if any(term in request_data + response_data for term in ["license", "key", "activate", "validate"]):
         flags.append("license_related")
 
     # Check for suspicious patterns
@@ -1470,9 +1458,7 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
     }
 
 
-def _submit_to_remote_endpoint(
-    report_data: dict[str, Any], endpoint: str, report_id: str
-) -> dict[str, Any]:
+def _submit_to_remote_endpoint(report_data: dict[str, Any], endpoint: str, report_id: str) -> dict[str, Any]:
     """Submit report to remote endpoint with comprehensive handling."""
     try:
         # Parse endpoint URL
@@ -1513,9 +1499,7 @@ def _submit_to_remote_endpoint(
                         "status": "submitted",
                         "endpoint": endpoint,
                         "response_code": response.status_code,
-                        "response_message": response.text[:200]
-                        if response.text
-                        else "Report submitted",
+                        "response_message": response.text[:200] if response.text else "Report submitted",
                         "tracking_id": report_id,
                         "delivery_method": "http_post",
                     }
@@ -1570,9 +1554,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         try:
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
-            formats_saved.append(
-                {"format": "json", "path": json_path, "size": os.path.getsize(json_path)}
-            )
+            formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save JSON report: %s", e)
 
@@ -1581,9 +1563,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         try:
             with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(_format_report_as_text(report_data))
-            formats_saved.append(
-                {"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)}
-            )
+            formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save text report: %s", e)
 
@@ -1591,9 +1571,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
         try:
             if _save_report_as_csv(report_data, csv_path):
-                formats_saved.append(
-                    {"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)}
-                )
+                formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not save CSV format: %s", e)
 
@@ -1631,9 +1609,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         return {"status": "error", "error": str(e)}
 
 
-def _handle_additional_delivery_methods(
-    report_data: dict[str, Any], report_id: str
-) -> list[dict[str, Any]]:
+def _handle_additional_delivery_methods(report_data: dict[str, Any], report_id: str) -> list[dict[str, Any]]:
     """Handle additional delivery methods like email, cloud storage, etc."""
     additional_deliveries = []
 
@@ -2204,9 +2180,7 @@ def _save_report_as_csv(report_data: dict[str, Any], csv_path: str) -> bool:
         return False
 
 
-def _create_report_archive(
-    report_id: str, formats_saved: list[dict[str, Any]], archive_path: str
-) -> bool:
+def _create_report_archive(report_id: str, formats_saved: list[dict[str, Any]], archive_path: str) -> bool:
     """Create compressed archive of all report formats."""
     _ = report_id
     try:
@@ -2227,9 +2201,7 @@ def _create_report_archive(
         return False
 
 
-def _create_submission_audit_trail(
-    submission_result: dict[str, Any], metadata: dict[str, Any]
-) -> None:
+def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: dict[str, Any]) -> None:
     """Create audit trail for report submission."""
     try:
         audit_entry = {
@@ -2341,9 +2313,7 @@ def create_dataset(data: list[dict[str, Any]], format: str = "json") -> dict[str
     return dataset
 
 
-def augment_dataset(
-    dataset: list[dict[str, Any]], augmentation_config: dict[str, Any]
-) -> list[dict[str, Any]]:
+def augment_dataset(dataset: list[dict[str, Any]], augmentation_config: dict[str, Any]) -> list[dict[str, Any]]:
     """Augment a dataset with various techniques.
 
     Args:
@@ -2431,9 +2401,7 @@ def create_full_feature_model(features: list[str], model_type: str = "ensemble")
     }
 
 
-def predict_vulnerabilities(
-    binary_features: dict[str, Any], model: Any | None = None
-) -> dict[str, Any]:
+def predict_vulnerabilities(binary_features: dict[str, Any], model: Any | None = None) -> dict[str, Any]:
     """Predict vulnerabilities in a binary.
 
     Args:
@@ -2471,9 +2439,7 @@ def predict_vulnerabilities(
 # === Misc Functions ===
 
 
-def add_code_snippet(
-    snippets: list[dict[str, Any]], title: str, code: str, language: str = "python"
-) -> None:
+def add_code_snippet(snippets: list[dict[str, Any]], title: str, code: str, language: str = "python") -> None:
     """Add a code snippet to a collection.
 
     Args:

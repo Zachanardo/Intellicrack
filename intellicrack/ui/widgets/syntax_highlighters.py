@@ -96,24 +96,18 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Number format
         number_format = QTextCharFormat()
         number_format.setForeground(QColor("#B5CEA8"))  # Light green
-        self.highlighting_rules.append(
-            (QRegularExpression("\\b[0-9]+\\.?[0-9]*\\b"), number_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\.?[0-9]*\\b"), number_format))
 
         # Function format
         function_format = QTextCharFormat()
         function_format.setForeground(QColor("#DCDCAA"))  # Yellow
-        self.highlighting_rules.append(
-            (QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\()"), function_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\()"), function_format))
 
         # Class format
         class_format = QTextCharFormat()
         class_format.setForeground(QColor("#4EC9B0"))  # Cyan
         class_format.setFontWeight(QFont.Weight.Bold)
-        self.highlighting_rules.append(
-            (QRegularExpression("\\bclass\\s+[A-Za-z_][A-Za-z0-9_]*"), class_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\bclass\\s+[A-Za-z_][A-Za-z0-9_]*"), class_format))
 
         # Self format
         self_format = QTextCharFormat()
@@ -123,9 +117,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Decorator format
         decorator_format = QTextCharFormat()
         decorator_format.setForeground(QColor("#FFD700"))  # Gold
-        self.highlighting_rules.append(
-            (QRegularExpression("@[A-Za-z_][A-Za-z0-9_]*"), decorator_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("@[A-Za-z_][A-Za-z0-9_]*"), decorator_format))
 
         # Built-in functions
         builtin_format = QTextCharFormat()
@@ -222,12 +214,8 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.setCurrentBlockState(0)
 
         # Multi-line strings
-        self.match_multiline_string(
-            text, QRegularExpression('"""'), 1, self.triple_double_quote_format
-        )
-        self.match_multiline_string(
-            text, QRegularExpression("'''"), 2, self.triple_single_quote_format
-        )
+        self.match_multiline_string(text, QRegularExpression('"""'), 1, self.triple_double_quote_format)
+        self.match_multiline_string(text, QRegularExpression("'''"), 2, self.triple_single_quote_format)
 
     def match_multiline_string(self, text, expression, state, format):
         """Handle multi-line string highlighting."""
@@ -343,25 +331,19 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         # Number format
         number_format = QTextCharFormat()
         number_format.setForeground(QColor("#B5CEA8"))  # Light green
-        self.highlighting_rules.append(
-            (QRegularExpression("\\b[0-9]+\\.?[0-9]*\\b"), number_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\.?[0-9]*\\b"), number_format))
         self.highlighting_rules.append((QRegularExpression("\\b0x[0-9a-fA-F]+\\b"), number_format))
 
         # Function format
         function_format = QTextCharFormat()
         function_format.setForeground(QColor("#DCDCAA"))  # Yellow
-        self.highlighting_rules.append(
-            (QRegularExpression("\\b[A-Za-z_$][A-Za-z0-9_$]*(?=\\()"), function_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z_$][A-Za-z0-9_$]*(?=\\()"), function_format))
 
         # Object/Class format
         class_format = QTextCharFormat()
         class_format.setForeground(QColor("#4EC9B0"))  # Cyan
         class_format.setFontWeight(QFont.Weight.Bold)
-        self.highlighting_rules.append(
-            (QRegularExpression("\\bclass\\s+[A-Za-z_$][A-Za-z0-9_$]*"), class_format)
-        )
+        self.highlighting_rules.append((QRegularExpression("\\bclass\\s+[A-Za-z_$][A-Za-z0-9_$]*"), class_format))
 
         # Built-in objects
         builtin_format = QTextCharFormat()

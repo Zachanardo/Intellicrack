@@ -132,9 +132,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_histogram(
-        self, values: list[int | float], bins: int = 10, title: str = "Histogram"
-    ) -> str:
+    def generate_histogram(self, values: list[int | float], bins: int = 10, title: str = "Histogram") -> str:
         """Generate histogram chart.
 
         Args:
@@ -242,10 +240,7 @@ class ASCIIChartGenerator:
                                 for step in range(1, steps):
                                     intermediate_x = start_x + (end_x - start_x) * step // steps
                                     intermediate_y = start_y + (end_y - start_y) * step // steps
-                                    if (
-                                        0 <= intermediate_x < chart_width
-                                        and 0 <= intermediate_y < chart_height
-                                    ):
+                                    if 0 <= intermediate_x < chart_width and 0 <= intermediate_y < chart_height:
                                         if chart[intermediate_y][intermediate_x] == " ":
                                             chart[intermediate_y][intermediate_x] = "·"
 
@@ -372,9 +367,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(
-        self, points: list[tuple[float, float]], title: str = "Scatter Plot"
-    ) -> str:
+    def generate_scatter_plot(self, points: list[tuple[float, float]], title: str = "Scatter Plot") -> str:
         """Generate scatter plot.
 
         Args:
@@ -647,9 +640,7 @@ class ASCIIChartGenerator:
         )
 
 
-def create_analysis_charts(
-    analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True
-) -> str:
+def create_analysis_charts(analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True) -> str:
     """Create charts from analysis results.
 
     Args:

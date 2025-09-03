@@ -169,8 +169,7 @@ class HexViewRenderer:
                     group_str = f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
                 elif self.group_size == 8 and len(group) == 8:
                     group_str = (
-                        f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
-                        f"{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}"
+                        f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}"
                     )
                 else:
                     # Handle incomplete groups at the end
@@ -259,9 +258,7 @@ class HexViewRenderer:
             # Add ASCII part if enabled
             if self.show_ascii:
                 # Add padding to align ASCII part
-                padding = " " * (
-                    self.bytes_per_row * 4 - len(line) + (8 if self.show_address else 0)
-                )
+                padding = " " * (self.bytes_per_row * 4 - len(line) + (8 if self.show_address else 0))
                 ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
                 line += padding + " | " + ascii_part
 
@@ -318,9 +315,7 @@ class HexViewRenderer:
 
         return "\n".join(result)
 
-    def render_structure_view(
-        self, data: bytes, structure_def: dict[str, Any], offset: int = 0
-    ) -> str:
+    def render_structure_view(self, data: bytes, structure_def: dict[str, Any], offset: int = 0) -> str:
         """Render data according to a structure definition.
 
         Args:
@@ -438,9 +433,7 @@ class HexViewRenderer:
             return f"<error: {e!s}>"
 
 
-def parse_hex_view(
-    hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16
-) -> tuple[int, bytes]:  # pylint: disable=unused-argument
+def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> tuple[int, bytes]:  # pylint: disable=unused-argument
     """Parse a hex view string back to binary data.
 
     Args:

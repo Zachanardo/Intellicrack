@@ -137,12 +137,12 @@ class MitigationBypassBase(ABC):
         tech_info = self.get_technique_info(technique_name)
 
         return (
-            self._check_architecture_compatibility(tech_info, binary_info) and
-            self._check_os_compatibility(tech_info, binary_info) and
-            self._check_technique_specific_requirements(technique_name, binary_info) and
-            self._check_size_requirements(tech_info, binary_info) and
-            self._check_feature_requirements(tech_info, binary_info) and
-            self._check_binary_type_requirements(technique_name, binary_info)
+            self._check_architecture_compatibility(tech_info, binary_info)
+            and self._check_os_compatibility(tech_info, binary_info)
+            and self._check_technique_specific_requirements(technique_name, binary_info)
+            and self._check_size_requirements(tech_info, binary_info)
+            and self._check_feature_requirements(tech_info, binary_info)
+            and self._check_binary_type_requirements(technique_name, binary_info)
         )
 
     def _check_architecture_compatibility(self, tech_info: dict[str, Any] | None, binary_info: dict[str, Any]) -> bool:
@@ -166,12 +166,12 @@ class MitigationBypassBase(ABC):
     def _check_technique_specific_requirements(self, technique_name: str, binary_info: dict[str, Any]) -> bool:
         """Check technique-specific security and feature requirements."""
         return (
-            self._check_rop_technique_requirements(technique_name, binary_info) and
-            self._check_stack_technique_requirements(technique_name, binary_info) and
-            self._check_heap_technique_requirements(technique_name, binary_info) and
-            self._check_code_injection_requirements(technique_name, binary_info) and
-            self._check_process_hollowing_requirements(technique_name, binary_info) and
-            self._check_shared_library_requirements(technique_name, binary_info)
+            self._check_rop_technique_requirements(technique_name, binary_info)
+            and self._check_stack_technique_requirements(technique_name, binary_info)
+            and self._check_heap_technique_requirements(technique_name, binary_info)
+            and self._check_code_injection_requirements(technique_name, binary_info)
+            and self._check_process_hollowing_requirements(technique_name, binary_info)
+            and self._check_shared_library_requirements(technique_name, binary_info)
         )
 
     def _check_rop_technique_requirements(self, technique_name: str, binary_info: dict[str, Any]) -> bool:
@@ -244,10 +244,7 @@ class MitigationBypassBase(ABC):
 
     def _check_feature_requirements(self, tech_info: dict[str, Any] | None, binary_info: dict[str, Any]) -> bool:
         """Check required and incompatible feature requirements."""
-        return (
-            self._check_required_features(tech_info, binary_info) and
-            self._check_incompatible_features(tech_info, binary_info)
-        )
+        return self._check_required_features(tech_info, binary_info) and self._check_incompatible_features(tech_info, binary_info)
 
     def _check_required_features(self, tech_info: dict[str, Any] | None, binary_info: dict[str, Any]) -> bool:
         """Check that all required features are present."""
@@ -391,7 +388,7 @@ class ROPBasedBypass(MitigationBypassBase):
                 # jmp/call register
                 (b"\xff[\xe0-\xe7]", "jmp reg"),
                 (b"\xff[\xd0-\xd7]", "call reg"),
-            ]
+            ],
         }
 
         patterns = gadget_patterns.get(arch, gadget_patterns["x64"])
@@ -425,17 +422,19 @@ class ROPBasedBypass(MitigationBypassBase):
                         # Look back up to 15 bytes for valid instruction sequences
                         lookback = min(index, 15)
                         if lookback > 0:
-                            gadget_bytes = section_data[index-lookback:index+len(pattern_bytes)]
+                            gadget_bytes = section_data[index - lookback : index + len(pattern_bytes)]
 
                             # Disassemble to verify (simplified)
                             if self._is_valid_gadget_sequence(gadget_bytes, arch):
-                                gadgets.append({
-                                    "address": hex(gadget_addr),
-                                    "instruction": description,
-                                    "type": self._classify_gadget(description),
-                                    "bytes": gadget_bytes.hex(),
-                                    "section": section.get("name", ".text")
-                                })
+                                gadgets.append(
+                                    {
+                                        "address": hex(gadget_addr),
+                                        "instruction": description,
+                                        "type": self._classify_gadget(description),
+                                        "bytes": gadget_bytes.hex(),
+                                        "section": section.get("name", ".text"),
+                                    }
+                                )
 
                         offset = index + 1
 
@@ -474,8 +473,7 @@ class ROPBasedBypass(MitigationBypassBase):
         # Must end with ret or jmp/call
         valid_endings = [b"\xc3", b"\xc2", b"\xff\xe4", b"\xff\xd4"]
         for ending in valid_endings:
-            if any(gadget_bytes.endswith(ending + bytes([b])) or gadget_bytes.endswith(ending)
-                   for b in range(256)):
+            if any(gadget_bytes.endswith(ending + bytes([b])) or gadget_bytes.endswith(ending) for b in range(256)):
                 return True
 
         return gadget_bytes.endswith(b"\xc3")  # At least must end with ret

@@ -115,9 +115,7 @@ class DemoPlugin(BasePlugin):
         self.system_libraries = self._load_system_libraries()
 
         # Initialize demo patterns that were missing
-        self.demo_patterns = (
-            self.file_signatures
-        )  # Use file_signatures as demo_patterns for backward compatibility
+        self.demo_patterns = self.file_signatures  # Use file_signatures as demo_patterns for backward compatibility
 
     def get_metadata(self) -> dict[str, Any]:
         """Return comprehensive plugin metadata with custom state."""
@@ -310,9 +308,7 @@ class DemoPlugin(BasePlugin):
                     # Handle list of patterns
                     for pattern in pattern_bytes:
                         if pattern in file_data:
-                            patterns_found.append(
-                                f"{pattern_name}: {pattern.decode('utf-8', errors='ignore')}"
-                            )
+                            patterns_found.append(f"{pattern_name}: {pattern.decode('utf-8', errors='ignore')}")
                 # Handle single pattern
                 elif pattern_bytes in file_data:
                     patterns_found.append(pattern_name)
@@ -354,7 +350,6 @@ class DemoPlugin(BasePlugin):
 
         return results
 
-
     def _handle_backup_creation(self, binary_path: str, options: dict) -> tuple[bool, str, list[str]]:
         """Handle backup creation for patching."""
         results = []
@@ -368,6 +363,7 @@ class DemoPlugin(BasePlugin):
 
             try:
                 import shutil
+
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"💾 Backup created: {os.path.basename(backup_path)}")
             except Exception as e:
@@ -381,36 +377,28 @@ class DemoPlugin(BasePlugin):
 
         return success, backup_path, results
 
-    def _handle_specific_offset_patch(self, binary_path: str, target_offset: int,
-                                      patch_bytes: bytes, options: dict) -> list[str]:
+    def _handle_specific_offset_patch(self, binary_path: str, target_offset: int, patch_bytes: bytes, options: dict) -> list[str]:
         """Handle patching at a specific offset."""
         results = []
         patch_mode = options.get("mode", "analysis")
 
         results.append(f"\n🎯 Targeting specific offset: 0x{target_offset:08x}")
         if patch_bytes:
-            results.append(
-                f"📝 Patch bytes: {patch_bytes.hex() if isinstance(patch_bytes, bytes) else patch_bytes}"
-            )
+            results.append(f"📝 Patch bytes: {patch_bytes.hex() if isinstance(patch_bytes, bytes) else patch_bytes}")
 
         if patch_mode == "apply":
-            success = self._apply_patch_at_offset(
-                binary_path, target_offset, patch_bytes, options
-            )
+            success = self._apply_patch_at_offset(binary_path, target_offset, patch_bytes, options)
             if success:
                 results.append("✅ Patch applied successfully at target offset")
             else:
                 results.append("❌ Failed to apply patch at target offset")
 
         elif patch_mode == "test":
-            results.extend(self._test_patch_at_offset(
-                binary_path, target_offset, patch_bytes
-            ))
+            results.extend(self._test_patch_at_offset(binary_path, target_offset, patch_bytes))
 
         return results
 
-    def _test_patch_at_offset(self, binary_path: str, target_offset: int,
-                              patch_bytes: bytes) -> list[str]:
+    def _test_patch_at_offset(self, binary_path: str, target_offset: int, patch_bytes: bytes) -> list[str]:
         """Test a patch in a safe environment."""
         results = []
         results.append("🧪 Testing patch at target offset in safe environment...")
@@ -458,8 +446,7 @@ class DemoPlugin(BasePlugin):
 
         return results
 
-    def _find_patch_opportunities(self, data: bytes, patch_type: str,
-                                  max_patches: int) -> list[dict]:
+    def _find_patch_opportunities(self, data: bytes, patch_type: str, max_patches: int) -> list[dict]:
         """Find patch opportunities in binary data."""
         patch_opportunities = []
 
@@ -467,26 +454,32 @@ class DemoPlugin(BasePlugin):
         if patch_type in ["auto", "nop"]:
             # Look for NOP instructions (safe to patch)
             if b"\x90\x90\x90\x90" in data:
-                patch_opportunities.append({
-                    "type": "nop",
-                    "description": "NOP sled detected - safe patch target",
-                })
+                patch_opportunities.append(
+                    {
+                        "type": "nop",
+                        "description": "NOP sled detected - safe patch target",
+                    }
+                )
 
         if patch_type in ["auto", "jmp", "call"]:
             # Look for function prologues
             if b"\x55\x8b\xec" in data:
-                patch_opportunities.append({
-                    "type": "prologue",
-                    "description": "Function prologue found - potential hook point",
-                })
+                patch_opportunities.append(
+                    {
+                        "type": "prologue",
+                        "description": "Function prologue found - potential hook point",
+                    }
+                )
 
         if patch_type in ["auto", "api"]:
             # Look for common API calls
             if b"kernel32" in data.lower():
-                patch_opportunities.append({
-                    "type": "api",
-                    "description": "Windows API usage detected - IAT patching possible",
-                })
+                patch_opportunities.append(
+                    {
+                        "type": "api",
+                        "description": "Windows API usage detected - IAT patching possible",
+                    }
+                )
 
         # Limit opportunities based on max_patches option
         if len(patch_opportunities) > max_patches:
@@ -500,22 +493,13 @@ class DemoPlugin(BasePlugin):
 
         if patch_results.get("patchable_locations"):
             results.append("✅ Found patchable locations:")
-            display_count = min(
-                len(patch_results["patchable_locations"]),
-                options.get("display_limit", 3)
-            )
+            display_count = min(len(patch_results["patchable_locations"]), options.get("display_limit", 3))
 
-            for i, location in enumerate(
-                patch_results["patchable_locations"][:display_count], 1
-            ):
-                results.append(
-                    f"  {i}. Offset 0x{location['offset']:08x}: {location['description']}"
-                )
+            for i, location in enumerate(patch_results["patchable_locations"][:display_count], 1):
+                results.append(f"  {i}. Offset 0x{location['offset']:08x}: {location['description']}")
 
             if len(patch_results["patchable_locations"]) > display_count:
-                results.append(
-                    f"  ... and {len(patch_results['patchable_locations']) - display_count} more"
-                )
+                results.append(f"  ... and {len(patch_results['patchable_locations']) - display_count} more")
 
             results.append("\n🎯 Real patch capabilities identified:")
             results.append("  • Binary modification support verified")
@@ -553,9 +537,7 @@ class DemoPlugin(BasePlugin):
 
         try:
             # Add header information
-            results.append(
-                f"🔧 {self.name} - Patch {'Analysis' if patch_mode == 'analysis' else 'Application'}"
-            )
+            results.append(f"🔧 {self.name} - Patch {'Analysis' if patch_mode == 'analysis' else 'Application'}")
             results.append(f"🎯 Target: {os.path.basename(binary_path)}")
             results.append(f"⚙️  Mode: {patch_mode.upper()}")
             if patch_type != "auto":
@@ -571,9 +553,7 @@ class DemoPlugin(BasePlugin):
             results.append(f"✅ {validation_msg}")
 
             # Handle backup creation
-            success, backup_path, backup_results = self._handle_backup_creation(
-                binary_path, options
-            )
+            success, backup_path, backup_results = self._handle_backup_creation(binary_path, options)
             results.extend(backup_results)
             if not success:
                 return results
@@ -588,26 +568,18 @@ class DemoPlugin(BasePlugin):
 
             # Handle specific offset patching
             if target_offset is not None and patch_mode != "analysis":
-                results.extend(self._handle_specific_offset_patch(
-                    binary_path, target_offset, patch_bytes, options
-                ))
+                results.extend(self._handle_specific_offset_patch(binary_path, target_offset, patch_bytes, options))
 
             # Find patch opportunities
-            patch_opportunities = self._find_patch_opportunities(
-                data, patch_type, max_patches
-            )
+            patch_opportunities = self._find_patch_opportunities(data, patch_type, max_patches)
 
             if len(patch_opportunities) > max_patches:
-                results.append(
-                    f"INFO: Limiting to first {max_patches} opportunities (configured via options)"
-                )
+                results.append(f"INFO: Limiting to first {max_patches} opportunities (configured via options)")
 
             if patch_opportunities:
                 results.append("Patch opportunities identified:")
                 for i, opportunity in enumerate(patch_opportunities, 1):
-                    results.append(
-                        f"  {i}. [{opportunity['type'].upper()}] {opportunity['description']}"
-                    )
+                    results.append(f"  {i}. [{opportunity['type'].upper()}] {opportunity['description']}")
             else:
                 results.append("No obvious patch opportunities in sample data")
 
@@ -645,9 +617,7 @@ class DemoPlugin(BasePlugin):
             results.extend(self._format_patch_analysis_results(patch_results, options))
 
             results.append("\n✅ Patch analysis completed successfully")
-            results.append(
-                f"💡 Mode: {patch_mode.upper()} - {'changes applied' if patch_mode == 'apply' else 'no modifications made'}"
-            )
+            results.append(f"💡 Mode: {patch_mode.upper()} - {'changes applied' if patch_mode == 'apply' else 'no modifications made'}")
             if options.get("create_backup", True) and patch_mode == "apply" and backup_path:
                 results.append(f"🛡️  Backup available at: {os.path.basename(backup_path)}")
 
@@ -658,9 +628,7 @@ class DemoPlugin(BasePlugin):
 
         return results
 
-    def _perform_safe_patch_analysis(
-        self, binary_path: str, options: dict[str, Any] = None
-    ) -> dict[str, Any]:
+    def _perform_safe_patch_analysis(self, binary_path: str, options: dict[str, Any] = None) -> dict[str, Any]:
         """Perform real but safe binary patch analysis."""
         if options is None:
             options = {}
@@ -764,17 +732,13 @@ class DemoPlugin(BasePlugin):
                 "patchable_locations": [],
             }
 
-    def _apply_patch_at_offset(
-        self, binary_path: str, offset: int, patch_bytes: bytes, options: dict[str, Any]
-    ) -> bool:
+    def _apply_patch_at_offset(self, binary_path: str, offset: int, patch_bytes: bytes, options: dict[str, Any]) -> bool:
         """Apply patch at specific offset in binary."""
         try:
             # Safety checks based on options
             verify_bytes = options.get("verify_original_bytes")
             update_checksum = options.get("update_checksum", False)
-            patch_method = options.get(
-                "patch_method", "direct"
-            )  # 'direct', 'temporary', 'memory_mapped'
+            patch_method = options.get("patch_method", "direct")  # 'direct', 'temporary', 'memory_mapped'
 
             # Read current bytes at offset for verification
             with open(binary_path, "rb") as f:
@@ -870,7 +834,7 @@ class DemoPlugin(BasePlugin):
                     if i == checksum_offset or i == checksum_offset + 1:
                         continue
 
-                    word = struct.unpack("<H", file_data[i:i+2])[0]
+                    word = struct.unpack("<H", file_data[i : i + 2])[0]
                     checksum = (checksum + word) & 0xFFFFFFFF
 
                     # Handle carry

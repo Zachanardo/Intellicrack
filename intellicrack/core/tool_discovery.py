@@ -189,9 +189,7 @@ class ToolValidator:
                     if major >= 3 and minor >= 8:
                         validation["capabilities"].append("compatible")
                     else:
-                        validation["issues"].append(
-                            f"Python {version} may not be compatible (need 3.8+)"
-                        )
+                        validation["issues"].append(f"Python {version} may not be compatible (need 3.8+)")
 
                 validation["valid"] = True
             else:
@@ -294,6 +292,148 @@ class ToolValidator:
 
         return validation
 
+    @staticmethod
+    def validate_nasm(tool_path: str) -> dict[str, Any]:
+        """Validate NASM (Netwide Assembler) installation."""
+        validation = {
+            "valid": False,
+            "version": None,
+            "capabilities": [],
+            "issues": [],
+        }
+
+        try:
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                [tool_path, "-v"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            if result.returncode == 0:
+                version_text = result.stdout
+                # NASM version output: "NASM version 2.16.03 compiled on ..."
+                version_match = re.search(r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text)
+                if version_match:
+                    validation["version"] = version_match.group(1)
+
+                # NASM capabilities
+                validation["capabilities"].extend(
+                    ["assembly_compilation", "x86_assembly", "x64_assembly", "multiple_formats", "macro_support"]
+                )
+
+                validation["valid"] = True
+            else:
+                validation["issues"].append(f"NASM execution failed: {result.stderr}")
+
+        except subprocess.TimeoutExpired:
+            validation["issues"].append("NASM validation timed out")
+        except Exception as e:
+            logger.error("Exception in tool_discovery: %s", e)
+            validation["issues"].append(f"Validation error: {e}")
+
+        return validation
+
+    @staticmethod
+    def validate_masm(tool_path: str) -> dict[str, Any]:
+        """Validate MASM (Microsoft Macro Assembler) installation."""
+        validation = {
+            "valid": False,
+            "version": None,
+            "capabilities": [],
+            "issues": [],
+        }
+
+        try:
+            # MASM typically shows help/version info with /? flag
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                [tool_path, "/?"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            # MASM help text contains version information
+            version_text = result.stdout or result.stderr
+            if "Microsoft (R) Macro Assembler" in version_text:
+                # Extract version number like "Version 14.16.27034.0"
+                version_match = re.search(r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text)
+                if version_match:
+                    validation["version"] = version_match.group(1)
+
+                # MASM capabilities
+                validation["capabilities"].extend(
+                    ["assembly_compilation", "x86_assembly", "x64_assembly", "microsoft_formats", "macro_support", "masm_syntax"]
+                )
+
+                validation["valid"] = True
+            else:
+                validation["issues"].append("MASM signature not found in output")
+
+        except subprocess.TimeoutExpired:
+            validation["issues"].append("MASM validation timed out")
+        except Exception as e:
+            logger.error("Exception in tool_discovery: %s", e)
+            validation["issues"].append(f"Validation error: {e}")
+
+        return validation
+
+    @staticmethod
+    def validate_accesschk(tool_path: str) -> dict[str, Any]:
+        """Validate SysInternals AccessChk installation."""
+        validation = {
+            "valid": False,
+            "version": None,
+            "capabilities": [],
+            "issues": [],
+        }
+
+        try:
+            # AccessChk shows version info with -accepteula flag to avoid EULA dialog
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                [tool_path, "-accepteula", "-?"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            # AccessChk help text contains version information
+            version_text = result.stdout or result.stderr
+            if "Sysinternals" in version_text and ("AccessChk" in version_text or "accesschk" in version_text.lower()):
+                # Extract version number like "v6.14" or "Version 6.14"
+                version_match = re.search(r"(?:v|Version\s+)?(\d+\.\d+)", version_text)
+                if version_match:
+                    validation["version"] = version_match.group(1)
+
+                # AccessChk capabilities
+                validation["capabilities"].extend(
+                    [
+                        "privilege_escalation_analysis",
+                        "permission_enumeration",
+                        "access_rights_checking",
+                        "file_permissions",
+                        "registry_permissions",
+                        "service_permissions",
+                        "process_permissions",
+                        "token_analysis",
+                    ]
+                )
+
+                validation["valid"] = True
+            else:
+                validation["issues"].append("AccessChk signature not found in output")
+
+        except subprocess.TimeoutExpired:
+            validation["issues"].append("AccessChk validation timed out")
+        except Exception as e:
+            logger.error("Exception in tool_discovery: %s", e)
+            validation["issues"].append(f"Validation error: {e}")
+
+        return validation
+
 
 class AdvancedToolDiscovery:
     """Advanced tool discovery with intelligent search and validation."""
@@ -308,6 +448,12 @@ class AdvancedToolDiscovery:
             "frida": ToolValidator.validate_frida,
             "qemu-system-x86_64": ToolValidator.validate_qemu,
             "qemu-system-i386": ToolValidator.validate_qemu,
+            "nasm": ToolValidator.validate_nasm,
+            "masm": ToolValidator.validate_masm,
+            "ml": ToolValidator.validate_masm,
+            "ml64": ToolValidator.validate_masm,
+            "accesschk": ToolValidator.validate_accesschk,
+            "accesschk64": ToolValidator.validate_accesschk,
         }
 
         # Load configuration
@@ -357,6 +503,24 @@ class AdvancedToolDiscovery:
                 "required": False,
                 "priority": "low",
             },
+            "nasm": {
+                "executables": ["nasm", "nasm.exe"],
+                "search_strategy": "installation_based",
+                "required": False,
+                "priority": "medium",
+            },
+            "masm": {
+                "executables": ["ml", "ml.exe", "ml64", "ml64.exe"],
+                "search_strategy": "installation_based",
+                "required": False,
+                "priority": "medium",
+            },
+            "accesschk": {
+                "executables": ["accesschk", "accesschk.exe", "accesschk64.exe"],
+                "search_strategy": "installation_based",
+                "required": False,
+                "priority": "medium",
+            },
         }
 
         results = {}
@@ -388,8 +552,7 @@ class AdvancedToolDiscovery:
         # Also save last discovery timestamp
         self.config.set("tools.last_discovery", time.time())
 
-        # Save the configuration (if auto-save is enabled)
-        self.config.save()
+        # Configuration is auto-saved by the config manager
 
         return results
 
@@ -495,9 +658,7 @@ class AdvancedToolDiscovery:
 
     def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in common installation locations."""
-        logger.debug(
-            f"Searching common locations for tool: {tool_name} with executables: {executables}"
-        )
+        logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
         common_paths = []
 
         if sys.platform == "win32":
@@ -559,12 +720,8 @@ class AdvancedToolDiscovery:
                                     try:
                                         display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in display_name.lower():
-                                            install_location = winreg.QueryValueEx(
-                                                subkey, "InstallLocation"
-                                            )[0]
-                                            if install_location and os.path.exists(
-                                                install_location
-                                            ):
+                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            if install_location and os.path.exists(install_location):
                                                 return install_location
                                     except FileNotFoundError as e:
                                         logger.error("File not found in tool_discovery: %s", e)
@@ -623,6 +780,85 @@ class AdvancedToolDiscovery:
                         "/usr/bin",
                         "/usr/local/bin",
                         "/opt/qemu",
+                    ]
+                )
+
+        elif tool_name == "nasm":
+            if sys.platform == "win32":
+                paths.extend(
+                    [
+                        "C:\\Program Files\\NASM",
+                        "C:\\Program Files (x86)\\NASM",
+                        "C:\\NASM",
+                        "C:\\Tools\\nasm",
+                        os.path.expanduser(
+                            "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe"
+                        ),
+                        "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
+                    ]
+                )
+            else:
+                paths.extend(
+                    [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/nasm",
+                    ]
+                )
+
+        elif tool_name == "masm":
+            if sys.platform == "win32":
+                # MASM is typically installed with Visual Studio or Windows SDK
+                vs_paths = []
+                for vs_version in ["2022", "2019", "2017", "BuildTools"]:
+                    vs_paths.extend(
+                        [
+                            f"C:\\Program Files\\Microsoft Visual Studio\\{vs_version}\\Community\\VC\\Tools\\MSVC",
+                            f"C:\\Program Files\\Microsoft Visual Studio\\{vs_version}\\Professional\\VC\\Tools\\MSVC",
+                            f"C:\\Program Files\\Microsoft Visual Studio\\{vs_version}\\Enterprise\\VC\\Tools\\MSVC",
+                            f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Community\\VC\\Tools\\MSVC",
+                            f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Professional\\VC\\Tools\\MSVC",
+                            f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Enterprise\\VC\\Tools\\MSVC",
+                        ]
+                    )
+
+                # Add Windows SDK paths
+                sdk_paths = []
+                for version in ["10", "8.1", "8.0"]:
+                    sdk_paths.extend(
+                        [
+                            f"C:\\Program Files (x86)\\Windows Kits\\{version}\\bin",
+                            f"C:\\Program Files\\Windows Kits\\{version}\\bin",
+                        ]
+                    )
+
+                paths.extend(
+                    vs_paths
+                    + sdk_paths
+                    + [
+                        "C:\\MASM",
+                        "C:\\Tools\\masm",
+                        "C:\\Program Files\\MASM",
+                        "C:\\Program Files (x86)\\MASM",
+                    ]
+                )
+
+        elif tool_name == "accesschk":
+            if sys.platform == "win32":
+                paths.extend(
+                    [
+                        "C:\\SysinternalsSuite",
+                        "C:\\Tools\\SysinternalsSuite",
+                        "C:\\Tools\\Sysinternals",
+                        "C:\\Program Files\\SysinternalsSuite",
+                        "C:\\Program Files (x86)\\SysinternalsSuite",
+                        "C:\\Windows\\System32",
+                        "C:\\Tools\\AccessChk",
+                        "C:\\AccessChk",
+                        os.path.expanduser("~\\Desktop"),
+                        os.path.expanduser("~\\Downloads"),
+                        os.path.expanduser("~\\Documents\\Tools"),
+                        os.path.expanduser("~\\AppData\\Local\\Microsoft\\WinGet\\Packages"),
                     ]
                 )
 
@@ -696,7 +932,6 @@ class AdvancedToolDiscovery:
         # Save to config
         self.manual_overrides[tool_name] = tool_path
         self.config.set(f"tools.manual_overrides.{tool_name}", tool_path)
-        self.config.save()
 
         logger.info(f"Set manual override for {tool_name}: {tool_path}")
 
@@ -722,7 +957,6 @@ class AdvancedToolDiscovery:
 
         del self.manual_overrides[tool_name]
         self.config.set(f"tools.manual_overrides.{tool_name}", None)
-        self.config.save()
 
         logger.info(f"Cleared manual override for {tool_name}")
 
@@ -821,9 +1055,7 @@ class AdvancedToolDiscovery:
 
         # Determine overall health
         health_status["healthy"] = (
-            health_status["available"]
-            and health_status["executable"]
-            and (health_status["version_valid"] or not validator)
+            health_status["available"] and health_status["executable"] and (health_status["version_valid"] or not validator)
         )
 
         return health_status
@@ -849,7 +1081,6 @@ class AdvancedToolDiscovery:
         # Save health check results to config
         self.config.set("tools.last_health_check", results)
         self.config.set("tools.last_health_check_time", time.time())
-        self.config.save()
 
         return results
 
@@ -861,11 +1092,7 @@ class AdvancedToolDiscovery:
 
         """
         health_results = self.health_check_all_tools()
-        return [
-            tool_name
-            for tool_name, status in health_results.items()
-            if status.get("healthy", False)
-        ]
+        return [tool_name for tool_name, status in health_results.items() if status.get("healthy", False)]
 
     def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
         """Enhanced tool discovery with comprehensive fallback mechanisms."""
@@ -902,7 +1129,7 @@ class AdvancedToolDiscovery:
             self._try_package_manager_paths,
             self._try_version_fallbacks,
             self._try_bundled_tools,
-            self._try_container_tools
+            self._try_container_tools,
         ]
 
         for strategy in strategies:
@@ -923,7 +1150,7 @@ class AdvancedToolDiscovery:
             Path.home() / "portable_tools" / tool_name,
             Path.cwd() / "tools" / tool_name,
             Path.cwd() / "portable" / tool_name,
-            Path(__file__).parent.parent.parent / "tools" / tool_name
+            Path(__file__).parent.parent.parent / "tools" / tool_name,
         ]
 
         for portable_dir in portable_paths:
@@ -942,29 +1169,35 @@ class AdvancedToolDiscovery:
 
         # Windows package managers
         if sys.platform == "win32":
-            pm_paths.extend([
-                Path.home() / "scoop" / "apps" / tool_name,
-                Path("C:/ProgramData/chocolatey/lib") / tool_name,
-                Path("C:/tools") / tool_name,
-                Path.home() / "AppData/Local/Programs" / tool_name
-            ])
+            pm_paths.extend(
+                [
+                    Path.home() / "scoop" / "apps" / tool_name,
+                    Path("C:/ProgramData/chocolatey/lib") / tool_name,
+                    Path("C:/tools") / tool_name,
+                    Path.home() / "AppData/Local/Programs" / tool_name,
+                ]
+            )
 
         # Linux package managers
         elif sys.platform.startswith("linux"):
-            pm_paths.extend([
-                Path("/opt") / tool_name,
-                Path("/usr/local/bin"),
-                Path("/snap/bin"),
-                Path.home() / ".local/bin"
-            ])
+            pm_paths.extend(
+                [
+                    Path("/opt") / tool_name,
+                    Path("/usr/local/bin"),
+                    Path("/snap/bin"),
+                    Path.home() / ".local/bin",
+                ]
+            )
 
         # macOS package managers
         elif sys.platform == "darwin":
-            pm_paths.extend([
-                Path("/usr/local/bin"),
-                Path("/opt/homebrew/bin"),
-                Path("/Applications") / f"{tool_name}.app/Contents/MacOS"
-            ])
+            pm_paths.extend(
+                [
+                    Path("/usr/local/bin"),
+                    Path("/opt/homebrew/bin"),
+                    Path("/Applications") / f"{tool_name}.app/Contents/MacOS",
+                ]
+            )
 
         for pm_path in pm_paths:
             if pm_path.exists():
@@ -979,8 +1212,11 @@ class AdvancedToolDiscovery:
     def _try_version_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any] | None:
         """Try different versions of the same tool."""
         version_patterns = [
-            f"{tool_name}3", f"{tool_name}2", f"{tool_name}-dev",
-            f"{tool_name}-stable", f"{tool_name}-latest"
+            f"{tool_name}3",
+            f"{tool_name}2",
+            f"{tool_name}-dev",
+            f"{tool_name}-stable",
+            f"{tool_name}-latest",
         ]
 
         for version_name in version_patterns:
@@ -1013,7 +1249,7 @@ class AdvancedToolDiscovery:
         """Try containerized versions of tools."""
         container_configs = {
             "radare2": {"image": "radare/radare2:latest", "command": "r2"},
-            "ghidra": {"image": "ghidra/ghidra:latest", "command": "ghidraRun"}
+            "ghidra": {"image": "ghidra/ghidra:latest", "command": "ghidraRun"},
         }
 
         if tool_name in container_configs:
@@ -1028,7 +1264,7 @@ class AdvancedToolDiscovery:
                         "available": True,
                         "path": wrapper_script,
                         "containerized": True,
-                        "container_image": container_cfg["image"]
+                        "container_image": container_cfg["image"],
                     }
 
         return None
@@ -1043,11 +1279,11 @@ class AdvancedToolDiscovery:
 
         if sys.platform == "win32":
             wrapper_content = f"""@echo off
-docker run --rm -it -v "%cd%":/workspace {container_cfg['image']} {container_cfg['command']} %*
+docker run --rm -it -v "%cd%":/workspace {container_cfg["image"]} {container_cfg["command"]} %*
 """
         else:
             wrapper_content = f"""#!/bin/bash
-docker run --rm -it -v "$(pwd)":/workspace {container_cfg['image']} {container_cfg['command']} "$@"
+docker run --rm -it -v "$(pwd)":/workspace {container_cfg["image"]} {container_cfg["command"]} "$@"
 """
 
         try:
@@ -1066,40 +1302,40 @@ docker run --rm -it -v "$(pwd)":/workspace {container_cfg['image']} {container_c
                 "ida_free": {
                     "executables": ["ida64", "ida"],
                     "search_strategy": "installation_based",
-                    "description": "IDA Free alternative to Ghidra"
+                    "description": "IDA Free alternative to Ghidra",
                 },
                 "cutter": {
                     "executables": ["cutter", "Cutter"],
                     "search_strategy": "path_based",
-                    "description": "Cutter/Rizin GUI alternative"
-                }
+                    "description": "Cutter/Rizin GUI alternative",
+                },
             },
             "radare2": {
                 "rizin": {
                     "executables": ["rz", "rizin"],
                     "search_strategy": "path_based",
-                    "description": "Rizin fork of Radare2"
+                    "description": "Rizin fork of Radare2",
                 },
                 "objdump": {
                     "executables": ["objdump"],
                     "search_strategy": "path_based",
-                    "description": "GNU objdump fallback"
-                }
+                    "description": "GNU objdump fallback",
+                },
             },
             "python3": {
                 "python": {
                     "executables": ["python"],
                     "search_strategy": "path_based",
-                    "description": "Python 2/3 fallback"
+                    "description": "Python 2/3 fallback",
                 }
             },
             "frida": {
                 "frida-tools": {
                     "executables": ["frida-ps", "frida-trace"],
                     "search_strategy": "path_based",
-                    "description": "Frida tools package"
+                    "description": "Frida tools package",
                 }
-            }
+            },
         }
 
         return alternatives.get(tool_name, {})

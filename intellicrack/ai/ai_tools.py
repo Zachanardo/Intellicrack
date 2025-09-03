@@ -56,8 +56,7 @@ class AIAssistant:
                 "lines_of_code": len(code.split("\n")),
                 "complexity": basic_analysis.get("complexity", "unknown"),
                 "insights": basic_analysis.get("insights", []) + ai_analysis.get("insights", []),
-                "suggestions": basic_analysis.get("suggestions", [])
-                + ai_analysis.get("suggestions", []),
+                "suggestions": basic_analysis.get("suggestions", []) + ai_analysis.get("suggestions", []),
                 "security_issues": basic_analysis.get("security_issues", []),
                 "patterns": basic_analysis.get("patterns", []),
                 "ai_enabled": ai_analysis.get("ai_enabled", False),
@@ -141,13 +140,7 @@ class AIAssistant:
 
         # General analysis
         comment_lines = len([line for line in lines if line.strip().startswith(("#", "//", "/*"))])
-        code_lines = len(
-            [
-                line
-                for line in lines
-                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
-            ]
-        )
+        code_lines = len([line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))])
 
         if code_lines > 0:
             comment_ratio = comment_lines / code_lines
@@ -168,13 +161,7 @@ class AIAssistant:
     def _calculate_complexity(self, code: str, language: str) -> str:
         """Calculate code complexity."""
         lines = code.split("\n")
-        code_lines = len(
-            [
-                line
-                for line in lines
-                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
-            ]
-        )
+        code_lines = len([line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))])
 
         # Count control structures
         control_keywords = ["if", "else", "while", "for", "switch", "case", "try", "catch"]
@@ -367,11 +354,7 @@ class AIAssistant:
                     )
                 if "protection" in question_lower or "security" in question_lower:
                     response = vuln_engine.analyze_protection_mechanisms(question, context)
-                    return (
-                        response
-                        if response
-                        else "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
-                    )
+                    return response if response else "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
                 if "vulnerability" in question_lower or "exploit" in question_lower:
                     response = vuln_engine.find_vulnerabilities(question, context)
                     return (
@@ -473,9 +456,7 @@ class CodeAnalyzer:
         """Analyze assembly code for patterns and vulnerabilities."""
         try:
             lines = assembly_code.split("\n")
-            instruction_count = len(
-                [line for line in lines if line.strip() and not line.strip().startswith(";")]
-            )
+            instruction_count = len([line for line in lines if line.strip() and not line.strip().startswith(";")])
 
             # Initialize result structure
             result = {
@@ -535,11 +516,11 @@ class CodeAnalyzer:
             if context:
                 context_info = f"""
                 Analysis context:
-                - Type: {context.get('analysis_type', 'unknown')}
-                - File: {context.get('file_path', 'N/A')}
-                - Findings: {len(context.get('findings', []))} items
-                - Security issues: {len(context.get('security_issues', []))} items
-                - Confidence: {context.get('confidence', 0):.1%}
+                - Type: {context.get("analysis_type", "unknown")}
+                - File: {context.get("file_path", "N/A")}
+                - Findings: {len(context.get("findings", []))} items
+                - Security issues: {len(context.get("security_issues", []))} items
+                - Confidence: {context.get("confidence", 0):.1%}
                 """
                 full_question = f"{context_info}\n\nQuestion: {question}"
             else:
@@ -567,9 +548,7 @@ class CodeAnalyzer:
             context_parts = []
 
             if analysis_result.get("analysis_type") == "binary":
-                context_parts.append(
-                    f"binary {analysis_result.get('metadata', {}).get('format', 'unknown')} file"
-                )
+                context_parts.append(f"binary {analysis_result.get('metadata', {}).get('format', 'unknown')} file")
             elif analysis_result.get("code_type") == "assembly":
                 context_parts.append("assembly code")
 
@@ -586,13 +565,9 @@ class CodeAnalyzer:
             # Add specific suggestions based on findings
             specific_suggestions = []
             if analysis_result.get("protection_mechanisms"):
-                specific_suggestions.append(
-                    "Analyze detected protection mechanisms for bypass opportunities"
-                )
+                specific_suggestions.append("Analyze detected protection mechanisms for bypass opportunities")
             if analysis_result.get("security_issues"):
-                specific_suggestions.append(
-                    "Investigate identified security issues for exploitation"
-                )
+                specific_suggestions.append("Investigate identified security issues for exploitation")
             if analysis_result.get("patterns"):
                 specific_suggestions.append("Examine code patterns for behavioral insights")
 
@@ -625,9 +600,7 @@ class CodeAnalyzer:
                 from .ai_file_tools import get_ai_file_tools
 
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(
-                    file_path, purpose="Binary header analysis for protection detection"
-                )
+                file_data = ai_file_tools.read_file(file_path, purpose="Binary header analysis for protection detection")
                 if file_data.get("status") == "success" and file_data.get("content"):
                     # Convert string content to bytes if needed
                     content = file_data["content"]
@@ -660,10 +633,7 @@ class CodeAnalyzer:
             # Check for common strings
             try:
                 strings_data = header.decode("ascii", errors="ignore")
-                if any(
-                    keyword in strings_data.lower()
-                    for keyword in ["license", "trial", "activation"]
-                ):
+                if any(keyword in strings_data.lower() for keyword in ["license", "trial", "activation"]):
                     result["findings"].append("License-related strings detected in binary")
                 if any(keyword in strings_data.lower() for keyword in ["debug", "test", "dev"]):
                     result["findings"].append("Development/debug strings found")
@@ -699,22 +669,15 @@ class CodeAnalyzer:
                     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                         imports = [imp.dll.decode() for imp in pe.DIRECTORY_ENTRY_IMPORT]
                         if any("crypt" in imp.lower() for imp in imports):
-                            result["protection_mechanisms"].append(
-                                "Cryptographic libraries detected"
-                            )
+                            result["protection_mechanisms"].append("Cryptographic libraries detected")
                         if any("debug" in imp.lower() for imp in imports):
                             result["findings"].append("Debugging libraries imported")
 
                     # Check sections
                     for section in pe.sections:
                         section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
-                        if (
-                            section.Characteristics & 0x20000000
-                            and section.Characteristics & 0x80000000
-                        ):
-                            result["security_issues"].append(
-                                f"Writable and executable section: {section_name}"
-                            )
+                        if section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000:
+                            result["security_issues"].append(f"Writable and executable section: {section_name}")
             except (AttributeError, IndexError, ValueError) as e:
                 logger.debug("PE section analysis failed: %s", e)
                 result["errors"].append("PE section analysis failed")
@@ -731,13 +694,8 @@ class CodeAnalyzer:
                         # Check for imported functions
                         if hasattr(binary, "imported_functions"):
                             for func in binary.imported_functions[:10]:
-                                if any(
-                                    keyword in func.lower()
-                                    for keyword in ["crypt", "hash", "verify"]
-                                ):
-                                    result["protection_mechanisms"].append(
-                                        f"Security function: {func}"
-                                    )
+                                if any(keyword in func.lower() for keyword in ["crypt", "hash", "verify"]):
+                                    result["protection_mechanisms"].append(f"Security function: {func}")
             except (AttributeError, TypeError, ImportError) as e:
                 logger.debug("LIEF binary analysis failed: %s", e)
                 result["errors"].append("Cross-platform binary analysis failed")
@@ -748,9 +706,7 @@ class CodeAnalyzer:
 
         return result
 
-    def _perform_ai_binary_analysis(
-        self, file_path: str, basic_result: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _perform_ai_binary_analysis(self, file_path: str, basic_result: dict[str, Any]) -> dict[str, Any]:
         """Perform AI-enhanced binary analysis using AI assistant."""
         try:
             # First try to use AI assistant for suggestions
@@ -761,9 +717,9 @@ class CodeAnalyzer:
             question = f"""
             I'm analyzing a binary file with these characteristics:
             - File: {file_path}
-            - Format: {basic_result.get('metadata', {}).get('format', 'Unknown')}
-            - Size: {basic_result.get('file_size', 0)} bytes
-            - Current findings: {'; '.join(basic_result.get('findings', []))}
+            - Format: {basic_result.get("metadata", {}).get("format", "Unknown")}
+            - Size: {basic_result.get("file_size", 0)} bytes
+            - Current findings: {"; ".join(basic_result.get("findings", []))}
 
             What security risks, protection mechanisms, and analysis recommendations do you have?
             """
@@ -799,10 +755,10 @@ class CodeAnalyzer:
             Analyze this binary file for security implications:
 
             File: {file_path}
-            Format: {basic_result.get('metadata', {}).get('format', 'Unknown')}
-            Size: {basic_result.get('file_size', 0)} bytes
+            Format: {basic_result.get("metadata", {}).get("format", "Unknown")}
+            Size: {basic_result.get("file_size", 0)} bytes
 
-            Current findings: {'; '.join(basic_result.get('findings', []))}
+            Current findings: {"; ".join(basic_result.get("findings", []))}
 
             Please provide:
             1. Potential security risks and vulnerabilities
@@ -912,10 +868,7 @@ class CodeAnalyzer:
                 vulnerabilities.append("Potential format string vulnerability")
 
             # Privilege escalation
-            if (
-                any(instr in line for instr in ["int 0x80", "syscall"])
-                and "setuid" in assembly_code.lower()
-            ):
+            if any(instr in line for instr in ["int 0x80", "syscall"]) and "setuid" in assembly_code.lower():
                 vulnerabilities.append("Potential privilege escalation attempt")
 
         return list(set(vulnerabilities))
@@ -932,9 +885,7 @@ class CodeAnalyzer:
             ai_security_issues = ai_analysis.get("security_issues", [])
 
             # Also get context-specific suggestions
-            context_suggestions = self.ai_assistant.get_suggestions(
-                "assembly code vulnerability analysis"
-            )
+            context_suggestions = self.ai_assistant.get_suggestions("assembly code vulnerability analysis")
 
             # Try advanced LLM analysis if available
             from .llm_backends import LLMManager, LLMMessage
@@ -992,9 +943,7 @@ class CodeAnalyzer:
             response = llm_manager.chat(messages)
 
             if response and response.content:
-                patterns, vulnerabilities, recommendations = self._parse_ai_assembly_response(
-                    response.content
-                )
+                patterns, vulnerabilities, recommendations = self._parse_ai_assembly_response(response.content)
                 # Combine AI assistant and LLM insights
                 all_patterns = list(set(ai_analysis.get("patterns", []) + patterns))
                 all_vulnerabilities = list(set(ai_security_issues + vulnerabilities))
@@ -1111,11 +1060,7 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
             language = _detect_code_language(code)
 
         lines = code.split("\n")
-        code_lines = [
-            line
-            for line in lines
-            if line.strip() and not line.strip().startswith(("#", "//", "/*"))
-        ]
+        code_lines = [line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))]
         line_count = len(code_lines)
 
         # Build explanation based on detail level
@@ -1130,9 +1075,7 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
             explanation += f"- Language: {language}\n"
             explanation += f"- Code complexity: {static_insights.get('complexity', 'unknown')}\n"
             explanation += f"- Functions/methods: {static_insights.get('function_count', 0)}\n"
-            explanation += (
-                f"- Control structures: {static_insights.get('control_structures', 0)}\n\n"
-            )
+            explanation += f"- Control structures: {static_insights.get('control_structures', 0)}\n\n"
 
             # Add structural insights
             if static_insights.get("imports"):
@@ -1164,16 +1107,10 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
                 explanation += f"- Purpose: {static_insights['main_purpose']}\n"
 
             if static_insights.get("key_patterns"):
-                explanation += (
-                    "- Key patterns: " + ", ".join(static_insights["key_patterns"][:3]) + "\n"
-                )
+                explanation += "- Key patterns: " + ", ".join(static_insights["key_patterns"][:3]) + "\n"
 
             if static_insights.get("security_notes"):
-                explanation += (
-                    "- Security considerations: "
-                    + "; ".join(static_insights["security_notes"][:2])
-                    + "\n"
-                )
+                explanation += "- Security considerations: " + "; ".join(static_insights["security_notes"][:2]) + "\n"
         else:
             explanation += f"Basic Analysis: {line_count} lines of {language} code\n"
             if static_insights.get("main_purpose"):
@@ -1283,38 +1220,26 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
     try:
         # Count functions and methods
         if language == "python":
-            result["functions"] = [
-                line.strip() for line in lines if line.strip().startswith("def ")
-            ]
+            result["functions"] = [line.strip() for line in lines if line.strip().startswith("def ")]
             result["function_count"] = len(result["functions"])
-            result["imports"] = [
-                line.strip() for line in lines if line.strip().startswith(("import ", "from "))
-            ]
+            result["imports"] = [line.strip() for line in lines if line.strip().startswith(("import ", "from "))]
 
             # Detect main purpose
             if any("flask" in imp.lower() or "django" in imp.lower() for imp in result["imports"]):
                 result["main_purpose"] = "Web application"
-            elif any(
-                "numpy" in imp.lower() or "pandas" in imp.lower() for imp in result["imports"]
-            ):
+            elif any("numpy" in imp.lower() or "pandas" in imp.lower() for imp in result["imports"]):
                 result["main_purpose"] = "Data analysis"
-            elif any(
-                "tkinter" in imp.lower() or "pyqt" in imp.lower() for imp in result["imports"]
-            ):
+            elif any("tkinter" in imp.lower() or "pyqt" in imp.lower() for imp in result["imports"]):
                 result["main_purpose"] = "GUI application"
 
         elif language in ["c", "cpp"]:
             result["functions"] = [
                 line.strip()
                 for line in lines
-                if "(" in line
-                and ")" in line
-                and any(ret in line for ret in ["int ", "void ", "char ", "float "])
+                if "(" in line and ")" in line and any(ret in line for ret in ["int ", "void ", "char ", "float "])
             ]
             result["function_count"] = len(result["functions"])
-            result["imports"] = [
-                line.strip() for line in lines if line.strip().startswith("#include")
-            ]
+            result["imports"] = [line.strip() for line in lines if line.strip().startswith("#include")]
 
             # Security analysis for C/C++
             if any("strcpy" in line or "strcat" in line for line in lines):
@@ -1324,11 +1249,7 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
 
         elif language == "assembly":
             result["main_purpose"] = "Low-level system code"
-            asm_lines = [
-                line.strip().lower()
-                for line in lines
-                if line.strip() and not line.strip().startswith(";")
-            ]
+            asm_lines = [line.strip().lower() for line in lines if line.strip() and not line.strip().startswith(";")]
 
             if any("syscall" in line or "int 0x80" in line for line in asm_lines):
                 result["key_patterns"].append("System calls")
@@ -1342,18 +1263,10 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
         if language == "assembly":
             control_keywords = ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]
 
-        result["control_structures"] = sum(
-            code.lower().count(keyword) for keyword in control_keywords
-        )
+        result["control_structures"] = sum(code.lower().count(keyword) for keyword in control_keywords)
 
         # Determine complexity
-        code_lines = len(
-            [
-                line
-                for line in lines
-                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
-            ]
-        )
+        code_lines = len([line for line in lines if line.strip() and not line.strip().startswith(("#", "//", "/*"))])
         if code_lines > 100 or result["control_structures"] > 15:
             result["complexity"] = "high"
         elif code_lines > 20 or result["control_structures"] > 5:

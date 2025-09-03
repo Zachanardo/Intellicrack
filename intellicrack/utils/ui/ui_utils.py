@@ -82,9 +82,7 @@ class ProgressTracker:
         self.is_cancelled = False
 
 
-def show_message(
-    message: str, msg_type: MessageType = MessageType.INFO, title: str = None, parent: Any = None
-) -> None:
+def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str = None, parent: Any = None) -> None:
     """Display a message to the user.
 
     Args:
@@ -133,9 +131,7 @@ def show_message(
         )
 
 
-def get_user_input(
-    prompt: str, default: str = "", title: str = "Input Required", parent: Any = None
-) -> str | None:
+def get_user_input(prompt: str, default: str = "", title: str = "Input Required", parent: Any = None) -> str | None:
     """Get text input from the user.
 
     Args:
@@ -195,9 +191,7 @@ def get_user_input(
         return None
 
 
-def update_progress(
-    progress: int, message: str = None, callback: Callable[[int, str], None] | None = None
-) -> None:
+def update_progress(progress: int, message: str = None, callback: Callable[[int, str], None] | None = None) -> None:
     """Update progress display.
 
     Args:
@@ -234,9 +228,7 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: Any = No
         # Sanitize title and message to prevent injection
         safe_title = title.replace("\n", " ").replace("\r", " ")
         safe_message = message.replace("\n", " ").replace("\r", " ")
-        response = (
-            input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()
-        )  # Input validated below
+        response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:

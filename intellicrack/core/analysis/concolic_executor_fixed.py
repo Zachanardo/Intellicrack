@@ -104,14 +104,10 @@ class ConcolicExecutionEngine:
         """Legacy property for backward compatibility."""
         return self.symbolic_engine is not None
 
-    def explore_paths(
-        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
-    ) -> dict[str, Any]:
+    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Explore paths using the available symbolic execution engine."""
         if not self.symbolic_engine:
-            return {
-                "error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."
-            }
+            return {"error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."}
 
         if self.symbolic_engine == "angr":
             return self._explore_paths_angr(target_address, avoid_addresses)
@@ -292,10 +288,7 @@ class ConcolicExecutionEngine:
 
             for func in cfg.functions.values():
                 # Look for functions that might be license checks
-                if any(
-                    pattern in func.name.lower()
-                    for pattern in ["license", "register", "validate", "check"]
-                ):
+                if any(pattern in func.name.lower() for pattern in ["license", "register", "validate", "check"]):
                     license_addrs.append(func.addr)
 
             if not license_addrs:

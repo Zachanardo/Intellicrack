@@ -395,9 +395,7 @@ class TutorialSystem:
 
         # Show recommendations
         if not any(self.tutorial_progress.values()):
-            self.console.print(
-                "\n💡 [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack"
-            )
+            self.console.print("\n💡 [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
 
     def _list_tutorials_basic(self):
         """List tutorials in basic text format."""
@@ -441,9 +439,7 @@ class TutorialSystem:
 
             if missing_prereqs:
                 if self.console:
-                    self.console.print(
-                        f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}"
-                    )
+                    self.console.print(f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}")
                 else:
                     print(f"Prerequisites not met: {', '.join(missing_prereqs)}")
                 return False
@@ -544,9 +540,7 @@ class TutorialSystem:
                 for hint in step.hints:
                     print(f"  💡 {hint}")
 
-            print(
-                "\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'"
-            )
+            print("\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
 
         # Prompt for command execution
         self._prompt_for_command()
@@ -676,7 +670,7 @@ class TutorialSystem:
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
                 result_output = result.stdout + result.stderr
 
@@ -694,7 +688,7 @@ class TutorialSystem:
                     )
             except Exception as e:
                 # Validation function error - continue anyway
-                if hasattr(self, 'debug') and self.debug:
+                if hasattr(self, "debug") and self.debug:
                     print(f"Debug: Validation function error: {e}")
 
         # Check expected output if provided
@@ -776,9 +770,7 @@ class TutorialSystem:
         )
 
         if self.console:
-            self.console.print(
-                f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]"
-            )
+            self.console.print(f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]")
             self.console.print("[dim]You can resume later with 'tutorial resume'[/dim]")
         else:
             print(f"Tutorial '{tutorial_name}' paused at step {self.current_step + 1}")
@@ -831,11 +823,7 @@ class TutorialSystem:
 
     def _show_next_recommendations(self):
         """Show recommended next tutorials."""
-        completed = set(
-            name
-            for name, progress in self.tutorial_progress.items()
-            if progress >= len(self.tutorials[name].steps)
-        )
+        completed = set(name for name, progress in self.tutorial_progress.items() if progress >= len(self.tutorials[name].steps))
 
         recommendations = []
 
@@ -985,15 +973,11 @@ class TutorialSystem:
             card_content += f"⏱️ {tutorial.estimated_time} min\n"
             card_content += f"📚 {len(tutorial.steps)} steps\n\n"
             card_content += (
-                f"[dim]{tutorial.description[:50]}...[/dim]"
-                if len(tutorial.description) > 50
-                else f"[dim]{tutorial.description}[/dim]"
+                f"[dim]{tutorial.description[:50]}...[/dim]" if len(tutorial.description) > 50 else f"[dim]{tutorial.description}[/dim]"
             )
 
             # Check completion status
-            completion = self.tutorial_progress.get(
-                tutorial.name, {"completed": False, "progress": 0}
-            )
+            completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
             if completion["completed"]:
                 border_style = "green"
                 title_prefix = "✅ "
@@ -1213,16 +1197,10 @@ class TutorialSystem:
         info_node.add(f"📝 Description: {tutorial.description}")
 
         # Add tutorial steps
-        steps_node = tree.add(
-            f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]"
-        )
+        steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
 
         for i, step in enumerate(tutorial.steps, 1):
-            step_icon = (
-                "✅"
-                if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0)
-                else "📖"
-            )
+            step_icon = "✅" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
             step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
 
             # Add step details
@@ -1300,9 +1278,7 @@ Start with 'getting_started' if you're new to Intellicrack.""",
                     # Tutorial will handle its own interactive loop
                     pass
                 else:
-                    print(
-                        f"Tutorial '{tutorial_name}' not found. Use 'list' to see available tutorials."
-                    )
+                    print(f"Tutorial '{tutorial_name}' not found. Use 'list' to see available tutorials.")
             elif parts[0] == "resume":
                 if not tutorial_system.resume_tutorial():
                     print("No tutorial to resume.")

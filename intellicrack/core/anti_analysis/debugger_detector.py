@@ -133,9 +133,7 @@ class DebuggerDetector(BaseDetector):
             # Calculate anti-debug effectiveness score
             results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
 
-            self.logger.info(
-                f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})"
-            )
+            self.logger.info(f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})")
             return results
 
         except Exception as e:
@@ -206,7 +204,7 @@ class DebuggerDetector(BaseDetector):
                     ("PebBaseAddress", ctypes.c_void_p),
                     ("Reserved2", ctypes.c_void_p * 2),
                     ("UniqueProcessId", ctypes.POINTER(ctypes.c_ulong)),
-                    ("Reserved3", ctypes.c_void_p)
+                    ("Reserved3", ctypes.c_void_p),
                 ]
 
             # Get PEB base address
@@ -216,7 +214,7 @@ class DebuggerDetector(BaseDetector):
                 0,  # ProcessBasicInformation
                 ctypes.byref(pbi),
                 ctypes.sizeof(pbi),
-                None
+                None,
             )
 
             if status != 0:
@@ -233,29 +231,21 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process,
-                being_debugged_addr,
-                ctypes.byref(being_debugged),
-                1,
-                ctypes.byref(bytes_read)
+                current_process, being_debugged_addr, ctypes.byref(being_debugged), 1, ctypes.byref(bytes_read)
             )
 
             if success and bytes_read.value == 1:
                 details["being_debugged"] = bool(being_debugged.value)
 
             # Read NtGlobalFlag - different offsets for x86/x64
-            is_64bit = platform.machine().endswith('64')
+            is_64bit = platform.machine().endswith("64")
             nt_global_flag_offset = 0xBC if is_64bit else 0x68
 
             nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
             nt_global_flag = ctypes.c_ulong()
 
             success = kernel32.ReadProcessMemory(
-                current_process,
-                nt_global_flag_addr,
-                ctypes.byref(nt_global_flag),
-                4,
-                ctypes.byref(bytes_read)
+                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read)
             )
 
             if success and bytes_read.value == 4:
@@ -293,9 +283,9 @@ class DebuggerDetector(BaseDetector):
                 try:
                     # Check /proc/self/status for TracerPid on Linux
                     if platform.system() == "Linux":
-                        with open('/proc/self/status', 'r') as f:
+                        with open("/proc/self/status", "r") as f:
                             for line in f:
-                                if line.startswith('TracerPid:'):
+                                if line.startswith("TracerPid:"):
                                     tracer_pid = int(line.split()[1])
                                     if tracer_pid != 0:
                                         debug_detected = True
@@ -305,18 +295,19 @@ class DebuggerDetector(BaseDetector):
 
                     # Check for common debugger processes
                     import subprocess
+
                     try:
                         ps_path = shutil.which("ps")
                         if ps_path:
                             ps_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                [ps_path, 'aux'],
+                                [ps_path, "aux"],
                                 capture_output=True,
                                 text=True,
                                 check=False,
-                                shell=False  # Explicitly secure - using list format prevents shell injection
+                                shell=False,  # Explicitly secure - using list format prevents shell injection
                             )
                             ps_output = ps_result.stdout
-                            debugger_patterns = ['gdb', 'lldb', 'strace', 'ltrace', 'x64dbg']
+                            debugger_patterns = ["gdb", "lldb", "strace", "ltrace", "x64dbg"]
                             for pattern in debugger_patterns:
                                 if pattern in ps_output:
                                     debug_detected = True
@@ -359,7 +350,7 @@ class DebuggerDetector(BaseDetector):
                     ("PebBaseAddress", ctypes.c_void_p),
                     ("Reserved2", ctypes.c_void_p * 2),
                     ("UniqueProcessId", ctypes.POINTER(ctypes.c_ulong)),
-                    ("Reserved3", ctypes.c_void_p)
+                    ("Reserved3", ctypes.c_void_p),
                 ]
 
             # Get PEB base address
@@ -369,7 +360,7 @@ class DebuggerDetector(BaseDetector):
                 0,  # ProcessBasicInformation
                 ctypes.byref(pbi),
                 ctypes.sizeof(pbi),
-                None
+                None,
             )
 
             if status != 0:
@@ -381,7 +372,7 @@ class DebuggerDetector(BaseDetector):
                 return False, 0.0, details
 
             # Read NtGlobalFlag - different offsets for x86/x64
-            is_64bit = platform.machine().endswith('64')
+            is_64bit = platform.machine().endswith("64")
             nt_global_flag_offset = 0xBC if is_64bit else 0x68
 
             nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
@@ -389,11 +380,7 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process,
-                nt_global_flag_addr,
-                ctypes.byref(nt_global_flag),
-                4,
-                ctypes.byref(bytes_read)
+                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read)
             )
 
             if success and bytes_read.value == 4:
@@ -531,7 +518,7 @@ class DebuggerDetector(BaseDetector):
                     ("Dr6", ctypes.c_uint32),  # Debug status register
                     ("Dr7", ctypes.c_uint32),  # Debug control register
                     # Other context fields omitted for brevity
-                    ("_reserved", ctypes.c_ubyte * 512)  # Reserve space
+                    ("_reserved", ctypes.c_ubyte * 512),  # Reserve space
                 ]
 
             # Context flags for debug registers
@@ -555,7 +542,7 @@ class DebuggerDetector(BaseDetector):
                     "DR2": hex(context.Dr2) if context.Dr2 else "0x0",
                     "DR3": hex(context.Dr3) if context.Dr3 else "0x0",
                     "DR6": hex(dr6_status),
-                    "DR7": hex(dr7_control)
+                    "DR7": hex(dr7_control),
                 }
 
                 # Check DR7 control register for enabled breakpoints
@@ -580,7 +567,7 @@ class DebuggerDetector(BaseDetector):
                     "enabled_breakpoints": breakpoint_enables,
                     "exact_instruction": bool(dr7_control & 0x00000300),
                     "data_writes": bool(dr7_control & 0x00030000),
-                    "data_reads_writes": bool(dr7_control & 0x00300000)
+                    "data_reads_writes": bool(dr7_control & 0x00300000),
                 }
 
                 # Check DR6 status for triggered breakpoints
@@ -611,6 +598,7 @@ class DebuggerDetector(BaseDetector):
         try:
             # Check if ptrace is available and accessible
             import os
+
             pid = os.getpid()
 
             # Check /proc/self/stat for tracer information
@@ -619,8 +607,8 @@ class DebuggerDetector(BaseDetector):
                     status_content = f.read()
 
                 # Look for TracerPid field
-                for line in status_content.split('\n'):
-                    if line.startswith('TracerPid:'):
+                for line in status_content.split("\n"):
+                    if line.startswith("TracerPid:"):
                         tracer_pid = int(line.split()[1])
                         if tracer_pid != 0:
                             details["tracer_pid"] = tracer_pid
@@ -635,6 +623,7 @@ class DebuggerDetector(BaseDetector):
             try:
                 # Use ptrace to attempt reading debug registers
                 import ctypes.util
+
                 libc_path = ctypes.util.find_library("c")
                 if libc_path:
                     libc = ctypes.CDLL(libc_path)
@@ -643,14 +632,7 @@ class DebuggerDetector(BaseDetector):
                     PTRACE_PEEKUSER = 3
 
                     # Debug register offsets (x86_64)
-                    DR_OFFSETS = {
-                        "DR0": 0x350,
-                        "DR1": 0x358,
-                        "DR2": 0x360,
-                        "DR3": 0x368,
-                        "DR6": 0x370,
-                        "DR7": 0x378
-                    }
+                    DR_OFFSETS = {"DR0": 0x350, "DR1": 0x358, "DR2": 0x360, "DR3": 0x368, "DR6": 0x370, "DR7": 0x378}
 
                     # Try to read debug registers (requires permissions)
                     debug_regs = {}
@@ -674,8 +656,8 @@ class DebuggerDetector(BaseDetector):
                 details["ptrace_error"] = str(e)
 
             # Check for debugger environment indicators
-            debugger_env = os.environ.get('_', '')
-            if 'gdb' in debugger_env.lower() or 'lldb' in debugger_env.lower():
+            debugger_env = os.environ.get("_", "")
+            if "gdb" in debugger_env.lower() or "lldb" in debugger_env.lower():
                 details["debugger_env"] = debugger_env
                 elapsed = time.time() - start_time
                 return True, elapsed, details
@@ -697,7 +679,7 @@ class DebuggerDetector(BaseDetector):
                             parent_name = f.read().strip()
 
                         details["parent_name"] = parent_name
-                        debugger_names = ['gdb', 'lldb', 'strace', 'ltrace', 'ddd', 'kgdb']
+                        debugger_names = ["gdb", "lldb", "strace", "ltrace", "ddd", "kgdb"]
                         if any(debugger in parent_name.lower() for debugger in debugger_names):
                             details["debugger_parent"] = parent_name
                             elapsed = time.time() - start_time
@@ -749,7 +731,7 @@ class DebuggerDetector(BaseDetector):
                     ("RegionSize", ctypes.c_size_t),
                     ("State", ctypes.c_ulong),
                     ("Protect", ctypes.c_ulong),
-                    ("Type", ctypes.c_ulong)
+                    ("Type", ctypes.c_ulong),
                 ]
 
             # Constants
@@ -764,42 +746,28 @@ class DebuggerDetector(BaseDetector):
             int3_count = 0
             locations = []
             address = 0
-            max_address = 0x7FFFFFFF if platform.machine().endswith('64') else 0x7FFFFFFF
+            max_address = 0x7FFFFFFF if platform.machine().endswith("64") else 0x7FFFFFFF
 
             # Scan memory regions
             while address < max_address:
                 mbi = MEMORY_BASIC_INFORMATION()
-                result = kernel32.VirtualQueryEx(
-                    current_process,
-                    ctypes.c_void_p(address),
-                    ctypes.byref(mbi),
-                    ctypes.sizeof(mbi)
-                )
+                result = kernel32.VirtualQueryEx(current_process, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
 
                 if result == 0:
                     break
 
                 # Check if this is executable memory
-                if (mbi.State == MEM_COMMIT and
-                    mbi.Protect in executable_pages and
-                    mbi.RegionSize > 0):
-
+                if mbi.State == MEM_COMMIT and mbi.Protect in executable_pages and mbi.RegionSize > 0:
                     # Read memory region
                     buffer_size = min(mbi.RegionSize, 0x10000)  # Limit to 64KB chunks
                     buffer = ctypes.create_string_buffer(buffer_size)
                     bytes_read = ctypes.c_size_t()
 
-                    success = kernel32.ReadProcessMemory(
-                        current_process,
-                        mbi.BaseAddress,
-                        buffer,
-                        buffer_size,
-                        ctypes.byref(bytes_read)
-                    )
+                    success = kernel32.ReadProcessMemory(current_process, mbi.BaseAddress, buffer, buffer_size, ctypes.byref(bytes_read))
 
                     if success and bytes_read.value > 0:
                         # Scan for INT3 (0xCC) instructions
-                        memory_data = buffer.raw[:bytes_read.value]
+                        memory_data = buffer.raw[: bytes_read.value]
                         for i, byte in enumerate(memory_data):
                             if byte == 0xCC:  # INT3 instruction
                                 int3_address = mbi.BaseAddress.value + i
@@ -835,13 +803,12 @@ class DebuggerDetector(BaseDetector):
     def _scan_int3_linux(self, details: dict) -> tuple[bool, float, dict]:
         """Scan for INT3 breakpoints on Linux systems."""
         try:
-
             int3_count = 0
             locations = []
 
             # Read process memory maps
             try:
-                with open('/proc/self/maps', 'r') as maps_file:
+                with open("/proc/self/maps", "r") as maps_file:
                     for line in maps_file:
                         parts = line.split()
                         if len(parts) < 6:
@@ -849,12 +816,12 @@ class DebuggerDetector(BaseDetector):
 
                         # Check if this is executable memory
                         permissions = parts[1]
-                        if 'x' not in permissions:
+                        if "x" not in permissions:
                             continue
 
                         # Parse address range
                         addr_range = parts[0]
-                        start_addr, end_addr = addr_range.split('-')
+                        start_addr, end_addr = addr_range.split("-")
                         start_addr = int(start_addr, 16)
                         end_addr = int(end_addr, 16)
                         size = end_addr - start_addr
@@ -865,7 +832,7 @@ class DebuggerDetector(BaseDetector):
 
                         try:
                             # Try to read the memory region
-                            with open('/proc/self/mem', 'rb') as mem_file:
+                            with open("/proc/self/mem", "rb") as mem_file:
                                 mem_file.seek(start_addr)
                                 memory_data = mem_file.read(min(size, 0x10000))  # Read up to 64KB
 
@@ -892,9 +859,9 @@ class DebuggerDetector(BaseDetector):
                 # Fallback: check for common debugger artifacts in /proc
                 try:
                     # Check if being traced
-                    with open('/proc/self/status', 'r') as f:
+                    with open("/proc/self/status", "r") as f:
                         for line in f:
-                            if line.startswith('TracerPid:'):
+                            if line.startswith("TracerPid:"):
                                 tracer_pid = int(line.split()[1])
                                 if tracer_pid != 0:
                                     details["tracer_detected"] = True
@@ -1139,12 +1106,8 @@ class DebuggerDetector(BaseDetector):
         kernel_debugger_methods = ["debug_port", "hardware_breakpoints"]
         user_debugger_methods = ["isdebuggerpresent", "checkremotedebuggerpresent"]
 
-        kernel_count = sum(
-            1 for m in kernel_debugger_methods if m in detections and detections[m]["detected"]
-        )
-        user_count = sum(
-            1 for m in user_debugger_methods if m in detections and detections[m]["detected"]
-        )
+        kernel_count = sum(1 for m in kernel_debugger_methods if m in detections and detections[m]["detected"])
+        user_count = sum(1 for m in user_debugger_methods if m in detections and detections[m]["detected"])
 
         if kernel_count > user_count:
             return "Kernel Debugger"

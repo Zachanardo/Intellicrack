@@ -58,9 +58,7 @@ class WindowsActivator:
 
     def __init__(self):
         """Initialize the Windows activator with script path and temporary directory setup."""
-        self.script_path = (
-            Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
-        )
+        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.logger = get_logger(__name__)
         self.last_validation_time = None
@@ -363,8 +361,7 @@ class WindowsActivator:
                             if os.path.isdir(item_path):
                                 # Check for Office executables
                                 if any(
-                                    os.path.exists(os.path.join(item_path, exe))
-                                    for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
+                                    os.path.exists(os.path.join(item_path, exe)) for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
                                 ):
                                     if "Office16" in item or "16.0" in item:
                                         detected_versions.append("2016")

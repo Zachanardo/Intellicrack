@@ -291,9 +291,7 @@ class SystemUtilitiesDialog(QDialog):
         # Size options
         output_layout.addWidget(QLabel("Size:"), 2, 0)
         self.icon_size_combo = QComboBox()
-        self.icon_size_combo.addItems(
-            ["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"]
-        )
+        self.icon_size_combo.addItems(["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"])
         output_layout.addWidget(self.icon_size_combo, 2, 1)
 
         layout.addWidget(output_group)
@@ -644,9 +642,7 @@ class SystemUtilitiesDialog(QDialog):
                 pixmap = QPixmap(result["output_path"])
                 if not pixmap.isNull():
                     # Scale to preview size
-                    scaled_pixmap = pixmap.scaled(
-                        128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation
-                    )
+                    scaled_pixmap = pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     self.icon_preview.setPixmap(scaled_pixmap)
                 else:
                     self.icon_preview.setText("Could not load extracted icon")
@@ -885,9 +881,7 @@ class SystemUtilitiesDialog(QDialog):
                     result = kill_process(int(pid))
 
                     if result:
-                        QMessageBox.information(
-                            self, "Success", f"Process {name} killed successfully."
-                        )
+                        QMessageBox.information(self, "Success", f"Process {name} killed successfully.")
                         # Refresh process list
                         self.get_process_list()
                     else:

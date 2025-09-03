@@ -34,14 +34,7 @@ class AdobeLicenseCompiler:
 
         # Configure startup folder based on settings
         if deployment_config.get("startup_folder", True):
-            self.startup_folder = (
-                Path(os.environ.get("APPDATA", ""))
-                / "Microsoft"
-                / "Windows"
-                / "Start Menu"
-                / "Programs"
-                / "Startup"
-            )
+            self.startup_folder = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
         else:
             self.startup_folder = Path(os.environ.get("PROGRAMDATA", "")) / service_name
 
@@ -89,12 +82,7 @@ class AdobeLicenseCompiler:
         try:
             timeout = nodejs_config.get("verification_timeout", 30)
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [node_cmd, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                shell=False,
-                check=False
+                [node_cmd, "--version"], capture_output=True, text=True, timeout=timeout, shell=False, check=False
             )
             if result.returncode == 0:
                 version = result.stdout.strip()
@@ -144,7 +132,10 @@ class AdobeLicenseCompiler:
             winget_path = shutil.which("winget")
             if winget_path:
                 winget_check = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [winget_path, "--version"], capture_output=True, text=True, shell=False  # Explicitly secure - using list format prevents shell injection
+                    [winget_path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
             else:
                 # Fallback if winget is not found
@@ -169,7 +160,7 @@ class AdobeLicenseCompiler:
                     capture_output=True,
                     text=True,
                     timeout=300,
-                    shell=False
+                    shell=False,
                 )
             else:
                 # Fallback if winget is not found
@@ -197,7 +188,10 @@ class AdobeLicenseCompiler:
             choco_path = shutil.which("choco")
             if choco_path:
                 choco_check = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [choco_path, "--version"], capture_output=True, text=True, shell=False  # Explicitly secure - using list format prevents shell injection
+                    [choco_path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
             else:
                 # Fallback if choco is not found
@@ -212,11 +206,7 @@ class AdobeLicenseCompiler:
             # Install Node.js using chocolatey
             if choco_path:
                 install_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [choco_path, "install", "nodejs", "-y"],
-                    capture_output=True,
-                    text=True,
-                    timeout=300,
-                    shell=False
+                    [choco_path, "install", "nodejs", "-y"], capture_output=True, text=True, timeout=300, shell=False
                 )
             else:
                 # Fallback if choco is not found
@@ -276,9 +266,7 @@ class AdobeLicenseCompiler:
                         return False
 
                     if actual_hash.lower() != expected_hash.lower():
-                        logger.error(
-                            f"SHA256 hash mismatch! Expected: {expected_hash}, Got: {actual_hash}"
-                        )
+                        logger.error(f"SHA256 hash mismatch! Expected: {expected_hash}, Got: {actual_hash}")
                         return False
 
                     logger.info("SHA256 hash verification passed")
@@ -293,7 +281,7 @@ class AdobeLicenseCompiler:
                         capture_output=True,
                         text=True,
                         timeout=timeout,
-                        shell=False
+                        shell=False,
                     )
                 else:
                     # Fallback if msiexec is not found
@@ -589,11 +577,7 @@ process.stdin.resume();
             npm_path = shutil.which("npm")
             if npm_path:
                 npm_install = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [npm_path, "install"],
-                    cwd=str(self.temp_dir),
-                    capture_output=True,
-                    text=True,
-                    shell=False
+                    [npm_path, "install"], cwd=str(self.temp_dir), capture_output=True, text=True, shell=False
                 )
             else:
                 logger.error("npm not found in PATH")
@@ -634,12 +618,7 @@ process.stdin.resume();
             ]
 
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                pkg_cmd,
-                cwd=str(self.temp_dir),
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                shell=False
+                pkg_cmd, cwd=str(self.temp_dir), capture_output=True, text=True, timeout=timeout, shell=False
             )
 
             if result.returncode != 0:
@@ -677,9 +656,7 @@ process.stdin.resume();
 
                     FILE_ATTRIBUTE_HIDDEN = 0x02
                     FILE_ATTRIBUTE_SYSTEM = 0x04
-                    ctypes.windll.kernel32.SetFileAttributesW(
-                        str(destination), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM
-                    )
+                    ctypes.windll.kernel32.SetFileAttributesW(str(destination), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)
                     logger.info("Applied hidden file attributes")
                 except Exception as e:
                     logger.warning(f"Failed to set hidden attributes: {e}")
@@ -774,10 +751,7 @@ process.stdin.resume();
 
             # Check and remove from other common locations
             other_locations = [
-                Path(os.environ.get("PROGRAMDATA", ""))
-                / "Microsoft"
-                / "WindowsUpdate"
-                / self.exe_name,
+                Path(os.environ.get("PROGRAMDATA", "")) / "Microsoft" / "WindowsUpdate" / self.exe_name,
                 Path(os.environ.get("TEMP", "")) / self.exe_name,
             ]
 
@@ -810,11 +784,7 @@ process.stdin.resume();
             tasklist_path = shutil.which("tasklist")
             if tasklist_path:
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [tasklist_path, "/FI", f"IMAGENAME eq {self.exe_name}"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                    shell=False
+                    [tasklist_path, "/FI", f"IMAGENAME eq {self.exe_name}"], capture_output=True, text=True, timeout=10, shell=False
                 )
                 return self.exe_name.lower() in result.stdout.lower()
             else:

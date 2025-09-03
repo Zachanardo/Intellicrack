@@ -396,17 +396,15 @@ class HexViewerDialog(QDialog):
         new_viewer = HexViewerWidget(self)
 
         # Copy file from active viewer if one is loaded
-        if self.active_viewer and hasattr(self.active_viewer, 'file_handler'):
-            if self.active_viewer.file_handler and hasattr(self.active_viewer.file_handler, 'file_path'):
+        if self.active_viewer and hasattr(self.active_viewer, "file_handler"):
+            if self.active_viewer.file_handler and hasattr(self.active_viewer.file_handler, "file_path"):
                 file_path = self.active_viewer.file_handler.file_path
                 read_only = self.active_viewer.file_handler.read_only
                 new_viewer.load_file(file_path, read_only)
 
                 # Sync position
                 if self.sync_scrolling_action.isChecked():
-                    new_viewer.vertical_scroll_bar.setValue(
-                        self.active_viewer.vertical_scroll_bar.value()
-                    )
+                    new_viewer.vertical_scroll_bar.setValue(self.active_viewer.vertical_scroll_bar.value())
 
         # Set up synchronization if enabled
         if self.sync_scrolling_action.isChecked():
@@ -532,11 +530,12 @@ class HexViewerDialog(QDialog):
             viewer: Viewer to set up sync for
 
         """
+
         def sync_vertical(value):
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
-                if other != viewer and hasattr(other, 'vertical_scroll_bar'):
+                if other != viewer and hasattr(other, "vertical_scroll_bar"):
                     other.vertical_scroll_bar.blockSignals(True)
                     other.vertical_scroll_bar.setValue(value)
                     other.vertical_scroll_bar.blockSignals(False)
@@ -545,7 +544,7 @@ class HexViewerDialog(QDialog):
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
-                if other != viewer and hasattr(other, 'horizontal_scroll_bar'):
+                if other != viewer and hasattr(other, "horizontal_scroll_bar"):
                     other.horizontal_scroll_bar.blockSignals(True)
                     other.horizontal_scroll_bar.setValue(value)
                     other.horizontal_scroll_bar.blockSignals(False)
@@ -623,9 +622,7 @@ class HexViewerDialog(QDialog):
 
         """
         try:
-            logger.info(
-                "HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only
-            )
+            logger.info("HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only)
 
             # Check if file exists and is accessible
             if not os.path.exists(file_path):
@@ -658,9 +655,7 @@ class HexViewerDialog(QDialog):
                 self.setWindowTitle(f"Enhanced Hex Viewer - {filename} ({mode_str})")
 
                 # Update Edit mode button text
-                self.edit_mode_action.setText(
-                    "Enable Editing" if read_only else "Switch to Read-Only"
-                )
+                self.edit_mode_action.setText("Enable Editing" if read_only else "Switch to Read-Only")
 
                 # Update status bar
                 self.update_status_bar(0, 0)
@@ -803,7 +798,7 @@ class HexViewerDialog(QDialog):
             return
 
         # Use the active viewer if in split view
-        viewer = self.active_viewer if hasattr(self, 'active_viewer') else self.hex_viewer
+        viewer = self.active_viewer if hasattr(self, "active_viewer") else self.hex_viewer
         dialog = PrintOptionsDialog(self, viewer)
         dialog.exec()
 
@@ -816,7 +811,7 @@ class HexViewerDialog(QDialog):
             return
 
         # Use the active viewer if in split view
-        viewer = self.active_viewer if hasattr(self, 'active_viewer') else self.hex_viewer
+        viewer = self.active_viewer if hasattr(self, "active_viewer") else self.hex_viewer
         dialog = PrintOptionsDialog(self, viewer)
         dialog.show_preview()
 
@@ -840,9 +835,9 @@ class HexViewerDialog(QDialog):
             settings: Dictionary with comparison settings
 
         """
-        file1 = settings['file1']
-        file2 = settings['file2']
-        mode = settings['mode']
+        file1 = settings["file1"]
+        file2 = settings["file2"]
+        mode = settings["mode"]
 
         # Create progress dialog
         progress = QProgressDialog("Comparing files...", "Cancel", 0, 100, self)
@@ -896,7 +891,7 @@ class HexViewerDialog(QDialog):
 
         """
         # Clear existing viewers if in split view
-        if hasattr(self, 'viewers') and len(self.viewers) > 1:
+        if hasattr(self, "viewers") and len(self.viewers) > 1:
             # Remove extra viewers
             while len(self.viewers) > 1:
                 viewer = self.viewers.pop()
@@ -910,11 +905,11 @@ class HexViewerDialog(QDialog):
         self.viewers[1].open_file(file2)
 
         # Apply difference highlighting if enabled
-        if settings['highlight_differences']:
+        if settings["highlight_differences"]:
             self.highlight_comparison_differences(differences)
 
         # Set up synchronized scrolling if enabled
-        if settings['sync_scrolling']:
+        if settings["sync_scrolling"]:
             self.sync_scrolling = True
             self.setup_synchronized_scrolling()
 
@@ -937,14 +932,14 @@ class HexViewerDialog(QDialog):
         colors = {
             "modified": "#FFE5B4",  # Peach
             "inserted": "#C1FFC1",  # Light green
-            "deleted": "#FFB6C1",   # Light pink
+            "deleted": "#FFB6C1",  # Light pink
         }
 
         # Highlight in first viewer
         for diff in differences:
             if diff.length1 > 0:
                 # Determine color based on type
-                diff_type_str = str(diff.diff_type).split('.')[-1].lower()
+                diff_type_str = str(diff.diff_type).split(".")[-1].lower()
                 color = colors.get(diff_type_str, "#FFFF00")
 
                 # Create highlight
@@ -953,7 +948,7 @@ class HexViewerDialog(QDialog):
                     end=diff.offset1 + diff.length1,
                     color=color,
                     highlight_type=HighlightType.CUSTOM,
-                    description=f"{diff_type_str.capitalize()} block"
+                    description=f"{diff_type_str.capitalize()} block",
                 )
 
                 # Add to first viewer
@@ -964,7 +959,7 @@ class HexViewerDialog(QDialog):
         for diff in differences:
             if diff.length2 > 0:
                 # Determine color based on type
-                diff_type_str = str(diff.diff_type).split('.')[-1].lower()
+                diff_type_str = str(diff.diff_type).split(".")[-1].lower()
                 color = colors.get(diff_type_str, "#FFFF00")
 
                 # Create highlight
@@ -973,7 +968,7 @@ class HexViewerDialog(QDialog):
                     end=diff.offset2 + diff.length2,
                     color=color,
                     highlight_type=HighlightType.CUSTOM,
-                    description=f"{diff_type_str.capitalize()} block"
+                    description=f"{diff_type_str.capitalize()} block",
                 )
 
                 # Add to second viewer
@@ -1040,7 +1035,7 @@ class HexViewerDialog(QDialog):
             html += "<th>File 2 Offset</th><th>File 2 Size</th></tr>"
 
             for diff in differences:
-                diff_type = str(diff.diff_type).split('.')[-1]
+                diff_type = str(diff.diff_type).split(".")[-1]
                 color = {"MODIFIED": "orange", "INSERTED": "green", "DELETED": "red"}.get(diff_type, "black")
 
                 html += f"<tr style='color: {color};'>"
@@ -1110,7 +1105,7 @@ class HexViewerDialog(QDialog):
         for i, group in enumerate(grouped):
             # Create group item
             group_item = QTreeWidgetItem(tree)
-            group_item.setText(0, f"Block {i+1}")
+            group_item.setText(0, f"Block {i + 1}")
 
             # Calculate group statistics
             total_modified = sum(d.length1 for d in group if "modified" in str(d.diff_type).lower())
@@ -1137,7 +1132,7 @@ class HexViewerDialog(QDialog):
             group_item.setText(3, f"0x{start_offset2:08X}-0x{end_offset2:08X}")
 
             # Set size change
-            size_change = (total_inserted - total_deleted)
+            size_change = total_inserted - total_deleted
             if size_change > 0:
                 group_item.setText(4, f"+{size_change} bytes")
             elif size_change < 0:
@@ -1148,7 +1143,7 @@ class HexViewerDialog(QDialog):
             # Add individual differences as children
             for diff in group:
                 diff_item = QTreeWidgetItem(group_item)
-                diff_type = str(diff.diff_type).split('.')[-1]
+                diff_type = str(diff.diff_type).split(".")[-1]
                 diff_item.setText(1, diff_type)
                 diff_item.setText(2, f"0x{diff.offset1:08X} ({diff.length1} bytes)")
                 diff_item.setText(3, f"0x{diff.offset2:08X} ({diff.length2} bytes)")
@@ -1236,9 +1231,7 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
-                                logger.debug(
-                                    f"Can't show 32-bit value - got {len(data)} bytes, need 4"
-                                )
+                                logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 32-bit value: %s", e)
@@ -1255,14 +1248,12 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"
-                                logger.debug(
-                                    f"Can't show 64-bit value - got {len(data)} bytes, need 8"
-                                )
+                                logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 64-bit value: %s", e)
 
-            info += f" | Selection: 0x{start:X}-0x{end-1:X} ({end-start} bytes){value_str}"
+            info += f" | Selection: 0x{start:X}-0x{end - 1:X} ({end - start} bytes){value_str}"
 
         self.status_bar.showMessage(info)
 

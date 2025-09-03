@@ -99,6 +99,7 @@ class GPUIntegration:
         if GPU_AUTOLOADER_AVAILABLE:
             try:
                 from ..utils.torch_gil_safety import safe_torch_import
+
                 torch = safe_torch_import()
                 if torch is None:
                     raise ImportError("PyTorch not available")
@@ -116,12 +117,8 @@ class GPUIntegration:
                     }
                 elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
                     info["runtime"] = {
-                        "hip_available": torch.hip.is_available()
-                        if hasattr(torch.hip, "is_available")
-                        else False,
-                        "device_count": torch.hip.device_count()
-                        if hasattr(torch.hip, "device_count")
-                        else 0,
+                        "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
+                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")

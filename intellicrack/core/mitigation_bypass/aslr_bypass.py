@@ -61,9 +61,7 @@ class ASLRBypass(MitigationBypassBase):
             return "ret2libc_bruteforce"
         return "partial_overwrite"
 
-    def bypass_aslr_info_leak(
-        self, target_binary: str, leak_address: str | None = None
-    ) -> dict[str, Any]:
+    def bypass_aslr_info_leak(self, target_binary: str, leak_address: str | None = None) -> dict[str, Any]:
         """Bypass ASLR using information leak technique."""
         try:
             self.logger.info("Attempting ASLR bypass via information leak on %s", target_binary)
@@ -74,9 +72,7 @@ class ASLRBypass(MitigationBypassBase):
                 self.logger.info("Using provided leak address: %s", leak_address)
                 try:
                     # Parse the provided address and use it as a starting point
-                    base_addr = (
-                        int(leak_address, 16) if isinstance(leak_address, str) else leak_address
-                    )
+                    base_addr = int(leak_address, 16) if isinstance(leak_address, str) else leak_address
                     leaked_addresses["provided_leak"] = {
                         "address": hex(base_addr),
                         "type": "user_provided",
@@ -107,9 +103,7 @@ class ASLRBypass(MitigationBypassBase):
             # Step 3: Calculate base addresses from leaked information
             base_addresses = self._calculate_base_addresses(leaked_addresses)
 
-            self.logger.info(
-                "Successfully bypassed ASLR - leaked %d addresses", len(leaked_addresses)
-            )
+            self.logger.info("Successfully bypassed ASLR - leaked %d addresses", len(leaked_addresses))
 
             return {
                 "success": True,
@@ -138,9 +132,7 @@ class ASLRBypass(MitigationBypassBase):
             for target in overwrite_targets:
                 result = self._execute_partial_overwrite(target_binary, target)
                 if result.get("success"):
-                    self.logger.info(
-                        "Partial overwrite successful on target: %s", target["description"]
-                    )
+                    self.logger.info("Partial overwrite successful on target: %s", target["description"])
                     return {
                         "success": True,
                         "technique": "partial_overwrite",
@@ -354,9 +346,7 @@ class ASLRBypass(MitigationBypassBase):
 
         return targets
 
-    def _execute_partial_overwrite(
-        self, target_binary: str, target: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _execute_partial_overwrite(self, target_binary: str, target: dict[str, Any]) -> dict[str, Any]:
         """Execute partial overwrite attack."""
         try:
             # Create payload that overwrites only specific bytes

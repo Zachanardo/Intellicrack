@@ -8,14 +8,16 @@ import ctypes
 import hashlib
 import json
 import logging
+import math
 import os
 import platform
 import queue
-import random
+import secrets
 import statistics
 import threading
 import time
 import traceback
+import winreg
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -195,8 +197,8 @@ class ChallengeGenerator:
         num_mutations = int(len(mutated) * mutation_rate)
 
         for _ in range(num_mutations):
-            pos = random.randint(0, len(mutated) - 1)
-            mutated[pos] = random.randint(0, 255)
+            pos = secrets.randbelow(len(mutated))
+            mutated[pos] = secrets.randbelow(255 - 0 + 1) + 0
 
         return bytes(mutated)
 
@@ -303,7 +305,6 @@ class ProcessMonitor:
 
         if platform.system() == "Windows":
             try:
-                import winreg
 
                 debug_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                                          r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug",
@@ -317,8 +318,8 @@ class ProcessMonitor:
                         "details": "System debugger configured"
                     })
 
-            except Exception:
-                pass
+            except Exception as e:
+                    logger.debug(f"Suppressed exception: {e}")
 
             try:
                 kernel32 = ctypes.windll.kernel32
@@ -330,8 +331,8 @@ class ProcessMonitor:
                         "type": "REMOTE_DEBUGGER",
                         "details": "Remote debugger detected"
                     })
-            except Exception:
-                pass
+            except Exception as e:
+                    logger.debug(f"Suppressed exception: {e}")
 
         rdtsc_start = time.perf_counter_ns()
         time.sleep(0.001)
@@ -449,7 +450,6 @@ class StatisticalValidator:
 
     def _normal_cdf(self, z: float) -> float:
         """Approximate normal CDF using error function."""
-        import math
         return 0.5 * (1 + math.erf(z / math.sqrt(2)))
 
     def validate_success_rate(self, test_name: str, required_rate: float = 0.95) -> Tuple[bool, Dict[str, Any]]:
@@ -482,6 +482,311 @@ class StatisticalValidator:
         return meets_requirement, validation_result
 
 
+class EnvironmentIsolationManager:
+    """
+    Manages environment isolation for validation testing.
+    Implements QEMU VM snapshots, network isolation, process sandboxing, and filesystem isolation.
+    """
+
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.vm_snapshot_name = config.get("global_settings", {}).get("qemu_snapshot_name", "clean_win11_snapshot")
+        self.network_isolation = config.get("security_settings", {}).get("network_isolation", True)
+        self.isolation_active = False
+        self.original_firewall_rules = []
+        self.sandbox_processes = []
+
+    def setup_vm_snapshot(self) -> bool:
+        """Setup and verify QEMU VM snapshot for clean testing state."""
+        try:
+            import subprocess
+
+            # Check if QEMU is available
+            qemu_cmd = ["qemu-system-x86_64", "--version"]
+            result = subprocess.run(qemu_cmd, capture_output=True, text=True, timeout=10)
+
+            if result.returncode != 0:
+                logger.warning("QEMU not available - VM snapshot isolation disabled")
+                return False
+
+            # Verify snapshot exists
+            snapshot_check = [
+                "qemu-img", "snapshot", "-l",
+                f"C:\\Intellicrack\\tests\\validation_system\\qemu\\{self.vm_snapshot_name}.qcow2"
+            ]
+
+            snapshot_result = subprocess.run(snapshot_check, capture_output=True, text=True, timeout=30)
+
+            if self.vm_snapshot_name not in snapshot_result.stdout:
+                logger.error(f"VM snapshot '{self.vm_snapshot_name}' not found")
+                return False
+
+            logger.info(f"VM snapshot '{self.vm_snapshot_name}' verified and ready")
+            return True
+
+        except subprocess.TimeoutExpired:
+            logger.error("QEMU snapshot verification timed out")
+            return False
+        except FileNotFoundError:
+            logger.warning("QEMU not installed - VM snapshot isolation disabled")
+            return False
+        except Exception as e:
+            logger.error(f"VM snapshot setup failed: {e}")
+            return False
+
+    def restore_vm_snapshot(self) -> bool:
+        """Restore VM to clean snapshot state."""
+        try:
+            import subprocess
+
+            restore_cmd = [
+                "qemu-system-x86_64",
+                "-loadvm", self.vm_snapshot_name,
+                "-nographic", "-monitor", "stdio"
+            ]
+
+            # Send restore command
+            process = subprocess.Popen(
+                restore_cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            # Send loadvm command and quit
+            stdout, stderr = process.communicate(
+                input=f"loadvm {self.vm_snapshot_name}\nquit\n",
+                timeout=60
+            )
+
+            if process.returncode == 0:
+                logger.info(f"VM restored to snapshot: {self.vm_snapshot_name}")
+                return True
+            else:
+                logger.error(f"VM restore failed: {stderr}")
+                return False
+
+        except Exception as e:
+            logger.error(f"VM snapshot restore failed: {e}")
+            return False
+
+    def setup_network_isolation(self) -> bool:
+        """Setup network isolation using Windows Firewall."""
+        if not self.network_isolation:
+            return True
+
+        try:
+            import subprocess
+
+            if platform.system() != "Windows":
+                logger.warning("Network isolation requires Windows - skipping")
+                return False
+
+            # Backup existing firewall rules
+            backup_cmd = ["netsh", "advfirewall", "export", "C:\\temp\\firewall_backup.wfw"]
+            subprocess.run(backup_cmd, check=True, capture_output=True)
+
+            # Block all outbound connections except essential
+            isolation_rules = [
+                # Block HTTP/HTTPS
+                ["netsh", "advfirewall", "firewall", "add", "rule",
+                 "name=ValidationIsolation_HTTP", "dir=out", "action=block", "protocol=TCP", "localport=80,443"],
+
+                # Block DNS (except localhost)
+                ["netsh", "advfirewall", "firewall", "add", "rule",
+                 "name=ValidationIsolation_DNS", "dir=out", "action=block", "protocol=UDP", "localport=53"],
+
+                # Block SMB/NetBIOS
+                ["netsh", "advfirewall", "firewall", "add", "rule",
+                 "name=ValidationIsolation_SMB", "dir=out", "action=block", "protocol=TCP", "localport=445,139"],
+            ]
+
+            for rule_cmd in isolation_rules:
+                result = subprocess.run(rule_cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.warning(f"Failed to add firewall rule: {' '.join(rule_cmd)}")
+                else:
+                    self.original_firewall_rules.append(rule_cmd[9])  # Store rule name
+
+            logger.info(f"Network isolation activated with {len(self.original_firewall_rules)} rules")
+            return True
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Network isolation setup failed: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Network isolation error: {e}")
+            return False
+
+    def setup_process_sandboxing(self) -> bool:
+        """Setup process sandboxing using Windows Sandbox or Docker."""
+        try:
+            import subprocess
+
+            # First try Windows Sandbox
+            if platform.system() == "Windows":
+                # Check if Windows Sandbox is available
+                wsb_check = ["powershell", "-Command", "Get-WindowsOptionalFeature", "-FeatureName", "Containers-DisposableClientVM", "-Online"]
+                result = subprocess.run(wsb_check, capture_output=True, text=True)
+
+                if "State : Enabled" in result.stdout:
+                    logger.info("Windows Sandbox available for process isolation")
+                    return True
+
+            # Fallback to Docker if available
+            docker_check = ["docker", "--version"]
+            docker_result = subprocess.run(docker_check, capture_output=True, text=True)
+
+            if docker_result.returncode == 0:
+                # Verify Docker daemon is running
+                docker_info = ["docker", "info"]
+                info_result = subprocess.run(docker_info, capture_output=True, text=True)
+
+                if info_result.returncode == 0:
+                    logger.info("Docker available for process sandboxing")
+                    return True
+
+            logger.warning("No sandboxing technology available - process isolation disabled")
+            return False
+
+        except Exception as e:
+            logger.error(f"Process sandboxing setup failed: {e}")
+            return False
+
+    def setup_filesystem_isolation(self) -> bool:
+        """Setup filesystem isolation with restricted permissions."""
+        try:
+            import subprocess
+            import tempfile
+
+            if platform.system() != "Windows":
+                logger.warning("Filesystem isolation requires Windows - skipping")
+                return False
+
+            # Create isolated directory for test execution
+            isolation_dir = Path("C:\\Intellicrack\\tests\\validation_system\\isolated_env")
+            isolation_dir.mkdir(parents=True, exist_ok=True)
+
+            # Set restrictive permissions using icacls
+            permission_cmds = [
+                # Remove inherited permissions
+                ["icacls", str(isolation_dir), "/inheritance:d"],
+
+                # Grant only current user full access
+                ["icacls", str(isolation_dir), "/grant", f"{os.getenv('USERNAME')}:F"],
+
+                # Deny network service access
+                ["icacls", str(isolation_dir), "/deny", "Network Service:F"],
+
+                # Deny anonymous logon
+                ["icacls", str(isolation_dir), "/deny", "Anonymous Logon:F"],
+            ]
+
+            for cmd in permission_cmds:
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.warning(f"Permission command failed: {' '.join(cmd)}")
+
+            # Verify permissions were applied
+            verify_cmd = ["icacls", str(isolation_dir)]
+            verify_result = subprocess.run(verify_cmd, capture_output=True, text=True)
+
+            if os.getenv('USERNAME') in verify_result.stdout:
+                logger.info(f"Filesystem isolation configured: {isolation_dir}")
+                return True
+            else:
+                logger.error("Filesystem isolation verification failed")
+                return False
+
+        except Exception as e:
+            logger.error(f"Filesystem isolation setup failed: {e}")
+            return False
+
+    def activate_isolation(self) -> bool:
+        """Activate all isolation measures."""
+        try:
+            isolation_results = {
+                "vm_snapshot": self.setup_vm_snapshot(),
+                "network_isolation": self.setup_network_isolation(),
+                "process_sandboxing": self.setup_process_sandboxing(),
+                "filesystem_isolation": self.setup_filesystem_isolation()
+            }
+
+            # Log results
+            for isolation_type, success in isolation_results.items():
+                status = "✓" if success else "✗"
+                logger.info(f"{status} {isolation_type}: {'Active' if success else 'Failed'}")
+
+            # Consider isolation active if at least network and filesystem are working
+            self.isolation_active = (
+                isolation_results["network_isolation"] and
+                isolation_results["filesystem_isolation"]
+            )
+
+            if self.isolation_active:
+                logger.info("Environment isolation activated successfully")
+            else:
+                logger.warning("Environment isolation partially failed")
+
+            return self.isolation_active
+
+        except Exception as e:
+            logger.error(f"Isolation activation failed: {e}")
+            return False
+
+    def deactivate_isolation(self) -> bool:
+        """Deactivate all isolation measures and restore original state."""
+        try:
+            import subprocess
+
+            success = True
+
+            # Restore firewall rules
+            if self.original_firewall_rules and platform.system() == "Windows":
+                for rule_name in self.original_firewall_rules:
+                    remove_cmd = ["netsh", "advfirewall", "firewall", "delete", "rule", f"name={rule_name}"]
+                    result = subprocess.run(remove_cmd, capture_output=True, text=True)
+                    if result.returncode != 0:
+                        logger.warning(f"Failed to remove firewall rule: {rule_name}")
+                        success = False
+
+                # Restore backup if available
+                backup_path = Path("C:\\temp\\firewall_backup.wfw")
+                if backup_path.exists():
+                    restore_cmd = ["netsh", "advfirewall", "import", str(backup_path)]
+                    result = subprocess.run(restore_cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        backup_path.unlink()  # Clean up backup file
+
+            # Clean up sandbox processes
+            for process in self.sandbox_processes:
+                try:
+                    process.terminate()
+                    process.wait(timeout=5)
+                except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+                    pass
+
+            self.isolation_active = False
+            logger.info("Environment isolation deactivated")
+            return success
+
+        except Exception as e:
+            logger.error(f"Isolation deactivation failed: {e}")
+            return False
+
+    def get_isolation_status(self) -> Dict[str, Any]:
+        """Get current isolation status and metrics."""
+        return {
+            "isolation_active": self.isolation_active,
+            "vm_snapshot_configured": self.vm_snapshot_name is not None,
+            "network_isolation_enabled": self.network_isolation,
+            "firewall_rules_active": len(self.original_firewall_rules),
+            "sandbox_processes": len(self.sandbox_processes),
+            "isolation_directory": "C:\\Intellicrack\\tests\\validation_system\\isolated_env"
+        }
+
+
 class ValidationTestRunner:
     """
     Main test runner orchestrating the validation system.
@@ -500,6 +805,7 @@ class ValidationTestRunner:
             confidence_level=self.config["global_settings"]["statistical_confidence_level"],
             minimum_runs=self.config["global_settings"]["minimum_test_runs"]
         )
+        self.environment_isolation = EnvironmentIsolationManager(self.config)
 
         self.test_results = []
         self.forensic_evidence = []
@@ -646,7 +952,6 @@ class ValidationTestRunner:
                 artifacts.append(f"VM file detected: {vm_file}")
 
         try:
-            import winreg
             vm_keys = [
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VMware, Inc.\VMware Tools"),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Oracle\VirtualBox Guest Additions")
@@ -657,11 +962,11 @@ class ValidationTestRunner:
                     key = winreg.OpenKey(hkey, subkey, 0, winreg.KEY_READ)
                     winreg.CloseKey(key)
                     artifacts.append(f"VM registry key: {subkey}")
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Suppressed exception: {e}")
 
-        except ImportError:
-            pass
+        except ImportError as e:
+                logger.debug(f"Suppressed ImportError: {e}")
 
         return artifacts
 
@@ -719,6 +1024,14 @@ class ValidationTestRunner:
         result["challenge_id"] = challenge["challenge_id"]
         result["steps_completed"].append("challenge_generated")
 
+        # Activate environment isolation
+        isolation_success = self.environment_isolation.activate_isolation()
+        result["isolation_activated"] = isolation_success
+        if isolation_success:
+            result["steps_completed"].append("environment_isolation_activated")
+        else:
+            logger.warning("Environment isolation partially failed - proceeding with test")
+
         self.process_monitor.start_monitoring(test_name)
         result["steps_completed"].append("monitoring_started")
 
@@ -732,10 +1045,10 @@ class ValidationTestRunner:
             logger.info(f"Test execution for {test_name} would happen here")
             logger.info("This is where Intellicrack would be invoked to detect and bypass protections")
 
-            test_duration = random.uniform(1.0, 5.0)
+            test_duration = secrets.SystemRandom().uniform(1.0, 5.0)
             time.sleep(test_duration)
 
-            test_success = random.random() > 0.3
+            test_success = secrets.SystemRandom().random() > 0.3
 
             self.statistical_validator.add_test_result(
                 test_name,
@@ -765,6 +1078,11 @@ class ValidationTestRunner:
             suspicious_events = self.process_monitor.get_suspicious_events()
             if suspicious_events:
                 result["suspicious_events"] = suspicious_events
+
+            # Deactivate environment isolation
+            deactivation_success = self.environment_isolation.deactivate_isolation()
+            result["isolation_deactivated"] = deactivation_success
+            result["isolation_status"] = self.environment_isolation.get_isolation_status()
 
         result["end_time"] = datetime.now().isoformat()
 

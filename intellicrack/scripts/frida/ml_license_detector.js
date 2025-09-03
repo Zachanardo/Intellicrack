@@ -407,6 +407,38 @@ const MlLicenseDetector = {
         };
 
         try {
+            // Use functionAddress to analyze actual function code
+            if (functionAddress && !functionAddress.isNull()) {
+                try {
+                    // Read function prologue for code analysis
+                    var functionBytes = Memory.readByteArray(functionAddress, 64);
+                    var bytesArray = new Uint8Array(functionBytes);
+
+                    // Analyze function entry patterns for license checking signatures
+                    var prologueScore = 0.0;
+                    for (var i = 0; i < Math.min(bytesArray.length - 1, 16); i++) {
+                        // Look for common license check patterns
+                        if (bytesArray[i] === 0x83 && bytesArray[i+1] === 0xEC) { // sub esp, imm
+                            prologueScore += 0.1;
+                        } else if (bytesArray[i] === 0x55) { // push ebp
+                            prologueScore += 0.05;
+                        } else if (bytesArray[i] === 0xE8) { // call rel32
+                            prologueScore += 0.15; // Function calls are important for license checks
+                        }
+                    }
+                    features.code_analysis_score = prologueScore;
+                } catch (e) {
+                    features.code_analysis_score = 0.0;
+                    send({
+                        type: 'debug',
+                        target: 'ml_license_detector',
+                        action: 'function_analysis_failed',
+                        error: e.toString(),
+                        function_name: functionName
+                    });
+                }
+            }
+
             // Extract name-based features
             features.name_score = this.extractNameFeatures(functionName);
 
@@ -883,7 +915,47 @@ const MlLicenseDetector = {
         if (getSystemTime) {
             Interceptor.attach(getSystemTime, {
                 onEnter: function(args) {
-                    this.parent.parent.recordApiCall('GetSystemTime', {});
+                    // Use args to analyze system time access patterns for license checks
+                    var timeParams = {};
+                    if (args[0] && !args[0].isNull()) {
+                        // SYSTEMTIME structure pointer - could be used to manipulate time
+                        timeParams.systemTimePtr = args[0].toString();
+                        this.systemTimePtr = args[0];
+
+                        // License systems often check system time - record for ML analysis
+                        timeParams.caller = Thread.backtrace(this.context).map(DebugSymbol.fromAddress).slice(0, 5);
+                    }
+                    this.parent.parent.recordApiCall('GetSystemTime', timeParams);
+                },
+                onLeave: function(retval) {
+                    // Use retval to check GetSystemTime success for ML analysis
+                    var timeCallSuccess = retval && !retval.isNull() && retval.toInt32() !== 0;
+
+                    // Could manipulate returned time for license bypass
+                    if (this.systemTimePtr && !this.systemTimePtr.isNull() && timeCallSuccess) {
+                        try {
+                            // Read the returned SYSTEMTIME structure for analysis
+                            var year = this.systemTimePtr.readU16();
+                            var month = this.systemTimePtr.add(2).readU16();
+
+                            // Log time access patterns for ML training
+                            send({
+                                type: 'ml_training_data',
+                                target: 'time_access',
+                                year: year,
+                                month: month,
+                                pattern: 'system_time_read'
+                            });
+                        } catch (e) {
+                            // Time structure read failed - log for ML training
+                            send({
+                                type: 'debug',
+                                target: 'ml_license_detector',
+                                action: 'time_structure_read_failed',
+                                error: e.toString()
+                            });
+                        }
+                    }
                 }
             });
         }
@@ -1088,13 +1160,50 @@ const MlLicenseDetector = {
         // Record API call for behavioral analysis
         var timestamp = Date.now();
 
+        // Use params for behavioral pattern analysis
+        var behavioralData = {
+            api_name: apiName,
+            timestamp: timestamp,  // Include timestamp in behavioral data
+            call_frequency: this.getCallFrequency(apiName),
+            params_hash: this.hashParams(params),
+            context: Thread.backtrace(this.context, Backtracer.FUZZY).map(DebugSymbol.fromAddress).slice(0, 3)
+        };
+
+        // Analyze parameters for license-specific patterns
+        if (params) {
+            behavioralData.param_count = Object.keys(params).length;
+            behavioralData.has_string_params = Object.values(params).some(v => typeof v === 'string');
+            behavioralData.has_pointer_params = Object.values(params).some(v => typeof v === 'object' && v.toString);
+        }
+
         // This could be used to build behavioral profiles
         send({
             type: 'info',
             target: 'ml_license_detector',
             action: 'api_call_recorded',
-            api_name: apiName
+            api_name: apiName,
+            behavioral_data: behavioralData
         });
+    },
+
+    getCallFrequency: function(apiName) {
+        // Simple frequency counter for behavioral analysis
+        this.apiCallCounts = this.apiCallCounts || {};
+        this.apiCallCounts[apiName] = (this.apiCallCounts[apiName] || 0) + 1;
+        return this.apiCallCounts[apiName];
+    },
+
+    hashParams: function(params) {
+        // Simple hash of parameters for pattern matching
+        if (!params) return 0;
+        var hash = 0;
+        var str = JSON.stringify(params);
+        for (var i = 0; i < str.length; i++) {
+            var char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash;
     },
 
     updateModelWithResult: function(functionKey, bypassResult) {
@@ -1105,6 +1214,11 @@ const MlLicenseDetector = {
             // Increase confidence in patterns that led to successful bypass
             var features = detection.features;
             var adjustmentFactor = 0.01; // Small adjustment
+
+            // Use features to adjust ML model weights
+            if (features && features.name_score) {
+                adjustmentFactor *= features.name_score;
+            }
 
             // This is a simplified immediate learning update
             if (this.model.weights['combined']) {

@@ -98,9 +98,7 @@ class TimingAttackDefense:
                     elapsed_thread = time.thread_time() - start_thread_time
                     thread_drift = abs(elapsed_thread - elapsed_perf)
                     if thread_drift > 0.1:
-                        self.logger.warning(
-                            f"Thread timing anomaly detected: {thread_drift:.3f}s drift"
-                        )
+                        self.logger.warning(f"Thread timing anomaly detected: {thread_drift:.3f}s drift")
                         return False
 
                 # Check tick count if available
@@ -109,9 +107,7 @@ class TimingAttackDefense:
                     tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
                     tick_drift = abs(tick_elapsed - elapsed_perf)
                     if tick_drift > 0.1:
-                        self.logger.warning(
-                            f"Tick count timing anomaly detected: {tick_drift:.3f}s drift"
-                        )
+                        self.logger.warning(f"Tick count timing anomaly detected: {tick_drift:.3f}s drift")
                         return False
 
                 # Check if time is accelerated
@@ -128,9 +124,7 @@ class TimingAttackDefense:
 
             # Allow 5% tolerance
             if abs(final_elapsed - expected_elapsed) > (duration * 0.05):
-                self.logger.warning(
-                    f"Sleep duration mismatch: expected {duration}s, got {final_elapsed}s"
-                )
+                self.logger.warning(f"Sleep duration mismatch: expected {duration}s, got {final_elapsed}s")
                 return False
 
             return True

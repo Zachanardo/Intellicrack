@@ -222,9 +222,7 @@ class CertificateExtractor:
                 try:
                     # Read length (simplified - assumes short form)
                     if cert_pos + 4 < len(pkcs7_data):
-                        cert_len = (
-                            struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
-                        )
+                        cert_len = struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
 
                         if cert_pos + cert_len <= len(pkcs7_data):
                             cert_der = pkcs7_data[cert_pos : cert_pos + cert_len]
@@ -307,7 +305,7 @@ class CertificateExtractor:
                 "SHA1 is cryptographically broken and used here only for legacy certificate "
                 "fingerprint extraction. SHA256 fingerprint is also calculated for security purposes.",
                 category=DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
             # Create SHA1 hash for legacy compatibility with explicit security context
@@ -365,9 +363,7 @@ class CertificateExtractor:
 
             try:
                 # Extended key usage
-                eku = cert.extensions.get_extension_for_oid(
-                    x509.oid.ExtensionOID.EXTENDED_KEY_USAGE
-                ).value
+                eku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
                 for usage in eku:
                     usage_name = usage._name if hasattr(usage, "_name") else str(usage)
                     extended_key_usage.append(usage_name)
@@ -381,9 +377,7 @@ class CertificateExtractor:
 
             try:
                 # Subject Alternative Names
-                san = cert.extensions.get_extension_for_oid(
-                    x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-                ).value
+                san = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
                 for name in san:
                     subject_alt_names.append(str(name))
 
@@ -440,9 +434,7 @@ class CertificateExtractor:
 
         return ", ".join(parts) if parts else str(name)
 
-    def _analyze_signing_info(
-        self, cert_data: bytes, certificates: list[CertificateInfo]
-    ) -> dict[str, Any]:
+    def _analyze_signing_info(self, cert_data: bytes, certificates: list[CertificateInfo]) -> dict[str, Any]:
         """Analyze signing information and trust status."""
         info = {
             "chain_valid": False,
@@ -544,12 +536,7 @@ class CertificateExtractor:
 
                         try:
                             if cert_pos + 4 < len(cert_content):
-                                cert_len = (
-                                    struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[
-                                        0
-                                    ]
-                                    + 4
-                                )
+                                cert_len = struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[0] + 4
 
                                 if cert_pos + cert_len <= len(cert_content):
                                     cert_der = cert_content[cert_pos : cert_pos + cert_len]
@@ -567,7 +554,7 @@ class CertificateExtractor:
             base_filename = os.path.splitext(os.path.basename(file_path))[0]
 
             for i, cert in enumerate(certificates):
-                cert_filename = f"{base_filename}_cert_{i+1}.pem"
+                cert_filename = f"{base_filename}_cert_{i + 1}.pem"
                 cert_path = os.path.join(output_dir, cert_filename)
 
                 try:
@@ -577,11 +564,11 @@ class CertificateExtractor:
                     with open(cert_path, "wb") as f:
                         f.write(pem_bytes)
 
-                    exported_files[f"certificate_{i+1}"] = cert_path
+                    exported_files[f"certificate_{i + 1}"] = cert_path
                     logger.info(f"Exported certificate to: {cert_path}")
 
                 except Exception as e:
-                    logger.error(f"Failed to export certificate {i+1}: {e}")
+                    logger.error(f"Failed to export certificate {i + 1}: {e}")
 
         except Exception as e:
             logger.error(f"Certificate export failed: {e}")

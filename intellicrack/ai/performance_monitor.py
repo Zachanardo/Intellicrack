@@ -260,9 +260,7 @@ class PerformanceMonitor:
             self.profiles.append(profile)
 
             # Record individual metrics
-            self.record_metric(
-                f"operation.{operation_name}.execution_time", execution_time, "seconds"
-            )
+            self.record_metric(f"operation.{operation_name}.execution_time", execution_time, "seconds")
             self.record_metric(f"operation.{operation_name}.memory_usage", memory_usage, "bytes")
             self.record_metric(f"operation.{operation_name}.cpu_usage", cpu_usage, "percent")
 
@@ -376,11 +374,7 @@ class PerformanceMonitor:
 
             return {
                 "score": max(0, health_score),
-                "status": "healthy"
-                if health_score > 80
-                else "degraded"
-                if health_score > 50
-                else "critical",
+                "status": "healthy" if health_score > 80 else "degraded" if health_score > 50 else "critical",
                 "issues": issues,
                 "current_memory_mb": current_memory / 1024 / 1024,
                 "memory_growth_mb": memory_growth / 1024 / 1024,
@@ -409,21 +403,15 @@ class PerformanceMonitor:
 
         # CPU recommendations
         if summary["system_health"]["cpu_usage"] > 80:
-            recommendations.append(
-                "High CPU usage detected - consider optimizing algorithms or reducing workload"
-            )
+            recommendations.append("High CPU usage detected - consider optimizing algorithms or reducing workload")
 
         # Operation-specific recommendations
         for op_name, stats in summary.get("operation_summary", {}).items():
             if stats["avg_execution_time"] > 10.0:
-                recommendations.append(
-                    f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)"
-                )
+                recommendations.append(f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)")
 
             if stats["success_rate"] < 0.9:
-                recommendations.append(
-                    f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})"
-                )
+                recommendations.append(f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})")
 
         return recommendations
 
@@ -446,11 +434,7 @@ class PerformanceMonitor:
     def optimize_cache(self):
         """Optimize performance cache."""
         current_time = time.time()
-        expired_keys = [
-            key
-            for key, (timestamp, _) in self.performance_cache.items()
-            if current_time - timestamp > self.cache_ttl
-        ]
+        expired_keys = [key for key, (timestamp, _) in self.performance_cache.items() if current_time - timestamp > self.cache_ttl]
 
         for key in expired_keys:
             del self.performance_cache[key]
@@ -493,9 +477,7 @@ class PerformanceMonitor:
             # Log performance data before exit for debugging
             self._log_final_metrics()
             if exc_tb:
-                logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.stop_monitoring()
         return False  # Don't suppress exceptions
 

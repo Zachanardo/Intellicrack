@@ -324,9 +324,20 @@ except ImportError as e:
 
         def __getattr__(self, name):
             # Create nested mock objects for Qt enumerations
-            if name in ('ItemDataRole', 'Orientation', 'KeyboardModifier', 'MouseButton',
-                       'WindowState', 'WindowType', 'FocusPolicy', 'TextFormat',
-                       'SortOrder', 'CheckState', 'ToolButtonStyle', 'LayoutDirection'):
+            if name in (
+                "ItemDataRole",
+                "Orientation",
+                "KeyboardModifier",
+                "MouseButton",
+                "WindowState",
+                "WindowType",
+                "FocusPolicy",
+                "TextFormat",
+                "SortOrder",
+                "CheckState",
+                "ToolButtonStyle",
+                "LayoutDirection",
+            ):
                 return MockQtEnum()
             return MockWidget()
 
@@ -346,14 +357,14 @@ except ImportError as e:
 
         def __getattr__(self, name):
             # Return integer values for common Qt enum values
-            if name in ('DisplayRole', 'EditRole', 'UserRole', 'DecorationRole'):
+            if name in ("DisplayRole", "EditRole", "UserRole", "DecorationRole"):
                 return 0  # Qt.ItemDataRole.DisplayRole = 0
-            elif name in ('Horizontal', 'Vertical'):
-                return 1 if name == 'Horizontal' else 2
-            elif name in ('Ascending', 'Descending'):
-                return 0 if name == 'Ascending' else 1
-            elif name in ('Unchecked', 'PartiallyChecked', 'Checked'):
-                return {'Unchecked': 0, 'PartiallyChecked': 1, 'Checked': 2}[name]
+            elif name in ("Horizontal", "Vertical"):
+                return 1 if name == "Horizontal" else 2
+            elif name in ("Ascending", "Descending"):
+                return 0 if name == "Ascending" else 1
+            elif name in ("Unchecked", "PartiallyChecked", "Checked"):
+                return {"Unchecked": 0, "PartiallyChecked": 1, "Checked": 2}[name]
             else:
                 return 0  # Default enum value
 
@@ -587,12 +598,15 @@ except ImportError as e:
         QWizard = MockWidget
         QWizardPage = MockWidget
         Qt = MockQt()
+
         def pyqtSignal(*args, **kwargs):
             """Fallback pyqtSignal implementation when PyQt6 is not available."""
             return lambda *a, **kw: None
+
         def pyqtSlot(*args, **kwargs):
             """Fallback pyqtSlot decorator implementation when PyQt6 is not available."""
             return lambda *a, **kw: None
+
         def qRgba(*args):
             """Fallback RGBA color function when PyQt6 is not available."""
             return None
@@ -624,12 +638,15 @@ except ImportError as e:
         QWizard = None
         QWizardPage = None
         Qt = None
+
         def pyqtSignal(*args, **kwargs):
             """Fallback pyqtSignal implementation for minimal PyQt6 compatibility."""
             return lambda: None
+
         def pyqtSlot(*args, **kwargs):
             """Fallback pyqtSlot decorator for minimal PyQt6 compatibility."""
             return lambda: None
+
         qRgba = None
 
 

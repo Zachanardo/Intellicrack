@@ -74,7 +74,7 @@
 **Missing**: Crypto processor emulation, side-channel attacks, firmware extraction
 **Reality**: Real dongles use secure elements that require physical attacks
 
-### Cloud Licensing  
+### Cloud Licensing
 **Missing**: Server emulation, certificate generation, token refresh handling
 **Reality**: Continuous validation makes offline cracking impossible
 

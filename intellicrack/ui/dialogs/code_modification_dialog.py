@@ -533,14 +533,8 @@ class CodeModificationDialog(QDialog):
             return
 
         # Create request
-        requirements = [
-            req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()
-        ]
-        constraints = [
-            constraint.strip()
-            for constraint in self.constraints_edit.toPlainText().split("\n")
-            if constraint.strip()
-        ]
+        requirements = [req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()]
+        constraints = [constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n") if constraint.strip()]
 
         request = self.modifier.create_modification_request(
             description=description,
@@ -582,9 +576,7 @@ class CodeModificationDialog(QDialog):
         self.progress_bar.setVisible(False)
 
         self.status_label.setText("Analysis failed")
-        QMessageBox.critical(
-            self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}"
-        )
+        QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
 
     def populate_changes_tree(self):
         """Populate the changes tree with current changes."""
@@ -644,7 +636,7 @@ class CodeModificationDialog(QDialog):
 <p>{change.reasoning}</p>
 
 <h4>Impact Analysis:</h4>
-<p>{change.impact_analysis.get('impact', 'No impact analysis available')}</p>
+<p>{change.impact_analysis.get("impact", "No impact analysis available")}</p>
 """
         self.change_details.setHtml(details_text)
 
@@ -694,8 +686,7 @@ class CodeModificationDialog(QDialog):
         reply = QMessageBox.question(
             self,
             "Confirm Application",
-            f"Apply {len(change_ids)} selected changes?\n\n"
-            "This will modify the files. Backups will be created.",
+            f"Apply {len(change_ids)} selected changes?\n\nThis will modify the files. Backups will be created.",
             QMessageBox.Yes | QMessageBox.No,
         )
 
@@ -714,15 +705,14 @@ class CodeModificationDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Success",
-                    f"Successfully applied {applied} changes.\n\n"
-                    f"Backups created: {len(results['backups_created'])}",
+                    f"Successfully applied {applied} changes.\n\nBackups created: {len(results['backups_created'])}",
                 )
             else:
                 error_details = "\n".join(results["errors"])
                 QMessageBox.warning(
                     self,
                     "Partial Success",
-                    f"Applied {applied} changes, {failed} failed.\n\n" f"Errors:\n{error_details}",
+                    f"Applied {applied} changes, {failed} failed.\n\nErrors:\n{error_details}",
                 )
 
             # Refresh display
@@ -769,9 +759,7 @@ class CodeModificationDialog(QDialog):
                 item.setText(1, Path(record["file_path"]).name)
                 item.setText(
                     2,
-                    record["description"][:50] + "..."
-                    if len(record["description"]) > 50
-                    else record["description"],
+                    record["description"][:50] + "..." if len(record["description"]) > 50 else record["description"],
                 )
                 item.setText(3, record["type"])
                 item.setText(4, record["status"])

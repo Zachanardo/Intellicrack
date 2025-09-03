@@ -62,17 +62,18 @@ class DashboardTab(BaseTab):
         self.config_manager = get_ui_config_manager()
 
         # Subscribe to configuration changes
-        self.config_manager.register_callback('theme', self.apply_theme)
-        self.config_manager.register_callback('layout.dashboard', self.update_layout)
-        self.config_manager.register_callback('font', self.update_fonts)
+        self.config_manager.register_callback("theme", self.apply_theme)
+        self.config_manager.register_callback("layout.dashboard", self.update_layout)
+        self.config_manager.register_callback("font", self.update_fonts)
 
     def setup_content(self):
         """Setup the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
         layout = QVBoxLayout(self)
         layout.setSpacing(layout_config.panel_spacing)
-        layout.setContentsMargins(layout_config.margin_size, layout_config.margin_size,
-                                  layout_config.margin_size, layout_config.margin_size)
+        layout.setContentsMargins(
+            layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size
+        )
 
         # Top section - Quick Start (prominent)
         quick_start_panel = self.create_quick_start_panel()
@@ -82,16 +83,16 @@ class DashboardTab(BaseTab):
         self.bottom_panel = QTabWidget()
 
         # Configure tab widget appearance from config
-        if self.config_manager.get_setting('dashboard.show_tabs', True):
+        if self.config_manager.get_setting("dashboard.show_tabs", True):
             self.bottom_panel.addTab(self.create_recent_files_panel(), "Recent Files")
 
-            if self.config_manager.get_setting('dashboard.show_system_monitor', True):
+            if self.config_manager.get_setting("dashboard.show_system_monitor", True):
                 self.bottom_panel.addTab(self.create_system_monitor_panel(), "System Monitor")
 
-            if self.config_manager.get_setting('dashboard.show_gpu_status', True):
+            if self.config_manager.get_setting("dashboard.show_gpu_status", True):
                 self.bottom_panel.addTab(self.create_gpu_status_panel(), "GPU Status")
 
-            if self.config_manager.get_setting('dashboard.show_cpu_status', True):
+            if self.config_manager.get_setting("dashboard.show_cpu_status", True):
                 self.bottom_panel.addTab(self.create_cpu_status_panel(), "CPU Status")
 
         layout.addWidget(self.bottom_panel)
@@ -310,11 +311,7 @@ class DashboardTab(BaseTab):
                         self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
         except ImportError:
             # Fallback to regular file dialog if ProgramSelectorDialog not available
-            QMessageBox.information(
-                self,
-                "Feature Unavailable",
-                "Program selector dialog not available. Using file browser instead."
-            )
+            QMessageBox.information(self, "Feature Unavailable", "Program selector dialog not available. Using file browser instead.")
             self.open_file_action()
 
     def log_activity(self, message):
@@ -330,13 +327,11 @@ class DashboardTab(BaseTab):
         self.system_monitor.alert_triggered.connect(self.handle_system_alert)
 
         # Configure monitoring based on settings
-        refresh_interval = self.config_manager.get_setting(
-            'dashboard.monitor_refresh_interval', 5000
-        )
+        refresh_interval = self.config_manager.get_setting("dashboard.monitor_refresh_interval", 5000)
         self.system_monitor.set_refresh_interval(refresh_interval)
 
         # Only start monitoring if enabled
-        if self.config_manager.get_setting('dashboard.auto_start_monitoring', True):
+        if self.config_manager.get_setting("dashboard.auto_start_monitoring", True):
             self.system_monitor.start_monitoring()
 
         return self.system_monitor
@@ -355,13 +350,11 @@ class DashboardTab(BaseTab):
         self.gpu_status = GPUStatusWidget()
 
         # Configure GPU monitoring based on settings
-        refresh_interval = self.config_manager.get_setting(
-            'dashboard.gpu_refresh_interval', 3000
-        )
+        refresh_interval = self.config_manager.get_setting("dashboard.gpu_refresh_interval", 3000)
         self.gpu_status.set_refresh_interval(refresh_interval)
 
         # Only start monitoring if enabled
-        if self.config_manager.get_setting('dashboard.auto_start_gpu_monitoring', True):
+        if self.config_manager.get_setting("dashboard.auto_start_gpu_monitoring", True):
             self.gpu_status.start_monitoring()
 
         return self.gpu_status
@@ -371,17 +364,14 @@ class DashboardTab(BaseTab):
         self.cpu_status = CPUStatusWidget()
 
         # Configure CPU monitoring based on settings
-        refresh_interval = self.config_manager.get_setting(
-            'dashboard.cpu_refresh_interval', 2000
-        )
+        refresh_interval = self.config_manager.get_setting("dashboard.cpu_refresh_interval", 2000)
         self.cpu_status.set_refresh_interval(refresh_interval)
 
         # Only start monitoring if enabled
-        if self.config_manager.get_setting('dashboard.auto_start_cpu_monitoring', True):
+        if self.config_manager.get_setting("dashboard.auto_start_cpu_monitoring", True):
             self.cpu_status.start_monitoring()
 
         return self.cpu_status
-
 
     def open_project(self):
         """Simple project opening for Quick Start."""
@@ -396,7 +386,6 @@ class DashboardTab(BaseTab):
             self.add_to_recent_files(project_file)
             self.project_opened.emit(project_file)
             self.log_activity(f"Opened project: {os.path.basename(project_file)}")
-
 
     def populate_recent_files(self):
         """Populate the recent files list."""
@@ -418,11 +407,11 @@ class DashboardTab(BaseTab):
                 if self.config_manager.get_setting("dashboard.show_file_icons", True):
                     file_ext = os.path.splitext(file_path)[1].lower()
                     icon_prefix = "🗃️"  # Default file icon
-                    if file_ext in ['.exe', '.dll']:
+                    if file_ext in [".exe", ".dll"]:
                         icon_prefix = "⚙️"
-                    elif file_ext in ['.so', '.dylib']:
+                    elif file_ext in [".so", ".dylib"]:
                         icon_prefix = "📦"
-                    elif file_ext == '.icp':
+                    elif file_ext == ".icp":
                         icon_prefix = "📁"
                     item.setText(f"{icon_prefix} {os.path.basename(file_path)}")
 
@@ -488,9 +477,9 @@ class DashboardTab(BaseTab):
             self.log_activity("CPU monitoring stopped")
 
         # Unregister callbacks
-        self.config_manager.unregister_callback('theme', self.apply_theme)
-        self.config_manager.unregister_callback('layout.dashboard', self.update_layout)
-        self.config_manager.unregister_callback('font', self.update_fonts)
+        self.config_manager.unregister_callback("theme", self.apply_theme)
+        self.config_manager.unregister_callback("layout.dashboard", self.update_layout)
+        self.config_manager.unregister_callback("font", self.update_fonts)
 
         # Call parent cleanup
         super().cleanup()
@@ -502,6 +491,7 @@ class DashboardTab(BaseTab):
 
         # Calculate hover and pressed colors
         from PyQt6.QtGui import QColor
+
         base = QColor(base_color)
         hover = base.lighter(120)
         pressed = base.darker(120)
@@ -544,7 +534,7 @@ class DashboardTab(BaseTab):
         """)
 
         # Update bottom panel tabs
-        if hasattr(self, 'bottom_panel'):
+        if hasattr(self, "bottom_panel"):
             self.bottom_panel.setStyleSheet(f"""
                 QTabWidget::pane {{
                     background-color: {theme.panel_color};
@@ -577,8 +567,7 @@ class DashboardTab(BaseTab):
         if self.layout():
             self.layout().setSpacing(layout_config.panel_spacing)
             self.layout().setContentsMargins(
-                layout_config.margin_size, layout_config.margin_size,
-                layout_config.margin_size, layout_config.margin_size
+                layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size
             )
 
     def update_fonts(self):
@@ -590,10 +579,10 @@ class DashboardTab(BaseTab):
 
         # Update widget fonts
         from PyQt6.QtGui import QFont
+
         font = QFont(font_config.family, font_config.base_size)
         self.setFont(font)
 
         # Update all child widgets
         for widget in self.findChildren(QWidget):
             widget.setFont(font)
-

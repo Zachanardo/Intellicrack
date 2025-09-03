@@ -540,35 +540,19 @@ class HASPEmulator:
 
             # Feature directory entry (16 bytes each)
             self.dongle_memory[entry_offset : entry_offset + 4] = struct.pack("<I", feature["id"])
-            self.dongle_memory[entry_offset + 4 : entry_offset + 6] = struct.pack(
-                "<H", feature["type"]
-            )
-            self.dongle_memory[entry_offset + 6 : entry_offset + 8] = struct.pack(
-                "<H", feature["options"]
-            )
-            self.dongle_memory[entry_offset + 8 : entry_offset + 12] = struct.pack(
-                "<I", data_offset
-            )
-            self.dongle_memory[entry_offset + 12 : entry_offset + 16] = struct.pack(
-                "<I", feature["size"]
-            )
+            self.dongle_memory[entry_offset + 4 : entry_offset + 6] = struct.pack("<H", feature["type"])
+            self.dongle_memory[entry_offset + 6 : entry_offset + 8] = struct.pack("<H", feature["options"])
+            self.dongle_memory[entry_offset + 8 : entry_offset + 12] = struct.pack("<I", data_offset)
+            self.dongle_memory[entry_offset + 12 : entry_offset + 16] = struct.pack("<I", feature["size"])
 
             # Initialize feature data area
             feature_data_offset = data_offset
 
             # Feature header in data area
-            self.dongle_memory[feature_data_offset : feature_data_offset + 4] = struct.pack(
-                "<I", feature["id"]
-            )
-            self.dongle_memory[feature_data_offset + 4 : feature_data_offset + 8] = struct.pack(
-                "<I", 0xFFFFFFFF
-            )  # Expiry (never)
-            self.dongle_memory[feature_data_offset + 8 : feature_data_offset + 12] = struct.pack(
-                "<I", 0
-            )  # Execution count
-            self.dongle_memory[feature_data_offset + 12 : feature_data_offset + 16] = struct.pack(
-                "<I", 0xFFFFFFFF
-            )  # Max executions
+            self.dongle_memory[feature_data_offset : feature_data_offset + 4] = struct.pack("<I", feature["id"])
+            self.dongle_memory[feature_data_offset + 4 : feature_data_offset + 8] = struct.pack("<I", 0xFFFFFFFF)  # Expiry (never)
+            self.dongle_memory[feature_data_offset + 8 : feature_data_offset + 12] = struct.pack("<I", 0)  # Execution count
+            self.dongle_memory[feature_data_offset + 12 : feature_data_offset + 16] = struct.pack("<I", 0xFFFFFFFF)  # Max executions
 
             # Create feature-specific memory area
             self.feature_memory[feature["id"]] = {
@@ -640,12 +624,8 @@ class HASPEmulator:
 
             # Update execution count
             exec_count_offset = feature_offset + 8
-            current_count = struct.unpack(
-                "<I", self.dongle_memory[exec_count_offset : exec_count_offset + 4]
-            )[0]
-            self.dongle_memory[exec_count_offset : exec_count_offset + 4] = struct.pack(
-                "<I", current_count + 1
-            )
+            current_count = struct.unpack("<I", self.dongle_memory[exec_count_offset : exec_count_offset + 4])[0]
+            self.dongle_memory[exec_count_offset : exec_count_offset + 4] = struct.pack("<I", current_count + 1)
 
             return handle  # Return session handle
 
@@ -840,9 +820,7 @@ class HASPEmulator:
             # Perform write
             self.dongle_memory[actual_offset : actual_offset + max_length] = data[:max_length]
 
-            self.logger.info(
-                f"HASP write: offset {offset}, length {len(data)} -> {max_length} bytes written"
-            )
+            self.logger.info(f"HASP write: offset {offset}, length {len(data)} -> {max_length} bytes written")
 
             return self.HASP_STATUS_OK
 
@@ -853,9 +831,7 @@ class HASPEmulator:
     def hasp_get_info(self, handle: int, query_type: int) -> tuple[int, bytes]:
         """Get HASP information."""
         try:
-            if (
-                handle not in self.active_sessions and handle != 0
-            ):  # Allow handle 0 for general queries
+            if handle not in self.active_sessions and handle != 0:  # Allow handle 0 for general queries
                 return self.HASP_INVALID_HANDLE, b""
 
             # Query types
@@ -894,9 +870,7 @@ class MicrosoftKMSEmulator:
             "Office 2019 Professional": "NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP",
         }
 
-    def activate_product(
-        self, product_key: str, product_name: str, client_info: dict[str, Any]
-    ) -> dict[str, Any]:
+    def activate_product(self, product_key: str, product_name: str, client_info: dict[str, Any]) -> dict[str, Any]:
         """Activate Microsoft product."""
         try:
             self.logger.info(f"KMS activation: {product_name}")
@@ -940,9 +914,7 @@ class AdobeEmulator:
             "Acrobat Pro": {"id": "ACRO", "version": "2024"},
         }
 
-    def validate_adobe_license(
-        self, product_id: str, user_id: str, machine_id: str
-    ) -> dict[str, Any]:
+    def validate_adobe_license(self, product_id: str, user_id: str, machine_id: str) -> dict[str, Any]:
         """Validate Adobe Creative Cloud license."""
         try:
             self.logger.info(f"Adobe validation: {product_id} for user {user_id}")
@@ -1106,9 +1078,7 @@ class DatabaseManager:
             self.logger.error(f"License validation error: {e}")
             return None
 
-    def log_operation(
-        self, license_key: str, operation: str, client_ip: str, success: bool, details: str = ""
-    ):
+    def log_operation(self, license_key: str, operation: str, client_ip: str, success: bool, details: str = ""):
         """Log license operation."""
         try:
             db = self.SessionLocal()
@@ -1162,12 +1132,7 @@ class HardwareFingerprintGenerator:
 
         try:
             return subprocess.run(  # nosec S603 - Legitimate subprocess usage with validated full path  # noqa: S603
-                safe_cmd,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                shell=False
+                safe_cmd, check=False, capture_output=True, text=True, timeout=timeout, shell=False
             )
         except (subprocess.TimeoutExpired, OSError) as e:
             self.logger.debug(f"Command execution failed: {e}")
@@ -1176,9 +1141,7 @@ class HardwareFingerprintGenerator:
     # Platform-specific CPU ID handlers
     def _get_cpu_id_windows(self) -> str:
         """Get CPU ID on Windows."""
-        result = self._safe_subprocess_run(
-            ["wmic", "cpu", "get", "ProcessorId", "/format:value"]
-        )
+        result = self._safe_subprocess_run(["wmic", "cpu", "get", "ProcessorId", "/format:value"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
                 if line.startswith("ProcessorId="):
@@ -1201,39 +1164,28 @@ class HardwareFingerprintGenerator:
                         model = line.split(":")[1].strip()
                         return hashlib.sha256(model.encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.processor()}{platform.machine()}{platform.node()}".encode()).hexdigest()[:16]
 
     def _get_cpu_id_darwin(self) -> str:
         """Get CPU ID on macOS."""
-        result = self._safe_subprocess_run(
-            ["sysctl", "-n", "machdep.cpu.brand_string"]
-        )
+        result = self._safe_subprocess_run(["sysctl", "-n", "machdep.cpu.brand_string"])
         if result and result.stdout:
             return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
 
-        return hashlib.sha256(
-            f"{platform.processor()}{platform.machine()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.processor()}{platform.machine()}".encode()).hexdigest()[:16]
 
     def _get_cpu_id_default(self) -> str:
         """Get CPU ID for other systems."""
 
-        return hashlib.sha256(
-            f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.processor()}{platform.machine()}{platform.node()}".encode()).hexdigest()[:16]
 
     # Platform-specific motherboard ID handlers
     def _get_motherboard_id_windows(self) -> str:
         """Get motherboard ID on Windows."""
         # Try to get serial number first
-        result = self._safe_subprocess_run(
-            ["wmic", "baseboard", "get", "SerialNumber", "/format:value"]
-        )
+        result = self._safe_subprocess_run(["wmic", "baseboard", "get", "SerialNumber", "/format:value"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
                 if line.startswith("SerialNumber="):
@@ -1242,15 +1194,11 @@ class HardwareFingerprintGenerator:
                         return board_id
 
         # Try alternative method
-        result = self._safe_subprocess_run(
-            ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"]
-        )
+        result = self._safe_subprocess_run(["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"])
         if result and result.stdout:
             return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
 
-        return hashlib.sha256(
-            f"{platform.node()}{platform.platform()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_linux(self) -> str:
         """Get motherboard ID on Linux."""
@@ -1259,8 +1207,7 @@ class HardwareFingerprintGenerator:
             with open("/sys/class/dmi/id/board_serial") as f:
                 return f.read().strip()
         except Exception:
-
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
         # Fallback to board name + vendor
         board_info = ""
@@ -1272,18 +1219,13 @@ class HardwareFingerprintGenerator:
             if board_info:
                 return hashlib.sha256(board_info.encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.node()}{platform.platform()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_darwin(self) -> str:
         """Get motherboard ID on macOS."""
-        result = self._safe_subprocess_run(
-            ["system_profiler", "SPHardwareDataType"]
-        )
+        result = self._safe_subprocess_run(["system_profiler", "SPHardwareDataType"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
                 if "Serial Number" in line:
@@ -1293,22 +1235,26 @@ class HardwareFingerprintGenerator:
 
             return hashlib.sha256(result.stdout.encode()).hexdigest()[:16]
 
-        return hashlib.sha256(
-            f"{platform.node()}{platform.version()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.version()}".encode()).hexdigest()[:16]
 
     def _get_motherboard_id_default(self) -> str:
         """Get motherboard ID for other systems."""
 
-        return hashlib.sha256(
-            f"{platform.node()}{platform.platform()}".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     # Platform-specific disk serial handlers
     def _get_disk_serial_windows(self) -> str:
         """Get disk serial on Windows."""
         result = self._safe_subprocess_run(
-            ["wmic", "logicaldisk", "where", "drivetype=3", "get", "VolumeSerialNumber", "/format:value"]
+            [
+                "wmic",
+                "logicaldisk",
+                "where",
+                "drivetype=3",
+                "get",
+                "VolumeSerialNumber",
+                "/format:value",
+            ]
         )
         if result and result.stdout:
             for line in result.stdout.split("\n"):
@@ -1320,32 +1266,23 @@ class HardwareFingerprintGenerator:
         # Fallback to filesystem stats
         try:
             stat_info = os.statvfs("C:\\")
-            return hashlib.sha256(
-                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
-            ).hexdigest()[:16]
+            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.node()}{platform.system()}disk".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_linux(self) -> str:
         """Get disk serial on Linux."""
         # Try to get disk serial
-        result = self._safe_subprocess_run(
-            ["lsblk", "-no", "SERIAL", "/dev/sda"]
-        )
+        result = self._safe_subprocess_run(["lsblk", "-no", "SERIAL", "/dev/sda"])
         if result and result.stdout:
             serial = result.stdout.strip()
             if serial:
                 return serial
 
         # Fallback to disk ID
-        result = self._safe_subprocess_run(
-            ["ls", "-l", "/dev/disk/by-id/"]
-        )
+        result = self._safe_subprocess_run(["ls", "-l", "/dev/disk/by-id/"])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
                 if "ata-" in line and "part" not in line:
@@ -1355,16 +1292,11 @@ class HardwareFingerprintGenerator:
         # Fallback to filesystem stats
         try:
             stat_info = os.statvfs("/")
-            return hashlib.sha256(
-                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
-            ).hexdigest()[:16]
+            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.node()}{platform.system()}disk".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_darwin(self) -> str:
         """Get disk serial on macOS."""
@@ -1381,7 +1313,7 @@ class HardwareFingerprintGenerator:
                     check=False,
                     capture_output=True,
                     text=True,
-                    shell=False
+                    shell=False,
                 )
                 for line in result.stdout.split("\n"):
                     if "Volume UUID" in line or "Disk / Partition UUID" in line:
@@ -1389,38 +1321,27 @@ class HardwareFingerprintGenerator:
                         if serial:
                             return serial
         except Exception:
-
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
         # Fallback to filesystem stats
         try:
             stat_info = os.statvfs("/")
-            return hashlib.sha256(
-                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
-            ).hexdigest()[:16]
+            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.node()}{platform.system()}disk".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_default(self) -> str:
         """Get disk serial for other systems."""
 
         try:
             stat_info = os.statvfs("/")
-            return hashlib.sha256(
-                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
-            ).hexdigest()[:16]
+            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
-
-        return hashlib.sha256(
-            f"{platform.node()}{platform.system()}disk".encode()
-        ).hexdigest()[:16]
+        return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     # MAC address handler
     def _get_mac_address(self) -> str:
@@ -1431,13 +1352,12 @@ class HardwareFingerprintGenerator:
             # Check if it's a real MAC (not random)
             if not ((mac_num >> 40) % 2):
                 # Real MAC address
-                return ":".join(
-                    [f"{(mac_num >> ele) & 0xff:02X}" for ele in range(0, 8 * 6, 8)][::-1]
-                )
+                return ":".join([f"{(mac_num >> ele) & 0xFF:02X}" for ele in range(0, 8 * 6, 8)][::-1])
 
             # Try to get real one using netifaces
             try:
                 import netifaces
+
                 interfaces = netifaces.interfaces()
                 for iface in interfaces:
                     if iface == "lo" or iface.startswith("vir"):
@@ -1448,10 +1368,9 @@ class HardwareFingerprintGenerator:
                         if mac and mac != "00:00:00:00:00:00":
                             return mac.upper()
             except ImportError:
-
-                self.logger.debug('Exception caught in fallback path', exc_info=False)
+                self.logger.debug("Exception caught in fallback path", exc_info=False)
         except Exception:
-                        self.logger.debug('Exception caught in fallback path', exc_info=False)
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
         # Generate secure MAC address
         mac_bytes = [secrets.randbelow(256) for _ in range(6)]
@@ -1464,15 +1383,14 @@ class HardwareFingerprintGenerator:
         # Try psutil first
         try:
             from intellicrack.handlers.psutil_handler import psutil
+
             return int(psutil.virtual_memory().total / (1024**3))
         except Exception:
-            self.logger.debug('Exception caught in fallback path', exc_info=False)
+            self.logger.debug("Exception caught in fallback path", exc_info=False)
 
         # Platform-specific fallbacks
         if platform.system() == "Windows":
-            result = self._safe_subprocess_run(
-                ["wmic", "computersystem", "get", "TotalPhysicalMemory", "/format:value"]
-            )
+            result = self._safe_subprocess_run(["wmic", "computersystem", "get", "TotalPhysicalMemory", "/format:value"])
             if result and result.stdout:
                 for line in result.stdout.split("\n"):
                     if line.startswith("TotalPhysicalMemory="):
@@ -1493,9 +1411,7 @@ class HardwareFingerprintGenerator:
                 pass
 
         elif platform.system() == "Darwin":
-            result = self._safe_subprocess_run(
-                ["sysctl", "-n", "hw.memsize"]
-            )
+            result = self._safe_subprocess_run(["sysctl", "-n", "hw.memsize"])
             if result and result.stdout:
                 try:
                     mem_bytes = int(result.stdout.strip())
@@ -1714,9 +1630,7 @@ class LicenseServerEmulator:
                 },
             }
 
-    async def _handle_license_validation(
-        self, request: LicenseRequest, client_request: Request
-    ) -> LicenseResponse:
+    async def _handle_license_validation(self, request: LicenseRequest, client_request: Request) -> LicenseResponse:
         """Handle license validation request."""
         try:
             client_ip = client_request.client.host
@@ -1731,9 +1645,7 @@ class LicenseServerEmulator:
             )
 
             # Check database first
-            license_entry = self.db_manager.validate_license(
-                request.license_key, request.product_name
-            )
+            license_entry = self.db_manager.validate_license(request.license_key, request.product_name)
 
             if license_entry:
                 # Calculate remaining days
@@ -1772,9 +1684,7 @@ class LicenseServerEmulator:
             self.logger.error(f"License validation error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
-    async def _handle_license_activation(
-        self, request: ActivationRequest, client_request: Request
-    ) -> ActivationResponse:
+    async def _handle_license_activation(self, request: ActivationRequest, client_request: Request) -> ActivationResponse:
         """Handle license activation request."""
         try:
             client_ip = client_request.client.host
@@ -1828,9 +1738,7 @@ class LicenseServerEmulator:
                     "status": license_entry.status,
                     "product_name": license_entry.product_name,
                     "version": license_entry.version,
-                    "expiry_date": license_entry.expiry_date.isoformat()
-                    if license_entry.expiry_date
-                    else None,
+                    "expiry_date": license_entry.expiry_date.isoformat() if license_entry.expiry_date else None,
                     "max_users": license_entry.max_users,
                     "current_users": license_entry.current_users,
                 }
@@ -1849,9 +1757,7 @@ class LicenseServerEmulator:
             self.logger.error(f"License status error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
-    async def _handle_flexlm_request(
-        self, request: dict[str, Any], client_request: Request
-    ) -> dict[str, Any]:
+    async def _handle_flexlm_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
         """Handle FlexLM license request."""
         try:
             feature = request.get("feature", "unknown")
@@ -1898,9 +1804,7 @@ class LicenseServerEmulator:
             self.logger.error(f"HASP request error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
-    async def _handle_kms_request(
-        self, request: dict[str, Any], client_request: Request
-    ) -> dict[str, Any]:
+    async def _handle_kms_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
         """Handle Microsoft KMS activation request."""
         try:
             product_key = request.get("product_key", "")
@@ -1917,15 +1821,11 @@ class LicenseServerEmulator:
             self.logger.error(f"KMS request error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
-    async def _handle_adobe_request(
-        self, request: dict[str, Any], client_request: Request
-    ) -> dict[str, Any]:
+    async def _handle_adobe_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
         """Handle Adobe license validation request."""
         try:
             product_id = request.get("product_id", "PHSP")
-            user_id = request.get(
-                "user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local")
-            )
+            user_id = request.get("user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local"))
             machine_id = request.get("machine_id", "machine-123")
 
             response = self.adobe.validate_adobe_license(product_id, user_id, machine_id)

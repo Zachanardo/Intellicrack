@@ -112,9 +112,11 @@ except ImportError as e:
     QTimer = None
     QTest = None
     QTextCursor = None
+
     def pyqtSignal(*args, **kwargs):
         """Fallback pyqtSignal implementation when PyQt6 is not available."""
         return lambda: None
+
     QFont = None
     QIcon = None
     QPixmap = None
@@ -163,6 +165,7 @@ except ImportError as e:
 
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
         """Create slider fallback."""
+
         class MockSlider:
             def __init__(self):
                 self._value = value

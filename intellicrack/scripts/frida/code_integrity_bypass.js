@@ -377,6 +377,19 @@ const CodeIntegrityBypass = {
                 if (hashFunc) {
                     Interceptor.attach(hashFunc, {
                         onEnter: function(args) {
+                            // Manipulate hash input buffer to control output
+                            if (args[0]) {
+                                this.inputBuffer = args[0];
+                                // Store original data to potentially bypass integrity checks
+                                this.originalData = Memory.readByteArray(args[0], Math.min(args[1] || 1024, 1024));
+                            }
+                            if (args[1]) {
+                                this.bufferSize = args[1].toInt32();
+                                // Force zero-length to bypass some hash checks
+                                if (this.bufferSize > 0) {
+                                    args[1] = ptr(0);
+                                }
+                            }
                             send({
                                 type: 'info',
                                 target: 'code_integrity_bypass',
@@ -389,6 +402,13 @@ const CodeIntegrityBypass = {
                         },
 
                         onLeave: function(retval) {
+                            // Force success return value for hash validation
+                            if (retval && !retval.isNull()) {
+                                // Common success values: 0, 1, S_OK (0x00000000)
+                                if (retval.toInt32() !== 0 && retval.toInt32() !== 1) {
+                                    retval.replace(ptr(0)); // Force success
+                                }
+                            }
                             if (functionName.includes('Final') && this.hashType) {
                                 // This is a final hash function - spoof the result
                                 this.spoofFinalHash();
@@ -448,7 +468,15 @@ const CodeIntegrityBypass = {
                     });
                 }
             } catch(e) {
-                // Module doesn't have this function - continue
+                // Module doesn't have this function - log for debugging
+                send({
+                    type: 'debug',
+                    target: 'code_integrity_bypass',
+                    action: 'hash_hook_failed',
+                    error: e.toString(),
+                    module: module.name,
+                    function: functionName
+                });
             }
         }
     },
@@ -472,6 +500,13 @@ const CodeIntegrityBypass = {
                     if (func) {
                         Interceptor.attach(func, {
                             onLeave: function(retval) {
+                                // Manipulate compute function return value
+                                if (retval && !retval.isNull()) {
+                                    // Ensure compute operations return success
+                                    if (retval.toInt32() !== 0 && retval.toInt32() !== hashSize) {
+                                        retval.replace(ptr(hashSize)); // Return expected hash size
+                                    }
+                                }
                                 // For compute functions, the result is often returned or in an output parameter
                                 this.spoofComputeResult();
                             },
@@ -521,7 +556,16 @@ const CodeIntegrityBypass = {
                         this.hooksInstalled[funcName + '_' + module.name] = true;
                     }
                 } catch(e) {
-                    // Continue with next module
+                    // Module hook failed - log error details
+                    send({
+                        type: 'debug',
+                        target: 'code_integrity_bypass',
+                        action: 'compute_module_hook_failed',
+                        error: e.toString(),
+                        function: funcName,
+                        module: module.name,
+                        stack: e.stack || 'No stack available'
+                    });
                 }
             }
         });
@@ -594,7 +638,15 @@ const CodeIntegrityBypass = {
                             });
                         }
                     } catch(e) {
-                        // String read failed - not a string comparison
+                        // String read failed - log failure for debugging
+                        send({
+                            type: 'debug',
+                            target: 'code_integrity_bypass',
+                            action: 'hash_string_read_failed',
+                            error: e.toString(),
+                            ptr1: args[0].toString(),
+                            ptr2: args[1].toString()
+                        });
                     }
                 },
 
@@ -671,6 +723,24 @@ const CodeIntegrityBypass = {
         if (cryptVerifySignature) {
             Interceptor.attach(cryptVerifySignature, {
                 onEnter: function(args) {
+                    // Manipulate CryptVerifySignature parameters
+                    if (args[0]) {
+                        // hProv - crypto service provider handle
+                        this.hProv = args[0];
+                    }
+                    if (args[1]) {
+                        // dwKeySpec - key specification
+                        this.dwKeySpec = args[1].toInt32();
+                        // Force to use AT_SIGNATURE key for bypass
+                        if (this.dwKeySpec !== 2) {
+                            args[1] = ptr(2); // AT_SIGNATURE
+                        }
+                    }
+                    if (args[2]) {
+                        // pbData - data buffer to verify
+                        this.pbData = args[2];
+                        // Could manipulate data here if needed
+                    }
                     send({
                         type: 'info',
                         target: 'code_integrity_bypass',
@@ -957,6 +1027,25 @@ const CodeIntegrityBypass = {
         if (cryptImportKey) {
             Interceptor.attach(cryptImportKey, {
                 onEnter: function(args) {
+                    // Manipulate key import parameters for bypass
+                    if (args[0]) {
+                        // hProv - crypto service provider
+                        this.hProv = args[0];
+                    }
+                    if (args[1]) {
+                        // pbData - key blob data
+                        this.pbData = args[1];
+                        // Store original key data
+                        this.originalKeySize = args[2] ? args[2].toInt32() : 0;
+                    }
+                    if (args[2]) {
+                        // dwDataLen - key blob length
+                        this.dwDataLen = args[2].toInt32();
+                    }
+                    if (args[3]) {
+                        // hPubKey - public key for verification
+                        this.hPubKey = args[3];
+                    }
                     send({
                         type: 'info',
                         target: 'code_integrity_bypass',
@@ -1142,10 +1231,24 @@ const CodeIntegrityBypass = {
             if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
                     onEnter: function(args) {
+                        // Manipulate TPM function parameters to bypass checks
+                        if (args[0]) {
+                            // First parameter - often context or handle
+                            this.contextOrHandle = args[0];
+                        }
+                        if (args[1]) {
+                            // Second parameter - command buffer or size
+                            this.commandBuffer = args[1];
+                            // Can manipulate TPM commands here
+                        }
+                        if (args[2]) {
+                            // Third parameter - buffer size or flags
+                            this.bufferSize = args[2];
+                        }
                         send({
                             type: 'info',
                             target: 'code_integrity_bypass',
-                            action: 'tpm_function_called',
+                            action: 'tmp_function_called',
                             function_name: funcName
                         });
                         this.bypassTPM = true;
@@ -1322,6 +1425,18 @@ const CodeIntegrityBypass = {
         if (certFreeChain) {
             Interceptor.attach(certFreeChain, {
                 onEnter: function(args) {
+                    // Manipulate certificate chain cleanup
+                    if (args[0]) {
+                        // pChainContext - certificate chain to free
+                        this.pChainContext = args[0];
+                        // Could manipulate chain data before cleanup
+                        send({
+                            type: 'debug',
+                            target: 'code_integrity_bypass',
+                            action: 'cert_chain_cleanup_intercepted',
+                            chain_context: args[0].toString()
+                        });
+                    }
                     send({
                         type: 'info',
                         target: 'code_integrity_bypass',

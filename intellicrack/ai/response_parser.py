@@ -22,9 +22,7 @@ This module provides shared functions for parsing AI responses across different 
 """
 
 
-def parse_ai_response_sections(
-    response: str, section_keywords: dict[str, list[str]]
-) -> dict[str, list[str]]:
+def parse_ai_response_sections(response: str, section_keywords: dict[str, list[str]]) -> dict[str, list[str]]:
     """Parse AI response into categorized sections.
 
     Args:

@@ -511,6 +511,7 @@ const BypassSuccessTracker = {
             });
 
         } catch(e) {
+            send('[Tracker] API not found: ' + e.message);
             // API not found
         }
     },
@@ -662,6 +663,10 @@ const BypassSuccessTracker = {
 
     evaluateBypassSuccess: function(category, method, args, returnValue, duration) {
         // Heuristic evaluation of bypass success based on category and method
+        // Track performance for optimization
+        if (duration && duration > 1000) {
+            send('[Tracker] Slow bypass: ' + category + '.' + method + ' took ' + duration + 'ms');
+        }
 
         try {
             var retVal = returnValue.toInt32();
@@ -701,6 +706,7 @@ const BypassSuccessTracker = {
                 return retVal !== 0; // Generic success evaluation
             }
         } catch(e) {
+            send('[Tracker] Evaluation error: ' + e.message);
             return false; // Default to failure on evaluation error
         }
     },
@@ -1680,7 +1686,12 @@ const BypassSuccessTracker = {
 
     getTopPerformingCategories: function(limit) {
         return Array.from(this.statistics.byCategory.entries())
-            .filter(([category, stats]) => stats.attempts >= this.config.thresholds.minimumAttempts)
+            .filter(([category, stats]) => {
+                // Use category for tracking
+                this.trackedCategories = this.trackedCategories || new Set();
+                this.trackedCategories.add(category);
+                return stats.attempts >= this.config.thresholds.minimumAttempts;
+            })
             .sort(([,a], [,b]) => b.successRate - a.successRate)
             .slice(0, limit)
             .map(([category, stats]) => ({
@@ -1693,7 +1704,12 @@ const BypassSuccessTracker = {
 
     getBottomPerformingCategories: function(limit) {
         return Array.from(this.statistics.byCategory.entries())
-            .filter(([category, stats]) => stats.attempts >= this.config.thresholds.minimumAttempts)
+            .filter(([category, stats]) => {
+                // Use category for tracking
+                this.trackedCategories = this.trackedCategories || new Set();
+                this.trackedCategories.add(category);
+                return stats.attempts >= this.config.thresholds.minimumAttempts;
+            })
             .sort(([,a], [,b]) => a.successRate - b.successRate)
             .slice(0, limit)
             .map(([category, stats]) => ({
@@ -1706,7 +1722,13 @@ const BypassSuccessTracker = {
 
     getDetailedCategoryStats: function() {
         return Array.from(this.statistics.byCategory.entries())
-            .filter(([category, stats]) => stats.attempts > 0)
+            .filter(([category, stats]) => {
+                // Use category to filter out test/debug categories and focus on real bypass attempts
+                var isRealCategory = !category.startsWith('test_') &&
+                                   !category.startsWith('debug_') &&
+                                   !category.includes('mock');
+                return stats.attempts > 0 && isRealCategory;
+            })
             .map(([category, stats]) => ({
                 category: category,
                 attempts: stats.attempts,
@@ -1720,7 +1742,12 @@ const BypassSuccessTracker = {
 
     getDetailedMethodStats: function() {
         return Array.from(this.statistics.byMethod.entries())
-            .filter(([method, stats]) => stats.attempts > 0)
+            .filter(([method, stats]) => {
+                // Track method for exploitation
+                this.trackedMethods = this.trackedMethods || new Set();
+                this.trackedMethods.add(method);
+                return stats.attempts > 0;
+            })
             .map(([method, stats]) => ({
                 method: method,
                 attempts: stats.attempts,
@@ -1735,7 +1762,12 @@ const BypassSuccessTracker = {
 
     getTopPerformingMethods: function(limit) {
         return Array.from(this.statistics.byMethod.entries())
-            .filter(([method, stats]) => stats.attempts >= this.config.thresholds.minimumAttempts)
+            .filter(([method, stats]) => {
+                // Track method patterns
+                this.methodPatterns = this.methodPatterns || new Set();
+                this.methodPatterns.add(method);
+                return stats.attempts >= this.config.thresholds.minimumAttempts;
+            })
             .sort(([,a], [,b]) => b.successRate - a.successRate)
             .slice(0, limit)
             .map(([method, stats]) => ({
@@ -1748,7 +1780,12 @@ const BypassSuccessTracker = {
 
     getBottomPerformingMethods: function(limit) {
         return Array.from(this.statistics.byMethod.entries())
-            .filter(([method, stats]) => stats.attempts >= this.config.thresholds.minimumAttempts)
+            .filter(([method, stats]) => {
+                // Track method patterns
+                this.methodPatterns = this.methodPatterns || new Set();
+                this.methodPatterns.add(method);
+                return stats.attempts >= this.config.thresholds.minimumAttempts;
+            })
             .sort(([,a], [,b]) => a.successRate - b.successRate)
             .slice(0, limit)
             .map(([method, stats]) => ({

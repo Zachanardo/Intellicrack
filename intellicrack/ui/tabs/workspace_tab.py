@@ -67,8 +67,8 @@ class WorkspaceTab(QWidget):
         self.setup_content()
 
         # Subscribe to configuration changes
-        self.config_manager.register_callback('theme', self.apply_theme)
-        self.config_manager.register_callback('font', self.update_fonts)
+        self.config_manager.register_callback("theme", self.apply_theme)
+        self.config_manager.register_callback("font", self.update_fonts)
 
     def setup_content(self):
         """Setup the workspace tab content with three-panel splitter layout."""
@@ -127,7 +127,7 @@ class WorkspaceTab(QWidget):
         project_layout.addWidget(QLabel("Current Project:"))
 
         self.current_project_label = QLabel("No project loaded")
-        StyleManager.style_label(self.current_project_label, 'current_project_label')
+        StyleManager.style_label(self.current_project_label, "current_project_label")
         project_layout.addWidget(self.current_project_label)
         project_layout.addStretch()
 
@@ -168,7 +168,7 @@ class WorkspaceTab(QWidget):
         binary_layout.addWidget(QLabel("Loaded Binary:"))
 
         self.current_binary_label = QLabel("No binary loaded")
-        StyleManager.style_label(self.current_binary_label, 'current_binary_label')
+        StyleManager.style_label(self.current_binary_label, "current_binary_label")
         binary_layout.addWidget(self.current_binary_label)
         binary_layout.addStretch()
 
@@ -323,7 +323,7 @@ class WorkspaceTab(QWidget):
             self,
             "Clear Activity Log",
             "Are you sure you want to clear the activity log?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -332,12 +332,7 @@ class WorkspaceTab(QWidget):
 
     def create_new_project(self):
         """Create a new project."""
-        project_dir = QFileDialog.getExistingDirectory(
-            self,
-            "Select Project Directory",
-            "",
-            QFileDialog.Option.ShowDirsOnly
-        )
+        project_dir = QFileDialog.getExistingDirectory(self, "Select Project Directory", "", QFileDialog.Option.ShowDirsOnly)
 
         if project_dir:
             project_name = os.path.basename(project_dir)
@@ -367,12 +362,7 @@ class WorkspaceTab(QWidget):
 
     def open_project(self):
         """Open an existing project."""
-        project_file, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open Project",
-            "",
-            "Intellicrack Projects (*.icp);;All Files (*)"
-        )
+        project_file, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)")
 
         if project_file:
             project_dir = os.path.dirname(project_file)
@@ -406,14 +396,15 @@ class WorkspaceTab(QWidget):
 
         # Save project metadata (simplified for now)
         import json
+
         project_data = {
             "name": os.path.basename(self.current_project_path),
             "created": datetime.now().isoformat(),
             "binary": self.loaded_binary_path,
-            "version": "1.0"
+            "version": "1.0",
         }
 
-        with open(project_file, 'w') as f:
+        with open(project_file, "w") as f:
             json.dump(project_data, f, indent=2)
 
         self.log_activity("Project saved", "SUCCESS")
@@ -426,9 +417,7 @@ class WorkspaceTab(QWidget):
                 self,
                 "Close Project",
                 "Do you want to save the project before closing?",
-                QMessageBox.StandardButton.Yes |
-                QMessageBox.StandardButton.No |
-                QMessageBox.StandardButton.Cancel
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
             )
 
             if reply == QMessageBox.StandardButton.Cancel:
@@ -453,10 +442,7 @@ class WorkspaceTab(QWidget):
     def load_binary(self):
         """Load a binary file for analysis."""
         binary_file, _ = QFileDialog.getOpenFileName(
-            self,
-            "Load Binary",
-            "",
-            "Executable Files (*.exe *.dll *.so *.dylib *.elf *.bin);;All Files (*)"
+            self, "Load Binary", "", "Executable Files (*.exe *.dll *.so *.dylib *.elf *.bin);;All Files (*)"
         )
 
         if binary_file:
@@ -490,6 +476,7 @@ class WorkspaceTab(QWidget):
             # If project is open, copy binary to project
             if self.current_project_path:
                 import shutil
+
                 dest = os.path.join(self.current_project_path, "binaries", binary_name)
                 shutil.copy2(binary_file, dest)
                 self.refresh_project_files()
@@ -526,36 +513,36 @@ class WorkspaceTab(QWidget):
             import struct
 
             try:
-                with open(self.loaded_binary_path, 'rb') as f:
+                with open(self.loaded_binary_path, "rb") as f:
                     # Read PE header
                     f.seek(0)
                     dos_header = f.read(64)
 
-                    if dos_header[:2] == b'MZ':
+                    if dos_header[:2] == b"MZ":
                         self.log_activity("Detected: MS-DOS executable header", "INFO")
 
                         # Get PE header offset
-                        pe_offset = struct.unpack('<L', dos_header[60:64])[0]
+                        pe_offset = struct.unpack("<L", dos_header[60:64])[0]
                         f.seek(pe_offset)
                         pe_signature = f.read(4)
 
-                        if pe_signature == b'PE\x00\x00':
+                        if pe_signature == b"PE\x00\x00":
                             self.log_activity("Detected: Valid PE executable", "INFO")
 
                             # Read machine type
-                            machine_type = struct.unpack('<H', f.read(2))[0]
-                            if machine_type == 0x014c:
+                            machine_type = struct.unpack("<H", f.read(2))[0]
+                            if machine_type == 0x014C:
                                 self.log_activity("Architecture: x86 (32-bit)", "INFO")
                             elif machine_type == 0x8664:
                                 self.log_activity("Architecture: x86-64 (64-bit)", "INFO")
-                            elif machine_type == 0x01c4:
+                            elif machine_type == 0x01C4:
                                 self.log_activity("Architecture: ARM", "INFO")
                             else:
                                 self.log_activity(f"Architecture: Unknown (0x{machine_type:04x})", "INFO")
 
                             # Basic protection detection
                             f.seek(pe_offset + 22)
-                            characteristics = struct.unpack('<H', f.read(2))[0]
+                            characteristics = struct.unpack("<H", f.read(2))[0]
 
                             protections = []
                             if characteristics & 0x0020:  # DYNAMIC_BASE
@@ -588,10 +575,7 @@ class WorkspaceTab(QWidget):
             return
 
         export_file, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export Analysis",
-            "",
-            "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)"
+            self, "Export Analysis", "", "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)"
         )
 
         if export_file:
@@ -608,25 +592,27 @@ class WorkspaceTab(QWidget):
         # Walk project directory
         for root, dirs, files in os.walk(self.current_project_path):
             # Skip hidden directories
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
 
             rel_path = os.path.relpath(root, self.current_project_path)
 
             # Create tree items
             for file in files:
-                if file.startswith('.'):
+                if file.startswith("."):
                     continue
 
                 file_path = os.path.join(root, file)
                 file_stat = os.stat(file_path)
 
                 # Create tree item
-                item = QTreeWidgetItem([
-                    file,
-                    os.path.splitext(file)[1],
-                    f"{file_stat.st_size / 1024:.1f} KB",
-                    datetime.fromtimestamp(file_stat.st_mtime).strftime("%Y-%m-%d %H:%M")
-                ])
+                item = QTreeWidgetItem(
+                    [
+                        file,
+                        os.path.splitext(file)[1],
+                        f"{file_stat.st_size / 1024:.1f} KB",
+                        datetime.fromtimestamp(file_stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
+                    ]
+                )
 
                 # Add to appropriate parent
                 if rel_path == ".":
@@ -678,15 +664,11 @@ class WorkspaceTab(QWidget):
         if not self.current_project_path:
             return
 
-        files, _ = QFileDialog.getOpenFileNames(
-            self,
-            "Add Files to Project",
-            "",
-            "All Files (*)"
-        )
+        files, _ = QFileDialog.getOpenFileNames(self, "Add Files to Project", "", "All Files (*)")
 
         if files:
             import shutil
+
             for file in files:
                 dest = os.path.join(self.current_project_path, os.path.basename(file))
                 shutil.copy2(file, dest)
@@ -708,7 +690,7 @@ class WorkspaceTab(QWidget):
             self,
             "Remove File",
             f"Remove {current_item.text(0)} from project?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -753,6 +735,7 @@ class WorkspaceTab(QWidget):
         font_config = self.config_manager.get_font_config()
 
         from PyQt6.QtGui import QFont
+
         font = QFont(font_config.family, font_config.base_size)
         self.setFont(font)
 
@@ -788,7 +771,7 @@ class WorkspaceTab(QWidget):
         if self.loaded_binary_path:
             # Read some binary info to provide context
             try:
-                with open(self.loaded_binary_path, 'rb') as f:
+                with open(self.loaded_binary_path, "rb") as f:
                     # Read first 1KB for header analysis
                     f.read(1024)
 
@@ -797,7 +780,7 @@ class WorkspaceTab(QWidget):
                     self.loaded_binary_path,
                     f"Binary: {os.path.basename(self.loaded_binary_path)}\n"
                     f"Size: {os.path.getsize(self.loaded_binary_path)} bytes\n"
-                    f"Type: {os.path.splitext(self.loaded_binary_path)[1]}\n"
+                    f"Type: {os.path.splitext(self.loaded_binary_path)[1]}\n",
                 )
 
                 self.log_activity("AI context updated with binary info", "INFO")
@@ -807,16 +790,13 @@ class WorkspaceTab(QWidget):
     def cleanup(self):
         """Cleanup resources when tab is closed."""
         # Unregister callbacks
-        self.config_manager.unregister_callback('theme', self.apply_theme)
-        self.config_manager.unregister_callback('font', self.update_fonts)
+        self.config_manager.unregister_callback("theme", self.apply_theme)
+        self.config_manager.unregister_callback("font", self.update_fonts)
 
         # Save any unsaved project data
         if self.current_project_path:
             reply = QMessageBox.question(
-                self,
-                "Closing Workspace",
-                "Save project before closing?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                self, "Closing Workspace", "Save project before closing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
             if reply == QMessageBox.StandardButton.Yes:

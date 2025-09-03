@@ -112,21 +112,15 @@ class ProgramDiscoveryEngine:
 
     # Registry paths for Windows program discovery
     WINDOWS_REGISTRY_PATHS = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
-        if HAS_WINREG
-        else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
         (
             winreg.HKEY_LOCAL_MACHINE,
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         )
         if HAS_WINREG
         else (None, None),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
-        if HAS_WINREG
-        else (None, None),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications")
-        if HAS_WINREG
-        else (None, None),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG else (None, None),
     ]
 
     # Priority targets for analysis (higher score = higher priority)
@@ -435,9 +429,7 @@ class ProgramDiscoveryEngine:
                             "locked",
                         ]
 
-                        if any(
-                            pattern in filename_lower for pattern in licensing_indicators
-                        ) or file_path.suffix.lower() in [
+                        if any(pattern in filename_lower for pattern in licensing_indicators) or file_path.suffix.lower() in [
                             ".lic",
                             ".license",
                             ".key",
@@ -594,7 +586,7 @@ class ProgramDiscoveryEngine:
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
                 if result.returncode == 0:
                     programs.extend(self._parse_dpkg_output(result.stdout))
@@ -611,7 +603,7 @@ class ProgramDiscoveryEngine:
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
                 if result.returncode == 0:
                     programs.extend(self._parse_rpm_output(result.stdout))
@@ -728,9 +720,7 @@ class ProgramDiscoveryEngine:
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     try:
                         subkey_name = winreg.EnumKey(key, i)
-                        program = self._extract_program_from_registry(
-                            hkey, path, subkey_name, include_system
-                        )
+                        program = self._extract_program_from_registry(hkey, path, subkey_name, include_system)
                         if program:
                             programs.append(program)
                     except (OSError, ValueError) as e:
@@ -742,9 +732,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _extract_program_from_registry(
-        self, hkey, path: str, subkey_name: str, include_system: bool
-    ) -> ProgramInfo | None:
+    def _extract_program_from_registry(self, hkey, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
@@ -795,9 +783,7 @@ class ProgramDiscoveryEngine:
                     registry_key=f"{path}\\{subkey_name}",
                     discovery_method="windows_registry",
                     confidence_score=0.9,
-                    analysis_priority=self._calculate_analysis_priority(
-                        display_name, install_location or ""
-                    ),
+                    analysis_priority=self._calculate_analysis_priority(display_name, install_location or ""),
                 )
 
                 return program_info
@@ -833,9 +819,7 @@ class ProgramDiscoveryEngine:
         name_lower = display_name.lower()
         key_lower = subkey_name.lower()
 
-        return any(
-            indicator in name_lower or indicator in key_lower for indicator in system_indicators
-        )
+        return any(indicator in name_lower or indicator in key_lower for indicator in system_indicators)
 
     def _should_use_cache(self) -> bool:
         """Check if cached data should be used."""

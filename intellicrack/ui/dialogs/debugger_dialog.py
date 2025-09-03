@@ -227,9 +227,7 @@ class DebuggerDialog(QDialog):
         toolbar.addSeparator()
 
         # Breakpoint controls
-        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(
-            self.toggle_current_line_breakpoint
-        )
+        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(self.toggle_current_line_breakpoint)
         toolbar.addAction("🗑️ Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
 
         return toolbar
@@ -453,17 +451,19 @@ class DebuggerDialog(QDialog):
 
         # Start debugger thread with real binary path
         from ...core.app_context import get_app_context
+
         app_context = get_app_context()
-        current_binary = getattr(app_context, 'current_binary_path', None)
+        current_binary = getattr(app_context, "current_binary_path", None)
 
         if not current_binary:
             # Generate real test binary if none available
             import tempfile
+
             test_binary = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
-            with open(test_binary, 'wb') as f:
+            with open(test_binary, "wb") as f:
                 # Create minimal PE executable
-                f.write(b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00')
-                f.write(b'\xb8\x00\x00\x00\x00' * 200)  # Basic opcodes
+                f.write(b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00")
+                f.write(b"\xb8\x00\x00\x00\x00" * 200)  # Basic opcodes
             current_binary = test_binary
 
         self.debugger_thread = DebuggerThread(
@@ -553,9 +553,7 @@ class DebuggerDialog(QDialog):
             self.console.append(f"⏸️ Paused at {data['file']}:{data['line']} in {data['function']}")
 
         elif msg_type == "breakpoint":
-            self.console.append(
-                f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})"
-            )
+            self.console.append(f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})")
 
         elif msg_type == "stack":
             self.update_stack_display(data)
@@ -760,9 +758,7 @@ class CodeEditorWidget(QTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.line_number_area.setGeometry(
-            cr.left(), cr.top(), self.line_number_area_width(), cr.height()
-        )
+        self.line_number_area.setGeometry(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers."""

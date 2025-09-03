@@ -47,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.core.dependency_feedback import dependency_feedback, get_user_friendly_error
 
 from .base_tab import BaseTab
 
@@ -97,6 +98,7 @@ class ToolsTab(BaseTab):
         # Add tool categories
         self.tools_tabs.addTab(self.create_system_tools_tab(), "System Tools")
         self.tools_tabs.addTab(self.create_analysis_tools_tab(), "Analysis Tools")
+        self.tools_tabs.addTab(self.create_advanced_analysis_tab(), "Advanced Analysis")
         self.tools_tabs.addTab(self.create_plugin_manager_tab(), "Plugin Manager")
         self.tools_tabs.addTab(self.create_network_tools_tab(), "Network Tools")
 
@@ -427,6 +429,138 @@ class ToolsTab(BaseTab):
 
         return tab
 
+    def create_advanced_analysis_tab(self):
+        """Create advanced analysis tools tab with sophisticated backend integration."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        # Binary path for advanced analysis
+        binary_path_layout = QHBoxLayout()
+        binary_path_layout.addWidget(QLabel("Target Binary:"))
+        self.advanced_binary_edit = QLineEdit()
+        browse_advanced_btn = QPushButton("Browse")
+        browse_advanced_btn.clicked.connect(self.browse_advanced_binary)
+        binary_path_layout.addWidget(self.advanced_binary_edit)
+        binary_path_layout.addWidget(browse_advanced_btn)
+
+        # Dynamic Analysis Tools
+        dynamic_group = QGroupBox("Dynamic Analysis & Instrumentation")
+        dynamic_layout = QGridLayout(dynamic_group)
+
+        frida_analysis_btn = QPushButton("Frida Analysis")
+        frida_analysis_btn.clicked.connect(self.run_frida_analysis)
+        frida_analysis_btn.setStyleSheet("font-weight: bold; color: #FF6B35;")
+        frida_analysis_btn.setToolTip("Dynamic binary analysis using Frida instrumentation")
+
+        symbolic_exec_btn = QPushButton("Symbolic Execution")
+        symbolic_exec_btn.clicked.connect(self.run_symbolic_execution)
+        symbolic_exec_btn.setStyleSheet("font-weight: bold; color: #2E86AB;")
+        symbolic_exec_btn.setToolTip("Advanced symbolic execution for path exploration")
+
+        memory_forensics_btn = QPushButton("Memory Forensics")
+        memory_forensics_btn.clicked.connect(self.run_memory_forensics)
+        memory_forensics_btn.setToolTip("Advanced memory analysis and forensics")
+
+        dynamic_layout.addWidget(frida_analysis_btn, 0, 0)
+        dynamic_layout.addWidget(symbolic_exec_btn, 0, 1)
+        dynamic_layout.addWidget(memory_forensics_btn, 1, 0)
+
+        # Advanced Static Analysis
+        static_group = QGroupBox("Advanced Static Analysis")
+        static_layout = QGridLayout(static_group)
+
+        ghidra_analysis_btn = QPushButton("Ghidra Analysis")
+        ghidra_analysis_btn.clicked.connect(self.run_ghidra_analysis)
+        ghidra_analysis_btn.setStyleSheet("font-weight: bold; color: #7209B7;")
+        ghidra_analysis_btn.setToolTip("Advanced static analysis using Ghidra")
+
+        protection_scan_btn = QPushButton("Protection Scanner")
+        protection_scan_btn.clicked.connect(self.run_protection_scanner)
+        protection_scan_btn.setStyleSheet("font-weight: bold; color: #F72585;")
+        protection_scan_btn.setToolTip("Comprehensive protection and packing detection")
+
+        vulnerability_scan_btn = QPushButton("Vulnerability Engine")
+        vulnerability_scan_btn.clicked.connect(self.run_vulnerability_engine)
+        vulnerability_scan_btn.setToolTip("Advanced vulnerability detection engine")
+
+        taint_analysis_btn = QPushButton("Taint Analysis")
+        taint_analysis_btn.clicked.connect(self.run_taint_analysis)
+        taint_analysis_btn.setToolTip("Data flow and taint analysis")
+
+        static_layout.addWidget(ghidra_analysis_btn, 0, 0)
+        static_layout.addWidget(protection_scan_btn, 0, 1)
+        static_layout.addWidget(vulnerability_scan_btn, 1, 0)
+        static_layout.addWidget(taint_analysis_btn, 1, 1)
+
+        # AI-Powered Analysis
+        ai_group = QGroupBox("AI-Powered Analysis")
+        ai_layout = QGridLayout(ai_group)
+
+        ai_script_gen_btn = QPushButton("AI Script Generator")
+        ai_script_gen_btn.clicked.connect(self.run_ai_script_generator)
+        ai_script_gen_btn.setStyleSheet("font-weight: bold; color: #4361EE;")
+        ai_script_gen_btn.setToolTip("AI-powered analysis script generation")
+
+        semantic_analysis_btn = QPushButton("Semantic Analysis")
+        semantic_analysis_btn.clicked.connect(self.run_semantic_analysis)
+        semantic_analysis_btn.setToolTip("AI semantic code analysis")
+
+        pattern_analysis_btn = QPushButton("Pattern Analysis")
+        pattern_analysis_btn.clicked.connect(self.run_pattern_analysis)
+        pattern_analysis_btn.setToolTip("AI-powered pattern recognition")
+
+        ai_layout.addWidget(ai_script_gen_btn, 0, 0)
+        ai_layout.addWidget(semantic_analysis_btn, 0, 1)
+        ai_layout.addWidget(pattern_analysis_btn, 1, 0)
+
+        # Exploitation Tools
+        exploit_group = QGroupBox("Exploitation & Payload Generation")
+        exploit_layout = QGridLayout(exploit_group)
+
+        rop_generator_btn = QPushButton("ROP Generator")
+        rop_generator_btn.clicked.connect(self.run_rop_generator)
+        rop_generator_btn.setStyleSheet("font-weight: bold; color: #D00000;")
+        rop_generator_btn.setToolTip("Generate ROP chains for exploitation")
+
+        payload_engine_btn = QPushButton("Payload Engine")
+        payload_engine_btn.clicked.connect(self.run_payload_engine)
+        payload_engine_btn.setStyleSheet("font-weight: bold; color: #FF8500;")
+        payload_engine_btn.setToolTip("Advanced payload generation and encoding")
+
+        shellcode_gen_btn = QPushButton("Shellcode Generator")
+        shellcode_gen_btn.clicked.connect(self.run_shellcode_generator)
+        shellcode_gen_btn.setToolTip("Generate custom shellcode")
+
+        exploit_layout.addWidget(rop_generator_btn, 0, 0)
+        exploit_layout.addWidget(payload_engine_btn, 0, 1)
+        exploit_layout.addWidget(shellcode_gen_btn, 1, 0)
+
+        # Network Analysis
+        network_group = QGroupBox("Network & Traffic Analysis")
+        network_layout = QGridLayout(network_group)
+
+        traffic_analysis_btn = QPushButton("Traffic Analysis")
+        traffic_analysis_btn.clicked.connect(self.run_traffic_analysis)
+        traffic_analysis_btn.setToolTip("Advanced network traffic analysis")
+
+        protocol_analysis_btn = QPushButton("Protocol Fingerprinting")
+        protocol_analysis_btn.clicked.connect(self.run_protocol_analysis)
+        protocol_analysis_btn.setToolTip("Advanced protocol fingerprinting")
+
+        network_layout.addWidget(traffic_analysis_btn, 0, 0)
+        network_layout.addWidget(protocol_analysis_btn, 0, 1)
+
+        # Add all groups to layout
+        layout.addLayout(binary_path_layout)
+        layout.addWidget(dynamic_group)
+        layout.addWidget(static_group)
+        layout.addWidget(ai_group)
+        layout.addWidget(exploit_group)
+        layout.addWidget(network_group)
+        layout.addStretch()
+
+        return tab
+
     def create_results_panel(self):
         """Create the results panel."""
         panel = QWidget()
@@ -654,9 +788,7 @@ class ToolsTab(BaseTab):
                         # Skip non-UTF-16 strings silently as expected
                         continue
 
-            self.log_message(
-                f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings"
-            )
+            self.log_message(f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings")
 
         except Exception as e:
             self.output_console.append(f"Error extracting strings: {e!s}")
@@ -795,7 +927,7 @@ class ToolsTab(BaseTab):
             self.tool_output.append("Section Entropies:")
 
             for i, ent in enumerate(section_entropies):
-                self.tool_output.append(f"  Section {i+1}: {ent:.4f}")
+                self.tool_output.append(f"  Section {i + 1}: {ent:.4f}")
 
             # Interpretation
             if entropy > 7.5:
@@ -864,22 +996,16 @@ class ToolsTab(BaseTab):
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 export_dir = pe.DIRECTORY_ENTRY_EXPORT
                 self.tool_output.append(f"Export DLL Name: {export_dir.name.decode('utf-8')}")
-                self.tool_output.append(
-                    f"Number of Functions: {export_dir.struct.NumberOfFunctions}"
-                )
+                self.tool_output.append(f"Number of Functions: {export_dir.struct.NumberOfFunctions}")
                 self.tool_output.append(f"Number of Names: {export_dir.struct.NumberOfNames}")
                 self.tool_output.append("\nExported Functions:")
 
                 for exp in export_dir.symbols:
                     if exp.name:
                         func_name = exp.name.decode("utf-8")
-                        self.tool_output.append(
-                            f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})"
-                        )
+                        self.tool_output.append(f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})")
                     else:
-                        self.tool_output.append(
-                            f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})"
-                        )
+                        self.tool_output.append(f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})")
             else:
                 self.tool_output.append("No exports found")
 
@@ -904,9 +1030,7 @@ class ToolsTab(BaseTab):
 
             self.tool_output.append("Section Analysis:")
             self.tool_output.append("-" * 60)
-            self.tool_output.append(
-                f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} {'Characteristics'}"
-            )
+            self.tool_output.append(f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} {'Characteristics'}")
             self.tool_output.append("-" * 60)
 
             for section in pe.sections:
@@ -917,9 +1041,7 @@ class ToolsTab(BaseTab):
                 raw_size = f"0x{section.SizeOfRawData:08x}"
                 chars = f"0x{section.Characteristics:08x}"
 
-                self.tool_output.append(
-                    f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}"
-                )
+                self.tool_output.append(f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}")
 
             self.log_message("Section analysis completed")
 
@@ -1033,9 +1155,7 @@ class ToolsTab(BaseTab):
         self.plugin_list.clear()
 
         # Look for plugins in the plugins directory
-        plugins_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-        )
+        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
 
         if os.path.exists(plugins_dir):
             for file in os.listdir(plugins_dir):
@@ -1072,9 +1192,7 @@ class ToolsTab(BaseTab):
             }
 
             # Update plugin info
-            self.plugin_info_text.setText(
-                f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module"
-            )
+            self.plugin_info_text.setText(f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module")
 
             # Update list display
             self.populate_plugin_list()
@@ -1166,9 +1284,7 @@ def get_plugin():
 '''
 
             # Save plugin file
-            plugins_dir = os.path.join(
-                os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-            )
+            plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
             os.makedirs(plugins_dir, exist_ok=True)
 
             plugin_file = os.path.join(plugins_dir, f"{plugin_name.lower()}_plugin.py")
@@ -1194,9 +1310,7 @@ def get_plugin():
         plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         # Open plugin file in default editor
-        plugins_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-        )
+        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
         plugin_file = os.path.join(plugins_dir, f"{plugin_name}.py")
 
         if os.path.exists(plugin_file):
@@ -1353,6 +1467,776 @@ def get_plugin():
 
         except Exception as e:
             self.output_console.append(f"Error performing service scan: {e!s}")
+
+    def browse_advanced_binary(self):
+        """Browse for binary for advanced analysis."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Binary for Advanced Analysis",
+            "",
+            "Executable Files (*.exe *.dll *.so *.bin);;All Files (*)",
+        )
+
+        if file_path:
+            self.advanced_binary_edit.setText(file_path)
+            self.log_message(f"Advanced analysis binary selected: {file_path}")
+
+    def run_frida_analysis(self):
+        """Execute Frida dynamic analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for Frida analysis")
+            return
+
+        try:
+            from intellicrack.core.analysis.frida_analyzer import FridaAnalyzer
+            from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE, frida
+
+            if not FRIDA_AVAILABLE:
+                # Use comprehensive dependency feedback
+                status = dependency_feedback.get_dependency_status("frida")
+                self.output_console.append(status["message"])
+
+                # Show alternatives
+                alternatives = dependency_feedback.suggest_alternatives("frida", "dynamic analysis")
+                self.tool_output.append(alternatives)
+                return
+
+            analyzer = FridaAnalyzer()
+
+            self.tool_output.append(f"Starting Frida analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run comprehensive Frida analysis
+            results = analyzer.analyze_binary(binary_path)
+
+            if results:
+                self.tool_output.append("Frida Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Display function hooks
+                if "function_hooks" in results:
+                    self.tool_output.append("Function Hooks Detected:")
+                    for hook in results["function_hooks"][:20]:  # Limit display
+                        self.tool_output.append(f"  - {hook}")
+
+                # Display memory regions
+                if "memory_regions" in results:
+                    self.tool_output.append("\nMemory Regions:")
+                    for region in results["memory_regions"][:10]:
+                        self.tool_output.append(f"  - {region}")
+
+                # Display API calls
+                if "api_calls" in results:
+                    self.tool_output.append("\nAPI Calls Intercepted:")
+                    for call in results["api_calls"][:15]:
+                        self.tool_output.append(f"  - {call}")
+
+            self.log_message("Frida dynamic analysis completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("frida", "Frida Analysis", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running Frida analysis: {e!s}")
+
+    def run_symbolic_execution(self):
+        """Execute symbolic execution analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for symbolic execution")
+            return
+
+        try:
+            from intellicrack.ui.symbolic_execution import SymbolicExecutionEngine
+
+            engine = SymbolicExecutionEngine()
+
+            self.tool_output.append(f"Starting symbolic execution on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run symbolic execution
+            results = engine.analyze_binary(binary_path)
+
+            if results:
+                self.tool_output.append("Symbolic Execution Results:")
+                self.tool_output.append("-" * 30)
+
+                # Display execution paths
+                if "execution_paths" in results:
+                    self.tool_output.append(f"Execution Paths Found: {len(results['execution_paths'])}")
+                    for i, path in enumerate(results["execution_paths"][:10]):
+                        self.tool_output.append(f"  Path {i + 1}: {path}")
+
+                # Display constraint analysis
+                if "constraints" in results:
+                    self.tool_output.append("\nConstraint Analysis:")
+                    for constraint in results["constraints"][:15]:
+                        self.tool_output.append(f"  - {constraint}")
+
+            self.log_message("Symbolic execution analysis completed")
+
+        except ImportError:
+            self.output_console.append("Error: Symbolic execution engine not available")
+        except Exception as e:
+            self.output_console.append(f"Error running symbolic execution: {e!s}")
+
+    def run_memory_forensics(self):
+        """Execute memory forensics analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for memory forensics")
+            return
+
+        try:
+            from intellicrack.core.processing.memory_loader import MemoryLoader
+
+            loader = MemoryLoader()
+
+            self.tool_output.append(f"Starting memory forensics on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Load and analyze memory
+            memory_data = loader.load_binary_to_memory(binary_path)
+
+            if memory_data:
+                self.tool_output.append("Memory Forensics Results:")
+                self.tool_output.append("-" * 30)
+
+                # Memory layout analysis
+                if "memory_layout" in memory_data:
+                    self.tool_output.append("Memory Layout:")
+                    for layout in memory_data["memory_layout"]:
+                        self.tool_output.append(f"  - {layout}")
+
+                # Memory artifacts
+                if "artifacts" in memory_data:
+                    self.tool_output.append("\nMemory Artifacts:")
+                    for artifact in memory_data["artifacts"][:20]:
+                        self.tool_output.append(f"  - {artifact}")
+
+            self.log_message("Memory forensics analysis completed")
+
+        except ImportError:
+            self.output_console.append("Error: Memory forensics tools not available")
+        except Exception as e:
+            self.output_console.append(f"Error running memory forensics: {e!s}")
+
+    def run_ghidra_analysis(self):
+        """Execute Ghidra static analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for Ghidra analysis")
+            return
+
+        try:
+            from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalyzer
+
+            analyzer = GhidraAnalyzer()
+
+            self.tool_output.append(f"Starting Ghidra analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run Ghidra analysis
+            results = analyzer.analyze_binary(binary_path)
+
+            if results:
+                self.tool_output.append("Ghidra Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Function analysis
+                if "functions" in results:
+                    self.tool_output.append(f"Functions Identified: {len(results['functions'])}")
+                    for func in results["functions"][:15]:
+                        self.tool_output.append(f"  - {func}")
+
+                # Control flow analysis
+                if "control_flow" in results:
+                    self.tool_output.append("\nControl Flow Analysis:")
+                    for flow in results["control_flow"][:10]:
+                        self.tool_output.append(f"  - {flow}")
+
+                # Data structures
+                if "data_structures" in results:
+                    self.tool_output.append("\nData Structures:")
+                    for struct in results["data_structures"][:10]:
+                        self.tool_output.append(f"  - {struct}")
+
+            self.log_message("Ghidra static analysis completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("ghidra", "Ghidra Analysis", e)
+            self.output_console.append(error_msg)
+
+            # Suggest alternatives for static analysis
+            alternatives = dependency_feedback.suggest_alternatives("ghidra", "static analysis")
+            self.tool_output.append(alternatives)
+        except Exception as e:
+            self.output_console.append(f"Error running Ghidra analysis: {e!s}")
+
+    def run_protection_scanner(self):
+        """Execute comprehensive protection scanning on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for protection scanning")
+            return
+
+        try:
+            from intellicrack.core.analysis.protection_scanner import ProtectionScanner
+
+            scanner = ProtectionScanner()
+
+            self.tool_output.append(f"Starting protection scan on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run comprehensive protection scan
+            results = scanner.scan_binary(binary_path)
+
+            if results:
+                self.tool_output.append("Protection Scanner Results:")
+                self.tool_output.append("-" * 30)
+
+                # Packing detection
+                if "packing" in results:
+                    packing_info = results["packing"]
+                    self.tool_output.append(f"Packing Detected: {'Yes' if packing_info['is_packed'] else 'No'}")
+                    if packing_info.get("packer_type"):
+                        self.tool_output.append(f"Packer Type: {packing_info['packer_type']}")
+
+                # Anti-debugging
+                if "anti_debugging" in results:
+                    anti_debug = results["anti_debugging"]
+                    if anti_debug["detected"]:
+                        self.tool_output.append("\nAnti-Debugging Detected:")
+                        for technique in anti_debug["techniques"]:
+                            self.tool_output.append(f"  - {technique}")
+
+                # Obfuscation
+                if "obfuscation" in results:
+                    obf_info = results["obfuscation"]
+                    self.tool_output.append(f"\nObfuscation Level: {obf_info.get('level', 'Unknown')}")
+                    if obf_info.get("techniques"):
+                        self.tool_output.append("Obfuscation Techniques:")
+                        for tech in obf_info["techniques"]:
+                            self.tool_output.append(f"  - {tech}")
+
+                # Commercial protections
+                if "commercial" in results:
+                    for protection in results["commercial"]:
+                        self.tool_output.append(f"\nCommercial Protection: {protection}")
+
+            self.log_message("Protection scanning completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("radare2", "Protection Scanner", e)
+            self.output_console.append(error_msg)
+
+            # Suggest alternatives for protection analysis
+            alternatives = dependency_feedback.suggest_alternatives("radare2", "protection scanning")
+            self.tool_output.append(alternatives)
+        except Exception as e:
+            self.output_console.append(f"Error running protection scanner: {e!s}")
+
+    def run_vulnerability_engine(self):
+        """Execute vulnerability detection engine on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for vulnerability scanning")
+            return
+
+        try:
+            from intellicrack.core.analysis.radare2_vulnerability_engine import RadareVulnerabilityEngine
+
+            engine = RadareVulnerabilityEngine()
+
+            self.tool_output.append(f"Starting vulnerability scan on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run vulnerability detection
+            results = engine.scan_binary(binary_path)
+
+            if results:
+                self.tool_output.append("Vulnerability Engine Results:")
+                self.tool_output.append("-" * 30)
+
+                # Buffer overflow vulnerabilities
+                if "buffer_overflows" in results:
+                    if results["buffer_overflows"]:
+                        self.tool_output.append("Buffer Overflow Vulnerabilities:")
+                        for vuln in results["buffer_overflows"]:
+                            self.tool_output.append(f"  - {vuln}")
+
+                # Format string vulnerabilities
+                if "format_strings" in results:
+                    if results["format_strings"]:
+                        self.tool_output.append("\nFormat String Vulnerabilities:")
+                        for vuln in results["format_strings"]:
+                            self.tool_output.append(f"  - {vuln}")
+
+                # Integer overflow vulnerabilities
+                if "integer_overflows" in results:
+                    if results["integer_overflows"]:
+                        self.tool_output.append("\nInteger Overflow Vulnerabilities:")
+                        for vuln in results["integer_overflows"]:
+                            self.tool_output.append(f"  - {vuln}")
+
+                # Use-after-free vulnerabilities
+                if "use_after_free" in results:
+                    if results["use_after_free"]:
+                        self.tool_output.append("\nUse-After-Free Vulnerabilities:")
+                        for vuln in results["use_after_free"]:
+                            self.tool_output.append(f"  - {vuln}")
+
+            self.log_message("Vulnerability detection completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("radare2", "Vulnerability Engine", e)
+            self.output_console.append(error_msg)
+
+            # Suggest alternatives for vulnerability detection
+            alternatives = dependency_feedback.suggest_alternatives("radare2", "vulnerability detection")
+            self.tool_output.append(alternatives)
+        except Exception as e:
+            self.output_console.append(f"Error running vulnerability engine: {e!s}")
+
+    def run_taint_analysis(self):
+        """Execute taint analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for taint analysis")
+            return
+
+        try:
+            from intellicrack.ui.symbolic_execution import SymbolicExecutionEngine
+
+            # Use symbolic execution engine for taint analysis
+            engine = SymbolicExecutionEngine()
+
+            self.tool_output.append(f"Starting taint analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run taint analysis
+            results = engine.run_taint_analysis(binary_path)
+
+            if results:
+                self.tool_output.append("Taint Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Taint sources
+                if "taint_sources" in results:
+                    self.tool_output.append("Taint Sources:")
+                    for source in results["taint_sources"]:
+                        self.tool_output.append(f"  - {source}")
+
+                # Taint sinks
+                if "taint_sinks" in results:
+                    self.tool_output.append("\nTaint Sinks:")
+                    for sink in results["taint_sinks"]:
+                        self.tool_output.append(f"  - {sink}")
+
+                # Data flow paths
+                if "data_flows" in results:
+                    self.tool_output.append("\nData Flow Paths:")
+                    for flow in results["data_flows"][:10]:
+                        self.tool_output.append(f"  - {flow}")
+
+            self.log_message("Taint analysis completed")
+
+        except ImportError:
+            self.output_console.append("Error: Taint analysis engine not available")
+        except Exception as e:
+            self.output_console.append(f"Error running taint analysis: {e!s}")
+
+    def run_ai_script_generator(self):
+        """Execute AI-powered script generation for target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for AI script generation")
+            return
+
+        try:
+            from intellicrack.ai.visualization_analytics import VisualizationAnalytics
+            from intellicrack.utils.core.import_checks import TENSORFLOW_AVAILABLE
+
+            if not TENSORFLOW_AVAILABLE:
+                # Use comprehensive dependency feedback for AI/ML dependencies
+                status = dependency_feedback.get_dependency_status("tensorflow")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for AI analysis
+                alternatives = dependency_feedback.suggest_alternatives("tensorflow", "AI script generation")
+                self.tool_output.append(alternatives)
+                return
+
+            generator = VisualizationAnalytics()
+
+            self.tool_output.append(f"Starting AI script generation for: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Generate analysis scripts
+            results = generator.generate_analysis_scripts(binary_path)
+
+            if results:
+                self.tool_output.append("AI Script Generation Results:")
+                self.tool_output.append("-" * 30)
+
+                # Generated Frida scripts
+                if "frida_scripts" in results:
+                    self.tool_output.append("Generated Frida Scripts:")
+                    for script in results["frida_scripts"][:3]:
+                        self.tool_output.append(f"  Script: {script['name']}")
+                        self.tool_output.append(f"  Purpose: {script['description']}")
+                        self.tool_output.append(f"  Code Preview: {script['code'][:200]}...")
+                        self.tool_output.append("")
+
+                # Generated Ghidra scripts
+                if "ghidra_scripts" in results:
+                    self.tool_output.append("Generated Ghidra Scripts:")
+                    for script in results["ghidra_scripts"][:2]:
+                        self.tool_output.append(f"  Script: {script['name']}")
+                        self.tool_output.append(f"  Purpose: {script['description']}")
+                        self.tool_output.append("")
+
+            self.log_message("AI script generation completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("tensorflow", "AI Script Generator", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running AI script generator: {e!s}")
+
+    def run_semantic_analysis(self):
+        """Execute AI semantic analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for semantic analysis")
+            return
+
+        try:
+            from intellicrack.ai.visualization_analytics import VisualizationAnalytics
+
+            analyzer = VisualizationAnalytics()
+
+            self.tool_output.append(f"Starting semantic analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run semantic analysis
+            results = analyzer.analyze_binary_semantics(binary_path)
+
+            if results:
+                self.tool_output.append("Semantic Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Function purposes
+                if "function_semantics" in results:
+                    self.tool_output.append("Function Semantic Analysis:")
+                    for func in results["function_semantics"][:10]:
+                        self.tool_output.append(f"  {func['name']}: {func['purpose']}")
+
+                # Code patterns
+                if "code_patterns" in results:
+                    self.tool_output.append("\nCode Pattern Analysis:")
+                    for pattern in results["code_patterns"]:
+                        self.tool_output.append(f"  Pattern: {pattern['type']}")
+                        self.tool_output.append(f"  Confidence: {pattern['confidence']}")
+                        self.tool_output.append("")
+
+            self.log_message("Semantic analysis completed")
+
+        except ImportError:
+            self.output_console.append("Error: Semantic analyzer not available")
+        except Exception as e:
+            self.output_console.append(f"Error running semantic analysis: {e!s}")
+
+    def run_pattern_analysis(self):
+        """Execute AI pattern analysis on target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for pattern analysis")
+            return
+
+        try:
+            from intellicrack.ml.pattern_evolution_tracker import PatternEvolutionTracker
+
+            tracker = PatternEvolutionTracker()
+
+            self.tool_output.append(f"Starting pattern analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Run pattern analysis
+            results = tracker.analyze_binary_patterns(binary_path)
+
+            if results:
+                self.tool_output.append("Pattern Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Code patterns
+                if "patterns" in results:
+                    self.tool_output.append("Detected Patterns:")
+                    for pattern in results["patterns"][:15]:
+                        self.tool_output.append(f"  - {pattern}")
+
+                # Pattern evolution
+                if "evolution" in results:
+                    self.tool_output.append("\nPattern Evolution:")
+                    for evolution in results["evolution"]:
+                        self.tool_output.append(f"  - {evolution}")
+
+            self.log_message("Pattern analysis completed")
+
+        except ImportError:
+            self.output_console.append("Error: Pattern analyzer not available")
+        except Exception as e:
+            self.output_console.append(f"Error running pattern analysis: {e!s}")
+
+    def run_rop_generator(self):
+        """Execute ROP chain generation for target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for ROP generation")
+            return
+
+        try:
+            from intellicrack.utils.core.import_checks import CAPSTONE_AVAILABLE
+            from intellicrack.utils.exploitation.exploitation import ExploitationFramework
+
+            if not CAPSTONE_AVAILABLE:
+                # Use comprehensive dependency feedback for disassembly dependency
+                status = dependency_feedback.get_dependency_status("capstone")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for disassembly/ROP generation
+                alternatives = dependency_feedback.suggest_alternatives("capstone", "ROP chain generation")
+                self.tool_output.append(alternatives)
+                return
+
+            framework = ExploitationFramework()
+
+            self.tool_output.append(f"Starting ROP chain generation for: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Generate ROP chains
+            results = framework.generate_rop_chains(binary_path)
+
+            if results:
+                self.tool_output.append("ROP Chain Generation Results:")
+                self.tool_output.append("-" * 30)
+
+                # ROP gadgets
+                if "gadgets" in results:
+                    self.tool_output.append(f"ROP Gadgets Found: {len(results['gadgets'])}")
+                    for gadget in results["gadgets"][:20]:
+                        self.tool_output.append(f"  0x{gadget['address']:08x}: {gadget['instructions']}")
+
+                # ROP chains
+                if "chains" in results:
+                    self.tool_output.append("\nGenerated ROP Chains:")
+                    for chain in results["chains"][:5]:
+                        self.tool_output.append(f"  Chain: {chain['purpose']}")
+                        self.tool_output.append(f"  Length: {len(chain['gadgets'])} gadgets")
+                        self.tool_output.append("")
+
+            self.log_message("ROP chain generation completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("capstone", "ROP Generator", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running ROP generator: {e!s}")
+
+    def run_payload_engine(self):
+        """Execute payload generation engine for target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for payload generation")
+            return
+
+        try:
+            from intellicrack.utils.core.import_checks import LIEF_AVAILABLE, PEFILE_AVAILABLE
+            from intellicrack.utils.exploitation.exploitation import ExploitationFramework
+
+            # Check binary analysis dependencies needed for payload generation
+            if not (PEFILE_AVAILABLE or LIEF_AVAILABLE):
+                # Use comprehensive dependency feedback for binary analysis
+                status = dependency_feedback.get_dependency_status("pefile")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for binary analysis
+                alternatives = dependency_feedback.suggest_alternatives("pefile", "payload generation")
+                self.tool_output.append(alternatives)
+                return
+
+            framework = ExploitationFramework()
+
+            self.tool_output.append(f"Starting payload generation for: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Generate payloads
+            results = framework.generate_payloads(binary_path)
+
+            if results:
+                self.tool_output.append("Payload Generation Results:")
+                self.tool_output.append("-" * 30)
+
+                # Generated payloads
+                if "payloads" in results:
+                    for payload in results["payloads"]:
+                        self.tool_output.append(f"Payload Type: {payload['type']}")
+                        self.tool_output.append(f"Target: {payload['target']}")
+                        self.tool_output.append(f"Size: {len(payload['data'])} bytes")
+                        if payload.get("description"):
+                            self.tool_output.append(f"Description: {payload['description']}")
+                        self.tool_output.append("")
+
+            self.log_message("Payload generation completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("pefile", "Payload Engine", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running payload engine: {e!s}")
+
+    def run_shellcode_generator(self):
+        """Execute shellcode generation for target binary."""
+        binary_path = self.advanced_binary_edit.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            self.output_console.append("Error: Invalid binary path for shellcode generation")
+            return
+
+        try:
+            from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
+            from intellicrack.utils.core.import_checks import CAPSTONE_AVAILABLE
+
+            if not CAPSTONE_AVAILABLE:
+                # Use comprehensive dependency feedback for disassembly
+                status = dependency_feedback.get_dependency_status("capstone")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for shellcode generation
+                alternatives = dependency_feedback.suggest_alternatives("capstone", "shellcode generation")
+                self.tool_output.append(alternatives)
+                return
+
+            generator = ShellcodeGenerator()
+
+            self.tool_output.append(f"Starting shellcode generation for: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            # Generate shellcode
+            results = generator.generate_shellcode(binary_path)
+
+            if results:
+                self.tool_output.append("Shellcode Generation Results:")
+                self.tool_output.append("-" * 30)
+
+                # Generated shellcode
+                if "shellcodes" in results:
+                    for shellcode in results["shellcodes"]:
+                        self.tool_output.append(f"Shellcode Type: {shellcode['type']}")
+                        self.tool_output.append(f"Architecture: {shellcode['arch']}")
+                        self.tool_output.append(f"Size: {len(shellcode['code'])} bytes")
+                        self.tool_output.append(f"Code: {shellcode['code'][:100]}...")
+                        self.tool_output.append("")
+
+            self.log_message("Shellcode generation completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("capstone", "Shellcode Generator", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running shellcode generator: {e!s}")
+
+    def run_traffic_analysis(self):
+        """Execute network traffic analysis."""
+        self.tool_output.append("Starting network traffic analysis...")
+        self.tool_output.append("=" * 50)
+
+        try:
+            from intellicrack.ui.traffic_analyzer import TrafficAnalyzer
+            from intellicrack.utils.core.import_checks import PSUTIL_AVAILABLE
+
+            if not PSUTIL_AVAILABLE:
+                # Use comprehensive dependency feedback for system monitoring
+                status = dependency_feedback.get_dependency_status("psutil")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for network analysis
+                alternatives = dependency_feedback.suggest_alternatives("psutil", "network traffic analysis")
+                self.tool_output.append(alternatives)
+                return
+
+            analyzer = TrafficAnalyzer()
+
+            # Run traffic analysis
+            results = analyzer.analyze_network_traffic()
+
+            if results:
+                self.tool_output.append("Traffic Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                # Protocol distribution
+                if "protocol_stats" in results:
+                    self.tool_output.append("Protocol Distribution:")
+                    for protocol, count in results["protocol_stats"].items():
+                        self.tool_output.append(f"  {protocol}: {count} packets")
+
+                # Top conversations
+                if "top_conversations" in results:
+                    self.tool_output.append("\nTop Conversations:")
+                    for conv in results["top_conversations"][:10]:
+                        self.tool_output.append(f"  {conv['src']} <-> {conv['dst']}: {conv['packets']} packets")
+
+            self.log_message("Traffic analysis completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("psutil", "Traffic Analyzer", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running traffic analysis: {e!s}")
+
+    def run_protocol_analysis(self):
+        """Execute protocol fingerprinting analysis."""
+        self.tool_output.append("Starting protocol fingerprinting...")
+        self.tool_output.append("=" * 50)
+
+        try:
+            from intellicrack.core.network.protocol_tool import ProtocolTool
+            from intellicrack.utils.core.import_checks import PSUTIL_AVAILABLE
+
+            if not PSUTIL_AVAILABLE:
+                # Use comprehensive dependency feedback for network analysis
+                status = dependency_feedback.get_dependency_status("psutil")
+                self.output_console.append(status["message"])
+
+                # Show alternatives for protocol analysis
+                alternatives = dependency_feedback.suggest_alternatives("psutil", "protocol fingerprinting")
+                self.tool_output.append(alternatives)
+                return
+
+            tool = ProtocolTool()
+
+            # Run protocol fingerprinting
+            results = tool.fingerprint_protocols()
+
+            if results:
+                self.tool_output.append("Protocol Fingerprinting Results:")
+                self.tool_output.append("-" * 30)
+
+                # Detected protocols
+                if "detected_protocols" in results:
+                    for protocol in results["detected_protocols"]:
+                        self.tool_output.append(f"Protocol: {protocol['name']}")
+                        self.tool_output.append(f"Version: {protocol.get('version', 'Unknown')}")
+                        self.tool_output.append(f"Confidence: {protocol.get('confidence', 'Unknown')}")
+                        self.tool_output.append("")
+
+            self.log_message("Protocol fingerprinting completed")
+
+        except ImportError as e:
+            error_msg = get_user_friendly_error("psutil", "Protocol Tool", e)
+            self.output_console.append(error_msg)
+        except Exception as e:
+            self.output_console.append(f"Error running protocol analysis: {e!s}")
 
     def log_message(self, message, level="info"):
         """Log message to console or status."""

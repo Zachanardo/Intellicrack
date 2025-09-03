@@ -25,22 +25,24 @@ from intellicrack.core.exceptions import ConfigurationError
 logger = logging.getLogger(__name__)
 
 
-def get_service_url(service_name: str) -> str:
+def get_service_url(service_name: str, fallback: str = None) -> str:
     """Get URL for a service from configuration.
 
     Args:
         service_name: Name of the service
+        fallback: Optional fallback URL to use if service is not configured
 
     Returns:
-        Service URL from configuration
+        Service URL from configuration or fallback
 
     Raises:
-        ConfigurationError: If service URL is not configured
+        ConfigurationError: If service URL is not configured and no fallback provided
 
     """
     # Import here to avoid circular imports
     try:
         from intellicrack.core.config_manager import get_config
+
         config = get_config()
     except ImportError as e:
         logger.warning(f"Could not import config manager: {e}")
@@ -51,12 +53,15 @@ def get_service_url(service_name: str) -> str:
 
     url = config.get(f"service_urls.{service_name}")
     if not url:
-        raise ConfigurationError(
-            f"Service '{service_name}' URL not configured. "
-            f"Please set 'service_urls.{service_name}' in configuration.",
-            service_name=service_name,
-            config_key=f"service_urls.{service_name}",
-        )
+        if fallback:
+            url = fallback
+            logger.debug(f"Using fallback URL for service '{service_name}': {fallback}")
+        else:
+            raise ConfigurationError(
+                f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration.",
+                service_name=service_name,
+                config_key=f"service_urls.{service_name}",
+            )
 
     # Validate URL format
     if not url.startswith(("http://", "https://", "ws://", "wss://", "tcp://", "udp://")):

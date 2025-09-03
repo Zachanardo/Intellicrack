@@ -87,9 +87,7 @@ class R2Session:
         if exc_type:
             logger.error(f"Radare2 session exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.disconnect()
 
     def connect(self) -> bool:
@@ -115,9 +113,7 @@ class R2Session:
 
             except Exception as e:
                 self.logger.error(f"Failed to connect to radare2: {e}")
-                error_handler.handle_error(
-                    e, "r2_connect", {"binary_path": self.binary_path, "r2_session": self}
-                )
+                error_handler.handle_error(e, "r2_connect", {"binary_path": self.binary_path, "r2_session": self})
                 raise R2Exception(f"Connection failed: {e}")
 
     def disconnect(self):
@@ -479,9 +475,7 @@ class R2Session:
 
         return vulnerabilities
 
-    def _analyze_function_vulnerabilities(
-        self, address: Union[str, int]
-    ) -> Dict[str, List[Dict[str, Any]]]:
+    def _analyze_function_vulnerabilities(self, address: Union[str, int]) -> Dict[str, List[Dict[str, Any]]]:
         """Analyze single function for vulnerabilities."""
         addr = hex(address) if isinstance(address, int) else address
         vulns = {
@@ -546,9 +540,7 @@ class R2Session:
                                 break
 
                 # Null pointer dereference
-                if "mov" in line_lower and (
-                    "dword ptr [0]" in line_lower or "qword ptr [0]" in line_lower
-                ):
+                if "mov" in line_lower and ("dword ptr [0]" in line_lower or "qword ptr [0]" in line_lower):
                     vulns["null_pointer"].append(
                         {
                             "line": line.strip(),
@@ -726,9 +718,7 @@ class R2BinaryDiff:
         return results
 
 
-def analyze_binary_comprehensive(
-    binary_path: str, radare2_path: Optional[str] = None
-) -> Dict[str, Any]:
+def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Perform comprehensive radare2 analysis on a binary.
 

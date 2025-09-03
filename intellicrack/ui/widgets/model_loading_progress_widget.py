@@ -274,12 +274,12 @@ class ModelLoadingProgressWidget(QWidget):
         stats = self.llm_manager.get_loading_statistics()
 
         stats_text = f"""
-Pending Tasks: {stats.get('pending', 0)}
-Active Tasks: {stats.get('active', 0)}
-Completed Tasks: {stats.get('completed', 0)}
-Success Rate: {stats.get('success_rate', 0):.1%}
-Total Workers: {stats.get('total_workers', 0)}
-Active Workers: {stats.get('active_workers', 0)}
+Pending Tasks: {stats.get("pending", 0)}
+Active Tasks: {stats.get("active", 0)}
+Completed Tasks: {stats.get("completed", 0)}
+Success Rate: {stats.get("success_rate", 0):.1%}
+Total Workers: {stats.get("total_workers", 0)}
+Active Workers: {stats.get("active_workers", 0)}
 """
         self.stats_text.setPlainText(stats_text.strip())
 

@@ -1,0 +1,404 @@
+{
+  "report_id": "unknown_pattern_report_20250902_191949",
+  "test_scenarios": [
+    {
+      "scenario_id": "unknown_pattern_custom_crypto_20250902_191949",
+      "pattern_type": "ProtectionPatternType.CUSTOM_CRYPTO",
+      "discovery_status": "DiscoveryStatus.PROTECTION_DETECTED",
+      "protection_identified": true,
+      "analysis_duration_seconds": 0.0,
+      "discovery_process": [
+        {
+          "step_number": 1,
+          "timestamp": "2025-09-02T19:19:49.618148",
+          "action_taken": "Initial binary analysis and reconnaissance",
+          "observation": "Examining binary structure and imports for protection indicators",
+          "confidence_level": 0.5,
+          "evidence_found": [
+            "Unusual section found: .crypto",
+            "Unusual section found: .keys",
+            "Protection-related API found: GetTickCount in kernel32.dll",
+            "Protection-related API found: RegOpenKeyExA in advapi32.dll"
+          ],
+          "hypothesis_formed": "Potential protection mechanism present based on binary characteristics"
+        },
+        {
+          "step_number": 2,
+          "timestamp": "2025-09-02T19:19:49.618148",
+          "action_taken": "Pattern recognition and signature analysis",
+          "observation": "Searching for protection patterns and signatures",
+          "confidence_level": 0.44999999999999996,
+          "evidence_found": [
+            "Cryptographic protection pattern detected"
+          ],
+          "hypothesis_formed": "Protection pattern matches known categories with variations"
+        },
+        {
+          "step_number": 3,
+          "timestamp": "2025-09-02T19:19:49.618148",
+          "action_taken": "Dynamic behavioral analysis",
+          "observation": "Monitoring runtime behavior for protection activities",
+          "confidence_level": 0.5,
+          "evidence_found": [],
+          "hypothesis_formed": "Protection behavior consistent with licensing mechanism"
+        },
+        {
+          "step_number": 4,
+          "timestamp": "2025-09-02T19:19:49.618148",
+          "action_taken": "Protection identification and classification",
+          "observation": "Analyzing collected evidence to identify protection type",
+          "confidence_level": 0.8,
+          "evidence_found": [
+            "Protection type identified: Custom Cryptographic License Protection"
+          ],
+          "hypothesis_formed": "Protection mechanism identified with high confidence"
+        }
+      ],
+      "evidence_collected": [
+        "Unusual section found: .crypto",
+        "Unusual section found: .keys",
+        "Protection-related API found: GetTickCount in kernel32.dll",
+        "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+        "Cryptographic protection pattern detected",
+        "Protection type identified: Custom Cryptographic License Protection"
+      ],
+      "final_assessment": {
+        "protection_type_identified": "Custom Cryptographic License Protection",
+        "confidence_level": 0.8,
+        "key_characteristics": [
+          "Novel encryption algorithm",
+          "Dynamic key generation"
+        ],
+        "discovery_method": "Heuristic analysis without prior knowledge",
+        "challenges_encountered": [
+          "Novel cryptographic algorithm not in standard libraries",
+          "Dynamic key generation makes static analysis difficult",
+          "Custom binary format requires reverse engineering",
+          "Encrypted function tables obscure control flow"
+        ],
+        "recommendations": [
+          "Reverse engineer custom crypto algorithm"
+        ]
+      },
+      "bypass_attempted": false,
+      "bypass_successful": false,
+      "compliance_met": true,
+      "error_details": null
+    },
+    {
+      "scenario_id": "unknown_pattern_multi_dll_scattered_20250902_191949",
+      "pattern_type": "ProtectionPatternType.MULTI_DLL_SCATTERED",
+      "discovery_status": "DiscoveryStatus.PROTECTION_DETECTED",
+      "protection_identified": true,
+      "analysis_duration_seconds": 0.0,
+      "discovery_process": [
+        {
+          "step_number": 1,
+          "timestamp": "2025-09-02T19:19:49.620154",
+          "action_taken": "Initial binary analysis and reconnaissance",
+          "observation": "Examining binary structure and imports for protection indicators",
+          "confidence_level": 0.44999999999999996,
+          "evidence_found": [
+            "Protection-related API found: GetTickCount in kernel32.dll",
+            "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+            "Protection-related API found: ValidateLicense in licensing.dll",
+            "Protection-related API found: EncryptData in crypto.dll",
+            "Protection-related API found: GetHardwareID in hardware.dll"
+          ],
+          "hypothesis_formed": "Potential protection mechanism present based on binary characteristics"
+        },
+        {
+          "step_number": 2,
+          "timestamp": "2025-09-02T19:19:49.620154",
+          "action_taken": "Pattern recognition and signature analysis",
+          "observation": "Searching for protection patterns and signatures",
+          "confidence_level": 0.4,
+          "evidence_found": [
+            "Multi-module protection pattern detected"
+          ],
+          "hypothesis_formed": "Protection pattern matches known categories with variations"
+        },
+        {
+          "step_number": 3,
+          "timestamp": "2025-09-02T19:19:49.620154",
+          "action_taken": "Dynamic behavioral analysis",
+          "observation": "Monitoring runtime behavior for protection activities",
+          "confidence_level": 0.5,
+          "evidence_found": [],
+          "hypothesis_formed": "Protection behavior consistent with licensing mechanism"
+        },
+        {
+          "step_number": 4,
+          "timestamp": "2025-09-02T19:19:49.620154",
+          "action_taken": "Protection identification and classification",
+          "observation": "Analyzing collected evidence to identify protection type",
+          "confidence_level": 0.75,
+          "evidence_found": [
+            "Protection type identified: Distributed DLL Protection System"
+          ],
+          "hypothesis_formed": "Protection mechanism identified with high confidence"
+        }
+      ],
+      "evidence_collected": [
+        "Protection-related API found: GetTickCount in kernel32.dll",
+        "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+        "Protection-related API found: ValidateLicense in licensing.dll",
+        "Protection-related API found: EncryptData in crypto.dll",
+        "Protection-related API found: GetHardwareID in hardware.dll",
+        "Multi-module protection pattern detected",
+        "Protection type identified: Distributed DLL Protection System"
+      ],
+      "final_assessment": {
+        "protection_type_identified": "Distributed DLL Protection System",
+        "confidence_level": 0.75,
+        "key_characteristics": [
+          "Protection logic across multiple modules",
+          "Inter-module communication"
+        ],
+        "discovery_method": "Heuristic analysis without prior knowledge",
+        "challenges_encountered": [
+          "Protection logic distributed across multiple modules",
+          "Complex inter-DLL dependencies",
+          "Encrypted communication between modules",
+          "Failure cascade makes single-point bypass difficult"
+        ],
+        "recommendations": [
+          "Analyze inter-DLL dependencies"
+        ]
+      },
+      "bypass_attempted": false,
+      "bypass_successful": false,
+      "compliance_met": true,
+      "error_details": null
+    },
+    {
+      "scenario_id": "unknown_pattern_time_delayed_20250902_191949",
+      "pattern_type": "ProtectionPatternType.TIME_DELAYED",
+      "discovery_status": "DiscoveryStatus.PROTECTION_DETECTED",
+      "protection_identified": true,
+      "analysis_duration_seconds": 0.0,
+      "discovery_process": [
+        {
+          "step_number": 1,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Initial binary analysis and reconnaissance",
+          "observation": "Examining binary structure and imports for protection indicators",
+          "confidence_level": 0.5,
+          "evidence_found": [
+            "Unusual section found: .timer",
+            "Unusual section found: .trigger",
+            "Protection-related API found: GetTickCount in kernel32.dll",
+            "Protection-related API found: RegOpenKeyExA in advapi32.dll"
+          ],
+          "hypothesis_formed": "Potential protection mechanism present based on binary characteristics"
+        },
+        {
+          "step_number": 2,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Pattern recognition and signature analysis",
+          "observation": "Searching for protection patterns and signatures",
+          "confidence_level": 0.4,
+          "evidence_found": [
+            "Time-based protection pattern detected"
+          ],
+          "hypothesis_formed": "Protection pattern matches known categories with variations"
+        },
+        {
+          "step_number": 3,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Dynamic behavioral analysis",
+          "observation": "Monitoring runtime behavior for protection activities",
+          "confidence_level": 0.7,
+          "evidence_found": [
+            "Background threads detected: ['License monitoring thread', 'Timer validation thread']",
+            "Periodic validation detected: ['Every 60 seconds: license re-validation']"
+          ],
+          "hypothesis_formed": "Protection behavior consistent with licensing mechanism"
+        },
+        {
+          "step_number": 4,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Protection identification and classification",
+          "observation": "Analyzing collected evidence to identify protection type",
+          "confidence_level": 0.7,
+          "evidence_found": [
+            "Protection type identified: Time-Delayed License Protection"
+          ],
+          "hypothesis_formed": "Protection mechanism identified with high confidence"
+        }
+      ],
+      "evidence_collected": [
+        "Unusual section found: .timer",
+        "Unusual section found: .trigger",
+        "Protection-related API found: GetTickCount in kernel32.dll",
+        "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+        "Time-based protection pattern detected",
+        "Background threads detected: ['License monitoring thread', 'Timer validation thread']",
+        "Periodic validation detected: ['Every 60 seconds: license re-validation']",
+        "Protection type identified: Time-Delayed License Protection"
+      ],
+      "final_assessment": {
+        "protection_type_identified": "Time-Delayed License Protection",
+        "confidence_level": 0.7,
+        "key_characteristics": [
+          "Delayed protection triggers",
+          "Background monitoring threads"
+        ],
+        "discovery_method": "Heuristic analysis without prior knowledge",
+        "challenges_encountered": [
+          "Initial analysis may miss delayed triggers",
+          "Requires long-term monitoring to detect full pattern",
+          "Background threads not immediately visible",
+          "Time-based logic creates analysis timing challenges"
+        ],
+        "recommendations": [
+          "Long-term monitoring required"
+        ]
+      },
+      "bypass_attempted": false,
+      "bypass_successful": false,
+      "compliance_met": true,
+      "error_details": null
+    },
+    {
+      "scenario_id": "unknown_pattern_hardware_fingerprint_20250902_191949",
+      "pattern_type": "ProtectionPatternType.HARDWARE_FINGERPRINT",
+      "discovery_status": "DiscoveryStatus.PROTECTION_DETECTED",
+      "protection_identified": true,
+      "analysis_duration_seconds": 0.0,
+      "discovery_process": [
+        {
+          "step_number": 1,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Initial binary analysis and reconnaissance",
+          "observation": "Examining binary structure and imports for protection indicators",
+          "confidence_level": 0.35,
+          "evidence_found": [
+            "Protection-related API found: GetTickCount in kernel32.dll",
+            "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+            "Protection-related API found: SetupDiGetDeviceRegistryPropertyA in setupapi.dll"
+          ],
+          "hypothesis_formed": "Potential protection mechanism present based on binary characteristics"
+        },
+        {
+          "step_number": 2,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Pattern recognition and signature analysis",
+          "observation": "Searching for protection patterns and signatures",
+          "confidence_level": 0.44999999999999996,
+          "evidence_found": [
+            "Hardware fingerprinting pattern detected"
+          ],
+          "hypothesis_formed": "Protection pattern matches known categories with variations"
+        },
+        {
+          "step_number": 3,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Dynamic behavioral analysis",
+          "observation": "Monitoring runtime behavior for protection activities",
+          "confidence_level": 0.75,
+          "evidence_found": [
+            "Hardware enumeration behavior detected",
+            "Anti-VM checks detected: ['VMware detection', 'VirtualBox detection', 'Hyper-V detection']"
+          ],
+          "hypothesis_formed": "Protection behavior consistent with licensing mechanism"
+        },
+        {
+          "step_number": 4,
+          "timestamp": "2025-09-02T19:19:49.622159",
+          "action_taken": "Protection identification and classification",
+          "observation": "Analyzing collected evidence to identify protection type",
+          "confidence_level": 0.85,
+          "evidence_found": [
+            "Protection type identified: Hardware-Bound License Protection"
+          ],
+          "hypothesis_formed": "Protection mechanism identified with high confidence"
+        }
+      ],
+      "evidence_collected": [
+        "Protection-related API found: GetTickCount in kernel32.dll",
+        "Protection-related API found: RegOpenKeyExA in advapi32.dll",
+        "Protection-related API found: SetupDiGetDeviceRegistryPropertyA in setupapi.dll",
+        "Hardware fingerprinting pattern detected",
+        "Hardware enumeration behavior detected",
+        "Anti-VM checks detected: ['VMware detection', 'VirtualBox detection', 'Hyper-V detection']",
+        "Protection type identified: Hardware-Bound License Protection"
+      ],
+      "final_assessment": {
+        "protection_type_identified": "Hardware-Bound License Protection",
+        "confidence_level": 0.85,
+        "key_characteristics": [
+          "Hardware fingerprint validation",
+          "Anti-virtualization checks"
+        ],
+        "discovery_method": "Heuristic analysis without prior knowledge",
+        "challenges_encountered": [
+          "Hardware-specific behavior difficult to simulate",
+          "Anti-VM detection may interfere with analysis environment",
+          "Fingerprint algorithm requires reverse engineering",
+          "Hardware dependency makes portable analysis challenging"
+        ],
+        "recommendations": [
+          "Hardware spoofing may be required"
+        ]
+      },
+      "bypass_attempted": false,
+      "bypass_successful": false,
+      "compliance_met": true,
+      "error_details": null
+    }
+  ],
+  "overall_compliance": true,
+  "detection_success_rate": 1.0,
+  "discovery_process_documentation": {
+    "test_date": "2025-09-02T19:19:49.624166",
+    "scenarios_tested": 4,
+    "scenarios_compliant": 4,
+    "detection_rate": "100.0%",
+    "phase_2_5_3_4_requirement": "Protection MUST be identified even if bypass fails",
+    "requirement_met": true,
+    "detailed_results": [
+      {
+        "pattern_type": "custom_crypto",
+        "protection_identified": true,
+        "bypass_attempted": false,
+        "bypass_successful": false,
+        "compliance_met": true,
+        "analysis_duration": "0.00s",
+        "discovery_steps": 4,
+        "evidence_pieces": 6
+      },
+      {
+        "pattern_type": "multi_dll_scattered",
+        "protection_identified": true,
+        "bypass_attempted": false,
+        "bypass_successful": false,
+        "compliance_met": true,
+        "analysis_duration": "0.00s",
+        "discovery_steps": 4,
+        "evidence_pieces": 7
+      },
+      {
+        "pattern_type": "time_delayed",
+        "protection_identified": true,
+        "bypass_attempted": false,
+        "bypass_successful": false,
+        "compliance_met": true,
+        "analysis_duration": "0.00s",
+        "discovery_steps": 4,
+        "evidence_pieces": 8
+      },
+      {
+        "pattern_type": "hardware_fingerprint",
+        "protection_identified": true,
+        "bypass_attempted": false,
+        "bypass_successful": false,
+        "compliance_met": true,
+        "analysis_duration": "0.00s",
+        "discovery_steps": 4,
+        "evidence_pieces": 7
+      }
+    ]
+  },
+  "generated_at": "2025-09-02T19:19:49.624166"
+}

@@ -152,9 +152,7 @@ class VMDetector(BaseDetector):
             # Calculate evasion score (how hard to evade detection)
             results["evasion_score"] = self._calculate_evasion_score(results["detections"])
 
-            self.logger.info(
-                f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})"
-            )
+            self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
             return results
 
         except Exception as e:
@@ -183,10 +181,7 @@ class VMDetector(BaseDetector):
                     for processor in c.Win32_Processor():
                         if hasattr(processor, "Manufacturer"):
                             manufacturer = processor.Manufacturer.lower()
-                            if any(
-                                vm in manufacturer
-                                for vm in ["vmware", "virtualbox", "microsoft hv"]
-                            ):
+                            if any(vm in manufacturer for vm in ["vmware", "virtualbox", "microsoft hv"]):
                                 details["vendor"] = manufacturer
                                 return True, 0.8, details
                 except ImportError as e:
@@ -292,9 +287,7 @@ class VMDetector(BaseDetector):
                 for process in sigs.get("processes", []):
                     if process.lower() in processes:
                         details["detected_processes"].append(process)
-                        details["vm_type"] = (
-                            vm_type  # Use vm_type to indicate which VM was detected
-                        )
+                        details["vm_type"] = vm_type  # Use vm_type to indicate which VM was detected
 
             if details["detected_processes"]:
                 return True, 0.7, details
@@ -407,7 +400,7 @@ class VMDetector(BaseDetector):
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                     output = result.stdout if result else ""
                 else:
@@ -420,7 +413,7 @@ class VMDetector(BaseDetector):
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                     output = result.stdout if result else ""
                 else:
@@ -500,7 +493,7 @@ class VMDetector(BaseDetector):
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
                     drivers = result.stdout.lower() if result and result.stdout else ""
                 else:

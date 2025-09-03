@@ -1,0 +1,90 @@
+{
+  "scenario_id": "unknown_pattern_custom_crypto_20250902_191949",
+  "pattern_type": "custom_crypto",
+  "simulation_timestamp": "2025-09-02T19:19:49.616142",
+  "binary_characteristics": {
+    "file_type": "PE32 executable",
+    "size_bytes": 103611,
+    "entry_point": "0x0040d25e",
+    "sections": [
+      {
+        "name": ".text",
+        "virtual_address": "0x00401000",
+        "size": "0x10000",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".data",
+        "virtual_address": "0x00411000",
+        "size": "0x5000",
+        "characteristics": "readable_writable"
+      },
+      {
+        "name": ".rsrc",
+        "virtual_address": "0x00416000",
+        "size": "0x3000",
+        "characteristics": "readable"
+      },
+      {
+        "name": ".crypto",
+        "virtual_address": "0x00419000",
+        "size": "0x2000",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".keys",
+        "virtual_address": "0x0041B000",
+        "size": "0x1000",
+        "characteristics": "readable"
+      }
+    ],
+    "imports": [
+      {
+        "dll": "kernel32.dll",
+        "functions": [
+          "CreateThread",
+          "GetTickCount",
+          "Sleep"
+        ]
+      },
+      {
+        "dll": "user32.dll",
+        "functions": [
+          "MessageBoxA",
+          "GetWindowTextA"
+        ]
+      },
+      {
+        "dll": "advapi32.dll",
+        "functions": [
+          "RegOpenKeyExA",
+          "RegQueryValueExA"
+        ]
+      }
+    ],
+    "exports": [
+      "MainEntryPoint"
+    ]
+  },
+  "protection_implementation": {
+    "crypto_algorithm": "Custom XOR-based cipher with dynamic key rotation",
+    "key_derivation": "Hardware MAC + timestamp based key generation",
+    "validation_method": "Multi-stage license verification with checksums",
+    "obfuscation_level": "High - encrypted function tables",
+    "license_format": "Binary blob with custom encoding",
+    "anti_debug": "Custom timing-based detection"
+  },
+  "behavioral_patterns": {
+    "network_activity": [],
+    "file_operations": [],
+    "registry_operations": [],
+    "process_operations": []
+  },
+  "detection_challenges": [
+    "Novel cryptographic algorithm not in standard libraries",
+    "Dynamic key generation makes static analysis difficult",
+    "Custom binary format requires reverse engineering",
+    "Encrypted function tables obscure control flow"
+  ],
+  "analysis_notes": "Unknown pattern: Custom license validation using novel cryptographic algorithm"
+}

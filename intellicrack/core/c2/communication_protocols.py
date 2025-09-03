@@ -90,9 +90,7 @@ class BaseProtocol:
 
     async def start(self):
         """Start the protocol handler."""
-        self.logger.info(
-            "Starting %s protocol handler on %s:%s", self.__class__.__name__, self.host, self.port
-        )
+        self.logger.info("Starting %s protocol handler on %s:%s", self.__class__.__name__, self.host, self.port)
         self.connected = True
         return True
 
@@ -436,9 +434,7 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_beacon(self, request):
         """Handle beacon endpoint."""
         try:
-            self.logger.debug(
-                f"Processing beacon request from {getattr(request, 'remote', 'unknown')}"
-            )
+            self.logger.debug(f"Processing beacon request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
@@ -480,9 +476,7 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_task(self, request):
         """Handle task endpoint."""
         try:
-            self.logger.debug(
-                f"Processing task request from {getattr(request, 'remote', 'unknown')}"
-            )
+            self.logger.debug(f"Processing task request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
@@ -523,9 +517,7 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_upload(self, request):
         """Handle file upload endpoint."""
         try:
-            self.logger.debug(
-                f"Processing upload request from {getattr(request, 'remote', 'unknown')}"
-            )
+            self.logger.debug(f"Processing upload request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
@@ -566,9 +558,7 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_download(self, request):
         """Handle file download endpoint."""
         try:
-            self.logger.debug(
-                f"Processing download request from {getattr(request, 'remote', 'unknown')}"
-            )
+            self.logger.debug(f"Processing download request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
@@ -789,9 +779,7 @@ class DnsProtocol(BaseProtocol):
         authority_rrs = 0
         additional_rrs = 0
 
-        header = struct.pack(
-            "!HHHHHH", transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs
-        )
+        header = struct.pack("!HHHHHH", transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs)
 
         # Encode domain name
         qname = b""
@@ -896,9 +884,7 @@ class DnsProtocol(BaseProtocol):
             if offset + 10 > len(response):
                 break
 
-            rr_type, rr_class, ttl, rdlength = struct.unpack(
-                "!HHIH", response[offset : offset + 10]
-            )
+            rr_type, rr_class, ttl, rdlength = struct.unpack("!HHIH", response[offset : offset + 10])
             self.logger.debug(
                 "RR - Type: %s, Class: %s, TTL: %s, Length: %s",
                 rr_type,
@@ -970,9 +956,7 @@ class DnsProtocol(BaseProtocol):
             length = rdata[txt_offset]
             txt_offset += 1
             if txt_offset + length <= len(rdata):
-                txt_chunk = rdata[txt_offset : txt_offset + length].decode(
-                    "utf-8", errors="ignore"
-                )
+                txt_chunk = rdata[txt_offset : txt_offset + length].decode("utf-8", errors="ignore")
                 txt_data += txt_chunk
                 txt_offset += length
             else:
@@ -996,9 +980,7 @@ class DnsProtocol(BaseProtocol):
                     if missing_padding:
                         data_part += "=" * (4 - missing_padding)
 
-                    decoded = base64.b64decode(data_part).decode(
-                        "utf-8", errors="ignore"
-                    )
+                    decoded = base64.b64decode(data_part).decode("utf-8", errors="ignore")
                     if decoded:
                         extracted_data.append(decoded)
                 except Exception:
@@ -1054,9 +1036,7 @@ class DnsProtocol(BaseProtocol):
 
     def _combine_dns_responses(self, responses: list[dict]) -> str:
         """Combine multiple DNS responses into original data."""
-        return "".join(
-            response.get("data", "") for response in responses if isinstance(response, dict)
-        )
+        return "".join(response.get("data", "") for response in responses if isinstance(response, dict))
 
     async def _dns_handler_loop(self):
         """Main DNS packet handling loop."""

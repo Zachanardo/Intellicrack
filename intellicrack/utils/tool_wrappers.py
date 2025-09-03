@@ -50,9 +50,7 @@ except ImportError:
     def wrapper_run_frida_script(app_instance, parameters):
         """Fallback wrapper for Frida script execution."""
         logger = __import__("logging").getLogger(__name__)
-        logger.debug(
-            f"Frida wrapper fallback called with app_instance: {app_instance is not None}, parameters: {parameters}"
-        )
+        logger.debug(f"Frida wrapper fallback called with app_instance: {app_instance is not None}, parameters: {parameters}")
         return {"success": False, "error": "Frida wrapper not available"}
 
 

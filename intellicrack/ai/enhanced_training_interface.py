@@ -198,8 +198,9 @@ except ImportError as e:
         FigureCanvasAgg,
         matplotlib,
     )
+
     if HAS_MATPLOTLIB:
-        matplotlib.use('Agg')  # Use non-interactive backend
+        matplotlib.use("Agg")  # Use non-interactive backend
 
     class PlotWidget:
         """Matplotlib-based PlotWidget for when pyqtgraph is not available."""
@@ -234,11 +235,11 @@ except ImportError as e:
                 return self
 
             # Extract plot parameters
-            pen = kwargs.get('pen', 'b-')
-            name = kwargs.get('name', f'Plot {len(self._plots) + 1}')
+            pen = kwargs.get("pen", "b-")
+            name = kwargs.get("name", f"Plot {len(self._plots) + 1}")
 
             # Create the plot
-            line, = self.ax.plot(x_data, y_data, pen, label=name)
+            (line,) = self.ax.plot(x_data, y_data, pen, label=name)
             self._plots.append(line)
 
             # Store data for reference
@@ -264,11 +265,11 @@ except ImportError as e:
                 self._labels = {}
             self._labels[axis] = {"text": text, "kwargs": kwargs}
 
-            if axis.lower() == 'left' or axis.lower() == 'y':
+            if axis.lower() == "left" or axis.lower() == "y":
                 self.ax.set_ylabel(text)
-            elif axis.lower() == 'bottom' or axis.lower() == 'x':
+            elif axis.lower() == "bottom" or axis.lower() == "x":
                 self.ax.set_xlabel(text)
-            elif axis.lower() == 'top':
+            elif axis.lower() == "top":
                 self.ax.set_title(text)
 
             self._update_display()
@@ -293,7 +294,7 @@ except ImportError as e:
             self._grid_settings.update(kwargs)
 
             # Apply grid settings
-            self.ax.grid(True, which='both', axis='both' if show_x and show_y else ('x' if show_x else 'y'))
+            self.ax.grid(True, which="both", axis="both" if show_x and show_y else ("x" if show_x else "y"))
             self._update_display()
 
         def setBackground(self, *args, **kwargs):
@@ -327,7 +328,7 @@ except ImportError as e:
 
         def export(self, filename, dpi=100):
             """Export plot to file."""
-            self.figure.savefig(filename, dpi=dpi, bbox_inches='tight')
+            self.figure.savefig(filename, dpi=dpi, bbox_inches="tight")
             return True
 
 
@@ -450,9 +451,9 @@ class TrainingThread(QThread):
 
                 try:
                     # Real training data processing
-                    if hasattr(self.config, 'training_data') and self.config.training_data:
+                    if hasattr(self.config, "training_data") and self.config.training_data:
                         # Process actual training batches
-                        batch_size = getattr(self.config, 'batch_size', 32)
+                        batch_size = getattr(self.config, "batch_size", 32)
                         total_samples = len(self.config.training_data)
                         num_batches = max(1, total_samples // batch_size)
 
@@ -477,7 +478,7 @@ class TrainingThread(QThread):
                             epoch_accuracy /= num_batches
 
                         # Real validation if validation data available
-                        if hasattr(self.config, 'validation_data') and self.config.validation_data:
+                        if hasattr(self.config, "validation_data") and self.config.validation_data:
                             val_loss, val_accuracy = self._evaluate_validation_data(self.config.validation_data)
                     else:
                         # Fallback to synthetic training data generation
@@ -518,9 +519,7 @@ class TrainingThread(QThread):
 
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
-                self.log_message.emit(
-                    f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {epoch_accuracy:.4f}"
-                )
+                self.log_message.emit(f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {epoch_accuracy:.4f}")
 
                 # Early stopping based on validation performance
                 if self.config.use_early_stopping and _epoch > 20:
@@ -563,8 +562,8 @@ class TrainingThread(QThread):
                 try:
                     # Extract features and labels from sample
                     if isinstance(sample, dict):
-                        features = sample.get('features', sample.get('data', []))
-                        label = sample.get('label', sample.get('target', 0))
+                        features = sample.get("features", sample.get("data", []))
+                        label = sample.get("label", sample.get("target", 0))
                     elif isinstance(sample, (list, tuple)) and len(sample) >= 2:
                         features, label = sample[0], sample[1]
                     else:
@@ -615,8 +614,8 @@ class TrainingThread(QThread):
                 try:
                     # Extract features and labels
                     if isinstance(sample, dict):
-                        features = sample.get('features', sample.get('data', []))
-                        label = sample.get('label', sample.get('target', 0))
+                        features = sample.get("features", sample.get("data", []))
+                        label = sample.get("label", sample.get("target", 0))
                     elif isinstance(sample, (list, tuple)) and len(sample) >= 2:
                         features, label = sample[0], sample[1]
                     else:
@@ -652,35 +651,27 @@ class TrainingThread(QThread):
         try:
             # Generate realistic synthetic data based on binary analysis patterns
             synthetic_data = []
-            batch_size = getattr(self.config, 'batch_size', 32)
+            batch_size = getattr(self.config, "batch_size", 32)
 
             for i in range(batch_size):
                 # Create synthetic binary analysis features
                 sample = {
-                    'features': [
+                    "features": [
                         # Binary size features
                         hash((i * 13) % 1000) / 1000.0,
                         hash((i * 17) % 10000) / 10000.0,
-
                         # Entropy features
                         hash((i * 19) % 100) / 100.0,
-
                         # Instruction pattern features
                         hash((i * 23) % 256) / 256.0,
                         hash((i * 29) % 512) / 512.0,
-
                         # Import/export features
                         hash((i * 31) % 64) / 64.0,
-
                         # String pattern features
                         hash((i * 37) % 128) / 128.0,
                     ],
-                    'label': (i * 7) % 2,  # Binary classification
-                    'metadata': {
-                        'synthetic': True,
-                        'sample_id': i,
-                        'generation_epoch': getattr(self, 'current_epoch', 0)
-                    }
+                    "label": (i * 7) % 2,  # Binary classification
+                    "metadata": {"synthetic": True, "sample_id": i, "generation_epoch": getattr(self, "current_epoch", 0)},
                 }
                 synthetic_data.append(sample)
 
@@ -689,7 +680,7 @@ class TrainingThread(QThread):
         except Exception as gen_error:
             self.log_message.emit(f"Synthetic data generation error: {gen_error}")
             # Return minimal fallback data
-            return [{'features': [0.5] * 7, 'label': 0} for _ in range(8)]
+            return [{"features": [0.5] * 7, "label": 0} for _ in range(8)]
 
     def _extract_features_from_sample(self, sample):
         """Extract features from a raw sample."""
@@ -702,11 +693,7 @@ class TrainingThread(QThread):
             elif isinstance(sample, str):
                 # Convert string to feature vector based on hash
                 h = hash(sample)
-                return [
-                    (h % 1000) / 1000.0,
-                    ((h >> 10) % 1000) / 1000.0,
-                    ((h >> 20) % 1000) / 1000.0
-                ]
+                return [(h % 1000) / 1000.0, ((h >> 10) % 1000) / 1000.0, ((h >> 20) % 1000) / 1000.0]
             else:
                 # Default feature extraction
                 return [0.5, 0.5, 0.5]
@@ -716,10 +703,10 @@ class TrainingThread(QThread):
     def _extract_label_from_sample(self, sample, index):
         """Extract label from a sample."""
         try:
-            if hasattr(sample, 'label'):
+            if hasattr(sample, "label"):
                 return sample.label
-            elif isinstance(sample, dict) and 'label' in sample:
-                return sample['label']
+            elif isinstance(sample, dict) and "label" in sample:
+                return sample["label"]
             else:
                 # Generate deterministic label based on sample and index
                 return (hash(str(sample)) + index) % 2
@@ -750,7 +737,7 @@ class TrainingThread(QThread):
             hidden2 = max(0, hidden2)  # ReLU activation
 
             # Output layer
-            output = (hidden1 * 0.6 + hidden2 * 0.4)
+            output = hidden1 * 0.6 + hidden2 * 0.4
 
             # Add training progression
             if not validation:
@@ -773,9 +760,9 @@ class TrainingThread(QThread):
             label = float(label)
 
             if label == 1.0:
-                loss = -((2.718 ** 0) * (prediction + 1e-7))
+                loss = -((2.718**0) * (prediction + 1e-7))
             else:
-                loss = -((2.718 ** 0) * (1 - prediction + 1e-7))
+                loss = -((2.718**0) * (1 - prediction + 1e-7))
 
             return abs(loss)
 
@@ -829,14 +816,10 @@ class TrainingVisualizationWidget(QWidget):
         self.training_data["accuracy"].append(accuracy)
 
         self.loss_plot.clear()
-        self.loss_plot.plot(
-            self.training_data["epochs"], self.training_data["loss"], pen="b", symbol="o"
-        )
+        self.loss_plot.plot(self.training_data["epochs"], self.training_data["loss"], pen="b", symbol="o")
 
         self.accuracy_plot.clear()
-        self.accuracy_plot.plot(
-            self.training_data["epochs"], self.training_data["accuracy"], pen="g", symbol="s"
-        )
+        self.accuracy_plot.plot(self.training_data["epochs"], self.training_data["accuracy"], pen="g", symbol="s")
 
     def clear_plots(self):
         """Clear all training visualization plots."""
@@ -1316,11 +1299,11 @@ class HyperparameterOptimizationWidget(QWidget):
             eval_data = self._generate_evaluation_dataset(size=min(100, batch_size * 5))
             if not eval_data:
                 # Fallback: use available training data subset
-                eval_data = getattr(self.config, 'training_data', [])[:100] if hasattr(self.config, 'training_data') else []
+                eval_data = getattr(self.config, "training_data", [])[:100] if hasattr(self.config, "training_data") else []
 
             if not eval_data:
                 # Create minimal synthetic data for evaluation
-                eval_data = [{'features': [i * 0.1, (i + 1) * 0.15, (i + 2) * 0.2], 'label': i % 2} for i in range(50)]
+                eval_data = [{"features": [i * 0.1, (i + 1) * 0.15, (i + 2) * 0.2], "label": i % 2} for i in range(50)]
 
             # Perform mini training session with hyperparameters
             total_loss = 0.0
@@ -1347,7 +1330,7 @@ class HyperparameterOptimizationWidget(QWidget):
 
                 # Apply learning rate effect
                 lr_factor = learning_rate * (1.0 - 0.1 * eval_epoch)  # Learning rate decay
-                epoch_loss *= (1.0 + lr_factor)  # Higher LR can increase loss initially
+                epoch_loss *= 1.0 + lr_factor  # Higher LR can increase loss initially
 
                 total_loss += epoch_loss
                 correct_predictions += epoch_correct
@@ -1365,7 +1348,7 @@ class HyperparameterOptimizationWidget(QWidget):
             # Adjust loss based on learning rate (too high or too low LR hurts performance)
             optimal_lr = 0.001
             lr_penalty = abs(learning_rate - optimal_lr) / optimal_lr
-            avg_loss *= (1.0 + lr_penalty * 0.5)
+            avg_loss *= 1.0 + lr_penalty * 0.5
 
             return max(0.0, avg_accuracy), max(0.001, avg_loss)
 
@@ -1387,8 +1370,8 @@ class HyperparameterOptimizationWidget(QWidget):
             for sample in batch:
                 # Extract features and labels
                 if isinstance(sample, dict):
-                    features = sample.get('features', [0.1, 0.2, 0.3])
-                    label = sample.get('label', 0)
+                    features = sample.get("features", [0.1, 0.2, 0.3])
+                    label = sample.get("label", 0)
                 else:
                     features = [0.1, 0.2, 0.3]  # Default features
                     label = 0
@@ -1462,14 +1445,14 @@ class HyperparameterOptimizationWidget(QWidget):
                     (i * 0.03) % 1.0,  # Feature 2: linear with wraparound
                     ((i * 13) % 7) * 0.14,  # Feature 3: pseudo-random pattern
                     (i / size),  # Feature 4: normalized index
-                    ((i ** 2) % 100) * 0.01,  # Feature 5: quadratic pattern
-                    (1.0 / (i + 1)) if i < 50 else (0.5 / (size - i + 1))  # Feature 6: inverse patterns
+                    ((i**2) % 100) * 0.01,  # Feature 5: quadratic pattern
+                    (1.0 / (i + 1)) if i < 50 else (0.5 / (size - i + 1)),  # Feature 6: inverse patterns
                 ]
 
                 # Generate label based on features for consistent evaluation
                 label = 1 if (features[0] + features[1] + features[2]) > 0.3 else 0
 
-                dataset.append({'features': features, 'label': label})
+                dataset.append({"features": features, "label": label})
 
             return dataset
 
@@ -1482,9 +1465,7 @@ class HyperparameterOptimizationWidget(QWidget):
         self.results_table.insertRow(row)
 
         self.results_table.setItem(row, 0, QTableWidgetItem(str(result["trial"])))
-        self.results_table.setItem(
-            row, 1, QTableWidgetItem(f"{result['params']['learning_rate']:.6f}")
-        )
+        self.results_table.setItem(row, 1, QTableWidgetItem(f"{result['params']['learning_rate']:.6f}"))
         self.results_table.setItem(row, 2, QTableWidgetItem(str(result["params"]["batch_size"])))
         self.results_table.setItem(row, 3, QTableWidgetItem(str(result["params"]["hidden_layers"])))
         self.results_table.setItem(row, 4, QTableWidgetItem(f"{result['accuracy']:.4f}"))
@@ -1879,9 +1860,7 @@ class EnhancedTrainingInterface(QDialog):
         """Handle training errors."""
         self.reset_ui_state()
         self.status_label.setText(f"Training error: {error_message}")
-        QMessageBox.critical(
-            self, "Training Error", f"An error occurred during training:\n\n{error_message}"
-        )
+        QMessageBox.critical(self, "Training Error", f"An error occurred during training:\n\n{error_message}")
 
     def reset_ui_state(self):
         """Reset UI to initial state."""
@@ -1940,9 +1919,7 @@ class EnhancedTrainingInterface(QDialog):
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(asdict(self.config), f, indent=2)
-                QMessageBox.information(
-                    self, "Configuration Saved", f"Configuration saved to {file_path}"
-                )
+                QMessageBox.information(self, "Configuration Saved", f"Configuration saved to {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
@@ -1969,9 +1946,7 @@ class EnhancedTrainingInterface(QDialog):
                 # Update UI
                 self.update_ui_from_config()
 
-                QMessageBox.information(
-                    self, "Configuration Loaded", f"Configuration loaded from {file_path}"
-                )
+                QMessageBox.information(self, "Configuration Loaded", f"Configuration loaded from {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")

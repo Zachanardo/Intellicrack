@@ -362,9 +362,7 @@ class NetworkForensicsEngine:
                     unique_artifacts.append(artifact)
 
             # Log artifact extraction progress
-            self.logger.info(
-                f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data"
-            )
+            self.logger.info(f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data")
 
             return unique_artifacts
         except Exception as e:
@@ -388,11 +386,7 @@ class NetworkForensicsEngine:
                 return protocols
 
             # Analyze packet data for protocol signatures
-            data = (
-                packet_data.lower()
-                if isinstance(packet_data, bytes)
-                else packet_data.encode().lower()
-            )
+            data = packet_data.lower() if isinstance(packet_data, bytes) else packet_data.encode().lower()
 
             # HTTP/HTTPS detection
             http_patterns = [
@@ -500,9 +494,7 @@ class NetworkForensicsEngine:
             if protocols:
                 self.logger.info(f"Detected protocols in packet data: {', '.join(protocols)}")
             else:
-                self.logger.debug(
-                    f"No known protocols detected in {len(packet_data)} bytes of packet data"
-                )
+                self.logger.debug(f"No known protocols detected in {len(packet_data)} bytes of packet data")
 
             return list(set(protocols))  # Remove duplicates
 

@@ -23,6 +23,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+
 from pathlib import Path
 
 from intellicrack.logger import logger
@@ -58,8 +59,7 @@ def _resolve_path_with_fallback(
         old_path = Path(old_absolute_path).resolve()
         if old_path.exists():
             logger.warning(
-                f"Using fallback path for '{new_relative_path}': {old_path}. "
-                f"Consider migrating to new location: {new_path}",
+                f"Using fallback path for '{new_relative_path}': {old_path}. Consider migrating to new location: {new_path}",
             )
             return old_path
 

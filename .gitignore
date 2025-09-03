@@ -263,45 +263,6 @@ dev/**
 tools/
 tools/**
 
-# Development analysis files
-analyze_stubs.py
-stub_analysis_report.txt
-*_analysis.py
-*_analysis.md
-*_analysis_results.md
-*_scan.py
-*_fixer.py
-*_patterns.md
-
-# Test artifacts
-test_launch_*
-comprehensive_placeholder_check.py
-detailed_placeholder_analysis.py
-fix_tuple_imports.py
-quick_integration_check.py
-verify_integration.py
-
-# Development documentation
-COMPLETE_IMPLEMENTATION_TODO.md
-PRODUCTION_REFACTORING_REPORT.md
-SCRIPT_ENHANCEMENT_PLAN.md
-PROJECT_STRUCTURE_REORGANIZATION_DETAILED.md
-MissingMethods.md
-FIXES_APPLIED.md
-INSTALLATION.md
-REFACTORING*.md
-
-# Pylint and error analysis
-pylint_errors*.txt
-*_errors.txt
-error_analysis.txt
-combined_errors.txt
-full_pylint_errors.txt
-core_errors.txt
-scripts_errors.txt
-all_errors_found.txt
-missing_*_list.txt
-
 # ==============================================================================
 # SECURITY AND SECRETS
 # ==============================================================================
@@ -345,6 +306,7 @@ Codex*.ps1
 *codex*.ps1
 GeminiCLI.ps1
 Codex.ps1
+QWEN.ps1
 
 # AI cache and configs
 .llm_cache/
@@ -573,7 +535,44 @@ docker-compose.override.yml
 
 # JSON results and reports
 *_integration_test_report*.json
-*_scan_results*.json# ==============================================================================
+*_scan_results*.json
+
+# ==============================================================================
+# NEW ADDITIONS - RUST AND DEVELOPMENT FILES
+# ==============================================================================
+# Rust target directory and build artifacts
+intellicrack-launcher/target/
+target/
+
+# Java tools
+*.jar
+checkstyle.jar
+
+# Large memory dumps and validation files
+*.dump
+*.mem
+tests/validation_system/forensic_evidence/
+tests/validation_system/certified_ground_truth/
+tests/validation_system/reports/
+tests/validation_system/tests/
+
+# AI configuration files
+gemini_cli_config.json
+GEMINI.md
+QWEN.md
+
+# Project upgrade documentation (temporary)
+intellicrack_16_point_upgrade.md
+
+# Large phase documentation (keep essential ones)
+docs/phase_documentation/
+
+# Additional helper files
+privilege_escalation_helpers.py
+
+# Secret keys and authentication
+.secret_key
+*.secret# ==============================================================================
 # ENVIRONMENT ACTIVATION
 # ==============================================================================
 # Direnv
@@ -602,16 +601,8 @@ mamba_env/
 mamba_env/**
 
 # ==============================================================================
-# ROOT DIRECTORY MD FILES AND TEMPORARY FILES
+# ROOT DIRECTORY FILES AND TEMPORARY FILES
 # ==============================================================================
-# Exclude all .md files in root except essential ones
-/*.md
-!README.md
-!CONTRIBUTING.md
-!CODE_OF_CONDUCT.md
-!CHANGELOG.md
-!LICENSE
-
 # Temporary analysis files from mock/stub scanning
 mock_objects.txt
 placeholder_todos.txt

@@ -162,8 +162,7 @@ class DIEAnalysisTool:
             # Add heuristic detections
             if analysis.heuristic_detections:
                 result["heuristic_detections"] = [
-                    {"name": det.name, "type": det.type.value, "confidence": det.confidence}
-                    for det in analysis.heuristic_detections
+                    {"name": det.name, "type": det.type.value, "confidence": det.confidence} for det in analysis.heuristic_detections
                 ]
 
             # Check if license pattern analysis is needed
@@ -279,9 +278,7 @@ class DIEAnalysisTool:
         }
         return categories.get(protection_type, "unknown")
 
-    def _generate_bypass_recommendations(
-        self, analysis: AdvancedProtectionAnalysis
-    ) -> Dict[str, List[str]]:
+    def _generate_bypass_recommendations(self, analysis: AdvancedProtectionAnalysis) -> Dict[str, List[str]]:
         """Generate bypass recommendations based on detections"""
         recommendations = {}
 
@@ -564,9 +561,7 @@ class DIEAnalysisTool:
 
         # Compare import hashes if available
         if analysis1.import_hash and analysis2.import_hash:
-            comparison["import_hash_match"] = (
-                analysis1.import_hash.imphash == analysis2.import_hash.imphash
-            )
+            comparison["import_hash_match"] = analysis1.import_hash.imphash == analysis2.import_hash.imphash
 
         return comparison
 
@@ -596,16 +591,12 @@ class DIEAnalysisTool:
         # Check for suspicious strings related to licensing
         if analysis.suspicious_strings:
             for string_info in analysis.suspicious_strings:
-                if any(
-                    keyword in string_info.value.lower() for keyword in ["license", "serial", "key"]
-                ):
+                if any(keyword in string_info.value.lower() for keyword in ["license", "serial", "key"]):
                     return True
 
         return False
 
-    def _analyze_license_patterns_for_llm(
-        self, file_path: str, analysis: AdvancedProtectionAnalysis
-    ) -> Dict[str, Any]:
+    def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> Dict[str, Any]:
         """Analyze license patterns for LLM consumption"""
         try:
             # Prepare input data for AI license analysis
@@ -662,9 +653,7 @@ class DIEAnalysisTool:
 
                 # Add protection-specific recommendations
                 if license_analysis.get("license_type") != "unknown":
-                    license_analysis["llm_guidance"] = self._get_license_llm_guidance(
-                        license_analysis["license_type"], analysis.detections
-                    )
+                    license_analysis["llm_guidance"] = self._get_license_llm_guidance(license_analysis["license_type"], analysis.detections)
 
             return license_analysis
 
@@ -715,9 +704,7 @@ class DIEAnalysisTool:
                 elif "hasp" in name_lower:
                     guidance += " HASP detected: Monitor hasp_login calls and feature ID checks."
                 elif "codemeter" in name_lower:
-                    guidance += (
-                        " CodeMeter detected: Analyze CmContainer access and license queries."
-                    )
+                    guidance += " CodeMeter detected: Analyze CmContainer access and license queries."
 
         return guidance
 

@@ -531,9 +531,7 @@ class SecretsManager:
             metadata = {
                 "total_keys": len(self._cache),
                 "encrypted_keys": [],
-                "last_sync": os.path.getmtime(self.secrets_file)
-                if self.secrets_file.exists()
-                else None,
+                "last_sync": os.path.getmtime(self.secrets_file) if self.secrets_file.exists() else None,
             }
 
             # Add key names (but not values) to metadata

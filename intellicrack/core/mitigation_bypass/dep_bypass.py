@@ -69,11 +69,7 @@ class DEPBypass:
                 analysis_confidence = min(analysis_confidence + 0.2, 1.0)
 
         # Success is based on whether we found viable bypass techniques
-        analysis_success = (
-            recommended_technique is not None
-            and analysis_confidence > 0.3
-            and binary_info is not None
-        )
+        analysis_success = recommended_technique is not None and analysis_confidence > 0.3 and binary_info is not None
 
         return {
             "success": analysis_success,
@@ -81,9 +77,7 @@ class DEPBypass:
             "recommended": recommended_technique,
             "confidence": analysis_confidence,
             "binary_analysis": {
-                "architecture": binary_info.get("architecture", "unknown")
-                if binary_info
-                else "unknown",
+                "architecture": binary_info.get("architecture", "unknown") if binary_info else "unknown",
                 "gadget_availability": binary_info.get("gadget_count", 0) if binary_info else 0,
                 "import_functions": len(binary_info.get("imports", [])) if binary_info else 0,
             },

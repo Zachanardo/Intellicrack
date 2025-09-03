@@ -78,9 +78,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(["--offset", hex(offset)])
-                logger.info(
-                    f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer"
-                )
+                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
 
                 # Create offset sync file for advanced integration
                 try:
@@ -117,7 +115,7 @@ class IntellicrackHexProtectionIntegration(QObject):
     def _cleanup_sync_files(self):
         """Clean up temporary sync files after protection viewer closes."""
         # Stop the sync timer
-        if hasattr(self, 'sync_timer') and self.sync_timer:
+        if hasattr(self, "sync_timer") and self.sync_timer:
             self.sync_timer.stop()
 
         try:
@@ -298,6 +296,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             # Try to import and check the hex widget class
             try:
                 from .hex_widget import HexViewerWidget
+
                 widget_class = HexViewerWidget
             except ImportError:
                 return features
@@ -308,12 +307,13 @@ class IntellicrackHexProtectionIntegration(QObject):
         features["Basic Viewing"] = True
 
         # Check for search capabilities
-        if hasattr(widget_class, 'search') or hasattr(widget_class, 'find_text'):
+        if hasattr(widget_class, "search") or hasattr(widget_class, "find_text"):
             features["Text Search"] = True
 
         # Check for advanced search module
         try:
             from .advanced_search import AdvancedSearchEngine
+
             _ = AdvancedSearchEngine.__name__  # Verify advanced search capabilities
             features["Advanced Search"] = True
             features["ANSI/Unicode Search"] = True
@@ -324,22 +324,24 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for export capabilities
         try:
             from .export_dialog import ExportDialog
+
             _ = ExportDialog.__name__  # Verify export dialog capabilities
             features["Data Export"] = True
         except ImportError:
             pass
 
         # Check for hex editing
-        if hasattr(widget_class, 'set_read_only') or hasattr(widget_class, 'edit_mode'):
+        if hasattr(widget_class, "set_read_only") or hasattr(widget_class, "edit_mode"):
             features["Hex Editing"] = True
 
         # Check for bookmarks
-        if hasattr(widget_class, 'add_bookmark') or hasattr(widget_class, 'bookmarks'):
+        if hasattr(widget_class, "add_bookmark") or hasattr(widget_class, "bookmarks"):
             features["Bookmarks"] = True
 
         # Check for highlighting
         try:
             from .hex_highlighter import HexHighlighter
+
             _ = HexHighlighter.__name__  # Verify highlighting capabilities are available
             features["Highlighting"] = True
         except ImportError:
@@ -348,13 +350,14 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for multi-view capabilities
         if self.hex_widget:
             parent = self.hex_widget.parent()
-            if parent and hasattr(parent, 'split_view_horizontal'):
+            if parent and hasattr(parent, "split_view_horizontal"):
                 features["Multi-View"] = True
         else:
             # Check if split view methods exist in dialog
             try:
                 from .hex_dialog import HexViewerDialog
-                if hasattr(HexViewerDialog, 'split_view_horizontal'):
+
+                if hasattr(HexViewerDialog, "split_view_horizontal"):
                     features["Multi-View"] = True
             except ImportError:
                 pass
@@ -362,6 +365,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for performance monitoring
         try:
             from .performance_monitor import PerformanceMonitor
+
             _ = PerformanceMonitor.__name__  # Verify performance monitoring capabilities are available
             features["Performance Monitoring"] = True
         except ImportError:
@@ -370,6 +374,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for templates
         try:
             from .templates import TemplateEngine
+
             _ = TemplateEngine.__name__  # Verify template engine capabilities are available
             features["Templates"] = True
         except ImportError:
@@ -378,6 +383,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for file comparison
         try:
             from .file_compare import BinaryComparer
+
             _ = BinaryComparer.__name__  # Verify binary comparison capabilities are available
             features["File Comparison"] = True
         except ImportError:
@@ -386,6 +392,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for printing
         try:
             from .print_dialog import PrintOptionsDialog
+
             _ = PrintOptionsDialog.__name__  # Verify printing capabilities are available
             features["Printing"] = True
         except ImportError:
@@ -398,9 +405,10 @@ class IntellicrackHexProtectionIntegration(QObject):
             import sys
 
             from .hex_commands import CommandManager
+
             sig = inspect.signature(CommandManager.__init__)
-            if 'max_history' in sig.parameters:
-                default_value = sig.parameters['max_history'].default
+            if "max_history" in sig.parameters:
+                default_value = sig.parameters["max_history"].default
                 if default_value == sys.maxsize:
                     features["Unlimited Undo/Redo"] = True
         except ImportError:
@@ -408,13 +416,13 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         # Check for hotkey access
         if self.hex_widget:
-            if hasattr(self.hex_widget, 'keyPressEvent'):
+            if hasattr(self.hex_widget, "keyPressEvent"):
                 features["Hotkey Access"] = True
         else:
             features["Hotkey Access"] = True  # Usually present in Qt widgets
 
         # Check for section navigation
-        if hasattr(widget_class, 'goto_offset') or hasattr(widget_class, 'jump_to_offset'):
+        if hasattr(widget_class, "goto_offset") or hasattr(widget_class, "jump_to_offset"):
             features["Section Navigation"] = True
 
         # Integration with analysis is present through this module
@@ -453,9 +461,7 @@ class ProtectionIntegrationWidget(QWidget):
 
         self.open_in_protection_viewer_btn = QPushButton("Open in Protection Viewer")
         self.open_in_protection_viewer_btn.clicked.connect(self._open_in_protection_viewer)
-        self.open_in_protection_viewer_btn.setToolTip(
-            "Open current file in protection viewer (press H for hex viewer)"
-        )
+        self.open_in_protection_viewer_btn.setToolTip("Open current file in protection viewer (press H for hex viewer)")
         button_layout.addWidget(self.open_in_protection_viewer_btn)
 
         self.sync_sections_btn = QPushButton("Sync Sections")
@@ -496,9 +502,7 @@ class ProtectionIntegrationWidget(QWidget):
                     for name, offset in sections.items():
                         if hasattr(self.hex_widget, "add_bookmark"):
                             self.hex_widget.add_bookmark(offset, f"Section: {name}")
-                    self.info_label.setText(
-                        f"Synced {len(sections)} sections from protection viewer"
-                    )
+                    self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
                 else:
                     self.info_label.setText("No sections found")
             else:

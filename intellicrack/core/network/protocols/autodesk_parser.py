@@ -229,27 +229,13 @@ class AutodeskLicensingParser:
             request_type = self._determine_request_type(request_line, headers, request_data)
 
             # Extract Autodesk-specific fields
-            product_key = self._extract_field(
-                request_data, headers, ["product_key", "productKey", "product_code"]
-            )
-            installation_id = self._extract_field(
-                request_data, headers, ["installation_id", "installationId", "install_id"]
-            )
-            machine_id = self._extract_field(
-                request_data, headers, ["machine_id", "machineId", "computer_id"]
-            )
-            user_id = self._extract_field(
-                request_data, headers, ["user_id", "userId", "adsk_user_id"]
-            )
-            activation_id = self._extract_field(
-                request_data, headers, ["activation_id", "activationId", "license_id"]
-            )
-            license_method = self._extract_field(
-                request_data, headers, ["license_method", "licenseMethod", "method"]
-            )
-            auth_token = self._extract_field(
-                request_data, headers, ["authorization", "x-ads-token", "bearer_token"]
-            )
+            product_key = self._extract_field(request_data, headers, ["product_key", "productKey", "product_code"])
+            installation_id = self._extract_field(request_data, headers, ["installation_id", "installationId", "install_id"])
+            machine_id = self._extract_field(request_data, headers, ["machine_id", "machineId", "computer_id"])
+            user_id = self._extract_field(request_data, headers, ["user_id", "userId", "adsk_user_id"])
+            activation_id = self._extract_field(request_data, headers, ["activation_id", "activationId", "license_id"])
+            license_method = self._extract_field(request_data, headers, ["license_method", "licenseMethod", "method"])
+            auth_token = self._extract_field(request_data, headers, ["authorization", "x-ads-token", "bearer_token"])
 
             # Remove 'Bearer ' prefix if present
             if auth_token and auth_token.startswith("Bearer "):
@@ -279,9 +265,7 @@ class AutodeskLicensingParser:
             self.logger.error(f"Failed to parse Autodesk request: {e}")
             return None
 
-    def _determine_request_type(
-        self, request_line: str, headers: dict[str, str], data: dict[str, Any]
-    ) -> str:
+    def _determine_request_type(self, request_line: str, headers: dict[str, str], data: dict[str, Any]) -> str:
         """Determine Autodesk request type from URL and data."""
         request_line_lower = request_line.lower()
 
@@ -360,9 +344,7 @@ class AutodeskLicensingParser:
         # Default to validation
         return base_type
 
-    def _extract_field(
-        self, data: dict[str, Any], headers: dict[str, str], field_names: list[str]
-    ) -> str | None:
+    def _extract_field(self, data: dict[str, Any], headers: dict[str, str], field_names: list[str]) -> str | None:
         """Extract field from request data or headers."""
         # Check data first
         for field_name in field_names:
@@ -376,9 +358,7 @@ class AutodeskLicensingParser:
 
         return None
 
-    def _extract_platform_info(
-        self, data: dict[str, Any], headers: dict[str, str]
-    ) -> dict[str, Any]:
+    def _extract_platform_info(self, data: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
         """Extract platform and system information."""
         platform_info = {}
 
@@ -769,12 +749,8 @@ class AutodeskLicensingParser:
         usage_summary = {
             "total_features": len(set(features_used)) if features_used else 0,
             "session_length": session_duration,
-            "most_used_feature": max(set(features_used), key=features_used.count)
-            if features_used
-            else "unknown",
-            "usage_frequency": len(features_used) / max(session_duration / 3600, 1)
-            if session_duration > 0
-            else 0,  # features per hour
+            "most_used_feature": max(set(features_used), key=features_used.count) if features_used else "unknown",
+            "usage_frequency": len(features_used) / max(session_duration / 3600, 1) if session_duration > 0 else 0,  # features per hour
         }
 
         return AutodeskResponse(
@@ -989,9 +965,7 @@ class AutodeskLicensingParser:
             # Add standard headers
             http_response += f"Content-Length: {len(body_json)}\r\n"
             http_response += "Server: intellicrack-autodesk-emulator\r\n"
-            http_response += (
-                f"Date: {time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())}\r\n"
-            )
+            http_response += f"Date: {time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())}\r\n"
             http_response += "Connection: close\r\n"
             http_response += "\r\n"
             http_response += body_json

@@ -142,7 +142,7 @@ class UIConfigManager:
             selection_color="#00ff00",
             disabled_color="#666666",
             button_color="#2d2d2d",
-            input_background="#252525"
+            input_background="#252525",
         ),
         "light": ThemeConfig(
             name="light",
@@ -162,7 +162,7 @@ class UIConfigManager:
             error_color="#cc0000",
             warning_color="#ff9900",
             success_color="#00cc00",
-            info_color="#0099ff"
+            info_color="#0099ff",
         ),
         "hacker": ThemeConfig(
             name="hacker",
@@ -182,8 +182,8 @@ class UIConfigManager:
             error_color="#ff0000",
             warning_color="#ffff00",
             success_color="#00ff00",
-            info_color="#00ffff"
-        )
+            info_color="#00ffff",
+        ),
     }
 
     def __init__(self):
@@ -199,14 +199,7 @@ class UIConfigManager:
         self._load_from_main_config()
 
         # Change callbacks
-        self.change_callbacks: Dict[str, List] = {
-            "theme": [],
-            "font": [],
-            "layout": [],
-            "editor": [],
-            "animation": [],
-            "accessibility": []
-        }
+        self.change_callbacks: Dict[str, List] = {"theme": [], "font": [], "layout": [], "editor": [], "animation": [], "accessibility": []}
 
         logger.info("UIConfigManager initialized with unified config system")
 
@@ -233,8 +226,8 @@ class UIConfigManager:
                 "auto_start_gpu_monitoring": True,
                 "auto_start_cpu_monitoring": True,
                 "max_recent_files": 10,
-                "show_file_icons": True
-            }
+                "show_file_icons": True,
+            },
         }
 
         self.main_config.set("ui", ui_config)
@@ -294,13 +287,10 @@ class UIConfigManager:
             "editor": asdict(self.editor),
             "animation": asdict(self.animation),
             "accessibility": asdict(self.accessibility),
-            "custom_themes": {
-                name: asdict(theme)
-                for name, theme in self.custom_themes.items()
-            },
+            "custom_themes": {name: asdict(theme) for name, theme in self.custom_themes.items()},
             # Preserve existing settings
             "recent_files": self.main_config.get("ui.recent_files", []),
-            "dashboard": self.main_config.get("ui.dashboard", {})
+            "dashboard": self.main_config.get("ui.dashboard", {}),
         }
 
         self.main_config.set("ui", ui_config)

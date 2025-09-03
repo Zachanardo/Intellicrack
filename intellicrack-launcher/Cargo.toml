@@ -1,0 +1,106 @@
+[package]
+name = "intellicrack-launcher"
+version = "2.0.0"
+edition = "2021"
+authors = ["Intellicrack Team"]
+description = "Sophisticated Rust launcher for Intellicrack binary analysis platform"
+license = "GPL-3.0"
+
+[lib]
+name = "intellicrack_launcher"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "intellicrack-launcher"
+path = "src/main.rs"
+
+[[bench]]
+name = "performance_benchmarks"
+harness = false
+
+[[bench]]
+name = "dependency_benchmarks"
+harness = false
+
+[[bench]]
+name = "process_benchmarks"
+harness = false
+
+[dependencies]
+# Python Integration
+pyo3 = { version = "0.20", features = ["auto-initialize", "extension-module", "abi3-py38"] }
+libloading = "0.8"
+
+# System Integration
+sysinfo = "0.30"
+which = "6.0"
+dirs = "5.0"
+num_cpus = "1.16"
+
+# Async Runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# HTTP Client for Flask testing
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+
+# Serialization & Configuration
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Error Handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging & Diagnostics
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# Signal handling
+ctrlc = "3.4"
+
+# Date/Time utilities
+chrono = { version = "0.4", features = ["serde"] }
+
+# String utilities
+regex = "1.10"
+
+# System APIs
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = [
+    "winbase", "winuser", "winerror", "processenv", "wincon",
+    "handleapi", "synchapi", "processthreadsapi", "tlhelp32"
+] }
+windows = { version = "0.52", features = [
+    "Win32_System_Registry",
+    "Win32_Graphics_Direct3D11",
+    "Win32_System_SystemInformation",
+    "Win32_Foundation"
+] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+nix = "0.27"
+
+[dev-dependencies]
+tempfile = "3.8"
+serial_test = "3.0"
+criterion = { version = "0.5", features = ["html_reports"] }
+tokio-test = "0.4"
+mockall = "0.12"
+proptest = "1.4"
+
+# Build Optimization
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+strip = false

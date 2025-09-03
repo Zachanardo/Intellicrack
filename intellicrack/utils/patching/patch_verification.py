@@ -109,9 +109,7 @@ def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any
                     offset = pe.get_offset_from_rva(rva)
                 except (OSError, ValueError, RuntimeError) as offset_error:
                     logger.error("Error in patch_verification: %s", offset_error)
-                    error_msg = (
-                        f"Error calculating offset for address 0x{address:X}: {offset_error}"
-                    )
+                    error_msg = f"Error calculating offset for address 0x{address:X}: {offset_error}"
                     app.update_output.emit(log_message(f"[Verify] {error_msg}"))
                     verification_results.append(error_msg)
                     fail_count += 1
@@ -120,9 +118,7 @@ def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any
                 # Assuming address might be a direct file offset if smaller than image base
                 offset = address
                 app.update_output.emit(
-                    log_message(
-                        f"[Verify] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}."
-                    )
+                    log_message(f"[Verify] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}.")
                 )
 
             # Check bytes at offset
@@ -132,9 +128,7 @@ def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any
                     actual_bytes = f.read(len(expected_bytes))
 
                 if actual_bytes == expected_bytes:
-                    verification_results.append(
-                        f"Patch at 0x{address:X} verified successfully: {description}"
-                    )
+                    verification_results.append(f"Patch at 0x{address:X} verified successfully: {description}")
                     success_count += 1
                 else:
                     mismatch_msg = f"Patch at 0x{address:X} verification failed: expected {expected_bytes.hex().upper()}, got {actual_bytes.hex().upper()}"
@@ -144,15 +138,11 @@ def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any
                     fail_count += 1
             except (OSError, ValueError, RuntimeError) as read_error:
                 logger.error("Error in patch_verification: %s", read_error)
-                verification_results.append(
-                    f"Error reading bytes at address 0x{address:X}: {read_error}"
-                )
+                verification_results.append(f"Error reading bytes at address 0x{address:X}: {read_error}")
                 fail_count += 1
 
         # Summary
-        verification_results.append(
-            f"Verification complete: {success_count} patches succeeded, {fail_count} failed"
-        )
+        verification_results.append(f"Verification complete: {success_count} patches succeeded, {fail_count} failed")
 
         return verification_results
 
@@ -237,9 +227,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
         except (OSError, ValueError, RuntimeError) as verification_error:
             logger.error("Error in patch_verification: %s", verification_error)
             is_valid_pe = False
-            results.append(
-                f"\nVerification failed: Invalid PE file after patching - {verification_error}"
-            )
+            results.append(f"\nVerification failed: Invalid PE file after patching - {verification_error}")
 
         if is_valid_pe:
             results.append("\nBasic verification passed: File appears to be a valid PE executable")
@@ -248,16 +236,12 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
             original_pe = pefile.PE(binary_path)
 
             # Check section sizes
-            for i, (orig_section, patched_section) in enumerate(
-                zip(original_pe.sections, verification_pe.sections, strict=False)
-            ):
+            for i, (orig_section, patched_section) in enumerate(zip(original_pe.sections, verification_pe.sections, strict=False)):
                 orig_name = orig_section.Name.decode("utf-8", "ignore").strip("\x00")
                 patched_name = patched_section.Name.decode("utf-8", "ignore").strip("\x00")
 
                 if orig_name != patched_name:
-                    results.append(
-                        f"Warning: Section {i + 1} name changed: {orig_name} -> {patched_name}"
-                    )
+                    results.append(f"Warning: Section {i + 1} name changed: {orig_name} -> {patched_name}")
 
                 if orig_section.SizeOfRawData != patched_section.SizeOfRawData:
                     results.append(
@@ -265,27 +249,18 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                     )
 
             # Check entry point
-            if hasattr(original_pe, "OPTIONAL_HEADER") and hasattr(
-                verification_pe, "OPTIONAL_HEADER"
-            ):
+            if hasattr(original_pe, "OPTIONAL_HEADER") and hasattr(verification_pe, "OPTIONAL_HEADER"):
                 if hasattr(original_pe.OPTIONAL_HEADER, "AddressOfEntryPoint") and hasattr(
                     verification_pe.OPTIONAL_HEADER, "AddressOfEntryPoint"
                 ):
-                    if (
-                        original_pe.OPTIONAL_HEADER.AddressOfEntryPoint
-                        != verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint
-                    ):
+                    if original_pe.OPTIONAL_HEADER.AddressOfEntryPoint != verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:
                         results.append(
                             f"Warning: Entry point changed: 0x{original_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} -> 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}"
                         )
                     else:
-                        results.append(
-                            f"Entry point verification passed: 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}"
-                        )
+                        results.append(f"Entry point verification passed: 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}")
                 else:
-                    results.append(
-                        "Warning: Could not verify entry point - AddressOfEntryPoint attribute not found"
-                    )
+                    results.append("Warning: Could not verify entry point - AddressOfEntryPoint attribute not found")
             else:
                 results.append("Warning: Could not verify entry point - OPTIONAL_HEADER not found")
 
@@ -300,9 +275,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                         continue
 
                     # Get file offset from RVA
-                    offset = verification_pe.get_offset_from_rva(
-                        address - verification_pe.OPTIONAL_HEADER.ImageBase
-                    )
+                    offset = verification_pe.get_offset_from_rva(address - verification_pe.OPTIONAL_HEADER.ImageBase)
 
                     # Read bytes at patched location
                     with open(temp_path, "rb") as f:
@@ -310,13 +283,9 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                         actual_bytes = f.read(len(new_bytes))
 
                     if actual_bytes == new_bytes:
-                        results.append(
-                            f"✓ Patch {i + 1} verification: Bytes match at offset 0x{offset:X}"
-                        )
+                        results.append(f"✓ Patch {i + 1} verification: Bytes match at offset 0x{offset:X}")
                     else:
-                        results.append(
-                            f"✗ Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}"
-                        )
+                        results.append(f"✗ Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
                         results.append(f"  Expected: {new_bytes.hex().upper()}")
                         results.append(f"  Actual: {actual_bytes.hex().upper()}")
                 except (OSError, ValueError, RuntimeError) as verify_error:
@@ -338,9 +307,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
     return results
 
 
-def apply_parsed_patch_instructions_with_validation(
-    app: Any, instructions: list[dict[str, Any]]
-) -> bool:
+def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list[dict[str, Any]]) -> bool:
     """Applies parsed patch instructions to a copy of the binary.
 
     Takes a list of patch instructions (typically parsed from AI output)
@@ -366,9 +333,7 @@ def apply_parsed_patch_instructions_with_validation(
         return False
 
     if not pefile:
-        app.update_output.emit(
-            log_message("[Patch] Error: pefile module not available for patching.")
-        )
+        app.update_output.emit(log_message("[Patch] Error: pefile module not available for patching."))
         return False
 
     # Create backup (using timestamp for uniqueness)
@@ -389,9 +354,7 @@ def apply_parsed_patch_instructions_with_validation(
     try:
         # Copy original to patched path
         shutil.copy2(app.binary_path, patched_path)
-        app.update_output.emit(
-            log_message(f"[Patch] Created temporary patched file: {patched_path}")
-        )
+        app.update_output.emit(log_message(f"[Patch] Created temporary patched file: {patched_path}"))
 
         # Load PE structure of the *patched* file for offset calculations
         try:
@@ -399,9 +362,7 @@ def apply_parsed_patch_instructions_with_validation(
             image_base = pe.OPTIONAL_HEADER.ImageBase
         except pefile.PEFormatError as e:
             logger.error("pefile.PEFormatError in patch_verification: %s", e)
-            app.update_output.emit(
-                log_message(f"[Patch] Error: Cannot parse PE structure of '{patched_path}': {e}")
-            )
+            app.update_output.emit(log_message(f"[Patch] Error: Cannot parse PE structure of '{patched_path}': {e}"))
             app.update_output.emit(log_message("[Patch] Aborting patching."))
             # Clean up the potentially corrupted patched file
             try:
@@ -411,16 +372,10 @@ def apply_parsed_patch_instructions_with_validation(
                 # File already doesn't exist, which is fine
             except PermissionError as perm_error:
                 logger.error("Permission error in patch_verification: %s", perm_error)
-                app.update_output.emit(
-                    log_message(
-                        f"[Patch] Warning: Cannot remove corrupted file due to permissions: {perm_error}"
-                    )
-                )
+                app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove corrupted file due to permissions: {perm_error}"))
             except OSError as os_error:
                 logger.error("OS error in patch_verification: %s", os_error)
-                app.update_output.emit(
-                    log_message(f"[Patch] Warning: Failed to cleanup corrupted file: {os_error}")
-                )
+                app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup corrupted file: {os_error}"))
             return False
 
         applied_count = 0
@@ -435,9 +390,7 @@ def apply_parsed_patch_instructions_with_validation(
                 desc = patch.get("description", "No description")
 
                 if address is None or new_bytes is None:
-                    app.update_output.emit(
-                        log_message(f"[Patch {patch_num}] Skipped: Invalid instruction data.")
-                    )
+                    app.update_output.emit(log_message(f"[Patch {patch_num}] Skipped: Invalid instruction data."))
                     error_count += 1
                     continue
 
@@ -452,9 +405,7 @@ def apply_parsed_patch_instructions_with_validation(
                         except Exception as e_rva:
                             logger.error("Exception in patch_verification: %s", e_rva)
                             app.update_output.emit(
-                                log_message(
-                                    f"[Patch {patch_num}] ERROR: Failed to get offset for RVA 0x{rva:X}: {e_rva}"
-                                )
+                                log_message(f"[Patch {patch_num}] ERROR: Failed to get offset for RVA 0x{rva:X}: {e_rva}")
                             )
                             error_count += 1
                             continue  # Skip this patch entirely rather than using risky fallback
@@ -481,40 +432,28 @@ def apply_parsed_patch_instructions_with_validation(
                 except pefile.PEFormatError as e_offset:
                     logger.error("pefile.PEFormatError in patch_verification: %s", e_offset)
                     app.update_output.emit(
-                        log_message(
-                            f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}"
-                        )
+                        log_message(f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}")
                     )
                     error_count += 1
                 except OSError as e_io:
                     logger.error("IO error in patch_verification: %s", e_io)
                     app.update_output.emit(
-                        log_message(
-                            f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}"
-                        )
+                        log_message(f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}")
                     )
                     error_count += 1
                 except Exception as e_apply:
                     logger.error("Exception in patch_verification: %s", e_apply)
-                    app.update_output.emit(
-                        log_message(
-                            f"[Patch {patch_num}] Skipped: Unexpected error applying patch: {e_apply}"
-                        )
-                    )
+                    app.update_output.emit(log_message(f"[Patch {patch_num}] Skipped: Unexpected error applying patch: {e_apply}"))
                     app.update_output.emit(log_message(traceback.format_exc()))
                     error_count += 1
 
         # Close the PE file handle before verification
         pe.close()
 
-        app.update_output.emit(
-            log_message(f"[Patch] Applied {applied_count} patches with {error_count} errors/skips.")
-        )
+        app.update_output.emit(log_message(f"[Patch] Applied {applied_count} patches with {error_count} errors/skips."))
 
         if applied_count > 0 and error_count == 0:
-            app.update_output.emit(
-                log_message(f"[Patch] Verifying patched file integrity: {patched_path}")
-            )
+            app.update_output.emit(log_message(f"[Patch] Verifying patched file integrity: {patched_path}"))
 
             # --- Post-Patch Validation ---
             validation_passed = False
@@ -523,52 +462,29 @@ def apply_parsed_patch_instructions_with_validation(
                 verify_pe = pefile.PE(patched_path)
                 verify_pe.close()  # Close handle after check
                 validation_passed = True
-                app.update_output.emit(
-                    log_message("[Verify] Patched file is still a valid PE executable.")
-                )
+                app.update_output.emit(log_message("[Verify] Patched file is still a valid PE executable."))
             except pefile.PEFormatError as e_verify:
                 logger.error("pefile.PEFormatError in patch_verification: %s", e_verify)
                 app.update_output.emit(
-                    log_message(
-                        f"[Verify] CRITICAL ERROR: Patched file '{patched_path}' failed PE validation: {e_verify}"
-                    )
+                    log_message(f"[Verify] CRITICAL ERROR: Patched file '{patched_path}' failed PE validation: {e_verify}")
                 )
-                app.update_output.emit(
-                    log_message("[Verify] The patch might have corrupted the file structure.")
-                )
-                app.update_output.emit(
-                    log_message(
-                        f"[Verify] Please examine the file or restore from backup: {backup_path}"
-                    )
-                )
+                app.update_output.emit(log_message("[Verify] The patch might have corrupted the file structure."))
+                app.update_output.emit(log_message(f"[Verify] Please examine the file or restore from backup: {backup_path}"))
 
             # --- Detailed Byte Verification ---
             if validation_passed:
-                verification_results = verify_patches(
-                    app, patched_path, instructions
-                )  # Use the existing verify function
+                verification_results = verify_patches(app, patched_path, instructions)  # Use the existing verify function
                 for line in verification_results:
                     app.update_output.emit(log_message(f"[Verify] {line}"))
 
                 # Check if all patches verified successfully
-                if all(
-                    "verified successfully" in line or "Invalid patch" in line
-                    for line in verification_results
-                ):
-                    app.update_output.emit(
-                        log_message(
-                            f"[Patch] Successfully created and verified patched file: {patched_path}"
-                        )
-                    )
+                if all("verified successfully" in line or "Invalid patch" in line for line in verification_results):
+                    app.update_output.emit(log_message(f"[Patch] Successfully created and verified patched file: {patched_path}"))
                     return True
-                app.update_output.emit(
-                    log_message("[Patch] Warning: Some patches could not be verified. Review logs.")
-                )
+                app.update_output.emit(log_message("[Patch] Warning: Some patches could not be verified. Review logs."))
 
         elif applied_count == 0:
-            app.update_output.emit(
-                log_message("[Patch] No patches were applied. Original file remains unchanged.")
-            )
+            app.update_output.emit(log_message("[Patch] No patches were applied. Original file remains unchanged."))
             # Clean up the copied file if no patches applied
             try:
                 os.remove(patched_path)
@@ -577,24 +493,12 @@ def apply_parsed_patch_instructions_with_validation(
                 # File already doesn't exist, which is acceptable
             except PermissionError as perm_error2:
                 logger.error("Permission error in patch_verification: %s", perm_error2)
-                app.update_output.emit(
-                    log_message(
-                        f"[Patch] Warning: Cannot remove unused patched file due to permissions: {perm_error2}"
-                    )
-                )
+                app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove unused patched file due to permissions: {perm_error2}"))
             except OSError as os_error2:
                 logger.error("OS error in patch_verification: %s", os_error2)
-                app.update_output.emit(
-                    log_message(
-                        f"[Patch] Warning: Failed to cleanup unused patched file: {os_error2}"
-                    )
-                )
+                app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup unused patched file: {os_error2}"))
         else:  # Errors occurred during patching
-            app.update_output.emit(
-                log_message(
-                    f"[Patch] Patching completed with {error_count} errors. Review logs for details."
-                )
-            )
+            app.update_output.emit(log_message(f"[Patch] Patching completed with {error_count} errors. Review logs for details."))
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in patch_verification: %s", e)
@@ -625,9 +529,7 @@ def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
     patches = []
     strategy_used = "None"
 
-    app.update_output.emit(
-        log_message("[License Rewrite] Running deep license analysis to find candidates...")
-    )
+    app.update_output.emit(log_message("[License Rewrite] Running deep license analysis to find candidates..."))
     from ...core.analysis.core_analysis import enhanced_deep_license_analysis
 
     candidates = enhanced_deep_license_analysis(app.binary_path)
@@ -635,11 +537,7 @@ def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
     if not candidates:
         return patches, strategy_used
 
-    app.update_output.emit(
-        log_message(
-            f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."
-        )
-    )
+    app.update_output.emit(log_message(f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."))
     strategy_used = "Deep Analysis"
 
     # Sort candidates by confidence
@@ -675,11 +573,7 @@ def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: l
     patches = []
 
     if not pefile or not Cs or not keystone:
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
-            )
-        )
+        app.update_output.emit(log_message("[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."))
         return patches
 
     try:
@@ -699,26 +593,16 @@ def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: l
 
         # Process each candidate
         for candidate in top_candidates:
-            patch = _process_single_candidate(
-                app, candidate, is_64bit, tools, code_data, code_base_addr, candidates
-            )
+            patch = _process_single_candidate(app, candidate, is_64bit, tools, code_data, code_base_addr, candidates)
             if patch:
                 patches.append(patch)
 
     except ImportError as e:
         logger.error("Import error in patch_verification: %s", e)
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
-            )
-        )
+        app.update_output.emit(log_message("[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."))
     except Exception as e_deep:
         logger.error("Exception in patch_verification: %s", e_deep)
-        app.update_output.emit(
-            log_message(
-                f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"
-            )
-        )
+        app.update_output.emit(log_message(f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"))
         app.update_output.emit(log_message(traceback.format_exc()))
 
     return patches
@@ -749,9 +633,7 @@ def _get_text_section(pe, app: Any):
     """
     text_section = next((s for s in pe.sections if b".text" in s.Name.lower()), None)
     if not text_section:
-        app.update_output.emit(
-            log_message("[License Rewrite] Error: Cannot find .text section.")
-        )
+        app.update_output.emit(log_message("[License Rewrite] Error: Cannot find .text section."))
     return text_section
 
 
@@ -772,19 +654,13 @@ def _process_single_candidate(
     start_addr = candidate["start"]
     keywords = candidate.get("keywords", [])
 
-    app.update_output.emit(
-        log_message(
-            f"[License Rewrite] Processing candidate at 0x{start_addr:X} (Keywords: {', '.join(keywords)})"
-        )
-    )
+    app.update_output.emit(log_message(f"[License Rewrite] Processing candidate at 0x{start_addr:X} (Keywords: {', '.join(keywords)})"))
 
     # Generate patch bytes
     patch_bytes, patch_asm = _generate_patch_bytes(is_64bit, tools["ks"])
 
     # Perform safety check and generate patch
-    patch = _perform_safety_check_and_patch(
-        app, start_addr, code_data, code_base_addr, patch_bytes, patch_asm, tools["md"], candidates
-    )
+    patch = _perform_safety_check_and_patch(app, start_addr, code_data, code_base_addr, patch_bytes, patch_asm, tools["md"], candidates)
 
     return patch
 
@@ -828,9 +704,7 @@ def _perform_safety_check_and_patch(
         code_offset = start_addr - code_base_addr
         if not (0 <= code_offset < len(code_data)):
             app.update_output.emit(
-                log_message(
-                    f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping."
-                )
+                log_message(f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping.")
             )
             return None
 
@@ -846,25 +720,19 @@ def _perform_safety_check_and_patch(
 
         if not instructions:
             app.update_output.emit(
-                log_message(
-                    f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check."
-                )
+                log_message(f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check.")
             )
             return None
 
         # Check if patch fits safely
-        patch = _check_patch_safety_and_create(
-            app, instructions, patch_bytes, patch_asm, start_addr, code_data, code_offset, candidates
-        )
+        patch = _check_patch_safety_and_create(app, instructions, patch_bytes, patch_asm, start_addr, code_data, code_offset, candidates)
 
         return patch
 
     except Exception as e_check:
         logger.error("Exception in patch_verification: %s", e_check)
         app.update_output.emit(
-            log_message(
-                f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate."
-            )
+            log_message(f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate.")
         )
         return None
 
@@ -946,9 +814,7 @@ def _add_manual_review_suggestions(
             suggestion_desc = f"Consider NOPing conditional jump {insn.mnemonic} at 0x{insn.address:X}"
 
             # Log the suggestion
-            app.update_output.emit(
-                log_message(f"[License Rewrite] SUGGESTION: {suggestion_desc}")
-            )
+            app.update_output.emit(log_message(f"[License Rewrite] SUGGESTION: {suggestion_desc}"))
 
             # Add to potential patches with clear manual verification flag
             if hasattr(app, "potential_patches"):
@@ -961,9 +827,7 @@ def _add_manual_review_suggestions(
                 app.potential_patches.append(fallback_patch)
 
                 app.update_output.emit(
-                    log_message(
-                        "[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."
-                    )
+                    log_message("[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review.")
                 )
             break
 
@@ -986,18 +850,12 @@ def _add_manual_review_suggestions(
         )
 
     # Log to analysis results
-    app.analyze_results.append(
-        f"Manual review needed for potential license check at 0x{start_addr:X}"
-    )
+    app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
 
 
 def _handle_no_patches_alternative(app: Any, strategy_used: str) -> None:
     """Handle case when no patches were generated from deep analysis."""
-    app.update_output.emit(
-        log_message(
-            "[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."
-        )
-    )
+    app.update_output.emit(log_message("[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."))
 
     # Log safer alternative approaches
     alternatives = [
@@ -1027,16 +885,10 @@ def _apply_ai_fallback_patching(app: Any) -> list:
     """
     patches = []
 
-    app.update_output.emit(
-        log_message(
-            "[License Rewrite] No patches generated from specific analysis. Trying generic/AI approach..."
-        )
-    )
+    app.update_output.emit(log_message("[License Rewrite] No patches generated from specific analysis. Trying generic/AI approach..."))
 
     try:
-        app.update_output.emit(
-            log_message("[License Rewrite] Invoking Automated Patch Agent...")
-        )
+        app.update_output.emit(log_message("[License Rewrite] Invoking Automated Patch Agent..."))
 
         # Diagnostic logging
         _log_application_state(app)
@@ -1046,9 +898,7 @@ def _apply_ai_fallback_patching(app: Any) -> list:
         original_patches = getattr(app, "potential_patches", None)
 
         # Run the automated patch agent
-        app.update_output.emit(
-            log_message("[License Rewrite] Calling run_automated_patch_agent()...")
-        )
+        app.update_output.emit(log_message("[License Rewrite] Calling run_automated_patch_agent()..."))
         run_automated_patch_agent(app)
 
         # Check results
@@ -1057,11 +907,7 @@ def _apply_ai_fallback_patching(app: Any) -> list:
         if has_patches:
             patches = _process_ai_patches(app, original_patches)
         else:
-            app.update_output.emit(
-                log_message(
-                    "[License Rewrite] Automated Patch Agent did not generate any patches"
-                )
-            )
+            app.update_output.emit(log_message("[License Rewrite] Automated Patch Agent did not generate any patches"))
 
         # Restore original status
         if hasattr(app, "analyze_status"):
@@ -1069,9 +915,7 @@ def _apply_ai_fallback_patching(app: Any) -> list:
 
     except Exception as e_agent:
         logger.error("Exception in patch_verification: %s", e_agent)
-        app.update_output.emit(
-            log_message(f"[License Rewrite] Error running Automated Patch Agent: {e_agent}")
-        )
+        app.update_output.emit(log_message(f"[License Rewrite] Error running Automated Patch Agent: {e_agent}"))
         app.update_output.emit(log_message(traceback.format_exc()))
 
     return patches
@@ -1079,17 +923,11 @@ def _apply_ai_fallback_patching(app: Any) -> list:
 
 def _log_application_state(app: Any) -> None:
     """Log application state for diagnostics."""
-    app.update_output.emit(
-        log_message("[License Rewrite] Checking application state before invoking agent...")
-    )
-    app.update_output.emit(
-        log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}")
-    )
+    app.update_output.emit(log_message("[License Rewrite] Checking application state before invoking agent..."))
+    app.update_output.emit(log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}"))
     if hasattr(app, "binary_path"):
         app.update_output.emit(
-            log_message(
-                f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"
-            )
+            log_message(f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}")
         )
 
 
@@ -1103,9 +941,7 @@ def _process_ai_patches(app: Any, original_patches: list | None) -> list:
 
     # Compare with original patches if both exist
     if original_patches:
-        app.update_output.emit(
-            log_message("[License Rewrite] Comparing original patches with new patches...")
-        )
+        app.update_output.emit(log_message("[License Rewrite] Comparing original patches with new patches..."))
 
         # Count new vs. overlapping patches
         original_patch_addrs = {p.get("address", "unknown") for p in original_patches}
@@ -1122,22 +958,14 @@ def _process_ai_patches(app: Any, original_patches: list | None) -> list:
 
         # Keep track of both sets if needed
         if new_patches_count == 0 and overlapping_patches > 0:
-            app.update_output.emit(
-                log_message(
-                    "[License Rewrite] No new patches found, keeping original patches for reference"
-                )
-            )
+            app.update_output.emit(log_message("[License Rewrite] No new patches found, keeping original patches for reference"))
             app.original_patches = original_patches
 
-    app.update_output.emit(
-        log_message(f"[License Rewrite] AI generated {len(patches)} potential patches")
-    )
+    app.update_output.emit(log_message(f"[License Rewrite] AI generated {len(patches)} potential patches"))
 
     # Log first patch details for debugging
     if patches and len(patches) > 0:
-        app.update_output.emit(
-            log_message(f"[License Rewrite] First patch details: {patches[0]!s}")
-        )
+        app.update_output.emit(log_message(f"[License Rewrite] First patch details: {patches[0]!s}"))
 
     return patches
 
@@ -1146,9 +974,7 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
     """Apply patches and finalize the process."""
     if patches:
         app.update_output.emit(log_message(f"[License Rewrite] Strategy: {strategy_used}"))
-        app.update_output.emit(
-            log_message(f"[License Rewrite] Found {len(patches)} patches to apply")
-        )
+        app.update_output.emit(log_message(f"[License Rewrite] Found {len(patches)} patches to apply"))
 
         # Mark patches as coming from license rewrite
         for patch in patches:
@@ -1160,16 +986,8 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
         # Apply patches
         apply_parsed_patch_instructions_with_validation(app, patches)
     else:
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] No patches could be generated. Manual intervention required."
-            )
-        )
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] Try using the AI assistant or dynamic analysis tools for more options."
-            )
-        )
+        app.update_output.emit(log_message("[License Rewrite] No patches could be generated. Manual intervention required."))
+        app.update_output.emit(log_message("[License Rewrite] Try using the AI assistant or dynamic analysis tools for more options."))
 
     # Update status
     app.analyze_status.setText("License function rewriting complete")
@@ -1186,15 +1004,12 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
     if not _validate_binary_selection(app):
         return
 
-    app.update_output.emit(
-        log_message("[License Rewrite] Starting license function rewriting analysis...")
-    )
+    app.update_output.emit(log_message("[License Rewrite] Starting license function rewriting analysis..."))
     app.analyze_status.setText("Rewriting license functions...")
 
     # Strategy 1: Deep License Analysis
     patches, strategy_used = _process_deep_analysis_candidates(app)
     candidates = []  # Initialize for later use
-
 
     # Alternative approaches when deep analysis fails
     if not patches and not candidates:

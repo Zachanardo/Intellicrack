@@ -463,11 +463,7 @@ class PayloadGeneratorDialog(BaseDialog):
                 template_name = items[0].text()
 
             # Determine category based on current selection
-            category = (
-                self.category_combo.currentText().lower().replace(" ", "_")
-                if hasattr(self, "category_combo")
-                else "shell"
-            )
+            category = self.category_combo.currentText().lower().replace(" ", "_") if hasattr(self, "category_combo") else "shell"
 
             # Get template details
             arch = Architecture.X86  # Default for getting template info

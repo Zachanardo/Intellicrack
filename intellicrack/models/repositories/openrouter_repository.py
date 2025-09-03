@@ -233,7 +233,5 @@ class OpenRouterRepository(APIRepositoryBase):
             Always returns (False, "OpenRouter doesn't support model downloads")
 
         """
-        self.logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        self.logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "OpenRouter doesn't support model downloads"

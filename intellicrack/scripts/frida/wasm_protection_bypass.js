@@ -483,13 +483,197 @@ const wasmProtectionBypass = {
             action: 'patching_wasm_binary'
         });
 
-        // For now, return original
-        // In a real implementation, we would:
-        // 1. Parse WASM structure properly
-        // 2. Locate license functions
-        // 3. Replace with stubs that return success
+        // Convert buffer to Uint8Array for manipulation
+        const bytes = new Uint8Array(buffer);
+        const patched = new Uint8Array(bytes.length);
+        patched.set(bytes);
 
-        return buffer;
+        // WASM magic number and version
+        if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6D) {
+            send({
+                type: 'error',
+                target: 'wasm_bypass',
+                action: 'invalid_wasm_magic'
+            });
+            return buffer;
+        }
+
+        let patchCount = 0;
+
+        // 1. Parse WASM sections to locate code section
+        let pos = 8; // Skip magic and version
+        while (pos < bytes.length) {
+            const sectionId = bytes[pos++];
+            if (pos >= bytes.length) break;
+
+            // Read section size (LEB128)
+            let sectionSize = 0;
+            let shift = 0;
+            let byte;
+            do {
+                if (pos >= bytes.length) break;
+                byte = bytes[pos++];
+                sectionSize |= (byte & 0x7F) << shift;
+                shift += 7;
+            } while (byte & 0x80);
+
+            const sectionStart = pos;
+            const sectionEnd = pos + sectionSize;
+
+            // Code section (ID = 10)
+            if (sectionId === 10 && analysis.licenseFunctions.length > 0) {
+                send({
+                    type: 'info',
+                    target: 'wasm_bypass',
+                    action: 'found_code_section',
+                    size: sectionSize
+                });
+
+                // Read number of functions
+                let funcPos = sectionStart;
+                let numFunctions = 0;
+                shift = 0;
+                do {
+                    if (funcPos >= sectionEnd) break;
+                    byte = bytes[funcPos++];
+                    numFunctions |= (byte & 0x7F) << shift;
+                    shift += 7;
+                } while (byte & 0x80);
+
+                // 2. Locate and patch license check functions
+                for (let i = 0; i < numFunctions && funcPos < sectionEnd; i++) {
+                    // Read function body size
+                    let bodySize = 0;
+                    shift = 0;
+                    const bodySizeStart = funcPos;
+                    do {
+                        if (funcPos >= sectionEnd) break;
+                        byte = bytes[funcPos++];
+                        bodySize |= (byte & 0x7F) << shift;
+                        shift += 7;
+                    } while (byte & 0x80);
+
+                    const bodyStart = funcPos;
+                    const bodyEnd = funcPos + bodySize;
+
+                    // Check if this is a license function by index
+                    if (analysis.licenseFunctionIndices && analysis.licenseFunctionIndices.includes(i)) {
+                        // 3. Replace function body with stub that returns success
+                        send({
+                            type: 'bypass',
+                            target: 'wasm_bypass',
+                            action: 'patching_license_function',
+                            function_index: i,
+                            original_size: bodySize
+                        });
+
+                        // Create stub function that returns 1 (success)
+                        // WASM bytecode: locals count (0), i32.const 1, return
+                        const stubBody = [
+                            0x00,  // No local variables
+                            0x41,  // i32.const
+                            0x01,  // value: 1
+                            0x0F   // return
+                        ];
+
+                        // Calculate size difference
+                        const sizeDiff = bodySize - stubBody.length;
+
+                        if (sizeDiff >= 0) {
+                            // Replace function body with stub
+                            for (let j = 0; j < stubBody.length; j++) {
+                                patched[bodyStart + j] = stubBody[j];
+                            }
+
+                            // Fill remaining space with nop instructions (0x01)
+                            for (let j = stubBody.length; j < bodySize; j++) {
+                                patched[bodyStart + j] = 0x01; // nop
+                            }
+
+                            patchCount++;
+                        } else {
+                            // Function body is too small for our stub
+                            // Try simpler patch: just change first instruction to return 1
+                            if (bodySize >= 3) {
+                                patched[bodyStart] = 0x41;     // i32.const
+                                patched[bodyStart + 1] = 0x01; // value: 1
+                                patched[bodyStart + 2] = 0x0F;  // return
+                                patchCount++;
+                            }
+                        }
+                    }
+
+                    funcPos = bodyEnd;
+                }
+            }
+
+            // Export section (ID = 7) - track function indices
+            if (sectionId === 7) {
+                let exportPos = sectionStart;
+
+                // Read number of exports
+                let numExports = 0;
+                shift = 0;
+                do {
+                    if (exportPos >= sectionEnd) break;
+                    byte = bytes[exportPos++];
+                    numExports |= (byte & 0x7F) << shift;
+                    shift += 7;
+                } while (byte & 0x80);
+
+                if (!analysis.licenseFunctionIndices) {
+                    analysis.licenseFunctionIndices = [];
+                }
+
+                for (let i = 0; i < numExports && exportPos < sectionEnd; i++) {
+                    // Read export name length
+                    let nameLen = 0;
+                    shift = 0;
+                    do {
+                        if (exportPos >= sectionEnd) break;
+                        byte = bytes[exportPos++];
+                        nameLen |= (byte & 0x7F) << shift;
+                        shift += 7;
+                    } while (byte & 0x80);
+
+                    // Read export name
+                    const nameBytes = [];
+                    for (let j = 0; j < nameLen && exportPos < sectionEnd; j++) {
+                        nameBytes.push(bytes[exportPos++]);
+                    }
+                    const name = String.fromCharCode.apply(null, nameBytes);
+
+                    // Read export kind
+                    const kind = bytes[exportPos++];
+
+                    // Read export index
+                    let index = 0;
+                    shift = 0;
+                    do {
+                        if (exportPos >= sectionEnd) break;
+                        byte = bytes[exportPos++];
+                        index |= (byte & 0x7F) << shift;
+                        shift += 7;
+                    } while (byte & 0x80);
+
+                    // Track license function indices
+                    if (kind === 0 && this.isLicenseFunction(name)) { // kind 0 = function
+                        analysis.licenseFunctionIndices.push(index);
+                    }
+                }
+            }
+
+            pos = sectionEnd;
+        }
+
+        send({
+            type: 'info',
+            target: 'wasm_bypass',
+            action: 'wasm_patching_complete',
+            patches_applied: patchCount
+        });
+
+        return patched.buffer;
     },
 
     // Modify import object
@@ -1332,7 +1516,16 @@ const wasmProtectionBypass = {
                                     });
                                 }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send({
+                                type: 'debug',
+                                target: 'wasm_bypass',
+                                action: 'shared_memory_patch_failed',
+                                function: 'SharedArrayBuffer_hook',
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace available'
+                            });
+                        }
                     }, 100);
                 }
 
@@ -1482,7 +1675,16 @@ const wasmProtectionBypass = {
                                 });
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        send({
+                            type: 'debug',
+                            target: 'wasm_bypass',
+                            action: 'memory64_patch_failed',
+                            function: 'WebAssembly.Memory_hook',
+                            error: e.toString(),
+                            stack: e.stack || 'No stack trace available'
+                        });
+                    }
                 }, 200);
 
                 return memory;

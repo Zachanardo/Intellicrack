@@ -546,12 +546,7 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
                     return []
 
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [lsusb_path],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                    shell=False
+                    [lsusb_path], check=False, capture_output=True, text=True, timeout=10, shell=False
                 )
 
                 if result.returncode == 0:
@@ -660,17 +655,10 @@ def detect_tpm_protection() -> dict[str, Any]:
                 dmesg_path = shutil.which("dmesg")
                 if dmesg_path:
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                        [dmesg_path],
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                        timeout=5,
-                        shell=False
+                        [dmesg_path], check=False, capture_output=True, text=True, timeout=5, shell=False
                     )
                     if result.returncode == 0:
-                        tpm_lines = [
-                            line for line in result.stdout.split("\n") if "tpm" in line.lower()
-                    ]
+                        tpm_lines = [line for line in result.stdout.split("\n") if "tpm" in line.lower()]
                     if tpm_lines:
                         tpm_info["present"] = True
                         tpm_info["details"].extend(tpm_lines[:3])  # Add first 3 TPM-related lines

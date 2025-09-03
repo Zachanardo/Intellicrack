@@ -191,11 +191,7 @@ class CacheManager:
     def _cleanup_expired(self):
         """Remove expired cache entries."""
         current_time = time.time()
-        expired_keys = [
-            key
-            for key, entry in self.cache_index.items()
-            if entry.get("expiry_time", 0) < current_time
-        ]
+        expired_keys = [key for key, entry in self.cache_index.items() if entry.get("expiry_time", 0) < current_time]
 
         for key in expired_keys:
             self._remove_entry(key)
@@ -384,9 +380,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Initialize cache manager
         cache_params = cache_config or {}
-        cache_dir = cache_params.get(
-            "cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
-        )
+        cache_dir = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
         ttl_seconds = cache_params.get("ttl", 3600)
         max_size_mb = cache_params.get("max_size_mb", 100)
         self.cache_manager = CacheManager(cache_dir, ttl_seconds, max_size_mb)

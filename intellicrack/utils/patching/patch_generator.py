@@ -19,15 +19,14 @@ Patch Generator Module
 Compatibility module that provides patch generation functionality
 by wrapping existing patch utilities.
 """
+
 import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def generate_patch(
-    target_binary: str, patch_config: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = None) -> dict[str, Any]:
     """Generate a patch for the specified binary.
 
     Args:
@@ -72,9 +71,7 @@ class PatchGenerator:
         """Initialize patch generator with logger for binary patching operations."""
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 
-    def generate_binary_patch(
-        self, target_path: str, patch_type: str = "license_bypass"
-    ) -> dict[str, Any]:
+    def generate_binary_patch(self, target_path: str, patch_type: str = "license_bypass") -> dict[str, Any]:
         """Generate a binary patch with specified type."""
         return generate_patch(target_path, {"type": patch_type})
 

@@ -122,9 +122,7 @@ class BinarySimilaritySearchDialog(QDialog):
 
         # Header with binary info
         header_layout = QHBoxLayout()
-        header_layout.addWidget(
-            QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}")
-        )
+        header_layout.addWidget(QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}"))
         header_layout.addStretch()
 
         # Database info
@@ -252,8 +250,7 @@ class BinarySimilaritySearchDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Error",
-                "Binary similarity search engine not available. "
-                "Please ensure all dependencies are installed.",
+                "Binary similarity search engine not available. Please ensure all dependencies are installed.",
             )
             return
 
@@ -276,9 +273,7 @@ class BinarySimilaritySearchDialog(QDialog):
             def run(self):
                 """Execute binary similarity search in a separate thread."""
                 try:
-                    results = self.search_engine.search_similar_binaries(
-                        self.binary_path, self.threshold
-                    )
+                    results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
                     self.result_signal.emit(results)
                 except (OSError, ValueError, RuntimeError) as e:
                     logging.exception("Binary similarity search failed: %s", e)
@@ -329,7 +324,7 @@ class BinarySimilaritySearchDialog(QDialog):
             patterns_text = f"Cracking patterns for {os.path.basename(result.get('path', ''))}:\n\n"
 
             for i, pattern in enumerate(patterns):
-                patterns_text += f"Pattern {i+1}:\n"
+                patterns_text += f"Pattern {i + 1}:\n"
                 patterns_text += f"{pattern}\n\n"
 
             self.patterns_view.setText(patterns_text)
@@ -357,10 +352,8 @@ class BinarySimilaritySearchDialog(QDialog):
         # If multiple patterns, ask which one to apply
         pattern_to_apply = None
         if len(patterns) > 1:
-            pattern_items = [f"Pattern {_i+1}" for _i in range(len(patterns))]
-            pattern_index, ok = QInputDialog.getItem(
-                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
-            )
+            pattern_items = [f"Pattern {_i + 1}" for _i in range(len(patterns))]
+            pattern_index, ok = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
 
             if ok and pattern_index:
                 index = pattern_items.index(pattern_index)
@@ -410,8 +403,7 @@ class BinarySimilaritySearchDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Error",
-                "Binary similarity search engine not available. "
-                "Please ensure all dependencies are installed.",
+                "Binary similarity search engine not available. Please ensure all dependencies are installed.",
             )
             return
 

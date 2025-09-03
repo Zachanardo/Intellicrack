@@ -278,9 +278,9 @@ class ContainerResource(ManagedResource):
                 subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [docker_path, "rm", self.container_id],
                     check=False,
-                capture_output=True,
-                timeout=10,  # noqa: S607
-            )
+                    capture_output=True,
+                    timeout=10,  # noqa: S607
+                )
 
             logger.info(f"Cleaned up container {self.container_name}")
         except subprocess.TimeoutExpired:
@@ -398,17 +398,11 @@ class ResourceManager:
             # Check limits
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
 
-            if (
-                resource.resource_type == ResourceType.PROCESS
-                and resource_count >= self.max_processes
-            ):
+            if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
                 raise RuntimeError(f"Process limit reached: {self.max_processes}")
             if resource.resource_type == ResourceType.VM and resource_count >= self.max_vms:
                 raise RuntimeError(f"VM limit reached: {self.max_vms}")
-            if (
-                resource.resource_type == ResourceType.CONTAINER
-                and resource_count >= self.max_containers
-            ):
+            if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
                 raise RuntimeError(f"Container limit reached: {self.max_containers}")
 
             # Register resource
@@ -543,9 +537,7 @@ class ResourceManager:
             except Exception as e:
                 logger.error(f"Failed to remove temp directory {temp_dir}: {e}")
 
-        resource = ManagedResource(
-            resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp
-        )
+        resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
 
         try:
             self.register_resource(resource)
@@ -650,9 +642,7 @@ class ResourceManager:
                     if self._cleanup_resource(resource_id):
                         cleaned_count += 1
 
-        logger.info(
-            f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)"
-        )
+        logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
     def set_resource_limits(self, **limits):
@@ -724,10 +714,7 @@ class ResourceManager:
                     f"VM count exceeds limit: {len(self._resources_by_type.get(ResourceType.VM, set()))} > {self.max_vms}",
                 )
 
-            if (
-                len(self._resources_by_type.get(ResourceType.CONTAINER, set()))
-                > self.max_containers
-            ):
+            if len(self._resources_by_type.get(ResourceType.CONTAINER, set())) > self.max_containers:
                 health["issues"].append(
                     f"Container count exceeds limit: {len(self._resources_by_type.get(ResourceType.CONTAINER, set()))} > {self.max_containers}",
                 )
@@ -736,16 +723,11 @@ class ResourceManager:
             current_time = time.time()
             stuck_resources = []
             for resource in self._resources.values():
-                if (
-                    resource.status == ResourceState.CLEANING
-                    and (current_time - resource.created_at) > 300
-                ):  # 5 minutes
+                if resource.status == ResourceState.CLEANING and (current_time - resource.created_at) > 300:  # 5 minutes
                     stuck_resources.append(resource.resource_id)
 
             if stuck_resources:
-                health["warnings"].append(
-                    f"Found {len(stuck_resources)} stuck resources in cleanup state"
-                )
+                health["warnings"].append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
 
             # Check memory usage
             memory_stats = self._get_memory_usage()
@@ -809,18 +791,14 @@ class ResourceContext:
         metadata["owner"] = self.owner
         metadata["context_managed"] = True
 
-        resource_id = self.resource_manager.register_resource(
-            resource_type, resource_handle, cleanup_func, metadata
-        )
+        resource_id = self.resource_manager.register_resource(resource_type, resource_handle, cleanup_func, metadata)
         self.managed_resources.append(resource_id)
         return resource_id
 
     def cleanup_all(self):
         """Cleanup all resources in this context."""
         cleaned_count = 0
-        for resource_id in self.managed_resources[
-            :
-        ]:  # Copy list to avoid modification during iteration
+        for resource_id in self.managed_resources[:]:  # Copy list to avoid modification during iteration
             if self.resource_manager._cleanup_resource(resource_id):
                 cleaned_count += 1
                 self.managed_resources.remove(resource_id)
@@ -1022,9 +1000,7 @@ class FallbackHandler:
             # Extract Unicode strings
             unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend(
-                [s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings]
-            )
+            strings.extend([s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings])
 
             return list(set(strings))  # Remove duplicates
 
@@ -1100,9 +1076,7 @@ class FallbackHandler:
                     for section in pe.sections:
                         section_name = section.Name.decode().rstrip(chr(0))
                         result.append(
-                            f"  {section_name}: "
-                            f"VA={hex(section.VirtualAddress)}, "
-                            f"Size={hex(section.Misc_VirtualSize)}",
+                            f"  {section_name}: VA={hex(section.VirtualAddress)}, Size={hex(section.Misc_VirtualSize)}",
                         )
 
                 return "\n".join(result)
@@ -1113,6 +1087,7 @@ class FallbackHandler:
             # Try ELF analysis
             try:
                 from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
+
                 if not HAS_PYELFTOOLS:
                     raise ImportError("pyelftools not available")
 
@@ -1128,9 +1103,7 @@ class FallbackHandler:
                         result.append("\nSections:")
                         for section in elf.iter_sections():
                             result.append(
-                                f"  {section.name}: "
-                                f"Offset={hex(section['sh_offset'])}, "
-                                f"Size={hex(section['sh_size'])}",
+                                f"  {section.name}: Offset={hex(section['sh_offset'])}, Size={hex(section['sh_size'])}",
                             )
 
                 return "\n".join(result)
@@ -1148,6 +1121,7 @@ class FallbackHandler:
         """Python-based readelf fallback using pyelftools."""
         try:
             from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
+
             if not HAS_PYELFTOOLS:
                 raise ImportError("pyelftools not available")
 
@@ -1170,10 +1144,7 @@ class FallbackHandler:
                     result.append("\nSection Headers:")
                     for section in elf.iter_sections():
                         result.append(
-                            f"  [{section.name}] "
-                            f"Type={section['sh_type']} "
-                            f"Addr={hex(section['sh_addr'])} "
-                            f"Size={hex(section['sh_size'])}",
+                            f"  [{section.name}] Type={section['sh_type']} Addr={hex(section['sh_addr'])} Size={hex(section['sh_size'])}",
                         )
 
             return "\n".join(result)
@@ -1245,9 +1216,7 @@ class FallbackHandler:
                     {
                         "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
                         "local_address": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "",
-                        "remote_address": f"{conn.raddr.ip}:{conn.raddr.port}"
-                        if conn.raddr
-                        else "",
+                        "remote_address": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "",
                         "status": conn.status,
                         "pid": conn.pid,
                     },
@@ -1352,9 +1321,7 @@ def execute_with_fallback(
         logger.warning(f"Primary command failed for {tool_name}: {e}")
 
         # Try fallback
-        fallback_result = fallback_handler.get_fallback(
-            tool_name, *(fallback_args or ()), **(fallback_kwargs or {})
-        )
+        fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
 
         if fallback_result is not None:
             return {"status": "fallback", "output": fallback_result, "method": "fallback"}
@@ -1390,9 +1357,7 @@ def validate_external_dependencies() -> dict[str, Any]:
             if status != external_tools_manager.tools[tool_name].status.AVAILABLE:
                 install_script = external_tools_manager.get_installation_script(tool_name)
                 if install_script:
-                    validation_result["recommendations"].append(
-                        f"Install {tool_name}: {install_script.strip()}"
-                    )
+                    validation_result["recommendations"].append(f"Install {tool_name}: {install_script.strip()}")
 
         return validation_result
 
@@ -1418,8 +1383,7 @@ def setup_resource_monitoring():
             health = resource_manager.health_check()
 
             logger.info(
-                f"Resource stats: {stats['total_resources']} total, "
-                f"Memory: {stats['memory_usage'].get('rss_mb', 0)}MB",
+                f"Resource stats: {stats['total_resources']} total, Memory: {stats['memory_usage'].get('rss_mb', 0)}MB",
             )
 
             if health["status"] != "healthy":

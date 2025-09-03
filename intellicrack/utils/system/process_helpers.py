@@ -19,9 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-def run_process_with_output(
-    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
-) -> tuple[int, str, str]:
+def run_process_with_output(cmd: list[str], encoding: str = "utf-8", timeout: int | None = None) -> tuple[int, str, str]:
     """Run a process and capture stdout/stderr.
 
     Args:

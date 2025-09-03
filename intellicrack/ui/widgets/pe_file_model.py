@@ -245,9 +245,7 @@ class PEFileModel(BinaryFileModel):
                 for imp in entry.imports:
                     import_info = ImportInfo(
                         dll_name=dll_name,
-                        function_name=imp.name.decode("utf-8", errors="ignore")
-                        if imp.name
-                        else f"Ordinal_{imp.ordinal}",
+                        function_name=imp.name.decode("utf-8", errors="ignore") if imp.name else f"Ordinal_{imp.ordinal}",
                         ordinal=imp.ordinal,
                         address=imp.address,
                         hint=imp.hint,
@@ -267,14 +265,10 @@ class PEFileModel(BinaryFileModel):
         try:
             for exp in self.pe.DIRECTORY_ENTRY_EXPORT.symbols:  # pylint: disable=no-member
                 export_info = ExportInfo(
-                    function_name=exp.name.decode("utf-8", errors="ignore")
-                    if exp.name
-                    else f"Ordinal_{exp.ordinal}",
+                    function_name=exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}",
                     ordinal=exp.ordinal,
                     address=exp.address,
-                    forwarder=exp.forwarder.decode("utf-8", errors="ignore")
-                    if exp.forwarder
-                    else None,
+                    forwarder=exp.forwarder.decode("utf-8", errors="ignore") if exp.forwarder else None,
                 )
                 self.exports.append(export_info)
 
@@ -352,9 +346,7 @@ class PEFileModel(BinaryFileModel):
             self.structures.append(section_struct)
 
         # Data Directories
-        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(
-            self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"
-        ):
+        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"):
             # pylint: disable=no-member
             for i, directory in enumerate(self.pe.OPTIONAL_HEADER.DATA_DIRECTORY):
                 if directory.VirtualAddress and directory.Size:

@@ -557,9 +557,7 @@ class R2ResultsViewer(QWidget):
             complexity = data["complexity_metrics"]
             metrics_info.append(f"Nodes: {complexity.get('nodes', 0)}")
             metrics_info.append(f"Edges: {complexity.get('edges', 0)}")
-            metrics_info.append(
-                f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}"
-            )
+            metrics_info.append(f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}")
 
         metrics_text.setPlainText("\n".join(metrics_info))
         layout.addWidget(metrics_text)
@@ -575,9 +573,7 @@ class R2ResultsViewer(QWidget):
 
             for i, pattern in enumerate(patterns):
                 patterns_widget.setItem(i, 0, QTableWidgetItem(pattern.get("type", "Unknown")))
-                patterns_widget.setItem(
-                    i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown")))
-                )
+                patterns_widget.setItem(i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown"))))
                 patterns_widget.setItem(i, 2, QTableWidgetItem(pattern.get("disasm", "Unknown")))
 
             layout.addWidget(patterns_widget)
@@ -592,11 +588,11 @@ class R2ResultsViewer(QWidget):
             license_widget.setReadOnly(True)
             license_data = data["ai_license_detection"]
             license_text = f"""
-Has License Validation: {license_data.get('has_license_validation', False)}
-Confidence: {license_data.get('confidence', 0):.2f}
-License Complexity: {license_data.get('license_complexity', 'Unknown')}
-Bypass Difficulty: {license_data.get('bypass_difficulty', 'Unknown')}
-Validation Methods: {', '.join(license_data.get('validation_methods', []))}
+Has License Validation: {license_data.get("has_license_validation", False)}
+Confidence: {license_data.get("confidence", 0):.2f}
+License Complexity: {license_data.get("license_complexity", "Unknown")}
+Bypass Difficulty: {license_data.get("bypass_difficulty", "Unknown")}
+Validation Methods: {", ".join(license_data.get("validation_methods", []))}
             """
             license_widget.setPlainText(license_text.strip())
             ai_tabs.addTab(license_widget, "License Detection")
@@ -811,9 +807,7 @@ class R2IntegrationWidget(QWidget):
         self.status_label.setText(f"Starting {analysis_type} analysis...")
 
         # Start worker thread
-        self.current_worker = R2AnalysisWorker(
-            self.binary_path, analysis_type, self.analysis_config
-        )
+        self.current_worker = R2AnalysisWorker(self.binary_path, analysis_type, self.analysis_config)
         self.current_worker.progress_updated.connect(self.progress_bar.setValue)
         self.current_worker.status_updated.connect(self.status_label.setText)
         self.current_worker.analysis_completed.connect(self._on_analysis_completed)

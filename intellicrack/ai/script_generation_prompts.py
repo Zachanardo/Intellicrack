@@ -346,21 +346,15 @@ Return validation results in structured JSON format.""",
 
     def get_frida_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Frida-specific prompt."""
-        prompt_type = (
-            PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
-        )
+        prompt_type = PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
         return self.get_prompt(prompt_type, **kwargs)
 
     def get_ghidra_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Ghidra-specific prompt."""
-        prompt_type = (
-            PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
-        )
+        prompt_type = PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
         return self.get_prompt(prompt_type, **kwargs)
 
-    def build_context_data(
-        self, binary_analysis: dict[str, Any], protection_types: list[str] = None
-    ) -> dict[str, str]:
+    def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] = None) -> dict[str, str]:
         """Build context data for prompt formatting."""
         context = {
             "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
@@ -369,31 +363,24 @@ Return validation results in structured JSON format.""",
             "file_type": binary_analysis.get("binary_info", {}).get("type", "PE"),
             "entry_point": "0x401000",  # Default
             "protection_types": ", ".join(protection_types or ["license_check"]),
-            "key_functions": ", ".join(
-                [f["name"] for f in binary_analysis.get("functions", [])[:10]]
-            ),
+            "key_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])[:10]]),
             "imports": ", ".join(binary_analysis.get("imports", [])[:15]),
             "license_strings": ", ".join(
                 [
                     s
                     for s in binary_analysis.get("strings", [])
-                    if any(
-                        keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"]
-                    )
+                    if any(keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"])
                 ]
             ),
             "analysis_summary": self._summarize_analysis(binary_analysis),
-            "functionality_requirements": self._build_functionality_requirements(
-                protection_types or []
-            ),
+            "functionality_requirements": self._build_functionality_requirements(protection_types or []),
             # Example addresses
             "key_addresses": ", ".join(["0x401000", "0x401200", "0x401400"]),
             "protection_functions": ", ".join(
                 [
                     f["name"]
                     for f in binary_analysis.get("functions", [])
-                    if "license" in f.get("name", "").lower()
-                    or "check" in f.get("name", "").lower()
+                    if "license" in f.get("name", "").lower() or "check" in f.get("name", "").lower()
                 ]
             ),
             "patching_objectives": self._build_patching_objectives(protection_types or []),

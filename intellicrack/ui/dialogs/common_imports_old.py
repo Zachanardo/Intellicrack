@@ -99,9 +99,11 @@ except ImportError as e:
     Qt = None
     QThread = None
     QTimer = None
+
     def pyqtSignal(*args, **kwargs):
         """Fallback pyqtSignal implementation when PyQt6 is not available."""
         return lambda: None
+
     QFont = None
     QIcon = None
     QPixmap = None
@@ -153,7 +155,7 @@ except ImportError as e:
                     except Exception as e:
                         logger.debug("Failed to load image from %s: %s", source, e)
                         self._image = None
-                elif hasattr(source, 'size') and hasattr(source, 'mode'):
+                elif hasattr(source, "size") and hasattr(source, "mode"):
                     # Already a PIL Image
                     self._image = source
                     self._size = source.size
@@ -286,7 +288,7 @@ except ImportError as e:
 
         if password:
             # Create custom password dialog
-            dialog = simpledialog.askstring(title, label, show='*', initialvalue=default, parent=root)
+            dialog = simpledialog.askstring(title, label, show="*", initialvalue=default, parent=root)
         else:
             dialog = simpledialog.askstring(title, label, initialvalue=default, parent=root)
 
@@ -326,13 +328,7 @@ class _TkinterHorizontalSlider:
 
             self._root = tk.Tk()
             self._root.withdraw()
-            self._scale = ttk.Scale(
-                self._root,
-                from_=self.minimum,
-                to=self.maximum,
-                orient='horizontal',
-                command=self._on_value_changed
-            )
+            self._scale = ttk.Scale(self._root, from_=self.minimum, to=self.maximum, orient="horizontal", command=self._on_value_changed)
             self._scale.set(self._value)
             self._initialized = True
 
@@ -412,15 +408,15 @@ class _TkinterHorizontalSlider:
 
     def valueChanged(self):
         """Get the value changed signal."""
-        return _SliderSignal(self, 'value_changed_callbacks')
+        return _SliderSignal(self, "value_changed_callbacks")
 
     def sliderPressed(self):
         """Get the slider pressed signal."""
-        return _SliderSignal(self, 'slider_pressed_callbacks')
+        return _SliderSignal(self, "slider_pressed_callbacks")
 
     def sliderReleased(self):
         """Get the slider released signal."""
-        return _SliderSignal(self, 'slider_released_callbacks')
+        return _SliderSignal(self, "slider_released_callbacks")
 
     def __del__(self):
         """Clean up Tkinter resources."""
@@ -443,7 +439,6 @@ class _SliderSignal:
         """Connect a callback to this signal."""
         getattr(self.slider, self.callback_attr).append(callback)
 
-
     def create_horizontal_slider(self=0, max_val=100, value=50, tick_interval=10):
         """Create horizontal slider for exploit parameter control."""
         slider = _TkinterHorizontalSlider()
@@ -452,7 +447,6 @@ class _SliderSignal:
         slider.setValue(value)
         slider.setTickInterval(tick_interval)
         return slider
-
 
 
 # Export all imports and utilities

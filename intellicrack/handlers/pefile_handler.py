@@ -109,35 +109,35 @@ except ImportError as e:
         """Machine types."""
 
         IMAGE_FILE_MACHINE_UNKNOWN = 0x0
-        IMAGE_FILE_MACHINE_I386 = 0x14c
+        IMAGE_FILE_MACHINE_I386 = 0x14C
         IMAGE_FILE_MACHINE_R3000 = 0x162
         IMAGE_FILE_MACHINE_R4000 = 0x166
         IMAGE_FILE_MACHINE_R10000 = 0x168
         IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169
         IMAGE_FILE_MACHINE_ALPHA = 0x184
-        IMAGE_FILE_MACHINE_SH3 = 0x1a2
-        IMAGE_FILE_MACHINE_SH3DSP = 0x1a3
-        IMAGE_FILE_MACHINE_SH3E = 0x1a4
-        IMAGE_FILE_MACHINE_SH4 = 0x1a6
-        IMAGE_FILE_MACHINE_SH5 = 0x1a8
-        IMAGE_FILE_MACHINE_ARM = 0x1c0
-        IMAGE_FILE_MACHINE_THUMB = 0x1c2
-        IMAGE_FILE_MACHINE_ARMNT = 0x1c4
-        IMAGE_FILE_MACHINE_AM33 = 0x1d3
-        IMAGE_FILE_MACHINE_POWERPC = 0x1f0
-        IMAGE_FILE_MACHINE_POWERPCFP = 0x1f1
+        IMAGE_FILE_MACHINE_SH3 = 0x1A2
+        IMAGE_FILE_MACHINE_SH3DSP = 0x1A3
+        IMAGE_FILE_MACHINE_SH3E = 0x1A4
+        IMAGE_FILE_MACHINE_SH4 = 0x1A6
+        IMAGE_FILE_MACHINE_SH5 = 0x1A8
+        IMAGE_FILE_MACHINE_ARM = 0x1C0
+        IMAGE_FILE_MACHINE_THUMB = 0x1C2
+        IMAGE_FILE_MACHINE_ARMNT = 0x1C4
+        IMAGE_FILE_MACHINE_AM33 = 0x1D3
+        IMAGE_FILE_MACHINE_POWERPC = 0x1F0
+        IMAGE_FILE_MACHINE_POWERPCFP = 0x1F1
         IMAGE_FILE_MACHINE_IA64 = 0x200
         IMAGE_FILE_MACHINE_MIPS16 = 0x266
         IMAGE_FILE_MACHINE_ALPHA64 = 0x284
         IMAGE_FILE_MACHINE_MIPSFPU = 0x366
         IMAGE_FILE_MACHINE_MIPSFPU16 = 0x466
         IMAGE_FILE_MACHINE_TRICORE = 0x520
-        IMAGE_FILE_MACHINE_CEF = 0xcef
-        IMAGE_FILE_MACHINE_EBC = 0xebc
+        IMAGE_FILE_MACHINE_CEF = 0xCEF
+        IMAGE_FILE_MACHINE_EBC = 0xEBC
         IMAGE_FILE_MACHINE_AMD64 = 0x8664
         IMAGE_FILE_MACHINE_M32R = 0x9041
-        IMAGE_FILE_MACHINE_ARM64 = 0xaa64
-        IMAGE_FILE_MACHINE_CEE = 0xc0ee
+        IMAGE_FILE_MACHINE_ARM64 = 0xAA64
+        IMAGE_FILE_MACHINE_CEE = 0xC0EE
 
     class SUBSYSTEM_TYPE:  # noqa: N801
         """Subsystem types."""
@@ -234,7 +234,7 @@ except ImportError as e:
         def unpack(self, data):
             """Unpack binary data."""
             if self.format_str:
-                return struct.unpack(self.format_str, data[:self.sizeof])
+                return struct.unpack(self.format_str, data[: self.sizeof])
             return ()
 
     class FallbackPE:
@@ -263,7 +263,7 @@ except ImportError as e:
 
             # Load data
             if name and not data:
-                with open(name, 'rb') as f:
+                with open(name, "rb") as f:
                     self.__data__ = f.read()
 
             if self.__data__:
@@ -275,18 +275,18 @@ except ImportError as e:
             if len(self.__data__) < 64:
                 raise PEFormatError("File too small to be PE")
 
-            dos_magic = struct.unpack('<H', self.__data__[:2])[0]
+            dos_magic = struct.unpack("<H", self.__data__[:2])[0]
             if dos_magic != 0x5A4D:  # MZ
                 raise PEFormatError("Invalid DOS signature")
 
             # Get PE header offset
-            pe_offset = struct.unpack('<I', self.__data__[60:64])[0]
+            pe_offset = struct.unpack("<I", self.__data__[60:64])[0]
 
             # Parse PE header
             if len(self.__data__) < pe_offset + 24:
                 raise PEFormatError("Invalid PE header offset")
 
-            pe_signature = struct.unpack('<I', self.__data__[pe_offset:pe_offset+4])[0]
+            pe_signature = struct.unpack("<I", self.__data__[pe_offset : pe_offset + 4])[0]
             if pe_signature != 0x00004550:  # PE\0\0
                 raise PEFormatError("Invalid PE signature")
 
@@ -296,11 +296,11 @@ except ImportError as e:
 
             # Parse optional header
             opt_offset = coff_offset + 20
-            opt_magic = struct.unpack('<H', self.__data__[opt_offset:opt_offset+2])[0]
+            opt_magic = struct.unpack("<H", self.__data__[opt_offset : opt_offset + 2])[0]
 
-            if opt_magic == 0x10b:  # PE32
+            if opt_magic == 0x10B:  # PE32
                 self.OPTIONAL_HEADER = self._parse_optional_header32(opt_offset)
-            elif opt_magic == 0x20b:  # PE32+
+            elif opt_magic == 0x20B:  # PE32+
                 self.OPTIONAL_HEADER = self._parse_optional_header64(opt_offset)
             else:
                 raise PEFormatError(f"Invalid optional header magic: 0x{opt_magic:04x}")
@@ -319,67 +319,69 @@ except ImportError as e:
 
         def _parse_file_header(self, offset):
             """Parse COFF file header."""
+
             class FileHeader:
                 pass
 
             header = FileHeader()
-            data = self.__data__[offset:offset+20]
+            data = self.__data__[offset : offset + 20]
 
-            header.Machine = struct.unpack('<H', data[0:2])[0]
-            header.NumberOfSections = struct.unpack('<H', data[2:4])[0]
-            header.TimeDateStamp = struct.unpack('<I', data[4:8])[0]
-            header.PointerToSymbolTable = struct.unpack('<I', data[8:12])[0]
-            header.NumberOfSymbols = struct.unpack('<I', data[12:16])[0]
-            header.SizeOfOptionalHeader = struct.unpack('<H', data[16:18])[0]
-            header.Characteristics = struct.unpack('<H', data[18:20])[0]
+            header.Machine = struct.unpack("<H", data[0:2])[0]
+            header.NumberOfSections = struct.unpack("<H", data[2:4])[0]
+            header.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
+            header.PointerToSymbolTable = struct.unpack("<I", data[8:12])[0]
+            header.NumberOfSymbols = struct.unpack("<I", data[12:16])[0]
+            header.SizeOfOptionalHeader = struct.unpack("<H", data[16:18])[0]
+            header.Characteristics = struct.unpack("<H", data[18:20])[0]
 
             return header
 
         def _parse_optional_header32(self, offset):
             """Parse 32-bit optional header."""
+
             class OptionalHeader:
                 pass
 
             header = OptionalHeader()
             data = self.__data__[offset:]
 
-            header.Magic = struct.unpack('<H', data[0:2])[0]
+            header.Magic = struct.unpack("<H", data[0:2])[0]
             header.MajorLinkerVersion = data[2]
             header.MinorLinkerVersion = data[3]
-            header.SizeOfCode = struct.unpack('<I', data[4:8])[0]
-            header.SizeOfInitializedData = struct.unpack('<I', data[8:12])[0]
-            header.SizeOfUninitializedData = struct.unpack('<I', data[12:16])[0]
-            header.AddressOfEntryPoint = struct.unpack('<I', data[16:20])[0]
-            header.BaseOfCode = struct.unpack('<I', data[20:24])[0]
-            header.BaseOfData = struct.unpack('<I', data[24:28])[0]
-            header.ImageBase = struct.unpack('<I', data[28:32])[0]
-            header.SectionAlignment = struct.unpack('<I', data[32:36])[0]
-            header.FileAlignment = struct.unpack('<I', data[36:40])[0]
-            header.MajorOperatingSystemVersion = struct.unpack('<H', data[40:42])[0]
-            header.MinorOperatingSystemVersion = struct.unpack('<H', data[42:44])[0]
-            header.MajorImageVersion = struct.unpack('<H', data[44:46])[0]
-            header.MinorImageVersion = struct.unpack('<H', data[46:48])[0]
-            header.MajorSubsystemVersion = struct.unpack('<H', data[48:50])[0]
-            header.MinorSubsystemVersion = struct.unpack('<H', data[50:52])[0]
-            header.Reserved1 = struct.unpack('<I', data[52:56])[0]
-            header.SizeOfImage = struct.unpack('<I', data[56:60])[0]
-            header.SizeOfHeaders = struct.unpack('<I', data[60:64])[0]
-            header.CheckSum = struct.unpack('<I', data[64:68])[0]
-            header.Subsystem = struct.unpack('<H', data[68:70])[0]
-            header.DllCharacteristics = struct.unpack('<H', data[70:72])[0]
-            header.SizeOfStackReserve = struct.unpack('<I', data[72:76])[0]
-            header.SizeOfStackCommit = struct.unpack('<I', data[76:80])[0]
-            header.SizeOfHeapReserve = struct.unpack('<I', data[80:84])[0]
-            header.SizeOfHeapCommit = struct.unpack('<I', data[84:88])[0]
-            header.LoaderFlags = struct.unpack('<I', data[88:92])[0]
-            header.NumberOfRvaAndSizes = struct.unpack('<I', data[92:96])[0]
+            header.SizeOfCode = struct.unpack("<I", data[4:8])[0]
+            header.SizeOfInitializedData = struct.unpack("<I", data[8:12])[0]
+            header.SizeOfUninitializedData = struct.unpack("<I", data[12:16])[0]
+            header.AddressOfEntryPoint = struct.unpack("<I", data[16:20])[0]
+            header.BaseOfCode = struct.unpack("<I", data[20:24])[0]
+            header.BaseOfData = struct.unpack("<I", data[24:28])[0]
+            header.ImageBase = struct.unpack("<I", data[28:32])[0]
+            header.SectionAlignment = struct.unpack("<I", data[32:36])[0]
+            header.FileAlignment = struct.unpack("<I", data[36:40])[0]
+            header.MajorOperatingSystemVersion = struct.unpack("<H", data[40:42])[0]
+            header.MinorOperatingSystemVersion = struct.unpack("<H", data[42:44])[0]
+            header.MajorImageVersion = struct.unpack("<H", data[44:46])[0]
+            header.MinorImageVersion = struct.unpack("<H", data[46:48])[0]
+            header.MajorSubsystemVersion = struct.unpack("<H", data[48:50])[0]
+            header.MinorSubsystemVersion = struct.unpack("<H", data[50:52])[0]
+            header.Reserved1 = struct.unpack("<I", data[52:56])[0]
+            header.SizeOfImage = struct.unpack("<I", data[56:60])[0]
+            header.SizeOfHeaders = struct.unpack("<I", data[60:64])[0]
+            header.CheckSum = struct.unpack("<I", data[64:68])[0]
+            header.Subsystem = struct.unpack("<H", data[68:70])[0]
+            header.DllCharacteristics = struct.unpack("<H", data[70:72])[0]
+            header.SizeOfStackReserve = struct.unpack("<I", data[72:76])[0]
+            header.SizeOfStackCommit = struct.unpack("<I", data[76:80])[0]
+            header.SizeOfHeapReserve = struct.unpack("<I", data[80:84])[0]
+            header.SizeOfHeapCommit = struct.unpack("<I", data[84:88])[0]
+            header.LoaderFlags = struct.unpack("<I", data[88:92])[0]
+            header.NumberOfRvaAndSizes = struct.unpack("<I", data[92:96])[0]
 
             # Parse data directories
             header.DATA_DIRECTORY = []
             for i in range(min(header.NumberOfRvaAndSizes, 16)):
                 dir_offset = 96 + i * 8
-                vaddr = struct.unpack('<I', data[dir_offset:dir_offset+4])[0]
-                size = struct.unpack('<I', data[dir_offset+4:dir_offset+8])[0]
+                vaddr = struct.unpack("<I", data[dir_offset : dir_offset + 4])[0]
+                size = struct.unpack("<I", data[dir_offset + 4 : dir_offset + 8])[0]
 
                 class DataDir:
                     pass
@@ -393,48 +395,49 @@ except ImportError as e:
 
         def _parse_optional_header64(self, offset):
             """Parse 64-bit optional header."""
+
             class OptionalHeader:
                 pass
 
             header = OptionalHeader()
             data = self.__data__[offset:]
 
-            header.Magic = struct.unpack('<H', data[0:2])[0]
+            header.Magic = struct.unpack("<H", data[0:2])[0]
             header.MajorLinkerVersion = data[2]
             header.MinorLinkerVersion = data[3]
-            header.SizeOfCode = struct.unpack('<I', data[4:8])[0]
-            header.SizeOfInitializedData = struct.unpack('<I', data[8:12])[0]
-            header.SizeOfUninitializedData = struct.unpack('<I', data[12:16])[0]
-            header.AddressOfEntryPoint = struct.unpack('<I', data[16:20])[0]
-            header.BaseOfCode = struct.unpack('<I', data[20:24])[0]
-            header.ImageBase = struct.unpack('<Q', data[24:32])[0]
-            header.SectionAlignment = struct.unpack('<I', data[32:36])[0]
-            header.FileAlignment = struct.unpack('<I', data[36:40])[0]
-            header.MajorOperatingSystemVersion = struct.unpack('<H', data[40:42])[0]
-            header.MinorOperatingSystemVersion = struct.unpack('<H', data[42:44])[0]
-            header.MajorImageVersion = struct.unpack('<H', data[44:46])[0]
-            header.MinorImageVersion = struct.unpack('<H', data[46:48])[0]
-            header.MajorSubsystemVersion = struct.unpack('<H', data[48:50])[0]
-            header.MinorSubsystemVersion = struct.unpack('<H', data[50:52])[0]
-            header.Reserved1 = struct.unpack('<I', data[52:56])[0]
-            header.SizeOfImage = struct.unpack('<I', data[56:60])[0]
-            header.SizeOfHeaders = struct.unpack('<I', data[60:64])[0]
-            header.CheckSum = struct.unpack('<I', data[64:68])[0]
-            header.Subsystem = struct.unpack('<H', data[68:70])[0]
-            header.DllCharacteristics = struct.unpack('<H', data[70:72])[0]
-            header.SizeOfStackReserve = struct.unpack('<Q', data[72:80])[0]
-            header.SizeOfStackCommit = struct.unpack('<Q', data[80:88])[0]
-            header.SizeOfHeapReserve = struct.unpack('<Q', data[88:96])[0]
-            header.SizeOfHeapCommit = struct.unpack('<Q', data[96:104])[0]
-            header.LoaderFlags = struct.unpack('<I', data[104:108])[0]
-            header.NumberOfRvaAndSizes = struct.unpack('<I', data[108:112])[0]
+            header.SizeOfCode = struct.unpack("<I", data[4:8])[0]
+            header.SizeOfInitializedData = struct.unpack("<I", data[8:12])[0]
+            header.SizeOfUninitializedData = struct.unpack("<I", data[12:16])[0]
+            header.AddressOfEntryPoint = struct.unpack("<I", data[16:20])[0]
+            header.BaseOfCode = struct.unpack("<I", data[20:24])[0]
+            header.ImageBase = struct.unpack("<Q", data[24:32])[0]
+            header.SectionAlignment = struct.unpack("<I", data[32:36])[0]
+            header.FileAlignment = struct.unpack("<I", data[36:40])[0]
+            header.MajorOperatingSystemVersion = struct.unpack("<H", data[40:42])[0]
+            header.MinorOperatingSystemVersion = struct.unpack("<H", data[42:44])[0]
+            header.MajorImageVersion = struct.unpack("<H", data[44:46])[0]
+            header.MinorImageVersion = struct.unpack("<H", data[46:48])[0]
+            header.MajorSubsystemVersion = struct.unpack("<H", data[48:50])[0]
+            header.MinorSubsystemVersion = struct.unpack("<H", data[50:52])[0]
+            header.Reserved1 = struct.unpack("<I", data[52:56])[0]
+            header.SizeOfImage = struct.unpack("<I", data[56:60])[0]
+            header.SizeOfHeaders = struct.unpack("<I", data[60:64])[0]
+            header.CheckSum = struct.unpack("<I", data[64:68])[0]
+            header.Subsystem = struct.unpack("<H", data[68:70])[0]
+            header.DllCharacteristics = struct.unpack("<H", data[70:72])[0]
+            header.SizeOfStackReserve = struct.unpack("<Q", data[72:80])[0]
+            header.SizeOfStackCommit = struct.unpack("<Q", data[80:88])[0]
+            header.SizeOfHeapReserve = struct.unpack("<Q", data[88:96])[0]
+            header.SizeOfHeapCommit = struct.unpack("<Q", data[96:104])[0]
+            header.LoaderFlags = struct.unpack("<I", data[104:108])[0]
+            header.NumberOfRvaAndSizes = struct.unpack("<I", data[108:112])[0]
 
             # Parse data directories
             header.DATA_DIRECTORY = []
             for i in range(min(header.NumberOfRvaAndSizes, 16)):
                 dir_offset = 112 + i * 8
-                vaddr = struct.unpack('<I', data[dir_offset:dir_offset+4])[0]
-                size = struct.unpack('<I', data[dir_offset+4:dir_offset+8])[0]
+                vaddr = struct.unpack("<I", data[dir_offset : dir_offset + 4])[0]
+                size = struct.unpack("<I", data[dir_offset + 4 : dir_offset + 8])[0]
 
                 class DataDir:
                     pass
@@ -453,22 +456,22 @@ except ImportError as e:
                 if section_offset + 40 > len(self.__data__):
                     break
 
-                data = self.__data__[section_offset:section_offset+40]
+                data = self.__data__[section_offset : section_offset + 40]
 
                 class Section:
                     pass
 
                 section = Section()
-                section.Name = data[:8].rstrip(b'\x00').decode('ascii', errors='ignore')
-                section.VirtualSize = struct.unpack('<I', data[8:12])[0]
-                section.VirtualAddress = struct.unpack('<I', data[12:16])[0]
-                section.SizeOfRawData = struct.unpack('<I', data[16:20])[0]
-                section.PointerToRawData = struct.unpack('<I', data[20:24])[0]
-                section.PointerToRelocations = struct.unpack('<I', data[24:28])[0]
-                section.PointerToLinenumbers = struct.unpack('<I', data[28:32])[0]
-                section.NumberOfRelocations = struct.unpack('<H', data[32:34])[0]
-                section.NumberOfLinenumbers = struct.unpack('<H', data[34:36])[0]
-                section.Characteristics = struct.unpack('<I', data[36:40])[0]
+                section.Name = data[:8].rstrip(b"\x00").decode("ascii", errors="ignore")
+                section.VirtualSize = struct.unpack("<I", data[8:12])[0]
+                section.VirtualAddress = struct.unpack("<I", data[12:16])[0]
+                section.SizeOfRawData = struct.unpack("<I", data[16:20])[0]
+                section.PointerToRawData = struct.unpack("<I", data[20:24])[0]
+                section.PointerToRelocations = struct.unpack("<I", data[24:28])[0]
+                section.PointerToLinenumbers = struct.unpack("<I", data[28:32])[0]
+                section.NumberOfRelocations = struct.unpack("<H", data[32:34])[0]
+                section.NumberOfLinenumbers = struct.unpack("<H", data[34:36])[0]
+                section.Characteristics = struct.unpack("<I", data[36:40])[0]
 
                 # Get section data
                 if section.PointerToRawData > 0 and section.SizeOfRawData > 0:
@@ -476,7 +479,7 @@ except ImportError as e:
                     end = start + section.SizeOfRawData
                     section.data = self.__data__[start:end]
                 else:
-                    section.data = b''
+                    section.data = b""
 
                 self.sections.append(section)
 
@@ -503,21 +506,21 @@ except ImportError as e:
                 if offset + 20 > len(self.__data__):
                     break
 
-                data = self.__data__[offset:offset+20]
+                data = self.__data__[offset : offset + 20]
 
                 # Check for end of imports
-                if data == b'\x00' * 20:
+                if data == b"\x00" * 20:
                     break
 
                 class ImportDescriptor:
                     pass
 
                 import_desc = ImportDescriptor()
-                import_desc.OriginalFirstThunk = struct.unpack('<I', data[0:4])[0]
-                import_desc.TimeDateStamp = struct.unpack('<I', data[4:8])[0]
-                import_desc.ForwarderChain = struct.unpack('<I', data[8:12])[0]
-                import_desc.Name = struct.unpack('<I', data[12:16])[0]
-                import_desc.FirstThunk = struct.unpack('<I', data[16:20])[0]
+                import_desc.OriginalFirstThunk = struct.unpack("<I", data[0:4])[0]
+                import_desc.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
+                import_desc.ForwarderChain = struct.unpack("<I", data[8:12])[0]
+                import_desc.Name = struct.unpack("<I", data[12:16])[0]
+                import_desc.FirstThunk = struct.unpack("<I", data[16:20])[0]
 
                 # Get DLL name
                 name_offset = self.get_offset_from_rva(import_desc.Name)
@@ -537,7 +540,7 @@ except ImportError as e:
 
         def _parse_import_thunks(self, import_desc, offset):
             """Parse import thunks."""
-            is_64bit = self.OPTIONAL_HEADER.Magic == 0x20b
+            is_64bit = self.OPTIONAL_HEADER.Magic == 0x20B
             thunk_size = 8 if is_64bit else 4
 
             while True:
@@ -545,10 +548,10 @@ except ImportError as e:
                     break
 
                 if is_64bit:
-                    thunk = struct.unpack('<Q', self.__data__[offset:offset+8])[0]
+                    thunk = struct.unpack("<Q", self.__data__[offset : offset + 8])[0]
                     ordinal_flag = 0x8000000000000000
                 else:
-                    thunk = struct.unpack('<I', self.__data__[offset:offset+4])[0]
+                    thunk = struct.unpack("<I", self.__data__[offset : offset + 4])[0]
                     ordinal_flag = 0x80000000
 
                 if thunk == 0:
@@ -569,7 +572,7 @@ except ImportError as e:
                     name_offset = self.get_offset_from_rva(name_rva)
                     if name_offset:
                         # Skip hint
-                        import_data.hint = struct.unpack('<H', self.__data__[name_offset:name_offset+2])[0]
+                        import_data.hint = struct.unpack("<H", self.__data__[name_offset : name_offset + 2])[0]
                         import_data.name = self._get_string(name_offset + 2)
                         import_data.ordinal = None
 
@@ -595,23 +598,23 @@ except ImportError as e:
             if export_offset + 40 > len(self.__data__):
                 return
 
-            data = self.__data__[export_offset:export_offset+40]
+            data = self.__data__[export_offset : export_offset + 40]
 
             class ExportDirectory:
                 pass
 
             export = ExportDirectory()
-            export.Characteristics = struct.unpack('<I', data[0:4])[0]
-            export.TimeDateStamp = struct.unpack('<I', data[4:8])[0]
-            export.MajorVersion = struct.unpack('<H', data[8:10])[0]
-            export.MinorVersion = struct.unpack('<H', data[10:12])[0]
-            export.Name = struct.unpack('<I', data[12:16])[0]
-            export.Base = struct.unpack('<I', data[16:20])[0]
-            export.NumberOfFunctions = struct.unpack('<I', data[20:24])[0]
-            export.NumberOfNames = struct.unpack('<I', data[24:28])[0]
-            export.AddressOfFunctions = struct.unpack('<I', data[28:32])[0]
-            export.AddressOfNames = struct.unpack('<I', data[32:36])[0]
-            export.AddressOfNameOrdinals = struct.unpack('<I', data[36:40])[0]
+            export.Characteristics = struct.unpack("<I", data[0:4])[0]
+            export.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
+            export.MajorVersion = struct.unpack("<H", data[8:10])[0]
+            export.MinorVersion = struct.unpack("<H", data[10:12])[0]
+            export.Name = struct.unpack("<I", data[12:16])[0]
+            export.Base = struct.unpack("<I", data[16:20])[0]
+            export.NumberOfFunctions = struct.unpack("<I", data[20:24])[0]
+            export.NumberOfNames = struct.unpack("<I", data[24:28])[0]
+            export.AddressOfFunctions = struct.unpack("<I", data[28:32])[0]
+            export.AddressOfNames = struct.unpack("<I", data[32:36])[0]
+            export.AddressOfNameOrdinals = struct.unpack("<I", data[36:40])[0]
 
             # Get DLL name
             name_offset = self.get_offset_from_rva(export.Name)
@@ -635,8 +638,8 @@ except ImportError as e:
                         if ordinal_offset + i * 2 + 2 > len(self.__data__):
                             break
 
-                        name_rva = struct.unpack('<I', self.__data__[name_offset + i * 4:name_offset + i * 4 + 4])[0]
-                        ordinal = struct.unpack('<H', self.__data__[ordinal_offset + i * 2:ordinal_offset + i * 2 + 2])[0]
+                        name_rva = struct.unpack("<I", self.__data__[name_offset + i * 4 : name_offset + i * 4 + 4])[0]
+                        ordinal = struct.unpack("<H", self.__data__[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2])[0]
 
                         name_file_offset = self.get_offset_from_rva(name_rva)
                         if name_file_offset:
@@ -649,9 +652,10 @@ except ImportError as e:
                         if func_offset + i * 4 + 4 > len(self.__data__):
                             break
 
-                        func_rva = struct.unpack('<I', self.__data__[func_offset + i * 4:func_offset + i * 4 + 4])[0]
+                        func_rva = struct.unpack("<I", self.__data__[func_offset + i * 4 : func_offset + i * 4 + 4])[0]
 
                         if func_rva != 0:
+
                             class ExportSymbol:
                                 pass
 
@@ -688,10 +692,10 @@ except ImportError as e:
 
         def _get_string(self, offset):
             """Get null-terminated string from offset."""
-            end = self.__data__.find(b'\x00', offset)
+            end = self.__data__.find(b"\x00", offset)
             if end == -1:
                 end = len(self.__data__)
-            return self.__data__[offset:end].decode('ascii', errors='ignore')
+            return self.__data__[offset:end].decode("ascii", errors="ignore")
 
         def get_offset_from_rva(self, rva):
             """Convert RVA to file offset."""
@@ -711,7 +715,7 @@ except ImportError as e:
             """Get data at RVA."""
             offset = self.get_offset_from_rva(rva)
             if offset and offset + length <= len(self.__data__):
-                return self.__data__[offset:offset+length]
+                return self.__data__[offset : offset + length]
             return None
 
         def get_memory_mapped_image(self):
@@ -747,33 +751,33 @@ except ImportError as e:
 
             imp_str = ""
             for entry in self.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.lower() if hasattr(entry, 'dll') else ""
-                if dll_name.endswith('.dll'):
+                dll_name = entry.dll.lower() if hasattr(entry, "dll") else ""
+                if dll_name.endswith(".dll"):
                     dll_name = dll_name[:-4]
 
                 for imp in entry.imports:
-                    if hasattr(imp, 'name') and imp.name:
+                    if hasattr(imp, "name") and imp.name:
                         imp_str += f"{dll_name}.{imp.name.lower()},"
-                    elif hasattr(imp, 'ordinal') and imp.ordinal:
+                    elif hasattr(imp, "ordinal") and imp.ordinal:
                         imp_str += f"{dll_name}.ord{imp.ordinal},"
 
-            imp_str = imp_str.rstrip(',')
+            imp_str = imp_str.rstrip(",")
             return hashlib.sha256(imp_str.encode()).hexdigest() if imp_str else ""
 
         def get_rich_header_hash(self):
             """Calculate Rich header hash."""
             # Find Rich header
-            rich_index = self.__data__.find(b'Rich')
+            rich_index = self.__data__.find(b"Rich")
             if rich_index == -1:
                 return None
 
             # Find DanS marker
-            dans_index = self.__data__.find(b'DanS')
+            dans_index = self.__data__.find(b"DanS")
             if dans_index == -1 or dans_index >= rich_index:
                 return None
 
             # Get Rich header data
-            rich_data = self.__data__[dans_index:rich_index+8]
+            rich_data = self.__data__[dans_index : rich_index + 8]
             return hashlib.sha256(rich_data).hexdigest()
 
         def generate_checksum(self):
@@ -784,7 +788,7 @@ except ImportError as e:
             # Calculate checksum
             for i in range(0, len(self.__data__), 2):
                 if i + 1 < len(self.__data__):
-                    word = struct.unpack('<H', self.__data__[i:i+2])[0]
+                    word = struct.unpack("<H", self.__data__[i : i + 2])[0]
                 else:
                     word = self.__data__[i]
 
@@ -819,7 +823,7 @@ except ImportError as e:
         def write(self, filename=None):
             """Write PE to file."""
             if filename:
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     f.write(self.__data__)
             return self.__data__
 
@@ -857,7 +861,9 @@ except ImportError as e:
 # Export all pefile objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_PEFILE", "PEFILE_AVAILABLE", "PEFILE_VERSION",
+    "HAS_PEFILE",
+    "PEFILE_AVAILABLE",
+    "PEFILE_VERSION",
     # Main module
     "pefile",
     # Main class
@@ -865,9 +871,14 @@ __all__ = [
     # Exceptions
     "PEFormatError",
     # Constants
-    "DIRECTORY_ENTRY", "SECTION_CHARACTERISTICS", "DLL_CHARACTERISTICS",
-    "MACHINE_TYPE", "SUBSYSTEM_TYPE", "IMAGE_CHARACTERISTICS",
-    "DEBUG_TYPE", "RESOURCE_TYPE",
+    "DIRECTORY_ENTRY",
+    "SECTION_CHARACTERISTICS",
+    "DLL_CHARACTERISTICS",
+    "MACHINE_TYPE",
+    "SUBSYSTEM_TYPE",
+    "IMAGE_CHARACTERISTICS",
+    "DEBUG_TYPE",
+    "RESOURCE_TYPE",
     # Structures
     "Structure",
 ]

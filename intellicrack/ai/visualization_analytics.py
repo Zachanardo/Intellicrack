@@ -132,6 +132,8 @@ class DataCollector:
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
         self.learning_engine = get_learning_engine()
+        self.learning_records = {}
+        self.error_history = deque(maxlen=1000)
 
         # Initialize data collectors
         self._initialize_collectors()
@@ -362,7 +364,8 @@ class DataCollector:
 
             # Also check the error history buffer
             recent_errors = [
-                error for error in self.error_history
+                error
+                for error in self.error_history
                 if datetime.fromisoformat(error.get("timestamp", current_time.isoformat())) >= lookback_time
             ]
             error_count += len(recent_errors)
@@ -393,10 +396,7 @@ class DataCollector:
             status = record.get("status", "").lower()
             result = record.get("result", "").lower()
 
-            error_keywords = [
-                "error", "failed", "exception", "timeout", "crash",
-                "invalid", "denied", "refused", "blocked", "abort"
-            ]
+            error_keywords = ["error", "failed", "exception", "timeout", "crash", "invalid", "denied", "refused", "blocked", "abort"]
 
             for keyword in error_keywords:
                 if keyword in status or keyword in result:
@@ -447,8 +447,9 @@ class DataCollector:
             # Also check for active analysis operations
             try:
                 from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
+
                 # If orchestrator exists, get active operations count
-                analysis_operations = getattr(AnalysisOrchestrator, '_active_operations', {})
+                analysis_operations = getattr(AnalysisOrchestrator, "_active_operations", {})
                 for op_id, op_data in analysis_operations.items():
                     if op_data.get("status") == "running":
                         total_tasks += 1
@@ -461,9 +462,10 @@ class DataCollector:
             # Check for running AI operations
             try:
                 from intellicrack.ai.orchestrator import AIOrchestrator
+
                 # If orchestrator has active tasks, count them
-                if hasattr(AIOrchestrator, '_active_tasks'):
-                    active_tasks = getattr(AIOrchestrator, '_active_tasks', {})
+                if hasattr(AIOrchestrator, "_active_tasks"):
+                    active_tasks = getattr(AIOrchestrator, "_active_tasks", {})
                     for task_id, task_data in active_tasks.items():
                         if task_data.get("status") in ["running", "queued"]:
                             total_tasks += 1
@@ -498,7 +500,7 @@ class DataCollector:
 
             # Ensure reasonable bounds
             active_agents = max(1, min(active_agents, 50))  # 1-50 agents
-            total_tasks = max(0, min(total_tasks, 10000))   # 0-10000 tasks
+            total_tasks = max(0, min(total_tasks, 10000))  # 0-10000 tasks
 
             return active_agents, total_tasks
 
@@ -507,7 +509,7 @@ class DataCollector:
             # Return conservative estimates if calculation fails
             return 1, 10
 
-    def _get_real_exploit_frequency(self, exploit_type: 'ExploitType', severity: str) -> int:
+    def _get_real_exploit_frequency(self, exploit_type: "ExploitType", severity: str) -> int:
         """Get real exploit frequency data from system tracking."""
         try:
             current_time = datetime.now()
@@ -557,39 +559,42 @@ class DataCollector:
             # Return baseline frequency based on exploit characteristics
             return self._get_base_frequency_for_exploit_type(exploit_type, severity)
 
-    def _record_matches_exploit(self, record: dict, exploit_type: 'ExploitType', severity: str) -> bool:
+    def _record_matches_exploit(self, record: dict, exploit_type: "ExploitType", severity: str) -> bool:
         """Check if a learning record matches specific exploit type and severity."""
         try:
             # Check for exploit type keywords in record
             exploit_keywords = {
                 # Map exploit types to searchable keywords
-                'ExploitType.BUFFER_OVERFLOW': ['buffer', 'overflow', 'stack', 'heap'],
-                'ExploitType.CODE_INJECTION': ['injection', 'code', 'execute', 'payload'],
-                'ExploitType.PRIVILEGE_ESCALATION': ['privilege', 'escalation', 'admin', 'root'],
-                'ExploitType.MEMORY_CORRUPTION': ['memory', 'corruption', 'segfault', 'access'],
-                'ExploitType.BYPASS_PROTECTION': ['bypass', 'protection', 'aslr', 'dep'],
+                "ExploitType.BUFFER_OVERFLOW": ["buffer", "overflow", "stack", "heap"],
+                "ExploitType.CODE_INJECTION": ["injection", "code", "execute", "payload"],
+                "ExploitType.PRIVILEGE_ESCALATION": ["privilege", "escalation", "admin", "root"],
+                "ExploitType.MEMORY_CORRUPTION": ["memory", "corruption", "segfault", "access"],
+                "ExploitType.BYPASS_PROTECTION": ["bypass", "protection", "aslr", "dep"],
             }
 
             record_text = (
-                record.get("description", "") + " " +
-                record.get("status", "") + " " +
-                record.get("result", "") + " " +
-                record.get("method", "")
+                record.get("description", "")
+                + " "
+                + record.get("status", "")
+                + " "
+                + record.get("result", "")
+                + " "
+                + record.get("method", "")
             ).lower()
 
             # Check for exploit type match
             exploit_key = str(exploit_type)
-            keywords = exploit_keywords.get(exploit_key, [exploit_type.name.lower().split('_')])
+            keywords = exploit_keywords.get(exploit_key, [exploit_type.name.lower().split("_")])
 
             exploit_match = any(keyword in record_text for keyword in keywords)
 
             if exploit_match:
                 # Check for severity indicators
                 severity_indicators = {
-                    'Critical': ['critical', 'severe', 'dangerous', 'high_risk'],
-                    'High': ['high', 'important', 'significant', 'major'],
-                    'Medium': ['medium', 'moderate', 'normal', 'standard'],
-                    'Low': ['low', 'minor', 'trivial', 'info']
+                    "Critical": ["critical", "severe", "dangerous", "high_risk"],
+                    "High": ["high", "important", "significant", "major"],
+                    "Medium": ["medium", "moderate", "normal", "standard"],
+                    "Low": ["low", "minor", "trivial", "info"],
                 }
 
                 severity_keywords = severity_indicators.get(severity, [severity.lower()])
@@ -603,22 +608,20 @@ class DataCollector:
             logger.warning(f"Error checking record exploit match: {e}")
             return False
 
-    def _error_matches_exploit(self, error_record: dict, exploit_type: 'ExploitType', severity: str) -> bool:
+    def _error_matches_exploit(self, error_record: dict, exploit_type: "ExploitType", severity: str) -> bool:
         """Check if an error record relates to specific exploit type and severity."""
         try:
             error_text = (
-                error_record.get("error_message", "") + " " +
-                error_record.get("error_type", "") + " " +
-                error_record.get("context", "")
+                error_record.get("error_message", "") + " " + error_record.get("error_type", "") + " " + error_record.get("context", "")
             ).lower()
 
             # Exploit-related error patterns
             exploit_patterns = {
-                'ExploitType.BUFFER_OVERFLOW': ['segmentation', 'buffer', 'stack', 'smash'],
-                'ExploitType.CODE_INJECTION': ['injection', 'execute', 'eval', 'script'],
-                'ExploitType.PRIVILEGE_ESCALATION': ['permission', 'access', 'denied', 'unauthorized'],
-                'ExploitType.MEMORY_CORRUPTION': ['memory', 'corrupt', 'invalid', 'fault'],
-                'ExploitType.BYPASS_PROTECTION': ['bypass', 'disable', 'override', 'circumvent'],
+                "ExploitType.BUFFER_OVERFLOW": ["segmentation", "buffer", "stack", "smash"],
+                "ExploitType.CODE_INJECTION": ["injection", "execute", "eval", "script"],
+                "ExploitType.PRIVILEGE_ESCALATION": ["permission", "access", "denied", "unauthorized"],
+                "ExploitType.MEMORY_CORRUPTION": ["memory", "corrupt", "invalid", "fault"],
+                "ExploitType.BYPASS_PROTECTION": ["bypass", "disable", "override", "circumvent"],
             }
 
             exploit_key = str(exploit_type)
@@ -630,20 +633,20 @@ class DataCollector:
             logger.warning(f"Error checking error exploit match: {e}")
             return False
 
-    def _get_base_frequency_for_exploit_type(self, exploit_type: 'ExploitType', severity: str) -> int:
+    def _get_base_frequency_for_exploit_type(self, exploit_type: "ExploitType", severity: str) -> int:
         """Get baseline frequency based on exploit type characteristics and industry data."""
         try:
             # Base frequencies based on common exploit patterns in security research
             base_frequencies = {
-                'ExploitType.BUFFER_OVERFLOW': {'Critical': 25, 'High': 35, 'Medium': 20, 'Low': 10},
-                'ExploitType.CODE_INJECTION': {'Critical': 30, 'High': 25, 'Medium': 15, 'Low': 8},
-                'ExploitType.PRIVILEGE_ESCALATION': {'Critical': 20, 'High': 30, 'Medium': 25, 'Low': 12},
-                'ExploitType.MEMORY_CORRUPTION': {'Critical': 15, 'High': 20, 'Medium': 18, 'Low': 7},
-                'ExploitType.BYPASS_PROTECTION': {'Critical': 18, 'High': 22, 'Medium': 16, 'Low': 9},
+                "ExploitType.BUFFER_OVERFLOW": {"Critical": 25, "High": 35, "Medium": 20, "Low": 10},
+                "ExploitType.CODE_INJECTION": {"Critical": 30, "High": 25, "Medium": 15, "Low": 8},
+                "ExploitType.PRIVILEGE_ESCALATION": {"Critical": 20, "High": 30, "Medium": 25, "Low": 12},
+                "ExploitType.MEMORY_CORRUPTION": {"Critical": 15, "High": 20, "Medium": 18, "Low": 7},
+                "ExploitType.BYPASS_PROTECTION": {"Critical": 18, "High": 22, "Medium": 16, "Low": 9},
             }
 
             exploit_key = str(exploit_type)
-            frequencies = base_frequencies.get(exploit_key, {'Critical': 15, 'High': 20, 'Medium': 15, 'Low': 5})
+            frequencies = base_frequencies.get(exploit_key, {"Critical": 15, "High": 20, "Medium": 15, "Low": 5})
 
             return frequencies.get(severity, 10)
 
@@ -761,9 +764,7 @@ class DataCollector:
 
         # Filter by time range (in seconds)
         cutoff_time = datetime.now() - timedelta(seconds=time_range)
-        filtered_data = [
-            point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time
-        ]
+        filtered_data = [point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time]
 
         return filtered_data
 
@@ -830,9 +831,7 @@ class ChartGenerator:
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(
-        self, template_name: str, custom_options: dict[str, Any] = None
-    ) -> ChartData:
+    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -953,7 +952,7 @@ class ChartGenerator:
         for i, exploit_type in enumerate(list(ExploitType)[:10]):
             for j, severity in enumerate(severities):
                 # Real frequency data from exploit tracking
-                frequency = self._get_real_exploit_frequency(exploit_type, severity)
+                frequency = self.data_collector._get_real_exploit_frequency(exploit_type, severity)
 
                 heatmap_data.append(
                     DataPoint(
@@ -1084,9 +1083,7 @@ class DashboardManager:
 
         return dashboard
 
-    def create_custom_dashboard(
-        self, name: str, description: str, chart_configs: list[dict[str, Any]]
-    ) -> Dashboard:
+    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
@@ -1442,9 +1439,7 @@ class VisualizationAnalytics:
         """Refresh dashboard data."""
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
-    def create_custom_dashboard(
-        self, name: str, description: str, chart_configs: list[dict[str, Any]]
-    ) -> Dashboard:
+    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 
@@ -1457,9 +1452,7 @@ class VisualizationAnalytics:
         return {
             "data_collector_active": self.data_collector.collection_enabled,
             "total_dashboards": len(self.dashboard_manager.dashboards),
-            "data_points_collected": sum(
-                len(queue) for queue in self.data_collector.data_store.values()
-            ),
+            "data_points_collected": sum(len(queue) for queue in self.data_collector.data_store.values()),
             "last_collection": datetime.now().isoformat(),
         }
 

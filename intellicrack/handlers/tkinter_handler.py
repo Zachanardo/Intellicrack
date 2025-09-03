@@ -73,22 +73,22 @@ except ImportError as e:
             self.winfo_children_list = []
 
             # Widget properties
-            self.width = kwargs.get('width', 100)
-            self.height = kwargs.get('height', 30)
-            self.x = kwargs.get('x', 0)
-            self.y = kwargs.get('y', 0)
-            self.bg = kwargs.get('bg', 'SystemButtonFace')
-            self.fg = kwargs.get('fg', 'black')
-            self.font = kwargs.get('font', ('TkDefaultFont', 9))
-            self.relief = kwargs.get('relief', 'flat')
-            self.borderwidth = kwargs.get('borderwidth', 1)
-            self.state = kwargs.get('state', 'normal')
-            self.text = kwargs.get('text', '')
-            self.textvariable = kwargs.get('textvariable', None)
+            self.width = kwargs.get("width", 100)
+            self.height = kwargs.get("height", 30)
+            self.x = kwargs.get("x", 0)
+            self.y = kwargs.get("y", 0)
+            self.bg = kwargs.get("bg", "SystemButtonFace")
+            self.fg = kwargs.get("fg", "black")
+            self.font = kwargs.get("font", ("TkDefaultFont", 9))
+            self.relief = kwargs.get("relief", "flat")
+            self.borderwidth = kwargs.get("borderwidth", 1)
+            self.state = kwargs.get("state", "normal")
+            self.text = kwargs.get("text", "")
+            self.textvariable = kwargs.get("textvariable", None)
 
             # Event bindings
             self.bindings = {}
-            self.command = kwargs.get('command', None)
+            self.command = kwargs.get("command", None)
 
             # Grid/pack properties
             self.grid_info_dict = {}
@@ -172,19 +172,18 @@ except ImportError as e:
             """Get focused widget."""
             return self
 
-        def grid(self, row=0, column=0, rowspan=1, columnspan=1, sticky='',
-                padx=0, pady=0, ipadx=0, ipady=0):
+        def grid(self, row=0, column=0, rowspan=1, columnspan=1, sticky="", padx=0, pady=0, ipadx=0, ipady=0):
             """Grid geometry manager."""
             self.grid_info_dict = {
-                'row': row,
-                'column': column,
-                'rowspan': rowspan,
-                'columnspan': columnspan,
-                'sticky': sticky,
-                'padx': padx,
-                'pady': pady,
-                'ipadx': ipadx,
-                'ipady': ipady
+                "row": row,
+                "column": column,
+                "rowspan": rowspan,
+                "columnspan": columnspan,
+                "sticky": sticky,
+                "padx": padx,
+                "pady": pady,
+                "ipadx": ipadx,
+                "ipady": ipady,
             }
             logger.debug("Widget %s: Gridded at row=%d, column=%d", self.widget_id, row, column)
 
@@ -192,18 +191,17 @@ except ImportError as e:
             """Get grid info."""
             return self.grid_info_dict
 
-        def pack(self, side='top', fill='none', expand=False, padx=0, pady=0,
-                ipadx=0, ipady=0, anchor='center'):
+        def pack(self, side="top", fill="none", expand=False, padx=0, pady=0, ipadx=0, ipady=0, anchor="center"):
             """Pack geometry manager."""
             self.pack_info_dict = {
-                'side': side,
-                'fill': fill,
-                'expand': expand,
-                'padx': padx,
-                'pady': pady,
-                'ipadx': ipadx,
-                'ipady': ipady,
-                'anchor': anchor
+                "side": side,
+                "fill": fill,
+                "expand": expand,
+                "padx": padx,
+                "pady": pady,
+                "ipadx": ipadx,
+                "ipady": ipady,
+                "anchor": anchor,
             }
             logger.debug("Widget %s: Packed with side=%s", self.widget_id, side)
 
@@ -211,13 +209,18 @@ except ImportError as e:
             """Get pack info."""
             return self.pack_info_dict
 
-        def place(self, x=0, y=0, width=None, height=None, anchor='nw',
-                 relx=0, rely=0, relwidth=None, relheight=None):
+        def place(self, x=0, y=0, width=None, height=None, anchor="nw", relx=0, rely=0, relwidth=None, relheight=None):
             """Place geometry manager."""
             self.place_info_dict = {
-                'x': x, 'y': y, 'width': width, 'height': height,
-                'anchor': anchor, 'relx': relx, 'rely': rely,
-                'relwidth': relwidth, 'relheight': relheight
+                "x": x,
+                "y": y,
+                "width": width,
+                "height": height,
+                "anchor": anchor,
+                "relx": relx,
+                "rely": rely,
+                "relwidth": relwidth,
+                "relheight": relheight,
             }
             self.x = x
             self.y = y
@@ -290,18 +293,18 @@ except ImportError as e:
             if newGeometry is not None:
                 self.geometry_string = newGeometry
                 # Parse geometry string (e.g., "800x600+100+100")
-                if '+' in newGeometry:
-                    size_part, pos_part = newGeometry.split('+', 1)
-                    if 'x' in size_part:
-                        w, h = size_part.split('x')
+                if "+" in newGeometry:
+                    size_part, pos_part = newGeometry.split("+", 1)
+                    if "x" in size_part:
+                        w, h = size_part.split("x")
                         self.width = int(w)
                         self.height = int(h)
-                    if '+' in pos_part:
-                        x, y = pos_part.split('+')
+                    if "+" in pos_part:
+                        x, y = pos_part.split("+")
                         self.x = int(x)
                         self.y = int(y)
-                elif 'x' in newGeometry:
-                    w, h = newGeometry.split('x')
+                elif "x" in newGeometry:
+                    w, h = newGeometry.split("x")
                     self.width = int(w)
                     self.height = int(h)
                 logger.debug("Window %s: Geometry set to '%s'", self.widget_id, newGeometry)
@@ -342,7 +345,7 @@ except ImportError as e:
             self.protocol_bindings[name] = func
             # For WM_DELETE_WINDOW and similar, queue for immediate processing
             if name in ["WM_DELETE_WINDOW", "WM_SAVE_YOURSELF", "WM_TAKE_FOCUS"]:
-                if not hasattr(self, '_pending_protocols'):
+                if not hasattr(self, "_pending_protocols"):
                     self._pending_protocols = []
                 self._pending_protocols.append((name, func))
             logger.debug("Window %s: Protocol '%s' bound", self.widget_id, name)
@@ -354,7 +357,7 @@ except ImportError as e:
             try:
                 while not self.destroyed:
                     # Process any pending protocol callbacks
-                    if hasattr(self, '_pending_protocols'):
+                    if hasattr(self, "_pending_protocols"):
                         for _protocol, func in self._pending_protocols:
                             if callable(func):
                                 try:
@@ -387,9 +390,9 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize label."""
             super().__init__(master, **kwargs)
-            self.text = kwargs.get('text', '')
-            self.justify = kwargs.get('justify', 'left')
-            self.wraplength = kwargs.get('wraplength', 0)
+            self.text = kwargs.get("text", "")
+            self.justify = kwargs.get("justify", "left")
+            self.wraplength = kwargs.get("wraplength", 0)
             logger.debug("Label created: %s with text '%s'", self.widget_id, self.text)
 
     class FallbackButton(FallbackWidget):
@@ -398,8 +401,8 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize button."""
             super().__init__(master, **kwargs)
-            self.text = kwargs.get('text', 'Button')
-            self.command = kwargs.get('command', None)
+            self.text = kwargs.get("text", "Button")
+            self.command = kwargs.get("command", None)
             logger.debug("Button created: %s with text '%s'", self.widget_id, self.text)
 
         def invoke(self):
@@ -419,8 +422,8 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize entry."""
             super().__init__(master, **kwargs)
-            self.value = kwargs.get('value', '')
-            self.show = kwargs.get('show', '')
+            self.value = kwargs.get("value", "")
+            self.show = kwargs.get("show", "")
             logger.debug("Entry created: %s", self.widget_id)
 
         def get(self):
@@ -434,7 +437,7 @@ except ImportError as e:
 
         def insert(self, index, string):
             """Insert string at index."""
-            if index == 'end':
+            if index == "end":
                 self.value += string
             else:
                 self.value = self.value[:index] + string + self.value[index:]
@@ -442,8 +445,8 @@ except ImportError as e:
 
         def delete(self, first, last=None):
             """Delete text."""
-            if first == 0 and last == 'end':
-                self.value = ''
+            if first == 0 and last == "end":
+                self.value = ""
             logger.debug("Entry %s: Text deleted", self.widget_id)
 
     class FallbackText(FallbackWidget):
@@ -452,21 +455,21 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize text widget."""
             super().__init__(master, **kwargs)
-            self.content = kwargs.get('text', '')
-            self.wrap = kwargs.get('wrap', 'char')
+            self.content = kwargs.get("text", "")
+            self.wrap = kwargs.get("wrap", "char")
             logger.debug("Text widget created: %s", self.widget_id)
 
         def get(self, start, end=None):
             """Get text content."""
             if end is None:
-                end = 'end'
-            if start == '1.0' and end == 'end':
+                end = "end"
+            if start == "1.0" and end == "end":
                 return self.content
             return self.content
 
         def insert(self, index, chars):
             """Insert text."""
-            if index == 'end':
+            if index == "end":
                 self.content += chars
             else:
                 self.content += chars
@@ -474,8 +477,8 @@ except ImportError as e:
 
         def delete(self, start, end=None):
             """Delete text."""
-            if start == '1.0' and end == 'end':
-                self.content = ''
+            if start == "1.0" and end == "end":
+                self.content = ""
             logger.debug("Text %s: Text deleted", self.widget_id)
 
         def see(self, index):
@@ -490,12 +493,12 @@ except ImportError as e:
             super().__init__(master, **kwargs)
             self.items = []
             self.selection = []
-            self.selectmode = kwargs.get('selectmode', 'browse')
+            self.selectmode = kwargs.get("selectmode", "browse")
             logger.debug("Listbox created: %s", self.widget_id)
 
         def insert(self, index, *items):
             """Insert items."""
-            if index == 'end':
+            if index == "end":
                 self.items.extend(items)
             else:
                 for i, item in enumerate(items):
@@ -506,15 +509,15 @@ except ImportError as e:
             """Delete items."""
             if last is None:
                 last = first
-            if first == 0 and last == 'end':
+            if first == 0 and last == "end":
                 self.items.clear()
             logger.debug("Listbox %s: Deleted items", self.widget_id)
 
         def get(self, first, last=None):
             """Get items."""
             if last is None:
-                return self.items[first] if 0 <= first < len(self.items) else ''
-            return self.items[first:last+1]
+                return self.items[first] if 0 <= first < len(self.items) else ""
+            return self.items[first : last + 1]
 
         def size(self):
             """Get number of items."""
@@ -538,11 +541,11 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize checkbutton."""
             super().__init__(master, **kwargs)
-            self.text = kwargs.get('text', '')
-            self.variable = kwargs.get('variable', FallbackIntVar())
-            self.onvalue = kwargs.get('onvalue', 1)
-            self.offvalue = kwargs.get('offvalue', 0)
-            self.command = kwargs.get('command', None)
+            self.text = kwargs.get("text", "")
+            self.variable = kwargs.get("variable", FallbackIntVar())
+            self.onvalue = kwargs.get("onvalue", 1)
+            self.offvalue = kwargs.get("offvalue", 0)
+            self.command = kwargs.get("command", None)
             logger.debug("Checkbutton created: %s", self.widget_id)
 
         def invoke(self):
@@ -560,10 +563,10 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize radiobutton."""
             super().__init__(master, **kwargs)
-            self.text = kwargs.get('text', '')
-            self.variable = kwargs.get('variable', FallbackStringVar())
-            self.value = kwargs.get('value', '')
-            self.command = kwargs.get('command', None)
+            self.text = kwargs.get("text", "")
+            self.variable = kwargs.get("variable", FallbackStringVar())
+            self.value = kwargs.get("value", "")
+            self.command = kwargs.get("command", None)
             logger.debug("Radiobutton created: %s", self.widget_id)
 
         def invoke(self):
@@ -579,12 +582,12 @@ except ImportError as e:
         def __init__(self, master=None, **kwargs):
             """Initialize scale."""
             super().__init__(master, **kwargs)
-            self.from_ = kwargs.get('from_', 0)
-            self.to = kwargs.get('to', 100)
-            self.orient = kwargs.get('orient', 'horizontal')
-            self.variable = kwargs.get('variable', FallbackDoubleVar())
-            self.variable.set(kwargs.get('value', self.from_))
-            self.command = kwargs.get('command', None)
+            self.from_ = kwargs.get("from_", 0)
+            self.to = kwargs.get("to", 100)
+            self.orient = kwargs.get("orient", "horizontal")
+            self.variable = kwargs.get("variable", FallbackDoubleVar())
+            self.variable.set(kwargs.get("value", self.from_))
+            self.command = kwargs.get("command", None)
             logger.debug("Scale created: %s", self.widget_id)
 
         def get(self):
@@ -674,25 +677,25 @@ except ImportError as e:
         def showinfo(title, message, **kwargs):
             """Show info dialog."""
             logger.info("INFO Dialog '%s': %s", title, message)
-            return 'ok'
+            return "ok"
 
         @staticmethod
         def showwarning(title, message, **kwargs):
             """Show warning dialog."""
             logger.warning("WARNING Dialog '%s': %s", title, message)
-            return 'ok'
+            return "ok"
 
         @staticmethod
         def showerror(title, message, **kwargs):
             """Show error dialog."""
             logger.error("ERROR Dialog '%s': %s", title, message)
-            return 'ok'
+            return "ok"
 
         @staticmethod
         def askquestion(title, message, **kwargs):
             """Ask yes/no question."""
             logger.info("QUESTION Dialog '%s': %s", title, message)
-            return 'yes'  # Default to yes
+            return "yes"  # Default to yes
 
         @staticmethod
         def askyesno(title, message, **kwargs):
@@ -739,10 +742,7 @@ except ImportError as e:
         @staticmethod
         def askopenfilenames(title="", initialdir="", filetypes=None, **kwargs):
             """Ask for multiple open filenames."""
-            default_files = [
-                os.path.join(initialdir or os.getcwd(), "file1.txt"),
-                os.path.join(initialdir or os.getcwd(), "file2.txt")
-            ]
+            default_files = [os.path.join(initialdir or os.getcwd(), "file1.txt"), os.path.join(initialdir or os.getcwd(), "file2.txt")]
             logger.info("OPEN FILES Dialog '%s': Would return %s", title, default_files)
             return default_files
 
@@ -767,8 +767,8 @@ except ImportError as e:
             self.size = size
             self.weight = weight
             self.slant = slant
-            self.underline = kwargs.get('underline', False)
-            self.overstrike = kwargs.get('overstrike', False)
+            self.underline = kwargs.get("underline", False)
+            self.overstrike = kwargs.get("overstrike", False)
 
         def configure(self, **kwargs):
             """Configure font."""
@@ -782,12 +782,7 @@ except ImportError as e:
 
         def metrics(self, *args):
             """Get font metrics."""
-            return {
-                'ascent': 10,
-                'descent': 2,
-                'linespace': 12,
-                'fixed': False
-            }
+            return {"ascent": 10, "descent": 2, "linespace": 12, "fixed": False}
 
     class FallbackScrolledText(FallbackText):
         """Scrolled text widget."""
@@ -818,9 +813,9 @@ except ImportError as e:
             def __init__(self, master=None, **kwargs):
                 """Initialize combobox."""
                 super().__init__(master, **kwargs)
-                self.values_list = kwargs.get('values', [])
+                self.values_list = kwargs.get("values", [])
                 self.current_index = 0
-                self.textvariable = kwargs.get('textvariable', FallbackStringVar())
+                self.textvariable = kwargs.get("textvariable", FallbackStringVar())
                 logger.debug("Combobox created: %s", self.widget_id)
 
             def get(self):
@@ -845,16 +840,16 @@ except ImportError as e:
             def __init__(self, master=None, **kwargs):
                 """Initialize progressbar."""
                 super().__init__(master, **kwargs)
-                self.maximum = kwargs.get('maximum', 100)
-                self.value = kwargs.get('value', 0)
-                self.mode = kwargs.get('mode', 'determinate')
+                self.maximum = kwargs.get("maximum", 100)
+                self.value = kwargs.get("value", 0)
+                self.mode = kwargs.get("mode", "determinate")
                 logger.debug("Progressbar created: %s", self.widget_id)
 
             def configure(self, **kwargs):
                 """Configure progressbar."""
                 super().configure(**kwargs)
-                if 'value' in kwargs:
-                    logger.debug("Progressbar %s: Value set to %s", self.widget_id, kwargs['value'])
+                if "value" in kwargs:
+                    logger.debug("Progressbar %s: Value set to %s", self.widget_id, kwargs["value"])
 
             def start(self, interval=None):
                 """Start progress animation."""
@@ -875,7 +870,7 @@ except ImportError as e:
             def __init__(self, master=None, **kwargs):
                 """Initialize treeview."""
                 super().__init__(master, **kwargs)
-                self.columns_list = kwargs.get('columns', [])
+                self.columns_list = kwargs.get("columns", [])
                 self.items = {}
                 self.next_item_id = 1
                 logger.debug("Treeview created: %s", self.widget_id)
@@ -887,10 +882,10 @@ except ImportError as e:
                     self.next_item_id += 1
 
                 self.items[iid] = {
-                    'parent': parent,
-                    'text': kwargs.get('text', ''),
-                    'values': kwargs.get('values', []),
-                    'tags': kwargs.get('tags', [])
+                    "parent": parent,
+                    "text": kwargs.get("text", ""),
+                    "values": kwargs.get("values", []),
+                    "tags": kwargs.get("tags", []),
                 }
                 logger.debug("Treeview %s: Inserted item %s", self.widget_id, iid)
                 return iid
@@ -902,11 +897,11 @@ except ImportError as e:
                         del self.items[item]
                 logger.debug("Treeview %s: Deleted %d items", self.widget_id, len(items))
 
-            def get_children(self, item=''):
+            def get_children(self, item=""):
                 """Get child items."""
                 children = []
                 for iid, data in self.items.items():
-                    if data['parent'] == item:
+                    if data["parent"] == item:
                         children.append(iid)
                 return children
 
@@ -923,43 +918,47 @@ except ImportError as e:
                 logger.debug("Treeview %s: Column %s configured", self.widget_id, column)
 
     # Module assignments
-    tk_module = type('tk', (), {
-        'Tk': FallbackTk,
-        'Frame': FallbackFrame,
-        'Label': FallbackLabel,
-        'Button': FallbackButton,
-        'Entry': FallbackEntry,
-        'Text': FallbackText,
-        'Listbox': FallbackListbox,
-        'Checkbutton': FallbackCheckbutton,
-        'Radiobutton': FallbackRadiobutton,
-        'Scale': FallbackScale,
-        'StringVar': FallbackStringVar,
-        'IntVar': FallbackIntVar,
-        'DoubleVar': FallbackDoubleVar,
-        'BooleanVar': FallbackBooleanVar,
-        'TkVersion': 8.6,
-        'NORMAL': 'normal',
-        'DISABLED': 'disabled',
-        'ACTIVE': 'active',
-        'END': 'end',
-        'BOTH': 'both',
-        'X': 'x',
-        'Y': 'y',
-        'TOP': 'top',
-        'BOTTOM': 'bottom',
-        'LEFT': 'left',
-        'RIGHT': 'right',
-        'CENTER': 'center',
-        'N': 'n',
-        'S': 's',
-        'E': 'e',
-        'W': 'w',
-        'NE': 'ne',
-        'NW': 'nw',
-        'SE': 'se',
-        'SW': 'sw'
-    })()
+    tk_module = type(
+        "tk",
+        (),
+        {
+            "Tk": FallbackTk,
+            "Frame": FallbackFrame,
+            "Label": FallbackLabel,
+            "Button": FallbackButton,
+            "Entry": FallbackEntry,
+            "Text": FallbackText,
+            "Listbox": FallbackListbox,
+            "Checkbutton": FallbackCheckbutton,
+            "Radiobutton": FallbackRadiobutton,
+            "Scale": FallbackScale,
+            "StringVar": FallbackStringVar,
+            "IntVar": FallbackIntVar,
+            "DoubleVar": FallbackDoubleVar,
+            "BooleanVar": FallbackBooleanVar,
+            "TkVersion": 8.6,
+            "NORMAL": "normal",
+            "DISABLED": "disabled",
+            "ACTIVE": "active",
+            "END": "end",
+            "BOTH": "both",
+            "X": "x",
+            "Y": "y",
+            "TOP": "top",
+            "BOTTOM": "bottom",
+            "LEFT": "left",
+            "RIGHT": "right",
+            "CENTER": "center",
+            "N": "n",
+            "S": "s",
+            "E": "e",
+            "W": "w",
+            "NE": "ne",
+            "NW": "nw",
+            "SE": "se",
+            "SW": "sw",
+        },
+    )()
 
     # Create tk module reference
     class FallbackTkModule:
@@ -981,26 +980,26 @@ except ImportError as e:
         DoubleVar = FallbackDoubleVar
         BooleanVar = FallbackBooleanVar
         # Constants
-        NORMAL = 'normal'
-        DISABLED = 'disabled'
-        ACTIVE = 'active'
-        END = 'end'
-        BOTH = 'both'
-        X = 'x'
-        Y = 'y'
-        TOP = 'top'
-        BOTTOM = 'bottom'
-        LEFT = 'left'
-        RIGHT = 'right'
-        CENTER = 'center'
-        N = 'n'
-        S = 's'
-        E = 'e'
-        W = 'w'
-        NE = 'ne'
-        NW = 'nw'
-        SE = 'se'
-        SW = 'sw'
+        NORMAL = "normal"
+        DISABLED = "disabled"
+        ACTIVE = "active"
+        END = "end"
+        BOTH = "both"
+        X = "x"
+        Y = "y"
+        TOP = "top"
+        BOTTOM = "bottom"
+        LEFT = "left"
+        RIGHT = "right"
+        CENTER = "center"
+        N = "n"
+        S = "s"
+        E = "e"
+        W = "w"
+        NE = "ne"
+        NW = "nw"
+        SE = "se"
+        SW = "sw"
 
     tk = FallbackTkModule()
     tkinter = tk  # Alias for compatibility
@@ -1035,45 +1034,80 @@ except ImportError as e:
     BooleanVar = FallbackBooleanVar
 
     # Constants
-    NORMAL = 'normal'
-    DISABLED = 'disabled'
-    ACTIVE = 'active'
-    END = 'end'
-    BOTH = 'both'
-    X = 'x'
-    Y = 'y'
-    TOP = 'top'
-    BOTTOM = 'bottom'
-    LEFT = 'left'
-    RIGHT = 'right'
-    CENTER = 'center'
-    N = 'n'
-    S = 's'
-    E = 'e'
-    W = 'w'
-    NE = 'ne'
-    NW = 'nw'
-    SE = 'se'
-    SW = 'sw'
+    NORMAL = "normal"
+    DISABLED = "disabled"
+    ACTIVE = "active"
+    END = "end"
+    BOTH = "both"
+    X = "x"
+    Y = "y"
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
+    N = "n"
+    S = "s"
+    E = "e"
+    W = "w"
+    NE = "ne"
+    NW = "nw"
+    SE = "se"
+    SW = "sw"
 
 
 # Export all tkinter objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_TKINTER", "TKINTER_VERSION",
+    "HAS_TKINTER",
+    "TKINTER_VERSION",
     # Main module
-    "tk", "tkinter",
+    "tk",
+    "tkinter",
     # Core widgets
-    "Tk", "Frame", "Label", "Button", "Entry", "Text", "Listbox",
-    "Checkbutton", "Radiobutton", "Scale",
+    "Tk",
+    "Frame",
+    "Label",
+    "Button",
+    "Entry",
+    "Text",
+    "Listbox",
+    "Checkbutton",
+    "Radiobutton",
+    "Scale",
     # Variables
-    "StringVar", "IntVar", "DoubleVar", "BooleanVar",
+    "StringVar",
+    "IntVar",
+    "DoubleVar",
+    "BooleanVar",
     # Sub-modules
-    "ttk", "messagebox", "filedialog", "colorchooser", "scrolledtext",
+    "ttk",
+    "messagebox",
+    "filedialog",
+    "colorchooser",
+    "scrolledtext",
     # Utilities
-    "Font", "ScrolledText",
+    "Font",
+    "ScrolledText",
     # Constants
-    "NORMAL", "DISABLED", "ACTIVE", "END", "BOTH", "X", "Y",
-    "TOP", "BOTTOM", "LEFT", "RIGHT", "CENTER",
-    "N", "S", "E", "W", "NE", "NW", "SE", "SW",
+    "NORMAL",
+    "DISABLED",
+    "ACTIVE",
+    "END",
+    "BOTH",
+    "X",
+    "Y",
+    "TOP",
+    "BOTTOM",
+    "LEFT",
+    "RIGHT",
+    "CENTER",
+    "N",
+    "S",
+    "E",
+    "W",
+    "NE",
+    "NW",
+    "SE",
+    "SW",
 ]

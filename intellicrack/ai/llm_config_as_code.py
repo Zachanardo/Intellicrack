@@ -32,9 +32,7 @@ try:
 
     HAS_JSONSCHEMA = True
 except ImportError:
-    logger.warning(
-        "jsonschema not available - schema validation disabled. Install with: pip install jsonschema"
-    )
+    logger.warning("jsonschema not available - schema validation disabled. Install with: pip install jsonschema")
 
 
 class ConfigValidationError(Exception):
@@ -266,9 +264,7 @@ class ConfigAsCodeManager:
                         config = json.load(f)
                     else:
                         if not HAS_YAML:
-                            raise ConfigValidationError(
-                                "Could not determine file format and YAML not available"
-                            )
+                            raise ConfigValidationError("Could not determine file format and YAML not available")
                         config = yaml.safe_load(f)
 
             logger.info(f"Loaded configuration from: {file_path}")
@@ -618,9 +614,7 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.error(f"Failed to apply fallback chains: {e}")
 
-    def generate_config_files(
-        self, output_dir: str | None = None, environments: list[str] = None
-    ) -> list[Path]:
+    def generate_config_files(self, output_dir: str | None = None, environments: list[str] = None) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -677,9 +671,7 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
     return _CONFIG_AS_CODE_MANAGER
 
 
-def load_config_file(
-    file_path: str | Path, apply_to_system: bool = True, validate: bool = True
-) -> dict[str, Any]:
+def load_config_file(file_path: str | Path, apply_to_system: bool = True, validate: bool = True) -> dict[str, Any]:
     """Convenience function to load and optionally apply configuration.
 
     Args:

@@ -415,8 +415,7 @@ class ModelDownloadManager:
                 "path": str(local_path),
                 "downloaded_at": datetime.now().isoformat(),
                 "revision": revision,
-                "size_mb": sum(f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file())
-                / (1024 * 1024),
+                "size_mb": sum(f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file()) / (1024 * 1024),
             }
             self._save_metadata()
 
@@ -511,9 +510,7 @@ class ModelDownloadManager:
             if model_dir.is_dir() and model_dir.name not in ["downloads", "tmp"]:
                 model_id = model_dir.name.replace("_", "/", 1)
                 if model_id not in cached_models:
-                    size_mb = sum(f.stat().st_size for f in model_dir.rglob("*") if f.is_file()) / (
-                        1024 * 1024
-                    )
+                    size_mb = sum(f.stat().st_size for f in model_dir.rglob("*") if f.is_file()) / (1024 * 1024)
                     cached_models[model_id] = {
                         "path": str(model_dir),
                         "size_mb": size_mb,

@@ -85,15 +85,11 @@ class ModelShardingManager:
         # Use unified GPU system if available
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            self.device_count = (
-                gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
-            )
+            self.device_count = gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
             self.gpu_type = gpu_info["type"]
             self.unified_device = get_device()
         else:
-            self.device_count = (
-                torch.cuda.device_count() if HAS_TORCH and torch.cuda.is_available() else 0
-            )
+            self.device_count = torch.cuda.device_count() if HAS_TORCH and torch.cuda.is_available() else 0
             self.gpu_type = "cuda" if self.device_count > 0 else "cpu"
             self.unified_device = None
 
@@ -114,9 +110,7 @@ class ModelShardingManager:
                 elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                     # Intel XPU properties
                     self.device_properties[i] = {
-                        "name": torch.xpu.get_device_name(i)
-                        if hasattr(torch.xpu, "get_device_name")
-                        else f"Intel XPU {i}",
+                        "name": torch.xpu.get_device_name(i) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {i}",
                         "total_memory": 0,  # Will be filled if available
                         "device_type": "xpu",
                     }
@@ -129,9 +123,7 @@ class ModelShardingManager:
                         except (AttributeError, RuntimeError):
                             pass
 
-            logger.info(
-                f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices"
-            )
+            logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
         else:
             logger.info("No GPUs detected, sharding disabled")
 
@@ -152,9 +144,7 @@ class ModelShardingManager:
                     torch.cuda.set_device(i)
                     info["devices"][i]["allocated_memory"] = torch.cuda.memory_allocated(i)
                     info["devices"][i]["reserved_memory"] = torch.cuda.memory_reserved(i)
-                    info["devices"][i]["free_memory"] = info["devices"][i][
-                        "total_memory"
-                    ] - torch.cuda.memory_allocated(i)
+                    info["devices"][i]["free_memory"] = info["devices"][i]["total_memory"] - torch.cuda.memory_allocated(i)
                 elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                     if hasattr(torch.xpu, "set_device"):
                         torch.xpu.set_device(i)
@@ -514,9 +504,7 @@ class ModelShardingManager:
             "total_memory_bytes": total_memory,
             "memory_per_device": total_memory // max(self.device_count, 1),
             "device_distribution": device_distribution,
-            "fits_in_memory": all(d["usage_percent"] < 90 for d in device_distribution.values())
-            if device_distribution
-            else False,
+            "fits_in_memory": all(d["usage_percent"] < 90 for d in device_distribution.values()) if device_distribution else False,
         }
 
     def optimize_device_map(
@@ -569,9 +557,7 @@ class ModelShardingManager:
         optimized_map["pooler"] = last_device
         optimized_map["lm_head"] = last_device
 
-        logger.info(
-            f"Optimized device map for {num_layers} layers across {self.device_count} devices"
-        )
+        logger.info(f"Optimized device map for {num_layers} layers across {self.device_count} devices")
         return optimized_map
 
     def monitor_memory_usage(self) -> dict[int, dict[str, float]]:
@@ -607,9 +593,7 @@ class ModelShardingManager:
                     memory_info[i]["total_gb"] = total
                     if "allocated_gb" in memory_info[i]:
                         memory_info[i]["free_gb"] = total - memory_info[i]["allocated_gb"]
-                        memory_info[i]["usage_percent"] = (
-                            memory_info[i]["allocated_gb"] / total
-                        ) * 100
+                        memory_info[i]["usage_percent"] = (memory_info[i]["allocated_gb"] / total) * 100
 
         return memory_info
 
@@ -757,9 +741,7 @@ class ModelShardingManager:
         for i in range(num_iterations):
             # Measure memory before forward pass
             if self.gpu_type == "nvidia_cuda":
-                iter_start_memory = sum(
-                    torch.cuda.memory_allocated(j) for j in range(self.device_count)
-                )
+                iter_start_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
             else:
                 iter_start_memory = 0
 
@@ -783,18 +765,14 @@ class ModelShardingManager:
 
             # Measure memory after forward pass
             if self.gpu_type == "nvidia_cuda":
-                iter_end_memory = sum(
-                    torch.cuda.memory_allocated(j) for j in range(self.device_count)
-                )
+                iter_end_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
                 memory_usage.append(
                     {
                         "iteration": i,
                         "memory_before": iter_start_memory,
                         "memory_after": iter_end_memory,
                         "memory_delta": iter_end_memory - iter_start_memory,
-                        "per_device": [
-                            torch.cuda.memory_allocated(j) for j in range(self.device_count)
-                        ],
+                        "per_device": [torch.cuda.memory_allocated(j) for j in range(self.device_count)],
                     }
                 )
             else:

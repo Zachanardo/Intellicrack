@@ -407,9 +407,7 @@ class AutonomousAgent:
 
         return True
 
-    def _extract_strings_with_command(
-        self, binary_path: str, license_related: list[str]
-    ) -> list[str]:
+    def _extract_strings_with_command(self, binary_path: str, license_related: list[str]) -> list[str]:
         """Extract strings using subprocess command."""
         import shutil
         import subprocess
@@ -448,9 +446,7 @@ class AutonomousAgent:
                     current_string += chr(byte)
                 else:
                     if len(current_string) >= 4:
-                        if any(
-                            keyword.lower() in current_string.lower() for keyword in license_related
-                        ):
+                        if any(keyword.lower() in current_string.lower() for keyword in license_related):
                             strings.append(current_string)
                     current_string = ""
 
@@ -487,9 +483,7 @@ class AutonomousAgent:
 
         return data or b""
 
-    def _filter_license_strings(
-        self, all_strings: list[str], license_related: list[str]
-    ) -> list[str]:
+    def _filter_license_strings(self, all_strings: list[str], license_related: list[str]) -> list[str]:
         """Filter strings for license-related content."""
         filtered = []
         for string in all_strings:
@@ -568,9 +562,7 @@ class AutonomousAgent:
                 func["file_size"] = file_size
 
             functions.extend(license_functions)
-            logger.info(
-                f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)"
-            )
+            logger.info(f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)")
 
         except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
             logger.error(f"Function analysis failed for {binary_path}: {e}", exc_info=True)
@@ -624,9 +616,7 @@ class AutonomousAgent:
                 )
             elif file_ext in [".so", ".elf"]:
                 # Linux-specific imports
-                protection_imports.extend(
-                    ["dlopen", "dlsym", "ptrace", "prctl", "getpid", "getppid", "signal"]
-                )
+                protection_imports.extend(["dlopen", "dlsym", "ptrace", "prctl", "getpid", "getppid", "signal"])
 
             # Add context-aware imports based on filename
             if "license" in filename or "trial" in filename:
@@ -777,7 +767,7 @@ class AutonomousAgent:
                 "network_apis": [],
                 "strings_found": [],
                 "imports_found": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Multi-layered network detection approach
@@ -855,27 +845,42 @@ class AutonomousAgent:
             # Try PE analysis first
             try:
                 import pefile
+
                 pe = pefile.PE(binary_path)
 
                 # Common Windows networking APIs
                 network_api_patterns = [
-                    "ws2_32.dll", "wininet.dll", "winhttp.dll", "urlmon.dll",
-                    "socket", "connect", "send", "recv", "WSAStartup", "WSAConnect",
-                    "InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest",
-                    "WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest",
-                    "URLDownloadToFile", "URLOpenStream"
+                    "ws2_32.dll",
+                    "wininet.dll",
+                    "winhttp.dll",
+                    "urlmon.dll",
+                    "socket",
+                    "connect",
+                    "send",
+                    "recv",
+                    "WSAStartup",
+                    "WSAConnect",
+                    "InternetOpen",
+                    "InternetConnect",
+                    "HttpOpenRequest",
+                    "HttpSendRequest",
+                    "WinHttpOpen",
+                    "WinHttpConnect",
+                    "WinHttpOpenRequest",
+                    "URLDownloadToFile",
+                    "URLOpenStream",
                 ]
 
                 # Check imports
-                if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+                if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        dll_name = entry.dll.decode('utf-8').lower()
+                        dll_name = entry.dll.decode("utf-8").lower()
                         if any(api.lower() in dll_name for api in network_api_patterns[:4]):  # DLL names
                             network_apis.append(f"imports:{dll_name}")
 
                         for func in entry.imports:
                             if func.name:
-                                func_name = func.name.decode('utf-8')
+                                func_name = func.name.decode("utf-8")
                                 if any(api in func_name for api in network_api_patterns[4:]):  # API names
                                     network_apis.append(f"api:{func_name}")
 
@@ -888,14 +893,28 @@ class AutonomousAgent:
             if not network_apis:
                 try:
                     import lief
+
                     binary = lief.parse(binary_path)
 
                     if binary and binary.format == lief.EXE_FORMATS.ELF:
                         # ELF network-related symbols
                         network_symbols = [
-                            "socket", "connect", "bind", "listen", "accept", "send", "recv",
-                            "sendto", "recvfrom", "gethostbyname", "getaddrinfo",
-                            "curl_", "SSL_", "TLS_", "libssl", "libcurl"
+                            "socket",
+                            "connect",
+                            "bind",
+                            "listen",
+                            "accept",
+                            "send",
+                            "recv",
+                            "sendto",
+                            "recvfrom",
+                            "gethostbyname",
+                            "getaddrinfo",
+                            "curl_",
+                            "SSL_",
+                            "TLS_",
+                            "libssl",
+                            "libcurl",
                         ]
 
                         # Check dynamic symbols
@@ -924,37 +943,39 @@ class AutonomousAgent:
         try:
             import re
 
-            result = {
-                "strings": [],
-                "endpoints": [],
-                "protocols": [],
-                "count": 0
-            }
+            result = {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
             # Read binary content for string analysis
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 content = f.read()
 
             # Convert to string, handling encoding issues
-            text_content = content.decode('utf-8', errors='ignore') + content.decode('latin-1', errors='ignore')
+            text_content = content.decode("utf-8", errors="ignore") + content.decode("latin-1", errors="ignore")
 
             # URL patterns
             url_patterns = [
                 r'https?://[^\s<>"{}|\\^`\[\]]+',  # HTTP(S) URLs
-                r'ftp://[^\s<>"{}|\\^`\[\]]+',     # FTP URLs
-                r'ws[s]?://[^\s<>"{}|\\^`\[\]]+', # WebSocket URLs
+                r'ftp://[^\s<>"{}|\\^`\[\]]+',  # FTP URLs
+                r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',  # WebSocket URLs
             ]
 
             # Domain patterns
             domain_patterns = [
-                r'\b[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.([a-zA-Z]{2,})\b',
-                r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b',  # IP addresses
+                r"\b[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.([a-zA-Z]{2,})\b",
+                r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",  # IP addresses
             ]
 
             # Protocol indicators
             protocol_patterns = [
-                r'\bHTTP[S]?\b', r'\bTCP\b', r'\bUDP\b', r'\bSSL\b', r'\bTLS\b',
-                r'\bFTP[S]?\b', r'\bSMTP\b', r'\bPOP3\b', r'\bIMAP\b'
+                r"\bHTTP[S]?\b",
+                r"\bTCP\b",
+                r"\bUDP\b",
+                r"\bSSL\b",
+                r"\bTLS\b",
+                r"\bFTP[S]?\b",
+                r"\bSMTP\b",
+                r"\bPOP3\b",
+                r"\bIMAP\b",
             ]
 
             # Find URLs
@@ -967,8 +988,8 @@ class AutonomousAgent:
                         result["count"] += 1
 
                         # Extract protocol
-                        if '://' in match:
-                            protocol = match.split('://')[0].upper()
+                        if "://" in match:
+                            protocol = match.split("://")[0].upper()
                             result["protocols"].append(protocol)
 
             # Find domains and IPs
@@ -976,13 +997,14 @@ class AutonomousAgent:
                 matches = re.findall(pattern, text_content, re.IGNORECASE)
                 for match in matches:
                     if isinstance(match, tuple):
-                        domain = '.'.join(match)
+                        domain = ".".join(match)
                     else:
                         domain = match
 
                     # Filter out common false positives
-                    if not any(exclude in domain.lower() for exclude in
-                             ['localhost', 'example.', 'test.', 'sample.', '.txt', '.exe', '.dll']):
+                    if not any(
+                        exclude in domain.lower() for exclude in ["localhost", "example.", "test.", "sample.", ".txt", ".exe", ".dll"]
+                    ):
                         result["strings"].append(domain)
                         result["endpoints"].append(domain)
                         result["count"] += 1
@@ -996,10 +1018,20 @@ class AutonomousAgent:
 
             # Look for common network-related strings
             network_keywords = [
-                "User-Agent", "Content-Type", "Authorization", "Cookie",
-                "GET ", "POST ", "PUT ", "DELETE ",
-                "Content-Length", "Host:", "Accept:",
-                "license.server", "activation.url", "api.endpoint"
+                "User-Agent",
+                "Content-Type",
+                "Authorization",
+                "Cookie",
+                "GET ",
+                "POST ",
+                "PUT ",
+                "DELETE ",
+                "Content-Length",
+                "Host:",
+                "Accept:",
+                "license.server",
+                "activation.url",
+                "api.endpoint",
             ]
 
             for keyword in network_keywords:
@@ -1021,42 +1053,39 @@ class AutonomousAgent:
     def _analyze_network_code_patterns(self, binary_path: str) -> dict[str, Any]:
         """Analyze code patterns for network functionality."""
         try:
-            result = {
-                "found": False,
-                "apis": []
-            }
+            result = {"found": False, "apis": []}
 
             # Read binary for pattern matching
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 content = f.read()
 
             # Common network-related code patterns (byte sequences)
             network_patterns = [
                 # Socket creation patterns
-                b'socket\x00',
-                b'connect\x00',
-                b'bind\x00',
-                b'listen\x00',
+                b"socket\x00",
+                b"connect\x00",
+                b"bind\x00",
+                b"listen\x00",
                 # HTTP patterns
-                b'HTTP/1.',
-                b'GET /',
-                b'POST /',
-                b'User-Agent:',
+                b"HTTP/1.",
+                b"GET /",
+                b"POST /",
+                b"User-Agent:",
                 # SSL/TLS patterns
-                b'SSL_',
-                b'TLS_',
+                b"SSL_",
+                b"TLS_",
                 # WinINet patterns
-                b'InternetOpen',
-                b'HttpSendRequest',
+                b"InternetOpen",
+                b"HttpSendRequest",
                 # Certificate patterns
-                b'-----BEGIN CERTIFICATE-----',
-                b'X509',
+                b"-----BEGIN CERTIFICATE-----",
+                b"X509",
             ]
 
             for pattern in network_patterns:
                 if pattern in content:
                     result["found"] = True
-                    result["apis"].append(pattern.decode('utf-8', errors='ignore').strip('\x00'))
+                    result["apis"].append(pattern.decode("utf-8", errors="ignore").strip("\x00"))
 
             return result
 
@@ -1067,31 +1096,27 @@ class AutonomousAgent:
     def _analyze_binary_format_networking(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary format specific networking features."""
         try:
-            result = {
-                "has_network": False,
-                "endpoints": [],
-                "protocols": [],
-                "indicators": []
-            }
+            result = {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
 
             file_ext = Path(binary_path).suffix.lower()
 
             # PE-specific analysis
-            if file_ext in ['.exe', '.dll']:
+            if file_ext in [".exe", ".dll"]:
                 try:
                     import pefile
+
                     pe = pefile.PE(binary_path)
 
                     # Check for TLS callbacks (often used by network code)
-                    if hasattr(pe, 'DIRECTORY_ENTRY_TLS'):
+                    if hasattr(pe, "DIRECTORY_ENTRY_TLS"):
                         result["has_network"] = True
                         result["indicators"].append("TLS_callbacks")
 
                     # Check for import forwarding (networking DLLs)
-                    if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                        network_dlls = ['ws2_32.dll', 'wininet.dll', 'winhttp.dll']
+                    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                        network_dlls = ["ws2_32.dll", "wininet.dll", "winhttp.dll"]
                         for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            dll_name = entry.dll.decode('utf-8').lower()
+                            dll_name = entry.dll.decode("utf-8").lower()
                             if dll_name in network_dlls:
                                 result["has_network"] = True
                                 result["protocols"].append("TCP" if "ws2_32" in dll_name else "HTTP")
@@ -1103,21 +1128,22 @@ class AutonomousAgent:
                     logger.debug(f"PE analysis failed: {e}")
 
             # ELF-specific analysis
-            elif file_ext in ['.so', ''] or 'linux' in binary_path.lower():
+            elif file_ext in [".so", ""] or "linux" in binary_path.lower():
                 try:
                     import lief
+
                     binary = lief.parse(binary_path)
 
                     if binary and binary.format == lief.EXE_FORMATS.ELF:
                         # Check for network-related sections
                         for section in binary.sections:
-                            if 'net' in section.name.lower() or 'socket' in section.name.lower():
+                            if "net" in section.name.lower() or "socket" in section.name.lower():
                                 result["has_network"] = True
                                 result["indicators"].append(f"section_{section.name}")
 
                         # Check for SSL/TLS libraries
                         for lib in binary.libraries:
-                            if any(net_lib in lib.lower() for net_lib in ['ssl', 'crypto', 'curl']):
+                            if any(net_lib in lib.lower() for net_lib in ["ssl", "crypto", "curl"]):
                                 result["has_network"] = True
                                 result["protocols"].append("HTTPS" if "ssl" in lib.lower() else "HTTP")
                                 result["indicators"].append(f"links_{lib}")
@@ -1159,9 +1185,7 @@ class AutonomousAgent:
 
         return scripts
 
-    def _iterative_refinement(
-        self, script: GeneratedScript, analysis: dict[str, Any]
-    ) -> GeneratedScript | None:
+    def _iterative_refinement(self, script: GeneratedScript, analysis: dict[str, Any]) -> GeneratedScript | None:
         """Iteratively test and refine the script until it works."""
         current_script = script
         self.iteration_count = 0
@@ -1204,9 +1228,7 @@ class AutonomousAgent:
                     self._log_to_user("Failed to refine script")
                     break
 
-        self._log_to_user(
-            f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review."
-        )
+        self._log_to_user(f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review.")
         return current_script
 
     def _test_script(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
@@ -1319,9 +1341,7 @@ class AutonomousAgent:
         binary_info = analysis.get("binary_info", {})
         binary_path = analysis.get("binary_path", "unknown")
 
-        self._log_to_user(
-            f"Testing {script.metadata.script_type.value} script in Docker container..."
-        )
+        self._log_to_user(f"Testing {script.metadata.script_type.value} script in Docker container...")
 
         # Configure Docker environment based on binary type
         platform = binary_info.get("platform", "unknown")
@@ -1424,18 +1444,14 @@ class AutonomousAgent:
                 except Exception as e:
                     logger.error(f"Failed to cleanup container {container_id}: {e}")
 
-    def _test_in_sandbox(
-        self, script: GeneratedScript, analysis: dict[str, Any]
-    ) -> ExecutionResult:
+    def _test_in_sandbox(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in sandbox environment using real sandboxing."""
         # Use analysis data for sandbox configuration
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
         network_activity = analysis.get("network_activity", {})
 
-        self._log_to_user(
-            f"Testing {script.metadata.script_type.value} script in isolated sandbox..."
-        )
+        self._log_to_user(f"Testing {script.metadata.script_type.value} script in isolated sandbox...")
 
         # Configure sandbox based on analysis
         has_network = network_activity.get("has_network", False)
@@ -1527,18 +1543,13 @@ class AutonomousAgent:
                     error = result.stderr
 
             # Check for bypass indicators in output
-            if success and any(
-                indicator in output.lower()
-                for indicator in ["bypass", "success", "patched", "unlocked"]
-            ):
+            if success and any(indicator in output.lower() for indicator in ["bypass", "success", "patched", "unlocked"]):
                 output = f"Sandbox: Script successfully tested against {binary_path}\n{output}"
                 # Calculate protection targeting accuracy
                 script_types = script.metadata.protection_types
                 analysis_types = {p.get("type") for p in protections}
                 if script_types and analysis_types:
-                    targeting_accuracy = len(
-                        set(st.value for st in script_types) & analysis_types
-                    ) / len(script_types)
+                    targeting_accuracy = len(set(st.value for st in script_types) & analysis_types) / len(script_types)
                     if targeting_accuracy > 0.5:
                         output += f"\nGood protection targeting: {targeting_accuracy:.1%}"
             else:
@@ -1613,9 +1624,7 @@ class AutonomousAgent:
         safety_warnings = []
 
         # Check for dangerous protections
-        dangerous_protections = [
-            p for p in protections if p.get("type") in ["anti_debug", "packer_detection"]
-        ]
+        dangerous_protections = [p for p in protections if p.get("type") in ["anti_debug", "packer_detection"]]
         if dangerous_protections:
             safety_score *= 0.5
             safety_warnings.append(f"Detected {len(dangerous_protections)} dangerous protections")
@@ -1648,9 +1657,7 @@ class AutonomousAgent:
         else:
             result_output += " (Warning: Script may not target detected protections)"
 
-        return ExecutionResult(
-            success=True, output=result_output, error="", exit_code=0, runtime_ms=120
-        )
+        return ExecutionResult(success=True, output=result_output, error="", exit_code=0, runtime_ms=120)
 
     def _verify_bypass(self, test_result: ExecutionResult, analysis: dict[str, Any]) -> bool:
         """Verify that the script actually bypassed the protection."""
@@ -1678,15 +1685,11 @@ class AutonomousAgent:
         for protection in protections:
             prot_type = protection.get("type", "")
             if prot_type == "license_check":
-                success_indicators.extend(
-                    ["license valid", "key accepted", "registration successful"]
-                )
+                success_indicators.extend(["license valid", "key accepted", "registration successful"])
             elif prot_type == "trial_timer":
                 success_indicators.extend(["trial extended", "time bypassed", "unlimited time"])
             elif prot_type == "anti_debug":
-                success_indicators.extend(
-                    ["debug detected", "debugger hidden", "anti-debug bypassed"]
-                )
+                success_indicators.extend(["debug detected", "debugger hidden", "anti-debug bypassed"])
 
         output_lower = test_result.output.lower()
         basic_success = any(indicator in output_lower for indicator in success_indicators)
@@ -1744,18 +1747,14 @@ class AutonomousAgent:
                 refinement_notes.extend(failure_notes)
 
             # Apply protection-specific refinements
-            protection_notes = self._apply_protection_refinements(
-                script, protections, refined_content
-            )
+            protection_notes = self._apply_protection_refinements(script, protections, refined_content)
             refinement_notes.extend(protection_notes)
 
             # Apply general improvements
             general_notes = self._apply_general_refinements(script, binary_info, refined_content)
             refinement_notes.extend(general_notes)
 
-            return self._create_refined_script(
-                script, refined_content, refinement_notes, binary_path
-            )
+            return self._create_refined_script(script, refined_content, refinement_notes, binary_path)
 
         except (AttributeError, ValueError, TypeError, KeyError) as e:
             logger.error(
@@ -1764,16 +1763,16 @@ class AutonomousAgent:
             )
             return None
 
-    def _apply_failure_refinements(
-        self, script: GeneratedScript, test_result: ExecutionResult, content: str
-    ) -> tuple[str, list[str]]:
+    def _apply_failure_refinements(self, script: GeneratedScript, test_result: ExecutionResult, content: str) -> tuple[str, list[str]]:
         """Apply refinements based on test failures."""
         refinement_notes = []
 
         if "protection mechanism detected" in test_result.error.lower():
             if script.metadata.script_type == ScriptType.FRIDA:
                 if "stealth" not in content.lower():
-                    stealth_code = "\n        // Stealth mode enhancements\n        Process.setExceptionHandler(function(details) { return true; });\n"
+                    stealth_code = (
+                        "\n        // Stealth mode enhancements\n        Process.setExceptionHandler(function(details) { return true; });\n"
+                    )
                     content = content.replace(
                         'console.log("[AI-Generated]',
                         stealth_code + '        console.log("[AI-Generated]',
@@ -1782,17 +1781,13 @@ class AutonomousAgent:
 
             elif script.metadata.script_type == ScriptType.GHIDRA:
                 if "analyzeAll" not in content:
-                    analysis_code = (
-                        "\n        // Enhanced analysis\n        analyzeAll(currentProgram);\n"
-                    )
+                    analysis_code = "\n        // Enhanced analysis\n        analyzeAll(currentProgram);\n"
                     content = analysis_code + content
                     refinement_notes.append("Added comprehensive analysis")
 
         return content, refinement_notes
 
-    def _apply_protection_refinements(
-        self, script: GeneratedScript, protections: list[dict], content: str
-    ) -> list[str]:
+    def _apply_protection_refinements(self, script: GeneratedScript, protections: list[dict], content: str) -> list[str]:
         """Apply protection-specific refinements."""
         refinement_notes = []
 
@@ -1813,9 +1808,7 @@ class AutonomousAgent:
 
         return refinement_notes
 
-    def _apply_general_refinements(
-        self, script: GeneratedScript, binary_info: dict, content: str
-    ) -> list[str]:
+    def _apply_general_refinements(self, script: GeneratedScript, binary_info: dict, content: str) -> list[str]:
         """Apply general refinements."""
         refinement_notes = []
 
@@ -1868,9 +1861,7 @@ class AutonomousAgent:
         });
 """
 
-    def _create_refined_script(
-        self, original: GeneratedScript, content: str, notes: list[str], binary_path: str
-    ) -> GeneratedScript | None:
+    def _create_refined_script(self, original: GeneratedScript, content: str, notes: list[str], binary_path: str) -> GeneratedScript | None:
         """Create refined script with updated metadata."""
         refined_script = GeneratedScript(
             metadata=original.metadata,
@@ -1888,9 +1879,7 @@ class AutonomousAgent:
         if notes:
             improvement_factor = min(1.2, 1 + len(notes) * 0.05)
             refined_script.metadata.success_probability *= improvement_factor
-            refined_script.metadata.success_probability = min(
-                0.95, refined_script.metadata.success_probability
-            )
+            refined_script.metadata.success_probability = min(0.95, refined_script.metadata.success_probability)
 
         logger.info(f"Refined script for {binary_path}: {len(notes)} improvements")
         return refined_script
@@ -1945,12 +1934,8 @@ class AutonomousAgent:
             # CLI confirmation
             self.cli_interface.print_info(f"Generated {script.metadata.script_type.value} script:")
             self.cli_interface.print_info(f"Target: {script.metadata.target_binary}")
-            self.cli_interface.print_info(
-                f"Protections: {[p.value for p in script.metadata.protection_types]}"
-            )
-            self.cli_interface.print_info(
-                f"Success probability: {script.metadata.success_probability:.0%}"
-            )
+            self.cli_interface.print_info(f"Protections: {[p.value for p in script.metadata.protection_types]}")
+            self.cli_interface.print_info(f"Success probability: {script.metadata.success_probability:.0%}")
 
             response = input("Deploy this script? (y/n): ").lower().strip()
             return response in ["y", "yes"]
@@ -2031,6 +2016,7 @@ class AutonomousAgent:
                     target_path = Path(temp_dir) / "target_binary"
                     if Path(target_binary).exists():
                         import shutil
+
                         shutil.copy2(target_binary, target_path)
                     else:
                         # Create minimal test binary if original doesn't exist
@@ -2054,7 +2040,7 @@ class AutonomousAgent:
                             capture_output=True,
                             text=True,
                             timeout=30,
-                            shell=False  # Explicitly secure - using list format prevents shell injection
+                            shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
 
                         if result.returncode == 0 or "executed" in result.stdout.lower():
@@ -2062,7 +2048,7 @@ class AutonomousAgent:
                             output_lines.append("✅ QEMU execution successful")
                             output_lines.append(f"   Binary: {target_binary}")
                             output_lines.append(f"   Script: {script_path.name}")
-                            output_lines.extend(result.stdout.split('\n')[:5])
+                            output_lines.extend(result.stdout.split("\n")[:5])
 
                     except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
                         # Attempt 2: Try native script execution with sandbox
@@ -2076,7 +2062,7 @@ class AutonomousAgent:
                                     capture_output=True,
                                     text=True,
                                     timeout=15,
-                                    shell=False  # Explicitly secure - using list format prevents shell injection
+                                    shell=False,  # Explicitly secure - using list format prevents shell injection
                                 )
                                 success = True
                                 output_lines.append("✅ Frida script validation successful")
@@ -2101,17 +2087,19 @@ class AutonomousAgent:
                     runtime_ms = int((time.time() - start_time) * 1000)
 
                     # Generate comprehensive output
-                    final_output = "\n".join([
-                        "=== Real QEMU/VM Testing Results ===",
-                        f"Target: {target_binary}",
-                        f"Script length: {len(script)} bytes",
-                        f"Test duration: {runtime_ms}ms",
-                        f"Environment: {temp_dir}",
-                        "",
-                        *output_lines,
-                        "",
-                        f"Test completed: {success}"
-                    ])
+                    final_output = "\n".join(
+                        [
+                            "=== Real QEMU/VM Testing Results ===",
+                            f"Target: {target_binary}",
+                            f"Script length: {len(script)} bytes",
+                            f"Test duration: {runtime_ms}ms",
+                            f"Environment: {temp_dir}",
+                            "",
+                            *output_lines,
+                            "",
+                            f"Test completed: {success}",
+                        ]
+                    )
 
                     return ExecutionResult(
                         success=success,
@@ -2140,7 +2128,7 @@ class AutonomousAgent:
                         analysis_output.append("✅ Function hooking patterns detected")
 
                     # Analyze script for potential issues
-                    script_lines = script.split('\n')
+                    script_lines = script.split("\n")
                     analysis_output.append(f"Script contains {len(script_lines)} lines")
 
                     if len(script) > 1000:
@@ -2184,17 +2172,13 @@ class AutonomousAgent:
 
             if task_type == "script_generation":
                 # Generate scripts based on task configuration
-                user_request = task_config.get(
-                    "request", f"Analyze and create scripts for {target_binary}"
-                )
+                user_request = task_config.get("request", f"Analyze and create scripts for {target_binary}")
                 return self.process_request(user_request)
 
             if task_type == "vulnerability_analysis":
                 # Perform vulnerability analysis
                 if not target_binary:
-                    return self._error_result(
-                        "No target binary specified for vulnerability analysis"
-                    )
+                    return self._error_result("No target binary specified for vulnerability analysis")
 
                 analysis = self._analyze_target(target_binary)
                 return {
@@ -2262,9 +2246,7 @@ class AutonomousAgent:
 
             if output_path is None:
                 # Use tempfile for automatic naming
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix="_session.json", delete=False
-                ) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix="_session.json", delete=False) as f:
                     json.dump(session_data, f, indent=2)
                     output_path = f.name
             else:
@@ -2438,9 +2420,7 @@ class AutonomousAgent:
 
         except Exception as e:
             logger.error(f"Error starting VM {vm_id}: {e}")
-            self._audit_logger.log_vm_operation(
-                "start", vm_info["name"], success=False, error=str(e)
-            )
+            self._audit_logger.log_vm_operation("start", vm_info["name"], success=False, error=str(e))
             return False
 
     def _stop_vm(self, vm_id: str, force: bool = False) -> bool:
@@ -2480,9 +2460,7 @@ class AutonomousAgent:
 
         except Exception as e:
             logger.error(f"Error stopping VM {vm_id}: {e}")
-            self._audit_logger.log_vm_operation(
-                "stop", vm_info["name"], success=False, error=str(e)
-            )
+            self._audit_logger.log_vm_operation("stop", vm_info["name"], success=False, error=str(e))
             return False
 
     def _create_snapshot(self, vm_id: str, snapshot_name: str) -> str | None:
@@ -2530,9 +2508,7 @@ class AutonomousAgent:
 
         except Exception as e:
             logger.error(f"Error creating snapshot for VM {vm_id}: {e}")
-            self._audit_logger.log_vm_operation(
-                "snapshot", vm_info["name"], success=False, error=str(e)
-            )
+            self._audit_logger.log_vm_operation("snapshot", vm_info["name"], success=False, error=str(e))
             return None
 
     def _restore_snapshot(self, vm_id: str, snapshot_id: str) -> bool:
@@ -2653,9 +2629,7 @@ class AutonomousAgent:
                 self._stop_vm(vm_id, force=True)
 
             # Delete all snapshots
-            for snapshot in vm_info["snapshots"][
-                :
-            ]:  # Copy list to avoid modification during iteration
+            for snapshot in vm_info["snapshots"][:]:  # Copy list to avoid modification during iteration
                 self._delete_snapshot(snapshot["id"])
 
             # Use QEMU manager to remove VM
@@ -2839,9 +2813,7 @@ class AutonomousAgent:
 
         except ImportError as e:
             logger.error("Docker package not installed")
-            raise RuntimeError(
-                "Docker package not available - install with: pip install docker"
-            ) from e
+            raise RuntimeError("Docker package not available - install with: pip install docker") from e
         except Exception as e:
             logger.error(f"Failed to initialize Docker client: {e}")
             raise RuntimeError(f"Docker initialization failed: {e!s}") from e
@@ -3052,9 +3024,7 @@ class AutonomousAgent:
 
         try:
             # Execute command
-            exec_result = container.exec_run(
-                command, workdir=workdir, stdout=True, stderr=True, demux=True
-            )
+            exec_result = container.exec_run(command, workdir=workdir, stdout=True, stderr=True, demux=True)
 
             # Parse results
             exit_code = exec_result.exit_code
@@ -3219,9 +3189,7 @@ class AutonomousAgent:
         if not hasattr(self, "_active_containers"):
             return
 
-        container_ids = list(
-            self._active_containers.keys()
-        )  # Copy to avoid modification during iteration
+        container_ids = list(self._active_containers.keys())  # Copy to avoid modification during iteration
 
         for container_id in container_ids:
             try:

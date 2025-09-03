@@ -155,9 +155,7 @@ class BeaconManager:
                 {
                     "timestamp": current_time,
                     "data": beacon_data,
-                    "response_time": health["response_times"][-1]
-                    if health["response_times"]
-                    else 0,
+                    "response_time": health["response_times"][-1] if health["response_times"] else 0,
                 }
             )
 
@@ -191,9 +189,7 @@ class BeaconManager:
 
                 # Calculate expected next beacon time
                 last_beacon = session["last_beacon"] or session["registered_at"]
-                expected_interval = self.adaptive_intervals.get(
-                    session_id, session["beacon_interval"]
-                )
+                expected_interval = self.adaptive_intervals.get(session_id, session["beacon_interval"])
                 time_since_last = current_time - last_beacon
 
                 # Account for jitter (add 50% tolerance)
@@ -205,9 +201,7 @@ class BeaconManager:
                     if session["missed_beacons"] >= self.max_missed_beacons:
                         session["status"] = "inactive"
                         inactive_sessions.append(session_id)
-                        self.logger.warning(
-                            f"Session {session_id} marked as inactive after {session['missed_beacons']} missed beacons"
-                        )
+                        self.logger.warning(f"Session {session_id} marked as inactive after {session['missed_beacons']} missed beacons")
 
             return inactive_sessions
 
@@ -254,11 +248,7 @@ class BeaconManager:
     def get_active_sessions(self) -> list[str]:
         """Get list of active session IDs."""
         try:
-            return [
-                session_id
-                for session_id, session in self.sessions.items()
-                if session["status"] == "active"
-            ]
+            return [session_id for session_id, session in self.sessions.items() if session["status"] == "active"]
         except Exception as e:
             self.logger.error(f"Error getting active sessions: {e}")
             return []
@@ -269,9 +259,7 @@ class BeaconManager:
             if session_id in self.sessions:
                 self.sessions[session_id]["beacon_interval"] = new_interval
                 self.adaptive_intervals[session_id] = new_interval
-                self.logger.info(
-                    f"Updated beacon interval for session {session_id} to {new_interval}s"
-                )
+                self.logger.info(f"Updated beacon interval for session {session_id} to {new_interval}s")
             else:
                 self.logger.warning(f"Cannot update interval for unknown session: {session_id}")
 
@@ -386,9 +374,7 @@ class BeaconManager:
                 return  # Need more data
 
             avg_response_time = sum(response_times) / len(response_times)
-            response_variance = sum((t - avg_response_time) ** 2 for t in response_times) / len(
-                response_times
-            )
+            response_variance = sum((t - avg_response_time) ** 2 for t in response_times) / len(response_times)
 
             # Determine connection quality
             if avg_response_time < 1.0 and response_variance < 0.5:
@@ -433,11 +419,7 @@ class BeaconManager:
 
             # Clean beacon data
             for session_id in list(self.beacon_data.keys()):
-                self.beacon_data[session_id] = [
-                    beacon
-                    for beacon in self.beacon_data[session_id]
-                    if beacon["timestamp"] > cutoff_time
-                ]
+                self.beacon_data[session_id] = [beacon for beacon in self.beacon_data[session_id] if beacon["timestamp"] > cutoff_time]
 
                 # Remove empty entries
                 if not self.beacon_data[session_id]:
@@ -446,9 +428,7 @@ class BeaconManager:
             # Clean performance metrics
             for session_id in list(self.performance_metrics.keys()):
                 self.performance_metrics[session_id] = [
-                    metric
-                    for metric in self.performance_metrics[session_id]
-                    if metric["timestamp"] > cutoff_time
+                    metric for metric in self.performance_metrics[session_id] if metric["timestamp"] > cutoff_time
                 ]
 
                 # Remove empty entries

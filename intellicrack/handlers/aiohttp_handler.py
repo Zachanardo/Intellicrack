@@ -86,11 +86,11 @@ except ImportError as e:
             self.reason = "OK" if status < 400 else "Error"
             self.cookies = {}
 
-        async def text(self, encoding='utf-8'):
+        async def text(self, encoding="utf-8"):
             """Get response text."""
             return self._content.decode(encoding)
 
-        async def json(self, encoding='utf-8'):
+        async def json(self, encoding="utf-8"):
             """Parse JSON response."""
             text = await self.text(encoding)
             return json.loads(text)
@@ -132,8 +132,7 @@ except ImportError as e:
     class TCPConnector:
         """TCP connector for connection pooling."""
 
-        def __init__(self, limit=100, limit_per_host=30, ttl_dns_cache=10,
-                    enable_cleanup_closed=False, force_close=False, ssl=True):
+        def __init__(self, limit=100, limit_per_host=30, ttl_dns_cache=10, enable_cleanup_closed=False, force_close=False, ssl=True):
             """Initialize connector."""
             self.limit = limit
             self.limit_per_host = limit_per_host
@@ -151,8 +150,7 @@ except ImportError as e:
     class ClientSession:
         """Async HTTP session."""
 
-        def __init__(self, connector=None, timeout=None, headers=None,
-                    cookies=None, auth=None, json_serialize=json.dumps):
+        def __init__(self, connector=None, timeout=None, headers=None, cookies=None, auth=None, json_serialize=json.dumps):
             """Initialize session."""
             self.connector = connector or TCPConnector()
             self.timeout = timeout or ClientTimeout()
@@ -165,11 +163,11 @@ except ImportError as e:
         async def request(self, method, url, **kwargs):
             """Send async HTTP request."""
             # Extract parameters
-            params = kwargs.get('params')
-            data = kwargs.get('data')
-            json_data = kwargs.get('json')
-            headers = kwargs.get('headers', {})
-            timeout = kwargs.get('timeout', self.timeout)
+            params = kwargs.get("params")
+            data = kwargs.get("data")
+            json_data = kwargs.get("json")
+            headers = kwargs.get("headers", {})
+            timeout = kwargs.get("timeout", self.timeout)
 
             # Build URL with params
             if params:
@@ -186,14 +184,14 @@ except ImportError as e:
             # Prepare data
             body = None
             if json_data is not None:
-                body = self.json_serialize(json_data).encode('utf-8')
-                req_headers['Content-Type'] = 'application/json'
+                body = self.json_serialize(json_data).encode("utf-8")
+                req_headers["Content-Type"] = "application/json"
             elif data is not None:
                 if isinstance(data, dict):
-                    body = urllib.parse.urlencode(data).encode('utf-8')
-                    req_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                    body = urllib.parse.urlencode(data).encode("utf-8")
+                    req_headers["Content-Type"] = "application/x-www-form-urlencoded"
                 else:
-                    body = data if isinstance(data, bytes) else str(data).encode('utf-8')
+                    body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
             # Create request
             req = urllib.request.Request(url, data=body, headers=req_headers, method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
@@ -205,18 +203,13 @@ except ImportError as e:
                 # Run urllib request in thread pool
                 response = await loop.run_in_executor(
                     None,
-                    lambda: urllib.request.urlopen(req, timeout=timeout.total if hasattr(timeout, 'total') else timeout)  # noqa: S310  # Legitimate HTTP request for security research tool
+                    lambda: urllib.request.urlopen(req, timeout=timeout.total if hasattr(timeout, "total") else timeout),  # noqa: S310  # Legitimate HTTP request for security research tool
                 )
 
                 content = response.read()
 
                 # Create ClientResponse
-                resp = ClientResponse(
-                    url=response.url,
-                    status=response.code,
-                    headers=dict(response.headers),
-                    content=content
-                )
+                resp = ClientResponse(url=response.url, status=response.code, headers=dict(response.headers), content=content)
 
                 return resp
 
@@ -225,8 +218,8 @@ except ImportError as e:
                 return ClientResponse(
                     url=url,
                     status=e.code,
-                    headers=dict(e.headers) if hasattr(e, 'headers') else {},
-                    content=e.read() if hasattr(e, 'read') else b''
+                    headers=dict(e.headers) if hasattr(e, "headers") else {},
+                    content=e.read() if hasattr(e, "read") else b"",
                 )
 
             except urllib.error.URLError as e:
@@ -240,31 +233,31 @@ except ImportError as e:
 
         async def get(self, url, **kwargs):
             """Send GET request."""
-            return await self.request('GET', url, **kwargs)
+            return await self.request("GET", url, **kwargs)
 
         async def post(self, url, data=None, json=None, **kwargs):
             """Send POST request."""
-            return await self.request('POST', url, data=data, json=json, **kwargs)
+            return await self.request("POST", url, data=data, json=json, **kwargs)
 
         async def put(self, url, data=None, **kwargs):
             """Send PUT request."""
-            return await self.request('PUT', url, data=data, **kwargs)
+            return await self.request("PUT", url, data=data, **kwargs)
 
         async def patch(self, url, data=None, **kwargs):
             """Send PATCH request."""
-            return await self.request('PATCH', url, data=data, **kwargs)
+            return await self.request("PATCH", url, data=data, **kwargs)
 
         async def delete(self, url, **kwargs):
             """Send DELETE request."""
-            return await self.request('DELETE', url, **kwargs)
+            return await self.request("DELETE", url, **kwargs)
 
         async def head(self, url, **kwargs):
             """Send HEAD request."""
-            return await self.request('HEAD', url, **kwargs)
+            return await self.request("HEAD", url, **kwargs)
 
         async def options(self, url, **kwargs):
             """Send OPTIONS request."""
-            return await self.request('OPTIONS', url, **kwargs)
+            return await self.request("OPTIONS", url, **kwargs)
 
         async def close(self):
             """Close session."""
@@ -283,7 +276,7 @@ except ImportError as e:
     class Request:
         """Web request object."""
 
-        def __init__(self, method='GET', path='/', headers=None, body=b''):
+        def __init__(self, method="GET", path="/", headers=None, body=b""):
             """Initialize request."""
             self.method = method
             self.path = path
@@ -296,7 +289,7 @@ except ImportError as e:
 
         async def text(self):
             """Get request text."""
-            return self.body.decode('utf-8')
+            return self.body.decode("utf-8")
 
         async def json(self):
             """Parse JSON request."""
@@ -312,13 +305,13 @@ except ImportError as e:
     class Response:
         """Web response object."""
 
-        def __init__(self, text='', status=200, headers=None, content_type='text/plain'):
+        def __init__(self, text="", status=200, headers=None, content_type="text/plain"):
             """Initialize response."""
             self.text = text
             self.status = status
             self.headers = headers or {}
             self.content_type = content_type
-            self.body = text.encode('utf-8') if isinstance(text, str) else text
+            self.body = text.encode("utf-8") if isinstance(text, str) else text
 
     class RouteTableDef:
         """Route table definition."""
@@ -329,37 +322,47 @@ except ImportError as e:
 
         def get(self, path):
             """GET route decorator."""
+
             def decorator(handler):
-                self.routes.append(('GET', path, handler))
+                self.routes.append(("GET", path, handler))
                 return handler
+
             return decorator
 
         def post(self, path):
             """POST route decorator."""
+
             def decorator(handler):
-                self.routes.append(('POST', path, handler))
+                self.routes.append(("POST", path, handler))
                 return handler
+
             return decorator
 
         def put(self, path):
             """PUT route decorator."""
+
             def decorator(handler):
-                self.routes.append(('PUT', path, handler))
+                self.routes.append(("PUT", path, handler))
                 return handler
+
             return decorator
 
         def delete(self, path):
             """DELETE route decorator."""
+
             def decorator(handler):
-                self.routes.append(('DELETE', path, handler))
+                self.routes.append(("DELETE", path, handler))
                 return handler
+
             return decorator
 
         def route(self, method, path):
             """Generic route decorator."""
+
             def decorator(handler):
                 self.routes.append((method, path, handler))
                 return handler
+
             return decorator
 
     class Application:
@@ -367,28 +370,28 @@ except ImportError as e:
 
         def __init__(self):
             """Initialize application."""
-            self.router = type('Router', (), {'routes': []})()
+            self.router = type("Router", (), {"routes": []})()
             self.middlewares = []
             self.on_startup = []
             self.on_cleanup = []
             self.on_shutdown = []
-            self['state'] = {}
+            self["state"] = {}
 
         def __getitem__(self, key):
             """Get app state item."""
-            if not hasattr(self, '_state'):
+            if not hasattr(self, "_state"):
                 self._state = {}
             return self._state.get(key)
 
         def __setitem__(self, key, value):
             """Set app state item."""
-            if not hasattr(self, '_state'):
+            if not hasattr(self, "_state"):
                 self._state = {}
             self._state[key] = value
 
         def add_routes(self, routes):
             """Add routes to application."""
-            if hasattr(routes, 'routes'):
+            if hasattr(routes, "routes"):
                 # RouteTableDef
                 for method, path, handler in routes.routes:
                     self.router.routes.append((method, path, handler))
@@ -412,7 +415,7 @@ except ImportError as e:
             for handler in self.on_shutdown:
                 await handler(self)
 
-    def run_app(app, host='127.0.0.1', port=8080, print=print):
+    def run_app(app, host="127.0.0.1", port=8080, print=print):
         """Run web application."""
         logger.info("Starting aiohttp fallback server on %s:%d", host, port)
         print(f"======== Running on http://{host}:{port} ========")
@@ -447,12 +450,7 @@ except ImportError as e:
         @staticmethod
         def json_response(data, status=200, **kwargs):
             """Create JSON response."""
-            return Response(
-                text=json.dumps(data),
-                status=status,
-                content_type='application/json',
-                **kwargs
-            )
+            return Response(text=json.dumps(data), status=status, content_type="application/json", **kwargs)
 
     # Create module-like object
     class FallbackAioHTTP:
@@ -486,13 +484,24 @@ except ImportError as e:
 # Export all aiohttp objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_AIOHTTP", "AIOHTTP_VERSION",
+    "HAS_AIOHTTP",
+    "AIOHTTP_VERSION",
     # Main module
     "aiohttp",
     # Client classes
-    "ClientSession", "ClientResponse", "ClientTimeout", "TCPConnector",
+    "ClientSession",
+    "ClientResponse",
+    "ClientTimeout",
+    "TCPConnector",
     # Exceptions
-    "ClientError", "ClientConnectorError", "ServerTimeoutError",
+    "ClientError",
+    "ClientConnectorError",
+    "ServerTimeoutError",
     # Web module
-    "web", "Application", "Request", "Response", "RouteTableDef", "run_app",
+    "web",
+    "Application",
+    "Request",
+    "Response",
+    "RouteTableDef",
+    "run_app",
 ]

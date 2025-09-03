@@ -58,6 +58,7 @@ except ImportError as e:
         """Fallback progress function that does nothing."""
         pass
 
+
 try:
     import angr
 
@@ -163,9 +164,7 @@ class DistributedProcessingManager:
                 if self.dask_available:
                     return "dask"
             return "multiprocessing"
-        self.logger.warning(
-            f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing"
-        )
+        self.logger.warning(f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing")
         return "multiprocessing"
 
     def set_binary(self, binary_path: str) -> bool:
@@ -214,9 +213,7 @@ class DistributedProcessingManager:
         self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
         return task["id"]
 
-    def process_binary_chunks(
-        self, process_func: Callable[[bytes, int], Any] | None = None
-    ) -> list[Any] | None:
+    def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
         """Process a binary file in chunks using distributed workers.
 
         Args:
@@ -241,9 +238,7 @@ class DistributedProcessingManager:
         # Calculate number of chunks
         num_chunks = (file_size + self.chunk_size - 1) // self.chunk_size
 
-        self.logger.info(
-            f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024*1024)}MB each"
-        )
+        self.logger.info(f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024 * 1024)}MB each")
 
         # Choose backend based on availability
         backend = self._select_backend()
@@ -312,9 +307,7 @@ class DistributedProcessingManager:
                 results.append(_result)
                 completed += 1
                 if completed % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(
-                        f"Progress: {completed}/{num_chunks} chunks processed ({completed/num_chunks*100:.1f}%)"
-                    )
+                    self.logger.info(f"Progress: {completed}/{num_chunks} chunks processed ({completed / num_chunks * 100:.1f}%)")
 
             return results
 
@@ -423,14 +416,10 @@ class DistributedProcessingManager:
         with multiprocessing.Pool(processes=self.num_workers) as pool:
             # Process chunks with progress tracking
             results = []
-            for i, result in enumerate(
-                pool.imap_unordered(read_and_process_chunk, range(num_chunks))
-            ):
+            for i, result in enumerate(pool.imap_unordered(read_and_process_chunk, range(num_chunks))):
                 results.append(result)
                 if (i + 1) % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(
-                        f"Progress: {i+1}/{num_chunks} chunks processed ({(i+1)/num_chunks*100:.1f}%)"
-                    )
+                    self.logger.info(f"Progress: {i + 1}/{num_chunks} chunks processed ({(i + 1) / num_chunks * 100:.1f}%)")
 
         return results
 
@@ -536,26 +525,18 @@ class DistributedProcessingManager:
 
                 # Process task
                 start_time = time.time()
-                logger.info(
-                    f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})"
-                )
+                logger.info(f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})")
 
                 try:
                     # Process task based on type
                     if task["type"] == "find_patterns":
                         result = self._task_find_patterns(worker_id, task, binary_path, chunk_size)
                     elif task["type"] == "analyze_entropy":
-                        result = self._task_analyze_entropy(
-                            worker_id, task, binary_path, chunk_size
-                        )
+                        result = self._task_analyze_entropy(worker_id, task, binary_path, chunk_size)
                     elif task["type"] == "analyze_section":
-                        result = self._task_analyze_section(
-                            worker_id, task, binary_path, chunk_size
-                        )
+                        result = self._task_analyze_section(worker_id, task, binary_path, chunk_size)
                     elif task["type"] == "symbolic_execution":
-                        result = self._task_symbolic_execution(
-                            worker_id, task, binary_path, chunk_size
-                        )
+                        result = self._task_symbolic_execution(worker_id, task, binary_path, chunk_size)
                     else:
                         # Generic task - process a chunk
                         result = self._task_generic(worker_id, task, binary_path, chunk_size)
@@ -586,9 +567,7 @@ class DistributedProcessingManager:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Worker %s error: %s", worker_id, e)
 
-    def _task_find_patterns(
-        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
-    ) -> dict[str, Any]:
+    def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process a pattern-finding task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         patterns = task["params"].get("patterns", [])
@@ -625,9 +604,7 @@ class DistributedProcessingManager:
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {"matches": matches, "patterns_found": len(matches)}
 
-    def _task_analyze_entropy(
-        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
-    ) -> dict[str, Any]:
+    def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process an entropy analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -660,9 +637,7 @@ class DistributedProcessingManager:
             )
 
         # Find high entropy regions
-        high_entropy_regions = [
-            _w for _w in window_results if _w["entropy"] > 7.0
-        ]  # High entropy threshold
+        high_entropy_regions = [_w for _w in window_results if _w["entropy"] > 7.0]  # High entropy threshold
 
         logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
@@ -684,9 +659,7 @@ class DistributedProcessingManager:
         entropy = -sum((_count / total) * math.log2(_count / total) for _count in counts.values())
         return entropy
 
-    def _task_analyze_section(
-        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
-    ) -> dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
         """Process a section analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         section_name = task["params"].get("section_name", None)
@@ -700,9 +673,7 @@ class DistributedProcessingManager:
         try:
             pe = pefile.PE(binary_path)
 
-            section = next(
-                (_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None
-            )
+            section = next((_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None)
             if not section:
                 return {"error": f"Section {section_name} not found"}
 
@@ -754,16 +725,10 @@ class DistributedProcessingManager:
                 )
 
             # Calculate overall entropy as average of chunk entropies
-            entropy = (
-                sum(total_entropy_samples) / len(total_entropy_samples)
-                if total_entropy_samples
-                else 0.0
-            )
+            entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
             strings = total_strings
 
-            logger.info(
-                f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}"
-            )
+            logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
 
             return {
                 "section_name": section_name,
@@ -787,9 +752,7 @@ class DistributedProcessingManager:
             logger.error("Error analyzing section %s: %s", section_name, e)
             return {"error": str(e), "section_name": section_name}
 
-    def _task_symbolic_execution(
-        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
-    ) -> dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
         """Process a symbolic execution task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         target_function = task["params"].get("target_function", None)
@@ -858,9 +821,7 @@ class DistributedProcessingManager:
                         if hasattr(state, "memory") and state.satisfiable():
                             try:
                                 # Check for potential buffer overflow conditions
-                                rsp_val = (
-                                    state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
-                                )
+                                rsp_val = state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
                                 if state.solver.satisfiable(extra_constraints=[rsp_val < 0x1000]):
                                     vulnerabilities.append(
                                         {
@@ -883,9 +844,7 @@ class DistributedProcessingManager:
                         "initial_active_states": chunk_start_states,
                         "final_active_states": len(simgr.active),
                         "chunk_duration": chunk_duration,
-                        "vulnerabilities_found": len(
-                            [v for v in vulnerabilities if v.get("chunk") == chunk_number]
-                        ),
+                        "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number]),
                     }
                 )
 
@@ -919,9 +878,7 @@ class DistributedProcessingManager:
                 "vulnerabilities_found": 0,
             }
 
-    def _task_generic(
-        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
-    ) -> dict[str, Any]:
+    def _task_generic(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process a generic task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -931,9 +888,7 @@ class DistributedProcessingManager:
             f.seek(chunk_start)
             chunk_data = f.read(chunk_size)
 
-        logger.info(
-            "Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start
-        )
+        logger.info("Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start)
         return {
             "worker_id": worker_id,
             "chunk_offset": chunk_start,
@@ -986,9 +941,7 @@ class DistributedProcessingManager:
 
                 # Process result
                 task_type = task["type"]
-                self.logger.info(
-                    "Processing result from worker %s for task %s", worker_id, task_type
-                )
+                self.logger.info("Processing result from worker %s for task %s", worker_id, task_type)
 
                 # Initialize task type in results if not already present
                 if task_type not in self.results["task_results"]:
@@ -1079,9 +1032,7 @@ class DistributedProcessingManager:
         """
         return self.results
 
-    def run_distributed_pattern_search(
-        self, patterns: list[str | bytes], chunk_size_mb: int = 10
-    ) -> list[dict[str, Any]]:
+    def run_distributed_pattern_search(self, patterns: list[str | bytes], chunk_size_mb: int = 10) -> list[dict[str, Any]]:
         """Search for _patterns in a binary file using distributed processing.
 
         Args:
@@ -1137,9 +1088,7 @@ class DistributedProcessingManager:
 
         return all_matches
 
-    def run_distributed_entropy_analysis(
-        self, window_size_kb: int = 64, chunk_size_mb: int = 10
-    ) -> dict[str, Any]:
+    def run_distributed_entropy_analysis(self, window_size_kb: int = 64, chunk_size_mb: int = 10) -> dict[str, Any]:
         """Calculate entropy of a binary file using distributed processing.
 
         Args:
@@ -1199,11 +1148,7 @@ class DistributedProcessingManager:
 
         # Calculate overall entropy (weighted by chunk size)
         total_size = sum(size for _, size in chunk_entropies)
-        overall_entropy = (
-            sum(entropy * size for entropy, size in chunk_entropies) / total_size
-            if total_size > 0
-            else 0
-        )
+        overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
 
         # Find high entropy regions
         high_entropy_regions = [_w for _w in all_windows if _w["entropy"] > 7.0]
@@ -1253,9 +1198,9 @@ class DistributedProcessingManager:
             <table>
                 <tr><th>Metric</th><th>Value</th></tr>
                 <tr><td>Workers</td><td>{self.num_workers}</td></tr>
-                <tr><td>Tasks Completed</td><td>{self.results.get('tasks_completed', 0)}</td></tr>
-                <tr><td>Tasks Failed</td><td>{self.results.get('tasks_failed', 0)}</td></tr>
-                <tr><td>Total Processing Time</td><td>{self.results.get('total_processing_time', 0):.2f} seconds</td></tr>
+                <tr><td>Tasks Completed</td><td>{self.results.get("tasks_completed", 0)}</td></tr>
+                <tr><td>Tasks Failed</td><td>{self.results.get("tasks_failed", 0)}</td></tr>
+                <tr><td>Total Processing Time</td><td>{self.results.get("total_processing_time", 0):.2f} seconds</td></tr>
             </table>
         """
 

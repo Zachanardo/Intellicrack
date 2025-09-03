@@ -279,9 +279,7 @@ class GhidraScriptManager:
                             logger.warning(f"Failed to load script {file}: {e}")
 
         self.last_scan = datetime.now()
-        logger.info(
-            f"Found {len(self.scripts)} Ghidra scripts in {len(self.categories)} categories"
-        )
+        logger.info(f"Found {len(self.scripts)} Ghidra scripts in {len(self.categories)} categories")
 
         # Save cache
         self._save_cache()
@@ -398,9 +396,7 @@ class GhidraScriptManager:
 
         return results
 
-    def add_user_script(
-        self, source_path: str, category: str = "User Scripts"
-    ) -> Optional[GhidraScript]:
+    def add_user_script(self, source_path: str, category: str = "User Scripts") -> Optional[GhidraScript]:
         """
         Add a user script to the user scripts directory.
 
@@ -490,9 +486,7 @@ class GhidraScriptManager:
                             self.categories[script.category] = []
                         self.categories[script.category].append(path)
 
-            self.last_scan = datetime.fromisoformat(
-                data.get("last_scan", datetime.now().isoformat())
-            )
+            self.last_scan = datetime.fromisoformat(data.get("last_scan", datetime.now().isoformat()))
             logger.info(f"Loaded {len(self.scripts)} scripts from cache")
 
         except Exception as e:

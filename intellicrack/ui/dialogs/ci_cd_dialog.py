@@ -326,8 +326,7 @@ class CICDDialog(PluginDialogBase):
 
         # Info
         info_label = QLabel(
-            "Generate GitHub Actions workflow for continuous integration. "
-            "This will create a .github/workflows file for your plugin.",
+            "Generate GitHub Actions workflow for continuous integration. This will create a .github/workflows file for your plugin.",
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
@@ -623,8 +622,7 @@ class CICDDialog(PluginDialogBase):
         QMessageBox.information(
             self,
             "Generated",
-            f"GitHub Actions workflow saved to:\n{workflow_path}\n\n"
-            "Commit this file to your repository to enable CI/CD.",
+            f"GitHub Actions workflow saved to:\n{workflow_path}\n\nCommit this file to your repository to enable CI/CD.",
         )
 
     def run_pipeline(self):
@@ -634,9 +632,7 @@ class CICDDialog(PluginDialogBase):
 
         # Clear console
         self.console_output.clear()
-        self.console_output.append(
-            f"🚀 Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n"
-        )
+        self.console_output.append(f"🚀 Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
@@ -706,9 +702,7 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(
-            1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "❌"]
-        )
+        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "❌"])
         self.progress_bar.setValue(completed)
 
         # Log errors

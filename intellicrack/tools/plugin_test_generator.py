@@ -202,9 +202,7 @@ if __name__ == '__main__':
                             "defaults": [self._get_default_value(d) for d in item.args.defaults],
                             "docstring": ast.get_docstring(item),
                             "is_async": isinstance(item, ast.AsyncFunctionDef),
-                            "decorators": [
-                                self._get_decorator_name(d) for d in item.decorator_list
-                            ],
+                            "decorators": [self._get_decorator_name(d) for d in item.decorator_list],
                             "returns": self._analyze_return_type(item),
                             "raises": self._analyze_exceptions(item),
                         }
@@ -212,9 +210,7 @@ if __name__ == '__main__':
 
                         # Generate test for each public method
                         if not item.name.startswith("_"):
-                            test_method = self._generate_comprehensive_test_for_method(
-                                method_info, class_attributes, imports
-                            )
+                            test_method = self._generate_comprehensive_test_for_method(method_info, class_attributes, imports)
                             test_methods.append(test_method)
 
                 # Generate attribute tests if any class attributes exist
@@ -462,9 +458,7 @@ if __name__ == '__main__':
         # Test with None parameters
         none_params = ", ".join(["None"] * len(args))
         test_lines.append("        # Test with None parameters")
-        test_lines.append(
-            "        with self.assertRaises((TypeError, ValueError, AttributeError)):"
-        )
+        test_lines.append("        with self.assertRaises((TypeError, ValueError, AttributeError)):")
         test_lines.append(f"            {await_prefix}self.plugin.{method_name}({none_params})")
 
         # Test with empty parameters
@@ -484,9 +478,7 @@ if __name__ == '__main__':
 
         if empty_params:
             empty_str = ", ".join(empty_params)
-            test_lines.append(
-                f"        result = {await_prefix}self.plugin.{method_name}({empty_str})"
-            )
+            test_lines.append(f"        result = {await_prefix}self.plugin.{method_name}({empty_str})")
             test_lines.append("        # Should handle empty inputs gracefully")
 
         return test_lines

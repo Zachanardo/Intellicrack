@@ -76,6 +76,16 @@ var getSystemInfo = Module.findExportByName('kernel32.dll', 'GetSystemInfo');
 if (getSystemInfo) {
     Interceptor.attach(getSystemInfo, {
         onLeave: function(retval) {
+            // Ensure GetSystemInfo returns success
+            if (retval && !retval.isNull() && retval.toInt32() === 0) {
+                // GetSystemInfo is void but we can check if it succeeded
+                send({
+                    type: 'debug',
+                    target: 'system_info',
+                    action: 'system_info_call_detected'
+                });
+            }
+
             var sysInfo = this.context.rcx; // SYSTEM_INFO pointer
             if (sysInfo && !sysInfo.isNull()) {
                 // Modify processor architecture and count
@@ -333,7 +343,9 @@ class HwidSpooferEnhanced {
                             if (guidStr && guidStr.includes('8086')) {
                                 this.smbiosQuery = true;
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            send('[HWID] WMI query error: ' + e.message);
+                        }
                     }
                 },
                 onLeave: function(retval) {
@@ -442,6 +454,10 @@ class HwidSpooferEnhanced {
                 }
             }
         });
+
+        // Store hook for management and potential cleanup
+        this.activeHooks = this.activeHooks || [];
+        this.activeHooks.push(cpuidHook);
 
         // Hook performance counter access
         const perfCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
@@ -676,6 +692,35 @@ class HwidSpooferEnhanced {
                     const classGuid = args[0];
                     const enumerator = args[1];
                     this.flags = args[3].toInt32();
+
+                    // Use classGuid to identify device type for targeted spoofing
+                    if (classGuid && !classGuid.isNull()) {
+                        try {
+                            const guidBytes = Memory.readByteArray(classGuid, 16);
+                            this.deviceClass = guidBytes;
+
+                            // Check for specific device classes to spoof
+                            const guidStr = Array.from(new Uint8Array(guidBytes))
+                                .map(b => b.toString(16).padStart(2, '0'))
+                                .join('');
+
+                            if (guidStr.includes('4d36e972e32511ce')) {
+                                // Network adapter GUID
+                                this.networkDevice = true;
+                            } else if (guidStr.includes('4d36e968e32511ce')) {
+                                // Display adapter GUID
+                                this.displayDevice = true;
+                            }
+                        } catch (e) {
+                            // GUID read failed - log error for debugging
+                            send({
+                                type: 'debug',
+                                target: 'device_enumeration',
+                                action: 'guid_read_failed',
+                                error: e.toString()
+                            });
+                        }
+                    }
 
                     if (enumerator && !enumerator.isNull()) {
                         const enumStr = enumerator.readUtf16String();
@@ -1065,6 +1110,33 @@ class HwidSpooferEnhanced {
                                 const statePtr = firstInterface.add(16);
                                 const descPtr = firstInterface.add(20);
 
+                                // Use descPtr to manipulate device description for spoofing
+                                if (descPtr && !descPtr.isNull()) {
+                                    try {
+                                        // Read original description pointer
+                                        const originalDescPtr = descPtr.readPointer();
+                                        if (originalDescPtr && !originalDescPtr.isNull()) {
+                                            const originalDesc = originalDescPtr.readUtf16String();
+
+                                            // Spoof wireless adapter description
+                                            const spoofedDesc = 'Generic 802.11 Wireless LAN Adapter';
+                                            const spoofedDescPtr = Memory.allocUtf16String(spoofedDesc);
+                                            descPtr.writePointer(spoofedDescPtr);
+
+                                            this.originalDescription = originalDesc;
+                                            this.spoofedDescription = spoofedDesc;
+                                        }
+                                    } catch (e) {
+                                        // Description manipulation failed - log error
+                                        send({
+                                            type: 'debug',
+                                            target: 'wireless_interface',
+                                            action: 'description_manipulation_failed',
+                                            error: e.toString()
+                                        });
+                                    }
+                                }
+
                                 // Generic WLAN GUID
                                 const spoofedGuid = new Uint8Array([
                                     0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0,
@@ -1413,6 +1485,74 @@ class HwidSpooferEnhanced {
 }
 
 const hwidSpoofer = new HwidSpooferEnhanced();
+
+// Initialize and activate all spoofing mechanisms
+if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
+    try {
+        hwidSpoofer.initializeSpoofing();
+
+        // Set up periodic spoofing refresh
+        setInterval(function() {
+            if (hwidSpoofer.spoofingState) {
+                hwidSpoofer.spoofingState.refreshCount = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                send({
+                    type: 'status',
+                    message: 'Hardware spoofing state refreshed',
+                    refresh_count: hwidSpoofer.spoofingState.refreshCount,
+                    active_bypasses: hwidSpoofer.spoofingState.bypassCount || 0
+                });
+            }
+        }, 30000); // Refresh every 30 seconds
+
+    } catch (e) {
+        send({
+            type: 'error',
+            message: 'Failed to initialize hardware spoofing',
+            error: e.toString(),
+            stack: e.stack || 'No stack available'
+        });
+    }
+} else {
+    send({
+        type: 'warning',
+        message: 'HwidSpooferEnhanced not properly instantiated',
+        available_methods: Object.getOwnPropertyNames(hwidSpoofer || {})
+    });
+}
+
+// Initialize and activate all spoofing mechanisms
+if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
+    try {
+        hwidSpoofer.initializeSpoofing();
+
+        // Set up periodic spoofing refresh
+        setInterval(function() {
+            if (hwidSpoofer.spoofingState) {
+                hwidSpoofer.spoofingState.refreshCount = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                send({
+                    type: 'status',
+                    message: 'Hardware spoofing state refreshed',
+                    refresh_count: hwidSpoofer.spoofingState.refreshCount,
+                    active_bypasses: hwidSpoofer.spoofingState.bypassCount || 0
+                });
+            }
+        }, 30000); // Refresh every 30 seconds
+
+    } catch (e) {
+        send({
+            type: 'error',
+            message: 'Failed to initialize hardware spoofing',
+            error: e.toString(),
+            stack: e.stack || 'No stack available'
+        });
+    }
+} else {
+    send({
+        type: 'warning',
+        message: 'HwidSpooferEnhanced not properly instantiated',
+        available_methods: Object.getOwnPropertyNames(hwidSpoofer || {})
+    });
+}
 
 send({
     type: 'status',

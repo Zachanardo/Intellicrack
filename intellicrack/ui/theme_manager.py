@@ -51,7 +51,16 @@ class ThemeManager:
 
     def load_theme_preference(self):
         """Load theme preference from central config, default to dark."""
-        return self.config.get("ui_preferences.theme", "dark")
+        stored_theme = self.config.get("ui_preferences.theme", "dark")
+
+        # Normalize stored theme name to lowercase for consistency
+        if stored_theme:
+            stored_theme = str(stored_theme).lower()
+
+        # Handle common theme variations
+        theme_mapping = {"dark": "dark", "light": "light", "default": "dark", "black": "dark", "white": "light"}
+
+        return theme_mapping.get(stored_theme, "dark")
 
     def save_theme_preference(self):
         """Save current theme preference to central config."""
@@ -64,11 +73,26 @@ class ThemeManager:
             theme_name: Name of the theme ("dark" or "light")
 
         """
-        if theme_name not in self.themes:
-            print(f"Warning: Unknown theme '{theme_name}', using light theme")
-            theme_name = "light"
+        # Normalize theme name to lowercase for consistent handling
+        if theme_name:
+            theme_name = str(theme_name).lower()
 
-        self.current_theme = theme_name
+        # Handle common theme variations
+        theme_mapping = {
+            "dark": "dark",
+            "light": "light",
+            "default": "dark",  # Map default to dark
+            "black": "dark",  # Map black to dark
+            "white": "light",  # Map white to light
+        }
+
+        normalized_theme = theme_mapping.get(theme_name, None)
+
+        if normalized_theme not in self.themes:
+            print(f"Warning: Unknown theme '{theme_name}', using light theme")
+            normalized_theme = "light"
+
+        self.current_theme = normalized_theme
         self.save_theme_preference()
         self._apply_theme()
 

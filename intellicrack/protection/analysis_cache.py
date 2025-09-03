@@ -221,10 +221,7 @@ class AnalysisCache:
         # Load existing cache
         self._load_cache()
 
-        logger.info(
-            f"Analysis cache initialized: {len(self._cache)} entries, "
-            f"{self._get_cache_size_mb():.1f}MB"
-        )
+        logger.info(f"Analysis cache initialized: {len(self._cache)} entries, {self._get_cache_size_mb():.1f}MB")
 
     def get(self, file_path: str, scan_options: str = "") -> Any | None:
         """Get cached analysis result.

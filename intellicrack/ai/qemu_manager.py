@@ -106,10 +106,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             # Key exists but doesn't match - potential security issue
             stored_key = existing_keys[key.get_name()]
             if stored_key != key:
-                raise paramiko.SSHException(
-                    f"Host key verification failed for {key_identifier}. "
-                    "Key fingerprint has changed!"
-                )
+                raise paramiko.SSHException(f"Host key verification failed for {key_identifier}. Key fingerprint has changed!")
 
         # Store the new key
         self.host_keys.add(key_identifier, key.get_name(), key)
@@ -178,12 +175,8 @@ class QEMUManager:
 
         # Circuit breaker for SSH connections from config
         self.ssh_circuit_breaker = {}  # vm_name -> {'failures': int, 'last_failure': datetime, 'open': bool}
-        self.circuit_breaker_threshold = self.config.get(
-            "vm_framework.ssh.circuit_breaker_threshold", 5
-        )
-        self.circuit_breaker_timeout = self.config.get(
-            "vm_framework.ssh.circuit_breaker_timeout", 60
-        )
+        self.circuit_breaker_threshold = self.config.get("vm_framework.ssh.circuit_breaker_threshold", 5)
+        self.circuit_breaker_timeout = self.config.get("vm_framework.ssh.circuit_breaker_timeout", 60)
 
         # Port allocation from config
         self.next_ssh_port = self.config.get("vm_framework.qemu_defaults.ssh_port_start", 22222)
@@ -368,18 +361,14 @@ class QEMUManager:
                     return client
 
                 except TimeoutError as e:
-                    logger.warning(
-                        "SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, e
-                    )
+                    logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, e)
                     self._record_connection_failure(snapshot.vm_name)
                 except paramiko.AuthenticationException as e:
                     logger.error("SSH authentication failed for %s: %s", snapshot.vm_name, e)
                     self._record_connection_failure(snapshot.vm_name)
                     break  # No point retrying auth failures
                 except paramiko.SSHException as e:
-                    logger.warning(
-                        "SSH connection error (attempt %s/%s): %s", attempt + 1, retries, e
-                    )
+                    logger.warning("SSH connection error (attempt %s/%s): %s", attempt + 1, retries, e)
                     self._record_connection_failure(snapshot.vm_name)
                 except Exception as e:
                     logger.exception("Unexpected SSH connection error: %s", e)
@@ -395,9 +384,7 @@ class QEMUManager:
             )
             return None
 
-    def download_file_from_vm(
-        self, snapshot: QEMUSnapshot, remote_path: str, local_path: str
-    ) -> bool:
+    def download_file_from_vm(self, snapshot: QEMUSnapshot, remote_path: str, local_path: str) -> bool:
         """Download file from VM using SFTP.
 
         Args:
@@ -443,9 +430,7 @@ class QEMUManager:
             return False
 
         except Exception as e:
-            logger.exception(
-                "Unexpected error downloading %s from %s: %s", remote_path, snapshot.vm_name, e
-            )
+            logger.exception("Unexpected error downloading %s from %s: %s", remote_path, snapshot.vm_name, e)
             return False
 
         finally:
@@ -455,9 +440,7 @@ class QEMUManager:
                 except Exception as e:
                     self.logger.debug("Error closing SFTP client: %s", e)
 
-    def get_modified_binary(
-        self, snapshot_id: str, remote_binary_path: str, local_download_dir: str
-    ) -> str | None:
+    def get_modified_binary(self, snapshot_id: str, remote_binary_path: str, local_download_dir: str) -> str | None:
         """Download modified binary from VM and return local path.
 
         Args:
@@ -1043,8 +1026,7 @@ class QEMUManager:
                 "created_at": snapshot.created_at.isoformat(),
                 "ssh_port": snapshot.ssh_port,
                 "vnc_port": getattr(snapshot, "vnc_port", "N/A"),
-                "vm_running": snapshot.vm_process is not None
-                and snapshot.vm_process.poll() is None,
+                "vm_running": snapshot.vm_process is not None and snapshot.vm_process.poll() is None,
                 "version": getattr(snapshot, "version", "v1.0"),
                 "parent_snapshot": getattr(snapshot, "parent_snapshot", None),
                 "children_snapshots": getattr(snapshot, "children_snapshots", []),
@@ -1369,9 +1351,7 @@ class QEMUManager:
         try:
             # Create qcow2 image with size based on OS type from config
             if os_type.lower() == "windows":
-                windows_size_gb = self.config.get(
-                    "vm_framework.base_images.default_windows_size_gb", 2
-                )
+                windows_size_gb = self.config.get("vm_framework.base_images.default_windows_size_gb", 2)
                 image_size = f"{windows_size_gb}G"
                 logger.info("Creating Windows test image (%s)", image_size)
             elif os_type.lower() in ["linux", "debian", "ubuntu"]:
@@ -1380,9 +1360,7 @@ class QEMUManager:
                 logger.info("Creating Linux test image (%s)", image_size)
             else:
                 # Default to Linux size for unknown OS types
-                default_size_gb = self.config.get(
-                    "vm_framework.base_images.default_linux_size_gb", 1
-                )
+                default_size_gb = self.config.get("vm_framework.base_images.default_linux_size_gb", 1)
                 image_size = f"{default_size_gb}G"
                 logger.info("Creating generic test image for %s (%s)", os_type, image_size)
 
@@ -1808,10 +1786,7 @@ fi
             AuditEvent(
                 event_type=AuditEventType.VM_SNAPSHOT,
                 severity=AuditSeverity.INFO,
-                description="Created versioned snapshot "
-                + snapshot_id
-                + " from "
-                + parent_snapshot_id,
+                description="Created versioned snapshot " + snapshot_id + " from " + parent_snapshot_id,
                 target=snapshot_id,
             ),
         )
@@ -1830,12 +1805,8 @@ fi
         logger.info("Comparing snapshots: %s vs %s", snapshot_id1, snapshot_id2)
 
         # Calculate disk usage differences
-        disk1_size = (
-            os.path.getsize(snapshot1.disk_path) if os.path.exists(snapshot1.disk_path) else 0
-        )
-        disk2_size = (
-            os.path.getsize(snapshot2.disk_path) if os.path.exists(snapshot2.disk_path) else 0
-        )
+        disk1_size = os.path.getsize(snapshot1.disk_path) if os.path.exists(snapshot1.disk_path) else 0
+        disk2_size = os.path.getsize(snapshot2.disk_path) if os.path.exists(snapshot2.disk_path) else 0
 
         # Compare test results
         results1 = snapshot1.test_results
@@ -1914,9 +1885,7 @@ fi
                 target_snapshot = self.snapshots[target_state]
 
                 # Create new overlay based on target
-                rollback_disk = (
-                    self.working_dir / f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
-                )
+                rollback_disk = self.working_dir / f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
                 cmd = [
                     "qemu-img",
                     "create",
@@ -2036,9 +2005,7 @@ fi
 
         try:
             # Get disk usage
-            disk_size = (
-                os.path.getsize(snapshot.disk_path) if os.path.exists(snapshot.disk_path) else 0
-            )
+            disk_size = os.path.getsize(snapshot.disk_path) if os.path.exists(snapshot.disk_path) else 0
 
             # Get memory usage from VM if running
             memory_usage = 0
@@ -2068,8 +2035,7 @@ fi
                 "disk_usage_bytes": disk_size,
                 "memory_usage_bytes": memory_usage,
                 "cpu_usage_percent": cpu_usage,
-                "vm_running": snapshot.vm_process is not None
-                and snapshot.vm_process.poll() is None,
+                "vm_running": snapshot.vm_process is not None and snapshot.vm_process.poll() is None,
                 "test_count": len(snapshot.test_results),
                 "uptime_seconds": (datetime.now() - snapshot.created_at).total_seconds(),
             }
@@ -2095,9 +2061,7 @@ fi
 
         if snapshot.vm_process and snapshot.vm_process.poll() is None:
             # Apply network isolation to running VM
-            isolation_cmd = (
-                "iptables -A OUTPUT -j DROP" if isolated else "iptables -D OUTPUT -j DROP"
-            )
+            isolation_cmd = "iptables -A OUTPUT -j DROP" if isolated else "iptables -D OUTPUT -j DROP"
 
             try:
                 self._execute_command_in_vm(snapshot, isolation_cmd)
@@ -2381,9 +2345,7 @@ exit 0
 
                                             # Update snapshot metadata
                                             snapshot.metadata["optimized"] = True
-                                            snapshot.metadata["optimization_date"] = (
-                                                datetime.now().isoformat()
-                                            )
+                                            snapshot.metadata["optimization_date"] = datetime.now().isoformat()
                                             snapshot.metadata["original_size"] = original_size
                                             snapshot.metadata["optimized_size"] = new_size
 
@@ -2391,9 +2353,7 @@ exit 0
                                             # Restore backup on error
                                             if os.path.exists(backup_path):
                                                 os.rename(backup_path, snapshot.disk_path)
-                                            raise Exception(
-                                                f"Failed to replace snapshot file: {e}"
-                                            ) from e
+                                            raise Exception(f"Failed to replace snapshot file: {e}") from e
                                     else:
                                         raise Exception(
                                             f"Integrity check failed: {check_result.stderr}",
@@ -2429,9 +2389,7 @@ exit 0
 
         # Calculate final statistics
         optimization_results["processing_time_seconds"] = time.time() - start_time
-        optimization_results["space_saved_mb"] = optimization_results["space_saved_bytes"] / (
-            1024 * 1024
-        )
+        optimization_results["space_saved_mb"] = optimization_results["space_saved_bytes"] / (1024 * 1024)
 
         # Log completion
         audit_logger.log_event(
@@ -2754,9 +2712,7 @@ exit 0
         summary = {
             "snapshots_remaining": len(self.snapshots),
             "total_disk_usage_mb": sum(
-                os.path.getsize(s.disk_path) / (1024 * 1024)
-                for s in self.snapshots.values()
-                if os.path.exists(s.disk_path)
+                os.path.getsize(s.disk_path) / (1024 * 1024) for s in self.snapshots.values() if os.path.exists(s.disk_path)
             ),
             "tasks_completed": len(maintenance_results["tasks_performed"]),
             "errors_encountered": len(maintenance_results["errors"]),
@@ -2878,14 +2834,10 @@ exit 0
             "cpu_cores": self.config.get("vm_framework.qemu_defaults.cpu_cores", 2),
             "enable_kvm": self.config.get("vm_framework.qemu_defaults.enable_kvm", True),
             "network_enabled": self.config.get("vm_framework.qemu_defaults.network_enabled", True),
-            "graphics_enabled": self.config.get(
-                "vm_framework.qemu_defaults.graphics_enabled", False
-            ),
+            "graphics_enabled": self.config.get("vm_framework.qemu_defaults.graphics_enabled", False),
             "monitor_port": self.config.get("vm_framework.qemu_defaults.monitor_port", 55555),
             "timeout": self.config.get("vm_framework.qemu_defaults.timeout", 300),
-            "shared_folder_name": self.config.get(
-                "vm_framework.qemu_defaults.shared_folder_name", "intellicrack_shared_folder"
-            ),
+            "shared_folder_name": self.config.get("vm_framework.qemu_defaults.shared_folder_name", "intellicrack_shared_folder"),
         }
 
         # For each key-value pair, call self.config.set() to update actual config
@@ -2951,7 +2903,7 @@ exit 0
                 text=True,
                 timeout=10,
                 check=False,
-                shell=False  # Explicitly secure - using list format prevents shell injection
+                shell=False,  # Explicitly secure - using list format prevents shell injection
             )
 
             if result.returncode != 0:

@@ -337,9 +337,7 @@ class DirectSyscalls:
 
         return status
 
-    def nt_create_thread_ex(
-        self, process_handle: int, start_address: int, parameter: int = 0
-    ) -> tuple[int, int]:
+    def nt_create_thread_ex(self, process_handle: int, start_address: int, parameter: int = 0) -> tuple[int, int]:
         """Direct syscall for NtCreateThreadEx."""
         if not AVAILABLE or "NtCreateThreadEx" not in self.syscall_numbers:
             return -1, 0

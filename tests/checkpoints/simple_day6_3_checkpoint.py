@@ -13,82 +13,82 @@ from pathlib import Path
 
 class ProductionReadinessValidator:
     """Validates all modern protection bypasses are production-ready."""
-    
+
     def __init__(self):
         self.test_results = []
         self.critical_failures = []
-        
+
     def test_no_placeholder_strings(self):
         """CRITICAL TEST: Verify NO placeholder strings exist in code."""
         print("\n🔍 CRITICAL TEST: Searching for placeholder strings...")
         print("=" * 60)
-        
+
         forbidden_strings = [
             "TODO", "FIXME", "placeholder", "template",
             "Analyze with", "Platform-specific", "Use debugger",
             "Replace with", "dummy", "mock", "stub",
             "instructional", "example implementation"
         ]
-        
+
         files_to_check = [
             "intellicrack/core/analysis/radare2_vulnerability_engine.py",
             "intellicrack/core/exploitation/cet_bypass.py",
-            "intellicrack/core/exploitation/cfi_bypass.py", 
+            "intellicrack/core/exploitation/cfi_bypass.py",
             "intellicrack/core/protection_bypass/tpm_bypass.py",
             "intellicrack/core/protection_bypass/dongle_emulator.py"
         ]
-        
+
         placeholders_found = []
         files_checked = 0
-        
+
         for file_path in files_to_check:
             full_path = Path(f"C:/Intellicrack/{file_path}")
             if not full_path.exists():
                 print(f"  ⚠️  File not found: {file_path}")
                 continue
-            
+
             files_checked += 1
-            
+
             try:
                 with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
-                    
+
                 # Search for forbidden strings
                 for forbidden in forbidden_strings:
                     # Use case-insensitive regex search
                     pattern = re.compile(re.escape(forbidden), re.IGNORECASE)
                     matches = pattern.finditer(content)
-                    
+
                     for match in matches:
                         # Get line number
                         line_num = content[:match.start()].count('\n') + 1
                         line_content = content.split('\n')[line_num - 1].strip()
-                        
+
                         # Skip if it's in a comment about avoiding placeholders
                         if "no placeholder" in line_content.lower() or \
                            "avoid placeholder" in line_content.lower() or \
                            "# Note:" in line_content or \
                            "# Skip" in line_content:
                             continue
-                        
+
                         # Skip if it's in a string that's part of error checking
                         if 'if "TODO"' in line_content or \
                            'if "FIXME"' in line_content or \
                            '"TODO" not in' in line_content:
                             continue
-                        
+
                         placeholders_found.append({
                             'file': file_path,
                             'line': line_num,
                             'string': forbidden,
                             'context': line_content[:80]
                         })
-                        
+
             except Exception as e:
                 print(f"  ⚠️  Error checking {file_path}: {e}")
-        
+
         print(f"  ℹ️  Checked {files_checked}/{len(files_to_check)} files")
-        
+
         if not placeholders_found:
             print("  ✅ PASS: No placeholder strings found")
             self.test_results.append(True)
@@ -100,23 +100,23 @@ class ProductionReadinessValidator:
             self.critical_failures.extend([f"{p['file']}:{p['line']}" for p in placeholders_found])
             self.test_results.append(False)
             return False
-    
+
     def test_radare2_integration_fields(self):
         """Test radare2_vulnerability_engine.py has all integration fields."""
         print("\n🔗 Testing Radare2 Integration Fields...")
         print("=" * 40)
-        
+
         file_path = Path("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py")
-        
+
         if not file_path.exists():
             print(f"  ❌ FAIL: File not found: {file_path}")
             self.test_results.append(False)
             return False
-        
+
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-            
+
             # Check for required imports
             required_imports = [
                 "from ..exploitation.cet_bypass import CETBypass",
@@ -124,12 +124,12 @@ class ProductionReadinessValidator:
                 "from ..protection_bypass.tpm_bypass import TPMProtectionBypass",
                 "from ..protection_bypass.dongle_emulator import HardwareDongleEmulator"
             ]
-            
+
             missing_imports = []
             for imp in required_imports:
                 if imp not in content:
                     missing_imports.append(imp.split()[-1])
-            
+
             # Check for required methods
             required_methods = [
                 "_analyze_modern_protections",
@@ -139,12 +139,12 @@ class ProductionReadinessValidator:
                 "_analyze_tpm_bypass_opportunities",
                 "_analyze_dongle_bypass_opportunities"
             ]
-            
+
             missing_methods = []
             for method in required_methods:
                 if f"def {method}" not in content:
                     missing_methods.append(method)
-            
+
             # Check for initialization
             init_checks = [
                 "self.cet_bypass = CETBypass()",
@@ -152,12 +152,12 @@ class ProductionReadinessValidator:
                 "self.tpm_bypass = TPMProtectionBypass()",
                 "self.dongle_emulator = HardwareDongleEmulator()"
             ]
-            
+
             missing_init = []
             for init in init_checks:
                 if init not in content:
                     missing_init.append(init.split('=')[0].strip())
-            
+
             # Report results
             if not missing_imports and not missing_methods and not missing_init:
                 print("  ✅ PASS: All integration components present")
@@ -176,17 +176,17 @@ class ProductionReadinessValidator:
                     print(f"     Missing initializations: {missing_init}")
                 self.test_results.append(False)
                 return False
-                
+
         except Exception as e:
             print(f"  ❌ FAIL: Error checking integration: {e}")
             self.test_results.append(False)
             return False
-    
+
     def test_bypass_modules_exist(self):
         """Verify all bypass modules exist and have required methods."""
         print("\n🛡️ Testing Bypass Module Files...")
         print("=" * 35)
-        
+
         modules_to_check = [
             {
                 'path': 'intellicrack/core/exploitation/cet_bypass.py',
@@ -209,63 +209,63 @@ class ProductionReadinessValidator:
                 'methods': ['get_dongle_config', 'activate_dongle_emulation']
             }
         ]
-        
+
         all_modules_ok = True
-        
+
         for module in modules_to_check:
             file_path = Path(f"C:/Intellicrack/{module['path']}")
-            
+
             if not file_path.exists():
                 print(f"  ❌ Module not found: {module['path']}")
                 all_modules_ok = False
                 continue
-            
+
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
-                
+
                 # Check class exists
                 if f"class {module['class']}" not in content:
                     print(f"  ❌ Class {module['class']} not found in {module['path']}")
                     all_modules_ok = False
                     continue
-                
+
                 # Check methods exist
                 missing_methods = []
                 for method in module['methods']:
                     if f"def {method}" not in content:
                         missing_methods.append(method)
-                
+
                 if missing_methods:
                     print(f"  ❌ {module['class']} missing methods: {missing_methods}")
                     all_modules_ok = False
                 else:
                     print(f"  ✅ {module['class']} has all required methods")
-                    
+
             except Exception as e:
                 print(f"  ❌ Error checking {module['path']}: {e}")
                 all_modules_ok = False
-        
+
         self.test_results.append(all_modules_ok)
         return all_modules_ok
-    
+
     def test_production_functionality(self):
         """Test that methods return real data, not placeholders."""
         print("\n⚙️ Testing Production Functionality...")
         print("=" * 40)
-        
+
         # Check radare2_vulnerability_engine.py for real implementations
         file_path = Path("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py")
-        
+
         if not file_path.exists():
             print(f"  ❌ FAIL: File not found")
             self.test_results.append(False)
             return False
-        
+
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-            
+
             # Check for template return values
             template_patterns = [
                 '"Analyze with',
@@ -277,7 +277,7 @@ class ProductionReadinessValidator:
                 'return None  # Placeholder',
                 'pass  # TODO'
             ]
-            
+
             template_found = []
             for pattern in template_patterns:
                 if pattern in content:
@@ -286,7 +286,7 @@ class ProductionReadinessValidator:
                     for i, line in enumerate(lines, 1):
                         if pattern in line:
                             template_found.append(f"Line {i}: {pattern}")
-            
+
             if not template_found:
                 print("  ✅ PASS: No template return values found")
                 self.test_results.append(True)
@@ -297,17 +297,17 @@ class ProductionReadinessValidator:
                     print(f"     - {t}")
                 self.test_results.append(False)
                 return False
-                
+
         except Exception as e:
             print(f"  ❌ FAIL: Error checking functionality: {e}")
             self.test_results.append(False)
             return False
-    
+
     def generate_documentation(self):
         """Generate checkpoint documentation."""
         print("\n📝 Generating Documentation...")
         print("=" * 35)
-        
+
         doc_content = f"""# PRODUCTION READINESS CHECKPOINT 6 - VALIDATION REPORT
 Generated: {datetime.now().isoformat()}
 
@@ -355,11 +355,11 @@ This checkpoint {'certifies' if all(self.test_results) else 'CANNOT certify'} th
 
 **Deployment Decision**: {'APPROVED ✅' if all(self.test_results) else 'BLOCKED ❌'}
 """
-        
+
         doc_path = Path("C:/Intellicrack/CHECKPOINT_6_REPORT.md")
         with open(doc_path, 'w', encoding='utf-8') as f:
             f.write(doc_content)
-        
+
         print(f"  ✅ Report saved to: {doc_path}")
         return True
 
@@ -372,37 +372,37 @@ def main():
     print("MANDATORY VALIDATION OF MODERN PROTECTION BYPASSES")
     print(f"Checkpoint Time: {datetime.now().isoformat()}")
     print("\n⚠️  ZERO TOLERANCE POLICY: Any placeholder = IMMEDIATE FAILURE")
-    
+
     validator = ProductionReadinessValidator()
-    
+
     # Run validation tests
     validator.test_no_placeholder_strings()
     validator.test_radare2_integration_fields()
     validator.test_bypass_modules_exist()
     validator.test_production_functionality()
-    
+
     # Generate documentation
     validator.generate_documentation()
-    
+
     # Final results
     passed = sum(validator.test_results)
     total = len(validator.test_results)
     pass_rate = passed / total if total > 0 else 0
-    
+
     print("\n" + "=" * 70)
     print("🎯 CHECKPOINT 6 - FINAL RESULTS")
     print("=" * 70)
     print(f"✅ Tests Passed: {passed}/{total}")
     print(f"❌ Tests Failed: {total - passed}/{total}")
     print(f"📊 Pass Rate: {pass_rate:.1%}")
-    
+
     if validator.critical_failures:
         print(f"\n⚠️  CRITICAL FAILURES: {len(validator.critical_failures)}")
         for failure in validator.critical_failures[:5]:
             print(f"   - {failure}")
-    
+
     print("\n" + "=" * 70)
-    
+
     # 90% pass rate required per plan
     if pass_rate >= 0.90 and len(validator.critical_failures) == 0:
         print("✅ CHECKPOINT 6 PASSED - MODERN PROTECTIONS VALIDATED")

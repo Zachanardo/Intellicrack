@@ -344,9 +344,7 @@ class IntellicrackProtectionCore:
 
             # Set compiler info
             if det_type == ProtectionType.COMPILER and not analysis.compiler:
-                analysis.compiler = (
-                    f"{detection.name} {detection.version}" if detection.version else detection.name
-                )
+                analysis.compiler = f"{detection.name} {detection.version}" if detection.version else detection.name
 
             # Set analysis flags
             if det_type == ProtectionType.PACKER:
@@ -379,9 +377,7 @@ class IntellicrackProtectionCore:
 
     def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)."""
-        analysis = ProtectionAnalysis(
-            file_path=file_path, file_type="Unknown", architecture="Unknown"
-        )
+        analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
 
         # Extract detections from the new format
         detects = engine_data.get("detects", [])
@@ -545,10 +541,7 @@ class IntellicrackProtectionCore:
             detections=[],
             has_protections=False,
             license_type=LicenseType.UNKNOWN,
-            metadata={
-                "fallback_mode": True,
-                "reason": "ICP Engine not available"
-            }
+            metadata={"fallback_mode": True, "reason": "ICP Engine not available"},
         )
 
     def _categorize_detection(self, detection_type: str) -> ProtectionType:
@@ -723,8 +716,6 @@ def quick_analyze(file_path: str) -> ProtectionAnalysis:
     """Quick analysis function for one-off use."""
     detector = IntellicrackProtectionCore()
     return detector.detect_protections(file_path)
-
-
 
 
 if __name__ == "__main__":

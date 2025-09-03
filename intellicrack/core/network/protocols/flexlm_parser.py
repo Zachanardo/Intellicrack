@@ -273,9 +273,7 @@ class FlexLMProtocolParser:
                 additional_data=additional_data,
             )
 
-            self.logger.info(
-                f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'"
-            )
+            self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
             return request
 
         except Exception as e:

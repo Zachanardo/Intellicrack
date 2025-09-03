@@ -78,11 +78,7 @@ class DashboardManager:
         Collects information about the currently loaded binary including
         file size, path, name, and last modification time.
         """
-        if (
-            hasattr(self.app, "binary_path")
-            and self.app.binary_path
-            and os.path.exists(self.app.binary_path)
-        ):
+        if hasattr(self.app, "binary_path") and self.app.binary_path and os.path.exists(self.app.binary_path):
             try:
                 binary_size = os.path.getsize(self.app.binary_path)
                 binary_name = os.path.basename(self.app.binary_path)
@@ -93,9 +89,7 @@ class DashboardManager:
                     "path": self.app.binary_path,
                     "size": binary_size,
                     "size_formatted": self._format_size(binary_size),
-                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
+                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S"),
                 }
 
                 self.logger.debug("Updated binary stats for %s", binary_name)
@@ -128,9 +122,7 @@ class DashboardManager:
                 "types": patch_types,
             }
 
-            self.logger.debug(
-                "Updated patch stats: %s total, %s applied", patch_count, applied_count
-            )
+            self.logger.debug("Updated patch stats: %s total, %s applied", patch_count, applied_count)
 
         else:
             self.stats["patches"] = {
@@ -299,9 +291,7 @@ class DashboardManager:
             "patch_count": self.stats.get("patches", {}).get("count", 0),
             "analysis_count": self.stats.get("analysis", {}).get("count", 0),
             "license_server_running": self.stats.get("license_server", {}).get("running", False),
-            "advanced_features_active": self.stats.get("advanced_analysis", {}).get(
-                "active_count", 0
-            ),
+            "advanced_features_active": self.stats.get("advanced_analysis", {}).get("active_count", 0),
             "recent_activity_count": len(self.recent_activities),
         }
 

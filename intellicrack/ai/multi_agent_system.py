@@ -193,9 +193,7 @@ class BaseAgent(ABC):
     async def execute_task(self, task: AgentTask) -> dict[str, Any]:
         """Execute a task specific to this agent."""
         # Implementation should use the task parameter to perform agent-specific work
-        raise NotImplementedError(
-            f"Subclasses must implement execute_task for task: {task.task_type}"
-        )
+        raise NotImplementedError(f"Subclasses must implement execute_task for task: {task.task_type}")
 
     def start(self):
         """Start the agent."""
@@ -400,9 +398,7 @@ class BaseAgent(ABC):
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
-    def _send_task_response(
-        self, original_message: AgentMessage, success: bool, result: dict[str, Any]
-    ):
+    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]):
         """Send task response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -436,9 +432,7 @@ class BaseAgent(ABC):
 
         self._send_message(response)
 
-    def _send_collaboration_response(
-        self, original_message: AgentMessage, available: bool, data: dict[str, Any]
-    ):
+    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]):
         """Send collaboration response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -842,9 +836,7 @@ class ReverseEngineeringAgent(BaseAgent):
         binary_data = input_data.get("binary_data", b"")
         start_address = input_data.get("start_address", 0x401000)
 
-        logger.debug(
-            f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}"
-        )
+        logger.debug(f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}")
 
         # Simulate disassembly
         await asyncio.sleep(3.0)
@@ -1077,9 +1069,7 @@ class MultiAgentSystem:
 
         return capability_map.get(task_type, [task_type])
 
-    def _find_suitable_agents(
-        self, required_capabilities: list[str]
-    ) -> list[tuple[str, BaseAgent]]:
+    def _find_suitable_agents(self, required_capabilities: list[str]) -> list[tuple[str, BaseAgent]]:
         """Find agents with required capabilities."""
         suitable_agents = []
 
@@ -1104,9 +1094,7 @@ class MultiAgentSystem:
 
         return suitable_agents
 
-    def _create_subtasks(
-        self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]
-    ) -> list[tuple[str, AgentTask]]:
+    def _create_subtasks(self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]) -> list[tuple[str, AgentTask]]:
         """Create subtasks for agents."""
         subtasks = []
 
@@ -1130,9 +1118,7 @@ class MultiAgentSystem:
 
         return subtasks
 
-    async def _execute_subtasks_parallel(
-        self, subtasks: list[tuple[str, AgentTask]]
-    ) -> dict[str, dict[str, Any]]:
+    async def _execute_subtasks_parallel(self, subtasks: list[tuple[str, AgentTask]]) -> dict[str, dict[str, Any]]:
         """Execute subtasks in parallel."""
 
         async def execute_subtask(agent_id: str, subtask: AgentTask) -> tuple[str, dict[str, Any]]:
@@ -1416,10 +1402,7 @@ class TaskDistributor:
 
         # Capability match score
         for capability in agent.capabilities:
-            if (
-                task.task_type in capability.input_types
-                or task.task_type == capability.capability_name
-            ):
+            if task.task_type in capability.input_types or task.task_type == capability.capability_name:
                 score += capability.confidence_level * 30
 
         # Recency score (more recent activity is better)
@@ -1501,9 +1484,7 @@ class KnowledgeManager:
             logger.debug(f"Knowledge retrieved from {category}:{key} by agent {requesting_agent}")
             return knowledge_item["value"]
 
-        logger.debug(
-            f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}"
-        )
+        logger.debug(f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}")
         return None
 
     def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:

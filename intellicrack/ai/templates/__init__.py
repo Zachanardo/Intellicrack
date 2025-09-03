@@ -14,9 +14,10 @@ TEMPLATES_DIR = Path(__file__).parent
 
 # Available template files
 TEMPLATE_FILES = {
-    'frida_license_bypass': TEMPLATES_DIR / 'frida_license_bypass.js',
-    'ghidra_analysis': TEMPLATES_DIR / 'ghidra_analysis.py',
+    "frida_license_bypass": TEMPLATES_DIR / "frida_license_bypass.js",
+    "ghidra_analysis": TEMPLATES_DIR / "ghidra_analysis.py",
 }
+
 
 def get_template_path(template_name):
     """Get path to a specific template file.
@@ -30,9 +31,11 @@ def get_template_path(template_name):
     """
     return TEMPLATE_FILES.get(template_name)
 
+
 def get_available_templates():
     """Get list of available template files."""
     return [name for name, path in TEMPLATE_FILES.items() if path.exists()]
+
 
 def load_template(template_name):
     """Load contents of a template file.
@@ -47,13 +50,14 @@ def load_template(template_name):
     template_path = get_template_path(template_name)
     if template_path and template_path.exists():
         try:
-            return template_path.read_text(encoding='utf-8')
+            return template_path.read_text(encoding="utf-8")
         except Exception as e:
             logger.error("Error loading template %s: %s", template_name, e)
             return None
     else:
         logger.warning("Template not found: %s", template_name)
         return None
+
 
 def template_exists(template_name):
     """Check if a template file exists.
@@ -68,11 +72,12 @@ def template_exists(template_name):
     template_path = get_template_path(template_name)
     return template_path is not None and template_path.exists()
 
+
 __all__ = [
-    'TEMPLATES_DIR',
-    'TEMPLATE_FILES',
-    'get_template_path',
-    'get_available_templates',
-    'load_template',
-    'template_exists',
+    "TEMPLATES_DIR",
+    "TEMPLATE_FILES",
+    "get_template_path",
+    "get_available_templates",
+    "load_template",
+    "template_exists",
 ]

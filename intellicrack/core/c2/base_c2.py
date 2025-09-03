@@ -40,9 +40,7 @@ class BaseC2:
         self.running = False
         self.stats = {"start_time": None}
 
-    def initialize_protocols(
-        self, protocols_config: list[dict[str, Any]], encryption_manager: Any
-    ) -> None:
+    def initialize_protocols(self, protocols_config: list[dict[str, Any]], encryption_manager: Any) -> None:
         """Initialize communication protocols with error handling.
 
         Args:

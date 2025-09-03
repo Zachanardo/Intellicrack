@@ -18,6 +18,7 @@ Common Windows utilities and checks.
 
 This module consolidates Windows-specific functionality to reduce code duplication.
 """
+
 import logging
 import sys
 

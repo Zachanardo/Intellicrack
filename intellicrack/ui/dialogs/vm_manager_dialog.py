@@ -104,9 +104,7 @@ class VMTableModel(QAbstractTableModel):
 
         return QVariant()
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         """Return header data."""
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             if 0 <= section < len(self.headers):
@@ -290,8 +288,7 @@ class VMManagerDialog(QDialog):
         QMessageBox.information(
             self,
             "Create New VM",
-            "VM creation will be implemented in the workflow manager.\n"
-            "Use the main application's binary analysis features to create VMs.",
+            "VM creation will be implemented in the workflow manager.\nUse the main application's binary analysis features to create VMs.",
         )
 
     def _configure_base_images(self):

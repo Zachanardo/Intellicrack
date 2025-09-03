@@ -1,4 +1,4 @@
-#\!/usr/bin/env python3
+# \!/usr/bin/env python3
 """
 Launcher script for Intellicrack with comprehensive GIL safety.
 
@@ -24,12 +24,21 @@ try:
 
     # Try to find and load the Python shared library
     python_lib = None
-    if sys.platform.startswith('win'):
-        # On Windows, try to get the Python DLL
-        python_lib = ctypes.CDLL(None)
+    if sys.platform.startswith("win"):
+        # On Windows, try to use kernel32 or find the Python DLL explicitly
+        try:
+            # First try to use kernel32 as a proxy for system DLL access
+            python_lib = ctypes.windll.kernel32
+        except Exception:
+            # If that fails, try to find python dll explicitly
+            try:
+                python_dll = f"python{sys.version_info[0]}{sys.version_info[1]}.dll"
+                python_lib = ctypes.CDLL(python_dll)
+            except Exception:
+                python_lib = None
     else:
         # On Unix-like systems
-        libname = ctypes.util.find_library('python{}.{}'.format(*sys.version_info[:2]))
+        libname = ctypes.util.find_library("python{}.{}".format(*sys.version_info[:2]))
         if libname:
             python_lib = ctypes.CDLL(libname)
 
@@ -61,11 +70,12 @@ def run_intellicrack():
     """Run Intellicrack with proper GIL handling."""
     try:
         # Set up thread safety before any imports
-        if hasattr(sys, 'setcheckinterval'):
+        if hasattr(sys, "setcheckinterval"):
             sys.setcheckinterval(10000)  # Reduce thread switching
 
         # Import and run the main application
         from intellicrack.main import main
+
         return main()
 
     except Exception as e:

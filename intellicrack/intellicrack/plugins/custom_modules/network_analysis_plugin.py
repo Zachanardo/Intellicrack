@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class NetworkAnalysisPlugin:
     """Plugin for network traffic analysis and monitoring capabilities for security research."""
+
     def __init__(self):
         """Initialize the network analysis plugin with traffic monitoring capabilities."""
         self.name = "Network Analysis Plugin"
@@ -322,7 +323,7 @@ class NetworkAnalysisPlugin:
                     [netstat_path, "-tunap"], capture_output=True, text=True, stderr=subprocess.DEVNULL, shell=False
                 )
             else:
-                netstat_proc = type('obj', (object,), {'returncode': 1, 'stdout': ''})()
+                netstat_proc = type("obj", (object,), {"returncode": 1, "stdout": ""})()
             if netstat_proc.returncode == 0:
                 grep_path = shutil.which("grep")
                 if grep_path:
@@ -330,7 +331,7 @@ class NetworkAnalysisPlugin:
                         [grep_path, "-E", "tcp|udp"], input=netstat_proc.stdout, capture_output=True, text=True, shell=False
                     )
                 else:
-                    grep_proc = type('obj', (object,), {'returncode': 1, 'stdout': ''})()
+                    grep_proc = type("obj", (object,), {"returncode": 1, "stdout": ""})()
                 output = grep_proc.stdout if grep_proc.returncode == 0 else ""
             else:
                 output = ""

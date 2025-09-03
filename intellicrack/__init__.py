@@ -39,10 +39,12 @@ Usage:
 # Initialize GIL safety measures FIRST - must be done before any imports
 try:
     from .utils.torch_gil_safety import initialize_gil_safety
+
     initialize_gil_safety()
 except ImportError:
     # If torch_gil_safety isn't available, set basic environment variables
     import os
+
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("MKL_NUM_THREADS", "1")
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
@@ -62,6 +64,7 @@ __license__ = "GPL-3.0"
 try:
     # Additional environment variables for PyTorch threading safety
     import os
+
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("MKL_NUM_THREADS", "1")
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")

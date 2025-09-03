@@ -58,9 +58,7 @@ class ProtectionAwareScriptGenerator:
             "microsoft_activation": self._get_ms_activation_scripts(),
         }
 
-    def generate_bypass_script(
-        self, binary_path: str, script_type: str = "frida"
-    ) -> dict[str, Any]:
+    def generate_bypass_script(self, binary_path: str, script_type: str = "frida") -> dict[str, Any]:
         """Generate a bypass script tailored to the detected protection.
 
         Args:
@@ -138,9 +136,7 @@ class ProtectionAwareScriptGenerator:
             highest_confidence = protections_to_process[primary_protection]["confidence"]
 
         # Get protection info from knowledge base
-        protection_info = (
-            self.kb.get_protection_info(primary_protection) if primary_protection else None
-        )
+        protection_info = self.kb.get_protection_info(primary_protection) if primary_protection else None
 
         # Generate script sections for each protection
         script_sections = []
@@ -152,12 +148,8 @@ class ProtectionAwareScriptGenerator:
 
             if protection_key in self.script_templates:
                 scripts = self.script_templates[protection_key]
-                script_section = scripts.get(
-                    script_type, self._get_generic_bypass_script(script_type)
-                )
-                script_sections.append(
-                    f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}"
-                )
+                script_section = scripts.get(script_type, self._get_generic_bypass_script(script_type))
+                script_sections.append(f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}")
 
                 # Get bypass techniques from knowledge base
                 techniques = self.kb.get_bypass_techniques(protection_name)
@@ -176,7 +168,7 @@ class ProtectionAwareScriptGenerator:
 // Target: {binary_path}
 // File Type: {result.file_type}
 // Architecture: {result.architecture}
-// Primary Protection: {primary_protection or 'Unknown'}
+// Primary Protection: {primary_protection or "Unknown"}
 // Total Protections Detected: {len(protections_to_process)}
 
 """
@@ -184,9 +176,7 @@ class ProtectionAwareScriptGenerator:
         final_script = header + combined_script
 
         # Add AI-enhanced instructions
-        ai_prompt = self._generate_ai_prompt(
-            result, primary_protection, highest_confidence, protection_info
-        )
+        ai_prompt = self._generate_ai_prompt(result, primary_protection, highest_confidence, protection_info)
 
         # Generate approach description
         approach = f"Multi-layered analysis detected {len(protections_to_process)} protection(s). "
@@ -202,18 +192,12 @@ class ProtectionAwareScriptGenerator:
             "approach": approach,
             "ai_prompt": ai_prompt,
             "bypass_techniques": self._get_recommended_techniques(protection_info),
-            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate")
-            if primary_protection
-            else "Variable",
-            "tools_needed": self.kb.get_tools_for_protection(primary_protection)
-            if primary_protection
-            else [],
+            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
+            "tools_needed": self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
             "icp_analysis": result.icp_analysis,
         }
 
-    def _generate_ai_prompt(
-        self, result, protection_type: str, confidence: float, protection_info: Any
-    ) -> str:
+    def _generate_ai_prompt(self, result, protection_type: str, confidence: float, protection_info: Any) -> str:
         """Generate AI prompt for script enhancement."""
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
@@ -235,7 +219,7 @@ Detected Components:
 Known Protection Information:
 - Vendor: {protection_info.vendor}
 - Description: {protection_info.description}
-- Common in: {', '.join(protection_info.common_applications[:3])}
+- Common in: {", ".join(protection_info.common_applications[:3])}
 
 Recommended Bypass Techniques:
 """
@@ -244,7 +228,7 @@ Recommended Bypass Techniques:
 - {technique.name}:
   - Success Rate: {technique.success_rate:.0%}
   - Time Estimate: {technique.time_estimate}
-  - Tools: {', '.join(technique.tools_required[:3])}
+  - Tools: {", ".join(technique.tools_required[:3])}
 """
 
         prompt += """

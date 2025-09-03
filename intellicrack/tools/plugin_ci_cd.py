@@ -144,9 +144,7 @@ class CICDPipeline:
         test_config = self.pipeline_config["test"]
 
         # Find test file
-        test_file = os.path.join(
-            self.plugin_dir, "tests", f"test_{os.path.basename(self.plugin_path)}"
-        )
+        test_file = os.path.join(self.plugin_dir, "tests", f"test_{os.path.basename(self.plugin_path)}")
 
         if not os.path.exists(test_file):
             # Generate tests if they don't exist
@@ -166,7 +164,7 @@ class CICDPipeline:
             test_config["framework"],
             test_file,
             "-v",
-            f'--timeout={test_config["timeout"]}',
+            f"--timeout={test_config['timeout']}",
             "--tb=short",
         ]
 
@@ -174,9 +172,7 @@ class CICDPipeline:
             cmd.extend([f"--cov={self.plugin_name}", "--cov-report=json"])
 
         try:
-            process = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=test_config["timeout"]
-            )
+            process = subprocess.run(cmd, capture_output=True, text=True, timeout=test_config["timeout"])
 
             result["test_results"] = {
                 "stdout": process.stdout,
@@ -197,9 +193,7 @@ class CICDPipeline:
 
                 if result["coverage"] < test_config["coverage_threshold"]:
                     result["success"] = False
-                    result["errors"].append(
-                        f"Coverage {result['coverage']}% below threshold {test_config['coverage_threshold']}%"
-                    )
+                    result["errors"].append(f"Coverage {result['coverage']}% below threshold {test_config['coverage_threshold']}%")
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in plugin_ci_cd: %s", e)
@@ -233,18 +227,14 @@ class CICDPipeline:
 
         if complexity > quality_config["max_complexity"]:
             result["success"] = False
-            result["errors"].append(
-                f"Code complexity {complexity} exceeds maximum {quality_config['max_complexity']}"
-            )
+            result["errors"].append(f"Code complexity {complexity} exceeds maximum {quality_config['max_complexity']}")
 
         # Check line length
         max_line_length = self._check_line_length()
         result["metrics"]["max_line_length"] = max_line_length
 
         if max_line_length > quality_config["max_line_length"]:
-            result["errors"].append(
-                f"Line length {max_line_length} exceeds maximum {quality_config['max_line_length']}"
-            )
+            result["errors"].append(f"Line length {max_line_length} exceeds maximum {quality_config['max_line_length']}")
 
         return result
 
@@ -323,9 +313,7 @@ class CICDPipeline:
 
         if deploy_config["target"] == "local":
             # Deploy to local plugin directory
-            plugin_install_dir = os.path.join(
-                os.path.dirname(os.path.dirname(self.plugin_dir)), "plugins", "deployed"
-            )
+            plugin_install_dir = os.path.join(os.path.dirname(os.path.dirname(self.plugin_dir)), "plugins", "deployed")
             os.makedirs(plugin_install_dir, exist_ok=True)
 
             try:
@@ -333,13 +321,11 @@ class CICDPipeline:
                 dest_path = os.path.join(plugin_install_dir, os.path.basename(self.plugin_path))
 
                 if os.path.exists(dest_path) and deploy_config["backup_previous"]:
-                    backup_path = dest_path + f'.backup.{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+                    backup_path = dest_path + f".backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                     shutil.move(dest_path, backup_path)
 
                 # Copy from build directory
-                build_path = os.path.join(
-                    self.plugin_dir, "build", os.path.basename(self.plugin_path)
-                )
+                build_path = os.path.join(self.plugin_dir, "build", os.path.basename(self.plugin_path))
                 shutil.copy2(build_path, dest_path)
 
                 result["deployed_to"].append(dest_path)
@@ -538,9 +524,7 @@ class CICDPipeline:
 
     def _generate_report(self):
         """Generate pipeline report"""
-        report_path = os.path.join(
-            self.plugin_dir, f'pipeline_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-        )
+        report_path = os.path.join(self.plugin_dir, f"pipeline_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
         with open(report_path, "w") as f:
             json.dump(self.results, f, indent=2)
@@ -550,8 +534,8 @@ class CICDPipeline:
 CI/CD Pipeline Report
 ====================
 Plugin: {self.plugin_name}
-Status: {self.results['overall_status'].upper()}
-Time: {self.results['timestamp']}
+Status: {self.results["overall_status"].upper()}
+Time: {self.results["timestamp"]}
 
 Stage Results:
 """

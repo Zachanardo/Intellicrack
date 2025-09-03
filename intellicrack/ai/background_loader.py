@@ -41,10 +41,7 @@ class ConsoleProgressCallback(ProgressCallback):
 
     def on_progress(self, progress: LoadingProgress):
         """Print progress to console."""
-        print(
-            f"[{progress.model_id}] {progress.state.value}: "
-            f"{progress.progress:.1%} - {progress.message}"
-        )
+        print(f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}")
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None):
         """Print completion status."""
@@ -152,9 +149,7 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(
-        self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None
-    ):
+    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None):
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -202,9 +197,7 @@ class BackgroundModelLoader:
         # Start worker threads (skip during testing)
         if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
             for i in range(max_concurrent_loads):
-                thread = threading.Thread(
-                    target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
-                )
+                thread = threading.Thread(target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True)
                 thread.start()
                 self.worker_threads.append(thread)
             logger.info(f"Background model loader started with {max_concurrent_loads} workers")
@@ -295,9 +288,7 @@ class BackgroundModelLoader:
             # Calculate success rate
             completed_tasks = list(self.completed_tasks.values())
             if completed_tasks:
-                successful = sum(
-                    1 for task in completed_tasks if task.state == LoadingState.COMPLETED
-                )
+                successful = sum(1 for task in completed_tasks if task.state == LoadingState.COMPLETED)
                 stats["success_rate"] = successful / len(completed_tasks)
             else:
                 stats["success_rate"] = 0.0
@@ -432,9 +423,7 @@ class IntegratedBackgroundLoader:
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
-    def load_model_in_background(
-        self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0
-    ) -> LoadingTask:
+    def load_model_in_background(self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0) -> LoadingTask:
         """Load a model in the background with integrated callbacks."""
 
         # Create a callback that notifies all registered callbacks

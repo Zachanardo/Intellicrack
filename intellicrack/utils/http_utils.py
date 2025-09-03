@@ -51,7 +51,7 @@ class SecureHTTPClient:
             total=network_config.get("max_retries", 3),
             backoff_factor=network_config.get("retry_delay", 1),
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "TRACE"]
+            allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "TRACE"],
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -59,9 +59,7 @@ class SecureHTTPClient:
         self.session.mount("https://", adapter)
 
         # Set default headers
-        self.session.headers.update({
-            "User-Agent": network_config.get("user_agent", "Intellicrack/3.0")
-        })
+        self.session.headers.update({"User-Agent": network_config.get("user_agent", "Intellicrack/3.0")})
 
         # Configure proxy if enabled
         if network_config.get("proxy_enabled", False):
@@ -75,10 +73,7 @@ class SecureHTTPClient:
                 if proxy_username and proxy_password:
                     proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_host}:{proxy_port}"
 
-                self.session.proxies = {
-                    "http": proxy_url,
-                    "https": proxy_url
-                }
+                self.session.proxies = {"http": proxy_url, "https": proxy_url}
 
     def _get_ssl_verify(self, override_verify: Optional[bool] = None) -> bool | str:
         """Get SSL verification setting with override capability.
@@ -120,21 +115,12 @@ class SecureHTTPClient:
             return env_ca_bundle
 
         if not ssl_verify:
-            logger.warning(
-                "SSL certificate verification is disabled in configuration. "
-                "Consider enabling it for production use."
-            )
+            logger.warning("SSL certificate verification is disabled in configuration. Consider enabling it for production use.")
             warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
         return ssl_verify
 
-    def request(
-        self,
-        method: str,
-        url: str,
-        verify: Optional[bool | str] = None,
-        **kwargs
-    ) -> requests.Response:
+    def request(self, method: str, url: str, verify: Optional[bool | str] = None, **kwargs) -> requests.Response:
         """Make an HTTP request with configurable SSL verification.
 
         Args:
@@ -211,12 +197,7 @@ def get_http_client() -> SecureHTTPClient:
     return _http_client
 
 
-def secure_request(
-    method: str,
-    url: str,
-    verify: Optional[bool | str] = None,
-    **kwargs
-) -> requests.Response:
+def secure_request(method: str, url: str, verify: Optional[bool | str] = None, **kwargs) -> requests.Response:
     """Convenience function for making secure HTTP requests.
 
     This function uses the global HTTP client with proper SSL configuration.

@@ -205,9 +205,7 @@ class ModelLoadingDialog(BaseDialog):
 
             if task:
                 logger.info(f"Submitted loading task for: {model_id}")
-                QMessageBox.information(
-                    self, "Success", f"Model loading task submitted:\n{model_id}"
-                )
+                QMessageBox.information(self, "Success", f"Model loading task submitted:\n{model_id}")
             else:
                 QMessageBox.critical(self, "Error", "Failed to submit loading task")
 

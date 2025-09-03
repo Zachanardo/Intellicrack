@@ -1,0 +1,116 @@
+{
+  "scenario_id": "unknown_pattern_time_delayed_20250902_191949",
+  "pattern_type": "time_delayed",
+  "simulation_timestamp": "2025-09-02T19:19:49.620154",
+  "binary_characteristics": {
+    "file_type": "PE32 executable",
+    "size_bytes": 231133,
+    "entry_point": "0x004009b0",
+    "sections": [
+      {
+        "name": ".text",
+        "virtual_address": "0x00401000",
+        "size": "0x10000",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".data",
+        "virtual_address": "0x00411000",
+        "size": "0x5000",
+        "characteristics": "readable_writable"
+      },
+      {
+        "name": ".rsrc",
+        "virtual_address": "0x00416000",
+        "size": "0x3000",
+        "characteristics": "readable"
+      },
+      {
+        "name": ".timer",
+        "virtual_address": "0x00419000",
+        "size": "0x1500",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".trigger",
+        "virtual_address": "0x0041A500",
+        "size": "0x800",
+        "characteristics": "readable_writable"
+      }
+    ],
+    "imports": [
+      {
+        "dll": "kernel32.dll",
+        "functions": [
+          "CreateThread",
+          "GetTickCount",
+          "Sleep"
+        ]
+      },
+      {
+        "dll": "user32.dll",
+        "functions": [
+          "MessageBoxA",
+          "GetWindowTextA"
+        ]
+      },
+      {
+        "dll": "advapi32.dll",
+        "functions": [
+          "RegOpenKeyExA",
+          "RegQueryValueExA"
+        ]
+      }
+    ],
+    "exports": [
+      "MainEntryPoint"
+    ]
+  },
+  "protection_implementation": {
+    "initial_grace_period": "30 seconds of normal operation",
+    "trigger_mechanism": "Background thread monitoring license validity",
+    "delay_patterns": [
+      "5 minute warning phase",
+      "15 minute degraded functionality",
+      "30 minute feature lockout",
+      "60 minute complete shutdown"
+    ],
+    "persistence_method": "Registry timestamp tracking",
+    "tamper_detection": "Periodic license re-validation",
+    "stealth_mode": "Minimal initial footprint"
+  },
+  "behavioral_patterns": {
+    "network_activity": [],
+    "file_operations": [],
+    "registry_operations": [],
+    "process_operations": [],
+    "background_threads": [
+      "License monitoring thread",
+      "Timer validation thread"
+    ],
+    "periodic_checks": [
+      "Every 60 seconds: license re-validation"
+    ],
+    "delayed_actions": [
+      {
+        "delay": "300s",
+        "action": "Display license warning"
+      },
+      {
+        "delay": "900s",
+        "action": "Begin feature restrictions"
+      },
+      {
+        "delay": "1800s",
+        "action": "Initiate shutdown sequence"
+      }
+    ]
+  },
+  "detection_challenges": [
+    "Initial analysis may miss delayed triggers",
+    "Requires long-term monitoring to detect full pattern",
+    "Background threads not immediately visible",
+    "Time-based logic creates analysis timing challenges"
+  ],
+  "analysis_notes": "Unknown pattern: License validation with time-delayed protection triggers"
+}

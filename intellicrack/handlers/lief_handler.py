@@ -177,17 +177,16 @@ except ImportError as e:
         def _parse_file(self):
             """Parse the binary file to detect format and extract basic info."""
             try:
-                with open(self.path, 'rb') as f:
+                with open(self.path, "rb") as f:
                     # Read first bytes for magic detection
                     magic = f.read(4)
                     f.seek(0)
 
-                    if magic[:2] == b'MZ':
+                    if magic[:2] == b"MZ":
                         self._parse_pe(f)
-                    elif magic == b'\x7fELF':
+                    elif magic == b"\x7fELF":
                         self._parse_elf(f)
-                    elif magic in (b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
-                                  b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe'):
+                    elif magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
                         self._parse_macho(f)
                     else:
                         self.format = "UNKNOWN"
@@ -206,48 +205,48 @@ except ImportError as e:
                     return
 
                 # Get PE header offset
-                pe_offset = struct.unpack('<I', dos_header[60:64])[0]
+                pe_offset = struct.unpack("<I", dos_header[60:64])[0]
                 f.seek(pe_offset)
 
                 # Read PE signature
                 signature = f.read(4)
-                if signature != b'PE\x00\x00':
+                if signature != b"PE\x00\x00":
                     return
 
                 # Read COFF header
-                machine = struct.unpack('<H', f.read(2))[0]
-                num_sections = struct.unpack('<H', f.read(2))[0]
+                machine = struct.unpack("<H", f.read(2))[0]
+                num_sections = struct.unpack("<H", f.read(2))[0]
                 f.read(12)  # Skip timestamp, symbol table, num symbols
-                opt_header_size = struct.unpack('<H', f.read(2))[0]
-                characteristics = struct.unpack('<H', f.read(2))[0]
+                opt_header_size = struct.unpack("<H", f.read(2))[0]
+                characteristics = struct.unpack("<H", f.read(2))[0]
 
                 # Determine architecture
-                if machine == 0x14c:  # IMAGE_FILE_MACHINE_I386
+                if machine == 0x14C:  # IMAGE_FILE_MACHINE_I386
                     self.architecture = ARCHITECTURES.X86
                     self.mode = MODES.MODE_32
                 elif machine == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
                     self.architecture = ARCHITECTURES.X64
                     self.mode = MODES.MODE_64
-                elif machine == 0x1c0:  # IMAGE_FILE_MACHINE_ARM
+                elif machine == 0x1C0:  # IMAGE_FILE_MACHINE_ARM
                     self.architecture = ARCHITECTURES.ARM
-                elif machine == 0xaa64:  # IMAGE_FILE_MACHINE_ARM64
+                elif machine == 0xAA64:  # IMAGE_FILE_MACHINE_ARM64
                     self.architecture = ARCHITECTURES.ARM64
 
                 # Read optional header
                 if opt_header_size > 0:
-                    opt_magic = struct.unpack('<H', f.read(2))[0]
+                    opt_magic = struct.unpack("<H", f.read(2))[0]
 
-                    if opt_magic == 0x10b:  # PE32
+                    if opt_magic == 0x10B:  # PE32
                         f.read(22)  # Skip to AddressOfEntryPoint
-                        self.entrypoint = struct.unpack('<I', f.read(4))[0]
+                        self.entrypoint = struct.unpack("<I", f.read(4))[0]
                         f.read(4)  # BaseOfCode
                         f.read(4)  # BaseOfData
-                        self.imagebase = struct.unpack('<I', f.read(4))[0]
-                    elif opt_magic == 0x20b:  # PE32+
+                        self.imagebase = struct.unpack("<I", f.read(4))[0]
+                    elif opt_magic == 0x20B:  # PE32+
                         f.read(22)  # Skip to AddressOfEntryPoint
-                        self.entrypoint = struct.unpack('<I', f.read(4))[0]
+                        self.entrypoint = struct.unpack("<I", f.read(4))[0]
                         f.read(4)  # BaseOfCode
-                        self.imagebase = struct.unpack('<Q', f.read(8))[0]
+                        self.imagebase = struct.unpack("<Q", f.read(8))[0]
 
                     # Skip rest of optional header
                     f.seek(pe_offset + 24 + opt_header_size)
@@ -258,12 +257,12 @@ except ImportError as e:
                     if len(section_data) < 40:
                         break
 
-                    name = section_data[:8].rstrip(b'\x00').decode('ascii', errors='ignore')
-                    virtual_size = struct.unpack('<I', section_data[8:12])[0]
-                    virtual_address = struct.unpack('<I', section_data[12:16])[0]
-                    size_of_raw_data = struct.unpack('<I', section_data[16:20])[0]
-                    pointer_to_raw_data = struct.unpack('<I', section_data[20:24])[0]
-                    characteristics = struct.unpack('<I', section_data[36:40])[0]
+                    name = section_data[:8].rstrip(b"\x00").decode("ascii", errors="ignore")
+                    virtual_size = struct.unpack("<I", section_data[8:12])[0]
+                    virtual_address = struct.unpack("<I", section_data[12:16])[0]
+                    size_of_raw_data = struct.unpack("<I", section_data[16:20])[0]
+                    pointer_to_raw_data = struct.unpack("<I", section_data[20:24])[0]
+                    characteristics = struct.unpack("<I", section_data[36:40])[0]
 
                     section = FallbackSection(
                         name=name,
@@ -271,7 +270,7 @@ except ImportError as e:
                         size=size_of_raw_data,
                         virtual_address=virtual_address,
                         virtual_size=virtual_size,
-                        characteristics=characteristics
+                        characteristics=characteristics,
                     )
                     self.sections.append(section)
 
@@ -290,7 +289,7 @@ except ImportError as e:
 
                 # Parse ELF identification
                 ei_class = elf_header[4]  # 32-bit or 64-bit
-                ei_data = elf_header[5]   # Endianness
+                ei_data = elf_header[5]  # Endianness
 
                 if ei_class == 1:  # ELFCLASS32
                     self.mode = MODES.MODE_32
@@ -301,41 +300,41 @@ except ImportError as e:
 
                 if ei_data == 1:  # ELFDATA2LSB
                     self.endianness = ENDIANNESS.LITTLE
-                    endian = '<'
+                    endian = "<"
                 elif ei_data == 2:  # ELFDATA2MSB
                     self.endianness = ENDIANNESS.BIG
-                    endian = '>'
+                    endian = ">"
                 else:
                     return
 
                 # Parse rest of header based on architecture
                 if self.mode == MODES.MODE_32:
-                    struct.unpack(endian + 'H', elf_header[16:18])[0]
-                    e_machine = struct.unpack(endian + 'H', elf_header[18:20])[0]
-                    self.entrypoint = struct.unpack(endian + 'I', elf_header[24:28])[0]
-                    struct.unpack(endian + 'I', elf_header[28:32])[0]
-                    e_shoff = struct.unpack(endian + 'I', elf_header[32:36])[0]
-                    struct.unpack(endian + 'H', elf_header[44:46])[0]
-                    e_shnum = struct.unpack(endian + 'H', elf_header[48:50])[0]
-                    e_shstrndx = struct.unpack(endian + 'H', elf_header[50:52])[0]
+                    struct.unpack(endian + "H", elf_header[16:18])[0]
+                    e_machine = struct.unpack(endian + "H", elf_header[18:20])[0]
+                    self.entrypoint = struct.unpack(endian + "I", elf_header[24:28])[0]
+                    struct.unpack(endian + "I", elf_header[28:32])[0]
+                    e_shoff = struct.unpack(endian + "I", elf_header[32:36])[0]
+                    struct.unpack(endian + "H", elf_header[44:46])[0]
+                    e_shnum = struct.unpack(endian + "H", elf_header[48:50])[0]
+                    e_shstrndx = struct.unpack(endian + "H", elf_header[50:52])[0]
                 else:  # 64-bit
-                    struct.unpack(endian + 'H', elf_header[16:18])[0]
-                    e_machine = struct.unpack(endian + 'H', elf_header[18:20])[0]
-                    self.entrypoint = struct.unpack(endian + 'Q', elf_header[24:32])[0]
-                    struct.unpack(endian + 'Q', elf_header[32:40])[0]
-                    e_shoff = struct.unpack(endian + 'Q', elf_header[40:48])[0]
-                    struct.unpack(endian + 'H', elf_header[56:58])[0]
-                    e_shnum = struct.unpack(endian + 'H', elf_header[60:62])[0]
-                    e_shstrndx = struct.unpack(endian + 'H', elf_header[62:64])[0]
+                    struct.unpack(endian + "H", elf_header[16:18])[0]
+                    e_machine = struct.unpack(endian + "H", elf_header[18:20])[0]
+                    self.entrypoint = struct.unpack(endian + "Q", elf_header[24:32])[0]
+                    struct.unpack(endian + "Q", elf_header[32:40])[0]
+                    e_shoff = struct.unpack(endian + "Q", elf_header[40:48])[0]
+                    struct.unpack(endian + "H", elf_header[56:58])[0]
+                    e_shnum = struct.unpack(endian + "H", elf_header[60:62])[0]
+                    e_shstrndx = struct.unpack(endian + "H", elf_header[62:64])[0]
 
                 # Determine architecture from machine type
                 if e_machine == 0x03:  # EM_386
                     self.architecture = ARCHITECTURES.X86
-                elif e_machine == 0x3e:  # EM_X86_64
+                elif e_machine == 0x3E:  # EM_X86_64
                     self.architecture = ARCHITECTURES.X64
                 elif e_machine == 0x28:  # EM_ARM
                     self.architecture = ARCHITECTURES.ARM
-                elif e_machine == 0xb7:  # EM_AARCH64
+                elif e_machine == 0xB7:  # EM_AARCH64
                     self.architecture = ARCHITECTURES.ARM64
                 elif e_machine == 0x08:  # EM_MIPS
                     self.architecture = ARCHITECTURES.MIPS
@@ -356,11 +355,11 @@ except ImportError as e:
                         shstrtab_header = f.read(sh_size)
 
                         if self.mode == MODES.MODE_32:
-                            shstrtab_offset = struct.unpack(endian + 'I', shstrtab_header[16:20])[0]
-                            shstrtab_size = struct.unpack(endian + 'I', shstrtab_header[20:24])[0]
+                            shstrtab_offset = struct.unpack(endian + "I", shstrtab_header[16:20])[0]
+                            shstrtab_size = struct.unpack(endian + "I", shstrtab_header[20:24])[0]
                         else:
-                            shstrtab_offset = struct.unpack(endian + 'Q', shstrtab_header[24:32])[0]
-                            shstrtab_size = struct.unpack(endian + 'Q', shstrtab_header[32:40])[0]
+                            shstrtab_offset = struct.unpack(endian + "Q", shstrtab_header[24:32])[0]
+                            shstrtab_size = struct.unpack(endian + "Q", shstrtab_header[32:40])[0]
 
                         # Read string table
                         f.seek(shstrtab_offset)
@@ -376,37 +375,31 @@ except ImportError as e:
                             break
 
                         if self.mode == MODES.MODE_32:
-                            sh_name = struct.unpack(endian + 'I', section_header[0:4])[0]
-                            struct.unpack(endian + 'I', section_header[4:8])[0]
-                            struct.unpack(endian + 'I', section_header[8:12])[0]
-                            sh_addr = struct.unpack(endian + 'I', section_header[12:16])[0]
-                            sh_offset = struct.unpack(endian + 'I', section_header[16:20])[0]
-                            sh_size = struct.unpack(endian + 'I', section_header[20:24])[0]
+                            sh_name = struct.unpack(endian + "I", section_header[0:4])[0]
+                            struct.unpack(endian + "I", section_header[4:8])[0]
+                            struct.unpack(endian + "I", section_header[8:12])[0]
+                            sh_addr = struct.unpack(endian + "I", section_header[12:16])[0]
+                            sh_offset = struct.unpack(endian + "I", section_header[16:20])[0]
+                            sh_size = struct.unpack(endian + "I", section_header[20:24])[0]
                         else:
-                            sh_name = struct.unpack(endian + 'I', section_header[0:4])[0]
-                            struct.unpack(endian + 'I', section_header[4:8])[0]
-                            struct.unpack(endian + 'Q', section_header[8:16])[0]
-                            sh_addr = struct.unpack(endian + 'Q', section_header[16:24])[0]
-                            sh_offset = struct.unpack(endian + 'Q', section_header[24:32])[0]
-                            sh_size = struct.unpack(endian + 'Q', section_header[32:40])[0]
+                            sh_name = struct.unpack(endian + "I", section_header[0:4])[0]
+                            struct.unpack(endian + "I", section_header[4:8])[0]
+                            struct.unpack(endian + "Q", section_header[8:16])[0]
+                            sh_addr = struct.unpack(endian + "Q", section_header[16:24])[0]
+                            sh_offset = struct.unpack(endian + "Q", section_header[24:32])[0]
+                            sh_size = struct.unpack(endian + "Q", section_header[32:40])[0]
 
                         # Get section name from string table
                         if sh_name < len(string_table):
-                            name_end = string_table.find(b'\x00', sh_name)
+                            name_end = string_table.find(b"\x00", sh_name)
                             if name_end >= 0:
-                                name = string_table[sh_name:name_end].decode('ascii', errors='ignore')
+                                name = string_table[sh_name:name_end].decode("ascii", errors="ignore")
                             else:
-                                name = string_table[sh_name:].decode('ascii', errors='ignore')
+                                name = string_table[sh_name:].decode("ascii", errors="ignore")
                         else:
                             name = f".section{i}"
 
-                        section = FallbackSection(
-                            name=name,
-                            offset=sh_offset,
-                            size=sh_size,
-                            virtual_address=sh_addr,
-                            virtual_size=sh_size
-                        )
+                        section = FallbackSection(name=name, offset=sh_offset, size=sh_size, virtual_address=sh_addr, virtual_size=sh_size)
                         self.sections.append(section)
 
             except Exception as e:
@@ -418,47 +411,47 @@ except ImportError as e:
 
             try:
                 # Read magic
-                magic = struct.unpack('<I', f.read(4))[0]
+                magic = struct.unpack("<I", f.read(4))[0]
 
                 # Determine architecture and endianness
-                if magic == 0xfeedface:  # MH_MAGIC
+                if magic == 0xFEEDFACE:  # MH_MAGIC
                     self.mode = MODES.MODE_32
                     self.endianness = ENDIANNESS.LITTLE
-                    endian = '<'
-                elif magic == 0xcefaedfe:  # MH_CIGAM
+                    endian = "<"
+                elif magic == 0xCEFAEDFE:  # MH_CIGAM
                     self.mode = MODES.MODE_32
                     self.endianness = ENDIANNESS.BIG
-                    endian = '>'
-                elif magic == 0xfeedfacf:  # MH_MAGIC_64
+                    endian = ">"
+                elif magic == 0xFEEDFACF:  # MH_MAGIC_64
                     self.mode = MODES.MODE_64
                     self.endianness = ENDIANNESS.LITTLE
-                    endian = '<'
-                elif magic == 0xcffaedfe:  # MH_CIGAM_64
+                    endian = "<"
+                elif magic == 0xCFFAEDFE:  # MH_CIGAM_64
                     self.mode = MODES.MODE_64
                     self.endianness = ENDIANNESS.BIG
-                    endian = '>'
+                    endian = ">"
                 else:
                     return
 
                 # Read header
-                cputype = struct.unpack(endian + 'I', f.read(4))[0]
-                struct.unpack(endian + 'I', f.read(4))[0]
-                struct.unpack(endian + 'I', f.read(4))[0]
-                ncmds = struct.unpack(endian + 'I', f.read(4))[0]
-                struct.unpack(endian + 'I', f.read(4))[0]
-                struct.unpack(endian + 'I', f.read(4))[0]
+                cputype = struct.unpack(endian + "I", f.read(4))[0]
+                struct.unpack(endian + "I", f.read(4))[0]
+                struct.unpack(endian + "I", f.read(4))[0]
+                ncmds = struct.unpack(endian + "I", f.read(4))[0]
+                struct.unpack(endian + "I", f.read(4))[0]
+                struct.unpack(endian + "I", f.read(4))[0]
 
                 if self.mode == MODES.MODE_64:
-                    struct.unpack(endian + 'I', f.read(4))[0]
+                    struct.unpack(endian + "I", f.read(4))[0]
 
                 # Determine architecture
                 if cputype == 0x7:  # CPU_TYPE_X86
                     self.architecture = ARCHITECTURES.X86
                 elif cputype == 0x1000007:  # CPU_TYPE_X86_64
                     self.architecture = ARCHITECTURES.X64
-                elif cputype == 0xc:  # CPU_TYPE_ARM
+                elif cputype == 0xC:  # CPU_TYPE_ARM
                     self.architecture = ARCHITECTURES.ARM
-                elif cputype == 0x100000c:  # CPU_TYPE_ARM64
+                elif cputype == 0x100000C:  # CPU_TYPE_ARM64
                     self.architecture = ARCHITECTURES.ARM64
                 elif cputype == 0x12:  # CPU_TYPE_POWERPC
                     self.architecture = ARCHITECTURES.PPC
@@ -466,39 +459,27 @@ except ImportError as e:
                 # Read load commands to find segments
                 for _i in range(min(ncmds, 100)):  # Limit commands
                     cmd_pos = f.tell()
-                    cmd = struct.unpack(endian + 'I', f.read(4))[0]
-                    cmdsize = struct.unpack(endian + 'I', f.read(4))[0]
+                    cmd = struct.unpack(endian + "I", f.read(4))[0]
+                    cmdsize = struct.unpack(endian + "I", f.read(4))[0]
 
                     if cmd == 0x1:  # LC_SEGMENT
-                        segname = f.read(16).rstrip(b'\x00').decode('ascii', errors='ignore')
-                        vmaddr = struct.unpack(endian + 'I', f.read(4))[0]
-                        vmsize = struct.unpack(endian + 'I', f.read(4))[0]
-                        fileoff = struct.unpack(endian + 'I', f.read(4))[0]
-                        filesize = struct.unpack(endian + 'I', f.read(4))[0]
+                        segname = f.read(16).rstrip(b"\x00").decode("ascii", errors="ignore")
+                        vmaddr = struct.unpack(endian + "I", f.read(4))[0]
+                        vmsize = struct.unpack(endian + "I", f.read(4))[0]
+                        fileoff = struct.unpack(endian + "I", f.read(4))[0]
+                        filesize = struct.unpack(endian + "I", f.read(4))[0]
 
-                        section = FallbackSection(
-                            name=segname,
-                            offset=fileoff,
-                            size=filesize,
-                            virtual_address=vmaddr,
-                            virtual_size=vmsize
-                        )
+                        section = FallbackSection(name=segname, offset=fileoff, size=filesize, virtual_address=vmaddr, virtual_size=vmsize)
                         self.sections.append(section)
 
                     elif cmd == 0x19:  # LC_SEGMENT_64
-                        segname = f.read(16).rstrip(b'\x00').decode('ascii', errors='ignore')
-                        vmaddr = struct.unpack(endian + 'Q', f.read(8))[0]
-                        vmsize = struct.unpack(endian + 'Q', f.read(8))[0]
-                        fileoff = struct.unpack(endian + 'Q', f.read(8))[0]
-                        filesize = struct.unpack(endian + 'Q', f.read(8))[0]
+                        segname = f.read(16).rstrip(b"\x00").decode("ascii", errors="ignore")
+                        vmaddr = struct.unpack(endian + "Q", f.read(8))[0]
+                        vmsize = struct.unpack(endian + "Q", f.read(8))[0]
+                        fileoff = struct.unpack(endian + "Q", f.read(8))[0]
+                        filesize = struct.unpack(endian + "Q", f.read(8))[0]
 
-                        section = FallbackSection(
-                            name=segname,
-                            offset=fileoff,
-                            size=filesize,
-                            virtual_address=vmaddr,
-                            virtual_size=vmsize
-                        )
+                        section = FallbackSection(name=segname, offset=fileoff, size=filesize, virtual_address=vmaddr, virtual_size=vmsize)
                         self.sections.append(section)
 
                     # Move to next command
@@ -565,15 +546,14 @@ except ImportError as e:
             return None
 
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 magic = f.read(4)
 
-                if magic[:2] == b'MZ':
+                if magic[:2] == b"MZ":
                     return FallbackPE(filepath)
-                elif magic == b'\x7fELF':
+                elif magic == b"\x7fELF":
                     return FallbackELF(filepath)
-                elif magic in (b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
-                              b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe'):
+                elif magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
                     return FallbackMachO(filepath)
                 else:
                     return FallbackBinary(filepath)
@@ -585,28 +565,27 @@ except ImportError as e:
     def is_pe(filepath):
         """Check if file is PE format."""
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 magic = f.read(2)
-                return magic == b'MZ'
+                return magic == b"MZ"
         except Exception:
             return False
 
     def is_elf(filepath):
         """Check if file is ELF format."""
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 magic = f.read(4)
-                return magic == b'\x7fELF'
+                return magic == b"\x7fELF"
         except Exception:
             return False
 
     def is_macho(filepath):
         """Check if file is Mach-O format."""
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 magic = f.read(4)
-                return magic in (b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
-                                b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe')
+                return magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe")
         except Exception:
             return False
 
@@ -665,14 +644,25 @@ except ImportError as e:
 # Export all LIEF objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_LIEF", "LIEF_VERSION",
+    "HAS_LIEF",
+    "LIEF_VERSION",
     # Main module
     "lief",
     # Core classes
-    "Binary", "Section", "Symbol", "Function",
-    "PE", "ELF", "MachO",
+    "Binary",
+    "Section",
+    "Symbol",
+    "Function",
+    "PE",
+    "ELF",
+    "MachO",
     # Constants
-    "ARCHITECTURES", "ENDIANNESS", "MODES",
+    "ARCHITECTURES",
+    "ENDIANNESS",
+    "MODES",
     # Functions
-    "parse", "is_pe", "is_elf", "is_macho",
+    "parse",
+    "is_pe",
+    "is_elf",
+    "is_macho",
 ]

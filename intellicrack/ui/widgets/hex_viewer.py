@@ -197,7 +197,9 @@ class HexViewerWidget(QWidget):
 
         selection_info = "None"
         if self.selection_start != -1 and self.selection_end != -1:
-            selection_info = f"0x{self.selection_start:08X} - 0x{self.selection_end-1:08X} ({self.selection_end - self.selection_start} bytes)"
+            selection_info = (
+                f"0x{self.selection_start:08X} - 0x{self.selection_end - 1:08X} ({self.selection_end - self.selection_start} bytes)"
+            )
 
         self.status_label.setText(
             f"Offset: 0x{offset:08X} | Byte: 0x{byte_val:02X} ({byte_val}) '{ascii_val}' | Selection: {selection_info}",
@@ -360,13 +362,9 @@ class HexDisplay(QWidget):
         if key == Qt.Key.Key_Left:
             self.hex_viewer.cursor_pos = max(0, self.hex_viewer.cursor_pos - 1)
         elif key == Qt.Key.Key_Right:
-            self.hex_viewer.cursor_pos = min(
-                len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1
-            )
+            self.hex_viewer.cursor_pos = min(len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1)
         elif key == Qt.Key.Key_Up:
-            self.hex_viewer.cursor_pos = max(
-                0, self.hex_viewer.cursor_pos - self.hex_viewer.bytes_per_line
-            )
+            self.hex_viewer.cursor_pos = max(0, self.hex_viewer.cursor_pos - self.hex_viewer.bytes_per_line)
         elif key == Qt.Key.Key_Down:
             self.hex_viewer.cursor_pos = min(
                 len(self.hex_viewer.data) - 1,
@@ -376,20 +374,14 @@ class HexDisplay(QWidget):
             if modifiers & Qt.KeyboardModifier.ControlModifier:
                 self.hex_viewer.cursor_pos = 0
             else:
-                line_start = (
-                    self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line
-                ) * self.hex_viewer.bytes_per_line
+                line_start = (self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line) * self.hex_viewer.bytes_per_line
                 self.hex_viewer.cursor_pos = line_start
         elif key == Qt.Key.Key_End:
             if modifiers & Qt.KeyboardModifier.ControlModifier:
                 self.hex_viewer.cursor_pos = len(self.hex_viewer.data) - 1
             else:
-                line_start = (
-                    self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line
-                ) * self.hex_viewer.bytes_per_line
-                line_end = min(
-                    line_start + self.hex_viewer.bytes_per_line - 1, len(self.hex_viewer.data) - 1
-                )
+                line_start = (self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line) * self.hex_viewer.bytes_per_line
+                line_end = min(line_start + self.hex_viewer.bytes_per_line - 1, len(self.hex_viewer.data) - 1)
                 self.hex_viewer.cursor_pos = line_end
 
         # Editing (if enabled)
@@ -446,6 +438,4 @@ class HexDisplay(QWidget):
         self.hex_viewer.data_modified.emit(self.hex_viewer.cursor_pos, bytes([new_byte]))
 
         # Advance cursor
-        self.hex_viewer.cursor_pos = min(
-            len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1
-        )
+        self.hex_viewer.cursor_pos = min(len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1)

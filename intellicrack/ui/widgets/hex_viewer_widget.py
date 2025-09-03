@@ -401,8 +401,7 @@ class HexViewerWidget(QWidget):
 
         # Update status
         self.status_label.setText(
-            f"Loaded: {os.path.basename(self.file_path)} "
-            f"({len(data):,} bytes from offset 0x{self.current_offset:X})",
+            f"Loaded: {os.path.basename(self.file_path)} ({len(data):,} bytes from offset 0x{self.current_offset:X})",
         )
 
     @pyqtSlot(int)
@@ -527,9 +526,7 @@ class HexViewerWidget(QWidget):
             section = self.file_model.get_section_at_rva(rva)
             if section:
                 self.structure_info_text.append(f"Section: {section.name}")
-                self.structure_info_text.append(
-                    f"Section Offset: 0x{rva - section.virtual_address:X}"
-                )
+                self.structure_info_text.append(f"Section Offset: 0x{rva - section.virtual_address:X}")
         else:
             QMessageBox.warning(self, "Invalid RVA", f"RVA 0x{rva:X} is not valid for this file")
 
@@ -641,9 +638,7 @@ class HexViewerWidget(QWidget):
             byte_val = self.file_data[offset]
             interpretations.append(("UInt8", str(byte_val)))
             interpretations.append(("Int8", str(struct.unpack("b", bytes([byte_val]))[0])))
-            interpretations.append(
-                ("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A")
-            )
+            interpretations.append(("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A"))
 
         # 16-bit values
         if available >= 2:
@@ -816,9 +811,7 @@ class HexViewerWidget(QWidget):
         # Highlight in hex view if valid offset
         if offset is not None and size is not None:
             # Add temporary highlight for clicked structure
-            self.highlighted_regions = [
-                region for region in self.highlighted_regions if not hasattr(region, "_temporary")
-            ]
+            self.highlighted_regions = [region for region in self.highlighted_regions if not hasattr(region, "_temporary")]
 
             # Add new temporary highlight
             highlight_color = QColor(100, 200, 255, 80)  # Light blue
@@ -898,7 +891,6 @@ class HexViewerWidget(QWidget):
         """Show context menu for hex display."""
         from intellicrack.handlers.pyqt6_handler import QAction, QMenu
 
-
         menu = QMenu(self)
 
         # Extract strings action
@@ -961,8 +953,8 @@ class HexViewerWidget(QWidget):
                 data_to_analyze = self.file_data
             elif selected_text:
                 # Convert hex text to bytes
-                hex_only = ''.join(selected_text.split())
-                hex_only = ''.join(c for c in hex_only if c in '0123456789ABCDEFabcdef')
+                hex_only = "".join(selected_text.split())
+                hex_only = "".join(c for c in hex_only if c in "0123456789ABCDEFabcdef")
                 try:
                     data_to_analyze = bytes.fromhex(hex_only)
                 except ValueError:
@@ -1040,9 +1032,21 @@ class HexViewerWidget(QWidget):
                 # Filter for license-related if requested
                 if filter_license:
                     license_keywords = [
-                        'license', 'activation', 'serial', 'key', 'product',
-                        'registration', 'trial', 'expire', 'valid', 'crack',
-                        'patch', 'keygen', 'hwid', 'machine', 'signature'
+                        "license",
+                        "activation",
+                        "serial",
+                        "key",
+                        "product",
+                        "registration",
+                        "trial",
+                        "expire",
+                        "valid",
+                        "crack",
+                        "patch",
+                        "keygen",
+                        "hwid",
+                        "machine",
+                        "signature",
                     ]
                     filtered = []
                     for s in strings:
@@ -1053,68 +1057,58 @@ class HexViewerWidget(QWidget):
 
                 # Display results
                 results = []
-                results.append(f"{'='*60}")
+                results.append(f"{'=' * 60}")
                 results.append(f"String Extraction Results ({'Unicode' if wide else 'ASCII'})")
-                results.append(f"{'='*60}")
+                results.append(f"{'=' * 60}")
                 results.append(f"Data size: {len(data_to_analyze):,} bytes")
                 results.append(f"Minimum length: {min_length} characters")
                 results.append(f"Strings found: {len(strings)}")
                 if filter_license:
                     results.append("Filter: License-related only")
-                results.append(f"{'='*60}\n")
+                results.append(f"{'=' * 60}\n")
 
                 # Group strings by potential category
-                categories = {
-                    'URLs': [],
-                    'Paths': [],
-                    'License': [],
-                    'Registry': [],
-                    'Error Messages': [],
-                    'Other': []
-                }
+                categories = {"URLs": [], "Paths": [], "License": [], "Registry": [], "Error Messages": [], "Other": []}
 
                 for string in strings:
-                    if string.startswith('http://') or string.startswith('https://'):
-                        categories['URLs'].append(string)
-                    elif '\\' in string or '/' in string:
-                        if any(ext in string.lower() for ext in ['.exe', '.dll', '.sys', '.dat']):
-                            categories['Paths'].append(string)
-                        elif 'HKEY' in string or 'Software\\' in string:
-                            categories['Registry'].append(string)
+                    if string.startswith("http://") or string.startswith("https://"):
+                        categories["URLs"].append(string)
+                    elif "\\" in string or "/" in string:
+                        if any(ext in string.lower() for ext in [".exe", ".dll", ".sys", ".dat"]):
+                            categories["Paths"].append(string)
+                        elif "HKEY" in string or "Software\\" in string:
+                            categories["Registry"].append(string)
                         else:
-                            categories['Other'].append(string)
-                    elif any(word in string.lower() for word in ['license', 'serial', 'activation', 'key']):
-                        categories['License'].append(string)
-                    elif any(word in string.lower() for word in ['error', 'fail', 'invalid', 'exception']):
-                        categories['Error Messages'].append(string)
+                            categories["Other"].append(string)
+                    elif any(word in string.lower() for word in ["license", "serial", "activation", "key"]):
+                        categories["License"].append(string)
+                    elif any(word in string.lower() for word in ["error", "fail", "invalid", "exception"]):
+                        categories["Error Messages"].append(string)
                     else:
-                        categories['Other'].append(string)
+                        categories["Other"].append(string)
 
                 # Display by category
                 for category, items in categories.items():
                     if items:
                         results.append(f"\n[{category}] ({len(items)} strings)")
-                        results.append('-' * 40)
+                        results.append("-" * 40)
                         for item in items[:100]:  # Limit display
                             results.append(item)
                         if len(items) > 100:
                             results.append(f"... and {len(items) - 100} more")
 
-                results_text.setPlainText('\n'.join(results))
+                results_text.setPlainText("\n".join(results))
                 stats_label.setText(f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings")
 
             def export_strings():
                 """Export strings to file."""
                 file_path, _ = QFileDialog.getSaveFileName(
-                    dialog,
-                    "Export Strings",
-                    "extracted_strings.txt",
-                    "Text Files (*.txt);;All Files (*)"
+                    dialog, "Export Strings", "extracted_strings.txt", "Text Files (*.txt);;All Files (*)"
                 )
 
                 if file_path:
                     try:
-                        with open(file_path, 'w', encoding='utf-8', errors='ignore') as f:
+                        with open(file_path, "w", encoding="utf-8", errors="ignore") as f:
                             f.write(results_text.toPlainText())
                         QMessageBox.information(dialog, "Export Complete", f"Strings exported to {file_path}")
                     except Exception as e:
@@ -1151,7 +1145,7 @@ class HexViewerWidget(QWidget):
         i = 0
         while i < len(data) - 1:
             # Check for printable Unicode character
-            char_bytes = data[i:i+2]
+            char_bytes = data[i : i + 2]
             if char_bytes[1] == 0:  # High byte is 0 (ASCII range)
                 if 32 <= char_bytes[0] <= 126:  # Printable ASCII
                     current_string += chr(char_bytes[0])
@@ -1179,7 +1173,7 @@ class HexViewerWidget(QWidget):
 
         try:
             # Read entire file
-            with open(self.file_path, 'rb') as f:
+            with open(self.file_path, "rb") as f:
                 data = f.read()
 
             # Use a copy of file_data temporarily
@@ -1216,16 +1210,16 @@ class HexViewerWidget(QWidget):
 
             # License-related patterns to search for
             patterns = [
-                (b'LICENSE', 'License keyword'),
-                (b'ACTIVATION', 'Activation keyword'),
-                (b'SERIAL', 'Serial keyword'),
-                (b'PRODUCT.?KEY', 'Product key pattern'),
-                (b'TRIAL', 'Trial keyword'),
-                (b'EXPIRE', 'Expiration keyword'),
-                (b'HWID', 'Hardware ID'),
-                (b'MACHINE.?ID', 'Machine ID pattern'),
-                (b'[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}', 'Serial number pattern'),
-                (b'[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}', 'UUID pattern'),
+                (b"LICENSE", "License keyword"),
+                (b"ACTIVATION", "Activation keyword"),
+                (b"SERIAL", "Serial keyword"),
+                (b"PRODUCT.?KEY", "Product key pattern"),
+                (b"TRIAL", "Trial keyword"),
+                (b"EXPIRE", "Expiration keyword"),
+                (b"HWID", "Hardware ID"),
+                (b"MACHINE.?ID", "Machine ID pattern"),
+                (b"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}", "Serial number pattern"),
+                (b"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}", "UUID pattern"),
             ]
 
             # Create results dialog
@@ -1250,7 +1244,7 @@ class HexViewerWidget(QWidget):
                         found_count += len(matches)
                         for match in matches:
                             offset = match.start()
-                            matched_text = match.group(0).decode('utf-8', errors='ignore')
+                            matched_text = match.group(0).decode("utf-8", errors="ignore")
                             item_text = f"0x{offset:08X}: {description} - '{matched_text}'"
                             results_list.addItem(item_text)
                 except (struct.error, ValueError, TypeError) as e:
@@ -1276,8 +1270,8 @@ class HexViewerWidget(QWidget):
                 if current_item:
                     text = current_item.text()
                     # Extract offset from text
-                    if text.startswith('0x'):
-                        offset_str = text.split(':')[0]
+                    if text.startswith("0x"):
+                        offset_str = text.split(":")[0]
                         offset = int(offset_str, 16)
                         self.go_to_offset(offset)
                         dialog.close()
@@ -1299,7 +1293,7 @@ class HexViewerWidget(QWidget):
         selected_text = cursor.selectedText()
         if selected_text:
             # Clean up hex for copying
-            hex_only = ''.join(c for c in selected_text if c in '0123456789ABCDEFabcdef ')
+            hex_only = "".join(c for c in selected_text if c in "0123456789ABCDEFabcdef ")
             clipboard = QApplication.clipboard()
             clipboard.setText(hex_only)
 

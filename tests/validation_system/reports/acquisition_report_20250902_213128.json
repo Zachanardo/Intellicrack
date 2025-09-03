@@ -1,0 +1,13 @@
+{
+  "report_generated": "2025-09-02T21:31:28.282278+00:00",
+  "total_binaries": 0,
+  "binaries": [],
+  "validation_ready": false,
+  "missing_software": [
+    "Adobe Creative Cloud 2024",
+    "AutoCAD 2024",
+    "MATLAB R2024a",
+    "SolidWorks 2024",
+    "VMware Workstation Pro"
+  ]
+}

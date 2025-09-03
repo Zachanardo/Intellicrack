@@ -140,8 +140,7 @@ class FlexLMProtocolHandler:
             else:
                 # Default feature
                 response_lines.append(
-                    "FEATURE product vendor 1.0 permanent uncounted "
-                    "HOSTID=ANY SIGN=VALID ck=123",
+                    "FEATURE product vendor 1.0 permanent uncounted HOSTID=ANY SIGN=VALID ck=123",
                 )
 
             response_text = "\n".join(response_lines) + "\n"
@@ -354,9 +353,7 @@ class MicrosoftKMSHandler:
 
             if parsed and parsed.get("format") == "rpc":
                 # Generate RPC response
-                response_header = struct.pack(
-                    "<IIII", 5, 2, 3, 32
-                )  # Version, response type, flags, length
+                response_header = struct.pack("<IIII", 5, 2, 3, 32)  # Version, response type, flags, length
                 response_payload = b"\x00" * 32  # Success response
                 return response_header + response_payload
 
@@ -411,9 +408,7 @@ class AutodeskProtocolHandler:
         """Generate Autodesk license response."""
         try:
             # Log context information for debugging
-            self.logger.debug(
-                f"Generating Autodesk response for {context.source_ip}:{context.source_port}"
-            )
+            self.logger.debug(f"Generating Autodesk response for {context.source_ip}:{context.source_port}")
 
             # Parse context request if available
             parsed_request = context.parsed_request or self.parse_request(context.request_data)
@@ -578,9 +573,7 @@ class DynamicResponseGenerator:
             response_time = time.time() - start_time
             current_avg = self.stats["average_response_time"]
             total_requests = self.stats["total_requests"]
-            self.stats["average_response_time"] = (
-                current_avg * (total_requests - 1) + response_time
-            ) / total_requests
+            self.stats["average_response_time"] = (current_avg * (total_requests - 1) + response_time) / total_requests
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
         """Generate cache key for request."""
@@ -683,9 +676,7 @@ class DynamicResponseGenerator:
             best_score = 0
 
             for learned_entry in self.learned_patterns[protocol]:
-                score = self._calculate_similarity(
-                    request_patterns, learned_entry["request_patterns"]
-                )
+                score = self._calculate_similarity(request_patterns, learned_entry["request_patterns"])
                 if score > best_score:
                     best_score = score
                     best_match = learned_entry
@@ -767,10 +758,7 @@ class DynamicResponseGenerator:
                 return response.encode("utf-8")
 
             # Binary response for binary requests
-            if (
-                len(context.request_data) > 0
-                and not context.request_data.decode("utf-8", errors="ignore").isprintable()
-            ):
+            if len(context.request_data) > 0 and not context.request_data.decode("utf-8", errors="ignore").isprintable():
                 # Simple binary OK response
                 return b"\x00\x00\x00\x01OK"
 
@@ -860,10 +848,7 @@ class DynamicResponseGenerator:
                 return b"ERROR: License service temporarily unavailable\n"
 
             # Binary protocols - return structured error
-            if (
-                context.request_data
-                and not context.request_data[:100].decode("utf-8", errors="ignore").isprintable()
-            ):
+            if context.request_data and not context.request_data[:100].decode("utf-8", errors="ignore").isprintable():
                 # Return a simple binary error pattern
                 return b"\x00\x00\x00\x04FAIL"
 
@@ -882,9 +867,7 @@ class DynamicResponseGenerator:
             request_str = context.request_data.decode("utf-8", errors="ignore")
 
             # Check content type from headers if available
-            content_type = (
-                context.headers.get("content-type", "").lower() if context.headers else ""
-            )
+            content_type = context.headers.get("content-type", "").lower() if context.headers else ""
 
             # XML response pattern
             if ("<" in request_str and ">" in request_str) or "xml" in content_type:
@@ -912,9 +895,7 @@ class DynamicResponseGenerator:
                 return json.dumps(response).encode("utf-8")
 
             # License-specific patterns
-            if any(
-                word in request_str.lower() for word in ["license", "auth", "validate", "verify"]
-            ):
+            if any(word in request_str.lower() for word in ["license", "auth", "validate", "verify"]):
                 # Check if it looks like a product-specific request
                 if "adobe" in request_str.lower():
                     return b"ADOBE_LICENSE_VALID"
@@ -958,9 +939,7 @@ class DynamicResponseGenerator:
         try:
             if "learned_patterns" in data:
                 self.learned_patterns.update(data["learned_patterns"])
-                self.logger.info(
-                    f"Imported learning data for {len(data['learned_patterns'])} protocols"
-                )
+                self.logger.info(f"Imported learning data for {len(data['learned_patterns'])} protocols")
 
         except Exception as e:
             self.logger.error(f"Error importing learning data: {e}")

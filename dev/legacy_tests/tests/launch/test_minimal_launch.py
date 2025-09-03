@@ -24,7 +24,7 @@ class TestMinimalLaunch:
         assert IntellicrackApp is not None
 
     @pytest.mark.skipif(
-        sys.platform == "win32", 
+        sys.platform == "win32",
         reason="GUI creation tests skipped on Windows due to display issues"
     )
     def test_qt_application_creation(self):
@@ -34,14 +34,14 @@ class TestMinimalLaunch:
         assert app is not None
 
     @pytest.mark.skipif(
-        sys.platform == "win32", 
+        sys.platform == "win32",
         reason="GUI window tests skipped on Windows due to display issues"
     )
     def test_intellicrack_app_creation(self):
         """Test IntellicrackApp creation (skipped on Windows)."""
         from intellicrack.ui.dialogs.common_imports import QApplication
         from intellicrack.ui.main_app import IntellicrackApp
-        
+
         app = QApplication(sys.argv)
         window = IntellicrackApp()
         window.setWindowTitle("Intellicrack Test")

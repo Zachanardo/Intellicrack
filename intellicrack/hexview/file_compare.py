@@ -86,7 +86,7 @@ class BinaryComparer:
             file1_size = os.path.getsize(file1_path)
             file2_size = os.path.getsize(file2_path)
 
-            with open(file1_path, 'rb') as f1, open(file2_path, 'rb') as f2:
+            with open(file1_path, "rb") as f1, open(file2_path, "rb") as f2:
                 self._compare_streams(f1, f2, file1_size, file2_size)
 
         except Exception as e:
@@ -132,8 +132,8 @@ class BinaryComparer:
 
         while offset < max_size:
             # Read blocks
-            block1 = f1.read(self.block_size) if offset < size1 else b''
-            block2 = f2.read(self.block_size) if offset < size2 else b''
+            block1 = f1.read(self.block_size) if offset < size1 else b""
+            block2 = f2.read(self.block_size) if offset < size2 else b""
 
             # Compare blocks
             if block1 == block2:
@@ -153,11 +153,7 @@ class BinaryComparer:
                     # Start new difference
                     diff_type = self._determine_diff_type(block1, block2)
                     current_diff = DifferenceBlock(
-                        offset1=offset,
-                        offset2=offset,
-                        length1=len(block1),
-                        length2=len(block2),
-                        diff_type=diff_type
+                        offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type
                     )
 
             offset += self.block_size
@@ -208,10 +204,10 @@ class BinaryComparer:
 
         for i in range(1, m + 1):
             for j in range(1, n + 1):
-                if data1[i-1] == data2[j-1]:
-                    lcs[i][j] = lcs[i-1][j-1] + 1
+                if data1[i - 1] == data2[j - 1]:
+                    lcs[i][j] = lcs[i - 1][j - 1] + 1
                 else:
-                    lcs[i][j] = max(lcs[i-1][j], lcs[i][j-1])
+                    lcs[i][j] = max(lcs[i - 1][j], lcs[i][j - 1])
 
         # Trace back to find differences
         self._trace_lcs(data1, data2, lcs)
@@ -237,11 +233,7 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i,
-                        offset2=j,
-                        length1=0,
-                        length2=len(data2) - j,
-                        diff_type=DifferenceType.INSERTED
+                        offset1=i, offset2=j, length1=0, length2=len(data2) - j, diff_type=DifferenceType.INSERTED
                     )
                 break
 
@@ -253,11 +245,7 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i,
-                        offset2=j,
-                        length1=len(data1) - i,
-                        length2=0,
-                        diff_type=DifferenceType.DELETED
+                        offset1=i, offset2=j, length1=len(data1) - i, length2=0, diff_type=DifferenceType.DELETED
                     )
                 break
 
@@ -277,13 +265,7 @@ class BinaryComparer:
                 else:
                     if current_diff:
                         self.differences.append(current_diff)
-                    current_diff = DifferenceBlock(
-                        offset1=i,
-                        offset2=j,
-                        length1=1,
-                        length2=1,
-                        diff_type=DifferenceType.MODIFIED
-                    )
+                    current_diff = DifferenceBlock(offset1=i, offset2=j, length1=1, length2=1, diff_type=DifferenceType.MODIFIED)
                 i += 1
                 j += 1
 
@@ -304,59 +286,39 @@ class BinaryComparer:
         while i > 0 or j > 0:
             if i == 0:
                 # Insertion in data2
-                self.differences.insert(0, DifferenceBlock(
-                    offset1=0,
-                    offset2=0,
-                    length1=0,
-                    length2=j,
-                    diff_type=DifferenceType.INSERTED
-                ))
+                self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=0, length2=j, diff_type=DifferenceType.INSERTED))
                 break
 
             elif j == 0:
                 # Deletion from data1
-                self.differences.insert(0, DifferenceBlock(
-                    offset1=0,
-                    offset2=0,
-                    length1=i,
-                    length2=0,
-                    diff_type=DifferenceType.DELETED
-                ))
+                self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED))
                 break
 
-            elif data1[i-1] == data2[j-1]:
+            elif data1[i - 1] == data2[j - 1]:
                 # Match, move diagonally
                 i -= 1
                 j -= 1
 
-            elif lcs[i-1][j] > lcs[i][j-1]:
+            elif lcs[i - 1][j] > lcs[i][j - 1]:
                 # Deletion from data1
                 start_i = i - 1
-                while i > 1 and lcs[i-1][j] == lcs[i-2][j]:
+                while i > 1 and lcs[i - 1][j] == lcs[i - 2][j]:
                     i -= 1
 
-                self.differences.insert(0, DifferenceBlock(
-                    offset1=i-1,
-                    offset2=j,
-                    length1=start_i - i + 1,
-                    length2=0,
-                    diff_type=DifferenceType.DELETED
-                ))
+                self.differences.insert(
+                    0, DifferenceBlock(offset1=i - 1, offset2=j, length1=start_i - i + 1, length2=0, diff_type=DifferenceType.DELETED)
+                )
                 i -= 1
 
             else:
                 # Insertion in data2
                 start_j = j - 1
-                while j > 1 and lcs[i][j-1] == lcs[i][j-2]:
+                while j > 1 and lcs[i][j - 1] == lcs[i][j - 2]:
                     j -= 1
 
-                self.differences.insert(0, DifferenceBlock(
-                    offset1=i,
-                    offset2=j-1,
-                    length1=0,
-                    length2=start_j - j + 1,
-                    diff_type=DifferenceType.INSERTED
-                ))
+                self.differences.insert(
+                    0, DifferenceBlock(offset1=i, offset2=j - 1, length1=0, length2=start_j - j + 1, diff_type=DifferenceType.INSERTED)
+                )
                 j -= 1
 
         # Merge adjacent differences of the same type
@@ -372,9 +334,7 @@ class BinaryComparer:
 
         for diff in self.differences[1:]:
             # Check if adjacent and same type
-            if (current.end1 == diff.offset1 and
-                current.end2 == diff.offset2 and
-                current.diff_type == diff.diff_type):
+            if current.end1 == diff.offset1 and current.end2 == diff.offset2 and current.diff_type == diff.diff_type:
                 # Merge
                 current.length1 += diff.length1
                 current.length2 += diff.length2
@@ -394,25 +354,25 @@ class BinaryComparer:
 
         """
         stats = {
-            'total_differences': len(self.differences),
-            'modified_blocks': 0,
-            'inserted_blocks': 0,
-            'deleted_blocks': 0,
-            'modified_bytes': 0,
-            'inserted_bytes': 0,
-            'deleted_bytes': 0,
+            "total_differences": len(self.differences),
+            "modified_blocks": 0,
+            "inserted_blocks": 0,
+            "deleted_blocks": 0,
+            "modified_bytes": 0,
+            "inserted_bytes": 0,
+            "deleted_bytes": 0,
         }
 
         for diff in self.differences:
             if diff.diff_type == DifferenceType.MODIFIED:
-                stats['modified_blocks'] += 1
-                stats['modified_bytes'] += max(diff.length1, diff.length2)
+                stats["modified_blocks"] += 1
+                stats["modified_bytes"] += max(diff.length1, diff.length2)
             elif diff.diff_type == DifferenceType.INSERTED:
-                stats['inserted_blocks'] += 1
-                stats['inserted_bytes'] += diff.length2
+                stats["inserted_blocks"] += 1
+                stats["inserted_bytes"] += diff.length2
             elif diff.diff_type == DifferenceType.DELETED:
-                stats['deleted_blocks'] += 1
-                stats['deleted_bytes'] += diff.length1
+                stats["deleted_blocks"] += 1
+                stats["deleted_bytes"] += diff.length1
 
         return stats
 

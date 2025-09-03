@@ -66,9 +66,7 @@ class GoogleRepository(APIRepositoryBase):
         # Get API endpoint from config if not provided
         if api_endpoint is None:
             config = get_config()
-            api_endpoint = (
-                config.get_api_endpoint("google") or "https://generativelanguage.googleapis.com"
-            )
+            api_endpoint = config.get_api_endpoint("google") or "https://generativelanguage.googleapis.com"
 
         # Get API key from secrets manager if not provided
         if not api_key:
@@ -221,12 +219,7 @@ class GoogleRepository(APIRepositoryBase):
             # Check for multimodal support
             input_features = []
             for input_feature in (
-                model_data.get("inputSchema", {})
-                .get("properties", {})
-                .get("parts", {})
-                .get("items", {})
-                .get("properties", {})
-                .keys()
+                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {}).keys()
             ):
                 input_features.append(input_feature)
 
@@ -263,7 +256,5 @@ class GoogleRepository(APIRepositoryBase):
             Always returns (False, "Google doesn't support model downloads")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "Google doesn't support model downloads"

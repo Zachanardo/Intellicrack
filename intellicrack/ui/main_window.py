@@ -303,8 +303,6 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Create splitter for two widgets
 
-
-
         splitter = QSplitter(Qt.Vertical)
 
         # Add unified protection widget
@@ -322,16 +320,12 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Connect signals
         self.protection_widget.protection_analyzed.connect(self._on_unified_protection_analyzed)
-        self.protection_widget.protection_analyzed.connect(
-            self.analysis_orchestrator.on_protection_analyzed
-        )
+        self.protection_widget.protection_analyzed.connect(self.analysis_orchestrator.on_protection_analyzed)
         self.protection_widget.bypass_requested.connect(self._on_bypass_requested)
 
         # Connect ICP widget signals
         self.icp_widget.analysis_complete.connect(self._on_icp_analysis_complete)
-        self.icp_widget.analysis_complete.connect(
-            self.analysis_orchestrator.on_icp_analysis_complete
-        )
+        self.icp_widget.analysis_complete.connect(self.analysis_orchestrator.on_icp_analysis_complete)
         self.icp_widget.protection_selected.connect(self._on_icp_protection_selected)
 
         # Connect handler signals
@@ -563,9 +557,7 @@ class IntellicrackMainWindow(QMainWindow):
                     # Use the first executable path as the binary to analyze
                     selected_executable = program_info["executable_paths"][0]
                     self.binary_path = selected_executable
-                    self.file_path_label.setText(
-                        f"{program_info['display_name']} ({os.path.basename(selected_executable)})"
-                    )
+                    self.file_path_label.setText(f"{program_info['display_name']} ({os.path.basename(selected_executable)})")
                     self.file_path_label.setToolTip(
                         f"Program: {program_info['display_name']}\nPath: {selected_executable}\nInstall Location: {installation_folder}"
                     )
@@ -578,15 +570,15 @@ class IntellicrackMainWindow(QMainWindow):
 
                     # Display program information
                     program_details = f"""Selected Program Information:
-Name: {program_info['display_name']}
-Version: {program_info.get('version', 'Unknown')}
-Publisher: {program_info.get('publisher', 'Unknown')}
-Architecture: {program_info.get('architecture', 'Unknown')}
+Name: {program_info["display_name"]}
+Version: {program_info.get("version", "Unknown")}
+Publisher: {program_info.get("publisher", "Unknown")}
+Architecture: {program_info.get("architecture", "Unknown")}
 Install Location: {installation_folder}
 Executable: {selected_executable}
-Discovery Method: {program_info.get('discovery_method', 'Unknown')}
-Confidence Score: {program_info.get('confidence_score', 0):.2f}
-Analysis Priority: {program_info.get('analysis_priority', 0)}
+Discovery Method: {program_info.get("discovery_method", "Unknown")}
+Confidence Score: {program_info.get("confidence_score", 0):.2f}
+Analysis Priority: {program_info.get("analysis_priority", 0)}
 
 Licensing Files Found: {len(licensing_files)}"""
 
@@ -678,9 +670,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
                     # Display AI analysis results
                     if ai_analysis and not ai_analysis.get("error"):
-                        self.update_output.emit(
-                            f"AI Confidence: {ai_analysis.get('confidence', 0.0):.2%}"
-                        )
+                        self.update_output.emit(f"AI Confidence: {ai_analysis.get('confidence', 0.0):.2%}")
 
                         if ai_analysis.get("findings"):
                             self.update_output.emit("\nFindings:")
@@ -694,9 +684,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
                         if ai_analysis.get("ml_integration"):
                             ml_info = ai_analysis["ml_integration"]
-                            self.update_output.emit(
-                                f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}"
-                            )
+                            self.update_output.emit(f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}")
 
                 except Exception as e:
                     self.logger.warning(f"AI complex analysis failed: {e!s}")
@@ -735,9 +723,7 @@ Licensing Files Found: {len(licensing_files)}"""
             if vulnerabilities:
                 self.update_output.emit(f"Found {len(vulnerabilities)} vulnerabilities:")
                 for _vuln in vulnerabilities:
-                    self.update_output.emit(
-                        f"  - {_vuln.get('type', 'Unknown')}: {_vuln.get('risk', 'Unknown risk')}"
-                    )
+                    self.update_output.emit(f"  - {_vuln.get('type', 'Unknown')}: {_vuln.get('risk', 'Unknown risk')}")
             else:
                 self.update_output.emit("No vulnerabilities detected.")
 
@@ -778,9 +764,7 @@ Licensing Files Found: {len(licensing_files)}"""
         if "imports" in results:
             result_text += f"\\nImports ({len(results['imports'])}):\\n"
             for _imp in results["imports"][:5]:  # Limit to first 5
-                result_text += (
-                    f"  {_imp.get('dll', 'Unknown')}: {len(_imp.get('functions', []))} functions\\n"
-                )
+                result_text += f"  {_imp.get('dll', 'Unknown')}: {len(_imp.get('functions', []))} functions\\n"
 
         self.results_display.setPlainText(result_text)
 
@@ -856,7 +840,6 @@ Licensing Files Found: {len(licensing_files)}"""
 
                 # Copy script to clipboard
 
-
                 clipboard = QApplication.clipboard()
                 clipboard.setText(result["script"])
 
@@ -882,9 +865,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
     def _on_unified_protection_analyzed(self, result):
         """Handle unified protection analysis completion."""
-        self.logger.info(
-            f"Protection analysis complete: {len(result.protections)} protections found"
-        )
+        self.logger.info(f"Protection analysis complete: {len(result.protections)} protections found")
 
         # Update results display
         result_text = "\n=== PROTECTION ANALYSIS COMPLETE ===\n"
@@ -902,9 +883,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
         # Update status
         if result.protections:
-            self.update_status.emit(
-                f"Analysis complete: {len(result.protections)} protection(s) detected"
-            )
+            self.update_status.emit(f"Analysis complete: {len(result.protections)} protection(s) detected")
         else:
             self.update_status.emit("Analysis complete: No protections detected")
 
@@ -915,9 +894,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
     def _on_script_ready(self, script_data: dict):
         """Handle script generation completion."""
-        self.logger.info(
-            f"Script ready: {script_data.get('type', 'Unknown')} with {script_data.get('confidence', 0):.0%} confidence"
-        )
+        self.logger.info(f"Script ready: {script_data.get('type', 'Unknown')} with {script_data.get('confidence', 0):.0%} confidence")
         # The script handler will show its own dialog
 
     def _on_report_ready(self, report_data: dict):
@@ -931,9 +908,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
         # Update results display
         result_text = "\n=== ICP ENGINE ANALYSIS ===\n"
-        result_text += (
-            f"File Type: {result.file_infos[0].filetype if result.file_infos else 'Unknown'}\n"
-        )
+        result_text += f"File Type: {result.file_infos[0].filetype if result.file_infos else 'Unknown'}\n"
         result_text += f"Packed: {'Yes' if result.is_packed else 'No'}\n"
         result_text += f"Protected: {'Yes' if result.is_protected else 'No'}\n"
 

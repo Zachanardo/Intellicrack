@@ -51,13 +51,7 @@ class NodeJSSetupDialog(BaseDialog):
 
     def __init__(self, parent=None):
         """Initialize Node.js setup dialog."""
-        super().__init__(
-            parent=parent,
-            title="Node.js Setup Required",
-            width=600,
-            height=500,
-            resizable=False
-        )
+        super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
         self.compiler = AdobeLicenseCompiler()
         self.install_worker = None
         self.setup_content(self.content_layout)
@@ -139,9 +133,7 @@ class NodeJSSetupDialog(BaseDialog):
 
     def browse_nodejs_path(self):
         """Browse for Node.js installation directory."""
-        directory = QFileDialog.getExistingDirectory(
-            self, "Select Node.js Installation Directory", "C:\\Program Files"
-        )
+        directory = QFileDialog.getExistingDirectory(self, "Select Node.js Installation Directory", "C:\\Program Files")
 
         if directory:
             self.path_input.setText(directory)

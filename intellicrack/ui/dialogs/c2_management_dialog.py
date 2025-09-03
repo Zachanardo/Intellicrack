@@ -672,16 +672,12 @@ class C2ManagementDialog(BaseDialog):
         if event == "connected":
             session = update.get("session", {})
             self.add_session(session)
-            self.log_message(
-                f"New session connected: {session.get('session_id', 'unknown')}", "success"
-            )
+            self.log_message(f"New session connected: {session.get('session_id', 'unknown')}", "success")
 
         elif event == "disconnected":
             session = update.get("session", {})
             self.remove_session(session.get("session_id"))
-            self.log_message(
-                f"Session disconnected: {session.get('session_id', 'unknown')}", "warning"
-            )
+            self.log_message(f"Session disconnected: {session.get('session_id', 'unknown')}", "warning")
 
         elif event == "beacon":
             data = update.get("data", {})
@@ -976,12 +972,8 @@ class C2ManagementDialog(BaseDialog):
                     seconds = int(uptime % 60)
                     self.uptime_label.setText(f"Uptime: {hours:02d}:{minutes:02d}:{seconds:02d}")
 
-                self.sessions_count_label.setText(
-                    f"Active Sessions: {stats.get('active_sessions', 0)}"
-                )
-                self.total_connections_label.setText(
-                    f"Total Connections: {stats.get('total_connections', 0)}"
-                )
+                self.sessions_count_label.setText(f"Active Sessions: {stats.get('active_sessions', 0)}")
+                self.total_connections_label.setText(f"Total Connections: {stats.get('total_connections', 0)}")
 
                 data_kb = stats.get("total_data_transfer", 0) / 1024
                 self.data_transferred_label.setText(f"Data Transferred: {data_kb:.2f} KB")
@@ -995,7 +987,7 @@ class C2ManagementDialog(BaseDialog):
                             if sid.startswith(partial_id):
                                 created_at = session.get("created_at", time.time())
                                 session_uptime = time.time() - created_at
-                                uptime_str = f"{int(session_uptime//3600):02d}:{int((session_uptime%3600)//60):02d}:{int(session_uptime%60):02d}"
+                                uptime_str = f"{int(session_uptime // 3600):02d}:{int((session_uptime % 3600) // 60):02d}:{int(session_uptime % 60):02d}"
                                 self.sessions_table.setItem(row, 7, QTableWidgetItem(uptime_str))
                                 break
 
@@ -1117,8 +1109,6 @@ class C2ManagementDialog(BaseDialog):
     def add_file_to_upload(self):
         """Add file to upload list."""
         try:
-
-
             # Open file dialog to select files
             file_paths, _ = QFileDialog.getOpenFileNames(
                 self,
@@ -1244,9 +1234,7 @@ class C2ManagementDialog(BaseDialog):
                     message += f", {failed_count} failed"
                 QMessageBox.information(self, "Upload Complete", message)
             elif failed_count > 0:
-                QMessageBox.critical(
-                    self, "Upload Failed", f"All {failed_count} file(s) failed to upload"
-                )
+                QMessageBox.critical(self, "Upload Failed", f"All {failed_count} file(s) failed to upload")
 
         except Exception as e:
             self.logger.error(f"File upload error: {e}")
@@ -1276,37 +1264,14 @@ class C2ManagementDialog(BaseDialog):
             # Filter by log level/type
             if (
                 filter_type_lower == "all"
-                or (
-                    filter_type_lower == "error" and ("error" in line_lower or "fail" in line_lower)
-                )
-                or (
-                    filter_type_lower == "warning"
-                    and ("warning" in line_lower or "warn" in line_lower)
-                )
-                or (
-                    filter_type_lower == "info"
-                    and ("info" in line_lower or "information" in line_lower)
-                )
-                or (
-                    filter_type_lower == "success"
-                    and ("success" in line_lower or "complete" in line_lower)
-                )
-                or (
-                    filter_type_lower == "connection"
-                    and ("connect" in line_lower or "disconnect" in line_lower)
-                )
-                or (
-                    filter_type_lower == "command"
-                    and ("command" in line_lower or "execute" in line_lower)
-                )
-                or (
-                    filter_type_lower == "upload"
-                    and ("upload" in line_lower or "download" in line_lower)
-                )
-                or (
-                    filter_type_lower == "client"
-                    and ("client" in line_lower or "agent" in line_lower)
-                )
+                or (filter_type_lower == "error" and ("error" in line_lower or "fail" in line_lower))
+                or (filter_type_lower == "warning" and ("warning" in line_lower or "warn" in line_lower))
+                or (filter_type_lower == "info" and ("info" in line_lower or "information" in line_lower))
+                or (filter_type_lower == "success" and ("success" in line_lower or "complete" in line_lower))
+                or (filter_type_lower == "connection" and ("connect" in line_lower or "disconnect" in line_lower))
+                or (filter_type_lower == "command" and ("command" in line_lower or "execute" in line_lower))
+                or (filter_type_lower == "upload" and ("upload" in line_lower or "download" in line_lower))
+                or (filter_type_lower == "client" and ("client" in line_lower or "agent" in line_lower))
             ):
                 filtered_lines.append(line)
             # Custom filter - search for the filter text in the line
@@ -1350,7 +1315,7 @@ class C2ManagementDialog(BaseDialog):
             self,
             "Export Activity Logs",
             f"c2_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)"
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)",
         )
 
         if not file_path:
@@ -1360,51 +1325,44 @@ class C2ManagementDialog(BaseDialog):
             # Get all log content
             log_content = self.log_display.toPlainText()
 
-            if file_path.endswith('.json'):
+            if file_path.endswith(".json"):
                 # Export as structured JSON
-                log_lines = log_content.split('\n')
+                log_lines = log_content.split("\n")
                 log_entries = []
 
                 for line in log_lines:
                     if line.strip():
                         # Parse log line format: [timestamp] [level] message
                         import re
-                        match = re.match(r'\[([\d-\s:]+)\]\s+\[(\w+)\]\s+(.*)', line)
+
+                        match = re.match(r"\[([\d-\s:]+)\]\s+\[(\w+)\]\s+(.*)", line)
                         if match:
-                            log_entries.append({
-                                'timestamp': match.group(1),
-                                'level': match.group(2),
-                                'message': match.group(3)
-                            })
+                            log_entries.append({"timestamp": match.group(1), "level": match.group(2), "message": match.group(3)})
 
                 # Write JSON log file
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump({
-                        'export_time': datetime.now().isoformat(),
-                        'session_count': len(self.session_tabs.keys()) if hasattr(self, 'session_tabs') else 0,
-                        'total_entries': len(log_entries),
-                        'logs': log_entries
-                    }, f, indent=2)
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {
+                            "export_time": datetime.now().isoformat(),
+                            "session_count": len(self.session_tabs.keys()) if hasattr(self, "session_tabs") else 0,
+                            "total_entries": len(log_entries),
+                            "logs": log_entries,
+                        },
+                        f,
+                        indent=2,
+                    )
             else:
                 # Export as plain text
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write("C2 Management Activity Logs\n")
                     f.write(f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                     f.write("=" * 60 + "\n\n")
                     f.write(log_content)
 
-            QMessageBox.information(
-                self,
-                "Export Successful",
-                f"Logs exported successfully to:\n{file_path}"
-            )
+            QMessageBox.information(self, "Export Successful", f"Logs exported successfully to:\n{file_path}")
 
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Export Failed",
-                f"Failed to export logs:\n{str(e)}"
-            )
+            QMessageBox.critical(self, "Export Failed", f"Failed to export logs:\n{str(e)}")
 
     def log_message(self, message: str, level: str = "info"):
         """Add message to activity log."""

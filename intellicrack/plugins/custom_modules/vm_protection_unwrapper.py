@@ -259,15 +259,11 @@ class VMProtectHandler:
 
     def _sigma0(self, value: int) -> int:
         """SHA-256 sigma0 function."""
-        return (
-            ((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)
-        ) & 0xFFFFFFFF
+        return (((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)) & 0xFFFFFFFF
 
     def _sigma1(self, value: int) -> int:
         """SHA-256 sigma1 function."""
-        return (
-            ((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)
-        ) & 0xFFFFFFFF
+        return (((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)) & 0xFFFFFFFF
 
     def _decrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
         """Decrypt data using key schedule."""
@@ -683,9 +679,7 @@ class VMAnalyzer:
 
         return entropy
 
-    def find_vm_entry_points(
-        self, binary_data: bytes, protection_type: ProtectionType
-    ) -> list[int]:
+    def find_vm_entry_points(self, binary_data: bytes, protection_type: ProtectionType) -> list[int]:
         """Find VM entry points."""
         entry_points = []
         patterns = self.patterns.get(protection_type, [])
@@ -879,9 +873,7 @@ class VMProtectionUnwrapper:
         finally:
             self.stats["files_processed"] += 1
 
-    def _unwrap_vm_sections(
-        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
-    ) -> list[bytes]:
+    def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> list[bytes]:
         """Unwrap VM sections."""
         unwrapped_sections = []
 
@@ -918,9 +910,7 @@ class VMProtectionUnwrapper:
 
         return unwrapped_sections
 
-    def _extract_encryption_key(
-        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
-    ) -> bytes:
+    def _extract_encryption_key(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> bytes:
         """Extract encryption key from binary."""
         # This is a simplified key extraction
         # Real implementation would use more sophisticated techniques
@@ -950,9 +940,7 @@ class VMProtectionUnwrapper:
         fallback_data = binary_data[entry_point : entry_point + 64]
         return hashlib.sha256(fallback_data).digest()
 
-    def _reconstruct_original_code(
-        self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]
-    ) -> bytes:
+    def _reconstruct_original_code(self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]) -> bytes:
         """Reconstruct original x86 code from VM sections."""
         reconstructed = bytearray()
 

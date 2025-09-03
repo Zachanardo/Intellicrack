@@ -230,9 +230,7 @@ class CPUStatusWidget(QWidget):
         self.processes_table = QTableWidget()
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
-        self.processes_table.horizontalHeader().setSectionResizeMode(
-            1, QHeaderView.ResizeMode.Stretch
-        )
+        self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.processes_table.setMaximumHeight(200)
         processes_layout.addWidget(self.processes_table)
 
@@ -265,7 +263,7 @@ class CPUStatusWidget(QWidget):
 
     def set_refresh_interval(self, interval_ms: int):
         """Set the refresh interval for CPU monitoring."""
-        if hasattr(self, 'monitor_worker'):
+        if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
     def update_cpu_data(self, data: dict[str, Any]):

@@ -531,7 +531,14 @@ const BlockchainLicenseBypass = {
                             });
                         }
                     } catch (e) {
-                        // Not JSON
+                        // Use e to log JSON parsing failures for blockchain license bypass debugging
+                        send({
+                            type: 'debug',
+                            target: 'blockchain_license_bypass',
+                            action: 'json_parse_failed',
+                            body_preview: body.slice(0, 100),
+                            error: e.toString()
+                        });
                     }
                 }
             }

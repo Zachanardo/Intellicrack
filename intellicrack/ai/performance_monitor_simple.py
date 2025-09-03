@@ -82,8 +82,7 @@ class PerformanceMonitor:
                 "avg_duration": sum(durations) / len(durations),
                 "min_duration": min(durations),
                 "max_duration": max(durations),
-                "error_rate": self.error_counts[operation_name]
-                / self.operation_counts[operation_name],
+                "error_rate": self.error_counts[operation_name] / self.operation_counts[operation_name],
                 "total_operations": self.operation_counts[operation_name],
             }
 

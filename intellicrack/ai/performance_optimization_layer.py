@@ -197,9 +197,7 @@ class PerformanceOptimizer:
         ]
 
     @profile_ai_operation("performance_optimization")
-    def optimize_operation(
-        self, operation_id: str, operation_func: Callable, *args, **kwargs
-    ) -> Any:
+    def optimize_operation(self, operation_id: str, operation_func: Callable, *args, **kwargs) -> Any:
         """Optimize execution of an operation."""
         # Check if optimization is cached
         cache_key = self._generate_cache_key(operation_id, args, kwargs)
@@ -232,11 +230,7 @@ class PerformanceOptimizer:
                 operation_type=operation_func.__name__,
                 execution_time=end_time - start_time,
                 memory_usage=(end_memory - start_memory) // (1024 * 1024),  # MB
-                cpu_usage=psutil.cpu_percent()
-                if PSUTIL_AVAILABLE
-                else 0.0
-                if PSUTIL_AVAILABLE
-                else 0.0,
+                cpu_usage=psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0 if PSUTIL_AVAILABLE else 0.0,
                 io_operations=0,  # Would need more detailed tracking
                 resource_bottlenecks=[],
             )
@@ -310,9 +304,7 @@ class PerformanceOptimizer:
         # Default to applying rule for new operations
         return True
 
-    def _apply_optimization_strategy(
-        self, func: Callable, strategy: OptimizationStrategy, parameters: dict[str, Any]
-    ) -> Callable:
+    def _apply_optimization_strategy(self, func: Callable, strategy: OptimizationStrategy, parameters: dict[str, Any]) -> Callable:
         """Apply specific optimization strategy."""
         if strategy == OptimizationStrategy.PARALLEL_EXECUTION:
             return self._wrap_for_parallel_execution(func, parameters)
@@ -414,9 +406,7 @@ class PerformanceOptimizer:
                 for i in range(0, len(items), batch_size):
                     batch = items[i : i + batch_size]
                     batch_result = func(batch, *remaining_args, **kwargs)
-                    results.extend(
-                        batch_result if isinstance(batch_result, list) else [batch_result]
-                    )
+                    results.extend(batch_result if isinstance(batch_result, list) else [batch_result])
 
                 return results
             return func(*args, **kwargs)
@@ -455,9 +445,7 @@ class PerformanceOptimizer:
         return {
             **self.optimization_stats,
             "cache_hit_rate": self.optimization_stats["cache_hits"]
-            / max(
-                1, self.optimization_stats["cache_hits"] + self.optimization_stats["cache_misses"]
-            ),
+            / max(1, self.optimization_stats["cache_hits"] + self.optimization_stats["cache_misses"]),
             "total_profiles": len(self.execution_profiles),
             "active_rules": len([r for r in self.optimization_rules if r.enabled]),
         }
@@ -589,10 +577,7 @@ class ResourceManager:
 
         # Check thread pool capacity
         thread_pool = self.resource_pools[ResourceType.THREADS]
-        if (
-            hasattr(thread_pool, "_threads")
-            and len(thread_pool._threads) >= thread_pool._max_workers
-        ):
+        if hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers:
             return False
 
         return True
@@ -613,11 +598,7 @@ class ResourceManager:
                 },
             )()
         )
-        disk_io = (
-            psutil.disk_io_counters()
-            if PSUTIL_AVAILABLE
-            else type("", (), {"read_bytes": 0, "write_bytes": 0})()
-        )
+        disk_io = psutil.disk_io_counters() if PSUTIL_AVAILABLE else type("", (), {"read_bytes": 0, "write_bytes": 0})()
 
         usage = {
             "cpu_percent": cpu_usage,
@@ -678,18 +659,14 @@ class ParallelExecutor:
         logger.info("Parallel executor initialized")
 
     @profile_ai_operation("parallel_execution")
-    def execute_parallel(
-        self, func: Callable, items: list[Any], max_workers: int = None, *args, **kwargs
-    ) -> list[Any]:
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None, *args, **kwargs) -> list[Any]:
         """Execute function in parallel for list of items."""
         if not items:
             return []
 
         # Determine optimal number of workers
         if max_workers is None:
-            max_workers = min(
-                len(items), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
-            )
+            max_workers = min(len(items), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4)
 
         # Measure sequential baseline (for first few items)
         baseline_items = items[: min(3, len(items))]
@@ -728,9 +705,7 @@ class ParallelExecutor:
         self.execution_stats["parallel_executions"] += 1
         self.execution_stats["total_time_saved"] += time_saved
         self.execution_stats["average_speedup"] = (
-            self.execution_stats["average_speedup"]
-            * (self.execution_stats["parallel_executions"] - 1)
-            + speedup
+            self.execution_stats["average_speedup"] * (self.execution_stats["parallel_executions"] - 1) + speedup
         ) / self.execution_stats["parallel_executions"]
 
         logger.info(f"Parallel execution: {speedup:.2f}x speedup, saved {time_saved:.2f}s")
@@ -738,26 +713,19 @@ class ParallelExecutor:
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(
-        self, operations: list[tuple[Callable, tuple, dict]], max_workers: int = None
-    ) -> list[Any]:
+    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]], max_workers: int = None) -> list[Any]:
         """Execute multiple different operations in parallel."""
         if not operations:
             return []
 
         if max_workers is None:
-            max_workers = min(
-                len(operations), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
-            )
+            max_workers = min(len(operations), psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4)
 
         results = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all operations
-            future_to_operation = {
-                executor.submit(func, *args, **kwargs): (func, args, kwargs)
-                for func, args, kwargs in operations
-            }
+            future_to_operation = {executor.submit(func, *args, **kwargs): (func, args, kwargs) for func, args, kwargs in operations}
 
             # Collect results in order
             for future in concurrent.futures.as_completed(future_to_operation):
@@ -976,9 +944,7 @@ class PerformanceOptimizationLayer:
         """Main optimization entry point."""
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
-    def execute_parallel(
-        self, func: Callable, items: list[Any], max_workers: int = None
-    ) -> list[Any]:
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None) -> list[Any]:
         """Execute function in parallel."""
         return self.parallel_executor.execute_parallel(func, items, max_workers)
 

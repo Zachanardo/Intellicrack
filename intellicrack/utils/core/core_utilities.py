@@ -507,9 +507,7 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> list[dict[str,
     return task_examples[:count]
 
 
-def deep_runtime_monitoring(
-    target_process: str, monitoring_config: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, Any] | None = None) -> dict[str, Any]:
     """Perform deep runtime monitoring of a target process.
 
     This function wraps the implementation in dynamic_analyzer.py

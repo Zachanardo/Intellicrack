@@ -19,16 +19,16 @@ def pytest_sessionstart(session):
     os.environ["DISABLE_AI_WORKERS"] = "1"
     os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
     os.environ["NO_AUTO_START"] = "1"
-    
+
     # Disable resource monitoring during tests
     os.environ["DISABLE_RESOURCE_MONITORING"] = "1"
     os.environ["DISABLE_AUDIT_LOGGING"] = "1"
-    
+
     # Threading environment variables for stability
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
     os.environ["NUMEXPR_NUM_THREADS"] = "1"
-    
+
     # Qt testing environment
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"

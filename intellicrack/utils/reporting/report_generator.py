@@ -148,9 +148,7 @@ def generate_text_report(results: dict[str, Any]) -> str:
         lines.append("VULNERABILITIES")
         lines.append("-" * 40)
         for vulnerability in results["vulnerabilities"]:
-            lines.append(
-                f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}"
-            )
+            lines.append(f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}")
             if "description" in vulnerability:
                 lines.append(f"    {vulnerability['description']}")
         lines.append("")
@@ -226,9 +224,7 @@ def generate_html_report(results: dict[str, Any]) -> str:
         <table class="info-table">
 """)
         for key, value in results["binary_info"].items():
-            html_parts.append(
-                f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>"
-            )
+            html_parts.append(f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>")
         html_parts.append("        </table>\n    </div>")
 
     # Vulnerabilities section
@@ -241,10 +237,10 @@ def generate_html_report(results: dict[str, Any]) -> str:
             severity = vulnerability.get("severity", "info").lower()
             html_parts.append(f'        <div class="vulnerability {severity}">')
             html_parts.append(
-                f'            <strong>[{vulnerability.get("severity", "UNKNOWN")}]</strong> {vulnerability.get("name", "Unknown")}'
+                f"            <strong>[{vulnerability.get('severity', 'UNKNOWN')}]</strong> {vulnerability.get('name', 'Unknown')}"
             )
             if "description" in vulnerability:
-                html_parts.append(f'            <p>{vulnerability["description"]}</p>')
+                html_parts.append(f"            <p>{vulnerability['description']}</p>")
             html_parts.append("        </div>")
         html_parts.append("    </div>")
 
@@ -294,9 +290,7 @@ def export_report(report_data: dict[str, Any], format: str = "pdf") -> str | Non
 
         # Generate filename based on report content
         report_title = report_data.get("title", "intellicrack_report")
-        safe_title = "".join(
-            c for c in report_title if c.isalnum() or c in (" ", "-", "_")
-        ).rstrip()
+        safe_title = "".join(c for c in report_title if c.isalnum() or c in (" ", "-", "_")).rstrip()
         filename = f"{safe_title}_{timestamp}"
 
         if format.lower() == "pdf":
@@ -358,12 +352,8 @@ def _generate_html_report(report_data: dict[str, Any]) -> str:
         metadata = report_data["metadata"]
         html_parts.append("<h2>Report Metadata</h2>")
         html_parts.append(f"<p><strong>Target:</strong> {metadata.get('target', 'Unknown')}</p>")
-        html_parts.append(
-            f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>"
-        )
-        html_parts.append(
-            f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>"
-        )
+        html_parts.append(f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>")
+        html_parts.append(f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>")
 
     # Executive Summary
     if "summary" in report_data:
@@ -377,14 +367,10 @@ def _generate_html_report(report_data: dict[str, Any]) -> str:
             severity = finding.get("severity", "low").lower()
             html_parts.append(f"<div class='finding {severity}'>")
             html_parts.append(f"<h3>{finding.get('title', 'Finding')}</h3>")
-            html_parts.append(
-                f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>"
-            )
+            html_parts.append(f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>")
             html_parts.append(f"<p>{finding.get('description', 'No description')}</p>")
             if "recommendation" in finding:
-                html_parts.append(
-                    f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>"
-                )
+                html_parts.append(f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>")
             html_parts.append("</div>")
 
     html_parts.append("</body></html>")

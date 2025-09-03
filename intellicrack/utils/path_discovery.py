@@ -299,9 +299,7 @@ def get_common_installation_paths() -> dict[str, list[str]]:
                 "home": [
                     os.path.expanduser("~/bin"),
                     os.path.expanduser("~/tools"),
-                    os.path.expanduser("~/Applications")
-                    if system == "darwin"
-                    else os.path.expanduser("~/.local/bin"),
+                    os.path.expanduser("~/Applications") if system == "darwin" else os.path.expanduser("~/.local/bin"),
                 ],
             }
         )
@@ -362,9 +360,7 @@ def find_python_installations() -> list[dict[str, str]]:
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [path, "--version"], check=False, capture_output=True, text=True, timeout=5
                     )
-                    version = (
-                        result.stdout.strip().split()[-1] if result.returncode == 0 else "unknown"
-                    )
+                    version = result.stdout.strip().split()[-1] if result.returncode == 0 else "unknown"
 
                     installation = {
                         "path": os.path.abspath(path),

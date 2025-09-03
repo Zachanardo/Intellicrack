@@ -18,6 +18,7 @@ Common certificate generation utilities.
 
 This module consolidates certificate creation patterns.
 """
+
 import datetime
 import logging
 

@@ -54,9 +54,7 @@ sys.path.insert(0, project_root)
 class AITerminalChat:
     """Terminal-based AI chat interface with rich formatting."""
 
-    def __init__(
-        self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None
-    ):
+    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
         """Initialize AI chat interface.
 
         Args:
@@ -102,24 +100,27 @@ class AITerminalChat:
         try:
             # Initialize LLM configuration manager
             from intellicrack.ai.llm_config_manager import LLMConfigManager
+
             self.llm_manager = LLMConfigManager()
 
             # Initialize AI orchestrator for complex tasks
             from intellicrack.ai.orchestrator import AIOrchestrator
+
             self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
 
             # Try to initialize the coordination layer as primary backend
             try:
                 from intellicrack.ai.coordination_layer import CoordinationLayer
+
                 self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
             except ImportError:
                 # Use orchestrator as fallback
                 self.ai_backend = self.orchestrator
 
             # Verify backend functionality
-            if hasattr(self.ai_backend, 'health_check'):
+            if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
-                if not health_status.get('healthy', False):
+                if not health_status.get("healthy", False):
                     raise Exception(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             if self.console:
@@ -133,6 +134,7 @@ class AITerminalChat:
             # Initialize minimal AI tools as final fallback
             try:
                 from intellicrack.ai.ai_tools import AIAssistant
+
                 self.ai_backend = AIAssistant()
 
                 if self.console:
@@ -270,9 +272,7 @@ class AITerminalChat:
 
             # Check if response contains code and prepare syntax highlighting
             if "```" in response:
-                progress.update(
-                    thinking_task, advance=15, description="[yellow]Formatting code blocks..."
-                )
+                progress.update(thinking_task, advance=15, description="[yellow]Formatting code blocks...")
 
             progress.update(thinking_task, advance=10, description="[green]Finalizing response...")
 
@@ -329,7 +329,7 @@ class AITerminalChat:
             enriched_context = self._prepare_enriched_context(user_input, context)
 
             # Try using the primary AI backend (orchestrator/coordination layer)
-            if hasattr(self.ai_backend, 'chat_with_context'):
+            if hasattr(self.ai_backend, "chat_with_context"):
                 response = self.ai_backend.chat_with_context(
                     user_input=user_input,
                     context=enriched_context,
@@ -341,7 +341,7 @@ class AITerminalChat:
                 return str(response)
 
             # Try using analyze_with_llm method
-            elif hasattr(self.ai_backend, 'analyze_with_llm'):
+            elif hasattr(self.ai_backend, "analyze_with_llm"):
                 response = self.ai_backend.analyze_with_llm(
                     user_input,
                     context=enriched_context,
@@ -353,7 +353,7 @@ class AITerminalChat:
                 return str(response)
 
             # Try using ask_question method (AIAssistant fallback)
-            elif hasattr(self.ai_backend, 'ask_question'):
+            elif hasattr(self.ai_backend, "ask_question"):
                 # Build contextual question with binary and analysis info
                 contextual_question = user_input
                 if self.binary_path:
@@ -361,31 +361,22 @@ class AITerminalChat:
 
                 if self.analysis_results:
                     # Add key analysis findings to context
-                    vuln_count = len(
-                        self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
-                    )
+                    vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
                     if vuln_count > 0:
-                        contextual_question = (
-                            f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
-                        )
+                        contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
 
                 response = self.ai_backend.ask_question(contextual_question)
                 return str(response)
 
             # Try generic query method
-            elif hasattr(self.ai_backend, 'query'):
-                response = self.ai_backend.query(
-                    prompt=user_input,
-                    context=enriched_context
-                )
+            elif hasattr(self.ai_backend, "query"):
+                response = self.ai_backend.query(prompt=user_input, context=enriched_context)
                 return str(response)
 
             # Direct LLM manager usage as final attempt
             elif self.llm_manager:
                 response = self.llm_manager.generate_response(
-                    prompt=user_input,
-                    context=enriched_context.get("binary_analysis", {}),
-                    max_tokens=1500
+                    prompt=user_input, context=enriched_context.get("binary_analysis", {}), max_tokens=1500
                 )
 
                 if isinstance(response, dict):
@@ -402,7 +393,7 @@ class AITerminalChat:
                     fallback_response = self.llm_manager.generate_response(
                         prompt=f"Binary Analysis Chat - User Question: {user_input}",
                         context={"error": str(e), "fallback": True},
-                        max_tokens=800
+                        max_tokens=800,
                     )
 
                     if isinstance(fallback_response, dict):
@@ -427,7 +418,7 @@ class AITerminalChat:
                 "binary_path": self.binary_path,
                 "file_type": self.analysis_results.get("file_type", "Unknown"),
                 "architecture": self.analysis_results.get("architecture", "Unknown"),
-                "size": self.analysis_results.get("size", 0)
+                "size": self.analysis_results.get("size", 0),
             }
 
             # Add security analysis summary
@@ -447,7 +438,7 @@ class AITerminalChat:
                     "total_vulnerabilities": len(vuln_list),
                     "severity_breakdown": severity_counts,
                     "has_critical": severity_counts.get("critical", 0) > 0,
-                    "has_high": severity_counts.get("high", 0) > 0
+                    "has_high": severity_counts.get("high", 0) > 0,
                 }
 
             # Add protection status
@@ -460,7 +451,7 @@ class AITerminalChat:
                     enriched_context["protection_analysis"] = {
                         "enabled_protections": enabled_protections,
                         "disabled_protections": disabled_protections,
-                        "protection_score": len(enabled_protections) / len(protections) if protections else 0
+                        "protection_score": len(enabled_protections) / len(protections) if protections else 0,
                     }
 
             # Add interesting strings context
@@ -470,14 +461,15 @@ class AITerminalChat:
                     # Identify potentially interesting strings
                     interesting_keywords = ["password", "key", "license", "admin", "secret", "token", "api"]
                     interesting_strings = [
-                        s for s in strings[:100]  # Limit to first 100 strings
+                        s
+                        for s in strings[:100]  # Limit to first 100 strings
                         if any(keyword in s.lower() for keyword in interesting_keywords)
                     ]
 
                     enriched_context["string_analysis"] = {
                         "total_strings": len(strings),
                         "interesting_strings_found": len(interesting_strings),
-                        "sample_interesting": interesting_strings[:5]  # First 5 interesting strings
+                        "sample_interesting": interesting_strings[:5],  # First 5 interesting strings
                     }
 
         # Add conversation context
@@ -496,7 +488,7 @@ class AITerminalChat:
             enriched_context["conversation_context"] = {
                 "recent_topics": list(set(recent_topics)),
                 "conversation_length": len(self.conversation_history),
-                "user_expertise_level": self._infer_user_expertise()
+                "user_expertise_level": self._infer_user_expertise(),
             }
 
         return enriched_context
@@ -522,7 +514,6 @@ class AITerminalChat:
         else:
             return "beginner"
 
-
     def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
         context = {
@@ -536,18 +527,14 @@ class AITerminalChat:
             context["binary_info"] = {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path)
-                if os.path.exists(self.binary_path)
-                else 0,
+                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
             }
 
         if self.analysis_results:
             # Summarize analysis results for context
             context["analysis_summary"] = {
                 "categories": list(self.analysis_results.keys()),
-                "vulnerability_count": len(
-                    self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
-                ),
+                "vulnerability_count": len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])),
                 "string_count": len(self.analysis_results.get("strings", [])),
                 "has_protections": "protections" in self.analysis_results,
             }
@@ -656,9 +643,7 @@ class AITerminalChat:
 
         if "vulnerabilities" in self.analysis_results:
             vuln_data = self.analysis_results["vulnerabilities"]
-            vuln_count = (
-                len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
-            )
+            vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
             panels.append(
                 Panel(
                     f"[red]{vuln_count}[/red] vulnerabilities found",
@@ -679,9 +664,7 @@ class AITerminalChat:
 
         if "protections" in self.analysis_results:
             protection_data = self.analysis_results["protections"]
-            protection_count = (
-                len(protection_data) if isinstance(protection_data, (list, dict)) else 1
-            )
+            protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 1
             panels.append(
                 Panel(
                     f"[yellow]{protection_count}[/yellow] protections detected",
@@ -798,7 +781,7 @@ class AITerminalChat:
             "metadata": {
                 "source": "analysis_context",
                 "results_included": bool(self.analysis_results),
-            }
+            },
         }
 
         self.conversation_history.append(response)
@@ -849,7 +832,7 @@ class AITerminalChat:
                             status = " [green](current)[/green]"
 
                         # Check backend configuration status
-                        if self.llm_manager and hasattr(self.llm_manager, 'is_backend_configured'):
+                        if self.llm_manager and hasattr(self.llm_manager, "is_backend_configured"):
                             if self.llm_manager.is_backend_configured(backend):
                                 status += " [blue](configured)[/blue]"
                             else:
@@ -884,6 +867,7 @@ class AITerminalChat:
                 else:
                     # Reinitialize LLM manager if not available
                     from intellicrack.ai.llm_config_manager import LLMConfigManager
+
                     self.llm_manager = LLMConfigManager()
                     success = self.llm_manager.switch_backend(backend_name)
 
@@ -924,20 +908,22 @@ class AITerminalChat:
         try:
             # Reinitialize orchestrator with new LLM manager
             from intellicrack.ai.orchestrator import AIOrchestrator
+
             self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
 
             # Try to reinitialize coordination layer
             try:
                 from intellicrack.ai.coordination_layer import CoordinationLayer
+
                 self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
             except ImportError:
                 # Use orchestrator as backend
                 self.ai_backend = self.orchestrator
 
             # Verify new backend functionality
-            if hasattr(self.ai_backend, 'health_check'):
+            if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
-                if not health_status.get('healthy', False):
+                if not health_status.get("healthy", False):
                     raise Exception(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             if self.console:
@@ -951,6 +937,7 @@ class AITerminalChat:
             # Fall back to AIAssistant if available
             try:
                 from intellicrack.ai.ai_tools import AIAssistant
+
                 self.ai_backend = AIAssistant()
 
                 if self.console:

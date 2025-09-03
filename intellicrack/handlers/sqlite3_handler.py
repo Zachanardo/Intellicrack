@@ -98,12 +98,12 @@ except ImportError as e:
 
             # Parse columns for constraints
             for col_name, _col_type, constraints in columns:
-                if 'PRIMARY KEY' in constraints:
+                if "PRIMARY KEY" in constraints:
                     self.primary_key = col_name
-                if 'UNIQUE' in constraints:
-                    self.constraints.append(('UNIQUE', col_name))
-                if 'NOT NULL' in constraints:
-                    self.constraints.append(('NOT NULL', col_name))
+                if "UNIQUE" in constraints:
+                    self.constraints.append(("UNIQUE", col_name))
+                if "NOT NULL" in constraints:
+                    self.constraints.append(("NOT NULL", col_name))
 
         def insert(self, values):
             """Insert row into table."""
@@ -116,25 +116,25 @@ except ImportError as e:
                     value = None
 
                 # Check NOT NULL
-                if value is None and ('NOT NULL', col_name) in self.constraints:
+                if value is None and ("NOT NULL", col_name) in self.constraints:
                     raise IntegrityError(f"NOT NULL constraint failed: {col_name}")
 
                 # Type conversion
                 if value is not None:
-                    if col_type == 'INTEGER':
-                        value = int(value) if value != '' else None
-                    elif col_type == 'REAL':
-                        value = float(value) if value != '' else None
-                    elif col_type == 'TEXT':
+                    if col_type == "INTEGER":
+                        value = int(value) if value != "" else None
+                    elif col_type == "REAL":
+                        value = float(value) if value != "" else None
+                    elif col_type == "TEXT":
                         value = str(value)
-                    elif col_type == 'BLOB':
+                    elif col_type == "BLOB":
                         value = bytes(value) if not isinstance(value, bytes) else value
 
                 row[col_name] = value
 
             # Check UNIQUE constraints
             for constraint_type, col_name in self.constraints:
-                if constraint_type == 'UNIQUE' and row[col_name] is not None:
+                if constraint_type == "UNIQUE" and row[col_name] is not None:
                     for existing_row in self.rows:
                         if existing_row[col_name] == row[col_name]:
                             raise IntegrityError(f"UNIQUE constraint failed: {col_name}")
@@ -159,7 +159,7 @@ except ImportError as e:
                         continue
 
                 # Select columns
-                if columns and columns != ['*']:
+                if columns and columns != ["*"]:
                     result_row = tuple(row.get(col) for col in columns)
                 else:
                     result_row = tuple(row.values())
@@ -170,8 +170,8 @@ except ImportError as e:
             if order_by:
                 col_name, direction = order_by
                 col_idx = self._get_column_index(col_name)
-                reverse = direction == 'DESC'
-                result_rows.sort(key=lambda x: x[col_idx] if x[col_idx] is not None else '', reverse=reverse)
+                reverse = direction == "DESC"
+                result_rows.sort(key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse)
 
             # Apply LIMIT
             if limit:
@@ -217,28 +217,28 @@ except ImportError as e:
             col_name, operator, value = where
             row_value = row.get(col_name)
 
-            if operator == '=':
+            if operator == "=":
                 return row_value == value
-            elif operator == '!=':
+            elif operator == "!=":
                 return row_value != value
-            elif operator == '>':
+            elif operator == ">":
                 return row_value > value if row_value is not None else False
-            elif operator == '<':
+            elif operator == "<":
                 return row_value < value if row_value is not None else False
-            elif operator == '>=':
+            elif operator == ">=":
                 return row_value >= value if row_value is not None else False
-            elif operator == '<=':
+            elif operator == "<=":
                 return row_value <= value if row_value is not None else False
-            elif operator == 'LIKE':
+            elif operator == "LIKE":
                 if row_value is None:
                     return False
-                pattern = value.replace('%', '.*').replace('_', '.')
+                pattern = value.replace("%", ".*").replace("_", ".")
                 return bool(re.match(pattern, str(row_value)))
-            elif operator == 'IN':
+            elif operator == "IN":
                 return row_value in value
-            elif operator == 'IS':
+            elif operator == "IS":
                 return row_value is value
-            elif operator == 'IS NOT':
+            elif operator == "IS NOT":
                 return row_value is not value
 
             return False
@@ -253,7 +253,7 @@ except ImportError as e:
     class FallbackDatabase:
         """In-memory database implementation."""
 
-        def __init__(self, path=':memory:'):
+        def __init__(self, path=":memory:"):
             """Initialize database."""
             self.path = path
             self.tables = {}
@@ -262,7 +262,7 @@ except ImportError as e:
             self.in_transaction = False
 
             # Load from file if not in-memory
-            if path != ':memory:' and os.path.exists(path):
+            if path != ":memory:" and os.path.exists(path):
                 self._load_from_file()
 
         def create_table(self, name, columns):
@@ -285,27 +285,27 @@ except ImportError as e:
             sql = sql.strip()
             sql_upper = sql.upper()
 
-            if sql_upper.startswith('CREATE TABLE'):
+            if sql_upper.startswith("CREATE TABLE"):
                 return self._execute_create_table(sql)
-            elif sql_upper.startswith('DROP TABLE'):
+            elif sql_upper.startswith("DROP TABLE"):
                 return self._execute_drop_table(sql)
-            elif sql_upper.startswith('INSERT INTO'):
+            elif sql_upper.startswith("INSERT INTO"):
                 return self._execute_insert(sql, params)
-            elif sql_upper.startswith('SELECT'):
+            elif sql_upper.startswith("SELECT"):
                 return self._execute_select(sql, params)
-            elif sql_upper.startswith('UPDATE'):
+            elif sql_upper.startswith("UPDATE"):
                 return self._execute_update(sql, params)
-            elif sql_upper.startswith('DELETE'):
+            elif sql_upper.startswith("DELETE"):
                 return self._execute_delete(sql, params)
-            elif sql_upper.startswith('BEGIN'):
+            elif sql_upper.startswith("BEGIN"):
                 self.in_transaction = True
                 self.transactions = []
                 return None
-            elif sql_upper.startswith('COMMIT'):
+            elif sql_upper.startswith("COMMIT"):
                 self.in_transaction = False
                 self._save_to_file()
                 return None
-            elif sql_upper.startswith('ROLLBACK'):
+            elif sql_upper.startswith("ROLLBACK"):
                 self.in_transaction = False
                 self.transactions.clear()
                 return None
@@ -315,7 +315,7 @@ except ImportError as e:
         def _execute_create_table(self, sql):
             """Execute CREATE TABLE statement."""
             # Parse table name and columns
-            match = re.match(r'CREATE TABLE\s+(\w+)\s*\((.*)\)', sql, re.IGNORECASE | re.DOTALL)
+            match = re.match(r"CREATE TABLE\s+(\w+)\s*\((.*)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
                 raise ProgrammingError(f"Invalid CREATE TABLE syntax: {sql}")
 
@@ -324,13 +324,13 @@ except ImportError as e:
 
             # Parse columns
             columns = []
-            for col_def in columns_str.split(','):
+            for col_def in columns_str.split(","):
                 col_def = col_def.strip()
                 parts = col_def.split()
                 if len(parts) >= 2:
                     col_name = parts[0]
                     col_type = parts[1]
-                    constraints = ' '.join(parts[2:])
+                    constraints = " ".join(parts[2:])
                     columns.append((col_name, col_type, constraints))
 
             self.create_table(table_name, columns)
@@ -338,7 +338,7 @@ except ImportError as e:
 
         def _execute_drop_table(self, sql):
             """Execute DROP TABLE statement."""
-            match = re.match(r'DROP TABLE\s+(\w+)', sql, re.IGNORECASE)
+            match = re.match(r"DROP TABLE\s+(\w+)", sql, re.IGNORECASE)
             if not match:
                 raise ProgrammingError(f"Invalid DROP TABLE syntax: {sql}")
 
@@ -348,7 +348,7 @@ except ImportError as e:
 
         def _execute_insert(self, sql, params):
             """Execute INSERT statement."""
-            match = re.match(r'INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)', sql, re.IGNORECASE | re.DOTALL)
+            match = re.match(r"INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
                 raise ProgrammingError(f"Invalid INSERT syntax: {sql}")
 
@@ -365,13 +365,13 @@ except ImportError as e:
                 values = params
             else:
                 # Parse literal values
-                for val in values_str.split(','):
+                for val in values_str.split(","):
                     val = val.strip()
                     if val.startswith("'") and val.endswith("'"):
                         values.append(val[1:-1])
-                    elif val.upper() == 'NULL':
+                    elif val.upper() == "NULL":
                         values.append(None)
-                    elif '.' in val:
+                    elif "." in val:
                         values.append(float(val))
                     else:
                         try:
@@ -386,8 +386,9 @@ except ImportError as e:
             """Execute SELECT statement."""
             # Simplified SELECT parsing
             match = re.match(
-                r'SELECT\s+(.*?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?(?:\s+ORDER BY\s+(.*?))?(?:\s+LIMIT\s+(\d+))?',
-                sql, re.IGNORECASE | re.DOTALL
+                r"SELECT\s+(.*?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?(?:\s+ORDER BY\s+(.*?))?(?:\s+LIMIT\s+(\d+))?",
+                sql,
+                re.IGNORECASE | re.DOTALL,
             )
 
             if not match:
@@ -403,27 +404,27 @@ except ImportError as e:
                 raise OperationalError(f"no such table: {table_name}")
 
             # Parse columns
-            if columns_str.strip() == '*':
-                columns = ['*']
+            if columns_str.strip() == "*":
+                columns = ["*"]
             else:
-                columns = [col.strip() for col in columns_str.split(',')]
+                columns = [col.strip() for col in columns_str.split(",")]
 
             # Parse WHERE clause
             where = None
             if where_str:
                 # Simple WHERE parsing (column operator value)
-                match = re.match(r'(\w+)\s*(=|!=|>|<|>=|<=|LIKE|IN|IS|IS NOT)\s*(.*)', where_str, re.IGNORECASE)
+                match = re.match(r"(\w+)\s*(=|!=|>|<|>=|<=|LIKE|IN|IS|IS NOT)\s*(.*)", where_str, re.IGNORECASE)
                 if match:
                     col_name = match.group(1)
                     operator = match.group(2).upper()
                     value_str = match.group(3)
 
                     # Parse value
-                    if params and '?' in value_str:
+                    if params and "?" in value_str:
                         value = params[0]
                     elif value_str.startswith("'") and value_str.endswith("'"):
                         value = value_str[1:-1]
-                    elif value_str.upper() == 'NULL':
+                    elif value_str.upper() == "NULL":
                         value = None
                     else:
                         try:
@@ -441,7 +442,7 @@ except ImportError as e:
             if order_str:
                 parts = order_str.split()
                 col_name = parts[0]
-                direction = parts[1] if len(parts) > 1 else 'ASC'
+                direction = parts[1] if len(parts) > 1 else "ASC"
                 order_by = (col_name, direction.upper())
 
             # Parse LIMIT
@@ -451,10 +452,7 @@ except ImportError as e:
 
         def _execute_update(self, sql, params):
             """Execute UPDATE statement."""
-            match = re.match(
-                r'UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?',
-                sql, re.IGNORECASE | re.DOTALL
-            )
+            match = re.match(r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
                 raise ProgrammingError(f"Invalid UPDATE syntax: {sql}")
@@ -468,12 +466,12 @@ except ImportError as e:
 
             # Parse SET clause
             set_values = {}
-            for assignment in set_str.split(','):
-                col_name, value_str = assignment.split('=')
+            for assignment in set_str.split(","):
+                col_name, value_str = assignment.split("=")
                 col_name = col_name.strip()
                 value_str = value_str.strip()
 
-                if params and '?' in value_str:
+                if params and "?" in value_str:
                     value = params.pop(0)
                 elif value_str.startswith("'") and value_str.endswith("'"):
                     value = value_str[1:-1]
@@ -495,10 +493,7 @@ except ImportError as e:
 
         def _execute_delete(self, sql, params):
             """Execute DELETE statement."""
-            match = re.match(
-                r'DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?',
-                sql, re.IGNORECASE | re.DOTALL
-            )
+            match = re.match(r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
                 raise ProgrammingError(f"Invalid DELETE syntax: {sql}")
@@ -519,26 +514,23 @@ except ImportError as e:
 
         def _save_to_file(self):
             """Save database to file."""
-            if self.path != ':memory:':
+            if self.path != ":memory:":
                 try:
                     # Serialize tables and views to JSON-safe format
                     tables_data = {}
                     for name, table in self.tables.items():
                         tables_data[name] = {
-                            'name': table.name,
-                            'columns': table.columns,
-                            'rows': table.rows,
-                            'primary_key': table.primary_key,
-                            'indexes': table.indexes,
-                            'constraints': table.constraints
+                            "name": table.name,
+                            "columns": table.columns,
+                            "rows": table.rows,
+                            "primary_key": table.primary_key,
+                            "indexes": table.indexes,
+                            "constraints": table.constraints,
                         }
 
-                    serialized_data = {
-                        'tables': tables_data,
-                        'views': self.views
-                    }
+                    serialized_data = {"tables": tables_data, "views": self.views}
 
-                    with open(self.path, 'w', encoding='utf-8') as f:
+                    with open(self.path, "w", encoding="utf-8") as f:
                         json.dump(serialized_data, f, indent=2)
                 except Exception as e:
                     logger.error("Failed to save database: %s", e)
@@ -546,20 +538,20 @@ except ImportError as e:
         def _load_from_file(self):
             """Load database from file."""
             try:
-                with open(self.path, 'r', encoding='utf-8') as f:
+                with open(self.path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                     # Reconstruct tables
                     self.tables = {}
-                    for name, table_data in data.get('tables', {}).items():
-                        table = FallbackTable(name, table_data['columns'])
-                        table.rows = table_data.get('rows', [])
-                        table.primary_key = table_data.get('primary_key')
-                        table.indexes = table_data.get('indexes', {})
-                        table.constraints = table_data.get('constraints', [])
+                    for name, table_data in data.get("tables", {}).items():
+                        table = FallbackTable(name, table_data["columns"])
+                        table.rows = table_data.get("rows", [])
+                        table.primary_key = table_data.get("primary_key")
+                        table.indexes = table_data.get("indexes", {})
+                        table.constraints = table_data.get("constraints", [])
                         self.tables[name] = table
 
-                    self.views = data.get('views', {})
+                    self.views = data.get("views", {})
             except Exception as e:
                 logger.error("Failed to load database: %s", e)
 
@@ -589,9 +581,9 @@ except ImportError as e:
                     self.rowcount = -1
 
                 # Set description for SELECT
-                if sql.strip().upper().startswith('SELECT'):
+                if sql.strip().upper().startswith("SELECT"):
                     # Simple description
-                    self.description = [('column',) for _ in range(len(self._results[0]) if self._results else 0)]
+                    self.description = [("column",) for _ in range(len(self._results[0]) if self._results else 0)]
 
                 return self
 
@@ -614,7 +606,7 @@ except ImportError as e:
 
         def fetchall(self):
             """Fetch all remaining rows."""
-            rows = self._results[self._result_index:]
+            rows = self._results[self._result_index :]
             self._result_index = len(self._results)
             return rows
 
@@ -646,7 +638,7 @@ except ImportError as e:
     class Connection:
         """Database connection implementation."""
 
-        def __init__(self, database=':memory:'):
+        def __init__(self, database=":memory:"):
             """Initialize connection."""
             self.database = database
             self._db = FallbackDatabase(database)
@@ -669,15 +661,15 @@ except ImportError as e:
 
         def commit(self):
             """Commit transaction."""
-            self._db.execute_sql('COMMIT')
+            self._db.execute_sql("COMMIT")
 
         def rollback(self):
             """Rollback transaction."""
-            self._db.execute_sql('ROLLBACK')
+            self._db.execute_sql("ROLLBACK")
 
         def close(self):
             """Close connection."""
-            if self._db.path != ':memory:':
+            if self._db.path != ":memory:":
                 self._db._save_to_file()
 
         def __enter__(self):
@@ -715,7 +707,7 @@ except ImportError as e:
             """Get column names."""
             return [desc[0] for desc in self.cursor.description or []]
 
-    def connect(database=':memory:', **kwargs):
+    def connect(database=":memory:", **kwargs):
         """Connect to database."""
         return Connection(database)
 
@@ -765,15 +757,26 @@ except ImportError as e:
 # Export all sqlite3 objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_SQLITE3", "HAS_SQLITE", "SQLITE3_VERSION",
+    "HAS_SQLITE3",
+    "HAS_SQLITE",
+    "SQLITE3_VERSION",
     # Main module
     "sqlite3",
     # Functions
-    "connect", "register_adapter", "register_converter",
+    "connect",
+    "register_adapter",
+    "register_converter",
     # Classes
-    "Connection", "Cursor", "Row",
+    "Connection",
+    "Cursor",
+    "Row",
     # Exceptions
-    "Error", "DatabaseError", "IntegrityError", "OperationalError", "ProgrammingError",
+    "Error",
+    "DatabaseError",
+    "IntegrityError",
+    "OperationalError",
+    "ProgrammingError",
     # Constants
-    "PARSE_DECLTYPES", "PARSE_COLNAMES",
+    "PARSE_DECLTYPES",
+    "PARSE_COLNAMES",
 ]

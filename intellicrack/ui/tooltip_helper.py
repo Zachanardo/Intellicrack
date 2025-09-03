@@ -219,9 +219,7 @@ def get_tooltip_definitions() -> dict[str, str]:
         ),
         # Memory Analysis
         "Memory Optimization Level": (
-            "Controls memory usage vs performance tradeoff.\n"
-            "Low: Fast but uses more RAM\n"
-            "High: Slower but works with limited memory"
+            "Controls memory usage vs performance tradeoff.\nLow: Fast but uses more RAM\nHigh: Slower but works with limited memory"
         ),
         # General Operations
         "Open Binary": (
@@ -440,22 +438,14 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
             "and advanced configuration options."
         ),
         # Common UI element tooltips
-        "Binary Path:": (
-            "Full path to the target binary file for analysis.\\n"
-            "Supports PE (.exe/.dll), ELF, and Mach-O formats."
-        ),
+        "Binary Path:": ("Full path to the target binary file for analysis.\\nSupports PE (.exe/.dll), ELF, and Mach-O formats."),
         "Target Binary:": (
-            "Select the executable file you want to analyze.\\n"
-            "The binary will be loaded but not executed until you choose."
+            "Select the executable file you want to analyze.\\nThe binary will be loaded but not executed until you choose."
         ),
         "Output Directory:": (
-            "Where analysis results and generated files will be saved.\\n"
-            "Include reports, patches, extracted data, and logs."
+            "Where analysis results and generated files will be saved.\\nInclude reports, patches, extracted data, and logs."
         ),
-        "API Key:": (
-            "Authentication key for AI service access.\\n"
-            "Required for OpenAI, Anthropic, or other AI providers."
-        ),
+        "API Key:": ("Authentication key for AI service access.\\nRequired for OpenAI, Anthropic, or other AI providers."),
         "Temperature:": (
             "Controls AI response creativity and randomness.\\n"
             "Lower values (0.1-0.3): More focused and deterministic\\n"
@@ -496,38 +486,18 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
         "opacity_slider": "Adjust window transparency",
         "icon_size_combo": "Choose UI icon size",
         # Placeholder text tooltips
-        "Select a binary file for analysis...": (
-            "Click Browse to choose an executable file.\\n" "Supported formats: PE, ELF, Mach-O"
-        ),
-        "Enter API key...": (
-            "Paste your AI service API key here.\\n" "Keep this secret and secure!"
-        ),
-        "Search files...": (
-            "Enter filename or pattern to search.\\n" "Supports wildcards like *.exe or *crack*"
-        ),
-        "Enter target address...": (
-            "Memory address in hexadecimal format.\\n" "Example: 0x401000 or 401000"
-        ),
-        "Enter shellcode...": (
-            "Raw shellcode bytes in hex format.\\n" "Example: \\x90\\x90\\xCC or 909090CC"
-        ),
+        "Select a binary file for analysis...": ("Click Browse to choose an executable file.\\nSupported formats: PE, ELF, Mach-O"),
+        "Enter API key...": ("Paste your AI service API key here.\\nKeep this secret and secure!"),
+        "Search files...": ("Enter filename or pattern to search.\\nSupports wildcards like *.exe or *crack*"),
+        "Enter target address...": ("Memory address in hexadecimal format.\\nExample: 0x401000 or 401000"),
+        "Enter shellcode...": ("Raw shellcode bytes in hex format.\\nExample: \\x90\\x90\\xCC or 909090CC"),
         # Analysis specific tooltips
         "Include Strings": (
-            "Extract and include readable text strings from the binary.\\n"
-            "Helps identify: URLs, file paths, error messages, debug info."
+            "Extract and include readable text strings from the binary.\\nHelps identify: URLs, file paths, error messages, debug info."
         ),
-        "Include Imports": (
-            "Analyze imported functions and libraries.\\n"
-            "Shows what Windows APIs or system functions are used."
-        ),
-        "Include Exports": (
-            "Analyze exported functions (for DLLs).\\n"
-            "Shows what functions this library provides to other programs."
-        ),
-        "Include Disassembly": (
-            "Include assembly code in the analysis.\\n"
-            "⚠️ Can produce very large outputs for big binaries."
-        ),
+        "Include Imports": ("Analyze imported functions and libraries.\\nShows what Windows APIs or system functions are used."),
+        "Include Exports": ("Analyze exported functions (for DLLs).\\nShows what functions this library provides to other programs."),
+        "Include Disassembly": ("Include assembly code in the analysis.\\n⚠️ Can produce very large outputs for big binaries."),
         "Enable GPU": (
             "Use GPU acceleration for analysis tasks.\\n"
             "Significantly faster but requires compatible GPU.\\n"
@@ -538,33 +508,13 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
             "Prevents accidental dangerous operations.\\n"
             "Recommended for production environments."
         ),
-        "Auto Analysis": (
-            "Automatically start analysis when binary is selected.\\n"
-            "Convenient but may slow down file browsing."
-        ),
-        "Show Tooltips": (
-            "Display helpful tooltips like this one.\\n" "Disable to reduce visual clutter."
-        ),
-        "Enable Animations": (
-            "Use smooth animations for UI transitions.\\n"
-            "Disable to improve performance on slower systems."
-        ),
-        "Parallel Processing": (
-            "Use multiple CPU cores for analysis tasks.\\n"
-            "Faster analysis but higher resource usage."
-        ),
-        "Auto Cleanup": (
-            "Automatically clean up temporary files and memory.\\n"
-            "Keeps system clean but may slow down repeated tasks."
-        ),
-        "Debug Mode": (
-            "Enable verbose logging and debug features.\\n"
-            "Useful for troubleshooting but slower performance."
-        ),
-        "Experimental Features": (
-            "Enable cutting-edge experimental features.\\n"
-            "⚠️ May be unstable - use at your own risk."
-        ),
+        "Auto Analysis": ("Automatically start analysis when binary is selected.\\nConvenient but may slow down file browsing."),
+        "Show Tooltips": ("Display helpful tooltips like this one.\\nDisable to reduce visual clutter."),
+        "Enable Animations": ("Use smooth animations for UI transitions.\\nDisable to improve performance on slower systems."),
+        "Parallel Processing": ("Use multiple CPU cores for analysis tasks.\\nFaster analysis but higher resource usage."),
+        "Auto Cleanup": ("Automatically clean up temporary files and memory.\\nKeeps system clean but may slow down repeated tasks."),
+        "Debug Mode": ("Enable verbose logging and debug features.\\nUseful for troubleshooting but slower performance."),
+        "Experimental Features": ("Enable cutting-edge experimental features.\\n⚠️ May be unstable - use at your own risk."),
     }
 
 

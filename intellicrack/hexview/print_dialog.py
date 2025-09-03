@@ -72,7 +72,7 @@ class PrintOptionsDialog(QDialog):
         self.selection_check.toggled.connect(self.on_range_changed)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, 'selection_start'):
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
             if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
                 self.selection_check.setEnabled(True)
                 selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
@@ -212,9 +212,7 @@ class PrintOptionsDialog(QDialog):
 
         button_layout.addStretch()
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.print_document)
         button_box.rejected.connect(self.reject)
         button_layout.addWidget(button_box)
@@ -260,7 +258,7 @@ class PrintOptionsDialog(QDialog):
             Tuple of (data, start_offset)
 
         """
-        if not self.hex_viewer or not hasattr(self.hex_viewer, 'file_handler'):
+        if not self.hex_viewer or not hasattr(self.hex_viewer, "file_handler"):
             return (None, 0)
 
         if self.selection_check.isChecked() and self.selection_check.isEnabled():
@@ -387,11 +385,7 @@ class PrintOptionsDialog(QDialog):
                 data_chunk = data[data_start:data_end]
 
                 if data_chunk:
-                    line = self.format_hex_line(
-                        start_offset + data_start,
-                        data_chunk,
-                        bytes_per_row
-                    )
+                    line = self.format_hex_line(start_offset + data_start, data_chunk, bytes_per_row)
                     painter.drawText(content_rect.left(), y_pos, line)
                     y_pos += line_height
 
@@ -418,8 +412,9 @@ class PrintOptionsDialog(QDialog):
 
         # Get filename
         filename = "Untitled"
-        if self.hex_viewer and hasattr(self.hex_viewer.file_handler, 'file_path'):
+        if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
             import os
+
             filename = os.path.basename(self.hex_viewer.file_handler.file_path)
 
         text = text.replace("%filename%", filename)
@@ -528,14 +523,7 @@ class PrintOptionsDialog(QDialog):
                     printer.newPage()
 
                 page_rect = printer.pageRect(QPrinter.Unit.DevicePixel)
-                self.render_page(
-                    painter,
-                    page_rect,
-                    data,
-                    start_offset,
-                    page_num,
-                    total_pages
-                )
+                self.render_page(painter, page_rect, data, start_offset, page_num, total_pages)
 
         finally:
             painter.end()

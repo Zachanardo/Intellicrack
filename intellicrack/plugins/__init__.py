@@ -42,9 +42,7 @@ def load_plugin(plugin_name, plugin_type="custom"):
     """Load a plugin by name and type."""
     try:
         if plugin_type == "custom":
-            module = importlib.import_module(
-                f".custom_modules.{plugin_name}", package="intellicrack.plugins"
-            )
+            module = importlib.import_module(f".custom_modules.{plugin_name}", package="intellicrack.plugins")
             _plugins[plugin_name] = module
             logger.info("Loaded plugin: %s", plugin_name)
             return module
@@ -190,18 +188,14 @@ except ImportError as e:
 
         Does nothing when the actual plugin system cannot be imported.
         """
-        logger.debug(
-            f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}"
-        )
+        logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
 
     def run_ghidra_plugin_from_file(*args, **kwargs):
         """Fallback function for running Ghidra plugins when plugin system is not available.
 
         Does nothing when the actual plugin system cannot be imported.
         """
-        logger.debug(
-            f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}"
-        )
+        logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
 
     def create_sample_plugins(*args, **kwargs):
         """Fallback function for creating sample plugins when plugin system is not available.

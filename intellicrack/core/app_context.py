@@ -208,9 +208,7 @@ class AppContext(QObject):
             project_data = {
                 "name": Path(project_path).stem,
                 "created_at": datetime.now().isoformat(),
-                "binary_path": self._state["current_binary"]["path"]
-                if self._state["current_binary"]
-                else None,
+                "binary_path": self._state["current_binary"]["path"] if self._state["current_binary"] else None,
                 "analysis_results": self._state["analysis_results"],
                 "settings": self._state["settings"],
             }
@@ -325,9 +323,7 @@ class AppContext(QObject):
                 self._state["failed_tasks"] = []
             self._state["failed_tasks"].append(failed_task)
 
-            logger.error(
-                f"Task failed: {task_id} ({task_info.get('description', 'N/A')}) - {error_message}"
-            )
+            logger.error(f"Task failed: {task_id} ({task_info.get('description', 'N/A')}) - {error_message}")
             self.task_failed.emit(task_id, error_message)
 
     def get_active_tasks(self) -> dict:

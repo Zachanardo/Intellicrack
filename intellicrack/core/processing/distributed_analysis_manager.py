@@ -250,9 +250,7 @@ class DistributedAnalysisManager:
         # Run analysis on containers
         for _container in self.containers:
             if _container["status"] == "running":
-                self.logger.info(
-                    f"Running {analysis_type} analysis on container {_container['id']}..."
-                )
+                self.logger.info(f"Running {analysis_type} analysis on container {_container['id']}...")
 
                 try:
                     # Create pre-analysis snapshot
@@ -315,12 +313,8 @@ class DistributedAnalysisManager:
             "vms_analyzed": len(running_vms),
             "containers_analyzed": len(running_containers),
             "total_nodes": len(self.vms) + len(self.containers),
-            "successful_vm_analyses": len(
-                [_r for _r in results["vms"] if _r["status"] == "completed"]
-            ),
-            "successful_container_analyses": len(
-                [_r for _r in results["containers"] if _r["status"] == "completed"]
-            ),
+            "successful_vm_analyses": len([_r for _r in results["vms"] if _r["status"] == "completed"]),
+            "successful_container_analyses": len([_r for _r in results["containers"] if _r["status"] == "completed"]),
             "analysis_type": analysis_type,
         }
 

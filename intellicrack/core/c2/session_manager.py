@@ -51,8 +51,7 @@ def migrate_resource_if_needed(old_path: str, new_path: Path):
     old_path_obj = Path(old_path)
     if old_path_obj.exists() and not new_path.exists():
         logger.warning(
-            f"Legacy path detected. Migrating '{old_path}' to '{new_path}'. "
-            "This is a one-time operation.",
+            f"Legacy path detected. Migrating '{old_path}' to '{new_path}'. This is a one-time operation.",
         )
         try:
             # Ensure parent directory of the new path exists
@@ -287,9 +286,7 @@ class SessionManager:
 
             # Update statistics
             self.stats["total_sessions"] += 1
-            self.stats["active_sessions"] = len(
-                [s for s in self.sessions.values() if s.status == "active"]
-            )
+            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
             # Persist to database
             await self._persist_session(session)
@@ -328,9 +325,7 @@ class SessionManager:
                 self.session_history.append(session.to_dict())
 
                 # Update statistics
-                self.stats["active_sessions"] = len(
-                    [s for s in self.sessions.values() if s.status == "active"]
-                )
+                self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
                 # Persist change
                 await self._persist_session(session)
@@ -360,9 +355,7 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to update session info: {e}")
 
-    async def create_task(
-        self, session_id: str, task_type: str, task_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_task(self, session_id: str, task_type: str, task_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new task for a session."""
         try:
             task_id = str(uuid.uuid4())
@@ -528,9 +521,7 @@ class SessionManager:
         """Get session manager statistics."""
         try:
             # Update active session count
-            self.stats["active_sessions"] = len(
-                [s for s in self.sessions.values() if s.status == "active"]
-            )
+            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
 
             # Add detailed statistics
             detailed_stats = self.stats.copy()
@@ -556,9 +547,7 @@ class SessionManager:
             if not self.sessions:
                 return 0.0
 
-            total_uptime = sum(
-                time.time() - session.created_at for session in self.sessions.values()
-            )
+            total_uptime = sum(time.time() - session.created_at for session in self.sessions.values())
 
             return total_uptime / len(self.sessions)
 
@@ -789,14 +778,8 @@ class SessionManager:
 
             export_data = {
                 "session": session.to_dict(),
-                "tasks": [
-                    dict(zip([col[0] for col in cursor.description], row, strict=False))
-                    for row in task_rows
-                ],
-                "files": [
-                    dict(zip([col[0] for col in cursor.description], row, strict=False))
-                    for row in file_rows
-                ],
+                "tasks": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
+                "files": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
                 "export_time": time.time(),
             }
 

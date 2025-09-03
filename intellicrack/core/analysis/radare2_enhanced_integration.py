@@ -195,9 +195,7 @@ class EnhancedR2Integration:
         # Add performance metrics
         results["performance"] = self.get_performance_stats()
         results["metadata"]["analysis_end"] = time.time()
-        results["metadata"]["total_duration"] = (
-            results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
-        )
+        results["metadata"]["total_duration"] = results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
 
         # Standardize results
         standardized_results = standardize_r2_result(
@@ -216,10 +214,7 @@ class EnhancedR2Integration:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
-            future_to_type = {
-                executor.submit(self._run_single_analysis, analysis_type): analysis_type
-                for analysis_type in analysis_types
-            }
+            future_to_type = {executor.submit(self._run_single_analysis, analysis_type): analysis_type for analysis_type in analysis_types}
 
             # Collect results as they complete
             for future in as_completed(future_to_type, timeout=300):  # 5 minute timeout
@@ -505,15 +500,10 @@ class EnhancedR2Integration:
 
         # Calculate recovery rate
         if stats["errors_handled"] > 0:
-            health["error_health"]["recovery_rate"] = (
-                stats["recoveries_successful"] / stats["errors_handled"]
-            )
+            health["error_health"]["recovery_rate"] = stats["recoveries_successful"] / stats["errors_handled"]
 
         # Determine overall health
-        if (
-            not health["r2pipe_available"]
-            or health["components_available"] < health["total_components"] * 0.5
-        ):
+        if not health["r2pipe_available"] or health["components_available"] < health["total_components"] * 0.5:
             health["overall_health"] = "critical"
         elif health["error_health"]["recovery_rate"] < 0.5:
             health["overall_health"] = "degraded"

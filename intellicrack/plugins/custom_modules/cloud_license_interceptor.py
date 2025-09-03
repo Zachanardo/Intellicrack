@@ -473,9 +473,7 @@ class RequestClassifier:
             ],
         }
 
-    def classify_request(
-        self, request: RequestInfo
-    ) -> tuple[CloudProvider, AuthenticationType, RequestType, float]:
+    def classify_request(self, request: RequestInfo) -> tuple[CloudProvider, AuthenticationType, RequestType, float]:
         """Classify request and return provider, auth type, request type, and confidence."""
         # Detect cloud provider
         provider = self._detect_provider(request.url, request.headers)
@@ -590,9 +588,7 @@ class RequestClassifier:
             return RequestType.TOKEN_REFRESH
 
         # Check for heartbeat patterns (enhanced with body hints)
-        if (
-            "heartbeat" in url_lower or "ping" in url_lower or "health" in url_lower
-        ) or "heartbeat" in body_hints:
+        if ("heartbeat" in url_lower or "ping" in url_lower or "health" in url_lower) or "heartbeat" in body_hints:
             return RequestType.HEARTBEAT
 
         # Check Content-Type for licensing data
@@ -1057,9 +1053,7 @@ class ResponseModifier:
             response_data = json.loads(response_body.decode("utf-8"))
 
             # Generate new tokens
-            access_token = self.auth_manager.generate_license_token(
-                request.provider, request.auth_type
-            )
+            access_token = self.auth_manager.generate_license_token(request.provider, request.auth_type)
             refresh_token = secrets.token_urlsafe(32)
 
             token_data = {
@@ -1215,10 +1209,7 @@ class CacheManager:
                 encoded_data = base64.b64encode(serialized_data).decode("utf-8")
 
                 # Store in SQLite for persistence (if configured)
-                if (
-                    hasattr(self.config, "enable_persistent_cache")
-                    and self.config.enable_persistent_cache
-                ):
+                if hasattr(self.config, "enable_persistent_cache") and self.config.enable_persistent_cache:
                     self._store_in_sqlite(cache_key, encoded_data)
 
             except Exception as e:
@@ -1254,16 +1245,12 @@ class CacheManager:
 
             # Log query parameters for network analysis
             if query_params:
-                self.logger.debug(
-                    f"Network connectivity test for {hostname}:{port} with query params: {list(query_params.keys())}"
-                )
+                self.logger.debug(f"Network connectivity test for {hostname}:{port} with query params: {list(query_params.keys())}")
 
                 # Validate common cloud service parameters
                 for param in ["key", "token", "auth", "license"]:
                     if param in query_params:
-                        self.logger.info(
-                            f"Detected authentication parameter '{param}' in URL - potential license validation endpoint"
-                        )
+                        self.logger.info(f"Detected authentication parameter '{param}' in URL - potential license validation endpoint")
 
             # Use socket to test connectivity
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1275,17 +1262,13 @@ class CacheManager:
             ping_data = struct.pack("!I", int(time.time()))
 
             # Log network diagnostics data
-            self.logger.debug(
-                f"Network diagnostic timestamp: {int(time.time())}, raw ping data: {ping_data.hex()}"
-            )
+            self.logger.debug(f"Network diagnostic timestamp: {int(time.time())}, raw ping data: {ping_data.hex()}")
 
             # Validate network connectivity result
             if result == 0:
                 self.logger.info(f"Successfully connected to {hostname}:{port}")
             else:
-                self.logger.warning(
-                    f"Failed to connect to {hostname}:{port} (error code: {result})"
-                )
+                self.logger.warning(f"Failed to connect to {hostname}:{port} (error code: {result})")
 
             return result == 0
         except Exception as e:
@@ -1517,9 +1500,7 @@ class LocalLicenseServer:
             },
         }
 
-    def _generate_token_response(
-        self, request: RequestInfo, license_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _generate_token_response(self, request: RequestInfo, license_data: dict[str, Any]) -> dict[str, Any]:
         """Generate token refresh response."""
         # Generate new tokens
         access_token = self.auth_manager.generate_license_token(request.provider, request.auth_type)
@@ -1612,9 +1593,7 @@ class CloudLicenseInterceptor:
             )
 
             self.running = True
-            self.logger.info(
-                f"Interceptor started on {self.config.listen_host}:{self.config.listen_port}"
-            )
+            self.logger.info(f"Interceptor started on {self.config.listen_host}:{self.config.listen_port}")
             return True
 
         except Exception as e:
@@ -1647,9 +1626,7 @@ class CloudLicenseInterceptor:
 
         return app
 
-    async def _stealth_middleware(
-        self, request: aiohttp.web.Request, handler: Callable
-    ) -> aiohttp.web.Response:
+    async def _stealth_middleware(self, request: aiohttp.web.Request, handler: Callable) -> aiohttp.web.Response:
         """Middleware for stealth operation."""
         if self.config.stealth_mode:
             # Add realistic delay
@@ -1665,9 +1642,7 @@ class CloudLicenseInterceptor:
 
         return response
 
-    async def _logging_middleware(
-        self, request: aiohttp.web.Request, handler: Callable
-    ) -> aiohttp.web.Response:
+    async def _logging_middleware(self, request: aiohttp.web.Request, handler: Callable) -> aiohttp.web.Response:
         """Middleware for request logging."""
         start_time = time.time()
         response = await handler(request)
@@ -1675,7 +1650,7 @@ class CloudLicenseInterceptor:
 
         # Log request
         self.logger.debug(
-            f"{request.method} {request.url} -> {response.status} " f"({processing_time:.3f}s)",
+            f"{request.method} {request.url} -> {response.status} ({processing_time:.3f}s)",
         )
 
         return response
@@ -1696,9 +1671,7 @@ class CloudLicenseInterceptor:
             )
 
             # Classify request
-            provider, auth_type, request_type, confidence = (
-                self.request_classifier.classify_request(request_info)
-            )
+            provider, auth_type, request_type, confidence = self.request_classifier.classify_request(request_info)
             request_info.provider = provider
             request_info.auth_type = auth_type
             request_info.request_type = request_type
@@ -1731,8 +1704,7 @@ class CloudLicenseInterceptor:
     async def _handle_license_request(self, request: RequestInfo) -> aiohttp.web.Response:
         """Handle license-related request with bypass logic."""
         self.logger.info(
-            f"License request detected: {request.provider.value} "
-            f"{request.request_type.value} (confidence: {request.confidence:.2f})",
+            f"License request detected: {request.provider.value} {request.request_type.value} (confidence: {request.confidence:.2f})",
         )
         try:
             # Try upstream first if not in fallback mode
@@ -1741,9 +1713,7 @@ class CloudLicenseInterceptor:
                     # Forward to upstream and modify response
                     upstream_response = await self._forward_request_upstream(request)
                     if upstream_response:
-                        modified_response = self._modify_upstream_response(
-                            request, upstream_response
-                        )
+                        modified_response = self._modify_upstream_response(request, upstream_response)
 
                         # Cache the response
                         self.cache_manager.store_response(request, modified_response)
@@ -1830,9 +1800,7 @@ class CloudLicenseInterceptor:
             self.logger.warning(f"Upstream request error: {e}")
             return None
 
-    def _modify_upstream_response(
-        self, request: RequestInfo, upstream_response: ResponseInfo
-    ) -> ResponseInfo:
+    def _modify_upstream_response(self, request: RequestInfo, upstream_response: ResponseInfo) -> ResponseInfo:
         """Modify upstream response for bypass."""
         # Use response modifier
         status, headers, body = self.response_modifier.modify_response(
@@ -1902,8 +1870,7 @@ class CloudLicenseInterceptor:
         """Get interceptor statistics."""
         return {
             "running": self.running,
-            "uptime": time.time()
-            - (self.request_log[0].timestamp if self.request_log else time.time()),
+            "uptime": time.time() - (self.request_log[0].timestamp if self.request_log else time.time()),
             "total_requests": len(self.request_log),
             "bypass_stats": dict(self.bypass_stats),
             "cache_stats": {
@@ -1962,8 +1929,8 @@ Cloud License Interceptor v2.0.0
 =================================================
 Listening on: {config.listen_host}:{config.listen_port}
 Cache TTL: {config.cache_ttl}s
-Stealth Mode: {'Enabled' if config.stealth_mode else 'Disabled'}
-Fallback Mode: {'Enabled' if config.fallback_mode else 'Disabled'}
+Stealth Mode: {"Enabled" if config.stealth_mode else "Disabled"}
+Fallback Mode: {"Enabled" if config.fallback_mode else "Disabled"}
 =================================================
 """)
 
@@ -1979,10 +1946,7 @@ Fallback Mode: {'Enabled' if config.fallback_mode else 'Disabled'}
                 # Print stats every 60 seconds
                 if int(time.time()) % 60 == 0:
                     stats = interceptor.get_statistics()
-                    print(
-                        f"Stats: {stats['total_requests']} requests, "
-                        f"{stats['bypass_stats']} bypasses"
-                    )
+                    print(f"Stats: {stats['total_requests']} requests, {stats['bypass_stats']} bypasses")
 
         else:
             print("Failed to start interceptor!")

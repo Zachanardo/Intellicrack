@@ -26,9 +26,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def capture_with_scapy(
-    interface: str = "any", filter_str: str = "", count: int = 100
-) -> dict[str, Any]:
+def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
     """Capture network packets using Scapy for real-time traffic analysis.
 
     Args:
@@ -111,9 +109,7 @@ def capture_with_scapy(
                     if any(keyword in payload.lower() for keyword in license_keywords):
                         packet_info["license_related"] = True
                         if "dst_ip" in packet_info:
-                            license_servers.add(
-                                (packet_info["dst_ip"], packet_info.get("dst_port", 0))
-                            )
+                            license_servers.add((packet_info["dst_ip"], packet_info.get("dst_port", 0)))
 
                         # Extract potential license data
                         packet_info["license_indicators"] = []
@@ -232,9 +228,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                 src = getattr(packet.ip, "src", "unknown")
                 dst = getattr(packet.ip, "dst", "unknown")
                 conv_key = f"{src} -> {dst}"
-                packet_summary["conversations"][conv_key] = (
-                    packet_summary["conversations"].get(conv_key, 0) + 1
-                )
+                packet_summary["conversations"][conv_key] = packet_summary["conversations"].get(conv_key, 0) + 1
 
                 # Check for license server communication
                 if hasattr(packet, "tcp"):
@@ -285,10 +279,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                     packet_summary["http_requests"].append(http_info)
 
                     # Check for license-related HTTP traffic
-                    if any(
-                        keyword in http_info["uri"].lower()
-                        for keyword in ["license", "activate", "validate"]
-                    ):
+                    if any(keyword in http_info["uri"].lower() for keyword in ["license", "activate", "validate"]):
                         packet_summary["license_traffic"].append(
                             {
                                 "type": "HTTP",
@@ -310,12 +301,8 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                     packet_summary["suspicious_ports"].append(
                         {
                             "port": dstport,
-                            "src": getattr(packet.ip, "src", "unknown")
-                            if hasattr(packet, "ip")
-                            else "unknown",
-                            "dst": getattr(packet.ip, "dst", "unknown")
-                            if hasattr(packet, "ip")
-                            else "unknown",
+                            "src": getattr(packet.ip, "src", "unknown") if hasattr(packet, "ip") else "unknown",
+                            "dst": getattr(packet.ip, "dst", "unknown") if hasattr(packet, "ip") else "unknown",
                             "flags": str(getattr(packet.tcp, "flags", "unknown")),
                         }
                     )
@@ -441,9 +428,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                         for question in dns.qd:
                                             queried_domain = question.name
                                             if queried_domain and len(queried_domain) > 1:
-                                                logger.debug(
-                                                    f"DNS query detected: {queried_domain}"
-                                                )
+                                                logger.debug(f"DNS query detected: {queried_domain}")
                                 except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError, AttributeError) as e:
                                     logger.debug(f"Failed to parse DNS packet: {e}")
 

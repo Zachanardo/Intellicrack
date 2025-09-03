@@ -78,7 +78,7 @@ class ExportDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, 'selection_start'):
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
             if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
                 self.selection_radio.setEnabled(True)
                 selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
@@ -155,9 +155,7 @@ class ExportDialog(QDialog):
         layout.addWidget(file_group)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.export_data)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -209,12 +207,7 @@ class ExportDialog(QDialog):
 
         file_filter = filters.get(format_name, "All Files (*)")
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export As",
-            f"export.{ext}",
-            file_filter
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export As", f"export.{ext}", file_filter)
 
         if file_path:
             self.file_path_edit.setText(file_path)
@@ -265,20 +258,12 @@ class ExportDialog(QDialog):
             with open(file_path, mode) as f:
                 f.write(output)
 
-            QMessageBox.information(
-                self,
-                "Export Complete",
-                f"Data exported successfully to:\n{file_path}"
-            )
+            QMessageBox.information(self, "Export Complete", f"Data exported successfully to:\n{file_path}")
             self.accept()
 
         except Exception as e:
             logger.error(f"Export failed: {e}")
-            QMessageBox.critical(
-                self,
-                "Export Failed",
-                f"Failed to export data:\n{str(e)}"
-            )
+            QMessageBox.critical(self, "Export Failed", f"Failed to export data:\n{str(e)}")
 
     def get_export_data(self) -> Optional[bytes]:
         """Get the data to export based on selection.
@@ -287,7 +272,7 @@ class ExportDialog(QDialog):
             Bytes to export or None if unavailable
 
         """
-        if not self.hex_viewer or not hasattr(self.hex_viewer, 'file_handler'):
+        if not self.hex_viewer or not hasattr(self.hex_viewer, "file_handler"):
             QMessageBox.warning(self, "No Data", "No file is loaded.")
             return None
 
@@ -349,7 +334,7 @@ class ExportDialog(QDialog):
         lines.append(f"unsigned char {var_name}[] = {{")
 
         for i in range(0, len(data), items_per_line):
-            chunk = data[i:i + items_per_line]
+            chunk = data[i : i + items_per_line]
             items = [hex_format.format(b) for b in chunk]
             line = "    " + ", ".join(items)
             if i + items_per_line < len(data):
@@ -383,7 +368,7 @@ class ExportDialog(QDialog):
         lines.append(f"const unsigned char {var_name}[] = {{")
 
         for i in range(0, len(data), items_per_line):
-            chunk = data[i:i + items_per_line]
+            chunk = data[i : i + items_per_line]
             items = [hex_format.format(b) for b in chunk]
             line = "    " + ", ".join(items)
             if i + items_per_line < len(data):
@@ -416,7 +401,7 @@ class ExportDialog(QDialog):
         lines.append(f"public static final byte[] {var_name} = {{")
 
         for i in range(0, len(data), items_per_line):
-            chunk = data[i:i + items_per_line]
+            chunk = data[i : i + items_per_line]
             # Java bytes are signed, so we need to handle values > 127
             items = []
             for b in chunk:
@@ -455,7 +440,7 @@ class ExportDialog(QDialog):
         lines.append(f"{var_name} = (")
 
         for i in range(0, len(data), items_per_line):
-            chunk = data[i:i + items_per_line]
+            chunk = data[i : i + items_per_line]
             hex_bytes = "".join(f"\\x{b:02x}" for b in chunk)
             lines.append(f'    b"{hex_bytes}"')
 
@@ -478,7 +463,7 @@ class ExportDialog(QDialog):
         record_size = 16  # Standard Intel Hex uses 16 bytes per record
 
         for i in range(0, len(data), record_size):
-            chunk = data[i:i + record_size]
+            chunk = data[i : i + record_size]
             address = base_address + i
 
             # Build record
@@ -517,12 +502,12 @@ class ExportDialog(QDialog):
         # Header record (S0)
         header = b"HDR"
         header_checksum = len(header) + 3 + sum(header)
-        header_checksum = ((~header_checksum) & 0xFF)
-        lines.append(f"S0{len(header)+3:02X}0000{header.hex().upper()}{header_checksum:02X}")
+        header_checksum = (~header_checksum) & 0xFF
+        lines.append(f"S0{len(header) + 3:02X}0000{header.hex().upper()}{header_checksum:02X}")
 
         # Data records (S1 for 16-bit addressing)
         for i in range(0, len(data), record_size):
-            chunk = data[i:i + record_size]
+            chunk = data[i : i + record_size]
             address = base_address + i
 
             # Calculate byte count (data + address + checksum)
@@ -531,7 +516,7 @@ class ExportDialog(QDialog):
             # Calculate checksum
             checksum = byte_count + (address >> 8) + (address & 0xFF)
             checksum += sum(chunk)
-            checksum = ((~checksum) & 0xFF)
+            checksum = (~checksum) & 0xFF
 
             # Format record
             hex_data = "".join(f"{b:02X}" for b in chunk)
@@ -540,7 +525,7 @@ class ExportDialog(QDialog):
 
         # End record (S9 for 16-bit addressing)
         end_checksum = 3 + (base_address >> 8) + (base_address & 0xFF)
-        end_checksum = ((~end_checksum) & 0xFF)
+        end_checksum = (~end_checksum) & 0xFF
         lines.append(f"S903{base_address:04X}{end_checksum:02X}")
 
         return "\n".join(lines)
@@ -556,12 +541,13 @@ class ExportDialog(QDialog):
 
         """
         import base64
-        encoded = base64.b64encode(data).decode('ascii')
+
+        encoded = base64.b64encode(data).decode("ascii")
 
         # Split into lines of 76 characters (standard MIME line length)
         lines = []
         for i in range(0, len(encoded), 76):
-            lines.append(encoded[i:i + 76])
+            lines.append(encoded[i : i + 76])
 
         return "\n".join(lines)
 
@@ -582,16 +568,16 @@ class ExportDialog(QDialog):
 
         if len(data) >= 4:
             # Check for common file signatures
-            if data[:2] == b'\xff\xd8':
+            if data[:2] == b"\xff\xd8":
                 mime_type = "image/jpeg"
-            elif data[:8] == b'\x89PNG\r\n\x1a\n':
+            elif data[:8] == b"\x89PNG\r\n\x1a\n":
                 mime_type = "image/png"
-            elif data[:6] in (b'GIF87a', b'GIF89a'):
+            elif data[:6] in (b"GIF87a", b"GIF89a"):
                 mime_type = "image/gif"
-            elif data[:4] == b'%PDF':
+            elif data[:4] == b"%PDF":
                 mime_type = "application/pdf"
-            elif data[:4] == b'PK\x03\x04':
+            elif data[:4] == b"PK\x03\x04":
                 mime_type = "application/zip"
 
-        encoded = base64.b64encode(data).decode('ascii')
+        encoded = base64.b64encode(data).decode("ascii")
         return f"data:{mime_type};base64,{encoded}"

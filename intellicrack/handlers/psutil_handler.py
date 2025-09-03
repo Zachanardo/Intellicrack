@@ -45,7 +45,6 @@ try:
         Error,
         Popen,
         Process,
-        ZombieProcessError,
         boot_time,
         cpu_count,
         cpu_freq,
@@ -182,16 +181,15 @@ except ImportError as e:
                     return None
 
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [wmic_path, "process", "where", f"ProcessId={self._pid}", "get",
-                     "Name,ParentProcessId,CreationDate"],
+                    [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "Name,ParentProcessId,CreationDate"],
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
                 if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')
+                    lines = result.stdout.strip().split("\n")
                     if len(lines) > 1:
                         # Parse output
                         data = lines[1].strip().split()
@@ -219,7 +217,7 @@ except ImportError as e:
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    shell=False  # Explicitly secure - using list format prevents shell injection
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
                 if result.returncode == 0:
@@ -264,11 +262,11 @@ except ImportError as e:
                         capture_output=True,
                         text=True,
                         timeout=2,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
 
                     if result.returncode == 0:
-                        lines = result.stdout.strip().split('\n')
+                        lines = result.stdout.strip().split("\n")
                         if len(lines) > 1:
                             return lines[1].strip() or ""
                 except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
@@ -299,11 +297,11 @@ except ImportError as e:
                         capture_output=True,
                         text=True,
                         timeout=2,
-                        shell=False  # Explicitly secure - using list format prevents shell injection
+                        shell=False,  # Explicitly secure - using list format prevents shell injection
                     )
 
                     if result.returncode == 0:
-                        lines = result.stdout.strip().split('\n')
+                        lines = result.stdout.strip().split("\n")
                         if len(lines) > 1:
                             cmdline = lines[1].strip()
                             return cmdline.split() if cmdline else []
@@ -314,8 +312,8 @@ except ImportError as e:
                 proc_cmdline = f"/proc/{self._pid}/cmdline"
                 if os.path.exists(proc_cmdline):
                     try:
-                        with open(proc_cmdline, 'r') as f:
-                            return f.read().strip('\x00').split('\x00')
+                        with open(proc_cmdline, "r") as f:
+                            return f.read().strip("\x00").split("\x00")
                     except (IOError, OSError, FileNotFoundError) as e:
                         logger.debug(f"Failed to read cmdline for PID {self._pid}: {e}")
 
@@ -364,17 +362,17 @@ except ImportError as e:
                 proc_stat = f"/proc/{self._pid}/stat"
                 if os.path.exists(proc_stat):
                     try:
-                        with open(proc_stat, 'r') as f:
+                        with open(proc_stat, "r") as f:
                             stat = f.read()
                             # Status is the third field after command in parentheses
-                            status_char = stat.split(')')[1].strip()[0]
+                            status_char = stat.split(")")[1].strip()[0]
                             status_map = {
-                                'R': STATUS_RUNNING,
-                                'S': STATUS_SLEEPING,
-                                'D': STATUS_DISK_SLEEP,
-                                'Z': STATUS_ZOMBIE,
-                                'T': STATUS_STOPPED,
-                                'I': STATUS_IDLE
+                                "R": STATUS_RUNNING,
+                                "S": STATUS_SLEEPING,
+                                "D": STATUS_DISK_SLEEP,
+                                "Z": STATUS_ZOMBIE,
+                                "T": STATUS_STOPPED,
+                                "I": STATUS_IDLE,
                             }
                             return status_map.get(status_char, STATUS_RUNNING)
                     except (IOError, OSError, FileNotFoundError, IndexError) as e:
@@ -404,6 +402,7 @@ except ImportError as e:
 
             if sys.platform != "win32":
                 import signal
+
                 os.kill(self._pid, signal.SIGSTOP)
 
         def resume(self):
@@ -413,6 +412,7 @@ except ImportError as e:
 
             if sys.platform != "win32":
                 import signal
+
                 os.kill(self._pid, signal.SIGCONT)
 
         def terminate(self):
@@ -426,6 +426,7 @@ except ImportError as e:
                     subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603  # Explicitly secure - using list format prevents shell injection
             else:
                 import signal
+
                 os.kill(self._pid, signal.SIGTERM)
 
         def kill(self):
@@ -437,12 +438,11 @@ except ImportError as e:
                 taskkill_path = shutil.which("taskkill")
                 if taskkill_path:
                     subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                        [taskkill_path, "/F", "/PID", str(self._pid)],
-                        check=False,
-                        shell=False
+                        [taskkill_path, "/F", "/PID", str(self._pid)], check=False, shell=False
                     )
             else:
                 import signal
+
                 os.kill(self._pid, signal.SIGKILL)
 
         def wait(self, timeout=None):
@@ -495,15 +495,11 @@ except ImportError as e:
                 if not wmic_path:
                     return 0.0
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [wmic_path, "cpu", "get", "loadpercentage"],
-                    capture_output=True,
-                    text=True,
-                    timeout=2,
-                    shell=False
+                    [wmic_path, "cpu", "get", "loadpercentage"], capture_output=True, text=True, timeout=2, shell=False
                 )
 
                 if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')
+                    lines = result.stdout.strip().split("\n")
                     if len(lines) > 1:
                         try:
                             percent = float(lines[1].strip())
@@ -517,13 +513,13 @@ except ImportError as e:
         else:
             # Read /proc/stat on Linux
             try:
-                with open('/proc/stat', 'r') as f:
+                with open("/proc/stat", "r") as f:
                     lines = f.readlines()
 
                     # Parse CPU usage from /proc/stat
                     cpu_times = []
                     for line in lines:
-                        if line.startswith('cpu'):
+                        if line.startswith("cpu"):
                             parts = line.split()
                             if len(parts) >= 5:
                                 # Calculate CPU usage percentage
@@ -537,10 +533,10 @@ except ImportError as e:
                                 if total > 0:
                                     usage = ((user + nice + system) / total) * 100.0
 
-                                    if line.startswith('cpu ') and not percpu:
+                                    if line.startswith("cpu ") and not percpu:
                                         # Overall CPU usage
                                         return min(100.0, usage)
-                                    elif not line.startswith('cpu '):
+                                    elif not line.startswith("cpu "):
                                         # Per-CPU usage
                                         cpu_times.append(min(100.0, usage))
 
@@ -571,6 +567,7 @@ except ImportError as e:
 
     def cpu_freq(percpu=False):
         """Get CPU frequency."""
+
         class CPUFreq:
             def __init__(self, current=0.0, min=0.0, max=0.0):
                 self.current = current
@@ -586,6 +583,7 @@ except ImportError as e:
 
     def cpu_stats():
         """Get CPU statistics."""
+
         class CPUStats:
             def __init__(self):
                 self.ctx_switches = 0
@@ -597,6 +595,7 @@ except ImportError as e:
 
     def virtual_memory():
         """Get virtual memory statistics."""
+
         class VirtualMemory:
             def __init__(self):
                 self.total = 8 * 1024 * 1024 * 1024  # 8GB default
@@ -616,11 +615,11 @@ except ImportError as e:
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    shell=False
+                    shell=False,
                 )
 
                 if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')
+                    lines = result.stdout.strip().split("\n")
                     if len(lines) > 1:
                         values = lines[1].strip().split()
                         if len(values) >= 2:
@@ -641,14 +640,14 @@ except ImportError as e:
         else:
             # Try reading /proc/meminfo on Linux
             try:
-                with open('/proc/meminfo', 'r') as f:
+                with open("/proc/meminfo", "r") as f:
                     mem = VirtualMemory()
                     for line in f:
-                        if line.startswith('MemTotal:'):
+                        if line.startswith("MemTotal:"):
                             mem.total = int(line.split()[1]) * 1024
-                        elif line.startswith('MemAvailable:'):
+                        elif line.startswith("MemAvailable:"):
                             mem.available = int(line.split()[1]) * 1024
-                        elif line.startswith('MemFree:'):
+                        elif line.startswith("MemFree:"):
                             mem.free = int(line.split()[1]) * 1024
 
                     mem.used = mem.total - mem.available
@@ -661,6 +660,7 @@ except ImportError as e:
 
     def swap_memory():
         """Get swap memory statistics."""
+
         class SwapMemory:
             def __init__(self):
                 self.total = 2 * 1024 * 1024 * 1024  # 2GB default
@@ -674,6 +674,7 @@ except ImportError as e:
 
     def disk_usage(path):
         """Get disk usage statistics."""
+
         class DiskUsage:
             def __init__(self):
                 self.total = 500 * 1024 * 1024 * 1024  # 500GB default
@@ -684,6 +685,7 @@ except ImportError as e:
         # Try to get real values
         try:
             import shutil
+
             usage = shutil.disk_usage(path)
             disk = DiskUsage()
             disk.total = usage.total
@@ -697,6 +699,7 @@ except ImportError as e:
 
     def disk_partitions(all=False):
         """Get disk partitions."""
+
         class DiskPartition:
             def __init__(self, device, mountpoint, fstype, opts):
                 self.device = device
@@ -709,6 +712,7 @@ except ImportError as e:
         if sys.platform == "win32":
             # Get Windows drives
             import string
+
             for letter in string.ascii_uppercase:
                 drive = f"{letter}:\\"
                 if os.path.exists(drive):
@@ -721,6 +725,7 @@ except ImportError as e:
 
     def disk_io_counters(perdisk=False):
         """Get disk I/O statistics."""
+
         class DiskIOCounters:
             def __init__(self):
                 self.read_count = 0
@@ -736,6 +741,7 @@ except ImportError as e:
 
     def net_io_counters(pernic=False):
         """Get network I/O statistics."""
+
         class NetIOCounters:
             def __init__(self):
                 self.bytes_sent = 0
@@ -751,7 +757,7 @@ except ImportError as e:
             return {"eth0": NetIOCounters()}
         return NetIOCounters()
 
-    def net_connections(kind='all'):
+    def net_connections(kind="all"):
         """Get network connections."""
         return []
 
@@ -782,15 +788,11 @@ except ImportError as e:
                 if not wmic_path:
                     return processes
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [wmic_path, "process", "get", "ProcessId"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                    shell=False
+                    [wmic_path, "process", "get", "ProcessId"], capture_output=True, text=True, timeout=5, shell=False
                 )
 
                 if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                    lines = result.stdout.strip().split("\n")[1:]  # Skip header
                     for line in lines:
                         try:
                             pid = int(line.strip())
@@ -825,7 +827,7 @@ except ImportError as e:
                     capture_output=True,
                     text=True,
                     timeout=2,
-                    shell=False
+                    shell=False,
                 )
                 return result.returncode == 0 and str(pid) in result.stdout
             except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
@@ -876,11 +878,7 @@ except ImportError as e:
             if not self._process:
                 return {}
 
-            info = {
-                'pid': self._process.pid,
-                'name': self._process.name(),
-                'status': self._process.status()
-            }
+            info = {"pid": self._process.pid, "name": self._process.name(), "status": self._process.status()}
             return info
 
     # Create Process wrapper that matches psutil.Process() interface
@@ -942,20 +940,44 @@ except ImportError as e:
 # Export all psutil objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_PSUTIL", "PSUTIL_AVAILABLE", "PSUTIL_VERSION",
+    "HAS_PSUTIL",
+    "PSUTIL_AVAILABLE",
+    "PSUTIL_VERSION",
     # Main module
     "psutil",
     # Classes
-    "Process", "NoSuchProcessError", "ZombieProcessError", "AccessDeniedError",
-    "TimeoutExpiredError", "Error", "Popen",
+    "Process",
+    "NoSuchProcessError",
+    "ZombieProcessError",
+    "AccessDeniedError",
+    "TimeoutExpiredError",
+    "Error",
+    "Popen",
     # Status constants
-    "STATUS_RUNNING", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
-    "STATUS_STOPPED", "STATUS_ZOMBIE", "STATUS_DEAD", "STATUS_IDLE",
+    "STATUS_RUNNING",
+    "STATUS_SLEEPING",
+    "STATUS_DISK_SLEEP",
+    "STATUS_STOPPED",
+    "STATUS_ZOMBIE",
+    "STATUS_DEAD",
+    "STATUS_IDLE",
     # Functions
-    "cpu_percent", "cpu_count", "cpu_freq", "cpu_stats",
-    "virtual_memory", "swap_memory",
-    "disk_usage", "disk_partitions", "disk_io_counters",
-    "net_io_counters", "net_connections", "net_if_addrs", "net_if_stats",
-    "boot_time", "users",
-    "process_iter", "pid_exists", "wait_procs",
+    "cpu_percent",
+    "cpu_count",
+    "cpu_freq",
+    "cpu_stats",
+    "virtual_memory",
+    "swap_memory",
+    "disk_usage",
+    "disk_partitions",
+    "disk_io_counters",
+    "net_io_counters",
+    "net_connections",
+    "net_if_addrs",
+    "net_if_stats",
+    "boot_time",
+    "users",
+    "process_iter",
+    "pid_exists",
+    "wait_procs",
 ]

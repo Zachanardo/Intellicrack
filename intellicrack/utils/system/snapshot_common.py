@@ -16,6 +16,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Common snapshot comparison utilities to avoid code duplication.
 """
+
 from typing import Any
 
 

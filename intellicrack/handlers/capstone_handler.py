@@ -16,6 +16,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import struct
+import warnings
 
 from intellicrack.logger import logger
 
@@ -26,6 +27,9 @@ This module provides a centralized abstraction layer for Capstone imports.
 When Capstone is not available, it provides REAL, functional disassembly
 implementations for essential architectures used in Intellicrack.
 """
+
+# Suppress pkg_resources deprecation warning from capstone
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning, module="capstone.*")
 
 # Capstone availability detection and import handling
 try:
@@ -154,12 +158,30 @@ except ImportError as e:
             """Get register name."""
             # X86 register names
             x86_regs = {
-                1: "eax", 2: "ecx", 3: "edx", 4: "ebx",
-                5: "esp", 6: "ebp", 7: "esi", 8: "edi",
-                9: "rax", 10: "rcx", 11: "rdx", 12: "rbx",
-                13: "rsp", 14: "rbp", 15: "rsi", 16: "rdi",
-                17: "r8", 18: "r9", 19: "r10", 20: "r11",
-                21: "r12", 22: "r13", 23: "r14", 24: "r15"
+                1: "eax",
+                2: "ecx",
+                3: "edx",
+                4: "ebx",
+                5: "esp",
+                6: "ebp",
+                7: "esi",
+                8: "edi",
+                9: "rax",
+                10: "rcx",
+                11: "rdx",
+                12: "rbx",
+                13: "rsp",
+                14: "rbp",
+                15: "rsi",
+                16: "rdi",
+                17: "r8",
+                18: "r9",
+                19: "r10",
+                20: "r11",
+                21: "r12",
+                22: "r13",
+                23: "r14",
+                24: "r15",
             }
             return x86_regs.get(reg_id, f"reg{reg_id}")
 
@@ -204,6 +226,244 @@ except ImportError as e:
 
             return instructions
 
+        def _handle_nop(self, code, offset):
+            """Handle NOP instruction (0x90)."""
+            return CsInsn(offset, 1, "nop", "", code[:1])
+
+        def _handle_ret(self, code, offset):
+            """Handle RET instruction (0xC3)."""
+            insn = CsInsn(offset, 1, "ret", "", code[:1])
+            insn.groups = [CS_GRP_RET]
+            return insn
+
+        def _handle_ret_imm16(self, code, offset):
+            """Handle RET imm16 instruction (0xC2)."""
+            if len(code) < 3:
+                return None
+            imm = struct.unpack("<H", code[1:3])[0]
+            insn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
+            insn.groups = [CS_GRP_RET]
+            return insn
+
+        def _handle_int3(self, code, offset):
+            """Handle INT3 instruction (0xCC)."""
+            insn = CsInsn(offset, 1, "int3", "", code[:1])
+            insn.groups = [CS_GRP_INT]
+            return insn
+
+        def _handle_int_imm8(self, code, offset):
+            """Handle INT imm8 instruction (0xCD)."""
+            if len(code) < 2:
+                return None
+            imm = code[1]
+            insn = CsInsn(offset, 2, "int", hex(imm), code[:2])
+            insn.groups = [CS_GRP_INT]
+            return insn
+
+        def _handle_call_rel32(self, code, offset):
+            """Handle CALL rel32 instruction (0xE8)."""
+            if len(code) < 5:
+                return None
+            rel = struct.unpack("<i", code[1:5])[0]
+            target = offset + 5 + rel
+            insn = CsInsn(offset, 5, "call", hex(target), code[:5])
+            insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
+            return insn
+
+        def _handle_jmp_rel32(self, code, offset):
+            """Handle JMP rel32 instruction (0xE9)."""
+            if len(code) < 5:
+                return None
+            rel = struct.unpack("<i", code[1:5])[0]
+            target = offset + 5 + rel
+            insn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
+            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
+            return insn
+
+        def _handle_jmp_rel8(self, code, offset):
+            """Handle JMP rel8 instruction (0xEB)."""
+            if len(code) < 2:
+                return None
+            rel = struct.unpack("b", code[1:2])[0]
+            target = offset + 2 + rel
+            insn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
+            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
+            return insn
+
+        def _handle_jcc_rel8(self, code, offset, opcode):
+            """Handle Jcc rel8 instructions (0x70-0x7F)."""
+            if len(code) < 2:
+                return None
+            jcc_mnemonics = {
+                0x70: "jo",
+                0x71: "jno",
+                0x72: "jb",
+                0x73: "jnb",
+                0x74: "je",
+                0x75: "jne",
+                0x76: "jbe",
+                0x77: "ja",
+                0x78: "js",
+                0x79: "jns",
+                0x7A: "jp",
+                0x7B: "jnp",
+                0x7C: "jl",
+                0x7D: "jge",
+                0x7E: "jle",
+                0x7F: "jg",
+            }
+            rel = struct.unpack("b", code[1:2])[0]
+            target = offset + 2 + rel
+            mnemonic = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
+            insn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
+            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
+            return insn
+
+        def _handle_two_byte_opcodes(self, code, offset):
+            """Handle two-byte opcodes starting with 0x0F."""
+            if len(code) < 2:
+                return None
+            opcode2 = code[1]
+
+            # Jcc rel32 (0x0F 0x80-0x8F)
+            if 0x80 <= opcode2 <= 0x8F:
+                if len(code) < 6:
+                    return None
+                jcc_mnemonics = {
+                    0x80: "jo",
+                    0x81: "jno",
+                    0x82: "jb",
+                    0x83: "jnb",
+                    0x84: "je",
+                    0x85: "jne",
+                    0x86: "jbe",
+                    0x87: "ja",
+                    0x88: "js",
+                    0x89: "jns",
+                    0x8A: "jp",
+                    0x8B: "jnp",
+                    0x8C: "jl",
+                    0x8D: "jge",
+                    0x8E: "jle",
+                    0x8F: "jg",
+                }
+                rel = struct.unpack("<i", code[2:6])[0]
+                target = offset + 6 + rel
+                mnemonic = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
+                insn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
+                insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
+                return insn
+
+            return None
+
+        def _handle_push_reg(self, code, offset, opcode, rex):
+            """Handle PUSH register instructions (0x50-0x57)."""
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            if self.is_64bit:
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+                if rex and (rex & 0x01):  # REX.B
+                    reg_names = [f"r{8 + i}" for i in range(8)]
+            reg = reg_names[opcode - 0x50]
+            return CsInsn(offset, 1, "push", reg, code[:1])
+
+        def _handle_pop_reg(self, code, offset, opcode, rex):
+            """Handle POP register instructions (0x58-0x5F)."""
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            if self.is_64bit:
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+                if rex and (rex & 0x01):  # REX.B
+                    reg_names = [f"r{8 + i}" for i in range(8)]
+            reg = reg_names[opcode - 0x58]
+            return CsInsn(offset, 1, "pop", reg, code[:1])
+
+        def _handle_mov_rm_r(self, code, offset):
+            """Handle MOV r/m, r instruction (0x89)."""
+            if len(code) < 2:
+                return None
+            modrm = code[1]
+            mod = (modrm >> 6) & 0x03
+            reg = (modrm >> 3) & 0x07
+            rm = modrm & 0x07
+
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            if self.is_64bit:
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+
+            if mod == 0x03:  # Register to register
+                src = reg_names[reg]
+                dst = reg_names[rm]
+                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
+            return None
+
+        def _handle_mov_r_rm(self, code, offset):
+            """Handle MOV r, r/m instruction (0x8B)."""
+            if len(code) < 2:
+                return None
+            modrm = code[1]
+            mod = (modrm >> 6) & 0x03
+            reg = (modrm >> 3) & 0x07
+            rm = modrm & 0x07
+
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            if self.is_64bit:
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+
+            if mod == 0x03:  # Register to register
+                src = reg_names[rm]
+                dst = reg_names[reg]
+                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
+            return None
+
+        def _handle_mov_reg_imm(self, code, offset, opcode, rex):
+            """Handle MOV reg, imm instructions (0xB8-0xBF)."""
+            reg_idx = opcode - 0xB8
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+
+            if self.is_64bit:
+                if rex and (rex & 0x08):  # REX.W
+                    if len(code) < 9:
+                        return None
+                    imm = struct.unpack("<Q", code[1:9])[0]
+                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+                    if rex and (rex & 0x01):  # REX.B
+                        reg_names = [f"r{8 + i}" for i in range(8)]
+                    return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
+                else:
+                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+
+            if self.is_32bit or (self.is_64bit and not (rex and (rex & 0x08))):
+                if len(code) < 5:
+                    return None
+                imm = struct.unpack("<I", code[1:5])[0]
+                return CsInsn(offset, 5, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:5])
+
+            if self.is_16bit:
+                if len(code) < 3:
+                    return None
+                imm = struct.unpack("<H", code[1:3])[0]
+                reg_names = ["ax", "cx", "dx", "bx", "sp", "bp", "si", "di"]
+                return CsInsn(offset, 3, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:3])
+
+            return None
+
+        def _handle_xor_rm_r(self, code, offset):
+            """Handle XOR r/m, r instruction (0x31)."""
+            if len(code) < 2:
+                return None
+            modrm = code[1]
+            mod = (modrm >> 6) & 0x03
+            reg = (modrm >> 3) & 0x07
+            rm = modrm & 0x07
+
+            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            if self.is_64bit:
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+
+            if mod == 0x03:  # Register to register
+                src = reg_names[reg]
+                dst = reg_names[rm]
+                return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
+            return None
 
         def _handle_nop(self, code, offset):
             """Handle NOP instruction (0x90)."""
@@ -274,10 +534,22 @@ except ImportError as e:
             if len(code) < 2:
                 return None
             jcc_mnemonics = {
-                0x70: "jo", 0x71: "jno", 0x72: "jb", 0x73: "jnb",
-                0x74: "je", 0x75: "jne", 0x76: "jbe", 0x77: "ja",
-                0x78: "js", 0x79: "jns", 0x7A: "jp", 0x7B: "jnp",
-                0x7C: "jl", 0x7D: "jge", 0x7E: "jle", 0x7F: "jg"
+                0x70: "jo",
+                0x71: "jno",
+                0x72: "jb",
+                0x73: "jnb",
+                0x74: "je",
+                0x75: "jne",
+                0x76: "jbe",
+                0x77: "ja",
+                0x78: "js",
+                0x79: "jns",
+                0x7A: "jp",
+                0x7B: "jnp",
+                0x7C: "jl",
+                0x7D: "jge",
+                0x7E: "jle",
+                0x7F: "jg",
             }
             rel = struct.unpack("b", code[1:2])[0]
             target = offset + 2 + rel
@@ -297,10 +569,22 @@ except ImportError as e:
                 if len(code) < 6:
                     return None
                 jcc_mnemonics = {
-                    0x80: "jo", 0x81: "jno", 0x82: "jb", 0x83: "jnb",
-                    0x84: "je", 0x85: "jne", 0x86: "jbe", 0x87: "ja",
-                    0x88: "js", 0x89: "jns", 0x8A: "jp", 0x8B: "jnp",
-                    0x8C: "jl", 0x8D: "jge", 0x8E: "jle", 0x8F: "jg"
+                    0x80: "jo",
+                    0x81: "jno",
+                    0x82: "jb",
+                    0x83: "jnb",
+                    0x84: "je",
+                    0x85: "jne",
+                    0x86: "jbe",
+                    0x87: "ja",
+                    0x88: "js",
+                    0x89: "jns",
+                    0x8A: "jp",
+                    0x8B: "jnp",
+                    0x8C: "jl",
+                    0x8D: "jge",
+                    0x8E: "jle",
+                    0x8F: "jg",
                 }
                 rel = struct.unpack("<i", code[2:6])[0]
                 target = offset + 6 + rel
@@ -317,7 +601,7 @@ except ImportError as e:
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                 if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8+i}" for i in range(8)]
+                    reg_names = [f"r{8 + i}" for i in range(8)]
             reg = reg_names[opcode - 0x50]
             return CsInsn(offset, 1, "push", reg, code[:1])
 
@@ -327,7 +611,7 @@ except ImportError as e:
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                 if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8+i}" for i in range(8)]
+                    reg_names = [f"r{8 + i}" for i in range(8)]
             reg = reg_names[opcode - 0x58]
             return CsInsn(offset, 1, "pop", reg, code[:1])
 
@@ -381,7 +665,7 @@ except ImportError as e:
                     imm = struct.unpack("<Q", code[1:9])[0]
                     reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                     if rex and (rex & 0x01):  # REX.B
-                        reg_names = [f"r{8+i}" for i in range(8)]
+                        reg_names = [f"r{8 + i}" for i in range(8)]
                     return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
                 else:
                     reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
@@ -419,224 +703,6 @@ except ImportError as e:
                 dst = reg_names[rm]
                 return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
             return None
-
-
-
-        def _handle_nop(self, code, offset):
-            """Handle NOP instruction (0x90)."""
-            return CsInsn(offset, 1, "nop", "", code[:1])
-
-        def _handle_ret(self, code, offset):
-            """Handle RET instruction (0xC3)."""
-            insn = CsInsn(offset, 1, "ret", "", code[:1])
-            insn.groups = [CS_GRP_RET]
-            return insn
-
-        def _handle_ret_imm16(self, code, offset):
-            """Handle RET imm16 instruction (0xC2)."""
-            if len(code) < 3:
-                return None
-            imm = struct.unpack("<H", code[1:3])[0]
-            insn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
-            insn.groups = [CS_GRP_RET]
-            return insn
-
-        def _handle_int3(self, code, offset):
-            """Handle INT3 instruction (0xCC)."""
-            insn = CsInsn(offset, 1, "int3", "", code[:1])
-            insn.groups = [CS_GRP_INT]
-            return insn
-
-        def _handle_int_imm8(self, code, offset):
-            """Handle INT imm8 instruction (0xCD)."""
-            if len(code) < 2:
-                return None
-            imm = code[1]
-            insn = CsInsn(offset, 2, "int", hex(imm), code[:2])
-            insn.groups = [CS_GRP_INT]
-            return insn
-
-        def _handle_call_rel32(self, code, offset):
-            """Handle CALL rel32 instruction (0xE8)."""
-            if len(code) < 5:
-                return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "call", hex(target), code[:5])
-            insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jmp_rel32(self, code, offset):
-            """Handle JMP rel32 instruction (0xE9)."""
-            if len(code) < 5:
-                return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jmp_rel8(self, code, offset):
-            """Handle JMP rel8 instruction (0xEB)."""
-            if len(code) < 2:
-                return None
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            insn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jcc_rel8(self, code, offset, opcode):
-            """Handle Jcc rel8 instructions (0x70-0x7F)."""
-            if len(code) < 2:
-                return None
-            jcc_mnemonics = {
-                0x70: "jo", 0x71: "jno", 0x72: "jb", 0x73: "jnb",
-                0x74: "je", 0x75: "jne", 0x76: "jbe", 0x77: "ja",
-                0x78: "js", 0x79: "jns", 0x7A: "jp", 0x7B: "jnp",
-                0x7C: "jl", 0x7D: "jge", 0x7E: "jle", 0x7F: "jg"
-            }
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            mnemonic = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
-            insn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_two_byte_opcodes(self, code, offset):
-            """Handle two-byte opcodes starting with 0x0F."""
-            if len(code) < 2:
-                return None
-            opcode2 = code[1]
-
-            # Jcc rel32 (0x0F 0x80-0x8F)
-            if 0x80 <= opcode2 <= 0x8F:
-                if len(code) < 6:
-                    return None
-                jcc_mnemonics = {
-                    0x80: "jo", 0x81: "jno", 0x82: "jb", 0x83: "jnb",
-                    0x84: "je", 0x85: "jne", 0x86: "jbe", 0x87: "ja",
-                    0x88: "js", 0x89: "jns", 0x8A: "jp", 0x8B: "jnp",
-                    0x8C: "jl", 0x8D: "jge", 0x8E: "jle", 0x8F: "jg"
-                }
-                rel = struct.unpack("<i", code[2:6])[0]
-                target = offset + 6 + rel
-                mnemonic = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
-                insn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
-                insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-                return insn
-
-            return None
-
-        def _handle_push_reg(self, code, offset, opcode, rex):
-            """Handle PUSH register instructions (0x50-0x57)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8+i}" for i in range(8)]
-            reg = reg_names[opcode - 0x50]
-            return CsInsn(offset, 1, "push", reg, code[:1])
-
-        def _handle_pop_reg(self, code, offset, opcode, rex):
-            """Handle POP register instructions (0x58-0x5F)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8+i}" for i in range(8)]
-            reg = reg_names[opcode - 0x58]
-            return CsInsn(offset, 1, "pop", reg, code[:1])
-
-        def _handle_mov_rm_r(self, code, offset):
-            """Handle MOV r/m, r instruction (0x89)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
-            return None
-
-        def _handle_mov_r_rm(self, code, offset):
-            """Handle MOV r, r/m instruction (0x8B)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[rm]
-                dst = reg_names[reg]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
-            return None
-
-        def _handle_mov_reg_imm(self, code, offset, opcode, rex):
-            """Handle MOV reg, imm instructions (0xB8-0xBF)."""
-            reg_idx = opcode - 0xB8
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-
-            if self.is_64bit:
-                if rex and (rex & 0x08):  # REX.W
-                    if len(code) < 9:
-                        return None
-                    imm = struct.unpack("<Q", code[1:9])[0]
-                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                    if rex and (rex & 0x01):  # REX.B
-                        reg_names = [f"r{8+i}" for i in range(8)]
-                    return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
-                else:
-                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if self.is_32bit or (self.is_64bit and not (rex and (rex & 0x08))):
-                if len(code) < 5:
-                    return None
-                imm = struct.unpack("<I", code[1:5])[0]
-                return CsInsn(offset, 5, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:5])
-
-            if self.is_16bit:
-                if len(code) < 3:
-                    return None
-                imm = struct.unpack("<H", code[1:3])[0]
-                reg_names = ["ax", "cx", "dx", "bx", "sp", "bp", "si", "di"]
-                return CsInsn(offset, 3, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:3])
-
-            return None
-
-        def _handle_xor_rm_r(self, code, offset):
-            """Handle XOR r/m, r instruction (0x31)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
-                return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
-            return None
-
 
         def _decode_instruction(self, code, offset):
             """Decode a single x86 instruction."""
@@ -868,7 +934,7 @@ except ImportError as e:
 
             # Convert code to bytes if needed
             if isinstance(code, str):
-                code = bytes(code, 'latin-1')
+                code = bytes(code, "latin-1")
             elif not isinstance(code, bytes):
                 code = bytes(code)
 
@@ -910,33 +976,33 @@ except ImportError as e:
 
                         # Read instruction
                         if self.is_big_endian:
-                            insn_word = struct.unpack(">I", code[idx:idx+4])[0]
+                            insn_word = struct.unpack(">I", code[idx : idx + 4])[0]
                         else:
-                            insn_word = struct.unpack("<I", code[idx:idx+4])[0]
+                            insn_word = struct.unpack("<I", code[idx : idx + 4])[0]
 
                         # Decode basic ARM64 instructions
                         if insn_word == 0xD503201F:  # NOP
-                            insn = CsInsn(offset + idx, 4, "nop", "", code[idx:idx+4])
+                            insn = CsInsn(offset + idx, 4, "nop", "", code[idx : idx + 4])
                         elif insn_word == 0xD65F03C0:  # RET
-                            insn = CsInsn(offset + idx, 4, "ret", "", code[idx:idx+4])
+                            insn = CsInsn(offset + idx, 4, "ret", "", code[idx : idx + 4])
                             insn.groups = [CS_GRP_RET]
                         elif (insn_word & 0xFC000000) == 0x94000000:  # BL
                             imm26 = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
                             target = offset + idx + (imm26 << 2)
-                            insn = CsInsn(offset + idx, 4, "bl", hex(target), code[idx:idx+4])
+                            insn = CsInsn(offset + idx, 4, "bl", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
                         elif (insn_word & 0xFC000000) == 0x14000000:  # B
                             imm26 = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
                             target = offset + idx + (imm26 << 2)
-                            insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx:idx+4])
+                            insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                         else:
                             # Unknown instruction
-                            insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx:idx+4])
+                            insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
 
                         instructions.append(insn)
                         idx += 4
@@ -1028,25 +1094,54 @@ except ImportError as e:
 # Export all Capstone objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_CAPSTONE", "CAPSTONE_AVAILABLE", "CAPSTONE_VERSION",
+    "HAS_CAPSTONE",
+    "CAPSTONE_AVAILABLE",
+    "CAPSTONE_VERSION",
     # Main module
     "capstone",
     # Core classes
-    "Cs", "CsInsn", "CsError",
+    "Cs",
+    "CsInsn",
+    "CsError",
     # Architecture constants
-    "CS_ARCH_ARM", "CS_ARCH_ARM64", "CS_ARCH_MIPS", "CS_ARCH_X86",
-    "CS_ARCH_PPC", "CS_ARCH_SPARC", "CS_ARCH_SYSZ", "CS_ARCH_XCORE",
+    "CS_ARCH_ARM",
+    "CS_ARCH_ARM64",
+    "CS_ARCH_MIPS",
+    "CS_ARCH_X86",
+    "CS_ARCH_PPC",
+    "CS_ARCH_SPARC",
+    "CS_ARCH_SYSZ",
+    "CS_ARCH_XCORE",
     # Mode constants
-    "CS_MODE_LITTLE_ENDIAN", "CS_MODE_ARM", "CS_MODE_16", "CS_MODE_32",
-    "CS_MODE_64", "CS_MODE_THUMB", "CS_MODE_MIPS32", "CS_MODE_MIPS64",
+    "CS_MODE_LITTLE_ENDIAN",
+    "CS_MODE_ARM",
+    "CS_MODE_16",
+    "CS_MODE_32",
+    "CS_MODE_64",
+    "CS_MODE_THUMB",
+    "CS_MODE_MIPS32",
+    "CS_MODE_MIPS64",
     "CS_MODE_BIG_ENDIAN",
     # Option constants
-    "CS_OPT_SYNTAX", "CS_OPT_DETAIL", "CS_OPT_SKIPDATA",
-    "CS_OPT_SYNTAX_DEFAULT", "CS_OPT_SYNTAX_INTEL", "CS_OPT_SYNTAX_ATT",
-    "CS_OPT_SYNTAX_NOREGNAME", "CS_OPT_SYNTAX_MASM",
+    "CS_OPT_SYNTAX",
+    "CS_OPT_DETAIL",
+    "CS_OPT_SKIPDATA",
+    "CS_OPT_SYNTAX_DEFAULT",
+    "CS_OPT_SYNTAX_INTEL",
+    "CS_OPT_SYNTAX_ATT",
+    "CS_OPT_SYNTAX_NOREGNAME",
+    "CS_OPT_SYNTAX_MASM",
     # Group constants
-    "CS_GRP_JUMP", "CS_GRP_CALL", "CS_GRP_RET", "CS_GRP_INT",
-    "CS_GRP_IRET", "CS_GRP_PRIVILEGE", "CS_GRP_BRANCH_RELATIVE",
+    "CS_GRP_JUMP",
+    "CS_GRP_CALL",
+    "CS_GRP_RET",
+    "CS_GRP_INT",
+    "CS_GRP_IRET",
+    "CS_GRP_PRIVILEGE",
+    "CS_GRP_BRANCH_RELATIVE",
     # Functions
-    "cs_disasm_quick", "cs_version", "version_bind", "debug",
+    "cs_disasm_quick",
+    "cs_version",
+    "version_bind",
+    "debug",
 ]

@@ -137,10 +137,10 @@ class GroundTruthEstablisher:
         """Check which external validation tools are available."""
         logger.info("Checking for external validation tools...")
 
-        for category, tools in self.external_validators.items():
+        for _category, tools in self.external_validators.items():
             for tool_name, tool_info in tools.items():
                 try:
-                    result = subprocess.run([tool_info["exe"], "--help"],
+                    result = subprocess.run([tool_info["exe"], "--help"],  # noqa: S603
                                          capture_output=True,
                                          timeout=5)
                     if result.returncode == 0 or result.returncode == 1:
@@ -148,7 +148,7 @@ class GroundTruthEstablisher:
                         logger.info(f"Found external tool: {tool_name}")
                 except Exception:
                     try:
-                        result = subprocess.run(["where", tool_info["exe"]],
+                        result = subprocess.run(["where", tool_info["exe"]],  # noqa: S603,S607
                                              capture_output=True,
                                              timeout=5)
                         if result.returncode == 0:
@@ -175,7 +175,7 @@ class GroundTruthEstablisher:
             logger.info(f"Scanning {binary_path.name} with {scanner_name}")
 
             cmd = [scanner_info["exe"], str(binary_path)]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)  # noqa: S603
 
             protections_found = self._parse_scanner_output(result.stdout, scanner_name)
 
@@ -259,14 +259,14 @@ class GroundTruthEstablisher:
 
         try:
             import_cmd = ["r2", "-q", "-c", "ii", str(binary_path)]
-            result = subprocess.run(import_cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(import_cmd, capture_output=True, text=True, timeout=30)  # noqa: S603
             if result.returncode == 0:
                 for line in result.stdout.split('\n'):
                     if line.strip():
                         results["imports"].append(line.strip())
 
             strings_cmd = ["r2", "-q", "-c", "iz", str(binary_path)]
-            result = subprocess.run(strings_cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(strings_cmd, capture_output=True, text=True, timeout=30)  # noqa: S603
             if result.returncode == 0:
                 for line in result.stdout.split('\n')[:100]:
                     if line.strip():
@@ -376,7 +376,7 @@ rule FlexNet_Protection {
         if self.external_validators["signature_matchers"]["yara"]["available"]:
             try:
                 cmd = ["yara64.exe", str(rules_file), str(binary_path)]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)  # noqa: S603
 
                 for line in result.stdout.split('\n'):
                     if line.strip() and not line.startswith('warning'):
@@ -445,7 +445,9 @@ rule FlexNet_Protection {
 
         return {}
 
-    def create_consensus_ground_truth(self, binary_path: Path, software_name: str) -> Dict[str, Any]:
+    def create_consensus_ground_truth(
+        self, binary_path: Path, software_name: str
+    ) -> Dict[str, Any]:
         """
         Create consensus ground truth from multiple independent sources.
         Requires at least 3 sources to agree for each protection detected.
@@ -515,7 +517,9 @@ rule FlexNet_Protection {
 
         return all_evidence
 
-    def cryptographically_sign_ground_truth(self, ground_truth: Dict[str, Any], software_name: str) -> str:
+    def cryptographically_sign_ground_truth(
+        self, ground_truth: Dict[str, Any], software_name: str
+    ) -> str:
         """
         Cryptographically sign the ground truth data.
         Uses SHA-256 for now, would use GPG in production.
@@ -532,7 +536,10 @@ rule FlexNet_Protection {
             "software_name": software_name
         }
 
-        signature_file = self.cryptographic_proofs_dir / f"{software_name.replace(' ', '_')}_signature.json"
+        signature_file = (
+            self.cryptographic_proofs_dir
+            / f"{software_name.replace(' ', '_')}_signature.json"
+        )
         with open(signature_file, 'w') as f:
             json.dump(signature_data, f, indent=2)
 
@@ -555,14 +562,19 @@ rule FlexNet_Protection {
 
         logger.info(f"Certified ground truth saved: {output_file}")
 
-        verification_file = self.ground_truth_dir / f"{software_name.replace(' ', '_')}_verification.txt"
+        verification_file = (
+            self.ground_truth_dir
+            / f"{software_name.replace(' ', '_')}_verification.txt"
+        )
         with open(verification_file, 'w') as f:
             f.write(f"Ground Truth Certification for {software_name}\n")
             f.write("=" * 60 + "\n\n")
             f.write(f"Generated: {datetime.now().isoformat()}\n")
             f.write(f"SHA-256: {signature}\n")
             f.write(f"Sources Used: {len(ground_truth.get('evidence_sources', []))}\n")
-            f.write(f"Consensus Protections: {len(ground_truth.get('consensus_protections', []))}\n")
+            f.write(
+                f"Consensus Protections: {len(ground_truth.get('consensus_protections', []))}\n"
+            )
             f.write("\nThis ground truth was generated using ONLY external sources.\n")
             f.write("Intellicrack was NOT used in ground truth generation.\n")
 
@@ -577,17 +589,21 @@ rule FlexNet_Protection {
 
         try:
             cmd = ["tasklist", "/FI", "IMAGENAME eq intellicrack*"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)  # noqa: S603
 
             if "intellicrack" in result.stdout.lower():
-                logger.error("CRITICAL: Intellicrack process detected during ground truth generation!")
+                logger.error(
+                    "CRITICAL: Intellicrack process detected during ground truth generation!"
+                )
                 return False
 
             cmd = ["tasklist", "/M", "intellicrack*"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)  # noqa: S603
 
             if "intellicrack" in result.stdout.lower():
-                logger.error("CRITICAL: Intellicrack modules detected during ground truth generation!")
+                logger.error(
+                    "CRITICAL: Intellicrack modules detected during ground truth generation!"
+                )
                 return False
 
             logger.info("Verified: No Intellicrack usage detected")
@@ -625,7 +641,11 @@ rule FlexNet_Protection {
                 except Exception:
                     logger.warning(f"Could not read ground truth file: {gt_file}")
 
-        report_file = self.base_dir / "reports" / f"ground_truth_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            self.base_dir
+            / "reports"
+            / f"ground_truth_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
 
@@ -651,4 +671,3 @@ if __name__ == "__main__":
 
     report = establisher.generate_ground_truth_report()
     print(f"\nGround truths established: {len(report['ground_truths'])}")
-

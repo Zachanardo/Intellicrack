@@ -108,9 +108,9 @@ class ReportGenerationThread(QThread):
 
         content = f"""# Intellicrack Analysis Report
 
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Report Type: {config.get('type', 'Unknown')}
-Binary: {config.get('binary_path', 'N/A')}
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+Report Type: {config.get("type", "Unknown")}
+Binary: {config.get("binary_path", "N/A")}
 
 ## Executive Summary
 
@@ -119,15 +119,15 @@ This report contains the analysis results for the specified binary file.
 ## Analysis Details
 
 ### Binary Information
-- File: {config.get('binary_path', 'N/A')}
-- Size: {config.get('file_size', 'Unknown')}
-- MD5: {config.get('md5_hash', 'N/A')}
-- SHA256: {config.get('sha256_hash', 'N/A')}
+- File: {config.get("binary_path", "N/A")}
+- Size: {config.get("file_size", "Unknown")}
+- MD5: {config.get("md5_hash", "N/A")}
+- SHA256: {config.get("sha256_hash", "N/A")}
 
 ### Analysis Results
-- Vulnerabilities Found: {config.get('vulnerabilities', 0)}
-- Suspicious Patterns: {config.get('patterns', 0)}
-- License Checks: {config.get('license_checks', 0)}
+- Vulnerabilities Found: {config.get("vulnerabilities", 0)}
+- Suspicious Patterns: {config.get("patterns", 0)}
+- License Checks: {config.get("license_checks", 0)}
 
 ### Recommendations
 
@@ -333,9 +333,7 @@ class ReportManagerDialog(BaseDialog):
 
         self.report_name_edit = QLineEdit()
         self.report_type_combo = QComboBox()
-        self.report_type_combo.addItems(
-            ["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"]
-        )
+        self.report_type_combo.addItems(["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"])
 
         self.binary_path_edit = QLineEdit()
         self.browse_binary_btn = QPushButton("Browse...")
@@ -642,9 +640,7 @@ class ReportManagerDialog(BaseDialog):
     def edit_report(self):
         """Edit the selected report."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Edit Report", "Report editing functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Edit Report", "Report editing functionality would be implemented here")
 
     def duplicate_report(self):
         """Duplicate the selected report."""
@@ -809,9 +805,7 @@ class ReportManagerDialog(BaseDialog):
     def preview_report(self):
         """Preview the report before generation."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Preview", "Report preview functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Preview", "Report preview functionality would be implemented here")
 
     def export_report(self):
         """Export the selected report."""
@@ -889,16 +883,12 @@ class ReportManagerDialog(BaseDialog):
     def edit_template(self):
         """Edit the selected template."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Edit Template", "Template editing functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Edit Template", "Template editing functionality would be implemented here")
 
     def create_template(self):
         """Create a new report template."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Create Template", "Template creation functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Create Template", "Template creation functionality would be implemented here")
 
 
 # Export for external use

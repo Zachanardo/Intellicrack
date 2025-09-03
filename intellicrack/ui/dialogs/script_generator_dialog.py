@@ -180,10 +180,23 @@ class TestScriptDialog(BaseDialog):
             "memory_limit": 128 * 1024 * 1024,  # 128MB
             "execution_timeout": 30,  # 30 seconds
             "allowed_modules": [
-                "frida", "ghidra", "pefile", "capstone", "keystone",
-                "unicorn", "radare2", "angr", "binwalk", "volatility",
-                "yara", "hashlib", "struct", "json", "base64", "zlib"
-            ]
+                "frida",
+                "ghidra",
+                "pefile",
+                "capstone",
+                "keystone",
+                "unicorn",
+                "radare2",
+                "angr",
+                "binwalk",
+                "volatility",
+                "yara",
+                "hashlib",
+                "struct",
+                "json",
+                "base64",
+                "zlib",
+            ],
         }
 
         # Initialize test timer
@@ -205,7 +218,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results.clear()
         for i in range(self.results_tabs.count() - 1):
             widget = self.results_tabs.widget(i)
-            if hasattr(widget, 'clear'):
+            if hasattr(widget, "clear"):
                 widget.clear()
 
         # Start test sequence
@@ -215,7 +228,7 @@ class TestScriptDialog(BaseDialog):
             ("Security Analysis", self.test_security),
             ("Performance Analysis", self.test_performance),
             ("Effectiveness Testing", self.test_effectiveness),
-            ("Generating Summary", self.generate_summary)
+            ("Generating Summary", self.generate_summary),
         ]
 
         self.test_timer.start(500)  # Update every 500ms
@@ -234,11 +247,7 @@ class TestScriptDialog(BaseDialog):
             test_function()
         except Exception as e:
             logger.error(f"Test phase '{phase_name}' failed: {e}")
-            self.test_results[phase_name.lower().replace(' ', '_')] = {
-                "status": "error",
-                "error": str(e),
-                "timestamp": time.time()
-            }
+            self.test_results[phase_name.lower().replace(" ", "_")] = {"status": "error", "error": str(e), "timestamp": time.time()}
 
         self.current_test_phase += 1
 
@@ -247,13 +256,7 @@ class TestScriptDialog(BaseDialog):
 
     def test_syntax(self):
         """Perform comprehensive syntax validation."""
-        results = {
-            "status": "running",
-            "tests": [],
-            "warnings": [],
-            "errors": [],
-            "timestamp": time.time()
-        }
+        results = {"status": "running", "tests": [], "warnings": [], "errors": [], "timestamp": time.time()}
 
         # Language detection
         language = self.detect_script_language()
@@ -300,14 +303,7 @@ class TestScriptDialog(BaseDialog):
 
     def validate_python_syntax(self):
         """Validate Python script syntax."""
-        validation_results = {
-            "syntax_valid": False,
-            "parse_errors": [],
-            "warnings": [],
-            "imports": [],
-            "functions": [],
-            "classes": []
-        }
+        validation_results = {"syntax_valid": False, "parse_errors": [], "warnings": [], "imports": [], "functions": [], "classes": []}
 
         try:
             import ast
@@ -343,12 +339,7 @@ class TestScriptDialog(BaseDialog):
 
     def validate_javascript_syntax(self):
         """Validate JavaScript/Frida script syntax."""
-        validation_results = {
-            "syntax_valid": True,
-            "warnings": [],
-            "frida_patterns": [],
-            "security_features": []
-        }
+        validation_results = {"syntax_valid": True, "warnings": [], "frida_patterns": [], "security_features": []}
 
         # Check for common Frida patterns
         frida_patterns = [
@@ -379,30 +370,26 @@ class TestScriptDialog(BaseDialog):
 
     def validate_powershell_syntax(self):
         """Validate PowerShell script syntax."""
-        validation_results = {
-            "syntax_valid": True,
-            "cmdlets": [],
-            "variables": [],
-            "warnings": []
-        }
+        validation_results = {"syntax_valid": True, "cmdlets": [], "variables": [], "warnings": []}
 
-        lines = self.script_content.split('\n')
+        lines = self.script_content.split("\n")
         for line in lines:
             # Find PowerShell cmdlets
-            if '-' in line and any(verb in line.lower() for verb in ['get-', 'set-', 'new-', 'remove-']):
+            if "-" in line and any(verb in line.lower() for verb in ["get-", "set-", "new-", "remove-"]):
                 cmdlet = line.strip().split()[0] if line.strip().split() else ""
                 if cmdlet and cmdlet not in validation_results["cmdlets"]:
                     validation_results["cmdlets"].append(cmdlet)
 
             # Find variables
-            if '$' in line:
+            if "$" in line:
                 import re
-                vars_found = re.findall(r'\$\w+', line)
+
+                vars_found = re.findall(r"\$\w+", line)
                 validation_results["variables"].extend(vars_found)
 
         validation_results["tests"] = [
             f"✓ Found {len(validation_results['cmdlets'])} PowerShell cmdlets",
-            f"✓ Found {len(set(validation_results['variables']))} unique variables"
+            f"✓ Found {len(set(validation_results['variables']))} unique variables",
         ]
 
         return validation_results
@@ -410,15 +397,15 @@ class TestScriptDialog(BaseDialog):
     def perform_generic_syntax_checks(self):
         """Perform language-agnostic syntax checks."""
         checks = {
-            "line_count": len(self.script_content.split('\n')),
+            "line_count": len(self.script_content.split("\n")),
             "character_count": len(self.script_content),
             "contains_comments": False,
             "contains_strings": False,
-            "suspicious_patterns": []
+            "suspicious_patterns": [],
         }
 
         # Check for comments
-        comment_patterns = ['#', '//', '/*', '--', 'REM ']
+        comment_patterns = ["#", "//", "/*", "--", "REM "]
         checks["contains_comments"] = any(pattern in self.script_content for pattern in comment_patterns)
 
         # Check for strings
@@ -426,7 +413,7 @@ class TestScriptDialog(BaseDialog):
         checks["contains_strings"] = any(pattern in self.script_content for pattern in string_patterns)
 
         # Check for suspicious patterns
-        suspicious = ['eval(', 'exec(', 'system(', 'shell(', 'cmd.exe', 'powershell.exe']
+        suspicious = ["eval(", "exec(", "system(", "shell(", "cmd.exe", "powershell.exe"]
         for pattern in suspicious:
             if pattern in self.script_content.lower():
                 checks["suspicious_patterns"].append(pattern)
@@ -441,27 +428,29 @@ class TestScriptDialog(BaseDialog):
             "vulnerabilities": [],
             "warnings": [],
             "safe_patterns": [],
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         # Check for dangerous operations
         dangerous_patterns = {
-            "system_execution": ['system(', 'exec(', 'subprocess', 'os.system', 'shell_exec'],
-            "file_operations": ['open(', 'file(', 'write(', 'delete', 'unlink'],
-            "network_access": ['urllib', 'requests', 'socket', 'httplib', 'xmlrpc'],
-            "registry_access": ['winreg', 'reg add', 'reg delete', 'registry'],
-            "memory_manipulation": ['ctypes', 'mmap', 'struct.pack', 'buffer']
+            "system_execution": ["system(", "exec(", "subprocess", "os.system", "shell_exec"],
+            "file_operations": ["open(", "file(", "write(", "delete", "unlink"],
+            "network_access": ["urllib", "requests", "socket", "httplib", "xmlrpc"],
+            "registry_access": ["winreg", "reg add", "reg delete", "registry"],
+            "memory_manipulation": ["ctypes", "mmap", "struct.pack", "buffer"],
         }
 
         risk_score = 0
         for category, patterns in dangerous_patterns.items():
             found_patterns = [p for p in patterns if p.lower() in self.script_content.lower()]
             if found_patterns:
-                security_results["vulnerabilities"].append({
-                    "category": category,
-                    "patterns": found_patterns,
-                    "severity": "high" if category in ["system_execution", "registry_access"] else "medium"
-                })
+                security_results["vulnerabilities"].append(
+                    {
+                        "category": category,
+                        "patterns": found_patterns,
+                        "severity": "high" if category in ["system_execution", "registry_access"] else "medium",
+                    }
+                )
                 risk_score += len(found_patterns) * (3 if category in ["system_execution"] else 1)
 
         # Determine overall risk level
@@ -473,13 +462,13 @@ class TestScriptDialog(BaseDialog):
             security_results["risk_level"] = "low"
 
         # Check for safe patterns
-        safe_patterns = ['try:', 'except:', 'finally:', 'with open', 'if __name__']
+        safe_patterns = ["try:", "except:", "finally:", "with open", "if __name__"]
         for pattern in safe_patterns:
             if pattern in self.script_content:
                 security_results["safe_patterns"].append(pattern)
 
         # Input validation checks
-        if 'input(' in self.script_content and 'validate' not in self.script_content.lower():
+        if "input(" in self.script_content and "validate" not in self.script_content.lower():
             security_results["warnings"].append("User input detected without apparent validation")
 
         self.test_results["security_analysis"] = security_results
@@ -494,15 +483,15 @@ class TestScriptDialog(BaseDialog):
             "memory_usage": "unknown",
             "bottlenecks": [],
             "optimizations": [],
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         # Analyze complexity based on control structures
         complexity_indicators = {
-            'loops': self.script_content.count('for ') + self.script_content.count('while '),
-            'conditionals': self.script_content.count('if ') + self.script_content.count('elif '),
-            'functions': self.script_content.count('def ') + self.script_content.count('function '),
-            'nested_structures': 0  # Simplified - would need proper parsing
+            "loops": self.script_content.count("for ") + self.script_content.count("while "),
+            "conditionals": self.script_content.count("if ") + self.script_content.count("elif "),
+            "functions": self.script_content.count("def ") + self.script_content.count("function "),
+            "nested_structures": 0,  # Simplified - would need proper parsing
         }
 
         total_complexity = sum(complexity_indicators.values())
@@ -515,22 +504,28 @@ class TestScriptDialog(BaseDialog):
 
         # Identify potential bottlenecks
         bottleneck_patterns = {
-            'nested_loops': ['for ' in line and 'for ' in self.script_content[self.script_content.find(line)+len(line):self.script_content.find(line)+200] for line in self.script_content.split('\n') if 'for ' in line],
-            'large_data_operations': 'read(' in self.script_content or 'readall()' in self.script_content,
-            'inefficient_string_ops': '+=' in self.script_content and 'str' in self.script_content,
-            'recursive_calls': 'def ' in self.script_content and any(func_name in self.script_content for func_name in ['recursive', 'recurse'])
+            "nested_loops": [
+                "for " in line
+                and "for " in self.script_content[self.script_content.find(line) + len(line) : self.script_content.find(line) + 200]
+                for line in self.script_content.split("\n")
+                if "for " in line
+            ],
+            "large_data_operations": "read(" in self.script_content or "readall()" in self.script_content,
+            "inefficient_string_ops": "+=" in self.script_content and "str" in self.script_content,
+            "recursive_calls": "def " in self.script_content
+            and any(func_name in self.script_content for func_name in ["recursive", "recurse"]),
         }
 
         for bottleneck, detected in bottleneck_patterns.items():
             if detected:
-                performance_results["bottlenecks"].append(bottleneck.replace('_', ' ').title())
+                performance_results["bottlenecks"].append(bottleneck.replace("_", " ").title())
 
         # Suggest optimizations
-        if 'import' in self.script_content and len([line for line in self.script_content.split('\n') if 'import' in line]) > 10:
+        if "import" in self.script_content and len([line for line in self.script_content.split("\n") if "import" in line]) > 10:
             performance_results["optimizations"].append("Consider lazy imports for better startup time")
 
-        if 'print(' in self.script_content:
-            print_count = self.script_content.count('print(')
+        if "print(" in self.script_content:
+            print_count = self.script_content.count("print(")
             if print_count > 10:
                 performance_results["optimizations"].append(f"High number of print statements ({print_count}) - consider logging")
 
@@ -545,7 +540,7 @@ class TestScriptDialog(BaseDialog):
             "capabilities": [],
             "missing_features": [],
             "recommendations": [],
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         script_type_lower = self.script_type.lower()
@@ -566,11 +561,7 @@ class TestScriptDialog(BaseDialog):
 
     def analyze_bypass_effectiveness(self):
         """Analyze bypass script effectiveness."""
-        analysis = {
-            "effectiveness_score": 0,
-            "capabilities": [],
-            "missing_features": []
-        }
+        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for bypass techniques
         bypass_techniques = {
@@ -578,24 +569,24 @@ class TestScriptDialog(BaseDialog):
             "api_hooking": ["hook", "intercept", "detour", "replacement"],
             "memory_manipulation": ["memory", "write", "read", "address"],
             "dll_injection": ["inject", "dll", "library", "loadlibrary"],
-            "process_manipulation": ["process", "thread", "suspend", "resume"]
+            "process_manipulation": ["process", "thread", "suspend", "resume"],
         }
 
         score = 0
         for technique, keywords in bypass_techniques.items():
             if any(keyword in self.script_content.lower() for keyword in keywords):
-                analysis["capabilities"].append(technique.replace('_', ' ').title())
+                analysis["capabilities"].append(technique.replace("_", " ").title())
                 score += 20
 
         # Check for error handling
-        if any(pattern in self.script_content.lower() for pattern in ['try', 'catch', 'except', 'error']):
+        if any(pattern in self.script_content.lower() for pattern in ["try", "catch", "except", "error"]):
             score += 10
             analysis["capabilities"].append("Error handling")
         else:
             analysis["missing_features"].append("Error handling")
 
         # Check for target validation
-        if any(pattern in self.script_content.lower() for pattern in ['validate', 'check', 'verify']):
+        if any(pattern in self.script_content.lower() for pattern in ["validate", "check", "verify"]):
             score += 10
             analysis["capabilities"].append("Target validation")
         else:
@@ -606,11 +597,7 @@ class TestScriptDialog(BaseDialog):
 
     def analyze_exploit_effectiveness(self):
         """Analyze exploit script effectiveness."""
-        analysis = {
-            "effectiveness_score": 0,
-            "capabilities": [],
-            "missing_features": []
-        }
+        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for exploit components
         exploit_components = {
@@ -618,13 +605,13 @@ class TestScriptDialog(BaseDialog):
             "payload_delivery": ["payload", "shellcode", "execute", "run"],
             "privilege_escalation": ["privilege", "admin", "root", "escalate"],
             "persistence": ["persist", "startup", "service", "registry"],
-            "evasion": ["evade", "hide", "stealth", "obfuscate"]
+            "evasion": ["evade", "hide", "stealth", "obfuscate"],
         }
 
         score = 0
         for component, keywords in exploit_components.items():
             if any(keyword in self.script_content.lower() for keyword in keywords):
-                analysis["capabilities"].append(component.replace('_', ' ').title())
+                analysis["capabilities"].append(component.replace("_", " ").title())
                 score += 20
 
         analysis["effectiveness_score"] = min(score, 100)
@@ -632,11 +619,7 @@ class TestScriptDialog(BaseDialog):
 
     def analyze_strategy_effectiveness(self):
         """Analyze strategy document effectiveness."""
-        analysis = {
-            "effectiveness_score": 0,
-            "capabilities": [],
-            "missing_features": []
-        }
+        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for strategy components
         strategy_components = {
@@ -644,13 +627,13 @@ class TestScriptDialog(BaseDialog):
             "vulnerability_analysis": ["vulnerability", "weakness", "flaw", "bug"],
             "attack_vectors": ["attack", "vector", "method", "approach"],
             "risk_assessment": ["risk", "impact", "likelihood", "assessment"],
-            "mitigation": ["mitigation", "defense", "protection", "countermeasure"]
+            "mitigation": ["mitigation", "defense", "protection", "countermeasure"],
         }
 
         score = 0
         for component, keywords in strategy_components.items():
             if any(keyword in self.script_content.lower() for keyword in keywords):
-                analysis["capabilities"].append(component.replace('_', ' ').title())
+                analysis["capabilities"].append(component.replace("_", " ").title())
                 score += 20
 
         analysis["effectiveness_score"] = min(score, 100)
@@ -658,13 +641,7 @@ class TestScriptDialog(BaseDialog):
 
     def generate_summary(self):
         """Generate comprehensive test summary."""
-        summary = {
-            "status": "completed",
-            "overall_score": 0,
-            "test_results_summary": {},
-            "recommendations": [],
-            "timestamp": time.time()
-        }
+        summary = {"status": "completed", "overall_score": 0, "test_results_summary": {}, "recommendations": [], "timestamp": time.time()}
 
         # Calculate overall score
         scores = []
@@ -683,10 +660,7 @@ class TestScriptDialog(BaseDialog):
                 score = 75  # Default for unknown tests
 
             scores.append(score)
-            summary["test_results_summary"][test_name] = {
-                "score": score,
-                "status": results.get("status", "unknown")
-            }
+            summary["test_results_summary"][test_name] = {"score": score, "status": results.get("status", "unknown")}
 
         summary["overall_score"] = sum(scores) // len(scores) if scores else 0
 
@@ -764,9 +738,9 @@ class TestScriptDialog(BaseDialog):
             lines.append(f"Functions: {', '.join(results['functions'])}")
         if results.get("frida_patterns"):
             lines.append("Frida Patterns:")
-            lines.extend([f"  {pattern}" for pattern in results['frida_patterns']])
+            lines.extend([f"  {pattern}" for pattern in results["frida_patterns"]])
 
-        self.syntax_results.setText('\n'.join(lines))
+        self.syntax_results.setText("\n".join(lines))
 
     def update_security_display(self):
         """Update the security analysis display."""
@@ -784,9 +758,9 @@ class TestScriptDialog(BaseDialog):
         if vulnerabilities:
             lines.append("Security Issues Found:")
             for vuln in vulnerabilities:
-                category = vuln["category"].replace('_', ' ').title()
+                category = vuln["category"].replace("_", " ").title()
                 severity = vuln["severity"]
-                patterns = ', '.join(vuln["patterns"])
+                patterns = ", ".join(vuln["patterns"])
                 severity_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
                 lines.append(f"  {severity_icon} {category} ({severity}): {patterns}")
             lines.append("")
@@ -804,7 +778,7 @@ class TestScriptDialog(BaseDialog):
             lines.append("Security Warnings:")
             lines.extend([f"  ⚠ {warning}" for warning in warnings])
 
-        self.security_results.setText('\n'.join(lines))
+        self.security_results.setText("\n".join(lines))
 
     def update_performance_display(self):
         """Update the performance analysis display."""
@@ -836,7 +810,7 @@ class TestScriptDialog(BaseDialog):
         lines.append(f"  Execution Time: {results.get('estimated_execution_time', 'Unknown')}")
         lines.append(f"  Memory Usage: {results.get('memory_usage', 'Unknown')}")
 
-        self.performance_results.setText('\n'.join(lines))
+        self.performance_results.setText("\n".join(lines))
 
     def update_effectiveness_display(self):
         """Update the effectiveness testing display."""
@@ -881,7 +855,7 @@ class TestScriptDialog(BaseDialog):
             lines.append("Recommendations:")
             lines.extend([f"  💡 {rec}" for rec in recommendations])
 
-        self.effectiveness_results.setText('\n'.join(lines))
+        self.effectiveness_results.setText("\n".join(lines))
 
     def update_summary_display(self):
         """Update the summary display."""
@@ -908,7 +882,7 @@ class TestScriptDialog(BaseDialog):
         if test_summary:
             lines.append("Test Results:")
             for test_name, test_result in test_summary.items():
-                test_display = test_name.replace('_', ' ').title()
+                test_display = test_name.replace("_", " ").title()
                 score = test_result.get("score", 0)
                 status = test_result.get("status", "unknown")
                 status_icon = "✓" if status == "completed" else "✗"
@@ -928,7 +902,7 @@ class TestScriptDialog(BaseDialog):
         lines.append(f"Script size: {len(self.script_content)} characters")
         lines.append(f"Script type: {self.script_type}")
 
-        self.summary_results.setText('\n'.join(lines))
+        self.summary_results.setText("\n".join(lines))
 
     def export_results(self):
         """Export test results to file."""
@@ -940,21 +914,19 @@ class TestScriptDialog(BaseDialog):
         default_name = f"script_test_results_{timestamp}.txt"
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export Test Results",
-            default_name,
-            "Text Files (*.txt);;JSON Files (*.json);;All Files (*)"
+            self, "Export Test Results", default_name, "Text Files (*.txt);;JSON Files (*.json);;All Files (*)"
         )
 
         if file_path:
             try:
-                if file_path.endswith('.json'):
+                if file_path.endswith(".json"):
                     import json
-                    with open(file_path, 'w', encoding='utf-8') as f:
+
+                    with open(file_path, "w", encoding="utf-8") as f:
                         json.dump(self.test_results, f, indent=2, default=str)
                 else:
                     # Export as formatted text
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write("Script Testing Results\n")
                         f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                         f.write(f"Script Type: {self.script_type}\n")
@@ -966,7 +938,7 @@ class TestScriptDialog(BaseDialog):
                             ("Security Analysis", self.security_results.toPlainText()),
                             ("Performance Analysis", self.performance_results.toPlainText()),
                             ("Effectiveness Testing", self.effectiveness_results.toPlainText()),
-                            ("Summary", self.summary_results.toPlainText())
+                            ("Summary", self.summary_results.toPlainText()),
                         ]
 
                         for tab_name, content in tabs:
@@ -1074,9 +1046,7 @@ class ScriptGeneratorWorker(QThread):
             protection_info = {
                 "type": self.kwargs.get("protection_type", "license"),
                 "methods": self.kwargs.get("methods", ["patch"]),
-                "target_platform": "frida"
-                if self.kwargs.get("language") == "javascript"
-                else "python",
+                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python",
             }
 
             # Generate script using AI
@@ -1095,9 +1065,7 @@ class ScriptGeneratorWorker(QThread):
             self.script_generated.emit(result)
 
         except Exception as e:
-            self.logger.warning(
-                f"AI script generation failed: {e}. Falling back to template-based generation."
-            )
+            self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
             # Fallback to template-based generation
             from ...utils.exploitation import generate_bypass_script
 
@@ -1553,9 +1521,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.script_display.setPlainText(script_content)
 
         # Display documentation
-        doc_content = result.get(
-            "documentation", result.get("description", "No documentation available")
-        )
+        doc_content = result.get("documentation", result.get("description", "No documentation available"))
         self.doc_display.setPlainText(doc_content)
 
         # Display template if available
@@ -1570,8 +1536,6 @@ class ScriptGeneratorDialog(BaseDialog):
         script_content = self.script_display.toPlainText()
         if script_content:
             try:
-
-
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
@@ -1644,11 +1608,7 @@ class ScriptGeneratorDialog(BaseDialog):
             script_type = self.script_type_combo.currentText()
             # Check if bypass_language exists and use it, otherwise detect from content
             if hasattr(self, "bypass_language") and self.bypass_language.isVisible():
-                language = (
-                    "javascript"
-                    if "javascript" in self.bypass_language.currentText().lower()
-                    else "python"
-                )
+                language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
             # Auto-detect language from script type and content
             elif "frida" in script_type.lower() or "javascript" in script_type.lower():
                 language = "javascript"
@@ -1705,9 +1665,7 @@ class ScriptGeneratorDialog(BaseDialog):
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
         lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(
-            f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
-        )
+        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
         lines.append("")
 
         # Insights

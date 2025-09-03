@@ -217,13 +217,13 @@ class ICPReportGenerator:
 
         {self._generate_icp_analysis_section(result)}
 
-        {(options.include_recommendations and self._generate_recommendations_section(result)) or ''}
+        {(options.include_recommendations and self._generate_recommendations_section(result)) or ""}
 
-        {(options.include_bypass_methods and self._generate_bypass_methods_section(result)) or ''}
+        {(options.include_bypass_methods and self._generate_bypass_methods_section(result)) or ""}
 
-        {(options.include_technical_details and self._generate_technical_details_section(result)) or ''}
+        {(options.include_technical_details and self._generate_technical_details_section(result)) or ""}
 
-        {(options.include_raw_json and self._generate_raw_data_section(result)) or ''}
+        {(options.include_raw_json and self._generate_raw_data_section(result)) or ""}
 
         <hr>
         <p style="text-align: center; color: #7f8c8d;">
@@ -244,13 +244,7 @@ class ICPReportGenerator:
 
     def _generate_summary_section(self, result: UnifiedProtectionResult) -> str:
         """Generate summary section HTML."""
-        confidence_class = (
-            "high"
-            if result.confidence_score >= 80
-            else "medium"
-            if result.confidence_score >= 50
-            else "low"
-        )
+        confidence_class = "high" if result.confidence_score >= 80 else "medium" if result.confidence_score >= 50 else "low"
 
         return f"""
         <div class="summary">
@@ -258,12 +252,12 @@ class ICPReportGenerator:
             <p><strong>File:</strong> {Path(result.file_path).name}</p>
             <p><strong>File Type:</strong> {result.file_type}</p>
             <p><strong>Architecture:</strong> {result.architecture}</p>
-            <p><strong>Protection Status:</strong> {'Protected' if result.is_protected else 'Not Protected'}</p>
-            <p><strong>Packed:</strong> {'Yes' if result.is_packed else 'No'}</p>
+            <p><strong>Protection Status:</strong> {"Protected" if result.is_protected else "Not Protected"}</p>
+            <p><strong>Packed:</strong> {"Yes" if result.is_packed else "No"}</p>
             <p><strong>Total Protections Found:</strong> {len(result.protections)}</p>
             <p><strong>Overall Confidence:</strong> <span class="confidence {confidence_class}">{result.confidence_score:.1f}%</span></p>
             <p><strong>Analysis Time:</strong> {result.analysis_time:.2f} seconds</p>
-            <p><strong>Engines Used:</strong> {', '.join(result.engines_used)}</p>
+            <p><strong>Engines Used:</strong> {", ".join(result.engines_used)}</p>
         </div>
         """
 
@@ -299,9 +293,7 @@ class ICPReportGenerator:
         html += "</table>"
         return html
 
-    def _generate_protections_section(
-        self, result: UnifiedProtectionResult, options: ReportOptions
-    ) -> str:
+    def _generate_protections_section(self, result: UnifiedProtectionResult, options: ReportOptions) -> str:
         """Generate detected protections section."""
         if not result.protections:
             return "<h2>Detected Protections</h2><p>No protections detected.</p>"
@@ -314,9 +306,9 @@ class ICPReportGenerator:
 
             html += f"""
             <div class="detection {severity_class}">
-                <h3>{protection['name']} <span class="badge {badge_class}">{protection['type']}</span></h3>
-                <p><strong>Confidence:</strong> {protection.get('confidence', 0):.1f}%</p>
-                <p><strong>Source:</strong> {protection.get('source', 'Unknown')}</p>
+                <h3>{protection["name"]} <span class="badge {badge_class}">{protection["type"]}</span></h3>
+                <p><strong>Confidence:</strong> {protection.get("confidence", 0):.1f}%</p>
+                <p><strong>Source:</strong> {protection.get("source", "Unknown")}</p>
             """
 
             if protection.get("version"):
@@ -350,17 +342,15 @@ class ICPReportGenerator:
             html += f"<h3>File: {file_info.filetype}</h3>"
 
             if file_info.detections:
-                html += (
-                    "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
-                )
+                html += "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
 
                 for detection in file_info.detections:
                     html += f"""
                     <tr>
                         <td>{detection.name}</td>
                         <td><span class="badge {detection.type.lower()}">{detection.type}</span></td>
-                        <td>{detection.version or 'N/A'}</td>
-                        <td>{detection.info or 'N/A'}</td>
+                        <td>{detection.version or "N/A"}</td>
+                        <td>{detection.info or "N/A"}</td>
                     </tr>
                     """
 
@@ -409,9 +399,9 @@ class ICPReportGenerator:
             for rec in recommendations:
                 html += f"""
                 <div class="detection medium">
-                    <h3>{rec['title']}</h3>
-                    <p>{rec['desc']}</p>
-                    <p><strong>Recommended Tools:</strong> {', '.join(rec['tools'])}</p>
+                    <h3>{rec["title"]}</h3>
+                    <p>{rec["desc"]}</p>
+                    <p><strong>Recommended Tools:</strong> {", ".join(rec["tools"])}</p>
                 </div>
                 """
 
@@ -427,10 +417,10 @@ class ICPReportGenerator:
         for strategy in result.bypass_strategies:
             html += f"""
             <div class="detection low">
-                <h3>{strategy['name']}</h3>
-                <p>{strategy['description']}</p>
-                <p><strong>Difficulty:</strong> {strategy['difficulty']}</p>
-                <p><strong>Tools:</strong> {', '.join(strategy['tools'])}</p>
+                <h3>{strategy["name"]}</h3>
+                <p>{strategy["description"]}</p>
+                <p><strong>Difficulty:</strong> {strategy["difficulty"]}</p>
+                <p><strong>Tools:</strong> {", ".join(strategy["tools"])}</p>
                 <h4>Steps:</h4>
                 <ol>
             """

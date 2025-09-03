@@ -13,7 +13,7 @@ class TestLaunch:
         assert callable(launch)
 
     @pytest.mark.skipif(
-        sys.platform == "win32", 
+        sys.platform == "win32",
         reason="GUI launch tests skipped on Windows due to display issues"
     )
     def test_launch_execution(self):

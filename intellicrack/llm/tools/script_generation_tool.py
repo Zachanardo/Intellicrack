@@ -215,13 +215,9 @@ deobfuscate_strings()''',
 
         try:
             if script_type == "frida":
-                script = self._generate_frida_script(
-                    target, task, protection_info, custom_requirements
-                )
+                script = self._generate_frida_script(target, task, protection_info, custom_requirements)
             elif script_type == "ghidra":
-                script = self._generate_ghidra_script(
-                    target, task, protection_info, custom_requirements
-                )
+                script = self._generate_ghidra_script(target, task, protection_info, custom_requirements)
             else:
                 return {"success": False, "error": f"Unknown script type: {script_type}"}
 
@@ -238,9 +234,7 @@ deobfuscate_strings()''',
             logger.error(f"Script generation error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _generate_frida_script(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_script(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Frida script"""
         task_lower = task.lower()
 
@@ -258,9 +252,7 @@ deobfuscate_strings()''',
         else:
             return self._generate_frida_custom(target, task, protection_info, requirements)
 
-    def _generate_frida_hook(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_hook(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Frida hook script based on detected protections"""
         script_parts = []
 
@@ -343,9 +335,7 @@ if (targetModule) {{
 
         return "\n".join(script_parts)
 
-    def _generate_frida_trace(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_trace(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Frida trace script based on protection analysis"""
         script_parts = []
 
@@ -463,9 +453,7 @@ if (targetModule) {{
         if protection_info:
             protections = protection_info.keys()
             if any("network" in p.lower() for p in protections):
-                base_apis.extend(
-                    [("ws2_32.dll", "connect"), ("ws2_32.dll", "send"), ("ws2_32.dll", "recv")]
-                )
+                base_apis.extend([("ws2_32.dll", "connect"), ("ws2_32.dll", "send"), ("ws2_32.dll", "recv")])
             if any("registry" in p.lower() for p in protections):
                 base_apis.extend(
                     [
@@ -477,9 +465,7 @@ if (targetModule) {{
 
         return base_apis
 
-    def _generate_frida_bypass(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_bypass(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Frida bypass script"""
         script_parts = []
 
@@ -594,9 +580,7 @@ if (targetModule) {{
 
         if bypass_code_parts:
             script_parts.append(
-                self.frida_templates["bypass_protection"].format(
-                    protection_type="generic", bypass_code="\n".join(bypass_code_parts)
-                )
+                self.frida_templates["bypass_protection"].format(protection_type="generic", bypass_code="\n".join(bypass_code_parts))
             )
         else:
             # Generic bypass
@@ -614,9 +598,7 @@ Interceptor.attach(targetAddr, {
 
         return "\n".join(script_parts)
 
-    def _generate_frida_patch(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_patch(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Frida memory patch script"""
         script_parts = []
 
@@ -694,9 +676,7 @@ Interceptor.attach(targetAddr, {
 
         return "\n".join(script_parts)
 
-    def _generate_frida_custom(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_frida_custom(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate custom Frida script"""
         script_parts = []
 
@@ -776,9 +756,7 @@ Process.enumerateModules().forEach(function(module) {{
 
         return "\n".join(script_parts)
 
-    def _generate_ghidra_script(
-        self, target: str, task: str, protection_info: Dict, requirements: List[str]
-    ) -> str:
+    def _generate_ghidra_script(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
         """Generate Ghidra script"""
         # Import here to avoid circular imports
         from ...scripting.ghidra_generator import GhidraScriptGenerator
@@ -1074,9 +1052,7 @@ if (virtualAlloc) {{
             if "serial" in details_lower or "key" in details_lower:
                 base_functions.extend(["ValidateSerial", "CheckSerialKey", "VerifyProductKey"])
             if "online" in details_lower or "server" in details_lower:
-                base_functions.extend(
-                    ["ConnectLicenseServer", "ValidateOnline", "CheckServerLicense"]
-                )
+                base_functions.extend(["ConnectLicenseServer", "ValidateOnline", "CheckServerLicense"])
             if "hardware" in details_lower or "hwid" in details_lower:
                 base_functions.extend(["GetHardwareID", "CheckHWID", "ValidateFingerprint"])
 
@@ -1323,7 +1299,7 @@ Process.enumerateModules().forEach(function(module) {{
     module.enumerateExports().forEach(function(exp) {{
         suspiciousFuncs.forEach(function(pattern) {{
             if (exp.name.toLowerCase().indexOf(pattern) !== -1 &&
-                exp.name.toLowerCase().indexOf("{protection_type.lower().replace('_', '')}") !== -1) {{
+                exp.name.toLowerCase().indexOf("{protection_type.lower().replace("_", "")}") !== -1) {{
                 console.log("[+] Found protection function: " + exp.name);
                 Interceptor.attach(exp.address, {{
                     onLeave: function(retval) {{

@@ -207,10 +207,7 @@ class CompareDialog(QDialog):
         layout.addWidget(self.stats_label)
 
         # Button box
-        self.button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
@@ -226,12 +223,7 @@ class CompareDialog(QDialog):
             file_num: 1 or 2 for first or second file
 
         """
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            f"Select File {file_num}",
-            "",
-            "All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, f"Select File {file_num}", "", "All Files (*.*)")
 
         if file_path:
             if file_num == 1:
@@ -320,35 +312,19 @@ class CompareDialog(QDialog):
 
         """
         if not self.file1_path or not self.file2_path:
-            QMessageBox.warning(
-                self,
-                "Selection Required",
-                "Please select two files to compare."
-            )
+            QMessageBox.warning(self, "Selection Required", "Please select two files to compare.")
             return False
 
         if not os.path.exists(self.file1_path):
-            QMessageBox.warning(
-                self,
-                "File Not Found",
-                f"File 1 not found: {self.file1_path}"
-            )
+            QMessageBox.warning(self, "File Not Found", f"File 1 not found: {self.file1_path}")
             return False
 
         if not os.path.exists(self.file2_path):
-            QMessageBox.warning(
-                self,
-                "File Not Found",
-                f"File 2 not found: {self.file2_path}"
-            )
+            QMessageBox.warning(self, "File Not Found", f"File 2 not found: {self.file2_path}")
             return False
 
         if self.file1_path == self.file2_path:
-            QMessageBox.warning(
-                self,
-                "Same File",
-                "Please select two different files to compare."
-            )
+            QMessageBox.warning(self, "Same File", "Please select two different files to compare.")
             return False
 
         return True
@@ -366,12 +342,12 @@ class CompareDialog(QDialog):
 
         """
         return {
-            'file1': self.file1_path,
-            'file2': self.file2_path,
-            'mode': self.comparison_mode,
-            'sync_scrolling': self.sync_scrolling,
-            'highlight_differences': self.highlight_differences,
-            'ignore_case': self.ignore_case_check.isChecked()
+            "file1": self.file1_path,
+            "file2": self.file2_path,
+            "mode": self.comparison_mode,
+            "sync_scrolling": self.sync_scrolling,
+            "highlight_differences": self.highlight_differences,
+            "ignore_case": self.ignore_case_check.isChecked(),
         }
 
     def show_quick_stats(self, differences: list):

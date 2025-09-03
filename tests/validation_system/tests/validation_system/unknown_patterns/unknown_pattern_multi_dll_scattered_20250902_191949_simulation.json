@@ -1,0 +1,106 @@
+{
+  "scenario_id": "unknown_pattern_multi_dll_scattered_20250902_191949",
+  "pattern_type": "multi_dll_scattered",
+  "simulation_timestamp": "2025-09-02T19:19:49.618148",
+  "binary_characteristics": {
+    "file_type": "PE32 executable",
+    "size_bytes": 67478,
+    "entry_point": "0x00460c7a",
+    "sections": [
+      {
+        "name": ".text",
+        "virtual_address": "0x00401000",
+        "size": "0x10000",
+        "characteristics": "executable"
+      },
+      {
+        "name": ".data",
+        "virtual_address": "0x00411000",
+        "size": "0x5000",
+        "characteristics": "readable_writable"
+      },
+      {
+        "name": ".rsrc",
+        "virtual_address": "0x00416000",
+        "size": "0x3000",
+        "characteristics": "readable"
+      }
+    ],
+    "imports": [
+      {
+        "dll": "kernel32.dll",
+        "functions": [
+          "CreateThread",
+          "GetTickCount",
+          "Sleep"
+        ]
+      },
+      {
+        "dll": "user32.dll",
+        "functions": [
+          "MessageBoxA",
+          "GetWindowTextA"
+        ]
+      },
+      {
+        "dll": "advapi32.dll",
+        "functions": [
+          "RegOpenKeyExA",
+          "RegQueryValueExA"
+        ]
+      },
+      {
+        "dll": "licensing.dll",
+        "functions": [
+          "ValidateLicense",
+          "GetLicenseInfo"
+        ]
+      },
+      {
+        "dll": "crypto.dll",
+        "functions": [
+          "EncryptData",
+          "GenerateKey"
+        ]
+      },
+      {
+        "dll": "hardware.dll",
+        "functions": [
+          "GetHardwareID",
+          "ValidateHardware"
+        ]
+      }
+    ],
+    "exports": [
+      "InitializeLicensing",
+      "CheckLicenseStatus",
+      "CleanupLicensing"
+    ]
+  },
+  "protection_implementation": {
+    "dll_count": 4,
+    "validation_distribution": {
+      "main_exe": "Initial license loading",
+      "licensing.dll": "Primary validation logic",
+      "crypto.dll": "Cryptographic operations",
+      "hardware.dll": "Hardware fingerprinting",
+      "network.dll": "Online activation checks"
+    },
+    "inter_dll_communication": "Encrypted message passing",
+    "dependency_chain": "Complex inter-dependencies between validation steps",
+    "failure_propagation": "Cascading validation failures across modules"
+  },
+  "behavioral_patterns": {
+    "network_activity": [],
+    "file_operations": [],
+    "registry_operations": [],
+    "process_operations": []
+  },
+  "detection_challenges": [
+    "Protection logic distributed across multiple modules",
+    "Complex inter-DLL dependencies",
+    "Encrypted communication between modules",
+    "Failure cascade makes single-point bypass difficult"
+  ],
+  "analysis_notes": "Unknown pattern: License validation distributed across multiple DLL files"
+}

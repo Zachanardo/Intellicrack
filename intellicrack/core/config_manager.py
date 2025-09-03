@@ -826,7 +826,7 @@ class IntellicrackConfig:
                     capture_output=True,
                     text=True,
                     timeout=10,  # Prevent hanging on broken tools
-                    shell=False
+                    shell=False,
                 )
                 if result.returncode == 0:
                     # Limit version string length to prevent huge outputs
@@ -922,6 +922,7 @@ class IntellicrackConfig:
         """
         try:
             from intellicrack.hexview.config_defaults import HEX_VIEWER_DEFAULTS
+
             return HEX_VIEWER_DEFAULTS
         except ImportError as e:
             logger.warning(f"Could not import hex viewer defaults: {e}")
@@ -1035,9 +1036,7 @@ class IntellicrackConfig:
 
             window_state = settings.value("window/state", None)
             if window_state:
-                self.set(
-                    "ui_preferences.window_state", {"main": window_state.toHex().data().decode()}
-                )
+                self.set("ui_preferences.window_state", {"main": window_state.toHex().data().decode()})
 
             # Migrate splitter states
             splitter_states = {}
@@ -1045,9 +1044,7 @@ class IntellicrackConfig:
                 if "splitter" in key.lower():
                     value = settings.value(key)
                     if value:
-                        splitter_states[key] = (
-                            value.toHex().data().decode() if hasattr(value, "toHex") else str(value)
-                        )
+                        splitter_states[key] = value.toHex().data().decode() if hasattr(value, "toHex") else str(value)
             if splitter_states:
                 self.set("ui_preferences.splitter_states", splitter_states)
 
@@ -1128,9 +1125,7 @@ class IntellicrackConfig:
                 if legacy_path.exists():
                     try:
                         legacy_data = json.loads(legacy_path.read_text())
-                        logger.info(
-                            f"Found legacy config at {legacy_path}: {len(legacy_data)} keys"
-                        )
+                        logger.info(f"Found legacy config at {legacy_path}: {len(legacy_data)} keys")
 
                         # Handle specific legacy fields that need special migration
                         self._migrate_specific_legacy_fields(legacy_data, legacy_path)
@@ -1205,9 +1200,7 @@ class IntellicrackConfig:
             if "output" in cli_config:
                 current_cli["output_format"] = cli_config["output"].get("format", "json")
                 current_cli["color_output"] = cli_config["output"].get("colors", True)
-                current_cli["verbosity"] = (
-                    "info" if cli_config["output"].get("verbosity", 1) == 1 else "debug"
-                )
+                current_cli["verbosity"] = "info" if cli_config["output"].get("verbosity", 1) == 1 else "debug"
             if "default_profile" in cli_config:
                 current_cli["default_profile"] = cli_config["default_profile"]
 
@@ -1323,9 +1316,7 @@ class IntellicrackConfig:
     def _migrate_font_configs(self):
         """Migrate font configuration from assets to central config."""
         try:
-            font_config_path = Path(
-                "C:\\Intellicrack\\intellicrack\\assets\\fonts\\font_config.json"
-            )
+            font_config_path = Path("C:\\Intellicrack\\intellicrack\\assets\\fonts\\font_config.json")
 
             if font_config_path.exists():
                 logger.info("Migrating font configuration to central config")
@@ -1446,8 +1437,8 @@ class IntellicrackConfig:
                 # Expand environment variables in the retrieved value
                 return self._expand_environment_variables(value)
 
-            except (KeyError, TypeError) as e:
-                self.logger.error("Error in config_manager: %s", e)
+            except (KeyError, TypeError):
+                self.logger.debug(f"Config key not found, using default: {key}")
                 return default
 
     def set(self, key: str, value: Any, save: bool | None = None):
@@ -1742,6 +1733,7 @@ def get_config() -> IntellicrackConfig:
     if _global_config is None:
         _global_config = IntellicrackConfig()
     return _global_config
+
 
 # Backward compatibility alias
 ConfigManager = IntellicrackConfig

@@ -76,8 +76,6 @@ class PreferencesDialog(BaseDialog):
         self.tab_widget.addTab(self.create_ai_tab(), "AI Settings")
         self.tab_widget.addTab(self.create_hex_viewer_tab(), "Hex Viewer")
 
-
-
     def create_general_tab(self):
         """Create the general preferences tab."""
         widget = QWidget()
@@ -305,9 +303,7 @@ class PreferencesDialog(BaseDialog):
         font_layout = QFormLayout()
 
         self.hex_font_family = QComboBox()
-        self.hex_font_family.addItems(
-            ["Consolas", "Courier New", "Monaco", "Menlo", "DejaVu Sans Mono"]
-        )
+        self.hex_font_family.addItems(["Consolas", "Courier New", "Monaco", "Menlo", "DejaVu Sans Mono"])
         current_font = self.config.get("hex_viewer.ui.font_family", "Consolas")
         self.hex_font_family.setCurrentText(current_font)
         self.hex_font_family.currentTextChanged.connect(self.on_hex_viewer_setting_changed)
@@ -361,32 +357,24 @@ class PreferencesDialog(BaseDialog):
 
         self.hex_search_history = QSpinBox()
         self.hex_search_history.setRange(10, 200)
-        self.hex_search_history.setValue(
-            self.config.get("hex_viewer.search.history_max_entries", 50)
-        )
+        self.hex_search_history.setValue(self.config.get("hex_viewer.search.history_max_entries", 50))
         self.hex_search_history.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search history size:", self.hex_search_history)
 
         self.hex_search_chunk = QSpinBox()
         self.hex_search_chunk.setRange(64, 1024)
         self.hex_search_chunk.setSuffix(" KB")
-        self.hex_search_chunk.setValue(
-            self.config.get("hex_viewer.search.search_chunk_size_kb", 256)
-        )
+        self.hex_search_chunk.setValue(self.config.get("hex_viewer.search.search_chunk_size_kb", 256))
         self.hex_search_chunk.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search chunk size:", self.hex_search_chunk)
 
         self.hex_incremental_search = QCheckBox("Enable incremental search")
-        self.hex_incremental_search.setChecked(
-            self.config.get("hex_viewer.search.incremental_search", True)
-        )
+        self.hex_incremental_search.setChecked(self.config.get("hex_viewer.search.incremental_search", True))
         self.hex_incremental_search.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_incremental_search)
 
         self.hex_highlight_all = QCheckBox("Highlight all matches")
-        self.hex_highlight_all.setChecked(
-            self.config.get("hex_viewer.search.highlight_all_matches", True)
-        )
+        self.hex_highlight_all.setChecked(self.config.get("hex_viewer.search.highlight_all_matches", True))
         self.hex_highlight_all.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_highlight_all)
 
@@ -423,12 +411,8 @@ class PreferencesDialog(BaseDialog):
         # Search settings
         self.config.set("hex_viewer.search.history_max_entries", self.hex_search_history.value())
         self.config.set("hex_viewer.search.search_chunk_size_kb", self.hex_search_chunk.value())
-        self.config.set(
-            "hex_viewer.search.incremental_search", self.hex_incremental_search.isChecked()
-        )
-        self.config.set(
-            "hex_viewer.search.highlight_all_matches", self.hex_highlight_all.isChecked()
-        )
+        self.config.set("hex_viewer.search.incremental_search", self.hex_incremental_search.isChecked())
+        self.config.set("hex_viewer.search.highlight_all_matches", self.hex_highlight_all.isChecked())
 
         # Save to disk if auto-save is enabled
         if self.config.get("general_preferences.auto_save", True):
@@ -541,10 +525,7 @@ class PreferencesDialog(BaseDialog):
             logger.warning("API key format may be invalid")
 
         # Check for conflicting settings
-        if (
-            self.sandbox_default_checkbox.isChecked()
-            and not self.warn_dangerous_checkbox.isChecked()
-        ):
+        if self.sandbox_default_checkbox.isChecked() and not self.warn_dangerous_checkbox.isChecked():
             logger.warning("Sandbox enabled but dangerous operation warnings disabled")
 
         if errors:
@@ -579,34 +560,22 @@ class PreferencesDialog(BaseDialog):
         self.config.set("qemu_testing.qemu_timeout", self.qemu_timeout_spin.value())
         self.config.set("qemu_testing.qemu_memory", self.qemu_memory_spin.value())
         self.config.set("general_preferences.execution_timeout", self.script_timeout_spin.value())
-        self.config.set(
-            "analysis_settings.save_intermediate_results", self.capture_output_checkbox.isChecked()
-        )
+        self.config.set("analysis_settings.save_intermediate_results", self.capture_output_checkbox.isChecked())
         self.config.set("logging.debug_mode", self.verbose_output_checkbox.isChecked())
 
         # Security
-        self.config.set(
-            "general_preferences.security_checks_enabled", self.warn_dangerous_checkbox.isChecked()
-        )
+        self.config.set("general_preferences.security_checks_enabled", self.warn_dangerous_checkbox.isChecked())
         self.config.set("patching.verify_patches", self.confirm_patches_checkbox.isChecked())
         self.config.set("security.sandbox_analysis", self.sandbox_default_checkbox.isChecked())
-        self.config.set(
-            "general_preferences.auto_detect_protections", self.auto_detect_checkbox.isChecked()
-        )
-        self.config.set(
-            "general_preferences.use_ml_analysis", self.ml_analysis_checkbox.isChecked()
-        )
+        self.config.set("general_preferences.auto_detect_protections", self.auto_detect_checkbox.isChecked())
+        self.config.set("general_preferences.use_ml_analysis", self.ml_analysis_checkbox.isChecked())
 
         # AI
-        self.config.set(
-            "ai_models.model_preferences.script_generation", self.default_model_combo.currentText()
-        )
+        self.config.set("ai_models.model_preferences.script_generation", self.default_model_combo.currentText())
         self.config.set("secrets.api_keys.openai", self.api_key_edit.text())
         self.config.set("ai_models.max_tokens", self.max_tokens_spin.value())
         self.config.set("general_preferences.ai_auto_refine", self.auto_refine_checkbox.isChecked())
-        self.config.set(
-            "general_preferences.ai_explain_scripts", self.explain_scripts_checkbox.isChecked()
-        )
+        self.config.set("general_preferences.ai_explain_scripts", self.explain_scripts_checkbox.isChecked())
 
         # Hex Viewer settings
         self.save_hex_viewer_settings()

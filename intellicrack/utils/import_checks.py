@@ -64,9 +64,7 @@ class ImportChecker:
             self._import_cache[cache_key] = False
             return False
 
-    def safe_import(
-        self, module_name: str, fallback: Any | None = None, package_name: str | None = None
-    ) -> tuple[bool, Any]:
+    def safe_import(self, module_name: str, fallback: Any | None = None, package_name: str | None = None) -> tuple[bool, Any]:
         """Safely import a module with fallback.
 
         Args:
@@ -121,9 +119,7 @@ def check_import(module_name: str, package_name: str | None = None) -> bool:
     return _import_checker.check_import(module_name, package_name)
 
 
-def safe_import(
-    module_name: str, fallback: Any | None = None, package_name: str | None = None
-) -> tuple[bool, Any]:
+def safe_import(module_name: str, fallback: Any | None = None, package_name: str | None = None) -> tuple[bool, Any]:
     """Safely import a module with fallback."""
     return _import_checker.safe_import(module_name, fallback, package_name)
 
@@ -388,9 +384,7 @@ def get_fallback_implementations() -> dict[str, Any]:
             @staticmethod
             def get(url, **kwargs):
                 """Perform HTTP GET request using urllib."""
-                logger.debug(
-                    f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}"
-                )
+                logger.debug(f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}")
                 try:
                     response = urllib.request.urlopen(url)  # noqa: S310  # Legitimate HTTP request fallback for security research tool
                     return type(

@@ -262,9 +262,7 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
         return False
 
 
-def setup_file_logging(
-    log_file: str = "intellicrack.log", level: int = logging.INFO
-) -> logging.Logger:
+def setup_file_logging(log_file: str = "intellicrack.log", level: int = logging.INFO) -> logging.Logger:
     """Set up file logging for the application.
 
     Args:

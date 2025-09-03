@@ -19,6 +19,7 @@ Common import patterns used across the Intellicrack codebase.
 This module provides centralized import handling for commonly used libraries
 with consistent error handling and availability flags.
 """
+
 import logging
 
 logger = logging.getLogger(__name__)

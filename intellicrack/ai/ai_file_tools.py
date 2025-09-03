@@ -126,9 +126,7 @@ class FileSearchTool:
             "*.sqlite",
         ]
 
-    def search_license_files(
-        self, search_path: str, custom_patterns: list[str] = None
-    ) -> dict[str, Any]:
+    def search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files in the specified path.
 
         Args:
@@ -234,9 +232,7 @@ class FileReadTool:
         self.app_instance = app_instance
         self.max_file_size = 10 * 1024 * 1024  # 10MB limit
 
-    def read_file_content(
-        self, file_path: str, purpose: str = "License analysis"
-    ) -> dict[str, Any]:
+    def read_file_content(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
         """Read the content of a file with user approval.
 
         Args:
@@ -321,9 +317,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
-    def read_multiple_files(
-        self, file_paths: list[str], purpose: str = "License analysis"
-    ) -> dict[str, Any]:
+    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
         """Read multiple files with a single approval request.
 
         Args:
@@ -382,9 +376,7 @@ class AIFileTools:
         self.search_tool = FileSearchTool(app_instance)
         self.read_tool = FileReadTool(app_instance)
 
-    def search_for_license_files(
-        self, base_path: str, custom_patterns: list[str] = None
-    ) -> dict[str, Any]:
+    def search_for_license_files(self, base_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files."""
         return self.search_tool.search_license_files(base_path, custom_patterns)
 
@@ -392,9 +384,7 @@ class AIFileTools:
         """Read a single file."""
         return self.read_tool.read_file_content(file_path, purpose)
 
-    def read_multiple_files(
-        self, file_paths: list[str], purpose: str = "License analysis"
-    ) -> dict[str, Any]:
+    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
         """Read multiple files."""
         return self.read_tool.read_multiple_files(file_paths, purpose)
 
