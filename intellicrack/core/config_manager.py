@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.core.exceptions import ConfigurationError
+from intellicrack.utils.resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
 
@@ -125,21 +126,31 @@ class IntellicrackConfig:
         self._ensure_directories_exist()
         self._load_or_create_config()
 
+    def _get_intellicrack_root(self) -> Path:
+        """Get the Intellicrack installation root directory.
+
+        Returns:
+            Path: The root directory where Intellicrack is installed
+        """
+        import intellicrack
+        # Get the parent directory of the intellicrack package
+        return Path(intellicrack.__file__).parent.parent
+
     def _get_user_config_dir(self) -> Path:
         r"""Get platform-appropriate user config directory.
 
-        Uses unified configuration directory at C:\\Intellicrack\\config
+        Uses unified configuration directory relative to Intellicrack root
         for all platforms to ensure consistency.
 
         Returns:
-            Path: Configuration directory path (C:\\Intellicrack\\config)
+            Path: Configuration directory path (relative to installation)
 
         Example:
-            All platforms: C:\\Intellicrack\\config
+            All platforms: <intellicrack_root>/config
 
         """
         # Use unified configuration directory for all platforms
-        return Path("C:/Intellicrack/config")
+        return self._get_intellicrack_root() / "config"
 
     def _ensure_directories_exist(self):
         """Create necessary directories if they don't exist.
@@ -203,7 +214,7 @@ class IntellicrackConfig:
 
         """
         # Try to load existing unified config first
-        unified_config_file = Path("C:/Intellicrack/config/config.json")
+        unified_config_file = self._get_intellicrack_root() / "config" / "config.json"
         if unified_config_file.exists():
             try:
                 with open(unified_config_file, encoding="utf-8") as f:
@@ -245,11 +256,11 @@ class IntellicrackConfig:
                 "logs": str(self.logs_dir),
                 "cache": str(self.cache_dir),
                 "temp": str(self.cache_dir / "temp"),
-                "scripts": "C:\\Intellicrack\\scripts",
-                "plugins": "C:\\Intellicrack\\plugins",
-                "signatures": "C:\\Intellicrack\\signatures",
-                "reports": "C:\\Intellicrack\\reports",
-                "backups": "C:\\Intellicrack\\backups",
+                "scripts": str(self._get_intellicrack_root() / "scripts"),
+                "plugins": str(self._get_intellicrack_root() / "plugins"),
+                "signatures": str(self._get_intellicrack_root() / "signatures"),
+                "reports": str(self._get_intellicrack_root() / "reports"),
+                "backups": str(self._get_intellicrack_root() / "backups"),
             },
             "tools": self._auto_discover_tools(),
             "ui_preferences": {
@@ -414,7 +425,7 @@ class IntellicrackConfig:
                 "enabled": True,
                 "auto_load": True,
                 "safe_mode": False,
-                "plugin_directory": "C:\\Intellicrack\\plugins",
+                "plugin_directory": str(self._get_intellicrack_root() / "plugins"),
                 "trusted_sources": [],
                 "sandbox_plugins": True,
                 "max_plugin_memory": "500MB",
@@ -1115,10 +1126,11 @@ class IntellicrackConfig:
             logger.info("Migrating legacy configuration files")
 
             # Check for legacy config files
+            root = self._get_intellicrack_root()
             legacy_paths = [
-                Path("C:\\Intellicrack\\config\\config.json"),
-                Path("C:\\Intellicrack\\data\\config\\intellicrack_config.json"),
-                Path("C:\\Intellicrack\\config\\intellicrack_config.json"),
+                root / "config" / "config.json",
+                root / "data" / "config" / "intellicrack_config.json",
+                root / "config" / "intellicrack_config.json",
             ]
 
             for legacy_path in legacy_paths:
@@ -1237,7 +1249,6 @@ class IntellicrackConfig:
         tool_paths = {
             "ghidra_path": "tools.ghidra.path",
             "radare2_path": "tools.radare2.path",
-            "ida_path": "tools.ida.path",
             "frida_path": "tools.frida.path",
         }
 
@@ -1316,7 +1327,7 @@ class IntellicrackConfig:
     def _migrate_font_configs(self):
         """Migrate font configuration from assets to central config."""
         try:
-            font_config_path = Path("C:\\Intellicrack\\intellicrack\\assets\\fonts\\font_config.json")
+            font_config_path = Path(get_resource_path("assets/fonts/font_config.json"))
 
             if font_config_path.exists():
                 logger.info("Migrating font configuration to central config")

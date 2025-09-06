@@ -1,6 +1,6 @@
 ---
 name: Auditor
-description: Use this agent when you need to perform comprehensive quality audits and detect placeholders, stubs, mocks, or incomplete implementations in the Intellicrack codebase. This agent excels at ensuring all code meets production-ready standards and identifying any non-functional implementations that could compromise the tool's effectiveness.
+description: Use this agent when you need to perform comprehensive quality audits and detect placeholders, stubs, mocks, simulations, hardcoded responses/data or simple incomplete implementations in the Intellicrack codebase. This agent excels at ensuring all code meets production-ready standards and identifying any non-functional implementations that could compromise the tool's effectiveness.
 model: opus
 color: red
 ---

@@ -130,118 +130,15 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
 
         pe = pefile.PE(binary_path)
 
-        # Basic PE header information
-        results.append("\nPE Header:")
-        if pe and hasattr(pe, "FILE_HEADER") and pe.FILE_HEADER:
-            machine = getattr(pe.FILE_HEADER, "Machine", None)
-            if machine is not None:
-                results.append(f"Machine: 0x{machine:04X} ({get_machine_type(machine)})")
-            num_sections = getattr(pe.FILE_HEADER, "NumberOfSections", None)
-            if num_sections is not None:
-                results.append(f"Number of sections: {num_sections}")
-            timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", None)
-            if timestamp is not None:
-                results.append(f"Time date stamp: {hex(timestamp)} ({get_pe_timestamp(timestamp)})")
-            characteristics = getattr(pe.FILE_HEADER, "Characteristics", None)
-            if characteristics is not None:
-                results.append(f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})")
-        else:
-            results.append("PE FILE_HEADER missing or invalid")
+        # Analyze different parts of the PE file
+        results.extend(_analyze_pe_header(pe))
+        results.extend(_analyze_optional_header(pe))
 
-        # Optional header
-        results.append("\nOptional Header:")
-        if pe and hasattr(pe, "OPTIONAL_HEADER") and pe.OPTIONAL_HEADER:
-            magic = getattr(pe.OPTIONAL_HEADER, "Magic", None)
-            if magic is not None:
-                results.append(f"Magic: 0x{magic:04X} ({get_magic_type(magic)})")
-            entry_point = getattr(pe.OPTIONAL_HEADER, "AddressOfEntryPoint", None)
-            if entry_point is not None:
-                results.append(f"Entry point: 0x{entry_point:08X}")
-            image_base = getattr(pe.OPTIONAL_HEADER, "ImageBase", None)
-            if image_base is not None:
-                results.append(f"Image base: 0x{image_base:08X}")
+        suspicious_sections = _analyze_sections(pe, results)
+        license_related_imports = _analyze_imports(pe, results)
 
-            # Handle checksum with case variations
-            checksum_val = None
-            if hasattr(pe.OPTIONAL_HEADER, "CheckSum"):
-                checksum_val = pe.OPTIONAL_HEADER.CheckSum
-            elif hasattr(pe.OPTIONAL_HEADER, "Checksum"):
-                checksum_val = pe.OPTIONAL_HEADER.Checksum
-            if checksum_val and checksum_val != 0:
-                results.append(f"Checksum: 0x{checksum_val:08X}")
-        else:
-            results.append("PE OPTIONAL_HEADER missing or invalid")
-
-        # Section information
-        results.append("\nSections:")
-        suspicious_sections = []
-
-        if pe and hasattr(pe, "sections") and pe.sections:
-            for _section in pe.sections:
-                name = getattr(_section, "Name", b"").decode("utf-8", errors="ignore").rstrip("\0")
-                results.append(f"  {name}:")
-                va = getattr(_section, "VirtualAddress", None)
-                if va is not None:
-                    results.append(f"    Virtual Address: 0x{va:08X}")
-                vsz = getattr(_section, "Misc_VirtualSize", None)
-                if vsz is not None:
-                    results.append(f"    Virtual Size: 0x{vsz:08X} ({vsz:,} bytes)")
-                rdsz = getattr(_section, "SizeOfRawData", None)
-                if rdsz is not None:
-                    results.append(f"    Raw Data Size: 0x{rdsz:08X} ({rdsz:,} bytes)")
-
-                # Calculate entropy for section
-                try:
-                    section_data = _section.get_data()
-                    entropy = calculate_entropy(section_data)
-                    results.append(f"    Entropy: {entropy:.2f}")
-                    if entropy > 7.0:
-                        results.append("    WARNING: High entropy, possible encryption/compression")
-                        suspicious_sections.append(name)
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in core_analysis: %s", e)
-                    results.append(f"    ERROR: Could not calculate entropy: {e}")
-
-        # Import table analysis
-        results.append("\nImports:")
-        license_related_imports = []
-        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = _entry.dll.decode("utf-8", errors="ignore")
-                results.append(f"  {dll_name}:")
-
-                for _imp in _entry.imports:
-                    if _imp.name:
-                        func_name = _imp.name.decode("utf-8", errors="ignore")
-                        # Check for license-related imports
-                        license_keywords = [
-                            "license",
-                            "activation",
-                            "validate",
-                            "verify",
-                            "check",
-                            "auth",
-                        ]
-                        if any(_keyword in func_name.lower() for _keyword in license_keywords):
-                            license_related_imports.append(f"{dll_name}::{func_name}")
-                        results.append(f"    {func_name}")
-
-        if license_related_imports:
-            results.append("\nLicense-related imports detected:")
-            for _imp in license_related_imports:
-                results.append(f"  {_imp}")
-
-        # Export table analysis
-        if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-            results.append("\nExports:")
-            for _exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                if _exp.name:
-                    results.append(f"  {_exp.name.decode('utf-8', errors='ignore')}")
-
-        # Summary
-        results.append("\nAnalysis Summary:")
-        results.append(f"  Suspicious sections: {len(suspicious_sections)}")
-        results.append(f"  License-related imports: {len(license_related_imports)}")
+        _analyze_exports(pe, results)
+        _generate_analysis_summary(results, suspicious_sections, license_related_imports)
 
         pe.close()
 
@@ -250,6 +147,138 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
         results.append(f"ERROR: Failed to analyze binary - {str(e)}")
 
     return results
+
+
+def _analyze_pe_header(pe) -> List[str]:
+    """Analyze PE file header and return results."""
+    results = ["\nPE Header:"]
+
+    if pe and hasattr(pe, "FILE_HEADER") and pe.FILE_HEADER:
+        machine = getattr(pe.FILE_HEADER, "Machine", None)
+        if machine is not None:
+            results.append(f"Machine: 0x{machine:04X} ({get_machine_type(machine)})")
+        num_sections = getattr(pe.FILE_HEADER, "NumberOfSections", None)
+        if num_sections is not None:
+            results.append(f"Number of sections: {num_sections}")
+        timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", None)
+        if timestamp is not None:
+            results.append(f"Time date stamp: {hex(timestamp)} ({get_pe_timestamp(timestamp)})")
+        characteristics = getattr(pe.FILE_HEADER, "Characteristics", None)
+        if characteristics is not None:
+            results.append(f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})")
+    else:
+        results.append("PE FILE_HEADER missing or invalid")
+
+    return results
+
+
+def _analyze_optional_header(pe) -> List[str]:
+    """Analyze PE optional header and return results."""
+    results = ["\nOptional Header:"]
+
+    if pe and hasattr(pe, "OPTIONAL_HEADER") and pe.OPTIONAL_HEADER:
+        magic = getattr(pe.OPTIONAL_HEADER, "Magic", None)
+        if magic is not None:
+            results.append(f"Magic: 0x{magic:04X} ({get_magic_type(magic)})")
+        entry_point = getattr(pe.OPTIONAL_HEADER, "AddressOfEntryPoint", None)
+        if entry_point is not None:
+            results.append(f"Entry point: 0x{entry_point:08X}")
+        image_base = getattr(pe.OPTIONAL_HEADER, "ImageBase", None)
+        if image_base is not None:
+            results.append(f"Image base: 0x{image_base:08X}")
+
+        # Handle checksum with case variations
+        checksum_val = None
+        if hasattr(pe.OPTIONAL_HEADER, "CheckSum"):
+            checksum_val = pe.OPTIONAL_HEADER.CheckSum
+        elif hasattr(pe.OPTIONAL_HEADER, "Checksum"):
+            checksum_val = pe.OPTIONAL_HEADER.Checksum
+        if checksum_val and checksum_val != 0:
+            results.append(f"Checksum: 0x{checksum_val:08X}")
+    else:
+        results.append("PE OPTIONAL_HEADER missing or invalid")
+
+    return results
+
+
+def _analyze_sections(pe, results: List[str]) -> List[str]:
+    """Analyze PE sections and return list of suspicious sections."""
+    results.append("\nSections:")
+    suspicious_sections = []
+
+    if pe and hasattr(pe, "sections") and pe.sections:
+        for section in pe.sections:
+            name = getattr(section, "Name", b"").decode("utf-8", errors="ignore").rstrip("\0")
+            results.append(f"  {name}:")
+            va = getattr(section, "VirtualAddress", None)
+            if va is not None:
+                results.append(f"    Virtual Address: 0x{va:08X}")
+            vsz = getattr(section, "Misc_VirtualSize", None)
+            if vsz is not None:
+                results.append(f"    Virtual Size: 0x{vsz:08X} ({vsz:,} bytes)")
+            rdsz = getattr(section, "SizeOfRawData", None)
+            if rdsz is not None:
+                results.append(f"    Raw Data Size: 0x{rdsz:08X} ({rdsz:,} bytes)")
+
+            # Calculate entropy for section
+            try:
+                section_data = section.get_data()
+                entropy = calculate_entropy(section_data)
+                results.append(f"    Entropy: {entropy:.2f}")
+                if entropy > 7.0:
+                    results.append("    WARNING: High entropy, possible encryption/compression")
+                    suspicious_sections.append(name)
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in core_analysis: %s", e)
+                results.append(f"    ERROR: Could not calculate entropy: {e}")
+
+    return suspicious_sections
+
+
+def _analyze_imports(pe, results: List[str]) -> List[str]:
+    """Analyze PE imports and return list of license-related imports."""
+    results.append("\nImports:")
+    license_related_imports = []
+
+    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+        for entry in pe.DIRECTORY_ENTRY_IMPORT:
+            dll_name = entry.dll.decode("utf-8", errors="ignore")
+            results.append(f"  {dll_name}:")
+
+            for imp in entry.imports:
+                if imp.name:
+                    func_name = imp.name.decode("utf-8", errors="ignore")
+                    # Check for license-related imports
+                    license_keywords = [
+                        "license", "activation", "validate",
+                        "verify", "check", "auth",
+                    ]
+                    if any(keyword in func_name.lower() for keyword in license_keywords):
+                        license_related_imports.append(f"{dll_name}::{func_name}")
+                    results.append(f"    {func_name}")
+
+    if license_related_imports:
+        results.append("\nLicense-related imports detected:")
+        for imp in license_related_imports:
+            results.append(f"  {imp}")
+
+    return license_related_imports
+
+
+def _analyze_exports(pe, results: List[str]) -> None:
+    """Analyze PE exports and add results to results list."""
+    if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
+        results.append("\nExports:")
+        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+            if exp.name:
+                results.append(f"  {exp.name.decode('utf-8', errors='ignore')}")
+
+
+def _generate_analysis_summary(results: List[str], suspicious_sections: List[str], license_related_imports: List[str]) -> None:
+    """Generate analysis summary and add to results list."""
+    results.append("\nAnalysis Summary:")
+    results.append(f"  Suspicious sections: {len(suspicious_sections)}")
+    results.append(f"  License-related imports: {len(license_related_imports)}")
 
 
 def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:

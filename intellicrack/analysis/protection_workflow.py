@@ -343,7 +343,7 @@ class ProtectionAnalysisWorkflow:
         if "antidebug" in protection_types:
             tools_needed.update(["ScyllaHide", "TitanHide"])
         if "license" in protection_types:
-            tools_needed.update(["IDA Pro", "API Monitor"])
+            tools_needed.update(["Ghidra", "API Monitor"])
 
         if tools_needed:
             recommendations.append(
@@ -788,7 +788,7 @@ console.log("[+] Generic bypass active for " + protectionName);
 
         elif analysis.has_licensing:
             steps.append("1. Run the license bypass script to identify check locations")
-            steps.append("2. Analyze the validation logic in IDA Pro")
+            steps.append("2. Analyze the validation logic in Ghidra")
             steps.append("3. Patch the license checks or generate valid keys")
 
         else:

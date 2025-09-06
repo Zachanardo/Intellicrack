@@ -151,12 +151,22 @@ def initialize_gil_safety():
     # Import threading and set up proper thread state
     import threading
 
-    # Ensure we're running in the main thread for GIL operations
-    if threading.current_thread() is not threading.main_thread():
-        import warnings
+    # Check if we're running in the main thread for GIL operations
+    # In subprocess/launcher environments, this check should be more permissive
+    current_thread = threading.current_thread()
+    main_thread = threading.main_thread()
 
-        warnings.warn(
-            "GIL safety initialization called from non-main thread. This may cause pybind11 errors.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+    if current_thread is not main_thread:
+        # Check if we're in a launcher environment where this is expected
+        launcher_env = os.environ.get("RUST_LAUNCHER_MODE") or os.environ.get("PYTHON_SUBPROCESS_MODE")
+
+        if not launcher_env:
+            import warnings
+            warnings.warn(
+                "GIL safety initialization called from non-main thread. This may cause pybind11 errors.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        else:
+            # In launcher mode, log at debug level instead of warning
+            logger.debug("GIL safety initialized from non-main thread in launcher environment")

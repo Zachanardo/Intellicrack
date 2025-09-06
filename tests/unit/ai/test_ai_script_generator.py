@@ -386,7 +386,6 @@ class TestAIScriptGenerator(BaseIntellicrackTest):
         script_types_and_prompts = [
             ('python', 'Create a Python script to analyze PE file headers and extract version information'),
             ('radare2', 'Generate r2 commands to disassemble main function and find crypto routines'),
-            ('ida', 'Write an IDA Pro script to identify and rename obfuscated functions'),
             ('javascript', 'Create a browser DevTools script to intercept and log WebSocket messages'),
             ('powershell', 'Generate PowerShell script to extract embedded resources from .NET assemblies'),
             ('lua', 'Write a Lua script for Wireshark to parse custom protocol packets'),

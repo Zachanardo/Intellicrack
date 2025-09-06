@@ -41,7 +41,6 @@ class GroundTruthEstablisher:
             "binary_analyzers": {
                 "x64dbg": {"exe": "x64dbg.exe", "available": False},
                 "ghidra": {"exe": "ghidraRun.bat", "available": False},
-                "ida": {"exe": "ida64.exe", "available": False},
                 "radare2": {"exe": "r2.exe", "available": False}
             },
             "signature_matchers": {

@@ -209,11 +209,32 @@ def create_simulated_upx_binary(output_path: Path) -> None:
     # Add UPX signature
     pe_data[0x200:0x203] = b"UPX!"
 
-    # Add high entropy data (compressed appearance)
-    import random
+    # Add high entropy data that mimics real UPX compression patterns
+    import os
+    import hashlib
 
-    for i in range(0x400, 0x1000):
-        pe_data[i] = random.randint(0, 255)
+    # Create realistic compressed-like data using cryptographic hash expansion
+    seed_data = b"UPX_COMPRESSED_SECTION_DATA_" + os.urandom(32)
+    compressed_section = bytearray()
+
+    # Generate compression-like patterns with realistic entropy distribution
+    for chunk_idx in range(0, 0xC00, 64):
+        # Create hash-based pseudo-compressed data
+        chunk_hash = hashlib.sha256(seed_data + chunk_idx.to_bytes(4, 'little')).digest()
+
+        # Mix with some structured patterns typical of UPX
+        for i in range(0, min(64, 0xC00 - chunk_idx)):
+            if i % 16 == 0:
+                # Occasional structured bytes (UPX metadata patterns)
+                compressed_section.append(0x8B ^ chunk_hash[i % 32])
+            elif i % 8 == 0:
+                # Jump instruction patterns
+                compressed_section.append(0xE9 ^ chunk_hash[i % 32])
+            else:
+                # High entropy compressed-like data
+                compressed_section.append(chunk_hash[i % 32])
+
+    pe_data[0x400:0x400 + len(compressed_section)] = compressed_section
 
     output_path.write_bytes(pe_data)
     print(f"✓ Created simulated UPX packed binary: {output_path}")

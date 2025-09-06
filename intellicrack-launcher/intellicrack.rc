@@ -1,0 +1,35 @@
+// Resource file for embedding manifest
+#include <windows.h>
+
+// Embed manifest for DLL loading control
+1 RT_MANIFEST "intellicrack.exe.manifest"
+
+// Version information
+1 VERSIONINFO
+FILEVERSION    1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+FILEFLAGS      0
+FILEOS         VOS_NT_WINDOWS32
+FILETYPE       VFT_APP
+FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName", ""
+            VALUE "FileDescription", "Intellicrack Launcher"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "Intellicrack.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Zachary Flint"
+            VALUE "OriginalFilename", "Intellicrack.exe"
+            VALUE "ProductName", "Intellicrack Binary Analysis Platform"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END

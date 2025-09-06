@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pyo3::prelude::*;
 use pyo3::types::IntoPyDict;
 use pyo3::Python;
 use serde::{Deserialize, Serialize};
@@ -168,6 +167,10 @@ impl DependencyValidator {
                     // Test basic routing capability
                     let route = test_app.getattr("route")?;
                     let test_route_decorator = route.call1(("/test",))?;
+                    // Validate the decorator is callable (proves routing is functional)
+                    if !test_route_decorator.is_callable() {
+                        warn!("Flask route decorator is not callable - routing may be broken");
+                    }
 
                     // Test app context
                     let app_context = test_app.call_method0("app_context")?;
@@ -438,6 +441,10 @@ impl DependencyValidator {
             let test_request_context =
                 app.call_method("test_request_context", ("/test", "POST"), None)?;
             let ctx = test_request_context.call_method0("__enter__")?;
+            // Validate context was established (ctx contains the active request context)
+            if ctx.is_none() {
+                warn!("Flask request context creation returned None");
+            }
 
             let flask_request = flask.getattr("request")?;
             let path: String = flask_request.getattr("path")?.extract()?;

@@ -28,6 +28,8 @@ from intellicrack.handlers.pyqt6_handler import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 
@@ -42,8 +44,41 @@ class PluginDialogBase(QDialog):
         self.init_dialog()
 
     def init_dialog(self):
-        """Initialize dialog - to be overridden by subclasses."""
-        raise NotImplementedError("Subclasses must implement init_dialog()")
+        """Initialize dialog with default layout. Can be overridden by subclasses."""
+        # Provide default implementation for base functionality
+        self.setWindowTitle("Plugin Dialog")
+        self.setMinimumSize(600, 400)
+
+        # Create default layout
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # Add plugin selection UI
+        plugin_layout = self.create_plugin_selection_layout()
+        layout.addLayout(plugin_layout)
+
+        # Add main content area (can be customized by subclasses)
+        self.content_area = QWidget()
+        self.content_layout = QVBoxLayout(self.content_area)
+        layout.addWidget(self.content_area)
+
+        # Add standard dialog buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+        button_layout.addWidget(self.ok_button)
+
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.cancel_button)
+
+        layout.addLayout(button_layout)
+
+        # Load plugin if path was provided
+        if self.plugin_path:
+            self.load_plugin(self.plugin_path)
 
     def create_plugin_selection_layout(self):
         """Create the common plugin selection layout."""

@@ -23,6 +23,7 @@ import json
 import logging
 import os
 
+from intellicrack.core.config_manager import IntellicrackConfig
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
@@ -44,6 +45,7 @@ from intellicrack.handlers.pyqt6_handler import (
     Qt,
     QTabWidget,
     QTextEdit,
+    QTimer,
     QVBoxLayout,
     QWidget,
     pyqtSignal,
@@ -60,15 +62,21 @@ class SettingsTab(BaseTab):
 
     def __init__(self, shared_context=None, parent=None):
         """Initialize settings tab with application configuration and preferences."""
-        super().__init__(shared_context, parent)
         self.logger = logging.getLogger(__name__ + ".SettingsTab")
 
-        # Initialize settings before setup_content is called
+        # Use centralized configuration system
+        self.config = IntellicrackConfig()
         self.load_settings()
+
+        super().__init__(shared_context, parent)
 
     def setup_content(self):
         """Setup the settings tab content."""
-        layout = QHBoxLayout(self)
+        layout = self.layout()  # Use existing layout from BaseTab
+
+        # Convert to QHBoxLayout behavior by using a horizontal container
+        h_container = QWidget()
+        h_layout = QHBoxLayout(h_container)
 
         # Left panel - Settings categories
         left_panel = self.create_settings_panel()
@@ -83,7 +91,8 @@ class SettingsTab(BaseTab):
         splitter.setStretchFactor(0, 60)
         splitter.setStretchFactor(1, 40)
 
-        layout.addWidget(splitter)
+        h_layout.addWidget(splitter)
+        layout.addWidget(h_container)
         self.is_loaded = True
 
     def create_settings_panel(self):
@@ -108,17 +117,21 @@ class SettingsTab(BaseTab):
         controls_layout = QHBoxLayout()
 
         save_btn = QPushButton("Save Settings")
+        save_btn.setToolTip("Save all current settings and preferences to the configuration file")
         save_btn.clicked.connect(self.save_settings)
         save_btn.setStyleSheet("font-weight: bold; color: green;")
 
         reset_btn = QPushButton("Reset to Defaults")
+        reset_btn.setToolTip("Reset all settings to their default values. This action cannot be undone")
         reset_btn.clicked.connect(self.reset_to_defaults)
         reset_btn.setStyleSheet("color: red;")
 
         export_btn = QPushButton("Export Settings")
+        export_btn.setToolTip("Export current settings to a JSON file for backup or sharing")
         export_btn.clicked.connect(self.export_settings)
 
         import_btn = QPushButton("Import Settings")
+        import_btn.setToolTip("Import settings from a previously exported JSON configuration file")
         import_btn.clicked.connect(self.import_settings)
 
         controls_layout.addWidget(save_btn)
@@ -426,102 +439,331 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_paths_tab(self):
-        """Create paths settings tab."""
+        """Create paths settings tab with auto-discovery and visual feedback."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        # Tool Paths
-        tools_group = QGroupBox("Tool Paths")
+        # Auto-discovery control
+        discovery_header = QHBoxLayout()
+        discovery_header.addWidget(QLabel("Tool Discovery"))
+
+        self.auto_discovery_btn = QPushButton("🔍 Discover Tools")
+        self.auto_discovery_btn.setToolTip("Automatically scan for installed tools")
+        self.auto_discovery_btn.clicked.connect(self.discover_tools)
+
+        self.refresh_discovery_btn = QPushButton("🔄 Refresh")
+        self.refresh_discovery_btn.setToolTip("Re-scan for tools")
+        self.refresh_discovery_btn.clicked.connect(self.refresh_tool_discovery)
+
+        discovery_header.addWidget(self.auto_discovery_btn)
+        discovery_header.addWidget(self.refresh_discovery_btn)
+        discovery_header.addStretch()
+
+        layout.addLayout(discovery_header)
+
+        # Tool Paths with enhanced UI
+        tools_group = QGroupBox("Analysis Tools")
         tools_layout = QVBoxLayout(tools_group)
 
-        # Ghidra path
-        ghidra_layout = QHBoxLayout()
-        ghidra_layout.addWidget(QLabel("Ghidra:"))
-        self.ghidra_path = QLineEdit()
-        self.ghidra_path.setText(self.settings.get("ghidra_path", ""))
-        browse_ghidra_btn = QPushButton("Browse")
-        browse_ghidra_btn.clicked.connect(lambda: self.browse_path(self.ghidra_path, "Select Ghidra Directory"))
-        ghidra_layout.addWidget(self.ghidra_path)
-        ghidra_layout.addWidget(browse_ghidra_btn)
+        # Initialize tool discovery
+        from intellicrack.core.tool_discovery import AdvancedToolDiscovery
+        self.tool_discovery = AdvancedToolDiscovery()
 
-        # Radare2 path
-        radare2_layout = QHBoxLayout()
-        radare2_layout.addWidget(QLabel("Radare2:"))
-        self.radare2_path = QLineEdit()
-        self.radare2_path.setText(self.settings.get("radare2_path", ""))
-        browse_radare2_btn = QPushButton("Browse")
-        browse_radare2_btn.clicked.connect(lambda: self.browse_path(self.radare2_path, "Select Radare2 Executable"))
-        radare2_layout.addWidget(self.radare2_path)
-        radare2_layout.addWidget(browse_radare2_btn)
+        # Tool path widgets storage
+        self.tool_widgets = {}
 
-        # IDA Pro path
-        ida_layout = QHBoxLayout()
-        ida_layout.addWidget(QLabel("IDA Pro:"))
-        self.ida_path = QLineEdit()
-        self.ida_path.setText(self.settings.get("ida_path", ""))
-        browse_ida_btn = QPushButton("Browse")
-        browse_ida_btn.clicked.connect(lambda: self.browse_path(self.ida_path, "Select IDA Pro Executable"))
-        ida_layout.addWidget(self.ida_path)
-        ida_layout.addWidget(browse_ida_btn)
+        # Create enhanced tool path entries
+        tools_config = [
+            ("ghidra", "Ghidra", "Select Ghidra Directory"),
+            ("radare2", "Radare2", "Select Radare2 Executable"),
+            ("x64dbg", "x64dbg", "Select x64dbg Executable"),
+            ("nasm", "NASM", "Select NASM Executable"),
+            ("masm", "MASM", "Select MASM Executable"),
+            ("accesschk", "AccessChk", "Select AccessChk Executable")
+        ]
 
-        # x64dbg path
-        x64dbg_layout = QHBoxLayout()
-        x64dbg_layout.addWidget(QLabel("x64dbg:"))
-        self.x64dbg_path = QLineEdit()
-        self.x64dbg_path.setText(self.settings.get("x64dbg_path", ""))
-        browse_x64dbg_btn = QPushButton("Browse")
-        browse_x64dbg_btn.clicked.connect(lambda: self.browse_path(self.x64dbg_path, "Select x64dbg Executable"))
-        x64dbg_layout.addWidget(self.x64dbg_path)
-        x64dbg_layout.addWidget(browse_x64dbg_btn)
-
-        tools_layout.addLayout(ghidra_layout)
-        tools_layout.addLayout(radare2_layout)
-        tools_layout.addLayout(ida_layout)
-        tools_layout.addLayout(x64dbg_layout)
+        for tool_key, tool_label, browse_title in tools_config:
+            tool_widget = self.create_enhanced_tool_entry(tool_key, tool_label, browse_title)
+            tools_layout.addWidget(tool_widget)
 
         # Output Paths
-        output_group = QGroupBox("Output Paths")
+        output_group = QGroupBox("Output Directories")
         output_layout = QVBoxLayout(output_group)
 
         # Output directory
-        output_dir_layout = QHBoxLayout()
-        output_dir_layout.addWidget(QLabel("Output Directory:"))
-        self.output_directory = QLineEdit()
-        self.output_directory.setText(self.settings.get("output_directory", ""))
-        browse_output_btn = QPushButton("Browse")
-        browse_output_btn.clicked.connect(lambda: self.browse_directory(self.output_directory, "Select Output Directory"))
-        output_dir_layout.addWidget(self.output_directory)
-        output_dir_layout.addWidget(browse_output_btn)
+        output_dir_widget = self.create_directory_entry(
+            "output_directory", "Output Directory", "Select Output Directory"
+        )
+        output_layout.addWidget(output_dir_widget)
 
         # Reports directory
-        reports_dir_layout = QHBoxLayout()
-        reports_dir_layout.addWidget(QLabel("Reports Directory:"))
-        self.reports_directory = QLineEdit()
-        self.reports_directory.setText(self.settings.get("reports_directory", ""))
-        browse_reports_btn = QPushButton("Browse")
-        browse_reports_btn.clicked.connect(lambda: self.browse_directory(self.reports_directory, "Select Reports Directory"))
-        reports_dir_layout.addWidget(self.reports_directory)
-        reports_dir_layout.addWidget(browse_reports_btn)
+        reports_dir_widget = self.create_directory_entry(
+            "reports_directory", "Reports Directory", "Select Reports Directory"
+        )
+        output_layout.addWidget(reports_dir_widget)
 
         # Scripts directory
-        scripts_dir_layout = QHBoxLayout()
-        scripts_dir_layout.addWidget(QLabel("Scripts Directory:"))
-        self.scripts_directory = QLineEdit()
-        self.scripts_directory.setText(self.settings.get("scripts_directory", ""))
-        browse_scripts_btn = QPushButton("Browse")
-        browse_scripts_btn.clicked.connect(lambda: self.browse_directory(self.scripts_directory, "Select Scripts Directory"))
-        scripts_dir_layout.addWidget(self.scripts_directory)
-        scripts_dir_layout.addWidget(browse_scripts_btn)
-
-        output_layout.addLayout(output_dir_layout)
-        output_layout.addLayout(reports_dir_layout)
-        output_layout.addLayout(scripts_dir_layout)
+        scripts_dir_widget = self.create_directory_entry(
+            "scripts_directory", "Scripts Directory", "Select Scripts Directory"
+        )
+        output_layout.addWidget(scripts_dir_widget)
 
         layout.addWidget(tools_group)
         layout.addWidget(output_group)
         layout.addStretch()
 
+        # Auto-discover tools on tab creation
+        QTimer.singleShot(100, self.discover_tools)
+
         return tab
+
+    def create_enhanced_tool_entry(self, tool_key, tool_label, browse_title):
+        """Create an enhanced tool path entry with auto-discovery and status indicators."""
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 5, 0, 5)
+
+        # Main row with label, path, status, and browse button
+        main_row = QHBoxLayout()
+
+        # Tool label
+        label = QLabel(f"{tool_label}:")
+        label.setMinimumWidth(80)
+        main_row.addWidget(label)
+
+        # Path input
+        path_edit = QLineEdit()
+        path_edit.setText(self.settings.get(f"{tool_key}_path", ""))
+        path_edit.setPlaceholderText("Auto-discovered path will appear here...")
+        path_edit.textChanged.connect(lambda text, key=tool_key: self.on_tool_path_changed(key, text))
+
+        # Status indicator
+        status_label = QLabel("⚪")
+        status_label.setToolTip("Tool status unknown")
+        status_label.setMinimumWidth(30)
+
+        # Browse button
+        browse_btn = QPushButton("📁")
+        browse_btn.setMaximumWidth(40)
+        browse_btn.setToolTip("Browse for tool executable")
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title)
+        )
+
+        # Clear/Reset button
+        reset_btn = QPushButton("↻")
+        reset_btn.setMaximumWidth(40)
+        reset_btn.setToolTip("Reset to auto-discovered path")
+        reset_btn.clicked.connect(lambda checked, key=tool_key: self.reset_tool_path(key))
+
+        main_row.addWidget(path_edit)
+        main_row.addWidget(status_label)
+        main_row.addWidget(browse_btn)
+        main_row.addWidget(reset_btn)
+
+        # Status details (initially hidden)
+        status_details = QLabel()
+        status_details.setStyleSheet("color: #666; font-size: 10px; margin-left: 85px;")
+        status_details.hide()
+
+        layout.addLayout(main_row)
+        layout.addWidget(status_details)
+
+        # Store widget references
+        self.tool_widgets[tool_key] = {
+            'path_edit': path_edit,
+            'status_label': status_label,
+            'status_details': status_details,
+            'container': container
+        }
+
+        return container
+
+    def create_directory_entry(self, dir_key, dir_label, browse_title):
+        """Create a directory path entry."""
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 5, 0, 5)
+
+        # Directory label
+        label = QLabel(f"{dir_label}:")
+        label.setMinimumWidth(80)
+        layout.addWidget(label)
+
+        # Path input
+        path_edit = QLineEdit()
+        path_edit.setText(self.settings.get(dir_key, ""))
+        path_edit.setPlaceholderText("Select directory path...")
+
+        # Browse button
+        browse_btn = QPushButton("📁")
+        browse_btn.setMaximumWidth(40)
+        browse_btn.setToolTip("Browse for directory")
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title)
+        )
+
+        layout.addWidget(path_edit)
+        layout.addWidget(browse_btn)
+
+        # Store reference for settings collection
+        setattr(self, dir_key, path_edit)
+
+        return container
+
+    def discover_tools(self):
+        """Discover all tools and update the UI with results."""
+        if not hasattr(self, 'tool_discovery'):
+            return
+
+        self.auto_discovery_btn.setEnabled(False)
+        self.auto_discovery_btn.setText("🔍 Discovering...")
+
+        try:
+            # Run discovery in background to avoid blocking UI
+            discovered_tools = self.tool_discovery.discover_all_tools()
+
+            # Update UI with discovered tools
+            for tool_key, widgets in self.tool_widgets.items():
+                if tool_key in discovered_tools:
+                    tool_info = discovered_tools[tool_key]
+                    self.update_tool_status(tool_key, tool_info)
+
+                    # Auto-populate if path is empty and tool was found
+                    current_path = widgets['path_edit'].text().strip()
+                    if not current_path and tool_info.get('available') and tool_info.get('path'):
+                        widgets['path_edit'].setText(tool_info['path'])
+
+        except Exception as e:
+            self.log_message(f"Tool discovery failed: {e}", "error")
+        finally:
+            self.auto_discovery_btn.setEnabled(True)
+            self.auto_discovery_btn.setText("🔍 Discover Tools")
+
+    def refresh_tool_discovery(self):
+        """Refresh tool discovery."""
+        if hasattr(self, 'tool_discovery'):
+            self.tool_discovery.refresh_discovery()
+            self.discover_tools()
+
+    def update_tool_status(self, tool_key, tool_info):
+        """Update the visual status indicator for a tool."""
+        if tool_key not in self.tool_widgets:
+            return
+
+        widgets = self.tool_widgets[tool_key]
+        status_label = widgets['status_label']
+        status_details = widgets['status_details']
+
+        if tool_info.get('available'):
+            # Run health check for more detailed status
+            try:
+                health_info = self.tool_discovery.health_check_tool(tool_key)
+
+                if health_info.get('healthy'):
+                    status_label.setText("🟢")
+                    status_label.setToolTip("Tool found and healthy")
+                    version = health_info.get('version', 'Unknown version')
+                    status_details.setText(f"✓ Found: {version}")
+                    status_details.setStyleSheet("color: #28a745; font-size: 10px; margin-left: 85px;")
+
+                elif health_info.get('available'):
+                    status_label.setText("🟡")
+                    status_label.setToolTip("Tool found but has issues")
+                    issues = ", ".join(health_info.get('issues', ['Unknown issues']))
+                    status_details.setText(f"⚠ Issues: {issues}")
+                    status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
+
+                else:
+                    status_label.setText("🔴")
+                    status_label.setToolTip("Tool path exists but not functional")
+                    status_details.setText("✗ Not functional")
+                    status_details.setStyleSheet("color: #dc3545; font-size: 10px; margin-left: 85px;")
+
+            except Exception as e:
+                status_label.setText("🟡")
+                status_label.setToolTip(f"Health check failed: {e}")
+                status_details.setText("⚠ Status check failed")
+                status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
+        else:
+            status_label.setText("⚫")
+            status_label.setToolTip("Tool not found")
+            error_msg = tool_info.get('error', 'Not found in common locations')
+            status_details.setText(f"✗ Not found: {error_msg}")
+            status_details.setStyleSheet("color: #6c757d; font-size: 10px; margin-left: 85px;")
+
+        # Show status details
+        status_details.show()
+
+    def on_tool_path_changed(self, tool_key, path):
+        """Handle manual tool path changes."""
+        if not path.strip():
+            return
+
+        # Validate the manually entered path
+        if hasattr(self, 'tool_discovery'):
+            try:
+                self.tool_discovery.health_check_tool(tool_key)
+
+                # Update manual override in tool discovery
+                self.tool_discovery.set_manual_override(tool_key, path)
+
+                # Create mock tool info for status update
+                tool_info = {
+                    'available': os.path.exists(path),
+                    'path': path
+                }
+                self.update_tool_status(tool_key, tool_info)
+
+            except Exception as e:
+                self.log_message(f"Failed to validate path for {tool_key}: {e}", "warning")
+
+    def reset_tool_path(self, tool_key):
+        """Reset tool path to auto-discovered value."""
+        if tool_key not in self.tool_widgets:
+            return
+
+        widgets = self.tool_widgets[tool_key]
+
+        # Clear manual override
+        if hasattr(self, 'tool_discovery'):
+            self.tool_discovery.clear_manual_override(tool_key)
+
+        # Re-discover the tool
+        try:
+            tool_info = self.tool_discovery.discover_tool(tool_key, {
+                "executables": self.get_tool_executables(tool_key),
+                "search_strategy": "installation_based",
+                "required": False
+            })
+
+            if tool_info.get('available') and tool_info.get('path'):
+                widgets['path_edit'].setText(tool_info['path'])
+                self.update_tool_status(tool_key, tool_info)
+            else:
+                widgets['path_edit'].clear()
+                self.update_tool_status(tool_key, tool_info)
+
+        except Exception as e:
+            self.log_message(f"Failed to reset path for {tool_key}: {e}", "error")
+
+    def get_tool_executables(self, tool_key):
+        """Get the list of possible executables for a tool."""
+        executables_map = {
+            "ghidra": ["ghidra", "ghidraRun", "ghidraRun.bat"],
+            "radare2": ["r2", "radare2"],
+            "x64dbg": ["x64dbg", "x32dbg", "x96dbg"],
+            "nasm": ["nasm", "nasm.exe"],
+            "masm": ["ml", "ml.exe", "ml64", "ml64.exe"],
+            "accesschk": ["accesschk", "accesschk.exe", "accesschk64.exe"]
+        }
+        return executables_map.get(tool_key, [tool_key])
+
+    def browse_tool_path(self, line_edit, title):
+        """Browse for a tool executable path."""
+        file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
+        if file_path:
+            line_edit.setText(file_path)
 
     def create_advanced_tab(self):
         """Create advanced settings tab."""
@@ -603,25 +845,14 @@ class SettingsTab(BaseTab):
         network_layout.addLayout(proxy_layout)
         network_layout.addLayout(timeout_layout)
 
-        # Developer Settings
+        # Developer Settings (keeping only functional ones)
         dev_group = QGroupBox("Developer Settings")
         dev_layout = QVBoxLayout(dev_group)
 
-        # Debug mode
+        # Debug mode (actually used by logging system)
         self.debug_mode_cb = QCheckBox("Enable Debug Mode")
         self.debug_mode_cb.setChecked(self.settings.get("debug_mode", False))
-
-        # Show debug console
-        self.show_debug_console_cb = QCheckBox("Show Debug Console")
-        self.show_debug_console_cb.setChecked(self.settings.get("show_debug_console", False))
-
-        # Enable experimental features
-        self.experimental_features_cb = QCheckBox("Enable Experimental Features")
-        self.experimental_features_cb.setChecked(self.settings.get("experimental_features", False))
-
         dev_layout.addWidget(self.debug_mode_cb)
-        dev_layout.addWidget(self.show_debug_console_cb)
-        dev_layout.addWidget(self.experimental_features_cb)
 
         layout.addWidget(logging_group)
         layout.addWidget(security_group)
@@ -688,27 +919,29 @@ class SettingsTab(BaseTab):
         self.preview_area.setText(preview_text)
 
     def load_settings(self):
-        """Load settings from file."""
-        # Try multiple possible settings locations
-        possible_paths = [
-            os.path.join(os.path.dirname(__file__), "..", "..", "config", "settings.json"),
-            os.path.join(os.path.expanduser("~"), ".intellicrack", "settings.json"),
-            os.path.join(".", "settings.json"),
-        ]
+        """Load settings from centralized configuration system."""
+        # Initialize defaults in centralized config if not present
+        default_settings = self.get_default_settings()
 
-        self.settings = self.get_default_settings()
+        # Check if UI settings exist in centralized config, if not, initialize them
+        if not self.config.get("ui"):
+            self.logger.info("Initializing UI settings in centralized config")
+            for key, value in default_settings.items():
+                self.config.set(f"ui.{key}", value, save=False)
+            self.config.save()
 
-        for settings_file in possible_paths:
-            try:
-                if os.path.exists(settings_file):
-                    with open(settings_file) as f:
-                        loaded_settings = json.load(f)
-                        self.settings.update(loaded_settings)
-                    self.logger.info(f"Loaded settings from: {settings_file}")
-                    break
-            except Exception as e:
-                self.logger.warning(f"Error loading settings from {settings_file}: {e}")
-                continue
+        # Load settings from centralized config with type safety
+        self.settings = {}
+        for key in default_settings:
+            value = self.config.get(f"ui.{key}", default_settings[key])
+            # Ensure we don't store dictionary objects as settings values
+            if isinstance(value, dict):
+                self.logger.warning(f"Settings key {key} returned dict, using default value")
+                self.settings[key] = default_settings[key]
+            else:
+                self.settings[key] = value
+
+        self.logger.info("Loaded settings from centralized configuration")
 
     def get_default_settings(self):
         """Get default settings."""
@@ -746,7 +979,6 @@ class SettingsTab(BaseTab):
             # Paths
             "ghidra_path": "",
             "radare2_path": "",
-            "ida_path": "",
             "x64dbg_path": "",
             "output_directory": "",
             "reports_directory": "",
@@ -761,22 +993,20 @@ class SettingsTab(BaseTab):
             "proxy": "",
             "network_timeout": 30,
             "debug_mode": False,
-            "show_debug_console": False,
-            "experimental_features": False,
         }
 
     def save_settings(self):
-        """Save current settings."""
-        # Collect settings from UI
-        self.collect_settings_from_ui()
-
-        # Save to file
-        settings_file = os.path.join(os.path.dirname(__file__), "..", "..", "config", "settings.json")
-        os.makedirs(os.path.dirname(settings_file), exist_ok=True)
-
+        """Save current settings to centralized configuration system."""
         try:
-            with open(settings_file, "w") as f:
-                json.dump(self.settings, f, indent=4)
+            # Collect settings from UI
+            self.collect_settings_from_ui()
+
+            # Save to centralized config
+            for key, value in self.settings.items():
+                self.config.set(f"ui.{key}", value, save=False)
+
+            # Save config to disk
+            self.config.save()
 
             QMessageBox.information(self, "Settings", "Settings saved successfully!")
             self.update_preview()
@@ -827,8 +1057,24 @@ class SettingsTab(BaseTab):
         if hasattr(self, "ai_max_tokens"):
             self.settings["ai_max_tokens"] = self.ai_max_tokens.value()
 
+        # Tool path settings
+        if hasattr(self, "tool_widgets"):
+            for tool_key, widgets in self.tool_widgets.items():
+                path_value = widgets['path_edit'].text().strip()
+                self.settings[f"{tool_key}_path"] = path_value
+
+        # Directory path settings
+        for dir_key in ["output_directory", "reports_directory", "scripts_directory"]:
+            if hasattr(self, dir_key):
+                dir_widget = getattr(self, dir_key)
+                self.settings[dir_key] = dir_widget.text().strip()
+
+        # Developer settings
+        if hasattr(self, "debug_mode_cb"):
+            self.settings["debug_mode"] = self.debug_mode_cb.isChecked()
+
         # Continue collecting other settings...
-        # (Performance, Paths, Advanced settings would be collected similarly)
+        # (Performance, Advanced settings would be collected similarly)
 
     def reset_to_defaults(self):
         """Reset settings to defaults."""
@@ -841,10 +1087,21 @@ class SettingsTab(BaseTab):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            self.settings = self.get_default_settings()
-            self.update_ui_from_settings()
-            self.update_preview()
-            QMessageBox.information(self, "Settings", "Settings reset to defaults!")
+            try:
+                # Reset to default settings
+                self.settings = self.get_default_settings()
+
+                # Save defaults to centralized config
+                for key, value in self.settings.items():
+                    self.config.set(f"ui.{key}", value, save=False)
+
+                self.config.save()
+                self.update_ui_from_settings()
+                self.update_preview()
+                QMessageBox.information(self, "Settings", "Settings reset to defaults!")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to reset settings: {e!s}")
 
     def update_ui_from_settings(self):
         """Update UI elements from current settings."""
@@ -853,6 +1110,19 @@ class SettingsTab(BaseTab):
             self.theme_combo.setCurrentText(self.settings.get("theme", "Dark"))
         if hasattr(self, "opacity_slider"):
             self.opacity_slider.setValue(self.settings.get("window_opacity", 100))
+
+        # Update tool path widgets
+        if hasattr(self, "tool_widgets"):
+            for tool_key, widgets in self.tool_widgets.items():
+                path_value = self.settings.get(f"{tool_key}_path", "")
+                widgets['path_edit'].setText(path_value)
+
+        # Update directory path widgets
+        for dir_key in ["output_directory", "reports_directory", "scripts_directory"]:
+            if hasattr(self, dir_key):
+                dir_widget = getattr(self, dir_key)
+                dir_widget.setText(self.settings.get(dir_key, ""))
+
         # Continue updating other UI elements...
 
     def export_settings(self):
@@ -887,7 +1157,14 @@ class SettingsTab(BaseTab):
                 with open(file_path) as f:
                     imported_settings = json.load(f)
 
+                # Update local settings
                 self.settings.update(imported_settings)
+
+                # Save to centralized config
+                for key, value in self.settings.items():
+                    self.config.set(f"ui.{key}", value, save=False)
+
+                self.config.save()
                 self.update_ui_from_settings()
                 self.update_preview()
                 QMessageBox.information(self, "Import", "Settings imported successfully!")

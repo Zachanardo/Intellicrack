@@ -226,7 +226,6 @@ class CustomScanner(PluginBase):
 
 ### Integration
 
-- **IDA Pro**: Import/export analysis data
 - **Ghidra**: Share project files
 - **radare2**: Command-line integration
 - **Custom Tools**: Plugin API for extensions

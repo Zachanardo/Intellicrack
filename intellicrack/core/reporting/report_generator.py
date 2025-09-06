@@ -24,7 +24,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
-import subprocess
 import sys
 import tempfile
 import webbrowser
@@ -33,6 +32,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from intellicrack.logger import logger
+from intellicrack.utils.subprocess_security import secure_run
 
 try:
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
@@ -635,22 +635,22 @@ def view_report(app_instance, filepath: Optional[str] = None) -> bool:
         elif file_ext == ".pdf":
             # Open with system PDF viewer
             if os.name == "nt":  # Windows
-                os.startfile(filepath)
+                secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             elif os.name == "posix":  # macOS and Linux
-                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
         elif file_ext in [".json", ".txt"]:
             # Open with system text editor
             if os.name == "nt":  # Windows
-                os.startfile(filepath)
+                secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
         else:
             logger.warning(f"Unknown report format: {file_ext}")
             # Try to open with system default
             if os.name == "nt":
-                os.startfile(filepath)
+                secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
 
         logger.info(f"Opened report: {filepath}")
 

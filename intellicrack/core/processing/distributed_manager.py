@@ -38,10 +38,21 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 try:
     import ray
-
-    RAY_AVAILABLE = True
+    # Test Ray initialization to ensure dependencies are working
+    if hasattr(ray, '_raylet'):
+        try:
+            _raylet_module = ray._raylet  # Access the module to trigger DLL loading
+            RAY_AVAILABLE = True
+        except (ImportError, OSError, AttributeError) as dll_err:
+            logger.warning("Ray module loaded but dependencies failed: %s", dll_err)
+            RAY_AVAILABLE = False
+    else:
+        RAY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in distributed_manager: %s", e)
+    RAY_AVAILABLE = False
+except (OSError, AttributeError) as dll_error:
+    logger.error("Ray dependency error (missing DLL): %s", dll_error)
     RAY_AVAILABLE = False
 
 try:
@@ -268,48 +279,72 @@ class DistributedProcessingManager:
         try:
             # Initialize Ray if not already initialized
             if not ray.is_initialized():
-                ray.init(num_cpus=self.num_workers)
+                try:
+                    ray.init(num_cpus=self.num_workers)
+                except (ImportError, OSError, RuntimeError, AttributeError) as init_error:
+                    self.logger.error("Ray initialization failed: %s", init_error)
+                    self.logger.info("Falling back to multiprocessing due to Ray initialization failure")
+                    return self._process_with_multiprocessing(process_func, num_chunks)
 
-            # Define remote function
-            @ray.remote
-            def process_chunk(chunk_idx: int, binary_path: str, chunk_size: int) -> Any:
-                """Process a specific chunk of the binary file in a distributed manner using Ray.
+            # Define remote function with error handling
+            try:
+                @ray.remote
+                def process_chunk(chunk_idx: int, binary_path: str, chunk_size: int) -> Any:
+                    """Process a specific chunk of the binary file in a distributed manner using Ray.
 
-                This function is decorated with @ray.remote to enable distributed execution
-                across multiple processes or nodes. It reads a specific chunk of the binary
-                file based on the provided index, applies the processing function, and
-                returns the results.
+                    This function is decorated with @ray.remote to enable distributed execution
+                    across multiple processes or nodes. It reads a specific chunk of the binary
+                    file based on the provided index, applies the processing function, and
+                    returns the results.
 
-                Args:
-                    chunk_idx: Index of the chunk to process
-                    binary_path: Path to the binary file
-                    chunk_size: Size of each chunk
+                    Args:
+                        chunk_idx: Index of the chunk to process
+                        binary_path: Path to the binary file
+                        chunk_size: Size of each chunk
 
-                Returns:
-                    Any: Result of applying the process_func to the chunk data and offset
+                    Returns:
+                        Any: Result of applying the process_func to the chunk data and offset
 
-                """
-                offset = chunk_idx * chunk_size
-                with open(binary_path, "rb") as f:
-                    f.seek(offset)
-                    chunk_data = f.read(chunk_size)
-                return process_func(chunk_data, offset)
+                    """
+                    offset = chunk_idx * chunk_size
+                    with open(binary_path, "rb") as f:
+                        f.seek(offset)
+                        chunk_data = f.read(chunk_size)
+                    return process_func(chunk_data, offset)
+            except (ImportError, OSError, RuntimeError, AttributeError) as remote_error:
+                self.logger.error("Ray remote function creation failed: %s", remote_error)
+                self.logger.info("Falling back to multiprocessing due to Ray remote function failure")
+                return self._process_with_multiprocessing(process_func, num_chunks)
 
-            # Submit tasks
-            tasks = []
-            for _i in range(num_chunks):
-                tasks.append(process_chunk.remote(_i, self.binary_path, self.chunk_size))
+            # Submit tasks with error handling
+            try:
+                tasks = []
+                for _i in range(num_chunks):
+                    task_ref = process_chunk.remote(_i, self.binary_path, self.chunk_size)
+                    tasks.append(task_ref)
 
-            # Get results with progress tracking
-            results = []
-            completed = 0
-            for _result in ray.get(tasks):
-                results.append(_result)
-                completed += 1
-                if completed % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(f"Progress: {completed}/{num_chunks} chunks processed ({completed / num_chunks * 100:.1f}%)")
+                # Get results with progress tracking and error handling
+                results = []
+                completed = 0
+                for task_ref in tasks:
+                    try:
+                        result = ray.get(task_ref)
+                        results.append(result)
+                    except (ImportError, OSError, RuntimeError, AttributeError) as task_error:
+                        self.logger.warning("Ray task failed: %s", task_error)
+                        # Still append error result to maintain result count
+                        results.append({"error": str(task_error), "chunk_idx": completed})
 
-            return results
+                    completed += 1
+                    if completed % max(1, num_chunks // 10) == 0:  # Report every 10%
+                        self.logger.info(f"Progress: {completed}/{num_chunks} chunks processed ({completed / num_chunks * 100:.1f}%)")
+
+                return results
+
+            except (ImportError, OSError, RuntimeError, AttributeError) as submission_error:
+                self.logger.error("Ray task submission failed: %s", submission_error)
+                self.logger.info("Falling back to multiprocessing due to Ray task submission failure")
+                return self._process_with_multiprocessing(process_func, num_chunks)
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in Ray processing: %s", e)

@@ -313,7 +313,7 @@ def bypass_protection(binary_path: str | Path, protection_type: str) -> dict[str
         elif platform == "macOS":
             strategies["tools"] = ["lldb", "radare2", "otool", "class-dump"]
         else:
-            strategies["tools"] = ["radare2", "IDA Pro", "Ghidra"]
+            strategies["tools"] = ["radare2", "Ghidra"]
 
         strategies["warnings"] = ["May trigger anti-debugging mechanisms"]
 

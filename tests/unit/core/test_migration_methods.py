@@ -295,8 +295,7 @@ class TestMigrationMethods(unittest.TestCase):
             {
                 "tools": {
                     "ghidra": "C:\\Tools\\ghidra\\ghidraRun.bat",
-                    "x64dbg": "C:\\Tools\\x64dbg\\x64dbg.exe",
-                    "ida": "C:\\Tools\\IDA\\ida64.exe"
+                    "x64dbg": "C:\\Tools\\x64dbg\\x64dbg.exe"
                 },
                 "directories": {
                     "plugins": "C:\\Intellicrack\\plugins",

@@ -30,6 +30,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from intellicrack.utils.subprocess_security import secure_run
+
 logger = logging.getLogger(__name__)
 
 # Import performance optimizer
@@ -1764,7 +1766,7 @@ def disassemble_with_objdump(
             cmd.extend(extra_args)
         cmd.append(binary_path)
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False, shell=False)
+        result = secure_run(cmd, capture_output=True, text=True, timeout=timeout, check=False, shell=False)
 
         if result.returncode == 0:
             if parse_func:

@@ -80,16 +80,12 @@ class DebuggerDetector(BaseDetector):
                     "x64dbg.exe",
                     "x32dbg.exe",
                     "windbg.exe",
-                    "idaq.exe",
-                    "idaq64.exe",
-                    "ida.exe",
-                    "ida64.exe",
                     "devenv.exe",
                     "dbgview.exe",
                     "processhacker.exe",
                 ],
                 "window_classes": ["OLLYDBG", "WinDbgFrameClass", "ID", "Zeta Debugger"],
-                "window_titles": ["OllyDbg", "x64dbg", "WinDbg", "IDA", "Immunity Debugger"],
+                "window_titles": ["OllyDbg", "x64dbg", "WinDbg", "Immunity Debugger"],
             },
             "linux": {
                 "processes": ["gdb", "lldb", "radare2", "r2", "edb", "strace", "ltrace"],
@@ -1095,8 +1091,6 @@ class DebuggerDetector(BaseDetector):
                 return "OllyDbg"
             if "x64dbg" in parent or "x32dbg" in parent:
                 return "x64dbg"
-            if "ida" in parent:
-                return "IDA Pro"
             if "gdb" in parent:
                 return "GDB"
             if "lldb" in parent:

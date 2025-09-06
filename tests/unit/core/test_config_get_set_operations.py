@@ -56,20 +56,18 @@ class TestConfigGetSetOperations(unittest.TestCase):
         # Test setting trusted binaries list
         trusted_binaries = [
             "C:\\Games\\CyberPunk2077\\bin\\x64\\Cyberpunk2077.exe",
-            "C:\\Program Files\\Adobe\\Photoshop\\Photoshop.exe",
-            "C:\\Tools\\IDA\\ida64.exe"
+            "C:\\Program Files\\Adobe\\Photoshop\\Photoshop.exe"
         ]
         self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
         retrieved_binaries = self.config.get("qemu_testing.trusted_binaries")
         assert retrieved_binaries == trusted_binaries
-        assert len(retrieved_binaries) == 3
+        assert len(retrieved_binaries) == 2
 
         # Test setting script type preferences
         script_prefs = {
             "frida": True,
             "ghidra": False,
             "radare2": True,
-            "ida": True,
             "x64dbg": False
         }
         self.config.set("qemu_testing.script_type_preferences", script_prefs)

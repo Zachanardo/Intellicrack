@@ -158,7 +158,8 @@ Process.enumerateModules().forEach(module => {{{{
     print(f"Call frequency: {{json.dumps(call_counts, indent=2)}}")
 
     # Save detailed data
-    with open('/tmp/qemu_test_data.json', 'w') as f:
+    import os
+    with open(os.path.join(tempfile.gettempdir(), 'qemu_test_data.json'), 'w') as f:
         json.dump({{
             'memory_changes': memory_changes,
             'api_calls': api_calls,

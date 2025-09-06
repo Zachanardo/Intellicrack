@@ -99,7 +99,8 @@ class SecretsManager:
         if config_dir is None:
             config_dir_str = self.central_config.get("secrets.config_directory")
             if not config_dir_str:
-                config_dir_str = "C:/Intellicrack/config/secrets"
+                config_dir = self._get_default_config_dir()
+                config_dir_str = str(config_dir)
                 # Store the default in central config
                 self.central_config.set("secrets.config_directory", config_dir_str)
             self.config_dir = Path(config_dir_str)
@@ -130,9 +131,11 @@ class SecretsManager:
     def _get_default_config_dir(self) -> Path:
         r"""Get unified configuration directory.
 
-        Uses C:\\Intellicrack\\config\\secrets for all platforms to ensure consistency.
+        Uses relative path to Intellicrack root for all platforms to ensure consistency.
         """
-        return Path("C:/Intellicrack/config/secrets")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent.parent
+        return root / "config" / "secrets"
 
     def _load_env_files(self):
         """Load environment variables from .env files."""
@@ -141,7 +144,9 @@ class SecretsManager:
             return
 
         # Priority 1: Check unified config directory first
-        unified_config_dir = Path("C:/Intellicrack/config")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent.parent
+        unified_config_dir = root / "config"
         unified_env_file = unified_config_dir / ".env"
         if unified_env_file.exists():
             load_dotenv(unified_env_file, override=True)

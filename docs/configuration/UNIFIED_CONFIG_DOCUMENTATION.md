@@ -80,7 +80,6 @@ This document provides comprehensive documentation for Intellicrack's unified co
 
 - `ghidra`: Ghidra reverse engineering tool configuration
 - `radare2`: Radare2 binary analysis framework
-- `ida`: IDA Pro disassembler configuration
 - `frida`: Frida dynamic instrumentation toolkit
 - `qemu`: QEMU virtualization platform
 - `python3`: Python 3 interpreter configuration

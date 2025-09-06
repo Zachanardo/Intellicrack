@@ -232,9 +232,6 @@ for api in hashed_apis:
 # Reconstruct import table
 reconstructed = api_analyzer.reconstruct_imports(binary_path)
 
-# Generate IDC script for IDA
-idc_script = api_analyzer.generate_ida_script(reconstructed)
-
 # Generate radare2 commands
 r2_commands = api_analyzer.generate_r2_commands(reconstructed)
 ```

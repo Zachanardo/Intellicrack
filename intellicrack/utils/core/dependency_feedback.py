@@ -50,7 +50,7 @@ class DependencyFeedback:
                 "Linux": ["sudo apt-get install ghidra", "Download from NSA GitHub releases"],
                 "macOS": ["brew install ghidra", "Download from NSA GitHub releases"],
             },
-            "alternatives": ["radare2", "IDA Pro", "Binary Ninja"],
+            "alternatives": ["radare2", "Binary Ninja"],
             "critical": True,
             "category": "static_analysis",
         },
@@ -303,7 +303,7 @@ class DependencyFeedback:
     def get_category_alternatives(self, category: str) -> List[str]:
         """Get alternative tools for a specific category."""
         alternatives = []
-        for dep_name, dep_info in self.DEPENDENCY_INFO.items():
+        for _dep_name, dep_info in self.DEPENDENCY_INFO.items():
             if dep_info.get("category") == category:
                 alternatives.extend(dep_info.get("alternatives", []))
         return list(set(alternatives))  # Remove duplicates

@@ -4924,7 +4924,6 @@ class DetectionDepthValidator:
                 b'x32dbg',
                 b'x64dbg',
                 b'windbg',
-                b'ida',
                 b'ghidra',
                 b'cheat engine',
                 b'process hacker'

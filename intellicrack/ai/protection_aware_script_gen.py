@@ -63,7 +63,7 @@ class ProtectionAwareScriptGenerator:
 
         Args:
             binary_path: Path to the protected binary
-            script_type: Type of script to generate (frida, ghidra, ida)
+            script_type: Type of script to generate (frida, ghidra)
 
         Returns:
             Dict containing script and metadata

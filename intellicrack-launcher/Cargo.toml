@@ -1,6 +1,6 @@
 [package]
 name = "intellicrack-launcher"
-version = "2.0.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["Intellicrack Team"]
 description = "Sophisticated Rust launcher for Intellicrack binary analysis platform"
@@ -11,7 +11,7 @@ name = "intellicrack_launcher"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "intellicrack-launcher"
+name = "Intellicrack"
 path = "src/main.rs"
 
 [[bench]]
@@ -26,9 +26,13 @@ harness = false
 name = "process_benchmarks"
 harness = false
 
+[build-dependencies]
+pyo3-build-config = "0.20"
+embed-resource = "2.4"
+
 [dependencies]
 # Python Integration
-pyo3 = { version = "0.20", features = ["auto-initialize", "extension-module", "abi3-py38"] }
+pyo3 = { version = "0.20", features = ["auto-initialize"] }
 libloading = "0.8"
 
 # System Integration
@@ -71,13 +75,19 @@ regex = "1.10"
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = [
     "winbase", "winuser", "winerror", "processenv", "wincon",
-    "handleapi", "synchapi", "processthreadsapi", "tlhelp32"
+    "handleapi", "synchapi", "processthreadsapi", "tlhelp32",
+    "libloaderapi", "memoryapi", "psapi", "shlobj"
 ] }
 windows = { version = "0.52", features = [
     "Win32_System_Registry",
     "Win32_Graphics_Direct3D11",
     "Win32_System_SystemInformation",
-    "Win32_Foundation"
+    "Win32_Foundation",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Threading",
+    "Win32_Security",
+    "Win32_System_Memory",
+    "Win32_System_LibraryLoader"
 ] }
 
 [target.'cfg(unix)'.dependencies]

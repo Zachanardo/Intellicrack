@@ -123,7 +123,7 @@ class AIAssistantTab(BaseTab):
 
     def setup_content(self):
         """Initialize the user interface."""
-        layout = QVBoxLayout()
+        layout = self.layout()  # Use existing layout from BaseTab
 
         # Model selection
         model_group = QGroupBox("AI Model Configuration")
@@ -134,19 +134,23 @@ class AIAssistantTab(BaseTab):
         model_selector_layout.addWidget(QLabel("Model:"))
 
         self.model_combo = QComboBox()
+        self.model_combo.setToolTip("Select the AI model to use for analysis. Configure API keys through the Configure button")
         model_selector_layout.addWidget(self.model_combo)
 
         self.configure_btn = QPushButton("Configure")
+        self.configure_btn.setToolTip("Set up API keys, endpoints, and parameters for the selected AI model")
         self.configure_btn.clicked.connect(self.configure_model)
         model_selector_layout.addWidget(self.configure_btn)
 
         # Upload local model button
         self.upload_model_btn = QPushButton("Upload Local Model")
+        self.upload_model_btn.setToolTip("Load a locally hosted AI model for offline analysis capabilities")
         self.upload_model_btn.clicked.connect(self.upload_local_model)
         model_selector_layout.addWidget(self.upload_model_btn)
 
         # Open model manager button
         self.model_manager_btn = QPushButton("Model Manager")
+        self.model_manager_btn.setToolTip("Manage installed AI models, download new models, and configure model parameters")
         self.model_manager_btn.clicked.connect(self.open_model_manager)
         model_selector_layout.addWidget(self.model_manager_btn)
 
@@ -163,20 +167,24 @@ class AIAssistantTab(BaseTab):
 
         self.input_text = QTextEdit()
         self.input_text.setPlaceholderText("Enter your query or paste code/binary analysis here...")
+        self.input_text.setToolTip("Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats")
         input_layout.addWidget(self.input_text)
 
         # Action buttons
         button_layout = QHBoxLayout()
 
         self.analyze_btn = QPushButton("Analyze")
+        self.analyze_btn.setToolTip("Send your query to the AI model for comprehensive analysis and insights")
         self.analyze_btn.clicked.connect(self.perform_analysis)
         button_layout.addWidget(self.analyze_btn)
 
         self.generate_script_btn = QPushButton("Generate Script")
+        self.generate_script_btn.setToolTip("Generate custom Frida, Ghidra, or IDA scripts based on your requirements")
         self.generate_script_btn.clicked.connect(self.generate_script)
         button_layout.addWidget(self.generate_script_btn)
 
         self.clear_btn = QPushButton("Clear")
+        self.clear_btn.setToolTip("Clear both input and output fields to start a new analysis session")
         self.clear_btn.clicked.connect(self.clear_all)
         button_layout.addWidget(self.clear_btn)
 
@@ -190,12 +198,14 @@ class AIAssistantTab(BaseTab):
 
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
+        self.output_text.setToolTip("AI model responses and generated analysis results. Content can be exported using the buttons below")
         output_layout.addWidget(self.output_text)
 
         # Export buttons
         export_layout = QHBoxLayout()
 
         self.export_script_btn = QPushButton("Export Script")
+        self.export_script_btn.setToolTip("Save the generated script to a file for use with Frida, Ghidra, or other tools")
         self.export_script_btn.clicked.connect(self.export_script)
         self.export_script_btn.setEnabled(False)
         export_layout.addWidget(self.export_script_btn)
@@ -213,8 +223,6 @@ class AIAssistantTab(BaseTab):
         # Status bar
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
-
-        self.setLayout(layout)
 
         # Initialize AI assistant after UI setup
         self.setup_ai_assistant()

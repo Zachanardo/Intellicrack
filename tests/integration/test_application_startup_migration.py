@@ -65,7 +65,6 @@ class TestApplicationStartupMigration(unittest.TestCase):
             },
             "tools": {
                 "ghidra": "C:\\Tools\\ghidra\\ghidraRun.bat",
-                "ida": "C:\\Tools\\IDA\\ida64.exe",
                 "x64dbg": "C:\\Tools\\x64dbg\\x64dbg.exe",
                 "radare2": "C:\\Tools\\radare2\\bin\\r2.exe"
             },
@@ -168,7 +167,6 @@ ANTHROPIC_API_KEY=sk-ant-test-anthropic-key-456
 GOOGLE_API_KEY=AIzaSyC-google-key-789
 VIRUSTOTAL_API_KEY=vt-key-abc123
 GHIDRA_INSTALL_DIR=C:\\Tools\\ghidra_11.0
-IDA_INSTALL_DIR=C:\\Tools\\IDA_8.3
 DEBUG_MODE=false
 LOG_LEVEL=INFO
 """

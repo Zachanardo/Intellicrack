@@ -1038,7 +1038,7 @@ const BehavioralPatternAnalyzer = {
         if (apiName === 'CreateProcessW' && args[1]) {
             try {
                 var commandLine = args[1].readUtf16String().toLowerCase();
-                var protectionTools = ['debugger', 'ollydbg', 'x64dbg', 'ida', 'wireshark'];
+                var protectionTools = ['debugger', 'ollydbg', 'x64dbg', 'wireshark'];
 
                 if (protectionTools.some(tool => commandLine.includes(tool))) {
                     this.recordProtectionMechanism('anti_debug_detection', {

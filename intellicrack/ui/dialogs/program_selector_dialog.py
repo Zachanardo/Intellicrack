@@ -88,7 +88,13 @@ class FileSelectionPage(QWizardPage):
         self.browse_btn = QPushButton("Browse...")
         self.browse_btn.clicked.connect(self.browse_for_file)
         if HAS_PYQT:
-            self.browse_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+            try:
+                self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+            except AttributeError:
+                try:
+                    self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                except AttributeError:
+                    pass
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -267,9 +273,18 @@ class AnalysisPage(QWizardPage):
             # Set icon based on file type
             if HAS_PYQT:
                 if file_type == "License":
-                    item.setIcon(0, self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+                    try:
+                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+                    except AttributeError:
+                        try:
+                            item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                        except AttributeError:
+                            pass
                 else:
-                    item.setIcon(0, self.style().standardIcon(QStyle.SP_FileIcon))
+                    try:
+                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+                    except AttributeError:
+                        pass
 
             self.licensing_tree.addTopLevelItem(item)
 
@@ -346,6 +361,12 @@ class ProgramSelectorDialog(QWizard):
         # Configure wizard
         self.setWizardStyle(QWizard.ModernStyle)
         self.setOption(QWizard.HaveHelpButton, False)
+
+    def get_selected_program(self):
+        """Get the selected program file path for compatibility with dashboard."""
+        if self.file_selection_page:
+            return self.file_selection_page.get_selected_file()
+        return None
 
     def get_selected_program_data(self):
         """Get data for the wizard results."""

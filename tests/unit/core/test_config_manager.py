@@ -652,7 +652,6 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             "ghidra_path": "C:/Program Files/Ghidra/ghidra",
             "radare2_path": "/usr/bin/r2",
             "frida_path": "frida",
-            "ida_path": "C:/Program Files/IDA Pro/ida.exe",
 
             # Legacy top-level fields that need migration
             "ui_theme": "Dark",
@@ -729,7 +728,6 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert tools_config.get("ghidra", {}).get("path") == "C:/Program Files/Ghidra/ghidra"
         assert tools_config.get("radare2", {}).get("path") == "/usr/bin/r2"
         assert tools_config.get("frida", {}).get("path") == "frida"
-        assert tools_config.get("ida", {}).get("path") == "C:/Program Files/IDA Pro/ida.exe"
 
         # Verify legacy field migrations
         ui_config = config.get_ui_config()

@@ -12747,7 +12747,7 @@ const UniversalUnpacker = {
                     'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
                     'OutputDebugString', 'GetThreadContext', 'SetThreadContext',
                     // Debugger process names
-                    'ollydbg', 'windbg', 'x64dbg', 'ida', 'cheat engine', 'processhacker',
+                    'ollydbg', 'windbg', 'x64dbg', 'cheat engine', 'processhacker',
                     // Anti-debug library signatures
                     'anti-debug', 'dbg_detect', 'debugger_check'
                 ];

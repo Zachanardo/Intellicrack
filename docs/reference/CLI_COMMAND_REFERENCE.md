@@ -171,7 +171,6 @@ Types:
   frida               Frida scripts
   ghidra              Ghidra scripts
   radare2             Radare2 scripts
-  ida                 IDA Pro scripts
 
 Options:
   --template TEMPLATE Use specific template

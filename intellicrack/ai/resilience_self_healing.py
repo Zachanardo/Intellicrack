@@ -144,6 +144,18 @@ class FailureType(Enum):
     DEPENDENCY_FAILURE = "dependency_failure"
     DATA_CORRUPTION = "data_corruption"
 
+    def __reduce__(self):
+        """Custom pickle serialization to avoid import issues."""
+        return (self.__class__, (self.value,))
+
+    @classmethod
+    def _missing_(cls, value):
+        """Handle missing enum values during deserialization."""
+        for member in cls:
+            if member.value == value:
+                return member
+        return cls.COMPONENT_CRASH
+
 
 class RecoveryStrategy(Enum):
     """Recovery strategies for different failure types."""
@@ -159,6 +171,18 @@ class RecoveryStrategy(Enum):
     ISOLATE_COMPONENT = "isolate_component"
     EMERGENCY_SHUTDOWN = "emergency_shutdown"
 
+    def __reduce__(self):
+        """Custom pickle serialization to avoid import issues."""
+        return (self.__class__, (self.value,))
+
+    @classmethod
+    def _missing_(cls, value):
+        """Handle missing enum values during deserialization."""
+        for member in cls:
+            if member.value == value:
+                return member
+        return cls.RESTART_COMPONENT
+
 
 class HealthStatus(Enum):
     """System health status levels."""
@@ -168,6 +192,20 @@ class HealthStatus(Enum):
     CRITICAL = "critical"
     FAILING = "failing"
     RECOVERY = "recovery"
+
+    def __reduce__(self):
+        """Custom pickle serialization to avoid import issues."""
+        return (self.__class__, (self.value,))
+
+    @classmethod
+    def _missing_(cls, value):
+        """Handle missing enum values during deserialization."""
+        # If the value is a string, try to find the matching enum
+        for member in cls:
+            if member.value == value:
+                return member
+        # Return a default value if not found
+        return cls.HEALTHY
 
 
 @dataclass

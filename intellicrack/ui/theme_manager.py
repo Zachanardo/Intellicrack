@@ -505,7 +505,7 @@ QTabWidget::tab-bar {
 
 QTabBar::tab {
     background-color: #DEDEDE;
-    color: #1A1A1A;
+    color: #000000;
     border: 1px solid #AAAAAA;
     border-bottom-color: #F5F5F5;
     border-top-left-radius: 6px;
@@ -730,7 +730,7 @@ QGroupBox::title {
 
 /* Labels */
 QLabel {
-    color: #1A1A1A;
+    color: #000000;
     background-color: transparent;
 }
 

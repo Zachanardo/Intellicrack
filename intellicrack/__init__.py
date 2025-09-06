@@ -118,14 +118,20 @@ if _config:
     }
     _config.update(runtime_config)
 
-# Main application
+# Main application entry point
 try:
     from .main import main
+except ImportError as e:
+    logger.error("Failed to import main function: %s", e)
+    # This is critical - main must be available
+    main = None
+
+# UI application (optional - requires PyQt6)
+try:
     from .ui.main_app import IntellicrackApp
 except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    # Handle case where dependencies aren't available
-    main = None
+    logger.warning("UI application not available: %s", e)
+    # UI is optional - can run in CLI mode without it
     IntellicrackApp = None
 
 # Core analysis modules

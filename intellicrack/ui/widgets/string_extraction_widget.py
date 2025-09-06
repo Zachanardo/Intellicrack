@@ -169,6 +169,7 @@ class StringExtractionWidget(QWidget):
 
         # String table
         self.string_table = QTableWidget()
+        self.string_table.setToolTip("Table of extracted strings from the binary. Click headers to sort, right-click for context menu")
         self.string_table.setColumnCount(5)
         self.string_table.setHorizontalHeaderLabels(
             [
@@ -231,18 +232,22 @@ class StringExtractionWidget(QWidget):
         self.min_length_spin.setMinimum(3)
         self.min_length_spin.setMaximum(20)
         self.min_length_spin.setValue(4)
+        self.min_length_spin.setToolTip("Minimum number of consecutive characters to consider as a valid string")
         options_layout.addWidget(QLabel("Min Length:"))
         options_layout.addWidget(self.min_length_spin)
 
         self.extract_ascii_cb = QCheckBox("ASCII")
+        self.extract_ascii_cb.setToolTip("Extract standard ASCII text strings (single-byte characters)")
         self.extract_ascii_cb.setChecked(True)
         options_layout.addWidget(self.extract_ascii_cb)
 
         self.extract_unicode_cb = QCheckBox("Unicode")
+        self.extract_unicode_cb.setToolTip("Extract Unicode/UTF-16 strings (wide character strings)")
         self.extract_unicode_cb.setChecked(True)
         options_layout.addWidget(self.extract_unicode_cb)
 
         self.extract_btn = QPushButton("Extract Strings")
+        self.extract_btn.setToolTip("Start extracting readable strings from the loaded binary file")
         self.extract_btn.clicked.connect(self.extract_strings)
         options_layout.addWidget(self.extract_btn)
 
@@ -254,10 +259,12 @@ class StringExtractionWidget(QWidget):
         export_layout = QHBoxLayout()
 
         self.export_format = QComboBox()
+        self.export_format.setToolTip("Select output format for exporting extracted strings")
         self.export_format.addItems(["Text", "CSV", "JSON"])
         export_layout.addWidget(self.export_format)
 
         self.export_btn = QPushButton("Export...")
+        self.export_btn.setToolTip("Export extracted strings to a file in the selected format")
         self.export_btn.clicked.connect(self.export_strings)
         export_layout.addWidget(self.export_btn)
 
@@ -274,12 +281,14 @@ class StringExtractionWidget(QWidget):
         # Search filter
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Filter strings...")
+        self.search_input.setToolTip("Search for specific text within extracted strings")
         self.search_input.textChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Filter:"))
         layout.addWidget(self.search_input)
 
         # Category filter
         self.category_filter = QComboBox()
+        self.category_filter.setToolTip("Filter strings by their detected category or purpose")
         self.category_filter.addItems(
             [
                 "All Categories",
@@ -299,6 +308,7 @@ class StringExtractionWidget(QWidget):
 
         # Encoding filter
         self.encoding_filter = QComboBox()
+        self.encoding_filter.setToolTip("Filter by character encoding type")
         self.encoding_filter.addItems(["All Encodings", "ASCII", "Unicode"])
         self.encoding_filter.currentTextChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Encoding:"))
@@ -309,6 +319,7 @@ class StringExtractionWidget(QWidget):
         self.min_length_filter.setMinimum(0)
         self.min_length_filter.setMaximum(1000)
         self.min_length_filter.setValue(0)
+        self.min_length_filter.setToolTip("Show only strings with at least this many characters")
         self.min_length_filter.valueChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Min Length:"))
         layout.addWidget(self.min_length_filter)
@@ -473,7 +484,6 @@ class StringExtractionWidget(QWidget):
                 "bypass",
                 "hack",
                 "ollydbg",
-                "ida",
                 "x64dbg",
                 "processhacker",
             ]

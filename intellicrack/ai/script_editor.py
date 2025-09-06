@@ -470,7 +470,9 @@ class AIScriptEditor:
         self.llm_interface = LLMScriptInterface()
         self.prompt_engineer = PromptEngineer()
         self.tester = ScriptTester()
-        self.version_manager = ScriptVersionManager("C:/Intellicrack/intellicrack/scripts")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        self.version_manager = ScriptVersionManager(str(root / "scripts"))
         self.edit_history = {}  # script_path -> List[ScriptEdit]
         logger.info("AIScriptEditor initialized with advanced editing capabilities")
 
@@ -975,7 +977,6 @@ Generate the complete modified script:"""
             ".py": "python",
             ".r2": "radare2",
             ".lua": "lua",
-            ".idc": "ida",
             ".c": "c",
             ".cpp": "cpp",
             ".sh": "shell",
@@ -992,8 +993,6 @@ Generate the complete modified script:"""
             script_type = "ghidra"
         elif "radare" in filename_lower or "r2" in filename_lower:
             script_type = "radare2"
-        elif "ida" in filename_lower:
-            script_type = "ida"
 
         return script_type
 

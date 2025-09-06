@@ -1,0 +1,9 @@
+[env]
+PYO3_PYTHON = "C:\\Intellicrack\\mamba_env\\python.exe"
+PYTHONHOME = "C:\\Intellicrack\\mamba_env"
+PYTHON_SYS_EXECUTABLE = "C:\\Intellicrack\\mamba_env\\python.exe"
+
+[build]
+rustflags = [
+    "-C", "link-arg=/LIBPATH:C:\\Intellicrack\\mamba_env\\libs",
+]

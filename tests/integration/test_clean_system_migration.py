@@ -237,7 +237,6 @@ class TestCleanSystemMigration(unittest.TestCase):
                     'r2': '/usr/bin/r2',
                     'frida': '/usr/local/bin/frida',
                     'x64dbg': None,  # Not available
-                    'ida': None,  # Not available
                 }
                 return tool_paths.get(tool)
 
@@ -264,9 +263,6 @@ class TestCleanSystemMigration(unittest.TestCase):
             # Unavailable tools should be marked as such
             self.assertIn("x64dbg", tools)
             self.assertEqual(tools["x64dbg"]["available"], False)
-
-            self.assertIn("ida", tools)
-            self.assertEqual(tools["ida"]["available"], False)
 
     def test_clean_system_directory_creation(self):
         """Test that required directories are created on clean system."""

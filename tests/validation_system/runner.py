@@ -250,7 +250,7 @@ class ProcessMonitor:
     def _monitor_loop(self, target_process: Optional[str]):
         """Main monitoring loop running in separate thread."""
         debugger_indicators = [
-            "x64dbg", "x32dbg", "ollydbg", "ida", "ida64",
+            "x64dbg", "x32dbg", "ollydbg",
             "ghidra", "windbg", "gdb", "radare2", "r2",
             "processhacker", "procmon", "procexp", "apimonitor"
         ]

@@ -38,7 +38,7 @@
 
     **Phase 0.2 Completion Notes:**
     - GroundTruthEstablisher class fully implemented with production-ready code
-    - External tool detection for PEiD, DIE, ProtectionID, x64dbg, Ghidra, IDA, radare2, YARA
+    - External tool detection for PEiD, DIE, ProtectionID, x64dbg, Ghidra, radare2, YARA
     - Consensus ground truth creation from multiple independent sources
     - SHA-256 cryptographic signing implemented (GPG support included)
     - Verification system to ensure Intellicrack not used in ground truth generation
@@ -140,7 +140,7 @@
         *   [ ] **1.2.5.3.** `validation_steps`:
             *   [ ] **1.2.5.3.1.** `detection`:
                 *   [ ] **1.2.5.3.1.1.** `required_evidence`: Array of evidence types (memory_addresses, disassembly, imports, signatures).
-                *   [ ] **1.2.5.3.1.2.** `cross_validation_sources`: Array of external validators (virustotal, ida_pro, pesieve).
+                *   [ ] **1.2.5.3.1.2.** `cross_validation_sources`: Array of external validators (virustotal, pesieve).
                 *   [ ] **1.2.5.3.1.3.** `minimum_confidence_score`: Required confidence level for detection.
             *   [ ] **1.2.5.3.2.** `exploitation`:
                 *   [ ] **1.2.5.3.2.1.** `negative_control`: Settings to verify protection exists before bypass.
@@ -155,7 +155,7 @@
         *   [ ] **1.3.2.1.** `binary_metadata`: Vendor name, version, official SHA-256, download URL.
         *   [ ] **1.3.2.2.** `protections_detected`: Array of protection objects with:
             *   [ ] **1.3.2.2.1.** Protection name, version, entry points (memory addresses).
-            *   [ ] **1.3.2.2.2.** Evidence from each external source (Protection Scanner (PEiD/DIE), IDA, etc.).
+            *   [ ] **1.3.2.2.2.** Evidence from each external source (Protection Scanner (PEiD/DIE), etc.).
             *   [ ] **1.3.2.2.3.** Consensus score (percentage of sources that agree).
         *   [ ] **1.3.2.3.** `verification_sources`: List of all external tools/services used.
         *   [ ] **1.3.2.4.** `gpg_signature`: Cryptographic signature of the entire profile.

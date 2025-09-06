@@ -1133,7 +1133,7 @@ const virtualizationBypass = {
                         var sandboxProcesses = [
                             'procmon.exe', 'procexp.exe', 'wireshark.exe', 'tcpview.exe',
                             'autoruns.exe', 'autorunsc.exe', 'filemon.exe', 'regmon.exe',
-                            'idaq.exe', 'idag.exe', 'idaw.exe', 'ollydbg.exe', 'windbg.exe',
+                            'ollydbg.exe', 'windbg.exe',
                             'x32dbg.exe', 'x64dbg.exe', 'immunity.exe', 'vboxservice.exe',
                             'vboxtray.exe', 'sandboxie.exe', 'sbiesvc.exe', 'kasperskyav.exe'
                         ];

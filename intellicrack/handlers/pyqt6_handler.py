@@ -647,7 +647,7 @@ except ImportError as e:
             """Fallback pyqtSlot decorator for minimal PyQt6 compatibility."""
             return lambda: None
 
-        qRgba = None
+        q_rgba = None
 
 
 # Export all PyQt6 classes and availability flag

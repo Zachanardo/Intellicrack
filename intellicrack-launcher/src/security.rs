@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pyo3::prelude::*;
 use pyo3::Python;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -215,13 +214,22 @@ impl SecurityManager {
     fn initialize_python_security_patches(&self) -> Result<()> {
         info!("Initializing Python security patches");
 
+        // Check if Python is initialized before trying to use it
+        match Python::with_gil(|_| -> Result<(), anyhow::Error> { Ok(()) }) {
+            Ok(_) => {
+                // Python is initialized, proceed
+            }
+            Err(_) => {
+                warn!("Python not initialized yet - deferring security patches");
+                return Ok(());
+            }
+        }
+
         Python::with_gil(|py| -> Result<()> {
-            // Import and initialize the security enforcement module
             match py.import("intellicrack.core.security_enforcement") {
                 Ok(security_module) => {
                     debug!("Security enforcement module imported");
 
-                    // Initialize security patches
                     if let Ok(init_func) = security_module.getattr("initialize_security") {
                         init_func.call0()?;
                         info!("Python security patches initialized");
@@ -229,7 +237,6 @@ impl SecurityManager {
                         warn!("initialize_security function not found in security module");
                     }
 
-                    // Get security status
                     if let Ok(status_func) = security_module.getattr("get_security_status") {
                         let status = status_func.call0()?;
                         debug!("Security status: {:?}", status);

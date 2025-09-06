@@ -70,8 +70,10 @@ class TrafficAnalyzer:
         try:
             log_info("Launching Visual Network Traffic Analyzer...")
 
-            # Import the core analyzer
-            from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
+            # Check if the core analyzer is available
+            import importlib.util
+            if importlib.util.find_spec("intellicrack.core.network.traffic_analyzer") is None:
+                raise ImportError("NetworkTrafficAnalyzer module not found")
 
             # Create and show the traffic analysis dialog
             dialog = NetworkTrafficAnalysisDialog(main_window)
@@ -872,7 +874,7 @@ def _perform_network_capture(self, interface, filter_str):
     try:
         # Try to use scapy for packet capture
         try:
-            from scapy.all import sniff, wrpcap
+            from scapy.all import sniff
 
             def packet_handler(packet):
                 """Handle captured packets."""

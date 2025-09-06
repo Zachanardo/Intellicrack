@@ -63,17 +63,19 @@ try:
     # If we couldn't load any Qt backend, check if PyQt is even available
     if FigureCanvasQTAgg is None:
         try:
-            import PyQt6
-
-            logger.debug("PyQt6 is available but matplotlib Qt backend failed to load")
+            import importlib.util
+            if importlib.util.find_spec("PyQt6") is not None:
+                logger.debug("PyQt6 is available but matplotlib Qt backend failed to load")
         except ImportError:
-            try:
-                import PyQt5
+            pass
 
+        try:
+            import importlib.util
+            if importlib.util.find_spec("PyQt5") is not None:
                 logger.debug("PyQt5 is available but matplotlib Qt backend failed to load")
-            except ImportError:
-                logger.debug("Neither PyQt6 nor PyQt5 available for matplotlib backend")
-                qt_backend_error = ImportError("No PyQt available")
+        except ImportError:
+            logger.debug("Neither PyQt6 nor PyQt5 available for matplotlib backend")
+            qt_backend_error = ImportError("No PyQt available")
 
     # Set the appropriate matplotlib backend
     if qt_backend_name:

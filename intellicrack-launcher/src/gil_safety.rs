@@ -46,7 +46,7 @@ impl GilSafetyManager {
         env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
 
         // Additional PyBind11 safety flags
-        env::set_var("PYBIND11_PYTHON_VERSION", "3.8");
+        env::set_var("PYBIND11_PYTHON_VERSION", "3.12");
 
         info!("PyBind11 GIL safety configured");
         Ok(())
@@ -323,7 +323,7 @@ mod tests {
             env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF").unwrap(),
             "1"
         );
-        assert_eq!(env::var("PYBIND11_PYTHON_VERSION").unwrap(), "3.8");
+        assert_eq!(env::var("PYBIND11_PYTHON_VERSION").unwrap(), "3.12");
     }
 
     #[test]
@@ -423,7 +423,7 @@ mod tests {
             env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF").unwrap(),
             "1"
         );
-        assert_eq!(env::var("PYBIND11_PYTHON_VERSION").unwrap(), "3.8");
+        assert_eq!(env::var("PYBIND11_PYTHON_VERSION").unwrap(), "3.12");
 
         // Verify threading configuration was applied (from manual fallback)
         assert_eq!(env::var("OMP_NUM_THREADS").unwrap(), "1");
@@ -565,7 +565,7 @@ mod tests {
 
         // Verify Python version is set for PyBind11 compatibility
         let python_version = env::var("PYBIND11_PYTHON_VERSION").unwrap();
-        assert_eq!(python_version, "3.8");
+        assert_eq!(python_version, "3.12");
     }
 
     #[test]

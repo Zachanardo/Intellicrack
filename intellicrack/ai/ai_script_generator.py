@@ -139,17 +139,23 @@ class ToolDiscovery:
 
     def _check_ghidra(self):
         """Check if Ghidra utilities are available."""
-        ghidra_path = Path("C:/Intellicrack/intellicrack/utils/tools/ghidra_utils.py")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        ghidra_path = root / "utils" / "tools" / "ghidra_utils.py"
         return ghidra_path.exists()
 
     def _check_radare2(self):
         """Check if Radare2 utilities are available."""
-        r2_path = Path("C:/Intellicrack/intellicrack/utils/tools/radare2_utils.py")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        r2_path = root / "utils" / "tools" / "radare2_utils.py"
         return r2_path.exists()
 
     def _check_qiling(self):
         """Check if Qiling is available."""
-        qiling_path = Path("C:/Intellicrack/intellicrack/core/processing/qiling_emulator.py")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        qiling_path = root / "core" / "processing" / "qiling_emulator.py"
         return qiling_path.exists()
 
     def _check_capstone(self):
@@ -184,7 +190,9 @@ class ToolDiscovery:
 
     def _check_qemu(self):
         """Check if QEMU emulator is available."""
-        qemu_path = Path("C:/Intellicrack/intellicrack/core/processing/qemu_emulator.py")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        qemu_path = root / "core" / "processing" / "qemu_emulator.py"
         return qemu_path.exists()
 
     def get_context_for_llm(self):
@@ -817,7 +825,9 @@ class ScriptStorageManager:
 
     def __init__(self):
         """Initialize script storage manager with default directory structure."""
-        self.base_path = Path("C:/Intellicrack/intellicrack/scripts")
+        import intellicrack
+        root = Path(intellicrack.__file__).parent
+        self.base_path = root / "scripts"
         self._ensure_directories()
 
     def _ensure_directories(self):
@@ -867,7 +877,6 @@ class ScriptStorageManager:
             elif (
                 script_type_lower
                 in [
-                    "ida",
                     "qiling",
                     "unicorn",
                     "angr",
@@ -1069,7 +1078,7 @@ class DynamicScriptGenerator:
             elif script_type == "ghidra" and ("import ghidra" in line or "public class" in line):
                 code_start = i
                 break
-            elif script_type in ["ida", "qiling", "unicorn"] and ("import" in line or "from" in line):
+            elif script_type in ["qiling", "unicorn"] and ("import" in line or "from" in line):
                 code_start = i
                 break
             elif script_type == "radare2" and any(cmd in line for cmd in ["s ", "aa", "pdf", "wx"]):

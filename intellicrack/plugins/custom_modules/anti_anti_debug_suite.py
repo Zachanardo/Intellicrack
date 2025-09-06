@@ -1059,8 +1059,6 @@ class EnvironmentSanitizer:
             "windbg.exe",
             "x64dbg.exe",
             "x32dbg.exe",
-            "ida.exe",
-            "ida64.exe",
             "cheatengine.exe",
             "processhacker.exe",
         ]

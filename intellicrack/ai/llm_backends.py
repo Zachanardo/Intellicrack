@@ -542,23 +542,37 @@ class OllamaBackend(LLMBackend):
                 logger.error("requests library not available for Ollama backend")
                 return False
 
-            # Test connection to Ollama
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            if response.status_code == 200:
-                self.is_initialized = True
-                logger.info("Ollama backend initialized with model: %s", self.config.model_name)
-                return True
-            logger.error("Ollama not accessible at %s", self.base_url)
-            return False
+            # Test connection to Ollama with proper error handling
+            try:
+                response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+                if response.status_code == 200:
+                    self.is_initialized = True
+                    logger.info("Ollama backend initialized with model: %s", self.config.model_name)
+                    return True
+                else:
+                    logger.warning("Ollama server responded with status %d at %s", response.status_code, self.base_url)
+                    return False
+            except requests.exceptions.ConnectionError:
+                logger.warning("Ollama server not running at %s - skipping initialization", self.base_url)
+                return False
+            except requests.exceptions.Timeout:
+                logger.warning("Ollama server timeout at %s - skipping initialization", self.base_url)
+                return False
+            except requests.exceptions.RequestException as e:
+                logger.warning("Ollama server connection failed at %s: %s", self.base_url, e)
+                return False
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize Ollama backend: %s", e)
+            logger.warning("Failed to initialize Ollama backend: %s", e)
             return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse:
         """Chat with Ollama model."""
         if not self.is_initialized:
-            raise RuntimeError("Backend not initialized")
+            return LLMResponse(
+                content="Ollama backend not initialized - please check if Ollama server is running",
+                finish_reason="error",
+            )
 
         try:
             import requests
@@ -605,9 +619,34 @@ class OllamaBackend(LLMBackend):
                 model=self.config.model_name,
             )
 
+        except requests.exceptions.ConnectionError:
+            logger.error("Ollama server connection lost during chat request")
+            return LLMResponse(
+                content="Ollama server connection lost - please check if Ollama is running",
+                finish_reason="error",
+                model=self.config.model_name,
+            )
+        except requests.exceptions.Timeout:
+            logger.error("Ollama server timeout during chat request")
+            return LLMResponse(
+                content="Ollama server timeout - request took too long to complete",
+                finish_reason="error",
+                model=self.config.model_name,
+            )
+        except requests.exceptions.RequestException as e:
+            logger.error("Ollama API request error: %s", e)
+            return LLMResponse(
+                content=f"Ollama API error: {e}",
+                finish_reason="error",
+                model=self.config.model_name,
+            )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Ollama API error: %s", e)
-            raise
+            return LLMResponse(
+                content=f"Ollama API error: {e}",
+                finish_reason="error",
+                model=self.config.model_name,
+            )
 
     def shutdown(self):
         """Shutdown Ollama backend."""
@@ -2662,30 +2701,43 @@ def _configure_default_llms(manager: LLMManager) -> None:
 
         ollama_url = get_service_url("ollama_api", fallback="http://localhost:11434")
         if ollama_url:
-            # Check if Ollama service is potentially available
-            ollama_config = create_ollama_config(
-                model_name="llama3.2:latest",  # Common Ollama model
-                api_base=ollama_url,
-                context_length=8192,
-                temperature=0.1,  # Lower temperature for more deterministic analysis
-            )
+            # Check if Ollama server is actually running before registering backends
+            try:
+                import requests
+                # Quick check if Ollama is accessible
+                response = requests.get(f"{ollama_url}/api/tags", timeout=2)
+                if response.status_code == 200:
+                    # Ollama is running, register the backends
+                    ollama_config = create_ollama_config(
+                        model_name="llama3.2:latest",  # Common Ollama model
+                        api_base=ollama_url,
+                        context_length=8192,
+                        temperature=0.1,  # Lower temperature for more deterministic analysis
+                    )
 
-            # Register with lazy loading to avoid blocking on initialization
-            if manager.register_llm("ollama-llama3.2", ollama_config, use_lazy_loading=True):
-                configured_count += 1
-                logger.info("Configured Ollama LLM: llama3.2:latest")
+                    # Register with lazy loading to avoid blocking on initialization
+                    if manager.register_llm("ollama-llama3.2", ollama_config, use_lazy_loading=True):
+                        configured_count += 1
+                        logger.info("Configured Ollama LLM: llama3.2:latest")
 
-            # Also register a smaller model as backup
-            ollama_small_config = create_ollama_config(
-                model_name="llama3.2:1b",  # Smaller Ollama model
-                api_base=ollama_url,
-                context_length=4096,
-                temperature=0.1,
-            )
+                    # Also register a smaller model as backup
+                    ollama_small_config = create_ollama_config(
+                        model_name="llama3.2:1b",  # Smaller Ollama model
+                        api_base=ollama_url,
+                        context_length=4096,
+                        temperature=0.1,
+                    )
 
-            if manager.register_llm("ollama-llama3.2-1b", ollama_small_config, use_lazy_loading=True):
-                configured_count += 1
-                logger.info("Configured Ollama LLM: llama3.2:1b (backup)")
+                    if manager.register_llm("ollama-llama3.2-1b", ollama_small_config, use_lazy_loading=True):
+                        configured_count += 1
+                        logger.info("Configured Ollama LLM: llama3.2:1b (backup)")
+                else:
+                    logger.debug("Ollama server not available (status %d), skipping configuration", response.status_code)
+            except (requests.ConnectionError, requests.Timeout):
+                # Ollama is not running, skip registration entirely
+                logger.debug("Ollama server not running at %s, skipping configuration", ollama_url)
+            except ImportError:
+                logger.debug("requests library not available, cannot check Ollama server status")
 
     except (ImportError, AttributeError, ConfigurationError, OSError, RuntimeError) as e:
         logger.debug("Ollama configuration failed: %s", e)
@@ -2756,24 +2808,11 @@ def _configure_default_llms(manager: LLMManager) -> None:
     except (ImportError, AttributeError, OSError, RuntimeError) as e:
         logger.debug("Anthropic configuration failed: %s", e)
 
-    # 5. As a last resort, configure a mock/fallback LLM for testing
+    # 5. If no LLMs configured, that's fine - Intellicrack can operate without external LLMs
     if configured_count == 0:
-        logger.warning("No external LLMs configured, creating minimal fallback configuration")
-
-        # Create a basic configuration that will fail gracefully
-        fallback_config = LLMConfig(
-            provider=LLMProvider.LOCAL_API,
-            model_name="fallback-model",
-            api_base="http://localhost:8080",  # Non-existent endpoint
-            context_length=2048,
-            temperature=0.1,
-        )
-
-        # Register but expect it to fail - this prevents the "no LLMs configured" warning
-        # while still allowing the system to operate with fallback responses
-        manager.register_llm("fallback-model", fallback_config, use_lazy_loading=True)
-        configured_count += 1
-        logger.info("Configured fallback LLM configuration (will use built-in analysis)")
+        # Don't log warnings - LLMs are optional for Intellicrack
+        logger.debug("No external LLMs configured - Intellicrack will use built-in analysis")
+        # Don't try to register a fallback that will fail - just leave it unconfigured
 
     logger.info("Auto-configuration complete: %d LLM(s) configured", configured_count)
 

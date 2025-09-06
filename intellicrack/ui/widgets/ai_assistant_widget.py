@@ -206,7 +206,6 @@ class AIAssistantWidget(QWidget):
             [
                 "Frida Hook Script",
                 "Ghidra Analysis Script",
-                "IDA Pro Script",
                 "x64dbg Script",
                 "Binary Ninja Plugin",
                 "Radare2 Script",
@@ -570,7 +569,7 @@ class AIAssistantWidget(QWidget):
         elif any(word in message_lower for word in ["reverse", "disassemble", "analyze"]):
             return (
                 f"Binary analysis approach with {model}:\n"
-                f"1. Load binary in disassembler (Ghidra, IDA, etc.)\n"
+                f"1. Load binary in disassembler (Ghidra, Radare2, etc.)\n"
                 f"2. Identify entry points and critical functions\n"
                 f"3. Analyze control flow and data structures\n"
                 f"4. Look for anti-analysis techniques"

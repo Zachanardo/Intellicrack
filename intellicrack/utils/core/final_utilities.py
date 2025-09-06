@@ -1543,8 +1543,11 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
     """Submit report to local storage with multiple format options."""
     try:
         # Create reports directory if it doesn't exist
-        reports_dir = os.path.join(os.getcwd(), "reports")
-        os.makedirs(reports_dir, exist_ok=True)
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent.parent
+        reports_dir = project_root / "data" / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        reports_dir = str(reports_dir)
 
         # Generate multiple output formats
         formats_saved = []

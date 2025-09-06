@@ -58,8 +58,9 @@ class DashboardTab(BaseTab):
 
     def __init__(self, shared_context=None, parent=None):
         """Initialize dashboard tab with system overview and status monitoring."""
-        super().__init__(shared_context, parent)
         self.config_manager = get_ui_config_manager()
+
+        super().__init__(shared_context, parent)
 
         # Subscribe to configuration changes
         self.config_manager.register_callback("theme", self.apply_theme)
@@ -69,7 +70,7 @@ class DashboardTab(BaseTab):
     def setup_content(self):
         """Setup the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
-        layout = QVBoxLayout(self)
+        layout = self.layout()  # Use existing layout from BaseTab
         layout.setSpacing(layout_config.panel_spacing)
         layout.setContentsMargins(
             layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size
@@ -97,10 +98,8 @@ class DashboardTab(BaseTab):
 
         layout.addWidget(self.bottom_panel)
 
-        # Apply initial theme
-        self.apply_theme()
-
-        self.is_loaded = True
+        # Store layout to avoid recreation
+        self.main_layout = layout
 
     def create_quick_start_panel(self):
         """Create the prominent Quick Start panel."""
@@ -158,6 +157,7 @@ class DashboardTab(BaseTab):
         # Open File button
         open_file_btn = QPushButton("📄 Open File")
         open_file_btn.setMinimumHeight(60)
+        open_file_btn.setToolTip("Load a binary file (EXE, DLL, SO, ELF) for analysis. Supports Windows PE, Linux ELF, and other executable formats")
         self._style_quick_start_button(open_file_btn, theme.accent_color)
         open_file_btn.clicked.connect(self.open_file_action)
         buttons_layout.addWidget(open_file_btn)
@@ -165,13 +165,15 @@ class DashboardTab(BaseTab):
         # Open Project button
         open_project_btn = QPushButton("📁 Open Project")
         open_project_btn.setMinimumHeight(60)
+        open_project_btn.setToolTip("Open an existing Intellicrack project workspace with saved analysis sessions and configurations")
         self._style_quick_start_button(open_project_btn, theme.success_color)
         open_project_btn.clicked.connect(self.open_project)
         buttons_layout.addWidget(open_project_btn)
 
-        # Select Program from Target button
-        select_target_btn = QPushButton("🎯 Select Program from Target")
+        # Select Running Process button
+        select_target_btn = QPushButton("Attach to Running Process")
         select_target_btn.setMinimumHeight(60)
+        select_target_btn.setToolTip("Attach to a currently running process for live analysis and debugging. Select from active processes on your system")
         self._style_quick_start_button(select_target_btn, theme.error_color)
         select_target_btn.clicked.connect(self.select_program_from_target)
         buttons_layout.addWidget(select_target_btn)
@@ -188,6 +190,7 @@ class DashboardTab(BaseTab):
 
         # Recent Files List with theme styling
         self.recent_files_list = QListWidget()
+        self.recent_files_list.setToolTip("Double-click any file to open it for analysis. Files are sorted by last access time")
         self.recent_files_list.setAlternatingRowColors(True)
 
         # Apply theme-based styling
@@ -223,6 +226,7 @@ class DashboardTab(BaseTab):
         font_config = self.config_manager.get_font_config()
 
         refresh_recent_btn = QPushButton("Refresh")
+        refresh_recent_btn.setToolTip("Reload the list of recently accessed files from the analysis history")
         refresh_recent_btn.clicked.connect(self.populate_recent_files)
         refresh_recent_btn.setStyleSheet(f"""
             QPushButton {{
@@ -244,6 +248,7 @@ class DashboardTab(BaseTab):
         actions_layout.addWidget(refresh_recent_btn)
 
         clear_recent_btn = QPushButton("Clear All")
+        clear_recent_btn.setToolTip("Remove all entries from the recent files history. This action cannot be undone")
         clear_recent_btn.clicked.connect(self.clear_recent_files)
         clear_recent_btn.setStyleSheet(f"""
             QPushButton {{
@@ -300,7 +305,7 @@ class DashboardTab(BaseTab):
             dialog = ProgramSelectorDialog(self)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 selected_program = dialog.get_selected_program()
-                if selected_program:
+                if selected_program and os.path.exists(selected_program):
                     self.add_to_recent_files(selected_program)
                     self.binary_selected.emit(selected_program)
 
@@ -309,10 +314,31 @@ class DashboardTab(BaseTab):
                         self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
                     else:
                         self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
-        except ImportError:
+                elif selected_program:
+                    QMessageBox.warning(self, "File Not Found", f"The selected program file does not exist:\n{selected_program}")
+                else:
+                    QMessageBox.information(self, "No Selection", "No program was selected from the dialog.")
+            else:
+                self.log_activity("Program selection cancelled by user")
+
+        except ImportError as e:
             # Fallback to regular file dialog if ProgramSelectorDialog not available
-            QMessageBox.information(self, "Feature Unavailable", "Program selector dialog not available. Using file browser instead.")
+            QMessageBox.information(
+                self,
+                "Feature Unavailable",
+                "Program selector dialog not available. Using file browser instead.\n\n"
+                f"Technical details: {str(e)}"
+            )
             self.open_file_action()
+        except Exception as e:
+            # Handle any other errors
+            QMessageBox.critical(
+                self,
+                "Program Selection Error",
+                f"An error occurred while selecting a program:\n\n{str(e)}\n\n"
+                "Please try using the Open File option instead."
+            )
+            self.log_activity(f"Error in program selection: {str(e)}")
 
     def log_activity(self, message):
         """Log an activity message - simplified version for dashboard."""
@@ -485,36 +511,44 @@ class DashboardTab(BaseTab):
         super().cleanup()
 
     def _style_quick_start_button(self, button, base_color):
-        """Apply consistent styling to quick start buttons."""
+        """Apply consistent styling to quick start buttons with improved contrast."""
         theme = self.config_manager.get_theme_config()
         font_config = self.config_manager.get_font_config()
 
-        # Calculate hover and pressed colors
+        # Calculate hover and pressed colors with better contrast
         from PyQt6.QtGui import QColor
 
         base = QColor(base_color)
-        hover = base.lighter(120)
-        pressed = base.darker(120)
+        # Make base color darker for better contrast with white text
+        base_darker = base.darker(140)
+        hover = base_darker.lighter(130)
+        pressed = base_darker.darker(130)
 
         button.setStyleSheet(f"""
             QPushButton {{
                 font-size: {font_config.base_size + 2}px;
                 font-weight: bold;
-                background-color: {base_color};
+                background-color: {base_darker.name()};
                 color: white;
-                border: none;
+                border: 2px solid {base.name()};
                 border-radius: {theme.border_radius}px;
-                padding: 10px;
+                padding: 12px;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
             }}
             QPushButton:hover {{
                 background-color: {hover.name()};
+                border-color: {base.lighter(120).name()};
+                transform: translateY(-1px);
             }}
             QPushButton:pressed {{
                 background-color: {pressed.name()};
+                border-color: {base.darker(120).name()};
+                transform: translateY(1px);
             }}
             QPushButton:disabled {{
                 background-color: {theme.disabled_color};
                 color: {theme.text_color_secondary};
+                border-color: {theme.border_color};
             }}
         """)
 

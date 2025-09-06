@@ -2576,8 +2576,6 @@ const KernelBridge = {
                 // Detect specific debugging tools
                 var debuggingTools = [
                     { name: 'windbg.exe', detection: 'windbgDetected' },
-                    { name: 'ida.exe', detection: 'ida_detected' },
-                    { name: 'ida64.exe', detection: 'ida_detected' },
                     { name: 'x32dbg.exe', detection: 'x64dbgDetected' },
                     { name: 'x64dbg.exe', detection: 'x64dbgDetected' },
                     { name: 'ollydbg.exe', detection: 'ollyDetected' }

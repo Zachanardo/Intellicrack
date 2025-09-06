@@ -108,7 +108,6 @@ autodoc_mock_imports = [
     'angr', 'z3', 'triton', 'miasm',
     # Reverse engineering tools
     'frida', 'r2pipe', 'radare2', 'rizin',
-    'ida', 'idaapi', 'idautils', 'idc',
     'ghidra', 'ghidra_bridge',
     'binaryninja', 'binja',
     # File format parsers

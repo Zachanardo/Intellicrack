@@ -35,7 +35,7 @@ Phase 0 of the Intellicrack Validation System has been **successfully completed*
 1. **GroundTruthEstablisher** (`ground_truth_establisher.py`)
    - External tool detection system for:
      - Protection scanners (PEiD, DIE, ProtectionID, ExeinfoPE)
-     - Binary analyzers (x64dbg, Ghidra, IDA, radare2)
+     - Binary analyzers (x64dbg, Ghidra, radare2)
      - Signature matchers (YARA, binwalk)
    - Consensus ground truth creation from multiple sources
    - Minimum 3-source agreement requirement

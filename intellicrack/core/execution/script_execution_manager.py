@@ -83,7 +83,7 @@ class ScriptExecutionManager(QObject):
         """Execute a script with optional QEMU testing.
 
         Args:
-            script_type: Type of script ('frida', 'ghidra', 'ida', etc.)
+            script_type: Type of script ('frida', 'ghidra', etc.)
             script_content: The actual script content
             target_binary: Path to the target binary
             options: Additional execution options
@@ -324,8 +324,6 @@ class ScriptExecutionManager(QObject):
                 results = self._execute_frida_host(script_content, target_binary, options)
             elif script_type == "ghidra":
                 results = self._execute_ghidra_host(script_content, target_binary, options)
-            elif script_type == "ida":
-                results = self._execute_ida_host(script_content, target_binary, options)
             else:
                 results = {"success": False, "error": f"Unsupported script type: {script_type}"}
 
@@ -448,64 +446,6 @@ class ScriptExecutionManager(QObject):
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _execute_ida_host(self, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
-        """Execute IDA script on host."""
-        try:
-            import tempfile
-
-            # Find IDA installation
-            ida_path = self._find_ida_installation()
-            if not ida_path:
-                return {"success": False, "error": "IDA installation not found"}
-
-            # Save script to temporary file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write(script_content)
-                script_path = f.name
-
-            # Prepare IDA command
-            ida_exe = "idat64.exe" if os.name == "nt" else "idat64"
-            ida_binary = os.path.join(ida_path, ida_exe)
-
-            cmd = [
-                ida_binary,
-                "-A",  # Auto analysis
-                "-S" + script_path,  # Script to run
-                target_binary,
-            ]
-
-            # Add options support
-            if options:
-                if options.get("batch_mode", True):
-                    cmd.append("-B")  # Batch mode
-
-                if "log_file" in options:
-                    cmd.extend(["-L" + options["log_file"]])
-
-                timeout = options.get("timeout", 300)
-            else:
-                cmd.append("-B")  # Default batch mode
-                timeout = 300
-
-            # Execute IDA with timeout
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                cmd, check=False, capture_output=True, text=True, timeout=timeout
-            )
-
-            # Clean up
-            os.unlink(script_path)
-
-            return {
-                "success": result.returncode == 0,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode,
-            }
-
-        except subprocess.TimeoutExpired:
-            return {"success": False, "error": f"IDA execution timed out after {timeout} seconds"}
-        except Exception as e:
-            return {"success": False, "error": f"IDA execution failed: {e!s}"}
 
     def _find_ghidra_installation(self) -> str | None:
         """Find Ghidra installation path."""
@@ -523,25 +463,6 @@ class ScriptExecutionManager(QObject):
                 return path
         return None
 
-    def _find_ida_installation(self) -> str | None:
-        """Find IDA installation path."""
-        # Check common locations
-        possible_paths = [
-            os.environ.get("IDA_HOME"),
-            os.path.expanduser("~/ida"),
-            "/opt/ida",
-            "C:\\Program Files\\IDA Pro",
-            "C:\\Program Files (x86)\\IDA Pro",
-            "C:\\IDA",
-        ]
-
-        for path in possible_paths:
-            if path and os.path.exists(path):
-                # Verify IDA executable exists
-                ida_exe = "idat64.exe" if os.name == "nt" else "idat64"
-                if os.path.exists(os.path.join(path, ida_exe)):
-                    return path
-        return None
 
     def _save_qemu_preference(self, preference: str, script_type: str):
         """Save QEMU testing preference."""

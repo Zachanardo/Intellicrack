@@ -149,6 +149,27 @@ const KeygenGenerator = {
             hardwareSpoofinCoordination: true,
             telemetryBlocking: true,
             cloudBypass: true
+        },
+
+        // Security Protection Configuration
+        security: {
+            runtimeProtection: {
+                antiDebugging: true,
+                antiHooking: true,
+                codeIntegrity: true,
+                memoryProtection: true,
+                selfModification: true
+            },
+            debuggerDetection: {
+                enabled: true,
+                interval: 10000,
+                methods: ['timing_checks', 'exception_handling', 'api_monitoring', 'memory_scanning', 'thread_counting']
+            },
+            tamperProtection: {
+                enabled: true,
+                integrityChecks: true,
+                checksumValidation: true
+            }
         }
     },
 
@@ -4779,13 +4800,14 @@ const KeygenGenerator = {
             },
 
             // Runtime protection mechanisms
-            enableRuntimeProtection: function() {
+            enableRuntimeProtection: function(options = {}) {
+                const config = KeygenGenerator.config.security.runtimeProtection;
                 const protection = {
-                    antiDebugging: true,
-                    antiHooking: true,
-                    codeIntegrity: true,
-                    memoryProtection: true,
-                    selfModification: true
+                    antiDebugging: options.antiDebugging !== undefined ? options.antiDebugging : config.antiDebugging,
+                    antiHooking: options.antiHooking !== undefined ? options.antiHooking : config.antiHooking,
+                    codeIntegrity: options.codeIntegrity !== undefined ? options.codeIntegrity : config.codeIntegrity,
+                    memoryProtection: options.memoryProtection !== undefined ? options.memoryProtection : config.memoryProtection,
+                    selfModification: options.selfModification !== undefined ? options.selfModification : config.selfModification
                 };
 
                 // Setup anti-debugging measures
@@ -4802,8 +4824,9 @@ const KeygenGenerator = {
 
             // Advanced debugger detection
             setupAdvancedDebuggerDetection: function() {
+                const config = KeygenGenerator.config.security.debuggerDetection;
                 const detection = {
-                    methods: [
+                    methods: config.methods || [
                         'timing_checks',
                         'exception_handling',
                         'api_monitoring',
@@ -4811,13 +4834,16 @@ const KeygenGenerator = {
                         'thread_counting'
                     ],
                     alerts: [],
-                    active: true
+                    active: config.enabled !== undefined ? config.enabled : true
                 };
 
-                // Start continuous monitoring
-                detection.monitoringInterval = setInterval(() => {
-                    this.performDebuggerDetection(detection);
-                }, 10000); // Check every 10 seconds
+                if (detection.active) {
+                    // Start continuous monitoring
+                    const interval = config.interval || 10000;
+                    detection.monitoringInterval = setInterval(() => {
+                        this.performDebuggerDetection(detection);
+                    }, interval);
+                }
 
                 return detection;
             },
@@ -4870,7 +4896,6 @@ const KeygenGenerator = {
                         'x64dbg',
                         'ollydbg',
                         'windbg',
-                        'ida',
                         'ghidra'
                     ];
 

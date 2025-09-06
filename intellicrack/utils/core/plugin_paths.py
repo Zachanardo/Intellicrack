@@ -31,46 +31,6 @@ from intellicrack.logger import logger
 from ..resource_helper import get_resource_path
 
 
-def _resolve_path_with_fallback(
-    new_relative_path: str,
-    old_absolute_path: str | None = None,
-    create_if_missing: bool = True,
-) -> Path:
-    """Resolve path with graceful fallback from new to old location.
-
-    Args:
-        new_relative_path: New path relative to project root
-        old_absolute_path: Old absolute path to fall back to
-        create_if_missing: Whether to create the new path if neither exists
-
-    Returns:
-        Path: Resolved path (new preferred, old as fallback)
-
-    """
-    project_root = get_project_root()
-    new_path = (project_root / new_relative_path).resolve()
-
-    # Try new path first
-    if new_path.exists():
-        return new_path
-
-    # Fall back to old path if provided and exists
-    if old_absolute_path:
-        old_path = Path(old_absolute_path).resolve()
-        if old_path.exists():
-            logger.warning(
-                f"Using fallback path for '{new_relative_path}': {old_path}. Consider migrating to new location: {new_path}",
-            )
-            return old_path
-
-    # If neither exists and create_if_missing is True, create new path
-    if create_if_missing:
-        new_path.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Created new directory: {new_path}")
-
-    return new_path
-
-
 def get_project_root() -> Path:
     """Get the project root directory.
 
@@ -131,7 +91,7 @@ def get_plugin_modules_dir() -> Path:
 
 
 def get_config_dir() -> Path:
-    """Get the configuration directory using modern config system with fallback.
+    """Get the configuration directory using modern config system.
 
     Returns:
         Path: Absolute path to the configuration directory
@@ -144,10 +104,11 @@ def get_config_dir() -> Path:
         return config.config_dir
     except ImportError as e:
         logger.error("Import error in plugin_paths: %s", e)
-        # Fallback with graceful transition support
+        # Fallback to standard config location
         project_root = get_project_root()
-        old_path = str(project_root / "config")
-        return _resolve_path_with_fallback("data/config", old_path)
+        config_dir = project_root / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return config_dir
 
 
 def get_main_config_file() -> Path:
@@ -186,55 +147,62 @@ def get_data_dir() -> Path:
         Path: Absolute path to the data directory
 
     """
-    return _resolve_path_with_fallback("data")
+    project_root = get_project_root()
+    data_dir = project_root / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return data_dir
 
 
 def get_logs_dir() -> Path:
-    """Get the logs directory with fallback support.
+    """Get the logs directory.
 
     Returns:
         Path: Absolute path to the logs directory
 
     """
     project_root = get_project_root()
-    old_path = str(project_root / "logs")
-    return _resolve_path_with_fallback("data/logs", old_path)
+    logs_dir = project_root / "data" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    return logs_dir
 
 
 def get_plugin_cache_dir() -> Path:
-    """Get the plugin cache directory with fallback support.
+    """Get the plugin cache directory.
 
     Returns:
         Path: Absolute path to the plugin cache directory
 
     """
     project_root = get_project_root()
-    old_path = str(project_root / "plugin_cache")
-    return _resolve_path_with_fallback("data/plugin_cache", old_path)
+    cache_dir = project_root / "data" / "plugin_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
 
 def get_visualizations_dir() -> Path:
-    """Get the visualizations directory with fallback support.
+    """Get the visualizations directory.
 
     Returns:
         Path: Absolute path to the visualizations directory
 
     """
     project_root = get_project_root()
-    old_path = str(project_root / "visualizations")
-    return _resolve_path_with_fallback("data/visualizations", old_path)
+    viz_dir = project_root / "data" / "visualizations"
+    viz_dir.mkdir(parents=True, exist_ok=True)
+    return viz_dir
 
 
 def get_reports_dir() -> Path:
-    """Get the reports directory with fallback support.
+    """Get the reports directory.
 
     Returns:
         Path: Absolute path to the reports directory
 
     """
     project_root = get_project_root()
-    old_path = str(project_root / "reports")
-    return _resolve_path_with_fallback("data/reports", old_path)
+    reports_dir = project_root / "data" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    return reports_dir
 
 
 def get_dev_dir() -> Path:
@@ -244,19 +212,23 @@ def get_dev_dir() -> Path:
         Path: Absolute path to the dev directory
 
     """
-    return _resolve_path_with_fallback("dev")
+    project_root = get_project_root()
+    dev_dir = project_root / "dev"
+    dev_dir.mkdir(parents=True, exist_ok=True)
+    return dev_dir
 
 
 def get_project_docs_dir() -> Path:
-    """Get the project documentation directory with fallback support.
+    """Get the project documentation directory.
 
     Returns:
         Path: Absolute path to the project docs directory
 
     """
     project_root = get_project_root()
-    old_path = str(project_root / "project-docs")
-    return _resolve_path_with_fallback("dev/project-docs", old_path)
+    docs_dir = project_root / "dev" / "project-docs"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    return docs_dir
 
 
 def get_dev_scripts_dir() -> Path:
@@ -266,7 +238,10 @@ def get_dev_scripts_dir() -> Path:
         Path: Absolute path to the dev scripts directory
 
     """
-    return _resolve_path_with_fallback("dev/scripts")
+    project_root = get_project_root()
+    scripts_dir = project_root / "dev" / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    return scripts_dir
 
 
 def get_frida_logs_dir() -> Path:

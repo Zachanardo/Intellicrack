@@ -77,11 +77,16 @@ class SymbolicExecution:
         try:
             # Check for angr availability
             try:
-                import angr
-                import claripy
+                import importlib.util
+                angr_spec = importlib.util.find_spec("angr")
+                claripy_spec = importlib.util.find_spec("claripy")
 
-                self.angr_available = True
-                log_info("Angr framework available for symbolic execution", category="SYMBOLIC")
+                if angr_spec is not None and claripy_spec is not None:
+                    self.angr_available = True
+                    log_info("Angr framework available for symbolic execution", category="SYMBOLIC")
+                else:
+                    self.angr_available = False
+                    log_warning("Angr framework not available - symbolic execution will use fallback mode", category="SYMBOLIC")
             except ImportError:
                 self.angr_available = False
                 log_warning("Angr framework not available - symbolic execution will use fallback mode", category="SYMBOLIC")
@@ -397,6 +402,81 @@ class SymbolicExecution:
             results["error"] = str(e)
             return results
 
+    def _check_buffer_overflow_constraint(self, constraint) -> bool:
+        """Check if a constraint indicates potential buffer overflow."""
+        try:
+            constraint_str = str(constraint).lower()
+            # Look for common buffer overflow patterns
+            overflow_indicators = [
+                "buffer",
+                "memcpy",
+                "strcpy",
+                "strcat",
+                "sprintf",
+                "gets",
+                "scanf",
+            ]
+
+            # Check for size comparisons that might indicate overflow
+            if any(indicator in constraint_str for indicator in overflow_indicators):
+                # Check for comparisons with buffer sizes
+                if ">" in constraint_str or ">=" in constraint_str:
+                    # Parse constraint for size values
+                    import re
+                    size_pattern = r'\b(\d+)\b'
+                    sizes = re.findall(size_pattern, constraint_str)
+                    for size in sizes:
+                        if int(size) > 0x10000:  # Suspiciously large size
+                            return True
+
+            # Check for array index out of bounds
+            if "array" in constraint_str or "index" in constraint_str:
+                if any(op in constraint_str for op in [">=", ">", "out_of_bounds"]):
+                    return True
+
+        except Exception as e:
+            log_warning(f"Failed to check memory access constraint: {e}", category="SYMBOLIC")
+        return False
+
+    def _check_integer_overflow_constraint(self, constraint) -> bool:
+        """Check if a constraint indicates potential integer overflow."""
+        try:
+            constraint_str = str(constraint).lower()
+
+            # Look for integer overflow patterns
+            overflow_patterns = [
+                "0xffffffff",  # Max 32-bit value
+                "0x7fffffff",  # Max signed 32-bit
+                "0xffffffffffffffff",  # Max 64-bit value
+                "0x7fffffffffffffff",  # Max signed 64-bit
+                "overflow",
+                "wrap",
+                "underflow",
+            ]
+
+            if any(pattern in constraint_str for pattern in overflow_patterns):
+                return True
+
+            # Check for arithmetic operations near boundaries
+            if any(op in constraint_str for op in ["+", "-", "*"]):
+                import re
+                # Look for large numbers in arithmetic
+                hex_pattern = r'0x[0-9a-fA-F]{8,}'
+                large_nums = re.findall(hex_pattern, constraint_str)
+                if large_nums:
+                    for num_str in large_nums:
+                        try:
+                            num = int(num_str, 16)
+                            # Check if number is near max values
+                            if num > 0x7FFFFFF0 or num > 0x7FFFFFFFFFFFFFF0:
+                                return True
+                        except ValueError:
+                            pass
+
+        except Exception as e:
+            log_warning(f"Failed to check integer overflow constraint: {e}", category="SYMBOLIC")
+        return False
+
     def _fallback_analysis(self, app, engine) -> Dict[str, Any]:
         """Fallback analysis when full engine features are not available."""
         results = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "execution_time": 0, "fallback_mode": True}
@@ -410,17 +490,60 @@ class SymbolicExecution:
                 path_results = engine.explore_paths()
                 results["paths_explored"] = len(path_results.get("paths", []))
 
-            # Add mock vulnerability for demonstration (in real implementation, this would be actual analysis)
-            if self.angr_available:
-                results["vulnerabilities"].append(
-                    {
-                        "type": "symbolic_analysis_complete",
-                        "description": "Symbolic execution completed successfully",
-                        "severity": "info",
-                        "location": "entry_point",
-                        "paths_affected": results["paths_explored"],
-                    }
-                )
+                # Analyze paths for real vulnerabilities
+                for path in path_results.get("paths", []):
+                    # Check for buffer overflow conditions
+                    if hasattr(path, "constraints"):
+                        for constraint in path.constraints:
+                            if self._check_buffer_overflow_constraint(constraint):
+                                results["vulnerabilities"].append({
+                                    "type": "buffer_overflow",
+                                    "description": "Potential buffer overflow detected",
+                                    "severity": "high",
+                                    "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
+                                    "constraint": str(constraint),
+                                })
+
+                            if self._check_integer_overflow_constraint(constraint):
+                                results["vulnerabilities"].append({
+                                    "type": "integer_overflow",
+                                    "description": "Potential integer overflow detected",
+                                    "severity": "medium",
+                                    "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
+                                    "constraint": str(constraint),
+                                })
+
+                    # Check for use-after-free conditions
+                    if hasattr(path, "memory_accesses"):
+                        freed_addrs = set()
+                        for access in path.memory_accesses:
+                            if access.type == "free":
+                                freed_addrs.add(access.addr)
+                            elif access.type in ["read", "write"] and access.addr in freed_addrs:
+                                results["vulnerabilities"].append({
+                                    "type": "use_after_free",
+                                    "description": f"Use-after-free detected at address 0x{access.addr:x}",
+                                    "severity": "critical",
+                                    "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
+                                })
+
+                    # Check for null pointer dereferences
+                    if hasattr(path, "memory_accesses"):
+                        for access in path.memory_accesses:
+                            if access.addr == 0 or (access.addr < 0x1000 and access.type in ["read", "write"]):
+                                results["vulnerabilities"].append({
+                                    "type": "null_pointer_dereference",
+                                    "description": "Null pointer dereference detected",
+                                    "severity": "high",
+                                    "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
+                                    "address": f"0x{access.addr:x}",
+                                })
+
+            # Only report completion if we actually found something or explored paths
+            if results["paths_explored"] > 0 and not results["vulnerabilities"]:
+                # This is informational only, not a mock vulnerability
+                if hasattr(app, "update_output"):
+                    app.update_output.emit(f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found")
 
             return results
 

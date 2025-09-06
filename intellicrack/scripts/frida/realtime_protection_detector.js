@@ -7480,7 +7480,7 @@ const RealtimeProtectionDetector = {
             // Check for suspicious process creation patterns
             const suspiciousProcesses = [
                 'taskkill', 'taskmgr', 'regedit', 'msconfig',
-                'procexp', 'procmon', 'wireshark', 'ida',
+                'procexp', 'procmon', 'wireshark',
                 'ollydbg', 'x64dbg', 'cheat engine'
             ];
 

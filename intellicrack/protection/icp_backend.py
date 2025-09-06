@@ -24,9 +24,13 @@ _icp_backend_module = None
 
 if platform.system() == "Windows":
     # Add potential DLL paths for ICP Engine on Windows
+    from pathlib import Path
+
+    import intellicrack
+    intellicrack_root = Path(intellicrack.__file__).parent.parent
     dll_paths = [
-        r"C:\Intellicrack\mamba_env\Lib\site-packages\die",
-        r"C:\Intellicrack\mamba_env\DLLs",
+        str(intellicrack_root / "mamba_env" / "Lib" / "site-packages" / "die"),
+        str(intellicrack_root / "mamba_env" / "DLLs"),
         os.path.dirname(sys.executable),
     ]
     for path in dll_paths:
@@ -1063,7 +1067,7 @@ class ICPBackend:
                         {
                             "target": f"Embedded Executable: {component.get('name', 'Unknown')}",
                             "method": "Extraction & Analysis",
-                            "tools": ["Binwalk", "Ghidra", "IDA Pro"],
+                            "tools": ["Binwalk", "Ghidra", "Radare2"],
                             "difficulty": "medium",
                             "description": f"Extract and analyze embedded component at offset {component.get('offset', 0)}",
                         }

@@ -99,9 +99,9 @@ class SystemMonitorWorker(QObject):
 
     def _collect_metrics(self) -> SystemMetrics:
         """Collect current system metrics."""
-        # CPU metrics
+        # CPU metrics - use single call to get both total and per-core data
         cpu_percent = psutil.cpu_percent(interval=0.1)
-        cpu_per_core = psutil.cpu_percent(interval=0.1, percpu=True)
+        cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
 
         # Memory metrics
         memory = psutil.virtual_memory()
@@ -282,7 +282,7 @@ class SystemMonitorWidget(QWidget):
             self.cpu_plot.setLabel("bottom", "Time", units="s")
             self.cpu_plot.setYRange(0, 100)
             self.cpu_plot.showGrid(x=True, y=True)
-            self.cpu_curve = self.cpu_plot.plot(pen="y")
+            self.cpu_curve = self.cpu_plot.plot(pen=pg.mkPen(color=(255, 100, 100), width=2))
             graphs_layout.addWidget(self.cpu_plot)
 
             # Memory graph
@@ -291,7 +291,7 @@ class SystemMonitorWidget(QWidget):
             self.memory_plot.setLabel("bottom", "Time", units="s")
             self.memory_plot.setYRange(0, 100)
             self.memory_plot.showGrid(x=True, y=True)
-            self.memory_curve = self.memory_plot.plot(pen="g")
+            self.memory_curve = self.memory_plot.plot(pen=pg.mkPen(color=(100, 100, 255), width=2))
             graphs_layout.addWidget(self.memory_plot)
 
             content_splitter.addWidget(graphs_group)
@@ -337,17 +337,21 @@ class SystemMonitorWidget(QWidget):
         # Store in history
         self.metrics_history.append(metrics)
 
-        # Update progress bars
-        self.cpu_bar.setValue(int(metrics.cpu_percent))
-        self.cpu_label.setText(f"{metrics.cpu_percent:.1f}%")
+        # Update progress bars with validated data to match graphs
+        cpu_display_value = float(metrics.cpu_percent) if metrics.cpu_percent is not None else 0.0
+        memory_display_value = float(metrics.memory_percent) if metrics.memory_percent is not None else 0.0
 
-        self.memory_bar.setValue(int(metrics.memory_percent))
-        self.memory_label.setText(f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB")
+        self.cpu_bar.setValue(int(cpu_display_value))
+        self.cpu_label.setText(f"{cpu_display_value:.1f}%")
+
+        self.memory_bar.setValue(int(memory_display_value))
+        self.memory_label.setText(f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB ({memory_display_value:.1f}%)")
 
         if GPU_AVAILABLE and hasattr(self, "gpu_bar"):
             if metrics.gpu_percent is not None:
-                self.gpu_bar.setValue(int(metrics.gpu_percent))
-                self.gpu_label.setText(f"{metrics.gpu_percent:.1f}%")
+                gpu_display_value = float(metrics.gpu_percent)
+                self.gpu_bar.setValue(int(gpu_display_value))
+                self.gpu_label.setText(f"{gpu_display_value:.1f}%")
 
         # Update graphs
         if PYQTGRAPH_AVAILABLE:
@@ -364,15 +368,23 @@ class SystemMonitorWidget(QWidget):
         if not self.metrics_history:
             return
 
-        # Prepare data
+        # Prepare data with validation
         times = list(range(len(self.metrics_history)))
-        cpu_values = [m.cpu_percent for m in self.metrics_history]
-        memory_values = [m.memory_percent for m in self.metrics_history]
+        cpu_values = []
+        memory_values = []
 
-        # Update CPU graph
+        for m in self.metrics_history:
+            # Ensure CPU and memory values are truly independent
+            cpu_val = float(m.cpu_percent) if m.cpu_percent is not None else 0.0
+            mem_val = float(m.memory_percent) if m.memory_percent is not None else 0.0
+
+            cpu_values.append(cpu_val)
+            memory_values.append(mem_val)
+
+        # Update CPU graph with red color for distinction
         self.cpu_curve.setData(times, cpu_values)
 
-        # Update memory graph
+        # Update memory graph with blue color for distinction
         self.memory_curve.setData(times, memory_values)
 
         # Auto-scroll if enabled

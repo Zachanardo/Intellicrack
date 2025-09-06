@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import math
 import os
 import shutil
 from datetime import datetime
@@ -28,6 +29,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QComboBox,
     QFileDialog,
     QFont,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QInputDialog,
@@ -45,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.subprocess_security import secure_run
 
 from .base_tab import BaseTab
 
@@ -94,27 +97,42 @@ class AnalysisTab(BaseTab):
         self.snapshots = {}
         self.comparison_results = []
 
-        # Connect to binary loading signal to automatically embed hex viewer
-        if shared_context and hasattr(shared_context, "binary_loaded"):
-            shared_context.binary_loaded.connect(self.embed_hex_viewer)
+        # Connect to app_context signals for binary loading
+        if self.app_context:
+            self.app_context.binary_loaded.connect(self.on_binary_loaded)
+            self.app_context.binary_unloaded.connect(self.on_binary_unloaded)
+
+            # Check if a binary is already loaded
+            current_binary = self.app_context.get_current_binary()
+            if current_binary:
+                self.on_binary_loaded(current_binary)
 
     def setup_content(self):
         """Setup the Analysis tab content with clean, organized interface."""
-        main_layout = QVBoxLayout(self)
+        main_layout = self.layout()  # Use existing layout from BaseTab
 
         # Create horizontal splitter for analysis controls and results
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left panel - Organized Analysis Controls (35%)
+        # Left panel - Analysis controls
         left_panel = self.create_analysis_controls_panel()
-        splitter.addWidget(left_panel)
 
-        # Right panel - Results Display (65%)
-        right_panel = self.create_results_panel()
+        # Middle panel - Binary information and analysis results
+        middle_panel = self.create_results_panel()
+
+        # Right panel - Protection detection
+        right_panel = self.create_protection_panel()
+
+        # Add all panels to splitter
+        splitter.addWidget(left_panel)
+        splitter.addWidget(middle_panel)
         splitter.addWidget(right_panel)
 
-        # Set splitter proportions
-        splitter.setSizes([350, 650])
+        # Configure splitter proportions
+        # 30% controls, 40% results, 30% protection
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 4)
+        splitter.setStretchFactor(2, 3)
 
         main_layout.addWidget(splitter)
 
@@ -138,6 +156,7 @@ class AnalysisTab(BaseTab):
         profile_layout.addWidget(QLabel("Profile:"))
 
         self.analysis_profile_combo = QComboBox()
+        self.analysis_profile_combo.setToolTip("Select a predefined analysis profile or create a custom configuration for your specific needs")
         self.analysis_profile_combo.addItems(["Quick Scan", "Static Analysis", "Dynamic Analysis", "Full Analysis", "Custom"])
         self.analysis_profile_combo.currentTextChanged.connect(self.update_profile_settings)
         profile_layout.addWidget(self.analysis_profile_combo)
@@ -149,10 +168,10 @@ class AnalysisTab(BaseTab):
         self.profile_description.setWordWrap(True)
         self.profile_description.setStyleSheet("color: #888; font-style: italic; padding: 5px;")
         quick_layout.addWidget(self.profile_description)
-        self.update_profile_settings("Quick Scan")
 
         # Primary action button
         self.run_analysis_btn = QPushButton("Run Analysis")
+        self.run_analysis_btn.setToolTip("Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first")
         self.run_analysis_btn.setMinimumHeight(40)
         self.run_analysis_btn.setStyleSheet("""
             QPushButton {
@@ -181,8 +200,10 @@ class AnalysisTab(BaseTab):
         # Control buttons
         control_layout = QHBoxLayout()
         self.stop_analysis_btn = QPushButton("Stop")
+        self.stop_analysis_btn.setToolTip("Halt the currently running analysis. Analysis can be resumed from the last checkpoint")
         self.stop_analysis_btn.setEnabled(False)
         self.clear_results_btn = QPushButton("Clear")
+        self.clear_results_btn.setToolTip("Clear all analysis results and reset the output display")
         self.clear_results_btn.clicked.connect(self.clear_results)
         control_layout.addWidget(self.stop_analysis_btn)
         control_layout.addWidget(self.clear_results_btn)
@@ -370,7 +391,45 @@ class AnalysisTab(BaseTab):
         # Set the panel as the scroll area's widget
         scroll_area.setWidget(panel)
 
+        # Initialize profile settings after all checkboxes are created
+        self.update_profile_settings("Quick Scan")
+
         return scroll_area
+
+    def create_protection_panel(self):
+        """Create the protection detection panel."""
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+
+        # Protection detection area
+        protection_group = QGroupBox("Protection Detection")
+        protection_layout = QVBoxLayout(protection_group)
+
+        # Protection scan button
+        self.scan_protection_btn = QPushButton("Scan for Protections")
+        self.scan_protection_btn.setEnabled(False)
+        protection_layout.addWidget(self.scan_protection_btn)
+
+        # Protection results display
+        self.protection_display = QTextEdit()
+        self.protection_display.setReadOnly(True)
+        self.protection_display.setPlaceholderText("Protection detection results will appear here...")
+        protection_layout.addWidget(self.protection_display)
+
+        layout.addWidget(protection_group)
+
+        # Bypass recommendations
+        bypass_group = QGroupBox("Bypass Recommendations")
+        bypass_layout = QVBoxLayout(bypass_group)
+
+        self.bypass_display = QTextEdit()
+        self.bypass_display.setReadOnly(True)
+        self.bypass_display.setPlaceholderText("Bypass recommendations will appear here...")
+        bypass_layout.addWidget(self.bypass_display)
+
+        layout.addWidget(bypass_group)
+
+        return panel
 
     def create_results_panel(self):
         """Create the analysis results display panel."""
@@ -387,6 +446,10 @@ class AnalysisTab(BaseTab):
 
         header_layout.addWidget(results_label)
         header_layout.addStretch()
+
+        # Binary info label
+        self.binary_info_label = QLabel("<i>No binary loaded</i>")
+        header_layout.addWidget(self.binary_info_label)
 
         # Progress bar
         self.analysis_progress = QProgressBar()
@@ -421,7 +484,7 @@ class AnalysisTab(BaseTab):
         self.entropy_view_container = QWidget()
         entropy_layout = QVBoxLayout(self.entropy_view_container)
 
-        # Try to create entropy visualizer
+        # Create entropy visualizer with fallback implementation
         try:
             from intellicrack.ui.widgets.entropy_visualizer import EntropyVisualizer
 
@@ -444,9 +507,29 @@ class AnalysisTab(BaseTab):
 
             entropy_layout.addLayout(entropy_controls)
         except ImportError:
-            entropy_placeholder = QLabel("Entropy visualization will be available after analysis")
-            entropy_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            entropy_layout.addWidget(entropy_placeholder)
+            # Fallback to matplotlib-based entropy visualization
+            self.entropy_visualizer = self.create_fallback_entropy_visualizer()
+            entropy_layout.addWidget(self.entropy_visualizer)
+
+            # Add entropy controls for fallback
+            entropy_controls = QHBoxLayout()
+            self.entropy_block_size = QSpinBox()
+            self.entropy_block_size.setRange(256, 4096)
+            self.entropy_block_size.setValue(1024)
+            self.entropy_block_size.setSuffix(" bytes")
+            entropy_controls.addWidget(QLabel("Block Size:"))
+            entropy_controls.addWidget(self.entropy_block_size)
+
+            refresh_entropy_btn = QPushButton("Refresh Analysis")
+            refresh_entropy_btn.clicked.connect(self.update_fallback_entropy_visualization)
+            entropy_controls.addWidget(refresh_entropy_btn)
+
+            analyze_entropy_btn = QPushButton("Analyze Entropy")
+            analyze_entropy_btn.clicked.connect(self.analyze_binary_entropy)
+            entropy_controls.addWidget(analyze_entropy_btn)
+
+            entropy_controls.addStretch()
+            entropy_layout.addLayout(entropy_controls)
 
         self.results_tabs.addTab(self.entropy_view_container, "Entropy Graph")
 
@@ -454,7 +537,7 @@ class AnalysisTab(BaseTab):
         self.structure_view_container = QWidget()
         structure_layout = QVBoxLayout(self.structure_view_container)
 
-        # Try to create structure visualizer
+        # Create structure visualizer with fallback implementation
         try:
             from intellicrack.ui.widgets.structure_visualizer import StructureVisualizerWidget
 
@@ -469,9 +552,27 @@ class AnalysisTab(BaseTab):
             structure_controls.addStretch()
             structure_layout.addLayout(structure_controls)
         except ImportError:
-            structure_placeholder = QLabel("Structure visualization will be available after analysis")
-            structure_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            structure_layout.addWidget(structure_placeholder)
+            # Fallback to basic structure analysis visualization
+            self.structure_visualizer = self.create_fallback_structure_visualizer()
+            structure_layout.addWidget(self.structure_visualizer)
+
+            # Add structure analysis controls for fallback
+            structure_controls = QHBoxLayout()
+
+            refresh_structure_btn = QPushButton("Analyze Structure")
+            refresh_structure_btn.clicked.connect(self.analyze_binary_structure)
+            structure_controls.addWidget(refresh_structure_btn)
+
+            export_structure_btn = QPushButton("Export Analysis")
+            export_structure_btn.clicked.connect(self.export_structure_analysis)
+            structure_controls.addWidget(export_structure_btn)
+
+            detect_protection_btn = QPushButton("Detect License Protection")
+            detect_protection_btn.clicked.connect(self.detect_license_protection)
+            structure_controls.addWidget(detect_protection_btn)
+
+            structure_controls.addStretch()
+            structure_layout.addLayout(structure_controls)
 
         self.results_tabs.addTab(self.structure_view_container, "Structure")
 
@@ -561,9 +662,11 @@ class AnalysisTab(BaseTab):
         if not self.current_binary:
             # Try to get binary from app context
             if hasattr(self, "app_context") and self.app_context:
-                if hasattr(self.app_context, "binary_path") and self.app_context.binary_path:
-                    self.current_binary = self.app_context.binary_path
-                    self.current_file_path = self.app_context.binary_path
+                current_binary_info = self.app_context.get_current_binary()
+                if current_binary_info and current_binary_info.get("path"):
+                    self.current_binary = current_binary_info["path"]
+                    self.current_file_path = current_binary_info["path"]
+                    self.log_activity(f"Retrieved binary from app context: {current_binary_info['name']}")
                 else:
                     QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
                     return
@@ -885,6 +988,52 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Error opening hex viewer: {e}")
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {str(e)}")
 
+    def on_binary_loaded(self, binary_info):
+        """Handle binary loaded signal from app_context."""
+        if isinstance(binary_info, dict):
+            self.current_binary = binary_info.get("path")
+            self.current_file_path = binary_info.get("path")
+
+            # Update UI to show binary is loaded
+            if hasattr(self, "binary_info_label"):
+                file_name = binary_info.get("name", "Unknown")
+                file_size = binary_info.get("size", 0)
+                self.binary_info_label.setText(f"<b>Loaded:</b> {file_name} ({self._format_size(file_size)})")
+
+            # Automatically embed hex viewer if available
+            self.embed_hex_viewer()
+
+            self.log_activity(f"Binary loaded in Analysis tab: {binary_info.get('name', 'Unknown')}")
+
+    def on_binary_unloaded(self):
+        """Handle binary unloaded signal from app_context."""
+        self.current_binary = None
+        self.current_file_path = None
+
+        # Clear hex viewer
+        if self.embedded_hex_viewer:
+            self.embedded_hex_viewer = None
+            if hasattr(self, "hex_view_container"):
+                layout = self.hex_view_container.layout()
+                while layout.count():
+                    child = layout.takeAt(0)
+                    if child.widget():
+                        child.widget().deleteLater()
+
+        # Update UI
+        if hasattr(self, "binary_info_label"):
+            self.binary_info_label.setText("<i>No binary loaded</i>")
+
+        self.log_activity("Binary unloaded in Analysis tab")
+
+    def _format_size(self, size_bytes):
+        """Format file size in human-readable format."""
+        for unit in ["B", "KB", "MB", "GB"]:
+            if size_bytes < 1024.0:
+                return f"{size_bytes:.1f} {unit}"
+            size_bytes /= 1024.0
+        return f"{size_bytes:.1f} TB"
+
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel."""
         if not self.current_binary:
@@ -926,13 +1075,170 @@ class AnalysisTab(BaseTab):
             self.hex_view_container.layout().addWidget(error_label)
 
     def view_disassembly(self):
-        """View disassembly in separate window."""
+        """View disassembly in separate window with real disassembly functionality."""
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
         self.log_activity(f"Opening disassembly viewer for {os.path.basename(self.current_binary)}")
-        QMessageBox.information(self, "Disassembly", "Disassembly viewer will be implemented with Ghidra/IDA integration.")
+
+        try:
+            # Create disassembly window
+            from intellicrack.handlers.pyqt6_handler import QDialog, QFont, QPlainTextEdit
+
+            disasm_dialog = QDialog(self)
+            disasm_dialog.setWindowTitle(f"Disassembly - {os.path.basename(self.current_binary)}")
+            disasm_dialog.resize(900, 700)
+
+            layout = QVBoxLayout(disasm_dialog)
+
+            # Create text editor for disassembly
+            disasm_text = QPlainTextEdit()
+            disasm_text.setReadOnly(True)
+            disasm_text.setFont(QFont("Courier New", 10))
+
+            # Generate disassembly using capstone
+            try:
+                import capstone
+
+                # Read binary data
+                with open(self.current_binary, 'rb') as f:
+                    binary_data = f.read(0x1000)  # Read first 4KB
+
+                # Detect architecture
+                if binary_data.startswith(b'MZ'):  # PE file
+                    # Parse PE header to find entry point
+                    import struct
+                    e_lfanew = struct.unpack('<I', binary_data[0x3C:0x40])[0]
+                    pe_header = binary_data[e_lfanew:e_lfanew+6]
+
+                    if pe_header[:2] == b'PE':
+                        machine = struct.unpack('<H', pe_header[4:6])[0]
+                        if machine == 0x8664:  # AMD64
+                            cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+                        else:  # x86
+                            cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+                    else:
+                        cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+
+                    # Find code section
+                    nt_headers_offset = e_lfanew + 24
+                    size_of_optional_header = struct.unpack('<H', binary_data[nt_headers_offset+16:nt_headers_offset+18])[0]
+                    section_table_offset = nt_headers_offset + 20 + size_of_optional_header
+
+                    # Parse first section (usually .text)
+                    section_data = binary_data[section_table_offset:section_table_offset+40]
+                    virtual_address = struct.unpack('<I', section_data[12:16])[0]
+                    raw_offset = struct.unpack('<I', section_data[20:24])[0]
+
+                    # Read code section
+                    with open(self.current_binary, 'rb') as f:
+                        f.seek(raw_offset)
+                        code_data = f.read(0x1000)
+
+                    base_address = 0x400000 + virtual_address
+
+                elif binary_data[:4] == b'\x7fELF':  # ELF file
+                    # Check architecture
+                    ei_class = binary_data[4]
+                    if ei_class == 2:  # 64-bit
+                        cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+                    else:  # 32-bit
+                        cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+
+                    code_data = binary_data
+                    base_address = 0x08048000
+                else:
+                    # Raw binary - assume x86
+                    cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+                    code_data = binary_data
+                    base_address = 0x0
+
+                # Disassemble
+                disasm_output = []
+                disasm_output.append(f"; Disassembly of {os.path.basename(self.current_binary)}")
+                disasm_output.append(f"; Architecture: {cs.arch}")
+                disasm_output.append(f"; Mode: {cs.mode}")
+                disasm_output.append("; " + "="*60)
+                disasm_output.append("")
+
+                for instruction in cs.disasm(code_data, base_address):
+                    hex_bytes = ' '.join(f'{b:02x}' for b in instruction.bytes)
+                    disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")
+
+                if len(disasm_output) > 5:
+                    disasm_text.setPlainText('\n'.join(disasm_output))
+                else:
+                    disasm_text.setPlainText("No instructions found. Binary may be packed or encrypted.")
+
+            except ImportError:
+                # Fallback to objdump if capstone not available
+                try:
+                    result = secure_run(
+                        ['objdump', '-d', '-M', 'intel', self.current_binary],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+
+                    if result.returncode == 0 and result.stdout:
+                        disasm_text.setPlainText(result.stdout)
+                    else:
+                        # Try with radare2
+                        result = secure_run(
+                            ['r2', '-q', '-c', 'pd 500', self.current_binary],
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+
+                        if result.returncode == 0 and result.stdout:
+                            disasm_text.setPlainText(result.stdout)
+                        else:
+                            disasm_text.setPlainText("Unable to disassemble. Please install capstone, objdump, or radare2.")
+
+                except FileNotFoundError:
+                    disasm_text.setPlainText("Disassembly tools not found. Please install capstone, objdump, or radare2.")
+                except Exception as e:
+                    disasm_text.setPlainText(f"Disassembly error: {str(e)}")
+
+            layout.addWidget(disasm_text)
+
+            # Add control buttons
+            button_layout = QHBoxLayout()
+
+            save_btn = QPushButton("Save Disassembly")
+            save_btn.clicked.connect(lambda: self.save_disassembly(disasm_text.toPlainText()))
+            button_layout.addWidget(save_btn)
+
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(disasm_dialog.accept)
+            button_layout.addWidget(close_btn)
+
+            layout.addLayout(button_layout)
+
+            disasm_dialog.exec()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Disassembly Error", f"Failed to generate disassembly: {str(e)}")
+
+    def save_disassembly(self, disasm_text):
+        """Save disassembly to file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Disassembly",
+            f"{os.path.splitext(os.path.basename(self.current_binary))[0]}_disasm.asm",
+            "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'w') as f:
+                    f.write(disasm_text)
+                self.log_activity(f"Disassembly saved to {file_path}")
+                QMessageBox.information(self, "Success", "Disassembly saved successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Save Error", f"Failed to save disassembly: {str(e)}")
 
     def attach_to_process(self):
         """Attach to running process for dynamic analysis."""
@@ -1130,6 +1436,469 @@ class AnalysisTab(BaseTab):
             except Exception as e:
                 self.log_activity(f"Export failed: {e}", is_error=True)
                 QMessageBox.critical(self, "Export Failed", f"Failed to export results: {str(e)}")
+
+    def create_fallback_entropy_visualizer(self):
+        """Create fallback entropy visualization using basic Qt widgets."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Header
+        header = QLabel("Binary Entropy Analysis")
+        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        layout.addWidget(header)
+
+        # Results text area
+        self.fallback_entropy_results = QTextEdit()
+        self.fallback_entropy_results.setMaximumHeight(200)
+        self.fallback_entropy_results.setPlainText("Click 'Analyze Entropy' to perform entropy analysis of the loaded binary.")
+        layout.addWidget(self.fallback_entropy_results)
+
+        # Statistics display
+        stats_group = QFrame()
+        stats_group.setFrameStyle(QFrame.StyledPanel)
+        stats_layout = QVBoxLayout(stats_group)
+        stats_layout.addWidget(QLabel("Entropy Statistics:"))
+
+        self.entropy_stats_label = QLabel("No analysis performed yet")
+        stats_layout.addWidget(self.entropy_stats_label)
+        layout.addWidget(stats_group)
+
+        return widget
+
+    def create_fallback_structure_visualizer(self):
+        """Create fallback structure visualization using basic Qt widgets."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # Header
+        header = QLabel("Binary Structure Analysis")
+        header.setStyleSheet("font-weight: bold; font-size: 14px;")
+        layout.addWidget(header)
+
+        # Results text area
+        self.fallback_structure_results = QTextEdit()
+        self.fallback_structure_results.setMaximumHeight(300)
+        self.fallback_structure_results.setPlainText("Click 'Analyze Structure' to perform structural analysis of the loaded binary.")
+        layout.addWidget(self.fallback_structure_results)
+
+        return widget
+
+    def update_fallback_entropy_visualization(self):
+        """Update fallback entropy visualization with analysis results."""
+        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+            self.fallback_entropy_results.setPlainText("No binary file loaded. Please load a binary first.")
+            return
+
+        try:
+            self.log_activity("Updating entropy analysis display...")
+
+            # Read file data
+            with open(self.current_file_path, "rb") as f:
+                file_data = f.read()
+
+            # Calculate basic entropy statistics
+            block_size = self.entropy_block_size.value()
+            file_size = len(file_data)
+            num_blocks = max(1, file_size // block_size)
+
+            results = "Entropy Analysis Results:\n"
+            results += f"File: {os.path.basename(self.current_file_path)}\n"
+            results += f"Size: {file_size:,} bytes\n"
+            results += f"Block size: {block_size} bytes\n"
+            results += f"Number of blocks: {num_blocks}\n\n"
+
+            # Analyze entropy by blocks
+            high_entropy_blocks = 0
+            low_entropy_blocks = 0
+
+            for i in range(0, file_size, block_size):
+                block = file_data[i:i+block_size]
+                if len(block) < 256:  # Skip small blocks
+                    continue
+
+                # Calculate Shannon entropy
+                entropy = self.calculate_shannon_entropy(block)
+
+                if entropy > 7.5:
+                    high_entropy_blocks += 1
+                elif entropy < 1.0:
+                    low_entropy_blocks += 1
+
+            results += f"High entropy blocks (>7.5): {high_entropy_blocks}\n"
+            results += f"Low entropy blocks (<1.0): {low_entropy_blocks}\n"
+            results += f"Normal entropy blocks: {num_blocks - high_entropy_blocks - low_entropy_blocks}\n\n"
+
+            # License protection indicators
+            if high_entropy_blocks > num_blocks * 0.3:
+                results += "⚠️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
+                results += "This may indicate license protection mechanisms:\n"
+                results += "• Encrypted license validation code\n"
+                results += "• Packed/compressed executable sections\n"
+                results += "• Anti-tampering protection\n\n"
+
+            if low_entropy_blocks > num_blocks * 0.2:
+                results += "📋 LOW ENTROPY REGIONS - Possible padding/alignment\n"
+                results += "May contain:\n"
+                results += "• String tables with license messages\n"
+                results += "• Padding areas for code caves\n"
+                results += "• Uninitialized data sections\n\n"
+
+            results += "Analysis completed successfully."
+
+            self.fallback_entropy_results.setPlainText(results)
+
+            # Update statistics label
+            stats_text = f"Total blocks: {num_blocks} | High entropy: {high_entropy_blocks} | Low entropy: {low_entropy_blocks}"
+            self.entropy_stats_label.setText(stats_text)
+
+            self.log_activity("Entropy analysis completed")
+
+        except Exception as e:
+            error_msg = f"Error during entropy analysis: {str(e)}"
+            self.fallback_entropy_results.setPlainText(error_msg)
+            self.log_activity(error_msg, is_error=True)
+
+    def analyze_binary_entropy(self):
+        """Perform detailed binary entropy analysis for license protection detection."""
+        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+            QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
+            return
+
+        try:
+            self.log_activity("Starting comprehensive entropy analysis...")
+
+            with open(self.current_file_path, "rb") as f:
+                file_data = f.read()
+
+            analysis_results = "🔍 COMPREHENSIVE ENTROPY ANALYSIS FOR LICENSE PROTECTION\n\n"
+            analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
+            analysis_results += f"Size: {len(file_data):,} bytes\n"
+            analysis_results += "="*60 + "\n\n"
+
+            # Analyze different block sizes for better detection
+            block_sizes = [256, 512, 1024, 2048]
+
+            for block_size in block_sizes:
+                analysis_results += f"Block Size: {block_size} bytes\n"
+
+                high_entropy_count = 0
+                suspicious_regions = []
+
+                for i in range(0, len(file_data) - block_size + 1, block_size):
+                    block = file_data[i:i+block_size]
+                    entropy = self.calculate_shannon_entropy(block)
+
+                    if entropy > 7.8:  # Very high entropy
+                        high_entropy_count += 1
+                        suspicious_regions.append((i, entropy))
+
+                analysis_results += f"  High entropy regions: {high_entropy_count}\n"
+
+                if suspicious_regions:
+                    analysis_results += "  Suspicious regions (possible encryption):\n"
+                    for offset, entropy_val in suspicious_regions[:5]:  # Show first 5
+                        analysis_results += f"    Offset 0x{offset:08x}: {entropy_val:.2f}\n"
+                    if len(suspicious_regions) > 5:
+                        analysis_results += f"    ... and {len(suspicious_regions) - 5} more\n"
+
+                analysis_results += "\n"
+
+            # License protection assessment
+            analysis_results += "LICENSE PROTECTION ASSESSMENT:\n"
+            total_high_entropy = sum(1 for block in range(0, len(file_data) - 1024 + 1, 1024)
+                                   if self.calculate_shannon_entropy(file_data[block:block+1024]) > 7.5)
+
+            protection_level = "NONE"
+            if total_high_entropy > len(file_data) // 1024 * 0.1:
+                protection_level = "LOW"
+            if total_high_entropy > len(file_data) // 1024 * 0.3:
+                protection_level = "MEDIUM"
+            if total_high_entropy > len(file_data) // 1024 * 0.5:
+                protection_level = "HIGH"
+
+            analysis_results += f"Protection Level: {protection_level}\n"
+
+            if protection_level != "NONE":
+                analysis_results += "\nPOSSIBLE PROTECTION MECHANISMS:\n"
+                analysis_results += "• Code packing/compression\n"
+                analysis_results += "• License key encryption\n"
+                analysis_results += "• Anti-tampering systems\n"
+                analysis_results += "• Hardware fingerprinting\n"
+                analysis_results += "• Obfuscated validation routines\n\n"
+
+                analysis_results += "BYPASS RECOMMENDATIONS:\n"
+                analysis_results += "• Use dynamic analysis to identify unpacking\n"
+                analysis_results += "• Hook decryption routines during runtime\n"
+                analysis_results += "• Locate license validation after unpacking\n"
+                analysis_results += "• Consider memory patching techniques\n"
+
+            self.fallback_entropy_results.setPlainText(analysis_results)
+            self.log_activity("Comprehensive entropy analysis completed")
+
+        except Exception as e:
+            error_msg = f"Error during comprehensive entropy analysis: {str(e)}"
+            self.fallback_entropy_results.setPlainText(error_msg)
+            self.log_activity(error_msg, is_error=True)
+
+    def analyze_binary_structure(self):
+        """Perform detailed binary structure analysis for license protection detection."""
+        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+            QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
+            return
+
+        try:
+            self.log_activity("Starting binary structure analysis...")
+
+            analysis_results = "🏗️ BINARY STRUCTURE ANALYSIS FOR LICENSE PROTECTION\n\n"
+            analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
+            analysis_results += "="*60 + "\n\n"
+
+            # Basic file analysis
+            with open(self.current_file_path, "rb") as f:
+                file_header = f.read(1024)  # Read first 1KB
+                f.seek(0, 2)  # Seek to end
+                file_size = f.tell()
+
+            analysis_results += f"File Size: {file_size:,} bytes\n"
+
+            # Detect file type
+            if file_header.startswith(b'MZ'):
+                analysis_results += "File Type: Windows PE (Portable Executable)\n"
+                analysis_results += self.analyze_pe_structure(file_header)
+            elif file_header.startswith(b'\x7fELF'):
+                analysis_results += "File Type: Linux ELF (Executable and Linkable Format)\n"
+                analysis_results += self.analyze_elf_structure(file_header)
+            elif file_header.startswith(b'\xfe\xed\xfa'):
+                analysis_results += "File Type: macOS Mach-O\n"
+                analysis_results += "Mach-O analysis not implemented in fallback mode.\n"
+            else:
+                analysis_results += "File Type: Unknown/Unsupported\n"
+                analysis_results += "Performing generic binary analysis...\n"
+
+            # Look for license-related strings
+            analysis_results += "\n🔐 LICENSE PROTECTION INDICATORS:\n"
+            license_strings = self.find_license_indicators()
+            if license_strings:
+                analysis_results += f"Found {len(license_strings)} potential license-related strings:\n"
+                for string in license_strings[:10]:  # Show first 10
+                    analysis_results += f"  • {string}\n"
+                if len(license_strings) > 10:
+                    analysis_results += f"  ... and {len(license_strings) - 10} more\n"
+            else:
+                analysis_results += "No obvious license strings found.\n"
+
+            analysis_results += "\nAnalysis completed. Use other tabs for detailed analysis."
+
+            self.fallback_structure_results.setPlainText(analysis_results)
+            self.log_activity("Binary structure analysis completed")
+
+        except Exception as e:
+            error_msg = f"Error during structure analysis: {str(e)}"
+            self.fallback_structure_results.setPlainText(error_msg)
+            self.log_activity(error_msg, is_error=True)
+
+    def export_structure_analysis(self):
+        """Export structure analysis results to file."""
+        if not hasattr(self, 'fallback_structure_results'):
+            QMessageBox.warning(self, "No Analysis", "No structure analysis results to export.")
+            return
+
+        try:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export Structure Analysis",
+                f"structure_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                "Text Files (*.txt);;All Files (*)",
+            )
+
+            if file_path:
+                with open(file_path, "w") as f:
+                    f.write(self.fallback_structure_results.toPlainText())
+
+                self.log_activity(f"Structure analysis exported to {file_path}")
+                QMessageBox.information(self, "Export Successful", f"Analysis exported to:\n{file_path}")
+
+        except Exception as e:
+            error_msg = f"Export failed: {str(e)}"
+            self.log_activity(error_msg, is_error=True)
+            QMessageBox.critical(self, "Export Failed", error_msg)
+
+    def detect_license_protection(self):
+        """Detect license protection mechanisms in the binary."""
+        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+            QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
+            return
+
+        try:
+            self.log_activity("Detecting license protection mechanisms...")
+
+            protection_results = "🛡️ LICENSE PROTECTION DETECTION RESULTS\n\n"
+            protection_results += f"Target: {os.path.basename(self.current_file_path)}\n"
+            protection_results += "="*60 + "\n\n"
+
+            # Check for common protection indicators
+            indicators_found = []
+
+            with open(self.current_file_path, "rb") as f:
+                file_content = f.read()
+
+            # String-based detection
+            protection_strings = [
+                b"license", b"License", b"LICENSE",
+                b"serial", b"Serial", b"SERIAL",
+                b"key", b"Key", b"KEY",
+                b"activation", b"Activation", b"ACTIVATION",
+                b"trial", b"Trial", b"TRIAL",
+                b"expired", b"Expired", b"EXPIRED",
+                b"hwid", b"HWID", b"hardware",
+                b"fingerprint", b"machine"
+            ]
+
+            for pattern in protection_strings:
+                if pattern in file_content:
+                    indicators_found.append(f"String pattern: {pattern.decode('utf-8', errors='ignore')}")
+
+            # Anti-debugging checks
+            antidebug_strings = [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtGlobalFlag"]
+            for pattern in antidebug_strings:
+                if pattern in file_content:
+                    indicators_found.append(f"Anti-debug: {pattern.decode('utf-8', errors='ignore')}")
+
+            # Crypto indicators
+            crypto_strings = [b"CryptStringToBinary", b"CryptDecrypt", b"MD5", b"SHA", b"AES"]
+            for pattern in crypto_strings:
+                if pattern in file_content:
+                    indicators_found.append(f"Cryptography: {pattern.decode('utf-8', errors='ignore')}")
+
+            if indicators_found:
+                protection_results += f"PROTECTION INDICATORS DETECTED ({len(indicators_found)}):\n"
+                for indicator in indicators_found:
+                    protection_results += f"  ✓ {indicator}\n"
+
+                protection_results += "\nLICENSE BYPASS STRATEGIES:\n"
+                protection_results += "1. Dynamic Analysis:\n"
+                protection_results += "   • Hook license validation functions\n"
+                protection_results += "   • Monitor registry/file access\n"
+                protection_results += "   • Trace hardware ID generation\n\n"
+                protection_results += "2. Static Patching:\n"
+                protection_results += "   • NOP out license checks\n"
+                protection_results += "   • Modify validation logic\n"
+                protection_results += "   • Replace with JMP instructions\n\n"
+                protection_results += "3. Key Generation:\n"
+                protection_results += "   • Reverse engineer algorithm\n"
+                protection_results += "   • Create keygen tool\n"
+                protection_results += "   • Implement validation bypass\n"
+            else:
+                protection_results += "NO OBVIOUS PROTECTION DETECTED\n"
+                protection_results += "This does not guarantee the absence of protection.\n"
+                protection_results += "Consider more advanced analysis techniques.\n"
+
+            self.fallback_structure_results.setPlainText(protection_results)
+            self.log_activity("License protection detection completed")
+
+        except Exception as e:
+            error_msg = f"Error during protection detection: {str(e)}"
+            self.fallback_structure_results.setPlainText(error_msg)
+            self.log_activity(error_msg, is_error=True)
+
+    def calculate_shannon_entropy(self, data):
+        """Calculate Shannon entropy of data block."""
+        if not data:
+            return 0.0
+
+        # Count byte frequencies
+        byte_counts = [0] * 256
+        for byte in data:
+            byte_counts[byte] += 1
+
+        # Calculate entropy
+        entropy = 0.0
+        length = len(data)
+
+        for count in byte_counts:
+            if count > 0:
+                probability = count / length
+                entropy -= probability * math.log2(probability)
+
+        return entropy
+
+    def analyze_pe_structure(self, header):
+        """Analyze PE file structure (basic analysis)."""
+        analysis = "PE Structure Analysis:\n"
+
+        # Basic PE header analysis
+        if len(header) > 64:
+            try:
+                import struct
+                pe_offset = struct.unpack("<I", header[60:64])[0]
+                if pe_offset < len(header):
+                    analysis += f"PE Header Offset: 0x{pe_offset:08x}\n"
+                else:
+                    analysis += "PE Header Offset: Beyond available data\n"
+            except Exception as e:
+                analysis += f"PE Header: Unable to parse ({e})\n"
+
+        analysis += "Note: Full PE analysis requires additional tools.\n"
+        return analysis
+
+    def analyze_elf_structure(self, header):
+        """Analyze ELF file structure (basic analysis)."""
+        analysis = "ELF Structure Analysis:\n"
+
+        if len(header) > 16:
+            # Basic ELF class/architecture info
+            ei_class = header[4]
+            ei_data = header[5]
+
+            arch = "32-bit" if ei_class == 1 else "64-bit" if ei_class == 2 else "Unknown"
+            endian = "Little-endian" if ei_data == 1 else "Big-endian" if ei_data == 2 else "Unknown"
+
+            analysis += f"Architecture: {arch}\n"
+            analysis += f"Endianness: {endian}\n"
+
+        analysis += "Note: Full ELF analysis requires additional tools.\n"
+        return analysis
+
+    def find_license_indicators(self):
+        """Find potential license-related strings in the binary."""
+        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+            return []
+
+        license_patterns = [
+            "license", "License", "LICENSE",
+            "serial", "Serial", "SERIAL",
+            "registration", "Registration", "REGISTRATION",
+            "activation", "Activation", "ACTIVATION",
+            "trial", "Trial", "TRIAL",
+            "expired", "Expired", "EXPIRED",
+            "valid", "Valid", "VALID",
+            "invalid", "Invalid", "INVALID",
+            "keygen", "Keygen", "KEYGEN",
+            "crack", "Crack", "CRACK"
+        ]
+
+        found_strings = []
+
+        try:
+            with open(self.current_file_path, "rb") as f:
+                content = f.read()
+
+            # Simple string extraction (ASCII strings >= 4 chars)
+            import re
+            strings = re.findall(b'[ -~]{4,}', content)
+
+            for string in strings:
+                string_text = string.decode('ascii', errors='ignore')
+                for pattern in license_patterns:
+                    if pattern in string_text:
+                        if string_text not in found_strings:
+                            found_strings.append(string_text)
+                        break
+
+        except Exception as e:
+            self.log_activity(f"Error during string extraction: {e}")
+
+        return found_strings
 
     def set_binary_path(self, binary_path):
         """Set the current binary path for analysis."""

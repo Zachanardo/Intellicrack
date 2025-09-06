@@ -26,18 +26,15 @@ from intellicrack.logger import logger
 try:
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtWidgets import (
-        QCheckBox,
         QComboBox,
         QDialog,
         QGridLayout,
         QGroupBox,
         QHBoxLayout,
         QLabel,
-        QLineEdit,
         QProgressBar,
         QPushButton,
         QSpinBox,
-        QTabWidget,
         QTextEdit,
         QVBoxLayout,
         QWidget,
@@ -341,7 +338,7 @@ class DistributedWorkerThread(QThread):
 
         results = {"target": target, "scan_type": scan_type, "vulnerabilities": [], "ports_open": [], "services": [], "risk_level": "low"}
 
-        for i, check in enumerate(checks):
+        for i, _check in enumerate(checks):
             if not self.running:
                 raise Exception("Task cancelled")
 

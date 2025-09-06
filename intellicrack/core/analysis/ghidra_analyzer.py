@@ -27,16 +27,24 @@ import tempfile
 from threading import Thread
 
 from intellicrack.config import get_config
+from intellicrack.utils.subprocess_security import secure_popen
 
 
 def _run_ghidra_thread(main_app, command, temp_dir):
     """Runs the Ghidra command in a background thread and cleans up afterward."""
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
-        # Using shell=False for security - Ghidra commands should work with list format
-        # In a real-world scenario, this provides robust security handling.
-        process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="ignore", shell=False
+        # Use secure subprocess wrapper with validation
+        # This prevents command injection while maintaining functionality
+        process = secure_popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            shell=False,
+            cwd=temp_dir
         )
 
         stdout, stderr = process.communicate()

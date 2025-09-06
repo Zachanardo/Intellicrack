@@ -10016,7 +10016,6 @@ InjectionToolkit.testingFramework = {
                 'autodesk_maya',
                 'adobe_photoshop',
                 'vmware_workstation',
-                'ida_pro',
                 'visual_studio',
                 'office_professional',
                 'autocad',

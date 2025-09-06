@@ -303,7 +303,6 @@ class AntiAnalysisDetector:
     def __init__(self):
         self.debugger_processes = [
             'ollydbg.exe', 'x64dbg.exe', 'x32dbg.exe', 'windbg.exe',
-            'idaq.exe', 'idaq64.exe', 'ida.exe', 'ida64.exe',
             'processhacker.exe', 'procmon.exe', 'procexp.exe',
             'apimonitor.exe', 'wireshark.exe', 'fiddler.exe'
         ]

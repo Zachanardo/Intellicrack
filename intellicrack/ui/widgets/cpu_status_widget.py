@@ -32,6 +32,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QLabel,
     QObject,
     QProgressBar,
+    QScrollArea,
     Qt,
     QTableWidget,
     QTableWidgetItem,
@@ -156,32 +157,47 @@ class CPUStatusWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize CPU status widget with performance monitoring and CPU detection."""
         super().__init__(parent)
-        self.setMaximumHeight(50)
         self.setMinimumWidth(250)
-        self._setup_ui()
-        self._start_monitoring()
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_context_menu)
+        self.setMinimumHeight(400)
+        self.core_bars = []  # Initialize core bars list
+        self.setup_ui()
+        self.setup_monitoring()
+        self.start_monitoring()
 
     def setup_ui(self):
         """Setup the user interface."""
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create scroll area for all content
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # Container widget for scrollable content
+        container = QWidget()
+        layout = QVBoxLayout(container)
 
         # CPU Info Group
         info_group = QGroupBox("CPU Information")
         info_layout = QGridLayout(info_group)
 
         self.model_label = QLabel("Model: Detecting...")
+        self.model_label.setToolTip("CPU model name and manufacturer information")
         self.model_label.setWordWrap(True)
         info_layout.addWidget(self.model_label, 0, 0, 1, 2)
 
         self.cores_label = QLabel("Cores: Detecting...")
+        self.cores_label.setToolTip("Number of physical CPU cores available")
         self.threads_label = QLabel("Threads: Detecting...")
+        self.threads_label.setToolTip("Number of logical threads (including hyperthreading)")
         info_layout.addWidget(self.cores_label, 1, 0)
         info_layout.addWidget(self.threads_label, 1, 1)
 
         self.freq_label = QLabel("Frequency: Detecting...")
+        self.freq_label.setToolTip("Current CPU clock frequency in GHz")
         self.load_label = QLabel("Load Average: Detecting...")
+        self.load_label.setToolTip("System load average over the last 1, 5, and 15 minutes")
         info_layout.addWidget(self.freq_label, 2, 0)
         info_layout.addWidget(self.load_label, 2, 1)
 
@@ -196,7 +212,9 @@ class CPUStatusWidget(QWidget):
         total_layout.addWidget(QLabel("Total:"))
         self.total_cpu_bar = QProgressBar()
         self.total_cpu_bar.setMaximum(100)
+        self.total_cpu_bar.setToolTip("Overall CPU utilization percentage across all cores")
         self.total_cpu_label = QLabel("0%")
+        self.total_cpu_label.setToolTip("Current total CPU usage percentage")
         total_layout.addWidget(self.total_cpu_bar)
         total_layout.addWidget(self.total_cpu_label)
         usage_layout.addLayout(total_layout)
@@ -230,13 +248,19 @@ class CPUStatusWidget(QWidget):
         self.processes_table = QTableWidget()
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
+        self.processes_table.setToolTip("Top CPU-consuming processes currently running on the system")
         self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.processes_table.setMaximumHeight(200)
+        self.processes_table.setMinimumHeight(150)
+        self.processes_table.setMaximumHeight(250)
         processes_layout.addWidget(self.processes_table)
 
         layout.addWidget(processes_group)
 
         layout.addStretch()
+
+        # Set the container as the scroll area widget
+        scroll_area.setWidget(container)
+        main_layout.addWidget(scroll_area)
 
     def setup_monitoring(self):
         """Setup CPU monitoring thread."""

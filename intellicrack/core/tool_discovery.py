@@ -787,6 +787,7 @@ class AdvancedToolDiscovery:
             if sys.platform == "win32":
                 paths.extend(
                     [
+                        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"),  # Primary location
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",
@@ -1299,11 +1300,6 @@ docker run --rm -it -v "$(pwd)":/workspace {container_cfg["image"]} {container_c
         """Get alternative tools for a given tool."""
         alternatives = {
             "ghidra": {
-                "ida_free": {
-                    "executables": ["ida64", "ida"],
-                    "search_strategy": "installation_based",
-                    "description": "IDA Free alternative to Ghidra",
-                },
                 "cutter": {
                     "executables": ["cutter", "Cutter"],
                     "search_strategy": "path_based",

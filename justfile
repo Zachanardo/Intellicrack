@@ -105,11 +105,31 @@ lint-md-fix:
     markdownlint "**/*.md" --fix --ignore node_modules --ignore .venv* --ignore mamba_env --ignore build --ignore dist --ignore tools
 
 # Lint all supported file types
-lint-all: lint lint-js lint-java lint-md
+lint-all: lint lint-js lint-java lint-md lint-rust-all
     @echo "All linting complete ✓"
 
+# Lint Rust code with clippy
+lint-rust:
+    cd intellicrack-launcher && cargo clippy -- -D warnings
+
+# Format Rust code with rustfmt
+lint-rust-fmt:
+    cd intellicrack-launcher && cargo fmt -- --force
+
+# Check Rust formatting without applying changes
+lint-rust-fmt-check:
+    cd intellicrack-launcher && cargo fmt -- --force --write-mode diff
+
+# Fix Rust linting issues automatically
+lint-rust-fix:
+    cd intellicrack-launcher && cargo clippy --fix --allow-dirty --allow-staged -- -D warnings
+
+# All Rust linting and formatting
+lint-rust-all: lint-rust lint-rust-fmt-check
+    @echo "Rust linting and formatting complete ✓"
+
 # Fix all auto-fixable linting issues
-lint-all-fix: lint-fix lint-js-fix lint-md-fix
+lint-all-fix: lint-fix lint-js-fix lint-md-fix lint-rust-fix lint-rust-fmt
     @echo "All auto-fixable linting issues resolved ✓"
 
 # ==================== DOCUMENTATION ====================

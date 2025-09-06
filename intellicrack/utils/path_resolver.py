@@ -47,11 +47,11 @@ def resolve_qemu_image_path(image_name: str) -> Path:
     """Resolve a QEMU image file path."""
     # Remove any hardcoded path prefixes
     if isinstance(image_name, str):
-        # Strip common hardcoded prefixes
+        # Strip common hardcoded prefixes - including legacy absolute paths
         for prefix in [
-            "C:\\Intellicrack\\qemu\\images\\",
-            "C:/Intellicrack/qemu/images/",
-            "/Intellicrack/qemu/images/",
+            "C:\\Intellicrack\\qemu\\images\\",  # Legacy Windows absolute
+            "C:/Intellicrack/qemu/images/",     # Legacy Windows absolute (forward slash)
+            "/Intellicrack/qemu/images/",        # Legacy Unix absolute
             "qemu/images/",
             "qemu\\images\\",
             "intellicrack/",

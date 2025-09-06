@@ -452,7 +452,7 @@ def run_memory_optimized_analysis(
             entropy_samples = []
             sample_count = min(100, results["file_info"].get("file_size", 0) // chunk_size)
 
-            for i, (offset, chunk) in enumerate(loader.iterate_file(chunk_size)):
+            for i, (_offset, chunk) in enumerate(loader.iterate_file(chunk_size)):
                 if i >= sample_count:
                     break
                 entropy_samples.append(loader.calculate_entropy(chunk))

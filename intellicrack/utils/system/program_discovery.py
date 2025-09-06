@@ -135,7 +135,6 @@ class ProgramDiscoveryEngine:
         "disassembler": 9,
         "decompiler": 9,
         "hex editor": 9,
-        "ida": 9,
         "ghidra": 9,
         "radare2": 9,
         "x64dbg": 9,

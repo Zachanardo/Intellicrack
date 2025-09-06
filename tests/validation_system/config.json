@@ -99,8 +99,7 @@
           "cross_validation_sources": [
             "peid",
             "die",
-            "protectionid",
-            "ida_pro"
+            "protectionid"
           ],
           "minimum_confidence_score": 0.90
         },

@@ -569,7 +569,8 @@ class {script_class_name}(GhidraScript):
 
         # Save results to file
         try:
-            results_file = "/tmp/intellicrack_analysis_results.json"
+            import tempfile
+            results_file = os.path.join(tempfile.gettempdir(), "intellicrack_analysis_results.json")
             with open(results_file, 'w') as f:
                 json.dump(self.analysis_results, f, indent=2, default=str)
             self.println("Results saved to: {{}}".format(results_file))
@@ -1097,7 +1098,7 @@ class ScriptTemplateEngine:
 
         # Save report to file
         try:
-            report_file = "/tmp/intellicrack_analysis_report.txt"
+            report_file = os.path.join(tempfile.gettempdir(), "intellicrack_analysis_report.txt")
             with open(report_file, 'w') as f:
                 f.write("\\n".join(report_lines))
             self.println("Report saved to: {}".format(report_file))

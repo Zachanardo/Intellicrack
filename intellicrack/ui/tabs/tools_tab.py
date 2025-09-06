@@ -61,14 +61,30 @@ class ToolsTab(BaseTab):
 
     def __init__(self, shared_context=None, parent=None):
         """Initialize tools tab with external tool integration and management."""
-        super().__init__(shared_context, parent)
         self.available_tools = {}
         self.loaded_plugins = {}
         self.network_interfaces = []
+        self.current_binary = None
+        self.current_binary_path = None
+        super().__init__(shared_context, parent)
+
+        # Connect to app_context signals for binary loading
+        if self.app_context:
+            self.app_context.binary_loaded.connect(self.on_binary_loaded)
+            self.app_context.binary_unloaded.connect(self.on_binary_unloaded)
+
+            # Check if a binary is already loaded
+            current_binary = self.app_context.get_current_binary()
+            if current_binary:
+                self.on_binary_loaded(current_binary)
 
     def setup_content(self):
         """Setup the tools tab content."""
-        layout = QHBoxLayout(self)
+        layout = self.layout()  # Use existing layout from BaseTab
+
+        # Convert to QHBoxLayout behavior by using a horizontal container
+        h_container = QWidget()
+        h_layout = QHBoxLayout(h_container)
 
         # Left panel - Tools and controls
         left_panel = self.create_tools_panel()
@@ -83,7 +99,8 @@ class ToolsTab(BaseTab):
         splitter.setStretchFactor(0, 40)
         splitter.setStretchFactor(1, 60)
 
-        layout.addWidget(splitter)
+        h_layout.addWidget(splitter)
+        layout.addWidget(h_container)
         self.is_loaded = True
 
     def create_tools_panel(self):
@@ -145,18 +162,18 @@ class ToolsTab(BaseTab):
         # File operations buttons
         file_ops_layout = QHBoxLayout()
 
-        file_info_btn = QPushButton("File Info")
-        file_info_btn.clicked.connect(self.get_file_info)
+        self.file_info_btn = QPushButton("File Info")
+        self.file_info_btn.clicked.connect(self.get_file_info)
 
         hex_dump_btn = QPushButton("Hex Dump")
         hex_dump_btn.clicked.connect(self.create_hex_dump)
 
-        strings_btn = QPushButton("Extract Strings")
-        strings_btn.clicked.connect(self.extract_strings)
+        self.strings_btn = QPushButton("Extract Strings")
+        self.strings_btn.clicked.connect(self.extract_strings)
 
-        file_ops_layout.addWidget(file_info_btn)
+        file_ops_layout.addWidget(self.file_info_btn)
         file_ops_layout.addWidget(hex_dump_btn)
-        file_ops_layout.addWidget(strings_btn)
+        file_ops_layout.addWidget(self.strings_btn)
 
         file_layout.addLayout(file_path_layout)
         file_layout.addLayout(file_ops_layout)
@@ -450,16 +467,16 @@ class ToolsTab(BaseTab):
         frida_analysis_btn = QPushButton("Frida Analysis")
         frida_analysis_btn.clicked.connect(self.run_frida_analysis)
         frida_analysis_btn.setStyleSheet("font-weight: bold; color: #FF6B35;")
-        frida_analysis_btn.setToolTip("Dynamic binary analysis using Frida instrumentation")
+        frida_analysis_btn.setToolTip("Dynamic binary instrumentation framework for real-time code injection, API hooking, and runtime manipulation")
 
         symbolic_exec_btn = QPushButton("Symbolic Execution")
         symbolic_exec_btn.clicked.connect(self.run_symbolic_execution)
         symbolic_exec_btn.setStyleSheet("font-weight: bold; color: #2E86AB;")
-        symbolic_exec_btn.setToolTip("Advanced symbolic execution for path exploration")
+        symbolic_exec_btn.setToolTip("Explore multiple execution paths simultaneously using symbolic values to discover vulnerabilities and edge cases")
 
         memory_forensics_btn = QPushButton("Memory Forensics")
         memory_forensics_btn.clicked.connect(self.run_memory_forensics)
-        memory_forensics_btn.setToolTip("Advanced memory analysis and forensics")
+        memory_forensics_btn.setToolTip("Analyze memory dumps, heap structures, and runtime memory patterns for hidden data and exploitation vectors")
 
         dynamic_layout.addWidget(frida_analysis_btn, 0, 0)
         dynamic_layout.addWidget(symbolic_exec_btn, 0, 1)
@@ -472,20 +489,20 @@ class ToolsTab(BaseTab):
         ghidra_analysis_btn = QPushButton("Ghidra Analysis")
         ghidra_analysis_btn.clicked.connect(self.run_ghidra_analysis)
         ghidra_analysis_btn.setStyleSheet("font-weight: bold; color: #7209B7;")
-        ghidra_analysis_btn.setToolTip("Advanced static analysis using Ghidra")
+        ghidra_analysis_btn.setToolTip("NSA's reverse engineering suite for decompilation, control flow analysis, and cross-references mapping")
 
         protection_scan_btn = QPushButton("Protection Scanner")
         protection_scan_btn.clicked.connect(self.run_protection_scanner)
         protection_scan_btn.setStyleSheet("font-weight: bold; color: #F72585;")
-        protection_scan_btn.setToolTip("Comprehensive protection and packing detection")
+        protection_scan_btn.setToolTip("Detect and identify packers, protectors, obfuscators, and anti-tampering mechanisms in binaries")
 
         vulnerability_scan_btn = QPushButton("Vulnerability Engine")
         vulnerability_scan_btn.clicked.connect(self.run_vulnerability_engine)
-        vulnerability_scan_btn.setToolTip("Advanced vulnerability detection engine")
+        vulnerability_scan_btn.setToolTip("Automated vulnerability scanning for buffer overflows, format strings, race conditions, and common weaknesses")
 
         taint_analysis_btn = QPushButton("Taint Analysis")
         taint_analysis_btn.clicked.connect(self.run_taint_analysis)
-        taint_analysis_btn.setToolTip("Data flow and taint analysis")
+        taint_analysis_btn.setToolTip("Track data flow from untrusted sources to critical sinks to identify potential security vulnerabilities")
 
         static_layout.addWidget(ghidra_analysis_btn, 0, 0)
         static_layout.addWidget(protection_scan_btn, 0, 1)
@@ -499,15 +516,15 @@ class ToolsTab(BaseTab):
         ai_script_gen_btn = QPushButton("AI Script Generator")
         ai_script_gen_btn.clicked.connect(self.run_ai_script_generator)
         ai_script_gen_btn.setStyleSheet("font-weight: bold; color: #4361EE;")
-        ai_script_gen_btn.setToolTip("AI-powered analysis script generation")
+        ai_script_gen_btn.setToolTip("Generate custom Frida, Ghidra, and IDA Pro scripts using AI based on your analysis requirements")
 
         semantic_analysis_btn = QPushButton("Semantic Analysis")
         semantic_analysis_btn.clicked.connect(self.run_semantic_analysis)
-        semantic_analysis_btn.setToolTip("AI semantic code analysis")
+        semantic_analysis_btn.setToolTip("Use AI to understand code intent, identify algorithms, and recognize design patterns in decompiled code")
 
         pattern_analysis_btn = QPushButton("Pattern Analysis")
         pattern_analysis_btn.clicked.connect(self.run_pattern_analysis)
-        pattern_analysis_btn.setToolTip("AI-powered pattern recognition")
+        pattern_analysis_btn.setToolTip("Machine learning-based detection of cryptographic routines, licensing checks, and protection patterns")
 
         ai_layout.addWidget(ai_script_gen_btn, 0, 0)
         ai_layout.addWidget(semantic_analysis_btn, 0, 1)
@@ -520,16 +537,16 @@ class ToolsTab(BaseTab):
         rop_generator_btn = QPushButton("ROP Generator")
         rop_generator_btn.clicked.connect(self.run_rop_generator)
         rop_generator_btn.setStyleSheet("font-weight: bold; color: #D00000;")
-        rop_generator_btn.setToolTip("Generate ROP chains for exploitation")
+        rop_generator_btn.setToolTip("Automatically generate Return-Oriented Programming chains to bypass DEP/NX protections")
 
         payload_engine_btn = QPushButton("Payload Engine")
         payload_engine_btn.clicked.connect(self.run_payload_engine)
         payload_engine_btn.setStyleSheet("font-weight: bold; color: #FF8500;")
-        payload_engine_btn.setToolTip("Advanced payload generation and encoding")
+        payload_engine_btn.setToolTip("Create, encode, and obfuscate exploitation payloads with bad character avoidance and size optimization")
 
         shellcode_gen_btn = QPushButton("Shellcode Generator")
         shellcode_gen_btn.clicked.connect(self.run_shellcode_generator)
-        shellcode_gen_btn.setToolTip("Generate custom shellcode")
+        shellcode_gen_btn.setToolTip("Generate position-independent shellcode for various architectures with customizable functionality")
 
         exploit_layout.addWidget(rop_generator_btn, 0, 0)
         exploit_layout.addWidget(payload_engine_btn, 0, 1)
@@ -541,11 +558,11 @@ class ToolsTab(BaseTab):
 
         traffic_analysis_btn = QPushButton("Traffic Analysis")
         traffic_analysis_btn.clicked.connect(self.run_traffic_analysis)
-        traffic_analysis_btn.setToolTip("Advanced network traffic analysis")
+        traffic_analysis_btn.setToolTip("Capture and analyze network traffic to identify license servers, API calls, and communication protocols")
 
         protocol_analysis_btn = QPushButton("Protocol Fingerprinting")
         protocol_analysis_btn.clicked.connect(self.run_protocol_analysis)
-        protocol_analysis_btn.setToolTip("Advanced protocol fingerprinting")
+        protocol_analysis_btn.setToolTip("Identify and decode proprietary protocols, license verification schemes, and encrypted communications")
 
         network_layout.addWidget(traffic_analysis_btn, 0, 0)
         network_layout.addWidget(protocol_analysis_btn, 0, 1)
@@ -574,7 +591,6 @@ class ToolsTab(BaseTab):
         self.output_console = QTextEdit()
         self.output_console.setReadOnly(True)
         self.output_console.setFont(QFont("Consolas", 10))
-        self.output_console.setStyleSheet("background-color: #1e1e1e; color: #ffffff;")
 
         # Tool output viewer
         self.tool_output = QTextEdit()
@@ -608,6 +624,53 @@ class ToolsTab(BaseTab):
 
         layout.addWidget(self.results_tabs)
         return panel
+
+    def on_binary_loaded(self, binary_info):
+        """Handle binary loaded signal from app_context."""
+        if isinstance(binary_info, dict):
+            self.current_binary = binary_info.get("name", "Unknown")
+            self.current_binary_path = binary_info.get("path")
+
+            # Update file path in file operations if available
+            if hasattr(self, "file_path_edit"):
+                self.file_path_edit.setText(self.current_binary_path)
+
+            # Enable analysis tools that require a binary
+            self.enable_binary_dependent_tools(True)
+
+            # Log the event
+            if hasattr(self, "tool_output"):
+                self.tool_output.append(f"[INFO] Binary loaded: {self.current_binary}")
+
+    def on_binary_unloaded(self):
+        """Handle binary unloaded signal from app_context."""
+        self.current_binary = None
+        self.current_binary_path = None
+
+        # Clear file path
+        if hasattr(self, "file_path_edit"):
+            self.file_path_edit.clear()
+
+        # Disable analysis tools that require a binary
+        self.enable_binary_dependent_tools(False)
+
+        # Log the event
+        if hasattr(self, "tool_output"):
+            self.tool_output.append("[INFO] Binary unloaded")
+
+    def enable_binary_dependent_tools(self, enabled):
+        """Enable or disable tools that require a loaded binary."""
+        # List of buttons that require a binary to be loaded
+        binary_dependent_buttons = [
+            "file_info_btn", "file_hash_btn", "strings_btn",
+            "disassemble_btn", "decompile_btn", "ida_btn",
+            "ghidra_btn", "radare2_btn", "x64dbg_btn"
+        ]
+
+        for btn_name in binary_dependent_buttons:
+            if hasattr(self, btn_name):
+                btn = getattr(self, btn_name)
+                btn.setEnabled(enabled)
 
     def get_system_info(self):
         """Get system information."""
@@ -1490,7 +1553,7 @@ def get_plugin():
 
         try:
             from intellicrack.core.analysis.frida_analyzer import FridaAnalyzer
-            from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE, frida
+            from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE
 
             if not FRIDA_AVAILABLE:
                 # Use comprehensive dependency feedback

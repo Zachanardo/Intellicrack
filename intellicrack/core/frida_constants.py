@@ -44,7 +44,7 @@ class ProtectionType(Enum):
     - Advanced: KERNEL, BEHAVIOR
     """
 
-    ANTI_DEBUG = "Anti-Debugging"  # Detects debuggers like GDB, IDA, x64dbg
+    ANTI_DEBUG = "Anti-Debugging"  # Detects debuggers like GDB, x64dbg
     ANTI_VM = "Anti-VM/Sandbox"  # Detects VMs/sandboxes (VMware, VirtualBox)
     ANTI_ATTACH = "Anti-Attach"  # Prevents process attachment/injection
     SSL_PINNING = "SSL Pinning"  # Certificate pinning for HTTPS

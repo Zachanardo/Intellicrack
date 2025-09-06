@@ -382,11 +382,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Progress bar
         self.progress_bar = QProgressBar()
+        self.progress_bar.setToolTip("Shows progress of current analysis or operation")
         self.progress_bar.setVisible(False)
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         # Status label
         self.status_label = QLabel("Ready")
+        self.status_label.setToolTip("Current application status and messages")
         self.status_bar.showMessage("Intellicrack initialized successfully")
 
     def _setup_menu_bar(self):
@@ -398,11 +400,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         open_action = QAction("Open Binary...", self)
         open_action.setShortcut("Ctrl+O")
+        open_action.setToolTip("Open a binary file for analysis (EXE, DLL, SO, ELF, or other executable formats)")
         open_action.triggered.connect(self._browse_for_file)
         file_menu.addAction(open_action)
 
         program_selector_action = QAction("Program Selector...", self)
         program_selector_action.setShortcut("Ctrl+Shift+O")
+        program_selector_action.setToolTip("Select a running process from the system to attach and analyze")
         program_selector_action.triggered.connect(self._show_program_selector)
         file_menu.addAction(program_selector_action)
 
@@ -410,6 +414,7 @@ class IntellicrackMainWindow(QMainWindow):
 
         export_action = QAction("Export Analysis Results...", self)
         export_action.setShortcut("Ctrl+Shift+E")
+        export_action.setToolTip("Export current analysis results to various formats (PDF, JSON, XML, or HTML)")
         export_action.triggered.connect(self._export_analysis_results)
         file_menu.addAction(export_action)
 
@@ -417,6 +422,7 @@ class IntellicrackMainWindow(QMainWindow):
 
         exit_action = QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
+        exit_action.setToolTip("Close Intellicrack and save current session state")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -425,11 +431,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         analyze_action = QAction("Analyze Binary", self)
         analyze_action.setShortcut("F5")
+        analyze_action.setToolTip("Run comprehensive analysis on the loaded binary including static and dynamic analysis")
         analyze_action.triggered.connect(self._run_analysis)
         analysis_menu.addAction(analyze_action)
 
         vulnerability_action = QAction("Scan Vulnerabilities", self)
         vulnerability_action.setShortcut("F6")
+        vulnerability_action.setToolTip("Scan for security vulnerabilities including buffer overflows, format strings, and common weaknesses")
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
 
@@ -437,6 +445,7 @@ class IntellicrackMainWindow(QMainWindow):
 
         protection_action = QAction("Analyze Protection", self)
         protection_action.setShortcut("F7")
+        protection_action.setToolTip("Detect and analyze protection mechanisms such as packers, obfuscators, and anti-debugging techniques")
         protection_action.triggered.connect(self._analyze_current_protection)
         analysis_menu.addAction(protection_action)
 
@@ -445,11 +454,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         generate_report_action = QAction("Generate Report...", self)
         generate_report_action.setShortcut("Ctrl+R")
+        generate_report_action.setToolTip("Generate a comprehensive analysis report with findings, vulnerabilities, and recommendations")
         generate_report_action.triggered.connect(self._generate_report)
         tools_menu.addAction(generate_report_action)
 
         generate_script_action = QAction("Generate Bypass Script...", self)
         generate_script_action.setShortcut("Ctrl+B")
+        generate_script_action.setToolTip("Create automated bypass scripts for detected protection mechanisms using AI assistance")
         generate_script_action.triggered.connect(self._generate_bypass_script_menu)
         tools_menu.addAction(generate_script_action)
 
@@ -457,11 +468,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         signature_editor_action = QAction("ICP Signature Editor...", self)
         signature_editor_action.setShortcut("Ctrl+E")
+        signature_editor_action.setToolTip("Edit and manage Intellicrack Protection signatures for enhanced detection capabilities")
         signature_editor_action.triggered.connect(self._open_signature_editor)
         tools_menu.addAction(signature_editor_action)
 
         export_results_action = QAction("Export Results...", self)
         export_results_action.setShortcut("Ctrl+Shift+X")
+        export_results_action.setToolTip("Export analysis results and findings to external formats for documentation or sharing")
         export_results_action.triggered.connect(self._export_analysis_results)
         tools_menu.addAction(export_results_action)
 
@@ -508,6 +521,17 @@ class IntellicrackMainWindow(QMainWindow):
             self.binary_path = file_path
             self.file_path_label.setText(os.path.basename(file_path))
             self.file_path_label.setToolTip(file_path)
+
+            # Load binary into app context for proper state management
+            try:
+                from ..core.app_context import get_app_context
+                app_context = get_app_context()
+                if app_context.load_binary(file_path):
+                    self.logger.info("Binary loaded into app context: %s", file_path)
+                else:
+                    self.logger.warning("Failed to load binary into app context: %s", file_path)
+            except Exception as e:
+                self.logger.error("Error loading binary into app context: %s", e)
 
             # Enable analysis buttons
             self.analyze_button.setEnabled(True)
@@ -561,6 +585,23 @@ class IntellicrackMainWindow(QMainWindow):
                     self.file_path_label.setToolTip(
                         f"Program: {program_info['display_name']}\nPath: {selected_executable}\nInstall Location: {installation_folder}"
                     )
+
+                    # Load binary into app context for proper state management
+                    try:
+                        from ..core.app_context import get_app_context
+                        app_context = get_app_context()
+                        metadata = {
+                            "program_name": program_info['display_name'],
+                            "installation_folder": installation_folder,
+                            "discovery_method": program_info.get('discovery_method', 'program_selector'),
+                            "licensing_files_count": len(licensing_files)
+                        }
+                        if app_context.load_binary(selected_executable, metadata):
+                            self.logger.info("Program binary loaded into app context: %s", selected_executable)
+                        else:
+                            self.logger.warning("Failed to load program binary into app context: %s", selected_executable)
+                    except Exception as e:
+                        self.logger.error("Error loading program binary into app context: %s", e)
 
                     # Enable analysis buttons
                     self.analyze_button.setEnabled(True)

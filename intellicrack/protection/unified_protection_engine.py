@@ -508,7 +508,7 @@ class UnifiedProtectionEngine:
                 {
                     "name": "License Validation Bypass",
                     "description": "Bypass license checking routines",
-                    "tools": ["IDA Pro", "x64dbg", "API Monitor"],
+                    "tools": ["Ghidra", "x64dbg", "API Monitor"],
                     "difficulty": "Hard",
                     "steps": [
                         "Trace license validation calls",
@@ -525,7 +525,7 @@ class UnifiedProtectionEngine:
                 {
                     "name": "Deobfuscation",
                     "description": "Remove code obfuscation",
-                    "tools": ["de4dot", "IDA Pro", "Custom scripts"],
+                    "tools": ["de4dot", "Ghidra", "Custom scripts"],
                     "difficulty": "Hard",
                     "steps": [
                         "Identify obfuscation type",

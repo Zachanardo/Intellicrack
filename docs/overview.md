@@ -62,7 +62,6 @@ Welcome to the official documentation for **Intellicrack** - a comprehensive bin
 - **GPU**: NVIDIA, AMD, or Intel GPU with appropriate drivers for acceleration
 - **Ghidra**: For advanced decompilation features
 - **radare2**: For additional analysis capabilities
-- **IDA Pro**: For IDA integration features
 
 ## 🔧 Configuration
 

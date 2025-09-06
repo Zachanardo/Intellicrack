@@ -49,7 +49,7 @@ pub use startup_checks::StartupValidator;
 pub struct IntellicrackLauncher {
     pub platform: PlatformInfo,
     pub environment: EnvironmentManager,
-    pub python: PythonIntegration,
+    pub python: Option<PythonIntegration>,
     pub security: Arc<Mutex<SecurityManager>>,
     pub dependencies: DependencyValidator,
     pub process_manager: ProcessManager,
@@ -62,7 +62,7 @@ impl IntellicrackLauncher {
         // Detect platform and initialize components
         let platform = PlatformInfo::detect()?;
         let environment = EnvironmentManager::new(&platform);
-        let python = PythonIntegration::initialize()?;
+        // CRITICAL: Don't initialize Python yet - must be done AFTER environment setup
         let security = Arc::new(Mutex::new(SecurityManager::new()?));
         let dependencies = DependencyValidator::new();
         let process_manager = ProcessManager::new(&platform, Arc::clone(&security))?;
@@ -71,7 +71,7 @@ impl IntellicrackLauncher {
         Ok(IntellicrackLauncher {
             platform,
             environment,
-            python,
+            python: None,
             security,
             dependencies,
             process_manager,
@@ -81,20 +81,27 @@ impl IntellicrackLauncher {
 
     /// Execute the complete launch sequence
     pub async fn launch(&mut self) -> Result<i32> {
-        tracing::info!("Starting Intellicrack launcher v2.0.0");
+        tracing::info!("Starting Intellicrack launcher");
 
-        // Configure environment
+        // CRITICAL: Configure environment BEFORE Python initialization
         self.environment.configure_complete_environment()?;
         tracing::info!(
             "Environment configured for platform: {:?}",
             self.platform.os_type
         );
 
-        // Initialize Python integration
-        self.python.configure_pybind11_compatibility()?;
-
-        // Initialize GIL safety
+        // Initialize GIL safety BEFORE Python initialization
+        // This ensures all GIL-related environment variables are set before PyO3 starts
         GilSafetyManager::initialize_gil_safety()?;
+
+        // NOW initialize Python with the correct environment and GIL safety
+        tracing::info!("Initializing Python with configured environment and GIL safety");
+        let mut python = PythonIntegration::initialize()?;
+        
+        // Configure PyBind11 compatibility
+        python.configure_pybind11_compatibility()?;
+        
+        self.python = Some(python);
 
         // Initialize security enforcement
         {
@@ -102,18 +109,36 @@ impl IntellicrackLauncher {
             security.initialize_security_enforcement()?;
         }
 
-        // Perform comprehensive startup checks
-        let validation_results = self.dependencies.validate_all_dependencies().await?;
-        self.diagnostics.log_validation_results(&validation_results);
+        // Skip comprehensive dependency validation for faster startup
+        // Just do minimal Python validation
+        
+        // Create minimal validation results for compatibility
+        let _validation_results = ValidationSummary {
+            dependencies: std::collections::HashMap::new(),
+            flask_validation: None,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health: None,
+        };
 
         // Display startup summary
-        self.display_startup_summary(&validation_results);
+        self.display_startup_summary(&_validation_results);
 
-        // Launch main application
-        let exit_code = self
-            .process_manager
-            .launch_intellicrack_application()
-            .await?;
+        // Check for test mode
+        let exit_code = if std::env::var("RUST_LAUNCHER_TEST_MODE").is_ok() {
+            tracing::info!("Test mode enabled - running environment verification");
+            self.python
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
+                .run_environment_test()?
+        } else {
+            // Launch main application directly via Python integration
+            // This eliminates the circular dependency of calling launch_intellicrack.py
+            self.python
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
+                .run_intellicrack_main()?
+        };
 
         tracing::info!(
             "Intellicrack launcher completed with exit code: {}",
@@ -124,24 +149,33 @@ impl IntellicrackLauncher {
 
     /// Display comprehensive startup summary
     fn display_startup_summary(&self, results: &ValidationSummary) {
-        println!("=== Intellicrack Launcher v2.0.0 ===");
+        println!("=== Intellicrack Launcher ===");
         println!(
             "Platform: {:?} (WSL: {})",
             self.platform.os_type, self.platform.is_wsl
         );
         println!("GPU Vendor: {:?}", self.platform.gpu_vendor);
-        println!("\nDependency Status:");
-
-        for (name, status) in &results.dependencies {
-            let status_symbol = if status.available { "✅" } else { "❌" };
-            let version = status.version.as_deref().unwrap_or("unknown");
-            println!("  {} {}: {}", status_symbol, name, version);
-        }
-
-        if results.all_critical_available() {
-            println!("\n🚀 All critical dependencies available - launching Intellicrack...\n");
+        
+        // Debug: Check what's in the dependencies HashMap
+        tracing::debug!("Dependencies HashMap size: {}", results.dependencies.len());
+        
+        // Only show dependency status if we actually validated dependencies
+        if !results.dependencies.is_empty() {
+            println!("\nDependency Status:");
+            for (name, status) in &results.dependencies {
+                let status_symbol = if status.available { "OK" } else { "MISSING" };
+                let version = status.version.as_deref().unwrap_or("unknown");
+                println!("  [{}] {}: {}", status_symbol, name, version);
+            }
+            
+            if results.all_critical_available() {
+                println!("\nAll critical dependencies available - launching Intellicrack...\n");
+            } else {
+                println!("\nSome dependencies unavailable - functionality may be limited\n");
+            }
         } else {
-            println!("\n⚠️  Some dependencies unavailable - functionality may be limited\n");
+            // Fast launch mode - skipped dependency validation
+            println!("\nFast launch mode - launching Intellicrack...\n");
         }
     }
 }

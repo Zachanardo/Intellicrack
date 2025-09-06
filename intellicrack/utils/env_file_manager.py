@@ -48,7 +48,9 @@ class EnvFileManager:
             env_path_str = self.central_config.get("environment.env_file_path")
             if not env_path_str:
                 # Fall back to default path if not configured
-                env_path_str = "C:/Intellicrack/config/.env"
+                import intellicrack
+                root = Path(intellicrack.__file__).parent.parent
+                env_path_str = str(root / "config" / ".env")
                 # Store the default in central config for future use
                 self.central_config.set("environment.env_file_path", env_path_str)
             self.env_path = Path(env_path_str)

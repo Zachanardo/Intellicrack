@@ -136,40 +136,82 @@ class EntropyVisualizer(QWidget):
         return positions, entropy_values
 
     def load_data(self, data: bytes, block_size: int = 1024):
-        """Load binary data and calculate entropy."""
-        self.file_data = data
-        self.block_positions, self.entropy_data = self.calculate_entropy(data, block_size)
-        self.update_plot()
+        """Load binary data and calculate entropy with comprehensive error handling."""
+        try:
+            if not isinstance(data, bytes):
+                raise TypeError(f"Expected bytes data, got {type(data)}")
+
+            if not data:
+                raise ValueError("Cannot process empty data")
+
+            if block_size <= 0:
+                raise ValueError(f"Block size must be positive, got {block_size}")
+
+            if len(data) < block_size:
+                block_size = max(1, len(data) // 4)  # Adaptive block size for small files
+
+            self.file_data = data
+            self.block_positions, self.entropy_data = self.calculate_entropy(data, block_size)
+            self.update_plot()
+
+        except (TypeError, ValueError, MemoryError) as e:
+            error_msg = f"Error loading entropy data: {str(e)}"
+            self.info_label.setText(error_msg)
+            self.entropy_data = []
+            self.block_positions = []
+            self.entropy_curve.setData([], [])
 
     def update_plot(self):
-        """Update the entropy plot."""
-        if not self.entropy_data:
-            self.info_label.setText("No entropy data available")
-            return
+        """Update the entropy plot with comprehensive error handling."""
+        try:
+            if not self.entropy_data:
+                self.info_label.setText("No entropy data available")
+                return
 
-        # Update plot
-        self.entropy_curve.setData(self.block_positions, self.entropy_data)
+            if len(self.entropy_data) != len(self.block_positions):
+                raise ValueError("Mismatch between entropy data and position data")
 
-        # Calculate statistics
-        avg_entropy = np.mean(self.entropy_data)
-        max_entropy = np.max(self.entropy_data)
-        min_entropy = np.min(self.entropy_data)
+            # Update plot with validation
+            if hasattr(self, 'entropy_curve') and self.entropy_curve:
+                self.entropy_curve.setData(self.block_positions, self.entropy_data)
+            else:
+                raise AttributeError("Entropy curve not properly initialized")
 
-        # Identify interesting regions
-        high_entropy_blocks = sum(1 for e in self.entropy_data if e > 7.5)
-        low_entropy_blocks = sum(1 for e in self.entropy_data if e < 1.0)
+            # Calculate statistics with error handling
+            entropy_array = np.array(self.entropy_data)
+            if len(entropy_array) == 0:
+                raise ValueError("Empty entropy data array")
 
-        # Update info label
-        info_text = (
-            f"Average Entropy: {avg_entropy:.2f} | "
-            f"Min: {min_entropy:.2f} | Max: {max_entropy:.2f}\n"
-            f"High Entropy Blocks: {high_entropy_blocks} | "
-            f"Low Entropy Blocks: {low_entropy_blocks}"
-        )
-        self.info_label.setText(info_text)
+            avg_entropy = np.mean(entropy_array)
+            max_entropy = np.max(entropy_array)
+            min_entropy = np.min(entropy_array)
 
-        # Emit signal for other components
-        self.entropy_calculated.emit(self.block_positions, self.entropy_data)
+            # Validate calculated values
+            if np.isnan(avg_entropy) or np.isnan(max_entropy) or np.isnan(min_entropy):
+                raise ValueError("Invalid entropy calculations (NaN detected)")
+
+            # Identify interesting regions
+            high_entropy_blocks = sum(1 for e in self.entropy_data if e > 7.5)
+            low_entropy_blocks = sum(1 for e in self.entropy_data if e < 1.0)
+
+            # Update info label
+            info_text = (
+                f"Average Entropy: {avg_entropy:.2f} | "
+                f"Min: {min_entropy:.2f} | Max: {max_entropy:.2f}\n"
+                f"High Entropy Blocks: {high_entropy_blocks} | "
+                f"Low Entropy Blocks: {low_entropy_blocks}"
+            )
+            self.info_label.setText(info_text)
+
+            # Emit signal for other components
+            self.entropy_calculated.emit(self.block_positions, self.entropy_data)
+
+        except (ValueError, AttributeError, RuntimeError, TypeError) as e:
+            error_msg = f"Error updating entropy plot: {str(e)}"
+            self.info_label.setText(error_msg)
+            # Clear the plot on error
+            if hasattr(self, 'entropy_curve') and self.entropy_curve:
+                self.entropy_curve.setData([], [])
 
     def find_suspicious_regions(self) -> list[tuple]:
         """Find regions with suspicious entropy patterns."""

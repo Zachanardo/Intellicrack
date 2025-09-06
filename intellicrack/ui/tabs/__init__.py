@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 # Import tab classes using absolute imports
 try:
-    from intellicrack.ui.analysis_tab import AnalysisTab
+    from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 except ImportError:
     AnalysisTab = None
 

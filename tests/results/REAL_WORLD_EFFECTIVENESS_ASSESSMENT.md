@@ -108,7 +108,7 @@ Intellicrack contains genuine exploitation capabilities but would achieve limite
 
 ### Essential Missing Tools:
 1. **Symbolic Execution Engine** (angr, Triton)
-2. **Advanced Disassembler** (IDA Pro integration)
+2. **Advanced Disassembler** (enhanced analysis capabilities)
 3. **Automated Unpacker** (for Themida, VMProtect)
 4. **Kernel Driver** (for ring-0 operations)
 5. **License Server Emulator** (full protocol implementation)
@@ -127,7 +127,7 @@ Intellicrack contains genuine exploitation capabilities but would achieve limite
 1. Fix Radare2 integration or switch to Capstone/Unicorn
 2. Implement proper license server emulation
 3. Add VM-based protection analysis
-4. Integrate with IDA Pro for better disassembly
+4. Enhance disassembly capabilities
 
 ### Medium Priority:
 1. Add symbolic execution with angr

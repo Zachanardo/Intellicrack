@@ -1134,6 +1134,8 @@ import subprocess
 import sys
 from typing import Dict, List, Optional
 
+from intellicrack.utils.subprocess_security import secure_run
+
 class NetworkAnalysisPlugin:
     def __init__(self):
         self.name = "Network Analysis Plugin"
@@ -1259,9 +1261,9 @@ class NetworkAnalysisPlugin:
                 pid = self._get_process_pid(target_process)
                 if pid:
                     # Get connections for specific process
-                    cmd = f"lsof -i -n -P -p {pid}"
+                    cmd = ["lsof", "-i", "-n", "-P", "-p", str(pid)]
                     try:
-                        output = subprocess.check_output(cmd, shell=True, text=True)
+                        output = secure_run(cmd, capture_output=True, text=True).stdout
                         results.append(f"Network connections for PID {pid}:")
                         results.extend(output.strip().split('\n')[1:])  # Skip header
                     except subprocess.CalledProcessError as e:
@@ -1271,8 +1273,8 @@ class NetworkAnalysisPlugin:
 
             # Try to capture some traffic
             try:
-                cmd = "tcpdump -c 10 -n -i any"
-                output = subprocess.check_output(cmd, shell=True, text=True, timeout=5)
+                cmd = ["tcpdump", "-c", "10", "-n", "-i", "any"]
+                output = secure_run(cmd, capture_output=True, text=True, timeout=5).stdout
                 results.append("Captured traffic:")
                 results.extend(output.strip().split('\n'))
             except subprocess.TimeoutExpired:
@@ -1294,11 +1296,16 @@ class NetworkAnalysisPlugin:
             import subprocess
 
             if sys.platform == "win32":
-                cmd = "netstat -ano"
+                cmd = ["netstat", "-ano"]
+                output = secure_run(cmd, capture_output=True, text=True).stdout
             else:
-                cmd = "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null"
-
-            output = subprocess.check_output(cmd, shell=True, text=True)
+                # Try ss first, then fall back to netstat
+                try:
+                    cmd = ["ss", "-tunap"]
+                    output = secure_run(cmd, capture_output=True, text=True).stdout
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    cmd = ["netstat", "-tunap"]
+                    output = secure_run(cmd, capture_output=True, text=True).stdout
             lines = output.strip().split('\n')
 
             if target_process:
@@ -1331,14 +1338,14 @@ class NetworkAnalysisPlugin:
             try:
                 import subprocess
                 if sys.platform == "win32":
-                    cmd = f'wmic process where "name like \'%{process_name}%\'" get processid'
-                    output = subprocess.check_output(cmd, shell=True, text=True)
+                    cmd = ["wmic", "process", "where", f"name like '%{process_name}%'", "get", "processid"]
+                    output = secure_run(cmd, capture_output=True, text=True).stdout
                     lines = output.strip().split('\n')
                     if len(lines) > 1:
                         return int(lines[1].strip())
                 else:
-                    cmd = f"pgrep -f {process_name}"
-                    output = subprocess.check_output(cmd, shell=True, text=True)
+                    cmd = ["pgrep", "-f", process_name]
+                    output = secure_run(cmd, capture_output=True, text=True).stdout
                     return int(output.strip().split('\n')[0])
             except (subprocess.CalledProcessError, ValueError, IndexError) as e:
                 self.logger.debug(f"Failed to get PID for process '{process_name}': {e}")
@@ -1399,8 +1406,14 @@ class NetworkAnalysisPlugin:
         try:
             import subprocess
 
-            cmd = "netstat -tunap 2>/dev/null | grep -E 'tcp|udp'"
-            output = subprocess.check_output(cmd, shell=True, text=True)
+            # Run netstat and then filter for tcp/udp lines
+            netstat_cmd = ["netstat", "-tunap"]
+            netstat_result = secure_run(netstat_cmd, capture_output=True, text=True, stderr=subprocess.DEVNULL)
+
+            # Filter output for tcp/udp lines
+            lines = netstat_result.stdout.strip().split('\n')
+            filtered_lines = [line for line in lines if any(proto in line.lower() for proto in ['tcp', 'udp'])]
+            output = '\n'.join(filtered_lines)
 
             lines = output.strip().split('\n')
             results.append("Active connections:")

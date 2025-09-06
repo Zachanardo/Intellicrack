@@ -10,7 +10,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tracing::{debug, error, info, warn};
 
-use crate::platform::{OsType, PlatformInfo};
+use crate::platform::PlatformInfo;
 use crate::security::SecurityManager;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,17 +82,17 @@ pub struct ProcessManager {
 }
 
 #[derive(Debug, Clone)]
-struct WorkerInfo {
-    id: usize,
-    status: WorkerStatus,
-    current_task: Option<u32>,
-    processes_completed: usize,
-    total_execution_time: Duration,
-    last_activity: Instant,
+pub struct WorkerInfo {
+    pub id: usize,
+    pub status: WorkerStatus,
+    pub current_task: Option<u32>,
+    pub processes_completed: usize,
+    pub total_execution_time: Duration,
+    pub last_activity: Instant,
 }
 
 #[derive(Debug, Clone)]
-enum WorkerStatus {
+pub enum WorkerStatus {
     Idle,
     Busy,
     Failed,
@@ -100,14 +100,14 @@ enum WorkerStatus {
 }
 
 #[derive(Debug, Default)]
-struct ProcessStatistics {
-    total_processes: usize,
-    successful_processes: usize,
-    failed_processes: usize,
-    timed_out_processes: usize,
-    security_blocked_processes: usize,
-    total_execution_time: Duration,
-    average_execution_time: Duration,
+pub struct ProcessStatistics {
+    pub total_processes: usize,
+    pub successful_processes: usize,
+    pub failed_processes: usize,
+    pub timed_out_processes: usize,
+    pub security_blocked_processes: usize,
+    pub total_execution_time: Duration,
+    pub average_execution_time: Duration,
 }
 
 impl Default for ProcessConfig {
@@ -183,116 +183,21 @@ impl ProcessManager {
     }
 
     pub async fn launch_intellicrack_application(&mut self) -> Result<i32> {
-        info!("Launching Intellicrack application with sophisticated process management");
+        info!("Launching Intellicrack application directly via Python integration");
 
-        // Determine Python executable based on platform
-        let python_executable = match (&self.platform.os_type, self.platform.is_wsl) {
-            (OsType::Windows, false) => {
-                // Check for mamba environment first
-                let mamba_python = r"C:\Intellicrack\mamba_env\python.exe";
-                if Path::new(mamba_python).exists() {
-                    mamba_python.to_string()
-                } else {
-                    "python".to_string()
-                }
-            }
-            (OsType::Windows, true) => "python3".to_string(), // WSL
-            (OsType::Unix, _) => "python3".to_string(),       // Linux
-        };
-
-        info!("Using Python executable: {}", python_executable);
-
-        // Set up working directory
-        let working_dir = std::env::current_dir().context("Failed to get current directory")?;
-
-        // Launch the main application
-        let launch_script = working_dir.join("launch_intellicrack.py");
-
-        if !launch_script.exists() {
-            warn!("Launch script not found, trying main module");
-
-            // Try to launch via module
-            let process_id = self.execute_command(
-                &python_executable,
-                &["-m".to_string(), "intellicrack".to_string()],
-                Some(&working_dir),
-                Some(Duration::from_secs(300)), // 5 minute timeout for startup
-            )?;
-
-            info!(
-                "Intellicrack application launched as process {}",
-                process_id
-            );
-
-            // Wait for the application to complete or timeout
-            let result = self.wait_for_process(process_id)?;
-
-            match result.status {
-                ProcessStatus::Completed => {
-                    info!("Intellicrack application completed successfully");
-                    Ok(result.exit_code.unwrap_or(0))
-                }
-                ProcessStatus::Failed => {
-                    error!(
-                        "Intellicrack application failed with exit code: {:?}",
-                        result.exit_code
-                    );
-                    Ok(result.exit_code.unwrap_or(1))
-                }
-                ProcessStatus::Timeout => {
-                    error!("Intellicrack application timed out");
-                    Ok(124) // Standard timeout exit code
-                }
-                _ => {
-                    error!(
-                        "Intellicrack application ended with status: {:?}",
-                        result.status
-                    );
-                    Ok(1)
-                }
-            }
-        } else {
-            // Launch via script
-            let process_id = self.execute_command(
-                &python_executable,
-                &[launch_script.to_string_lossy().to_string()],
-                Some(&working_dir),
-                Some(Duration::from_secs(300)),
-            )?;
-
-            info!(
-                "Intellicrack application launched via script as process {}",
-                process_id
-            );
-
-            // Wait for the application
-            let result = self.wait_for_process(process_id)?;
-
-            match result.status {
-                ProcessStatus::Completed => {
-                    info!("Intellicrack application completed successfully");
-                    Ok(result.exit_code.unwrap_or(0))
-                }
-                ProcessStatus::Failed => {
-                    error!(
-                        "Intellicrack application failed with exit code: {:?}",
-                        result.exit_code
-                    );
-                    Ok(result.exit_code.unwrap_or(1))
-                }
-                ProcessStatus::Timeout => {
-                    error!("Intellicrack application timed out");
-                    Ok(124)
-                }
-                _ => {
-                    error!(
-                        "Intellicrack application ended with status: {:?}",
-                        result.status
-                    );
-                    Ok(1)
-                }
-            }
-        }
+        // We no longer need to spawn a separate Python process
+        // The Python integration module will handle running the main module directly
+        // This eliminates the circular dependency and runs the application in-process
+        
+        // Note: This method is now primarily for backward compatibility
+        // The actual execution happens via the Python integration module
+        // which is called from the main launcher
+        
+        warn!("ProcessManager::launch_intellicrack_application is deprecated");
+        warn!("Application should be launched via PythonIntegration::run_intellicrack_main");
+        
+        // Return success since the actual launch happens elsewhere
+        Ok(0)
     }
 
     pub fn execute_command<P: AsRef<Path>>(
@@ -330,7 +235,8 @@ impl ProcessManager {
             id
         };
 
-        info!("Starting process {}: {} {:?}", process_id, command, args);
+        info!("Starting process {} on {:?}: {} {:?}", 
+             process_id, self.platform.os_type, command, args);
 
         // Set up command
         let mut cmd = Command::new(command);
@@ -338,6 +244,18 @@ impl ProcessManager {
 
         if let Some(ref wd) = working_dir {
             cmd.current_dir(wd.as_ref());
+        }
+        
+        // Apply platform-specific command configuration
+        match self.platform.os_type {
+            crate::platform::OsType::Windows => {
+                // Windows-specific: ensure proper console handling
+                debug!("Configuring Windows process creation flags");
+            }
+            crate::platform::OsType::Unix => {
+                // Unix-specific: might need different signal handling
+                debug!("Configuring Unix process environment");
+            }
         }
 
         // Configure stdio based on config
@@ -400,6 +318,10 @@ impl ProcessManager {
             let mut processes = self.processes.lock().unwrap();
             processes.insert(process_id, managed_process);
         }
+        
+        // Assign worker and update status
+        let worker_id = (process_id as usize) % self.config.worker_pool_size;
+        self.update_worker_status(worker_id, WorkerStatus::Busy, Some(process_id));
 
         // Start monitoring threads
         if self.config.enable_stdout_capture || self.config.enable_stderr_capture {
@@ -505,12 +427,32 @@ impl ProcessManager {
         let processes_arc = Arc::clone(&self.processes);
         let stats_arc = Arc::clone(&self.process_stats);
         let shutdown_flag = Arc::clone(&self.shutdown_flag);
+        let workers_arc = Arc::clone(&self.worker_pool);
+        let worker_pool_size = self.config.worker_pool_size;
 
         let handle = thread::spawn(move || {
             let start_time = Instant::now();
+            let worker_id = (process_id as usize) % worker_pool_size;
+            
+            // Helper function to update worker status
+            let update_worker_status = |status: WorkerStatus, current_task: Option<u32>| {
+                if let Ok(mut workers) = workers_arc.lock() {
+                    if let Some(worker) = workers.get_mut(worker_id) {
+                        worker.status = status;
+                        worker.current_task = current_task;
+                        worker.last_activity = Instant::now();
+                        
+                        if current_task.is_none() && worker.current_task.is_some() {
+                            worker.processes_completed += 1;
+                        }
+                    }
+                }
+            };
 
             loop {
                 if *shutdown_flag.lock().unwrap() {
+                    // Update worker status to Shutdown when shutting down
+                    update_worker_status(WorkerStatus::Shutdown, None);
                     break;
                 }
 
@@ -528,9 +470,12 @@ impl ProcessManager {
                                         ProcessStatus::Failed
                                     };
 
+                                    let runtime = managed_process.start_time.elapsed();
                                     info!(
-                                        "Process {} finished with exit code: {:?}",
+                                        "Process {} (id: {}) finished after {:?} with exit code: {:?}",
                                         process_id,
+                                        managed_process.id,
+                                        runtime,
                                         exit_status.code()
                                     );
                                     (false, true)
@@ -588,6 +533,8 @@ impl ProcessManager {
                         stats.timed_out_processes += 1;
                     }
 
+                    // Update worker status to Failed due to timeout
+                    update_worker_status(WorkerStatus::Failed, None);
                     break;
                 } else if process_finished {
                     // Update statistics
@@ -612,6 +559,8 @@ impl ProcessManager {
                         }
                     }
 
+                    // Update worker status back to Idle when process completes
+                    update_worker_status(WorkerStatus::Idle, None);
                     break;
                 }
 
@@ -785,6 +734,20 @@ impl ProcessManager {
         let workers = self.worker_pool.lock().unwrap();
         workers.clone()
     }
+    
+    /// Update worker status based on process activity
+    fn update_worker_status(&self, worker_id: usize, new_status: WorkerStatus, current_task: Option<u32>) {
+        let mut workers = self.worker_pool.lock().unwrap();
+        if let Some(worker) = workers.get_mut(worker_id) {
+            worker.status = new_status;
+            worker.current_task = current_task;
+            worker.last_activity = Instant::now();
+            
+            if current_task.is_none() && worker.current_task.is_some() {
+                worker.processes_completed += 1;
+            }
+        }
+    }
 
     pub fn execute_python_subprocess(&self, script_path: &str, args: &[String]) -> Result<u32> {
         // Validate Python script execution through security manager
@@ -801,6 +764,11 @@ impl ProcessManager {
             match py.import("intellicrack.utils.runtime.runner_functions") {
                 Ok(runner_module) => {
                     debug!("Python runner module imported for subprocess execution");
+                    
+                    // Validate the runner module has expected functions
+                    if !runner_module.hasattr("run_subprocess")? {
+                        warn!("Runner module missing expected run_subprocess function");
+                    }
 
                     // Build command for Python execution
                     let python_command =

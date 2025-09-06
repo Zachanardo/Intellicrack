@@ -538,7 +538,7 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
         }
 
         safety_count = 0
-        for pattern, desc in safety_patterns.items():
+        for pattern, _desc in safety_patterns.items():
             safety_count += data.count(pattern)
 
         if safety_count > 0:

@@ -11,7 +11,9 @@ Licensed under GNU General Public License v3.0
 use crate::platform::{GpuVendor, OsType, PlatformInfo};
 use anyhow::Result;
 use std::env;
+use std::path::PathBuf;
 use tracing::{debug, info, warn};
+
 
 pub struct EnvironmentManager {
     platform: PlatformInfo,
@@ -32,6 +34,9 @@ impl EnvironmentManager {
             self.platform.os_type
         );
 
+        // CRITICAL: Activate mamba environment FIRST
+        self.activate_mamba_environment()?;
+
         // Intel GPU settings (from RUN_INTELLICRACK.bat)
         self.set_intel_gpu_environment()?;
 
@@ -46,6 +51,9 @@ impl EnvironmentManager {
 
         // Qt configuration (from main.py)
         self.set_qt_environment()?;
+
+        // PyTorch configuration (from launch_intellicrack.py)
+        self.set_pytorch_environment()?;
 
         // Platform-specific settings
         self.set_platform_specific_environment()?;
@@ -69,6 +77,11 @@ impl EnvironmentManager {
         env::set_var("QT_ANGLE_PLATFORM", "warp");
         env::set_var("QT_D3D_ADAPTER_INDEX", "1");
         env::set_var("QT_QUICK_BACKEND", "software");
+        
+        // Intel Extension for PyTorch settings
+        env::set_var("IPEX_ENABLE", "1");
+        env::set_var("INTEL_DISABLE_GPU", "0");
+        env::set_var("ZE_ENABLE_PCI_ID_DEVICE_ORDER", "1");
 
         // Set Qt platform (will be overridden by platform-specific config if needed)
         if self.platform.os_type == OsType::Windows && !self.platform.is_wsl {
@@ -193,13 +206,193 @@ impl EnvironmentManager {
     fn set_native_windows_environment(&self) -> Result<()> {
         debug!("Setting native Windows environment");
 
+        // CRITICAL: Configure DLL search paths FIRST for Ray and other native modules
+        self.configure_windows_dll_search_paths()?;
+
+        // Configure PATH for mamba environment (must be done early)
+        self.configure_mamba_path()?;
+
         // Windows-specific settings
         env::set_var("PYTHONIOENCODING", "utf-8");
 
         // Ensure Windows Unicode support
         env::set_var("PYTHONUTF8", "1");
+        
+        // Visual C++ runtime configuration
+        env::set_var("VCRUNTIME_REDIST_INSTALLED", "1");
+        
+        // Windows Error Reporting - disable for subprocess crashes
+        env::set_var("WINDOWS_TRACING_FLAGS", "3");
+        env::set_var("WINDOWS_TRACING_LOGFILE", r"C:\Intellicrack\logs\launcher.etl");
 
         info!("Native Windows environment configured");
+        Ok(())
+    }
+    
+    /// Configure Windows DLL search paths for native Python modules
+    #[cfg(target_os = "windows")]
+    fn configure_windows_dll_search_paths(&self) -> Result<()> {
+        debug!("Configuring Windows DLL search paths");
+        
+        // Critical DLL directories for Ray and other native modules
+        let dll_directories = vec![
+            r"C:\Intellicrack\mamba_env",
+            r"C:\Intellicrack\mamba_env\Library\bin",
+            r"C:\Intellicrack\mamba_env\DLLs",
+            r"C:\Intellicrack\mamba_env\Scripts",
+            r"C:\Intellicrack\mamba_env\Lib\site-packages\torchvision",
+            r"C:\Intellicrack\mamba_env\Lib\site-packages\h5py",
+        ];
+        
+        // First, ensure all directories are in the system PATH
+        let current_path = env::var("PATH").unwrap_or_default();
+        let mut path_parts: Vec<String> = Vec::new();
+        
+        for dir in &dll_directories {
+            let path_buf = std::path::PathBuf::from(dir);
+            if path_buf.exists() {
+                path_parts.push(dir.to_string());
+                debug!("Added to DLL search path: {}", dir);
+            }
+        }
+        
+        // Add existing PATH at the end
+        if !current_path.is_empty() {
+            path_parts.push(current_path);
+        }
+        
+        // Set the new PATH with DLL directories FIRST
+        let new_path = path_parts.join(";");
+        env::set_var("PATH", &new_path);
+        
+        info!("Configured Windows DLL search paths for {} directories", dll_directories.len());
+        Ok(())
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    fn configure_windows_dll_search_paths(&self) -> Result<()> {
+        // No-op on non-Windows platforms
+        Ok(())
+    }
+
+    /// Configure PATH environment variable for mamba environment
+    fn configure_mamba_path(&self) -> Result<()> {
+        let current_path = env::var("PATH").unwrap_or_default();
+        
+        // Build new PATH with launcher directory FIRST for DLL compatibility
+        let mut new_path_parts = Vec::new();
+        
+        // CRITICAL: Add launcher directory FIRST for _tkinter DLL loading
+        if let Ok(exe_path) = env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let launcher_dir = exe_dir.to_string_lossy().to_string();
+                new_path_parts.push(launcher_dir.clone());
+                info!("Added launcher directory to PATH first: {}", launcher_dir);
+            }
+        }
+        
+        // Mamba environment paths that need to be in PATH
+        let mamba_paths = vec![
+            r"C:\Intellicrack\mamba_env",
+            r"C:\Intellicrack\mamba_env\Scripts",
+            r"C:\Intellicrack\mamba_env\Library\bin",
+            r"C:\Intellicrack\mamba_env\Library\usr\bin",
+            r"C:\Intellicrack\mamba_env\Library\mingw64\bin",
+            r"C:\Intellicrack\mamba_env\Library\mingw-w64\bin",
+            r"C:\Intellicrack\mamba_env\DLLs",
+        ];
+        
+        // Add mamba paths after launcher directory
+        for mamba_path in mamba_paths {
+            let path_buf = std::path::PathBuf::from(mamba_path);
+            if path_buf.exists() {
+                new_path_parts.push(mamba_path.to_string());
+                debug!("Added to PATH: {}", mamba_path);
+            }
+        }
+        
+        // Add existing PATH last
+        if !current_path.is_empty() {
+            new_path_parts.push(current_path);
+        }
+        
+        let new_path = new_path_parts.join(";");
+        env::set_var("PATH", &new_path);
+        
+        info!("Configured PATH with launcher directory first + {} additional paths", 
+              new_path_parts.len() - 1); // -1 because existing PATH counts as 1
+        
+        Ok(())
+    }
+    
+    /// Properly activate mamba environment by setting all required environment variables
+    fn activate_mamba_environment(&self) -> Result<()> {
+        info!("Activating mamba environment");
+        
+        // Set CONDA environment variables for proper activation
+        env::set_var("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
+        env::set_var("CONDA_DEFAULT_ENV", "mamba_env");
+        env::set_var("CONDA_PYTHON_EXE", r"C:\Intellicrack\mamba_env\python.exe");
+        env::set_var("CONDA_SHLVL", "1");
+        env::set_var("CONDA_PROMPT_MODIFIER", "(mamba_env)");
+        env::set_var("CONDA_EXE", r"C:\Users\zachf\mambaforge\Scripts\conda.exe");
+        
+        // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
+        // This tells PyO3 where to find the Python runtime and standard library
+        env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+        
+        // Set PYTHONPATH to include both mamba site-packages and Intellicrack source
+        // This ensures all packages and local modules are importable
+        let pythonpath = format!(
+            r"C:\Intellicrack;C:\Intellicrack\mamba_env\Lib\site-packages"
+        );
+        env::set_var("PYTHONPATH", &pythonpath);
+        
+        // Set TCL/TK library paths for _tkinter functionality
+        // CRITICAL: Use launcher's bundled Tcl/Tk directories first for DLL compatibility
+        // This ensures main process and subprocess use the same libraries
+        
+        let mut tcl_set = false;
+        let mut tk_set = false;
+        
+        // FIRST: Try launcher directory (prioritized for DLL compatibility)
+        if let Ok(exe_path) = env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let launcher_tcl = exe_dir.join("tcl8.6");
+                let launcher_tk = exe_dir.join("tk8.6");
+                
+                if launcher_tcl.exists() {
+                    env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
+                    info!("Set TCL_LIBRARY to launcher directory: {}", launcher_tcl.display());
+                    tcl_set = true;
+                }
+                
+                if launcher_tk.exists() {
+                    env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
+                    info!("Set TK_LIBRARY to launcher directory: {}", launcher_tk.display());
+                    tk_set = true;
+                }
+            }
+        }
+        
+        // FALLBACK: Use mamba environment paths only if launcher paths don't exist
+        if !tcl_set {
+            let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
+            if tcl_lib_path.exists() {
+                env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
+                info!("Set TCL_LIBRARY to mamba fallback: {}", tcl_lib_path.display());
+            }
+        }
+        
+        if !tk_set {
+            let tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
+            if tk_lib_path.exists() {
+                env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
+                info!("Set TK_LIBRARY to mamba fallback: {}", tk_lib_path.display());
+            }
+        }
+        
+        info!("Mamba environment activated successfully");
         Ok(())
     }
 

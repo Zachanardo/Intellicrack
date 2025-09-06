@@ -657,8 +657,8 @@ const DynamicScriptGenerator = {
     },
 
     scanModuleForStrings: function(module, analysis) {
-        // This is a simplified string scanning implementation
-        // In practice, you'd want more sophisticated string extraction
+        // Comprehensive string scanning implementation
+        // Scans module memory for protection keywords and URL patterns
 
         var protectionKeywords = [
             'debugger', 'cracked', 'patched', 'tampered', 'license', 'trial',
@@ -669,20 +669,121 @@ const DynamicScriptGenerator = {
             'http://', 'https://', 'ftp://', 'license-server', 'activation'
         ];
 
-        // Simulate string scanning
-        for (var i = 0; i < protectionKeywords.length; i++) {
-            var keyword = protectionKeywords[i];
+        // Scan module memory sections for protection strings
+        try {
+            // Get module memory ranges
+            var ranges = Process.enumerateRangesSync({
+                protection: 'r--',
+                coalesce: false
+            }).filter(function(range) {
+                return range.file && range.file.path && 
+                       range.file.path.toLowerCase().indexOf(module.name.toLowerCase()) !== -1;
+            });
 
-            // In real implementation, you'd scan the module's memory sections
-            // For now, we'll add some simulated findings
-            if (Math.random() > 0.7) {
-                analysis.protectionStrings.push({
-                    string: keyword,
-                    module: module.name,
-                    address: ptr(module.base).add(Math.floor(Math.random() * 0x1000)),
-                    context: 'simulated_detection'
-                });
+            for (var r = 0; r < ranges.length; r++) {
+                var range = ranges[r];
+                
+                for (var i = 0; i < protectionKeywords.length; i++) {
+                    var keyword = protectionKeywords[i];
+                    var keywordBytes = Memory.allocUtf8String(keyword);
+                    
+                    try {
+                        // Scan for ASCII strings
+                        var matches = Memory.scanSync(range.base, range.size, 
+                            Memory.readByteArray(keywordBytes, keyword.length));
+                        
+                        for (var m = 0; m < matches.length; m++) {
+                            var match = matches[m];
+                            // Verify it's a complete string (not part of larger data)
+                            var context = '';
+                            try {
+                                var beforeByte = match.address.sub(1).readU8();
+                                var afterByte = match.address.add(keyword.length).readU8();
+                                if ((beforeByte === 0 || beforeByte < 32) && 
+                                    (afterByte === 0 || afterByte < 32)) {
+                                    context = 'string_table';
+                                } else {
+                                    context = 'embedded_data';
+                                }
+                            } catch(e) {
+                                context = 'memory_boundary';
+                            }
+                            
+                            analysis.protectionStrings.push({
+                                string: keyword,
+                                module: module.name,
+                                address: match.address,
+                                context: context,
+                                range: range.protection
+                            });
+                        }
+                        
+                        // Also scan for wide character (UTF-16) version
+                        var widePattern = [];
+                        for (var c = 0; c < keyword.length; c++) {
+                            widePattern.push(keyword.charCodeAt(c));
+                            widePattern.push(0);
+                        }
+                        
+                        var wideMatches = Memory.scanSync(range.base, range.size, widePattern);
+                        for (var wm = 0; wm < wideMatches.length; wm++) {
+                            var wideMatch = wideMatches[wm];
+                            analysis.protectionStrings.push({
+                                string: keyword,
+                                module: module.name,
+                                address: wideMatch.address,
+                                context: 'wide_string',
+                                range: range.protection
+                            });
+                        }
+                        
+                    } catch(scanError) {
+                        // Continue scanning other keywords even if one fails
+                        continue;
+                    }
+                }
+                
+                // Scan for URL patterns in this range
+                for (var u = 0; u < urlPatterns.length; u++) {
+                    var urlPattern = urlPatterns[u];
+                    var urlBytes = Memory.allocUtf8String(urlPattern);
+                    
+                    try {
+                        var urlMatches = Memory.scanSync(range.base, range.size,
+                            Memory.readByteArray(urlBytes, urlPattern.length));
+                            
+                        for (var um = 0; um < urlMatches.length; um++) {
+                            var urlMatch = urlMatches[um];
+                            // Try to read more context around URL
+                            var fullUrl = '';
+                            try {
+                                fullUrl = urlMatch.address.readCString(128);
+                            } catch(e) {
+                                fullUrl = urlPattern;
+                            }
+                            
+                            analysis.protectionStrings.push({
+                                string: fullUrl,
+                                module: module.name,
+                                address: urlMatch.address,
+                                context: 'url_reference',
+                                range: range.protection
+                            });
+                        }
+                    } catch(urlScanError) {
+                        continue;
+                    }
+                }
             }
+        } catch(moduleError) {
+            // Log error but don't fail the entire analysis
+            send({
+                type: 'error',
+                target: 'dynamic_script_generator',
+                action: 'string_scan_error',
+                module: module.name,
+                error: moduleError.toString()
+            });
         }
     },
 
@@ -4462,7 +4563,7 @@ const DynamicScriptGenerator = {
                     static_analysis_countermeasures: {
                         countermeasures: ['disassembly_confusion', 'string_encryption', 'import_hiding'],
                         analysis_misdirection: ['fake_functions', 'dead_code_insertion', 'complexity_inflation'],
-                        tool_specific_defenses: ['ida_pro', 'ghidra', 'radare2', 'binary_ninja']
+                        tool_specific_defenses: ['ghidra', 'radare2', 'binary_ninja']
                     },
                     symbolic_execution_barriers: {
                         barriers: ['path_explosion', 'constraint_complexity', 'solver_timeouts'],

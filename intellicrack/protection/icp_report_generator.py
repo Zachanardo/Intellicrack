@@ -389,7 +389,7 @@ class ICPReportGenerator:
                 {
                     "title": "License Analysis",
                     "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
-                    "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"],
+                    "tools": ["Ghidra", "API Monitor", "WinAPIOverride"],
                 }
             )
 

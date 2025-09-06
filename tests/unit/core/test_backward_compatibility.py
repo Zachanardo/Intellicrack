@@ -295,7 +295,8 @@ class TestBackwardCompatibility(unittest.TestCase):
         class MockFontManager:
             def __init__(self):
                 self.config = get_config()
-                self.fonts_dir = "C:\\Intellicrack\\assets\\fonts"
+                from intellicrack.utils.resource_helper import get_resource_path
+                self.fonts_dir = get_resource_path("assets/fonts")
                 self.loaded_fonts = []
 
             def _load_config(self):

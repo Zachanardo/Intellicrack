@@ -1603,7 +1603,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
     def _recommend_analysis_tools(self, analysis: dict) -> list[str]:
         """Recommend tools based on binary analysis."""
-        tools = ["IDA Pro", "Ghidra", "x64dbg"]
+        tools = ["Ghidra", "x64dbg", "Radare2"]
 
         if analysis.get("likely_packed"):
             tools.append("UPX Unpacker")

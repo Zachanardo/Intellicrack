@@ -525,7 +525,6 @@ def detect_anti_debugging_techniques(binary_path: str) -> dict[str, Any]:
         # Anti-debugging strings and indicators
         debug_strings = [
             b"debugger",
-            b"IDA",
             b"OllyDbg",
             b"x64dbg",
             b"WinDbg",

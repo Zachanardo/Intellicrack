@@ -114,24 +114,6 @@ def _get_tool_search_paths(tool_name: str) -> list[str]:
                 ]
             )
 
-    elif tool_name.lower() == "ida" or tool_name.lower() == "ida64":
-        if system == "windows":
-            paths.extend(
-                [
-                    r"C:\Program Files\IDA Pro 7.7\ida64.exe",
-                    r"C:\Program Files\IDA Pro 7.6\ida64.exe",
-                    r"C:\Program Files\IDA Pro 7.5\ida64.exe",
-                    r"C:\Program Files (x86)\IDA Pro 7.7\ida64.exe",
-                    r"C:\IDA Pro\ida64.exe",
-                ]
-            )
-        else:
-            paths.extend(
-                [
-                    "/opt/ida/ida64",
-                    "/usr/local/ida/ida64",
-                ]
-            )
 
     elif tool_name.lower() == "x64dbg":
         if system == "windows":
@@ -229,8 +211,6 @@ def find_all_tools() -> dict[str, str | None]:
     tools = [
         "ghidra",
         "radare2",
-        "ida",
-        "ida64",
         "x64dbg",
         "ollydbg",
         "windbg",
