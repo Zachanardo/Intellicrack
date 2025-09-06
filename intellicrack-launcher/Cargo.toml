@@ -27,12 +27,12 @@ name = "process_benchmarks"
 harness = false
 
 [build-dependencies]
-pyo3-build-config = "0.20"
+pyo3-build-config = "0.26"
 embed-resource = "2.4"
 
 [dependencies]
 # Python Integration
-pyo3 = { version = "0.20", features = ["auto-initialize"] }
+pyo3 = { version = "0.26", features = ["auto-initialize"] }
 libloading = "0.8"
 
 # System Integration
