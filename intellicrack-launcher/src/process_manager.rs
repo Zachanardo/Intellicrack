@@ -359,13 +359,11 @@ impl ProcessManager {
                             if config.enable_stdout_capture {
                                 if let Some(stdout) = child.stdout.as_mut() {
                                     let reader = BufReader::new(stdout);
-                                    for line_result in reader.lines() {
-                                        if let Ok(line) = line_result {
-                                            if config.log_process_output {
-                                                debug!("Process {} stdout: {}", process_id, line);
-                                            }
-                                            managed_process.info.stdout_lines.push(line);
+                                    for line in reader.lines().map_while(Result::ok) {
+                                        if config.log_process_output {
+                                            debug!("Process {} stdout: {}", process_id, line);
                                         }
+                                        managed_process.info.stdout_lines.push(line);
                                     }
                                 }
                             }
@@ -374,13 +372,11 @@ impl ProcessManager {
                             if config.enable_stderr_capture {
                                 if let Some(stderr) = child.stderr.as_mut() {
                                     let reader = BufReader::new(stderr);
-                                    for line_result in reader.lines() {
-                                        if let Ok(line) = line_result {
-                                            if config.log_process_output {
-                                                debug!("Process {} stderr: {}", process_id, line);
-                                            }
-                                            managed_process.info.stderr_lines.push(line);
+                                    for line in reader.lines().map_while(Result::ok) {
+                                        if config.log_process_output {
+                                            debug!("Process {} stderr: {}", process_id, line);
                                         }
+                                        managed_process.info.stderr_lines.push(line);
                                     }
                                 }
                             }

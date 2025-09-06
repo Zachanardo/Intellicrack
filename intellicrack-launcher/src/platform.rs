@@ -145,7 +145,7 @@ impl PlatformInfo {
 
         // Use WMIC to query display adapters
         let output = Command::new("wmic")
-            .args(&["path", "win32_VideoController", "get", "name"])
+            .args(["path", "win32_VideoController", "get", "name"])
             .output()
             .context("Failed to run wmic command")?;
 
@@ -186,7 +186,7 @@ impl PlatformInfo {
         // On Windows, assume display is available unless explicitly set to offscreen
         #[cfg(target_os = "windows")]
         {
-            return true;
+            true
         }
 
         #[cfg(not(target_os = "windows"))]

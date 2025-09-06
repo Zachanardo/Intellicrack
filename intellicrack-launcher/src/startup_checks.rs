@@ -828,7 +828,7 @@ impl StartupValidator {
         #[cfg(windows)]
         {
             match Command::new("wmic")
-                .args(&["computersystem", "get", "TotalPhysicalMemory", "/value"])
+                .args(["computersystem", "get", "TotalPhysicalMemory", "/value"])
                 .output()
                 .await
             {
@@ -886,7 +886,7 @@ impl StartupValidator {
                 .and_then(|root| root.to_str())
                 .unwrap_or("C:");
 
-            match Command::new("dir").args(&[drive, "/-c"]).output().await {
+            match Command::new("dir").args([drive, "/-c"]).output().await {
                 Ok(output) if output.status.success() => {
                     let output_str = String::from_utf8_lossy(&output.stdout);
                     for line in output_str.lines() {
@@ -970,8 +970,8 @@ impl StartupValidator {
             Command::new(command).arg("--help").output(),
         )
         .await
-        .map_or(false, |result| {
-            result.map_or(false, |output| output.status.success())
+        .is_ok_and(|result| {
+            result.is_ok_and(|output| output.status.success())
         })
     }
 
@@ -980,7 +980,7 @@ impl StartupValidator {
         match timeout(
             Duration::from_secs(5),
             Command::new("ping")
-                .args(&["-c", "1", "8.8.8.8"]) // Linux/macOS
+                .args(["-c", "1", "8.8.8.8"]) // Linux/macOS
                 .output(),
         )
         .await
@@ -991,7 +991,7 @@ impl StartupValidator {
                 match timeout(
                     Duration::from_secs(5),
                     Command::new("ping")
-                        .args(&["-n", "1", "8.8.8.8"]) // Windows
+                        .args(["-n", "1", "8.8.8.8"]) // Windows
                         .output(),
                 )
                 .await
@@ -1007,7 +1007,7 @@ impl StartupValidator {
         #[cfg(windows)]
         {
             // On Windows, check if running as administrator
-            match Command::new("net").args(&["session"]).output().await {
+            match Command::new("net").args(["session"]).output().await {
                 Ok(output) => output.status.success(),
                 Err(_) => false,
             }
@@ -1053,7 +1053,7 @@ impl StartupValidator {
             Command::new("tasklist")
                 .output()
                 .await
-                .map_or(false, |output| output.status.success())
+                .is_ok_and(|output| output.status.success())
         }
 
         #[cfg(unix)]

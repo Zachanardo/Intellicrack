@@ -189,7 +189,7 @@ impl GilSafetyManager {
 
             let thread_check_available = py
                 .import("sys")
-                .and_then(|sys| Ok(sys.hasattr("setcheckinterval")?))
+                .and_then(|sys| sys.hasattr("setcheckinterval"))
                 .unwrap_or(false);
 
             let torch_gil_available = py.import("intellicrack.utils.torch_gil_safety").is_ok();

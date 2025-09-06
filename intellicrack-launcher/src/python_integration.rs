@@ -418,10 +418,8 @@ impl PythonIntegration {
                 let python_lib_bin_dir = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\bin");
                 
                 // Build PATH: launcher_dir;mamba_env\DLLs;mamba_env;mamba_env\Library\bin;system_path
-                let mut final_path = String::new();
-                
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
-                final_path = exe_dir_str.to_string();
+                let mut final_path = exe_dir_str.to_string();
                 info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
                 
                 // Add Python DLLs directory for Python extension modules

@@ -116,11 +116,11 @@ impl FlaskValidator {
                 }
 
                 // If we reach here, Flask is installed but some functionality failed
-                return Ok(DependencyStatus {
+                Ok(DependencyStatus {
                     available: true,
                     version: Some(version),
                     details,
-                });
+                })
             }
             Err(e) => {
                 warn!("Flask not available or version detection failed: {}", e);
@@ -129,11 +129,11 @@ impl FlaskValidator {
                     serde_json::Value::String(e.to_string()),
                 );
 
-                return Ok(DependencyStatus {
+                Ok(DependencyStatus {
                     available: false,
                     version: None,
                     details,
-                });
+                })
             }
         }
     }
@@ -145,7 +145,7 @@ impl FlaskValidator {
         let python_commands = vec!["python", "python3", "py"];
 
         for cmd in python_commands {
-            let output = Command::new(cmd).args(&["--version"]).output();
+            let output = Command::new(cmd).args(["--version"]).output();
 
             match output {
                 Ok(result) => {
@@ -187,7 +187,7 @@ except Exception as e:
         let python_commands = vec!["python", "python3", "py"];
 
         for cmd in python_commands {
-            let output = Command::new(cmd).args(&["-c", python_code]).output();
+            let output = Command::new(cmd).args(["-c", python_code]).output();
 
             match output {
                 Ok(result) => {
@@ -268,7 +268,7 @@ except Exception as e:
         let python_commands = vec!["python", "python3", "py"];
 
         for cmd in python_commands {
-            let output = Command::new(cmd).args(&["-c", python_code]).output();
+            let output = Command::new(cmd).args(["-c", python_code]).output();
 
             match output {
                 Ok(result) => {
@@ -347,7 +347,7 @@ except Exception as e:
         let python_commands = vec!["python", "python3", "py"];
 
         for cmd in python_commands {
-            let output = Command::new(cmd).args(&["-c", python_code]).output();
+            let output = Command::new(cmd).args(["-c", python_code]).output();
 
             match output {
                 Ok(result) => {
@@ -457,7 +457,7 @@ except Exception as e:
         let python_commands = vec!["python", "python3", "py"];
 
         for cmd in python_commands {
-            let output = Command::new(cmd).args(&["-c", python_code]).output();
+            let output = Command::new(cmd).args(["-c", python_code]).output();
 
             match output {
                 Ok(result) => {

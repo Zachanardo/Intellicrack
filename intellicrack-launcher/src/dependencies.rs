@@ -67,7 +67,7 @@ impl ValidationSummary {
         critical_deps.iter().all(|dep| {
             self.dependencies
                 .get(*dep)
-                .map_or(false, |status| status.available)
+                .is_some_and(|status| status.available)
         })
     }
 
@@ -401,7 +401,7 @@ impl DependencyValidator {
     fn is_dependency_available(&self, name: &str) -> bool {
         self.results
             .get(name)
-            .map_or(false, |status| status.available)
+            .is_some_and(|status| status.available)
     }
 
     async fn validate_flask_server(&self) -> Result<FlaskValidationResult> {
@@ -609,11 +609,10 @@ impl DependencyValidator {
 
                     // Test parameter modification
                     if let Ok(original_ctx) = params.getattr("n_ctx") {
-                        if params.setattr("n_ctx", 1024).is_ok() {
-                            if params.setattr("n_ctx", original_ctx).is_ok() {
+                        if params.setattr("n_ctx", 1024).is_ok()
+                            && params.setattr("n_ctx", original_ctx).is_ok() {
                                 params_modifiable = true;
                             }
-                        }
                     }
                 }
             }

@@ -93,7 +93,7 @@ impl PerformanceMetrics {
             use std::process::Command;
 
             let output = Command::new("powershell")
-                .args(&[
+                .args([
                     "-Command",
                     "Get-Process -Id $PID | Select-Object -ExpandProperty WorkingSet",
                 ])
@@ -136,7 +136,7 @@ impl PerformanceMetrics {
             use std::process::Command;
 
             let output = Command::new("powershell")
-                .args(&["-Command", "Get-Counter \"\\Processor(_Total)\\% Processor Time\" | Select-Object -ExpandProperty CounterSamples | Select-Object -ExpandProperty CookedValue"])
+                .args(["-Command", "Get-Counter \"\\Processor(_Total)\\% Processor Time\" | Select-Object -ExpandProperty CounterSamples | Select-Object -ExpandProperty CookedValue"])
                 .output()?;
 
             if output.status.success() {
@@ -216,7 +216,7 @@ impl PerformanceMetrics {
             use std::process::Command;
 
             let output = Command::new("powershell")
-                .args(&["-Command", "Get-Process -Id $PID | Select-Object -ExpandProperty Threads | Measure-Object | Select-Object -ExpandProperty Count"])
+                .args(["-Command", "Get-Process -Id $PID | Select-Object -ExpandProperty Threads | Measure-Object | Select-Object -ExpandProperty Count"])
                 .output()?;
 
             if output.status.success() {
@@ -254,7 +254,7 @@ impl PerformanceMetrics {
             use std::process::Command;
 
             let output = Command::new("powershell")
-                .args(&[
+                .args([
                     "-Command",
                     "Get-Process | Measure-Object | Select-Object -ExpandProperty Count",
                 ])
@@ -293,7 +293,7 @@ impl PerformanceMetrics {
             use std::process::Command;
 
             let output = Command::new("powershell")
-                .args(&["-Command", "(Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime | Select-Object -ExpandProperty TotalHours"])
+                .args(["-Command", "(Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime | Select-Object -ExpandProperty TotalHours"])
                 .output()?;
 
             if output.status.success() {
@@ -330,7 +330,7 @@ impl PerformanceMetrics {
         #[cfg(windows)]
         {
             let output = Command::new("ping")
-                .args(&["-n", "1", "8.8.8.8"])
+                .args(["-n", "1", "8.8.8.8"])
                 .output()?;
 
             if output.status.success() {
@@ -786,7 +786,7 @@ impl DiagnosticsManager {
         report.push_str(&format!("Errors: {}\n", error_count));
         report.push_str(&format!("Warnings: {}\n", warning_count));
         report.push_str(&format!("Info: {}\n", info_count));
-        report.push_str("\n");
+        report.push('\n');
         report.push_str(&self.metrics.format_summary());
         report.push_str("\n\n=== RECENT ENTRIES ===\n");
 

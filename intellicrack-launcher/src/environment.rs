@@ -343,9 +343,7 @@ impl EnvironmentManager {
         
         // Set PYTHONPATH to include both mamba site-packages and Intellicrack source
         // This ensures all packages and local modules are importable
-        let pythonpath = format!(
-            r"C:\Intellicrack;C:\Intellicrack\mamba_env\Lib\site-packages"
-        );
+        let pythonpath = r"C:\Intellicrack;C:\Intellicrack\mamba_env\Lib\site-packages".to_string();
         env::set_var("PYTHONPATH", &pythonpath);
         
         // Set TCL/TK library paths for _tkinter functionality
