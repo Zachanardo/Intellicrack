@@ -56,7 +56,7 @@ Scratchpad format you must maintain:
 
 FIX STANDARDS:
 ALLOWED: Import organization, style fixes, type annotations, docstrings, security fixes, verified dead code removal
-FORBIDDEN: Automated scripts, code deletion without approval, disable comments, functionality changes, performance degradation >5%
+FORBIDDEN: Automated scripts, code deletion without approval, unused import or unused code deletion(provide implementation instead)
 
 SAFETY CHECKPOINTS:
 - Create rollback points: Before session, before critical fixes, every 10 files

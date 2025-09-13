@@ -8,7 +8,6 @@ NO mocked components - validates actual hex display and navigation.
 import pytest
 import tempfile
 import os
-from unittest.mock import patch, MagicMock
 from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
 from intellicrack.ui.dialogs.common_imports import QTest, Qt
 

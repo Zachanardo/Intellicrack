@@ -1,140 +1,127 @@
-# Intellicrack CLI - Complete Command Line Interface
+# Intellicrack CLI
 
-This directory contains the comprehensive command-line interface for Intellicrack, providing access to **ALL 78 features** through command-line arguments.
+This directory contains the command-line interface for Intellicrack, providing access to analysis, exploitation, and AI-powered features through terminal commands.
 
 ## Quick Start
 
 ```bash
-# Basic analysis
-python intellicrack/cli/main.py binary.exe
+# Run the CLI
+python cli/cli.py --help
 
-# Comprehensive analysis
-python intellicrack/cli/main.py binary.exe --comprehensive
+# Scan for vulnerabilities
+python cli/cli.py scan binary.exe --vulns
 
-# Full help with all commands
-python intellicrack/cli/main.py --help
+# Extract strings from binary
+python cli/cli.py strings binary.exe --min-length 4
 
-# Category-specific help
-python intellicrack/cli/main.py --help-category analysis
+# Generate payload
+python cli/cli.py payload generate --type reverse_shell --arch x64 --lhost 192.168.1.100 --lport 4444
+
+# Analyze binary
+python cli/cli.py analyze binary.exe --deep
 ```
+
+## Available Commands
+
+### Core Commands
+- `scan`: Perform vulnerability scanning on binaries
+- `strings`: Extract strings from binary files
+- `analyze`: Comprehensive binary analysis
+- `basic-analyze`: Basic binary analysis with AI integration
+- `patch`: Apply patches to binary files
+
+### Payload Generation
+- `payload generate`: Generate various types of payloads
+- `payload list-templates`: List available payload templates
+- `payload from-template`: Generate payload from template
+
+### Command and Control
+- `c2 server`: Start C2 server
+- `c2 client`: Start C2 client/agent
+- `c2 exec`: Execute commands on remote sessions
+- `c2 status`: Show C2 server status
+
+### Exploitation
+- `exploit`: Exploit target binaries or services
+
+### Advanced Features
+- `advanced payload`: Advanced payload generation with evasion
+- `advanced c2`: Advanced C2 server configuration
+- `advanced research`: Vulnerability research campaigns
+- `advanced post-exploit`: Post-exploitation operations
+- `advanced auto-exploit`: Automated exploitation workflow
+
+### AI Commands
+- `ai generate`: Generate AI scripts for binary analysis
+- `ai test`: Test generated scripts in safe environments
+- `ai analyze`: AI-powered binary analysis
+- `ai autonomous`: Run autonomous AI workflows
+- `ai save-session`: Save AI session data
+- `ai reset`: Reset AI agent state
+- `ai task`: Execute specific AI tasks
 
 ## File Structure
 
 ```
-intellicrack/cli/
-├── main.py              # Main CLI script with all 78 features
-├── README.md            # This file
-├── commands.md          # Complete command reference
-├── examples.md          # Usage examples and workflows
-├── interactive.py       # Interactive mode (coming soon)
-├── completion.sh        # Bash completion script (coming soon)
-└── templates/           # Analysis templates (coming soon)
-    ├── bypass.json
-    ├── license.json
-    └── network.json
+cli/
+├── __init__.py
+├── cli.py                    # Main CLI interface
+├── analysis_cli.py           # Analysis-specific CLI functions
+├── ai_chat_interface.py      # AI chat interface
+├── ai_integration.py         # AI integration utilities
+├── ai_wrapper.py             # AI functionality wrapper
+├── ascii_charts.py           # ASCII chart generation
+├── CLI_ENHANCEMENTS_DEMO.md  # CLI enhancement documentation
+├── cli.py
+├── config_manager.py         # Configuration management
+├── config_profiles.py        # Configuration profiles
+├── enhanced_runner.py        # Enhanced execution runner
+├── examples.md               # Usage examples
+├── hex_viewer_cli.py         # Hex viewer for CLI
+├── interactive_mode.py       # Interactive CLI mode
+├── pipeline.py               # Command pipeline support
+├── progress_manager.py       # Progress tracking
+├── project_manager.py        # Project management
+├── README.md                 # This file
+├── terminal_dashboard.py     # Terminal dashboard
+└── tutorial_system.py        # Tutorial system
 ```
 
-## Complete Feature Coverage
+## Key Features
 
-The CLI provides access to every single Intellicrack feature through command-line arguments:
+### Binary Analysis
+- Static and dynamic analysis
+- Vulnerability detection
+- Protection mechanism identification
+- String extraction and analysis
 
-#### **Core Analysis Capabilities (15 features)**
-1. `--skip-basic` / default: Static Binary Analysis (PE, ELF, Mach-O)
-2. `--comprehensive`: Dynamic Runtime Analysis (Subprocess & Frida)
-3. `--multi-format`: Multi-Format Binary Parsing & Manipulation (LIEF)
-4. `--license-analysis`: Deep License Logic Analysis & Pattern Recognition
-5. `--frida-script`: Deep Runtime Monitoring & API Hooking
-6. `--cfg-analysis`: Control Flow Graph Generation & Analysis
-7. `--symbolic-execution`: Symbolic Execution for Path Exploration (Angr)
-8. `--concolic-execution`: Concolic Execution for Precise Path Finding (Manticore)
-9. `--rop-gadgets`: ROP Chain Generation & Analysis (ROPgadget)
-10. `--taint-analysis`: Taint Analysis for Data Flow Tracking
-11. `--distributed`: Distributed Analysis Processing for Large Binaries
-12. `--gpu-accelerate`: GPU-Accelerated Analysis
-13. `--incremental`: Incremental Analysis Caching System
-14. `--memory-optimized`: Memory-Optimized Loading for Very Large Binaries
-15. `--qemu-emulate`: Full System Emulation (QEMU Integration)
+### Payload Generation
+- Multiple payload types (reverse shell, bind shell, etc.)
+- Cross-platform support (x86, x64, ARM, ARM64)
+- Encoding options (XOR, polymorphic, etc.)
+- Template-based generation
 
-#### **Advanced Vulnerability & Protection Detection (12 features)**
-16. `--import-export`: Import/Export Table Analysis
-17. `--section-analysis`: Section Analysis (Entropy, Permissions, Unusual Names)
-18. `--weak-crypto`: Weak Cryptography Detection
-19. `--license-analysis`: License Weakness Detection
-20. `--detect-packing`: Obfuscation Detection (Packing, High Entropy)
-21. `--comprehensive`: Self-Healing Code Detection
-22. `--comprehensive`: Integrity/Checksum Verification Detection
-23. `--commercial-protections`: Commercial Protection System Recognition
-24. `--comprehensive`: Hardware Dongle Detection
-25. `--comprehensive`: TPM Protection Usage Detection
-26. `--bypass-vm-detection`: Virtualization/Container/Sandbox Detection
-27. `--anti-debug`: Anti-Debugger Technique Detection
+### Command & Control
+- Multi-protocol C2 server (HTTPS, DNS, TCP)
+- Session management
+- Remote command execution
+- Encrypted communications
 
-#### **Patching and Exploitation (8 features)**
-28. `--suggest-patches`: Automated Patch Planning and Application
-29. `--comprehensive`: AI-Driven Patching
-30. `--apply-patch`: Static File Patching with Backups
-31. `--memory-patch`: Memory Patching for Protected Binaries
-32. `--generate-payload`: Runtime Patching Fallback (Frida-based)
-33. `--generate-payload`: Automated Exploit Strategy Generation
-34. `--generate-payload`: Advanced Payload Generation
-35. `--comprehensive`: Patch Simulation and Verification
+### AI Integration
+- Automated script generation (Frida, Ghidra)
+- Intelligent binary analysis
+- Autonomous workflows
+- Session persistence
 
-#### **Network and Protocol Analysis (6 features)**
-36. `--network-capture`: Network Traffic Analysis & Capture
-37. `--protocol-fingerprint`: Protocol Fingerprinting with Learning Mode
-38. `--comprehensive`: Network License Server Emulation
-39. `--comprehensive`: Cloud License Verification Interception
-40. `--ssl-intercept`: SSL/TLS Interception for Encrypted Traffic
-41. `--comprehensive`: Comprehensive Network API Hooking
+## Requirements
 
-#### **Protection Bypass Capabilities (8 features)**
-42. `--emulate-dongle`: Hardware Dongle Emulation
-43. `--bypass-tpm`: TPM Protection Bypass Strategies
-44. `--bypass-vm-detection`: Virtualization/Container Detection Bypass
-45. `--hwid-spoof`: HWID Spoofing (Frida Plugin)
-46. `--comprehensive`: Anti-Debugger Countermeasures
-47. `--time-bomb-defuser`: Time Bomb Defuser (Frida Plugin & API Hooks)
-48. `--telemetry-blocker`: Telemetry Blocking (Frida Plugin & Network Hooks)
-49. `--comprehensive`: Embedded/Encrypted Script Detection & Extraction
+- Python 3.8+
+- Click (command-line framework)
+- Various analysis libraries depending on features used
 
-#### **Machine Learning Integration (5 features)**
-50. `--ml-vulnerability`: ML-Based Vulnerability Prediction
-51. `--similarity-search`: Binary Similarity Search
-52. `--comprehensive`: Automated Feature Extraction for ML Models
-53. `--ai-assistant`: AI Assistant for Guidance & Analysis
-54. `--train-model`: AI Model Fine-tuning Interface
+## Note
 
-#### **External Tool Integration (3 features)**
-55. `--ghidra-analysis`: Advanced Ghidra Analysis Integration
-56. `--qemu-emulate`: QEMU System Emulation Integration
-57. `--frida-script`: Frida Dynamic Instrumentation Integration
-
-#### **Plugin System (6 features)**
-1. `--plugin-list`: Self-Initializing Plugin Framework
-2. `--plugin-run`: Custom Python Module Support
-3. `--frida-script`: Frida Script Plugin Support
-4. `--ghidra-script`: Ghidra Script Plugin Support
-5. `--plugin-remote`: Remote Plugin Execution Framework
-6. `--plugin-sandbox`: Sandboxed Plugin Execution
-
-#### **User Interface and Experience (9 features)**
-1. CLI interface: Comprehensive GUI alternative
-2. `--help`: Guided Workflow Wizard (command-line version)
-3. `--apply-patch`: Visual Patch Editor (JSON-based)
-4. `--format text`: Editable Hex Viewer Widget (text output)
-5. `--format pdf/html`: PDF and HTML Report Generation
-6. `--generate-license-key`: License Key Generator Utility
-7. `--format text`: Visual Network Traffic Analyzer (text output)
-8. `--cfg-output`: Visual CFG Explorer (export to DOT/JSON)
-9. Text-based themes: Theme Support (Light/Dark via colored output)
-
-#### **System Features (6 features)**
-1. Built-in: Persistent Logging with Rotation
-2. Built-in: Automatic Dependency Management & Installation Checks
-3. `--threads`: Multi-Threading for Long-Running Operations
-4. `--train-model`: Custom AI Model Import & Fine-tuning Support
-5. `--extract-icon`: Executable Icon Extraction for UI
-6. Built-in: Memory Usage Optimization
+The CLI provides access to core Intellicrack functionality. Some advanced features may require additional dependencies or external tools (Frida, Ghidra, QEMU, etc.). Check individual command help for specific requirements.
 
 ## Command Categories
 

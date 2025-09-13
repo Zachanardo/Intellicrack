@@ -15,7 +15,6 @@ from pathlib import Path
 from intellicrack.core.c2.c2_server import C2Server
 from intellicrack.core.c2.c2_client import C2Client
 from intellicrack.core.c2.c2_manager import C2Manager
-from intellicrack.core.c2.communication_protocols import ProtocolHandler
 from intellicrack.core.c2.encryption_manager import EncryptionManager
 from tests.base_test import BaseIntellicrackTest
 

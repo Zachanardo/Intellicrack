@@ -92,9 +92,10 @@ def main() -> int:
 
     This function performs the following operations:
 
-    1. Executes startup checks and auto-configuration
-    2. Imports and launches the GUI application
-    3. Handles import errors and other exceptions gracefully
+    1. Configures logging with file output
+    2. Executes startup checks and auto-configuration
+    3. Imports and launches the GUI application
+    4. Handles import errors and other exceptions gracefully
 
     The function includes verbose logging for debugging startup issues
     and provides helpful error messages for missing dependencies.
@@ -113,6 +114,30 @@ def main() -> int:
 
     """
     try:
+        # Configure logging with file output FIRST
+        from datetime import datetime
+        from pathlib import Path
+
+        from intellicrack.utils.logger import setup_logging
+
+        # Create logs directory if it doesn't exist
+        logs_dir = Path("data/logs")
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate log filename with current date
+        log_filename = f"intellicrack-launcher.{datetime.now().strftime('%Y-%m-%d')}"
+        log_file_path = logs_dir / log_filename
+
+        # Set up logging with file handler
+        setup_logging(
+            level="INFO",
+            log_file=str(log_file_path),
+            enable_rotation=False,  # Daily files, no rotation needed
+        )
+
+        logger.info("=== Intellicrack Application Starting ===")
+        logger.info(f"Log file: {log_file_path}")
+
         # Initialize security enforcement if available
         try:
             security_enforcement.initialize_security()
@@ -128,20 +153,26 @@ def main() -> int:
         from intellicrack.core.startup_checks import perform_startup_checks
 
         print("Initializing Intellicrack...")
+        logger.info("Performing startup checks...")
         perform_startup_checks()
         print("Startup checks completed.")
+        logger.info("Startup checks completed successfully")
 
         # Import and launch the GUI
         # Always use absolute import to avoid issues
         print("Importing launch function...")
+        logger.info("Importing GUI launch function...")
         from intellicrack.ui.main_app import launch
 
         print("Launch function imported successfully.")
+        logger.info("GUI launch function imported successfully")
 
         print("Calling launch()...")
+        logger.info("Launching GUI application...")
         sys.stdout.flush()  # Force output to display
         result = launch()
         print(f"Launch() returned: {result}")
+        logger.info(f"GUI application exited with code: {result}")
         sys.stdout.flush()
         return result
 

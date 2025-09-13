@@ -9,7 +9,6 @@ import pytest
 import tempfile
 import os
 import time
-from unittest.mock import patch
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
 from PyQt6.QtCore import Qt, QFileInfo
 from intellicrack.ui.dialogs.common_imports import QGroupBox, QPushButton, QTest, QThread

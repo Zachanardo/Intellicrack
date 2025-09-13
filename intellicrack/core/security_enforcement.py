@@ -18,13 +18,14 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
-import json
 import logging
 import os
 import pickle
 import subprocess
 from pathlib import Path
 from typing import Any
+
+from intellicrack.core.config_manager import IntellicrackConfig
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -46,23 +47,26 @@ class SecurityEnforcement:
         self._bypass_security = False  # Emergency bypass flag
 
     def _load_config(self) -> dict[str, Any]:
-        """Load security configuration from ``intellicrack_config.json``."""
-        config_paths = [
-            Path(__file__).parent.parent.parent / "config" / "intellicrack_config.json",
-            Path.cwd() / "config" / "intellicrack_config.json",
-            Path.home() / ".intellicrack" / "intellicrack_config.json",
-        ]
+        """Load security configuration from main IntellicrackConfig."""
+        try:
+            config = IntellicrackConfig()
+            # Get the main config dictionary
+            config_data = config._config if hasattr(config, "_config") else {}
 
-        for config_path in config_paths:
-            if config_path.exists():
-                try:
-                    with open(config_path) as f:
-                        return json.load(f)
-                except Exception as e:
-                    logger.error(f"Failed to load config from {config_path}: {e}")
+            # If security section doesn't exist, merge with defaults
+            if "security" not in config_data:
+                logger.info("Security section not found in config, using defaults")
+                default_config = self._get_default_config()
+                config_data.update(default_config)
+                # Save the updated config with security defaults
+                if hasattr(config, "save"):
+                    config.save()
 
-        logger.warning("No configuration found, using default security settings")
-        return self._get_default_config()
+            return config_data
+        except Exception as e:
+            logger.error(f"Failed to load config from IntellicrackConfig: {e}")
+            logger.warning("Using default security settings")
+            return self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
         """Return default security configuration."""

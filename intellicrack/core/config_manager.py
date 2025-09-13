@@ -29,7 +29,7 @@ import shutil
 import sys
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from intellicrack.core.exceptions import ConfigurationError
 from intellicrack.utils.resource_helper import get_resource_path
@@ -117,14 +117,20 @@ class IntellicrackConfig:
 
         # Set up directories
         self.config_dir = self._get_user_config_dir()
-        self.config_file = self.config_dir / "config.json"
+
+        # Configuration file paths (layered architecture)
+        self.config_file = self.config_dir / "config.json"  # Legacy path for compatibility
+        self.defaults_file = self.config_dir / "config.defaults.json"
+        self.user_config_file = Path(os.environ.get("INTELLICRACK_CONFIG_PATH", str(self.config_dir / "intellicrack_config.json")))
+        self.state_file = self.config_dir / "runtime.state.json"
+
         self.cache_dir = self.config_dir / "cache"
         self.logs_dir = self.config_dir / "logs"
         self.output_dir = self.config_dir / "output"
 
         # Initialize configuration
         self._ensure_directories_exist()
-        self._load_or_create_config()
+        self._load_layered_config()
 
     def _get_intellicrack_root(self) -> Path:
         """Get the Intellicrack installation root directory.
@@ -133,6 +139,7 @@ class IntellicrackConfig:
             Path: The root directory where Intellicrack is installed
         """
         import intellicrack
+
         # Get the parent directory of the intellicrack package
         return Path(intellicrack.__file__).parent.parent
 
@@ -177,18 +184,47 @@ class IntellicrackConfig:
                 # Continue even if directory creation fails
                 logger.warning(f"Could not create directory {directory}: {e}")
 
-    def _load_or_create_config(self):
-        """Load existing config or create default one."""
+    def _load_layered_config(self):
+        """Load configuration using layered architecture.
+
+        Loading order (each layer overrides previous):
+        1. Load defaults from config.defaults.json or config.json
+        2. Merge user overrides from intellicrack_config.json
+        3. Merge runtime state from runtime.state.json
+        """
         try:
-            if self.config_file.exists():
-                self._load_config()
-                self._upgrade_config_if_needed()
+            # Step 1: Load defaults
+            if self.defaults_file.exists():
+                self._load_defaults_from_file(self.defaults_file)
+            elif self.config_file.exists():
+                # Fallback to legacy config.json if defaults don't exist
+                self._load_defaults_from_file(self.config_file)
+                # Create defaults file for future use
+                self._create_defaults_from_legacy()
             else:
                 logger.info("First run detected - creating default configuration")
                 self._create_default_config()
+
+            # Step 2: Merge user overrides if they exist
+            if self.user_config_file.exists():
+                self._merge_user_config()
+            else:
+                logger.info(f"No user config found at {self.user_config_file}")
+
+            # Step 3: Merge runtime state if it exists
+            if self.state_file.exists():
+                self._merge_runtime_state()
+
+            # Upgrade config if needed
+            self._upgrade_config_if_needed()
+
         except Exception as e:
-            logger.error(f"Configuration initialization failed: {e}")
+            logger.error(f"Failed to load layered configuration: {e}")
             self._create_emergency_config()
+
+    def _load_or_create_config(self):
+        """Legacy method maintained for compatibility."""
+        self._load_layered_config()
 
     def _load_config(self):
         """Load configuration from file."""
@@ -200,6 +236,72 @@ class IntellicrackConfig:
         except Exception as e:
             logger.error(f"Failed to load config: {e}")
             self._create_default_config()
+
+    def _load_defaults_from_file(self, file_path: Path):
+        """Load default configuration from specified file."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                with self._config_lock:
+                    self._config = json.load(f)
+            logger.info(f"Default configuration loaded from {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to load defaults from {file_path}: {e}")
+            raise
+
+    def _merge_user_config(self):
+        """Merge user-specific configuration overrides."""
+        try:
+            with open(self.user_config_file, encoding="utf-8") as f:
+                user_config = json.load(f)
+            with self._config_lock:
+                self._deep_merge(self._config, user_config)
+            logger.info(f"User configuration merged from {self.user_config_file}")
+        except Exception as e:
+            logger.error(f"Failed to merge user config: {e}")
+
+    def _merge_runtime_state(self):
+        """Merge runtime state into configuration."""
+        try:
+            with open(self.state_file, encoding="utf-8") as f:
+                state = json.load(f)
+            with self._config_lock:
+                self._deep_merge(self._config, state)
+            logger.debug(f"Runtime state merged from {self.state_file}")
+        except Exception as e:
+            logger.error(f"Failed to merge runtime state: {e}")
+
+    def _deep_merge(self, base: Dict[str, Any], override: Dict[str, Any]):
+        """Deep merge override dict into base dict."""
+        for key, value in override.items():
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                self._deep_merge(base[key], value)
+            else:
+                base[key] = value
+
+    def _create_defaults_from_legacy(self):
+        """Create config.defaults.json from legacy config.json."""
+        try:
+            # Remove runtime state fields from config before saving as defaults
+            defaults = self._config.copy()
+            runtime_fields = ["initialized", "emergency_mode"]
+            for field in runtime_fields:
+                if field in defaults:
+                    del defaults[field]
+
+            # Clean up runtime state from nested fields
+            if "secrets" in defaults and "last_sync" in defaults["secrets"]:
+                del defaults["secrets"]["last_sync"]
+            if "tools" in defaults:
+                # Keep tool paths but remove discovered state
+                for tool in defaults["tools"].values():
+                    if isinstance(tool, dict) and "auto_discovered" in tool:
+                        del tool["auto_discovered"]
+
+            with open(self.defaults_file, "w", encoding="utf-8") as f:
+                json.dump(defaults, f, indent=2, sort_keys=True)
+            logger.info(f"Created {self.defaults_file} from legacy config")
+        except Exception as e:
+            logger.error(f"Failed to create defaults from legacy config: {e}")
 
     def _create_default_config(self):
         r"""Create or load unified configuration.
@@ -1363,14 +1465,53 @@ class IntellicrackConfig:
             }
 
     def _save_config(self):
-        """Save configuration to file."""
+        """Save configuration using layered architecture.
+
+        Saves runtime state separately and maintains backwards compatibility.
+        """
         try:
+            # Extract and save runtime state to separate file
+            runtime_state = {
+                "initialized": self._config.get("initialized"),
+                "emergency_mode": self._config.get("emergency_mode"),
+                "tools": {},
+            }
+
+            # Extract tool discovery state
+            if "tools" in self._config:
+                for tool_name, tool_config in self._config.get("tools", {}).items():
+                    if isinstance(tool_config, dict):
+                        runtime_state["tools"][tool_name] = {
+                            "available": tool_config.get("available"),
+                            "auto_discovered": tool_config.get("auto_discovered"),
+                            "path": tool_config.get("path"),
+                        }
+
+            # Extract secrets runtime state
+            if "secrets" in self._config and "last_sync" in self._config["secrets"]:
+                runtime_state["secrets"] = {"last_sync": self._config["secrets"]["last_sync"]}
+
+            # Remove None values from runtime state
+            runtime_state = {k: v for k, v in runtime_state.items() if v is not None}
+
+            # Save runtime state to separate file
+            if runtime_state:
+                with open(self.state_file, "w", encoding="utf-8") as f:
+                    json.dump(runtime_state, f, indent=2, sort_keys=True)
+                logger.debug(f"Runtime state saved to {self.state_file}")
+
+            # For backward compatibility, also save full config to legacy location
             with open(self.config_file, "w", encoding="utf-8") as f:
                 with self._config_lock:
                     json.dump(self._config, f, indent=2, sort_keys=True)
-            logger.debug(f"Configuration saved to {self.config_file}")
+            logger.debug(f"Configuration saved to {self.config_file} (legacy)")
+
         except Exception as e:
             logger.error(f"Failed to save configuration: {e}")
+
+    def save(self):
+        """Public method to save configuration."""
+        self._save_config()
 
     # Public API methods
 

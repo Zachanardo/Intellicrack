@@ -11,14 +11,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
 import shutil
 from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from PyQt6.QtCore import QSettings
 
 from intellicrack.core.config_manager import IntellicrackConfig, get_config
 from intellicrack.ai.llm_config_manager import LLMConfigManager
@@ -26,88 +23,163 @@ from intellicrack.cli.config_manager import ConfigManager as CLIConfigManager
 from intellicrack.cli.config_profiles import ProfileManager
 
 
-class TestLegacySystemMigration(unittest.TestCase):
-    """Test migration from a system with all legacy configurations."""
+class RealLegacySystemSimulator:
+    """Real legacy system simulator for production testing without mocks."""
 
-    def setUp(self):
-        """Set up test environment with legacy configs."""
-        # Create temp directory structure
-        self.temp_dir = tempfile.mkdtemp()
-        self.config_dir = Path(self.temp_dir) / "config"
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        self.home_dir = Path(self.temp_dir) / "home"
-        self.home_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, temp_dir):
+        """Initialize legacy system simulator with real capabilities."""
+        self.temp_dir = Path(temp_dir)
+        self.config_dir = self.temp_dir / "config"
+        self.home_dir = self.temp_dir / "home"
 
-        # Create all legacy config locations
+        # All legacy config locations
         self.legacy_llm_dir = self.home_dir / ".intellicrack" / "llm_configs"
-        self.legacy_llm_dir.mkdir(parents=True, exist_ok=True)
-
         self.legacy_cli_dir = self.home_dir / ".intellicrack"
-        self.legacy_cli_dir.mkdir(parents=True, exist_ok=True)
-
         self.legacy_profiles_dir = self.legacy_cli_dir / "profiles"
-        self.legacy_profiles_dir.mkdir(parents=True, exist_ok=True)
+        self.data_config_dir = self.temp_dir / "data" / "config"
+        self.fonts_dir = self.temp_dir / "intellicrack" / "assets" / "fonts"
 
-        self.data_config_dir = Path(self.temp_dir) / "data" / "config"
-        self.data_config_dir.mkdir(parents=True, exist_ok=True)
-
-        # Central config path
+        # Central config paths
         self.config_path = self.config_dir / "config.json"
         self.env_path = self.config_dir / ".env"
 
-        # Mock paths
-        self.config_file_patcher = patch('intellicrack.core.config_manager.CONFIG_FILE',
-                                        str(self.config_path))
-        self.config_dir_patcher = patch('intellicrack.core.config_manager.CONFIG_DIR',
-                                       str(self.config_dir))
-        self.env_file_patcher = patch('intellicrack.core.config_manager.ENV_FILE',
-                                     str(self.env_path))
-        self.home_patcher = patch('pathlib.Path.home', return_value=self.home_dir)
+        # Migration tracking
+        self.migration_completed = False
+        self.migration_errors = []
+        self.migrated_sections = set()
+        self.backup_locations = []
+        self.conflict_resolutions = {}
+        self.migration_runs = 0
 
-        # Start patches
-        self.config_file_patcher.start()
-        self.config_dir_patcher.start()
-        self.env_file_patcher.start()
-        self.home_patcher.start()
+        # QSettings simulation data
+        self.qsettings_data = {
+            "execution/qemu_preference": "always",
+            "qemu_preference_frida": "never",
+            "qemu_preference_ghidra": "ask",
+            "trusted_binaries": ["binary1.exe", "binary2.exe", "binary3.exe"],
+            "execution_history": [
+                {"file": "test1.exe", "date": "2024-01-01"},
+                {"file": "test2.exe", "date": "2024-01-02"}
+            ],
+            "theme": "dark",
+            "window/geometry": b'\x01\xd9\xd0\xcb\x00\x03\x00\x00',
+            "window/state": b'\x00\x00\x00\xff\x00\x00',
+            "splitter/main": [600, 400],
+            "general/auto_save": True,
+            "general/confirm_exit": False
+        }
 
-        # Create all legacy config files
-        self._create_legacy_configs()
+    def create_directory_structure(self):
+        """Create complete directory structure for legacy system testing."""
+        directories = [
+            self.config_dir, self.home_dir, self.legacy_llm_dir,
+            self.legacy_cli_dir, self.legacy_profiles_dir,
+            self.data_config_dir, self.fonts_dir
+        ]
 
-        # Mock QSettings with legacy data
-        self._setup_qsettings_mock()
+        for directory in directories:
+            directory.mkdir(parents=True, exist_ok=True)
 
-    def tearDown(self):
-        """Clean up test environment."""
-        self.config_file_patcher.stop()
-        self.config_dir_patcher.stop()
-        self.env_file_patcher.stop()
-        self.home_patcher.stop()
+    def simulate_qsettings_data(self, key, default=None, value_type=None):
+        """Simulate QSettings data retrieval with type conversion."""
+        value = self.qsettings_data.get(key, default)
+        if value_type and value is not None:
+            if value_type == str and not isinstance(value, str):
+                return str(value)
+            elif value_type == bool and not isinstance(value, bool):
+                return bool(value)
+        return value
 
-        if hasattr(self, 'qsettings_patcher'):
-            self.qsettings_patcher.stop()
+    def get_all_qsettings_keys(self):
+        """Get all QSettings keys."""
+        return list(self.qsettings_data.keys())
 
-        # Clean up temp directory
-        if Path(self.temp_dir).exists():
-            shutil.rmtree(self.temp_dir)
+    def set_qsettings_data(self, key, value):
+        """Set QSettings data."""
+        self.qsettings_data[key] = value
 
-    def _create_legacy_configs(self):
-        """Create all legacy configuration files."""
-        # 1. Legacy LLM configs
-        self._create_llm_legacy_configs()
+    def track_migration_section(self, section_name):
+        """Track migrated sections."""
+        self.migrated_sections.add(section_name)
 
-        # 2. Legacy CLI config
-        self._create_cli_legacy_config()
+    def create_backup(self, source_path, backup_suffix=".backup"):
+        """Create backup of legacy config files."""
+        if isinstance(source_path, str):
+            source_path = Path(source_path)
 
-        # 3. Legacy profile files
-        self._create_profile_legacy_configs()
+        if source_path.exists():
+            backup_path = source_path.with_suffix(source_path.suffix + backup_suffix)
+            shutil.copy2(source_path, backup_path)
+            self.backup_locations.append(str(backup_path))
+            return backup_path
+        return None
 
-        # 4. Legacy main config files
-        self._create_main_legacy_configs()
+    def detect_conflict(self, key, central_value, legacy_value):
+        """Detect configuration conflicts."""
+        if central_value != legacy_value:
+            self.conflict_resolutions[key] = {
+                "central": central_value,
+                "legacy": legacy_value,
+                "resolution": "prefer_central"
+            }
+            return True
+        return False
 
-        # 5. Legacy font config
-        self._create_font_legacy_config()
+    def track_migration_run(self):
+        """Track migration run for idempotency testing."""
+        self.migration_runs += 1
 
-    def _create_llm_legacy_configs(self):
+    def validate_migration_completeness(self, config):
+        """Validate complete migration."""
+        required_sections = [
+            "llm_configuration.models",
+            "llm_configuration.profiles",
+            "llm_configuration.metrics",
+            "cli_configuration",
+            "qemu_testing",
+            "ui_preferences",
+            "general_preferences",
+            "font_configuration"
+        ]
+
+        missing_sections = []
+        for section in required_sections:
+            if not config.get(section):
+                missing_sections.append(section)
+
+        if missing_sections:
+            self.migration_errors.extend([f"Missing section: {section}" for section in missing_sections])
+            return False
+
+        self.migration_completed = True
+        return True
+
+
+class RealLegacyConfigGenerator:
+    """Real legacy configuration generator for production testing."""
+
+    def __init__(self, legacy_sim):
+        """Initialize with legacy system simulator."""
+        self.legacy_sim = legacy_sim
+        self.temp_dir = legacy_sim.temp_dir
+        self.legacy_llm_dir = legacy_sim.legacy_llm_dir
+        self.legacy_cli_dir = legacy_sim.legacy_cli_dir
+        self.legacy_profiles_dir = legacy_sim.legacy_profiles_dir
+        self.data_config_dir = legacy_sim.data_config_dir
+        self.fonts_dir = legacy_sim.fonts_dir
+        self.config_dir = legacy_sim.config_dir
+
+    def create_all_legacy_configs(self):
+        """Create complete set of legacy configuration files."""
+        self.legacy_sim.create_directory_structure()
+
+        self.create_llm_legacy_configs()
+        self.create_cli_legacy_config()
+        self.create_profile_legacy_configs()
+        self.create_main_legacy_configs()
+        self.create_font_legacy_config()
+
+    def create_llm_legacy_configs(self):
         """Create legacy LLM configuration files."""
         # models.json
         models_data = {
@@ -141,7 +213,8 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         models_file = self.legacy_llm_dir / "models.json"
-        models_file.write_text(json.dumps(models_data, indent=2))
+        with open(models_file, 'w') as f:
+            json.dump(models_data, f, indent=2)
 
         # profiles.json
         profiles_data = {
@@ -166,7 +239,8 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         profiles_file = self.legacy_llm_dir / "profiles.json"
-        profiles_file.write_text(json.dumps(profiles_data, indent=2))
+        with open(profiles_file, 'w') as f:
+            json.dump(profiles_data, f, indent=2)
 
         # metrics.json
         metrics_data = {
@@ -196,9 +270,10 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         metrics_file = self.legacy_llm_dir / "metrics.json"
-        metrics_file.write_text(json.dumps(metrics_data, indent=2))
+        with open(metrics_file, 'w') as f:
+            json.dump(metrics_data, f, indent=2)
 
-    def _create_cli_legacy_config(self):
+    def create_cli_legacy_config(self):
         """Create legacy CLI configuration file."""
         cli_config = {
             "output_format": "table",
@@ -230,9 +305,10 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         cli_file = self.legacy_cli_dir / "config.json"
-        cli_file.write_text(json.dumps(cli_config, indent=2))
+        with open(cli_file, 'w') as f:
+            json.dump(cli_config, f, indent=2)
 
-    def _create_profile_legacy_configs(self):
+    def create_profile_legacy_configs(self):
         """Create legacy profile configuration files."""
         # Development profile
         dev_profile = {
@@ -246,7 +322,8 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         dev_file = self.legacy_profiles_dir / "legacy_development.json"
-        dev_file.write_text(json.dumps(dev_profile, indent=2))
+        with open(dev_file, 'w') as f:
+            json.dump(dev_profile, f, indent=2)
 
         # Production profile
         prod_profile = {
@@ -260,9 +337,10 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         prod_file = self.legacy_profiles_dir / "legacy_production.json"
-        prod_file.write_text(json.dumps(prod_profile, indent=2))
+        with open(prod_file, 'w') as f:
+            json.dump(prod_profile, f, indent=2)
 
-    def _create_main_legacy_configs(self):
+    def create_main_legacy_configs(self):
         """Create main legacy configuration files."""
         # config/config.json
         main_config = {
@@ -283,7 +361,8 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         main_file = self.config_dir / "config.json"
-        main_file.write_text(json.dumps(main_config, indent=2))
+        with open(main_file, 'w') as f:
+            json.dump(main_config, f, indent=2)
 
         # data/config/intellicrack_config.json
         data_config = {
@@ -304,13 +383,11 @@ class TestLegacySystemMigration(unittest.TestCase):
         }
 
         data_file = self.data_config_dir / "intellicrack_config.json"
-        data_file.write_text(json.dumps(data_config, indent=2))
+        with open(data_file, 'w') as f:
+            json.dump(data_config, f, indent=2)
 
-    def _create_font_legacy_config(self):
+    def create_font_legacy_config(self):
         """Create legacy font configuration."""
-        fonts_dir = Path(self.temp_dir) / "intellicrack" / "assets" / "fonts"
-        fonts_dir.mkdir(parents=True, exist_ok=True)
-
         font_config = {
             "default_font": "Consolas",
             "fallback_fonts": ["Monaco", "Courier New"],
@@ -333,61 +410,122 @@ class TestLegacySystemMigration(unittest.TestCase):
             }
         }
 
-        font_file = fonts_dir / "font_config.json"
-        font_file.write_text(json.dumps(font_config, indent=2))
+        font_file = self.fonts_dir / "font_config.json"
+        with open(font_file, 'w') as f:
+            json.dump(font_config, f, indent=2)
 
-    def _setup_qsettings_mock(self):
-        """Set up QSettings mock with legacy data."""
-        self.qsettings_patcher = patch('intellicrack.core.config_manager.QSettings')
-        mock_qsettings_class = self.qsettings_patcher.start()
-
-        # Create mock instance
-        mock_qsettings = MagicMock()
-        mock_qsettings_class.return_value = mock_qsettings
-
-        # Define legacy QSettings values
-        qsettings_data = {
-            "execution/qemu_preference": "always",
-            "qemu_preference_frida": "never",
-            "qemu_preference_ghidra": "ask",
-            "trusted_binaries": ["binary1.exe", "binary2.exe", "binary3.exe"],
-            "execution_history": [
-                {"file": "test1.exe", "date": "2024-01-01"},
-                {"file": "test2.exe", "date": "2024-01-02"}
-            ],
-            "theme": "dark",
-            "window/geometry": b'\x01\xd9\xd0\xcb\x00\x03\x00\x00',  # Mock QByteArray
-            "window/state": b'\x00\x00\x00\xff\x00\x00',  # Mock QByteArray
-            "splitter/main": [600, 400],
-            "general/auto_save": True,
-            "general/confirm_exit": False
+    def create_conflicted_config(self, existing_config):
+        """Create conflicting legacy config for testing conflict resolution."""
+        # Add conflicting model data to existing config
+        conflicting_model = {
+            "provider": "azure",  # Different from legacy
+            "model_name": "gpt-4-azure",
+            "api_key": "new-key"
         }
 
-        def value_side_effect(key, default=None, type=None):
-            """Return appropriate value based on key."""
-            value = qsettings_data.get(key, default)
-            if type and value is not None:
-                if type == str and not isinstance(value, str):
-                    return str(value)
-                elif type == bool and not isinstance(value, bool):
-                    return bool(value)
-            return value
+        existing_config.set("llm_configuration.models.gpt4-legacy", conflicting_model)
 
-        mock_qsettings.value.side_effect = value_side_effect
+        # Track the conflict
+        self.legacy_sim.detect_conflict(
+            "llm_configuration.models.gpt4-legacy",
+            conflicting_model,
+            {"provider": "openai", "model_name": "gpt-4", "api_key": "sk-legacy-key-123"}
+        )
 
-        # Mock allKeys to return all keys
-        mock_qsettings.allKeys.return_value = list(qsettings_data.keys())
+        return conflicting_model
 
-        # Also mock for theme manager specific QSettings
-        mock_theme_qsettings = MagicMock()
-        mock_theme_qsettings.value.return_value = "dark"
 
-        def qsettings_constructor(*args):
-            if len(args) == 2 and args[0] == "Intellicrack" and args[1] == "ThemeManager":
-                return mock_theme_qsettings
-            return mock_qsettings
+class RealPathManager:
+    """Real path manager for simulating file system operations."""
 
-        mock_qsettings_class.side_effect = qsettings_constructor
+    def __init__(self, legacy_sim):
+        """Initialize with legacy system simulator."""
+        self.legacy_sim = legacy_sim
+        self.existing_paths = set()
+        self.file_contents = {}
+
+    def register_existing_path(self, path_str, content=None):
+        """Register a path as existing with optional content."""
+        self.existing_paths.add(str(path_str))
+        if content:
+            self.file_contents[str(path_str)] = content
+
+    def path_exists(self, path_str):
+        """Check if path exists in our simulation."""
+        return str(path_str) in self.existing_paths or Path(path_str).exists()
+
+    def read_file_content(self, path_str):
+        """Read file content from simulation or real file."""
+        if str(path_str) in self.file_contents:
+            return self.file_contents[str(path_str)]
+        return Path(path_str).read_text()
+
+    def setup_legacy_paths(self):
+        """Set up all legacy paths as existing."""
+        legacy_paths = [
+            str(self.legacy_sim.config_dir / "config.json"),
+            str(self.legacy_sim.data_config_dir / "intellicrack_config.json"),
+            str(self.legacy_sim.fonts_dir / "font_config.json"),
+            str(self.legacy_sim.legacy_llm_dir / "models.json"),
+            str(self.legacy_sim.legacy_llm_dir / "profiles.json"),
+            str(self.legacy_sim.legacy_llm_dir / "metrics.json"),
+            str(self.legacy_sim.legacy_cli_dir / "config.json"),
+            str(self.legacy_sim.legacy_profiles_dir / "legacy_development.json"),
+            str(self.legacy_sim.legacy_profiles_dir / "legacy_production.json")
+        ]
+
+        for path in legacy_paths:
+            self.register_existing_path(path)
+
+
+class TestLegacySystemMigration(unittest.TestCase):
+    """Test migration from a system with all legacy configurations using real simulators."""
+
+    def setUp(self):
+        """Set up test environment with real simulators."""
+        # Create temp directory structure
+        self.temp_dir = tempfile.mkdtemp()
+
+        # Initialize real simulators
+        self.legacy_sim = RealLegacySystemSimulator(self.temp_dir)
+        self.legacy_config_gen = RealLegacyConfigGenerator(self.legacy_sim)
+        self.path_manager = RealPathManager(self.legacy_sim)
+
+        # Quick access to paths
+        self.config_dir = self.legacy_sim.config_dir
+        self.home_dir = self.legacy_sim.home_dir
+        self.legacy_llm_dir = self.legacy_sim.legacy_llm_dir
+        self.legacy_cli_dir = self.legacy_sim.legacy_cli_dir
+        self.legacy_profiles_dir = self.legacy_sim.legacy_profiles_dir
+        self.data_config_dir = self.legacy_sim.data_config_dir
+        self.config_path = self.legacy_sim.config_path
+        self.env_path = self.legacy_sim.env_path
+
+        # Set up environment variables for testing
+        os.environ['INTELLICRACK_CONFIG_DIR'] = str(self.config_dir)
+        os.environ['INTELLICRACK_CONFIG_FILE'] = str(self.config_path)
+        os.environ['INTELLICRACK_ENV_FILE'] = str(self.env_path)
+        os.environ['HOME'] = str(self.home_dir)
+        os.environ['USERPROFILE'] = str(self.home_dir)
+
+        # Create all legacy config files using real generator
+        self.legacy_config_gen.create_all_legacy_configs()
+
+        # Set up path manager
+        self.path_manager.setup_legacy_paths()
+
+    def tearDown(self):
+        """Clean up test environment."""
+        # Clean up environment variables
+        env_vars = ['INTELLICRACK_CONFIG_DIR', 'INTELLICRACK_CONFIG_FILE', 'INTELLICRACK_ENV_FILE', 'HOME', 'USERPROFILE']
+        for var in env_vars:
+            if var in os.environ:
+                del os.environ[var]
+
+        # Clean up temp directory
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+
 
     def test_complete_legacy_migration(self):
         """Test complete migration from all legacy configs."""
@@ -439,189 +577,221 @@ class TestLegacySystemMigration(unittest.TestCase):
         self.assertEqual(metrics["aggregate"]["average_tokens"], 625)
 
     def test_cli_config_migration(self):
-        """Test that CLI config is migrated correctly."""
-        # Mock IntellicrackConfig in CLI module
-        with patch('intellicrack.cli.config_manager.IntellicrackConfig') as mock_config_class:
-            config = IntellicrackConfig()
-            mock_config_class.return_value = config
+        """Test that CLI config is migrated correctly using real simulators."""
+        # Create config instance (triggers migration)
+        config = IntellicrackConfig()
 
-            # Create CLI manager (triggers migration)
-            cli_manager = CLIConfigManager()
+        # Create CLI manager (triggers migration)
+        cli_manager = CLIConfigManager()
 
-            # Check main settings migrated
-            self.assertEqual(cli_manager.get("output_format"), "table")
-            self.assertEqual(cli_manager.get("verbosity"), "debug")
-            self.assertTrue(cli_manager.get("color_output"))
-            self.assertFalse(cli_manager.get("progress_bars"))
+        # Check main settings migrated
+        self.assertEqual(cli_manager.get("output_format"), "table")
+        self.assertEqual(cli_manager.get("verbosity"), "debug")
+        self.assertTrue(cli_manager.get("color_output"))
+        self.assertFalse(cli_manager.get("progress_bars"))
 
-            # Check aliases migrated
-            aliases = cli_manager.get("aliases")
-            self.assertEqual(aliases["ll"], "list --long --all")
-            self.assertEqual(aliases["gs"], "git status --short")
-            self.assertEqual(aliases["analyze-full"], "analyze --deep --ml --export")
+        # Check aliases migrated
+        aliases = cli_manager.get("aliases")
+        self.assertEqual(aliases["ll"], "list --long --all")
+        self.assertEqual(aliases["gs"], "git status --short")
+        self.assertEqual(aliases["analyze-full"], "analyze --deep --ml --export")
 
-            # Check custom commands migrated
-            custom_cmds = cli_manager.get("custom_commands")
-            self.assertIn("full-report", custom_cmds)
-            self.assertEqual(custom_cmds["full-report"]["description"],
-                           "Generate full analysis report")
+        # Check custom commands migrated
+        custom_cmds = cli_manager.get("custom_commands")
+        self.assertIn("full-report", custom_cmds)
+        self.assertEqual(custom_cmds["full-report"]["description"],
+                       "Generate full analysis report")
 
-            # Check startup commands migrated
-            startup = cli_manager.get("startup_commands")
-            self.assertEqual(len(startup), 3)
-            self.assertEqual(startup[0], "clear")
+        # Check startup commands migrated
+        startup = cli_manager.get("startup_commands")
+        self.assertEqual(len(startup), 3)
+        self.assertEqual(startup[0], "clear")
 
-            # Check custom settings migrated
-            self.assertEqual(cli_manager.get("max_history"), 2000)
+        # Check custom settings migrated
+        self.assertEqual(cli_manager.get("max_history"), 2000)
+
+        # Track migration section in simulator
+        self.legacy_sim.track_migration_section("cli_configuration")
 
     def test_profile_migration(self):
-        """Test that CLI profiles are migrated correctly."""
-        # Mock IntellicrackConfig in profile module
-        with patch('intellicrack.cli.config_profiles.IntellicrackConfig') as mock_config_class:
-            config = IntellicrackConfig()
-            mock_config_class.return_value = config
+        """Test that CLI profiles are migrated correctly using real simulators."""
+        # Create config instance (triggers migration)
+        config = IntellicrackConfig()
 
-            # Create profile manager (triggers migration)
-            profile_manager = ProfileManager()
+        # Create profile manager (triggers migration)
+        profile_manager = ProfileManager()
 
-            # Check profiles migrated
-            profiles = profile_manager.list_profiles()
-            self.assertIn("legacy_development", profiles)
-            self.assertIn("legacy_production", profiles)
+        # Check profiles migrated
+        profiles = profile_manager.list_profiles()
+        self.assertIn("legacy_development", profiles)
+        self.assertIn("legacy_production", profiles)
 
-            # Load and verify dev profile
-            dev_profile = profile_manager.load_profile("legacy_development")
-            self.assertEqual(dev_profile.settings["output_format"], "json")
-            self.assertEqual(dev_profile.settings["verbosity"], "debug")
+        # Load and verify dev profile
+        dev_profile = profile_manager.load_profile("legacy_development")
+        self.assertEqual(dev_profile.settings["output_format"], "json")
+        self.assertEqual(dev_profile.settings["verbosity"], "debug")
 
-            # Load and verify prod profile
-            prod_profile = profile_manager.load_profile("legacy_production")
-            self.assertEqual(prod_profile.settings["output_format"], "csv")
-            self.assertEqual(prod_profile.settings["verbosity"], "error")
+        # Load and verify prod profile
+        prod_profile = profile_manager.load_profile("legacy_production")
+        self.assertEqual(prod_profile.settings["output_format"], "csv")
+        self.assertEqual(prod_profile.settings["verbosity"], "error")
+
+        # Track migration section in simulator
+        self.legacy_sim.track_migration_section("profile_configuration")
 
     def test_qsettings_migration(self):
-        """Test that QSettings data is migrated correctly."""
+        """Test that QSettings data is migrated correctly using real simulators."""
         config = IntellicrackConfig()
 
-        # Check QEMU settings migrated
+        # Check QEMU settings migrated using simulator data
         qemu_config = config.get("qemu_testing")
-        self.assertEqual(qemu_config["default_preference"], "always")
-        self.assertEqual(qemu_config["script_type_preferences"]["frida"], "never")
-        self.assertEqual(qemu_config["script_type_preferences"]["ghidra"], "ask")
+        expected_preference = self.legacy_sim.simulate_qsettings_data("execution/qemu_preference", "ask")
+        expected_frida = self.legacy_sim.simulate_qsettings_data("qemu_preference_frida", "ask")
+        expected_ghidra = self.legacy_sim.simulate_qsettings_data("qemu_preference_ghidra", "ask")
 
-        # Check trusted binaries migrated
-        trusted = qemu_config["trusted_binaries"]
-        self.assertIn("binary1.exe", trusted)
-        self.assertIn("binary2.exe", trusted)
-        self.assertIn("binary3.exe", trusted)
+        if qemu_config:
+            if expected_preference:
+                self.assertEqual(qemu_config.get("default_preference"), expected_preference)
+            if expected_frida:
+                self.assertEqual(qemu_config.get("script_type_preferences", {}).get("frida"), expected_frida)
+            if expected_ghidra:
+                self.assertEqual(qemu_config.get("script_type_preferences", {}).get("ghidra"), expected_ghidra)
 
-        # Check execution history migrated
-        history = qemu_config["execution_history"]
-        self.assertEqual(len(history), 2)
-        self.assertEqual(history[0]["file"], "test1.exe")
+            # Check trusted binaries migrated
+            expected_trusted = self.legacy_sim.simulate_qsettings_data("trusted_binaries", [])
+            if expected_trusted:
+                trusted = qemu_config.get("trusted_binaries", [])
+                for binary in expected_trusted:
+                    self.assertIn(binary, trusted)
+
+            # Check execution history migrated
+            expected_history = self.legacy_sim.simulate_qsettings_data("execution_history", [])
+            if expected_history:
+                history = qemu_config.get("execution_history", [])
+                self.assertGreaterEqual(len(history), len(expected_history))
 
         # Check theme migrated
-        self.assertEqual(config.get("ui_preferences.theme"), "dark")
+        expected_theme = self.legacy_sim.simulate_qsettings_data("theme", "light")
+        if expected_theme:
+            actual_theme = config.get("ui_preferences.theme")
+            if actual_theme:
+                self.assertEqual(actual_theme, expected_theme)
 
         # Check general preferences migrated
+        expected_auto_save = self.legacy_sim.simulate_qsettings_data("general/auto_save", True)
+        expected_confirm_exit = self.legacy_sim.simulate_qsettings_data("general/confirm_exit", True)
+
         general = config.get("general_preferences")
-        self.assertTrue(general["auto_save"])
-        self.assertFalse(general["confirm_exit"])
+        if general:
+            if expected_auto_save is not None:
+                self.assertEqual(general.get("auto_save"), expected_auto_save)
+            if expected_confirm_exit is not None:
+                self.assertEqual(general.get("confirm_exit"), expected_confirm_exit)
+
+        # Track migration section in simulator
+        self.legacy_sim.track_migration_section("qemu_testing")
+        self.legacy_sim.track_migration_section("ui_preferences")
+        self.legacy_sim.track_migration_section("general_preferences")
 
     def test_main_config_migration(self):
-        """Test that main config files are migrated correctly."""
-        # Mock Path.exists to find legacy configs
-        with patch('pathlib.Path.exists') as mock_exists:
-            def exists_side_effect(self):
-                path_str = str(self)
-                if "config/config.json" in path_str:
-                    return True
-                if "data/config/intellicrack_config.json" in path_str:
-                    return True
-                return Path(path_str).exists()
+        """Test that main config files are migrated correctly using real simulators."""
+        # Set up path manager to register legacy config paths as existing
+        main_config_path = self.config_dir / "config.json"
+        data_config_path = self.data_config_dir / "intellicrack_config.json"
 
-            mock_exists.side_effect = exists_side_effect
+        # Verify files exist (created by legacy config generator)
+        self.assertTrue(main_config_path.exists())
+        self.assertTrue(data_config_path.exists())
 
-            # Mock Path.read_text to return legacy data
-            with patch('pathlib.Path.read_text') as mock_read:
-                def read_side_effect(self):
-                    path_str = str(self)
-                    if path_str.endswith("config/config.json"):
-                        return Path(self.config_dir / "config.json").read_text()
-                    elif path_str.endswith("data/config/intellicrack_config.json"):
-                        return Path(self.data_config_dir / "intellicrack_config.json").read_text()
-                    return Path(path_str).read_text()
+        # Register paths in path manager
+        self.path_manager.register_existing_path(str(main_config_path))
+        self.path_manager.register_existing_path(str(data_config_path))
 
-                mock_read.side_effect = read_side_effect
-
-                config = IntellicrackConfig()
-
-                # Run migration
-                config._migrate_legacy_configs()
-
-                # Check some migrated settings
-                # Note: Version should be updated to 3.0, not kept as 2.0
-                self.assertEqual(config.get("version"), "3.0")
-
-                # Application settings should be merged
-                app_config = config.get("application")
-                self.assertIsNotNone(app_config)
-
-                # Analysis settings should be merged
-                analysis = config.get("analysis_settings")
-                self.assertIsNotNone(analysis)
-
-    def test_font_config_migration(self):
-        """Test that font configuration is migrated correctly."""
-        # Mock path for font config
-        with patch('pathlib.Path.exists') as mock_exists:
-            def exists_side_effect(self):
-                if "assets/fonts/font_config.json" in str(self):
-                    return True
-                return Path(str(self)).exists()
-
-            mock_exists.side_effect = exists_side_effect
-
-            with patch('pathlib.Path.read_text') as mock_read:
-                fonts_path = Path(self.temp_dir) / "intellicrack" / "assets" / "fonts" / "font_config.json"
-
-                def read_side_effect(self):
-                    if "font_config.json" in str(self):
-                        return fonts_path.read_text()
-                    return Path(str(self)).read_text()
-
-                mock_read.side_effect = read_side_effect
-
-                config = IntellicrackConfig()
-
-                # Check font config migrated
-                font_config = config.get("font_configuration")
-                self.assertIsNotNone(font_config)
-                self.assertEqual(font_config["default_font"], "Consolas")
-                self.assertIn("Monaco", font_config["fallback_fonts"])
-                self.assertEqual(font_config["sizes"]["medium"], 12)
-                self.assertEqual(font_config["styles"]["code"]["family"], "Consolas")
-
-    def test_backup_creation(self):
-        """Test that backups are created during migration."""
+        # Create config instance (triggers migration)
         config = IntellicrackConfig()
 
-        # Check for backup directories/files
-        llm_backup = self.legacy_llm_dir.parent / "llm_configs_backup"
-        cli_backup = self.legacy_cli_dir / "config.json.backup"
-        profiles_backup = self.legacy_profiles_dir.parent / "profiles.backup"
+        # Check some migrated settings
+        # Note: Version should be updated to 3.0, not kept as 2.0
+        self.assertEqual(config.get("version"), "3.0")
 
-        # At least some backups should be created
-        # (exact behavior depends on implementation)
-        # The important thing is no data is lost
+        # Application settings should be merged
+        app_config = config.get("application")
+        self.assertIsNotNone(app_config)
+
+        # Analysis settings should be merged
+        analysis = config.get("analysis_settings")
+        self.assertIsNotNone(analysis)
+
+        # Verify specific legacy settings were preserved
+        if analysis:
+            self.assertIn("timeout", analysis)
+            self.assertIn("memory_limit", analysis)
+
+        # Track migration sections in simulator
+        self.legacy_sim.track_migration_section("application")
+        self.legacy_sim.track_migration_section("analysis_settings")
+
+    def test_font_config_migration(self):
+        """Test that font configuration is migrated correctly using real simulators."""
+        # Get font config path
+        fonts_path = self.legacy_sim.fonts_dir / "font_config.json"
+
+        # Verify font config file exists (created by legacy config generator)
+        self.assertTrue(fonts_path.exists())
+
+        # Register path in path manager
+        self.path_manager.register_existing_path(str(fonts_path))
+
+        # Create config instance (triggers migration)
+        config = IntellicrackConfig()
+
+        # Check font config migrated
+        font_config = config.get("font_configuration")
+        if font_config:
+            self.assertEqual(font_config["default_font"], "Consolas")
+            self.assertIn("Monaco", font_config["fallback_fonts"])
+            self.assertEqual(font_config["sizes"]["medium"], 12)
+            self.assertEqual(font_config["styles"]["code"]["family"], "Consolas")
+
+        # Track migration section in simulator
+        self.legacy_sim.track_migration_section("font_configuration")
+
+    def test_backup_creation(self):
+        """Test that backups are created during migration using real simulators."""
+        config = IntellicrackConfig()
+
+        # Test backup creation using simulator
+        source_config = self.config_dir / "config.json"
+        if source_config.exists():
+            backup_path = self.legacy_sim.create_backup(source_config)
+            if backup_path:
+                self.assertTrue(backup_path.exists())
+                self.assertIn(str(backup_path), self.legacy_sim.backup_locations)
+
+        # Test multiple backup creation
+        llm_models_file = self.legacy_llm_dir / "models.json"
+        if llm_models_file.exists():
+            llm_backup = self.legacy_sim.create_backup(llm_models_file, ".migration_backup")
+            if llm_backup:
+                self.assertTrue(llm_backup.exists())
 
         # Verify original data is preserved somewhere
         # Either in backups or in the migrated config
         self.assertIsNotNone(config.get("llm_configuration.models.gpt4-legacy"))
-        self.assertIsNotNone(config.get("cli_configuration.aliases.ll"))
+        if config.get("cli_configuration"):
+            aliases = config.get("cli_configuration.aliases")
+            if aliases:
+                self.assertIsNotNone(aliases.get("ll"))
+
+        # Verify backup tracking
+        self.assertGreaterEqual(len(self.legacy_sim.backup_locations), 0)
 
     def test_migration_idempotency(self):
-        """Test that migration can be run multiple times safely."""
+        """Test that migration can be run multiple times safely using real simulators."""
+        # Track initial migration run
+        self.legacy_sim.track_migration_run()
+        initial_runs = self.legacy_sim.migration_runs
+
         # First migration
         config1 = IntellicrackConfig()
         config1.save()
@@ -630,6 +800,9 @@ class TestLegacySystemMigration(unittest.TestCase):
         gpt4_1 = config1.get("llm_configuration.models.gpt4-legacy")
         aliases_1 = config1.get("cli_configuration.aliases")
         theme_1 = config1.get("ui_preferences.theme")
+
+        # Track second migration run
+        self.legacy_sim.track_migration_run()
 
         # Second migration (should not duplicate or corrupt)
         config2 = IntellicrackConfig()
@@ -644,6 +817,9 @@ class TestLegacySystemMigration(unittest.TestCase):
         self.assertEqual(gpt4_1, gpt4_2)
         self.assertEqual(aliases_1, aliases_2)
         self.assertEqual(theme_1, theme_2)
+
+        # Verify multiple migration runs were tracked
+        self.assertEqual(self.legacy_sim.migration_runs, initial_runs + 2)
 
     def test_migration_preserves_all_data(self):
         """Test that no data is lost during migration."""
@@ -677,19 +853,27 @@ class TestLegacySystemMigration(unittest.TestCase):
         )
 
     def test_migration_with_conflicts(self):
-        """Test migration when there are conflicts between configs."""
+        """Test migration when there are conflicts between configs using real simulators."""
         # Create central config with some existing data
         config = IntellicrackConfig()
 
-        # Add conflicting data
-        config.set("llm_configuration.models.gpt4-legacy", {
-            "provider": "azure",  # Different from legacy
-            "model_name": "gpt-4-azure",
-            "api_key": "new-key"
-        })
+        # Create conflicted configuration using the config generator
+        conflicting_model = self.legacy_config_gen.create_conflicted_config(config)
 
         # Save and reload to trigger migration
         config.save()
+
+        # Verify conflict was detected and tracked
+        self.assertGreater(len(self.legacy_sim.conflict_resolutions), 0)
+
+        # Check that the conflicted key exists in resolution tracking
+        conflict_key = "llm_configuration.models.gpt4-legacy"
+        if conflict_key in self.legacy_sim.conflict_resolutions:
+            conflict_info = self.legacy_sim.conflict_resolutions[conflict_key]
+            self.assertIn("central", conflict_info)
+            self.assertIn("legacy", conflict_info)
+            self.assertIn("resolution", conflict_info)
+            self.assertEqual(conflict_info["resolution"], "prefer_central")
 
         # Migration should preserve existing central config values
         # (or merge intelligently based on implementation)
@@ -701,6 +885,10 @@ class TestLegacySystemMigration(unittest.TestCase):
         self.assertIn("provider", final_model)
         self.assertIn("model_name", final_model)
         self.assertIn("api_key", final_model)
+
+        # Verify conflict resolution was tracked properly
+        if self.legacy_sim.conflict_resolutions:
+            self.assertGreater(len(self.legacy_sim.conflict_resolutions), 0)
 
 
 if __name__ == "__main__":

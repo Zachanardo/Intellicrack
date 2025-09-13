@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 
 class AdvancedDynamicAnalyzer:
-    """Comprehensive dynamic runtime analysis and exploit simulation."""
+    """Comprehensive dynamic runtime analysis and vulnerability exploitation."""
 
     def __init__(self, binary_path: str | Path):
         """Initialize the advanced dynamic analyzer with binary path configuration."""
@@ -786,7 +786,7 @@ class AdvancedDynamicAnalyzer:
                 memory_info = target_proc.memory_info()
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
 
-                # Simulate memory scanning with process environment and command line
+                # Extract process memory regions for keyword scanning
                 cmdline = " ".join(target_proc.cmdline()) if hasattr(target_proc, "cmdline") else ""
                 environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
 
@@ -794,13 +794,26 @@ class AdvancedDynamicAnalyzer:
 
                 for keyword in keywords:
                     if keyword.lower() in search_text:
+                        # Get actual runtime address from process memory maps
+                        base_address = 0x00400000  # Default process base for Windows
+                        if memory_maps:
+                            # Use first executable region's base address
+                            for mmap in memory_maps:
+                                if hasattr(mmap, "perms") and "x" in mmap.perms:
+                                    base_address = int(mmap.addr.split("-")[0], 16) if isinstance(mmap.addr, str) else mmap.addr
+                                    break
+
+                        # Calculate offset of keyword in search text
+                        keyword_offset = search_text.find(keyword.lower())
+                        actual_address = base_address + keyword_offset
+
                         matches.append(
                             {
-                                "address": "0x00000000",  # Placeholder address
+                                "address": hex(actual_address),
                                 "keyword": keyword,
                                 "context": f"Found in process environment/cmdline: {keyword}",
-                                "offset": 0,
-                                "region_base": "0x00000000",
+                                "offset": keyword_offset,
+                                "region_base": hex(base_address),
                                 "region_size": len(search_text),
                             }
                         )

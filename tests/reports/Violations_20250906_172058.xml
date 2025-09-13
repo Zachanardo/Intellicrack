@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<ProductionReadinessAudit generated="2025-09-06T17:20:58.220138" tool_version="1.0">
+  <Summary>
+    <TotalFiles>0</TotalFiles>
+    <FilesWithViolations>0</FilesWithViolations>
+    <TotalViolations>0</TotalViolations>
+    <CriticalViolations>0</CriticalViolations>
+    <HighViolations>0</HighViolations>
+    <MediumViolations>0</MediumViolations>
+  </Summary>
+  <Violations/>
+</ProductionReadinessAudit>

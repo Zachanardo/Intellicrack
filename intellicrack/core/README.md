@@ -90,7 +90,6 @@ Distributed and accelerated processing:
 - **gpu_accelerator.py** - GPU acceleration support
 - **memory_loader.py** - Efficient memory loading
 - **memory_optimizer.py** - Memory usage optimization
-- **qemu_emulator.py** - QEMU emulator integration
 - **qiling_emulator.py** - Qiling framework integration
 
 ### Protection Bypass (`protection_bypass/`)
@@ -160,11 +159,11 @@ The core module integrates with:
 The core module is typically used through higher-level interfaces:
 
 ```python
-from intellicrack.core.analysis import CoreAnalyzer
+from intellicrack.core.binary_analyzer import BinaryAnalyzer
 from intellicrack.core.vulnerability_research import VulnerabilityAnalyzer
 
 # Initialize analyzers
-analyzer = CoreAnalyzer()
+analyzer = BinaryAnalyzer()
 vuln_analyzer = VulnerabilityAnalyzer()
 
 # Perform analysis

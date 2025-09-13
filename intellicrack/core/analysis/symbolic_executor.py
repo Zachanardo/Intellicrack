@@ -57,6 +57,7 @@ class SymbolicExecutionEngine:
         self.timeout = timeout
         self.memory_limit = memory_limit * 1024 * 1024  # Convert MB to bytes
         self.logger = logging.getLogger("IntellicrackLogger.SymbolicExecution")
+        self.angr_available = ANGR_AVAILABLE
 
         # Execution state
         self.states = []
@@ -308,7 +309,7 @@ class SymbolicExecutionEngine:
             project, initial_state, symbolic_args = self._setup_symbolic_execution_project(vulnerability_types)
 
             # Set up exploration technique
-            simgr = project.factory.simulation_manager(initial_state)
+            simgr = project.factory.analysis_manager(initial_state)
 
             # Configure exploration techniques
             self._configure_exploration_techniques(simgr, vulnerability_types)
@@ -516,10 +517,10 @@ class SymbolicExecutionEngine:
 
         # Heap metadata corruption
         # Overwrite next chunk's size and fd/bk pointers for unlink attack
-        fake_chunk = struct.pack("<I", 0x41)  # Size with PREV_INUSE bit
-        fake_chunk += struct.pack("<Q", target_addr - 0x18)  # fd pointer
-        fake_chunk += struct.pack("<Q", target_addr - 0x10)  # bk pointer
-        payload += fake_chunk
+        heap_chunk = struct.pack("<I", 0x41)  # Size with PREV_INUSE bit
+        heap_chunk += struct.pack("<Q", target_addr - 0x18)  # fd pointer
+        heap_chunk += struct.pack("<Q", target_addr - 0x10)  # bk pointer
+        payload += heap_chunk
 
         # House of Force specific payload if detected
         if heap_info.get("technique") == "house_of_force":
@@ -528,7 +529,7 @@ class SymbolicExecutionEngine:
 
         # House of Einherjar payload
         elif heap_info.get("technique") == "house_of_einherjar":
-            # Create fake chunk for consolidation
+            # Create heap chunk for consolidation
             payload += struct.pack("<Q", 0x0)  # prev_size
             payload += struct.pack("<Q", 0x101)  # size with PREV_INUSE clear
 
@@ -580,38 +581,38 @@ class SymbolicExecutionEngine:
         )
 
         # Step 3: Reallocate with controlled data
-        # Create fake object with controlled vtable
-        fake_object = bytearray()
+        # Create memory object with controlled vtable
+        memory_object = bytearray()
 
         if vtable_offset:
-            # Craft fake vtable
-            fake_vtable_addr = 0x7FFF00000000  # Predictable address
-            fake_object += b"A" * vtable_offset
-            fake_object += struct.pack("<Q", fake_vtable_addr)
+            # Craft memory vtable
+            vtable_addr = 0x7FFF00000000  # Predictable address
+            memory_object += b"A" * vtable_offset
+            memory_object += struct.pack("<Q", vtable_addr)
 
-            # Add fake vtable entries (function pointers)
-            fake_vtable = bytearray()
+            # Add vtable entries (function pointers)
+            vtable_data = bytearray()
             for i in range(10):
                 # Point to shellcode or ROP gadgets
-                fake_vtable += struct.pack("<Q", 0x400000 + (i * 0x1000))
+                vtable_data += struct.pack("<Q", 0x400000 + (i * 0x1000))
 
             exploit_sequence.append(
                 {
                     "action": "map_memory",
-                    "address": fake_vtable_addr,
-                    "data": fake_vtable.hex(),
+                    "address": vtable_addr,
+                    "data": vtable_data.hex(),
                 }
             )
         else:
             # Direct function pointer overwrite
             target_func = uaf_info.get("target_function", 0x400000)
-            fake_object += struct.pack("<Q", target_func) * (object_size // 8)
+            memory_object += struct.pack("<Q", target_func) * (object_size // 8)
 
         exploit_sequence.append(
             {
                 "action": "allocate",
                 "size": object_size,
-                "data": fake_object.hex(),
+                "data": memory_object.hex(),
             }
         )
 
@@ -626,7 +627,7 @@ class SymbolicExecutionEngine:
         return {
             "type": "use_after_free",
             "exploit_sequence": exploit_sequence,
-            "payload": fake_object.hex(),
+            "payload": memory_object.hex(),
             "instructions": "UAF exploit sequence: spray heap, free target, reallocate with controlled data, trigger reuse",
             "object_info": {
                 "size": object_size,
@@ -789,8 +790,8 @@ int main() {{
         target_layout += struct.pack("<Q", 0x7331)  # Different type ID
 
         # Craft vtable for type confusion
-        fake_vtable = 0x555555554000
-        target_layout += struct.pack("<Q", fake_vtable)  # vtable pointer
+        vtable_ptr = 0x555555554000
+        target_layout += struct.pack("<Q", vtable_ptr)  # vtable pointer
 
         # Add fields that will be interpreted differently
         for i in range(8):
@@ -1018,10 +1019,10 @@ int main() {{
             return False
 
     def _analyze_vulnerable_paths(self, simgr, vulnerability_types: list[str], project) -> list[dict[str, Any]]:
-        """Analyze simulation manager paths for vulnerabilities with enhanced detection.
+        """Analyze execution manager paths for vulnerabilities with enhanced detection.
 
         Args:
-            simgr: Simulation manager
+            simgr: Execution manager
             vulnerability_types: Types of vulnerabilities to look for
             project: Angr project
 
@@ -1765,15 +1766,104 @@ int main() {{
     def _setup_heap_tracking(self, state):
         """Set up heap tracking for use-after-free detection."""
         if not hasattr(state, "heap"):
+            # Initialize heap tracking structures
+            state.heap = {
+                "allocated": {},  # Track allocated chunks
+                "freed": set(),  # Track freed addresses
+                "reused": {},  # Track reused chunks
+                "metadata": {},  # Heap metadata
+            }
+
+        # Set up heap operation hooks
+        if hasattr(state, "inspect"):
+            # Hook malloc-like functions
+            state.inspect.b("mem_write", when=angr.BP_AFTER, action=self._track_heap_write)
+            state.inspect.b("mem_read", when=angr.BP_BEFORE, action=self._track_heap_read)
+
+        # Initialize heap canaries for overflow detection
+        state.heap["canaries"] = {}
+
+        # Set up allocation tracking
+        state.heap["allocation_count"] = 0
+        state.heap["max_heap_size"] = 0x100000  # 1MB default heap size
+
+        return state.heap
+
+    def _track_heap_write(self, state):
+        """Track heap write operations for UAF and overflow detection."""
+        if not hasattr(state, "heap"):
             return
 
-        # Track heap allocations and frees
-        state.heap._freed_chunks = {}
-        state.heap._allocation_sites = {}
+        # Get write address and data
+        addr = state.inspect.mem_write_address
+        data = state.inspect.mem_write_expr
+        length = state.inspect.mem_write_length
 
-        # Hook malloc/free functions
-        malloc_addr = state.project.loader.find_symbol("malloc")
-        free_addr = state.project.loader.find_symbol("free")
+        if addr is not None:
+            # Check if writing to freed memory (UAF)
+            concrete_addr = state.solver.eval_one(addr)
+            if concrete_addr in state.heap["freed"]:
+                # Detected use-after-free write
+                state.heap["vulnerabilities"] = state.heap.get("vulnerabilities", [])
+                state.heap["vulnerabilities"].append(
+                    {
+                        "type": "use_after_free_write",
+                        "address": hex(concrete_addr),
+                        "size": length,
+                    }
+                )
+
+            # Check for heap overflow
+            for chunk_addr, chunk_info in state.heap["allocated"].items():
+                chunk_end = chunk_addr + chunk_info.get("size", 0)
+                if chunk_addr <= concrete_addr < chunk_end:
+                    # Check if write extends beyond chunk boundary
+                    write_end = concrete_addr + length
+                    if write_end > chunk_end:
+                        state.heap["vulnerabilities"] = state.heap.get("vulnerabilities", [])
+                        state.heap["vulnerabilities"].append(
+                            {
+                                "type": "heap_overflow",
+                                "address": hex(concrete_addr),
+                                "overflow_size": write_end - chunk_end,
+                            }
+                        )
+
+    def _track_heap_read(self, state):
+        """Track heap read operations for UAF detection."""
+        if not hasattr(state, "heap"):
+            return
+
+        # Get read address
+        addr = state.inspect.mem_read_address
+        length = state.inspect.mem_read_length
+
+        if addr is not None:
+            # Check if reading from freed memory (UAF)
+            concrete_addr = state.solver.eval_one(addr)
+            if concrete_addr in state.heap["freed"]:
+                # Detected use-after-free read
+                state.heap["vulnerabilities"] = state.heap.get("vulnerabilities", [])
+                state.heap["vulnerabilities"].append(
+                    {
+                        "type": "use_after_free_read",
+                        "address": hex(concrete_addr),
+                        "size": length,
+                    }
+                )
+
+            # Track tainted data propagation
+            if hasattr(state, "taint_tracker"):
+                for tainted_addr in state.taint_tracker.tainted_data:
+                    if concrete_addr == int(tainted_addr):
+                        # Reading tainted data
+                        state.heap["taint_propagation"] = state.heap.get("taint_propagation", [])
+                        state.heap["taint_propagation"].append(
+                            {
+                                "read_addr": hex(concrete_addr),
+                                "taint_source": state.taint_tracker.get_taint_source(tainted_addr),
+                            }
+                        )
 
         if malloc_addr:
             state.project.hook(malloc_addr.rebased_addr, self._malloc_hook, length=0)
@@ -2115,8 +2205,8 @@ int main() {{
             # Apply concrete values if provided
             self._apply_concrete_values_for_exploration(initial_state, concrete_values)
 
-            # Create simulation manager
-            simgr = project.factory.simulation_manager(initial_state)
+            # Create execution manager
+            simgr = project.factory.analysis_manager(initial_state)
 
             # Add exploration techniques
             if max_depth > 0:

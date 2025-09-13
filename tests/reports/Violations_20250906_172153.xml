@@ -1,0 +1,2885 @@
+<?xml version="1.0" ?>
+<ProductionReadinessAudit generated="2025-09-06T17:21:53.749142" tool_version="1.0">
+  <Summary>
+    <TotalFiles>117</TotalFiles>
+    <FilesWithViolations>117</FilesWithViolations>
+    <TotalViolations>359</TotalViolations>
+    <CriticalViolations>158</CriticalViolations>
+    <HighViolations>74</HighViolations>
+    <MediumViolations>127</MediumViolations>
+  </Summary>
+  <Violations>
+    <Violation id="1" severity="MEDIUM">
+      <File>.\intellicrack\ai\ai_script_generator.py</File>
+      <Line>1137</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>if &quot;TODO&quot; in script or &quot;PLACEHOLDER&quot; in script:</Code>
+      <Description>Placeholder text found in code</Description>
+      <Recommendation>Replace with actual implementation</Recommendation>
+    </Violation>
+    <Violation id="2" severity="MEDIUM">
+      <File>.\intellicrack\ai\ai_script_generator.py</File>
+      <Line>502</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>(&quot;http://localhost:8080/v1&quot;, &quot;local_llm&quot;),</Code>
+      <Description>Hardcoded localhost URL in production code</Description>
+      <Recommendation>Use configurable host and port values</Recommendation>
+    </Violation>
+    <Violation id="3" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_format_converter.py</File>
+      <Line>333</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randint(</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="4" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_format_converter.py</File>
+      <Line>359</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randn(*input_shape)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="5" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_format_converter.py</File>
+      <Line>368</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = to_device(dummy_input, device)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="6" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_format_converter.py</File>
+      <Line>968</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randint(0, config.vocab_size, (batch_size, seq_length))</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="7" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_format_converter.py</File>
+      <Line>972</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randn(*input_shape)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="8" severity="CRITICAL">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>106</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement load_model for path: {model_path}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="9" severity="CRITICAL">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>112</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement predict with model {type(model)} and data {type(input_data)}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="10" severity="CRITICAL">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>118</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement get_model_info for model {type(model)}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="11" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>2318</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Model not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="12" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>2669</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;PyTorch not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="13" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_manager_module.py</File>
+      <Line>2676</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;PyTorch components not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="14" severity="MEDIUM">
+      <File>.\intellicrack\ai\model_performance_monitor.py</File>
+      <Line>459</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No metrics found for model&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="15" severity="CRITICAL">
+      <File>.\intellicrack\ai\multi_agent_system.py</File>
+      <Line>196</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement execute_task for task: {task.task_type}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="16" severity="CRITICAL">
+      <File>.\intellicrack\ai\predictive_intelligence.py</File>
+      <Line>408</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="17" severity="MEDIUM">
+      <File>.\intellicrack\ai\realtime_adaptation_engine.py</File>
+      <Line>798</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Session not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="18" severity="MEDIUM">
+      <File>.\intellicrack\ai\script_editor.py</File>
+      <Line>661</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Version not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="19" severity="MEDIUM">
+      <File>.\intellicrack\ai\script_editor.py</File>
+      <Line>148</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_request = ScriptGenerationRequest(prompt=&quot;validation&quot;, script_type=script_type, binary_path=binary_path)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="20" severity="MEDIUM">
+      <File>.\intellicrack\core\binary_analyzer.py</File>
+      <Line>430</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>&quot;sample&quot;: strings[:50],  # First 50 strings</Code>
+      <Description>Sample data in production code</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="21" severity="MEDIUM">
+      <File>.\intellicrack\core\binary_analyzer.py</File>
+      <Line>672</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>strings=analysis_results.get(&quot;strings&quot;, {}).get(&quot;sample&quot;, []),</Code>
+      <Description>Sample data in production code</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="22" severity="MEDIUM">
+      <File>.\intellicrack\core\config_manager.py</File>
+      <Line>251</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>&quot;local_llm&quot;: &quot;http://localhost:8080/v1&quot;,</Code>
+      <Description>Hardcoded localhost URL in production code</Description>
+      <Recommendation>Use configurable host and port values</Recommendation>
+    </Violation>
+    <Violation id="23" severity="MEDIUM">
+      <File>.\intellicrack\core\network_capture.py</File>
+      <Line>44</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Scapy not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install scapy&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="24" severity="MEDIUM">
+      <File>.\intellicrack\core\network_capture.py</File>
+      <Line>191</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;PyShark not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install pyshark&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="25" severity="MEDIUM">
+      <File>.\intellicrack\core\network_capture.py</File>
+      <Line>341</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;dpkt not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install dpkt&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="26" severity="MEDIUM">
+      <File>.\intellicrack\core\protection_analyzer.py</File>
+      <Line>320</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Could not calculate entropy&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="27" severity="MEDIUM">
+      <File>.\intellicrack\core\protection_analyzer.py</File>
+      <Line>377</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Unsupported file type or missing parser&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="28" severity="MEDIUM">
+      <File>.\intellicrack\core\protection_analyzer.py</File>
+      <Line>446</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Import analysis not supported for this file type&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="29" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>196</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid DOS header&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="30" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>202</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid PE header&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="31" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>259</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid ELF header&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="32" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>354</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;File too small for Mach-O&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="33" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>374</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid Mach-O magic&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="34" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\binary_analyzer.py</File>
+      <Line>424</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid DEX header&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="35" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\cfg_explorer.py</File>
+      <Line>1010</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No graph or NetworkX not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="36" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor.py</File>
+      <Line>529</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Required dependencies not available. Please install manticore.&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="37" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor.py</File>
+      <Line>660</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead.&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="38" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor.py</File>
+      <Line>661</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Required dependencies not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="39" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor.py</File>
+      <Line>671</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Could not automatically find license check address&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="40" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor_fixed.py</File>
+      <Line>110</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No symbolic execution engine available. Install angr (recommended) or manticore (Linux).&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="41" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor_fixed.py</File>
+      <Line>177</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Manticore not available on this platform&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="42" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor_fixed.py</File>
+      <Line>250</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No suitable symbolic execution engine for license bypass&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="43" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\concolic_executor_fixed.py</File>
+      <Line>342</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Manticore not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="44" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\dynamic_analyzer.py</File>
+      <Line>914</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No binary selected&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="45" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\multi_format_analyzer.py</File>
+      <Line>1221</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No binary selected&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="46" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\network_forensics_engine.py</File>
+      <Line>51</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Capture file not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="47" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_ai_integration.py</File>
+      <Line>401</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient features for license detection&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="48" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_ai_integration.py</File>
+      <Line>454</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient features for vulnerability prediction&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="49" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_ai_integration.py</File>
+      <Line>468</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient functions for clustering analysis&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="50" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_ai_integration.py</File>
+      <Line>543</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient features for anomaly detection&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="51" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_ai_integration.py</File>
+      <Line>571</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient functions for similarity analysis&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="52" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>151</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare metadata&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="53" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>205</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare functions&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="54" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>289</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to get string data&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="55" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>323</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare strings&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="56" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>369</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare imports/exports&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="57" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>378</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to get section data&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="58" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>427</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare sections&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="59" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>446</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare entry points&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="60" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_binary_diff.py</File>
+      <Line>481</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to compare security features&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="61" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1799</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_data = &quot;memcpy(lpData, fakeBinaryKey, sizeof(fakeBinaryKey));&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="62" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1800</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_size = &quot;*lpcbData = sizeof(fakeBinaryKey);&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="63" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1802</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_data = &quot;*(DWORD*)lpData = 0x12345678;  // Valid license flag&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="64" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1803</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_size = &quot;*lpcbData = sizeof(DWORD);&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="65" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1805</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_data = f'strcpy((char*)lpData, &quot;{app_name.upper()}-VALID-LICENSE-KEY&quot;);'</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="66" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1806</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_size = f'*lpcbData = strlen(&quot;{app_name.upper()}-VALID-LICENSE-KEY&quot;) + 1;'</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="67" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1853</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_file = f&quot;fake_{app_name.lower()}_license.dat&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="68" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1855</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_file = f&quot;fake_{app_name.lower()}_key.key&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="69" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1857</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_file = f&quot;fake_{app_name.lower()}_serial.txt&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="70" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_bypass_generator.py</File>
+      <Line>1859</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_file = f&quot;fake_{app_name.lower()}_license.lic&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="71" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\radare2_esil.py</File>
+      <Line>582</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No functions found for analysis&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="72" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>441</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Required dependencies not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="73" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>519</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_chunk = struct.pack(&quot;&lt;I&quot;, 0x41)  # Size with PREV_INUSE bit</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="74" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>584</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_object = bytearray()</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="75" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>588</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable_addr = 0x7FFF00000000  # Predictable address</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="76" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>593</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable = bytearray()</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="77" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\symbolic_executor.py</File>
+      <Line>792</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable = 0x555555554000</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="78" severity="MEDIUM">
+      <File>.\intellicrack\core\analysis\yara_pattern_engine.py</File>
+      <Line>791</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No rules loaded&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="79" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\cfi_bypass.py</File>
+      <Line>484</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable = self._generate_fake_vtable(vtables[0])</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="80" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\cfi_bypass.py</File>
+      <Line>657</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable = b&quot;&quot;</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="81" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\lateral_movement.py</File>
+      <Line>2673</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>$password = ConvertTo-SecureString 'PLACEHOLDER' -AsPlainText -Force</Code>
+      <Description>Placeholder text found in code</Description>
+      <Recommendation>Replace with actual implementation</Recommendation>
+    </Violation>
+    <Violation id="82" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\payload_templates.py</File>
+      <Line>1083</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>&quot;PLACEHOLDER&quot;,</Code>
+      <Description>Placeholder text found in code</Description>
+      <Recommendation>Replace with actual implementation</Recommendation>
+    </Violation>
+    <Violation id="83" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\payload_templates.py</File>
+      <Line>1204</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>&quot;PLACEHOLDER&quot;,</Code>
+      <Description>Placeholder text found in code</Description>
+      <Recommendation>Replace with actual implementation</Recommendation>
+    </Violation>
+    <Violation id="84" severity="MEDIUM">
+      <File>.\intellicrack\core\exploitation\payload_templates.py</File>
+      <Line>1210</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>&quot;DUMMY&quot;,</Code>
+      <Description>Dummy value found in production code</Description>
+      <Recommendation>Replace with meaningful implementation</Recommendation>
+    </Violation>
+    <Violation id="85" severity="HIGH">
+      <File>.\intellicrack\core\exploitation\payload_templates.py</File>
+      <Line>1081</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>stub_patterns = [</Code>
+      <Description>Variable with 'stub_' prefix suggests incomplete implementation</Description>
+      <Recommendation>Replace stub with complete implementation</Recommendation>
+    </Violation>
+    <Violation id="86" severity="HIGH">
+      <File>.\intellicrack\core\exploitation\payload_templates.py</File>
+      <Line>1202</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>stub_patterns = [</Code>
+      <Description>Variable with 'stub_' prefix suggests incomplete implementation</Description>
+      <Recommendation>Replace stub with complete implementation</Recommendation>
+    </Violation>
+    <Violation id="87" severity="HIGH">
+      <File>.\intellicrack\core\exploitation\polymorphic_engine.py</File>
+      <Line>659</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>stub_size_estimate = 30</Code>
+      <Description>Variable with 'stub_' prefix suggests incomplete implementation</Description>
+      <Recommendation>Replace stub with complete implementation</Recommendation>
+    </Violation>
+    <Violation id="88" severity="MEDIUM">
+      <File>.\intellicrack\core\logging\audit_logger.py</File>
+      <Line>831</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;psutil not available for system metrics&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="89" severity="CRITICAL">
+      <File>.\intellicrack\core\network\license_protocol_handler.py</File>
+      <Line>217</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Subclasses must implement _run_proxy&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="90" severity="CRITICAL">
+      <File>.\intellicrack\core\network\license_protocol_handler.py</File>
+      <Line>231</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Subclasses must implement handle_connection&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="91" severity="CRITICAL">
+      <File>.\intellicrack\core\network\license_protocol_handler.py</File>
+      <Line>247</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Subclasses must implement generate_response&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="92" severity="HIGH">
+      <File>.\intellicrack\core\patching\early_bird_injection.py</File>
+      <Line>186</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>stub_addr = self._create_injection_stub(</Code>
+      <Description>Variable with 'stub_' prefix suggests incomplete implementation</Description>
+      <Recommendation>Replace stub with complete implementation</Recommendation>
+    </Violation>
+    <Violation id="93" severity="HIGH">
+      <File>.\intellicrack\core\patching\early_bird_injection.py</File>
+      <Line>440</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>stub_addr = self._allocate_and_write_shellcode(process_handle, bytes(stub))</Code>
+      <Description>Variable with 'stub_' prefix suggests incomplete implementation</Description>
+      <Recommendation>Replace stub with complete implementation</Recommendation>
+    </Violation>
+    <Violation id="94" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\distributed_manager.py</File>
+      <Line>613</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No patterns specified&quot;, &quot;matches&quot;: []}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="95" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\distributed_manager.py</File>
+      <Line>703</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No section name specified&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="96" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\distributed_manager.py</File>
+      <Line>706</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;pefile not available for section analysis&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="97" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\distributed_manager.py</File>
+      <Line>798</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No target function specified&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="98" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\distributed_manager.py</File>
+      <Line>801</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;angr not available for symbolic execution&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="99" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\qemu_emulator_backup.py</File>
+      <Line>3002</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to start QEMU system&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="100" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\qemu_emulator_backup.py</File>
+      <Line>3008</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to create baseline snapshot&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="101" severity="MEDIUM">
+      <File>.\intellicrack\core\processing\qemu_emulator_backup.py</File>
+      <Line>3023</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to create post-execution snapshot&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="102" severity="HIGH">
+      <File>.\intellicrack\core\resources\resource_manager.py</File>
+      <Line>1317</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;output&quot;: result.stdout, &quot;method&quot;: &quot;primary&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="103" severity="MEDIUM">
+      <File>.\intellicrack\core\vulnerability_research\vulnerability_analyzer.py</File>
+      <Line>1589</Line>
+      <Type>HARDCODED_DICT</Type>
+      <Code>def _compute_stats(): return {...}</Code>
+      <Description>Function with no parameters returns hardcoded dictionary</Description>
+      <Recommendation>Make response dynamic based on actual data or add parameters</Recommendation>
+    </Violation>
+    <Violation id="104" severity="MEDIUM">
+      <File>.\intellicrack\core\vulnerability_research\exploit_developer\__init__.py</File>
+      <Line>125</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_vtable = params.get(&quot;fake_vtable&quot;, None)</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="105" severity="HIGH">
+      <File>.\intellicrack\handlers\frida_handler.py</File>
+      <Line>438</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;method&quot;: method_name, &quot;fallback&quot;: True}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="106" severity="HIGH">
+      <File>.\intellicrack\handlers\pyqt6_handler.py</File>
+      <Line>240</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>self._mock_name = &quot;MockWidget&quot;</Code>
+      <Description>Variable with 'mock_' prefix in production code</Description>
+      <Recommendation>Replace mock with real implementation</Recommendation>
+    </Violation>
+    <Violation id="107" severity="HIGH">
+      <File>.\intellicrack\handlers\pyqt6_handler.py</File>
+      <Line>323</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>self._mock_name = &quot;MockQt&quot;</Code>
+      <Description>Variable with 'mock_' prefix in production code</Description>
+      <Recommendation>Replace mock with real implementation</Recommendation>
+    </Violation>
+    <Violation id="108" severity="HIGH">
+      <File>.\intellicrack\handlers\pyqt6_handler.py</File>
+      <Line>356</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>self._mock_name = &quot;MockQtEnum&quot;</Code>
+      <Description>Variable with 'mock_' prefix in production code</Description>
+      <Recommendation>Replace mock with real implementation</Recommendation>
+    </Violation>
+    <Violation id="109" severity="HIGH">
+      <File>.\intellicrack\handlers\tkinter_handler.py</File>
+      <Line>680</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return &quot;ok&quot;</Code>
+      <Description>Hardcoded OK string response</Description>
+      <Recommendation>Return meaningful result based on operation</Recommendation>
+    </Violation>
+    <Violation id="110" severity="HIGH">
+      <File>.\intellicrack\handlers\tkinter_handler.py</File>
+      <Line>686</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return &quot;ok&quot;</Code>
+      <Description>Hardcoded OK string response</Description>
+      <Recommendation>Return meaningful result based on operation</Recommendation>
+    </Violation>
+    <Violation id="111" severity="HIGH">
+      <File>.\intellicrack\handlers\tkinter_handler.py</File>
+      <Line>692</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return &quot;ok&quot;</Code>
+      <Description>Hardcoded OK string response</Description>
+      <Recommendation>Return meaningful result based on operation</Recommendation>
+    </Violation>
+    <Violation id="112" severity="MEDIUM">
+      <File>.\intellicrack\hexview\ai_bridge.py</File>
+      <Line>1513</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Pattern description is required&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="113" severity="MEDIUM">
+      <File>.\intellicrack\hexview\ai_bridge.py</File>
+      <Line>1588</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Edit intent is required&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="114" severity="MEDIUM">
+      <File>.\intellicrack\hexview\integration.py</File>
+      <Line>57</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;AI bridge not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="115" severity="MEDIUM">
+      <File>.\intellicrack\hexview\integration.py</File>
+      <Line>67</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;AI bridge not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="116" severity="MEDIUM">
+      <File>.\intellicrack\hexview\integration.py</File>
+      <Line>77</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;AI bridge not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="117" severity="MEDIUM">
+      <File>.\intellicrack\plugins\custom_modules\hardware_dongle_emulator.py</File>
+      <Line>1416</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Dongle not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="118" severity="MEDIUM">
+      <File>.\intellicrack\plugins\custom_modules\network_analysis_plugin.py</File>
+      <Line>262</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Monitoring already in progress&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="119" severity="MEDIUM">
+      <File>.\intellicrack\plugins\custom_modules\success_rate_analyzer.py</File>
+      <Line>1128</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Insufficient data for comparison&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="120" severity="CRITICAL">
+      <File>.\intellicrack\scripts\ghidra\AntiAnalysisDetector.py</File>
+      <Line>63</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Subclasses must implement the run() method&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="121" severity="MEDIUM">
+      <File>.\intellicrack\ui\cfg_explorer_inner.py</File>
+      <Line>137</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;NetworkX not available or no graph data&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="122" severity="MEDIUM">
+      <File>.\intellicrack\ui\cfg_explorer_inner.py</File>
+      <Line>140</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No nodes in graph&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="123" severity="MEDIUM">
+      <File>.\intellicrack\ui\__init__.py</File>
+      <Line>101</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Integration not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="124" severity="MEDIUM">
+      <File>.\intellicrack\ui\dialogs\ai_coding_assistant_dialog.py</File>
+      <Line>2231</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_serials = [</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="125" severity="MEDIUM">
+      <File>.\intellicrack\ui\dialogs\ai_coding_assistant_dialog.py</File>
+      <Line>2255</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>fake_processors = [</Code>
+      <Description>Variable with 'fake_' prefix suggests placeholder data</Description>
+      <Recommendation>Replace with real data source or implementation</Recommendation>
+    </Violation>
+    <Violation id="126" severity="HIGH">
+      <File>.\intellicrack\ui\dialogs\plugin_editor_dialog.py</File>
+      <Line>263</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {'status': 'success', 'results': []}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="127" severity="MEDIUM">
+      <File>.\intellicrack\ui\dialogs\vulnerability_research_dialog.py</File>
+      <Line>96</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Binary files not found&quot;, &quot;similarity&quot;: 0.0}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="128" severity="MEDIUM">
+      <File>.\intellicrack\ui\dialogs\vulnerability_research_dialog.py</File>
+      <Line>2252</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Target file not found&quot;, &quot;vulnerabilities&quot;: []}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="129" severity="MEDIUM">
+      <File>.\intellicrack\ui\widgets\file_metadata_widget.py</File>
+      <Line>368</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;File not being tracked&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="130" severity="MEDIUM">
+      <File>.\intellicrack\ui\widgets\file_metadata_widget.py</File>
+      <Line>371</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;File no longer exists&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="131" severity="MEDIUM">
+      <File>.\intellicrack\utils\log_message.py</File>
+      <Line>138</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>...     context={&quot;host&quot;: &quot;example.com&quot;, &quot;port&quot;: 443},</Code>
+      <Description>Hardcoded example domain in production code</Description>
+      <Recommendation>Use configurable domain value</Recommendation>
+    </Violation>
+    <Violation id="132" severity="MEDIUM">
+      <File>.\intellicrack\utils\analysis\security_analysis.py</File>
+      <Line>707</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;psutil module not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="133" severity="MEDIUM">
+      <File>.\intellicrack\utils\binary\binary_utils.py</File>
+      <Line>193</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;File not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="134" severity="MEDIUM">
+      <File>.\intellicrack\utils\binary\elf_analyzer.py</File>
+      <Line>427</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to load binary&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="135" severity="MEDIUM">
+      <File>.\intellicrack\utils\core\final_utilities.py</File>
+      <Line>241</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;psutil not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="136" severity="MEDIUM">
+      <File>.\intellicrack\utils\core\internal_helpers.py</File>
+      <Line>538</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;License ID required&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="137" severity="MEDIUM">
+      <File>.\intellicrack\utils\core\internal_helpers.py</File>
+      <Line>864</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;License ID required for release&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="138" severity="MEDIUM">
+      <File>.\intellicrack\utils\exploitation\exploitation.py</File>
+      <Line>677</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;OpenSSL module not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="139" severity="MEDIUM">
+      <File>.\intellicrack\utils\exploitation\exploitation.py</File>
+      <Line>751</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;OpenSSL not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="140" severity="MEDIUM">
+      <File>.\intellicrack\utils\protection\protection_detection.py</File>
+      <Line>161</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Binary file not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="141" severity="MEDIUM">
+      <File>.\intellicrack\utils\protection\protection_detection.py</File>
+      <Line>502</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Binary file not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="142" severity="MEDIUM">
+      <File>.\intellicrack\utils\protection\protection_detection.py</File>
+      <Line>925</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Invalid binary path or file does not exist&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="143" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\additional_runners.py</File>
+      <Line>918</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>&quot;plugin&quot;: &quot;sample&quot;,</Code>
+      <Description>Sample data in production code</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="144" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\distributed_processing.py</File>
+      <Line>892</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No successful chunk processing&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="145" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\distributed_processing.py</File>
+      <Line>1505</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Celery not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install celery&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="146" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\distributed_processing.py</File>
+      <Line>1613</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Joblib not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install joblib&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="147" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\distributed_processing.py</File>
+      <Line>1694</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Joblib not available&quot;, &quot;suggestion&quot;: &quot;Install with: pip install joblib&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="148" severity="MEDIUM">
+      <File>.\intellicrack\utils\runtime\performance_optimizer.py</File>
+      <Line>525</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Failed to read chunk&quot;, &quot;status&quot;: &quot;failed&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="149" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>374</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;CFG analysis complete&quot;, &quot;data&quot;: graph_data}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="150" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>479</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Network traffic analyzer started&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="151" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>535</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Distributed processing started&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="152" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>864</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Ghidra analysis started&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="153" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>1277</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;ROP chain generation completed&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="154" severity="HIGH">
+      <File>.\intellicrack\utils\runtime\runner_functions.py</File>
+      <Line>1369</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Qiling emulation complete&quot;, &quot;results&quot;: results}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="155" severity="HIGH">
+      <File>.\intellicrack\utils\tools\tool_wrappers.py</File>
+      <Line>306</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Deep license analysis completed&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="156" severity="HIGH">
+      <File>.\intellicrack\utils\tools\tool_wrappers.py</File>
+      <Line>553</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;status&quot;: &quot;success&quot;, &quot;message&quot;: &quot;Successfully detached from target process&quot;}</Code>
+      <Description>Hardcoded success response</Description>
+      <Recommendation>Generate response based on actual operation result</Recommendation>
+    </Violation>
+    <Violation id="157" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\loaders\xmlldr.py</File>
+      <Line>1276</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_reference - add code to store reference</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="158" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\loaders\xmlldr.py</File>
+      <Line>1289</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_section - handle overlays?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="159" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\loaders\xmlldr.py</File>
+      <Line>1396</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: this needs to be on &quot;end&quot; event for PROGRAM</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="160" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\plugins\xmlldr.py</File>
+      <Line>1276</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_reference - add code to store reference</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="161" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\plugins\xmlldr.py</File>
+      <Line>1289</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_section - handle overlays?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="162" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\6xx\plugins\xmlldr.py</File>
+      <Line>1396</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: this needs to be on &quot;end&quot; event for PROGRAM</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="163" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>349</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: Test decompiler comments in batch and gui modes</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="164" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>752</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: How to handle print_type for data mangled names?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="165" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1014</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: How to handle print_type for function typeinfo cmts</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="166" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1088</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: Ask about OPND_ALL and retrieving additional manual operands</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="167" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1132</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: How to handle get_date_type_size for structure members</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="168" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1506</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO:How to handle opnd.type for stack references</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="169" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1510</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO:How to handle op_t_get_addr for stack references</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="170" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>1568</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: How to handle get_data_type_size (for stack vars)</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="171" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>2809</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_description: decide what to do with DESCRIPTION</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="172" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>2990</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: auto_wait is probably not needed...</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="173" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>3004</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: TYPECMTs</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="174" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>3235</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_reference: store refs? maybe only user-defined?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="175" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Extensions\IDAPro\Python\7xx\python\idaxml.py</File>
+      <Line>3253</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: import_memory_section - handle overlays?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="176" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Base\ghidra_scripts\RecursiveStringFinder.py</File>
+      <Line>29</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Must sub-class&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="177" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Base\ghidra_scripts\RecursiveStringFinder.py</File>
+      <Line>31</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="178" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Base\ghidra_scripts\RecursiveStringFinder.py</File>
+      <Line>40</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="179" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\argparse.py</File>
+      <Line>802</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(_('.__call__() not defined'))</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="180" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\asynchat.py</File>
+      <Line>83</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;must be implemented in subclass&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="181" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\asynchat.py</File>
+      <Line>94</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;must be implemented in subclass&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="182" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\asyncore.py</File>
+      <Line>641</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Only asyncore specific behaviour &quot;</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="183" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\BaseHTTPServer.py</File>
+      <Line>580</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>501: ('Not Implemented',</Code>
+      <Description>Explicit 'not implemented' text found</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="184" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\bdb.py</File>
+      <Line>149</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError, &quot;subclass of bdb must implement do_clear()&quot;</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="185" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>133</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="186" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>156</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="187" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>179</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="188" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>211</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="189" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>251</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="190" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>293</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="191" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\codecs.py</File>
+      <Line>424</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="192" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\collections.py</File>
+      <Line>500</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="193" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\cookielib.py</File>
+      <Line>831</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="194" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\cookielib.py</File>
+      <Line>835</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="195" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\cookielib.py</File>
+      <Line>1763</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="196" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\datetime.py</File>
+      <Line>1105</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;tzinfo subclass must override tzname()&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="197" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\datetime.py</File>
+      <Line>1109</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;tzinfo subclass must override utcoffset()&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="198" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\datetime.py</File>
+      <Line>1117</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;tzinfo subclass must override dst()&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="199" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\gettext.py</File>
+      <Line>37</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO:</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="200" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\hmac.py</File>
+      <Line>78</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># raise NotImplementedError, &quot;clear() method not available in HMAC.&quot;</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="201" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\httplib.py</File>
+      <Line>208</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>501: 'Not Implemented',</Code>
+      <Description>Explicit 'not implemented' text found</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="202" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>54</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="203" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>58</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="204" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>72</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="205" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>90</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="206" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>94</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="207" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>98</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="208" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>102</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="209" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>139</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="210" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>146</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="211" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>188</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="212" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>192</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="213" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>196</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="214" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\mailbox.py</File>
+      <Line>200</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('Method must be implemented by subclass')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="215" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\markupbase.py</File>
+      <Line>34</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="216" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\nntplib.py</File>
+      <Line>134</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># error 500, probably 'not implemented'</Code>
+      <Description>Explicit 'not implemented' text found</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="217" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\nntplib.py</File>
+      <Line>169</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># error 500, probably 'not implemented'</Code>
+      <Description>Explicit 'not implemented' text found</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="218" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>63</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="219" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>71</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="220" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>76</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="221" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>81</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="222" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>86</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="223" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>91</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="224" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>104</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="225" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>109</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="226" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>117</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="227" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>122</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="228" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>130</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="229" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>135</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="230" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>140</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="231" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>145</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="232" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>150</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="233" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>155</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="234" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>160</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="235" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>186</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="236" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>199</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="237" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>220</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="238" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>225</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="239" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>230</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="240" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>235</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="241" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>242</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="242" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>247</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="243" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>278</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="244" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>282</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="245" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>304</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="246" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>319</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="247" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>324</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="248" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>329</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="249" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>334</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="250" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>339</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="251" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>344</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="252" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>349</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="253" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>354</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="254" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>359</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="255" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>364</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="256" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>369</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="257" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>374</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="258" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\numbers.py</File>
+      <Line>271</Line>
+      <Type>STUB_CLASS</Type>
+      <Code>class Rational</Code>
+      <Description>Class has 2/3 placeholder methods</Description>
+      <Recommendation>Implement missing class methods or remove if not needed</Recommendation>
+    </Violation>
+    <Violation id="259" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\optparse.py</File>
+      <Line>250</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError, &quot;subclasses must implement&quot;</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="260" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\optparse.py</File>
+      <Line>253</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError, &quot;subclasses must implement&quot;</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="261" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\os.py</File>
+      <Line>674</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;/dev/urandom (or equivalent) not found&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="262" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\pycimport.py</File>
+      <Line>8</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># Todo: This should be stored in a central place.</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="263" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\pycimport.py</File>
+      <Line>49</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># Todo: This check should also be in Unmarshaller</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="264" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\random.py</File>
+      <Line>838</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('System entropy source does not have state.')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="265" severity="MEDIUM">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\random.py</File>
+      <Line>62</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>__all__ = [&quot;Random&quot;, &quot;seed&quot;, &quot;random&quot;, &quot;uniform&quot;, &quot;randint&quot;, &quot;choice&quot;, &quot;sample&quot;,</Code>
+      <Description>Sample data in production code</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="266" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\readline.py</File>
+      <Line>138</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: if there are a reasonably large number of completions</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="267" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\signal.py</File>
+      <Line>195</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="268" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\signal.py</File>
+      <Line>234</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;alarm not implemented on this platform&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="269" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\smtpd.py</File>
+      <Line>65</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO:</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="270" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\smtpd.py</File>
+      <Line>327</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="271" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ssl.py</File>
+      <Line>545</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;only stream sockets are supported&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="272" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ssl.py</File>
+      <Line>729</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Can't dup() %s instances&quot; %</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="273" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ssl.py</File>
+      <Line>912</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="274" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ssl.py</File>
+      <Line>1232</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="275" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ssl.py</File>
+      <Line>1235</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="276" severity="MEDIUM">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\timeit.py</File>
+      <Line>67</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_src_name = &quot;&lt;timeit-src&gt;&quot;</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="277" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\types.py</File>
+      <Line>52</Line>
+      <Type>STUB_CLASS</Type>
+      <Code>class _C</Code>
+      <Description>Class has 1/1 placeholder methods</Description>
+      <Recommendation>Implement missing class methods or remove if not needed</Recommendation>
+    </Violation>
+    <Violation id="278" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>92</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: sort out True/False/boolean issues for Python 2.3</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="279" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>634</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: the xml-rpc specification allows us to leave out</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="280" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>815</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: assert standalone == 1 ???</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="281" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>1509</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: mostly untested</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="282" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>1166</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="283" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>1193</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="284" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>1224</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="285" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xmlrpclib.py</File>
+      <Line>1519</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="286" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\zipfile.py</File>
+      <Line>539</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;compression type %d (%s)&quot; % (self._compress_type, descr))</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="287" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\zipfile.py</File>
+      <Line>541</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;compression type %d&quot; % (self._compress_type,))</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="288" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_abcoll.py</File>
+      <Line>267</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="289" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_abcoll.py</File>
+      <Line>272</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="290" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_google_ipaddr_r234.py</File>
+      <Line>516</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('BaseIP has no version')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="291" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_google_ipaddr_r234.py</File>
+      <Line>690</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('BaseNet has no version')</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="292" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_socket.py</File>
+      <Line>1831</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="293" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\_sslcerts.py</File>
+      <Line>306</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Jython does not implement PEM object {!r}&quot;.format(obj))</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="294" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ctypes\__init__.py</File>
+      <Line>103</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;struct packing not implemented&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="295" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\ctypes\__init__.py</File>
+      <Line>105</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;anonymous fields not implemented&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="296" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\distutils\ccompiler.py</File>
+      <Line>670</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="297" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\distutils\ccompiler.py</File>
+      <Line>718</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="298" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\distutils\ccompiler.py</File>
+      <Line>724</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="299" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\distutils\ccompiler.py</File>
+      <Line>730</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="300" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\distutils\ccompiler.py</File>
+      <Line>783</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="301" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\btm_utils.py</File>
+      <Line>223</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: handle {min, max} repeaters</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="302" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\btm_utils.py</File>
+      <Line>224</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="303" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\fixer_base.py</File>
+      <Line>109</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError()</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="304" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\pytree.py</File>
+      <Line>88</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="305" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\pytree.py</File>
+      <Line>96</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="306" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\pytree.py</File>
+      <Line>104</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="307" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\lib2to3\pytree.py</File>
+      <Line>112</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="308" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\logging\config.py</File>
+      <Line>801</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;listen() needs threading to work&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="309" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\logging\__init__.py</File>
+      <Line>745</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError('emit must be implemented '</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="310" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\logging\__init__.py</File>
+      <Line>1681</Line>
+      <Type>STUB_CLASS</Type>
+      <Code>class NullHandler</Code>
+      <Description>Class has 2/3 placeholder methods</Description>
+      <Recommendation>Implement missing class methods or remove if not needed</Recommendation>
+    </Violation>
+    <Violation id="311" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\wsgiref\handlers.py</File>
+      <Line>337</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="312" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\wsgiref\handlers.py</File>
+      <Line>345</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="313" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\wsgiref\handlers.py</File>
+      <Line>349</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="314" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\wsgiref\handlers.py</File>
+      <Line>353</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="315" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\wsgiref\handlers.py</File>
+      <Line>357</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="316" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\NodeFilter.py</File>
+      <Line>27</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="317" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\xmlbuilder.py</File>
+      <Line>198</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;Haven't written this yet...&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="318" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\xmlbuilder.py</File>
+      <Line>349</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="319" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\xmlbuilder.py</File>
+      <Line>353</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;haven't written this yet&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="320" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\xmlbuilder.py</File>
+      <Line>356</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;haven't written this yet&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="321" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\dom\xmlbuilder.py</File>
+      <Line>382</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="322" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementPath.py</File>
+      <Line>135</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: raise error if .. is applied at toplevel?</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="323" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementPath.py</File>
+      <Line>147</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: replace with real parser!!! refs:</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="324" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementPath.py</File>
+      <Line>217</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: what if the selector is &quot;*&quot; ?</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="325" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementTree.py</File>
+      <Line>151</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: not sure about this; might be a better idea to look</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="326" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementTree.py</File>
+      <Line>797</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: raise an ImportError for c14n if ElementC14N is missing?</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="327" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementTree.py</File>
+      <Line>865</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: can this be handled in XML 1.0?</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="328" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementTree.py</File>
+      <Line>990</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: handle boolean attributes</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="329" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\etree\ElementTree.py</File>
+      <Line>1150</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: merge small fragments into larger parts</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="330" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>219</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: pseudo-buffering if a read without argument is not supported.</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="331" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>300</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO : implement a model parser</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="332" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>314</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: use the same trick to report accurate error locations ?</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="333" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>357</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: make a helper function here</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="334" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>457</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># TODO: adapt mode, required, etc.</Code>
+      <Description>TODO comment indicates incomplete implementation</Description>
+      <Recommendation>Complete the implementation and remove TODO</Recommendation>
+    </Violation>
+    <Violation id="335" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>124</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(error)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="336" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\parsers\expat.py</File>
+      <Line>133</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(error)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="337" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>81</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="338" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>85</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="339" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>89</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="340" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>94</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="341" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>99</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="342" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>104</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="343" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>109</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="344" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>113</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="345" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>117</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="346" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>121</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="347" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>125</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="348" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>130</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="349" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>134</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="350" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>138</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="351" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxlib.py</File>
+      <Line>142</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="352" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxutils.py</File>
+      <Line>475</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: remove this backward compatibility hack when not needed anymore</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="353" severity="HIGH">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxutils.py</File>
+      <Line>492</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code># FIXME: what about char-stream?</Code>
+      <Description>FIXME comment indicates broken functionality</Description>
+      <Recommendation>Fix the issue and remove FIXME comment</Recommendation>
+    </Violation>
+    <Violation id="354" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\saxutils.py</File>
+      <Line>507</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;prepareParser must be overridden!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="355" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\xmlreader.py</File>
+      <Line>30</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="356" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\xmlreader.py</File>
+      <Line>132</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="357" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\xmlreader.py</File>
+      <Line>137</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;prepareParser must be overridden!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="358" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\xmlreader.py</File>
+      <Line>150</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="359" severity="CRITICAL">
+      <File>.\tools\ghidra\ghidra_11.3.2_PUBLIC\Ghidra\Features\Jython\data\jython-2.7.4\Lib\xml\sax\xmlreader.py</File>
+      <Line>157</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(&quot;This method must be implemented!&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+  </Violations>
+</ProductionReadinessAudit>

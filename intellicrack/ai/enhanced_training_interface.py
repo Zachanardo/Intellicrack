@@ -46,6 +46,7 @@ try:
         QLabel,
         QLineEdit,
         QMessageBox,
+        QPainter,
         QPalette,
         QPixmap,
         QProgressBar,
@@ -69,96 +70,19 @@ try:
     PYQT6_AVAILABLE = HAS_PYQT
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
+    logger.error("PyQt6 is required for GUI functionality. Install with: pip install PyQt6")
     PYQT6_AVAILABLE = False
 
-    # Create fallback classes for when PyQt6 is not available
-    class QThread:
-        pass
+    # Raise error immediately when PyQt6 is not available
+    error_msg = """
+    CRITICAL: PyQt6 is not installed but is required for the Enhanced Training Interface.
 
-    class QWidget:
-        pass
+    To install PyQt6, run:
+        pip install PyQt6
 
-    class QDialog:
-        pass
-
-    class QVBoxLayout:
-        pass
-
-    class QHBoxLayout:
-        pass
-
-    class QTabWidget:
-        pass
-
-    class QLabel:
-        pass
-
-    class QPushButton:
-        pass
-
-    class QProgressBar:
-        pass
-
-    class QTextEdit:
-        pass
-
-    class QCheckBox:
-        pass
-
-    class QSpinBox:
-        pass
-
-    class QDoubleSpinBox:
-        pass
-
-    class QComboBox:
-        pass
-
-    class QSlider:
-        pass
-
-    class QGroupBox:
-        pass
-
-    class QFormLayout:
-        pass
-
-    class QGridLayout:
-        pass
-
-    class QFrame:
-        pass
-
-    class QTableWidget:
-        pass
-
-    class QTableWidgetItem:
-        pass
-
-    class QScrollArea:
-        pass
-
-    class QSplitter:
-        pass
-
-    class QLineEdit:
-        pass
-
-    class QFileDialog:
-        pass
-
-    class QMessageBox:
-        pass
-
-    class QTimer:
-        pass
-
-    def pyqtSignal(*args):
-        return None
-
-    Qt = None
-    QFont = None
-    QIcon = None
+    For headless training without GUI, use the headless_training_interface module instead.
+    """
+    raise ImportError(error_msg) from e
     QPalette = None
     QPixmap = None
 
@@ -716,41 +640,104 @@ class TrainingThread(QThread):
     def _forward_pass(self, features, epoch=0, validation=False):
         """Perform forward pass through the model."""
         try:
-            # Real neural network forward pass simulation
+            import numpy as np
+
+            # Initialize model weights if not already initialized
+            if not hasattr(self, "_model_weights"):
+                self._initialize_model_weights(len(features) if features else 10)
+
             if not features:
                 return 0.0
 
-            # Normalize features
-            feature_sum = sum(abs(float(f)) for f in features if isinstance(f, (int, float)))
-            if feature_sum == 0:
-                return 0.0
+            # Convert features to numpy array
+            feature_array = np.array([float(f) if isinstance(f, (int, float)) else 0.0 for f in features], dtype=np.float32)
 
-            normalized_features = [float(f) / feature_sum for f in features if isinstance(f, (int, float))]
+            # Normalize features using batch normalization
+            mean = np.mean(feature_array)
+            std = np.std(feature_array) + 1e-8  # Prevent division by zero
+            normalized_features = (feature_array - mean) / std
 
-            # Simple neural network computation
-            # Hidden layer 1
-            hidden1 = sum(f * (0.5 + epoch * 0.01) for f in normalized_features[:3])
-            hidden1 = max(0, hidden1)  # ReLU activation
+            # Ensure correct input dimensions
+            if len(normalized_features) < self._input_size:
+                # Pad with zeros if needed
+                normalized_features = np.pad(normalized_features, (0, self._input_size - len(normalized_features)))
+            elif len(normalized_features) > self._input_size:
+                # Truncate if too many features
+                normalized_features = normalized_features[: self._input_size]
 
-            # Hidden layer 2
-            hidden2 = sum(f * (0.3 + epoch * 0.005) for f in normalized_features[3:6])
-            hidden2 = max(0, hidden2)  # ReLU activation
+            # Layer 1: Input -> Hidden1
+            z1 = np.dot(normalized_features, self._weights["W1"]) + self._weights["b1"]
+            a1 = self._relu(z1)
 
-            # Output layer
-            output = hidden1 * 0.6 + hidden2 * 0.4
+            # Apply dropout during training
+            if not validation and hasattr(self.config, "dropout_rate"):
+                dropout_rate = self.config.dropout_rate
+                dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
+                a1 = a1 * dropout_mask
 
-            # Add training progression
+            # Layer 2: Hidden1 -> Hidden2
+            z2 = np.dot(a1, self._weights["W2"]) + self._weights["b2"]
+            a2 = self._relu(z2)
+
+            # Apply dropout during training
+            if not validation and hasattr(self.config, "dropout_rate"):
+                dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
+                a2 = a2 * dropout_mask
+
+            # Layer 3: Hidden2 -> Output
+            z3 = np.dot(a2, self._weights["W3"]) + self._weights["b3"]
+            output = self._sigmoid(z3)
+
+            # Store activations for backpropagation
             if not validation:
-                improvement_factor = min(1.0, epoch / self.config.epochs + 0.3)
-                output *= improvement_factor
+                self._last_activations = {"input": normalized_features, "z1": z1, "a1": a1, "z2": z2, "a2": a2, "z3": z3, "output": output}
 
-            # Sigmoid activation for binary classification
-            prediction = 1.0 / (1.0 + (2.718 ** (-output)))
+            return float(output[0])
 
-            return prediction
+        except Exception as e:
+            logger.debug(f"Forward pass error: {e}")
+            return 0.5
 
-        except Exception:
-            return 0.5  # Default neutral prediction
+    def _initialize_model_weights(self, input_size):
+        """Initialize neural network weights using He initialization."""
+        import numpy as np
+
+        self._input_size = input_size
+        hidden1_size = max(32, input_size * 2)
+        hidden2_size = max(16, input_size)
+        output_size = 1
+
+        # He initialization for ReLU activation
+        self._weights = {
+            "W1": np.random.randn(input_size, hidden1_size) * np.sqrt(2.0 / input_size),
+            "b1": np.zeros((hidden1_size,)),
+            "W2": np.random.randn(hidden1_size, hidden2_size) * np.sqrt(2.0 / hidden1_size),
+            "b2": np.zeros((hidden2_size,)),
+            "W3": np.random.randn(hidden2_size, output_size) * np.sqrt(2.0 / hidden2_size),
+            "b3": np.zeros((output_size,)),
+        }
+
+        # Initialize optimizer parameters (Adam)
+        self._adam_params = {
+            "m": {key: np.zeros_like(val) for key, val in self._weights.items()},
+            "v": {key: np.zeros_like(val) for key, val in self._weights.items()},
+            "t": 0,
+            "beta1": 0.9,
+            "beta2": 0.999,
+            "epsilon": 1e-8,
+        }
+
+    def _relu(self, x):
+        """ReLU activation function."""
+        return np.maximum(0, x)
+
+    def _sigmoid(self, x):
+        """Sigmoid activation function."""
+        import numpy as np
+
+        # Clip values to prevent overflow
+        x_clipped = np.clip(x, -500, 500)
+        return 1.0 / (1.0 + np.exp(-x_clipped))
 
     def _compute_loss(self, prediction, label):
         """Compute loss between prediction and true label."""
@@ -862,7 +849,7 @@ class DatasetAnalysisWidget(QWidget):
         load_layout = QHBoxLayout()
 
         self.dataset_path_edit = QLineEdit()
-        self.dataset_path_edit.setPlaceholderText("Path to dataset...")
+        self.dataset_path_edit.setToolTip("Enter the full path to your training dataset file (CSV, JSON, or NPZ format)")
 
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse_dataset)
@@ -1523,6 +1510,11 @@ class EnhancedTrainingInterface(QDialog):
         self.training_thread = None
         self.config = TrainingConfiguration()
 
+        # Initialize status update timer for UI refresh
+        self.status_timer = QTimer()
+        self.status_timer.timeout.connect(self._update_status_display)
+        self.status_timer.setInterval(1000)  # Update every second
+
         # Initialize UI attributes
         self.model_name_edit = None
         self.model_type_combo = None
@@ -1636,35 +1628,75 @@ class EnhancedTrainingInterface(QDialog):
         self.setPalette(palette)
 
     def _apply_button_icons(self):
-        """Apply icons to buttons using colored pixmaps."""
+        """Apply icons to buttons using SVG icons."""
+        from PyQt6.QtCore import QByteArray
+        from PyQt6.QtSvg import QSvgRenderer
 
-        # Create simple colored pixmaps as placeholders for icons
-        def create_colored_pixmap(color, size=16):
-            """Create a solid-colored pixmap for use as a button icon.
+        def create_svg_icon(svg_str, size=16):
+            """Create an icon from SVG string data.
 
             Args:
-                color: Qt color to fill the pixmap with
-                size: Size of the square pixmap in pixels (default: 16)
+                svg_str: SVG XML string defining the icon
+                size: Size of the icon in pixels (default: 16)
 
             Returns:
-                QPixmap: A square pixmap filled with the specified color
-
+                QIcon: Icon created from the SVG data
             """
+            svg_bytes = QByteArray(svg_str.encode("utf-8"))
+            renderer = QSvgRenderer(svg_bytes)
             pixmap = QPixmap(size, size)
-            pixmap.fill(color)
-            return pixmap
+            pixmap.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(pixmap)
+            renderer.render(painter)
+            painter.end()
+            return QIcon(pixmap)
 
-        # Apply icons (using colored squares as placeholders)
+        # Play icon (triangle pointing right)
+        play_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 2 L12 8 L4 14 Z" fill="#28a745" stroke="#1e7e34" stroke-width="0.5"/>
+        </svg>"""
+
+        # Pause icon (two vertical bars)
+        pause_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="2" width="3" height="12" fill="#ffc107" stroke="#d39e00" stroke-width="0.5"/>
+            <rect x="9" y="2" width="3" height="12" fill="#ffc107" stroke="#d39e00" stroke-width="0.5"/>
+        </svg>"""
+
+        # Stop icon (square)
+        stop_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="10" height="10" fill="#dc3545" stroke="#bd2130" stroke-width="0.5"/>
+        </svg>"""
+
+        # Save icon (floppy disk)
+        save_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2 L2 14 L14 14 L14 5 L11 2 Z" fill="#007bff" stroke="#0056b3" stroke-width="0.5"/>
+            <rect x="5" y="2" width="6" height="4" fill="#ffffff" stroke="#0056b3" stroke-width="0.5"/>
+            <rect x="4" y="8" width="8" height="4" fill="#ffffff" stroke="#0056b3" stroke-width="0.5"/>
+            <rect x="8" y="2.5" width="2" height="2.5" fill="#0056b3"/>
+        </svg>"""
+
+        # Load icon (folder with arrow)
+        load_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 4 L2 13 L14 13 L14 6 L8 6 L7 4 Z" fill="#17a2b8" stroke="#117a8b" stroke-width="0.5"/>
+            <path d="M8 8 L8 11 M6 9.5 L8 11 L10 9.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>"""
+
+        # Apply icons
         if self.start_btn:
-            self.start_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.green)))
+            self.start_btn.setIcon(create_svg_icon(play_svg, 20))
+            self.start_btn.setToolTip("Start Training")
         if self.pause_btn:
-            self.pause_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.yellow)))
+            self.pause_btn.setIcon(create_svg_icon(pause_svg, 20))
+            self.pause_btn.setToolTip("Pause Training")
         if self.stop_btn:
-            self.stop_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.red)))
+            self.stop_btn.setIcon(create_svg_icon(stop_svg, 20))
+            self.stop_btn.setToolTip("Stop Training")
         if self.save_config_btn:
-            self.save_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.blue)))
+            self.save_config_btn.setIcon(create_svg_icon(save_svg, 20))
+            self.save_config_btn.setToolTip("Save Configuration")
         if self.load_config_btn:
-            self.load_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.cyan)))
+            self.load_config_btn.setIcon(create_svg_icon(load_svg, 20))
+            self.load_config_btn.setToolTip("Load Configuration")
 
     def create_config_tab(self) -> QWidget:
         """Create the configuration tab with scrollable area."""
@@ -1966,6 +1998,15 @@ class EnhancedTrainingInterface(QDialog):
         self.augmentation_cb.setChecked(self.config.use_augmentation)
         self.transfer_learning_cb.setChecked(self.config.use_transfer_learning)
         self.gpu_cb.setChecked(self.config.use_gpu)
+
+    def _update_status_display(self):
+        """Update the status display during training."""
+        if hasattr(self, "training_thread") and self.training_thread and self.training_thread.isRunning():
+            current_time = datetime.now().strftime("%H:%M:%S")
+            if hasattr(self, "status_label"):
+                self.status_label.setText(f"Training in progress... ({current_time})")
+        elif hasattr(self, "status_label"):
+            self.status_label.setText("Ready for training")
 
 
 def create_enhanced_training_interface(parent=None) -> "EnhancedTrainingInterface":

@@ -6,7 +6,15 @@ This directory is reserved for custom fonts that may be bundled with Intellicrac
 
 The application uses the following fonts:
 - **UI Fonts**: Segoe UI, Arial, Roboto, System Default
-- **Code/Monospace Fonts**: Consolas, Courier New, Source Code Pro, Monospace
+- **Code/Monospace Fonts**: JetBrains Mono, Consolas, Courier New, Source Code Pro, Monospace
+
+## Bundled Fonts
+
+This directory includes:
+- **JetBrainsMono-Regular.ttf**: Regular weight JetBrains Mono font
+- **JetBrainsMono-Bold.ttf**: Bold weight JetBrains Mono font
+
+These fonts are automatically loaded by the application for monospace text display.
 
 ## Font Fallback
 

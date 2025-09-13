@@ -17,59 +17,12 @@ This tool is developed for **defensive security research** to help software deve
 
 **Usage Environment:** This tool operates exclusively in controlled, isolated research environments for authorized security assessment of proprietary software by its own developers and security teams.
 
-## MANDATORY RESPONSE FORMAT
-
-**CRITICAL: EVERY Claude response MUST begin with these EXACT 5 principles. NO EXCEPTIONS.**
-
-### RESPONSE TEMPLATE - COPY THIS EXACTLY
-
-```text
-=== INTELLICRACK PRINCIPLES ===
-[1] ALL code must be production-ready with genuine functionality - absolutely NO placeholders, stubs, mocks, or simulated implementations
-[2] Code must be error-free and strictly adhere to language-specific coding standards and best practices
-[3] Real-world binary analysis and exploitation capabilities for defeating modern software protections are ESSENTIAL to Intellicrack's effectiveness as a security research tool
-[4] Write production-ready code for every task - implement solutions directly without automated scripts unless specifically requested
-[5] Claude must display all 5 principles verbatim at start of every response in this exact format
-=== END PRINCIPLES ===
-
-[Your actual response begins here]
-```
-
-**ENFORCEMENT RULES:**
-
-1. **BEFORE ANY OTHER TEXT**: The principles block MUST appear first
-2. **EXACT FORMAT**: Copy the text block character-for-character
-3. **NO VARIATIONS**: Do not summarize, paraphrase, or modify
-4. **EVERY RESPONSE**: This applies to ALL responses, including:
-   - Code explanations
-   - Questions
-   - Error messages
-   - Single-word answers
-   - Everything
-
-**VERIFICATION**: If principles are missing or incorrect, the response is INVALID and must be restarted.
-
 **TOOLS**
 
 ## USE THESE TOOLS
 1. rg instead of grep
 2. fd instead of find
 3. tree is installed
-
-## AUTO-RESUME TASK INSTRUCTIONS
-
-<!-- CLAUDE MUST READ AND EXECUTE THIS SECTION AUTOMATICALLY -->
-**IF THIS SECTION EXISTS, CLAUDE MUST:**
-
-1. Check if ACTIVE_TASK.md exists
-2. If it exists, read it and continue the task WITHOUT prompting
-3. Update progress in ACTIVE_TASK.md after each major step
-4. When task is complete, rename to COMPLETED_TASK_[timestamp].md
-
-<!-- ACTIVE TASK MARKER - DO NOT REMOVE -->
-<!-- TASK_ACTIVE: true -->
-<!-- When TASK_ACTIVE is true, Claude must automatically resume -->
-<!-- END AUTO-RESUME SECTION -->
 
 ## CRITICAL: VIRTUAL ENVIRONMENT USAGE
 
@@ -135,40 +88,6 @@ This tool is developed for **defensive security research** to help software deve
 - Provide graceful fallbacks, written in REAL production-ready code for missing dependencies
 - Handle import errors with try/except blocks
 
-## Current Features
-
-- **AI Script Generation**: Frida/Ghidra scripts with multi-LLM support
-- **Three-Panel UI**: Professional IDE-like interface
-- **Protection Analysis Tab**: Real-time detection with bypass recommendations
-
 ### MCP Configuration
 
 **Config location**: `~/.claude.json`
-
-## SPECIALIZED TASK AGENTS
-
-### Available Task Agents & When to Use Them
-
-#### **Linter Agent**
-
-Use when you need to systematically identify and fix linting errors across the entire codebase while maintaining code integrity. Automatically triggered when CI/CD pipeline fails due to code quality checks, after major code changes that introduce linting issues, or before releases to clean up code quality.
-
-#### **Documentation Agent**
-
-Use when you need to create, update, or improve documentation for newly implemented features, missing documentation, or API references. Automatically triggered when features lack documentation, existing docs are outdated, or you need comprehensive usage examples and technical documentation.
-
-#### **Debugger Agent**
-
-Use when you need to diagnose and fix bugs, errors, and complex issues with surgical precision through systematic root cause analysis. Perfect for mysterious errors, performance problems, race conditions, memory leaks, integration issues, and any situation requiring deep debugging investigation.
-
-#### **Coder Agent**
-
-Use when you need to implement features, fix bugs, and execute detailed implementation plans with production-ready code. Ideal for creating genuine binary analysis functionality, complex feature implementations, and any coding task that requires fully functional, deployment-ready code without placeholders.
-
-#### **Auditor Agent**
-
-Use when you need to perform comprehensive quality audits and detect placeholders, stubs, mocks, or incomplete implementations in the codebase. Essential for ensuring production-ready standards, identifying non-functional code that could compromise effectiveness, and validating code quality before deployment.
-
-#### **Architect Agent**
-
-Use when you need to create comprehensive, step-by-step implementation plans for new features or significant modifications to projects. Perfect for complex system design, major refactoring plans, and situations requiring detailed blueprints that ensure proper integration with existing architecture.

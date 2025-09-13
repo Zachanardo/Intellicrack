@@ -7,7 +7,6 @@ NO mocked components - validates actual console behavior.
 
 import pytest
 import time
-from unittest.mock import patch
 from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton, QLineEdit, QCheckBox
 from intellicrack.ui.dialogs.common_imports import QTest, QTextCursor, QThread, Qt
 

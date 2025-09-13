@@ -4,10 +4,13 @@ This directory contains ready-to-use model configuration files for Intellicrack'
 
 ## Usage
 
-1. **Import Configuration**: Use the "Import Configuration" button in the LLM Configuration dialog
-2. **Load from File**: Select any `.json` file from this directory
-3. **Customize**: Edit the configuration to match your API keys and local paths
-4. **Save**: Save your customized configuration for future use
+These JSON files serve as reference configurations for setting up LLM models in Intellicrack. To use them:
+
+1. **Manual Configuration**: Open the LLM Configuration dialog and manually enter settings based on these examples
+2. **API Keys**: Copy the structure and replace `YOUR_API_KEY` placeholders with actual keys
+3. **Model Paths**: For local models, update `model_path` to point to your local model files
+4. **Customize**: Adjust parameters like `temperature`, `max_tokens`, and other settings as needed
+5. **Save**: Save your customized configuration through the dialog
 
 ## Available Configurations
 
@@ -69,8 +72,3 @@ This directory contains ready-to-use model configuration files for Intellicrack'
 2. **Model Not Found**: Check local model paths and file permissions
 3. **CUDA Errors**: Adjust GPU memory settings or use CPU fallback
 4. **Import Errors**: Ensure all required dependencies are installed
-
-### Getting Help
-- Check the main documentation in `/dev/LLM_MODEL_FORMATS_USER_GUIDE.md`
-- Review hardware requirements for each model type
-- Test with simpler configurations first before using complex setups

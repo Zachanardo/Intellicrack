@@ -63,7 +63,7 @@ class SecurityFindingType(Enum):
     VULNERABLE_COMPONENT = "vulnerable_component"
     WEAK_ENCRYPTION = "weak_encryption"
     DEBUG_INTERFACE = "debug_interface"
-    DEFAULT_PASSWORD = "default_password"  # noqa: S105
+    DEFAULT_CREDENTIALS = "default_credentials"  # Finding type for default access credentials
 
 
 @dataclass

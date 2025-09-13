@@ -1,0 +1,165 @@
+<?xml version="1.0" ?>
+<ProductionReadinessAudit generated="2025-09-06T17:21:09.320104" tool_version="1.0">
+  <Summary>
+    <TotalFiles>8</TotalFiles>
+    <FilesWithViolations>8</FilesWithViolations>
+    <TotalViolations>19</TotalViolations>
+    <CriticalViolations>5</CriticalViolations>
+    <HighViolations>0</HighViolations>
+    <MediumViolations>14</MediumViolations>
+  </Summary>
+  <Violations>
+    <Violation id="1" severity="MEDIUM">
+      <File>intellicrack/ai/ai_script_generator.py</File>
+      <Line>1137</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>if &quot;TODO&quot; in script or &quot;PLACEHOLDER&quot; in script:</Code>
+      <Description>Placeholder text found in code</Description>
+      <Recommendation>Replace with actual implementation</Recommendation>
+    </Violation>
+    <Violation id="2" severity="MEDIUM">
+      <File>intellicrack/ai/ai_script_generator.py</File>
+      <Line>502</Line>
+      <Type>DUMMY_DATA</Type>
+      <Code>(&quot;http://localhost:8080/v1&quot;, &quot;local_llm&quot;),</Code>
+      <Description>Hardcoded localhost URL in production code</Description>
+      <Recommendation>Use configurable host and port values</Recommendation>
+    </Violation>
+    <Violation id="3" severity="MEDIUM">
+      <File>intellicrack/ai/model_format_converter.py</File>
+      <Line>333</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randint(</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="4" severity="MEDIUM">
+      <File>intellicrack/ai/model_format_converter.py</File>
+      <Line>359</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randn(*input_shape)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="5" severity="MEDIUM">
+      <File>intellicrack/ai/model_format_converter.py</File>
+      <Line>368</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = to_device(dummy_input, device)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="6" severity="MEDIUM">
+      <File>intellicrack/ai/model_format_converter.py</File>
+      <Line>968</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randint(0, config.vocab_size, (batch_size, seq_length))</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="7" severity="MEDIUM">
+      <File>intellicrack/ai/model_format_converter.py</File>
+      <Line>972</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_input = torch.randn(*input_shape)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+    <Violation id="8" severity="CRITICAL">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>106</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement load_model for path: {model_path}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="9" severity="CRITICAL">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>112</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement predict with model {type(model)} and data {type(input_data)}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="10" severity="CRITICAL">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>118</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement get_model_info for model {type(model)}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="11" severity="MEDIUM">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>2318</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Model not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="12" severity="MEDIUM">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>2669</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;PyTorch not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="13" severity="MEDIUM">
+      <File>intellicrack/ai/model_manager_module.py</File>
+      <Line>2676</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;PyTorch components not available&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="14" severity="MEDIUM">
+      <File>intellicrack/ai/model_performance_monitor.py</File>
+      <Line>459</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;No metrics found for model&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="15" severity="CRITICAL">
+      <File>intellicrack/ai/multi_agent_system.py</File>
+      <Line>196</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(f&quot;Subclasses must implement execute_task for task: {task.task_type}&quot;)</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="16" severity="CRITICAL">
+      <File>intellicrack/ai/predictive_intelligence.py</File>
+      <Line>408</Line>
+      <Type>PLACEHOLDER</Type>
+      <Code>raise NotImplementedError(</Code>
+      <Description>NotImplementedError indicates missing functionality</Description>
+      <Recommendation>Implement the required functionality</Recommendation>
+    </Violation>
+    <Violation id="17" severity="MEDIUM">
+      <File>intellicrack/ai/realtime_adaptation_engine.py</File>
+      <Line>798</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Session not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="18" severity="MEDIUM">
+      <File>intellicrack/ai/script_editor.py</File>
+      <Line>661</Line>
+      <Type>HARDCODED_RESPONSE</Type>
+      <Code>return {&quot;error&quot;: &quot;Version not found&quot;}</Code>
+      <Description>Hardcoded error response</Description>
+      <Recommendation>Generate error response based on actual error condition</Recommendation>
+    </Violation>
+    <Violation id="19" severity="MEDIUM">
+      <File>intellicrack/ai/script_editor.py</File>
+      <Line>148</Line>
+      <Type>FAKE_SIMULATION</Type>
+      <Code>dummy_request = ScriptGenerationRequest(prompt=&quot;validation&quot;, script_type=script_type, binary_path=binary_path)</Code>
+      <Description>Variable with 'dummy_' prefix suggests test data</Description>
+      <Recommendation>Replace with real data handling</Recommendation>
+    </Violation>
+  </Violations>
+</ProductionReadinessAudit>
