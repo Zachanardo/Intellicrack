@@ -24,7 +24,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, List, Dict
 
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
 from .frida_constants import HookCategory, ProtectionType
@@ -1068,6 +1068,7 @@ class FridaManager:
         self.device = None
         self.sessions = {}
         self.scripts = {}
+        self.script_outputs = {}  # Store script outputs for persistence
 
         # Use consistent absolute path for scripts
         if script_dir:
@@ -1470,6 +1471,8 @@ class FridaManager:
                 "notification",
             ]:
                 self._handle_structured_message(session_id, script_name, payload)
+                # Save script output for persistence
+                self.save_script_output(script_name, payload)
                 return
 
         # Handle binary data if present
@@ -1741,7 +1744,12 @@ class FridaManager:
             "cloud_licensing_bypass",
             {
                 "intercept_requests": True,
-                "fake_responses": True,
+                "modify_responses": True,
+                "response_manipulation": {
+                    "license_valid": True,
+                    "activation_status": "activated",
+                    "expiry_override": True,
+                },
             },
         )
 
@@ -2411,9 +2419,24 @@ class FridaManager:
         return stats
 
     def export_analysis(self, output_path: str = None) -> str:
-        """Export complete analysis results."""
+        """Export complete analysis results including script outputs."""
         # Export logs
         log_dir = self.logger.export_logs(output_path)
+
+        # Create frida_results directory for script outputs
+        frida_results_dir = Path(log_dir) / "frida_results"
+        frida_results_dir.mkdir(exist_ok=True)
+
+        # Export all script outputs
+        for script_name, outputs in self.script_outputs.items():
+            if outputs:
+                script_dir = frida_results_dir / script_name.replace(".js", "")
+                script_dir.mkdir(exist_ok=True)
+
+                for idx, output in enumerate(outputs):
+                    output_file = script_dir / f"output_{idx:04d}.json"
+                    with open(output_file, "w") as f:
+                        json.dump(output, f, indent=2)
 
         # Add analysis summary
         summary = {
@@ -2425,6 +2448,10 @@ class FridaManager:
                 "successful": self.logger.stats["bypasses_successful"],
                 "success_rate": self.logger.stats.get("bypass_success_rate", 0),
             },
+            "script_outputs": {
+                script_name: len(outputs)
+                for script_name, outputs in self.script_outputs.items()
+            }
         }
 
         summary_file = Path(log_dir) / "analysis_summary.json"
@@ -2432,6 +2459,72 @@ class FridaManager:
             json.dump(summary, f, indent=2)
 
         return log_dir
+
+    def save_script_output(self, script_name: str, output: dict):
+        """Save script output for persistence.
+
+        Args:
+            script_name: Name of the script
+            output: Output data to save
+        """
+        if script_name not in self.script_outputs:
+            self.script_outputs[script_name] = []
+
+        # Add timestamp to output
+        output_with_metadata = {
+            "timestamp": datetime.now().isoformat(),
+            "script_name": script_name,
+            "pid": output.get("pid", None),
+            "process_name": output.get("process_name", None),
+            "data": output
+        }
+
+        self.script_outputs[script_name].append(output_with_metadata)
+
+        # Also save to disk immediately for persistence
+        project_dir = Path(self.logger.log_dir).parent
+        frida_results_dir = project_dir / "frida_results"
+        frida_results_dir.mkdir(exist_ok=True)
+
+        script_dir = frida_results_dir / script_name.replace(".js", "")
+        script_dir.mkdir(exist_ok=True)
+
+        # Generate timestamp filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+        output_file = script_dir / f"{timestamp}.json"
+
+        with open(output_file, "w") as f:
+            json.dump(output_with_metadata, f, indent=2)
+
+    def load_previous_results(self, script_name: str) -> List[Dict]:
+        """Load previous results for a given script.
+
+        Args:
+            script_name: Name of the script
+
+        Returns:
+            List of previous results sorted by timestamp
+        """
+        project_dir = Path(self.logger.log_dir).parent
+        frida_results_dir = project_dir / "frida_results"
+        script_dir = frida_results_dir / script_name.replace(".js", "")
+
+        if not script_dir.exists():
+            return []
+
+        results = []
+        for result_file in script_dir.glob("*.json"):
+            try:
+                with open(result_file, "r") as f:
+                    result = json.load(f)
+                    results.append(result)
+            except Exception as e:
+                logger.warning(f"Failed to load result file {result_file}: {e}")
+
+        # Sort by timestamp
+        results.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
+        return results
 
     def cleanup(self):
         """Clean up resources."""
