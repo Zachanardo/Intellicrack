@@ -116,7 +116,7 @@ dependencies = [
     "wmi==1.5.1 ; sys_platform == 'win32'",
     
     # Web & Document Processing
-    "Flask==3.1.0",
+    "Flask==3.1.1",
     "flask_cors==6.0.1",
     "Jinja2==3.1.6",
     "pdfkit==1.0.0",
