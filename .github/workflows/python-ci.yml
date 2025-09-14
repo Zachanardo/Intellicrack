@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   build:
@@ -19,32 +21,52 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements/*.txt
+          pyproject.toml
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt', 'pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest black isort
-        # Install dependencies from requirements.txt if it exists
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        # Install development dependencies if requirements-dev.txt exists
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        # Install the package itself in editable mode to make its modules available for tests
+        python -m pip install --upgrade pip setuptools wheel
+        if (Test-Path requirements/base.txt) { pip install -r requirements/base.txt }
+        if (Test-Path requirements/test.txt) { pip install -r requirements/test.txt }
         pip install -e .
 
-    - name: Lint and format with ruff
+    - name: Lint with ruff
       run: |
-        # Ruff replaces flake8, black, isort, and many other tools
         pip install ruff==0.5.0
-        # Check for linting errors and code quality issues
         ruff check intellicrack/ tests/ --output-format=github
-        # Format check (replaces black and isort)
         ruff format --check intellicrack/ tests/
 
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+      env:
+        PYTHONDONTWRITEBYTECODE: 1
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-py${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+          coverage.xml

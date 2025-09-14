@@ -6,35 +6,68 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
         python-version: ['3.10', '3.11', '3.12', '3.13']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements/*.txt
+          pyproject.toml
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt', 'pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements/base.txt
         pip install -r requirements/test.txt
+        pip install -e .
 
     - name: Lint with ruff
       run: |
         pip install ruff==0.5.0
-        # Check for linting errors and code quality issues
         ruff check intellicrack/ tests/ --output-format=github
-        # Format check (ensure code follows consistent style)
         ruff format --check intellicrack/ tests/
+
+    - name: Security scan with bandit
+      run: |
+        pip install bandit[toml]==1.7.8
+        bandit -r intellicrack/ -f json -o bandit-report.json || true
+        python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
+      continue-on-error: true
+
+    - name: Type check with mypy
+      run: |
+        pip install mypy==1.16.0
+        mypy intellicrack/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true
 
     - name: Verify No Mock Usage (Production-Ready Enforcement)
       run: |
@@ -43,11 +76,28 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=intellicrack --cov-report=xml
+        pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+      env:
+        PYTHONDONTWRITEBYTECODE: 1
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+          coverage.xml
+          bandit-report.json
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
-        name: codecov-umbrella
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        fail_ci_if_error: false
+        verbose: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
