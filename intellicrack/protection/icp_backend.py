@@ -41,6 +41,7 @@ if platform.system() == "Windows":
     from pathlib import Path
 
     import intellicrack
+
     intellicrack_root = Path(intellicrack.__file__).parent.parent
     dll_paths = [
         str(intellicrack_root / "mamba_env" / "Lib" / "site-packages" / "die"),

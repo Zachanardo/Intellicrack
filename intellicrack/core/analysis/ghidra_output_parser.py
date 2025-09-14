@@ -18,12 +18,12 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
-import xml.etree.ElementTree as ET
-import re
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field
 import logging
+import re
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FunctionSignature:
     """Represents a parsed function signature."""
+
     name: str
     address: int
     return_type: str
@@ -46,6 +47,7 @@ class FunctionSignature:
 @dataclass
 class DataStructure:
     """Represents a parsed data structure."""
+
     name: str
     size: int
     fields: List[Tuple[str, str, int, int]]  # (type, name, offset, size)
@@ -57,6 +59,7 @@ class DataStructure:
 @dataclass
 class CrossReference:
     """Represents a cross-reference."""
+
     from_address: int
     to_address: int
     ref_type: str  # CALL, JUMP, DATA_READ, DATA_WRITE
@@ -68,6 +71,7 @@ class CrossReference:
 @dataclass
 class DecompiledFunction:
     """Represents decompiled C/C++ pseudocode."""
+
     name: str
     address: int
     pseudocode: str
@@ -125,7 +129,7 @@ class GhidraOutputParser:
                 "functions": len(self.functions),
                 "structures": len(self.structures),
                 "xrefs": len(self.xrefs),
-                "strings": len(self.strings)
+                "strings": len(self.strings),
             }
 
         except Exception as e:
@@ -135,7 +139,7 @@ class GhidraOutputParser:
     def parse_json_output(self, json_path: Path) -> Dict[str, Any]:
         """Parse Ghidra JSON export format."""
         try:
-            with open(json_path, 'r', encoding='utf-8') as f:
+            with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Parse functions from JSON
@@ -151,8 +155,7 @@ class GhidraOutputParser:
                         is_exported=func_data.get("isExported", False),
                         is_imported=func_data.get("isImported", False),
                         stack_frame_size=func_data.get("stackFrameSize", 0),
-                        local_variables=[(v["type"], v["name"], v["offset"])
-                                       for v in func_data.get("localVariables", [])]
+                        local_variables=[(v["type"], v["name"], v["offset"]) for v in func_data.get("localVariables", [])],
                     )
                     self.functions[function.address] = function
 
@@ -166,7 +169,7 @@ class GhidraOutputParser:
                         high_pcode=decomp_data.get("pcode"),
                         complexity=decomp_data.get("cyclomaticComplexity", 0),
                         basic_blocks=decomp_data.get("basicBlocks", 0),
-                        edges=decomp_data.get("edges", 0)
+                        edges=decomp_data.get("edges", 0),
                     )
                     self.decompiled[decompiled.address] = decompiled
 
@@ -191,7 +194,7 @@ class GhidraOutputParser:
                 "decompiled": len(self.decompiled),
                 "imports": len(self.imports),
                 "exports": len(self.exports),
-                "vtables": len(self.vtables)
+                "vtables": len(self.vtables),
             }
 
         except Exception as e:
@@ -203,32 +206,28 @@ class GhidraOutputParser:
         decompiled_functions = []
 
         try:
-            content = decomp_path.read_text(encoding='utf-8', errors='ignore')
+            content = decomp_path.read_text(encoding="utf-8", errors="ignore")
 
             # Parse function boundaries
-            function_pattern = r'/\*\s+\*\s+FUNCTION:\s+([^\s]+)\s+@\s+(0x[0-9a-fA-F]+)\s+\*/'
+            function_pattern = r"/\*\s+\*\s+FUNCTION:\s+([^\s]+)\s+@\s+(0x[0-9a-fA-F]+)\s+\*/"
             code_blocks = re.split(function_pattern, content)
 
             # Process each function
             for i in range(1, len(code_blocks), 3):
-                if i+1 < len(code_blocks):
+                if i + 1 < len(code_blocks):
                     func_name = code_blocks[i]
-                    func_addr = int(code_blocks[i+1], 16)
-                    func_code = code_blocks[i+2] if i+2 < len(code_blocks) else ""
+                    func_addr = int(code_blocks[i + 1], 16)
+                    func_code = code_blocks[i + 2] if i + 2 < len(code_blocks) else ""
 
                     # Clean up the pseudocode
                     func_code = self._clean_pseudocode(func_code)
 
                     # Calculate complexity metrics
                     complexity = self._calculate_complexity(func_code)
-                    blocks = func_code.count('{')
+                    blocks = func_code.count("{")
 
                     decompiled = DecompiledFunction(
-                        name=func_name,
-                        address=func_addr,
-                        pseudocode=func_code,
-                        complexity=complexity,
-                        basic_blocks=blocks
+                        name=func_name, address=func_addr, pseudocode=func_code, complexity=complexity, basic_blocks=blocks
                     )
 
                     decompiled_functions.append(decompiled)
@@ -245,10 +244,10 @@ class GhidraOutputParser:
         call_graph = {}
 
         try:
-            with open(graph_path, 'r', encoding='utf-8') as f:
+            with open(graph_path, "r", encoding="utf-8") as f:
                 for line in f:
                     # Parse graph edges (caller -> callee)
-                    match = re.match(r'([^\s]+)\s+->\s+([^\s]+)', line.strip())
+                    match = re.match(r"([^\s]+)\s+->\s+([^\s]+)", line.strip())
                     if match:
                         caller = match.group(1)
                         callee = match.group(2)
@@ -268,10 +267,10 @@ class GhidraOutputParser:
         structures = {}
 
         try:
-            content = types_path.read_text(encoding='utf-8', errors='ignore')
+            content = types_path.read_text(encoding="utf-8", errors="ignore")
 
             # Parse structure definitions
-            struct_pattern = r'struct\s+(\w+)\s*\{([^}]+)\}'
+            struct_pattern = r"struct\s+(\w+)\s*\{([^}]+)\}"
 
             for match in re.finditer(struct_pattern, content, re.DOTALL):
                 struct_name = match.group(1)
@@ -279,7 +278,7 @@ class GhidraOutputParser:
 
                 # Parse fields
                 fields = []
-                field_pattern = r'([^;]+)\s+(\w+)(?:\[(\d+)\])?;'
+                field_pattern = r"([^;]+)\s+(\w+)(?:\[(\d+)\])?;"
 
                 offset = 0
                 for field_match in re.finditer(field_pattern, struct_body):
@@ -295,11 +294,7 @@ class GhidraOutputParser:
                     fields.append((field_type, field_name, offset, field_size))
                     offset += field_size
 
-                structure = DataStructure(
-                    name=struct_name,
-                    size=offset,
-                    fields=fields
-                )
+                structure = DataStructure(name=struct_name, size=offset, fields=fields)
 
                 structures[struct_name] = structure
                 self.structures[struct_name] = structure
@@ -355,7 +350,7 @@ class GhidraOutputParser:
             calling_convention=elem.get("CALLING_CONVENTION", "default"),
             is_thunk=elem.get("IS_THUNK", "false").lower() == "true",
             stack_frame_size=int(elem.get("STACK_FRAME_SIZE", "0")),
-            local_variables=locals_list
+            local_variables=locals_list,
         )
 
     def _parse_structure_xml(self, elem: ET.Element) -> DataStructure:
@@ -371,12 +366,7 @@ class GhidraOutputParser:
             field_size = int(field_elem.get("SIZE", "0"))
             fields.append((field_type, field_name, field_offset, field_size))
 
-        return DataStructure(
-            name=name,
-            size=size,
-            fields=fields,
-            is_union=elem.get("IS_UNION", "false").lower() == "true"
-        )
+        return DataStructure(name=name, size=size, fields=fields, is_union=elem.get("IS_UNION", "false").lower() == "true")
 
     def _parse_xref_xml(self, elem: ET.Element) -> CrossReference:
         """Parse cross-reference from XML element."""
@@ -385,17 +375,17 @@ class GhidraOutputParser:
             to_address=int(elem.get("TO", "0"), 16),
             ref_type=elem.get("TYPE", "UNKNOWN"),
             from_function=elem.get("FROM_FUNCTION"),
-            to_function=elem.get("TO_FUNCTION")
+            to_function=elem.get("TO_FUNCTION"),
         )
 
     def _clean_pseudocode(self, code: str) -> str:
         """Clean up decompiled pseudocode."""
         # Remove excessive whitespace
-        code = re.sub(r'\n\s*\n\s*\n', '\n\n', code)
+        code = re.sub(r"\n\s*\n\s*\n", "\n\n", code)
 
         # Remove Ghidra comments that aren't useful
-        code = re.sub(r'/\*\s+WARNING:.*?\*/', '', code, flags=re.DOTALL)
-        code = re.sub(r'/\*\s+DWARF.*?\*/', '', code, flags=re.DOTALL)
+        code = re.sub(r"/\*\s+WARNING:.*?\*/", "", code, flags=re.DOTALL)
+        code = re.sub(r"/\*\s+DWARF.*?\*/", "", code, flags=re.DOTALL)
 
         return code.strip()
 
@@ -404,15 +394,15 @@ class GhidraOutputParser:
         complexity = 1  # Base complexity
 
         # Count decision points
-        complexity += code.count('if ')
-        complexity += code.count('else if ')
-        complexity += code.count('while ')
-        complexity += code.count('for ')
-        complexity += code.count('switch ')
-        complexity += code.count('case ')
-        complexity += code.count('&&')
-        complexity += code.count('||')
-        complexity += code.count('? ')  # Ternary operator
+        complexity += code.count("if ")
+        complexity += code.count("else if ")
+        complexity += code.count("while ")
+        complexity += code.count("for ")
+        complexity += code.count("switch ")
+        complexity += code.count("case ")
+        complexity += code.count("&&")
+        complexity += code.count("||")
+        complexity += code.count("? ")  # Ternary operator
 
         return complexity
 
@@ -420,20 +410,32 @@ class GhidraOutputParser:
         """Get size of a data type in bytes."""
         # Basic type sizes (architecture-dependent, assuming 64-bit)
         type_sizes = {
-            "char": 1, "unsigned char": 1, "byte": 1, "BYTE": 1,
-            "short": 2, "unsigned short": 2, "WORD": 2,
-            "int": 4, "unsigned int": 4, "DWORD": 4, "long": 4,
-            "long long": 8, "unsigned long long": 8, "QWORD": 8,
-            "float": 4, "double": 8,
-            "void*": 8, "pointer": 8
+            "char": 1,
+            "unsigned char": 1,
+            "byte": 1,
+            "BYTE": 1,
+            "short": 2,
+            "unsigned short": 2,
+            "WORD": 2,
+            "int": 4,
+            "unsigned int": 4,
+            "DWORD": 4,
+            "long": 4,
+            "long long": 8,
+            "unsigned long long": 8,
+            "QWORD": 8,
+            "float": 4,
+            "double": 8,
+            "void*": 8,
+            "pointer": 8,
         }
 
         # Handle pointers
-        if '*' in type_name or type_name.startswith("LP"):
+        if "*" in type_name or type_name.startswith("LP"):
             return 8  # 64-bit pointer
 
         # Check known types
-        base_type = type_name.split()[0] if ' ' in type_name else type_name
+        base_type = type_name.split()[0] if " " in type_name else type_name
         return type_sizes.get(base_type, 4)  # Default to 4 bytes
 
     def get_function_by_name(self, name: str) -> Optional[FunctionSignature]:
@@ -476,18 +478,12 @@ class GhidraOutputParser:
                     "parameters": [{"type": t, "name": n} for t, n in f.parameters],
                     "calling_convention": f.calling_convention,
                     "stack_frame_size": f.stack_frame_size,
-                    "local_variables": [{"type": t, "name": n, "offset": o}
-                                      for t, n, o in f.local_variables]
+                    "local_variables": [{"type": t, "name": n, "offset": o} for t, n, o in f.local_variables],
                 }
                 for f in self.functions.values()
             ],
             "structures": [
-                {
-                    "name": s.name,
-                    "size": s.size,
-                    "fields": [{"type": t, "name": n, "offset": o, "size": sz}
-                             for t, n, o, sz in s.fields]
-                }
+                {"name": s.name, "size": s.size, "fields": [{"type": t, "name": n, "offset": o, "size": sz} for t, n, o, sz in s.fields]}
                 for s in self.structures.values()
             ],
             "cross_references": [
@@ -496,7 +492,7 @@ class GhidraOutputParser:
                     "to": hex(x.to_address),
                     "type": x.ref_type,
                     "from_function": x.from_function,
-                    "to_function": x.to_function
+                    "to_function": x.to_function,
                 }
                 for x in self.xrefs
             ],
@@ -506,11 +502,11 @@ class GhidraOutputParser:
                     "address": hex(d.address),
                     "complexity": d.complexity,
                     "basic_blocks": d.basic_blocks,
-                    "code": d.pseudocode[:1000]  # First 1000 chars for preview
+                    "code": d.pseudocode[:1000],  # First 1000 chars for preview
                 }
                 for d in self.decompiled.values()
-            ]
+            ],
         }
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)

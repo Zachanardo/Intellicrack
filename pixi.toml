@@ -3,7 +3,7 @@ name = "intellicrack"
 version = "0.1.0"
 description = "Advanced Binary Analysis and Security Research Framework"
 authors = ["Zachary Flint <zach.flint2@gmail.com>"]
-channels = ["conda-forge", "pytorch", "nvidia"]
+channels = ["conda-forge"]
 platforms = ["win-64"]
 
 [tasks]
@@ -21,12 +21,12 @@ setup = "pixi install && pixi run post-install && pixi run verify"
 python = "3.12.*"
 
 # Core scientific stack (from conda-forge)
-numpy = "*"
-pandas = "*"
-scipy = "*"
-scikit-learn = "*"
-matplotlib = "*"
-seaborn = "*"
+# numpy = "*"  # Commented - pulls in MKL
+# pandas = "*"  # Commented - depends on numpy
+# scipy = "*"  # Commented - pulls in MKL
+# scikit-learn = "*"  # Commented - pulls in MKL
+# matplotlib = "*"  # Commented - may pull numpy/MKL
+# seaborn = "*"  # Commented - depends on matplotlib
 joblib = "*"
 
 # System and binary packages (conda-forge)
@@ -43,10 +43,10 @@ psutil = "*"
 pyqtgraph = "*"
 
 # ML/AI packages (conda-forge)
-onnx = "*"
-onnxruntime = "*"
-transformers = "*"
-accelerate = "*"
+# onnx = "*"  # Commented - may need numpy
+# onnxruntime = "*"  # Commented - may need numpy
+# transformers = "*"  # Commented - may need numpy
+# accelerate = "*"  # Commented - may need numpy
 huggingface_hub = "*"
 safetensors = "*"
 

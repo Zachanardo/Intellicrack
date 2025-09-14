@@ -21,28 +21,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import asyncio
+import hashlib
+import hmac
 import json
-import socket
-import struct
+import logging
 import threading
 import time
 import uuid
-import zmq
-import msgpack
-from dataclasses import dataclass, asdict
-from enum import Enum
-from typing import Dict, List, Any, Optional, Callable, Union
-from pathlib import Path
 from collections import defaultdict
-import logging
-import hashlib
-import hmac
+from dataclasses import asdict, dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
+import msgpack
+import zmq
 
 logger = logging.getLogger(__name__)
 
 
 class MessageType(Enum):
     """IPC message types for tool communication."""
+
     ANALYSIS_REQUEST = "analysis_request"
     ANALYSIS_RESULT = "analysis_result"
     FUNCTION_DISCOVERED = "function_discovered"
@@ -65,6 +64,7 @@ class MessageType(Enum):
 
 class ToolType(Enum):
     """Analysis tool identifiers."""
+
     GHIDRA = "ghidra"
     FRIDA = "frida"
     RADARE2 = "radare2"
@@ -78,6 +78,7 @@ class ToolType(Enum):
 @dataclass
 class IPCMessage:
     """Structured IPC message for tool communication."""
+
     id: str
     source: ToolType
     destination: Optional[ToolType]
@@ -93,13 +94,13 @@ class IPCMessage:
         return msgpack.packb(asdict(self))
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'IPCMessage':
+    def from_bytes(cls, data: bytes) -> "IPCMessage":
         """Deserialize message from bytes."""
         msg_dict = msgpack.unpackb(data, raw=False)
-        msg_dict['source'] = ToolType(msg_dict['source'])
-        if msg_dict['destination']:
-            msg_dict['destination'] = ToolType(msg_dict['destination'])
-        msg_dict['message_type'] = MessageType(msg_dict['message_type'])
+        msg_dict["source"] = ToolType(msg_dict["source"])
+        if msg_dict["destination"]:
+            msg_dict["destination"] = ToolType(msg_dict["destination"])
+        msg_dict["message_type"] = MessageType(msg_dict["message_type"])
         return cls(**msg_dict)
 
 
@@ -190,7 +191,7 @@ class ToolCommunicationBridge:
             "capabilities": capabilities,
             "registered_at": time.time(),
             "last_heartbeat": time.time(),
-            "status": "active"
+            "status": "active",
         }
 
         # Create dealer socket for this tool
@@ -240,28 +241,18 @@ class ToolCommunicationBridge:
                     return message.id
         else:
             # Broadcast message
-            self.publisher.send_multipart([
-                message.source.value.encode(),
-                message.to_bytes()
-            ])
+            self.publisher.send_multipart([message.source.value.encode(), message.to_bytes()])
             logger.debug(f"Broadcast {message.message_type.value} from {message.source.value}")
 
         return None
 
     def _generate_message_auth(self, message: IPCMessage) -> str:
         """Generate HMAC authentication for message."""
-        msg_bytes = json.dumps({
-            "id": message.id,
-            "source": message.source.value,
-            "type": message.message_type.value,
-            "timestamp": message.timestamp
-        }).encode()
+        msg_bytes = json.dumps(
+            {"id": message.id, "source": message.source.value, "type": message.message_type.value, "timestamp": message.timestamp}
+        ).encode()
 
-        return hmac.new(
-            self.auth_key.encode(),
-            msg_bytes,
-            hashlib.sha256
-        ).hexdigest()
+        return hmac.new(self.auth_key.encode(), msg_bytes, hashlib.sha256).hexdigest()
 
     def _verify_message_auth(self, message: IPCMessage) -> bool:
         """Verify message authentication."""
@@ -269,10 +260,7 @@ class ToolCommunicationBridge:
             return False
 
         expected_auth = self._generate_message_auth(message)
-        return hmac.compare_digest(
-            message.payload["auth"],
-            expected_auth
-        )
+        return hmac.compare_digest(message.payload["auth"], expected_auth)
 
     async def send_and_wait(self, message: IPCMessage, timeout: float = 30.0) -> Optional[IPCMessage]:
         """Send message and wait for response."""
@@ -371,16 +359,12 @@ class ToolCommunicationBridge:
                         timestamp=time.time(),
                         payload=response,
                         correlation_id=message.id,
-                        requires_response=False
+                        requires_response=False,
                     )
 
                     # Add auth and send
                     response_msg.payload["auth"] = self._generate_message_auth(response_msg)
-                    self.router.send_multipart([
-                        identity,
-                        b"",
-                        response_msg.to_bytes()
-                    ])
+                    self.router.send_multipart([identity, b"", response_msg.to_bytes()])
 
             except Exception as e:
                 logger.error(f"Handler error for {message.message_type.value}: {e}")
@@ -397,10 +381,7 @@ class ToolCommunicationBridge:
             destination=None,
             message_type=MessageType.ANALYSIS_RESULT,
             timestamp=time.time(),
-            payload={
-                "event_type": event_type,
-                "data": data
-            }
+            payload={"event_type": event_type, "data": data},
         )
         self.send_message(message)
 
@@ -412,18 +393,13 @@ class ToolCommunicationBridge:
             destination=tool_type,
             message_type=MessageType.ANALYSIS_REQUEST,
             timestamp=time.time(),
-            payload={
-                "operation": "cross_reference",
-                "address": address
-            },
-            requires_response=True
+            payload={"operation": "cross_reference", "address": address},
+            requires_response=True,
         )
 
         # Synchronous wrapper for async operation
         loop = asyncio.new_event_loop()
-        response = loop.run_until_complete(
-            self.send_and_wait(message, timeout=10.0)
-        )
+        response = loop.run_until_complete(self.send_and_wait(message, timeout=10.0))
         loop.close()
 
         if response:
@@ -440,10 +416,7 @@ class ToolCommunicationBridge:
                     destination=tool,
                     message_type=MessageType.SYNC_REQUEST,
                     timestamp=time.time(),
-                    payload={
-                        "sync_type": "breakpoints",
-                        "breakpoints": breakpoints
-                    }
+                    payload={"sync_type": "breakpoints", "breakpoints": breakpoints},
                 )
                 self.send_message(message)
 
@@ -455,10 +428,7 @@ class ToolCommunicationBridge:
             destination=None,
             message_type=MessageType.FUNCTION_DISCOVERED,
             timestamp=time.time(),
-            payload={
-                "address": address,
-                "signature": signature
-            }
+            payload={"address": address, "signature": signature},
         )
         self.send_message(message)
 
@@ -473,17 +443,12 @@ class ToolCommunicationBridge:
             destination=ToolType.RADARE2,
             message_type=MessageType.ANALYSIS_REQUEST,
             timestamp=time.time(),
-            payload={
-                "operation": "verify_patches",
-                "patches": patches
-            },
-            requires_response=True
+            payload={"operation": "verify_patches", "patches": patches},
+            requires_response=True,
         )
 
         loop = asyncio.new_event_loop()
-        verification = loop.run_until_complete(
-            self.send_and_wait(verify_msg, timeout=15.0)
-        )
+        verification = loop.run_until_complete(self.send_and_wait(verify_msg, timeout=15.0))
         loop.close()
 
         if not verification or not verification.payload.get("valid", False):
@@ -498,17 +463,12 @@ class ToolCommunicationBridge:
                 destination=ToolType.RADARE2,
                 message_type=MessageType.ANALYSIS_REQUEST,
                 timestamp=time.time(),
-                payload={
-                    "operation": "apply_patch",
-                    "patch": patch
-                },
-                requires_response=True
+                payload={"operation": "apply_patch", "patch": patch},
+                requires_response=True,
             )
 
             loop = asyncio.new_event_loop()
-            result = loop.run_until_complete(
-                self.send_and_wait(apply_msg, timeout=10.0)
-            )
+            result = loop.run_until_complete(self.send_and_wait(apply_msg, timeout=10.0))
             loop.close()
 
             if not result or not result.payload.get("success", False):
@@ -532,7 +492,7 @@ class ToolCommunicationBridge:
                 "status": "active" if heartbeat_age < 30 else "inactive",
                 "capabilities": info["capabilities"],
                 "last_heartbeat": heartbeat_age,
-                "message_count": self.message_stats.get(tool_type, 0)
+                "message_count": self.message_stats.get(tool_type, 0),
             }
 
         return status
@@ -543,7 +503,7 @@ class ToolCommunicationBridge:
             "total_messages": sum(self.message_stats.values()),
             "message_types": dict(self.message_stats),
             "average_latency": {},
-            "tools_connected": len(self.tool_registry)
+            "tools_connected": len(self.tool_registry),
         }
 
         for msg_type, latencies in self.latency_stats.items():
@@ -551,7 +511,7 @@ class ToolCommunicationBridge:
                 metrics["average_latency"][msg_type.value] = {
                     "avg": sum(latencies) / len(latencies),
                     "min": min(latencies),
-                    "max": max(latencies)
+                    "max": max(latencies),
                 }
 
         return metrics
@@ -560,8 +520,7 @@ class ToolCommunicationBridge:
 class ToolConnector:
     """Client connector for individual tools to communicate with bridge."""
 
-    def __init__(self, tool_type: ToolType, bridge_host: str = "127.0.0.1",
-                 bridge_port: int = 5555):
+    def __init__(self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555):
         """Initialize tool connector."""
         self.tool_type = tool_type
         self.bridge_host = bridge_host
@@ -614,7 +573,7 @@ class ToolConnector:
             destination=ToolType.ORCHESTRATOR,
             message_type=result_type,
             timestamp=time.time(),
-            payload=data
+            payload=data,
         )
 
         self.dealer.send(message.to_bytes())

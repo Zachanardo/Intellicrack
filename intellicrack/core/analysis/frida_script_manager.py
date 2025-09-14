@@ -17,24 +17,24 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import os
-import json
-import time
-import threading
-import random
 import hashlib
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Callable
+import json
+import logging
+import random
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 import frida
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class ScriptCategory(Enum):
     """Categories for Frida scripts."""
+
     PROTECTION_BYPASS = "protection_bypass"
     MEMORY_ANALYSIS = "memory_analysis"
     NETWORK_INTERCEPTION = "network_interception"
@@ -50,6 +50,7 @@ class ScriptCategory(Enum):
 @dataclass
 class FridaScriptConfig:
     """Configuration for a Frida script."""
+
     name: str
     path: Path
     category: ScriptCategory
@@ -65,6 +66,7 @@ class FridaScriptConfig:
 @dataclass
 class ScriptResult:
     """Result from Frida script execution."""
+
     script_name: str
     success: bool
     start_time: float
@@ -110,11 +112,7 @@ class FridaScriptManager:
         prefixes = ["WD", "ST", "HGST", "TOSHIBA", "SAMSUNG", "INTEL"]
         prefix = random.choice(prefixes)
         # Generate alphanumeric serial
-        serial_parts = [
-            prefix,
-            f"{random.randint(1000, 9999)}",
-            "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))
-        ]
+        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]
         return "-".join(serial_parts)
 
     def _generate_motherboard_id(self) -> str:
@@ -139,7 +137,7 @@ class FridaScriptManager:
             ("Intel", "Core-i5", "13600K"),
             ("AMD", "Ryzen-9", "7950X"),
             ("AMD", "Ryzen-7", "7700X"),
-            ("AMD", "Ryzen-5", "7600X")
+            ("AMD", "Ryzen-5", "7600X"),
         ]
 
         brand, family, model = random.choice(cpu_families)
@@ -157,13 +155,7 @@ class FridaScriptManager:
                 path=self.scripts_dir / "memory_dumper.js",
                 category=ScriptCategory.MEMORY_ANALYSIS,
                 description="Dumps process memory regions for analysis",
-                parameters={
-                    "dump_executable": True,
-                    "dump_heap": True,
-                    "dump_stack": False,
-                    "output_format": "binary",
-                    "compress": True
-                }
+                parameters={"dump_executable": True, "dump_heap": True, "dump_stack": False, "output_format": "binary", "compress": True},
             ),
             "anti_debugger.js": FridaScriptConfig(
                 name="Anti-Debug Bypass",
@@ -175,8 +167,8 @@ class FridaScriptManager:
                     "bypass_checkremotedebuggerpresent": True,
                     "bypass_ntqueryinformationprocess": True,
                     "bypass_peb_checks": True,
-                    "bypass_timing_checks": True
-                }
+                    "bypass_timing_checks": True,
+                },
             ),
             "certificate_pinning_bypass.js": FridaScriptConfig(
                 name="Certificate Pinning Bypass",
@@ -188,8 +180,8 @@ class FridaScriptManager:
                     "bypass_ios": True,
                     "bypass_okhttp": True,
                     "bypass_trustmanager": True,
-                    "log_certificates": True
-                }
+                    "log_certificates": True,
+                },
             ),
             "hwid_spoofer.js": FridaScriptConfig(
                 name="Hardware ID Spoofer",
@@ -201,45 +193,29 @@ class FridaScriptManager:
                     "spoof_disk_serial": self._generate_disk_serial(),
                     "spoof_motherboard": self._generate_motherboard_id(),
                     "spoof_cpu_id": self._generate_cpu_id(),
-                    "randomize": True
-                }
+                    "randomize": True,
+                },
             ),
             "registry_monitor.js": FridaScriptConfig(
                 name="Registry Monitor",
                 path=self.scripts_dir / "registry_monitor.js",
                 category=ScriptCategory.REGISTRY_MONITORING,
                 description="Monitors Windows registry operations",
-                parameters={
-                    "monitor_reads": True,
-                    "monitor_writes": True,
-                    "monitor_deletes": True,
-                    "filter_keys": [],
-                    "log_values": True
-                }
+                parameters={"monitor_reads": True, "monitor_writes": True, "monitor_deletes": True, "filter_keys": [], "log_values": True},
             ),
             "telemetry_blocker.js": FridaScriptConfig(
                 name="Telemetry Blocker",
                 path=self.scripts_dir / "telemetry_blocker.js",
                 category=ScriptCategory.NETWORK_INTERCEPTION,
                 description="Blocks telemetry and analytics",
-                parameters={
-                    "block_domains": [],
-                    "block_ips": [],
-                    "block_user_agents": [],
-                    "generate_spoofed_responses": True
-                }
+                parameters={"block_domains": [], "block_ips": [], "block_user_agents": [], "generate_spoofed_responses": True},
             ),
             "time_bomb_defuser.js": FridaScriptConfig(
                 name="Time Bomb Defuser",
                 path=self.scripts_dir / "time_bomb_defuser.js",
                 category=ScriptCategory.LICENSE_BYPASS,
                 description="Bypasses time-based protection",
-                parameters={
-                    "freeze_time": None,
-                    "accelerate_time": 1.0,
-                    "bypass_expiry_checks": True,
-                    "spoof_system_time": None
-                }
+                parameters={"freeze_time": None, "accelerate_time": 1.0, "bypass_expiry_checks": True, "spoof_system_time": None},
             ),
             "behavioral_pattern_analyzer.js": FridaScriptConfig(
                 name="Behavioral Pattern Analyzer",
@@ -251,21 +227,15 @@ class FridaScriptManager:
                     "track_file_operations": True,
                     "track_network": True,
                     "pattern_detection": True,
-                    "ml_analysis": False
-                }
+                    "ml_analysis": False,
+                },
             ),
             "universal_unpacker.js": FridaScriptConfig(
                 name="Universal Unpacker",
                 path=self.scripts_dir / "universal_unpacker.js",
                 category=ScriptCategory.UNPACKING,
                 description="Unpacks protected executables",
-                parameters={
-                    "detect_packer": True,
-                    "dump_at_oep": True,
-                    "fix_imports": True,
-                    "rebuild_iat": True,
-                    "remove_overlays": False
-                }
+                parameters={"detect_packer": True, "dump_at_oep": True, "fix_imports": True, "rebuild_iat": True, "remove_overlays": False},
             ),
             "keygen_generator.js": FridaScriptConfig(
                 name="Keygen Generator",
@@ -277,9 +247,9 @@ class FridaScriptManager:
                     "extract_algorithm": True,
                     "generate_keys": 10,
                     "test_keys": True,
-                    "export_keygen": True
-                }
-            )
+                    "export_keygen": True,
+                },
+            ),
         }
 
         # Load configurations
@@ -302,23 +272,24 @@ class FridaScriptManager:
                         path=script_file,
                         category=ScriptCategory(metadata.get("category", "behavioral_analysis")),
                         description=metadata.get("description", "Custom script"),
-                        parameters=metadata.get("parameters", {})
+                        parameters=metadata.get("parameters", {}),
                     )
                     self.scripts[script_file.name] = config
 
     def _parse_script_metadata(self, script_path: Path) -> Optional[Dict[str, Any]]:
         """Parse metadata from script header."""
         try:
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Look for metadata in comments
             import re
-            metadata_match = re.search(r'/\*\*\s*@metadata(.*?)@end\s*\*/', content, re.DOTALL)
+
+            metadata_match = re.search(r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL)
             if metadata_match:
                 metadata_text = metadata_match.group(1)
                 # Parse JSON metadata
-                json_match = re.search(r'\{.*\}', metadata_text, re.DOTALL)
+                json_match = re.search(r"\{.*\}", metadata_text, re.DOTALL)
                 if json_match:
                     return json.loads(json_match.group())
 
@@ -334,7 +305,7 @@ class FridaScriptManager:
         target: str,
         mode: str = "spawn",
         parameters: Optional[Dict[str, Any]] = None,
-        output_callback: Optional[Callable] = None
+        output_callback: Optional[Callable] = None,
     ) -> ScriptResult:
         """Execute a Frida script.
 
@@ -352,16 +323,11 @@ class FridaScriptManager:
             raise ValueError(f"Unknown script: {script_name}")
 
         config = self.scripts[script_name]
-        result = ScriptResult(
-            script_name=script_name,
-            success=False,
-            start_time=time.time(),
-            end_time=0
-        )
+        result = ScriptResult(script_name=script_name, success=False, start_time=time.time(), end_time=0)
 
         try:
             # Load script content
-            with open(config.path, 'r', encoding='utf-8') as f:
+            with open(config.path, "r", encoding="utf-8") as f:
                 script_content = f.read()
 
             # Inject parameters
@@ -408,7 +374,7 @@ class FridaScriptManager:
             def on_message(message, data):
                 self._handle_message(result, message, data, output_callback)
 
-            script.on('message', on_message)
+            script.on("message", on_message)
             script.load()
 
             # Wait for script to complete or timeout
@@ -456,13 +422,7 @@ class FridaScriptManager:
 
         return "\n".join(js_params)
 
-    def _handle_message(
-        self,
-        result: ScriptResult,
-        message: Dict[str, Any],
-        data: Any,
-        callback: Optional[Callable]
-    ):
+    def _handle_message(self, result: ScriptResult, message: Dict[str, Any], data: Any, callback: Optional[Callable]):
         """Handle messages from Frida script."""
         try:
             msg_type = message.get("type")
@@ -537,10 +497,10 @@ class FridaScriptManager:
             "errors": result.errors,
             "data": result.data,
             "patches": result.patches,
-            "memory_dumps_count": len(result.memory_dumps)
+            "memory_dumps_count": len(result.memory_dumps),
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
         # Export memory dumps
@@ -553,22 +513,13 @@ class FridaScriptManager:
                 dump_file.write_bytes(dump)
 
     def create_custom_script(
-        self,
-        name: str,
-        code: str,
-        category: ScriptCategory,
-        parameters: Optional[Dict[str, Any]] = None
+        self, name: str, code: str, category: ScriptCategory, parameters: Optional[Dict[str, Any]] = None
     ) -> FridaScriptConfig:
         """Create a custom Frida script."""
         script_path = self.scripts_dir / f"custom_{name}.js"
 
         # Add metadata header
-        metadata = {
-            "name": name,
-            "category": category.value,
-            "parameters": parameters or {},
-            "description": f"Custom script: {name}"
-        }
+        metadata = {"name": name, "category": category.value, "parameters": parameters or {}, "description": f"Custom script: {name}"}
 
         header = f"""/**
  * @metadata
@@ -579,17 +530,13 @@ class FridaScriptManager:
 """
 
         # Write script
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(header)
             f.write(code)
 
         # Create configuration
         config = FridaScriptConfig(
-            name=name,
-            path=script_path,
-            category=category,
-            description=f"Custom script: {name}",
-            parameters=parameters or {}
+            name=name, path=script_path, category=category, description=f"Custom script: {name}", parameters=parameters or {}
         )
 
         # Register script

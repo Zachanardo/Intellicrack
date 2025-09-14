@@ -21,23 +21,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 import json
+import logging
 import time
 import uuid
-import hashlib
-from typing import Dict, List, Any, Optional, Set, Callable
-from dataclasses import dataclass, asdict
+from collections import deque
+from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
+
 import websockets
 from websockets.server import WebSocketServerProtocol
-import logging
-from collections import deque
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
 class EventType(Enum):
     """Types of analysis events."""
+
     ANALYSIS_STARTED = "analysis_started"
     ANALYSIS_COMPLETE = "analysis_complete"
     FUNCTION_DISCOVERED = "function_discovered"
@@ -63,6 +63,7 @@ class EventType(Enum):
 
 class EventPriority(Enum):
     """Event priority levels."""
+
     CRITICAL = 1
     HIGH = 2
     MEDIUM = 3
@@ -73,6 +74,7 @@ class EventPriority(Enum):
 @dataclass
 class AnalysisEvent:
     """Analysis event data structure."""
+
     id: str
     type: EventType
     timestamp: float
@@ -99,13 +101,7 @@ class WebSocketEventStream:
         self.running = False
 
         # Statistics
-        self.stats = {
-            "events_sent": 0,
-            "events_received": 0,
-            "clients_connected": 0,
-            "clients_total": 0,
-            "uptime_start": time.time()
-        }
+        self.stats = {"events_sent": 0, "events_received": 0, "clients_connected": 0, "clients_total": 0, "uptime_start": time.time()}
 
         # Event filters
         self.filters: Dict[str, Dict[str, Any]] = {}
@@ -116,13 +112,7 @@ class WebSocketEventStream:
     async def start(self):
         """Start WebSocket server."""
         self.running = True
-        self.server = await websockets.serve(
-            self.handle_client,
-            self.host,
-            self.port,
-            ping_interval=20,
-            ping_timeout=10
-        )
+        self.server = await websockets.serve(self.handle_client, self.host, self.port, ping_interval=20, ping_timeout=10)
         logger.info(f"WebSocket stream server started on ws://{self.host}:{self.port}")
 
         # Start background tasks
@@ -152,7 +142,7 @@ class WebSocketEventStream:
             "remote_address": websocket.remote_address,
             "path": path,
             "filters": {},
-            "subscriptions": set()
+            "subscriptions": set(),
         }
 
         # Add to clients
@@ -192,18 +182,11 @@ class WebSocketEventStream:
             "client_id": client_id,
             "server_version": "1.0.0",
             "timestamp": time.time(),
-            "capabilities": [
-                "real_time_events",
-                "filtering",
-                "subscriptions",
-                "control_commands",
-                "statistics"
-            ]
+            "capabilities": ["real_time_events", "filtering", "subscriptions", "control_commands", "statistics"],
         }
         await websocket.send(json.dumps(welcome))
 
-    async def _handle_client_message(self, websocket: WebSocketServerProtocol,
-                                    client_id: str, message: str):
+    async def _handle_client_message(self, websocket: WebSocketServerProtocol, client_id: str, message: str):
         """Handle message from client."""
         try:
             data = json.loads(message)
@@ -229,8 +212,7 @@ class WebSocketEventStream:
         except Exception as e:
             await self._send_error(websocket, str(e))
 
-    async def _handle_subscribe(self, websocket: WebSocketServerProtocol,
-                               client_id: str, data: Dict[str, Any]):
+    async def _handle_subscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]):
         """Handle event subscription request."""
         event_types = data.get("event_types", [])
 
@@ -245,13 +227,9 @@ class WebSocketEventStream:
                 await self._send_error(websocket, f"Invalid event type: {event_type}")
 
         # Send confirmation
-        await websocket.send(json.dumps({
-            "type": "subscription_confirmed",
-            "subscribed_to": event_types
-        }))
+        await websocket.send(json.dumps({"type": "subscription_confirmed", "subscribed_to": event_types}))
 
-    async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol,
-                                 client_id: str, data: Dict[str, Any]):
+    async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]):
         """Handle unsubscribe request."""
         event_types = data.get("event_types", [])
 
@@ -264,13 +242,9 @@ class WebSocketEventStream:
                     pass
 
         # Send confirmation
-        await websocket.send(json.dumps({
-            "type": "unsubscription_confirmed",
-            "unsubscribed_from": event_types
-        }))
+        await websocket.send(json.dumps({"type": "unsubscription_confirmed", "unsubscribed_from": event_types}))
 
-    async def _handle_filter(self, websocket: WebSocketServerProtocol,
-                            client_id: str, data: Dict[str, Any]):
+    async def _handle_filter(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]):
         """Handle filter configuration."""
         if client_id not in self.filters:
             self.filters[client_id] = {}
@@ -284,17 +258,20 @@ class WebSocketEventStream:
             self.filters[client_id]["tags"] = set(data["tags"])
 
         # Send confirmation
-        await websocket.send(json.dumps({
-            "type": "filter_applied",
-            "filters": {
-                "priority": self.filters[client_id].get("priority", "").value if "priority" in self.filters[client_id] else None,
-                "source": self.filters[client_id].get("source"),
-                "tags": list(self.filters[client_id].get("tags", []))
-            }
-        }))
+        await websocket.send(
+            json.dumps(
+                {
+                    "type": "filter_applied",
+                    "filters": {
+                        "priority": self.filters[client_id].get("priority", "").value if "priority" in self.filters[client_id] else None,
+                        "source": self.filters[client_id].get("source"),
+                        "tags": list(self.filters[client_id].get("tags", [])),
+                    },
+                }
+            )
+        )
 
-    async def _handle_control(self, websocket: WebSocketServerProtocol,
-                             client_id: str, data: Dict[str, Any]):
+    async def _handle_control(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]):
         """Handle control commands from client."""
         action = data.get("action")
         target = data.get("target")
@@ -304,77 +281,82 @@ class WebSocketEventStream:
         result = await self._execute_control_action(action, target, params)
 
         # Send result
-        await websocket.send(json.dumps({
-            "type": "control_result",
-            "action": action,
-            "target": target,
-            "success": result["success"],
-            "data": result.get("data")
-        }))
+        await websocket.send(
+            json.dumps(
+                {"type": "control_result", "action": action, "target": target, "success": result["success"], "data": result.get("data")}
+            )
+        )
 
-    async def _execute_control_action(self, action: str, target: str,
-                                     params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_control_action(self, action: str, target: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute control action on analysis components."""
         result = {"success": False, "data": None}
 
         if action == "pause":
             # Pause analysis on target
-            self.publish_event(AnalysisEvent(
-                id=str(uuid.uuid4()),
-                type=EventType.INFO,
-                timestamp=time.time(),
-                source="dashboard",
-                target=target,
-                data={"action": "pause"},
-                priority=EventPriority.HIGH,
-                tags=["control"],
-                session_id=""
-            ))
+            self.publish_event(
+                AnalysisEvent(
+                    id=str(uuid.uuid4()),
+                    type=EventType.INFO,
+                    timestamp=time.time(),
+                    source="dashboard",
+                    target=target,
+                    data={"action": "pause"},
+                    priority=EventPriority.HIGH,
+                    tags=["control"],
+                    session_id="",
+                )
+            )
             result["success"] = True
 
         elif action == "resume":
             # Resume analysis on target
-            self.publish_event(AnalysisEvent(
-                id=str(uuid.uuid4()),
-                type=EventType.INFO,
-                timestamp=time.time(),
-                source="dashboard",
-                target=target,
-                data={"action": "resume"},
-                priority=EventPriority.HIGH,
-                tags=["control"],
-                session_id=""
-            ))
+            self.publish_event(
+                AnalysisEvent(
+                    id=str(uuid.uuid4()),
+                    type=EventType.INFO,
+                    timestamp=time.time(),
+                    source="dashboard",
+                    target=target,
+                    data={"action": "resume"},
+                    priority=EventPriority.HIGH,
+                    tags=["control"],
+                    session_id="",
+                )
+            )
             result["success"] = True
 
         elif action == "stop":
             # Stop analysis on target
-            self.publish_event(AnalysisEvent(
-                id=str(uuid.uuid4()),
-                type=EventType.INFO,
-                timestamp=time.time(),
-                source="dashboard",
-                target=target,
-                data={"action": "stop"},
-                priority=EventPriority.HIGH,
-                tags=["control"],
-                session_id=""
-            ))
+            self.publish_event(
+                AnalysisEvent(
+                    id=str(uuid.uuid4()),
+                    type=EventType.INFO,
+                    timestamp=time.time(),
+                    source="dashboard",
+                    target=target,
+                    data={"action": "stop"},
+                    priority=EventPriority.HIGH,
+                    tags=["control"],
+                    session_id="",
+                )
+            )
             result["success"] = True
 
         elif action == "configure":
             # Configure analysis parameters
-            self.publish_event(AnalysisEvent(
-                id=str(uuid.uuid4()),
-                type=EventType.INFO,
-                timestamp=time.time(),
-                source="dashboard",
-                target=target,
-                data={"action": "configure", "params": params},
-                priority=EventPriority.MEDIUM,
-                tags=["control", "configuration"],
-                session_id=""
-            ))
+            self.publish_event(
+                AnalysisEvent(
+                    id=str(uuid.uuid4()),
+                    type=EventType.INFO,
+                    timestamp=time.time(),
+                    source="dashboard",
+                    target=target,
+                    data={"action": "configure", "params": params},
+                    priority=EventPriority.MEDIUM,
+                    tags=["control", "configuration"],
+                    session_id="",
+                )
+            )
             result["success"] = True
             result["data"] = params
 
@@ -393,8 +375,8 @@ class WebSocketEventStream:
                 "clients_total": self.stats["clients_total"],
                 "queue_size": len(self.event_queue),
                 "uptime_seconds": uptime,
-                "uptime_formatted": self._format_uptime(uptime)
-            }
+                "uptime_formatted": self._format_uptime(uptime),
+            },
         }
         await websocket.send(json.dumps(stats))
 
@@ -411,19 +393,11 @@ class WebSocketEventStream:
             event_dict["priority"] = event.priority.value
             history.append(event_dict)
 
-        await websocket.send(json.dumps({
-            "type": "history",
-            "count": len(history),
-            "events": history
-        }))
+        await websocket.send(json.dumps({"type": "history", "count": len(history), "events": history}))
 
     async def _send_error(self, websocket: WebSocketServerProtocol, error: str):
         """Send error message to client."""
-        await websocket.send(json.dumps({
-            "type": "error",
-            "message": error,
-            "timestamp": time.time()
-        }))
+        await websocket.send(json.dumps({"type": "error", "message": error, "timestamp": time.time()}))
 
     def _format_uptime(self, seconds: float) -> str:
         """Format uptime in human-readable format."""
@@ -475,10 +449,7 @@ class WebSocketEventStream:
                 if self._should_send_to_client(client_id, event):
                     # Check rate limiting
                     if not self._is_rate_limited(client_id):
-                        await client.send(json.dumps({
-                            "type": "event",
-                            "event": event_dict
-                        }))
+                        await client.send(json.dumps({"type": "event", "event": event_dict}))
                         self.stats["events_sent"] += 1
 
             except websockets.exceptions.ConnectionClosed:
@@ -527,10 +498,7 @@ class WebSocketEventStream:
     def _is_rate_limited(self, client_id: str) -> bool:
         """Check if client is rate limited."""
         if client_id not in self.rate_limits:
-            self.rate_limits[client_id] = {
-                "messages": 0,
-                "reset_time": time.time() + 1.0
-            }
+            self.rate_limits[client_id] = {"messages": 0, "reset_time": time.time() + 1.0}
 
         rate_limit = self.rate_limits[client_id]
 
@@ -562,11 +530,11 @@ class WebSocketEventStream:
                     "events_sent": self.stats["events_sent"],
                     "events_received": self.stats["events_received"],
                     "clients_connected": self.stats["clients_connected"],
-                    "queue_size": len(self.event_queue)
+                    "queue_size": len(self.event_queue),
                 },
                 priority=EventPriority.LOW,
                 tags=["statistics", "monitoring"],
-                session_id=""
+                session_id="",
             )
 
             self.event_queue.append(stats_event)
@@ -592,25 +560,22 @@ class WebSocketEventStream:
 
     def create_session(self, session_id: str, metadata: Dict[str, Any]):
         """Create new analysis session."""
-        self.sessions[session_id] = {
-            "id": session_id,
-            "created_at": time.time(),
-            "metadata": metadata,
-            "events": []
-        }
+        self.sessions[session_id] = {"id": session_id, "created_at": time.time(), "metadata": metadata, "events": []}
 
         # Publish session start event
-        self.publish_event(AnalysisEvent(
-            id=str(uuid.uuid4()),
-            type=EventType.ANALYSIS_STARTED,
-            timestamp=time.time(),
-            source="session_manager",
-            target=None,
-            data={"session_id": session_id, "metadata": metadata},
-            priority=EventPriority.HIGH,
-            tags=["session", "start"],
-            session_id=session_id
-        ))
+        self.publish_event(
+            AnalysisEvent(
+                id=str(uuid.uuid4()),
+                type=EventType.ANALYSIS_STARTED,
+                timestamp=time.time(),
+                source="session_manager",
+                target=None,
+                data={"session_id": session_id, "metadata": metadata},
+                priority=EventPriority.HIGH,
+                tags=["session", "start"],
+                session_id=session_id,
+            )
+        )
 
     def end_session(self, session_id: str):
         """End analysis session."""
@@ -619,21 +584,19 @@ class WebSocketEventStream:
             duration = time.time() - session["created_at"]
 
             # Publish session end event
-            self.publish_event(AnalysisEvent(
-                id=str(uuid.uuid4()),
-                type=EventType.ANALYSIS_COMPLETE,
-                timestamp=time.time(),
-                source="session_manager",
-                target=None,
-                data={
-                    "session_id": session_id,
-                    "duration": duration,
-                    "event_count": len(session["events"])
-                },
-                priority=EventPriority.HIGH,
-                tags=["session", "end"],
-                session_id=session_id
-            ))
+            self.publish_event(
+                AnalysisEvent(
+                    id=str(uuid.uuid4()),
+                    type=EventType.ANALYSIS_COMPLETE,
+                    timestamp=time.time(),
+                    source="session_manager",
+                    target=None,
+                    data={"session_id": session_id, "duration": duration, "event_count": len(session["events"])},
+                    priority=EventPriority.HIGH,
+                    tags=["session", "end"],
+                    session_id=session_id,
+                )
+            )
 
             del self.sessions[session_id]
 
@@ -646,11 +609,15 @@ class EventPublisher:
         self.stream = stream
         self.source = source
 
-    def publish(self, event_type: EventType, data: Dict[str, Any],
-               target: Optional[str] = None,
-               priority: EventPriority = EventPriority.MEDIUM,
-               tags: Optional[List[str]] = None,
-               session_id: str = ""):
+    def publish(
+        self,
+        event_type: EventType,
+        data: Dict[str, Any],
+        target: Optional[str] = None,
+        priority: EventPriority = EventPriority.MEDIUM,
+        tags: Optional[List[str]] = None,
+        session_id: str = "",
+    ):
         """Publish event to stream."""
         event = AnalysisEvent(
             id=str(uuid.uuid4()),
@@ -661,25 +628,19 @@ class EventPublisher:
             data=data,
             priority=priority,
             tags=tags or [],
-            session_id=session_id
+            session_id=session_id,
         )
         self.stream.publish_event(event)
 
     def function_discovered(self, address: int, name: str, size: int):
         """Publish function discovery event."""
         self.publish(
-            EventType.FUNCTION_DISCOVERED,
-            {"address": f"0x{address:x}", "name": name, "size": size},
-            tags=["discovery", "function"]
+            EventType.FUNCTION_DISCOVERED, {"address": f"0x{address:x}", "name": name, "size": size}, tags=["discovery", "function"]
         )
 
     def string_found(self, address: int, value: str):
         """Publish string discovery event."""
-        self.publish(
-            EventType.STRING_FOUND,
-            {"address": f"0x{address:x}", "value": value[:100]},
-            tags=["discovery", "string"]
-        )
+        self.publish(EventType.STRING_FOUND, {"address": f"0x{address:x}", "value": value[:100]}, tags=["discovery", "string"])
 
     def crypto_detected(self, algorithm: str, address: int):
         """Publish crypto detection event."""
@@ -687,7 +648,7 @@ class EventPublisher:
             EventType.CRYPTO_DETECTED,
             {"algorithm": algorithm, "address": f"0x{address:x}"},
             priority=EventPriority.HIGH,
-            tags=["crypto", "detection"]
+            tags=["crypto", "detection"],
         )
 
     def license_check_found(self, check_type: str, address: int):
@@ -696,7 +657,7 @@ class EventPublisher:
             EventType.LICENSE_CHECK_FOUND,
             {"type": check_type, "address": f"0x{address:x}"},
             priority=EventPriority.HIGH,
-            tags=["license", "detection"]
+            tags=["license", "detection"],
         )
 
     def patch_applied(self, address: int, description: str):
@@ -705,14 +666,11 @@ class EventPublisher:
             EventType.PATCH_APPLIED,
             {"address": f"0x{address:x}", "description": description},
             priority=EventPriority.CRITICAL,
-            tags=["patch", "modification"]
+            tags=["patch", "modification"],
         )
 
     def progress(self, percentage: float, message: str):
         """Publish progress update."""
         self.publish(
-            EventType.PROGRESS,
-            {"percentage": percentage, "message": message},
-            priority=EventPriority.LOW,
-            tags=["progress", "status"]
+            EventType.PROGRESS, {"percentage": percentage, "message": message}, priority=EventPriority.LOW, tags=["progress", "status"]
         )

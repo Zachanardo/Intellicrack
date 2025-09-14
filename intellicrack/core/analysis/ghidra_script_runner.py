@@ -17,15 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import os
 import json
-import tempfile
+import logging
+import os
 import shutil
 import subprocess
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+import tempfile
 from dataclasses import dataclass
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GhidraScript:
     """Represents a Ghidra script configuration."""
+
     name: str
     path: Path
     language: str  # "python" or "java"
@@ -53,7 +54,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"detailed": True, "include_thunks": False},
             output_format="json",
-            description="Analyze all functions in the binary"
+            description="Analyze all functions in the binary",
         ),
         "string_extraction": GhidraScript(
             name="StringExtractor",
@@ -61,7 +62,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"min_length": 4, "encoding": "UTF-8"},
             output_format="json",
-            description="Extract all strings from the binary"
+            description="Extract all strings from the binary",
         ),
         "crypto_detection": GhidraScript(
             name="CryptoFinder",
@@ -69,7 +70,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"algorithms": ["AES", "RSA", "SHA256"]},
             output_format="json",
-            description="Detect cryptographic algorithms"
+            description="Detect cryptographic algorithms",
         ),
         "import_analysis": GhidraScript(
             name="ImportAnalysis",
@@ -77,7 +78,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"resolve_ordinals": True},
             output_format="json",
-            description="Analyze imported functions"
+            description="Analyze imported functions",
         ),
         "export_analysis": GhidraScript(
             name="ExportAnalysis",
@@ -85,7 +86,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={},
             output_format="json",
-            description="Analyze exported functions"
+            description="Analyze exported functions",
         ),
         "decompilation": GhidraScript(
             name="DecompileAll",
@@ -93,7 +94,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"output_dir": None, "format": "c"},
             output_format="text",
-            description="Decompile all functions to C pseudocode"
+            description="Decompile all functions to C pseudocode",
         ),
         "call_graph": GhidraScript(
             name="CallGraphBuilder",
@@ -101,7 +102,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"format": "dot", "max_depth": 10},
             output_format="text",
-            description="Generate function call graph"
+            description="Generate function call graph",
         ),
         "vtable_recovery": GhidraScript(
             name="VTableRecovery",
@@ -109,7 +110,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"deep_analysis": True},
             output_format="json",
-            description="Recover C++ virtual tables and classes"
+            description="Recover C++ virtual tables and classes",
         ),
         "license_finder": GhidraScript(
             name="LicenseFinder",
@@ -117,7 +118,7 @@ class GhidraScriptRunner:
             language="python",
             parameters={"patterns": ["license", "serial", "key", "activation"]},
             output_format="json",
-            description="Find license validation routines"
+            description="Find license validation routines",
         ),
         "anti_debug_detector": GhidraScript(
             name="AntiDebugDetector",
@@ -125,8 +126,8 @@ class GhidraScriptRunner:
             language="python",
             parameters={},
             output_format="json",
-            description="Detect anti-debugging techniques"
-        )
+            description="Detect anti-debugging techniques",
+        ),
     }
 
     def __init__(self, ghidra_path: Path):
@@ -157,13 +158,13 @@ class GhidraScriptRunner:
                         language="python",
                         parameters=metadata.get("parameters", {}),
                         output_format=metadata.get("output_format", "text"),
-                        description=metadata.get("description", "")
+                        description=metadata.get("description", ""),
                     )
 
     def _parse_script_metadata(self, script_path: Path) -> Optional[Dict[str, Any]]:
         """Parse metadata from script header comments."""
         try:
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             metadata = {}
@@ -194,7 +195,7 @@ class GhidraScriptRunner:
         script_name: str,
         output_dir: Optional[Path] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        project_path: Optional[Path] = None
+        project_path: Optional[Path] = None,
     ) -> Dict[str, Any]:
         """Run a Ghidra script on a binary."""
 
@@ -226,7 +227,7 @@ class GhidraScriptRunner:
         try:
             # Prepare script parameters file
             params_file = temp_dir / "params.json"
-            with open(params_file, 'w') as f:
+            with open(params_file, "w") as f:
                 json.dump(script_params, f)
 
             # Build command
@@ -234,11 +235,15 @@ class GhidraScriptRunner:
                 str(self.headless_path),
                 str(project_dir),
                 project_name,
-                "-import", str(binary_path),
-                "-scriptPath", str(script.path.parent),
-                "-postScript", script.path.name,
+                "-import",
+                str(binary_path),
+                "-scriptPath",
+                str(script.path.parent),
+                "-postScript",
+                script.path.name,
                 str(params_file),  # Pass parameters file to script
-                "-scriptlog", str(output_dir / "script.log")
+                "-scriptlog",
+                str(output_dir / "script.log"),
             ]
 
             if delete_project:
@@ -249,28 +254,17 @@ class GhidraScriptRunner:
                 script_params["output_dir"] = str(output_dir)
 
             # Execute script
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=script.timeout,
-                cwd=str(temp_dir)
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=str(temp_dir))
 
             # Parse results based on output format
-            results = self._parse_script_output(
-                output_dir,
-                script.output_format,
-                result.stdout,
-                result.stderr
-            )
+            results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
 
             # Add execution metadata
             results["execution"] = {
                 "script": script_name,
                 "binary": str(binary_path),
                 "return_code": result.returncode,
-                "success": result.returncode == 0
+                "success": result.returncode == 0,
             }
 
             return results
@@ -288,13 +282,7 @@ class GhidraScriptRunner:
             if not project_path and temp_dir.exists():
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
-    def run_script_chain(
-        self,
-        binary_path: Path,
-        script_names: List[str],
-        output_dir: Path,
-        share_project: bool = True
-    ) -> Dict[str, Any]:
+    def run_script_chain(self, binary_path: Path, script_names: List[str], output_dir: Path, share_project: bool = True) -> Dict[str, Any]:
         """Run multiple scripts in sequence, optionally sharing project."""
 
         results = {}
@@ -313,10 +301,7 @@ class GhidraScriptRunner:
                 script_output_dir.mkdir(parents=True, exist_ok=True)
 
                 result = self.run_script(
-                    binary_path=binary_path,
-                    script_name=script_name,
-                    output_dir=script_output_dir,
-                    project_path=project_path
+                    binary_path=binary_path, script_name=script_name, output_dir=script_output_dir, project_path=project_path
                 )
 
                 results[script_name] = result
@@ -334,11 +319,7 @@ class GhidraScriptRunner:
                 shutil.rmtree(project_path, ignore_errors=True)
 
     def create_custom_script(
-        self,
-        name: str,
-        code: str,
-        language: str = "python",
-        parameters: Optional[Dict[str, Any]] = None
+        self, name: str, code: str, language: str = "python", parameters: Optional[Dict[str, Any]] = None
     ) -> GhidraScript:
         """Create a custom Ghidra script."""
 
@@ -359,7 +340,7 @@ class GhidraScriptRunner:
 """
 
         # Write script
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(metadata_header)
             f.write(code)
 
@@ -370,7 +351,7 @@ class GhidraScriptRunner:
             language=language,
             parameters=parameters or {},
             output_format="json",
-            description=f"Custom script {name}"
+            description=f"Custom script {name}",
         )
 
         # Register script
@@ -396,25 +377,15 @@ class GhidraScriptRunner:
                 path=script_path,
                 language="python" if script_path.suffix == ".py" else "java",
                 parameters={},
-                output_format="text"
+                output_format="text",
             )
 
         return None
 
-    def _parse_script_output(
-        self,
-        output_dir: Path,
-        format: str,
-        stdout: str,
-        stderr: str
-    ) -> Dict[str, Any]:
+    def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> Dict[str, Any]:
         """Parse script output based on format."""
 
-        results = {
-            "stdout": stdout,
-            "stderr": stderr,
-            "files": []
-        }
+        results = {"stdout": stdout, "stderr": stderr, "files": []}
 
         # List output files
         for file in output_dir.iterdir():
@@ -426,7 +397,7 @@ class GhidraScriptRunner:
             # Look for JSON output file
             json_files = list(output_dir.glob("*.json"))
             if json_files:
-                with open(json_files[0], 'r') as f:
+                with open(json_files[0], "r") as f:
                     results["data"] = json.load(f)
 
         elif format == "xml":
@@ -449,21 +420,11 @@ class GhidraScriptRunner:
 
         # Add builtin scripts
         for name, script in self.BUILTIN_SCRIPTS.items():
-            scripts.append({
-                "name": name,
-                "type": "builtin",
-                "language": script.language,
-                "description": script.description
-            })
+            scripts.append({"name": name, "type": "builtin", "language": script.language, "description": script.description})
 
         # Add custom scripts
         for name, script in self.custom_scripts.items():
-            scripts.append({
-                "name": name,
-                "type": "custom",
-                "language": script.language,
-                "description": script.description
-            })
+            scripts.append({"name": name, "type": "custom", "language": script.language, "description": script.description})
 
         return scripts
 
@@ -480,9 +441,9 @@ class GhidraScriptRunner:
 
             # Try to parse for basic syntax (Python only)
             if script_path.suffix == ".py":
-                with open(script_path, 'r') as f:
+                with open(script_path, "r") as f:
                     code = f.read()
-                compile(code, str(script_path), 'exec')
+                compile(code, str(script_path), "exec")
 
             return True
 

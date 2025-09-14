@@ -86,25 +86,26 @@ warnings.filterwarnings("ignore", message=".*pkg_resources is deprecated.*")
 def run_intellicrack():
     """Run Intellicrack with proper GIL handling."""
     # Debug: Check if TCL/TK environment variables are set
-    tcl_lib = os.environ.get('TCL_LIBRARY', 'NOT SET')
-    tk_lib = os.environ.get('TK_LIBRARY', 'NOT SET')
+    tcl_lib = os.environ.get("TCL_LIBRARY", "NOT SET")
+    tk_lib = os.environ.get("TK_LIBRARY", "NOT SET")
     print(f"DEBUG: TCL_LIBRARY={tcl_lib}", file=sys.stderr)
     print(f"DEBUG: TK_LIBRARY={tk_lib}", file=sys.stderr)
-    
+
     # Add launcher DLL directory to Windows DLL search path if available
-    dll_dir = os.environ.get('INTEL_LAUNCHER_DLL_DIR')
-    if dll_dir and sys.platform.startswith('win'):
+    dll_dir = os.environ.get("INTEL_LAUNCHER_DLL_DIR")
+    if dll_dir and sys.platform.startswith("win"):
         print(f"DEBUG: INTEL_LAUNCHER_DLL_DIR={dll_dir}", file=sys.stderr)
         # Add to PATH for DLL loading
-        current_path = os.environ.get('PATH', '')
+        current_path = os.environ.get("PATH", "")
         if dll_dir not in current_path:
-            os.environ['PATH'] = f"{dll_dir};{current_path}"
+            os.environ["PATH"] = f"{dll_dir};{current_path}"
             print(f"DEBUG: Added {dll_dir} to PATH", file=sys.stderr)
-        
+
         # Use Windows AddDllDirectory if available (Windows 7+)
         try:
             import ctypes
             from ctypes import wintypes
+
             kernel32 = ctypes.windll.kernel32
             kernel32.AddDllDirectory.argtypes = [wintypes.LPCWSTR]
             kernel32.AddDllDirectory.restype = wintypes.LPVOID
@@ -115,7 +116,7 @@ def run_intellicrack():
                 print(f"DEBUG: AddDllDirectory failed for {dll_dir}", file=sys.stderr)
         except Exception as e:
             print(f"DEBUG: Could not use AddDllDirectory: {e}", file=sys.stderr)
-    
+
     try:
         # Set up thread safety before any imports
         if hasattr(sys, "setcheckinterval"):
@@ -133,38 +134,40 @@ def run_intellicrack():
 
 if __name__ == "__main__":
     # CRITICAL DEBUG: Test environment variables before importing Intellicrack
-    print(f"=== DEBUG: Environment Variables ===", file=sys.stderr)
+    print("=== DEBUG: Environment Variables ===", file=sys.stderr)
     print(f"TCL_LIBRARY: {os.environ.get('TCL_LIBRARY', 'NOT SET')}", file=sys.stderr)
     print(f"TK_LIBRARY: {os.environ.get('TK_LIBRARY', 'NOT SET')}", file=sys.stderr)
-    
+
     # Test if paths exist
-    tcl_lib = os.environ.get('TCL_LIBRARY')
+    tcl_lib = os.environ.get("TCL_LIBRARY")
     if tcl_lib:
         tcl_exists = os.path.exists(tcl_lib)
-        init_tcl = os.path.join(tcl_lib, 'init.tcl')
+        init_tcl = os.path.join(tcl_lib, "init.tcl")
         init_exists = os.path.exists(init_tcl)
         print(f"TCL_LIBRARY exists: {tcl_exists}", file=sys.stderr)
         print(f"init.tcl exists: {init_exists}", file=sys.stderr)
-    
+
     # Test _tkinter import BEFORE running main application
     try:
         import _tkinter
-        print(f"✅ SUCCESS: _tkinter imported successfully", file=sys.stderr)
-        
+
+        print("✅ SUCCESS: _tkinter imported successfully", file=sys.stderr)
+
         # Test tkinter GUI creation
         try:
             import tkinter as tk
+
             root = tk.Tk()
             root.withdraw()
-            root.destroy() 
-            print(f"✅ SUCCESS: tkinter GUI test passed - FULLY FUNCTIONAL!", file=sys.stderr)
+            root.destroy()
+            print("✅ SUCCESS: tkinter GUI test passed - FULLY FUNCTIONAL!", file=sys.stderr)
         except Exception as e:
             print(f"❌ FAIL: tkinter GUI test failed: {e}", file=sys.stderr)
-            
+
     except ImportError as e:
         print(f"❌ FAIL: _tkinter import failed in subprocess: {e}", file=sys.stderr)
     except Exception as e:
         print(f"❌ FAIL: Unexpected _tkinter error: {e}", file=sys.stderr)
-    
-    print(f"=== END DEBUG ===", file=sys.stderr)
+
+    print("=== END DEBUG ===", file=sys.stderr)
     sys.exit(run_intellicrack())

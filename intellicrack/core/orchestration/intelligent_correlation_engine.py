@@ -20,24 +20,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import numpy as np
+import hashlib
+import json
+import logging
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import networkx as nx
+import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import hashlib
-import json
-import time
-from dataclasses import dataclass, field
-from typing import Dict, List, Set, Tuple, Any, Optional
-from enum import Enum
-from collections import defaultdict
-import logging
-from pathlib import Path
 
 from intellicrack.core.orchestration.result_serialization_protocol import (
-    BaseResult, FunctionResult, StringResult, CryptoResult,
-    LicenseCheckResult, ProtectionResult, ResultType
+    BaseResult,
+    CryptoResult,
+    FunctionResult,
+    LicenseCheckResult,
+    ProtectionResult,
+    StringResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 class CorrelationType(Enum):
     """Types of correlations between analysis results."""
+
     ADDRESS_MATCH = "address_match"
     XREF_RELATED = "xref_related"
     STRING_REFERENCE = "string_reference"
@@ -62,6 +66,7 @@ class CorrelationType(Enum):
 @dataclass
 class Correlation:
     """Represents a correlation between analysis results."""
+
     id: str
     type: CorrelationType
     source_results: List[str]  # Result IDs
@@ -74,6 +79,7 @@ class Correlation:
 @dataclass
 class CorrelationCluster:
     """Group of highly correlated results."""
+
     id: str
     results: List[BaseResult]
     correlations: List[Correlation]
@@ -114,26 +120,26 @@ class IntelligentCorrelationEngine:
                 "functions": ["validate_serial", "check_license", "verify_key"],
                 "strings": ["invalid license", "trial expired", "activation required"],
                 "api_calls": ["GetVolumeInformation", "GetComputerName", "RegQueryValueEx"],
-                "constants": [0x19990318, 0x12345678, 0xDEADBEEF]
+                "constants": [0x19990318, 0x12345678, 0xDEADBEEF],
             },
             "hwid_check": {
                 "functions": ["get_hwid", "machine_id", "hardware_fingerprint"],
                 "strings": ["hardware id", "machine code", "device fingerprint"],
                 "api_calls": ["GetVolumeSerialNumber", "GetAdaptersInfo", "DeviceIoControl"],
-                "wmi_queries": ["Win32_Processor", "Win32_BaseBoard", "Win32_DiskDrive"]
+                "wmi_queries": ["Win32_Processor", "Win32_BaseBoard", "Win32_DiskDrive"],
             },
             "time_bomb": {
                 "functions": ["check_expiry", "validate_date", "time_limit"],
                 "strings": ["trial period", "days remaining", "expired"],
                 "api_calls": ["GetSystemTime", "GetLocalTime", "NtQuerySystemTime"],
-                "network_checks": ["time.windows.com", "pool.ntp.org"]
+                "network_checks": ["time.windows.com", "pool.ntp.org"],
             },
             "online_activation": {
                 "functions": ["activate_online", "server_validate", "cloud_check"],
                 "strings": ["activation server", "license server", "validation endpoint"],
                 "api_calls": ["InternetOpen", "HttpSendRequest", "WinHttpOpen"],
-                "domains": ["license.company.com", "activate.vendor.net"]
-            }
+                "domains": ["license.company.com", "activate.vendor.net"],
+            },
         }
 
     def _load_crypto_patterns(self) -> Dict[str, Any]:
@@ -141,27 +147,34 @@ class IntelligentCorrelationEngine:
         return {
             "aes": {
                 "constants": [
-                    0x63, 0x7c, 0x77, 0x7b,  # AES S-box start
-                    0xc66363a5, 0xf87c7c84  # AES round constants
+                    0x63,
+                    0x7C,
+                    0x77,
+                    0x7B,  # AES S-box start
+                    0xC66363A5,
+                    0xF87C7C84,  # AES round constants
                 ],
                 "functions": ["aes_encrypt", "aes_decrypt", "rijndael"],
-                "key_sizes": [128, 192, 256]
+                "key_sizes": [128, 192, 256],
             },
             "rsa": {
                 "constants": [0x10001],  # Common public exponent
                 "functions": ["rsa_public", "rsa_private", "modexp"],
-                "operations": ["modular_exponentiation", "prime_generation"]
+                "operations": ["modular_exponentiation", "prime_generation"],
             },
             "sha256": {
                 "constants": [
-                    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5  # SHA256 K constants
+                    0x428A2F98,
+                    0x71374491,
+                    0xB5C0FBCF,
+                    0xE9B5DBA5,  # SHA256 K constants
                 ],
-                "functions": ["sha256_transform", "sha256_update"]
+                "functions": ["sha256_transform", "sha256_update"],
             },
             "custom_crypto": {
                 "indicators": ["xor_encrypt", "custom_hash", "proprietary_cipher"],
-                "suspicious": ["weak_prng", "hardcoded_key", "simple_xor"]
-            }
+                "suspicious": ["weak_prng", "hardcoded_key", "simple_xor"],
+            },
         }
 
     def _load_protection_patterns(self) -> Dict[str, Any]:
@@ -170,18 +183,18 @@ class IntelligentCorrelationEngine:
             "vmprotect": {
                 "markers": [".vmp0", ".vmp1", ".vmp2"],
                 "imports": ["VMProtectSDK32.dll", "VMProtectSDK64.dll"],
-                "mutations": ["virtualized_functions", "mutated_code"]
+                "mutations": ["virtualized_functions", "mutated_code"],
             },
             "themida": {
                 "markers": [".themida", ".WinLicense"],
                 "techniques": ["code_virtualization", "api_wrapping"],
-                "anti_debug": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent"]
+                "anti_debug": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent"],
             },
             "denuvo": {
                 "markers": ["denuvo64.dll", "denuvo32.dll"],
                 "checks": ["integrity_check", "anti_tamper"],
-                "triggers": ["steam_api", "origin_api"]
-            }
+                "triggers": ["steam_api", "origin_api"],
+            },
         }
 
     def add_result(self, result: BaseResult):
@@ -211,7 +224,7 @@ class IntelligentCorrelationEngine:
             correlations = []
 
             # Address-based correlation
-            if hasattr(new_result, 'address') and hasattr(existing_result, 'address'):
+            if hasattr(new_result, "address") and hasattr(existing_result, "address"):
                 if self._check_address_correlation(new_result, existing_result):
                     correlations.append(self._create_address_correlation(new_result, existing_result))
 
@@ -232,17 +245,12 @@ class IntelligentCorrelationEngine:
             # Add correlations to graph
             for correlation in correlations:
                 self.correlations.append(correlation)
-                self.correlation_graph.add_edge(
-                    new_result.id,
-                    existing_result.id,
-                    weight=correlation.confidence,
-                    correlation=correlation
-                )
+                self.correlation_graph.add_edge(new_result.id, existing_result.id, weight=correlation.confidence, correlation=correlation)
 
     def _check_address_correlation(self, result1: BaseResult, result2: BaseResult) -> bool:
         """Check if two results are correlated by address proximity."""
-        addr1 = getattr(result1, 'address', None)
-        addr2 = getattr(result2, 'address', None)
+        addr1 = getattr(result1, "address", None)
+        addr2 = getattr(result2, "address", None)
 
         if addr1 is None or addr2 is None:
             return False
@@ -315,7 +323,7 @@ class IntelligentCorrelationEngine:
 
     def _create_address_correlation(self, result1: BaseResult, result2: BaseResult) -> Correlation:
         """Create address-based correlation."""
-        distance = abs(getattr(result1, 'address', 0) - getattr(result2, 'address', 0))
+        distance = abs(getattr(result1, "address", 0) - getattr(result2, "address", 0))
         confidence = 1.0 - (distance / self.address_proximity_threshold)
 
         return Correlation(
@@ -324,7 +332,7 @@ class IntelligentCorrelationEngine:
             source_results=[result1.id, result2.id],
             confidence=confidence,
             evidence={"distance": distance},
-            description=f"Address proximity: {distance} bytes apart"
+            description=f"Address proximity: {distance} bytes apart",
         )
 
     def _create_xref_correlation(self, func1: FunctionResult, func2: FunctionResult) -> Correlation:
@@ -350,7 +358,7 @@ class IntelligentCorrelationEngine:
             source_results=[func1.id, func2.id],
             confidence=confidence,
             evidence=evidence,
-            description=f"Cross-reference: {evidence.get('relationship', 'related')}"
+            description=f"Cross-reference: {evidence.get('relationship', 'related')}",
         )
 
     def _create_string_correlation(self, string: StringResult, result: BaseResult) -> Correlation:
@@ -361,7 +369,7 @@ class IntelligentCorrelationEngine:
             source_results=[string.id, result.id],
             confidence=0.85,
             evidence={"string_value": string.value[:50]},
-            description=f"String '{string.value[:30]}...' referenced"
+            description=f"String '{string.value[:30]}...' referenced",
         )
 
     def _create_semantic_correlation(self, result1: BaseResult, result2: BaseResult) -> Correlation:
@@ -375,7 +383,7 @@ class IntelligentCorrelationEngine:
             source_results=[result1.id, result2.id],
             confidence=0.75,
             evidence={"similarity_type": "semantic"},
-            description="Semantic similarity detected"
+            description="Semantic similarity detected",
         )
 
     def _perform_comprehensive_correlation(self):
@@ -414,19 +422,14 @@ class IntelligentCorrelationEngine:
                     source_results=matching_results,
                     confidence=0.85,
                     evidence={"pattern": pattern_name},
-                    description=f"License pattern: {pattern_name}"
+                    description=f"License pattern: {pattern_name}",
                 )
                 self.correlations.append(correlation)
 
                 # Add edges to graph
                 for i in range(len(matching_results)):
                     for j in range(i + 1, len(matching_results)):
-                        self.correlation_graph.add_edge(
-                            matching_results[i],
-                            matching_results[j],
-                            weight=0.85,
-                            correlation=correlation
-                        )
+                        self.correlation_graph.add_edge(matching_results[i], matching_results[j], weight=0.85, correlation=correlation)
 
     def _correlate_crypto_patterns(self):
         """Identify cryptographic patterns across results."""
@@ -450,7 +453,7 @@ class IntelligentCorrelationEngine:
                     source_results=matching_results,
                     confidence=0.9,
                     evidence={"algorithm": algo_name},
-                    description=f"Cryptographic pattern: {algo_name}"
+                    description=f"Cryptographic pattern: {algo_name}",
                 )
                 self.correlations.append(correlation)
 
@@ -476,7 +479,7 @@ class IntelligentCorrelationEngine:
                     source_results=matching_results,
                     confidence=0.88,
                     evidence={"protection": protection_name},
-                    description=f"Protection scheme: {protection_name}"
+                    description=f"Protection scheme: {protection_name}",
                 )
                 self.correlations.append(correlation)
 
@@ -519,7 +522,7 @@ class IntelligentCorrelationEngine:
                 correlations=[],
                 cluster_type="density_based",
                 confidence=0.8,
-                summary={"size": len(cluster_results)}
+                summary={"size": len(cluster_results)},
             )
 
             self.clusters.append(cluster)
@@ -533,8 +536,8 @@ class IntelligentCorrelationEngine:
         features.append(result.timestamp)
 
         # Type-specific features
-        if hasattr(result, 'address'):
-            features.append(float(getattr(result, 'address', 0)))
+        if hasattr(result, "address"):
+            features.append(float(getattr(result, "address", 0)))
 
         if isinstance(result, FunctionResult):
             features.append(float(result.size))
@@ -573,8 +576,8 @@ class IntelligentCorrelationEngine:
                         for node2 in component:
                             if self.correlation_graph.has_edge(node1, node2):
                                 edge_data = self.correlation_graph[node1][node2]
-                                if 'correlation' in edge_data:
-                                    cluster_correlations.append(edge_data['correlation'])
+                                if "correlation" in edge_data:
+                                    cluster_correlations.append(edge_data["correlation"])
 
                     cluster = CorrelationCluster(
                         id=hashlib.md5(f"graph_cluster_{time.time()}".encode()).hexdigest(),
@@ -582,10 +585,7 @@ class IntelligentCorrelationEngine:
                         correlations=cluster_correlations,
                         cluster_type="graph_component",
                         confidence=0.85,
-                        summary={
-                            "size": len(component),
-                            "density": nx.density(self.correlation_graph.subgraph(component))
-                        }
+                        summary={"size": len(component), "density": nx.density(self.correlation_graph.subgraph(component))},
                     )
 
                     self.clusters.append(cluster)
@@ -603,7 +603,7 @@ class IntelligentCorrelationEngine:
                     "confidence": correlation.confidence,
                     "description": correlation.description,
                     "results": [self.results[rid] for rid in correlation.source_results],
-                    "evidence": correlation.evidence
+                    "evidence": correlation.evidence,
                 }
                 findings.append(finding)
 
@@ -616,7 +616,7 @@ class IntelligentCorrelationEngine:
                     "confidence": cluster.confidence,
                     "size": len(cluster.results),
                     "results": cluster.results,
-                    "summary": cluster.summary
+                    "summary": cluster.summary,
                 }
                 findings.append(finding)
 
@@ -632,14 +632,13 @@ class IntelligentCorrelationEngine:
             "correlation_types": {},
             "high_confidence_findings": self.get_high_confidence_findings(),
             "graph_metrics": {},
-            "patterns_detected": {}
+            "patterns_detected": {},
         }
 
         # Count correlation types
         for correlation in self.correlations:
             cor_type = correlation.type.value
-            report["correlation_types"][cor_type] = \
-                report["correlation_types"].get(cor_type, 0) + 1
+            report["correlation_types"][cor_type] = report["correlation_types"].get(cor_type, 0) + 1
 
         # Graph metrics
         if self.correlation_graph.number_of_nodes() > 0:
@@ -647,15 +646,12 @@ class IntelligentCorrelationEngine:
                 "nodes": self.correlation_graph.number_of_nodes(),
                 "edges": self.correlation_graph.number_of_edges(),
                 "density": nx.density(self.correlation_graph),
-                "components": nx.number_connected_components(self.correlation_graph)
+                "components": nx.number_connected_components(self.correlation_graph),
             }
 
         # Pattern detection summary
         for pattern_type in ["license", "crypto", "protection"]:
-            pattern_correlations = [
-                c for c in self.correlations
-                if pattern_type in c.type.value.lower()
-            ]
+            pattern_correlations = [c for c in self.correlations if pattern_type in c.type.value.lower()]
             if pattern_correlations:
                 report["patterns_detected"][pattern_type] = len(pattern_correlations)
 
@@ -666,13 +662,7 @@ class IntelligentCorrelationEngine:
         export_data = {
             "report": self.generate_correlation_report(),
             "correlations": [
-                {
-                    "id": c.id,
-                    "type": c.type.value,
-                    "confidence": c.confidence,
-                    "description": c.description,
-                    "evidence": c.evidence
-                }
+                {"id": c.id, "type": c.type.value, "confidence": c.confidence, "description": c.description, "evidence": c.evidence}
                 for c in self.correlations
             ],
             "clusters": [
@@ -681,13 +671,13 @@ class IntelligentCorrelationEngine:
                     "type": cluster.cluster_type,
                     "size": len(cluster.results),
                     "confidence": cluster.confidence,
-                    "summary": cluster.summary
+                    "summary": cluster.summary,
                 }
                 for cluster in self.clusters
-            ]
+            ],
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
         logger.info(f"Exported correlation analysis to {output_path}")

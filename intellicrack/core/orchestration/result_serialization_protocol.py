@@ -20,25 +20,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
-import struct
 import base64
 import hashlib
+import json
+import logging
+import struct
 import zlib
-import msgpack
-import capstone
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Any, Optional, Union, Tuple
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+import msgpack
 
 logger = logging.getLogger(__name__)
 
 
 class DataFormat(Enum):
     """Supported serialization formats."""
+
     JSON = "json"
     MSGPACK = "msgpack"
     PROTOBUF = "protobuf"
@@ -48,6 +49,7 @@ class DataFormat(Enum):
 
 class ResultType(Enum):
     """Types of analysis results."""
+
     FUNCTION = "function"
     STRING = "string"
     IMPORT = "import"
@@ -73,6 +75,7 @@ class ResultType(Enum):
 @dataclass
 class BaseResult:
     """Base class for all analysis results."""
+
     id: str
     type: ResultType
     source_tool: str
@@ -83,7 +86,7 @@ class BaseResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         result = asdict(self)
-        result['type'] = self.type.value
+        result["type"] = self.type.value
         return result
 
     def calculate_hash(self) -> str:
@@ -95,6 +98,7 @@ class BaseResult:
 @dataclass
 class FunctionResult(BaseResult):
     """Function analysis result."""
+
     address: int
     name: str
     size: int
@@ -116,6 +120,7 @@ class FunctionResult(BaseResult):
 @dataclass
 class StringResult(BaseResult):
     """String discovery result."""
+
     address: int
     value: str
     encoding: str = "utf-8"
@@ -132,6 +137,7 @@ class StringResult(BaseResult):
 @dataclass
 class CryptoResult(BaseResult):
     """Cryptographic operation result."""
+
     address: int
     algorithm: str
     key_size: Optional[int] = None
@@ -147,6 +153,7 @@ class CryptoResult(BaseResult):
 @dataclass
 class LicenseCheckResult(BaseResult):
     """License validation detection result."""
+
     address: int
     check_type: str  # "serial", "hwid", "time", "network", "file"
     success_path: Optional[int] = None
@@ -162,6 +169,7 @@ class LicenseCheckResult(BaseResult):
 @dataclass
 class ProtectionResult(BaseResult):
     """Protection scheme detection result."""
+
     protection_type: str  # "packer", "protector", "obfuscator", "anti-debug"
     name: str
     version: Optional[str] = None
@@ -177,6 +185,7 @@ class ProtectionResult(BaseResult):
 @dataclass
 class PatchResult(BaseResult):
     """Binary patch result."""
+
     address: int
     original_bytes: bytes
     patched_bytes: bytes
@@ -190,6 +199,7 @@ class PatchResult(BaseResult):
 @dataclass
 class MemoryDumpResult(BaseResult):
     """Memory dump result."""
+
     start_address: int
     end_address: int
     size: int
@@ -206,6 +216,7 @@ class MemoryDumpResult(BaseResult):
 @dataclass
 class ControlFlowResult(BaseResult):
     """Control flow analysis result."""
+
     function_address: int
     basic_blocks: List[Dict[str, int]] = field(default_factory=list)
     edges: List[Tuple[int, int]] = field(default_factory=list)
@@ -236,7 +247,7 @@ class ResultSerializer:
             ResultType.PROTECTION: ProtectionResult,
             ResultType.PATCH: PatchResult,
             ResultType.MEMORY_DUMP: MemoryDumpResult,
-            ResultType.CONTROL_FLOW: ControlFlowResult
+            ResultType.CONTROL_FLOW: ControlFlowResult,
         }
 
     def serialize(self, result: BaseResult) -> bytes:
@@ -245,11 +256,11 @@ class ResultSerializer:
         data = result.to_dict()
 
         # Add serialization metadata
-        data['_serialization'] = {
-            'version': '1.0',
-            'format': self.format.value,
-            'compressed': self.compression_enabled,
-            'hash': result.calculate_hash()
+        data["_serialization"] = {
+            "version": "1.0",
+            "format": self.format.value,
+            "compressed": self.compression_enabled,
+            "hash": result.calculate_hash(),
         }
 
         # Serialize based on format
@@ -280,7 +291,7 @@ class ResultSerializer:
 
         # Decompress if needed
         try:
-            if data[:2] == b'\x78\x9c':  # zlib magic bytes
+            if data[:2] == b"\x78\x9c":  # zlib magic bytes
                 data = zlib.decompress(data)
         except:
             pass
@@ -296,11 +307,11 @@ class ResultSerializer:
             raise ValueError(f"Unsupported format: {self.format}")
 
         # Remove metadata
-        if '_serialization' in result_dict:
-            del result_dict['_serialization']
+        if "_serialization" in result_dict:
+            del result_dict["_serialization"]
 
         # Convert type string back to enum
-        result_dict['type'] = ResultType(result_dict['type'])
+        result_dict["type"] = ResultType(result_dict["type"])
 
         # Create appropriate result class
         result_class = self.result_classes.get(result_type, BaseResult)
@@ -309,34 +320,34 @@ class ResultSerializer:
     def _binary_serialize(self, data: Dict[str, Any]) -> bytes:
         """Custom binary serialization for maximum efficiency."""
         # Binary format: [header][type][data_length][data]
-        header = b'ICRK'  # Intellicrack magic bytes
-        version = struct.pack('H', 1)
+        header = b"ICRK"  # Intellicrack magic bytes
+        version = struct.pack("H", 1)
 
         # Serialize data to msgpack first
         data_bytes = msgpack.packb(data, use_bin_type=True)
-        data_length = struct.pack('I', len(data_bytes))
+        data_length = struct.pack("I", len(data_bytes))
 
         return header + version + data_length + data_bytes
 
     def _binary_deserialize(self, data: bytes) -> Dict[str, Any]:
         """Deserialize custom binary format."""
         # Check header
-        if data[:4] != b'ICRK':
+        if data[:4] != b"ICRK":
             raise ValueError("Invalid binary format")
 
         # Parse header
-        version = struct.unpack('H', data[4:6])[0]
-        data_length = struct.unpack('I', data[6:10])[0]
+        version = struct.unpack("H", data[4:6])[0]
+        data_length = struct.unpack("I", data[6:10])[0]
 
         # Extract data
-        data_bytes = data[10:10+data_length]
+        data_bytes = data[10 : 10 + data_length]
         return msgpack.unpackb(data_bytes, raw=False)
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""
         from Crypto.Cipher import AES
-        from Crypto.Util.Padding import pad
         from Crypto.Random import get_random_bytes
+        from Crypto.Util.Padding import pad
 
         # Generate IV
         iv = get_random_bytes(16)
@@ -369,9 +380,9 @@ class ResultSerializer:
     def batch_serialize(self, results: List[BaseResult]) -> bytes:
         """Serialize multiple results efficiently."""
         batch_data = {
-            'batch_id': hashlib.sha256(str(datetime.now()).encode()).hexdigest()[:16],
-            'count': len(results),
-            'results': [r.to_dict() for r in results]
+            "batch_id": hashlib.sha256(str(datetime.now()).encode()).hexdigest()[:16],
+            "count": len(results),
+            "results": [r.to_dict() for r in results],
         }
 
         return self.serialize_dict(batch_data)
@@ -396,10 +407,10 @@ class CustomJSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, bytes):
-            return base64.b64encode(obj).decode('ascii')
+            return base64.b64encode(obj).decode("ascii")
         elif isinstance(obj, Enum):
             return obj.value
-        elif hasattr(obj, 'to_dict'):
+        elif hasattr(obj, "to_dict"):
             return obj.to_dict()
         elif isinstance(obj, Path):
             return str(obj)
@@ -415,34 +426,33 @@ class ResultConverter:
         results = []
 
         # Convert functions
-        for func in ghidra_data.get('functions', []):
+        for func in ghidra_data.get("functions", []):
             result = FunctionResult(
                 id=hashlib.md5(f"{func['address']}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
-                address=int(func['address'], 16) if isinstance(func['address'], str) else func['address'],
-                name=func['name'],
-                size=func.get('size', 0),
-                return_type=func.get('return_type'),
-                parameters=[{'name': p['name'], 'type': p['type']}
-                          for p in func.get('parameters', [])],
-                calling_convention=func.get('calling_convention'),
-                decompiled_code=func.get('decompiled')
+                address=int(func["address"], 16) if isinstance(func["address"], str) else func["address"],
+                name=func["name"],
+                size=func.get("size", 0),
+                return_type=func.get("return_type"),
+                parameters=[{"name": p["name"], "type": p["type"]} for p in func.get("parameters", [])],
+                calling_convention=func.get("calling_convention"),
+                decompiled_code=func.get("decompiled"),
             )
             results.append(result)
 
         # Convert strings
-        for string in ghidra_data.get('strings', []):
+        for string in ghidra_data.get("strings", []):
             result = StringResult(
                 id=hashlib.md5(f"{string['address']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
-                address=int(string['address'], 16) if isinstance(string['address'], str) else string['address'],
-                value=string['value'],
-                length=len(string['value']),
-                references=string.get('xrefs', [])
+                address=int(string["address"], 16) if isinstance(string["address"], str) else string["address"],
+                value=string["value"],
+                length=len(string["value"]),
+                references=string.get("xrefs", []),
             )
             results.append(result)
 
@@ -454,34 +464,30 @@ class ResultConverter:
         results = []
 
         # Convert functions
-        for addr, func in ida_data.get('functions', {}).items():
+        for addr, func in ida_data.get("functions", {}).items():
             result = FunctionResult(
                 id=hashlib.md5(f"{addr}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="ida_pro",
                 timestamp=datetime.now().timestamp(),
                 address=int(addr, 16) if isinstance(addr, str) else addr,
-                name=func.get('name', f'sub_{addr:x}'),
-                size=func.get('end_ea', addr) - addr,
-                stack_frame_size=func.get('frame_size', 0),
-                xrefs_to=func.get('xrefs_to', []),
-                xrefs_from=func.get('xrefs_from', [])
+                name=func.get("name", f"sub_{addr:x}"),
+                size=func.get("end_ea", addr) - addr,
+                stack_frame_size=func.get("frame_size", 0),
+                xrefs_to=func.get("xrefs_to", []),
+                xrefs_from=func.get("xrefs_from", []),
             )
             results.append(result)
 
         # Convert structures
-        for struct_name, struct_data in ida_data.get('structures', {}).items():
+        for struct_name, struct_data in ida_data.get("structures", {}).items():
             # Store as metadata since we don't have a dedicated structure result
             result = BaseResult(
                 id=hashlib.md5(struct_name.encode()).hexdigest(),
                 type=ResultType.STRUCTURE,
                 source_tool="ida_pro",
                 timestamp=datetime.now().timestamp(),
-                metadata={
-                    'name': struct_name,
-                    'size': struct_data.get('size', 0),
-                    'members': struct_data.get('members', [])
-                }
+                metadata={"name": struct_name, "size": struct_data.get("size", 0), "members": struct_data.get("members", [])},
             )
             results.append(result)
 
@@ -493,32 +499,31 @@ class ResultConverter:
         results = []
 
         # Convert functions from aflj output
-        for func in r2_data.get('functions', []):
+        for func in r2_data.get("functions", []):
             result = FunctionResult(
                 id=hashlib.md5(f"{func['offset']}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="radare2",
                 timestamp=datetime.now().timestamp(),
-                address=func['offset'],
-                name=func['name'],
-                size=func.get('size', 0),
-                cyclomatic_complexity=func.get('cc', 0),
-                basic_blocks=[{'start': bb['addr'], 'size': bb['size']}
-                            for bb in func.get('bbs', [])]
+                address=func["offset"],
+                name=func["name"],
+                size=func.get("size", 0),
+                cyclomatic_complexity=func.get("cc", 0),
+                basic_blocks=[{"start": bb["addr"], "size": bb["size"]} for bb in func.get("bbs", [])],
             )
             results.append(result)
 
         # Convert strings from izj output
-        for string in r2_data.get('strings', []):
+        for string in r2_data.get("strings", []):
             result = StringResult(
                 id=hashlib.md5(f"{string['vaddr']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="radare2",
                 timestamp=datetime.now().timestamp(),
-                address=string['vaddr'],
-                value=string['string'],
-                length=string['length'],
-                encoding=string.get('type', 'ascii')
+                address=string["vaddr"],
+                value=string["string"],
+                length=string["length"],
+                encoding=string.get("type", "ascii"),
             )
             results.append(result)
 
@@ -530,34 +535,34 @@ class ResultConverter:
         results = []
 
         # Convert API calls
-        for call in frida_data.get('api_calls', []):
+        for call in frida_data.get("api_calls", []):
             result = BaseResult(
                 id=hashlib.md5(f"{call['timestamp']}".encode()).hexdigest(),
                 type=ResultType.API_CALL,
                 source_tool="frida",
-                timestamp=call['timestamp'],
+                timestamp=call["timestamp"],
                 metadata={
-                    'function': call['function'],
-                    'arguments': call['args'],
-                    'return_value': call.get('retval'),
-                    'thread_id': call.get('tid'),
-                    'process_id': call.get('pid')
-                }
+                    "function": call["function"],
+                    "arguments": call["args"],
+                    "return_value": call.get("retval"),
+                    "thread_id": call.get("tid"),
+                    "process_id": call.get("pid"),
+                },
             )
             results.append(result)
 
         # Convert memory dumps
-        for dump in frida_data.get('memory_dumps', []):
+        for dump in frida_data.get("memory_dumps", []):
             result = MemoryDumpResult(
                 id=hashlib.md5(f"{dump['address']}".encode()).hexdigest(),
                 type=ResultType.MEMORY_DUMP,
                 source_tool="frida",
                 timestamp=datetime.now().timestamp(),
-                start_address=dump['address'],
-                end_address=dump['address'] + dump['size'],
-                size=dump['size'],
-                data=base64.b64decode(dump['data']),
-                permissions=dump.get('protection', 'rwx')
+                start_address=dump["address"],
+                end_address=dump["address"] + dump["size"],
+                size=dump["size"],
+                data=base64.b64decode(dump["data"]),
+                permissions=dump.get("protection", "rwx"),
             )
             results.append(result)
 
@@ -567,14 +572,10 @@ class ResultConverter:
     def standard_to_json(results: List[BaseResult]) -> str:
         """Convert standard results to JSON for export."""
         export_data = {
-            'version': '1.0',
-            'timestamp': datetime.now().isoformat(),
-            'results': [r.to_dict() for r in results],
-            'summary': {
-                'total': len(results),
-                'by_type': {},
-                'by_tool': {}
-            }
+            "version": "1.0",
+            "timestamp": datetime.now().isoformat(),
+            "results": [r.to_dict() for r in results],
+            "summary": {"total": len(results), "by_type": {}, "by_tool": {}},
         }
 
         # Calculate summary statistics
@@ -582,10 +583,8 @@ class ResultConverter:
             result_type = result.type.value
             source_tool = result.source_tool
 
-            export_data['summary']['by_type'][result_type] = \
-                export_data['summary']['by_type'].get(result_type, 0) + 1
+            export_data["summary"]["by_type"][result_type] = export_data["summary"]["by_type"].get(result_type, 0) + 1
 
-            export_data['summary']['by_tool'][source_tool] = \
-                export_data['summary']['by_tool'].get(source_tool, 0) + 1
+            export_data["summary"]["by_tool"][source_tool] = export_data["summary"]["by_tool"].get(source_tool, 0) + 1
 
         return json.dumps(export_data, indent=2, cls=CustomJSONEncoder)

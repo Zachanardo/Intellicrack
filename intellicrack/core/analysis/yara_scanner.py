@@ -17,21 +17,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import yara
-import os
 import json
-import hashlib
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
+import os
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import yara
 
 logger = logging.getLogger(__name__)
 
 
 class RuleCategory(Enum):
     """Categories of YARA rules."""
+
     PACKER = "packer"
     PROTECTOR = "protector"
     CRYPTO = "crypto"
@@ -47,6 +48,7 @@ class RuleCategory(Enum):
 @dataclass
 class YaraMatch:
     """Represents a YARA rule match."""
+
     rule_name: str
     category: RuleCategory
     offset: int
@@ -59,6 +61,7 @@ class YaraMatch:
 @dataclass
 class ProtectionSignature:
     """Signature for a protection scheme."""
+
     name: str
     version: Optional[str]
     category: str
@@ -78,53 +81,53 @@ class YaraScanner:
             version=None,
             category="protector",
             signatures=[
-                b"\x56\x4D\x50\x72\x6F\x74\x65\x63\x74",  # "VMProtect"
-                b"\x2E\x76\x6D\x70\x30",  # ".vmp0"
-                b"\x2E\x76\x6D\x70\x31",  # ".vmp1"
-                b"\x2E\x76\x6D\x70\x32",  # ".vmp2"
+                b"\x56\x4d\x50\x72\x6f\x74\x65\x63\x74",  # "VMProtect"
+                b"\x2e\x76\x6d\x70\x30",  # ".vmp0"
+                b"\x2e\x76\x6d\x70\x31",  # ".vmp1"
+                b"\x2e\x76\x6d\x70\x32",  # ".vmp2"
             ],
-            entry_point_pattern=b"\x68\x00\x00\x00\x00\xE8",
+            entry_point_pattern=b"\x68\x00\x00\x00\x00\xe8",
             section_characteristics={"name": ".vmp", "flags": 0xE0000020},
-            imports=None
+            imports=None,
         ),
         "Themida": ProtectionSignature(
             name="Themida",
             version=None,
             category="protector",
             signatures=[
-                b"\x54\x68\x65\x6D\x69\x64\x61",  # "Themida"
-                b"\x2E\x74\x68\x65\x6D\x69\x64\x61",  # ".themida"
-                b"\xB8\x00\x00\x00\x00\x60\x0B\xC0\x74\x58",
+                b"\x54\x68\x65\x6d\x69\x64\x61",  # "Themida"
+                b"\x2e\x74\x68\x65\x6d\x69\x64\x61",  # ".themida"
+                b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74\x58",
             ],
-            entry_point_pattern=b"\xB8\x00\x00\x00\x00\x60\x0B\xC0",
+            entry_point_pattern=b"\xb8\x00\x00\x00\x00\x60\x0b\xc0",
             section_characteristics=None,
-            imports=["SecureEngineSDK.dll"]
+            imports=["SecureEngineSDK.dll"],
         ),
         "ASProtect": ProtectionSignature(
             name="ASProtect",
             version=None,
             category="protector",
             signatures=[
-                b"\x41\x53\x50\x72\x6F\x74\x65\x63\x74",  # "ASProtect"
-                b"\x2E\x61\x73\x70\x72",  # ".aspr"
-                b"\x60\xE8\x03\x00\x00\x00\xE9\xEB\x04",
+                b"\x41\x53\x50\x72\x6f\x74\x65\x63\x74",  # "ASProtect"
+                b"\x2e\x61\x73\x70\x72",  # ".aspr"
+                b"\x60\xe8\x03\x00\x00\x00\xe9\xeb\x04",
             ],
-            entry_point_pattern=b"\x60\xE8\x03\x00\x00\x00",
+            entry_point_pattern=b"\x60\xe8\x03\x00\x00\x00",
             section_characteristics={"name": ".aspack", "flags": 0xE0000020},
-            imports=None
+            imports=None,
         ),
         "Denuvo": ProtectionSignature(
             name="Denuvo",
             version=None,
             category="protector",
             signatures=[
-                b"\x44\x65\x6E\x75\x76\x6F",  # "Denuvo"
-                b"\x2E\x64\x65\x6E\x75",  # ".denu"
-                b"\x48\x8D\x05\x00\x00\x00\x00\x48\x89\x45",
+                b"\x44\x65\x6e\x75\x76\x6f",  # "Denuvo"
+                b"\x2e\x64\x65\x6e\x75",  # ".denu"
+                b"\x48\x8d\x05\x00\x00\x00\x00\x48\x89\x45",
             ],
             entry_point_pattern=None,
             section_characteristics=None,
-            imports=["denuvo32.dll", "denuvo64.dll"]
+            imports=["denuvo32.dll", "denuvo64.dll"],
         ),
         "UPX": ProtectionSignature(
             name="UPX",
@@ -136,10 +139,10 @@ class YaraScanner:
                 b"\x55\x50\x58\x31",  # "UPX1"
                 b"\x55\x50\x58\x32",  # "UPX2"
             ],
-            entry_point_pattern=b"\x60\xBE\x00\x00\x00\x00\x8D\xBE",
+            entry_point_pattern=b"\x60\xbe\x00\x00\x00\x00\x8d\xbe",
             section_characteristics={"name": "UPX", "flags": 0xE0000080},
-            imports=None
-        )
+            imports=None,
+        ),
     }
 
     def __init__(self, rules_dir: Optional[Path] = None):
@@ -164,7 +167,7 @@ class YaraScanner:
             RuleCategory.CRYPTO: self._create_crypto_rules(),
             RuleCategory.LICENSE: self._create_license_rules(),
             RuleCategory.ANTI_DEBUG: self._create_antidebug_rules(),
-            RuleCategory.COMPILER: self._create_compiler_rules()
+            RuleCategory.COMPILER: self._create_compiler_rules(),
         }
 
         for category, rule_source in builtin_rules.items():
@@ -176,7 +179,7 @@ class YaraScanner:
 
     def _create_packer_rules(self) -> str:
         """Create YARA rules for packer detection."""
-        return '''
+        return """
 rule UPX_Packer {
     meta:
         description = "Detects UPX packed executables"
@@ -221,11 +224,11 @@ rule PECompact_Packer {
         uint16(0) == 0x5A4D and
         (any of ($pec*) or $ep)
 }
-'''
+"""
 
     def _create_protector_rules(self) -> str:
         """Create YARA rules for protector detection."""
-        return '''
+        return """
 rule VMProtect_Protector {
     meta:
         description = "Detects VMProtect protected executables"
@@ -290,11 +293,11 @@ rule ASProtect_Protector {
         uint16(0) == 0x5A4D and
         (2 of ($asp*) or $ep or $sig)
 }
-'''
+"""
 
     def _create_crypto_rules(self) -> str:
         """Create YARA rules for cryptographic algorithm detection."""
-        return '''
+        return """
 rule AES_Constants {
     meta:
         description = "Detects AES encryption constants"
@@ -348,11 +351,11 @@ rule MD5_Constants {
     condition:
         any of them
 }
-'''
+"""
 
     def _create_license_rules(self) -> str:
         """Create YARA rules for license validation detection."""
-        return '''
+        return """
 rule License_Check_Patterns {
     meta:
         description = "Detects license validation routines"
@@ -418,11 +421,11 @@ rule CodeMeter_License {
     condition:
         2 of them
 }
-'''
+"""
 
     def _create_antidebug_rules(self) -> str:
         """Create YARA rules for anti-debugging detection."""
-        return '''
+        return """
 rule AntiDebug_IsDebuggerPresent {
     meta:
         description = "Detects IsDebuggerPresent anti-debug"
@@ -467,11 +470,11 @@ rule AntiDebug_Exception {
     condition:
         ($seh or $veh) and any of ($int*)
 }
-'''
+"""
 
     def _create_compiler_rules(self) -> str:
         """Create YARA rules for compiler detection."""
-        return '''
+        return """
 rule MSVC_Compiler {
     meta:
         description = "Detects Microsoft Visual C++ compiler"
@@ -515,7 +518,7 @@ rule Delphi_Compiler {
         uint16(0) == 0x5A4D and
         (2 of ($delphi*) or $tls)
 }
-'''
+"""
 
     def _load_custom_rules(self):
         """Load custom YARA rules from directory."""
@@ -527,8 +530,7 @@ rule Delphi_Compiler {
             except Exception as e:
                 logger.error(f"Failed to load rule {rule_file}: {e}")
 
-    def scan_file(self, file_path: Path,
-                  categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
+    def scan_file(self, file_path: Path, categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
         """Scan a file with YARA rules.
 
         Args:
@@ -542,9 +544,7 @@ rule Delphi_Compiler {
 
         # Determine which rules to use
         if categories:
-            rules_to_scan = {cat: self.compiled_rules[cat]
-                            for cat in categories
-                            if cat in self.compiled_rules}
+            rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
         else:
             rules_to_scan = self.compiled_rules
 
@@ -561,7 +561,7 @@ rule Delphi_Compiler {
                         matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                         tags=match.tags,
                         meta=match.meta,
-                        confidence=float(match.meta.get("confidence", 50))
+                        confidence=float(match.meta.get("confidence", 50)),
                     )
                     matches.append(yara_match)
 
@@ -581,7 +581,7 @@ rule Delphi_Compiler {
                         matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                         tags=match.tags,
                         meta=match.meta,
-                        confidence=float(match.meta.get("confidence", 50))
+                        confidence=float(match.meta.get("confidence", 50)),
                     )
                     matches.append(yara_match)
 
@@ -590,8 +590,7 @@ rule Delphi_Compiler {
 
         return matches
 
-    def scan_memory(self, pid: int,
-                   categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
+    def scan_memory(self, pid: int, categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
         """Scan process memory with YARA rules.
 
         Args:
@@ -605,9 +604,7 @@ rule Delphi_Compiler {
 
         # Determine which rules to use
         if categories:
-            rules_to_scan = {cat: self.compiled_rules[cat]
-                            for cat in categories
-                            if cat in self.compiled_rules}
+            rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
         else:
             rules_to_scan = self.compiled_rules
 
@@ -624,7 +621,7 @@ rule Delphi_Compiler {
                         matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                         tags=match.tags,
                         meta=match.meta,
-                        confidence=float(match.meta.get("confidence", 50))
+                        confidence=float(match.meta.get("confidence", 50)),
                     )
                     matches.append(yara_match)
 
@@ -642,14 +639,7 @@ rule Delphi_Compiler {
         Returns:
             Dictionary of detected protections
         """
-        protections = {
-            "packers": [],
-            "protectors": [],
-            "crypto": [],
-            "license": [],
-            "anti_debug": [],
-            "compiler": None
-        }
+        protections = {"packers": [], "protectors": [], "crypto": [], "license": [], "anti_debug": [], "compiler": None}
 
         # Scan with protection-related categories
         matches = self.scan_file(
@@ -660,48 +650,25 @@ rule Delphi_Compiler {
                 RuleCategory.CRYPTO,
                 RuleCategory.LICENSE,
                 RuleCategory.ANTI_DEBUG,
-                RuleCategory.COMPILER
-            ]
+                RuleCategory.COMPILER,
+            ],
         )
 
         # Organize matches by category
         for match in matches:
             if match.category == RuleCategory.PACKER:
-                protections["packers"].append({
-                    "name": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset
-                })
+                protections["packers"].append({"name": match.rule_name, "confidence": match.confidence, "offset": match.offset})
             elif match.category == RuleCategory.PROTECTOR:
-                protections["protectors"].append({
-                    "name": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset
-                })
+                protections["protectors"].append({"name": match.rule_name, "confidence": match.confidence, "offset": match.offset})
             elif match.category == RuleCategory.CRYPTO:
-                protections["crypto"].append({
-                    "algorithm": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset
-                })
+                protections["crypto"].append({"algorithm": match.rule_name, "confidence": match.confidence, "offset": match.offset})
             elif match.category == RuleCategory.LICENSE:
-                protections["license"].append({
-                    "type": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset
-                })
+                protections["license"].append({"type": match.rule_name, "confidence": match.confidence, "offset": match.offset})
             elif match.category == RuleCategory.ANTI_DEBUG:
-                protections["anti_debug"].append({
-                    "technique": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset
-                })
+                protections["anti_debug"].append({"technique": match.rule_name, "confidence": match.confidence, "offset": match.offset})
             elif match.category == RuleCategory.COMPILER:
                 if protections["compiler"] is None or match.confidence > protections["compiler"]["confidence"]:
-                    protections["compiler"] = {
-                        "name": match.rule_name,
-                        "confidence": match.confidence
-                    }
+                    protections["compiler"] = {"name": match.rule_name, "confidence": match.confidence}
 
         # Also check with signature-based detection
         sig_detections = self._detect_by_signatures(file_path)
@@ -721,7 +688,7 @@ rule Delphi_Compiler {
         detections = []
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 # Read first 64KB for signature scanning
                 data = f.read(65536)
 
@@ -746,19 +713,14 @@ rule Delphi_Compiler {
                             confidence += 40
 
                     if detected:
-                        detections.append({
-                            "name": name,
-                            "category": signature.category,
-                            "confidence": min(confidence, 95)
-                        })
+                        detections.append({"name": name, "category": signature.category, "confidence": min(confidence, 95)})
 
         except Exception as e:
             logger.error(f"Failed to perform signature-based detection: {e}")
 
         return detections
 
-    def create_custom_rule(self, rule_name: str, rule_content: str,
-                          category: RuleCategory = RuleCategory.CUSTOM) -> bool:
+    def create_custom_rule(self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.CUSTOM) -> bool:
         """Create and compile a custom YARA rule.
 
         Args:
@@ -777,7 +739,7 @@ rule Delphi_Compiler {
             rule_file = self.rules_dir / f"{rule_name}.yar"
             self.rules_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(rule_file, 'w') as f:
+            with open(rule_file, "w") as f:
                 f.write(rule_content)
 
             # Store compiled rule
@@ -790,8 +752,7 @@ rule Delphi_Compiler {
             logger.error(f"Failed to create custom rule: {e}")
             return False
 
-    def export_detections(self, detections: Dict[str, Any],
-                         output_path: Path) -> None:
+    def export_detections(self, detections: Dict[str, Any], output_path: Path) -> None:
         """Export detection results to file.
 
         Args:
@@ -806,11 +767,11 @@ rule Delphi_Compiler {
                 "total_protectors": len(detections.get("protectors", [])),
                 "total_crypto": len(detections.get("crypto", [])),
                 "total_license": len(detections.get("license", [])),
-                "total_anti_debug": len(detections.get("anti_debug", []))
-            }
+                "total_anti_debug": len(detections.get("anti_debug", [])),
+            },
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
         logger.info(f"Exported detections to {output_path}")

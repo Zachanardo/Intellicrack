@@ -17,20 +17,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import r2pipe
-import struct
 import json
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any, Union
+import logging
+import struct
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import r2pipe
 
 logger = logging.getLogger(__name__)
 
 
 class PatchType(Enum):
     """Types of patches that can be applied."""
+
     NOP_SLED = "nop_sled"
     JUMP_MODIFICATION = "jump_modification"
     CALL_REDIRECTION = "call_redirection"
@@ -46,6 +48,7 @@ class PatchType(Enum):
 @dataclass
 class PatchInstruction:
     """Represents a single patch instruction."""
+
     address: int
     original_bytes: bytes
     patch_bytes: bytes
@@ -57,6 +60,7 @@ class PatchInstruction:
 @dataclass
 class PatchSet:
     """Collection of related patches."""
+
     name: str
     patches: List[PatchInstruction]
     target_binary: Path
@@ -90,7 +94,7 @@ class Radare2PatchEngine:
             "jmp_short": b"\xeb",  # Short jump
             "call": b"\xe8",  # Near call
             "jmp_far": b"\xff\x25",  # Far jump (64-bit)
-        }
+        },
     }
 
     # Conditional jump inversions
@@ -184,7 +188,7 @@ class Radare2PatchEngine:
             original_bytes=original_bytes,
             patch_bytes=patch_bytes,
             patch_type=PatchType.NOP_SLED,
-            description=f"NOP sled of {length} bytes at 0x{address:x}"
+            description=f"NOP sled of {length} bytes at 0x{address:x}",
         )
 
     def _get_multibyte_nop(self, length: int) -> bytes:
@@ -275,7 +279,7 @@ class Radare2PatchEngine:
                         patch_bytes=patch_bytes,
                         patch_type=PatchType.JUMP_MODIFICATION,
                         description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
-                        metadata={"target": target, "jump_type": jump_type}
+                        metadata={"target": target, "jump_type": jump_type},
                     )
             else:
                 # B instruction
@@ -302,7 +306,7 @@ class Radare2PatchEngine:
                         patch_bytes=patch_bytes,
                         patch_type=PatchType.JUMP_MODIFICATION,
                         description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
-                        metadata={"target": target, "jump_type": jump_type}
+                        metadata={"target": target, "jump_type": jump_type},
                     )
 
             patch_bytes = struct.pack("<I", instruction)
@@ -359,7 +363,7 @@ class Radare2PatchEngine:
             patch_bytes=patch_bytes,
             patch_type=PatchType.JUMP_MODIFICATION,
             description=f"Redirect {jump_type} at 0x{address:x} to 0x{target:x}",
-            metadata={"target": target, "jump_type": jump_type}
+            metadata={"target": target, "jump_type": jump_type},
         )
 
     def _create_indirect_jump(self, target: int) -> bytes:
@@ -385,8 +389,7 @@ class Radare2PatchEngine:
         """
         return self.modify_jump(address, new_function, "call")
 
-    def patch_return_value(self, function_address: int, return_value: int,
-                          value_size: int = 4) -> List[PatchInstruction]:
+    def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> List[PatchInstruction]:
         """Patch a function to return a specific value.
 
         Args:
@@ -422,21 +425,20 @@ class Radare2PatchEngine:
             # Read original bytes
             original_bytes = self._read_bytes(function_address, len(patch_bytes))
 
-            patches.append(PatchInstruction(
-                address=function_address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.RETURN_VALUE,
-                description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=function_address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.RETURN_VALUE,
+                    description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}",
+                )
+            )
 
             # NOP remaining bytes if function is longer
             function_size = self._get_function_size(function_address)
             if function_size > len(patch_bytes):
-                nop_patch = self.create_nop_sled(
-                    function_address + len(patch_bytes),
-                    function_size - len(patch_bytes)
-                )
+                nop_patch = self.create_nop_sled(function_address + len(patch_bytes), function_size - len(patch_bytes))
                 patches.append(nop_patch)
 
         elif self.architecture == "arm":
@@ -455,13 +457,15 @@ class Radare2PatchEngine:
                 patch_bytes += struct.pack("<I", 0xE12FFF1E)
 
             original_bytes = self._read_bytes(function_address, len(patch_bytes))
-            patches.append(PatchInstruction(
-                address=function_address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.RETURN_VALUE,
-                description=f"Patch ARM function at 0x{function_address:x} to return 0x{return_value:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=function_address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.RETURN_VALUE,
+                    description=f"Patch ARM function at 0x{function_address:x} to return 0x{return_value:x}",
+                )
+            )
 
         elif self.architecture == "arm64":
             # ARM64: MOV X0/W0, value + RET
@@ -497,13 +501,15 @@ class Radare2PatchEngine:
             patch_bytes += struct.pack("<I", 0xD65F03C0)
 
             original_bytes = self._read_bytes(function_address, len(patch_bytes))
-            patches.append(PatchInstruction(
-                address=function_address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.RETURN_VALUE,
-                description=f"Patch ARM64 function at 0x{function_address:x} to return 0x{return_value:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=function_address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.RETURN_VALUE,
+                    description=f"Patch ARM64 function at 0x{function_address:x} to return 0x{return_value:x}",
+                )
+            )
 
         elif self.architecture == "mips":
             # MIPS: LI V0, value + JR RA + NOP
@@ -522,13 +528,15 @@ class Radare2PatchEngine:
                 patch_bytes += struct.pack(">II", 0x03E00008, 0x00000000)
 
             original_bytes = self._read_bytes(function_address, len(patch_bytes))
-            patches.append(PatchInstruction(
-                address=function_address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.RETURN_VALUE,
-                description=f"Patch MIPS function at 0x{function_address:x} to return 0x{return_value:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=function_address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.RETURN_VALUE,
+                    description=f"Patch MIPS function at 0x{function_address:x} to return 0x{return_value:x}",
+                )
+            )
 
         elif self.architecture == "ppc":
             # PowerPC: LI R3, value + BLR
@@ -547,13 +555,15 @@ class Radare2PatchEngine:
                 patch_bytes += struct.pack(">I", 0x4E800020)
 
             original_bytes = self._read_bytes(function_address, len(patch_bytes))
-            patches.append(PatchInstruction(
-                address=function_address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.RETURN_VALUE,
-                description=f"Patch PowerPC function at 0x{function_address:x} to return 0x{return_value:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=function_address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.RETURN_VALUE,
+                    description=f"Patch PowerPC function at 0x{function_address:x} to return 0x{return_value:x}",
+                )
+            )
 
         else:
             # Generic fallback using Radare2 assembler
@@ -578,13 +588,15 @@ class Radare2PatchEngine:
 
             if patch_bytes:
                 original_bytes = self._read_bytes(function_address, len(patch_bytes))
-                patches.append(PatchInstruction(
-                    address=function_address,
-                    original_bytes=original_bytes,
-                    patch_bytes=patch_bytes,
-                    patch_type=PatchType.RETURN_VALUE,
-                    description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}"
-                ))
+                patches.append(
+                    PatchInstruction(
+                        address=function_address,
+                        original_bytes=original_bytes,
+                        patch_bytes=patch_bytes,
+                        patch_type=PatchType.RETURN_VALUE,
+                        description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}",
+                    )
+                )
             else:
                 # Last resort - write return value directly to return register location
                 # This is highly architecture-dependent but provides a fallback
@@ -594,13 +606,15 @@ class Radare2PatchEngine:
                     patch_bytes = struct.pack("<I", return_value) + b"\xc3"  # value + RET
 
                 original_bytes = self._read_bytes(function_address, len(patch_bytes))
-                patches.append(PatchInstruction(
-                    address=function_address,
-                    original_bytes=original_bytes,
-                    patch_bytes=patch_bytes,
-                    patch_type=PatchType.RETURN_VALUE,
-                    description=f"Generic patch at 0x{function_address:x} to return 0x{return_value:x}"
-                ))
+                patches.append(
+                    PatchInstruction(
+                        address=function_address,
+                        original_bytes=original_bytes,
+                        patch_bytes=patch_bytes,
+                        patch_type=PatchType.RETURN_VALUE,
+                        description=f"Generic patch at 0x{function_address:x} to return 0x{return_value:x}",
+                    )
+                )
 
         return patches
 
@@ -637,7 +651,7 @@ class Radare2PatchEngine:
             original_bytes=original_bytes,
             patch_bytes=patch_bytes,
             patch_type=PatchType.CONDITIONAL_INVERSION,
-            description=f"Invert conditional jump at 0x{address:x}"
+            description=f"Invert conditional jump at 0x{address:x}",
         )
 
     def patch_function_prologue(self, address: int, new_prologue: bytes) -> PatchInstruction:
@@ -658,7 +672,7 @@ class Radare2PatchEngine:
             original_bytes=original_bytes,
             patch_bytes=new_prologue,
             patch_type=PatchType.FUNCTION_REPLACEMENT,
-            description=f"Replace function prologue at 0x{address:x}"
+            description=f"Replace function prologue at 0x{address:x}",
         )
 
     def patch_function_epilogue(self, function_address: int, new_epilogue: bytes) -> PatchInstruction:
@@ -683,11 +697,10 @@ class Radare2PatchEngine:
             original_bytes=original_bytes,
             patch_bytes=new_epilogue,
             patch_type=PatchType.FUNCTION_REPLACEMENT,
-            description=f"Replace function epilogue at 0x{epilogue_address:x}"
+            description=f"Replace function epilogue at 0x{epilogue_address:x}",
         )
 
-    def create_jump_table_patch(self, table_address: int,
-                              entries: List[int]) -> List[PatchInstruction]:
+    def create_jump_table_patch(self, table_address: int, entries: List[int]) -> List[PatchInstruction]:
         """Modify a jump table with new entries.
 
         Args:
@@ -709,13 +722,15 @@ class Radare2PatchEngine:
             else:
                 patch_bytes = struct.pack("<I", entry)
 
-            patches.append(PatchInstruction(
-                address=address,
-                original_bytes=original_bytes,
-                patch_bytes=patch_bytes,
-                patch_type=PatchType.VTABLE_MODIFICATION,
-                description=f"Patch jump table entry {i} at 0x{address:x}"
-            ))
+            patches.append(
+                PatchInstruction(
+                    address=address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.VTABLE_MODIFICATION,
+                    description=f"Patch jump table entry {i} at 0x{address:x}",
+                )
+            )
 
         return patches
 
@@ -746,7 +761,7 @@ class Radare2PatchEngine:
             patch_bytes=patch_bytes,
             patch_type=PatchType.INLINE_PATCH,
             description=f"Inline patch at 0x{address:x}: {assembly_code}",
-            metadata={"assembly": assembly_code}
+            metadata={"assembly": assembly_code},
         )
 
     def apply_patch(self, patch: PatchInstruction) -> bool:
@@ -846,7 +861,7 @@ class Radare2PatchEngine:
             patches=patches,
             target_binary=self.binary_path,
             architecture=self.architecture,
-            checksum_original=self._calculate_checksum()
+            checksum_original=self._calculate_checksum(),
         )
 
         self.patch_sets[name] = patch_set
@@ -878,13 +893,13 @@ class Radare2PatchEngine:
                     "patch_bytes": p.patch_bytes.hex(),
                     "patch_type": p.patch_type.value,
                     "description": p.description,
-                    "metadata": p.metadata
+                    "metadata": p.metadata,
                 }
                 for p in patch_set.patches
-            ]
+            ],
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
     def _read_bytes(self, address: int, size: int) -> bytes:

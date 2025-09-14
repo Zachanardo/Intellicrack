@@ -19,20 +19,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import r2pipe
-import struct
 import json
-from typing import Dict, List, Any, Optional, Tuple, Union
-from pathlib import Path
+import logging
+import struct
 from dataclasses import dataclass
 from enum import Enum
-import logging
+from typing import Any, Dict, List, Optional, Union
+
+import r2pipe
 
 logger = logging.getLogger(__name__)
 
 
 class ESILState(Enum):
     """ESIL emulation states."""
+
     READY = "ready"
     RUNNING = "running"
     BREAKPOINT = "breakpoint"
@@ -44,6 +45,7 @@ class ESILState(Enum):
 @dataclass
 class ESILRegister:
     """Register state during ESIL emulation."""
+
     name: str
     value: int
     size: int
@@ -59,6 +61,7 @@ class ESILRegister:
 @dataclass
 class ESILMemoryAccess:
     """Memory access tracking during emulation."""
+
     address: int
     size: int
     value: bytes
@@ -70,6 +73,7 @@ class ESILMemoryAccess:
 @dataclass
 class ESILBreakpoint:
     """ESIL breakpoint configuration."""
+
     address: int
     condition: Optional[str] = None
     hit_count: int = 0
@@ -106,10 +110,10 @@ class RadareESILEmulator:
         try:
             self.r2 = r2pipe.open(self.binary_path, ["-2", "-w"])
             self.r2.cmd("aaa")  # Analyze all
-            self.r2.cmd(f"e io.va=true")  # Enable virtual addressing
-            self.r2.cmd(f"e asm.esil=true")  # Enable ESIL output
-            self.r2.cmd(f"e esil.stack.addr=0x100000")  # Set stack address
-            self.r2.cmd(f"e esil.stack.size=0x10000")  # Set stack size
+            self.r2.cmd("e io.va=true")  # Enable virtual addressing
+            self.r2.cmd("e asm.esil=true")  # Enable ESIL output
+            self.r2.cmd("e esil.stack.addr=0x100000")  # Set stack address
+            self.r2.cmd("e esil.stack.size=0x10000")  # Set stack size
 
             # Get architecture info
             info = json.loads(self.r2.cmd("ij"))
@@ -149,11 +153,7 @@ class RadareESILEmulator:
             size = reg.get("size", 8)
             value = reg.get("value", 0)
 
-            self.registers[name] = ESILRegister(
-                name=name,
-                value=value,
-                size=size
-            )
+            self.registers[name] = ESILRegister(name=name, value=value, size=size)
 
     def _setup_memory_regions(self):
         """Setup memory regions for emulation."""
@@ -179,7 +179,7 @@ class RadareESILEmulator:
                 value=value if isinstance(value, int) else 0,
                 size=self.registers[register].size if register in self.registers else 8,
                 symbolic=True,
-                constraints=[f"{sym_name} = {value}"]
+                constraints=[f"{sym_name} = {value}"],
             )
             self.r2.cmd(f"dr {register}={sym_name}")
         else:
@@ -203,14 +203,9 @@ class RadareESILEmulator:
         self.r2.cmd(f"wx {hex_data} @ {address}")
         self.memory_map[address] = data
 
-    def add_breakpoint(self, address: int, condition: Optional[str] = None,
-                       callback: Optional[callable] = None) -> ESILBreakpoint:
+    def add_breakpoint(self, address: int, condition: Optional[str] = None, callback: Optional[callable] = None) -> ESILBreakpoint:
         """Add conditional breakpoint with optional callback."""
-        bp = ESILBreakpoint(
-            address=address,
-            condition=condition,
-            callback=callback
-        )
+        bp = ESILBreakpoint(address=address, condition=condition, callback=callback)
         self.breakpoints[address] = bp
         self.r2.cmd(f"db {address}")
         return bp
@@ -246,10 +241,7 @@ class RadareESILEmulator:
         changed_regs = {}
         for reg, new_val in new_registers.items():
             if reg in prev_registers and prev_registers[reg] != new_val:
-                changed_regs[reg] = {
-                    "old": prev_registers[reg],
-                    "new": new_val
-                }
+                changed_regs[reg] = {"old": prev_registers[reg], "new": new_val}
                 # Propagate taint
                 if self._is_register_tainted(reg):
                     self.registers[reg].tainted = True
@@ -276,12 +268,14 @@ class RadareESILEmulator:
 
         # Track calls
         if "call" in inst_opcode.lower():
-            self.call_stack.append({
-                "from": inst_addr,
-                "to": new_pc,
-                "instruction": inst_opcode,
-                "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0))
-            })
+            self.call_stack.append(
+                {
+                    "from": inst_addr,
+                    "to": new_pc,
+                    "instruction": inst_opcode,
+                    "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0)),
+                }
+            )
         elif "ret" in inst_opcode.lower() and self.call_stack:
             self.call_stack.pop()
 
@@ -292,7 +286,7 @@ class RadareESILEmulator:
             "changed_registers": changed_regs,
             "memory_accesses": mem_accesses,
             "new_pc": new_pc,
-            "call_depth": len(self.call_stack)
+            "call_depth": len(self.call_stack),
         }
 
     def _get_register_state(self) -> Dict[str, int]:
@@ -309,8 +303,7 @@ class RadareESILEmulator:
         taint_info = self.r2.cmd(f"dtg {register}")
         return "tainted" in taint_info.lower()
 
-    def _get_memory_accesses(self, esil: str, inst_addr: int,
-                            registers: Dict[str, int]) -> List[ESILMemoryAccess]:
+    def _get_memory_accesses(self, esil: str, inst_addr: int, registers: Dict[str, int]) -> List[ESILMemoryAccess]:
         """Extract memory accesses from ESIL expression."""
         accesses = []
 
@@ -328,14 +321,16 @@ class RadareESILEmulator:
                         if addr:
                             # Read memory value
                             mem_val = self.r2.cmd(f"pv @ {addr}")
-                            accesses.append(ESILMemoryAccess(
-                                address=addr,
-                                size=8,  # Default size
-                                value=bytes.fromhex(mem_val.strip()),
-                                operation="read",
-                                instruction_address=inst_addr,
-                                register_state=registers.copy()
-                            ))
+                            accesses.append(
+                                ESILMemoryAccess(
+                                    address=addr,
+                                    size=8,  # Default size
+                                    value=bytes.fromhex(mem_val.strip()),
+                                    operation="read",
+                                    instruction_address=inst_addr,
+                                    register_state=registers.copy(),
+                                )
+                            )
                     except:
                         pass
 
@@ -346,20 +341,22 @@ class RadareESILEmulator:
                 if "=[" in part:
                     if i > 0:
                         # Previous part is the value
-                        value_expr = parts[i-1]
+                        value_expr = parts[i - 1]
                         addr_expr = part.replace("=[", "").replace("]", "")
                         try:
                             addr = self._evaluate_esil_expr(addr_expr, registers)
                             value = self._evaluate_esil_expr(value_expr, registers)
                             if addr and value is not None:
-                                accesses.append(ESILMemoryAccess(
-                                    address=addr,
-                                    size=8,
-                                    value=struct.pack("<Q", value)[:8],
-                                    operation="write",
-                                    instruction_address=inst_addr,
-                                    register_state=registers.copy()
-                                ))
+                                accesses.append(
+                                    ESILMemoryAccess(
+                                        address=addr,
+                                        size=8,
+                                        value=struct.pack("<Q", value)[:8],
+                                        operation="write",
+                                        instruction_address=inst_addr,
+                                        register_state=registers.copy(),
+                                    )
+                                )
                         except:
                             pass
 
@@ -398,15 +395,30 @@ class RadareESILEmulator:
         try:
             # Safe evaluation
             import ast
-            node = ast.parse(condition, mode='eval')
+
+            node = ast.parse(condition, mode="eval")
             for subnode in ast.walk(node):
-                if not isinstance(subnode, (ast.Expression, ast.Compare, ast.BinOp,
-                                           ast.UnaryOp, ast.Name, ast.Constant,
-                                           ast.Load, ast.Eq, ast.NotEq, ast.Lt,
-                                           ast.LtE, ast.Gt, ast.GtE)):
+                if not isinstance(
+                    subnode,
+                    (
+                        ast.Expression,
+                        ast.Compare,
+                        ast.BinOp,
+                        ast.UnaryOp,
+                        ast.Name,
+                        ast.Constant,
+                        ast.Load,
+                        ast.Eq,
+                        ast.NotEq,
+                        ast.Lt,
+                        ast.LtE,
+                        ast.Gt,
+                        ast.GtE,
+                    ),
+                ):
                     return False
 
-            compiled = compile(node, '<string>', 'eval')
+            compiled = compile(node, "<string>", "eval")
             return eval(compiled, {"__builtins__": {}}, {})
         except:
             return False
@@ -473,12 +485,14 @@ class RadareESILEmulator:
 
         for entry in self.call_stack:
             if entry["to"] in import_addrs:
-                api_calls.append({
-                    "address": entry["from"],
-                    "api": import_addrs[entry["to"]],
-                    "stack_ptr": entry["stack_ptr"],
-                    "arguments": self._extract_call_arguments(entry["from"])
-                })
+                api_calls.append(
+                    {
+                        "address": entry["from"],
+                        "api": import_addrs[entry["to"]],
+                        "stack_ptr": entry["stack_ptr"],
+                        "arguments": self._extract_call_arguments(entry["from"]),
+                    }
+                )
 
         return api_calls
 
@@ -499,7 +513,7 @@ class RadareESILEmulator:
                 esp = registers.get("esp", 0)
                 for i in range(6):
                     try:
-                        arg_data = self.r2.cmd(f"pv @ {esp + 4 + i*4}")
+                        arg_data = self.r2.cmd(f"pv @ {esp + 4 + i * 4}")
                         args.append(int(arg_data.strip()))
                     except:
                         break
@@ -527,9 +541,9 @@ class RadareESILEmulator:
         # Common license check patterns
         patterns = [
             "cmp.*0x.*",  # Comparisons with constants
-            "test.*",      # Test instructions
-            "je.*fail",    # Jump to failure
-            "jne.*success" # Jump to success
+            "test.*",  # Test instructions
+            "je.*fail",  # Jump to failure
+            "jne.*success",  # Jump to success
         ]
 
         # Search for patterns
@@ -546,13 +560,15 @@ class RadareESILEmulator:
                     for block in blocks:
                         if block.get("offset", 0) == addr:
                             if len(block.get("jump", [])) > 1:
-                                license_patterns.append({
-                                    "address": addr,
-                                    "type": "conditional_branch",
-                                    "pattern": pattern,
-                                    "true_path": block["jump"][0],
-                                    "false_path": block["jump"][1] if len(block["jump"]) > 1 else None
-                                })
+                                license_patterns.append(
+                                    {
+                                        "address": addr,
+                                        "type": "conditional_branch",
+                                        "pattern": pattern,
+                                        "true_path": block["jump"][0],
+                                        "false_path": block["jump"][1] if len(block["jump"]) > 1 else None,
+                                    }
+                                )
 
         return license_patterns
 
@@ -594,33 +610,21 @@ class RadareESILEmulator:
             "entry_point": self.entry_point,
             "instruction_count": self.instruction_count,
             "breakpoints_hit": [
-                {
-                    "address": addr,
-                    "hits": bp.hit_count,
-                    "condition": bp.condition
-                }
+                {"address": addr, "hits": bp.hit_count, "condition": bp.condition}
                 for addr, bp in self.breakpoints.items()
                 if bp.hit_count > 0
             ],
             "api_calls": self.extract_api_calls(),
             "memory_accesses": [
-                {
-                    "address": acc.address,
-                    "size": acc.size,
-                    "operation": acc.operation,
-                    "instruction": acc.instruction_address
-                }
+                {"address": acc.address, "size": acc.size, "operation": acc.operation, "instruction": acc.instruction_address}
                 for acc in self.memory_accesses
             ],
-            "tainted_registers": [
-                reg for reg, state in self.registers.items()
-                if state.tainted
-            ],
+            "tainted_registers": [reg for reg, state in self.registers.items() if state.tainted],
             "path_constraints": self.path_constraints,
-            "call_stack_max_depth": max(len(self.call_stack), 1)
+            "call_stack_max_depth": max(len(self.call_stack), 1),
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(trace_data, f, indent=2)
 
     def cleanup(self):
