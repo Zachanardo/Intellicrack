@@ -130,8 +130,8 @@ class R2BinaryDiff:
         if self.r2_secondary:
             try:
                 self.r2_secondary.quit()
-            except:
-                pass
+            except Exception as e:
+                self.logger.warning(f"Failed to close previous r2 session: {e}")
 
         if self.r2pipe_available:
             try:
@@ -620,7 +620,8 @@ class R2BinaryDiff:
             xrefs = r2_session.cmd("axtj")
             xrefs = json.loads(xrefs) if xrefs else []
             return [x.get("from", 0) for x in xrefs]
-        except:
+        except Exception as e:
+            self.logger.warning(f"Failed to get xrefs for address {hex(address)}: {e}")
             return []
 
     def _get_file_hash(self, r2_session) -> str:
@@ -629,8 +630,8 @@ class R2BinaryDiff:
             if r2_session:
                 result = r2_session.cmd("!rahash2 -a md5 -q $F")
                 return result.strip() if result else ""
-        except:
-            pass
+        except Exception as e:
+            self.logger.warning(f"Failed to compute file hash: {e}")
         return ""
 
     def _get_file_size(self, r2_session) -> int:
@@ -639,8 +640,8 @@ class R2BinaryDiff:
             if r2_session:
                 result = r2_session.cmd("i~size[1]")
                 return int(result.strip()) if result and result.strip().isdigit() else 0
-        except:
-            pass
+        except Exception as e:
+            self.logger.warning(f"Failed to get file size: {e}")
         return 0
 
     def cleanup(self):
