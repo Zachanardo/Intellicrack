@@ -250,9 +250,11 @@ class EnhancedR2Integration:
         cached_result = self._get_cached_result(cache_key)
         if cached_result:
             self.performance_stats["cache_hits"] += 1
+            self.performance_monitor.record_cache_hit()
             return cached_result
 
         self.performance_stats["cache_misses"] += 1
+        self.performance_monitor.record_cache_miss()
 
         # Check if component is available
         if analysis_type not in self.components or self.components[analysis_type] is None:
@@ -265,6 +267,9 @@ class EnhancedR2Integration:
             return {"degraded": True, "reason": "Circuit breaker open"}
 
         start_time = time.time()
+
+        # Start performance tracking
+        operation_metrics = self.performance_monitor.start_operation(f"analysis_{analysis_type}")
 
         try:
             with r2_error_context(f"r2_{analysis_type}", binary_path=self.binary_path):
@@ -296,6 +301,10 @@ class EnhancedR2Integration:
                 duration = time.time() - start_time
                 self._record_analysis_time(analysis_type, duration)
 
+                # End performance tracking with success
+                bytes_processed = len(str(result)) if result else 0
+                self.performance_monitor.end_operation(operation_metrics, success=True, bytes_processed=bytes_processed)
+
                 # Cache result
                 self._cache_result(cache_key, result)
 
@@ -304,6 +313,9 @@ class EnhancedR2Integration:
         except Exception as e:
             duration = time.time() - start_time
             self._record_analysis_time(analysis_type, duration, success=False)
+
+            # End performance tracking with failure
+            self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
 
             self.logger.error(f"Analysis {analysis_type} failed: {e}")
             self.performance_stats["errors_handled"] += 1
@@ -606,11 +618,45 @@ class EnhancedR2Integration:
             self.logger.error(f"Failed to get basic block diffs: {e}")
             return []
 
+    def get_performance_metrics(self) -> dict[str, Any]:
+        """Get comprehensive performance metrics.
+
+        Returns:
+            Dictionary containing performance metrics and statistics
+        """
+        # Get metrics from the performance monitor
+        current_metrics = self.performance_monitor.get_current_metrics()
+        operation_stats = self.performance_monitor.get_operation_statistics()
+        full_report = self.performance_monitor.get_performance_report()
+
+        return {
+            "current_session": current_metrics,
+            "operation_statistics": operation_stats,
+            "performance_stats": self.performance_stats,
+            "full_report": full_report
+        }
+
+    def export_performance_metrics(self, filepath: str):
+        """Export performance metrics to a file.
+
+        Args:
+            filepath: Path to export file
+        """
+        self.performance_monitor.export_metrics(filepath)
+        self.logger.info(f"Exported performance metrics to {filepath}")
+
     def cleanup(self):
         """Cleanup resources."""
         try:
             self.stop_real_time_monitoring()
             self.clear_cache()
+
+            # End performance monitoring session
+            final_metrics = self.performance_monitor.end_session()
+            if final_metrics:
+                self.logger.info(f"Performance session ended: {final_metrics.session_id}")
+                self.logger.info(f"Total operations: {final_metrics.total_operations}, "
+                               f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}")
 
             # Cleanup components
             for component in self.components.values():
