@@ -93,9 +93,9 @@ dependencies = [
     
     # ML Frameworks
     "tensorflow_cpu>=2.15.0,<2.20.0",
-    "torch==2.7.1+xpu",
-    "torchvision==0.22.1+xpu",
-    "torchaudio==2.7.1+xpu",
+    "torch==2.7.1",
+    "torchvision==0.22.1",
+    "torchaudio==2.7.1",
     # Intel extension installed separately due to uv platform issues
     "onnx==1.18.0",
     "onnxruntime==1.22.0",
