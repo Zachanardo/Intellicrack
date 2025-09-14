@@ -429,8 +429,6 @@ yarn.lock
 
 # Python package files
 Pipfile
-requirements-dev.txt
-setup.cfg
 
 # UV package manager
 uv.lock
