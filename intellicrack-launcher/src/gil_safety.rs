@@ -11,8 +11,8 @@ Licensed under GNU General Public License v3.0
 
 use anyhow::Result;
 use pyo3::prelude::*;
-use pyo3::types::IntoPyDict;
 use std::env;
+use std::ffi::CStr;
 use tracing::{debug, info};
 
 pub struct GilSafetyManager;
@@ -54,7 +54,7 @@ impl GilSafetyManager {
 
     /// Initialize torch GIL safety module if available (replicates Python import)
     fn initialize_torch_gil_safety() -> Result<()> {
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             match py.import("intellicrack.utils.torch_gil_safety") {
                 Ok(gil_module) => {
                     debug!("Found torch_gil_safety module, initializing...");
@@ -96,7 +96,7 @@ impl GilSafetyManager {
 
     /// Configure Python threading settings
     fn configure_python_threading() -> Result<()> {
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             debug!("Configuring Python threading settings");
 
             // Set thread check interval if available (replicates launch_intellicrack.py)
@@ -123,13 +123,13 @@ impl GilSafetyManager {
     fn validate_gil_configuration() -> Result<()> {
         debug!("Validating GIL configuration");
 
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             // Test GIL state
             let gil_state = py.check_signals();
             debug!("GIL signals check result: {:?}", gil_state);
 
             // Test thread safety by creating and destroying a simple object
-            let test_list = py.eval("[]", None, None)?;
+            let test_list = py.eval(CStr::from_bytes_with_nul(b"[]\0").unwrap(), None, None)?;
             test_list.call_method1("append", (42,))?;
             let length: usize = test_list.call_method0("__len__")?.extract()?;
 
@@ -144,35 +144,34 @@ impl GilSafetyManager {
 
     /// Configure warning suppression (replicates warnings.filterwarnings from Python)
     pub fn configure_warning_suppression() -> Result<()> {
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             debug!("Configuring warning suppression");
 
             let warnings = py.import("warnings")?;
 
             // Suppress pkg_resources deprecation warning from capstone
+            let builtins = py.import("builtins")?;
+            let user_warning = builtins.getattr("UserWarning")?;
+            let pkg_resources_eval = py.eval(CStr::from_bytes_with_nul(b"'pkg_resources'\0").unwrap(), None, None)?;
+
+            let dict = pyo3::types::PyDict::new(py);
+            dict.set_item("category", user_warning)?;
+            dict.set_item("module", pkg_resources_eval)?;
+
             warnings.call_method(
                 "filterwarnings",
                 ("ignore",),
-                Some(
-                    [
-                        ("category", py.import("builtins")?.getattr("UserWarning")?),
-                        ("module", py.eval("'pkg_resources'", None, None)?),
-                    ]
-                    .into_py_dict(py),
-                ),
+                Some(&dict),
             )?;
 
             // Suppress pkg_resources deprecated message
+            let message_eval = py.eval(CStr::from_bytes_with_nul(b"'.*pkg_resources is deprecated.*'\0").unwrap(), None, None)?;
+            let message_dict = pyo3::types::PyDict::new(py);
+            message_dict.set_item("message", message_eval)?;
             warnings.call_method(
                 "filterwarnings",
                 ("ignore",),
-                Some(
-                    [(
-                        "message",
-                        py.eval("'.*pkg_resources is deprecated.*'", None, None)?,
-                    )]
-                    .into_py_dict(py),
-                ),
+                Some(&message_dict),
             )?;
 
             info!("Warning suppression configured");
@@ -182,7 +181,7 @@ impl GilSafetyManager {
 
     /// Get current GIL safety status
     pub fn get_gil_safety_status() -> Result<GilSafetyStatus> {
-        Python::with_gil(|py| -> Result<GilSafetyStatus> {
+        Python::attach(|py| -> Result<GilSafetyStatus> {
             let pybind11_disabled = env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF")
                 .map(|v| v == "1")
                 .unwrap_or(false);
@@ -220,7 +219,6 @@ impl GilSafetyStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::panic;
     use std::sync::Once;
 
     static INIT: Once = Once::new();

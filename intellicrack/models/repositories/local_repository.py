@@ -23,14 +23,11 @@ import os
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
-"""
-Local File Repository Implementation
+"""Local File Repository Implementation
 
 This module provides an implementation of the model repository interface for
 locally stored model files. It adapts the existing file-based model system
-to the repository interface.
-"""
-
+to the repository interface."""
 # Set up logging
 logger = logging.getLogger(__name__)
 

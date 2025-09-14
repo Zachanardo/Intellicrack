@@ -920,6 +920,7 @@ class ProtectionDetector:
 
         Returns:
             Comprehensive protection detection results
+
         """
         if not binary_path or not os.path.exists(binary_path):
             return {"error": "Invalid binary path or file does not exist"}
@@ -1097,6 +1098,7 @@ class ProtectionDetector:
 
         Returns:
             Specific protection detection results
+
         """
         protection_methods = {
             "virtualization": detect_virtualization_protection,

@@ -30,6 +30,7 @@ def setup_cli_logging(verbose: bool = False) -> None:
 
     Args:
         verbose: Enable verbose logging output
+
     """
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="[%(levelname)s] %(name)s: %(message)s", stream=sys.stdout)
@@ -47,6 +48,7 @@ def validate_binary_path(path: str) -> Path:
     Raises:
         FileNotFoundError: If binary file doesn't exist
         PermissionError: If file is not readable
+
     """
     binary_path = Path(path).resolve()
 
@@ -71,6 +73,7 @@ def run_basic_analysis(binary_path: Path, options: Dict[str, Any]) -> Dict[str, 
 
     Returns:
         Dictionary containing analysis results
+
     """
     try:
         # Import analysis components
@@ -129,6 +132,7 @@ def format_analysis_output(results: Dict[str, Any], output_format: str) -> str:
 
     Returns:
         Formatted output string
+
     """
     if output_format.lower() == "json":
         import json
@@ -186,6 +190,7 @@ def create_cli_parser() -> argparse.ArgumentParser:
 
     Returns:
         Configured ArgumentParser instance
+
     """
     parser = argparse.ArgumentParser(
         description="Intellicrack Binary Analysis CLI Tool",
@@ -226,6 +231,7 @@ def main() -> int:
 
     Returns:
         Exit code (0 for success, 1 for error)
+
     """
     try:
         parser = create_cli_parser()

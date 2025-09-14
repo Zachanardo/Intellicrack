@@ -1609,6 +1609,7 @@ class StaticAnalysisAgent(BaseAgent):
         """Analyze Python code using AST."""
         try:
             import ast
+
             tree = ast.parse(code)
 
             functions = []
@@ -1631,7 +1632,7 @@ class StaticAnalysisAgent(BaseAgent):
                 "class_names": classes,
                 "potential_vulnerabilities": vulnerabilities,
                 "code_quality_score": quality_score,
-                "confidence": 0.9
+                "confidence": 0.9,
             }
 
         except SyntaxError as e:
@@ -1643,6 +1644,7 @@ class StaticAnalysisAgent(BaseAgent):
     def _check_python_vulnerabilities(self, node) -> list[dict[str, Any]]:
         """Check for vulnerabilities in Python AST node."""
         import ast
+
         vulnerabilities = []
 
         for child in ast.walk(node):
@@ -1650,27 +1652,23 @@ class StaticAnalysisAgent(BaseAgent):
                 if hasattr(child.func, "id"):
                     func_name = child.func.id
                     if func_name in ["eval", "exec", "compile", "__import__"]:
-                        vulnerabilities.append({
-                            "type": "dangerous_function",
-                            "function": func_name,
-                            "line": child.lineno,
-                            "severity": "high"
-                        })
+                        vulnerabilities.append(
+                            {"type": "dangerous_function", "function": func_name, "line": child.lineno, "severity": "high"}
+                        )
                     elif func_name in ["input", "raw_input"]:
-                        vulnerabilities.append({
-                            "type": "unvalidated_input",
-                            "function": func_name,
-                            "line": child.lineno,
-                            "severity": "medium"
-                        })
+                        vulnerabilities.append(
+                            {"type": "unvalidated_input", "function": func_name, "line": child.lineno, "severity": "medium"}
+                        )
                 elif hasattr(child.func, "attr"):
                     if child.func.attr in ["system", "popen", "subprocess"]:
-                        vulnerabilities.append({
-                            "type": "command_injection",
-                            "function": child.func.attr,
-                            "line": child.lineno,
-                            "severity": "high",
-                        })
+                        vulnerabilities.append(
+                            {
+                                "type": "command_injection",
+                                "function": child.func.attr,
+                                "line": child.lineno,
+                                "severity": "high",
+                            }
+                        )
 
         return vulnerabilities
 
@@ -1714,12 +1712,7 @@ class StaticAnalysisAgent(BaseAgent):
         for line_num, line in enumerate(lines, 1):
             for func, (vuln_type, severity) in dangerous_functions.items():
                 if func + "(" in line:
-                    vulnerabilities.append({
-                        "type": vuln_type,
-                        "function": func,
-                        "line": line_num,
-                        "severity": severity
-                    })
+                    vulnerabilities.append({"type": vuln_type, "function": func, "line": line_num, "severity": severity})
 
         function_count = len([line for line in lines if re.search(r"\w+\s+\w+\s*\([^)]*\)\s*{", line)])
         class_count = len([line for line in lines if re.search(r"(class|struct)\s+\w+", line)])
@@ -1733,7 +1726,7 @@ class StaticAnalysisAgent(BaseAgent):
             "classes_detected": class_count,
             "potential_vulnerabilities": vulnerabilities,
             "code_quality_score": max(0.1, quality_score),
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
     def _analyze_javascript_code(self, code: str) -> dict[str, Any]:
@@ -1753,12 +1746,7 @@ class StaticAnalysisAgent(BaseAgent):
         for line_num, line in enumerate(lines, 1):
             for pattern, vuln_type, severity in dangerous_patterns:
                 if re.search(pattern, line):
-                    vulnerabilities.append({
-                        "type": vuln_type,
-                        "pattern": pattern,
-                        "line": line_num,
-                        "severity": severity
-                    })
+                    vulnerabilities.append({"type": vuln_type, "pattern": pattern, "line": line_num, "severity": severity})
 
         function_count = len([line for line in lines if re.search(r"function\s+\w+|const\s+\w+\s*=.*=>|\w+\s*:\s*function", line)])
         class_count = len([line for line in lines if re.search(r"class\s+\w+", line)])
@@ -1772,7 +1760,7 @@ class StaticAnalysisAgent(BaseAgent):
             "classes_detected": class_count,
             "potential_vulnerabilities": vulnerabilities,
             "code_quality_score": max(0.1, quality_score),
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
     def _analyze_generic_code(self, code: str) -> dict[str, Any]:
@@ -1782,7 +1770,7 @@ class StaticAnalysisAgent(BaseAgent):
             "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),
             "classes_detected": len([line for line in lines if "class " in line]),
             "code_quality_score": 0.5,
-            "confidence": 0.6
+            "confidence": 0.6,
         }
 
     async def _analyze_code(self, input_data: dict[str, Any]) -> dict[str, Any]:
@@ -2706,19 +2694,11 @@ class ReverseEngineeringAgent(BaseAgent):
 
     def _process_capstone_instruction(self, insn, function_boundaries: list, cross_references: list) -> dict[str, Any]:
         """Process a single capstone instruction and update boundaries/references."""
-        instruction_info = {
-            "address": hex(insn.address),
-            "instruction": f"{insn.mnemonic} {insn.op_str}",
-            "bytes": insn.bytes.hex()
-        }
+        instruction_info = {"address": hex(insn.address), "instruction": f"{insn.mnemonic} {insn.op_str}", "bytes": insn.bytes.hex()}
 
         # Detect function boundaries (prologue detection)
         if insn.mnemonic == "push" and "bp" in insn.op_str:
-            function_boundaries.append({
-                "start": hex(insn.address),
-                "end": None,
-                "name": f"sub_{insn.address:x}"
-            })
+            function_boundaries.append({"start": hex(insn.address), "end": None, "name": f"sub_{insn.address:x}"})
         elif insn.mnemonic == "ret":
             if function_boundaries and function_boundaries[-1]["end"] is None:
                 function_boundaries[-1]["end"] = hex(insn.address + len(insn.bytes))
@@ -2728,18 +2708,10 @@ class ReverseEngineeringAgent(BaseAgent):
             try:
                 target = insn.op_str.strip()
                 if target.startswith("0x"):
-                    cross_references.append({
-                        "from": hex(insn.address),
-                        "to": target,
-                        "type": insn.mnemonic
-                    })
+                    cross_references.append({"from": hex(insn.address), "to": target, "type": insn.mnemonic})
             except (ValueError, AttributeError, KeyError) as e:
                 self.logger.debug(f"Failed to parse instruction at {hex(insn.address)}: {e}")
-                cross_references.append({
-                    "from": hex(insn.address),
-                    "to": "unknown",
-                    "type": "invalid_instruction"
-                })
+                cross_references.append({"from": hex(insn.address), "to": "unknown", "type": "invalid_instruction"})
 
         return instruction_info
 
@@ -2779,12 +2751,12 @@ class ReverseEngineeringAgent(BaseAgent):
                     return f"arith [modrm: {modrm:02x}], {imm}", 3
         elif opcode == 0xE8:  # call rel32
             if offset + 4 < len(binary_data):
-                rel = int.from_bytes(binary_data[offset + 1:offset + 5], "little", signed=True)
+                rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
                 target = addr + 5 + rel
                 return f"call {hex(target)}", 5
         elif opcode == 0xE9:  # jmp rel32
             if offset + 4 < len(binary_data):
-                rel = int.from_bytes(binary_data[offset + 1:offset + 5], "little", signed=True)
+                rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
                 target = addr + 5 + rel
                 return f"jmp {hex(target)}", 5
         elif opcode == 0xC3:  # ret
@@ -2828,41 +2800,31 @@ class ReverseEngineeringAgent(BaseAgent):
             instruction, size = self._decode_x86_instruction(binary_data, offset, start_address)
 
             if instruction:
-                assembly_instructions.append({
-                    "address": hex(addr),
-                    "instruction": instruction,
-                    "bytes": binary_data[offset:offset + size].hex()
-                })
+                assembly_instructions.append(
+                    {"address": hex(addr), "instruction": instruction, "bytes": binary_data[offset : offset + size].hex()}
+                )
 
                 # Detect function start
                 if binary_data[offset] == 0x55:  # push ebp
-                    function_boundaries.append({
-                        "start": hex(addr),
-                        "end": None,
-                        "name": f"sub_{addr:x}"
-                    })
+                    function_boundaries.append({"start": hex(addr), "end": None, "name": f"sub_{addr:x}"})
 
                 # Track cross-references for manual disassembly
                 if binary_data[offset] in [0xE8, 0xE9]:  # call/jmp rel32
                     if offset + 4 < len(binary_data):
-                        rel = int.from_bytes(binary_data[offset + 1:offset + 5], "little", signed=True)
+                        rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
                         target = addr + 5 + rel
-                        cross_references.append({
-                            "from": hex(addr),
-                            "to": hex(target),
-                            "type": "call" if binary_data[offset] == 0xE8 else "jmp"
-                        })
+                        cross_references.append(
+                            {"from": hex(addr), "to": hex(target), "type": "call" if binary_data[offset] == 0xE8 else "jmp"}
+                        )
                 elif binary_data[offset] in [0x74, 0x75]:  # je/jne rel8
                     if offset + 1 < len(binary_data):
                         rel = binary_data[offset + 1]
                         if rel > 127:
                             rel = rel - 256
                         target = addr + 2 + rel
-                        cross_references.append({
-                            "from": hex(addr),
-                            "to": hex(target),
-                            "type": "je" if binary_data[offset] == 0x74 else "jne"
-                        })
+                        cross_references.append(
+                            {"from": hex(addr), "to": hex(target), "type": "je" if binary_data[offset] == 0x74 else "jne"}
+                        )
 
                 # Mark function end
                 if binary_data[offset] == 0xC3:  # ret
@@ -2878,13 +2840,9 @@ class ReverseEngineeringAgent(BaseAgent):
         assembly_instructions = []
         for i in range(0, min(len(binary_data), 100), 16):
             addr = start_address + i
-            chunk = binary_data[i:i + 16]
+            chunk = binary_data[i : i + 16]
             hex_str = chunk.hex()
-            assembly_instructions.append({
-                "address": hex(addr),
-                "instruction": f"db {hex_str}",
-                "bytes": hex_str
-            })
+            assembly_instructions.append({"address": hex(addr), "instruction": f"db {hex_str}", "bytes": hex_str})
         return assembly_instructions
 
     def _identify_function_patterns(self, assembly_instructions: list) -> list:
@@ -2894,11 +2852,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         for insn in assembly_instructions:
             if "push" in insn["instruction"] and "bp" in insn["instruction"]:
-                current_func = {
-                    "start": insn["address"],
-                    "end": None,
-                    "name": f"sub_{insn['address'][2:]}"
-                }
+                current_func = {"start": insn["address"], "end": None, "name": f"sub_{insn['address'][2:]}"}
             elif current_func and "ret" in insn["instruction"]:
                 current_func["end"] = insn["address"]
                 function_boundaries.append(current_func)
@@ -2930,9 +2884,7 @@ class ReverseEngineeringAgent(BaseAgent):
         except ImportError:
             # Fallback to manual x86 disassembly
             try:
-                assembly_instructions, function_boundaries, cross_references = self._manual_x86_disassembly(
-                    binary_data, start_address
-                )
+                assembly_instructions, function_boundaries, cross_references = self._manual_x86_disassembly(binary_data, start_address)
             except Exception as e:
                 logger.warning(f"Manual disassembly failed: {e}")
                 assembly_instructions = self._create_fallback_disassembly(binary_data, start_address)
@@ -2983,21 +2935,13 @@ class ReverseEngineeringAgent(BaseAgent):
                 if len(parts) >= 2:
                     ret_type = parts[0]
                     params = parts[1:] if len(parts) > 1 else []
-                    function_signatures.append({
-                        "name": func_name,
-                        "parameters": params,
-                        "return_type": ret_type
-                    })
+                    function_signatures.append({"name": func_name, "parameters": params, "return_type": ret_type})
 
             # Get local variables
             vars_json = r2.cmdj(f"afvj @ {func_addr}")
             if vars_json:
                 for var in vars_json:
-                    variable_analysis.append({
-                        "name": var.get("name", "unknown"),
-                        "type": var.get("type", "unknown"),
-                        "scope": "local"
-                    })
+                    variable_analysis.append({"name": var.get("name", "unknown"), "type": var.get("type", "unknown"), "scope": "local"})
 
         r2.quit()
         return pseudo_code, function_signatures, variable_analysis
@@ -3091,11 +3035,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 pseudo_code += "    }\n"
 
             pseudo_code += "}\n"
-            function_signatures.append({
-                "name": func_name,
-                "parameters": ["void*"],
-                "return_type": "int"
-            })
+            function_signatures.append({"name": func_name, "parameters": ["void*"], "return_type": "int"})
 
         return pseudo_code, function_signatures
 
@@ -3103,8 +3043,7 @@ class ReverseEngineeringAgent(BaseAgent):
         """Generate pseudo code based on common patterns in assembly."""
         has_license_check = any("license" in str(insn).lower() for insn in assembly_code)
         has_string_ops = any("str" in insn.get("instruction", "").lower() for insn in assembly_code)
-        has_crypto = any(op in str(insn).lower() for insn in assembly_code
-                        for op in ["aes", "des", "rsa", "sha", "md5"])
+        has_crypto = any(op in str(insn).lower() for insn in assembly_code for op in ["aes", "des", "rsa", "sha", "md5"])
 
         if has_license_check or has_string_ops:
             pseudo_code = """
@@ -3151,11 +3090,9 @@ void decrypt_data(unsigned char* data, int len, unsigned char* key) {
         data[i] ^= key[i % 32];
     }
 }"""
-            function_signatures = [{
-                "name": "decrypt_data",
-                "parameters": ["unsigned char*", "int", "unsigned char*"],
-                "return_type": "void"
-            }]
+            function_signatures = [
+                {"name": "decrypt_data", "parameters": ["unsigned char*", "int", "unsigned char*"], "return_type": "void"}
+            ]
         else:
             pseudo_code = """
 int process_data(void* input, int size) {

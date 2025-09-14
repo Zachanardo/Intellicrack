@@ -140,6 +140,7 @@ class ToolDiscovery:
     def _check_ghidra(self):
         """Check if Ghidra utilities are available."""
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         ghidra_path = root / "utils" / "tools" / "ghidra_utils.py"
         return ghidra_path.exists()
@@ -147,6 +148,7 @@ class ToolDiscovery:
     def _check_radare2(self):
         """Check if Radare2 utilities are available."""
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         r2_path = root / "utils" / "tools" / "radare2_utils.py"
         return r2_path.exists()
@@ -154,6 +156,7 @@ class ToolDiscovery:
     def _check_qiling(self):
         """Check if Qiling is available."""
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         qiling_path = root / "core" / "processing" / "qiling_emulator.py"
         return qiling_path.exists()
@@ -191,6 +194,7 @@ class ToolDiscovery:
     def _check_qemu(self):
         """Check if QEMU emulator is available."""
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         qemu_path = root / "core" / "processing" / "qemu_emulator.py"
         return qemu_path.exists()
@@ -826,6 +830,7 @@ class ScriptStorageManager:
     def __init__(self):
         """Initialize script storage manager with default directory structure."""
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         self.base_path = root / "scripts"
         self._ensure_directories()
@@ -1448,6 +1453,7 @@ class AIScriptGenerator:
 
         Returns:
             Dict with 'script' and 'metadata' keys for test compatibility
+
         """
         try:
             script_type = request.get("type", "auto")

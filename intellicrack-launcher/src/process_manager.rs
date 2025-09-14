@@ -188,14 +188,14 @@ impl ProcessManager {
         // We no longer need to spawn a separate Python process
         // The Python integration module will handle running the main module directly
         // This eliminates the circular dependency and runs the application in-process
-        
+
         // Note: This method is now primarily for backward compatibility
         // The actual execution happens via the Python integration module
         // which is called from the main launcher
-        
+
         warn!("ProcessManager::launch_intellicrack_application is deprecated");
         warn!("Application should be launched via PythonIntegration::run_intellicrack_main");
-        
+
         // Return success since the actual launch happens elsewhere
         Ok(0)
     }
@@ -235,7 +235,7 @@ impl ProcessManager {
             id
         };
 
-        info!("Starting process {} on {:?}: {} {:?}", 
+        info!("Starting process {} on {:?}: {} {:?}",
              process_id, self.platform.os_type, command, args);
 
         // Set up command
@@ -245,7 +245,7 @@ impl ProcessManager {
         if let Some(ref wd) = working_dir {
             cmd.current_dir(wd.as_ref());
         }
-        
+
         // Apply platform-specific command configuration
         match self.platform.os_type {
             crate::platform::OsType::Windows => {
@@ -318,7 +318,7 @@ impl ProcessManager {
             let mut processes = self.processes.lock().unwrap();
             processes.insert(process_id, managed_process);
         }
-        
+
         // Assign worker and update status
         let worker_id = (process_id as usize) % self.config.worker_pool_size;
         self.update_worker_status(worker_id, WorkerStatus::Busy, Some(process_id));
@@ -429,7 +429,7 @@ impl ProcessManager {
         let handle = thread::spawn(move || {
             let start_time = Instant::now();
             let worker_id = (process_id as usize) % worker_pool_size;
-            
+
             // Helper function to update worker status
             let update_worker_status = |status: WorkerStatus, current_task: Option<u32>| {
                 if let Ok(mut workers) = workers_arc.lock() {
@@ -437,7 +437,7 @@ impl ProcessManager {
                         worker.status = status;
                         worker.current_task = current_task;
                         worker.last_activity = Instant::now();
-                        
+
                         if current_task.is_none() && worker.current_task.is_some() {
                             worker.processes_completed += 1;
                         }
@@ -730,7 +730,7 @@ impl ProcessManager {
         let workers = self.worker_pool.lock().unwrap();
         workers.clone()
     }
-    
+
     /// Update worker status based on process activity
     fn update_worker_status(&self, worker_id: usize, new_status: WorkerStatus, current_task: Option<u32>) {
         let mut workers = self.worker_pool.lock().unwrap();
@@ -738,7 +738,7 @@ impl ProcessManager {
             worker.status = new_status;
             worker.current_task = current_task;
             worker.last_activity = Instant::now();
-            
+
             if current_task.is_none() && worker.current_task.is_some() {
                 worker.processes_completed += 1;
             }
@@ -756,11 +756,11 @@ impl ProcessManager {
         }
 
         // Use Python integration to execute subprocess
-        Python::with_gil(|py| -> Result<u32> {
+        Python::attach(|py| -> Result<u32> {
             match py.import("intellicrack.utils.runtime.runner_functions") {
                 Ok(runner_module) => {
                     debug!("Python runner module imported for subprocess execution");
-                    
+
                     // Validate the runner module has expected functions
                     if !runner_module.hasattr("run_subprocess")? {
                         warn!("Runner module missing expected run_subprocess function");
@@ -819,10 +819,8 @@ impl Drop for ProcessManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use std::path::PathBuf;
     use std::sync::Once;
-    use tempfile::TempDir;
 
     static INIT: Once = Once::new();
 
@@ -836,12 +834,11 @@ mod tests {
         PlatformInfo {
             os_type: crate::platform::OsType::Windows,
             is_wsl: false,
-            architecture: "x86_64".to_string(),
-            version: "Windows 11".to_string(),
             gpu_vendor: crate::platform::GpuVendor::Intel,
             display_available: true,
             font_directory: PathBuf::from("C:\\Windows\\Fonts"),
-            qt_platform: Some("windows".to_string()),
+            architecture: "x86_64".to_string(),
+            version: "Windows 11".to_string(),
         }
     }
 
@@ -1012,11 +1009,11 @@ mod tests {
         let manager = ProcessManager::new(&platform, security).unwrap();
 
         let stats = manager.get_statistics();
-        assert_eq!(stats.total_processes_started, 0);
-        assert_eq!(stats.processes_completed, 0);
-        assert_eq!(stats.processes_failed, 0);
-        assert_eq!(stats.processes_killed, 0);
-        assert_eq!(stats.processes_timeout, 0);
+        assert_eq!(stats.total_processes, 0);
+        assert_eq!(stats.successful_processes, 0);
+        assert_eq!(stats.failed_processes, 0);
+        assert_eq!(stats.timed_out_processes, 0);
+        assert_eq!(stats.security_blocked_processes, 0);
     }
 
     #[test]
@@ -1027,11 +1024,15 @@ mod tests {
         let manager = ProcessManager::new(&platform, security).unwrap();
 
         let worker_status = manager.get_worker_status();
-        assert!(worker_status.available_workers > 0);
-        assert_eq!(worker_status.active_workers, 0);
-        assert_eq!(worker_status.failed_workers, 0);
-        assert!(worker_status.total_execution_time >= Duration::from_secs(0));
-        assert_eq!(worker_status.tasks_completed, 0);
+        assert!(!worker_status.is_empty()); // Should have at least one worker
+
+        // Check first worker status
+        let first_worker = &worker_status[0];
+        assert!(first_worker.id == 0);
+        assert!(matches!(first_worker.status, WorkerStatus::Idle));
+        assert!(first_worker.current_task.is_none());
+        assert_eq!(first_worker.processes_completed, 0);
+        assert!(first_worker.total_execution_time >= Duration::from_secs(0));
     }
 
     #[test]
@@ -1188,7 +1189,7 @@ mod tests {
             Ok(process_id) => {
                 assert!(process_id > 0);
                 // Try to get process info
-                let info_result = manager.get_process_info(process_id);
+                let _info_result = manager.get_process_info(process_id);
                 // May or may not exist depending on timing
             }
             Err(_) => {
@@ -1206,7 +1207,7 @@ mod tests {
         let manager = ProcessManager::new(&platform, security).unwrap();
 
         let result = manager.get_process_info(99999);
-        assert!(result.is_err());
+        assert!(result.is_none());
     }
 
     #[test]
@@ -1236,7 +1237,7 @@ mod tests {
         init_test_logging();
         let platform = create_test_platform();
         let security = create_test_security_manager();
-        let mut manager = ProcessManager::new(&platform, security).unwrap();
+        let manager = ProcessManager::new(&platform, security).unwrap();
 
         assert!(manager.is_running());
 

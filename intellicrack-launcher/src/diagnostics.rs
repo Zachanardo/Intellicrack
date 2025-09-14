@@ -631,7 +631,7 @@ impl DiagnosticsManager {
         self.add_entry(entry);
     }
 
-    pub fn log_error(&mut self, category: &str, message: &str, error: &dyn std::error::Error) {
+    pub fn log_error(&mut self, category: &str, message: &str, error: &anyhow::Error) {
         if !self.enabled {
             return;
         }
@@ -1070,36 +1070,38 @@ mod tests {
         let mut manager = DiagnosticsManager::new_with_path(&log_path).unwrap();
 
         // Create a mock validation summary
+        let mut dependencies = HashMap::new();
+        dependencies.insert(
+            "Python".to_string(),
+            crate::dependencies::DependencyStatus {
+                available: true,
+                version: Some("3.9.0".to_string()),
+                details: HashMap::new(),
+            },
+        );
+        dependencies.insert(
+            "Flask".to_string(),
+            crate::dependencies::DependencyStatus {
+                available: true,
+                version: Some("2.3.0".to_string()),
+                details: HashMap::new(),
+            },
+        );
+        dependencies.insert(
+            "TensorFlow".to_string(),
+            crate::dependencies::DependencyStatus {
+                available: false,
+                version: None,
+                details: HashMap::new(),
+            },
+        );
+
         let validation_summary = ValidationSummary {
-            total: 3,
-            successful: 2,
-            failed: 1,
-            dependencies: vec![
-                (
-                    "Python".to_string(),
-                    crate::dependencies::DependencyStatus {
-                        available: true,
-                        version: Some("3.9.0".to_string()),
-                        details: HashMap::new(),
-                    },
-                ),
-                (
-                    "Flask".to_string(),
-                    crate::dependencies::DependencyStatus {
-                        available: true,
-                        version: Some("2.3.0".to_string()),
-                        details: HashMap::new(),
-                    },
-                ),
-                (
-                    "TensorFlow".to_string(),
-                    crate::dependencies::DependencyStatus {
-                        available: false,
-                        version: None,
-                        details: HashMap::new(),
-                    },
-                ),
-            ],
+            dependencies,
+            flask_validation: None,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health: None,
         };
 
         manager.log_validation_results(&validation_summary);

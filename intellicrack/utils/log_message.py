@@ -58,6 +58,7 @@ def register_message_callback(callback: Callable[[str, str, str], None]) -> None
 
     Args:
         callback: Function that receives (level, category, message) parameters
+
     """
     global _message_callbacks
     with _queue_lock:
@@ -70,6 +71,7 @@ def unregister_message_callback(callback: Callable[[str, str, str], None]) -> No
 
     Args:
         callback: Callback function to remove
+
     """
     global _message_callbacks
     with _queue_lock:
@@ -82,6 +84,7 @@ def get_message_queue() -> List[Dict[str, Any]]:
 
     Returns:
         List of message dictionaries with timestamp, level, category, and message
+
     """
     with _queue_lock:
         return _message_queue.copy()
@@ -138,6 +141,7 @@ def log_message(
         ...     context={"host": "example.com", "port": 443},
         ...     exception=connection_error
         ... )
+
     """
     # Convert enums to strings if needed
     if isinstance(level, MessageLevel):

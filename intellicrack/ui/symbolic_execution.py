@@ -78,6 +78,7 @@ class SymbolicExecution:
             # Check for angr availability
             try:
                 import importlib.util
+
                 angr_spec = importlib.util.find_spec("angr")
                 claripy_spec = importlib.util.find_spec("claripy")
 
@@ -113,6 +114,7 @@ class SymbolicExecution:
 
         Args:
             app: Main application instance with binary data and UI signals
+
         """
         try:
             log_info("Starting symbolic execution analysis", category="SYMBOLIC")
@@ -209,6 +211,7 @@ class SymbolicExecution:
 
         Returns:
             True if user clicked OK, False if cancelled
+
         """
         try:
             if not hasattr(app, "centralWidget") or not app.centralWidget():
@@ -423,7 +426,8 @@ class SymbolicExecution:
                 if ">" in constraint_str or ">=" in constraint_str:
                     # Parse constraint for size values
                     import re
-                    size_pattern = r'\b(\d+)\b'
+
+                    size_pattern = r"\b(\d+)\b"
                     sizes = re.findall(size_pattern, constraint_str)
                     for size in sizes:
                         if int(size) > 0x10000:  # Suspiciously large size
@@ -460,8 +464,9 @@ class SymbolicExecution:
             # Check for arithmetic operations near boundaries
             if any(op in constraint_str for op in ["+", "-", "*"]):
                 import re
+
                 # Look for large numbers in arithmetic
-                hex_pattern = r'0x[0-9a-fA-F]{8,}'
+                hex_pattern = r"0x[0-9a-fA-F]{8,}"
                 large_nums = re.findall(hex_pattern, constraint_str)
                 if large_nums:
                     for num_str in large_nums:
@@ -496,22 +501,26 @@ class SymbolicExecution:
                     if hasattr(path, "constraints"):
                         for constraint in path.constraints:
                             if self._check_buffer_overflow_constraint(constraint):
-                                results["vulnerabilities"].append({
-                                    "type": "buffer_overflow",
-                                    "description": "Potential buffer overflow detected",
-                                    "severity": "high",
-                                    "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
-                                    "constraint": str(constraint),
-                                })
+                                results["vulnerabilities"].append(
+                                    {
+                                        "type": "buffer_overflow",
+                                        "description": "Potential buffer overflow detected",
+                                        "severity": "high",
+                                        "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
+                                        "constraint": str(constraint),
+                                    }
+                                )
 
                             if self._check_integer_overflow_constraint(constraint):
-                                results["vulnerabilities"].append({
-                                    "type": "integer_overflow",
-                                    "description": "Potential integer overflow detected",
-                                    "severity": "medium",
-                                    "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
-                                    "constraint": str(constraint),
-                                })
+                                results["vulnerabilities"].append(
+                                    {
+                                        "type": "integer_overflow",
+                                        "description": "Potential integer overflow detected",
+                                        "severity": "medium",
+                                        "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
+                                        "constraint": str(constraint),
+                                    }
+                                )
 
                     # Check for use-after-free conditions
                     if hasattr(path, "memory_accesses"):
@@ -520,30 +529,36 @@ class SymbolicExecution:
                             if access.type == "free":
                                 freed_addrs.add(access.addr)
                             elif access.type in ["read", "write"] and access.addr in freed_addrs:
-                                results["vulnerabilities"].append({
-                                    "type": "use_after_free",
-                                    "description": f"Use-after-free detected at address 0x{access.addr:x}",
-                                    "severity": "critical",
-                                    "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
-                                })
+                                results["vulnerabilities"].append(
+                                    {
+                                        "type": "use_after_free",
+                                        "description": f"Use-after-free detected at address 0x{access.addr:x}",
+                                        "severity": "critical",
+                                        "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
+                                    }
+                                )
 
                     # Check for null pointer dereferences
                     if hasattr(path, "memory_accesses"):
                         for access in path.memory_accesses:
                             if access.addr == 0 or (access.addr < 0x1000 and access.type in ["read", "write"]):
-                                results["vulnerabilities"].append({
-                                    "type": "null_pointer_dereference",
-                                    "description": "Null pointer dereference detected",
-                                    "severity": "high",
-                                    "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
-                                    "address": f"0x{access.addr:x}",
-                                })
+                                results["vulnerabilities"].append(
+                                    {
+                                        "type": "null_pointer_dereference",
+                                        "description": "Null pointer dereference detected",
+                                        "severity": "high",
+                                        "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
+                                        "address": f"0x{access.addr:x}",
+                                    }
+                                )
 
             # Only report completion if we actually found something or explored paths
             if results["paths_explored"] > 0 and not results["vulnerabilities"]:
                 # This is informational only, not a mock vulnerability
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found")
+                    app.update_output.emit(
+                        f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found"
+                    )
 
             return results
 
@@ -605,6 +620,7 @@ class SymbolicExecution:
 
         Returns:
             Dictionary containing status information
+
         """
         return {
             "engine_available": self.engine_available,

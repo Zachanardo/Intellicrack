@@ -530,6 +530,7 @@ def detect_gpu_frameworks() -> dict[str, Any]:
 
     Returns:
         Dictionary containing framework availability and information
+
     """
     frameworks = {
         "cuda": False,

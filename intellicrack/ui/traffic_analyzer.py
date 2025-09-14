@@ -66,12 +66,14 @@ class TrafficAnalyzer:
 
         Args:
             main_window: Main application window for context and logging
+
         """
         try:
             log_info("Launching Visual Network Traffic Analyzer...")
 
             # Check if the core analyzer is available
             import importlib.util
+
             if importlib.util.find_spec("intellicrack.core.network.traffic_analyzer") is None:
                 raise ImportError("NetworkTrafficAnalyzer module not found")
 
@@ -97,6 +99,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         Args:
             parent: Parent widget, typically main application window
+
         """
         super().__init__(parent)
         self.parent = parent
@@ -768,8 +771,10 @@ def start_network_capture(self, interface=None, filter_str=None):
     """Start network packet capture on specified interface.
 
     Args:
+        self: Traffic analyzer instance
         interface: Network interface to capture on (None for default)
         filter_str: BPF filter string for capture filtering
+
     """
     try:
         # Initialize traffic analyzer if not already done
@@ -868,8 +873,10 @@ def _perform_network_capture(self, interface, filter_str):
     """Background thread function to perform packet capture.
 
     Args:
+        self: Traffic analyzer instance
         interface: Network interface to capture on
         filter_str: BPF filter string
+
     """
     try:
         # Try to use scapy for packet capture

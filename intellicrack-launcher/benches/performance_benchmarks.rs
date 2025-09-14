@@ -27,7 +27,7 @@ fn benchmark_environment_setup(c: &mut Criterion) {
 fn benchmark_python_integration_init(c: &mut Criterion) {
     c.bench_function("python_integration_init", |b| {
         b.iter(|| {
-            let python = black_box(PythonIntegration::initialize().unwrap());
+            let mut python = black_box(PythonIntegration::initialize().unwrap());
             let _result = black_box(python.configure_pybind11_compatibility());
         });
     });
@@ -59,29 +59,31 @@ fn benchmark_gil_safety_init(c: &mut Criterion) {
 }
 
 fn benchmark_full_launcher_initialization(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
-
     c.bench_function("full_launcher_init", |b| {
-        b.to_async(&rt).iter(|| async {
-            let _launcher = black_box(
-                intellicrack_launcher::IntellicrackLauncher::new()
-                    .await
-                    .unwrap(),
-            );
+        b.iter(|| {
+            let rt = Runtime::new().unwrap();
+            rt.block_on(async {
+                let _launcher = black_box(
+                    intellicrack_launcher::IntellicrackLauncher::new()
+                        .await
+                        .unwrap(),
+                );
+            });
         });
     });
 }
 
 fn benchmark_concurrent_platform_detection(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
-
     c.bench_function("concurrent_platform_detection", |b| {
-        b.to_async(&rt).iter(|| async {
-            let handles: Vec<_> = (0..10)
-                .map(|_| tokio::spawn(async { PlatformInfo::detect().unwrap() }))
-                .collect();
+        b.iter(|| {
+            let rt = Runtime::new().unwrap();
+            rt.block_on(async {
+                let handles: Vec<_> = (0..10)
+                    .map(|_| tokio::spawn(async { PlatformInfo::detect().unwrap() }))
+                    .collect();
 
-            let _results: Vec<_> = black_box(futures::future::join_all(handles).await);
+                let _results: Vec<_> = black_box(futures::future::join_all(handles).await);
+            });
         });
     });
 }
@@ -108,6 +110,9 @@ fn benchmark_memory_usage_tracking(c: &mut Criterion) {
             ALLOCATED.fetch_sub(layout.size(), Ordering::SeqCst);
         }
     }
+
+    // construct the allocator to avoid "never constructed" dead-code warning
+    let _track_alloc = TrackingAllocator;
 
     c.bench_function("memory_usage_platform_detection", |b| {
         b.iter(|| {
@@ -190,8 +195,6 @@ fn benchmark_multithreaded_operations(c: &mut Criterion) {
 }
 
 fn benchmark_startup_sequence_components(c: &mut Criterion) {
-    let rt = Runtime::new().unwrap();
-
     let mut group = c.benchmark_group("startup_components");
     group.measurement_time(Duration::from_secs(10));
 
@@ -211,7 +214,7 @@ fn benchmark_startup_sequence_components(c: &mut Criterion) {
 
     group.bench_function("python_integration", |b| {
         b.iter(|| {
-            let python = PythonIntegration::initialize().unwrap();
+            let mut python = PythonIntegration::initialize().unwrap();
             let _result = black_box(python.configure_pybind11_compatibility());
         });
     });

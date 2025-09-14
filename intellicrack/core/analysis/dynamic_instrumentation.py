@@ -1,5 +1,4 @@
-"""
-Dynamic binary instrumentation using Frida.
+"""Dynamic binary instrumentation using Frida.
 
 This module provides the core functionality for instrumenting a running
 process to monitor its behavior, trace function calls, and manipulate
@@ -37,8 +36,7 @@ def on_message(main_app, message, data):
 
 
 def run_instrumentation_thread(main_app, binary_path, script_source):
-    """
-    The actual instrumentation logic that runs in a separate thread
+    """The actual instrumentation logic that runs in a separate thread
     to avoid blocking the main UI.
     """
     try:
@@ -80,8 +78,7 @@ def run_instrumentation_thread(main_app, binary_path, script_source):
 
 
 def run_dynamic_instrumentation(main_app):
-    """
-    Launches a dynamic instrumentation session using Frida. This function
+    """Launches a dynamic instrumentation session using Frida. This function
     is designed to be called from the main UI thread.
     """
     if not main_app.current_binary:

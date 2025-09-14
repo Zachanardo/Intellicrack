@@ -1,5 +1,4 @@
-"""
-Core analysis functions for Intellicrack.
+"""Core analysis functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -98,8 +97,7 @@ def get_pe_timestamp(timestamp: int) -> str:
 
 
 def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None) -> List[str]:
-    """
-    Analyzes the binary file structure in detail.
+    """Analyzes the binary file structure in detail.
 
     Performs comprehensive static analysis of a binary executable file,
     examining its PE header, sections, imports, exports, resources, and strings.
@@ -113,6 +111,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
 
     Returns:
         list: Analysis results as a list of formatted strings
+
     """
     if flags is None:
         flags = []
@@ -250,8 +249,12 @@ def _analyze_imports(pe, results: List[str]) -> List[str]:
                     func_name = imp.name.decode("utf-8", errors="ignore")
                     # Check for license-related imports
                     license_keywords = [
-                        "license", "activation", "validate",
-                        "verify", "check", "auth",
+                        "license",
+                        "activation",
+                        "validate",
+                        "verify",
+                        "check",
+                        "auth",
                     ]
                     if any(keyword in func_name.lower() for keyword in license_keywords):
                         license_related_imports.append(f"{dll_name}::{func_name}")
@@ -282,8 +285,7 @@ def _generate_analysis_summary(results: List[str], suspicious_sections: List[str
 
 
 def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
-    """
-    Performs deep license analysis on a binary file.
+    """Performs deep license analysis on a binary file.
 
     This function analyzes the binary for license-related patterns, validation routines,
     and protection mechanisms commonly used in commercial software.
@@ -293,6 +295,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         dict: Analysis results containing license-related findings
+
     """
     results = {
         "license_patterns": [],
@@ -403,8 +406,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
 
 def detect_packing(binary_path: str) -> Dict[str, Any]:
-    """
-    Detects if a binary is packed or obfuscated.
+    """Detects if a binary is packed or obfuscated.
 
     Analyzes various indicators that suggest the binary has been packed,
     compressed, or obfuscated to hide its true functionality.
@@ -414,6 +416,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
 
     Returns:
         dict: Packing detection results
+
     """
     results = {
         "is_packed": False,

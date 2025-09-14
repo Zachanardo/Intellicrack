@@ -35,6 +35,7 @@ class CloudLicenseResponseGenerator:
                 - response_templates: License response templates
                 - intercept_mode: Active or passive interception
                 - encryption_keys: Keys for encrypted communications
+
         """
         self.config = config or {}
         self.target_ports = self.config.get("target_ports", [443, 8443, 5000, 8080])
@@ -135,6 +136,7 @@ class CloudLicenseResponseGenerator:
 
         Args:
             port: Port number to listen on
+
         """
         try:
             listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -168,6 +170,7 @@ class CloudLicenseResponseGenerator:
             client_socket: Connected client socket
             address: Client address tuple
             port: Port the connection was received on
+
         """
         try:
             # Record connection start time for performance metrics
@@ -226,6 +229,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             Detected protocol name
+
         """
         # Check for HTTP/HTTPS
         if data.startswith(b"GET ") or data.startswith(b"POST ") or data.startswith(b"PUT "):
@@ -253,6 +257,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             Generated response bytes or None
+
         """
         protocol = request_info["protocol"]
 
@@ -269,6 +274,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             HTTP response bytes
+
         """
         # Parse HTTP request
         request_data = request_info["data"]
@@ -307,6 +313,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             HTTPS response bytes
+
         """
         # For HTTPS, we would need to handle TLS handshake
         # This is a simplified version
@@ -320,6 +327,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             WebSocket response bytes
+
         """
         # Generate WebSocket frame with license data
         license_data = self._create_license_response("valid_license")
@@ -350,6 +358,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             gRPC response bytes
+
         """
         # Generate gRPC response with license data
         license_data = self._create_license_response("valid_license")
@@ -373,6 +382,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             Custom protocol response bytes
+
         """
         # Generate generic license response
         license_data = self._create_license_response("valid_license")
@@ -395,6 +405,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             License response dictionary
+
         """
         template = self.response_templates.get(template_name, self.response_templates["valid_license"])
 
@@ -419,6 +430,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             Signature string
+
         """
         # Create signing string
         signing_data = json.dumps(data, sort_keys=True).encode()
@@ -444,6 +456,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             List of intercepted request information
+
         """
         return self.intercepted_requests
 
@@ -452,6 +465,7 @@ class CloudLicenseResponseGenerator:
 
         Returns:
             List of generated response information
+
         """
         return self.generated_responses
 
@@ -461,6 +475,7 @@ class CloudLicenseResponseGenerator:
         Args:
             name: Template name
             template: Template dictionary
+
         """
         self.response_templates[name] = template
 
@@ -471,11 +486,11 @@ class CloudLicenseResponseGenerator:
 
 
 def run_cloud_license_hooker(app_instance=None):
-    """
-    Initializes and runs the cloud license hooker.
+    """Initializes and runs the cloud license hooker.
 
     Args:
         app_instance: The main application instance (optional, for logging/context).
+
     """
     hooker = CloudLicenseResponseGenerator()
     hooker.enable_network_api_hooks()

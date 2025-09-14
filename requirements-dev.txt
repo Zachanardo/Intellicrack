@@ -1,0 +1,5 @@
+# Development requirements file for Intellicrack
+# This file points to the test/dev requirements in the requirements directory
+# For GitHub Actions compatibility
+
+-r requirements/test.txt

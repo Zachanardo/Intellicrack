@@ -1,5 +1,4 @@
-"""
-Automated patch agent for real-time binary patching with exploitation capabilities.
+"""Automated patch agent for real-time binary patching with exploitation capabilities.
 Production-ready implementation for security research.
 """
 
@@ -14,6 +13,13 @@ class AutomatedPatchAgent:
     """Real-time automated binary patching agent for exploitation."""
 
     def __init__(self):
+        """
+        Initialize the Automated Patch Agent.
+
+        Sets up the agent's core attributes including patch history tracking,
+        bypass pattern initialization, and exploitation technique loading.
+        Prepares the agent for binary analysis and automated patching operations.
+        """
         self.patch_history = []
         self.patch_signatures = {}
         self.bypass_patterns = self._initialize_bypass_patterns()

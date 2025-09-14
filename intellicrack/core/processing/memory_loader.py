@@ -343,6 +343,7 @@ def run_memory_optimized_analysis(
             - packed_probability: Likelihood of packing/compression
             - sections: Section-level analysis (if applicable)
             - anomalies: Detected anomalies and suspicious patterns
+
     """
     results = {
         "file_path": file_path,

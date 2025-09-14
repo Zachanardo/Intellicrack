@@ -1598,7 +1598,12 @@ mod tests {
             .get_available_disk_space(&PathBuf::from("."))
             .await;
         match disk_result {
-            Ok(mb) => assert!(mb >= 0),
+            Ok(mb) => {
+                // Verify disk space is greater than zero (meaningful non-zero space detected)
+                assert!(mb > 0);
+                // Additional validation: ensure reasonable disk space for testing
+                assert!(mb < 100 * 1024 * 1024); // Less than 100TB, reasonable for test systems
+            }
             Err(_) => {} // Expected on some platforms
         }
     }

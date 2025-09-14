@@ -229,8 +229,47 @@ class HttpsProtocol(BaseProtocol):
     def _create_response(self, body=None, status=200):
         """Create HTTP response, handling missing aiohttp gracefully."""
         if not HAS_AIOHTTP:
-            # Return a mock response for testing
-            return {"body": body, "status": status}
+            # Use standard library http.server for fallback HTTP response
+            import http.server
+            from io import BytesIO
+
+            # Create HTTP response using standard library
+            response_data = BytesIO()
+
+            # Write HTTP status line
+            status_line = (
+                f"HTTP/1.1 {status} {http.server.BaseHTTPRequestHandler.responses.get(status, ('Unknown', 'Unknown status'))[0]}\r\n"
+            )
+            response_data.write(status_line.encode("utf-8"))
+
+            # Write headers
+            if body:
+                content_length = len(body) if isinstance(body, bytes) else len(str(body).encode("utf-8"))
+                response_data.write(f"Content-Length: {content_length}\r\n".encode("utf-8"))
+                response_data.write(b"Content-Type: application/octet-stream\r\n")
+
+            response_data.write(b"Connection: close\r\n")
+            response_data.write(b"\r\n")
+
+            # Write body
+            if body:
+                if isinstance(body, bytes):
+                    response_data.write(body)
+                else:
+                    response_data.write(str(body).encode("utf-8"))
+
+            # Return response object compatible with expected interface
+            class HTTPResponse:
+                def __init__(self, data, status_code):
+                    self.body = data.getvalue()
+                    self.status = status_code
+                    self.headers = {}
+
+                def __bytes__(self):
+                    return self.body
+
+            return HTTPResponse(response_data, status)
+
         # Use the globally imported aiohttp
         return aiohttp.web.Response(body=body, status=status)
 

@@ -49,6 +49,7 @@ class R2PatchIntegrator:
 
         Returns:
             Dictionary containing integrated patch results
+
         """
         try:
             # Generate R2 bypass patches using enhanced instruction generation
@@ -112,6 +113,7 @@ class R2PatchIntegrator:
 
         Returns:
             List of BinaryPatch objects
+
         """
         binary_patches = []
 
@@ -138,6 +140,7 @@ class R2PatchIntegrator:
 
         Returns:
             BinaryPatch object or None if conversion fails
+
         """
         try:
             # Extract address (handle both hex string and int formats)
@@ -197,6 +200,7 @@ class R2PatchIntegrator:
 
         Returns:
             List of validated BinaryPatch objects
+
         """
         validated_patches = []
 
@@ -220,6 +224,7 @@ class R2PatchIntegrator:
 
         Returns:
             True if patch is valid, False otherwise
+
         """
         # Check offset is valid
         if patch.offset < 0:
@@ -250,6 +255,7 @@ class R2PatchIntegrator:
 
         Returns:
             Dictionary containing application results
+
         """
         try:
             if not output_path:
@@ -320,6 +326,7 @@ class R2PatchIntegrator:
 
         Returns:
             Dictionary containing integration status information
+
         """
         return {
             "r2_bypass_generator": {

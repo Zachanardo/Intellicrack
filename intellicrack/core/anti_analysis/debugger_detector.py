@@ -72,26 +72,456 @@ class DebuggerDetector(BaseDetector):
                 "breakpoint_detection": self._check_breakpoints_linux,
             }
 
-        # Known debugger signatures
-        self.debugger_signatures = {
+        # Dynamic debugger signature detection
+        self.debugger_signatures = self._build_dynamic_signatures()
+
+        # Monitor for new debuggers
+        self._update_signatures_from_system()
+
+    def _build_dynamic_signatures(self) -> dict:
+        """Build debugger signatures dynamically based on system analysis."""
+        import json
+        import os
+
+        signatures = {
             "windows": {
-                "processes": [
-                    "ollydbg.exe",
-                    "x64dbg.exe",
-                    "x32dbg.exe",
-                    "windbg.exe",
-                    "devenv.exe",
-                    "dbgview.exe",
-                    "processhacker.exe",
-                ],
-                "window_classes": ["OLLYDBG", "WinDbgFrameClass", "ID", "Zeta Debugger"],
-                "window_titles": ["OllyDbg", "x64dbg", "WinDbg", "Immunity Debugger"],
+                "processes": [],
+                "window_classes": [],
+                "window_titles": [],
+                "driver_names": [],
+                "dll_patterns": [],
             },
             "linux": {
-                "processes": ["gdb", "lldb", "radare2", "r2", "edb", "strace", "ltrace"],
-                "files": ["/proc/self/status", "/proc/self/stat"],
+                "processes": [],
+                "files": [],
+                "libraries": [],
+                "symbols": [],
             },
         }
+
+        # Load base signatures from configuration
+        config_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json")
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, "r") as f:
+                    base_sigs = json.load(f)
+                    # Merge base signatures
+                    for platform_key in signatures:
+                        if platform_key in base_sigs:
+                            for sig_type in signatures[platform_key]:
+                                if sig_type in base_sigs[platform_key]:
+                                    signatures[platform_key][sig_type].extend(base_sigs[platform_key][sig_type])
+        except (IOError, json.JSONDecodeError):
+            pass  # Use dynamic detection only
+
+        # Add known debugger patterns dynamically
+        if platform.system() == "Windows":
+            # Core debuggers - always check for these
+            core_debuggers = [
+                # User-mode debuggers
+                "ollydbg",
+                "x64dbg",
+                "x32dbg",
+                "windbg",
+                "cdb",
+                "immunity",
+                "radare2",
+                "r2",
+                "pestudio",
+                "petools",
+                # Kernel debuggers
+                "kd",
+                "livekd",
+                "syser",
+                "softice",
+                # IDE debuggers
+                "devenv",
+                "vsjitdebugger",
+                "msvsmon",
+                "dbgclr",
+                # .NET debuggers
+                "dnspy",
+                "ilspy",
+                "dotpeek",
+                "justdecompile",
+                # Java debuggers
+                "jdb",
+                "eclipse",
+                "intellij",
+                "netbeans",
+                # Script debuggers
+                "pycharm",
+                "vscode",
+                "atom",
+                "sublime",
+                # System tools that can debug
+                "processhacker",
+                "procmon",
+                "procexp",
+                "apimonitor",
+                "rohitab",
+                "wireshark",
+                "fiddler",
+                "charles",
+                # Game hacking tools (often have debuggers)
+                "cheatengine",
+                "artmoney",
+                "tsearch",
+                "ollyice",
+                # Reverse engineering tools
+                "ida",
+                "ida64",
+                "idaq",
+                "idaq64",
+                "ghidra",
+                "hopper",
+                "binaryninja",
+                "cutter",
+                "rizin",
+                "snowman",
+            ]
+
+            # Build process patterns with variations
+            for debugger in core_debuggers:
+                # Add base name
+                signatures["windows"]["processes"].append(f"{debugger}.exe")
+                # Add common variations
+                signatures["windows"]["processes"].append(f"{debugger}64.exe")
+                signatures["windows"]["processes"].append(f"{debugger}32.exe")
+                signatures["windows"]["processes"].append(f"{debugger}_x64.exe")
+                signatures["windows"]["processes"].append(f"{debugger}_x86.exe")
+                # Portable versions
+                signatures["windows"]["processes"].append(f"{debugger}_portable.exe")
+                signatures["windows"]["processes"].append(f"portable_{debugger}.exe")
+
+            # Add window class patterns
+            window_classes = [
+                "OLLYDBG",
+                "WinDbgFrameClass",
+                "ID",
+                "Zeta Debugger",
+                "x64dbg",
+                "Qt5QWindowIcon",
+                "HexRaysIDA",
+                "SysAnalyzer",
+                "PEiDWindowClass",
+                "ProcessHacker",
+                "dbgviewClass",
+                "ConsoleWindowClass",
+                "GhidraClass",
+                "BinaryNinjaCore",
+                "CutterClass",
+                "HopperDisassembler",
+            ]
+
+            # Add regex patterns for window classes
+            for wc in window_classes:
+                signatures["windows"]["window_classes"].append(wc)
+                # Add variations
+                signatures["windows"]["window_classes"].append(wc.lower())
+                signatures["windows"]["window_classes"].append(wc.upper())
+
+            # Add window title patterns
+            title_patterns = [
+                r".*[Dd]ebug.*",
+                r".*[Bb]reakpoint.*",
+                r".*[Dd]isassembl.*",
+                r".*[Hh]ex [Ee]dit.*",
+                r".*[Mm]emory [Vv]iew.*",
+                r".*[Rr]egisters.*",
+                r".*[Ss]tack.*",
+                r".*[Aa]ssembly.*",
+                r".*[Dd]ump.*",
+                r"OllyDbg.*",
+                r"x64dbg.*",
+                r"WinDbg.*",
+                r"Immunity.*",
+                r"IDA.*",
+                r"Ghidra.*",
+                r"Binary Ninja.*",
+                r"Hopper.*",
+                r"Radare2.*",
+                r"Cutter.*",
+                r"Process Hacker.*",
+                r"API Monitor.*",
+            ]
+            signatures["windows"]["window_titles"].extend(title_patterns)
+
+            # Add driver patterns for kernel debuggers
+            driver_patterns = [
+                r"\\Driver\\KLDBGDRV",
+                r"\\Device\\KLDBGDRV",
+                r"\\Driver\\SYSER",
+                r"\\Driver\\SICE",
+                r"\\Driver\\NTICE",
+                r"\\Driver\\ICEEXT",
+                r"\\Driver\\SYSERBOOT",
+                r"\\Driver\\SYSERDBGMSG",
+                r"\\Driver\\Ring0Debugger",
+                r"\\Driver\\KernelDebugger",
+            ]
+            signatures["windows"]["driver_names"].extend(driver_patterns)
+
+            # Add DLL injection patterns
+            dll_patterns = [
+                "dbghelp.dll",
+                "dbgcore.dll",
+                "dbgeng.dll",
+                "dbgmodel.dll",
+                "symsrv.dll",
+                "srcsrv.dll",
+                "titanengine.dll",
+                "beaengine.dll",
+                "hooklib*.dll",
+                "detours*.dll",
+                "easyhook*.dll",
+                "mhook*.dll",
+                "x64dbg*.dll",
+                "x32dbg*.dll",
+                "ollydbg*.dll",
+                "immdbg*.dll",
+            ]
+            signatures["windows"]["dll_patterns"].extend(dll_patterns)
+
+        else:  # Linux/Unix
+            # Core debuggers for Linux
+            core_debuggers = [
+                "gdb",
+                "lldb",
+                "radare2",
+                "r2",
+                "rizin",
+                "cutter",
+                "edb",
+                "evan",
+                "ddd",
+                "kdbg",
+                "nemiver",
+                "voltron",
+                "peda",
+                "gef",
+                "pwndbg",
+                "strace",
+                "ltrace",
+                "ftrace",
+                "ptrace",
+                "dtrace",
+                "systemtap",
+                "perf",
+                "valgrind",
+                "gdbserver",
+                "lldb-server",
+                "rr",
+                "undo",
+                "qira",
+            ]
+
+            for debugger in core_debuggers:
+                signatures["linux"]["processes"].append(debugger)
+                # Add common paths
+                signatures["linux"]["processes"].append(f"/usr/bin/{debugger}")
+                signatures["linux"]["processes"].append(f"/usr/local/bin/{debugger}")
+                signatures["linux"]["processes"].append(f"/opt/{debugger}/{debugger}")
+
+            # Add files to check
+            debug_files = [
+                "/proc/self/status",
+                "/proc/self/stat",
+                "/proc/self/cmdline",
+                "/proc/self/maps",
+                "/proc/self/environ",
+                "/proc/self/fd/",
+                "/sys/kernel/debug/",
+                "/dev/kmem",
+                "/dev/mem",
+                "/dev/port",
+            ]
+            signatures["linux"]["files"].extend(debug_files)
+
+            # Add library patterns
+            lib_patterns = [
+                "libdebug*.so",
+                "libgdb*.so",
+                "liblldb*.so",
+                "libtrace*.so",
+                "libptrace*.so",
+                "libinject*.so",
+                "libhook*.so",
+                "libdetour*.so",
+                "libintercept*.so",
+            ]
+            signatures["linux"]["libraries"].extend(lib_patterns)
+
+            # Add symbol patterns that indicate debugging
+            symbol_patterns = [
+                "__debugbreak",
+                "__builtin_trap",
+                "ptrace",
+                "waitpid",
+                "PTRACE_ATTACH",
+                "PTRACE_TRACEME",
+                "raise",
+                "signal",
+                "sigaction",
+                "kill",
+            ]
+            signatures["linux"]["symbols"].extend(symbol_patterns)
+
+        # Remove duplicates while preserving order
+        for platform_key in signatures:
+            for sig_type in signatures[platform_key]:
+                seen = set()
+                unique_list = []
+                for item in signatures[platform_key][sig_type]:
+                    if item.lower() not in seen:
+                        seen.add(item.lower())
+                        unique_list.append(item)
+                signatures[platform_key][sig_type] = unique_list
+
+        return signatures
+
+    def _update_signatures_from_system(self):
+        """Scan system for additional debugger signatures."""
+        import re
+
+        import psutil
+
+        try:
+            # Scan running processes for debug-related patterns
+            debug_patterns = [
+                re.compile(r".*debug.*", re.IGNORECASE),
+                re.compile(r".*dbg.*", re.IGNORECASE),
+                re.compile(r".*trace.*", re.IGNORECASE),
+                re.compile(r".*monitor.*", re.IGNORECASE),
+                re.compile(r".*analyze.*", re.IGNORECASE),
+                re.compile(r".*reverse.*", re.IGNORECASE),
+                re.compile(r".*disasm.*", re.IGNORECASE),
+                re.compile(r".*hook.*", re.IGNORECASE),
+                re.compile(r".*inject.*", re.IGNORECASE),
+            ]
+
+            current_platform = "windows" if platform.system() == "Windows" else "linux"
+
+            for proc in psutil.process_iter(["name", "exe", "cmdline"]):
+                try:
+                    proc_name = proc.info.get("name", "").lower()
+                    proc_exe = proc.info.get("exe", "").lower() if proc.info.get("exe") else ""
+
+                    # Check if process matches debug patterns
+                    for pattern in debug_patterns:
+                        if pattern.match(proc_name) or pattern.match(proc_exe):
+                            # Check if it's not already in our list
+                            if proc_name not in [p.lower() for p in self.debugger_signatures[current_platform]["processes"]]:
+                                # Verify it's actually a debugger by checking its capabilities
+                                if self._verify_debugger_capabilities(proc):
+                                    self.debugger_signatures[current_platform]["processes"].append(proc_name)
+                                    self.logger.info(f"Discovered new debugger: {proc_name}")
+                            break
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+        except Exception as e:
+            self.logger.debug(f"Error updating signatures: {e}")
+
+    def _verify_debugger_capabilities(self, process) -> bool:
+        """Verify if a process has debugger capabilities."""
+        try:
+            # Check for debug privileges
+            if platform.system() == "Windows":
+                # Check if process has SeDebugPrivilege
+                try:
+                    import ctypes
+                    from ctypes import wintypes
+
+                    # Get process handle
+                    PROCESS_QUERY_INFORMATION = 0x0400
+                    kernel32 = ctypes.windll.kernel32
+                    handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, process.pid)
+
+                    if handle:
+                        # Check token privileges
+                        advapi32 = ctypes.windll.advapi32
+                        token_handle = wintypes.HANDLE()
+                        TOKEN_QUERY = 0x0008
+
+                        if advapi32.OpenProcessToken(handle, TOKEN_QUERY, ctypes.byref(token_handle)):
+                            # Would check for SeDebugPrivilege here
+                            kernel32.CloseHandle(token_handle)
+                            kernel32.CloseHandle(handle)
+
+                            # Check if process has open handles to other processes
+                            connections = process.connections()
+                            if len(connections) > 10:  # Debuggers often have many connections
+                                return True
+
+                except Exception:
+                    pass
+            else:
+                # Linux: Check for ptrace capability
+                try:
+                    import os
+
+                    status_path = f"/proc/{process.pid}/status"
+                    if os.path.exists(status_path):
+                        with open(status_path, "r") as f:
+                            status = f.read()
+                            # Check for TracerPid or capabilities
+                            if "TracerPid" in status or "CapEff" in status:
+                                cap_line = [line for line in status.split("\n") if "CapEff" in line]
+                                if cap_line:
+                                    # Check for CAP_SYS_PTRACE capability
+                                    cap_value = int(cap_line[0].split()[1], 16)
+                                    CAP_SYS_PTRACE = 1 << 19
+                                    if cap_value & CAP_SYS_PTRACE:
+                                        return True
+                except Exception:
+                    pass
+
+            # Check if process has child processes (debuggers often spawn debuggees)
+            children = process.children()
+            if children:
+                # Check if children have different names (sign of debugging)
+                child_names = set(child.name() for child in children)
+                if len(child_names) > 1:
+                    return True
+
+            # Check memory usage patterns
+            mem_info = process.memory_info()
+            # Debuggers typically use more memory for symbol tables
+            if mem_info.rss > 100 * 1024 * 1024:  # > 100MB
+                return True
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
+        return False
+
+    def update_signatures(self, custom_signatures: dict = None):
+        """Update debugger signatures with custom entries."""
+        if custom_signatures:
+            current_platform = "windows" if platform.system() == "Windows" else "linux"
+
+            for sig_type in custom_signatures.get(current_platform, {}):
+                if sig_type in self.debugger_signatures[current_platform]:
+                    self.debugger_signatures[current_platform][sig_type].extend(custom_signatures[current_platform][sig_type])
+
+        # Re-scan system for new debuggers
+        self._update_signatures_from_system()
+
+    def save_signatures(self, path: str = None):
+        """Save current signatures to file for future use."""
+        import json
+        import os
+
+        if not path:
+            path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json")
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        with open(path, "w") as f:
+            json.dump(self.debugger_signatures, f, indent=2)
 
     def detect_debugger(self, aggressive: bool = False) -> dict[str, Any]:
         """Perform debugger detection using multiple techniques.

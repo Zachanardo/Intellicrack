@@ -1,5 +1,4 @@
-"""
-Frida-based Dynamic Analysis Script Runner.
+"""Frida-based Dynamic Analysis Script Runner.
 
 This module provides a secure and user-friendly interface for running approved
 Frida analysis scripts against a target binary.
@@ -102,8 +101,7 @@ def run_frida_script_thread(main_app, binary_path, script_path):
 
 
 def run_frida_analysis(main_app):
-    """
-        Presents a dialog for the user to select a whitelisted analysis script,
+    """Presents a dialog for the user to select a whitelisted analysis script,
     then runs it against the currently loaded binary.
     """
     if not main_app.current_binary:
@@ -145,9 +143,7 @@ def run_frida_analysis(main_app):
 
 
 def stop_frida_analysis(main_app):
-    """
-    Stops a running Frida analysis session for the current binary.
-    """
+    """Stops a running Frida analysis session for the current binary."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
         return

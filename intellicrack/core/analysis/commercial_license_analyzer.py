@@ -25,6 +25,7 @@ class CommercialLicenseAnalyzer:
 
         Args:
             binary_path: Path to the binary to analyze
+
         """
         self.binary_path = binary_path
         self.flexlm_parser = FlexLMProtocolParser()
@@ -47,6 +48,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Analysis results including detected systems and bypass strategies
+
         """
         if binary_path:
             self.binary_path = binary_path
@@ -100,6 +102,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             True if FlexLM detected
+
         """
         flexlm_indicators = [
             b"FLEXlm",
@@ -151,6 +154,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             True if HASP detected
+
         """
         hasp_indicators = [
             b"hasp_login",
@@ -199,6 +203,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             True if CodeMeter detected
+
         """
         codemeter_indicators = [
             b"CodeMeter",
@@ -248,6 +253,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Network protocol analysis results
+
         """
         analysis = {"servers": [], "features": {}, "protocols": []}
 
@@ -282,6 +288,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             FlexLM bypass configuration
+
         """
         bypass = {
             "method": "flexlm_emulation",
@@ -332,6 +339,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             HASP bypass configuration
+
         """
         bypass = {
             "method": "hasp_emulation",
@@ -390,6 +398,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             CodeMeter bypass configuration
+
         """
         bypass = {
             "method": "codemeter_emulation",
@@ -445,6 +454,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Binary response for hasp_get_info
+
         """
         import hashlib
         import time
@@ -547,6 +557,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Binary response for CmGetLicenseInfo
+
         """
         import hashlib
         import time
@@ -688,6 +699,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Binary patch bytes for XOR encryption with dynamic key
+
         """
         import hashlib
         import platform
@@ -752,6 +764,7 @@ class CommercialLicenseAnalyzer:
 
         Returns:
             Frida script as string
+
         """
         import hashlib
         import platform
@@ -1062,6 +1075,7 @@ console.log("[FlexLM] Server: " + flexlm_context.server_name + ":" + flexlm_cont
 
         Returns:
             Frida script as string
+
         """
         return """
 // HASP Dongle Emulation Script with Dynamic Handle
@@ -1251,6 +1265,7 @@ console.log("[HASP] Dongle emulation active with dynamic handle: 0x" + dynamic_h
 
         Returns:
             Frida script as string
+
         """
         return """
 // CodeMeter License Bypass Script with Dynamic Handle
@@ -1497,6 +1512,7 @@ console.log("[CodeMeter] Box Serial: 0x" + session_data.box_serial.toString(16))
 
         Returns:
             Confidence score between 0.0 and 1.0
+
         """
         confidence = 0.0
 
@@ -1522,6 +1538,7 @@ console.log("[CodeMeter] Box Serial: 0x" + session_data.box_serial.toString(16))
 
         Returns:
             Formatted report string
+
         """
         report = "=" * 60 + "\n"
         report += "COMMERCIAL LICENSE PROTECTION ANALYSIS REPORT\n"

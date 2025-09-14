@@ -1,5 +1,4 @@
-"""
-Ghidra Analysis Engine.
+"""Ghidra Analysis Engine.
 
 This module provides the core functionality for running Ghidra headless analysis
 and processing the results.
@@ -37,14 +36,7 @@ def _run_ghidra_thread(main_app, command, temp_dir):
         # Use secure subprocess wrapper with validation
         # This prevents command injection while maintaining functionality
         process = secure_popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors="ignore",
-            shell=False,
-            cwd=temp_dir
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="ignore", shell=False, cwd=temp_dir
         )
 
         stdout, stderr = process.communicate()
@@ -75,9 +67,7 @@ def _run_ghidra_thread(main_app, command, temp_dir):
 
 
 def run_advanced_ghidra_analysis(main_app):
-    """
-    Launches a Ghidra headless analysis session.
-    """
+    """Launches a Ghidra headless analysis session."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
         return

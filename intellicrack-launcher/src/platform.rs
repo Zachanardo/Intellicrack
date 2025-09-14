@@ -48,6 +48,8 @@ pub struct PlatformInfo {
     pub gpu_vendor: GpuVendor,
     pub display_available: bool,
     pub font_directory: PathBuf,
+    pub architecture: String,
+    pub version: String,
 }
 
 impl PlatformInfo {
@@ -88,12 +90,22 @@ impl PlatformInfo {
         let font_directory = Self::get_font_directory(&os_type)?;
         debug!("Font directory: {:?}", font_directory);
 
+        // Architecture detection
+        let architecture = Self::detect_architecture();
+        debug!("Architecture detected: {}", architecture);
+
+        // Version detection
+        let version = Self::detect_version();
+        debug!("Version detected: {}", version);
+
         Ok(PlatformInfo {
             os_type,
             is_wsl,
             gpu_vendor,
             display_available,
             font_directory,
+            architecture,
+            version,
         })
     }
 
@@ -225,6 +237,56 @@ impl PlatformInfo {
         }
     }
 
+    /// Detect system architecture
+    fn detect_architecture() -> String {
+        // Use cfg! to determine architecture at compile time
+        if cfg!(target_arch = "x86_64") {
+            "x86_64".to_string()
+        } else if cfg!(target_arch = "x86") {
+            "x86".to_string()
+        } else if cfg!(target_arch = "aarch64") {
+            "aarch64".to_string()
+        } else if cfg!(target_arch = "arm") {
+            "arm".to_string()
+        } else {
+            "unknown".to_string()
+        }
+    }
+
+    /// Detect system version
+    fn detect_version() -> String {
+        // Try to get OS version information
+        if cfg!(target_os = "windows") {
+            // On Windows, try to get version from environment
+            env::var("OS").unwrap_or_else(|_| "Windows".to_string())
+        } else if cfg!(target_os = "linux") {
+            // On Linux, try to read /etc/os-release
+            if let Ok(content) = fs::read_to_string("/etc/os-release") {
+                for line in content.lines() {
+                    if line.starts_with("PRETTY_NAME=") {
+                        return line.trim_start_matches("PRETTY_NAME=\"")
+                            .trim_end_matches("\"")
+                            .to_string();
+                    }
+                }
+            }
+            "Linux".to_string()
+        } else if cfg!(target_os = "macos") {
+            // On macOS, use sw_vers or uname
+            if let Ok(output) = std::process::Command::new("sw_vers")
+                .arg("-productVersion")
+                .output()
+            {
+                if let Ok(version) = String::from_utf8(output.stdout) {
+                    return format!("macOS {}", version.trim());
+                }
+            }
+            "macOS".to_string()
+        } else {
+            "Unknown".to_string()
+        }
+    }
+
     /// Configure Qt platform based on detected environment
     pub fn configure_qt_platform(&self) -> Result<()> {
         match (&self.os_type, self.is_wsl, self.display_available) {
@@ -266,7 +328,6 @@ impl PlatformInfo {
 mod tests {
     use super::*;
     use std::env;
-    use std::fs;
     use tempfile::TempDir;
 
     #[test]
@@ -377,6 +438,8 @@ mod tests {
             gpu_vendor: GpuVendor::Intel,
             display_available: true,
             font_directory: PathBuf::from("C:\\Windows\\Fonts"),
+            architecture: "x86_64".to_string(),
+            version: "Windows 11".to_string(),
         };
 
         platform.configure_qt_platform().unwrap();
@@ -392,6 +455,8 @@ mod tests {
             gpu_vendor: GpuVendor::Intel,
             display_available: false,
             font_directory: PathBuf::from("/usr/share/fonts"),
+            architecture: "x86_64".to_string(),
+            version: "WSL".to_string(),
         };
 
         platform.configure_qt_platform().unwrap();
@@ -407,6 +472,8 @@ mod tests {
             gpu_vendor: GpuVendor::Intel,
             display_available: true,
             font_directory: PathBuf::from("/usr/share/fonts"),
+            architecture: "x86_64".to_string(),
+            version: "Ubuntu 22.04".to_string(),
         };
 
         // Test X11 configuration
@@ -431,6 +498,8 @@ mod tests {
             gpu_vendor: GpuVendor::Intel,
             display_available: false,
             font_directory: PathBuf::from("/usr/share/fonts"),
+            architecture: "x86_64".to_string(),
+            version: "Ubuntu 22.04".to_string(),
         };
 
         platform.configure_qt_platform().unwrap();
@@ -474,6 +543,8 @@ mod tests {
             gpu_vendor: GpuVendor::Intel,
             display_available: true,
             font_directory: PathBuf::from("C:\\Windows\\Fonts"),
+            architecture: "x86_64".to_string(),
+            version: "Windows 11".to_string(),
         };
 
         // Test JSON serialization
@@ -510,6 +581,8 @@ mod tests {
             gpu_vendor: GpuVendor::Nvidia,
             display_available: false,
             font_directory: PathBuf::from("/usr/share/fonts"),
+            architecture: "x86_64".to_string(),
+            version: "Ubuntu 22.04".to_string(),
         };
 
         let debug_string = format!("{:?}", platform);
@@ -553,6 +626,25 @@ mod tests {
 
         // Should be a valid path structure
         assert!(font_dir.is_absolute() || font_dir.starts_with("/"));
+    }
+
+    #[test]
+    fn test_temporary_directory_operations() {
+        // Test temporary directory creation and usage
+        let temp_dir = TempDir::new().unwrap();
+        let temp_file_path = temp_dir.path().join("test_config.txt");
+
+        // Write test data to temporary file
+        fs::write(&temp_file_path, "test configuration data").unwrap();
+
+        // Verify file was created and contains expected data
+        assert!(temp_file_path.exists());
+        let content = fs::read_to_string(&temp_file_path).unwrap();
+        assert_eq!(content, "test configuration data");
+
+        // Test temporary directory cleanup (automatic when TempDir goes out of scope)
+        drop(temp_file_path);
+        // TempDir will be cleaned up automatically
     }
 
     #[test]

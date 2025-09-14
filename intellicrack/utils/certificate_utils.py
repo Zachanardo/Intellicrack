@@ -1,5 +1,4 @@
-"""
-Certificate generation utilities for SSL interception.
+"""Certificate generation utilities for SSL interception.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,14 +28,14 @@ from cryptography.x509.oid import NameOID
 
 
 def generate_self_signed_cert(common_name="intellicrack.local"):
-    """
-    Generates a self-signed certificate for SSL interception.
+    """Generates a self-signed certificate for SSL interception.
 
     Args:
         common_name (str): The common name for the certificate.
 
     Returns:
         A tuple containing the certificate and private key in PEM format.
+
     """
     # Generate our private key
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())

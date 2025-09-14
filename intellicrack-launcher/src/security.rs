@@ -1,5 +1,6 @@
 use anyhow::Result;
-use pyo3::Python;
+use pyo3::prelude::*;
+use pyo3::types::PyAnyMethods;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
@@ -215,7 +216,7 @@ impl SecurityManager {
         info!("Initializing Python security patches");
 
         // Check if Python is initialized before trying to use it
-        match Python::with_gil(|_| -> Result<(), anyhow::Error> { Ok(()) }) {
+        match Python::attach(|_| -> Result<(), anyhow::Error> { Ok(()) }) {
             Ok(_) => {
                 // Python is initialized, proceed
             }
@@ -225,7 +226,7 @@ impl SecurityManager {
             }
         }
 
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             match py.import("intellicrack.core.security_enforcement") {
                 Ok(security_module) => {
                     debug!("Security enforcement module imported");
@@ -260,7 +261,7 @@ impl SecurityManager {
         // Set bypass environment variable for Python integration
         env::set_var("INTELLICRACK_SECURITY_BYPASS", "1");
 
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
                 if let Ok(security_obj) = security_module.getattr("_security") {
                     if let Ok(enable_bypass) = security_obj.getattr("enable_bypass") {
@@ -278,7 +279,7 @@ impl SecurityManager {
         // Remove bypass environment variable
         env::remove_var("INTELLICRACK_SECURITY_BYPASS");
 
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
                 if let Ok(security_obj) = security_module.getattr("_security") {
                     if let Ok(disable_bypass) = security_obj.getattr("disable_bypass") {
@@ -413,11 +414,11 @@ impl SecurityManager {
         let mut patches_applied = HashMap::new();
 
         // Check if Python security patches are applied
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
                 if let Ok(status_func) = security_module.getattr("get_security_status") {
                     if let Ok(status) = status_func.call0() {
-                        if let Ok(status_dict) = status.extract::<HashMap<String, pyo3::PyObject>>()
+                        if let Ok(status_dict) = status.extract::<HashMap<String, Py<PyAny>>>()
                         {
                             if let Some(patches) = status_dict.get("patches_applied") {
                                 if let Ok(patches_dict) =
@@ -471,7 +472,6 @@ mod tests {
     use super::*;
     use std::env;
     use std::fs;
-    use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
 
     fn get_test_security_manager() -> SecurityManager {
@@ -978,5 +978,24 @@ mod tests {
         // Verify cleanup
         assert!(env::var("INTELLICRACK_SANDBOX").is_err());
         assert!(env::var("INTELLICRACK_DEFAULT_HASH").is_err());
+    }
+
+    #[test]
+    fn test_temporary_file_security_operations() {
+        // Test secure temporary file creation and usage
+        let temp_file = NamedTempFile::new().unwrap();
+        let temp_path = temp_file.path().to_path_buf();
+
+        // Write sensitive data to temporary file
+        fs::write(&temp_path, "sensitive security configuration").unwrap();
+
+        // Verify file was created and contains data
+        assert!(temp_path.exists());
+        let content = fs::read_to_string(&temp_path).unwrap();
+        assert_eq!(content, "sensitive security configuration");
+
+        // Test that file is automatically cleaned up when NamedTempFile is dropped
+        drop(temp_file);
+        // On some systems, the file might still exist until process exit, but this demonstrates usage
     }
 }

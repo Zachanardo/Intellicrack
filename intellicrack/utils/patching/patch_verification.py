@@ -513,6 +513,7 @@ def _validate_binary_selection(app: Any) -> bool:
 
     Returns:
         True if binary is selected, False otherwise
+
     """
     if not app.binary_path:
         app.update_output.emit(log_message("[License Rewrite] No binary selected."))
@@ -525,6 +526,7 @@ def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
 
     Returns:
         Tuple of (patches list, strategy used)
+
     """
     patches = []
     strategy_used = "None"
@@ -555,6 +557,7 @@ def _sort_candidates_by_confidence(candidates):
 
     Returns:
         Sorted list of candidates
+
     """
     if isinstance(candidates, list):
         candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
@@ -569,6 +572,7 @@ def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: l
 
     Returns:
         List of patches generated
+
     """
     patches = []
 
@@ -613,6 +617,7 @@ def _setup_disassembly_tools(is_64bit: bool) -> dict:
 
     Returns:
         Dictionary with 'ks' and 'md' tools
+
     """
     arch = keystone.KS_ARCH_X86
     ks_mode = keystone.KS_MODE_64 if is_64bit else keystone.KS_MODE_32
@@ -630,6 +635,7 @@ def _get_text_section(pe, app: Any):
 
     Returns:
         Text section or None if not found
+
     """
     text_section = next((s for s in pe.sections if b".text" in s.Name.lower()), None)
     if not text_section:
@@ -650,6 +656,7 @@ def _process_single_candidate(
 
     Returns:
         Patch dictionary or None if no patch generated
+
     """
     start_addr = candidate["start"]
     keywords = candidate.get("keywords", [])
@@ -670,6 +677,7 @@ def _generate_patch_bytes(is_64bit: bool, ks) -> tuple[bytes, str]:
 
     Returns:
         Tuple of (patch bytes, assembly string)
+
     """
     if is_64bit:
         # mov rax, 1; ret => 48 C7 C0 01 00 00 00 C3
@@ -698,6 +706,7 @@ def _perform_safety_check_and_patch(
 
     Returns:
         Patch dictionary or None if not safe
+
     """
     try:
         # Calculate offset within code_data
@@ -751,6 +760,7 @@ def _check_patch_safety_and_create(
 
     Returns:
         Patch dictionary or None if not safe
+
     """
     prologue_size = _calculate_safe_prologue_size(instructions)
 
@@ -783,6 +793,7 @@ def _calculate_safe_prologue_size(instructions: list) -> int:
 
     Returns:
         Safe prologue size in bytes
+
     """
     prologue_size = 0
     safe_prologue_mnemonics = ["push", "mov", "sub", "lea", "xor"]
@@ -882,6 +893,7 @@ def _apply_ai_fallback_patching(app: Any) -> list:
 
     Returns:
         List of patches generated
+
     """
     patches = []
 
@@ -936,6 +948,7 @@ def _process_ai_patches(app: Any, original_patches: list | None) -> list:
 
     Returns:
         List of patches
+
     """
     patches = app.potential_patches
 

@@ -47,18 +47,59 @@ except ImportError:
 
     # Fallback base classes
     class QObject:
+        """Fallback stub class for PyQt6.QtCore.QObject when PyQt6 is not available.
+
+        This class serves as a minimal implementation to prevent import errors
+        when PyQt6 is not installed. It provides no functionality and is only
+        used as a base class placeholder for compatibility.
+        """
+
         pass
 
     class QThread:
+        """Fallback stub class for PyQt6.QtCore.QThread when PyQt6 is not available.
+
+        This class serves as a minimal implementation to prevent import errors
+        when PyQt6 is not installed. It provides no threading functionality and is only
+        used as a base class placeholder for compatibility.
+        """
+
         pass
 
     class QDialog:
+        """Fallback stub class for PyQt6.QtWidgets.QDialog when PyQt6 is not available.
+
+        This class serves as a minimal implementation to prevent import errors
+        when PyQt6 is not installed. It provides no dialog functionality and is only
+        used as a base class placeholder for compatibility.
+        """
+
         pass
 
     class QWidget:
+        """Fallback stub class for PyQt6.QtWidgets.QWidget when PyQt6 is not available.
+
+        This class serves as a minimal implementation to prevent import errors
+        when PyQt6 is not installed. It provides no widget functionality and is only
+        used as a base class placeholder for compatibility.
+        """
+
         pass
 
     def pyqtSignal(*args):
+        """Fallback stub function for PyQt6.QtCore.pyqtSignal when PyQt6 is not available.
+
+        This function serves as a minimal implementation to prevent import errors
+        when PyQt6 is not installed. It returns None and provides no signal functionality,
+        used only as a placeholder for compatibility.
+
+        Args:
+            *args: Signal signature arguments (ignored in fallback implementation)
+
+        Returns:
+            None: Always returns None as no signal functionality is available
+
+        """
         return None
 
 
@@ -83,6 +124,7 @@ class DistributedTask:
             task_id: Unique identifier for the task
             task_type: Type of processing task (analysis, cracking, etc.)
             parameters: Task configuration parameters
+
         """
         self.task_id = task_id
         self.task_type = task_type
@@ -126,6 +168,7 @@ class DistributedWorkerThread(QThread):
         Args:
             worker_id: Unique identifier for this worker
             task_queue: Shared task queue to process
+
         """
         if HAS_PYQT6:
             super().__init__()
@@ -155,6 +198,7 @@ class DistributedWorkerThread(QThread):
 
         Returns:
             Next task to process or None if queue is empty
+
         """
         with self.queue_lock:
             for task in self.task_queue:
@@ -170,6 +214,7 @@ class DistributedWorkerThread(QThread):
 
         Args:
             task: Task to process
+
         """
         try:
             self.current_task = task
@@ -216,6 +261,7 @@ class DistributedWorkerThread(QThread):
 
         Returns:
             Analysis results
+
         """
         binary_path = task.parameters.get("binary_path")
         if not binary_path:
@@ -273,6 +319,7 @@ class DistributedWorkerThread(QThread):
 
         Returns:
             Cracking results
+
         """
         hash_value = task.parameters.get("hash")
         wordlist = task.parameters.get("wordlist", "default")
@@ -319,6 +366,7 @@ class DistributedWorkerThread(QThread):
 
         Returns:
             Scan results
+
         """
         target = task.parameters.get("target")
         scan_type = task.parameters.get("scan_type", "basic")
@@ -368,6 +416,7 @@ class DistributedWorkerThread(QThread):
 
         Returns:
             Processing results
+
         """
         # Simulate generic processing
         steps = task.parameters.get("steps", 10)
@@ -608,6 +657,7 @@ class DistributedProcessing:
 
         Args:
             main_app_instance: Main application instance (optional)
+
         """
         try:
             if not HAS_PYQT6:
@@ -636,6 +686,7 @@ class DistributedProcessing:
 
         Returns:
             Task ID of the added task
+
         """
         task_id = f"task_{len(self.tasks) + 1}_{int(time.time())}"
         task = DistributedTask(task_id, task_type, parameters)
@@ -652,6 +703,7 @@ class DistributedProcessing:
 
         Returns:
             Task status information or None if not found
+
         """
         for task in self.tasks:
             if task.task_id == task_id:
@@ -663,6 +715,7 @@ class DistributedProcessing:
 
         Returns:
             List of all task status information
+
         """
         return [task.to_dict() for task in self.tasks]
 
@@ -674,6 +727,7 @@ class DistributedProcessing:
 
         Returns:
             True if task was cancelled, False if not found
+
         """
         for task in self.tasks:
             if task.task_id == task_id and task.status in [ProcessingStatus.QUEUED, ProcessingStatus.RUNNING]:

@@ -499,7 +499,6 @@ class HASPEmulator:
 
     def _initialize_real_hasp_memory(self):
         """Initialize dongle memory with real HASP data structure."""
-
         # HASP memory layout:
         # 0x0000-0x00FF: System area (256 bytes)
         # 0x0100-0x01FF: Feature directory (256 bytes)
@@ -1115,6 +1114,7 @@ class HardwareFingerprintGenerator:
 
         Returns:
             subprocess.CompletedProcess or None if command unavailable
+
         """
         if not cmd_parts:
             return None
@@ -1154,7 +1154,6 @@ class HardwareFingerprintGenerator:
 
     def _get_cpu_id_linux(self) -> str:
         """Get CPU ID on Linux."""
-
         try:
             with open("/proc/cpuinfo") as f:
                 for line in f:
@@ -1178,7 +1177,6 @@ class HardwareFingerprintGenerator:
 
     def _get_cpu_id_default(self) -> str:
         """Get CPU ID for other systems."""
-
         return hashlib.sha256(f"{platform.processor()}{platform.machine()}{platform.node()}".encode()).hexdigest()[:16]
 
     # Platform-specific motherboard ID handlers
@@ -1202,7 +1200,6 @@ class HardwareFingerprintGenerator:
 
     def _get_motherboard_id_linux(self) -> str:
         """Get motherboard ID on Linux."""
-
         try:
             with open("/sys/class/dmi/id/board_serial") as f:
                 return f.read().strip()
@@ -1239,7 +1236,6 @@ class HardwareFingerprintGenerator:
 
     def _get_motherboard_id_default(self) -> str:
         """Get motherboard ID for other systems."""
-
         return hashlib.sha256(f"{platform.node()}{platform.platform()}".encode()).hexdigest()[:16]
 
     # Platform-specific disk serial handlers
@@ -1334,7 +1330,6 @@ class HardwareFingerprintGenerator:
 
     def _get_disk_serial_default(self) -> str:
         """Get disk serial for other systems."""
-
         try:
             stat_info = os.statvfs("/")
             return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
@@ -1346,7 +1341,6 @@ class HardwareFingerprintGenerator:
     # MAC address handler
     def _get_mac_address(self) -> str:
         """Get MAC address cross-platform."""
-
         try:
             mac_num = uuid.getnode()
             # Check if it's a real MAC (not random)
@@ -1425,7 +1419,6 @@ class HardwareFingerprintGenerator:
     # Main refactored method
     def generate_fingerprint(self) -> HardwareFingerprint:
         """Generate hardware fingerprint from system with reduced complexity."""
-
         try:
             fingerprint = HardwareFingerprint()
 

@@ -34,6 +34,13 @@ class APIKeyConfigDialog(QDialog):
     """Dialog for configuring API keys and model settings."""
 
     def __init__(self, model_name, parent=None):
+        """
+        Initialize the API key configuration dialog.
+
+        Args:
+            model_name: Name of the AI model to configure (e.g., "GPT-4", "Claude")
+            parent: Parent widget for the dialog
+        """
         super().__init__(parent)
         self.model_name = model_name
         self.setWindowTitle(f"Configure {model_name}")
@@ -41,6 +48,12 @@ class APIKeyConfigDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
+        """Set up the user interface for the API key configuration dialog.
+
+        Configures the dialog layout with form fields for API key, base URL,
+        model selection, temperature, and max tokens settings. Includes
+        standard dialog buttons for accepting or canceling the configuration.
+        """
         layout = QVBoxLayout(self)
 
         # Form layout for settings
@@ -91,6 +104,21 @@ class APIKeyConfigDialog(QDialog):
         layout.addWidget(buttons)
 
     def get_config(self):
+        """Retrieve the current configuration from the dialog form fields.
+
+        Collects all the API configuration settings entered by the user,
+        including API key, base URL, model name, temperature, and max tokens.
+        Temperature is converted from integer (0-200) to float (0.0-2.0).
+
+        Returns:
+            dict: Configuration dictionary containing:
+                - api_key: The API key string
+                - base_url: Base URL string or None if empty
+                - model: Model name string
+                - temperature: Temperature as float (0.0-2.0)
+                - max_tokens: Maximum tokens as integer
+
+        """
         return {
             "api_key": self.api_key_edit.text(),
             "base_url": self.base_url_edit.text() or None,
@@ -100,6 +128,21 @@ class APIKeyConfigDialog(QDialog):
         }
 
     def set_config(self, config):
+        """Populate the dialog form fields with the provided configuration.
+
+        Sets the API key, base URL, model name, temperature, and max tokens
+        fields based on the configuration dictionary. Temperature is converted
+        from float (0.0-2.0) to integer (0-200) for the spin box.
+
+        Args:
+            config: Configuration dictionary containing:
+                - api_key: API key string (optional)
+                - base_url: Base URL string (optional)
+                - model: Model name string (optional)
+                - temperature: Temperature as float (0.0-2.0, optional)
+                - max_tokens: Maximum tokens as integer (optional)
+
+        """
         if config.get("api_key"):
             self.api_key_edit.setText(config["api_key"])
         if config.get("base_url"):
@@ -167,7 +210,9 @@ class AIAssistantTab(BaseTab):
 
         self.input_text = QTextEdit()
         self.input_text.setPlaceholderText("Enter your query or paste code/binary analysis here...")
-        self.input_text.setToolTip("Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats")
+        self.input_text.setToolTip(
+            "Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats"
+        )
         input_layout.addWidget(self.input_text)
 
         # Action buttons

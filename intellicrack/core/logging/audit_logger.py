@@ -432,6 +432,7 @@ class AuditLogger:
             purpose: Purpose for credential access
             success: Whether access was successful
             severity: Override default severity level (defaults to context-appropriate level)
+
         """
         # Determine appropriate severity level based on context
         if severity is None:

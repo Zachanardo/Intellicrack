@@ -94,6 +94,7 @@ class GpuAnalysis:
 
         Args:
             app: Main application instance with binary data and UI signals
+
         """
         try:
             log_info("Starting GPU-accelerated binary analysis", category="GPU")
@@ -288,6 +289,7 @@ class GpuAnalysis:
 
         Returns:
             Dictionary containing GPU status information
+
         """
         return {
             "gpu_available": self.gpu_available,
@@ -301,6 +303,7 @@ class GpuAnalysis:
 
         Returns:
             List of supported file extensions/formats
+
         """
         return [
             ".exe",

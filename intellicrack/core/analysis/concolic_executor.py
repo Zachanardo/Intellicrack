@@ -448,7 +448,14 @@ except ImportError:
                 self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
-                """Callback before state fork."""
+                """Callback before state fork.
+
+                Args:
+                    state: Current execution state before forking
+                    new_state: New execution state being created
+                    *args: Additional positional arguments from the execution engine
+                    **kwargs: Additional keyword arguments from the execution engine
+                """
                 self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
 
             def will_execute_instruction_callback(self, state, pc, insn):
@@ -594,6 +601,8 @@ class ConcolicExecutionEngine:
 
                     Args:
                         state: The state that will be forked
+                        *args: Additional positional arguments from the execution engine
+                        **kwargs: Additional keyword arguments from the execution engine
 
                     """
                     self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
@@ -1128,7 +1137,15 @@ class ConcolicExecutionEngine:
                 return vuln
 
             def will_fork_state_callback(self, state, expression, solutions, *args, **kwargs):
-                """Track constraints when state forks."""
+                """Track constraints when state forks.
+
+                Args:
+                    state: Current execution state being forked
+                    expression: Symbolic expression representing the branch condition
+                    solutions: Possible solutions for the branch condition
+                    *args: Additional positional arguments from the execution engine
+                    **kwargs: Additional keyword arguments from the execution engine
+                """
                 try:
                     constraint_str = str(expression) if expression else "unknown"
 
@@ -1258,6 +1275,7 @@ class ConcolicExecutionEngine:
 
         Returns:
             dict: Execution results including paths, coverage, and discovered vulnerabilities
+
         """
         if binary_path:
             self.binary_path = binary_path

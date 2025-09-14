@@ -1,5 +1,4 @@
-"""
-Enhanced Protection Scanner.
+"""Enhanced Protection Scanner.
 
 This module provides functionality to scan for various software protections
 like packers, anti-debugging techniques, and virtualization detection.
@@ -82,9 +81,7 @@ def run_scan_thread(main_app, binary_path):
 
 
 def run_enhanced_protection_scan(main_app):
-    """
-    Runs an enhanced scan for software protections on the target binary.
-    """
+    """Runs an enhanced scan for software protections on the target binary."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Protection Scanner] Error: No binary loaded.")
         return

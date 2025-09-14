@@ -1190,6 +1190,7 @@ class R2RealtimeAnalyzer:
 
         Returns:
             Dictionary containing enhanced string analysis results
+
         """
         try:
             # Import the enhanced string analyzer
@@ -1306,6 +1307,7 @@ class R2RealtimeAnalyzer:
 
         Returns:
             Dictionary containing dynamic monitoring results
+
         """
         try:
             # Dynamic string monitoring - check memory regions for new strings
@@ -1363,6 +1365,7 @@ class R2RealtimeAnalyzer:
 
         Returns:
             Dictionary containing API call monitoring results
+
         """
         try:
             # Get imports that relate to string operations

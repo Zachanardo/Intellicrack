@@ -723,7 +723,6 @@ except Exception as e:
 mod tests {
     use super::*;
     use std::env;
-    use tempfile::TempDir;
 
     fn setup_test_environment() {
         let _ = tracing_subscriber::fmt().with_test_writer().try_init();
@@ -928,7 +927,7 @@ mod tests {
         assert_eq!(deserialized.version, Some("2.13.0".to_string()));
         assert_eq!(
             deserialized.details.get("test_key"),
-            Some(&"test_value".to_string())
+            Some(&serde_json::Value::String("test_value".to_string()))
         );
     }
 
@@ -1045,7 +1044,9 @@ mod tests {
 
             // Should contain either an error message or some diagnostic info
             let has_error_info = status.details.values().any(|v| {
-                v.contains("error") || v.contains("failed") || v.contains("not available")
+                v.as_str().unwrap_or("").contains("error") ||
+                v.as_str().unwrap_or("").contains("failed") ||
+                v.as_str().unwrap_or("").contains("not available")
             });
             assert!(has_error_info);
         }

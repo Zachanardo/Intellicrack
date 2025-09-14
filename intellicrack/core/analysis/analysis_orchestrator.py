@@ -654,6 +654,7 @@ def run_selected_analysis(binary_path: str, analysis_types: list[str] | None = N
 
     Returns:
         Analysis results dictionary
+
     """
     orchestrator = AnalysisOrchestrator(binary_path)
 

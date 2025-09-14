@@ -1,5 +1,4 @@
-"""
-Binary analysis utility functions.
+"""Binary analysis utility functions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -92,8 +91,7 @@ except ImportError as e:
 
 
 def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True) -> Dict[str, Any]:
-    """
-    Optimized binary analysis with performance management for large files.
+    """Optimized binary analysis with performance management for large files.
 
     Args:
         binary_path: Path to the binary file
@@ -102,6 +100,7 @@ def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_perfor
 
     Returns:
         Dictionary containing analysis results
+
     """
     if not os.path.exists(binary_path):
         return {"error": f"File not found: {binary_path}"}
@@ -168,8 +167,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
 
 
 def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> Dict[str, Any]:
-    """
-    Main binary analysis orchestrator.
+    """Main binary analysis orchestrator.
 
     Identifies the binary format and performs appropriate analysis.
 
@@ -180,6 +178,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
 
     Returns:
         Dict containing analysis results
+
     """
     # Validate input type and value
     if not isinstance(binary_path, (str, bytes, os.PathLike)):
@@ -220,8 +219,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
 
 
 def _integrate_ai_script_generation(analysis_results: Dict[str, Any], binary_path: str) -> Dict[str, Any]:
-    """
-    Integrate AI script generation workflow with binary analysis results.
+    """Integrate AI script generation workflow with binary analysis results.
 
     Args:
         analysis_results: Results from binary analysis
@@ -229,6 +227,7 @@ def _integrate_ai_script_generation(analysis_results: Dict[str, Any], binary_pat
 
     Returns:
         Enhanced analysis results with AI script generation suggestions
+
     """
     try:
         # Import AI components
@@ -470,14 +469,14 @@ def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[s
 
 
 def identify_binary_format(binary_path: str) -> str:
-    """
-    Identify the format of a binary file.
+    """Identify the format of a binary file.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         String indicating the format (PE, ELF, MACHO, UNKNOWN)
+
     """
     try:
         with open(binary_path, "rb") as f:
@@ -525,8 +524,7 @@ def identify_binary_format(binary_path: str) -> str:
 
 
 def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
-    """
-    Analyze a PE (Windows) binary.
+    """Analyze a PE (Windows) binary.
 
     Args:
         binary_path: Path to the binary file
@@ -534,6 +532,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
     Returns:
         Dict containing PE analysis results
+
     """
     _ = detailed
     if not PEFILE_AVAILABLE:
@@ -625,8 +624,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
 
 def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
-    """
-    Analyze an ELF (Linux) binary.
+    """Analyze an ELF (Linux) binary.
 
     Args:
         binary_path: Path to the binary file
@@ -634,6 +632,7 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
     Returns:
         Dict containing ELF analysis results
+
     """
     _ = detailed
     # Try LIEF first, then pyelftools
@@ -737,8 +736,7 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, A
 
 
 def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
-    """
-    Analyze a Mach-O (macOS) binary.
+    """Analyze a Mach-O (macOS) binary.
 
     Args:
         binary_path: Path to the binary file
@@ -746,6 +744,7 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
     Returns:
         Dict containing Mach-O analysis results
+
     """
     _ = detailed
     if LIEF_AVAILABLE:
@@ -832,8 +831,7 @@ def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, A
 
 
 def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -> Dict[str, Any]:
-    """
-    Analyze patterns in a binary file.
+    """Analyze patterns in a binary file.
 
     Args:
         binary_path: Path to the binary file
@@ -841,6 +839,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
 
     Returns:
         Dict containing pattern analysis results
+
     """
     if patterns is None:
         # Default patterns for license checks and protection
@@ -911,8 +910,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
 
 
 def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = None, duration: int = 60) -> Dict[str, Any]:
-    """
-    Analyze network traffic for license-related communications.
+    """Analyze network traffic for license-related communications.
 
     Args:
         pcap_file: Path to PCAP file to analyze (optional)
@@ -921,6 +919,7 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
 
     Returns:
         Dict containing traffic analysis results
+
     """
     _ = duration
     results = {
@@ -1230,14 +1229,14 @@ def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
 
 
 def extract_binary_info(binary_path: str) -> Dict[str, Any]:
-    """
-    Extract basic binary information.
+    """Extract basic binary information.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing basic binary information
+
     """
     info = get_basic_file_info(binary_path)
     info["format"] = identify_binary_format(binary_path)
@@ -1258,14 +1257,14 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
 
 
 def extract_binary_features(binary_path: str) -> Dict[str, Any]:
-    """
-    Extract features from binary for ML analysis.
+    """Extract features from binary for ML analysis.
 
     Args:
         binary_path: Path to the binary file
 
     Returns:
         Dict containing extracted features
+
     """
     features = {
         "file_size": 0,
@@ -1317,8 +1316,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
 
 
 def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_frequency: int = 2) -> List[Tuple[bytes, int]]:
-    """
-    Extract frequently occurring byte patterns from binary.
+    """Extract frequently occurring byte patterns from binary.
 
     Args:
         binary_path: Path to the binary file
@@ -1327,6 +1325,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_f
 
     Returns:
         List of (pattern, frequency) tuples
+
     """
     patterns = {}
 
@@ -1358,8 +1357,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_f
 
 
 def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None) -> Dict[str, Any]:
-    """
-    Scan binary for known signatures.
+    """Scan binary for known signatures.
 
     Args:
         binary_path: Path to the binary file
@@ -1367,6 +1365,7 @@ def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None)
 
     Returns:
         Dict containing scan results
+
     """
     if signatures is None:
         # Default signatures for common packers/protectors
@@ -1625,8 +1624,7 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
 
 def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[str]:
-    """
-    Get quick disassembly of binary entry point for UI display.
+    """Get quick disassembly of binary entry point for UI display.
 
     Args:
         binary_path: Path to binary file
@@ -1634,6 +1632,7 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
 
     Returns:
         List of disassembly lines
+
     """
     try:
         # Try to use capstone for disassembly
@@ -1748,8 +1747,7 @@ def _get_elf_entry_point(binary_path: str) -> int:
 def disassemble_with_objdump(
     binary_path: str, extra_args: Optional[List[str]] = None, timeout: int = 30, parse_func=None
 ) -> Optional[List[Any]]:
-    """
-    Common objdump disassembly fallback function.
+    """Common objdump disassembly fallback function.
 
     Args:
         binary_path: Path to binary file
@@ -1759,6 +1757,7 @@ def disassemble_with_objdump(
 
     Returns:
         List of parsed instructions or None if objdump fails
+
     """
     try:
         cmd = ["objdump", "-d"]

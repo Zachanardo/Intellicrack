@@ -1064,6 +1064,7 @@ class TrainingThread(QThread):
 
         return embedding_params + layer_params + output_params
 
+
 class LicenseAnalysisNeuralNetwork:
     """Production-ready neural network for binary analysis when PyTorch unavailable."""
 
@@ -1121,8 +1122,8 @@ class LicenseAnalysisNeuralNetwork:
         for i in range(len(self.config["hidden_layers"]) - 1):
             fan_in = self.config["hidden_layers"][i]
             fan_out = self.config["hidden_layers"][i + 1]
-            self.weights[f"W{i+2}"] = self._xavier_init(fan_in, fan_out)
-            self.biases[f"b{i+2}"] = self.np.zeros((1, fan_out))
+            self.weights[f"W{i + 2}"] = self._xavier_init(fan_in, fan_out)
+            self.biases[f"b{i + 2}"] = self.np.zeros((1, fan_out))
 
         # Output layer
         fan_in = self.config["hidden_layers"][-1]
@@ -1162,7 +1163,7 @@ class LicenseAnalysisNeuralNetwork:
                 padding = self.np.zeros((x.shape[0], self.config["input_size"] - x.shape[1]))
                 x = self.np.concatenate([x, padding], axis=1)
             else:
-                x = x[:, :self.config["input_size"]]
+                x = x[:, : self.config["input_size"]]
 
         # Store activations for backpropagation
         self.activations = {"a0": x}
@@ -1204,8 +1205,8 @@ class LicenseAnalysisNeuralNetwork:
         output_layer = len(self.config["hidden_layers"]) + 1
         dz = y_pred - y_true
 
-        gradients[f"dW{output_layer}"] = (1/m) * self.np.dot(self.activations[f"a{output_layer-1}"].T, dz)
-        gradients[f"db{output_layer}"] = (1/m) * self.np.sum(dz, axis=0, keepdims=True)
+        gradients[f"dW{output_layer}"] = (1 / m) * self.np.dot(self.activations[f"a{output_layer - 1}"].T, dz)
+        gradients[f"db{output_layer}"] = (1 / m) * self.np.sum(dz, axis=0, keepdims=True)
 
         # Backpropagate through hidden layers
         da = self.np.dot(dz, self.weights[f"W{output_layer}"].T)
@@ -1215,9 +1216,10 @@ class LicenseAnalysisNeuralNetwork:
             dz = da * self._relu_derivative(self.activations[f"z{i}"])
 
             # Weight gradients with L2 regularization
-            gradients[f"dW{i}"] = (1/m) * self.np.dot(self.activations[f"a{i-1}"].T, dz) + \
-                                   self.config["l2_regularization"] * self.weights[f"W{i}"]
-            gradients[f"db{i}"] = (1/m) * self.np.sum(dz, axis=0, keepdims=True)
+            gradients[f"dW{i}"] = (1 / m) * self.np.dot(self.activations[f"a{i - 1}"].T, dz) + self.config[
+                "l2_regularization"
+            ] * self.weights[f"W{i}"]
+            gradients[f"db{i}"] = (1 / m) * self.np.sum(dz, axis=0, keepdims=True)
 
             # Propagate gradient to next layer
             if i > 1:
@@ -1234,7 +1236,7 @@ class LicenseAnalysisNeuralNetwork:
         # L2 regularization
         l2_penalty = 0
         for weight_matrix in self.weights.values():
-            l2_penalty += self.np.sum(weight_matrix ** 2)
+            l2_penalty += self.np.sum(weight_matrix**2)
         l2_penalty *= self.config["l2_regularization"] / 2
 
         return cross_entropy + l2_penalty
@@ -1257,15 +1259,13 @@ class LicenseAnalysisNeuralNetwork:
         }
 
         for epoch in range(epochs):
-            epoch_loss, epoch_accuracy = self._train_epoch(
-                x_train, y_train, n_batches, batch_size, epoch, epochs, training_metrics
-            )
+            epoch_loss, epoch_accuracy = self._train_epoch(x_train, y_train, n_batches, batch_size, epoch, epochs, training_metrics)
 
             # Validation
             if validation_data:
                 self._validate_epoch(validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy)
             else:
-                self.logger.info(f"Epoch {epoch+1}/{epochs}: Loss={epoch_loss:.4f}, Accuracy={epoch_accuracy:.4f}")
+                self.logger.info(f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Accuracy={epoch_accuracy:.4f}")
 
         self.training = False
         self.loss_history = training_metrics["loss_history"]
@@ -1276,7 +1276,7 @@ class LicenseAnalysisNeuralNetwork:
             "final_loss": training_metrics["loss_history"][-1],
             "final_accuracy": training_metrics["accuracy_history"][-1],
             "metrics": training_metrics,
-            "message": "Sophisticated license analysis training completed successfully"
+            "message": "Sophisticated license analysis training completed successfully",
         }
 
     def _train_epoch(self, x_train, y_train, n_batches, batch_size, epoch, epochs, training_metrics):
@@ -1342,16 +1342,18 @@ class LicenseAnalysisNeuralNetwork:
         training_metrics["validation_loss"].append(val_loss)
         training_metrics["validation_accuracy"].append(val_accuracy)
 
-        self.logger.info(f"Epoch {epoch+1}/{epochs}: Loss={epoch_loss:.4f}, Acc={epoch_accuracy:.4f}, Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}")
+        self.logger.info(
+            f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Acc={epoch_accuracy:.4f}, Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}"
+        )
 
     def _update_weights(self, gradients, learning_rate):
         """Update weights using gradient descent with momentum."""
         # Initialize momentum if not exists
-        if not hasattr(self, 'momentum'):
+        if not hasattr(self, "momentum"):
             self.momentum = {}
             for key in self.weights:
                 self.momentum[f"m_dW{key[1:]}"] = self.np.zeros_like(self.weights[key])
-                self.momentum[f"m_db{key[1:]}"] = self.np.zeros_like(self.biases[key.replace('W', 'b')])
+                self.momentum[f"m_db{key[1:]}"] = self.np.zeros_like(self.biases[key.replace("W", "b")])
 
         beta = 0.9  # Momentum parameter
 
@@ -1429,7 +1431,7 @@ class LicenseAnalysisNeuralNetwork:
             "version": "1.0.0",
         }
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             self.json.dump(model_data, f, indent=2)
 
         return {"status": "model_saved", "path": filepath}
@@ -1544,9 +1546,9 @@ class LicenseAnalysisNeuralNetwork:
             # Generate sophisticated license protection training data
             training_data, validation_data = self._generate_license_training_data()
 
-            if hasattr(self.model, 'train') and callable(self.model.train):
+            if hasattr(self.model, "train") and callable(self.model.train):
                 # Use the sophisticated neural network training
-                if hasattr(self.model, 'np'):  # Our custom neural network
+                if hasattr(self.model, "np"):  # Our custom neural network
                     self.logger.info("Starting license protection model training with custom neural network")
 
                     # Extract training features and labels
@@ -1561,7 +1563,7 @@ class LicenseAnalysisNeuralNetwork:
                         y_train=y_train,
                         epochs=self.config.epochs,
                         batch_size=self.config.batch_size,
-                        validation_data=validation_tuple
+                        validation_data=validation_tuple,
                     )
 
                     # Process real training metrics
@@ -1582,32 +1584,42 @@ class LicenseAnalysisNeuralNetwork:
                                 "epoch": epoch,
                                 "loss": loss,
                                 "accuracy": acc,
-                                "lr": metrics["learning_rate_schedule"][epoch] if epoch < len(metrics["learning_rate_schedule"]) else self.config.learning_rate,
+                                "lr": metrics["learning_rate_schedule"][epoch]
+                                if epoch < len(metrics["learning_rate_schedule"])
+                                else self.config.learning_rate,
                                 "progress": progress_ratio * 100,
-                                "validation_loss": metrics["validation_loss"][epoch] if epoch < len(metrics.get("validation_loss", [])) else None,
-                                "validation_accuracy": metrics["validation_accuracy"][epoch] if epoch < len(metrics.get("validation_accuracy", [])) else None,
+                                "validation_loss": metrics["validation_loss"][epoch]
+                                if epoch < len(metrics.get("validation_loss", []))
+                                else None,
+                                "validation_accuracy": metrics["validation_accuracy"][epoch]
+                                if epoch < len(metrics.get("validation_accuracy", []))
+                                else None,
                             }
 
                             self.training_history.append(training_metrics)
 
                             # Emit real progress updates
                             if PYQT6_AVAILABLE and self.progress_signal:
-                                self.progress_signal.emit({
-                                    **training_metrics,
-                                    "status": f"Training license analysis epoch {epoch + 1}/{self.config.epochs}",
-                                    "message": f"Loss: {loss:.4f}, Accuracy: {acc:.4f}",
-                                    "history": self.training_history[-5:],
-                                })
+                                self.progress_signal.emit(
+                                    {
+                                        **training_metrics,
+                                        "status": f"Training license analysis epoch {epoch + 1}/{self.config.epochs}",
+                                        "message": f"Loss: {loss:.4f}, Accuracy: {acc:.4f}",
+                                        "history": self.training_history[-5:],
+                                    }
+                                )
 
                             # Real validation phase
                             if training_metrics["validation_loss"] is not None:
                                 self.status = TrainingStatus.VALIDATING
                                 if PYQT6_AVAILABLE and self.progress_signal:
-                                    self.progress_signal.emit({
-                                        "status": self.status.value,
-                                        "message": f"Validation - Loss: {training_metrics['validation_loss']:.4f}, Acc: {training_metrics['validation_accuracy']:.4f}",
-                                        "step": current_step,
-                                    })
+                                    self.progress_signal.emit(
+                                        {
+                                            "status": self.status.value,
+                                            "message": f"Validation - Loss: {training_metrics['validation_loss']:.4f}, Acc: {training_metrics['validation_accuracy']:.4f}",
+                                            "step": current_step,
+                                        }
+                                    )
                                 self.status = TrainingStatus.TRAINING
 
                     # Final training completion with real results
@@ -1617,13 +1629,13 @@ class LicenseAnalysisNeuralNetwork:
                         "final_loss": training_results.get("final_loss", 0),
                         "final_accuracy": training_results.get("final_accuracy", 0),
                         "message": training_results.get("message", "Training completed"),
-                        "license_capabilities": "Hardware binding, Registry validation, Activation analysis, Bypass assessment"
+                        "license_capabilities": "Hardware binding, Registry validation, Activation analysis, Bypass assessment",
                     }
 
                     if PYQT6_AVAILABLE and self.progress_signal:
                         self.progress_signal.emit(final_metrics)
 
-                elif hasattr(self.model, 'parameters'):  # PyTorch model
+                elif hasattr(self.model, "parameters"):  # PyTorch model
                     self.logger.info("Starting PyTorch-based license protection training")
 
                     # Real PyTorch training implementation for license analysis
@@ -1634,11 +1646,13 @@ class LicenseAnalysisNeuralNetwork:
                     # Fallback to evaluation
                     eval_results = self.model.eval()
                     if PYQT6_AVAILABLE and self.progress_signal:
-                        self.progress_signal.emit({
-                            "status": "Model switched to evaluation mode",
-                            "message": str(eval_results),
-                            "step": 1,
-                        })
+                        self.progress_signal.emit(
+                            {
+                                "status": "Model switched to evaluation mode",
+                                "message": str(eval_results),
+                                "step": 1,
+                            }
+                        )
 
             else:
                 raise ValueError("Model does not implement training functionality")
@@ -1646,22 +1660,23 @@ class LicenseAnalysisNeuralNetwork:
         except Exception as e:
             self.logger.error("License protection training failed: %s", e)
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": "Training failed",
-                    "error": str(e),
-                    "step": -1,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": "Training failed",
+                        "error": str(e),
+                        "step": -1,
+                    }
+                )
             raise
 
     def _generate_license_training_data(self):
         """Generate sophisticated training data for license protection analysis."""
-
         self.logger.info("Generating license protection training dataset")
 
         # Create comprehensive binary feature vectors for license analysis
         n_samples = max(1000, self.config.batch_size * 10)  # Ensure sufficient data
         n_features = 1024  # Binary feature vector size
-        n_classes = 32     # License protection classification outputs
+        n_classes = 32  # License protection classification outputs
 
         # Generate realistic binary analysis features
         X_train = self._generate_binary_features(n_samples, n_features)
@@ -1707,11 +1722,18 @@ class LicenseAnalysisNeuralNetwork:
             registry_features = np.random.poisson(1.5, 128)
 
             # Combine all feature types
-            all_features = np.concatenate([
-                entropy_features, import_features, section_features,
-                license_features, hwid_features, protection_features,
-                anti_debug_features, registry_features
-            ])
+            all_features = np.concatenate(
+                [
+                    entropy_features,
+                    import_features,
+                    section_features,
+                    license_features,
+                    hwid_features,
+                    protection_features,
+                    anti_debug_features,
+                    registry_features,
+                ]
+            )
 
             # Ensure exact feature count
             if len(all_features) > n_features:
@@ -1737,13 +1759,13 @@ class LicenseAnalysisNeuralNetwork:
         features[:16] = np.random.exponential(2.0, 16)  # HWID complexity
 
         # Registry key patterns
-        features[16:32] = np.random.gamma(1.5, 2, 16)   # Registry usage
+        features[16:32] = np.random.gamma(1.5, 2, 16)  # Registry usage
 
         # Activation server communication
-        features[32:48] = np.random.beta(3, 7, 16)      # Network patterns
+        features[32:48] = np.random.beta(3, 7, 16)  # Network patterns
 
         # Cryptographic operations
-        features[48:64] = np.random.weibull(2, 16)      # Crypto signatures
+        features[48:64] = np.random.weibull(2, 16)  # Crypto signatures
 
         return features
 
@@ -1814,11 +1836,7 @@ class LicenseAnalysisNeuralNetwork:
 
             # Setup loss function and optimizer for multi-label classification
             criterion = nn.BCEWithLogitsLoss()  # Better for multi-label
-            optimizer = optim.AdamW(
-                self.model.parameters(),
-                lr=self.config.learning_rate,
-                weight_decay=1e-4
-            )
+            optimizer = optim.AdamW(self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4)
 
             # Learning rate scheduler
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.epochs)
@@ -1839,7 +1857,7 @@ class LicenseAnalysisNeuralNetwork:
                         break
 
                     # Move to device if available
-                    if hasattr(self, 'training_device') and torch.cuda.is_available():
+                    if hasattr(self, "training_device") and torch.cuda.is_available():
                         batch_x = batch_x.to(self.training_device)
                         batch_y = batch_y.to(self.training_device)
 
@@ -1880,7 +1898,7 @@ class LicenseAnalysisNeuralNetwork:
                     val_batches = 0
                     with torch.no_grad():
                         for val_x, val_y in val_loader:
-                            if hasattr(self, 'training_device') and torch.cuda.is_available():
+                            if hasattr(self, "training_device") and torch.cuda.is_available():
                                 val_x = val_x.to(self.training_device)
                                 val_y = val_y.to(self.training_device)
 
@@ -1917,25 +1935,29 @@ class LicenseAnalysisNeuralNetwork:
                     progress_data = {
                         **training_metrics,
                         "status": f"PyTorch license training epoch {epoch + 1}/{self.config.epochs}",
-                        "message": f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}" +
-                                 (f", Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}" if val_loader else ""),
+                        "message": f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}"
+                        + (f", Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}" if val_loader else ""),
                         "history": self.training_history[-5:],
                     }
                     self.progress_signal.emit(progress_data)
 
-                self.logger.info(f"Epoch {epoch+1}/{self.config.epochs}: " +
-                               f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}" +
-                               (f", Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}" if val_loader else ""))
+                self.logger.info(
+                    f"Epoch {epoch + 1}/{self.config.epochs}: "
+                    + f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}"
+                    + (f", Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}" if val_loader else "")
+                )
 
             # Final completion signal
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": "PyTorch license protection training completed",
-                    "step": len(self.training_history),
-                    "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
-                    "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
-                    "message": "Advanced license analysis model training completed successfully"
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": "PyTorch license protection training completed",
+                        "step": len(self.training_history),
+                        "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
+                        "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
+                        "message": "Advanced license analysis model training completed successfully",
+                    }
+                )
 
         except ImportError:
             self.logger.warning("PyTorch not available, falling back to custom neural network")

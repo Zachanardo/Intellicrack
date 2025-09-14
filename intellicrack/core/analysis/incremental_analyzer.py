@@ -1,5 +1,4 @@
-"""
-Incremental Analysis Engine.
+"""Incremental Analysis Engine.
 
 This module provides functionality to perform incremental analysis on binaries,
 using a caching mechanism to avoid re-analyzing unchanged files.
@@ -41,8 +40,7 @@ def get_cache_path(binary_path: str) -> Path:
 
 
 def run_incremental_analysis(main_app):
-    """
-    Runs analysis on the target binary, using cached results if available
+    """Runs analysis on the target binary, using cached results if available
     to speed up the process. This is a production-ready implementation.
     """
     if not main_app.current_binary:

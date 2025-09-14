@@ -1,5 +1,4 @@
-"""
-Subprocess Security Module.
+"""Subprocess Security Module.
 
 Provides secure subprocess execution with input validation and sanitization
 for the Intellicrack security research platform.
@@ -22,14 +21,39 @@ logger = logging.getLogger(__name__)
 
 # Define allowed executable patterns for security research tools
 ALLOWED_TOOLS = {
-    'wmic', 'tasklist', 'reg', 'powershell', 'cmd', 'psexec', 'scp', 'ssh',
-    'sshpass', 'winrs', 'john', 'hashcat', 'ghidra', 'frida', 'x64dbg',
-    'ida', 'ollydbg', 'radare2', 'objdump', 'nm', 'strings', 'file',
-    'upx', 'python', 'python3', 'node', 'npm', 'git', 'klist'
+    "wmic",
+    "tasklist",
+    "reg",
+    "powershell",
+    "cmd",
+    "psexec",
+    "scp",
+    "ssh",
+    "sshpass",
+    "winrs",
+    "john",
+    "hashcat",
+    "ghidra",
+    "frida",
+    "x64dbg",
+    "ida",
+    "ollydbg",
+    "radare2",
+    "objdump",
+    "nm",
+    "strings",
+    "file",
+    "upx",
+    "python",
+    "python3",
+    "node",
+    "npm",
+    "git",
+    "klist",
 }
 
 # Shell metacharacters that could be dangerous
-SHELL_METACHARACTERS = {'&', '|', ';', '$', '`', '\n', '\r', '>', '<', '(', ')', '{', '}', '[', ']', '*', '?', '~'}
+SHELL_METACHARACTERS = {"&", "|", ";", "$", "`", "\n", "\r", ">", "<", "(", ")", "{", "}", "[", "]", "*", "?", "~"}
 
 
 class SecureSubprocess:
@@ -37,8 +61,7 @@ class SecureSubprocess:
 
     @staticmethod
     def validate_executable(executable: str) -> str:
-        """
-        Validate that the executable is allowed and exists.
+        """Validate that the executable is allowed and exists.
 
         Args:
             executable: Path to executable or command name
@@ -48,10 +71,11 @@ class SecureSubprocess:
 
         Raises:
             ValueError: If executable is not allowed or doesn't exist
+
         """
         # Extract base name for validation
         base_name = os.path.basename(executable).lower()
-        base_name = base_name.replace('.exe', '').replace('.bat', '').replace('.sh', '')
+        base_name = base_name.replace(".exe", "").replace(".bat", "").replace(".sh", "")
 
         # Check if tool is in allowed list
         if base_name not in ALLOWED_TOOLS:
@@ -66,16 +90,17 @@ class SecureSubprocess:
         else:
             # Try to find in PATH
             import shutil
+
             abs_path = shutil.which(executable)
             if not abs_path:
                 # Try common locations on Windows
-                if os.name == 'nt':
-                    system_root = os.environ.get('SystemRoot', 'C:\\Windows')
+                if os.name == "nt":
+                    system_root = os.environ.get("SystemRoot", "C:\\Windows")
                     possible_paths = [
-                        os.path.join(system_root, 'System32', executable),
-                        os.path.join(system_root, 'System32', f'{executable}.exe'),
-                        os.path.join(system_root, 'SysWOW64', executable),
-                        os.path.join(system_root, 'SysWOW64', f'{executable}.exe'),
+                        os.path.join(system_root, "System32", executable),
+                        os.path.join(system_root, "System32", f"{executable}.exe"),
+                        os.path.join(system_root, "SysWOW64", executable),
+                        os.path.join(system_root, "SysWOW64", f"{executable}.exe"),
                     ]
                     for path in possible_paths:
                         if os.path.exists(path):
@@ -89,8 +114,7 @@ class SecureSubprocess:
 
     @staticmethod
     def validate_argument(arg: str, allow_wildcards: bool = False) -> str:
-        """
-        Validate a single command argument.
+        """Validate a single command argument.
 
         Args:
             arg: Argument to validate
@@ -101,6 +125,7 @@ class SecureSubprocess:
 
         Raises:
             ValueError: If argument contains dangerous characters
+
         """
         # Convert to string if needed
         if not isinstance(arg, str):
@@ -109,14 +134,14 @@ class SecureSubprocess:
         # Check for shell metacharacters
         dangerous_chars = SHELL_METACHARACTERS.copy()
         if allow_wildcards:
-            dangerous_chars -= {'*', '?'}
+            dangerous_chars -= {"*", "?"}
 
         # Check for command injection attempts
         if any(char in arg for char in dangerous_chars):
             # Allow certain safe patterns
-            if arg.startswith('-') or arg.startswith('/'):  # Command flags
+            if arg.startswith("-") or arg.startswith("/"):  # Command flags
                 pass
-            elif '=' in arg and not any(char in arg for char in ['`', '$', ';', '|', '&']):  # Key=value pairs
+            elif "=" in arg and not any(char in arg for char in ["`", "$", ";", "|", "&"]):  # Key=value pairs
                 pass
             else:
                 raise ValueError(f"Potentially dangerous argument: {arg}")
@@ -125,8 +150,7 @@ class SecureSubprocess:
 
     @staticmethod
     def validate_command(command: List[str], allow_wildcards: bool = False) -> List[str]:
-        """
-        Validate entire command list.
+        """Validate entire command list.
 
         Args:
             command: List of command arguments
@@ -137,6 +161,7 @@ class SecureSubprocess:
 
         Raises:
             ValueError: If command validation fails
+
         """
         if not command:
             raise ValueError("Empty command")
@@ -157,17 +182,18 @@ class SecureSubprocess:
         return validated
 
     @staticmethod
-    def run(command: Union[List[str], str],
-            shell: bool = False,
-            capture_output: bool = True,
-            text: bool = True,
-            timeout: Optional[int] = None,
-            check: bool = False,
-            cwd: Optional[str] = None,
-            env: Optional[Dict[str, str]] = None,
-            **kwargs) -> subprocess.CompletedProcess:
-        """
-        Secure subprocess.run wrapper with validation.
+    def run(
+        command: Union[List[str], str],
+        shell: bool = False,
+        capture_output: bool = True,
+        text: bool = True,
+        timeout: Optional[int] = None,
+        check: bool = False,
+        cwd: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ) -> subprocess.CompletedProcess:
+        """Secure subprocess.run wrapper with validation.
 
         Args:
             command: Command to execute
@@ -182,13 +208,14 @@ class SecureSubprocess:
 
         Returns:
             CompletedProcess instance
+
         """
         # Force shell=False for security unless explicitly required
         if shell:
             logger.warning("Shell execution requested - this reduces security")
             # Convert to string for shell execution
             if isinstance(command, list):
-                command = ' '.join(command)
+                command = " ".join(command)
         else:
             # Validate command for non-shell execution
             if isinstance(command, str):
@@ -204,28 +231,21 @@ class SecureSubprocess:
 
         # Execute with security flags
         return subprocess.run(  # noqa: S603
-            command,
-            shell=shell,
-            capture_output=capture_output,
-            text=text,
-            timeout=timeout,
-            check=check,
-            cwd=cwd,
-            env=env,
-            **kwargs
+            command, shell=shell, capture_output=capture_output, text=text, timeout=timeout, check=check, cwd=cwd, env=env, **kwargs
         )
 
     @staticmethod
-    def popen(command: Union[List[str], str],
-             shell: bool = False,
-             stdout=None,
-             stderr=None,
-             stdin=None,
-             cwd: Optional[str] = None,
-             env: Optional[Dict[str, str]] = None,
-             **kwargs) -> subprocess.Popen:
-        """
-        Secure subprocess.Popen wrapper with validation.
+    def popen(
+        command: Union[List[str], str],
+        shell: bool = False,
+        stdout=None,
+        stderr=None,
+        stdin=None,
+        cwd: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ) -> subprocess.Popen:
+        """Secure subprocess.Popen wrapper with validation.
 
         Args:
             command: Command to execute
@@ -239,13 +259,14 @@ class SecureSubprocess:
 
         Returns:
             Popen instance
+
         """
         # Force shell=False for security unless explicitly required
         if shell:
             logger.warning("Shell execution requested - this reduces security")
             # Convert to string for shell execution
             if isinstance(command, list):
-                command = ' '.join(command)
+                command = " ".join(command)
         else:
             # Validate command for non-shell execution
             if isinstance(command, str):
@@ -261,14 +282,7 @@ class SecureSubprocess:
 
         # Execute with security flags
         return subprocess.Popen(  # noqa: S603
-            command,
-            shell=shell,
-            stdout=stdout,
-            stderr=stderr,
-            stdin=stdin,
-            cwd=cwd,
-            env=env,
-            **kwargs
+            command, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, env=env, **kwargs
         )
 
 

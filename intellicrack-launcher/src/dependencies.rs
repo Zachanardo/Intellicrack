@@ -1,9 +1,11 @@
 use anyhow::Result;
-use pyo3::types::IntoPyDict;
+use pyo3::types::{IntoPyDict, PyDict};
+use pyo3::prelude::*;
 use pyo3::Python;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
+use std::ffi::CStr;
 use std::process::Command;
 use tracing::{info, warn};
 
@@ -98,6 +100,7 @@ impl ValidationSummary {
     }
 }
 
+#[derive(Clone)]
 pub struct DependencyValidator {
     results: HashMap<String, DependencyStatus>,
 }
@@ -151,7 +154,7 @@ impl DependencyValidator {
     async fn check_flask_dependency(&mut self) -> Result<()> {
         info!("Checking Flask dependency");
 
-        let flask_status = Python::with_gil(|py| -> Result<DependencyStatus> {
+        let flask_status = Python::attach(|py| -> Result<DependencyStatus> {
             match py.import("flask") {
                 Ok(flask_module) => {
                     let flask_cors = py.import("flask_cors")?;
@@ -162,7 +165,7 @@ impl DependencyValidator {
 
                     // Test CORS
                     let cors_class = flask_cors.getattr("CORS")?;
-                    cors_class.call1((test_app,))?;
+                    cors_class.call1((test_app.clone(),))?;
 
                     // Test basic routing capability
                     let route = test_app.getattr("route")?;
@@ -217,7 +220,7 @@ impl DependencyValidator {
     async fn check_tensorflow_dependency(&mut self) -> Result<()> {
         info!("Checking TensorFlow dependency");
 
-        let tf_status = Python::with_gil(|py| -> Result<DependencyStatus> {
+        let tf_status = Python::attach(|py| -> Result<DependencyStatus> {
             // Configure TensorFlow environment
             env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
             env::set_var("CUDA_VISIBLE_DEVICES", "-1");
@@ -229,8 +232,7 @@ impl DependencyValidator {
 
                     // Disable GPU for Intel Arc B580 compatibility
                     let config = tf.getattr("config")?;
-                    config
-                        .call_method1("set_visible_devices", (py.eval("[]", None, None)?, "GPU"))?;
+                    config.call_method1("set_visible_devices", (py.eval(CStr::from_bytes_with_nul(b"[]\0").unwrap(), None, None)?, py.eval(CStr::from_bytes_with_nul(b"'GPU'\0").unwrap(), None, None)?))?;
 
                     // Test basic tensor operations
                     let constant =
@@ -293,7 +295,7 @@ impl DependencyValidator {
     async fn check_llama_cpp_dependency(&mut self) -> Result<()> {
         info!("Checking llama-cpp-python dependency");
 
-        let llama_status = Python::with_gil(|py| -> Result<DependencyStatus> {
+        let llama_status = Python::attach(|py| -> Result<DependencyStatus> {
             match py.import("llama_cpp") {
                 Ok(llama_module) => {
                     let mut details = HashMap::new();
@@ -407,7 +409,7 @@ impl DependencyValidator {
     async fn validate_flask_server(&self) -> Result<FlaskValidationResult> {
         info!("Validating Flask server configuration");
 
-        let result = Python::with_gil(|py| -> Result<FlaskValidationResult> {
+        let result = Python::attach(|py| -> Result<FlaskValidationResult> {
             let secrets = py.import("secrets")?;
             let flask = py.import("flask")?;
             let flask_cors = py.import("flask_cors")?;
@@ -418,8 +420,14 @@ impl DependencyValidator {
 
             // Configure CORS
             let cors_class = flask_cors.getattr("CORS")?;
-            let cors_config = py.eval("{'resources': {r'/*': {'origins': '*'}}}", None, None)?;
-            cors_class.call((app,), Some([("resources", cors_config)].into_py_dict(py)))?;
+            let cors_config = PyDict::new(py);
+            let resources_dict = PyDict::new(py);
+            let origins_dict = PyDict::new(py);
+            origins_dict.set_item("origins", "*")?;
+            resources_dict.set_item("/*", origins_dict)?;
+            cors_config.set_item("resources", resources_dict)?;
+            let kwargs = [("resources", cors_config)].into_py_dict(py).unwrap();
+            cors_class.call((app.clone(),), Some(&kwargs))?;
 
             // Configure app
             let config = app.getattr("config")?;
@@ -427,11 +435,13 @@ impl DependencyValidator {
             config.call_method1(
                 "update",
                 (py.eval(
-                    &format!(
-                        "{{'SECRET_KEY': '{}', 'JSON_SORT_KEYS': False, 'MAX_CONTENT_LENGTH': {}}}",
-                        secret_key.extract::<String>()?,
-                        16 * 1024 * 1024
-                    ),
+                    CStr::from_bytes_with_nul(
+                        format!(
+                            "{{'SECRET_KEY': '{}', 'JSON_SORT_KEYS': False, 'MAX_CONTENT_LENGTH': {}}}\0",
+                            secret_key.extract::<String>()?,
+                            16 * 1024 * 1024
+                        ).as_bytes()
+                    ).unwrap(),
                     None,
                     None,
                 )?,),
@@ -472,69 +482,74 @@ impl DependencyValidator {
     async fn validate_tensorflow_models(&self) -> Result<TensorFlowValidationResult> {
         info!("Validating TensorFlow model capabilities");
 
-        let result = Python::with_gil(|py| -> Result<TensorFlowValidationResult> {
+        let result = Python::attach(|py| -> Result<TensorFlowValidationResult> {
             // Configure TensorFlow environment
             env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
             env::set_var("CUDA_VISIBLE_DEVICES", "-1");
             env::set_var("MKL_THREADING_LAYER", "GNU");
 
+            // Import tensorflow handler and get tensorflow module
             let tf_handler = py.import("intellicrack.handlers.tensorflow_handler")?;
             let tf = tf_handler.getattr("tensorflow")?;
 
             // Disable GPU
             let config = tf.getattr("config")?;
-            config.call_method1("set_visible_devices", (py.eval("[]", None, None)?, "GPU"))?;
+            use std::ffi::CStr;
+            let empty_list = py.eval(CStr::from_bytes_with_nul(b"[]\0").unwrap(), None, None)?;
+            let gpu_string = py.eval(CStr::from_bytes_with_nul(b"'GPU'\0").unwrap(), None, None)?;
+            config.call_method1("set_visible_devices", (empty_list, gpu_string))?;
 
             // Get TF info
             let version: String = tf.getattr("__version__")?.extract()?;
             let physical_devices = config.call_method1("list_physical_devices", ("GPU",))?;
             let gpu_count: usize = physical_devices.call_method0("__len__")?.extract()?;
             let keras_available = tf.hasattr("keras")?;
-
-            // Test model building
             let keras = tf.getattr("keras")?;
-            let sequential = keras.getattr("Sequential")?;
             let layers = keras.getattr("layers")?;
 
+            let shape_tuple = py.eval(CStr::from_bytes_with_nul(b"(10,)\0").unwrap(), None, None)?;
+            let shape_kwargs = [("shape", shape_tuple)].into_py_dict(py).unwrap();
             let input_layer = layers.call_method(
                 "Input",
                 (),
-                Some([("shape", py.eval("(10,)", None, None)?)].into_py_dict(py)),
+                Some(&shape_kwargs),
             )?;
+            let relu_kwargs = [("activation", "relu")].into_py_dict(py).unwrap();
             let dense1 = layers.call_method(
                 "Dense",
                 (64,),
-                Some([("activation", "relu")].into_py_dict(py)),
+                Some(&relu_kwargs),
             )?;
             let dense2 = layers.call_method(
                 "Dense",
                 (32,),
-                Some([("activation", "relu")].into_py_dict(py)),
+                Some(&relu_kwargs),
             )?;
+            let sigmoid_kwargs = [("activation", "sigmoid")].into_py_dict(py).unwrap();
             let dense3 = layers.call_method(
                 "Dense",
                 (1,),
-                Some([("activation", "sigmoid")].into_py_dict(py)),
+                Some(&sigmoid_kwargs),
             )?;
 
+            let sequential = keras.getattr("Sequential")?;
+            let locals_dict = [
+                ("input_layer", input_layer),
+                ("dense1", dense1),
+                ("dense2", dense2),
+                ("dense3", dense3),
+            ].into_py_dict(py).unwrap();
             let model = sequential.call1((py.eval(
-                "[input_layer, dense1, dense2, dense3]",
-                Some(
-                    [
-                        ("input_layer", input_layer),
-                        ("dense1", dense1),
-                        ("dense2", dense2),
-                        ("dense3", dense3),
-                    ]
-                    .into_py_dict(py),
-                ),
+                CStr::from_bytes_with_nul(b"[input_layer, dense1, dense2, dense3]\0").unwrap(),
+                Some(&locals_dict),
                 None,
             )?,))?;
 
+            let compile_kwargs = [("optimizer", "adam"), ("loss", "binary_crossentropy")].into_py_dict(py).unwrap();
             model.call_method(
                 "compile",
                 (),
-                Some([("optimizer", "adam"), ("loss", "binary_crossentropy")].into_py_dict(py)),
+                Some(&compile_kwargs),
             )?;
 
             // Test prediction
@@ -580,7 +595,7 @@ impl DependencyValidator {
     async fn validate_llama_cpp(&self) -> Result<LlamaValidationResult> {
         info!("Validating llama-cpp-python capabilities");
 
-        let result = Python::with_gil(|py| -> Result<LlamaValidationResult> {
+        let result = Python::attach(|py| -> Result<LlamaValidationResult> {
             let llama_cpp = py.import("llama_cpp")?;
 
             let version = llama_cpp
@@ -634,7 +649,7 @@ impl DependencyValidator {
     async fn generate_system_health_report(&self) -> Result<SystemHealthReport> {
         info!("Generating system health report");
 
-        let report = Python::with_gil(|py| -> Result<SystemHealthReport> {
+        let report = Python::attach(|py| -> Result<SystemHealthReport> {
             let sys = py.import("sys")?;
             let platform: String = sys.getattr("platform")?.extract()?;
             let version_info = sys.getattr("version")?.extract::<String>()?;
@@ -653,7 +668,7 @@ impl DependencyValidator {
                     let test_app = flask_class.call1(("health_test",))?;
 
                     let cors_class = flask_cors.getattr("CORS")?;
-                    cors_class.call1((test_app,))?;
+                    cors_class.call1((test_app.clone(),))?;
 
                     let debug_mode = test_app.getattr("debug")?.extract::<bool>()?;
 
@@ -680,7 +695,7 @@ impl DependencyValidator {
                 let version: String = tf.getattr("__version__")?.extract()?;
 
                 let config = tf.getattr("config")?;
-                config.call_method1("set_visible_devices", (py.eval("[]", None, None)?, "GPU"))?;
+                config.call_method1("set_visible_devices", (py.eval(CStr::from_bytes_with_nul(b"[]\0").unwrap(), None, None)?, py.eval(CStr::from_bytes_with_nul(b"'GPU'\0").unwrap(), None, None)?))?;
 
                 let physical_devices = config.call_method1("list_physical_devices", ("GPU",))?;
                 let gpu_count: usize = physical_devices.call_method0("__len__")?.extract()?;
@@ -733,6 +748,7 @@ impl DependencyValidator {
                 if let Ok(path_resolver) = py.import("intellicrack.utils.path_resolver") {
                     if let Ok(data_dir_func) = path_resolver.getattr("get_data_dir") {
                         if let Ok(data_dir) = data_dir_func.call0() {
+                            let data_dir_str = data_dir.str()?.extract::<String>()?;
                             if let Ok(disk_usage) = shutil.call_method1("disk_usage", (data_dir,)) {
                                 let total: u64 = disk_usage.getattr("total")?.extract()?;
                                 let used: u64 = disk_usage.getattr("used")?.extract()?;
@@ -745,7 +761,7 @@ impl DependencyValidator {
 
                                 disk_space.insert(
                                     "data_directory".to_string(),
-                                    serde_json::Value::String(data_dir.str()?.extract()?),
+                                    serde_json::Value::String(data_dir_str),
                                 );
                                 disk_space.insert(
                                     "total_gb".to_string(),
@@ -802,6 +818,82 @@ impl DependencyValidator {
         })?;
 
         Ok(report)
+    }
+
+    pub async fn validate_python_availability(&mut self) -> Result<ValidationSummary> {
+        info!("Validating Python availability");
+        self.check_flask_dependency().await?;
+        let summary = ValidationSummary {
+            dependencies: self.results.clone(),
+            flask_validation: None,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health: None,
+        };
+        Ok(summary)
+    }
+
+    pub async fn validate_flask_comprehensive(&mut self) -> Result<ValidationSummary> {
+        info!("Running comprehensive Flask validation");
+        self.check_flask_dependency().await?;
+        let flask_validation = if self.is_dependency_available("Flask") {
+            Some(self.validate_flask_server().await?)
+        } else {
+            None
+        };
+        let summary = ValidationSummary {
+            dependencies: self.results.clone(),
+            flask_validation,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health: None,
+        };
+        Ok(summary)
+    }
+
+    pub async fn validate_tensorflow_comprehensive(&mut self) -> Result<ValidationSummary> {
+        info!("Running comprehensive TensorFlow validation");
+        self.check_tensorflow_dependency().await?;
+        let tensorflow_validation = if self.is_dependency_available("TensorFlow") {
+            Some(self.validate_tensorflow_models().await?)
+        } else {
+            None
+        };
+        let summary = ValidationSummary {
+            dependencies: self.results.clone(),
+            flask_validation: None,
+            tensorflow_validation,
+            llama_validation: None,
+            system_health: None,
+        };
+        Ok(summary)
+    }
+
+    pub async fn validate_qemu_availability(&mut self) -> Result<ValidationSummary> {
+        info!("Validating QEMU availability");
+        self.check_qemu_dependency().await?;
+        let summary = ValidationSummary {
+            dependencies: self.results.clone(),
+            flask_validation: None,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health: None,
+        };
+        Ok(summary)
+    }
+
+    pub async fn validate_system_tools(&mut self) -> Result<ValidationSummary> {
+        info!("Validating system tools");
+        self.check_qemu_dependency().await?;
+        let system_health = Some(self.generate_system_health_report().await?);
+        let summary = ValidationSummary {
+            dependencies: self.results.clone(),
+            flask_validation: None,
+            tensorflow_validation: None,
+            llama_validation: None,
+            system_health,
+        };
+        Ok(summary)
     }
 }
 
@@ -1211,6 +1303,19 @@ mod tests {
     }
 
     #[test]
+    fn test_dependency_validation_with_environment_variables() {
+        // Test that dependency validation respects environment variables
+        env::set_var("INTELLICRACK_TEST_VAR", "test_value");
+
+        // Verify the environment variable is set
+        assert_eq!(env::var("INTELLICRACK_TEST_VAR").unwrap(), "test_value");
+
+        // Clean up
+        env::remove_var("INTELLICRACK_TEST_VAR");
+        assert!(env::var("INTELLICRACK_TEST_VAR").is_err());
+    }
+
+    #[test]
     fn test_validation_summary_partial_results() {
         let mut dependencies = HashMap::new();
         dependencies.insert(
@@ -1413,8 +1518,9 @@ mod tests {
         // Simulate manual dependency addition (what would happen after real validation)
         validator.results.insert(
             "TestDep".to_string(),
-            create_test_dependency_status(true, Some("1.0.0".to_string())),
-        );
+            create_test_dependency_status(
+true, Some("1.0.0".to_string())),
+       );
 
         assert!(validator.is_dependency_available("TestDep"));
         assert!(!validator.is_dependency_available("NonExistentDep"));

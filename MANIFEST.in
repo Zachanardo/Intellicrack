@@ -1,66 +1,19 @@
-# Include documentation and metadata files
 include README.md
 include LICENSE
-include CHANGELOG.md
-include CONTRIBUTING.md
-include CODE_OF_CONDUCT.md
-include requirements/requirements.lock
-include requirements/pyproject.toml
-include justfile
-
-# Include configuration files
-include .gitignore
-include .editorconfig
-
-# Include all package data
+include pyproject.toml
+include requirements.txt
+include requirements-dev.txt
 recursive-include intellicrack *.py
 recursive-include intellicrack/assets *
 recursive-include intellicrack/data *
-recursive-include intellicrack/scripts *.py *.js
-recursive-include intellicrack/ssl_certificates *
-
-# Include tests
-recursive-include tests *.py
-recursive-include tests/data *
-recursive-include tests/fixtures *
-
-# Include documentation
-recursive-include docs *.rst *.md *.txt
-recursive-include docs/images *
-
-# Include examples
-recursive-include examples *.py *.md
-
-# Exclude compiled and temporary files
-global-exclude __pycache__
-global-exclude *.py[co]
-global-exclude .DS_Store
-global-exclude .git*
+recursive-include intellicrack/config *.json
+recursive-include intellicrack/models *.pkl *.joblib
+recursive-include intellicrack/plugins *.py
+recursive-include requirements *.txt
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude tests *
+recursive-exclude docs *
 global-exclude *.log
-global-exclude *.tmp
-global-exclude *.bak
-global-exclude *.swp
-global-exclude *~
-
-# Exclude build directories
-prune build
-prune dist
-prune .tox
-prune .pytest_cache
-prune htmlcov
-prune .mypy_cache
-prune .venv
-prune venv
-prune env
-prune mamba_env
-
-# Exclude IDE directories
-prune .idea
-prune .vscode
-
-# Exclude large binary directories
-prune tools/ghidra
-prune tools/radare2
-prune node_modules
-prune dev
-prune backups
+global-exclude .git*
+global-exclude .DS_Store

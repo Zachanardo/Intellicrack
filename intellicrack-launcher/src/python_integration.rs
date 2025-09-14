@@ -13,6 +13,7 @@ use anyhow::{Context, Result};
 use libloading::Library;
 use pyo3::prelude::*;
 use std::env;
+use std::ffi::CStr;
 use std::path::PathBuf;
 use tracing::{debug, error, info, warn};
 
@@ -53,10 +54,10 @@ impl PythonIntegration {
         };
 
         // Load Python library and configure GIL within Python context
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             println!("DEBUG: Successfully acquired Python GIL");
             info!("Acquired Python GIL for initialization");
-            
+
             // Load the Python DLL/shared library
             integration.load_python_library(py)?;
             info!("Python library loaded successfully");
@@ -74,7 +75,7 @@ impl PythonIntegration {
 
         Ok(integration)
     }
-    
+
     // REMOVED: configure_sys_path() - PyO3 disabled for subprocess-only mode
 
     /// Locate the Python interpreter with multiple fallback strategies
@@ -132,7 +133,7 @@ impl PythonIntegration {
             "Python version: {}.{}.{}",
             version_info.major, version_info.minor, version_info.patch
         );
-        
+
         // PyO3 has already loaded the Python library during initialization
         // We just verify it's the correct version
         if version_info.major != 3 || version_info.minor != 12 {
@@ -141,7 +142,7 @@ impl PythonIntegration {
                 version_info.major, version_info.minor
             );
         }
-        
+
         Ok(())
     }
 
@@ -172,7 +173,7 @@ impl PythonIntegration {
         debug!("Testing Python interpreter functionality");
 
         // Test basic Python operations
-        let result: i32 = py.eval("2 + 2", None, None)?.extract()?;
+        let result: i32 = py.eval(CStr::from_bytes_with_nul(b"2 + 2\0").unwrap(), None, None)?.extract()?;
         if result != 4 {
             anyhow::bail!(
                 "Python interpreter test failed: 2 + 2 = {}, expected 4",
@@ -213,7 +214,7 @@ impl PythonIntegration {
         }
 
         // Test Python version compatibility
-        Python::with_gil(|py| -> Result<()> {
+        Python::attach(|py| -> Result<()> {
             let version_info = py.version_info();
             info!(
                 "Python version: {}.{}.{}",
@@ -241,26 +242,26 @@ impl PythonIntegration {
         info!("Running Intellicrack main module via subprocess");
         self.run_via_subprocess()
     }
-    
+
     /// Run via subprocess (primary mode for launcher)
     fn run_via_subprocess(&self) -> Result<i32> {
         use std::process::Command;
-        
+
         info!("Running Intellicrack main module via subprocess");
-        
+
         // CRITICAL: Log the exact Python interpreter being used
         info!("Using Python interpreter: {:?}", self.interpreter_path);
         info!("Python version: {:?}", self.interpreter_path.display());
-        
+
         // Verify the interpreter exists
         if !self.interpreter_path.exists() {
             error!("Python interpreter not found at: {:?}", self.interpreter_path);
             return Err(anyhow::anyhow!("Python interpreter not found: {:?}", self.interpreter_path));
         }
-        
+
         let python_launcher_path = PathBuf::from(r"C:\Intellicrack\launch_intellicrack.py");
         info!("Executing Python launcher: {:?}", python_launcher_path.display());
-        
+
         // On Windows, add launcher directory to DLL search path BEFORE launching Python
         #[cfg(target_os = "windows")]
         {
@@ -268,16 +269,16 @@ impl PythonIntegration {
                 if let Some(exe_dir) = exe_path.parent() {
                     use std::os::windows::ffi::OsStrExt;
                     use std::ffi::OsStr;
-                    
+
                     let exe_dir_str = exe_dir.to_string_lossy();
                     info!("Setting DLL directory for Windows: {}", exe_dir_str);
-                    
+
                     // Convert path to wide string for Windows API
                     let wide_path: Vec<u16> = OsStr::new(exe_dir.as_os_str())
                         .encode_wide()
                         .chain(std::iter::once(0))
                         .collect();
-                    
+
                     // Use Windows SetDllDirectory to add our directory to DLL search path
                     unsafe {
                         #[link(name = "kernel32")]
@@ -285,7 +286,7 @@ impl PythonIntegration {
                             fn SetDllDirectoryW(lpPathName: *const u16) -> i32;
                             fn AddDllDirectory(NewDirectory: *const u16) -> *mut std::ffi::c_void;
                         }
-                        
+
                         // Try AddDllDirectory first (Windows 7+)
                         let result = AddDllDirectory(wide_path.as_ptr());
                         if !result.is_null() {
@@ -303,11 +304,11 @@ impl PythonIntegration {
                 }
             }
         }
-        
+
         // Use absolute path explicitly
         let mut cmd = Command::new(&self.interpreter_path);
         cmd.arg(&python_launcher_path);
-        
+
         // Set working directory to launcher directory for DLL loading
         // This ensures _tkinter can find tcl86t.dll and tk86t.dll in the target/release directory
         // CRITICAL: The subprocess must run from the launcher's directory where the bundled DLLs are located
@@ -317,27 +318,27 @@ impl PythonIntegration {
                 info!("Set subprocess working directory to launcher directory: {}", exe_dir.display());
             }
         }
-        
+
         // Set environment for subprocess with ABSOLUTE PATHS
         cmd.env("PYTHONPATH", r"C:\Intellicrack");
         cmd.env("PYTHONIOENCODING", "utf-8");
         cmd.env("PYTHONDONTWRITEBYTECODE", "1");
         cmd.env("PYTHONUNBUFFERED", "1");
-        
+
         // Set conda environment variables
         cmd.env("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
         cmd.env("CONDA_DEFAULT_ENV", "mamba_env");
         cmd.env("CONDA_PYTHON_EXE", r"C:\Intellicrack\mamba_env\python.exe");
         cmd.env("CONDA_SHLVL", "1");
-        
+
         cmd.env("PYTHONHOME", r"C:\Intellicrack\mamba_env");
-        
+
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
         // This ensures _tkinter.pyd can find the runtime scripts in the same directory as the DLLs
         let tcl_lib_path;
         let tk_lib_path;
-        
+
         if let Ok(exe_path) = std::env::current_exe() {
             info!("Subprocess: Current executable path: {}", exe_path.display());
             if let Some(exe_dir) = exe_path.parent() {
@@ -358,11 +359,11 @@ impl PythonIntegration {
             tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
             tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
         }
-        
+
         if tcl_lib_path.exists() {
             cmd.env("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
             info!("Subprocess: Set TCL_LIBRARY to launcher path: {}", tcl_lib_path.display());
-            
+
             // DEBUG: Check if init.tcl exists
             let init_tcl = tcl_lib_path.join("init.tcl");
             if init_tcl.exists() {
@@ -373,11 +374,11 @@ impl PythonIntegration {
         } else {
             warn!("Subprocess: TCL_LIBRARY path does not exist: {}", tcl_lib_path.display());
         }
-        
+
         if tk_lib_path.exists() {
             cmd.env("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
             info!("Subprocess: Set TK_LIBRARY to launcher path: {}", tk_lib_path.display());
-            
+
             // DEBUG: Check if tk.tcl exists
             let tk_tcl = tk_lib_path.join("tk.tcl");
             if tk_tcl.exists() {
@@ -388,7 +389,7 @@ impl PythonIntegration {
         } else {
             warn!("Subprocess: TK_LIBRARY path does not exist: {}", tk_lib_path.display());
         }
-        
+
         // Also check for launcher's directories as fallback
         if let Ok(exe_path) = std::env::current_exe() {
             if let Some(exe_dir) = exe_path.parent() {
@@ -399,7 +400,7 @@ impl PythonIntegration {
                         info!("Subprocess: Fallback TCL_LIBRARY to launcher: {}", launcher_tcl.display());
                     }
                 }
-                
+
                 if !tk_lib_path.exists() {
                     let launcher_tk = exe_dir.join("tk8.6");
                     if launcher_tk.exists() {
@@ -407,47 +408,47 @@ impl PythonIntegration {
                         info!("Subprocess: Fallback TK_LIBRARY to launcher: {}", launcher_tk.display());
                     }
                 }
-                
+
                 // CRITICAL: Build PATH with LAUNCHER directory FIRST for DLL loading
                 // This ensures _tkinter finds the launcher's Tcl/Tk DLLs that match TCL_LIBRARY/TK_LIBRARY paths
                 let system_path = std::env::var_os("PATH").unwrap_or_default();
                 let exe_dir_str = exe_dir.to_string_lossy();
-                
+
                 let python_base_dir = PathBuf::from(r"C:\Intellicrack\mamba_env");
                 let python_dll_dir = PathBuf::from(r"C:\Intellicrack\mamba_env\DLLs");
                 let python_lib_bin_dir = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\bin");
-                
+
                 // Build PATH: launcher_dir;mamba_env\DLLs;mamba_env;mamba_env\Library\bin;system_path
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
                 let mut final_path = exe_dir_str.to_string();
                 info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
-                
+
                 // Add Python DLLs directory for Python extension modules
                 if python_dll_dir.exists() {
                     final_path = format!("{};{}", final_path, python_dll_dir.display());
                     info!("Subprocess: Added Python DLLs directory to PATH");
                 }
-                
+
                 // Add Python base directory for core Python DLL
                 if python_base_dir.exists() {
                     final_path = format!("{};{}", final_path, python_base_dir.display());
                     info!("Subprocess: Added Python base directory to PATH");
                 }
-                
+
                 // Add Library\bin directory for additional dependencies
                 if python_lib_bin_dir.exists() {
                     final_path = format!("{};{}", final_path, python_lib_bin_dir.display());
                     info!("Subprocess: Added Python Library\\bin to PATH");
                 }
-                
+
                 // Add system PATH last
                 if !system_path.is_empty() {
                     final_path = format!("{};{}", final_path, system_path.to_string_lossy());
                 }
-                
+
                 cmd.env("PATH", final_path);
                 info!("Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system");
-                
+
                 // Also add to PYTHONPATH to help Python find the DLLs
                 let current_pythonpath = std::env::var("PYTHONPATH").unwrap_or_default();
                 let new_pythonpath = if current_pythonpath.is_empty() {
@@ -457,7 +458,7 @@ impl PythonIntegration {
                 };
                 cmd.env("PYTHONPATH", &new_pythonpath);
                 info!("Subprocess: Added {} to PYTHONPATH for DLL discovery", exe_dir_str);
-                
+
                 // Set DLL directory hint for Windows to launcher directory where DLLs are bundled
                 // This helps launch_intellicrack.py add the correct directory to DLL search path
                 // CRITICAL: Must point to target/release where tcl86t.dll and tk86t.dll are located
@@ -468,11 +469,11 @@ impl PythonIntegration {
         cmd.env_remove("PYTHONSTARTUP");
         cmd.env_remove("PYTHONUSERBASE");
         cmd.env_remove("PYTHONEXECUTABLE");
-        
+
         // Execute and wait for completion
         let output = cmd.output()
             .context("Failed to execute Python launcher subprocess")?;
-        
+
         // Print output
         if !output.stdout.is_empty() {
             let stdout = String::from_utf8_lossy(&output.stdout);
@@ -480,34 +481,34 @@ impl PythonIntegration {
                 println!("{}", line);
             }
         }
-        
+
         if !output.stderr.is_empty() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             for line in stderr.lines() {
                 eprintln!("{}", line);
             }
         }
-        
+
         // Get exit code
         let exit_code = output.status.code().unwrap_or(1);
-        
+
         if exit_code != 0 {
             error!("Intellicrack launcher exited with code: {}", exit_code);
         }
-        
+
         info!("Intellicrack launcher completed with exit code: {}", exit_code);
         Ok(exit_code)
     }
-    
+
     /* Original PyO3 approach - keeping for reference
         Python::with_gil(|py| -> Result<i32> {
             // sys.path is already configured during initialization
-            
+
             // Import the main module
             match py.import("intellicrack.main") {
                 Ok(main_module) => {
                     info!("Successfully imported intellicrack.main module");
-                    
+
                     // Call the main() function
                     match main_module.call_method0("main") {
                         Ok(result) => {
@@ -518,7 +519,7 @@ impl PythonIntegration {
                         }
                         Err(e) => {
                             error!("Error running intellicrack.main:main(): {:?}", e);
-                            
+
                             // Check if it's an ImportError for better error reporting
                             if e.is_instance_of::<pyo3::exceptions::PyImportError>(py) {
                                 error!("Import error - ensure Intellicrack is properly installed");
@@ -532,20 +533,20 @@ impl PythonIntegration {
                                 }
                                 return Ok(0); // Default to 0 for normal SystemExit
                             }
-                            
+
                             Err(anyhow::anyhow!("Failed to run intellicrack.main:main(): {}", e))
                         }
                     }
                 }
                 Err(e) => {
                     error!("Failed to import intellicrack.main module: {:?}", e);
-                    
+
                     // Try to provide helpful error messages
                     if e.is_instance_of::<pyo3::exceptions::PyModuleNotFoundError>(py) {
                         error!("Module not found - ensure Intellicrack is in PYTHONPATH");
                         error!("Current working directory: {:?}", std::env::current_dir());
                     }
-                    
+
                     Err(anyhow::anyhow!("Failed to import intellicrack.main: {}", e))
                 }
             }
@@ -556,14 +557,14 @@ impl PythonIntegration {
     pub fn run_environment_test(&self) -> Result<i32> {
         info!("Running environment test mode");
 
-        Python::with_gil(|py| -> Result<i32> {
+        Python::attach(|py| -> Result<i32> {
             // sys.path is already configured during initialization
-            
+
             // Run the test script to verify environment setup
             let test_script = std::fs::read_to_string("test_rust_launcher_env.py")
                 .context("Failed to read test script")?;
-            
-            match py.run(&test_script, None, None) {
+
+            match py.run(CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or_else(|_| CStr::from_bytes_with_nul(b"pass\0").unwrap()), None, None) {
                 Ok(_) => {
                     info!("Environment test completed successfully");
                     Ok(0)
@@ -593,11 +594,24 @@ impl PythonIntegration {
 
     /// Get Python version information
     pub fn get_python_version(&self) -> Result<String> {
-        Python::with_gil(|py| -> Result<String> {
+        Python::attach(|py| -> Result<String> {
             let version_info = py.version_info();
             Ok(format!(
                 "{}.{}.{}",
                 version_info.major, version_info.minor, version_info.patch
+            ))
+        })
+    }
+
+    /// Get detailed Python version information
+    pub fn get_python_version_info(&self) -> Result<(u8, u8, u8, Option<String>)> {
+        Python::attach(|py| -> Result<(u8, u8, u8, Option<String>)> {
+            let version_info = py.version_info();
+            Ok((
+                version_info.major,
+                version_info.minor,
+                version_info.patch,
+                version_info.suffix.map(|s| s.to_string()),
             ))
         })
     }
@@ -865,14 +879,34 @@ mod tests {
 
         // Test that DLL names are generated correctly
         // We can't test actual loading without Python, but we can test path logic
-        let version_info = pyo3::PyVersionInfo {
+        #[derive(Debug)]
+        struct TestVersionInfo {
+            major: u8,
+            minor: u8,
+            patch: u8,
+            suffix: Option<String>,
+        }
+
+        let version_info = TestVersionInfo {
             major: 3,
             minor: 12,
-            micro: 0,
+            patch: 0,
+            suffix: None,
         };
+
+        // Validate version info fields
+        assert_eq!(version_info.major, 3);
+        assert_eq!(version_info.minor, 12);
+        assert_eq!(version_info.patch, 0);
+        assert!(version_info.suffix.is_none());
 
         let expected_dll = format!("python{}{}.dll", version_info.major, version_info.minor);
         assert_eq!(expected_dll, "python312.dll");
+
+        // Test version string construction using all fields
+        let version_str = format!("{}.{}.{}{}", version_info.major, version_info.minor, version_info.patch,
+                                 version_info.suffix.as_deref().unwrap_or(""));
+        assert_eq!(version_str, "3.12.0");
 
         // Test alternative paths are constructed correctly
         let alternative_paths = vec![
@@ -988,7 +1022,7 @@ mod tests {
 
     #[test]
     fn test_library_loading_state_tracking() {
-        let mut python_integration = create_test_python_integration();
+        let python_integration = create_test_python_integration();
 
         // Initially no library loaded
         assert!(!python_integration.is_library_loaded());
@@ -1051,7 +1085,7 @@ mod tests {
     fn test_thread_safety_preparation() {
         // Test Python GIL acquisition
         // Standard Python builds require using with_gil()
-        Python::with_gil(|_py| {
+        Python::attach(|_py| {
             // Successfully acquired GIL
         });
 

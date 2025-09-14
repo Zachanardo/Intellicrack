@@ -70,6 +70,7 @@ class ReportGenerator:
 
         Returns:
             Path to the reports directory
+
         """
         try:
             from intellicrack.utils.core.plugin_paths import get_reports_dir
@@ -87,6 +88,7 @@ class ReportGenerator:
 
         Returns:
             Path to the templates directory
+
         """
         # Check multiple possible locations
         possible_paths = [
@@ -112,6 +114,7 @@ class ReportGenerator:
 
         Returns:
             HTML content as string
+
         """
         if self.jinja_env:
             try:
@@ -217,6 +220,7 @@ class ReportGenerator:
 
         Returns:
             CSS styles as string
+
         """
         return """
         body {
@@ -307,6 +311,7 @@ class ReportGenerator:
 
         Returns:
             JSON content as string
+
         """
         # Add metadata
         report_data = {
@@ -328,6 +333,7 @@ class ReportGenerator:
 
         Returns:
             Text content as string
+
         """
         lines = []
         lines.append("=" * 80)
@@ -402,6 +408,7 @@ class ReportGenerator:
 
         Returns:
             Path to saved report file
+
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -428,6 +435,7 @@ class ReportGenerator:
 
         Returns:
             Path to temporary report file
+
         """
         # Use tempfile to create secure temporary file
         with tempfile.NamedTemporaryFile(
@@ -448,6 +456,7 @@ class ReportGenerator:
 
         Returns:
             List of supported format extensions
+
         """
         basic_formats: List[str] = ["html", "json", "txt"]
 
@@ -464,6 +473,7 @@ class ReportGenerator:
 
         Returns:
             Dictionary mapping formats to MIME types
+
         """
         return {"html": "text/html", "json": "application/json", "txt": "text/plain", "pdf": "application/pdf"}
 
@@ -475,6 +485,7 @@ class ReportGenerator:
 
         Returns:
             Jinja2 Template object or None if creation fails
+
         """
         if JINJA_AVAILABLE:
             try:
@@ -497,6 +508,7 @@ def generate_report(app_instance, format: str = "html", save: bool = True, filen
 
     Returns:
         Path to saved report or report content if not saved
+
     """
     try:
         generator = ReportGenerator()
@@ -597,6 +609,7 @@ def view_report(app_instance, filepath: Optional[str] = None) -> bool:
 
     Returns:
         True if report was opened successfully
+
     """
     try:
         # If no filepath provided, show file dialog

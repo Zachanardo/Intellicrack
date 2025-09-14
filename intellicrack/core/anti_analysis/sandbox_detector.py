@@ -54,61 +54,733 @@ class SandboxDetector(BaseDetector):
             "time_acceleration": self._check_time_acceleration,
             "api_hooks": self._check_api_hooks,
             "mouse_movement": self._check_mouse_movement,
+            "hardware_analysis": self._check_hardware_indicators,
+            "registry_analysis": self._check_registry_indicators,
+            "virtualization": self._check_virtualization_artifacts,
         }
 
-        # Known sandbox signatures
-        self.sandbox_signatures = {
+        # Build dynamic sandbox signatures
+        self.sandbox_signatures = self._build_dynamic_signatures()
+
+        # Build behavioral patterns dynamically
+        self.behavioral_patterns = self._build_behavioral_patterns()
+
+        # Initialize detection cache
+        self.detection_cache = {}
+
+        # Perform initial system profiling
+        self._profile_system()
+
+    def _build_dynamic_signatures(self) -> dict:
+        """Build sandbox signatures dynamically based on system analysis."""
+        import json
+
+        signatures = {}
+
+        # Common sandbox products and their dynamic detection
+        sandbox_products = {
             "cuckoo": {
-                "files": [
-                    os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
-                    os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
-                    "/tmp/.cuckoo-*",  # noqa: S108 - Hardcoded path required for sandbox signature detection
-                ],
-                "processes": ["python.exe", "analyzer.py"],
-                "network": ["192.168.56.0/24"],  # Common Cuckoo network
-                "artifacts": ["cuckoo", "analyzer", "auxiliary"],
+                "path_patterns": ["analyzer", "sandbox", "cuckoo", "agent"],
+                "process_patterns": ["analyzer", "agent.py", "auxiliary"],
+                "network_patterns": ["192.168.56.", "10.0.0."],
+                "service_names": ["CuckooAgent", "CuckooMon"],
             },
             "vmray": {
-                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "vmray")],
-                "processes": ["vmray_controller.exe"],
-                "artifacts": ["vmray", "controller"],
+                "path_patterns": ["vmray", "controller", "vragent"],
+                "process_patterns": ["vmray_", "vragent", "controller"],
+                "registry_keys": ["VMRay", "VRAgent"],
             },
             "joe_sandbox": {
-                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "joe")],
-                "processes": ["joeboxcontrol.exe", "joeboxserver.exe"],
-                "artifacts": ["joe", "joebox"],
+                "path_patterns": ["joe", "joebox", "jbxapi"],
+                "process_patterns": ["joebox", "joecontrol", "jbx"],
+                "service_names": ["JoeBox", "JoeAgent"],
             },
             "threatgrid": {
-                "artifacts": ["threatgrid", "tgrid"],
-                "network": ["192.168.2.0/24"],
+                "path_patterns": ["threatgrid", "tgrid", "tg_agent"],
+                "process_patterns": ["tgrid", "threatgrid"],
+                "network_patterns": ["192.168.2."],
             },
             "hybrid_analysis": {
-                "artifacts": ["falcon", "hybrid-analysis"],
-                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "falcon")],
+                "path_patterns": ["falcon", "hybrid", "cwsandbox"],
+                "process_patterns": ["falcon", "hybrid", "cws"],
+                "registry_keys": ["FalconSandbox", "HybridAnalysis"],
+            },
+            "sandboxie": {
+                "path_patterns": ["sandboxie", "sbie"],
+                "process_patterns": ["sbie", "sandboxie"],
+                "dll_names": ["sbiedll.dll", "sbieapi.dll"],
+            },
+            "anubis": {
+                "path_patterns": ["anubis", "cwapi"],
+                "process_patterns": ["anubis", "cwmonitor"],
+            },
+            "norman": {
+                "path_patterns": ["norman", "nvc"],
+                "process_patterns": ["norman", "nvc_"],
+            },
+            "fortinet": {
+                "path_patterns": ["fortinet", "forticlient"],
+                "process_patterns": ["fortisandbox", "forticlient"],
+            },
+            "fireeye": {
+                "path_patterns": ["fireeye", "feye"],
+                "process_patterns": ["fireeye", "feye_"],
+                "network_patterns": ["10.10.10."],
             },
         }
 
-        # Sandbox behavioral patterns
-        self.behavioral_patterns = {
-            "no_user_files": {
-                "paths": [
-                    os.path.expanduser("~/Documents"),
-                    os.path.expanduser("~/Desktop"),
-                    os.path.expanduser("~/Downloads"),
-                ],
-                "min_files": 5,  # Real systems have user files
+        # Build signatures for each sandbox
+        for sandbox_name, patterns in sandbox_products.items():
+            signatures[sandbox_name] = {
+                "files": [],
+                "processes": [],
+                "network": [],
+                "artifacts": [],
+                "registry": [],
+                "services": [],
+                "dlls": [],
+            }
+
+            # Build file paths dynamically
+            if "path_patterns" in patterns:
+                for pattern in patterns["path_patterns"]:
+                    # Check common installation directories
+                    common_dirs = self._get_common_directories()
+                    for base_dir in common_dirs:
+                        # Build potential paths
+                        potential_paths = [
+                            os.path.join(base_dir, pattern),
+                            os.path.join(base_dir, pattern.upper()),
+                            os.path.join(base_dir, pattern.capitalize()),
+                            os.path.join(base_dir, "." + pattern),  # Hidden
+                        ]
+                        signatures[sandbox_name]["files"].extend(potential_paths)
+
+                        # Also check for pattern in path
+                        signatures[sandbox_name]["artifacts"].append(pattern)
+
+            # Add process patterns
+            if "process_patterns" in patterns:
+                for proc_pattern in patterns["process_patterns"]:
+                    # Add various executable extensions
+                    signatures[sandbox_name]["processes"].extend(
+                        [
+                            f"{proc_pattern}.exe",
+                            f"{proc_pattern}",
+                            f"{proc_pattern}32.exe",
+                            f"{proc_pattern}64.exe",
+                            f"{proc_pattern}_service.exe",
+                            f"{proc_pattern}_agent.exe",
+                        ]
+                    )
+
+            # Add network patterns
+            if "network_patterns" in patterns:
+                signatures[sandbox_name]["network"].extend(patterns["network_patterns"])
+
+            # Add registry keys
+            if "registry_keys" in patterns:
+                for key in patterns["registry_keys"]:
+                    signatures[sandbox_name]["registry"].extend(
+                        [
+                            f"HKLM\\SOFTWARE\\{key}",
+                            f"HKLM\\SYSTEM\\CurrentControlSet\\Services\\{key}",
+                            f"HKCU\\SOFTWARE\\{key}",
+                        ]
+                    )
+
+            # Add service names
+            if "service_names" in patterns:
+                signatures[sandbox_name]["services"].extend(patterns["service_names"])
+
+            # Add DLL names
+            if "dll_names" in patterns:
+                signatures[sandbox_name]["dlls"].extend(patterns["dll_names"])
+
+        # Add virtualization platform indicators
+        vm_signatures = self._build_vm_signatures()
+        signatures.update(vm_signatures)
+
+        # Load custom signatures from configuration
+        config_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "sandbox_signatures.json")
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, "r") as f:
+                    custom_sigs = json.load(f)
+                    # Merge custom signatures
+                    for sandbox_name, sig_data in custom_sigs.items():
+                        if sandbox_name not in signatures:
+                            signatures[sandbox_name] = sig_data
+                        else:
+                            for sig_type, sig_values in sig_data.items():
+                                if sig_type in signatures[sandbox_name]:
+                                    signatures[sandbox_name][sig_type].extend(sig_values)
+        except (IOError, json.JSONDecodeError):
+            pass
+
+        return signatures
+
+    def _build_behavioral_patterns(self) -> dict:
+        """Build behavioral patterns for sandbox detection."""
+        import psutil
+
+        patterns = {}
+
+        # Analyze current system to establish baseline
+        try:
+            # Count user files in common directories
+            user_dirs = [
+                os.path.expanduser("~/Documents"),
+                os.path.expanduser("~/Desktop"),
+                os.path.expanduser("~/Downloads"),
+                os.path.expanduser("~/Pictures"),
+                os.path.expanduser("~/Videos"),
+                os.path.expanduser("~/Music"),
+            ]
+
+            total_user_files = 0
+            for user_dir in user_dirs:
+                if os.path.exists(user_dir):
+                    try:
+                        # Count files (not recursively for performance)
+                        files = os.listdir(user_dir)
+                        total_user_files += len(files)
+                    except (OSError, PermissionError):
+                        pass
+
+            # Establish minimum based on current system
+            # Sandboxes typically have very few user files
+            patterns["user_files"] = {
+                "paths": user_dirs,
+                "min_files": max(10, total_user_files // 10),  # At least 10% of current
+                "current_count": total_user_files,
+            }
+
+            # Process count analysis
+            process_count = len(psutil.pids())
+            patterns["processes"] = {
+                "min_processes": max(30, process_count // 2),  # At least half of current
+                "current_count": process_count,
+                "common_processes": self._get_common_processes(),
+            }
+
+            # System uptime
+            boot_time = psutil.boot_time()
+            current_time = psutil.time.time()
+            uptime = current_time - boot_time
+
+            patterns["uptime"] = {
+                "min_uptime": 600,  # 10 minutes minimum for real systems
+                "current_uptime": uptime,
+                "suspicious_if_less_than": 300,  # 5 minutes
+            }
+
+            # Network connections
+            connections = psutil.net_connections()
+            patterns["network"] = {
+                "min_connections": max(5, len(connections) // 4),
+                "current_connections": len(connections),
+                "suspicious_ports": [3389, 5900, 5901, 6000],  # RDP, VNC, X11
+            }
+
+            # Disk usage patterns
+            disk_usage = psutil.disk_usage("/")
+            patterns["disk"] = {
+                "min_used_percent": 20,  # Real systems use disk space
+                "current_used_percent": disk_usage.percent,
+                "min_total_gb": 50,  # Minimum disk size for real systems
+                "current_total_gb": disk_usage.total / (1024**3),
+            }
+
+            # Memory patterns
+            mem = psutil.virtual_memory()
+            patterns["memory"] = {
+                "min_total_gb": 2,  # Minimum RAM for real systems
+                "current_total_gb": mem.total / (1024**3),
+                "min_used_percent": 30,  # Real systems use memory
+                "current_used_percent": mem.percent,
+            }
+
+            # CPU patterns
+            cpu_count = psutil.cpu_count(logical=True)
+            patterns["cpu"] = {
+                "min_cores": 2,  # Most modern systems have at least 2 cores
+                "current_cores": cpu_count,
+                "suspicious_if_exactly": [1, 2],  # VMs often have 1-2 cores
+            }
+
+        except Exception as e:
+            self.logger.debug(f"Error building behavioral patterns: {e}")
+            # Use conservative defaults
+            patterns = {
+                "user_files": {"paths": user_dirs, "min_files": 10},
+                "processes": {"min_processes": 40},
+                "uptime": {"min_uptime": 600},
+                "network": {"min_connections": 5},
+                "disk": {"min_used_percent": 20, "min_total_gb": 50},
+                "memory": {"min_total_gb": 2, "min_used_percent": 30},
+                "cpu": {"min_cores": 2},
+            }
+
+        return patterns
+
+    def _get_common_directories(self) -> list:
+        """Get common directories where sandbox artifacts might be found."""
+        import tempfile
+
+        dirs = []
+
+        # Windows paths
+        if platform.system() == "Windows":
+            system_drive = os.environ.get("SystemDrive", "C:")
+            dirs.extend(
+                [
+                    system_drive + "\\",
+                    os.environ.get("ProgramFiles", "C:\\Program Files"),
+                    os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
+                    os.environ.get("ProgramData", "C:\\ProgramData"),
+                    os.environ.get("APPDATA", ""),
+                    os.environ.get("LOCALAPPDATA", ""),
+                    os.environ.get("TEMP", tempfile.gettempdir()),
+                    os.path.join(system_drive, "Windows"),
+                    os.path.join(system_drive, "Windows", "System32"),
+                    os.path.join(system_drive, "Windows", "SysWOW64"),
+                    os.path.join(system_drive, "Users", "Public"),
+                ]
+            )
+        else:
+            # Linux/Unix paths
+            dirs.extend(
+                [
+                    "/",
+                    "/tmp",
+                    "/var/tmp",
+                    "/opt",
+                    "/usr/local",
+                    "/usr/share",
+                    "/etc",
+                    "/var/lib",
+                    "/var/log",
+                    os.path.expanduser("~"),
+                    os.path.expanduser("~/.local"),
+                    os.path.expanduser("~/.config"),
+                ]
+            )
+
+        # Filter out non-existent or inaccessible directories
+        valid_dirs = []
+        for d in dirs:
+            if d and os.path.exists(d):
+                try:
+                    # Test if we can list the directory
+                    os.listdir(d)
+                    valid_dirs.append(d)
+                except (OSError, PermissionError):
+                    pass
+
+        return valid_dirs
+
+    def _build_vm_signatures(self) -> dict:
+        """Build virtualization platform signatures."""
+        vm_sigs = {}
+
+        # VMware signatures
+        vm_sigs["vmware"] = {
+            "files": [
+                "C:\\Windows\\System32\\drivers\\vmmouse.sys",
+                "C:\\Windows\\System32\\drivers\\vmhgfs.sys",
+                "C:\\Program Files\\VMware\\VMware Tools",
+                "/usr/bin/vmware-toolbox-cmd",
+                "/etc/vmware-tools",
+            ],
+            "processes": ["vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe"],
+            "registry": [
+                "HKLM\\SOFTWARE\\VMware, Inc.",
+                "HKLM\\SYSTEM\\CurrentControlSet\\Services\\VMTools",
+            ],
+            "artifacts": ["vmware", "vmtools", "vmx"],
+        }
+
+        # VirtualBox signatures
+        vm_sigs["virtualbox"] = {
+            "files": [
+                "C:\\Windows\\System32\\drivers\\VBoxMouse.sys",
+                "C:\\Windows\\System32\\drivers\\VBoxGuest.sys",
+                "C:\\Program Files\\Oracle\\VirtualBox Guest Additions",
+                "/usr/bin/VBoxClient",
+                "/etc/init.d/vboxadd",
+            ],
+            "processes": ["VBoxTray.exe", "VBoxService.exe", "VBoxClient"],
+            "registry": [
+                "HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions",
+                "HKLM\\SYSTEM\\CurrentControlSet\\Services\\VBoxGuest",
+            ],
+            "artifacts": ["vbox", "virtualbox", "oracle"],
+        }
+
+        # Hyper-V signatures
+        vm_sigs["hyperv"] = {
+            "files": [
+                "C:\\Windows\\System32\\drivers\\vmbus.sys",
+                "C:\\Windows\\System32\\drivers\\hypervideo.sys",
+            ],
+            "processes": ["vmconnect.exe"],
+            "registry": [
+                "HKLM\\SOFTWARE\\Microsoft\\Virtual Machine\\Guest",
+                "HKLM\\SYSTEM\\CurrentControlSet\\Services\\vmbus",
+            ],
+            "artifacts": ["hyperv", "vmbus", "microsoft virtual"],
+        }
+
+        # QEMU/KVM signatures
+        vm_sigs["qemu"] = {
+            "files": [
+                "/usr/bin/qemu-ga",
+                "/etc/qemu-ga",
+                "C:\\Program Files\\QEMU-GA",
+            ],
+            "processes": ["qemu-ga", "qemu-ga.exe"],
+            "artifacts": ["qemu", "kvm", "bochs", "seabios"],
+        }
+
+        # Xen signatures
+        vm_sigs["xen"] = {
+            "files": [
+                "/proc/xen",
+                "/sys/hypervisor/type",
+                "C:\\Program Files\\Xen Tools",
+            ],
+            "processes": ["xenservice.exe", "xen-detect"],
+            "artifacts": ["xen", "xvm", "citrix"],
+        }
+
+        # Parallels signatures
+        vm_sigs["parallels"] = {
+            "files": [
+                "C:\\Program Files\\Parallels\\Parallels Tools",
+                "/usr/bin/prl_tools",
+            ],
+            "processes": ["prl_tools.exe", "prl_cc.exe"],
+            "registry": ["HKLM\\SOFTWARE\\Parallels"],
+            "artifacts": ["parallels", "prl"],
+        }
+
+        return vm_sigs
+
+    def _get_common_processes(self) -> list:
+        """Get list of common processes for real systems."""
+        if platform.system() == "Windows":
+            return [
+                "explorer.exe",
+                "svchost.exe",
+                "csrss.exe",
+                "winlogon.exe",
+                "services.exe",
+                "lsass.exe",
+                "system",
+                "smss.exe",
+                "dwm.exe",
+                "taskhostw.exe",
+                "runtime broker.exe",
+                "searchindexer.exe",
+                "spoolsv.exe",
+                "audiodg.exe",
+                # Common user applications
+                "chrome.exe",
+                "firefox.exe",
+                "msedge.exe",
+                "opera.exe",
+                "outlook.exe",
+                "teams.exe",
+                "discord.exe",
+                "slack.exe",
+                "spotify.exe",
+                "steam.exe",
+                "notepad.exe",
+                "code.exe",
+            ]
+        else:
+            return [
+                "systemd",
+                "init",
+                "kernel",
+                "kthreadd",
+                "kworker",
+                "systemd-journald",
+                "systemd-logind",
+                "systemd-resolved",
+                "NetworkManager",
+                "dbus",
+                "polkitd",
+                "chronyd",
+                # Common user applications
+                "chrome",
+                "firefox",
+                "thunderbird",
+                "code",
+                "sublime",
+                "spotify",
+                "discord",
+                "slack",
+                "telegram",
+                "signal",
+            ]
+
+    def _profile_system(self):
+        """Profile the current system to establish baseline."""
+        import hashlib
+        import uuid
+
+        profile = {
+            "timestamp": psutil.time.time(),
+            "boot_time": psutil.boot_time(),
+            "cpu_count": psutil.cpu_count(logical=True),
+            "memory_total": psutil.virtual_memory().total,
+            "disk_total": psutil.disk_usage("/").total,
+            "process_count": len(psutil.pids()),
+            "network_interfaces": len(psutil.net_if_addrs()),
+            "unique_id": str(uuid.getnode()),  # MAC address as unique ID
+        }
+
+        # Create system fingerprint
+        fingerprint_data = f"{profile['cpu_count']}:{profile['memory_total']}:{profile['unique_id']}"
+        profile["fingerprint"] = hashlib.sha256(fingerprint_data.encode()).hexdigest()
+
+        self.system_profile = profile
+
+        # Check if profile matches known sandbox profiles
+        self._check_against_known_profiles()
+
+    def _check_against_known_profiles(self):
+        """Check system profile against known sandbox profiles."""
+        known_sandbox_profiles = {
+            "cuckoo_default": {
+                "cpu_count": [1, 2],
+                "memory_total_gb": [1, 2, 4],
+                "network_interfaces": [1, 2],
             },
-            "limited_processes": {
-                "min_processes": 50,  # Real systems run many processes
-                "common_processes": ["explorer.exe", "svchost.exe", "chrome.exe", "firefox.exe"],
+            "vmray_default": {
+                "cpu_count": [2, 4],
+                "memory_total_gb": [2, 4, 8],
             },
-            "fast_boot": {
-                "max_uptime": 300,  # 5 minutes - sandboxes often have fresh boots
-            },
-            "limited_network": {
-                "min_connections": 5,  # Real systems have network activity
+            "generic_sandbox": {
+                "cpu_count": [1, 2],
+                "memory_total_gb": [1, 2],
+                "process_count_max": 50,
             },
         }
+
+        if hasattr(self, "system_profile"):
+            mem_gb = self.system_profile["memory_total"] / (1024**3)
+
+            for sandbox_name, profile in known_sandbox_profiles.items():
+                matches = 0
+                checks = 0
+
+                if "cpu_count" in profile:
+                    checks += 1
+                    if self.system_profile["cpu_count"] in profile["cpu_count"]:
+                        matches += 1
+
+                if "memory_total_gb" in profile:
+                    checks += 1
+                    if int(mem_gb) in profile["memory_total_gb"]:
+                        matches += 1
+
+                if "network_interfaces" in profile:
+                    checks += 1
+                    if self.system_profile["network_interfaces"] in profile["network_interfaces"]:
+                        matches += 1
+
+                if "process_count_max" in profile:
+                    checks += 1
+                    if self.system_profile["process_count"] <= profile["process_count_max"]:
+                        matches += 1
+
+                # If more than 75% of checks match, flag as potential sandbox
+                if checks > 0 and (matches / checks) > 0.75:
+                    self.logger.warning(f"System profile matches {sandbox_name}: {matches}/{checks}")
+                    self.detection_cache[f"profile_{sandbox_name}"] = True
+
+    def _check_hardware_indicators(self) -> dict:
+        """Check hardware indicators for sandbox/VM detection."""
+        indicators = {"detected": False, "confidence": 0, "details": []}
+
+        try:
+            # Check CPU vendor
+            import subprocess
+
+            if platform.system() == "Windows":
+                try:
+                    result = subprocess.run(["wmic", "cpu", "get", "name"], capture_output=True, text=True, timeout=5)
+                    cpu_name = result.stdout.lower()
+
+                    # Check for VM CPU signatures
+                    vm_cpu_patterns = ["qemu", "virtual", "vmware", "vbox", "hypervisor"]
+                    for pattern in vm_cpu_patterns:
+                        if pattern in cpu_name:
+                            indicators["detected"] = True
+                            indicators["confidence"] += 30
+                            indicators["details"].append(f"VM CPU pattern: {pattern}")
+
+                except Exception:
+                    pass
+            else:
+                try:
+                    with open("/proc/cpuinfo", "r") as f:
+                        cpu_info = f.read().lower()
+
+                        if "hypervisor" in cpu_info or "qemu" in cpu_info:
+                            indicators["detected"] = True
+                            indicators["confidence"] += 30
+                            indicators["details"].append("Hypervisor detected in cpuinfo")
+                except Exception:
+                    pass
+
+            # Check MAC address patterns
+            import uuid
+
+            mac = uuid.getnode()
+            mac_str = ":".join(["{:02x}".format((mac >> i) & 0xFF) for i in range(0, 48, 8)])
+
+            # Known VM MAC prefixes
+            vm_mac_prefixes = [
+                "00:05:69",  # VMware
+                "00:0c:29",  # VMware
+                "00:1c:14",  # VMware
+                "00:50:56",  # VMware
+                "08:00:27",  # VirtualBox
+                "52:54:00",  # QEMU/KVM
+                "00:16:3e",  # Xen
+                "00:1c:42",  # Parallels
+                "00:03:ff",  # Microsoft Hyper-V
+            ]
+
+            for prefix in vm_mac_prefixes:
+                if mac_str.lower().startswith(prefix.lower()):
+                    indicators["detected"] = True
+                    indicators["confidence"] += 40
+                    indicators["details"].append(f"VM MAC prefix: {prefix}")
+                    break
+
+        except Exception as e:
+            self.logger.debug(f"Hardware check error: {e}")
+
+        return indicators
+
+    def _check_registry_indicators(self) -> dict:
+        """Check Windows registry for sandbox indicators."""
+        indicators = {"detected": False, "confidence": 0, "details": []}
+
+        if platform.system() != "Windows":
+            return indicators
+
+        try:
+            import winreg
+
+            # Registry keys to check
+            registry_checks = [
+                (winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\ACPI\DSDT\VBOX__"),
+                (winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\ACPI\FADT\VBOX__"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Oracle\VirtualBox Guest Additions"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VMware, Inc.\VMware Tools"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\VBoxGuest"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\VMTools"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\vmbus"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wine"),
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Parallels"),
+            ]
+
+            for hkey, path in registry_checks:
+                try:
+                    key = winreg.OpenKey(hkey, path)
+                    winreg.CloseKey(key)
+                    indicators["detected"] = True
+                    indicators["confidence"] += 50
+                    indicators["details"].append(f"Registry key found: {path}")
+                except WindowsError:
+                    pass
+
+            # Check for sandbox-specific values
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation")
+                value, _ = winreg.QueryValueEx(key, "SystemManufacturer")
+                winreg.CloseKey(key)
+
+                vm_manufacturers = ["vmware", "virtualbox", "qemu", "xen", "parallels", "microsoft corporation"]
+                if any(vm in value.lower() for vm in vm_manufacturers):
+                    indicators["detected"] = True
+                    indicators["confidence"] += 40
+                    indicators["details"].append(f"VM manufacturer: {value}")
+
+            except Exception:
+                pass
+
+        except Exception as e:
+            self.logger.debug(f"Registry check error: {e}")
+
+        return indicators
+
+    def _check_virtualization_artifacts(self) -> dict:
+        """Check for virtualization artifacts."""
+        artifacts = {"detected": False, "confidence": 0, "details": []}
+
+        # Check loaded drivers/modules
+        if platform.system() == "Windows":
+            try:
+                import subprocess
+
+                result = subprocess.run(["driverquery", "/v"], capture_output=True, text=True, timeout=5)
+                drivers = result.stdout.lower()
+
+                vm_drivers = ["vboxdrv", "vboxguest", "vmci", "vmhgfs", "vmmouse", "vmrawdsk", "vmusbmouse", "vmx86", "vmware"]
+
+                for driver in vm_drivers:
+                    if driver in drivers:
+                        artifacts["detected"] = True
+                        artifacts["confidence"] += 30
+                        artifacts["details"].append(f"VM driver: {driver}")
+
+            except Exception:
+                pass
+        else:
+            # Check loaded kernel modules on Linux
+            try:
+                with open("/proc/modules", "r") as f:
+                    modules = f.read().lower()
+
+                    vm_modules = ["vboxguest", "vboxsf", "vmw_balloon", "vmxnet", "virtio", "xen", "kvm", "hyperv"]
+
+                    for module in vm_modules:
+                        if module in modules:
+                            artifacts["detected"] = True
+                            artifacts["confidence"] += 30
+                            artifacts["details"].append(f"VM module: {module}")
+
+            except Exception:
+                pass
+
+        # Check DMI/SMBIOS information
+        try:
+            if platform.system() == "Linux":
+                import subprocess
+
+                result = subprocess.run(["dmidecode", "-t", "system"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    dmi_info = result.stdout.lower()
+                    vm_indicators = ["vmware", "virtualbox", "qemu", "kvm", "xen", "parallels"]
+
+                    for indicator in vm_indicators:
+                        if indicator in dmi_info:
+                            artifacts["detected"] = True
+                            artifacts["confidence"] += 50
+                            artifacts["details"].append(f"DMI indicator: {indicator}")
+                            break
+        except Exception:
+            pass
+
+        return artifacts
 
     def detect_sandbox(self, aggressive: bool = False) -> dict[str, Any]:
         """Perform sandbox detection using multiple techniques.

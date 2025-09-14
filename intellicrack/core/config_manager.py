@@ -137,6 +137,7 @@ class IntellicrackConfig:
 
         Returns:
             Path: The root directory where Intellicrack is installed
+
         """
         import intellicrack
 

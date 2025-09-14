@@ -1,3 +1,31 @@
+"""
+CFG Explorer Inner Module
+
+This module provides internal functionality for Control Flow Graph (CFG) exploration within the Intellicrack application.
+It handles the integration of various analysis tools and libraries for binary analysis, graph visualization,
+and license pattern detection.
+
+Main Classes:
+    CfgExplorerInner: Main class containing methods for CFG analysis and visualization.
+
+Key Features:
+    - NetworkX integration for graph analysis and manipulation
+    - Matplotlib integration for CFG visualization
+    - Radare2 integration for advanced binary analysis
+    - Capstone integration for disassembly and instruction analysis
+    - License pattern detection in binary data
+    - Binary format detection (PE, ELF, Mach-O)
+    - Function pattern recognition
+    - Control flow graph construction and visualization
+    - Export capabilities for various formats (PNG, SVG, DOT, HTML)
+
+Dependencies:
+    - networkx: For graph operations and analysis
+    - matplotlib: For visualization (optional)
+    - r2pipe: For Radare2 integration (optional)
+    - capstone: For disassembly (optional)
+"""
+
 import logging
 
 import networkx
@@ -8,8 +36,42 @@ logger = logging.getLogger(__name__)
 
 
 class CfgExplorerInner:
+    """Internal class for handling Control Flow Graph (CFG) exploration functionality.
+
+    This class provides methods to initialize and configure various analysis tools,
+    perform binary analysis, detect patterns, and visualize control flow graphs.
+    It serves as a bridge between the UI components and the underlying analysis engines.
+
+    The class integrates multiple analysis tools including NetworkX for graph operations,
+    Matplotlib for visualization, Radare2 for binary analysis, and Capstone for disassembly.
+
+    Attributes:
+        The class primarily operates on the provided app instance, adding attributes like:
+        - cfg_explorer_config: Configuration settings for CFG analysis
+        - cfg_analysis_tools: Dictionary tracking available analysis tools
+        - cfg_graph: NetworkX DiGraph for storing the control flow graph
+        - cfg_functions: Dictionary of detected functions
+        - cfg_binary_format: Detected binary format (PE, ELF, Mach-O)
+        - cfg_detected_functions: List of detected function patterns
+        - cfg_license_hits: List of license-related pattern matches
+        - cfg_graph_data: Dictionary containing graph nodes and edges for visualization
+
+    Main Methods:
+        run_cfg_explorer_inner: Main entry point for CFG exploration
+        _initialize_cfg_explorer_config: Sets up default configuration
+        _initialize_cfg_analysis_tools: Checks and marks available analysis tools
+        _setup_networkx_integration: Configures NetworkX for graph analysis
+        _setup_matplotlib_integration: Sets up Matplotlib for visualization
+        _setup_radare2_integration: Configures Radare2 for binary analysis
+        _setup_capstone_integration: Sets up Capstone for disassembly
+        _perform_binary_structure_analysis: Analyzes binary file structure
+        _build_sample_cfg_graph: Creates sample CFG from detected functions
+        _compile_cfg_analysis_results: Compiles and stores analysis results
+
+    """
+
     def run_cfg_explorer_inner(self, app, *args, **kwargs):
-        """Run CFG explorer for visual control flow analysis when explorer not available"""
+        """Run CFG explorer for visual control flow analysis when explorer not available."""
         try:
             from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer
 
@@ -41,7 +103,7 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
 
     def _initialize_cfg_explorer_config(self, app):
-        """Initialize CFG explorer configuration"""
+        """Initialize CFG explorer configuration."""
         if not hasattr(app, "cfg_explorer_config"):
             app.cfg_explorer_config = {
                 "layout_algorithm": "spring",
@@ -53,7 +115,7 @@ class CfgExplorerInner:
             }
 
     def _initialize_cfg_analysis_tools(self, app):
-        """Initialize analysis tools availability tracking"""
+        """Initialize analysis tools availability tracking."""
         if not hasattr(app, "cfg_analysis_tools"):
             app.cfg_analysis_tools = {
                 "radare2_available": False,
@@ -64,7 +126,7 @@ class CfgExplorerInner:
             }
 
     def _setup_networkx_integration(self, app):
-        """Set up NetworkX graph analysis integration"""
+        """Set up NetworkX graph analysis integration."""
         try:
             import networkx
 
@@ -76,7 +138,7 @@ class CfgExplorerInner:
                 app.cfg_graph = networkx.DiGraph()
 
             def build_cfg_with_networkx(functions, edges):
-                """Build Control Flow Graph using NetworkX"""
+                """Build Control Flow Graph using NetworkX."""
                 app.cfg_graph.clear()
 
                 # Add nodes (basic blocks/functions)
@@ -124,7 +186,7 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message("[CFG Explorer] NetworkX not available, using basic analysis"))
 
     def _setup_matplotlib_integration(self, app):
-        """Set up Matplotlib visualization integration"""
+        """Set up Matplotlib visualization integration."""
         try:
             from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
             from intellicrack.handlers.matplotlib_handler import plt as matplotlib_pyplot
@@ -132,7 +194,7 @@ class CfgExplorerInner:
             app.cfg_analysis_tools["matplotlib_available"] = HAS_MATPLOTLIB
 
             def visualize_cfg_with_matplotlib(save_path=None):
-                """Visualize CFG using matplotlib and networkx"""
+                """Visualize CFG using matplotlib and networkx."""
                 if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(app, "cfg_graph"):
                     return {"error": "NetworkX not available or no graph data"}
 
@@ -220,7 +282,7 @@ class CfgExplorerInner:
             pass
 
     def _setup_radare2_integration(self, app):
-        """Set up Radare2 binary analysis integration"""
+        """Set up Radare2 binary analysis integration."""
         try:
             import r2pipe
 
@@ -229,7 +291,7 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message("[CFG Explorer] Radare2 available for binary analysis"))
 
             def analyze_with_r2pipe(binary_path):
-                """Analyze binary using radare2 via r2pipe"""
+                """Analyze binary using radare2 via r2pipe."""
                 try:
                     r2 = r2pipe.open(binary_path)
                     r2.cmd("aaa")  # Analyze all
@@ -303,14 +365,14 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message("[CFG Explorer] Radare2 not available, using pattern-based analysis"))
 
     def _setup_capstone_integration(self, app):
-        """Set up Capstone disassembler integration"""
+        """Set up Capstone disassembler integration."""
         try:
             from intellicrack.handlers.capstone_handler import capstone
 
             app.cfg_analysis_tools["capstone_available"] = True
 
             def disassemble_with_capstone(binary_data, offset=0, arch="x86", mode="64"):
-                """Disassemble binary data using Capstone disassembler"""
+                """Disassemble binary data using Capstone disassembler."""
                 try:
                     if arch == "x86":
                         if mode == "64":
@@ -389,7 +451,7 @@ class CfgExplorerInner:
             pass
 
     def _initialize_cfg_data_structures(self, app):
-        """Initialize CFG-related data structures"""
+        """Initialize CFG-related data structures."""
         if not hasattr(app, "cfg_functions"):
             app.cfg_functions = {}
 
@@ -397,7 +459,7 @@ class CfgExplorerInner:
             app.cfg_current_function = None
 
     def _setup_license_patterns(self, app):
-        """Set up license pattern detection"""
+        """Set up license pattern detection."""
         if not hasattr(app, "license_patterns"):
             app.license_patterns = {
                 "keywords": [
@@ -448,7 +510,7 @@ class CfgExplorerInner:
             }
 
     def _perform_binary_structure_analysis(self, app):
-        """Perform basic binary structure analysis"""
+        """Perform basic binary structure analysis."""
         if hasattr(app, "binary_path") and app.binary_path:
             try:
                 with open(app.binary_path, "rb") as binary_file:
@@ -480,7 +542,7 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
     def _detect_binary_format(self, app, binary_data):
-        """Detect binary format from data"""
+        """Detect binary format from data."""
         binary_format = "unknown"
         if binary_data[:2] == b"MZ":
             binary_format = "PE"
@@ -497,7 +559,7 @@ class CfgExplorerInner:
         return binary_format
 
     def _detect_function_patterns(self, app, binary_data, binary_format):
-        """Detect function patterns in binary data"""
+        """Detect function patterns in binary data."""
         function_patterns = []
         if binary_format == "PE":
             from ..utils.analysis.pattern_search import find_function_prologues
@@ -516,7 +578,7 @@ class CfgExplorerInner:
         return function_patterns
 
     def _search_license_patterns(self, app, binary_data):
-        """Search for license-related patterns in binary data"""
+        """Search for license-related patterns in binary data."""
         license_hits = []
         for keyword in app.license_patterns["keywords"]:
             if keyword.encode("ascii", errors="ignore") in binary_data:
@@ -531,7 +593,7 @@ class CfgExplorerInner:
         return license_hits
 
     def _initialize_graph_visualization_data(self, app):
-        """Initialize graph visualization data structures"""
+        """Initialize graph visualization data structures."""
         if not hasattr(app, "cfg_graph_data"):
             app.cfg_graph_data = {
                 "nodes": [],
@@ -543,7 +605,7 @@ class CfgExplorerInner:
             }
 
     def _build_sample_cfg_graph(self, app):
-        """Create sample CFG graph if functions detected"""
+        """Create sample CFG graph if functions detected."""
         if hasattr(app, "cfg_detected_functions") and app.cfg_detected_functions:
             sample_nodes = []
             sample_edges = []
@@ -570,7 +632,7 @@ class CfgExplorerInner:
                 )
 
     def _compile_cfg_analysis_results(self, app):
-        """Compile and store CFG analysis results"""
+        """Compile and store CFG analysis results."""
         if not hasattr(app, "analyze_results"):
             app.analyze_results = []
 
