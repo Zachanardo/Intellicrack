@@ -14,7 +14,7 @@ bitsandbytes>=0.41.0
 # Binary Analysis
 angr==9.2.95
 claripy==9.2.95
-capstone>=5.0.0
+capstone>=5.0.1
 keystone_engine==0.9.2
 binwalk @ https://github.com/ReFirmLabs/binwalk/archive/v2.3.4.tar.gz
 volatility3==2.26.0
@@ -48,7 +48,7 @@ aiohttp==3.12.14
 Requests==2.32.4
 urllib3==2.5.0
 defusedxml==0.7.1
-boto3==1.38.41
+boto3==1.39.11
 azure-storage-blob==12.19.0
 fastapi==0.111.0
 httpie>=3.2.3
