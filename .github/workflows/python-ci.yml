@@ -36,20 +36,14 @@ jobs:
         # Install the package itself in editable mode to make its modules available for tests
         pip install -e .
 
-    - name: Lint with flake8
+    - name: Lint and format with ruff
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
-
-    - name: Format with black (check only)
-      run: |
-        black --check .
-
-    - name: Sort imports with isort (check only)
-      run: |
-        isort --check-only .
+        # Ruff replaces flake8, black, isort, and many other tools
+        pip install ruff==0.5.0
+        # Check for linting errors and code quality issues
+        ruff check intellicrack/ tests/ --output-format=github
+        # Format check (replaces black and isort)
+        ruff format --check intellicrack/ tests/
 
     - name: Test with pytest
       run: |

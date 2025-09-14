@@ -28,13 +28,13 @@ jobs:
         pip install -r requirements/base.txt
         pip install -r requirements/test.txt
 
-    - name: Lint with flake8
+    - name: Lint with ruff
       run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        pip install ruff==0.5.0
+        # Check for linting errors and code quality issues
+        ruff check intellicrack/ tests/ --output-format=github
+        # Format check (ensure code follows consistent style)
+        ruff format --check intellicrack/ tests/
 
     - name: Verify No Mock Usage (Production-Ready Enforcement)
       run: |
