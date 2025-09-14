@@ -40,7 +40,7 @@ py-lief = "*"
 # GUI packages (conda-forge)
 pillow = "*"
 psutil = "*"
-pyqtgraph = "*"
+# pyqtgraph = "*"  # Commented - may need numpy
 
 # ML/AI packages (conda-forge)
 # onnx = "*"  # Commented - may need numpy
@@ -71,7 +71,7 @@ pymongo = "*"
 sqlalchemy = "*"
 
 # Parallel processing (conda-forge)
-dask = "*"
+# dask = "*"  # Commented - depends on numpy
 
 # Development tools (conda-forge)
 setuptools = "==80.9.0"
@@ -270,6 +270,6 @@ platforms = ["win-64"]
 
 [environments]
 default = {solve-group = "default"}
-dev = {features = ["dev"], solve-group = "dev"}
+# dev = {features = ["dev"], solve-group = "dev"}  # Commented - resolving too many envs
 # cuda = {features = ["cuda"], solve-group = "cuda"}  # Uncomment for NVIDIA GPU support
-intel = {features = ["intel"], solve-group = "intel"}
+# intel = {features = ["intel"], solve-group = "intel"}  # Commented - causing crashes
