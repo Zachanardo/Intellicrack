@@ -40,7 +40,7 @@ cryptography==44.0.3
 paramiko==3.5.1
 pyshark==0.6
 dpkt==1.9.8
-pycryptodome==3.19.0
+pycryptodome==3.19.1
 pyOpenSSL==25.0.0
 
 # Web & HTTP

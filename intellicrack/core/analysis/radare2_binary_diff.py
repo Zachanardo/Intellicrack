@@ -649,10 +649,10 @@ class R2BinaryDiff:
         if self.r2_primary:
             try:
                 self.r2_primary.quit()
-            except:
-                pass
+            except Exception as e:
+                self.logger.warning(f"Error closing primary r2 session: {e}")
         if self.r2_secondary:
             try:
                 self.r2_secondary.quit()
-            except:
-                pass
+            except Exception as e:
+                self.logger.warning(f"Error closing secondary r2 session: {e}")

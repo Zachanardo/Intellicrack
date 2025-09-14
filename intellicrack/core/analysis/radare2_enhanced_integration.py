@@ -33,6 +33,7 @@ from .radare2_error_handler import get_error_handler, r2_error_context
 from .radare2_esil import ESILAnalysisEngine
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_json_standardizer import standardize_r2_result
+from .radare2_performance_metrics import R2PerformanceMonitor, create_performance_monitor
 from .radare2_scripting import R2ScriptingEngine
 from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
@@ -91,6 +92,12 @@ class EnhancedR2Integration:
             "recoveries_successful": 0,
         }
 
+        # Initialize performance monitor
+        self.performance_monitor = create_performance_monitor(
+            enable_real_time=self.config.get("enable_performance_monitoring", True)
+        )
+        self.performance_monitor.start_session(f"r2_session_{binary_path}")
+
         # Thread safety
         self._lock = threading.RLock()
 
@@ -131,8 +138,8 @@ class EnhancedR2Integration:
             try:
                 with r2_error_context(f"init_{name}_component", binary_path=self.binary_path):
                     if name == "diff":
-                        # Binary diff needs two binaries, initialize later
-                        self.components[name] = None
+                        # Initialize binary diff with primary binary only
+                        self.components[name] = R2BinaryDiff(self.binary_path)
                     else:
                         self.components[name] = component_class(self.binary_path)
                     self.logger.debug(f"Initialized {name} component")
@@ -511,6 +518,93 @@ class EnhancedR2Integration:
             health["overall_health"] = "warning"
 
         return health
+
+    def set_secondary_binary(self, secondary_path: str) -> bool:
+        """Set secondary binary for diff analysis.
+
+        Args:
+            secondary_path: Path to the secondary binary
+
+        Returns:
+            True if successfully set, False otherwise
+        """
+        try:
+            if self.components.get("diff"):
+                self.components["diff"].set_secondary_binary(secondary_path)
+                self.logger.info(f"Set secondary binary for diff: {secondary_path}")
+                return True
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return False
+        except Exception as e:
+            self.logger.error(f"Failed to set secondary binary: {e}")
+            return False
+
+    def get_function_diffs(self) -> list[dict[str, Any]]:
+        """Get function differences between primary and secondary binaries.
+
+        Returns:
+            List of function diff results
+        """
+        try:
+            if self.components.get("diff"):
+                diffs = self.components["diff"].get_function_diffs()
+                # Convert dataclass objects to dictionaries
+                return [
+                    {
+                        "name": d.name,
+                        "status": d.status,
+                        "primary_address": d.primary_address,
+                        "secondary_address": d.secondary_address,
+                        "primary_size": d.primary_size,
+                        "secondary_size": d.secondary_size,
+                        "size_diff": d.size_diff,
+                        "similarity_score": d.similarity_score,
+                        "opcodes_changed": d.opcodes_changed,
+                        "calls_changed": d.calls_changed,
+                        "basic_block_diff": d.basic_block_diff
+                    }
+                    for d in diffs
+                ]
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return []
+        except Exception as e:
+            self.logger.error(f"Failed to get function diffs: {e}")
+            return []
+
+    def get_basic_block_diffs(self, function_name: str) -> list[dict[str, Any]]:
+        """Get basic block differences for a specific function.
+
+        Args:
+            function_name: Name of the function to analyze
+
+        Returns:
+            List of basic block diff results
+        """
+        try:
+            if self.components.get("diff"):
+                bb_diffs = self.components["diff"].get_basic_block_diffs(function_name)
+                # Convert dataclass objects to dictionaries
+                return [
+                    {
+                        "address": d.address,
+                        "status": d.status,
+                        "primary_size": d.primary_size,
+                        "secondary_size": d.secondary_size,
+                        "instruction_count_diff": d.instruction_count_diff,
+                        "edges_added": d.edges_added,
+                        "edges_removed": d.edges_removed,
+                        "jump_targets_changed": d.jump_targets_changed
+                    }
+                    for d in bb_diffs
+                ]
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return []
+        except Exception as e:
+            self.logger.error(f"Failed to get basic block diffs: {e}")
+            return []
 
     def cleanup(self):
         """Cleanup resources."""
