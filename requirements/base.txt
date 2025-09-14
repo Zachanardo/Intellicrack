@@ -60,9 +60,9 @@ ray==2.47.1
 
 # ML Frameworks
 tensorflow_cpu>=2.15.0,<2.20.0
-torch==2.7.1+cpu
-torchvision==0.22.1+cpu
-torchaudio==2.7.1+cpu
+torch==2.7.1+xpu
+torchvision==0.22.1+xpu
+torchaudio==2.7.1+xpu
 onnx==1.18.0
 onnxruntime==1.22.0
 pyopencl==2025.2.4

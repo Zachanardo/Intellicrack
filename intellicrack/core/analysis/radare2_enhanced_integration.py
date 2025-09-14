@@ -31,6 +31,7 @@ from .radare2_bypass_generator import R2BypassGenerator
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_error_handler import get_error_handler, r2_error_context
 from .radare2_esil import ESILAnalysisEngine
+from .radare2_graph_view import R2GraphGenerator, create_graph_generator
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_json_standardizer import standardize_r2_result
 from .radare2_performance_metrics import R2PerformanceMonitor, create_performance_monitor
@@ -132,6 +133,7 @@ class EnhancedR2Integration:
             "bypass": R2BypassGenerator,
             "diff": R2BinaryDiff,
             "scripting": R2ScriptingEngine,
+            "graph": R2GraphGenerator,
         }
 
         for name, component_class in component_classes.items():
@@ -644,6 +646,180 @@ class EnhancedR2Integration:
         """
         self.performance_monitor.export_metrics(filepath)
         self.logger.info(f"Exported performance metrics to {filepath}")
+
+    def generate_control_flow_graph(self, function_name: str) -> dict[str, Any]:
+        """Generate control flow graph for a function.
+
+        Args:
+            function_name: Name of the function
+
+        Returns:
+            Dictionary containing graph data
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_control_flow_graph(function_name)
+                return {
+                    "nodes": [
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "size": n.size,
+                            "color": n.color,
+                            "attributes": n.attributes
+                        }
+                        for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style
+                        }
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate CFG: {e}")
+            return {}
+
+    def generate_call_graph(self, max_depth: int = 3) -> dict[str, Any]:
+        """Generate function call graph.
+
+        Args:
+            max_depth: Maximum depth for traversal
+
+        Returns:
+            Dictionary containing graph data
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_call_graph(max_depth)
+                return {
+                    "nodes": [
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "size": n.size,
+                            "color": n.color,
+                            "attributes": n.attributes
+                        }
+                        for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style
+                        }
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate call graph: {e}")
+            return {}
+
+    def generate_xref_graph(self, address: int) -> dict[str, Any]:
+        """Generate cross-reference graph for an address.
+
+        Args:
+            address: Address to analyze
+
+        Returns:
+            Dictionary containing graph data
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_xref_graph(address)
+                return {
+                    "nodes": [
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "color": n.color
+                        }
+                        for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style
+                        }
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate xref graph: {e}")
+            return {}
+
+    def visualize_graph(self, graph_type: str, **kwargs) -> bool:
+        """Visualize a graph.
+
+        Args:
+            graph_type: Type of graph ('cfg', 'call', 'xref', 'import')
+            **kwargs: Additional arguments for specific graph types
+
+        Returns:
+            True if successful
+        """
+        try:
+            if not self.components.get("graph"):
+                self.logger.error("Graph component not initialized")
+                return False
+
+            graph_gen = self.components["graph"]
+
+            if graph_type == "cfg":
+                function_name = kwargs.get("function_name", "main")
+                graph_data = graph_gen.generate_control_flow_graph(function_name)
+            elif graph_type == "call":
+                max_depth = kwargs.get("max_depth", 3)
+                graph_data = graph_gen.generate_call_graph(max_depth)
+            elif graph_type == "xref":
+                address = kwargs.get("address", 0)
+                graph_data = graph_gen.generate_xref_graph(address)
+            elif graph_type == "import":
+                graph_data = graph_gen.generate_import_dependency_graph()
+            else:
+                self.logger.error(f"Unknown graph type: {graph_type}")
+                return False
+
+            output_path = kwargs.get("output_path")
+            layout = kwargs.get("layout", "spring")
+
+            return graph_gen.visualize_graph(graph_data, output_path, layout)
+
+        except Exception as e:
+            self.logger.error(f"Failed to visualize graph: {e}")
+            return False
 
     def cleanup(self):
         """Cleanup resources."""
