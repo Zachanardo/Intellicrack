@@ -431,7 +431,6 @@ yarn.lock
 Pipfile
 requirements-dev.txt
 setup.cfg
-pyproject.toml
 
 # UV package manager
 uv.lock
