@@ -25,57 +25,74 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Setup Mambaforge
+      uses: conda-incubator/setup-miniconda@v3
       with:
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: intellicrack
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements/*.txt
-          pyproject.toml
+        use-mamba: true
+        channels: conda-forge
+        channel-priority: strict
 
-    - name: Cache pip packages
+    - name: Cache Mamba environment
       uses: actions/cache@v4
       with:
-        path: ~\.cache\pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt', 'pyproject.toml') }}
+        path: |
+          C:\Miniconda3\envs\intellicrack
+          ~/.mamba
+          ~/.conda
+        key: ${{ runner.os }}-mamba-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt', 'pyproject.toml') }}
         restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-mamba-${{ matrix.python-version }}-
+          ${{ runner.os }}-mamba-
 
     - name: Install dependencies
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements/base.txt
         pip install -r requirements/test.txt
         pip install -e .
 
     - name: Lint with ruff
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         pip install ruff==0.5.0
         ruff check intellicrack/ tests/ --output-format=github
         ruff format --check intellicrack/ tests/
 
     - name: Security scan with bandit
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         pip install bandit[toml]==1.7.8
         bandit -r intellicrack/ -f json -o bandit-report.json || true
         python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
       continue-on-error: true
 
     - name: Type check with mypy
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         pip install mypy==1.16.0
         mypy intellicrack/ --ignore-missing-imports --no-strict-optional
       continue-on-error: true
 
     - name: Verify No Mock Usage (Production-Ready Enforcement)
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         python tests/utils/verify_no_mocks.py --ci
       continue-on-error: false
 
     - name: Test with pytest
+      shell: bash -el {0}
       run: |
+        mamba activate intellicrack
         pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
       env:
         PYTHONDONTWRITEBYTECODE: 1
