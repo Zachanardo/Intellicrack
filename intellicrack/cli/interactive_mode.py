@@ -1,7 +1,21 @@
 """Interactive CLI mode for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import cmd
@@ -151,8 +165,17 @@ class IntellicrackShell(cmd.Cmd):
         try:
             from intellicrack.cli.advanced_export import AdvancedExporter
 
-            # Use current file path or placeholder if not loaded
-            binary_path = str(self.current_file) if self.current_file else "interactive_session"
+            # Validate that we have a loaded binary to export results from
+            if not self.current_file:
+                print("Error: No binary file loaded. Use 'load <filepath>' to load a binary first.")
+                return
+
+            # Ensure analysis results exist before attempting export
+            if not self.analysis_results:
+                print("Error: No analysis results available. Run 'analyze' on a loaded binary first.")
+                return
+
+            binary_path = str(self.current_file)
             exporter = AdvancedExporter(binary_path, self.analysis_results)
 
             success = False

@@ -1,0 +1,10 @@
+authors
+channels
+description
+install-ipex
+name
+platforms
+post-install
+test
+verify
+version

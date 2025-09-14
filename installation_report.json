@@ -1,0 +1,34 @@
+{
+  "Errors": [
+    "PyTorch XPU: [W914 14:11:20.000000000 OperatorEntry.cpp:225] Warning: Warning only once for all operators,  other operators may also be overridden.   Overriding a previously registered kernel for the same operator and the same dispatch key   operator: aten::geometric_(Tensor(a!) self, float p, *, Generator? generator=None) -> Tensor(a!)     registered at C:\\actions-runner\\_work\\pytorch\\pytorch\\pytorch\\build\\aten\\src\\ATen\\RegisterSchema.cpp:6   dispatch key: XPU   previous kernel: registered at C:\\actions-runner\\_work\\pytorch\\pytorch\\pytorch\\aten\\src\\ATen\\VmapModeRegistrations.cpp:37        new kernel: registered at I:\\frameworks.ai.pytorch.ipex-gpu\\build\\Release\\csrc\\gpu\\csrc\\gpu\\xpu\\ATen\\RegisterXPU_0.cpp:172 (function operator ()) Traceback (most recent call last):   File \"<string>\", line 3, in <module>   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\__init__.py\", line 127, in <module>     from . import xpu   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\xpu\\__init__.py\", line 20, in <module>     from .utils import *   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\xpu\\utils.py\", line 6, in <module>     from .. import frontend   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\frontend.py\", line 9, in <module>     from .nn import utils   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\nn\\utils\\__init__.py\", line 1, in <module>     from intel_extension_for_pytorch.nn.utils import _weight_prepack   File \"C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\intel_extension_for_pytorch\\nn\\utils\\_weight_prepack.py\", line 122, in <module>     installed_pkg = {dist.metadata[\"Name\"].lower() for dist in distributions()}                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^ AttributeError: 'NoneType' object has no attribute 'lower'",
+    "ROPGadget not installed or import failed",
+    "tensorflow not installed",
+    "pandas not installed",
+    "scipy not installed",
+    "matplotlib not installed",
+    "scikit-learn not installed"
+  ],
+  "PythonVersion": "Python 3.12.11",
+  "Warnings": [
+    "Package conflicts: bokeh 3.8.0 requires pandas, which is not installed. nltk 3.9.1 requires joblib, which is not installed. panel 1.7.5 requires pandas, which is not installed. seaborn 0.13.2 requires matplotlib, which is not installed. seaborn 0.13.2 requires pandas, which is not installed. statsmodels 0.14.5 requires pandas, which is not installed. statsmodels 0.14.5 requires scipy, which is not installed. aiobotocore 2.24.0 has requirement botocore<1.39.12,>=1.39.9, but you have botocore 1.40.30. distributed 2025.5.1 has requirement dask==2025.5.1, but you have dask 2025.7.0. panel 1.7.5 has requirement bokeh<3.8.0,>=3.5.0, but you have bokeh 3.8.0."
+  ],
+  "Success": [
+    "Python: Python 3.12.11",
+    "capstone: C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\capstone\\__init__.py:327: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.   import pkg_resources 5.0.0",
+    "r2pipe: OK",
+    "unicorn: C:\\Intellicrack\\mamba_env\\Lib\\site-packages\\unicorn\\unicorn.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.   import pkg_resources 2.0.1",
+    "angr: 9.2.95",
+    "pwn: OK",
+    "yara: 4.5.4",
+    "frida: 17.2.12",
+    "volatility3: OK",
+    "transformers: 4.56.1",
+    "accelerate: 1.10.1",
+    "huggingface_hub: 0.34.4",
+    "safetensors: 0.6.2",
+    "tensorboard: 2.18.0",
+    "numpy: 2.0.2",
+    "Critical imports compatibility verified"
+  ],
+  "Timestamp": "2025-09-14T14:12:49.4659749-06:00"
+}
