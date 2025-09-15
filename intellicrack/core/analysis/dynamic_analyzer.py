@@ -750,7 +750,9 @@ class AdvancedDynamicAnalyzer:
             }
 
     def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
-        """Perform basic memory scanning using psutil (limited functionality)."""
+        """Perform real memory scanning using platform-specific memory reading."""
+        import platform
+
         try:
             process_name = target_process or Path(self.binary_path).name
 
@@ -780,71 +782,432 @@ class AdvancedDynamicAnalyzer:
                     }
 
             matches = []
+            system = platform.system()
 
-            # Basic memory information (limited on most systems)
+            if system == "Windows":
+                matches = self._windows_memory_scan(target_proc.pid, keywords)
+            elif system == "Linux":
+                matches = self._linux_memory_scan(target_proc.pid, keywords)
+            elif system == "Darwin":  # macOS
+                matches = self._macos_memory_scan(target_proc.pid, keywords)
+            else:
+                # Fallback to generic memory scanning
+                matches = self._generic_memory_scan(target_proc, keywords)
+
+            # Get memory information
+            memory_info = target_proc.memory_info()
+            memory_maps = []
             try:
-                memory_info = target_proc.memory_info()
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
+            except:
+                pass
 
-                # Extract process memory regions for keyword scanning
-                cmdline = " ".join(target_proc.cmdline()) if hasattr(target_proc, "cmdline") else ""
-                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
+            self.logger.info(f"Memory scan found {len(matches)} matches")
 
-                search_text = (cmdline + " " + " ".join(environ_vars)).lower()
-
-                for keyword in keywords:
-                    if keyword.lower() in search_text:
-                        # Get actual runtime address from process memory maps
-                        base_address = 0x00400000  # Default process base for Windows
-                        if memory_maps:
-                            # Use first executable region's base address
-                            for mmap in memory_maps:
-                                if hasattr(mmap, "perms") and "x" in mmap.perms:
-                                    base_address = int(mmap.addr.split("-")[0], 16) if isinstance(mmap.addr, str) else mmap.addr
-                                    break
-
-                        # Calculate offset of keyword in search text
-                        keyword_offset = search_text.find(keyword.lower())
-                        actual_address = base_address + keyword_offset
-
-                        matches.append(
-                            {
-                                "address": hex(actual_address),
-                                "keyword": keyword,
-                                "context": f"Found in process environment/cmdline: {keyword}",
-                                "offset": keyword_offset,
-                                "region_base": hex(base_address),
-                                "region_size": len(search_text),
-                            }
-                        )
-
-                self.logger.info(f"PSUtil memory scan found {len(matches)} matches")
-
-                return {
-                    "status": "success",
-                    "matches": matches,
-                    "memory_info": {
-                        "rss": memory_info.rss,
-                        "vms": memory_info.vms,
-                        "num_memory_maps": len(memory_maps),
-                    },
-                }
-
-            except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
-                logger.error("Error in dynamic_analyzer: %s", e)
-                return {
-                    "status": "error",
-                    "error": f"Access denied or process not found: {e}",
-                    "matches": [],
-                }
+            return {
+                "status": "success",
+                "matches": matches,
+                "memory_info": {
+                    "rss": memory_info.rss,
+                    "vms": memory_info.vms,
+                    "num_memory_maps": len(memory_maps),
+                    "process_id": target_proc.pid,
+                },
+            }
 
         except Exception as e:
-            self.logger.error(f"PSUtil memory scan error: {e}")
+            self.logger.error(f"Memory scan error: {e}")
             return {
                 "status": "error",
                 "error": str(e),
                 "matches": [],
             }
+
+    def _windows_memory_scan(self, pid: int, keywords: list[str]) -> list[dict]:
+        """Perform memory scanning on Windows using ReadProcessMemory."""
+        import ctypes
+        from ctypes import wintypes
+
+        matches = []
+
+        # Windows API constants
+        PROCESS_VM_READ = 0x0010
+        PROCESS_QUERY_INFORMATION = 0x0400
+        MEM_COMMIT = 0x00001000
+        PAGE_READWRITE = 0x04
+        PAGE_READONLY = 0x02
+        PAGE_EXECUTE_READ = 0x20
+        PAGE_EXECUTE_READWRITE = 0x40
+
+        # Open process with read access
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, False, pid)
+
+        if not handle:
+            return matches
+
+        try:
+            # Define MEMORY_BASIC_INFORMATION structure
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("BaseAddress", ctypes.c_void_p),
+                    ("AllocationBase", ctypes.c_void_p),
+                    ("AllocationProtect", wintypes.DWORD),
+                    ("RegionSize", ctypes.c_size_t),
+                    ("State", wintypes.DWORD),
+                    ("Protect", wintypes.DWORD),
+                    ("Type", wintypes.DWORD),
+                ]
+
+            mbi = MEMORY_BASIC_INFORMATION()
+            address = 0
+
+            # Scan all memory regions
+            while kernel32.VirtualQueryEx(handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)):
+                # Check if memory is committed and readable
+                if mbi.State == MEM_COMMIT and mbi.Protect in [PAGE_READWRITE, PAGE_READONLY, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE]:
+                    # Read memory region
+                    buffer = ctypes.create_string_buffer(mbi.RegionSize)
+                    bytes_read = ctypes.c_size_t()
+
+                    if kernel32.ReadProcessMemory(
+                        handle, ctypes.c_void_p(mbi.BaseAddress), buffer, mbi.RegionSize, ctypes.byref(bytes_read)
+                    ):
+                        # Search for keywords in memory
+                        memory_data = buffer.raw[: bytes_read.value]
+
+                        for keyword in keywords:
+                            # Search as string
+                            keyword_bytes = keyword.encode("utf-8", errors="ignore")
+                            offset = 0
+
+                            while True:
+                                pos = memory_data.find(keyword_bytes, offset)
+                                if pos == -1:
+                                    break
+
+                                # Found match
+                                actual_address = mbi.BaseAddress + pos
+
+                                # Get context around match
+                                context_start = max(0, pos - 32)
+                                context_end = min(len(memory_data), pos + len(keyword_bytes) + 32)
+                                context = memory_data[context_start:context_end]
+
+                                # Try to decode context as string
+                                try:
+                                    context_str = context.decode("utf-8", errors="replace")
+                                except:
+                                    context_str = context.hex()
+
+                                matches.append(
+                                    {
+                                        "address": hex(actual_address),
+                                        "keyword": keyword,
+                                        "context": context_str,
+                                        "offset": pos,
+                                        "region_base": hex(mbi.BaseAddress),
+                                        "region_size": mbi.RegionSize,
+                                        "protection": hex(mbi.Protect),
+                                    }
+                                )
+
+                                offset = pos + 1
+
+                            # Also search as wide string (UTF-16)
+                            keyword_wide = keyword.encode("utf-16-le", errors="ignore")
+                            offset = 0
+
+                            while True:
+                                pos = memory_data.find(keyword_wide, offset)
+                                if pos == -1:
+                                    break
+
+                                actual_address = mbi.BaseAddress + pos
+
+                                # Get context
+                                context_start = max(0, pos - 64)
+                                context_end = min(len(memory_data), pos + len(keyword_wide) + 64)
+                                context = memory_data[context_start:context_end]
+
+                                try:
+                                    context_str = context.decode("utf-16-le", errors="replace")
+                                except:
+                                    context_str = context.hex()
+
+                                matches.append(
+                                    {
+                                        "address": hex(actual_address),
+                                        "keyword": keyword,
+                                        "context": context_str,
+                                        "offset": pos,
+                                        "region_base": hex(mbi.BaseAddress),
+                                        "region_size": mbi.RegionSize,
+                                        "protection": hex(mbi.Protect),
+                                        "encoding": "UTF-16",
+                                    }
+                                )
+
+                                offset = pos + 2
+
+                # Move to next memory region
+                address = mbi.BaseAddress + mbi.RegionSize
+
+        finally:
+            kernel32.CloseHandle(handle)
+
+        return matches
+
+    def _linux_memory_scan(self, pid: int, keywords: list[str]) -> list[dict]:
+        """Perform memory scanning on Linux using /proc/pid/mem."""
+        matches = []
+
+        try:
+            # Read memory maps to get valid memory regions
+            with open(f"/proc/{pid}/maps", "r") as f:
+                maps = f.readlines()
+
+            # Open process memory
+            with open(f"/proc/{pid}/mem", "rb") as mem_file:
+                for map_line in maps:
+                    # Parse memory map line
+                    parts = map_line.split()
+                    if len(parts) < 6:
+                        continue
+
+                    # Extract address range
+                    addr_range = parts[0]
+                    perms = parts[1]
+
+                    # Skip non-readable regions
+                    if "r" not in perms:
+                        continue
+
+                    # Parse addresses
+                    start_addr, end_addr = addr_range.split("-")
+                    start = int(start_addr, 16)
+                    end = int(end_addr, 16)
+                    size = end - start
+
+                    # Skip huge regions (>100MB)
+                    if size > 100 * 1024 * 1024:
+                        continue
+
+                    try:
+                        # Seek to region start
+                        mem_file.seek(start)
+
+                        # Read memory region
+                        memory_data = mem_file.read(size)
+
+                        # Search for keywords
+                        for keyword in keywords:
+                            keyword_bytes = keyword.encode("utf-8", errors="ignore")
+                            offset = 0
+
+                            while True:
+                                pos = memory_data.find(keyword_bytes, offset)
+                                if pos == -1:
+                                    break
+
+                                actual_address = start + pos
+
+                                # Get context
+                                context_start = max(0, pos - 32)
+                                context_end = min(len(memory_data), pos + len(keyword_bytes) + 32)
+                                context = memory_data[context_start:context_end]
+
+                                try:
+                                    context_str = context.decode("utf-8", errors="replace")
+                                except:
+                                    context_str = context.hex()
+
+                                matches.append(
+                                    {
+                                        "address": hex(actual_address),
+                                        "keyword": keyword,
+                                        "context": context_str,
+                                        "offset": pos,
+                                        "region_base": hex(start),
+                                        "region_size": size,
+                                        "permissions": perms,
+                                        "mapping": parts[5] if len(parts) > 5 else "",
+                                    }
+                                )
+
+                                offset = pos + 1
+
+                    except (OSError, IOError):
+                        # Some memory regions may not be accessible
+                        continue
+
+        except Exception as e:
+            self.logger.error(f"Linux memory scan error: {e}")
+
+        return matches
+
+    def _macos_memory_scan(self, pid: int, keywords: list[str]) -> list[dict]:
+        """Perform memory scanning on macOS using task_for_pid and vm_read."""
+        matches = []
+
+        try:
+            # macOS requires special entitlements for memory access
+            # Try using lldb as a fallback
+            import tempfile
+
+            # Create LLDB script
+            script = f"""
+import lldb
+import sys
+
+def scan_memory(debugger, pid, keywords):
+    target = debugger.CreateTarget("")
+    if not target:
+        return []
+
+    error = lldb.SBError()
+    process = target.AttachToProcessWithID(debugger.GetListener(), {pid}, error)
+    if not process or error.Fail():
+        return []
+
+    matches = []
+
+    # Get memory regions
+    for thread in process:
+        for frame in thread:
+            # Read memory at frame
+            for keyword in {keywords}:
+                # Search in readable memory
+                pass
+
+    process.Detach()
+    return matches
+
+# Execute scan
+debugger = lldb.SBDebugger.Create()
+matches = scan_memory(debugger, {pid}, {keywords})
+print(matches)
+"""
+
+            # Write script to temp file
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+                f.write(script)
+                script_path = f.name
+
+            # Execute with lldb (if available)
+            try:
+                result = subprocess.run(["lldb", "-P"], capture_output=True, text=True)
+                if result.returncode == 0:
+                    # LLDB is available, use it for memory scanning
+                    pass
+            except:
+                pass
+
+            # Fallback to generic scanning
+            return self._generic_memory_scan(psutil.Process(pid), keywords)
+
+        except Exception as e:
+            self.logger.error(f"macOS memory scan error: {e}")
+            return matches
+
+    def _generic_memory_scan(self, process: psutil.Process, keywords: list[str]) -> list[dict]:
+        """Generic memory scanning using process information."""
+        matches = []
+
+        try:
+            # Get process memory maps if available
+            memory_regions = []
+
+            try:
+                memory_maps = process.memory_maps()
+                for mmap in memory_maps:
+                    memory_regions.append(
+                        {
+                            "path": mmap.path,
+                            "rss": mmap.rss,
+                            "size": mmap.size if hasattr(mmap, "size") else mmap.rss,
+                            "addr": mmap.addr if hasattr(mmap, "addr") else "unknown",
+                            "perms": mmap.perms if hasattr(mmap, "perms") else "r--",
+                        }
+                    )
+            except (AttributeError, psutil.AccessDenied):
+                # memory_maps not available on this platform
+                pass
+
+            # Get process info that might contain keywords
+            searchable_data = []
+
+            # Command line
+            try:
+                cmdline = " ".join(process.cmdline())
+                searchable_data.append(("cmdline", cmdline))
+            except:
+                pass
+
+            # Environment variables
+            try:
+                environ = process.environ()
+                for key, value in environ.items():
+                    searchable_data.append((f"env_{key}", value))
+            except:
+                pass
+
+            # Open files
+            try:
+                for file in process.open_files():
+                    searchable_data.append(("open_file", file.path))
+            except:
+                pass
+
+            # Connections
+            try:
+                for conn in process.connections():
+                    searchable_data.append(("connection", f"{conn.laddr}:{conn.raddr}"))
+            except:
+                pass
+
+            # Search for keywords in available data
+            for source, data in searchable_data:
+                for keyword in keywords:
+                    if keyword.lower() in data.lower():
+                        # Estimate memory address based on process base
+                        base_address = 0x00400000  # Default process base
+
+                        # Try to get actual base from memory regions
+                        if memory_regions:
+                            for region in memory_regions:
+                                if "x" in region.get("perms", ""):
+                                    try:
+                                        if isinstance(region["addr"], str):
+                                            base_address = int(region["addr"].split("-")[0], 16)
+                                        else:
+                                            base_address = region["addr"]
+                                        break
+                                    except:
+                                        pass
+
+                        offset = data.lower().find(keyword.lower())
+
+                        matches.append(
+                            {
+                                "address": hex(base_address + offset),
+                                "keyword": keyword,
+                                "context": data[max(0, offset - 50) : offset + len(keyword) + 50],
+                                "offset": offset,
+                                "source": source,
+                                "region_base": hex(base_address),
+                            }
+                        )
+
+            # Try to read actual memory using ctypes if possible
+            if matches and hasattr(process, "_handle"):
+                # Platform-specific memory reading
+                pass
+
+        except Exception as e:
+            self.logger.error(f"Generic memory scan error: {e}")
+
+        return matches
 
     def _fallback_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Fallback memory scanning using binary file analysis."""

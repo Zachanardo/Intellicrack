@@ -24,6 +24,7 @@ import socket
 import ssl
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from typing import Any
 
@@ -72,6 +73,29 @@ class BaseProtocol:
             "keep_alive": True,
         }
 
+        # Protocol type (set by subclasses)
+        self.protocol_type = "base"
+
+        # Message tracking
+        self._sent_messages = {}
+        self._pending_messages = []
+
+        # Connection tracking
+        self.connection_count = 0
+        self.client_connections = {}
+
+        # Event handlers
+        self.on_connection = self._default_on_connection
+        self.on_message = self._default_on_message
+        self.on_disconnection = self._default_on_disconnection
+        self.on_error = self._default_on_error
+
+        # Socket for direct operations
+        self.socket = None
+        self.reader = None
+        self.writer = None
+        self.server = None
+
     async def _default_on_connection(self, connection_info: dict[str, Any]):
         """Default no-op connection handler."""
         self.logger.debug("Default connection handler called with: %s", connection_info)
@@ -101,49 +125,329 @@ class BaseProtocol:
         return True
 
     async def send_message(self, message: dict[str, Any]) -> dict[str, Any] | None:
-        """Send message through the protocol."""
+        """Send message through the protocol with actual network transmission."""
         self.logger.debug("Send message called with: %s", message)
 
-        # Basic implementation that can be overridden by subclasses
         if not self.connected:
             self.logger.error("Cannot send message - not connected")
             return None
 
-        # Encrypt message if encryption manager is available
-        if self.encryption_manager:
-            try:
-                encrypted_data = self.encryption_manager.encrypt(json.dumps(message))
+        try:
+            # Serialize message
+            message_data = json.dumps(message).encode("utf-8")
 
-                # Log encrypted data size and store for transmission
-                self.logger.info(f"Message encrypted: {len(encrypted_data)} bytes")
+            # Encrypt if encryption manager is available
+            if self.encryption_manager:
+                try:
+                    message_data = self.encryption_manager.encrypt(message_data)
+                    self.logger.info(f"Message encrypted: {len(message_data)} bytes")
+                except Exception as e:
+                    self.logger.error("Encryption failed: %s", str(e))
+                    return None
 
-                # Store encrypted data for actual transmission
-                # In a real implementation, this would send over the network
-                self._pending_messages.append(
-                    {
-                        "encrypted_data": encrypted_data,
-                        "message_id": message.get("id", "unknown"),
-                        "timestamp": time.time(),
-                        "destination": message.get("destination", "default"),
-                    }
-                )
+            # Add message headers
+            message_id = message.get("id", str(uuid.uuid4()))
+            timestamp = time.time()
+
+            # Create transmission packet
+            packet = {
+                "header": {
+                    "message_id": message_id,
+                    "timestamp": timestamp,
+                    "protocol": self.protocol_type,
+                    "version": "2.0",
+                    "length": len(message_data),
+                },
+                "body": message_data.hex() if isinstance(message_data, bytes) else message_data,
+            }
+
+            # Protocol-specific transmission
+            if self.protocol_type == "tcp":
+                success = await self._send_tcp(packet)
+            elif self.protocol_type == "udp":
+                success = await self._send_udp(packet)
+            elif self.protocol_type == "http":
+                success = await self._send_http(packet)
+            elif self.protocol_type == "websocket":
+                success = await self._send_websocket(packet)
+            else:
+                # Fallback to generic socket transmission
+                success = await self._send_generic(packet)
+
+            if success:
+                # Track sent message
+                self._sent_messages[message_id] = {"timestamp": timestamp, "size": len(message_data), "retries": 0, "acknowledged": False}
 
                 return {
                     "status": "success",
-                    "message_id": message.get("id", "unknown"),
-                    "timestamp": time.time(),
-                    "encrypted_size": len(encrypted_data),
+                    "message_id": message_id,
+                    "timestamp": timestamp,
+                    "size": len(message_data),
+                    "encrypted": self.encryption_manager is not None,
                 }
-            except Exception as e:
-                self.logger.error("Encryption failed: %s", str(e))
-                return None
-        else:
-            # No encryption - return unencrypted response
-            return {
-                "status": "success",
-                "message_id": message.get("id", "unknown"),
-                "timestamp": time.time(),
-            }
+            else:
+                # Queue for retry
+                self._pending_messages.append(
+                    {
+                        "packet": packet,
+                        "message": message,
+                        "retry_count": 0,
+                        "max_retries": 3,
+                        "next_retry": time.time() + 5,  # Retry after 5 seconds
+                    }
+                )
+
+                return {"status": "queued", "message_id": message_id, "reason": "transmission_failed", "will_retry": True}
+
+        except Exception as e:
+            self.logger.error("Failed to send message: %s", str(e))
+            return None
+
+    async def _send_tcp(self, packet: dict[str, Any]) -> bool:
+        """Send packet via TCP socket."""
+        try:
+            if not self.socket:
+                # Create TCP socket if not exists
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.settimeout(self.config.get("timeout", 30))
+                self.socket.connect((self.host, self.port))
+
+            # Serialize packet
+            packet_data = json.dumps(packet).encode("utf-8")
+            packet_size = len(packet_data)
+
+            # Send size header (4 bytes) + data
+            size_header = packet_size.to_bytes(4, byteorder="big")
+            self.socket.sendall(size_header + packet_data)
+
+            # Update stats
+            self.stats["messages_sent"] += 1
+            self.stats["bytes_sent"] += packet_size + 4
+            self.stats["last_activity"] = time.time()
+
+            return True
+
+        except (socket.error, ConnectionError, TimeoutError) as e:
+            self.logger.error("TCP send failed: %s", e)
+            # Close and reset socket on error
+            if self.socket:
+                self.socket.close()
+                self.socket = None
+            return False
+
+    async def _send_udp(self, packet: dict[str, Any]) -> bool:
+        """Send packet via UDP socket."""
+        try:
+            if not self.socket:
+                # Create UDP socket if not exists
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.socket.settimeout(self.config.get("timeout", 30))
+
+            # Serialize packet
+            packet_data = json.dumps(packet).encode("utf-8")
+
+            # UDP has size limit, fragment if needed
+            max_udp_size = 65507  # Max UDP payload size
+            if len(packet_data) > max_udp_size:
+                # Fragment large packets
+                fragments = []
+                fragment_id = os.urandom(8).hex()
+                total_fragments = (len(packet_data) + max_udp_size - 1) // max_udp_size
+
+                for i in range(total_fragments):
+                    start = i * max_udp_size
+                    end = min(start + max_udp_size, len(packet_data))
+                    fragment = {"fragment_id": fragment_id, "fragment": i, "total": total_fragments, "data": packet_data[start:end].hex()}
+                    fragments.append(fragment)
+
+                # Send each fragment
+                for fragment in fragments:
+                    fragment_data = json.dumps(fragment).encode("utf-8")
+                    self.socket.sendto(fragment_data, (self.host, self.port))
+                    await asyncio.sleep(0.001)  # Small delay between fragments
+            else:
+                # Send single packet
+                self.socket.sendto(packet_data, (self.host, self.port))
+
+            # Update stats
+            self.stats["messages_sent"] += 1
+            self.stats["bytes_sent"] += len(packet_data)
+            self.stats["last_activity"] = time.time()
+
+            return True
+
+        except (socket.error, ConnectionError, TimeoutError) as e:
+            self.logger.error("UDP send failed: %s", e)
+            return False
+
+    async def _send_http(self, packet: dict[str, Any]) -> bool:
+        """Send packet via HTTP POST request."""
+        try:
+            import urllib.error
+            import urllib.request
+
+            # Prepare URL
+            scheme = "https" if self.config.get("use_ssl", False) else "http"
+            url = f"{scheme}://{self.host}:{self.port}/data"
+
+            # Serialize packet
+            packet_data = json.dumps(packet).encode("utf-8")
+
+            # Create request
+            req = urllib.request.Request(
+                url,
+                data=packet_data,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": self.config.get("user_agent", "Mozilla/5.0"),
+                    "Content-Length": str(len(packet_data)),
+                },
+            )
+
+            # Send request with timeout
+            timeout = self.config.get("timeout", 30)
+            response = urllib.request.urlopen(req, timeout=timeout)
+
+            # Check response
+            if response.getcode() == 200:
+                # Update stats
+                self.stats["messages_sent"] += 1
+                self.stats["bytes_sent"] += len(packet_data)
+                self.stats["last_activity"] = time.time()
+                return True
+
+            return False
+
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
+            self.logger.error("HTTP send failed: %s", e)
+            return False
+
+    async def _send_websocket(self, packet: dict[str, Any]) -> bool:
+        """Send packet via WebSocket connection."""
+        try:
+            # Try to use websockets library if available
+            try:
+                import websockets
+
+                # Create WebSocket connection
+                scheme = "wss" if self.config.get("use_ssl", False) else "ws"
+                uri = f"{scheme}://{self.host}:{self.port}/ws"
+
+                async with websockets.connect(uri) as websocket:
+                    # Send packet
+                    packet_data = json.dumps(packet)
+                    await websocket.send(packet_data)
+
+                    # Wait for acknowledgment
+                    response = await asyncio.wait_for(websocket.recv(), timeout=self.config.get("timeout", 30))
+
+                    if response:
+                        # Update stats
+                        self.stats["messages_sent"] += 1
+                        self.stats["bytes_sent"] += len(packet_data)
+                        self.stats["last_activity"] = time.time()
+                        return True
+
+            except ImportError:
+                # Fallback to raw socket WebSocket implementation
+                return await self._send_websocket_raw(packet)
+
+        except Exception as e:
+            self.logger.error("WebSocket send failed: %s", e)
+            return False
+
+    async def _send_websocket_raw(self, packet: dict[str, Any]) -> bool:
+        """Send packet via raw WebSocket implementation."""
+        try:
+            import base64
+
+            if not self.socket:
+                # Create TCP socket for WebSocket
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.settimeout(self.config.get("timeout", 30))
+                self.socket.connect((self.host, self.port))
+
+                # Perform WebSocket handshake
+                key = base64.b64encode(os.urandom(16)).decode("utf-8")
+                handshake = (
+                    f"GET /ws HTTP/1.1\r\n"
+                    f"Host: {self.host}:{self.port}\r\n"
+                    f"Upgrade: websocket\r\n"
+                    f"Connection: Upgrade\r\n"
+                    f"Sec-WebSocket-Key: {key}\r\n"
+                    f"Sec-WebSocket-Version: 13\r\n"
+                    f"\r\n"
+                )
+
+                self.socket.sendall(handshake.encode("utf-8"))
+
+                # Read handshake response
+                response = self.socket.recv(1024).decode("utf-8")
+                if "101 Switching Protocols" not in response:
+                    raise ConnectionError("WebSocket handshake failed")
+
+            # Serialize packet
+            packet_data = json.dumps(packet).encode("utf-8")
+
+            # Create WebSocket frame
+            frame = bytearray()
+
+            # FIN = 1, RSV = 0, Opcode = 1 (text)
+            frame.append(0x81)
+
+            # Mask and payload length
+            length = len(packet_data)
+            if length <= 125:
+                frame.append(0x80 | length)  # Masked
+            elif length <= 65535:
+                frame.append(0x80 | 126)  # Masked, extended length
+                frame.extend(length.to_bytes(2, byteorder="big"))
+            else:
+                frame.append(0x80 | 127)  # Masked, extended length
+                frame.extend(length.to_bytes(8, byteorder="big"))
+
+            # Masking key
+            mask_key = os.urandom(4)
+            frame.extend(mask_key)
+
+            # Masked payload
+            for i, byte in enumerate(packet_data):
+                frame.append(byte ^ mask_key[i % 4])
+
+            # Send frame
+            self.socket.sendall(bytes(frame))
+
+            # Update stats
+            self.stats["messages_sent"] += 1
+            self.stats["bytes_sent"] += len(frame)
+            self.stats["last_activity"] = time.time()
+
+            return True
+
+        except Exception as e:
+            self.logger.error("Raw WebSocket send failed: %s", e)
+            if self.socket:
+                self.socket.close()
+                self.socket = None
+            return False
+
+    async def _send_generic(self, packet: dict[str, Any]) -> bool:
+        """Generic socket-based transmission fallback."""
+        try:
+            # Try TCP first
+            if await self._send_tcp(packet):
+                return True
+
+            # Fallback to UDP
+            if await self._send_udp(packet):
+                return True
+
+            # Last resort: HTTP
+            return await self._send_http(packet)
+
+        except Exception as e:
+            self.logger.error("Generic send failed: %s", e)
+            return False
 
     async def connect(self) -> bool:
         """Establish connection (client-side)."""

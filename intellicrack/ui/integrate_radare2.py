@@ -1,11 +1,24 @@
 """Simple Integration Script for Adding Radare2 UI to Existing Application.
 
+This script provides a simple way to integrate all radare2 functionality
+into the existing Intellicrack application without modifying core files.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
-This script provides a simple way to integrate all radare2 functionality
-into the existing Intellicrack application without modifying core files.
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys

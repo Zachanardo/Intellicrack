@@ -437,7 +437,9 @@ class IntellicrackMainWindow(QMainWindow):
 
         vulnerability_action = QAction("Scan Vulnerabilities", self)
         vulnerability_action.setShortcut("F6")
-        vulnerability_action.setToolTip("Scan for security vulnerabilities including buffer overflows, format strings, and common weaknesses")
+        vulnerability_action.setToolTip(
+            "Scan for security vulnerabilities including buffer overflows, format strings, and common weaknesses"
+        )
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
 
@@ -525,6 +527,7 @@ class IntellicrackMainWindow(QMainWindow):
             # Load binary into app context for proper state management
             try:
                 from ..core.app_context import get_app_context
+
                 app_context = get_app_context()
                 if app_context.load_binary(file_path):
                     self.logger.info("Binary loaded into app context: %s", file_path)
@@ -589,12 +592,13 @@ class IntellicrackMainWindow(QMainWindow):
                     # Load binary into app context for proper state management
                     try:
                         from ..core.app_context import get_app_context
+
                         app_context = get_app_context()
                         metadata = {
-                            "program_name": program_info['display_name'],
+                            "program_name": program_info["display_name"],
                             "installation_folder": installation_folder,
-                            "discovery_method": program_info.get('discovery_method', 'program_selector'),
-                            "licensing_files_count": len(licensing_files)
+                            "discovery_method": program_info.get("discovery_method", "program_selector"),
+                            "licensing_files_count": len(licensing_files),
                         }
                         if app_context.load_binary(selected_executable, metadata):
                             self.logger.info("Program binary loaded into app context: %s", selected_executable)
@@ -974,17 +978,312 @@ Licensing Files Found: {len(licensing_files)}"""
         # For now, just log the selection
 
     def _generate_report(self):
-        """Generate a comprehensive analysis report."""
-        if not self.report_handler.current_result:
-            QMessageBox.warning(
-                self,
-                "No Analysis Available",
-                "Please perform a protection analysis first before generating a report.",
-            )
-            return
+        """Generate comprehensive analysis report."""
+        import datetime
+        import json
+        from pathlib import Path
 
-        # Use the report handler to generate report
-        self.report_handler.generate_report(self)
+        self.update_status.emit("Generating report...")
+        self.update_output.emit("=== REPORT GENERATION ===")
+
+        try:
+            # Collect all analysis data
+            report_data = {
+                "timestamp": datetime.datetime.now().isoformat(),
+                "binary_path": self.binary_path or "No file loaded",
+                "binary_info": {},
+                "analysis_results": {},
+                "vulnerabilities": [],
+                "protections": [],
+                "bypass_techniques": [],
+                "recommendations": [],
+            }
+
+            # Add binary info if available
+            if self.binary_info:
+                report_data["binary_info"] = {
+                    "name": self.binary_info.get("name", "Unknown"),
+                    "size": self.binary_info.get("size", 0),
+                    "type": self.binary_info.get("type", "Unknown"),
+                    "architecture": self.binary_info.get("arch", "Unknown"),
+                    "platform": self.binary_info.get("platform", "Unknown"),
+                    "entry_point": hex(self.binary_info.get("entry_point", 0)),
+                    "sections": self.binary_info.get("sections", []),
+                    "imports": self.binary_info.get("imports", [])[:10],  # Top 10 imports
+                    "exports": self.binary_info.get("exports", [])[:10],  # Top 10 exports
+                }
+
+            # Add analysis results
+            if self.analyze_results:
+                report_data["analysis_results"] = {
+                    "protections_found": self.analyze_results.get("protections", []),
+                    "packers_detected": self.analyze_results.get("packers", []),
+                    "anti_debug_techniques": self.analyze_results.get("anti_debug", []),
+                    "obfuscation_methods": self.analyze_results.get("obfuscation", []),
+                    "cryptographic_usage": self.analyze_results.get("crypto", []),
+                    "license_checks": self.analyze_results.get("license_checks", []),
+                    "network_activity": self.analyze_results.get("network", []),
+                    "file_operations": self.analyze_results.get("file_ops", []),
+                    "registry_operations": self.analyze_results.get("registry_ops", []),
+                }
+
+            # Add vulnerability scan results if available
+            if hasattr(self, "vulnerability_results") and self.vulnerability_results:
+                for vuln in self.vulnerability_results:
+                    report_data["vulnerabilities"].append(
+                        {
+                            "type": vuln.get("type", "Unknown"),
+                            "severity": vuln.get("severity", "Unknown"),
+                            "description": vuln.get("description", ""),
+                            "location": vuln.get("location", ""),
+                            "exploit_difficulty": vuln.get("exploit_difficulty", "Unknown"),
+                            "mitigation": vuln.get("mitigation", ""),
+                        }
+                    )
+
+            # Add protection analysis results
+            if hasattr(self.protection_widget, "analysis_result") and self.protection_widget.analysis_result:
+                prot_result = self.protection_widget.analysis_result
+                for protection in prot_result.get("protections", []):
+                    report_data["protections"].append(
+                        {
+                            "name": protection.get("name", "Unknown"),
+                            "type": protection.get("type", "Unknown"),
+                            "strength": protection.get("strength", "Unknown"),
+                            "details": protection.get("details", {}),
+                            "bypass_feasibility": protection.get("bypass_feasibility", "Unknown"),
+                        }
+                    )
+
+                # Add bypass techniques
+                for bypass in prot_result.get("bypasses", []):
+                    report_data["bypass_techniques"].append(
+                        {
+                            "target_protection": bypass.get("target", "Unknown"),
+                            "technique": bypass.get("technique", "Unknown"),
+                            "success_rate": bypass.get("success_rate", "Unknown"),
+                            "implementation": bypass.get("implementation", ""),
+                            "requirements": bypass.get("requirements", []),
+                        }
+                    )
+
+            # Generate recommendations based on findings
+            if report_data["vulnerabilities"]:
+                critical_vulns = [v for v in report_data["vulnerabilities"] if v["severity"] == "Critical"]
+                high_vulns = [v for v in report_data["vulnerabilities"] if v["severity"] == "High"]
+
+                if critical_vulns:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "Critical",
+                            "category": "Security",
+                            "recommendation": f"Address {len(critical_vulns)} critical vulnerabilities immediately",
+                            "details": "Critical vulnerabilities pose immediate risk and should be patched urgently",
+                        }
+                    )
+
+                if high_vulns:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "High",
+                            "category": "Security",
+                            "recommendation": f"Fix {len(high_vulns)} high-severity vulnerabilities",
+                            "details": "High severity issues should be addressed in the next update cycle",
+                        }
+                    )
+
+            if report_data["protections"]:
+                weak_protections = [p for p in report_data["protections"] if p["strength"] in ["Weak", "Very Weak"]]
+                if weak_protections:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "Medium",
+                            "category": "Protection",
+                            "recommendation": f"Strengthen {len(weak_protections)} weak protection mechanisms",
+                            "details": "Consider implementing stronger protection techniques or layered defenses",
+                        }
+                    )
+
+            # Generate report formats
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_filename = f"intellicrack_report_{timestamp}"
+
+            # Generate JSON report
+            json_report_path = (
+                Path(self.binary_path).parent / f"{base_filename}.json" if self.binary_path else Path(f"{base_filename}.json")
+            )
+            with open(json_report_path, "w", encoding="utf-8") as f:
+                json.dump(report_data, f, indent=2, default=str)
+
+            # Generate HTML report
+            html_report_path = (
+                Path(self.binary_path).parent / f"{base_filename}.html" if self.binary_path else Path(f"{base_filename}.html")
+            )
+            html_content = self._generate_html_report(report_data)
+            with open(html_report_path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+
+            # Generate markdown report
+            md_report_path = Path(self.binary_path).parent / f"{base_filename}.md" if self.binary_path else Path(f"{base_filename}.md")
+            md_content = self._generate_markdown_report(report_data)
+            with open(md_report_path, "w", encoding="utf-8") as f:
+                f.write(md_content)
+
+            # Display summary in UI
+            self.update_output.emit("Report generated successfully!")
+            self.update_output.emit(f"  - JSON: {json_report_path}")
+            self.update_output.emit(f"  - HTML: {html_report_path}")
+            self.update_output.emit(f"  - Markdown: {md_report_path}")
+            self.update_output.emit("")
+            self.update_output.emit("=== REPORT SUMMARY ===")
+            self.update_output.emit(f"Binary: {report_data['binary_path']}")
+            self.update_output.emit(f"Timestamp: {report_data['timestamp']}")
+            self.update_output.emit(f"Vulnerabilities Found: {len(report_data['vulnerabilities'])}")
+            self.update_output.emit(f"Protections Detected: {len(report_data['protections'])}")
+            self.update_output.emit(f"Bypass Techniques: {len(report_data['bypass_techniques'])}")
+            self.update_output.emit(f"Recommendations: {len(report_data['recommendations'])}")
+
+            self.update_status.emit("Report generation complete")
+
+        except Exception as e:
+            self.update_output.emit(f"Report generation error: {e!s}")
+            self.update_status.emit("Report generation failed")
+            self.logger.error(f"Report generation error: {e!s}")
+
+    def _generate_html_report(self, report_data: dict) -> str:
+        """Generate HTML formatted report."""
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intellicrack Analysis Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        h1 {{ color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }}
+        h2 {{ color: #34495e; margin-top: 30px; border-bottom: 1px solid #ecf0f1; padding-bottom: 5px; }}
+        h3 {{ color: #7f8c8d; }}
+        .info-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }}
+        .info-card {{ background: #ecf0f1; padding: 15px; border-radius: 5px; }}
+        .info-card h4 {{ margin: 0 0 10px 0; color: #2c3e50; }}
+        .severity-critical {{ color: #e74c3c; font-weight: bold; }}
+        .severity-high {{ color: #e67e22; font-weight: bold; }}
+        .severity-medium {{ color: #f39c12; }}
+        .severity-low {{ color: #95a5a6; }}
+        .protection-strong {{ color: #27ae60; font-weight: bold; }}
+        .protection-medium {{ color: #f39c12; }}
+        .protection-weak {{ color: #e74c3c; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th {{ background: #3498db; color: white; padding: 10px; text-align: left; }}
+        td {{ padding: 10px; border-bottom: 1px solid #ecf0f1; }}
+        tr:hover {{ background: #f8f9fa; }}
+        .recommendation {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0; }}
+        .timestamp {{ color: #95a5a6; font-size: 0.9em; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Intellicrack Analysis Report</h1>
+        <p class="timestamp">Generated: {report_data["timestamp"]}</p>
+
+        <h2>Binary Information</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>File Path</h4>
+                <p>{report_data["binary_path"]}</p>
+            </div>
+            <div class="info-card">
+                <h4>Architecture</h4>
+                <p>{report_data["binary_info"].get("architecture", "Unknown")}</p>
+            </div>
+            <div class="info-card">
+                <h4>Platform</h4>
+                <p>{report_data["binary_info"].get("platform", "Unknown")}</p>
+            </div>
+            <div class="info-card">
+                <h4>Entry Point</h4>
+                <p>{report_data["binary_info"].get("entry_point", "Unknown")}</p>
+            </div>
+        </div>
+
+        <h2>Vulnerabilities ({len(report_data["vulnerabilities"])})</h2>
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Description</th>
+                <th>Location</th>
+            </tr>
+            {"".join([f'<tr><td>{v["type"]}</td><td class="severity-{v["severity"].lower()}">{v["severity"]}</td><td>{v["description"]}</td><td>{v["location"]}</td></tr>' for v in report_data["vulnerabilities"]])}
+        </table>
+
+        <h2>Protection Mechanisms ({len(report_data["protections"])})</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Strength</th>
+                <th>Bypass Feasibility</th>
+            </tr>
+            {"".join([f'<tr><td>{p["name"]}</td><td>{p["type"]}</td><td class="protection-{p["strength"].lower()}">{p["strength"]}</td><td>{p["bypass_feasibility"]}</td></tr>' for p in report_data["protections"]])}
+        </table>
+
+        <h2>Recommendations</h2>
+        {"".join([f'<div class="recommendation"><strong>[{r["priority"]}]</strong> {r["recommendation"]}<br><small>{r["details"]}</small></div>' for r in report_data["recommendations"]])}
+    </div>
+</body>
+</html>"""
+        return html
+
+    def _generate_markdown_report(self, report_data: dict) -> str:
+        """Generate Markdown formatted report."""
+        md = f"""# Intellicrack Analysis Report
+
+**Generated:** {report_data["timestamp"]}
+
+## Binary Information
+
+- **File Path:** {report_data["binary_path"]}
+- **Architecture:** {report_data["binary_info"].get("architecture", "Unknown")}
+- **Platform:** {report_data["binary_info"].get("platform", "Unknown")}
+- **Entry Point:** {report_data["binary_info"].get("entry_point", "Unknown")}
+
+## Analysis Results
+
+### Protections Found
+{chr(10).join(["- " + p for p in report_data["analysis_results"].get("protections_found", [])])}
+
+### Packers Detected
+{chr(10).join(["- " + p for p in report_data["analysis_results"].get("packers_detected", [])])}
+
+### Anti-Debug Techniques
+{chr(10).join(["- " + t for t in report_data["analysis_results"].get("anti_debug_techniques", [])])}
+
+## Vulnerabilities ({len(report_data["vulnerabilities"])})
+
+| Type | Severity | Description | Location |
+|------|----------|-------------|----------|
+{chr(10).join([f"| {v['type']} | **{v['severity']}** | {v['description']} | {v['location']} |" for v in report_data["vulnerabilities"]])}
+
+## Protection Mechanisms ({len(report_data["protections"])})
+
+| Name | Type | Strength | Bypass Feasibility |
+|------|------|----------|-------------------|
+{chr(10).join([f"| {p['name']} | {p['type']} | **{p['strength']}** | {p['bypass_feasibility']} |" for p in report_data["protections"]])}
+
+## Bypass Techniques ({len(report_data["bypass_techniques"])})
+
+{chr(10).join([f"### {b['technique']}\n- **Target:** {b['target_protection']}\n- **Success Rate:** {b['success_rate']}\n- **Requirements:** {', '.join(b['requirements'])}\n" for b in report_data["bypass_techniques"]])}
+
+## Recommendations
+
+{chr(10).join([f"### [{r['priority']}] {r['recommendation']}\n{r['details']}\n" for r in report_data["recommendations"]])}
+
+---
+*Report generated by Intellicrack - Advanced Binary Analysis Platform*
+"""
+        return md
 
     def _generate_bypass_script_menu(self):
         """Generate bypass script from menu."""

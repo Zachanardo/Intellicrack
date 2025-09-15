@@ -3,6 +3,23 @@
 This module provides sophisticated capabilities for intercepting and responding to
 cloud-based license validation requests, enabling security researchers to test
 software behavior under various license conditions.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import hashlib
@@ -180,7 +197,7 @@ class CloudLicenseResponseGenerator:
             request_data = client_socket.recv(4096)
 
             if request_data:
-                # Add realistic network delay to simulate real license server
+                # Match actual license server response timing characteristics
                 network_delay = self.config.get("network_delay", 0.1)
                 if network_delay > 0:
                     time.sleep(network_delay)

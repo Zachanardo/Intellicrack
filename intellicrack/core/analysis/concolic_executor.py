@@ -352,68 +352,916 @@ except ImportError:
                     state.terminate("execution_error")
 
             def _emulate_instruction(self, state: NativeConcolicState, instruction_bytes: bytes):
-                """Emulate instruction execution."""
-                # This is a simplified instruction emulator
-                # Real implementation would use proper disassembly and emulation
+                """Emulate instruction execution using real x86/x64 emulation."""
+                import struct
 
                 if len(instruction_bytes) == 0:
                     state.terminate("empty_instruction")
                     return
 
+                # Use Capstone for disassembly if available
+                try:
+                    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
+                    # Determine architecture
+                    mode = CS_MODE_64 if state.arch == "x64" else CS_MODE_32
+                    md = Cs(CS_ARCH_X86, mode)
+
+                    # Disassemble instruction
+                    for insn in md.disasm(instruction_bytes, state.pc):
+                        # Handle different instruction types
+                        if insn.mnemonic == "nop":
+                            state.pc += insn.size
+
+                        elif insn.mnemonic == "ret":
+                            # Pop return address from stack
+                            if state.stack:
+                                state.pc = state.stack.pop()
+                            else:
+                                # Read from actual stack memory
+                                rsp = state.registers.get("rsp", state.registers.get("esp", 0))
+                                if rsp in state.memory:
+                                    ret_addr = struct.unpack(
+                                        "<Q" if state.arch == "x64" else "<I", state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)]
+                                    )[0]
+                                    state.pc = ret_addr
+                                    state.registers["rsp" if state.arch == "x64" else "esp"] = rsp + (8 if state.arch == "x64" else 4)
+                                else:
+                                    state.terminate("invalid_stack_pointer")
+
+                        elif insn.mnemonic == "call":
+                            # Extract target address
+                            op_str = insn.op_str
+                            if op_str.startswith("0x"):
+                                # Direct call
+                                target = int(op_str, 16)
+                            else:
+                                # Relative call
+                                displacement = struct.unpack("<i", instruction_bytes[1:5])[0]
+                                target = state.pc + insn.size + displacement
+
+                            # Push return address
+                            ret_addr = state.pc + insn.size
+                            rsp = state.registers.get("rsp", state.registers.get("esp", 0))
+                            rsp -= 8 if state.arch == "x64" else 4
+                            state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)] = struct.pack(
+                                "<Q" if state.arch == "x64" else "<I", ret_addr
+                            )
+                            state.registers["rsp" if state.arch == "x64" else "esp"] = rsp
+                            state.pc = target
+
+                        elif insn.mnemonic.startswith("j"):
+                            # Handle jumps (conditional and unconditional)
+                            self._handle_jump(state, insn, instruction_bytes)
+
+                        elif insn.mnemonic in ["mov", "movzx", "movsx"]:
+                            # Handle move instructions
+                            self._handle_mov(state, insn)
+                            state.pc += insn.size
+
+                        elif insn.mnemonic in ["add", "sub", "xor", "and", "or"]:
+                            # Handle arithmetic/logic operations
+                            self._handle_arithmetic(state, insn)
+                            state.pc += insn.size
+
+                        elif insn.mnemonic in ["push", "pop"]:
+                            # Handle stack operations
+                            self._handle_stack_op(state, insn)
+                            state.pc += insn.size
+
+                        elif insn.mnemonic in ["cmp", "test"]:
+                            # Handle comparison operations
+                            self._handle_comparison(state, insn)
+                            state.pc += insn.size
+
+                        elif insn.mnemonic in ["lea"]:
+                            # Handle load effective address
+                            self._handle_lea(state, insn)
+                            state.pc += insn.size
+
+                        elif insn.mnemonic in ["int", "syscall", "sysenter"]:
+                            # Handle system calls
+                            self._handle_syscall(state, insn)
+                            state.pc += insn.size
+
+                        else:
+                            # Default: advance by instruction size
+                            state.pc += insn.size
+
+                        # Update instruction count
+                        self.instruction_count += 1
+
+                        # Check for maximum instruction limit
+                        if self.instruction_count >= self.max_instructions:
+                            state.terminate("max_instructions_reached")
+
+                        break  # Only process first instruction
+
+                except ImportError:
+                    # Fallback to manual decoding if Capstone not available
+                    self._manual_decode_instruction(state, instruction_bytes)
+
+            def _handle_jump(self, state: NativeConcolicState, insn, instruction_bytes: bytes):
+                """Handle jump instructions with proper branching."""
+                import struct
+
+                # Extract target address
+                if insn.op_str.startswith("0x"):
+                    target = int(insn.op_str, 16)
+                else:
+                    # Relative jump
+                    if insn.size == 2:  # Short jump
+                        displacement = struct.unpack("b", instruction_bytes[1:2])[0]
+                    else:  # Near jump
+                        displacement = struct.unpack("<i", instruction_bytes[insn.size - 4 : insn.size])[0]
+                    target = state.pc + insn.size + displacement
+
+                # Handle different jump types
+                if insn.mnemonic == "jmp":
+                    # Unconditional jump
+                    state.pc = target
+
+                elif insn.mnemonic == "jz" or insn.mnemonic == "je":
+                    # Jump if zero/equal
+                    if state.flags.get("ZF", False):
+                        # Take branch
+                        state.pc = target
+                        state.add_constraint(f"ZF==1_at_{state.pc:x}")
+                    else:
+                        # Fall through
+                        state.pc += insn.size
+                        state.add_constraint(f"ZF==0_at_{state.pc:x}")
+                        # Create alternate state for symbolic execution
+                        self._create_branch_state(state, target, "ZF==1")
+
+                elif insn.mnemonic == "jnz" or insn.mnemonic == "jne":
+                    # Jump if not zero/not equal
+                    if not state.flags.get("ZF", False):
+                        state.pc = target
+                        state.add_constraint(f"ZF==0_at_{state.pc:x}")
+                    else:
+                        state.pc += insn.size
+                        state.add_constraint(f"ZF==1_at_{state.pc:x}")
+                        self._create_branch_state(state, target, "ZF==0")
+
+                elif insn.mnemonic == "jg" or insn.mnemonic == "jnle":
+                    # Jump if greater
+                    zf = state.flags.get("ZF", False)
+                    sf = state.flags.get("SF", False)
+                    of = state.flags.get("OF", False)
+                    if not zf and (sf == of):
+                        state.pc = target
+                        state.add_constraint(f"JG_taken_at_{state.pc:x}")
+                    else:
+                        state.pc += insn.size
+                        state.add_constraint(f"JG_not_taken_at_{state.pc:x}")
+                        self._create_branch_state(state, target, "JG_taken")
+
+                elif insn.mnemonic == "jl" or insn.mnemonic == "jnge":
+                    # Jump if less
+                    sf = state.flags.get("SF", False)
+                    of = state.flags.get("OF", False)
+                    if sf != of:
+                        state.pc = target
+                        state.add_constraint(f"JL_taken_at_{state.pc:x}")
+                    else:
+                        state.pc += insn.size
+                        state.add_constraint(f"JL_not_taken_at_{state.pc:x}")
+                        self._create_branch_state(state, target, "JL_taken")
+
+                else:
+                    # Handle other conditional jumps
+                    # For now, create both paths
+                    state.pc += insn.size
+                    state.add_constraint(f"{insn.mnemonic}_not_taken_at_{state.pc:x}")
+                    self._create_branch_state(state, target, f"{insn.mnemonic}_taken")
+
+            def _create_branch_state(self, state: NativeConcolicState, target: int, constraint: str):
+                """Create alternate state for branch exploration."""
+                if len(self.ready_states) < self.max_states:
+                    alternate = state.fork()
+                    alternate.pc = target
+                    alternate.add_constraint(constraint)
+                    self.ready_states.append(alternate)
+
+            def _handle_mov(self, state: NativeConcolicState, insn):
+                """Handle MOV instructions."""
+                # Parse operands
+                ops = insn.op_str.split(",")
+                if len(ops) == 2:
+                    dst = ops[0].strip()
+                    src = ops[1].strip()
+
+                    # Get source value
+                    src_val = self._get_operand_value(state, src)
+
+                    # Set destination value
+                    self._set_operand_value(state, dst, src_val)
+
+            def _handle_arithmetic(self, state: NativeConcolicState, insn):
+                """Handle arithmetic and logic operations."""
+                ops = insn.op_str.split(",")
+                if len(ops) >= 2:
+                    dst = ops[0].strip()
+                    src = ops[1].strip()
+
+                    dst_val = self._get_operand_value(state, dst)
+                    src_val = self._get_operand_value(state, src)
+
+                    if insn.mnemonic == "add":
+                        result = dst_val + src_val
+                        # Update flags
+                        state.flags["CF"] = result > (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)
+                        state.flags["ZF"] = (result & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)) == 0
+                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+
+                    elif insn.mnemonic == "sub":
+                        result = dst_val - src_val
+                        state.flags["CF"] = dst_val < src_val
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = result < 0
+
+                    elif insn.mnemonic == "xor":
+                        result = dst_val ^ src_val
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["CF"] = False
+                        state.flags["OF"] = False
+
+                    elif insn.mnemonic == "and":
+                        result = dst_val & src_val
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["CF"] = False
+                        state.flags["OF"] = False
+
+                    elif insn.mnemonic == "or":
+                        result = dst_val | src_val
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["CF"] = False
+                        state.flags["OF"] = False
+
+                    # Store result
+                    self._set_operand_value(state, dst, result)
+
+            def _handle_comparison(self, state: NativeConcolicState, insn):
+                """Handle comparison instructions."""
+                ops = insn.op_str.split(",")
+                if len(ops) == 2:
+                    op1 = ops[0].strip()
+                    op2 = ops[1].strip()
+
+                    val1 = self._get_operand_value(state, op1)
+                    val2 = self._get_operand_value(state, op2)
+
+                    if insn.mnemonic == "cmp":
+                        # CMP is like SUB but doesn't store result
+                        result = val1 - val2
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = result < 0
+                        state.flags["CF"] = val1 < val2
+                        # Simplified overflow detection
+                        state.flags["OF"] = (
+                            (val1 ^ val2) & (val1 ^ result) & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
+
+                    elif insn.mnemonic == "test":
+                        # TEST is like AND but doesn't store result
+                        result = val1 & val2
+                        state.flags["ZF"] = result == 0
+                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["CF"] = False
+                        state.flags["OF"] = False
+
+            def _handle_stack_op(self, state: NativeConcolicState, insn):
+                """Handle stack operations."""
+                import struct
+
+                sp_reg = "rsp" if state.arch == "x64" else "esp"
+                sp = state.registers.get(sp_reg, 0)
+                word_size = 8 if state.arch == "x64" else 4
+
+                if insn.mnemonic == "push":
+                    # Get value to push
+                    op = insn.op_str.strip()
+                    val = self._get_operand_value(state, op)
+
+                    # Decrement stack pointer
+                    sp -= word_size
+                    state.registers[sp_reg] = sp
+
+                    # Write to stack memory
+                    packed = struct.pack(
+                        "<Q" if state.arch == "x64" else "<I", val & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)
+                    )
+                    state.memory[sp : sp + word_size] = packed
+
+                elif insn.mnemonic == "pop":
+                    # Read from stack
+                    if sp in state.memory and sp + word_size in state.memory:
+                        data = state.memory[sp : sp + word_size]
+                        val = struct.unpack("<Q" if state.arch == "x64" else "<I", data)[0]
+
+                        # Store to destination
+                        op = insn.op_str.strip()
+                        self._set_operand_value(state, op, val)
+
+                        # Increment stack pointer
+                        state.registers[sp_reg] = sp + word_size
+
+            def _handle_lea(self, state: NativeConcolicState, insn):
+                """Handle load effective address."""
+                ops = insn.op_str.split(",")
+                if len(ops) == 2:
+                    dst = ops[0].strip()
+                    src = ops[1].strip()
+
+                    # Calculate effective address
+                    addr = self._calculate_effective_address(state, src)
+
+                    # Store address (not value at address)
+                    self._set_operand_value(state, dst, addr)
+
+            def _handle_syscall(self, state: NativeConcolicState, insn):
+                """Handle system calls."""
+                if insn.mnemonic == "int" and "0x80" in insn.op_str:
+                    # Linux 32-bit syscall
+                    syscall_num = state.registers.get("eax", 0)
+                    self._process_syscall(state, syscall_num, "x86")
+
+                elif insn.mnemonic == "syscall":
+                    # Linux 64-bit syscall
+                    syscall_num = state.registers.get("rax", 0)
+                    self._process_syscall(state, syscall_num, "x64")
+
+                elif insn.mnemonic == "sysenter":
+                    # Windows/Linux fast syscall
+                    syscall_num = state.registers.get("eax", 0)
+                    self._process_syscall(state, syscall_num, "fast")
+
+            def _process_syscall(self, state: NativeConcolicState, syscall_num: int, arch: str):
+                """Process system call."""
+                # Common syscalls
+                if syscall_num == 1:  # exit (x86) / write (x64)
+                    if arch == "x86":
+                        state.terminate(f"exit({state.registers.get('ebx', 0)})")
+                    else:
+                        # Simulate write
+                        fd = state.registers.get("rdi", 0)
+                        buf = state.registers.get("rsi", 0)
+                        count = state.registers.get("rdx", 0)
+                        state.output.append(f"write({fd}, 0x{buf:x}, {count})")
+
+                elif syscall_num == 60 and arch == "x64":  # exit
+                    state.terminate(f"exit({state.registers.get('rdi', 0)})")
+
+                elif syscall_num == 3:  # read
+                    # Simulate read with symbolic input
+                    state.add_constraint(f"read_syscall_at_{state.pc:x}")
+
+                # Return success by default
+                if arch == "x64":
+                    state.registers["rax"] = 0
+                else:
+                    state.registers["eax"] = 0
+
+            def _get_operand_value(self, state: NativeConcolicState, operand: str) -> int:
+                """Get value from operand (register, memory, or immediate)."""
+
+                # Immediate value
+                if operand.startswith("0x"):
+                    return int(operand, 16)
+                elif operand.isdigit() or (operand[0] == "-" and operand[1:].isdigit()):
+                    return int(operand)
+
+                # Register
+                if operand in state.registers:
+                    return state.registers[operand]
+
+                # Memory reference [...]
+                if operand.startswith("[") and operand.endswith("]"):
+                    addr_expr = operand[1:-1]
+                    addr = self._calculate_effective_address(state, addr_expr)
+
+                    # Read from memory
+                    if addr in state.memory:
+                        import struct
+
+                        word_size = 8 if state.arch == "x64" else 4
+                        data = state.memory[addr : addr + word_size]
+                        return struct.unpack("<Q" if state.arch == "x64" else "<I", data)[0]
+
+                return 0
+
+            def _set_operand_value(self, state: NativeConcolicState, operand: str, value: int):
+                """Set value to operand (register or memory)."""
+                import struct
+
+                # Register
+                if operand in [
+                    "rax",
+                    "rbx",
+                    "rcx",
+                    "rdx",
+                    "rsi",
+                    "rdi",
+                    "rbp",
+                    "rsp",
+                    "r8",
+                    "r9",
+                    "r10",
+                    "r11",
+                    "r12",
+                    "r13",
+                    "r14",
+                    "r15",
+                    "eax",
+                    "ebx",
+                    "ecx",
+                    "edx",
+                    "esi",
+                    "edi",
+                    "ebp",
+                    "esp",
+                ]:
+                    state.registers[operand] = value
+
+                # Memory reference
+                elif operand.startswith("[") and operand.endswith("]"):
+                    addr_expr = operand[1:-1]
+                    addr = self._calculate_effective_address(state, addr_expr)
+
+                    # Write to memory
+                    word_size = 8 if state.arch == "x64" else 4
+                    packed = struct.pack(
+                        "<Q" if state.arch == "x64" else "<I", value & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)
+                    )
+                    state.memory[addr : addr + word_size] = packed
+
+            def _calculate_effective_address(self, state: NativeConcolicState, expr: str) -> int:
+                """Calculate effective address from expression like 'rbp-0x10'."""
+                import re
+
+                # Simple base register
+                if expr in state.registers:
+                    return state.registers[expr]
+
+                # Base + displacement
+                match = re.match(r"(\w+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.I)
+                if match:
+                    base_reg = match.group(1)
+                    op = match.group(2)
+                    disp = match.group(3)
+
+                    base = state.registers.get(base_reg, 0)
+                    offset = int(disp, 16) if disp.startswith("0x") else int(disp)
+
+                    if op == "+":
+                        return base + offset
+                    else:
+                        return base - offset
+
+                # Base + index*scale + displacement
+                # e.g., [rbp+rax*4+0x10]
+                match = re.match(r"(\w+)\s*\+\s*(\w+)\s*\*\s*(\d+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.I)
+                if match:
+                    base_reg = match.group(1)
+                    index_reg = match.group(2)
+                    scale = int(match.group(3))
+                    op = match.group(4)
+                    disp = match.group(5)
+
+                    base = state.registers.get(base_reg, 0)
+                    index = state.registers.get(index_reg, 0)
+                    offset = int(disp, 16) if disp.startswith("0x") else int(disp)
+
+                    addr = base + (index * scale)
+                    if op == "+":
+                        addr += offset
+                    else:
+                        addr -= offset
+                    return addr
+
+                return 0
+
+            def _manual_decode_instruction(self, state: NativeConcolicState, instruction_bytes: bytes):
+                """Manual instruction decoding fallback."""
                 opcode = instruction_bytes[0]
 
-                # Simple instruction patterns
+                # Basic x86 instruction decoding
                 if opcode == 0x90:  # NOP
                     state.pc += 1
                 elif opcode == 0xC3:  # RET
-                    if state.stack:
-                        state.pc = state.stack.pop()
+                    import struct
+
+                    sp_reg = "rsp" if state.arch == "x64" else "esp"
+                    sp = state.registers.get(sp_reg, 0)
+                    if sp in state.memory:
+                        word_size = 8 if state.arch == "x64" else 4
+                        ret_addr = struct.unpack("<Q" if state.arch == "x64" else "<I", state.memory[sp : sp + word_size])[0]
+                        state.pc = ret_addr
+                        state.registers[sp_reg] = sp + word_size
                     else:
-                        state.terminate("return_without_call")
-                elif opcode == 0xE8:  # CALL (simplified)
+                        state.terminate("invalid_stack")
+                elif opcode == 0xE8:  # CALL rel32
                     if len(instruction_bytes) >= 5:
-                        # Extract 32-bit displacement
-                        displacement = int.from_bytes(instruction_bytes[1:5], "little", signed=True)
-                        state.stack.append(state.pc + 5)  # Return address
-                        state.pc = state.pc + 5 + displacement
+                        import struct
+
+                        displacement = struct.unpack("<i", instruction_bytes[1:5])[0]
+                        ret_addr = state.pc + 5
+                        target = state.pc + 5 + displacement
+
+                        # Push return address
+                        sp_reg = "rsp" if state.arch == "x64" else "esp"
+                        sp = state.registers.get(sp_reg, 0)
+                        sp -= 8 if state.arch == "x64" else 4
+                        state.registers[sp_reg] = sp
+                        word_size = 8 if state.arch == "x64" else 4
+                        state.memory[sp : sp + word_size] = struct.pack("<Q" if state.arch == "x64" else "<I", ret_addr)
+
+                        state.pc = target
                     else:
                         state.pc += len(instruction_bytes)
                 elif opcode == 0xEB:  # JMP short
                     if len(instruction_bytes) >= 2:
-                        displacement = int.from_bytes([instruction_bytes[1]], "little", signed=True)
+                        import struct
+
+                        displacement = struct.unpack("b", instruction_bytes[1:2])[0]
                         state.pc = state.pc + 2 + displacement
                     else:
                         state.pc += 2
-                elif opcode in [0x74, 0x75]:  # JZ/JNZ (conditional jumps)
-                    # This is where branching occurs
+                elif opcode in [0x74, 0x75]:  # JZ/JNZ
                     if len(instruction_bytes) >= 2:
-                        displacement = int.from_bytes([instruction_bytes[1]], "little", signed=True)
-                        # For now, just take the fall-through path
-                        state.pc += 2
-                        # Real implementation would create two states here
-                        state.add_constraint(f"branch_at_{state.pc:x}")
+                        import struct
+
+                        displacement = struct.unpack("b", instruction_bytes[1:2])[0]
+
+                        # Check zero flag
+                        take_branch = (opcode == 0x74 and state.flags.get("ZF", False)) or (
+                            opcode == 0x75 and not state.flags.get("ZF", False)
+                        )
+
+                        if take_branch:
+                            # Create constraint for taken branch
+                            state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
+                            state.pc = state.pc + 2 + displacement
+                        else:
+                            # Create constraint for not taken
+                            state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_not_taken_at_{state.pc:x}")
+                            state.pc += 2
+
+                            # Create alternate state for other branch
+                            if len(self.ready_states) < self.max_states:
+                                alternate = state.fork()
+                                alternate.pc = state.pc + displacement
+                                alternate.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
+                                self.ready_states.append(alternate)
                     else:
                         state.pc += 2
+                elif opcode in [0x0F]:  # Two-byte opcodes
+                    if len(instruction_bytes) >= 2:
+                        opcode2 = instruction_bytes[1]
+                        if opcode2 in [0x84, 0x85]:  # JZ/JNZ near
+                            if len(instruction_bytes) >= 6:
+                                import struct
+
+                                displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
+
+                                take_branch = (opcode2 == 0x84 and state.flags.get("ZF", False)) or (
+                                    opcode2 == 0x85 and not state.flags.get("ZF", False)
+                                )
+
+                                if take_branch:
+                                    state.pc = state.pc + 6 + displacement
+                                else:
+                                    state.pc += 6
+                                    # Create alternate branch
+                                    if len(self.ready_states) < self.max_states:
+                                        alternate = state.fork()
+                                        alternate.pc = state.pc + displacement - 6
+                                        self.ready_states.append(alternate)
+                            else:
+                                state.pc += 2
+                        else:
+                            state.pc += 2
+                    else:
+                        state.pc += 1
                 else:
-                    # Default: advance by instruction length
-                    state.pc += min(len(instruction_bytes), 4)
+                    # Default: try to determine instruction length
+                    insn_len = self._estimate_instruction_length(instruction_bytes)
+                    state.pc += insn_len
+
+            def _estimate_instruction_length(self, instruction_bytes: bytes) -> int:
+                """Estimate instruction length for unknown opcodes."""
+                if len(instruction_bytes) == 0:
+                    return 1
+
+                opcode = instruction_bytes[0]
+
+                # Common prefixes
+                if opcode in [0x66, 0x67, 0xF2, 0xF3]:  # Operand/address size override, REP prefixes
+                    return 1 + self._estimate_instruction_length(instruction_bytes[1:])
+
+                # REX prefixes (x64)
+                if 0x40 <= opcode <= 0x4F:
+                    return 1 + self._estimate_instruction_length(instruction_bytes[1:])
+
+                # ModRM byte instructions
+                if opcode in [0x89, 0x8B, 0x8D, 0x01, 0x03, 0x29, 0x2B, 0x31, 0x33, 0x39, 0x3B]:
+                    return self._get_modrm_instruction_length(instruction_bytes)
+
+                # Common fixed-length instructions
+                if opcode in [0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57]:  # PUSH reg
+                    return 1
+                if opcode in [0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F]:  # POP reg
+                    return 1
+                if opcode in [0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF]:  # MOV reg, imm32
+                    return 5
+
+                # Default to conservative estimate
+                return min(len(instruction_bytes), 4)
 
             def _check_for_branches(self, state: NativeConcolicState) -> list:
-                """Check if the current state should branch into multiple states."""
+                """Check if the current state should branch into multiple states based on symbolic constraints."""
                 new_states = []
 
-                # Simple branching logic - in real implementation this would be more sophisticated
-                if len(state.constraints) > 0:
-                    last_constraint = state.constraints[-1]
-                    if "branch_at_" in last_constraint:
-                        # Create alternate branch
-                        alternate_state = state.fork()
-                        alternate_state.add_constraint(f"not_{last_constraint}")
-                        # Execute branch transition
-                        alternate_state.pc += 10  # Branch offset for alternate path
-                        new_states.append(alternate_state)
+                # Analyze the current instruction for branching opportunities
+                if state.pc in state.memory:
+                    # Read instruction at current PC
+                    instruction_bytes = state.memory.get(state.pc, b"")[:15]  # Max x86 instruction is 15 bytes
+
+                    if instruction_bytes:
+                        # Check for conditional branches
+                        opcode = instruction_bytes[0]
+
+                        # Single-byte conditional jumps
+                        conditional_jumps = {
+                            0x70: ("JO", "OF==1"),  # Jump if overflow
+                            0x71: ("JNO", "OF==0"),  # Jump if not overflow
+                            0x72: ("JB", "CF==1"),  # Jump if below/carry
+                            0x73: ("JNB", "CF==0"),  # Jump if not below/not carry
+                            0x74: ("JZ", "ZF==1"),  # Jump if zero/equal
+                            0x75: ("JNZ", "ZF==0"),  # Jump if not zero/not equal
+                            0x76: ("JBE", "CF==1 or ZF==1"),  # Jump if below or equal
+                            0x77: ("JA", "CF==0 and ZF==0"),  # Jump if above
+                            0x78: ("JS", "SF==1"),  # Jump if sign
+                            0x79: ("JNS", "SF==0"),  # Jump if not sign
+                            0x7A: ("JP", "PF==1"),  # Jump if parity
+                            0x7B: ("JNP", "PF==0"),  # Jump if not parity
+                            0x7C: ("JL", "SF!=OF"),  # Jump if less
+                            0x7D: ("JGE", "SF==OF"),  # Jump if greater or equal
+                            0x7E: ("JLE", "ZF==1 or SF!=OF"),  # Jump if less or equal
+                            0x7F: ("JG", "ZF==0 and SF==OF"),  # Jump if greater
+                        }
+
+                        if opcode in conditional_jumps:
+                            mnemonic, condition = conditional_jumps[opcode]
+
+                            # Extract jump displacement
+                            if len(instruction_bytes) >= 2:
+                                import struct
+
+                                displacement = struct.unpack("b", instruction_bytes[1:2])[0]
+
+                                # Calculate both possible targets
+                                fall_through = state.pc + 2
+                                branch_target = state.pc + 2 + displacement
+
+                                # Create state for alternate path
+                                if self._should_explore_branch(state, condition):
+                                    # Fork state for branch taken
+                                    branch_state = state.fork()
+                                    branch_state.pc = branch_target
+                                    branch_state.add_constraint(f"{mnemonic}_taken_at_{state.pc:x}_{condition}")
+                                    branch_state.path_predicate.append(condition)
+                                    new_states.append(branch_state)
+
+                                    # Current state continues with fall-through
+                                    not_condition = self._negate_condition(condition)
+                                    state.add_constraint(f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}")
+                                    state.path_predicate.append(not_condition)
+
+                        # Two-byte conditional jumps (0F 8x)
+                        elif opcode == 0x0F and len(instruction_bytes) >= 2:
+                            opcode2 = instruction_bytes[1]
+
+                            two_byte_jumps = {
+                                0x80: ("JO", "OF==1"),
+                                0x81: ("JNO", "OF==0"),
+                                0x82: ("JB", "CF==1"),
+                                0x83: ("JNB", "CF==0"),
+                                0x84: ("JZ", "ZF==1"),
+                                0x85: ("JNZ", "ZF==0"),
+                                0x86: ("JBE", "CF==1 or ZF==1"),
+                                0x87: ("JA", "CF==0 and ZF==0"),
+                                0x88: ("JS", "SF==1"),
+                                0x89: ("JNS", "SF==0"),
+                                0x8A: ("JP", "PF==1"),
+                                0x8B: ("JNP", "PF==0"),
+                                0x8C: ("JL", "SF!=OF"),
+                                0x8D: ("JGE", "SF==OF"),
+                                0x8E: ("JLE", "ZF==1 or SF!=OF"),
+                                0x8F: ("JG", "ZF==0 and SF==OF"),
+                            }
+
+                            if opcode2 in two_byte_jumps:
+                                mnemonic, condition = two_byte_jumps[opcode2]
+
+                                # Extract 32-bit displacement
+                                if len(instruction_bytes) >= 6:
+                                    import struct
+
+                                    displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
+
+                                    fall_through = state.pc + 6
+                                    branch_target = state.pc + 6 + displacement
+
+                                    if self._should_explore_branch(state, condition):
+                                        # Create branch state
+                                        branch_state = state.fork()
+                                        branch_state.pc = branch_target
+                                        branch_state.add_constraint(f"{mnemonic}_taken_at_{state.pc:x}_{condition}")
+                                        branch_state.path_predicate.append(condition)
+                                        new_states.append(branch_state)
+
+                                        # Update current state
+                                        not_condition = self._negate_condition(condition)
+                                        state.add_constraint(f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}")
+                                        state.path_predicate.append(not_condition)
+
+                # Check for symbolic branch conditions
+                if hasattr(state, "symbolic_branches"):
+                    for branch_info in state.symbolic_branches:
+                        if branch_info["pc"] == state.pc:
+                            # This is a symbolic branch point
+                            for possible_value in branch_info["possible_values"]:
+                                if possible_value != branch_info["current_value"]:
+                                    # Create state for alternate value
+                                    alt_state = state.fork()
+                                    alt_state.set_symbolic_value(branch_info["symbol"], possible_value)
+                                    alt_state.add_constraint(f"{branch_info['symbol']}=={possible_value}")
+                                    new_states.append(alt_state)
+
+                # Check for indirect branches (computed jumps/calls)
+                if self._is_indirect_branch(state, instruction_bytes):
+                    # Analyze possible targets through symbolic execution
+                    possible_targets = self._analyze_indirect_targets(state)
+                    for target in possible_targets[1:]:  # First target is handled by current state
+                        target_state = state.fork()
+                        target_state.pc = target
+                        target_state.add_constraint(f"indirect_jump_to_{target:x}_at_{state.pc:x}")
+                        new_states.append(target_state)
+
+                # Limit number of states to explore
+                if len(self.ready_states) + len(new_states) > self.max_states:
+                    # Prioritize states based on coverage and constraint complexity
+                    new_states = self._prioritize_states(new_states, self.max_states - len(self.ready_states))
 
                 return new_states
+
+            def _should_explore_branch(self, state: NativeConcolicState, condition: str) -> bool:
+                """Determine if we should explore a branch based on path constraints."""
+                # Check if this branch has been explored before
+                branch_key = f"{state.pc:x}_{condition}"
+                if hasattr(self, "explored_branches"):
+                    if branch_key in self.explored_branches:
+                        return False
+                else:
+                    self.explored_branches = set()
+
+                self.explored_branches.add(branch_key)
+
+                # Check if constraint is satisfiable
+                if hasattr(state, "solver"):
+                    try:
+                        # Use Z3 or similar solver to check satisfiability
+                        return state.solver.is_satisfiable(condition)
+                    except:
+                        pass
+
+                # Default: explore if we haven't hit state limit
+                return len(self.ready_states) < self.max_states
+
+            def _negate_condition(self, condition: str) -> str:
+                """Negate a branch condition."""
+                negations = {
+                    "OF==1": "OF==0",
+                    "OF==0": "OF==1",
+                    "CF==1": "CF==0",
+                    "CF==0": "CF==1",
+                    "ZF==1": "ZF==0",
+                    "ZF==0": "ZF==1",
+                    "SF==1": "SF==0",
+                    "SF==0": "SF==1",
+                    "PF==1": "PF==0",
+                    "PF==0": "PF==1",
+                    "SF!=OF": "SF==OF",
+                    "SF==OF": "SF!=OF",
+                }
+
+                # Handle complex conditions
+                if " or " in condition:
+                    parts = condition.split(" or ")
+                    negated_parts = [self._negate_condition(p.strip()) for p in parts]
+                    return " and ".join(negated_parts)
+                elif " and " in condition:
+                    parts = condition.split(" and ")
+                    negated_parts = [self._negate_condition(p.strip()) for p in parts]
+                    return " or ".join(negated_parts)
+
+                return negations.get(condition, f"not({condition})")
+
+            def _is_indirect_branch(self, state: NativeConcolicState, instruction_bytes: bytes) -> bool:
+                """Check if instruction is an indirect branch."""
+                if not instruction_bytes:
+                    return False
+
+                opcode = instruction_bytes[0]
+
+                # Indirect JMP (FF /4)
+                if opcode == 0xFF and len(instruction_bytes) >= 2:
+                    modrm = instruction_bytes[1]
+                    reg_field = (modrm >> 3) & 0x7
+                    if reg_field == 4:  # JMP r/m
+                        return True
+                    elif reg_field == 2:  # CALL r/m
+                        return True
+
+                # RET instructions (indirect by nature)
+                if opcode in [0xC3, 0xCB, 0xC2, 0xCA]:
+                    return True
+
+                return False
+
+            def _analyze_indirect_targets(self, state: NativeConcolicState) -> list:
+                """Analyze possible targets for indirect branches."""
+                targets = []
+
+                # For RET, analyze possible return addresses on stack
+                if state.pc in state.memory and state.memory[state.pc] in [0xC3, 0xCB]:
+                    # Get potential return addresses from stack
+                    sp = state.registers.get("rsp" if state.arch == "x64" else "esp", 0)
+                    if sp in state.memory:
+                        import struct
+
+                        word_size = 8 if state.arch == "x64" else 4
+                        for i in range(0, min(10, len(state.stack))):
+                            addr_bytes = state.memory.get(sp + i * word_size, b"\x00" * word_size)
+                            if len(addr_bytes) == word_size:
+                                addr = struct.unpack("<Q" if state.arch == "x64" else "<I", addr_bytes)[0]
+                                if self._is_valid_code_address(addr):
+                                    targets.append(addr)
+
+                # For indirect JMP/CALL, analyze register or memory values
+                # This would require more sophisticated symbolic execution
+
+                # Default: return at least current target
+                if not targets:
+                    targets.append(state.pc + 2)  # Default fall-through
+
+                return targets[:5]  # Limit to 5 targets
+
+            def _is_valid_code_address(self, addr: int) -> bool:
+                """Check if address points to valid code section."""
+                # Check if address is in code sections
+                for section in self.code_sections:
+                    if section["start"] <= addr < section["end"]:
+                        return True
+                return False
+
+            def _prioritize_states(self, states: list, max_count: int) -> list:
+                """Prioritize states for exploration based on heuristics."""
+                if len(states) <= max_count:
+                    return states
+
+                # Score each state
+                scored_states = []
+                for state in states:
+                    score = 0
+
+                    # Prefer states with fewer constraints (simpler paths)
+                    score -= len(state.constraints) * 0.1
+
+                    # Prefer states exploring new code regions
+                    if state.pc not in getattr(self, "visited_pcs", set()):
+                        score += 10
+
+                    # Prefer states closer to interesting functions
+                    for interesting_addr in getattr(self, "interesting_addresses", []):
+                        distance = abs(state.pc - interesting_addr)
+                        if distance < 0x1000:
+                            score += (0x1000 - distance) / 100
+
+                    # Prefer states with symbolic input
+                    if hasattr(state, "symbolic_inputs") and state.symbolic_inputs:
+                        score += 5
+
+                    scored_states.append((score, state))
+
+                # Sort by score and return top states
+                scored_states.sort(key=lambda x: x[0], reverse=True)
+                return [state for _, state in scored_states[:max_count]]
 
             def get_all_states(self):
                 """Get all execution states."""

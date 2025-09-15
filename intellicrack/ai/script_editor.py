@@ -8,6 +8,23 @@ This module provides advanced script editing capabilities including:
 5. Performance-based optimization
 
 Production-ready AI-driven script editing system.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import hashlib
@@ -145,10 +162,23 @@ Provide only the JSON response, no explanations."""
             # Use LLM for validation
             from .ai_script_generator import ScriptGenerationRequest
 
-            dummy_request = ScriptGenerationRequest(prompt="validation", script_type=script_type, binary_path=binary_path)
+            # Create a proper validation request with complete context
+            validation_request = ScriptGenerationRequest(
+                prompt=f"Validate {script_type} script for binary analysis and exploitation",
+                script_type=script_type,
+                binary_path=binary_path,
+                additional_context={
+                    "operation": "script_validation",
+                    "validation_type": "comprehensive",
+                    "target_script": script_content[:500],  # Include preview for context
+                    "check_categories": ["syntax", "security", "performance", "logic", "best_practices"],
+                    "severity_levels": ["critical", "high", "medium", "low"],
+                    "require_json_response": True,
+                },
+            )
 
             # Get LLM analysis
-            response, _ = self.llm_interface.generate_script(dummy_request, validation_prompt)
+            response, _ = self.llm_interface.generate_script(validation_request, validation_prompt)
 
             # Parse LLM response
             try:
@@ -471,6 +501,7 @@ class AIScriptEditor:
         self.prompt_engineer = PromptEngineer()
         self.tester = ScriptTester()
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         self.version_manager = ScriptVersionManager(str(root / "scripts"))
         self.edit_history = {}  # script_path -> List[ScriptEdit]

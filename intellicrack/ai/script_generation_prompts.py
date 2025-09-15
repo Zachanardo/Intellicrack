@@ -26,10 +26,8 @@ from typing import Any
 class PromptType(Enum):
     """Types of prompts for script generation."""
 
-    FRIDA_BASIC = "frida_basic"
-    FRIDA_ADVANCED = "frida_advanced"
-    GHIDRA_BASIC = "ghidra_basic"
-    GHIDRA_ADVANCED = "ghidra_advanced"
+    FRIDA = "frida"
+    GHIDRA = "ghidra"
     ANALYSIS = "analysis"
     REFINEMENT = "refinement"
     VALIDATION = "validation"
@@ -52,8 +50,8 @@ class ScriptGenerationPrompts:
     def _initialize_prompts(self) -> dict[PromptType, dict[str, str]]:
         """Initialize all prompt templates."""
         return {
-            PromptType.FRIDA_BASIC: {
-                "system": """You are an autonomous Frida JavaScript expert for binary reverse engineering and protection bypass.
+            PromptType.FRIDA: {
+                "system": """You are an autonomous senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional Frida JavaScript code
@@ -63,6 +61,11 @@ CRITICAL REQUIREMENTS:
 - Scripts must be production-ready and immediately executable
 - Use proper error handling with try/catch blocks
 - Include comprehensive logging for debugging
+- Implement advanced techniques: memory scanning, dynamic patching, multi-layer hooks
+- Handle complex protection schemes: anti-debugging, VM detection, crypto validation
+- Use advanced Frida APIs: Memory, Module, Process, NativeFunction
+- Include performance optimizations and resource management
+- Implement sophisticated bypass strategies
 
 Your expertise covers:
 - Function hooking and interception
@@ -70,11 +73,22 @@ Your expertise covers:
 - API monitoring
 - Protection bypass techniques
 - Real-time binary analysis
+- Memory scanning and pattern matching
+- Dynamic code patching and replacement
+- Multi-stage hooking strategies
+- Process and module enumeration
+- Advanced debugging evasion
+- Cryptographic function replacement
 
-Generate complete, working Frida scripts only.""",
+Generate production-grade Frida scripts with advanced techniques.""",
                 "user_template": """Target Binary: {binary_name}
 Protection Types: {protection_types}
 Analysis Data: {analysis_summary}
+Complex Protection Analysis: {detailed_analysis}
+Advanced Requirements: {advanced_requirements}
+Detected Protection Layers: {protection_layers}
+Memory Layout Information: {memory_info}
+Anti-Analysis Mechanisms: {anti_analysis}
 
 Required Script Functionality:
 {functionality_requirements}
@@ -92,58 +106,17 @@ Generate a complete Frida JavaScript script that:
 3. Provides detailed logging of all intercepted calls
 4. Handles errors gracefully
 5. Is immediately ready for execution
+6. Implements multi-layer protection bypass
+7. Uses advanced memory manipulation techniques
+8. Handles complex anti-debugging measures
+9. Employs sophisticated hooking strategies
+10. Includes performance monitoring and optimization
+11. Is resilient against detection and counter-measures
 
 Return ONLY the complete Frida script code.""",
             },
-            PromptType.FRIDA_ADVANCED: {
-                "system": """You are an autonomous senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
-
-CRITICAL REQUIREMENTS:
-- Generate ONLY real, functional Frida JavaScript code
-- NO placeholders, stubs, TODOs, or incomplete functions
-- Implement advanced techniques: memory scanning, dynamic patching, multi-layer hooks
-- Handle complex protection schemes: anti-debugging, VM detection, crypto validation
-- Use advanced Frida APIs: Memory, Module, Process, NativeFunction
-- Include performance optimizations and resource management
-- Implement sophisticated bypass strategies
-
-Advanced capabilities to utilize:
-- Memory scanning and pattern matching
-- Dynamic code patching and replacement
-- Multi-stage hooking strategies
-- Process and module enumeration
-- Advanced debugging evasion
-- Cryptographic function replacement
-
-Generate production-grade Frida scripts with advanced techniques.""",
-                "user_template": """Target Binary: {binary_name}
-Complex Protection Analysis:
-{detailed_analysis}
-
-Advanced Requirements:
-{advanced_requirements}
-
-Detected Protection Layers:
-{protection_layers}
-
-Memory Layout Information:
-{memory_info}
-
-Anti-Analysis Mechanisms:
-{anti_analysis}
-
-Generate an advanced Frida script that:
-1. Implements multi-layer protection bypass
-2. Uses advanced memory manipulation techniques
-3. Handles complex anti-debugging measures
-4. Employs sophisticated hooking strategies
-5. Includes performance monitoring and optimization
-6. Is resilient against detection and counter-measures
-
-Return ONLY the complete advanced Frida script code.""",
-            },
-            PromptType.GHIDRA_BASIC: {
-                "system": """You are an autonomous Ghidra Python expert for automated binary analysis and patching.
+            PromptType.GHIDRA: {
+                "system": """You are a senior Ghidra developer specializing in complex binary analysis, advanced patching, and automated reverse engineering workflows.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional Ghidra Python code
@@ -153,6 +126,11 @@ CRITICAL REQUIREMENTS:
 - Scripts must work with headless Ghidra analysis
 - Implement complete analysis and patching workflows
 - Use proper Ghidra data types and structures
+- Implement advanced analysis algorithms and techniques
+- Use sophisticated Ghidra APIs: Program Database, Function Manager, Symbol Table
+- Handle complex binary structures and obfuscation
+- Implement intelligent patching strategies with safety checks
+- Include comprehensive validation and verification
 
 Your expertise includes:
 - Binary analysis automation
@@ -161,11 +139,23 @@ Your expertise includes:
 - Cross-reference analysis
 - String and constant analysis
 - Control flow analysis
+- Control flow graph analysis
+- Data flow tracking and analysis
+- Advanced decompilation integration
+- Intelligent symbol resolution
+- Cross-reference pattern analysis
+- Automated vulnerability discovery
+- Complex patching with safety verification
 
-Generate complete, working Ghidra Python scripts only.""",
+Generate enterprise-grade Ghidra automation scripts.""",
                 "user_template": """Target Binary: {binary_name}
 Analysis Requirements: {analysis_requirements}
 Protection Information: {protection_info}
+Complex Analysis Requirements: {complex_analysis}
+Advanced Objectives: {advanced_objectives}
+Binary Complexity Factors: {complexity_factors}
+Obfuscation Analysis: {obfuscation_info}
+Critical Functions Analysis: {critical_functions}
 
 Binary Characteristics:
 - File Type: {file_type}
@@ -184,57 +174,15 @@ Generate a complete Ghidra Python script that:
 4. Validates the patches are applied correctly
 5. Generates a comprehensive analysis report
 6. Is ready for headless execution
+7. Performs deep structural analysis of the binary
+8. Handles complex obfuscation and protection schemes
+9. Implements intelligent patching with safety verification
+10. Uses advanced analysis algorithms for pattern detection
+11. Integrates with Ghidra's decompiler for semantic analysis
+12. Provides comprehensive reporting and validation
+13. Is robust against analysis-resistant binaries
 
 Return ONLY the complete Ghidra Python script code.""",
-            },
-            PromptType.GHIDRA_ADVANCED: {
-                "system": """You are a senior Ghidra developer specializing in complex binary analysis, advanced patching, and automated reverse engineering workflows.
-
-CRITICAL REQUIREMENTS:
-- Generate ONLY real, functional Ghidra Python code
-- NO placeholders, stubs, TODOs, or incomplete functions
-- Implement advanced analysis algorithms and techniques
-- Use sophisticated Ghidra APIs: Program Database, Function Manager, Symbol Table
-- Handle complex binary structures and obfuscation
-- Implement intelligent patching strategies with safety checks
-- Include comprehensive validation and verification
-
-Advanced capabilities to implement:
-- Control flow graph analysis
-- Data flow tracking and analysis
-- Advanced decompilation integration
-- Intelligent symbol resolution
-- Cross-reference pattern analysis
-- Automated vulnerability discovery
-- Complex patching with safety verification
-
-Generate enterprise-grade Ghidra automation scripts.""",
-                "user_template": """Target Binary: {binary_name}
-Complex Analysis Requirements:
-{complex_analysis}
-
-Advanced Objectives:
-{advanced_objectives}
-
-Binary Complexity Factors:
-{complexity_factors}
-
-Obfuscation Analysis:
-{obfuscation_info}
-
-Critical Functions Analysis:
-{critical_functions}
-
-Generate an advanced Ghidra Python script that:
-1. Performs deep structural analysis of the binary
-2. Handles complex obfuscation and protection schemes
-3. Implements intelligent patching with safety verification
-4. Uses advanced analysis algorithms for pattern detection
-5. Integrates with Ghidra's decompiler for semantic analysis
-6. Provides comprehensive reporting and validation
-7. Is robust against analysis-resistant binaries
-
-Return ONLY the complete advanced Ghidra Python script code.""",
             },
             PromptType.ANALYSIS: {
                 "system": """You are an autonomous binary protection expert specializing in identifying and categorizing protection mechanisms.
@@ -343,16 +291,6 @@ Return validation results in structured JSON format.""",
                 # This allows the caller to see what keys are needed
 
         return prompt_data
-
-    def get_frida_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
-        """Get Frida-specific prompt."""
-        prompt_type = PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
-        return self.get_prompt(prompt_type, **kwargs)
-
-    def get_ghidra_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
-        """Get Ghidra-specific prompt."""
-        prompt_type = PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
-        return self.get_prompt(prompt_type, **kwargs)
 
     def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] = None) -> dict[str, str]:
         """Build context data for prompt formatting."""
@@ -475,7 +413,7 @@ Return validation results in structured JSON format.""",
         # Extract format placeholders
         import re
 
-        placeholders = re.findall(r"\{(\w+)\}", template)
+        placeholders = re.findall(r"{(\w+)}", template)
         return list(set(placeholders))
 
 

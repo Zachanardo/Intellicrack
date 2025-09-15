@@ -42,7 +42,7 @@ jobs:
           C:\Miniconda3\envs\intellicrack
           ~/.mamba
           ~/.conda
-        key: ${{ runner.os }}-mamba-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt', 'pyproject.toml') }}
+        key: ${{ runner.os }}-mamba-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-mamba-${{ matrix.python-version }}-
           ${{ runner.os }}-mamba-
@@ -51,10 +51,12 @@ jobs:
       shell: bash -el {0}
       run: |
         mamba activate intellicrack
+        # Install Python and pip only via mamba
+        mamba install python=${{ matrix.python-version }} pip -y
+        # Upgrade pip and install all packages via pip/pyproject.toml
         python -m pip install --upgrade pip setuptools wheel
-        if [ -f requirements/base.txt ]; then pip install -r requirements/base.txt; fi
-        if [ -f requirements/test.txt ]; then pip install -r requirements/test.txt; fi
         pip install -e .
+        pip install -e .[dev]
 
     - name: Lint with ruff
       shell: bash -el {0}

@@ -1932,11 +1932,216 @@ void apply_patch() {{
 
     def _generate_license_file_content(self) -> str:
         """Generate valid license file content based on analysis."""
-        return f"""# License File
-Licensed=1
-Serial={self._generate_license_value()}
-Expires=2099-12-31
-Valid=True"""
+        import base64
+        import hashlib
+        import json
+        import platform
+        import uuid
+        from datetime import datetime, timedelta
+
+        # Analyze target binary to determine expected license format
+        license_format = self._detect_license_format()
+
+        # Generate hardware-bound license data
+        machine_id = str(uuid.UUID(int=uuid.getnode()))
+        cpu_info = platform.processor()
+        system_info = f"{platform.system()}_{platform.machine()}"
+
+        # Generate license serial
+        serial = self._generate_license_value()
+
+        # Generate additional license components
+        license_id = hashlib.sha256(f"{machine_id}:{serial}".encode()).hexdigest()[:16].upper()
+
+        # Current and expiry dates
+        now = datetime.now()
+        expiry = now + timedelta(days=36500)  # 100 years
+
+        # Select format based on binary analysis
+        if license_format == "json":
+            # JSON format license
+            license_data = {
+                "license": {
+                    "id": license_id,
+                    "serial": serial,
+                    "type": "professional",
+                    "status": "active",
+                    "hardware": {
+                        "machine_id": machine_id,
+                        "cpu": cpu_info,
+                        "system": system_info,
+                        "binding": hashlib.md5(machine_id.encode()).hexdigest(),
+                    },
+                    "dates": {"issued": now.isoformat(), "expires": expiry.isoformat(), "last_validated": now.isoformat()},
+                    "features": {"max_users": "unlimited", "modules": "all", "support_level": "priority", "updates": "lifetime"},
+                    "signature": hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest(),
+                }
+            }
+            return json.dumps(license_data, indent=2)
+
+        elif license_format == "xml":
+            # XML format license
+            signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
+            return f"""<?xml version="1.0" encoding="UTF-8"?>
+<license version="2.0">
+    <id>{license_id}</id>
+    <serial>{serial}</serial>
+    <type>professional</type>
+    <status>active</status>
+    <hardware>
+        <machine_id>{machine_id}</machine_id>
+        <cpu>{cpu_info}</cpu>
+        <system>{system_info}</system>
+        <binding>{hashlib.md5(machine_id.encode()).hexdigest()}</binding>
+    </hardware>
+    <dates>
+        <issued>{now.strftime("%Y-%m-%d")}</issued>
+        <expires>{expiry.strftime("%Y-%m-%d")}</expires>
+        <last_validated>{now.strftime("%Y-%m-%d")}</last_validated>
+    </dates>
+    <features>
+        <feature name="max_users">unlimited</feature>
+        <feature name="modules">all</feature>
+        <feature name="support_level">priority</feature>
+        <feature name="updates">lifetime</feature>
+    </features>
+    <signature algorithm="sha512">{signature}</signature>
+</license>"""
+
+        elif license_format == "binary":
+            # Binary format license (base64 encoded)
+            binary_data = bytearray()
+
+            # Magic header
+            binary_data.extend(b"LICC")  # License magic
+
+            # Version (2 bytes)
+            binary_data.extend((2).to_bytes(1, "little"))
+            binary_data.extend((0).to_bytes(1, "little"))
+
+            # License ID (16 bytes)
+            binary_data.extend(license_id.encode()[:16].ljust(16, b"\x00"))
+
+            # Serial (converted to bytes)
+            serial_bytes = serial.encode()[:32].ljust(32, b"\x00")
+            binary_data.extend(serial_bytes)
+
+            # Hardware ID (8 bytes)
+            hw_id = int(hashlib.crc32(machine_id.encode())) & 0xFFFFFFFF
+            binary_data.extend(hw_id.to_bytes(4, "little"))
+            binary_data.extend((hw_id ^ 0xDEADBEEF).to_bytes(4, "little"))
+
+            # Issue timestamp (8 bytes)
+            timestamp = int(now.timestamp())
+            binary_data.extend(timestamp.to_bytes(8, "little"))
+
+            # Expiry timestamp (8 bytes)
+            expiry_timestamp = int(expiry.timestamp())
+            binary_data.extend(expiry_timestamp.to_bytes(8, "little"))
+
+            # Features bitmap (4 bytes)
+            features = 0xFFFFFFFF  # All features enabled
+            binary_data.extend(features.to_bytes(4, "little"))
+
+            # Signature (32 bytes)
+            sig_data = serial_bytes + hw_id.to_bytes(4, "little") + timestamp.to_bytes(8, "little")
+            signature = hashlib.sha256(sig_data).digest()
+            binary_data.extend(signature)
+
+            # Padding to 256 bytes
+            while len(binary_data) < 256:
+                binary_data.append(len(binary_data) & 0xFF)
+
+            # Return base64 encoded
+            return f"# Binary License File\n{base64.b64encode(binary_data).decode('ascii')}"
+
+        elif license_format == "encrypted":
+            # Encrypted license format
+            plain_data = f"{license_id}|{serial}|{machine_id}|{now.isoformat()}|{expiry.isoformat()}"
+
+            # Simple XOR encryption with key derived from hardware
+            key = hashlib.sha256(machine_id.encode()).digest()
+            encrypted = bytearray()
+
+            for i, char in enumerate(plain_data.encode()):
+                encrypted.append(char ^ key[i % len(key)])
+
+            # Add header and encode
+            result = "# Encrypted License\n"
+            result += "Algorithm=XOR256\n"
+            result += "KeyDerivation=SHA256(MachineID)\n"
+            result += f"Data={base64.b64encode(encrypted).decode('ascii')}\n"
+            result += f"Checksum={hashlib.md5(encrypted).hexdigest()}"
+            return result
+
+        else:
+            # Default INI format with comprehensive data
+            signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
+            checksum = hashlib.crc32(f"{serial}{machine_id}".encode()) & 0xFFFFFFFF
+
+            return f"""# License File
+[License]
+ID={license_id}
+Serial={serial}
+Type=Professional
+Status=Active
+Version=2.0
+
+[Hardware]
+MachineID={machine_id}
+CPU={cpu_info}
+System={system_info}
+Binding={hashlib.md5(machine_id.encode()).hexdigest()}
+VolumeSerial={hex(hash(machine_id) & 0xFFFFFFFF)[2:].upper()}
+
+[Dates]
+Issued={now.strftime("%Y-%m-%d %H:%M:%S")}
+Expires={expiry.strftime("%Y-%m-%d %H:%M:%S")}
+LastValidated={now.strftime("%Y-%m-%d %H:%M:%S")}
+GracePeriod=30
+
+[Features]
+MaxUsers=Unlimited
+AllModules=True
+PrioritySupport=True
+CloudSync=Enabled
+AdvancedAnalytics=True
+APIAccess=Full
+CustomIntegrations=Enabled
+
+[Validation]
+Signature={signature[:32]}
+Signature2={signature[32:64]}
+Signature3={signature[64:96]}
+Signature4={signature[96:]}
+Checksum={checksum:08X}
+Algorithm=SHA512
+
+[Metadata]
+Generator=Intellicrack
+GeneratorVersion=2.0
+LicenseVersion=2.0
+Compatible=1.0,1.5,2.0"""
+
+    def _detect_license_format(self) -> str:
+        """Detect expected license format from binary analysis."""
+        if not hasattr(self, "_binary_data") or not self._binary_data:
+            return "ini"  # Default format
+
+        # Analyze strings in binary to detect format
+        binary_str = self._binary_data[:1000000].decode("latin-1", errors="ignore").lower()
+
+        # Check for format indicators
+        if '"license"' in binary_str and '"serial"' in binary_str:
+            return "json"
+        elif "<license>" in binary_str or "xml" in binary_str:
+            return "xml"
+        elif any(magic in self._binary_data[:1000] for magic in [b"LICC", b"LIC\x00", b"\x4c\x49\x43"]):
+            return "binary"
+        elif "encrypt" in binary_str or "decrypt" in binary_str:
+            return "encrypted"
+        else:
+            return "ini"
 
     def _get_original_bytes(self, r2, func_addr: int) -> str:
         """Get original bytes at function address."""

@@ -1,4 +1,22 @@
-"""Adobe License Bypass Compiler - Creates standalone EXE from Frida script."""
+"""Adobe License Bypass Compiler - Creates standalone EXE from Frida script.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import json
 import os
@@ -411,6 +429,10 @@ class AdobeLicenseCompiler:
         # Convert process list to JavaScript array format
         js_processes = json.dumps(target_processes)
 
+        # Read the actual Frida script content first
+        with open(self.bypass_script, "r", encoding="utf-8") as f:
+            script_content = f.read()
+
         wrapper_content = f"""
 const frida = require('frida');
 const fs = require('fs');
@@ -418,7 +440,7 @@ const path = require('path');
 
 // Embedded Frida script
 const fridaScript = `
-%SCRIPT_CONTENT%
+{script_content}
 `;
 
 // Adobe process names to monitor (from configuration)
@@ -506,13 +528,6 @@ monitorLoop().catch(() => {{
 // Keep process running
 process.stdin.resume();
 """
-
-        # Read the actual Frida script content
-        with open(self.bypass_script, "r", encoding="utf-8") as f:
-            script_content = f.read()
-
-        # Replace placeholder with actual script
-        wrapper_content = wrapper_content.replace("%SCRIPT_CONTENT%", script_content)
 
         # Write wrapper to temp directory
         wrapper_path = self.temp_dir / "adobe_wrapper.js"

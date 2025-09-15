@@ -1,5 +1,4 @@
-"""
-Intellicrack Main Application Module
+"""Intellicrack Main Application Module
 
 This module provides the main graphical user interface for the Intellicrack application,
 a comprehensive binary analysis and security research toolkit. The application integrates
@@ -18,19 +17,23 @@ Key Features:
     - Exploitation framework with payload generation and testing
     - Plugin system for extensibility
     - Comprehensive logging and reporting capabilities
-    - Real-time analysis progress tracking
-    - Theme support and customizable UI
 
-Main Functions:
-    launch: Entry point for starting the Intellicrack application with proper
-            Qt event loop management and splash screen support.
+Copyright (C) 2025 Zachary Flint
 
-Dependencies:
-    - PyQt6: For GUI framework and widgets
-    - Multiple analysis engines (optional, with graceful fallbacks)
-    - AI/ML frameworks for intelligent analysis (optional)
-    - Network analysis libraries (optional)
-    - External tools integration (Frida, Ghidra, etc.)
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
