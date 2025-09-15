@@ -2,7 +2,7 @@
 
 A comprehensive binary analysis and security research platform designed to help software developers identify and strengthen vulnerabilities in their own licensing and protection systems.
 
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
