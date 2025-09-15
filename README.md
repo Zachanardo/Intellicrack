@@ -6,7 +6,7 @@ A comprehensive binary analysis and security research platform designed to help 
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20-lightgrey)
 
-## 🚀 Features
+## Features
 
 ### Core Capabilities
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
@@ -31,7 +31,7 @@ A comprehensive binary analysis and security research platform designed to help 
 - **Plugin System**: Extensible architecture for custom tools
 - **Real-time Logging**: Comprehensive logging with adjustable verbosity
 
-## 📋 Requirements
+## Requirements
 
 ### System Requirements
 - **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
@@ -45,15 +45,15 @@ A comprehensive binary analysis and security research platform designed to help 
 - **Ghidra**: For advanced decompilation
 - **radare2**: For additional analysis capabilities
 
-## 🔧 Installation
+## Installation
 
 ### Manual Installation
 
-1. **Install Python 3.11 or 3.12**
+1. **Install Python 3.12**
 
    ```bash
    # Verify Python version
-   python --version  # Should be 3.11.x or 3.12.x
+   python --version  # Should be 3.12.x
    ```
 
 2. **Clone the repository**
@@ -69,10 +69,6 @@ A comprehensive binary analysis and security research platform designed to help 
    # Windows
    python -m venv mamba_env
    mamba_env\Scripts\activate
-
-   # Linux/macOS
-   python -m venv mamba_env
-   source mamba_env/bin/activate
    ```
 
 4. **Install dependencies**
@@ -143,7 +139,7 @@ print(f"File type: {result.file_format}")
 print(f"Protections: {result.protections}")
 ```
 
-## 📚 Documentation
+## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
@@ -155,7 +151,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - [GPU Acceleration Guide](docs/guides/GPU_ACCELERATION_GUIDE.md)
 - [Security and Ethics](docs/security/SECURITY_AND_ETHICS_GUIDE.md)
 
-## 🛠️ Configuration
+## Configuration
 
 Intellicrack uses JSON configuration files. Key settings include:
 
@@ -175,7 +171,7 @@ Intellicrack uses JSON configuration files. Key settings include:
 
 See the [Configuration Reference](docs/reference/CONFIGURATION_REFERENCE.md) for details.
 
-## 🧩 Plugins
+## Plugins
 
 Extend functionality with custom plugins:
 
@@ -194,7 +190,7 @@ class MyPlugin(PluginBase):
 
 See the [Plugin Development Guide](docs/development/plugins.md) for more information.
 
-## 🔍 Examples
+## Examples
 
 ### Basic Binary Analysis
 
@@ -231,7 +227,7 @@ analyzer.start_capture()
 packets = analyzer.stop_capture()
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -279,7 +275,7 @@ Enable detailed logging for troubleshooting:
 }
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
 - Code style guidelines
@@ -287,11 +283,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - Pull request process
 - Bug reporting
 
-## 📄 License
+## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 **Intellicrack** is developed for **defensive security research** to help software developers:
 
