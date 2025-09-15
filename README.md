@@ -4,7 +4,7 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20-lightgrey)
 
 ## 🚀 Features
 
