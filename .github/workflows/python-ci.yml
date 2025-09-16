@@ -33,13 +33,13 @@ jobs:
         use-mamba: true
         channels: conda-forge
         channel-priority: strict
-        auto-activate-base: false
+        auto-activate-base: true
 
     - name: Cache Mamba environment
       uses: actions/cache@v4
       with:
         path: |
-          C:\Miniconda3\envs\intellicrack
+          C:\Miniconda3
           ~/.mamba
           ~/.conda
         key: ${{ runner.os }}-mamba-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
