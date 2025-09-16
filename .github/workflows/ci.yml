@@ -25,47 +25,25 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
       with:
-        miniforge-variant: Miniforge3
-        miniforge-version: latest
-        activate-environment: intellicrack
         python-version: ${{ matrix.python-version }}
-        use-mamba: true
-        channels: conda-forge
-        channel-priority: strict
-
-    - name: Cache Mamba environment
-      uses: actions/cache@v4
-      with:
-        path: |
-          C:\Miniconda3\envs\intellicrack
-          ~/.mamba
-          ~/.conda
-        key: ${{ runner.os }}-mamba-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-mamba-${{ matrix.python-version }}-
-          ${{ runner.os }}-mamba-
+        cache: 'pip'
 
     - name: Install dependencies
-      shell: bash -el {0}
       run: |
-        # Python is already installed by setup-miniconda
-        # Upgrade pip and install all packages via pip/pyproject.toml
         python -m pip install --upgrade pip setuptools wheel
         pip install -e .
         pip install -e .[dev]
 
     - name: Lint with ruff
-      shell: bash -el {0}
       run: |
         pip install ruff==0.5.0
         ruff check intellicrack/ tests/ --output-format=github
         ruff format --check intellicrack/ tests/
 
     - name: Security scan with bandit
-      shell: bash -el {0}
       run: |
         pip install bandit[toml]==1.7.8
         bandit -r intellicrack/ -f json -o bandit-report.json || true
@@ -73,20 +51,17 @@ jobs:
       continue-on-error: true
 
     - name: Type check with mypy
-      shell: bash -el {0}
       run: |
         pip install mypy==1.16.0
         mypy intellicrack/ --ignore-missing-imports --no-strict-optional
       continue-on-error: true
 
     - name: Verify No Mock Usage (Production-Ready Enforcement)
-      shell: bash -el {0}
       run: |
         python tests/utils/verify_no_mocks.py --ci
       continue-on-error: false
 
     - name: Test with pytest
-      shell: bash -el {0}
       run: |
         pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
       env:
