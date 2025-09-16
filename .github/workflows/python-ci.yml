@@ -50,8 +50,7 @@ jobs:
     - name: Install dependencies
       shell: bash -el {0}
       run: |
-        # Install Python and pip only via mamba
-        mamba install python=${{ matrix.python-version }} pip -y
+        # Python is already installed by setup-miniconda
         # Upgrade pip and install all packages via pip/pyproject.toml
         python -m pip install --upgrade pip setuptools wheel
         pip install -e .
