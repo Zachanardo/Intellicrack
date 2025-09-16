@@ -88,8 +88,8 @@ Extensible plugin architecture supporting:
 ## Technology Stack
 
 ### Core Technologies
-- **Language**: Python 3.11+ (primary), JavaScript (Frida), Java (Ghidra)
-- **UI Framework**: PyQt6 for modern, cross-platform GUI
+- **Language**: Python 3.12+ (primary), JavaScript (Frida), Java (Ghidra)
+- **UI Framework**: PyQt6 for modern Windows 11 GUI
 - **AI/ML**: PyTorch, TensorFlow, Transformers, ONNX
 - **Analysis**: Radare2, Ghidra Bridge, QEMU integration
 

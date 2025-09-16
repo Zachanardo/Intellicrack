@@ -12,9 +12,9 @@ Intellicrack supports GPU acceleration for computationally intensive operations 
 - **Driver**: 525.60.13 or newer
 
 ### AMD GPUs
-- **Requirements**: ROCm 5.4.2+ (Linux only)
+- **Requirements**: DirectML (Windows 11)
 - **Recommended**: RX 6600 or newer
-- **Note**: Windows support via DirectML
+- **Driver**: Latest AMD Adrenalin drivers
 
 ### Intel GPUs
 - **Requirements**: Intel Arc A-series or newer
@@ -44,18 +44,18 @@ set INTELLICRACK_GPU_TYPE=intel    # Set GPU type
 ### Manual Configuration
 
 #### Environment Variables
-```bash
-# NVIDIA GPU
-export INTELLICRACK_GPU_TYPE=nvidia
-export CUDA_VISIBLE_DEVICES=0
+```batch
+REM NVIDIA GPU
+set INTELLICRACK_GPU_TYPE=nvidia
+set CUDA_VISIBLE_DEVICES=0
 
-# AMD GPU
-export INTELLICRACK_GPU_TYPE=amd
-export HSA_OVERRIDE_GFX_VERSION=10.3.0
+REM AMD GPU
+set INTELLICRACK_GPU_TYPE=amd
+set AMD_DIRECT_ML=1
 
-# Intel GPU
-export INTELLICRACK_GPU_TYPE=intel
-export CUDA_VISIBLE_DEVICES=-1
+REM Intel GPU
+set INTELLICRACK_GPU_TYPE=intel
+set CUDA_VISIBLE_DEVICES=-1
 ```
 
 #### Configuration File
@@ -128,12 +128,12 @@ gpu_config = {
 
 ### GPU Not Detected
 1. Check driver installation:
-   ```bash
-   # NVIDIA
+   ```batch
+   REM NVIDIA
    nvidia-smi
 
-   # Intel
-   xpu-smi discovery
+   REM Intel Arc
+   wmic path win32_VideoController get name,driverversion
    ```
 
 2. Verify environment variables are set correctly

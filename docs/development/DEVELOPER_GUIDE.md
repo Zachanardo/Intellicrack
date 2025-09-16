@@ -23,7 +23,7 @@ This guide provides comprehensive information for developers working with, exten
 ### Prerequisites
 
 **System Requirements:**
-- Python 3.11+ (recommended: 3.12)
+- Python 3.12+ (required)
 - Git 2.40+
 - Node.js 18+ (for Frida script development)
 - Visual Studio Code or PyCharm (recommended IDEs)

@@ -1,9 +1,6 @@
 {
   "monospace_fonts": {
-    "primary": [
-      "JetBrains Mono",
-      "JetBrainsMono-Regular"
-    ],
+    "primary": ["JetBrains Mono", "JetBrainsMono-Regular"],
     "fallback": [
       "Consolas",
       "Source Code Pro",
@@ -19,11 +16,7 @@
     ]
   },
   "ui_fonts": {
-    "primary": [
-      "Segoe UI",
-      "Roboto",
-      "Arial"
-    ],
+    "primary": ["Segoe UI", "Roboto", "Arial"],
     "fallback": [
       "Helvetica Neue",
       "Helvetica",
@@ -43,8 +36,5 @@
     "code_large": 11,
     "hex_view": 11
   },
-  "available_fonts": [
-    "JetBrainsMono-Regular.ttf",
-    "JetBrainsMono-Bold.ttf"
-  ]
+  "available_fonts": ["JetBrainsMono-Regular.ttf", "JetBrainsMono-Bold.ttf"]
 }

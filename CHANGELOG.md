@@ -97,8 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical Infrastructure
 - **Development Environment**:
-  - Python 3.11/3.12 support
-  - Cross-platform compatibility (Windows, Linux, macOS)
+  - Python 3.12+ support
+  - Windows 11 optimized compatibility
   - GPU acceleration support (NVIDIA, AMD, Intel)
   - Virtual environment management
 - **Testing Framework**:

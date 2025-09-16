@@ -685,7 +685,7 @@ This document provides comprehensive documentation for Intellicrack's unified co
 
 - Migrates font settings from font_config.json
 - Adds size and fallback management
-- Supports cross-platform font selection
+- Supports Windows 11 font selection
 
 **Example:**
 

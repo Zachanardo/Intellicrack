@@ -52,7 +52,7 @@ Welcome to the official documentation for **Intellicrack** - a comprehensive bin
 ## 🛠️ System Requirements
 
 ### Minimum Requirements
-- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
+- **OS**: Windows 11 Pro/Enterprise
 - **Python**: 3.8 or higher
 - **RAM**: 8GB minimum (16GB recommended)
 - **Disk**: 2GB free space
@@ -79,7 +79,7 @@ See the [Configuration Guide](usage/basic_analysis.md#configuration) for details
 ### Common Issues
 
 1. **Import Errors**: Run `dependencies\install_dependencies.bat` to ensure all packages are installed
-2. **GPU Not Detected**: Normal in WSL/VMs - CPU fallback will be used automatically
+2. **GPU Not Detected**: Normal in VMs - CPU fallback will be used automatically
 3. **Qt Warnings**: Set environment variables in launch script to suppress
 4. **Slow Analysis**: Enable GPU acceleration or distributed processing
 

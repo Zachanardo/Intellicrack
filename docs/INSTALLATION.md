@@ -3,8 +3,8 @@
 ## Prerequisites
 
 ### System Requirements
-- **Operating System**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
-- **Python**: 3.8 or higher (3.10+ recommended)
+- **Operating System**: Windows 11
+- **Python**: 3.12 or higher
 - **RAM**: 8GB minimum (16GB recommended for large binary analysis)
 - **Disk Space**: 2GB for base installation, additional space for models and analysis data
 - **GPU** (Optional): NVIDIA, AMD, or Intel GPU for acceleration features
@@ -40,49 +40,12 @@ pip install -r requirements/requirements_windows.txt
 RUN_INTELLICRACK.bat
 ```
 
-### Linux/WSL Installation
-
-```bash
-# Navigate to the Intellicrack directory
-cd intellicrack
-
-# The virtual environment should already exist as .venv_wsl
-# If not, create it:
-python3 -m venv .venv_wsl
-
-# Activate virtual environment
-source .venv_wsl/bin/activate
-
-# Install dependencies
-pip install -r requirements/requirements.txt
-
-# Launch Intellicrack
-python launch_intellicrack.py
-```
-
-### macOS Installation
-
-```bash
-# Navigate to the Intellicrack directory
-cd intellicrack
-
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements/requirements.txt
-
-# Launch Intellicrack
-python launch_intellicrack.py
-```
 
 ## Important Notes on Virtual Environments
 
-**⚠️ CRITICAL**: Different environments for different contexts:
-- **Windows users**: Use `.venv_windows`
-- **WSL/Linux users**: Use `.venv_wsl`
-- **NEVER cross-use environments** - This can cause dependency conflicts
+**⚠️ CRITICAL**: Virtual environment management:
+- **Windows 11 users**: Use `.venv_windows`
+- **Keep environments isolated** - This prevents dependency conflicts
 
 ## Dependency Management
 

@@ -6,38 +6,32 @@ Intellicrack supports multiple symbolic execution engines with automatic platfor
 
 ## Engine Priority and Availability
 
-### 1. angr (Primary Engine - All Platforms)
-- **Platforms**: Windows, Linux, macOS
+### 1. angr (Primary Engine)
+- **Platforms**: Windows 11
 - **Installation**: Included in base requirements
 - **Features**: Full symbolic execution, path exploration, constraint solving
 - **UI Option**: "Symbolic Execution" button
 
-### 2. manticore (Secondary Engine - Linux Only)
-- **Platforms**: Linux/Unix only
-- **Installation**: Automatic on Linux via `pip install intellicrack`
-- **Features**: Native EVM support, detailed state management
-- **UI Option**: "Concolic Execution" button (Linux only)
+### 2. manticore (Secondary Engine - Not Available on Windows)
+- **Platforms**: Not supported on Windows 11
+- **Installation**: Not available for Windows platforms
+- **Features**: N/A for Windows users
+- **UI Option**: Disabled on Windows 11
 
 ### 3. simconcolic (Fallback Engine)
-- **Platforms**: All (built-in)
+- **Platforms**: Windows 11 (built-in)
 - **Installation**: No installation needed
 - **Features**: Basic symbolic execution, limited functionality
 
 ## Platform-Specific Behavior
 
-### Windows Users
+### Windows 11 Users
 1. **Available Engines**: angr (full features), simconcolic (fallback)
 2. **Recommended**: Always use "Symbolic Execution" (angr)
 3. **UI Behavior**:
    - "Concolic Execution" shows informative message directing to angr
    - No manticore errors or missing dependency warnings
-
-### Linux Users
-1. **Available Engines**: angr, manticore, simconcolic
-2. **Recommended**: angr for general use, manticore for specific needs
-3. **UI Behavior**:
-   - Both "Symbolic Execution" and "Concolic Execution" available
-   - Automatic fallback if one engine fails
+   - Automatic fallback to simconcolic if angr fails
 
 ## Code Architecture
 
@@ -62,7 +56,7 @@ try:
     from manticore.native import Manticore
     execution_engines['manticore'] = True
 except ImportError:
-    pass  # Expected on Windows
+    pass  # Expected on Windows 11
 ```
 
 ### Execution Priority
@@ -70,40 +64,37 @@ except ImportError:
 if execution_engines['angr']:
     # Use angr (preferred)
     perform_angr_analysis()
-elif execution_engines['manticore']:
-    # Use manticore (Linux fallback)
-    perform_manticore_analysis()
 elif execution_engines['simconcolic']:
     # Use simconcolic (minimal fallback)
     perform_basic_analysis()
+else:
+    # No symbolic execution engine available
+    show_error_message()
 ```
 
 ## Feature Comparison
 
-| Feature | angr | manticore | simconcolic |
-|---------|------|-----------|-------------|
-| Windows Support | ✅ | ❌ | ✅ |
-| Linux Support | ✅ | ✅ | ✅ |
-| Path Exploration | ✅ | ✅ | ⚠️ |
-| Constraint Solving | ✅ | ✅ | ⚠️ |
-| License Bypass | ✅ | ✅ | ❌ |
-| Memory Analysis | ✅ | ✅ | ❌ |
-| Hook Support | ✅ | ✅ | ⚠️ |
-| Speed | Fast | Slow | Fast |
+| Feature | angr | simconcolic |
+|---------|------|-------------|
+| Windows 11 Support | ✅ | ✅ |
+| Path Exploration | ✅ | ⚠️ |
+| Constraint Solving | ✅ | ⚠️ |
+| License Bypass | ✅ | ❌ |
+| Memory Analysis | ✅ | ❌ |
+| Hook Support | ✅ | ⚠️ |
+| Speed | Fast | Fast |
 
 ## Troubleshooting
 
-### "Manticore not available" on Windows
-This is expected. Use the "Symbolic Execution" option which uses angr.
+### "Manticore not available" on Windows 11
+This is expected. Manticore is not supported on Windows platforms. Use the "Symbolic Execution" option which uses angr.
 
-### "Manticore not available" on Linux
-Install with: `pip install manticore`
-
-### Both engines fail
+### angr fails to load
 Check that you have:
-1. Proper Python version (3.10-3.12)
+1. Proper Python version (3.12+)
 2. Updated pip: `pip install --upgrade pip`
-3. C++ compiler for binary dependencies
+3. Visual C++ Build Tools for Windows 11
+4. Reinstall angr: `pip install --force-reinstall angr`
 
 ## API Usage
 

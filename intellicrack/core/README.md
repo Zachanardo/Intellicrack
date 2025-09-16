@@ -9,19 +9,23 @@ The core module is organized into specialized subsystems, each handling specific
 ## Module Structure
 
 ### Analysis (`analysis/`)
+
 Core analysis engines and algorithms:
+
 - **cfg_explorer.py** - Control Flow Graph exploration and analysis
 - **concolic_executor.py** - Concolic execution engine for path exploration
 - **incremental_manager.py** - Incremental analysis management
 - **multi_format_analyzer.py** - Multi-format binary analysis support
-- **radare2_*.py** - Radare2 integration modules
+- **radare2\_\*.py** - Radare2 integration modules
 - **rop_generator.py** - Return-Oriented Programming gadget generation
 - **symbolic_executor.py** - Symbolic execution engine
 - **taint_analyzer.py** - Taint analysis for data flow tracking
 - **vulnerability_engine.py** - Vulnerability detection and classification
 
 ### Anti-Analysis (`anti_analysis/`)
+
 Detection and bypass of anti-analysis techniques:
+
 - **api_obfuscation.py** - API obfuscation detection
 - **debugger_detector.py** - Anti-debugging technique detection
 - **process_hollowing.py** - Process hollowing detection and analysis
@@ -30,7 +34,9 @@ Detection and bypass of anti-analysis techniques:
 - **vm_detector.py** - Virtual machine detection bypass
 
 ### Command & Control (`c2/`)
+
 C2 infrastructure and communication:
+
 - **base_c2.py** - Base C2 communication framework
 - **beacon_manager.py** - Beacon management and coordination
 - **c2_client.py** - C2 client implementation
@@ -40,11 +46,15 @@ C2 infrastructure and communication:
 - **session_manager.py** - Session management and persistence
 
 ### Execution (`execution/`)
+
 Script and payload execution management:
+
 - **script_execution_manager.py** - Manages execution of analysis scripts
 
 ### Exploitation (`exploitation/`)
+
 Exploitation tools and payload generation:
+
 - **assembly_compiler.py** - Assembly code compilation
 - **base_exploitation.py** - Base exploitation framework
 - **base_persistence.py** - Persistence mechanism base
@@ -58,13 +68,17 @@ Exploitation tools and payload generation:
 - **shellcode_generator.py** - Shellcode generation utilities
 
 ### Mitigation Bypass (`mitigation_bypass/`)
+
 Modern mitigation bypass techniques:
+
 - **bypass_engine.py** - General bypass engine
 - **cfi_bypass.py** - Control Flow Integrity bypass
 - **dep_bypass.py** - Data Execution Prevention bypass
 
 ### Network (`network/`)
+
 Network analysis and interception:
+
 - **base_network_analyzer.py** - Base network analysis framework
 - **cloud_license_hooker.py** - Cloud license interception
 - **dynamic_response_generator.py** - Dynamic response generation
@@ -75,13 +89,17 @@ Network analysis and interception:
 - **traffic_interception_engine.py** - Traffic interception engine
 
 ### Patching (`patching/`)
+
 Binary modification and patching:
+
 - **adobe_injector.py** - Adobe-specific injection techniques
 - **base_patcher.py** - Base patching framework
 - **payload_generator.py** - Advanced payload generation for patches
 
 ### Processing (`processing/`)
+
 Distributed and accelerated processing:
+
 - **base_snapshot_handler.py** - Snapshot management
 - **distributed_analysis_manager.py** - Distributed analysis coordination
 - **distributed_manager.py** - General distributed processing
@@ -93,22 +111,30 @@ Distributed and accelerated processing:
 - **qiling_emulator.py** - Qiling framework integration
 
 ### Protection Bypass (`protection_bypass/`)
+
 Protection mechanism bypass:
+
 - **dongle_emulator.py** - Hardware dongle emulation
 - **tpm_bypass.py** - TPM (Trusted Platform Module) bypass
 - **vm_bypass.py** - Virtual machine detection bypass
 
 ### Reporting (`reporting/`)
+
 Analysis result reporting:
+
 - **pdf_generator.py** - PDF report generation
 
 ### Shared (`shared/`)
+
 Common utilities and configuration:
+
 - **bypass_config.py** - Bypass configuration management
 - **result_utils.py** - Result processing utilities
 
 ### Vulnerability Research (`vulnerability_research/`)
+
 Advanced vulnerability research tools:
+
 - **base_analyzer.py** - Base vulnerability analyzer
 - **binary_differ.py** - Binary diffing utilities
 - **common_enums.py** - Common enumerations and constants
@@ -126,7 +152,8 @@ Advanced vulnerability research tools:
 ## Integration Points
 
 The core module integrates with:
-- **Frida** - Dynamic instrumentation (frida_*.py files)
+
+- **Frida** - Dynamic instrumentation (frida\_\*.py files)
 - **Ghidra** - Static analysis integration
 - **Radare2** - Reverse engineering framework
 - **Qiling** - Binary emulation framework
@@ -135,21 +162,25 @@ The core module integrates with:
 ## Key Features
 
 ### Multi-Engine Analysis
+
 - Supports multiple analysis engines (angr, radare2, custom)
 - Automatic engine selection based on binary characteristics
 - Fallback mechanisms for unsupported formats
 
 ### Advanced Execution
+
 - Symbolic execution with constraint solving
 - Concolic execution for path exploration
 - Taint analysis for data flow tracking
 
 ### Modern Protections
+
 - CFI bypass techniques
 - DEP/ASLR bypass methods
 - Anti-analysis detection and evasion
 
 ### Scalability
+
 - Distributed processing support
 - GPU acceleration for intensive operations
 - Memory optimization for large binaries
@@ -174,6 +205,7 @@ vulnerabilities = vuln_analyzer.scan_binary("target.exe")
 ## Development
 
 When extending the core module:
+
 1. Follow the existing architectural patterns
 2. Ensure proper error handling and logging
 3. Add comprehensive unit tests
@@ -183,6 +215,7 @@ When extending the core module:
 ## Dependencies
 
 Core dependencies include:
+
 - **angr** - Binary analysis platform
 - **radare2** - Reverse engineering framework
 - **capstone** - Disassembly engine

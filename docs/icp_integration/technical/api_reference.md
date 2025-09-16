@@ -367,7 +367,7 @@ From Phase 5 testing with die-python v0.4.0:
 
 **Supported die-python versions:** 0.4.0+
 **Underlying engine compatibility:** 3.09+ (This refers to the internal dependency, not the user-facing ICP Engine)
-**Python requirements:** 3.11+
+**Python requirements:** 3.12+
 
 ## Migration from Legacy DIE
 

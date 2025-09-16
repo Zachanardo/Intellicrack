@@ -11,7 +11,7 @@ authors = [
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.12,<3.14"
 keywords = ["binary-analysis", "reverse-engineering", "security", "vulnerability-detection", "malware-analysis", "ai-security", "exploit-development"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -23,8 +23,6 @@ classifiers = [
     "Topic :: Software Development :: Debuggers",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
@@ -510,7 +508,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

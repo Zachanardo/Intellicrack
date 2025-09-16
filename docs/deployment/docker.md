@@ -16,13 +16,13 @@ This guide covers deploying Intellicrack using Docker containers. Docker provide
 ### Using Docker Compose
 
 1. Clone the repository:
-```bash
+```batch
 git clone https://github.com/yourusername/intellicrack.git
 cd intellicrack
 ```
 
 2. Start services:
-```bash
+```batch
 docker-compose up -d
 ```
 
@@ -33,18 +33,18 @@ docker-compose up -d
 ### Using Docker CLI
 
 1. Build the image:
-```bash
+```batch
 docker build -t intellicrack:latest .
 ```
 
 2. Run the container:
-```bash
-docker run -d \
-  --name intellicrack \
-  -p 8080:8080 \
-  -p 9999:9999 \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/logs:/app/logs \
+```batch
+docker run -d ^
+  --name intellicrack ^
+  -p 8080:8080 ^
+  -p 9999:9999 ^
+  -v %cd%\data:/app/data ^
+  -v %cd%\logs:/app/logs ^
   intellicrack:latest
 ```
 

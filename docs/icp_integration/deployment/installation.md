@@ -37,14 +37,11 @@ Graphics: Hardware acceleration support (optional)
 |----|---------|--------------|--------|
 | Windows | 10, 11 | x64 | Fully Supported |
 | Windows | Server 2019, 2022 | x64 | Fully Supported |
-| Linux | Ubuntu 20.04+ | x64 | Fully Supported |
-| Linux | RHEL 8+, CentOS 8+ | x64 | Fully Supported |
-| Linux | Debian 11+ | x64 | Fully Supported |
-| macOS | 11.0+ (Big Sur) | x64, ARM64 | Supported |
+| Windows 11 | 22H2+ | x64, ARM64 | Fully Supported |
 
 **Python Requirements:**
 ```
-Python Version: 3.11.0 or higher
+Python Version: 3.12.0 or higher
 Package Manager: pip 23.0 or higher
 Virtual Environment: venv or conda recommended
 ```
@@ -86,7 +83,7 @@ psutil >= 5.9.0        (System monitoring, optional)
 ```bash
 # Check Python version
 python --version
-# Should output: Python 3.11.x or higher
+# Should output: Python 3.12.x or higher
 
 # Check pip version
 pip --version
@@ -116,7 +113,7 @@ where python
 # Should point to virtual environment
 ```
 
-Linux/macOS:
+Windows 11 Terminal:
 ```bash
 # Create virtual environment
 python3 -m venv intellicrack_env
@@ -196,7 +193,7 @@ python -c "from intellicrack.protection.icp_backend import ICPBackend; print('IC
 
 **Dockerfile for ICP Integration:**
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -252,7 +249,7 @@ docker run -it --rm \
 **Create Conda Environment:**
 ```bash
 # Create conda environment
-conda create -n intellicrack python=3.11
+conda create -n intellicrack python=3.12
 
 # Activate environment
 conda activate intellicrack
@@ -280,7 +277,7 @@ pip install -e .
 # Install Git for Windows (if needed)
 # Download from: https://git-scm.com/download/win
 
-# Install Python 3.11+ from python.org
+# Install Python 3.12+ from python.org
 # Ensure "Add Python to PATH" is checked
 ```
 
@@ -312,102 +309,6 @@ Issue: SSL certificate verification failed
 Solution: pip install --trusted-host pypi.org --trusted-host pypi.python.org <package>
 ```
 
-### Linux Installation
-
-**Package Manager Setup:**
-
-Ubuntu/Debian:
-```bash
-# Update package lists
-sudo apt update
-
-# Install build dependencies
-sudo apt install -y python3.11 python3.11-venv python3.11-dev
-sudo apt install -y build-essential cmake git
-sudo apt install -y qt5-qmake qtbase5-dev
-
-# Install pip for Python 3.11
-sudo apt install -y python3-pip
-```
-
-CentOS/RHEL:
-```bash
-# Enable EPEL repository
-sudo dnf install -y epel-release
-
-# Install Python 3.11
-sudo dnf install -y python3.11 python3.11-devel python3.11-pip
-
-# Install build tools
-sudo dnf groupinstall -y "Development Tools"
-sudo dnf install -y cmake git qt5-qtbase-devel
-
-# Create symbolic links (if needed)
-sudo ln -sf /usr/bin/python3.11 /usr/local/bin/python
-sudo ln -sf /usr/bin/pip3.11 /usr/local/bin/pip
-```
-
-**Linux-Specific Configuration:**
-```bash
-# Set library path (if needed)
-export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-
-# Create desktop entry (optional)
-cat > ~/.local/share/applications/intellicrack.desktop << EOF
-[Desktop Entry]
-Name=Intellicrack
-Comment=Binary Analysis Platform
-Exec=/path/to/intellicrack_env/bin/python /path/to/intellicrack/main.py
-Icon=/path/to/intellicrack/icon.png
-Terminal=false
-Type=Application
-Categories=Development;
-EOF
-```
-
-### macOS Installation
-
-**Prerequisites:**
-```bash
-# Install Homebrew (if not installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Python 3.11
-brew install python@3.11
-
-# Install build tools
-brew install cmake git qt5
-```
-
-**macOS-Specific Steps:**
-```bash
-# Set Python path
-export PATH="/opt/homebrew/bin:$PATH"
-
-# Verify Python installation
-python3.11 --version
-
-# Create virtual environment
-python3.11 -m venv intellicrack_env
-source intellicrack_env/bin/activate
-
-# Set Qt environment variables
-export QT_QPA_PLATFORM_PLUGIN_PATH="/opt/homebrew/lib/python3.11/site-packages/PyQt5/Qt5/plugins/platforms"
-
-# Follow standard installation steps
-```
-
-**macOS Troubleshooting:**
-```
-Issue: Qt platform plugin not found
-Solution: Set QT_QPA_PLATFORM_PLUGIN_PATH environment variable
-
-Issue: Permission denied in /usr/local
-Solution: Use Homebrew installation or adjust permissions
-
-Issue: SSL certificate issues
-Solution: Update certificates with "pip install --upgrade certifi"
-```
 
 ## Configuration and Validation
 
@@ -440,7 +341,7 @@ EOF
 
 **Environment Variables:**
 ```bash
-# Add to ~/.bashrc or ~/.zshrc (Linux/macOS)
+# Add to Environment Variables (Windows 11)
 export INTELLICRACK_CONFIG_DIR="$HOME/.intellicrack/config"
 export INTELLICRACK_LOG_LEVEL="INFO"
 export INTELLICRACK_ICP_TIMEOUT="30"
@@ -765,7 +666,7 @@ chmod +x ~/.intellicrack/intellicrack/scripts/*.py
 **Execute Validation Tests:**
 ```bash
 # Activate virtual environment
-source intellicrack_env/bin/activate  # Linux/macOS
+intellicrack_env\Scripts\activate  # Windows 11
 # OR
 intellicrack_env\Scripts\activate     # Windows
 
@@ -815,8 +716,7 @@ Error: Failed building wheel for die-python
 Solution:
 1. Install build dependencies:
    - Windows: Visual Studio Build Tools
-   - Linux: build-essential, cmake
-   - macOS: Xcode Command Line Tools
+   - Windows 11: Visual Studio Build Tools, CMake
 2. Upgrade pip: pip install --upgrade pip setuptools wheel
 3. Try installing from source: pip install --no-binary die-python die-python
 ```

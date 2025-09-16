@@ -36,22 +36,18 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 ## Development Setup
 
 ### Prerequisites
-- **Python 3.11 or 3.12** (required for full functionality)
+- **Python 3.12+** (required for full functionality)
 - **Git** for version control
-- **Windows 10/11, Linux (Ubuntu 20.04+), or macOS 10.15+**
+- **Windows 11**
 
 ### Virtual Environment Setup
 
 1. Create and activate virtual environment:
 
    ```bash
-   # Windows (using actual project structure)
+   # Windows 11 (using actual project structure)
    python -m venv mamba_env
    mamba_env\Scripts\activate
-
-   # Linux/macOS
-   python -m venv mamba_env
-   source mamba_env/bin/activate
    ```
 
 2. Install dependencies:

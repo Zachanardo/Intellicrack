@@ -5,6 +5,7 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 ## 🚀 New CLI Features Overview
 
 ### 1. **Interactive REPL Mode** (`interactive_mode.py`)
+
 - Tab completion for commands and file paths
 - Command history with arrow keys
 - Rich terminal UI with colors and formatting
@@ -12,6 +13,7 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 - Session state persistence
 
 ### 2. **Progress Visualization** (`progress_manager.py`)
+
 - Real-time progress bars for long operations
 - Multi-stage operation tracking
 - Performance metrics (operations/second)
@@ -19,6 +21,7 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 - Beautiful summary reports
 
 ### 3. **Configuration Profiles** (`config_profiles.py`)
+
 - Save and reuse analysis configurations
 - Default profiles for common workflows
 - Profile management (create, edit, delete)
@@ -26,6 +29,7 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 - Last-used tracking
 
 ### 4. **Pipeline Support** (`pipeline.py`)
+
 - Unix-style command chaining
 - Data transformation between formats
 - Filtering and processing stages
@@ -33,6 +37,7 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 - Stream processing support
 
 ### 5. **Enhanced Runner** (`enhanced_runner.py`)
+
 - Integrates all enhancements
 - Parallel operation execution
 - Beautiful result display
@@ -121,24 +126,28 @@ Analysis Summary
 ## 🔧 Implementation Details
 
 ### Interactive Mode Features
+
 - **Command Parser**: Robust argument parsing with shlex
 - **Tab Completion**: Context-aware completions for commands and paths
 - **State Management**: Maintains analysis context between commands
 - **Rich Output**: Tables, progress bars, and formatted text
 
 ### Progress System Architecture
+
 - **Async Updates**: Non-blocking progress updates
 - **Multi-threading**: Parallel task execution with progress tracking
 - **Memory Efficient**: Minimal overhead for progress tracking
 - **Customizable**: Easy to add new progress indicators
 
 ### Profile System Design
+
 - **JSON Storage**: Human-readable profile files
 - **Extensible**: Easy to add new configuration options
 - **Validation**: Input validation for all settings
 - **Import/Export**: Share profiles between systems
 
 ### Pipeline Processing
+
 - **Modular Stages**: Each stage is independent and reusable
 - **Error Handling**: Graceful failure with error propagation
 - **Format Conversion**: Automatic data format detection
@@ -147,12 +156,14 @@ Analysis Summary
 ## 🎯 Use Cases
 
 ### Security Auditing
+
 ```bash
 # Comprehensive security audit with report
 python intellicrack/cli/enhanced_runner.py --profile security_audit target.exe
 ```
 
 ### Batch Processing
+
 ```bash
 # Process all executables in a directory
 for file in /protected_samples/*.exe; do
@@ -162,6 +173,7 @@ done
 ```
 
 ### License Analysis
+
 ```bash
 # Find all license-related functions
 python intellicrack/cli/pipeline.py -i commercial_app.exe \
@@ -169,6 +181,7 @@ python intellicrack/cli/pipeline.py -i commercial_app.exe \
 ```
 
 ### Vulnerability Research
+
 ```bash
 # Interactive vulnerability exploration
 python intellicrack/cli/interactive_mode.py
@@ -181,6 +194,7 @@ python intellicrack/cli/interactive_mode.py
 ## 📚 Advanced Features
 
 ### Custom Pipeline Stages
+
 Create your own pipeline stages by extending `PipelineStage`:
 
 ```python
@@ -191,6 +205,7 @@ class CustomFilterStage(PipelineStage):
 ```
 
 ### Progress Callbacks
+
 Add custom progress handlers:
 
 ```python
@@ -202,6 +217,7 @@ progress_manager.add_callback(my_progress_callback)
 ```
 
 ### Profile Inheritance
+
 Create profiles that extend others:
 
 ```python
@@ -212,29 +228,33 @@ child_profile.add_options(["additional_analysis"])
 ## 🚦 Getting Started
 
 1. **Install Requirements**:
-   ```bash
-   pip install rich click prompt_toolkit
-   ```
+
+    ```bash
+    pip install rich click prompt_toolkit
+    ```
 
 2. **Try Interactive Mode**:
-   ```bash
-   python intellicrack/cli/interactive_mode.py
-   ```
+
+    ```bash
+    python intellicrack/cli/interactive_mode.py
+    ```
 
 3. **Run with Progress**:
-   ```bash
-   python intellicrack/cli/enhanced_runner.py
-   ```
+
+    ```bash
+    python intellicrack/cli/enhanced_runner.py
+    ```
 
 4. **Create Profiles**:
-   ```bash
-   python intellicrack/cli/config_profiles.py
-   ```
+
+    ```bash
+    python intellicrack/cli/config_profiles.py
+    ```
 
 5. **Build Pipelines**:
-   ```bash
-   python intellicrack/cli/pipeline.py -h  # See examples
-   ```
+    ```bash
+    python intellicrack/cli/pipeline.py -h  # See examples
+    ```
 
 ## 🔮 Future Enhancements
 

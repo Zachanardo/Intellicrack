@@ -1,24 +1,31 @@
 // adobe_bypass.js
-console.log('[*] Adobe license patch injected.');
+console.log("[*] Adobe license patch injected.");
 
 const targets = [
-    'IsActivated',
-    'IsLicenseValid',
-    'GetLicenseStatus',
-    'GetSerialNumber',
-    'CheckSubscription'
+  "IsActivated",
+  "IsLicenseValid",
+  "GetLicenseStatus",
+  "GetSerialNumber",
+  "CheckSubscription",
 ];
 
 for (let name of targets) {
-    try {
-        let addr = Module.findExportByName('AdobeLM.dll', name);
-        if (addr) {
-            Interceptor.replace(addr, new NativeCallback(function () {
-                console.log('[✓] Spoofed: ' + name);
-                return 1;
-            }, 'int', []));
-        }
-    } catch (error) {
-        console.log('[-] Failed to patch: ' + name + ' - Error: ' + error.message);
+  try {
+    let addr = Module.findExportByName("AdobeLM.dll", name);
+    if (addr) {
+      Interceptor.replace(
+        addr,
+        new NativeCallback(
+          function () {
+            console.log("[✓] Spoofed: " + name);
+            return 1;
+          },
+          "int",
+          [],
+        ),
+      );
     }
+  } catch (error) {
+    console.log("[-] Failed to patch: " + name + " - Error: " + error.message);
+  }
 }

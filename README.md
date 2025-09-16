@@ -4,7 +4,7 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Windows%2011-lightgrey)
 
 ## Features
 
@@ -24,7 +24,7 @@ A comprehensive binary analysis and security research platform designed to help 
 - **C2 Infrastructure**: Command and control capabilities for security testing
 
 ### User Interface
-- **Modern GUI**: Built with PyQt6 for cross-platform compatibility
+- **Modern GUI**: Built with PyQt6 for Windows 11 compatibility
 - **Three-Panel Layout**: Professional IDE-like interface with tabs and output panel
 - **Hex Editor**: Built-in viewer/editor with pattern highlighting and data inspection
 - **AI Assistant Tab**: Integrated AI-powered analysis and script generation
@@ -34,8 +34,8 @@ A comprehensive binary analysis and security research platform designed to help 
 ## Requirements
 
 ### System Requirements
-- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
-- **Python**: 3.11 or 3.12 (required for full functionality)
+- **OS**: Windows 11
+- **Python**: 3.12+ (required for full functionality)
 - **RAM**: 8GB minimum (16GB recommended)
 - **Disk**: 5GB free space (for all tools and dependencies)
 - **CPU**: 4 cores minimum
@@ -49,11 +49,11 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ### Manual Installation
 
-1. **Install Python 3.12**
+1. **Install Python 3.12+**
 
    ```bash
    # Verify Python version
-   python --version  # Should be 3.12.x
+   python --version  # Should be 3.12.x or higher
    ```
 
 2. **Clone the repository**
@@ -66,7 +66,6 @@ A comprehensive binary analysis and security research platform designed to help 
 3. **Create and activate virtual environment**
 
    ```bash
-   # Windows
    python -m venv mamba_env
    mamba_env\Scripts\activate
    ```
@@ -78,23 +77,17 @@ A comprehensive binary analysis and security research platform designed to help 
    pip install -r requirements/requirements.lock
    ```
 
-### Platform-Specific Dependencies
+### Dependencies
 
-Intellicrack automatically manages platform-specific dependencies:
+Intellicrack automatically manages dependencies for Windows 11:
 
-#### Windows
-- **Primary Engine**: angr (full Windows support)
+#### Windows 11 Features
+- **Primary Engine**: angr (full Windows 11 support)
 - **GPU Support**: Intel Arc B580 detection with GIL crash prevention
-- All Windows users get a fully functional system
-
-#### Linux/Unix
-- **Primary Engine**: angr (recommended)
-- **Secondary Engine**: manticore (automatically installed)
-- **Full QEMU support**: For emulation and dynamic analysis
+- All Windows 11 users get a fully functional system
 
 #### Symbolic Execution Support
-- **angr**: Cross-platform, installed by default, recommended for all users
-- **manticore**: Linux-only, optional fallback
+- **angr**: Windows 11 optimized, installed by default, recommended for all users
 - **Built-in fallback**: For minimal functionality
 
 ## 🎯 Usage

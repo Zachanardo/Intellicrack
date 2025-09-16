@@ -22,155 +22,187 @@
 // Generated: {{timestamp}}
 // Confidence: {{confidence}}%
 
-(function() {
-    'use strict';
+(function () {
+  "use strict";
 
-    // Script metadata
-    const scriptInfo = {
-        name: '{{script_name}}',
-        version: '1.0.0',
-        description: '{{description}}',
-        target: '{{target_binary}}',
-        protections: [], // {{protection_list}} - Template placeholder
-        generated: '{{timestamp}}'
-    };
+  // Script metadata
+  const scriptInfo = {
+    name: "{{script_name}}",
+    version: "1.0.0",
+    description: "{{description}}",
+    target: "{{target_binary}}",
+    protections: [], // {{protection_list}} - Template placeholder
+    generated: "{{timestamp}}",
+  };
 
-    // Logger
-    const logger = {
-        info: function(msg) { console.log('[+] ' + msg); }, // eslint-disable-line no-console
-        warn: function(msg) { console.log('[!] ' + msg); }, // eslint-disable-line no-console
-        error: function(msg) { console.log('[-] ' + msg); } // eslint-disable-line no-console
-    };
+  // Logger
+  const logger = {
+    info: function (msg) {
+      console.log("[+] " + msg);
+    }, // eslint-disable-line no-console
+    warn: function (msg) {
+      console.log("[!] " + msg);
+    }, // eslint-disable-line no-console
+    error: function (msg) {
+      console.log("[-] " + msg);
+    }, // eslint-disable-line no-console
+  };
 
-    // Hook tracking
-    const hooks = {
-        active: 0,
-        failed: 0,
-        success_rate: 0,
-        getStats: function() {
-            const total = this.active + this.failed;
-            this.success_rate = total > 0 ? this.active / total : 0;
-            return { total: total, active: this.active, failed: this.failed, success_rate: this.success_rate };
-        }
-    };
+  // Hook tracking
+  const hooks = {
+    active: 0,
+    failed: 0,
+    success_rate: 0,
+    getStats: function () {
+      const total = this.active + this.failed;
+      this.success_rate = total > 0 ? this.active / total : 0;
+      return {
+        total: total,
+        active: this.active,
+        failed: this.failed,
+        success_rate: this.success_rate,
+      };
+    },
+  };
 
-    // Detection counters
-    const detections = {
-        license_checks: 0,
-        trial_checks: 0,
-        expiry_checks: 0,
-        hardware_checks: 0,
-        registry_access: 0
-    };
+  // Detection counters
+  const detections = {
+    license_checks: 0,
+    trial_checks: 0,
+    expiry_checks: 0,
+    hardware_checks: 0,
+    registry_access: 0,
+  };
 
-    // License Check Bypass Implementation
-    logger.info('Setting up license check bypass...');
+  // License Check Bypass Implementation
+  logger.info("Setting up license check bypass...");
 
-    // String comparison hooks
-    const stringFunctions = ['strcmp', 'strcasecmp', 'memcmp', 'wcscmp', '_stricmp'];
-    stringFunctions.forEach(function(funcName) {
-        try {
-            const funcAddr = Module.findExportByName(null, funcName);
-            if (funcAddr) {
-                Interceptor.attach(funcAddr, {
-                    onEnter: function(args) {
-                        this.str1 = '';
-                        this.str2 = '';
-                        this.isLicenseCheck = false;
+  // String comparison hooks
+  const stringFunctions = [
+    "strcmp",
+    "strcasecmp",
+    "memcmp",
+    "wcscmp",
+    "_stricmp",
+  ];
+  stringFunctions.forEach(function (funcName) {
+    try {
+      const funcAddr = Module.findExportByName(null, funcName);
+      if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+          onEnter: function (args) {
+            this.str1 = "";
+            this.str2 = "";
+            this.isLicenseCheck = false;
 
-                        try {
-                            this.str1 = args[0].readCString() || '';
-                            this.str2 = args[1].readCString() || '';
+            try {
+              this.str1 = args[0].readCString() || "";
+              this.str2 = args[1].readCString() || "";
 
-                            // Detect license-related comparisons
-                            const licenseKeywords = ['license', 'trial', 'expire', 'valid', 'key', 'serial'];
-                            this.isLicenseCheck = licenseKeywords.some(keyword =>
-                                this.str1.toLowerCase().includes(keyword) ||
-                                this.str2.toLowerCase().includes(keyword)
-                            );
+              // Detect license-related comparisons
+              const licenseKeywords = [
+                "license",
+                "trial",
+                "expire",
+                "valid",
+                "key",
+                "serial",
+              ];
+              this.isLicenseCheck = licenseKeywords.some(
+                (keyword) =>
+                  this.str1.toLowerCase().includes(keyword) ||
+                  this.str2.toLowerCase().includes(keyword),
+              );
 
-                            if (this.isLicenseCheck) {
-                                detections.license_checks++;
-                                logger.warn(`License check detected in ${funcName}: "${this.str1}" vs "${this.str2}"`);
-                            }
-                        } catch {
-                            // Ignore memory access errors
-                        }
-                    },
-                    onLeave: function(retval) {
-                        if (this.isLicenseCheck) {
-                            // Force license check to succeed
-                            retval.replace(0);
-                            logger.info(`License check bypassed: forced ${funcName} to return 0 (equal)`);
-                            hooks.active++;
-                        }
-                    }
-                });
-                logger.info(`Hooked ${funcName}`);
+              if (this.isLicenseCheck) {
+                detections.license_checks++;
+                logger.warn(
+                  `License check detected in ${funcName}: "${this.str1}" vs "${this.str2}"`,
+                );
+              }
+            } catch {
+              // Ignore memory access errors
             }
-        } catch (e) {
-            logger.error(`Failed to hook ${funcName}: ${e.message}`);
-            hooks.failed++;
-        }
-    });
-
-    // Hook license validation functions by name
-    const licenseTargets = []; // {{license_functions}} - Template placeholder
-    licenseTargets.forEach(function(funcName) {
-        try {
-            const funcAddr = Module.findExportByName(null, funcName);
-            if (funcAddr) {
-                Interceptor.attach(funcAddr, {
-                    onEnter: function() {
-                        logger.warn(`License function called: ${funcName}`);
-                        detections.license_checks++;
-                    },
-                    onLeave: function(retval) {
-                        // Force license validation to succeed
-                        retval.replace(1);
-                        logger.info(`License function bypassed: ${funcName} forced to return 1 (valid)`);
-                        hooks.active++;
-                    }
-                });
-                logger.info(`Hooked license function: ${funcName}`);
+          },
+          onLeave: function (retval) {
+            if (this.isLicenseCheck) {
+              // Force license check to succeed
+              retval.replace(0);
+              logger.info(
+                `License check bypassed: forced ${funcName} to return 0 (equal)`,
+              );
+              hooks.active++;
             }
-        } catch (e) {
-            logger.error(`Failed to hook ${funcName}: ${e.message}`);
-            hooks.failed++;
-        }
-    });
+          },
+        });
+        logger.info(`Hooked ${funcName}`);
+      }
+    } catch (e) {
+      logger.error(`Failed to hook ${funcName}: ${e.message}`);
+      hooks.failed++;
+    }
+  });
 
-    // Hook imports that might be used for license checks
-    const targetImports = []; // {{target_imports}} - Template placeholder
-    targetImports.forEach(function(importName) {
-        try {
-            const importAddr = Module.findExportByName(null, importName);
-            if (importAddr) {
-                Interceptor.attach(importAddr, {
-                    onEnter: function() {
-                        // Log import usage for analysis
-                        logger.info(`Import called: ${importName}`);
-                    }
-                });
-            }
-        } catch {
-            // Silently ignore failed import hooks
-        }
-    });
+  // Hook license validation functions by name
+  const licenseTargets = []; // {{license_functions}} - Template placeholder
+  licenseTargets.forEach(function (funcName) {
+    try {
+      const funcAddr = Module.findExportByName(null, funcName);
+      if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+          onEnter: function () {
+            logger.warn(`License function called: ${funcName}`);
+            detections.license_checks++;
+          },
+          onLeave: function (retval) {
+            // Force license validation to succeed
+            retval.replace(1);
+            logger.info(
+              `License function bypassed: ${funcName} forced to return 1 (valid)`,
+            );
+            hooks.active++;
+          },
+        });
+        logger.info(`Hooked license function: ${funcName}`);
+      }
+    } catch (e) {
+      logger.error(`Failed to hook ${funcName}: ${e.message}`);
+      hooks.failed++;
+    }
+  });
 
-    // Bypass methods implementation
-    // Template: bypass methods will be inserted here during script generation
+  // Hook imports that might be used for license checks
+  const targetImports = []; // {{target_imports}} - Template placeholder
+  targetImports.forEach(function (importName) {
+    try {
+      const importAddr = Module.findExportByName(null, importName);
+      if (importAddr) {
+        Interceptor.attach(importAddr, {
+          onEnter: function () {
+            // Log import usage for analysis
+            logger.info(`Import called: ${importName}`);
+          },
+        });
+      }
+    } catch {
+      // Silently ignore failed import hooks
+    }
+  });
 
-    // Main execution
-    logger.info(`Initialized ${scriptInfo.name} v${scriptInfo.version}`);
-    logger.info(`Target: ${scriptInfo.target}`);
-    logger.info(`Protections detected: ${scriptInfo.protections.join(', ')}`);
+  // Bypass methods implementation
+  // Template: bypass methods will be inserted here during script generation
 
-    // Periodic status reporting
-    setInterval(function() {
-        const stats = hooks.getStats();
-        logger.info(`Hook stats: ${stats.total} active, ${stats.failed} failed, ${(stats.success_rate * 100).toFixed(1)}% success rate`);
-        logger.info(`Detections: ${JSON.stringify(detections)}`);
-    }, 30000);
+  // Main execution
+  logger.info(`Initialized ${scriptInfo.name} v${scriptInfo.version}`);
+  logger.info(`Target: ${scriptInfo.target}`);
+  logger.info(`Protections detected: ${scriptInfo.protections.join(", ")}`);
 
+  // Periodic status reporting
+  setInterval(function () {
+    const stats = hooks.getStats();
+    logger.info(
+      `Hook stats: ${stats.total} active, ${stats.failed} failed, ${(stats.success_rate * 100).toFixed(1)}% success rate`,
+    );
+    logger.info(`Detections: ${JSON.stringify(detections)}`);
+  }, 30000);
 })();

@@ -59,9 +59,6 @@ Comprehensive test suite created for `intellicrack/core/c2/c2_client.py` validat
 | `_windows_token_impersonation` | **NOT COVERED** | **Coverage gap** |
 | `_check_privilege` | Implicitly via privilege tests | Partial |
 | `_windows_service_exploit` | **NOT COVERED** | **Coverage gap** |
-| `_linux_sudo_exploit` | **NOT COVERED** | **Coverage gap** |
-| `_linux_suid_exploit` | **NOT COVERED** | **Coverage gap** |
-| `_linux_kernel_exploit` | **NOT COVERED** | **Coverage gap** |
 
 ### **Service Exploitation Methods Covered (60%)**
 
@@ -127,10 +124,10 @@ Comprehensive test suite created for `intellicrack/core/c2/c2_client.py` validat
    - `_windows_token_impersonation`: Token manipulation not validated
    - `_windows_service_exploit`: Service exploitation not covered
 
-2. **Linux-Specific Privilege Escalation**
-   - `_linux_sudo_exploit`: Sudo exploitation not tested
-   - `_linux_suid_exploit`: SUID binary exploitation not validated
-   - `_linux_kernel_exploit`: Kernel exploit techniques not covered
+2. **Additional Windows 11 Privilege Escalation**
+   - Focus on Windows 11 specific exploitation techniques
+   - Enhanced UAC bypass methods for Windows 11
+   - Modern Windows service exploitation patterns
 
 3. **Service Vulnerability Exploitation**
    - Service enumeration tested, but actual exploitation methods uncovered
@@ -159,12 +156,12 @@ async def test_windows_token_impersonation_real(self):
 async def test_windows_service_exploitation_real(self):
     """Test real Windows service vulnerability exploitation."""
 
-# Linux-Specific Exploitation Tests
-async def test_linux_privilege_escalation_real(self):
-    """Test real Linux privilege escalation techniques."""
+# Windows 11 Specific Exploitation Tests
+async def test_windows11_privilege_escalation_real(self):
+    """Test real Windows 11 privilege escalation techniques."""
 
-async def test_linux_suid_exploitation_real(self):
-    """Test real SUID binary exploitation."""
+async def test_windows11_service_exploitation_real(self):
+    """Test real Windows 11 service exploitation."""
 
 # Service Vulnerability Tests
 async def test_service_vulnerability_exploitation_real(self):
