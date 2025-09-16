@@ -50,7 +50,6 @@ jobs:
     - name: Install dependencies
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         # Install Python and pip only via mamba
         mamba install python=${{ matrix.python-version }} pip -y
         # Upgrade pip and install all packages via pip/pyproject.toml
@@ -61,7 +60,6 @@ jobs:
     - name: Lint with ruff
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pip install ruff==0.5.0
         ruff check intellicrack/ tests/ --output-format=github
         ruff format --check intellicrack/ tests/
@@ -69,7 +67,6 @@ jobs:
     - name: Test with pytest
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
       env:
         PYTHONDONTWRITEBYTECODE: 1

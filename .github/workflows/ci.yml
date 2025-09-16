@@ -51,7 +51,6 @@ jobs:
     - name: Install dependencies
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         # Install Python and pip only via mamba
         mamba install python=${{ matrix.python-version }} pip -y
         # Upgrade pip and install all packages via pip/pyproject.toml
@@ -62,7 +61,6 @@ jobs:
     - name: Lint with ruff
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pip install ruff==0.5.0
         ruff check intellicrack/ tests/ --output-format=github
         ruff format --check intellicrack/ tests/
@@ -70,7 +68,6 @@ jobs:
     - name: Security scan with bandit
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pip install bandit[toml]==1.7.8
         bandit -r intellicrack/ -f json -o bandit-report.json || true
         python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
@@ -79,7 +76,6 @@ jobs:
     - name: Type check with mypy
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pip install mypy==1.16.0
         mypy intellicrack/ --ignore-missing-imports --no-strict-optional
       continue-on-error: true
@@ -87,14 +83,12 @@ jobs:
     - name: Verify No Mock Usage (Production-Ready Enforcement)
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         python tests/utils/verify_no_mocks.py --ci
       continue-on-error: false
 
     - name: Test with pytest
       shell: bash -el {0}
       run: |
-        mamba activate intellicrack
         pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
       env:
         PYTHONDONTWRITEBYTECODE: 1
