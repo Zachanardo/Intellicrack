@@ -67,7 +67,7 @@ dependencies = [
     "die-python<=0.4.0",
 
     # Security & Network
-    "mitmproxy==12.1.1",
+    "mitmproxy==12.1.2",
     "scapy==2.6.1",
     "cryptography>=43.0,<44.0",
     "paramiko==3.5.1",
