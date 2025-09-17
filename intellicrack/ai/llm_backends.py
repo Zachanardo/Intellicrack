@@ -2025,7 +2025,7 @@ class LLMManager:
                 return None
 
             # Prepend system prompt if it exists and is not already in messages
-            if backend.config.system_prompt and not any(m.role == 'system' for m in messages):
+            if backend.config.system_prompt and not any(m.role == "system" for m in messages):
                 messages.insert(0, LLMMessage(role="system", content=backend.config.system_prompt))
 
             try:
@@ -2709,6 +2709,7 @@ def _configure_default_llms(manager: LLMManager) -> None:
             # Check if Ollama server is actually running before registering backends
             try:
                 import requests
+
                 # Quick check if Ollama is accessible
                 response = requests.get(f"{ollama_url}/api/tags", timeout=2)
                 if response.status_code == 200:
@@ -2731,7 +2732,7 @@ def _configure_default_llms(manager: LLMManager) -> None:
                         api_base=ollama_url,
                         context_length=4096,
                         temperature=0.1,
-                        system_prompt=DEFAULT_SYSTEM_PROMPT,
+                        system_prompt=None,
                     )
 
                     if manager.register_llm("ollama-llama3.2-1b", ollama_small_config, use_lazy_loading=True):
@@ -2821,42 +2822,6 @@ def _configure_default_llms(manager: LLMManager) -> None:
         # Don't try to register a fallback that will fail - just leave it unconfigured
 
     logger.info("Auto-configuration complete: %d LLM(s) configured", configured_count)
-
-
-def get_llm_manager() -> LLMManager:
-    """Get the global LLM manager instance."""
-    global _LLM_MANAGER  # pylint: disable=global-statement
-    if _LLM_MANAGER is None:
-        _LLM_MANAGER = LLMManager()
-        _configure_default_llms(_LLM_MANAGER)
-    return _LLM_MANAGER
-
-
-def get_llm_backend() -> LLMManager:
-    """Get the global LLM manager instance for backward compatibility.
-
-    This function provides backward compatibility for code that expects
-    a get_llm_backend() function. Returns the same LLMManager instance
-    as get_llm_manager().
-
-    Returns:
-        LLMManager: The global LLM manager instance
-
-    """
-    return get_llm_manager()
-
-
-def shutdown_llm_manager():
-    """Shutdown the global LLM manager."""
-    global _LLM_MANAGER  # pylint: disable=global-statement
-    if _LLM_MANAGER:
-        _LLM_MANAGER.shutdown()
-        _LLM_MANAGER = None
-
-
-# Aliases for backward compatibility
-LocalModelBackend = HuggingFaceLocalBackend
-ModelManager = LLMManager
 
 
 def get_llm_manager() -> LLMManager:
