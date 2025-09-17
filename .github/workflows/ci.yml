@@ -31,11 +31,47 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
+    - name: Set up Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: intellicrack-launcher
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -e .
         pip install -e .[dev]
+
+    - name: Rust - Check compilation
+      run: |
+        cd intellicrack-launcher
+        cargo check --all-features --all-targets
+
+    - name: Rust - Format check
+      run: |
+        cd intellicrack-launcher
+        cargo fmt -- --check
+
+    - name: Rust - Clippy linting
+      run: |
+        cd intellicrack-launcher
+        cargo clippy --all-features --all-targets -- -D warnings
+
+    - name: Rust - Run tests
+      run: |
+        cd intellicrack-launcher
+        cargo test --all-features --verbose
+
+    - name: Rust - Build release
+      run: |
+        cd intellicrack-launcher
+        cargo build --release --all-features
 
     - name: Lint with ruff
       run: |
