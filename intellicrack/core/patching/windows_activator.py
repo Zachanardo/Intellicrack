@@ -65,6 +65,118 @@ class WindowsActivator:
         self.last_validation_result = None
         self.validation_cache_duration = 300  # 5 minutes
 
+    def activate(self, method: str = "hwid") -> dict[str, any]:
+        """Activate Windows using specified method - alias for activate_windows.
+
+        Args:
+            method: Activation method ('hwid', 'kms38', 'ohook')
+
+        Returns:
+            Dictionary with activation results
+        """
+        method_enum = ActivationMethod.HWID
+        if method.lower() == "kms38":
+            method_enum = ActivationMethod.KMS38
+        elif method.lower() == "ohook":
+            method_enum = ActivationMethod.ONLINE_KMS
+        return self.activate_windows(method_enum)
+
+    def check_activation_status(self) -> dict[str, str]:
+        """Check current Windows activation status - alias for get_activation_status.
+
+        Returns:
+            Dictionary with activation status information
+        """
+        status = self.get_activation_status()
+        # Add 'activated' key for compatibility
+        if 'status' in status:
+            status['activated'] = status['status'] == 'activated'
+        return status
+
+    def generate_hwid(self) -> str:
+        """Generate Hardware ID for Windows activation.
+
+        Returns:
+            Hardware ID string for digital license activation
+        """
+        import hashlib
+        import platform
+        import uuid
+
+        import wmi
+
+        try:
+            # Initialize WMI
+            c = wmi.WMI()
+
+            # Collect hardware information
+            hardware_info = []
+
+            # CPU info
+            for processor in c.Win32_Processor():
+                hardware_info.append(processor.ProcessorId.strip() if processor.ProcessorId else "")
+                hardware_info.append(str(processor.NumberOfCores))
+                hardware_info.append(processor.Name.strip() if processor.Name else "")
+
+            # Motherboard info
+            for board in c.Win32_BaseBoard():
+                hardware_info.append(board.SerialNumber.strip() if board.SerialNumber else "")
+                hardware_info.append(board.Manufacturer.strip() if board.Manufacturer else "")
+                hardware_info.append(board.Product.strip() if board.Product else "")
+
+            # BIOS info
+            for bios in c.Win32_BIOS():
+                hardware_info.append(bios.SerialNumber.strip() if bios.SerialNumber else "")
+                hardware_info.append(bios.Manufacturer.strip() if bios.Manufacturer else "")
+
+            # Network adapter MAC addresses (physical adapters only)
+            for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
+                if nic.MACAddress:
+                    hardware_info.append(nic.MACAddress.replace(":", ""))
+
+            # System UUID
+            for system in c.Win32_ComputerSystemProduct():
+                hardware_info.append(system.UUID.strip() if system.UUID else "")
+
+            # Combine all hardware info
+            combined_info = "|".join(filter(None, hardware_info))
+
+            # Generate HWID hash
+            hwid_hash = hashlib.sha256(combined_info.encode()).hexdigest()
+
+            # Format as Windows-style HWID
+            hwid = f"{hwid_hash[:8]}-{hwid_hash[8:12]}-{hwid_hash[12:16]}-{hwid_hash[16:20]}-{hwid_hash[20:32]}"
+
+            self.logger.info(f"Generated HWID: {hwid[:20]}...")  # Log partial HWID for privacy
+            return hwid.upper()
+
+        except ImportError:
+            # Fallback if WMI not available
+            self.logger.warning("WMI not available, using fallback HWID generation")
+
+            # Use platform info and MAC address as fallback
+            machine_info = f"{platform.machine()}|{platform.processor()}|{platform.node()}"
+
+            # Try to get MAC address
+            try:
+                mac = uuid.getnode()
+                machine_info += f"|{mac:012X}"
+            except:
+                pass
+
+            # Generate fallback HWID
+            fallback_hash = hashlib.sha256(machine_info.encode()).hexdigest()
+            hwid = f"{fallback_hash[:8]}-{fallback_hash[8:12]}-{fallback_hash[12:16]}-{fallback_hash[16:20]}-{fallback_hash[20:32]}"
+
+            return hwid.upper()
+
+        except Exception as e:
+            self.logger.error(f"Error generating HWID: {e}")
+            # Return a deterministic but unique HWID based on available info
+            basic_info = f"{os.environ.get('COMPUTERNAME', 'UNKNOWN')}|{platform.platform()}"
+            basic_hash = hashlib.sha256(basic_info.encode()).hexdigest()
+            return f"{basic_hash[:8]}-{basic_hash[8:12]}-{basic_hash[12:16]}-{basic_hash[16:20]}-{basic_hash[20:32]}".upper()
+
     def check_prerequisites(self) -> tuple[bool, list[str]]:
         """Check if prerequisites for Windows activation are met.
 

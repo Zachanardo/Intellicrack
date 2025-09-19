@@ -3039,7 +3039,11 @@ WantedBy=multi-user.target
             import subprocess
 
             # Check imports of the binary
-            result = subprocess.run(["dumpbin", "/imports", binary_path], capture_output=True, text=True, check=False)
+            dumpbin_path = shutil.which("dumpbin")
+            if dumpbin_path:
+                result = subprocess.run([dumpbin_path, "/imports", binary_path], capture_output=True, text=True, check=False)
+            else:
+                result = None
 
             if result.returncode == 0:
                 # Parse imported DLLs

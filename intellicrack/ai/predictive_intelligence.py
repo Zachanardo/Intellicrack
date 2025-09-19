@@ -950,7 +950,8 @@ class ExecutionTimePredictor:
                                 }
                             )
 
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Error parsing log entry: {e}")
                         continue
 
         # Load from actual tool execution logs

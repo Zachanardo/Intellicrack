@@ -321,7 +321,7 @@ class RadareESILEmulator:
         if "[" in esil and "]" in esil:
             # Memory read operation
             parts = esil.split(",")
-            for i, part in enumerate(parts):
+            for _i, part in enumerate(parts):
                 if "]" in part:
                     # Found memory dereference
                     addr_expr = part.replace("[", "").replace("]", "")

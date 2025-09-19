@@ -515,7 +515,7 @@ class CrossToolOrchestrator:
                 cf.notes.append("Has inline hook detected by Frida")
 
         # Calculate confidence scores
-        for name, cf in function_map.items():
+        for _name, cf in function_map.items():
             sources = sum([1 if cf.ghidra_data else 0, 1 if cf.r2_data else 0, 1 if cf.frida_data else 0])
             cf.confidence_score = sources / 3.0
             correlated.append(cf)

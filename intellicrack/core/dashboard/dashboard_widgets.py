@@ -230,7 +230,7 @@ class LineChartWidget(DashboardWidget):
 
         # Collect all series
         for data in self.data_history:
-            for key, value in data.values.items():
+            for key, _value in data.values.items():
                 ax.plot(x_data, [d.values.get(key, 0) for d in self.data_history], label=key)
 
         ax.set_title(self.config.title)

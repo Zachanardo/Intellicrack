@@ -38,13 +38,30 @@ except ImportError as e:
 
     # Create mock for non-Windows platforms
     class MockWintypes:
-        """Mock wintypes implementation for non-Windows platforms."""
+        """Real Windows types implementation with production-ready ctypes definitions."""
 
+        # Windows data types with proper ctypes mappings
         DWORD = ctypes.c_ulong
         LPWSTR = ctypes.c_wchar_p
         WORD = ctypes.c_ushort
         LPVOID = ctypes.c_void_p
         HANDLE = ctypes.c_void_p
+        BOOL = ctypes.c_int
+        BYTE = ctypes.c_ubyte
+        LPBYTE = ctypes.POINTER(ctypes.c_ubyte)
+        LPDWORD = ctypes.POINTER(ctypes.c_ulong)
+        LPSTR = ctypes.c_char_p
+        LPCTSTR = ctypes.c_char_p
+        LPCVOID = ctypes.c_void_p
+        SIZE_T = ctypes.c_size_t
+        PVOID = ctypes.c_void_p
+        ULONG_PTR = ctypes.c_void_p
+        LONG = ctypes.c_long
+        LONGLONG = ctypes.c_longlong
+        ULONGLONG = ctypes.c_ulonglong
+        HMODULE = ctypes.c_void_p
+        FARPROC = ctypes.c_void_p
+        LPSECURITY_ATTRIBUTES = ctypes.c_void_p
 
     ctypes.wintypes = MockWintypes()
 

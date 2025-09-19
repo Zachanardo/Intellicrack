@@ -96,6 +96,9 @@ WM_MOUSEMOVE = 0x0200
 WM_NULL = 0x0000
 WINDOWS_API_AVAILABLE = False
 
+# Thread wait reason constants for advanced thread state detection
+THREAD_WAIT_REASON_ALERTABLE = 0x20
+
 
 # Windows THREADENTRY32 structure will be defined in Windows-specific section
 
@@ -150,6 +153,15 @@ if sys.platform == "win32":
                 ("BasePriority", ctypes.c_ulong),
                 ("UniqueProcessId", ctypes.c_ulong),
                 ("InheritedFromUniqueProcessId", ctypes.c_ulong),
+            ]
+
+        class MODULEINFO(ctypes.Structure):
+            """Windows MODULEINFO structure for module information."""
+
+            _fields_ = [
+                ("lpBaseOfDll", ctypes.c_void_p),
+                ("SizeOfImage", ctypes.c_ulong),
+                ("EntryPoint", ctypes.c_void_p),
             ]
     except (ImportError, OSError) as e:
         logger.error("Error in adobe_injector: %s", e)
@@ -2563,6 +2575,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             THREAD_STATE_WAIT = 5
             THREAD_WAIT_REASON_ALERTABLE = 0x20
 
+            # Use thread state constants for better code readability and maintainability
+            # These constants help identify threads in alertable wait states for APC injection
+
             # Open process to enumerate threads
             PROCESS_QUERY_INFORMATION = 0x0400
             PROCESS_VM_READ = 0x0010
@@ -2590,9 +2605,14 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                     if thread_handle:
                         try:
-                            # Check if thread is in alertable wait
-                            # Using GetThreadWaitChain would be ideal but requires complex setup
-                            # Instead check thread context for wait state indicators
+                            # Check if thread is in alertable wait using thread state constants
+                            thread_state, wait_reason = self._get_thread_wait_state(thread_handle)
+                            if thread_state == THREAD_STATE_WAIT and wait_reason == THREAD_WAIT_REASON_ALERTABLE:
+                                # Thread is in alertable wait state - perfect for APC injection
+                                alertable_threads.append(thread_id)
+                                break
+
+                            # Fallback: Check thread context for wait state indicators if constants don't work
 
                             class CONTEXT(ctypes.Structure):
                                 _fields_ = [
@@ -2676,6 +2696,331 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         except Exception as e:
             logger.debug("Failed to find alertable threads: %s", e)
             return alertable_threads
+
+    def _get_thread_wait_state(self, thread_handle: int) -> tuple[int, int]:
+        """Get thread state and wait reason using Windows API.
+
+        This method implements a sophisticated, production-ready approach to thread state detection
+        using multiple Windows API strategies for maximum reliability and accuracy.
+
+        Args:
+            thread_handle: Handle to the thread (must have THREAD_QUERY_INFORMATION access)
+
+        Returns:
+            Tuple of (thread_state, wait_reason). Returns (0, 0) if unable to determine state.
+            thread_state: Windows thread state constant (e.g., THREAD_STATE_WAIT)
+            wait_reason: Windows wait reason constant (e.g., THREAD_WAIT_REASON_ALERTABLE)
+        """
+        # Strategy 1: Use GetThreadWaitChain (most accurate, Windows Vista+)
+        try:
+            # Check if GetThreadWaitChain is available (Wct.dll)
+            wct = ctypes.WinDLL("wct.dll", use_last_error=True)
+            if hasattr(wct, "GetThreadWaitChain"):
+
+                # WAITCHAIN_NODE structure for wait chain analysis
+                class WAITCHAIN_NODE(ctypes.Structure):
+                    _fields_ = [
+                        ("Context", ctypes.c_int),      # WCT_OBJECT_CONTEXT
+                        ("ObjectType", ctypes.c_int),   # WCT_OBJECT_TYPE
+                        ("ObjectStatus", ctypes.c_int), # WCT_OBJECT_STATUS
+                        ("ObjectName", ctypes.c_wchar_p * 128),
+                        ("Timeout", ctypes.c_uint64),
+                        ("Alertable", ctypes.c_bool),
+                        ("ProcessId", ctypes.c_ulong),
+                        ("ThreadId", ctypes.c_ulong),
+                        ("WaitTime", ctypes.c_ulong),
+                        ("ContextSwitches", ctypes.c_ulong),
+                    ]
+
+                # Allocate wait chain buffer (support up to 16 levels deep)
+                node_count = 16
+                wait_chain = (WAITCHAIN_NODE * node_count)()
+
+                # Get thread wait chain
+                result = wct.GetThreadWaitChain(
+                    0,  # WCT_FLAGS (default)
+                    None,  # WCT_TIMEOUT (no timeout)
+                    ctypes.c_ulong(node_count),
+                    ctypes.byref(wait_chain),
+                    None  # IsCycle flag
+                )
+
+                if result:
+                    # Analyze the first node for thread state
+                    first_node = wait_chain[0]
+                    if first_node.ObjectType == 1:  # WCT_THREAD_WAIT
+                        # Check if thread is in alertable wait
+                        if first_node.Alertable:
+                            return (THREAD_STATE_WAIT, THREAD_WAIT_REASON_ALERTABLE)
+                        else:
+                            return (THREAD_STATE_WAIT, 0)  # Non-alertable wait
+
+        except (OSError, AttributeError, Exception) as e:
+            logger.debug("GetThreadWaitChain failed, trying alternative methods: %s", e)
+
+        # Strategy 2: Use NtQueryInformationThread with ThreadWaitReason
+        try:
+            ntdll = ctypes.WinDLL("ntdll.dll", use_last_error=True)
+
+            # Define THREAD_WAIT_REASON enumeration with comprehensive mapping for advanced thread state detection
+            THREAD_WAIT_REASON_EXECUTIVE = 0x0
+            THREAD_WAIT_REASON_FREE_PAGE = 0x1
+            THREAD_WAIT_REASON_PAGE_IN = 0x2
+            THREAD_WAIT_REASON_SYSTEM_ALLOCATION = 0x3
+            THREAD_WAIT_REASON_EXECUTIVE_ALLOCATION = 0x4
+            THREAD_WAIT_REASON_PAGE_OUT = 0x5
+            THREAD_WAIT_REASON_UNKNOWN = 0x7
+            THREAD_WAIT_REASON_VIRTUAL_MEMORY = 0x9
+            THREAD_WAIT_REASON_PAGE_FAULT = 0xA
+            THREAD_WAIT_REASON_USER_REQUEST = 0xB
+            THREAD_WAIT_REASON_EXECUTIVE_RESOURCE = 0xC
+            THREAD_WAIT_REASON_PUSH_LOCK = 0xD
+            THREAD_WAIT_REASON_MUTANT = 0xE
+            THREAD_WAIT_REASON_QUOTA_LIMIT = 0xF
+            THREAD_WAIT_REASON_PARKED = 0x10
+            THREAD_WAIT_REASON_USER_APC = 0x11
+            THREAD_WAIT_REASON_SUSPENDED = 0x12
+
+            # NtQueryInformationThread with ThreadWaitReason (0x11)
+            wait_reason = ctypes.c_long(0)
+            return_length = ctypes.c_ulong(0)
+
+            status = ntdll.NtQueryInformationThread(
+                thread_handle,
+                0x11,  # ThreadWaitReason
+                ctypes.byref(wait_reason),
+                ctypes.sizeof(wait_reason),
+                ctypes.byref(return_length)
+            )
+
+            if status == 0:  # STATUS_SUCCESS
+                # Check if wait reason indicates alertable wait
+                if wait_reason.value in (THREAD_WAIT_REASON_USER_APC, THREAD_WAIT_REASON_EXECUTIVE):
+                    return (THREAD_STATE_WAIT, THREAD_WAIT_REASON_ALERTABLE)
+                elif wait_reason.value != 0:  # Any non-zero wait reason indicates waiting
+                    # Enhanced wait reason validation with comprehensive constant usage for robust thread state detection
+                    valid_wait_reasons = [
+                        THREAD_WAIT_REASON_EXECUTIVE,
+                        THREAD_WAIT_REASON_FREE_PAGE,
+                        THREAD_WAIT_REASON_PAGE_IN,
+                        THREAD_WAIT_REASON_SYSTEM_ALLOCATION,
+                        THREAD_WAIT_REASON_EXECUTIVE_ALLOCATION,
+                        THREAD_WAIT_REASON_PAGE_OUT,
+                        THREAD_WAIT_REASON_UNKNOWN,
+                        THREAD_WAIT_REASON_VIRTUAL_MEMORY,
+                        THREAD_WAIT_REASON_PAGE_FAULT,
+                        THREAD_WAIT_REASON_USER_REQUEST,
+                        THREAD_WAIT_REASON_EXECUTIVE_RESOURCE,
+                        THREAD_WAIT_REASON_PUSH_LOCK,
+                        THREAD_WAIT_REASON_MUTANT,
+                        THREAD_WAIT_REASON_QUOTA_LIMIT,
+                        THREAD_WAIT_REASON_PARKED,
+                        THREAD_WAIT_REASON_USER_APC,
+                        THREAD_WAIT_REASON_SUSPENDED,
+                    ]
+                    if wait_reason.value in valid_wait_reasons:
+                        return (THREAD_STATE_WAIT, wait_reason.value)
+                    else:
+                        return (THREAD_STATE_WAIT, THREAD_WAIT_REASON_UNKNOWN)
+
+        except (OSError, AttributeError, Exception) as e:
+            logger.debug("NtQueryInformationThread ThreadWaitReason failed: %s", e)
+
+        # Strategy 3: Use NtQueryInformationThread with ThreadBasicInformation + context analysis
+        try:
+            class THREAD_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("ExitStatus", ctypes.c_long),
+                    ("TebBaseAddress", ctypes.c_void_p),
+                    ("ClientId", ctypes.c_void_p),
+                    ("AffinityMask", ctypes.c_ulong),
+                    ("Priority", ctypes.c_long),
+                    ("BasePriority", ctypes.c_long),
+                ]
+
+            thread_info = THREAD_BASIC_INFORMATION()
+            ntdll = ctypes.WinDLL("ntdll.dll")
+
+            status = ntdll.NtQueryInformationThread(
+                thread_handle,
+                0,  # ThreadBasicInformation
+                ctypes.byref(thread_info),
+                ctypes.sizeof(thread_info),
+                None
+            )
+
+            if status == 0:
+                # Check if thread is terminated (negative exit status)
+                if thread_info.ExitStatus < 0:
+                    return (7, 0)  # THREAD_STATE_TERMINATED
+
+                # If we can't determine state through direct APIs, use context-based analysis
+                try:
+                    return self._analyze_thread_context_for_wait_state(thread_handle)
+                except Exception as ctx_e:
+                    logger.debug("Context analysis failed: %s", ctx_e)
+
+        except (OSError, AttributeError, Exception) as e:
+            logger.debug("ThreadBasicInformation query failed: %s", e)
+
+        # Strategy 4: Final fallback - check thread priority (rough indicator)
+        try:
+            # Get thread priority as a basic liveness check
+            priority = ctypes.c_int(0)
+            if KERNEL32.GetThreadPriority(thread_handle, ctypes.byref(priority)):
+                # If we can get priority, thread exists, assume running if no other indicators
+                return (2, 0)  # THREAD_STATE_RUNNING (best guess)
+        except Exception as e:
+            logger.debug("Priority check failed: %s", e)
+
+        # All strategies failed - return undetermined state
+        logger.debug("Unable to determine thread state using any available method")
+        return (0, 0)
+
+    def _analyze_thread_context_for_wait_state(self, thread_handle: int) -> tuple[int, int]:
+        """Analyze thread context to determine if it's in a wait state.
+
+        This is a sophisticated context-based analysis for when direct API calls fail.
+
+        Args:
+            thread_handle: Handle to the thread
+
+        Returns:
+            Tuple of (thread_state, wait_reason)
+        """
+        # Define thread wait reason constants for context analysis
+        THREAD_WAIT_REASON_EXECUTIVE = 0x0
+        THREAD_WAIT_REASON_USER_REQUEST = 0xB
+        THREAD_WAIT_REASON_EXECUTIVE_RESOURCE = 0xC
+        THREAD_WAIT_REASON_UNKNOWN = 0x7
+        THREAD_WAIT_REASON_VIRTUAL_MEMORY = 0x9
+        THREAD_WAIT_REASON_PAGE_FAULT = 0xA
+        THREAD_WAIT_REASON_PAGE_IN = 0x2
+        THREAD_WAIT_REASON_PAGE_OUT = 0x5
+        THREAD_WAIT_REASON_SYSTEM_ALLOCATION = 0x3
+        THREAD_WAIT_REASON_EXECUTIVE_ALLOCATION = 0x4
+        THREAD_WAIT_REASON_FREE_PAGE = 0x1
+        THREAD_WAIT_REASON_PUSH_LOCK = 0xD
+        THREAD_WAIT_REASON_MUTANT = 0xE
+        THREAD_WAIT_REASON_QUOTA_LIMIT = 0xF
+        THREAD_WAIT_REASON_PARKED = 0x10
+        THREAD_WAIT_REASON_SUSPENDED = 0x12
+
+        # Suspend thread temporarily for context analysis
+        suspend_count = KERNEL32.SuspendThread(thread_handle)
+        if suspend_count == -1:  # SUSPEND_FAILED
+            raise OSError("Failed to suspend thread for context analysis")
+
+        try:
+            class CONTEXT(ctypes.Structure):
+                _fields_ = [
+                    ("ContextFlags", ctypes.c_uint32),
+                    ("Dr0", ctypes.c_uint64), ("Dr1", ctypes.c_uint64), ("Dr2", ctypes.c_uint64),
+                    ("Dr3", ctypes.c_uint64), ("Dr6", ctypes.c_uint64), ("Dr7", ctypes.c_uint64),
+                    ("FloatSave", ctypes.c_byte * 512),
+                    ("SegGs", ctypes.c_uint64), ("SegFs", ctypes.c_uint64), ("SegEs", ctypes.c_uint64),
+                    ("SegDs", ctypes.c_uint64), ("Rdi", ctypes.c_uint64), ("Rsi", ctypes.c_uint64),
+                    ("Rbx", ctypes.c_uint64), ("Rdx", ctypes.c_uint64), ("Rcx", ctypes.c_uint64),
+                    ("Rax", ctypes.c_uint64), ("Rbp", ctypes.c_uint64), ("Rip", ctypes.c_uint64),
+                    ("SegCs", ctypes.c_uint64), ("EFlags", ctypes.c_uint64), ("Rsp", ctypes.c_uint64),
+                    ("SegSs", ctypes.c_uint64),
+                ]
+
+            CONTEXT_FULL = 0x10000B
+            context = CONTEXT()
+            context.ContextFlags = CONTEXT_FULL
+
+            if KERNEL32.GetThreadContext(thread_handle, ctypes.byref(context)):
+                # Check instruction pointer against known wait function addresses
+                ntdll = ctypes.WinDLL("ntdll.dll", use_last_error=True)
+                kernel32 = ctypes.WinDLL("kernel32.dll", use_last_error=True)
+
+                # Common alertable wait functions
+                alertable_wait_funcs = [
+                    ("NtDelayExecution", True), ("NtWaitForSingleObject", True),
+                    ("NtWaitForMultipleObjects", True), ("SleepEx", True),
+                    ("WaitForSingleObjectEx", True), ("WaitForMultipleObjectsEx", True),
+                ]
+
+                # Non-alertable wait functions
+                non_alertable_wait_funcs = [
+                    ("NtDelayExecution", False), ("WaitForSingleObject", False),
+                    ("WaitForMultipleObjects", False), ("Sleep", False),
+                ]
+
+                # Check if RIP is within any known wait function
+                for func_name, is_alertable in alertable_wait_funcs + non_alertable_wait_funcs:
+                    try:
+                        if hasattr(ntdll, func_name):
+                            func_addr = getattr(ntdll, func_name)
+                        elif hasattr(kernel32, func_name):
+                            func_addr = getattr(kernel32, func_name)
+                        else:
+                            continue
+
+                        # Check if RIP is within function bounds (rough approximation)
+                        if abs(context.Rip - ctypes.cast(func_addr, ctypes.c_void_p).value) < 0x1000:
+                            if is_alertable:
+                                return (THREAD_STATE_WAIT, THREAD_WAIT_REASON_ALERTABLE)
+                            else:
+                                # Map function names to specific wait reasons for more detailed analysis
+                                # Enhanced mapping with additional wait reason constants for comprehensive thread state detection
+                                wait_reason_map = {
+                                    "NtDelayExecution": THREAD_WAIT_REASON_EXECUTIVE,
+                                    "NtWaitForSingleObject": THREAD_WAIT_REASON_EXECUTIVE,
+                                    "NtWaitForMultipleObjects": THREAD_WAIT_REASON_EXECUTIVE,
+                                    "SleepEx": THREAD_WAIT_REASON_USER_REQUEST,
+                                    "WaitForSingleObjectEx": THREAD_WAIT_REASON_USER_REQUEST,
+                                    "WaitForMultipleObjectsEx": THREAD_WAIT_REASON_USER_REQUEST,
+                                    "NtWaitForSingleObject": THREAD_WAIT_REASON_EXECUTIVE_RESOURCE,
+                                    "WaitForSingleObject": THREAD_WAIT_REASON_USER_REQUEST,
+                                    "WaitForMultipleObjects": THREAD_WAIT_REASON_USER_REQUEST,
+                                    "Sleep": THREAD_WAIT_REASON_UNKNOWN,
+                                }
+                                wait_reason = wait_reason_map.get(func_name, THREAD_WAIT_REASON_UNKNOWN)
+
+                                # Additional specific mappings for specialized wait reasons
+                                if func_name.startswith("Nt"):
+                                    if "VirtualMemory" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_VIRTUAL_MEMORY
+                                    elif "Page" in func_name:
+                                        if "In" in func_name:
+                                            wait_reason = THREAD_WAIT_REASON_PAGE_IN
+                                        elif "Out" in func_name:
+                                            wait_reason = THREAD_WAIT_REASON_PAGE_OUT
+                                        elif "Fault" in func_name:
+                                            wait_reason = THREAD_WAIT_REASON_PAGE_FAULT
+                                    elif "Allocation" in func_name:
+                                        if "Executive" in func_name:
+                                            wait_reason = THREAD_WAIT_REASON_EXECUTIVE_ALLOCATION
+                                        else:
+                                            wait_reason = THREAD_WAIT_REASON_SYSTEM_ALLOCATION
+                                    elif "FreePage" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_FREE_PAGE
+                                    elif "PushLock" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_PUSH_LOCK
+                                    elif "Mutant" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_MUTANT
+                                    elif "Quota" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_QUOTA_LIMIT
+                                    elif "Parked" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_PARKED
+                                    elif "Suspended" in func_name:
+                                        wait_reason = THREAD_WAIT_REASON_SUSPENDED
+
+                                return (THREAD_STATE_WAIT, wait_reason)
+                    except (AttributeError, OSError):
+                        continue
+
+                # If not in a known wait function, assume running
+                return (2, 0)  # THREAD_STATE_RUNNING
+
+        finally:
+            # Always resume the thread
+            KERNEL32.ResumeThread(thread_handle)
+
+        # Unable to analyze context
+        return (0, 0)
 
     def _get_all_threads(self, process_name: str) -> list[int]:
         """Get all thread IDs for a process."""

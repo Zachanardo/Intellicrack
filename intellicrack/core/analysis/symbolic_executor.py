@@ -630,7 +630,7 @@ class SymbolicExecutionEngine:
             gadgets = process_info.get("gadgets", [])
             if gadgets:
                 # Use discovered gadgets for vtable entries
-                for i, gadget in enumerate(gadgets[:10]):
+                for _i, gadget in enumerate(gadgets[:10]):
                     vtable_data += struct.pack("<Q", gadget["address"])
             else:
                 # Generate vtable entries based on common patterns

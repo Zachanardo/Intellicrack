@@ -615,8 +615,12 @@ class SandboxDetector(BaseDetector):
 
             if platform.system() == "Windows":
                 try:
-                    result = subprocess.run(["wmic", "cpu", "get", "name"], capture_output=True, text=True, timeout=5)
-                    cpu_name = result.stdout.lower()
+                    wmic_path = shutil.which("wmic")
+                    if wmic_path:
+                        result = subprocess.run([wmic_path, "cpu", "get", "name"], capture_output=True, text=True, timeout=5)
+                        cpu_name = result.stdout.lower()
+                    else:
+                        cpu_name = ""
 
                     # Check for VM CPU signatures
                     vm_cpu_patterns = ["qemu", "virtual", "vmware", "vbox", "hypervisor"]
@@ -733,8 +737,12 @@ class SandboxDetector(BaseDetector):
             try:
                 import subprocess
 
-                result = subprocess.run(["driverquery", "/v"], capture_output=True, text=True, timeout=5)
-                drivers = result.stdout.lower()
+                driverquery_path = shutil.which("driverquery")
+                if driverquery_path:
+                    result = subprocess.run([driverquery_path, "/v"], capture_output=True, text=True, timeout=5)
+                    drivers = result.stdout.lower()
+                else:
+                    drivers = ""
 
                 vm_drivers = ["vboxdrv", "vboxguest", "vmci", "vmhgfs", "vmmouse", "vmrawdsk", "vmusbmouse", "vmx86", "vmware"]
 
@@ -768,9 +776,15 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Linux":
                 import subprocess
 
-                result = subprocess.run(["dmidecode", "-t", "system"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    dmi_info = result.stdout.lower()
+                dmidecode_path = shutil.which("dmidecode")
+                if dmidecode_path:
+                    result = subprocess.run([dmidecode_path, "-t", "system"], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        dmi_info = result.stdout.lower()
+                    else:
+                        dmi_info = ""
+                else:
+                    dmi_info = ""
                     vm_indicators = ["vmware", "virtualbox", "qemu", "kvm", "xen", "parallels"]
 
                     for indicator in vm_indicators:

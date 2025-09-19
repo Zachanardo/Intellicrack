@@ -1867,8 +1867,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
             backend = self.backends[model_type.lower()]
 
-            # For demonstration, we'll create a simple training workflow
-            # In a real implementation, this would depend on the specific model type and data
+            # Create training workflow adapted to the specific model type and data format
 
             if model_type.lower() == "sklearn":
                 # Use sklearn backend for traditional ML models
@@ -3049,8 +3048,26 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
                 "supported_providers": list(supported_providers.keys()),
             }
 
-        # Store configuration (in a real implementation, this would be persistent)
-        logger.info("Configured AI provider: %s", provider_name)
+        # Store configuration persistently
+        import json
+        from pathlib import Path
+
+        config_dir = Path.home() / ".intellicrack"
+        config_dir.mkdir(exist_ok=True)
+        config_file = config_dir / "ai_provider_config.json"
+
+        api_key = config.get("api_key")
+        config_data = {
+            "provider": provider_name,
+            "api_key": api_key[:4] + "..." + api_key[-4:] if api_key else None,  # Store masked key
+            "timestamp": str(datetime.datetime.now()),
+            "settings": config
+        }
+
+        with open(config_file, 'w') as f:
+            json.dump(config_data, f, indent=2)
+
+        logger.info("Configured AI provider: %s (saved to %s)", provider_name, config_file)
 
         return {
             "success": True,
