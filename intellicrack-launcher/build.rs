@@ -7,99 +7,129 @@ fn main() {
     {
         println!("cargo:rerun-if-changed=intellicrack.rc");
         println!("cargo:rerun-if-changed=Intellicrack.exe.manifest");
-        
+
         std::env::set_var("RC_NOLOGO", "1");
         std::env::set_var("VSLANG", "1033");
-        
+
         let output_dir = std::env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
         std::env::set_var("TMP", &output_dir);
         std::env::set_var("TEMP", &output_dir);
-        
+
         let empty_macros: &[&str] = &[];
         embed_resource::compile("intellicrack.rc", empty_macros);
         println!("cargo:warning=Windows manifest embedded");
-        
+
         let nul_path = std::path::Path::new("NUL");
         if nul_path.exists() {
             let _ = std::fs::remove_file(nul_path);
             println!("cargo:warning=Cleaned up NUL file created by rc.exe");
         }
     }
-    
-    let mamba_python = PathBuf::from(r"C:\Intellicrack\mamba_env\python.exe");
-    
-    // Verify the Python executable exists
-    if !mamba_python.exists() {
-        panic!("Mamba Python not found at expected location: {}", mamba_python.display());
-    }
-    
-    // Ensure Python 3.12 DLL is accessible
-    let python312_dll = PathBuf::from(r"C:\Intellicrack\mamba_env\python312.dll");
-    if !python312_dll.exists() {
-        panic!("Python 3.12 DLL not found at: {}", python312_dll.display());
-    }
-    
-    // Set environment variables for PyO3 build configuration
-    env::set_var("PYO3_PYTHON", mamba_python.to_str().unwrap());
-    env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
-    env::set_var("PYTHON_SYS_EXECUTABLE", mamba_python.to_str().unwrap());
-    
-    // Verify Python version
-    let output = Command::new(&mamba_python)
+
+    // Detect CI environment or use PYO3_PYTHON if set
+    let python_exe = if let Ok(pyo3_python) = env::var("PYO3_PYTHON") {
+        // CI or custom Python path
+        println!("cargo:warning=Using PYO3_PYTHON from environment: {}", pyo3_python);
+        PathBuf::from(pyo3_python)
+    } else if env::var("CI").is_ok() || env::var("GITHUB_ACTIONS").is_ok() {
+        // Running in CI, try to find Python
+        let python_candidates = vec![
+            env::var("pythonLocation").ok().map(|p| PathBuf::from(p).join("python.exe")),
+            env::var("Python_ROOT_DIR").ok().map(|p| PathBuf::from(p).join("python.exe")),
+            Some(PathBuf::from("python.exe")),
+            Some(PathBuf::from("python3.exe")),
+        ];
+
+        let mut found_python = None;
+        for candidate in python_candidates.into_iter().flatten() {
+            if candidate.exists() || Command::new(&candidate).arg("--version").output().is_ok() {
+                found_python = Some(candidate);
+                break;
+            }
+        }
+
+        match found_python {
+            Some(p) => {
+                println!("cargo:warning=CI environment detected, using Python: {}", p.display());
+                p
+            }
+            None => panic!("CI environment detected but Python not found. Set PYO3_PYTHON environment variable.")
+        }
+    } else {
+        // Local development with Mamba
+        let mamba_python = PathBuf::from(r"C:\Intellicrack\mamba_env\python.exe");
+        if !mamba_python.exists() {
+            panic!("Local development: Mamba Python not found at: {}. For CI, set PYO3_PYTHON.", mamba_python.display());
+        }
+        println!("cargo:warning=Using local Mamba Python: {}", mamba_python.display());
+        mamba_python
+    };
+
+    // Verify Python executable works
+    let output = Command::new(&python_exe)
         .arg("--version")
         .output()
         .expect("Failed to run Python");
-    
+
     let version_str = String::from_utf8_lossy(&output.stdout);
     println!("cargo:warning=Detected Python version: {}", version_str.trim());
-    
+
     // Ensure we're using Python 3.12
     if !version_str.contains("3.12") {
-        panic!(
-            "Wrong Python version detected! Expected Python 3.12.x from mamba, got: {}",
-            version_str.trim()
-        );
+        println!("cargo:warning=Warning: Expected Python 3.12.x, got: {}", version_str.trim());
     }
-    
+
+    // Only set environment variables if not already set (allows CI to override)
+    if env::var("PYO3_PYTHON").is_err() {
+        env::set_var("PYO3_PYTHON", python_exe.to_str().unwrap());
+    }
+    if env::var("PYTHON_SYS_EXECUTABLE").is_err() {
+        env::set_var("PYTHON_SYS_EXECUTABLE", python_exe.to_str().unwrap());
+    }
+
     // Print diagnostics
-    println!("cargo:warning=Configuring PyO3 for mamba Python 3.12 at: {}", mamba_python.display());
-    
+    println!("cargo:warning=Configuring PyO3 for Python at: {}", python_exe.display());
+
     // Configure PyO3 build
     // The correct function for pyo3-build-config 0.20 is just to use environment variables
     // PyO3 will automatically use PYO3_PYTHON environment variable we set above
-    
-    // Additional configuration for Windows linking with GNU toolchain
-    // Link against Python 3.12 DLL using proper GNU linker syntax
-    println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env/libs");
-    println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env/DLLs");
-    println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env");
-    
+
+    // Additional configuration for linking
+    // Only add mamba-specific paths in local development
+    if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
+        // Local development paths
+        println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env/libs");
+        println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env/DLLs");
+        println!("cargo:rustc-link-search=native=C:/Intellicrack/mamba_env");
+    }
+
     // Link against Python 3.12 DLL
     println!("cargo:rustc-link-lib=python312");
-    
+
     // Force rerun if environment changes
     println!("cargo:rerun-if-env-changed=PYO3_PYTHON");
     println!("cargo:rerun-if-env-changed=PYTHONHOME");
     println!("cargo:rerun-if-env-changed=PYTHON_SYS_EXECUTABLE");
     println!("cargo:rerun-if-changed=build.rs");
-    
-    // Copy critical DLLs to output directory for runtime access
-    let target_dir = env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
-    let target_dir = PathBuf::from(target_dir).parent().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
-    
-    // Copy critical Python and runtime DLLs to target directory
-    let dlls_to_copy = [
+
+    // Copy critical DLLs to output directory for runtime access (local development only)
+    if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
+        let target_dir = env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
+        let target_dir = PathBuf::from(target_dir).parent().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
+
+        // Copy critical Python and runtime DLLs to target directory
+        let dlls_to_copy = [
         // Core Python DLLs
         ("python312.dll", r"C:\Intellicrack\mamba_env\python312.dll"),
         ("python3.dll", r"C:\Intellicrack\mamba_env\python3.dll"),
-        
+
         // Runtime DLLs
         ("vcruntime140.dll", r"C:\Intellicrack\mamba_env\vcruntime140.dll"),
         ("vcruntime140_1.dll", r"C:\Intellicrack\mamba_env\vcruntime140_1.dll"),
         ("msvcp140.dll", r"C:\Intellicrack\mamba_env\msvcp140.dll"),
         ("ucrtbase.dll", r"C:\Intellicrack\mamba_env\ucrtbase.dll"),
         ("zlib.dll", r"C:\Intellicrack\mamba_env\zlib.dll"),
-        
+
         // Critical supporting libraries
         ("sqlite3.dll", r"C:\Intellicrack\mamba_env\Library\bin\sqlite3.dll"),
         ("libssl-3-x64.dll", r"C:\Intellicrack\mamba_env\Library\bin\libssl-3-x64.dll"),
@@ -108,21 +138,21 @@ fn main() {
         ("ffi-8.dll", r"C:\Intellicrack\mamba_env\Library\bin\ffi-8.dll"),
         ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
         ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
-        
+
         // XML parsing libraries (critical for pyexpat functionality)
         ("libexpat.dll", r"C:\Intellicrack\mamba_env\Library\bin\libexpat.dll"),
-        
+
         // Font and graphics libraries for matplotlib
         ("freetype.dll", r"C:\Intellicrack\mamba_env\Library\bin\freetype.dll"),
         ("fontconfig-1.dll", r"C:\Intellicrack\mamba_env\Library\bin\fontconfig-1.dll"),
         ("libpng16.dll", r"C:\Intellicrack\mamba_env\Library\bin\libpng16.dll"),
-        
+
         // Math libraries for scipy and numpy
         ("libblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libblas.dll"),
         ("libcblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libcblas.dll"),
         ("liblapack.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapack.dll"),
         ("liblapacke.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapacke.dll"),
-        
+
         // Intel MKL libraries for high-performance math
         ("mkl_core.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_core.2.dll"),
         ("mkl_rt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_rt.2.dll"),
@@ -138,13 +168,13 @@ fn main() {
         ("mkl_vml_cmpt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_cmpt.2.dll"),
         ("mkl_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_mc3.2.dll"),
         ("mkl_vml_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_mc3.2.dll"),
-        
+
         // Intel threading libraries
         ("libiomp5md.dll", r"C:\Intellicrack\mamba_env\Library\bin\libiomp5md.dll"),
         ("tbb12.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbb12.dll"),
         ("tbbmalloc.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc.dll"),
         ("tbbmalloc_proxy.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc_proxy.dll"),
-        
+
         // Tcl/Tk DLLs for _tkinter module
         ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
         ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
@@ -162,11 +192,11 @@ fn main() {
         ("_socket.pyd", r"C:\Intellicrack\mamba_env\DLLs\_socket.pyd"),
         ("unicodedata.pyd", r"C:\Intellicrack\mamba_env\DLLs\unicodedata.pyd"),
         ("_lzma.pyd", r"C:\Intellicrack\mamba_env\DLLs\_lzma.pyd"),
-        
+
         // Critical XML parsing modules
         ("pyexpat.pyd", r"C:\Intellicrack\mamba_env\DLLs\pyexpat.pyd"),
         ("_elementtree.pyd", r"C:\Intellicrack\mamba_env\DLLs\_elementtree.pyd"),
-        
+
         // Additional critical modules for full functionality
         ("_asyncio.pyd", r"C:\Intellicrack\mamba_env\DLLs\_asyncio.pyd"),
         ("_decimal.pyd", r"C:\Intellicrack\mamba_env\DLLs\_decimal.pyd"),
@@ -177,12 +207,12 @@ fn main() {
         ("_zoneinfo.pyd", r"C:\Intellicrack\mamba_env\DLLs\_zoneinfo.pyd"),
         ("winsound.pyd", r"C:\Intellicrack\mamba_env\DLLs\winsound.pyd"),
     ];
-    
+
     // Copy DLL files
     for (dll_name, src_path) in &dlls_to_copy {
         let src = PathBuf::from(src_path);
         let dst = target_dir.join(dll_name);
-        
+
         if src.exists() {
             if let Err(e) = std::fs::copy(&src, &dst) {
                 println!("cargo:warning=Failed to copy {}: {}", dll_name, e);
@@ -193,12 +223,12 @@ fn main() {
             println!("cargo:warning={} not found at {}", dll_name, src.display());
         }
     }
-    
+
     // Copy Python extension modules (.pyd files)
     for (pyd_name, src_path) in &pyds_to_copy {
         let src = PathBuf::from(src_path);
         let dst = target_dir.join(pyd_name);
-        
+
         if src.exists() {
             if let Err(e) = std::fs::copy(&src, &dst) {
                 println!("cargo:warning=Failed to copy {}: {}", pyd_name, e);
@@ -209,17 +239,17 @@ fn main() {
             println!("cargo:warning={} not found at {}", pyd_name, src.display());
         }
     }
-    
+
     // Copy Tcl/Tk library directories for _tkinter functionality
     let tcl_tk_dirs = [
         ("tcl8.6", r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6"),
         ("tk8.6", r"C:\Intellicrack\mamba_env\Library\lib\tk8.6"),
     ];
-    
+
     for (dir_name, src_path) in &tcl_tk_dirs {
         let src = PathBuf::from(src_path);
         let dst = target_dir.join(dir_name);
-        
+
         if src.exists() && src.is_dir() {
             if let Err(e) = copy_dir_all(&src, &dst) {
                 println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
