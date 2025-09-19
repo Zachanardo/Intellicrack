@@ -26,6 +26,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
+      id: setup-python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
@@ -52,12 +53,19 @@ jobs:
         uv pip install --system -e .
         uv pip install --system -e .[dev]
 
+    - name: Set Python Path for PyO3
+      run: |
+        echo "Python location: $(which python)"
+        echo "Python version: $(python --version)"
+      shell: bash
+
     - name: Rust - Check compilation
       run: |
         cd intellicrack-launcher
         cargo check --all-features --all-targets
       env:
-        PYO3_PYTHON: python
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Format check
       run: |
@@ -69,21 +77,24 @@ jobs:
         cd intellicrack-launcher
         cargo clippy --all-features --all-targets -- -D warnings
       env:
-        PYO3_PYTHON: python
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Run tests
       run: |
         cd intellicrack-launcher
         cargo test --all-features --verbose
       env:
-        PYO3_PYTHON: python
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Build release
       run: |
         cd intellicrack-launcher
         cargo build --release --all-features
       env:
-        PYO3_PYTHON: python
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Lint with ruff
       run: |
