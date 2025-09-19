@@ -26,9 +26,11 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
+      id: setup-python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - name: Set up Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -55,6 +57,8 @@ jobs:
       run: |
         cd intellicrack-launcher
         cargo check --all-features --all-targets
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Format check
       run: |
@@ -65,16 +69,22 @@ jobs:
       run: |
         cd intellicrack-launcher
         cargo clippy --all-features --all-targets -- -D warnings
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Run tests
       run: |
         cd intellicrack-launcher
         cargo test --all-features --verbose
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Rust - Build release
       run: |
         cd intellicrack-launcher
         cargo build --release --all-features
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
 
     - name: Lint with ruff
       run: |
