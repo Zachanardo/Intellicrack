@@ -138,6 +138,7 @@ class FileTreeWidget(QTreeWidget):
                 if item.is_dir():
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
                     except (ImportError, AttributeError):
                         pass
@@ -148,12 +149,14 @@ class FileTreeWidget(QTreeWidget):
                 elif item.suffix.lower() in self.supported_extensions:
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
                     except (ImportError, AttributeError):
                         pass
                 else:
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
                     except (ImportError, AttributeError):
                         pass
@@ -600,15 +603,17 @@ class AICodingAssistantWidget(QWidget):
         gen_layout.addWidget(QLabel("License Bypass Generation"))
 
         self.bypass_type_combo = QComboBox()
-        self.bypass_type_combo.addItems([
-            "Keygen Algorithm",
-            "Hardware ID Spoofer",
-            "License Server Emulator",
-            "Registry Patcher",
-            "API Hook Script",
-            "Time Bomb Disabler",
-            "Protection Analyzer"
-        ])
+        self.bypass_type_combo.addItems(
+            [
+                "Keygen Algorithm",
+                "Hardware ID Spoofer",
+                "License Server Emulator",
+                "Registry Patcher",
+                "API Hook Script",
+                "Time Bomb Disabler",
+                "Protection Analyzer",
+            ]
+        )
         gen_layout.addWidget(self.bypass_type_combo)
 
         generate_bypass_btn = QPushButton("Generate Bypass")
@@ -634,7 +639,9 @@ class AICodingAssistantWidget(QWidget):
         quick_actions_layout = QHBoxLayout()
 
         analyze_license_btn = QPushButton("Analyze License")
-        analyze_license_btn.clicked.connect(lambda: self.send_quick_license_message("Analyze the loaded binary for license protection mechanisms"))
+        analyze_license_btn.clicked.connect(
+            lambda: self.send_quick_license_message("Analyze the loaded binary for license protection mechanisms")
+        )
 
         find_validation_btn = QPushButton("Find Validation")
         find_validation_btn.clicked.connect(lambda: self.send_quick_license_message("Locate license key validation routines in the binary"))
@@ -674,9 +681,11 @@ class AICodingAssistantWidget(QWidget):
     def on_file_selected_for_analysis(self, file_path: str):
         """Handle file selection for license protection analysis."""
         try:
-            if Path(file_path).suffix.lower() in ['.exe', '.dll', '.so', '.dylib']:
+            if Path(file_path).suffix.lower() in [".exe", ".dll", ".so", ".dylib"]:
                 # Binary file selected - update license analysis context
-                self.license_context.setPlainText(f"License-protected binary: {Path(file_path).name}\nPath: {file_path}\nAnalysis: Ready for license protection research")
+                self.license_context.setPlainText(
+                    f"License-protected binary: {Path(file_path).name}\nPath: {file_path}\nAnalysis: Ready for license protection research"
+                )
                 logger.info(f"Selected binary for license analysis: {file_path}")
             else:
                 # Source file selected - open in editor
@@ -700,7 +709,7 @@ class AICodingAssistantWidget(QWidget):
                     f.write(template)
 
                 # Refresh file tree and open in editor
-                if hasattr(self, 'file_tree'):
+                if hasattr(self, "file_tree"):
                     self.file_tree.refresh_tree()
                 self.open_file_in_research_editor(file_path)
                 logger.info(f"Created new research file: {file_path}")
@@ -710,7 +719,7 @@ class AICodingAssistantWidget(QWidget):
     def get_research_file_template(self, file_ext: str) -> str:
         """Get template content for license research files."""
         templates = {
-            '.py': '''#!/usr/bin/env python3
+            ".py": '''#!/usr/bin/env python3
 """License Protection Analysis Script
 
 This script analyzes and bypasses license protection mechanisms
@@ -1023,7 +1032,7 @@ if __name__ == "__main__":
     results = analyzer.analyze_protection()
     print("Analysis complete:", results)
 ''',
-            '.js': '''/*
+            ".js": """/*
  * License Protection Bypass Script (Frida)
  *
  * This Frida script bypasses license validation mechanisms
@@ -1301,8 +1310,8 @@ setTimeout(function() {
     bypassTimeBomb();
     console.log("[+] License bypass script loaded successfully");
 }, 1000);
-''',
-            '.keygen': '''# License Key Generation Template
+""",
+            ".keygen": '''# License Key Generation Template
 #
 # This template provides structure for implementing
 # license key generation algorithms.
@@ -1431,7 +1440,7 @@ def validate_license_key(key: str) -> bool:
 # key = generate_license_key("username")
 # print(f"Generated key: {key}")
 # print(f"Valid: {validate_license_key(key)}")
-'''
+''',
         }
         return templates.get(file_ext, "# License research file\n# Add your analysis and bypass code here\n")
 
@@ -1445,7 +1454,9 @@ def validate_license_key(key: str) -> bool:
                 "Executable Files (*.exe *.dll);;All Files (*)",
             )
             if file_path:
-                self.license_context.setPlainText(f"Target Binary: {Path(file_path).name}\nPath: {file_path}\nStatus: Ready for license protection analysis")
+                self.license_context.setPlainText(
+                    f"Target Binary: {Path(file_path).name}\nPath: {file_path}\nStatus: Ready for license protection analysis"
+                )
                 self.current_target_binary = file_path
                 logger.info(f"Loaded target binary: {file_path}")
         except Exception as e:
@@ -1455,7 +1466,7 @@ def validate_license_key(key: str) -> bool:
         """Open a file in the research editor tabs."""
         try:
             # Check if file is already open
-            if hasattr(self, 'editor_tabs'):
+            if hasattr(self, "editor_tabs"):
                 for i in range(self.editor_tabs.count()):
                     editor = self.editor_tabs.widget(i)
                     if hasattr(editor, "current_file") and editor.current_file == file_path:
@@ -1476,7 +1487,7 @@ def validate_license_key(key: str) -> bool:
     def close_research_tab(self, index: int):
         """Close a research editor tab."""
         try:
-            if hasattr(self, 'editor_tabs') and self.editor_tabs.count() > index:
+            if hasattr(self, "editor_tabs") and self.editor_tabs.count() > index:
                 self.editor_tabs.removeTab(index)
                 logger.info(f"Closed research tab at index: {index}")
         except Exception as e:
@@ -1486,12 +1497,12 @@ def validate_license_key(key: str) -> bool:
         """Execute the current license bypass script."""
         try:
             logger.info("Executing license bypass script...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", "License bypass script execution initiated...")
 
             # Get current editor content
             current_editor = None
-            if hasattr(self, 'editor_tabs') and self.editor_tabs.currentWidget():
+            if hasattr(self, "editor_tabs") and self.editor_tabs.currentWidget():
                 current_editor = self.editor_tabs.currentWidget()
 
             if not current_editor:
@@ -1499,7 +1510,7 @@ def validate_license_key(key: str) -> bool:
                 return
 
             script_content = current_editor.toPlainText()
-            script_path = getattr(current_editor, 'current_file', None)
+            script_path = getattr(current_editor, "current_file", None)
 
             if not script_content.strip():
                 self.chat_widget.add_message("System", "Script is empty")
@@ -1509,11 +1520,11 @@ def validate_license_key(key: str) -> bool:
             if script_path:
                 file_ext = Path(script_path).suffix.lower()
 
-                if file_ext == '.py':
+                if file_ext == ".py":
                     self._execute_python_bypass_script(script_content, script_path)
-                elif file_ext == '.js':
+                elif file_ext == ".js":
                     self._execute_frida_bypass_script(script_content, script_path)
-                elif file_ext == '.keygen':
+                elif file_ext == ".keygen":
                     self._execute_keygen_script(script_content)
                 else:
                     self.chat_widget.add_message("System", f"Unsupported script type: {file_ext}")
@@ -1523,7 +1534,7 @@ def validate_license_key(key: str) -> bool:
 
         except Exception as e:
             logger.error(f"Error executing license bypass script: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"Script execution failed: {e}")
 
     def _execute_python_bypass_script(self, script_content: str, script_path: str):
@@ -1533,17 +1544,13 @@ def validate_license_key(key: str) -> bool:
 
         try:
             # Create temporary script file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp_file:
                 tmp_file.write(script_content)
                 tmp_script_path = tmp_file.name
 
             # Execute with timeout for safety
             result = secure_run(
-                [sys.executable, tmp_script_path],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=os.path.dirname(tmp_script_path)
+                [sys.executable, tmp_script_path], capture_output=True, text=True, timeout=30, cwd=os.path.dirname(tmp_script_path)
             )
 
             # Report results
@@ -1569,7 +1576,7 @@ def validate_license_key(key: str) -> bool:
             import frida
 
             # Get target process
-            target_binary = getattr(self, 'current_target_binary', None)
+            target_binary = getattr(self, "current_target_binary", None)
             if not target_binary:
                 self.chat_widget.add_message("System", "No target binary specified for Frida script")
                 return
@@ -1592,7 +1599,7 @@ def validate_license_key(key: str) -> bool:
 
             # Create and load script
             script = session.create_script(script_content)
-            script.on('message', self._on_frida_message)
+            script.on("message", self._on_frida_message)
             script.load()
 
             self.chat_widget.add_message("System", "✅ Frida bypass script loaded successfully")
@@ -1611,23 +1618,22 @@ def validate_license_key(key: str) -> bool:
         """Execute keygen template script."""
         try:
             # Parse keygen template to extract configuration
-            lines = script_content.split('\n')
+            lines = script_content.split("\n")
             config = {}
 
             for line in lines:
-                if '=' in line and not line.strip().startswith('#'):
-                    key, value = line.split('=', 1)
+                if "=" in line and not line.strip().startswith("#"):
+                    key, value = line.split("=", 1)
                     key = key.strip()
                     value = value.strip()
                     # Remove surrounding quotes if present
-                    if (value.startswith('"') and value.endswith('"')) or \
-                       (value.startswith("'") and value.endswith("'")):
+                    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                         value = value[1:-1]
                     config[key] = value
 
             # Generate keys using extracted configuration
-            algorithm = config.get('ALGORITHM_TYPE', 'Custom')
-            key_length = int(config.get('KEY_LENGTH', '16'))
+            algorithm = config.get("ALGORITHM_TYPE", "Custom")
+            key_length = int(config.get("KEY_LENGTH", "16"))
 
             self.chat_widget.add_message("System", "🔑 Keygen Configuration:")
             self.chat_widget.add_message("System", f"Algorithm: {algorithm}")
@@ -1636,7 +1642,7 @@ def validate_license_key(key: str) -> bool:
             # Generate multiple keys for testing
             generated_keys = []
             for i in range(5):
-                key = self._generate_key_from_template(config, f"user_{i+1}")
+                key = self._generate_key_from_template(config, f"user_{i + 1}")
                 generated_keys.append(key)
 
             self.chat_widget.add_message("System", "✅ Generated License Keys:")
@@ -1655,9 +1661,9 @@ def validate_license_key(key: str) -> bool:
         import hashlib
         import secrets
 
-        algorithm = config.get('ALGORITHM_TYPE', 'Custom').lower()
+        algorithm = config.get("ALGORITHM_TYPE", "Custom").lower()
 
-        if 'md5' in algorithm or 'hash' in algorithm:
+        if "md5" in algorithm or "hash" in algorithm:
             hash_input = f"{user_info}_license_{secrets.randbelow(9000) + 1000}"
             sha256_hash = hashlib.sha256(hash_input.encode()).hexdigest().upper()
             return f"{sha256_hash[:4]}-{sha256_hash[4:8]}-{sha256_hash[8:12]}-{sha256_hash[12:16]}"
@@ -1668,30 +1674,32 @@ def validate_license_key(key: str) -> bool:
     def _validate_key_from_template(self, config: dict, key: str) -> bool:
         """Validate key using template pattern."""
         import re
-        pattern = config.get('VALIDATION_PATTERN', r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$')
+
+        pattern = config.get("VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
         return bool(re.match(pattern, key))
 
     def _on_frida_message(self, message, data):
         """Handle Frida script messages."""
-        if message.get('type') == 'send':
-            payload = message.get('payload', {})
-            if hasattr(self, 'chat_widget'):
+        if message.get("type") == "send":
+            payload = message.get("payload", {})
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("Frida", f"📱 {payload}")
 
     def analyze_license_protection(self):
         """Analyze the current binary for license protection."""
         try:
             logger.info("Analyzing license protection mechanisms...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", "Analyzing license protection - this may take a moment...")
 
-            target_binary = getattr(self, 'current_target_binary', None)
+            target_binary = getattr(self, "current_target_binary", None)
             if not target_binary or not Path(target_binary).exists():
                 self.chat_widget.add_message("System", "No target binary loaded for analysis")
                 return
 
             # Instantiate analyzer and perform analysis
             from intellicrack.utils.logger import get_logger
+
             analyzer_logger = get_logger(__name__)
 
             # Create LicenseAnalyzer instance
@@ -1710,76 +1718,83 @@ def validate_license_key(key: str) -> bool:
                         pe = pefile.PE(self.target_path)
 
                         self.protection_info = {
-                            'file_path': self.target_path,
-                            'file_size': os.path.getsize(self.target_path),
-                            'protections': [],
-                            'license_functions': [],
-                            'crypto_imports': [],
-                            'registry_operations': [],
-                            'time_checks': [],
-                            'hardware_checks': [],
-                            'network_validations': [],
-                            'string_patterns': []
+                            "file_path": self.target_path,
+                            "file_size": os.path.getsize(self.target_path),
+                            "protections": [],
+                            "license_functions": [],
+                            "crypto_imports": [],
+                            "registry_operations": [],
+                            "time_checks": [],
+                            "hardware_checks": [],
+                            "network_validations": [],
+                            "string_patterns": [],
                         }
 
                         # Analyze imports for protection indicators
-                        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+                        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                             for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                                dll_name = entry.dll.decode('utf-8').lower()
+                                dll_name = entry.dll.decode("utf-8").lower()
 
                                 # Crypto/license APIs
-                                if any(x in dll_name for x in ['crypt', 'bcrypt', 'advapi32']):
+                                if any(x in dll_name for x in ["crypt", "bcrypt", "advapi32"]):
                                     for imp in entry.imports:
                                         if imp.name:
-                                            func_name = imp.name.decode('utf-8')
-                                            if any(x in func_name.lower() for x in
-                                                  ['hash', 'encrypt', 'decrypt', 'sign', 'verify', 'regquery', 'regopen']):
-                                                self.protection_info['license_functions'].append({
-                                                    'dll': dll_name,
-                                                    'function': func_name,
-                                                    'address': hex(imp.address) if imp.address else 'N/A'
-                                                })
+                                            func_name = imp.name.decode("utf-8")
+                                            if any(
+                                                x in func_name.lower()
+                                                for x in ["hash", "encrypt", "decrypt", "sign", "verify", "regquery", "regopen"]
+                                            ):
+                                                self.protection_info["license_functions"].append(
+                                                    {
+                                                        "dll": dll_name,
+                                                        "function": func_name,
+                                                        "address": hex(imp.address) if imp.address else "N/A",
+                                                    }
+                                                )
 
                         # Scan for license-related strings
-                        with open(self.target_path, 'rb') as f:
+                        with open(self.target_path, "rb") as f:
                             binary_data = f.read()
 
                             # License string patterns
                             patterns = [
-                                (rb'[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}', 'License Key Pattern'),
-                                (rb'trial|demo|evaluation|expired', 'Trial/Demo Strings'),
-                                (rb'license|serial|activation|registration', 'License Strings'),
-                                (rb'ValidateLicense|CheckLicense|VerifyKey', 'License Functions'),
-                                (rb'Hardware.*ID|HWID|Machine.*ID', 'Hardware Binding'),
-                                (rb'\d{4}-\d{2}-\d{2}', 'Date Patterns')
+                                (rb"[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}", "License Key Pattern"),
+                                (rb"trial|demo|evaluation|expired", "Trial/Demo Strings"),
+                                (rb"license|serial|activation|registration", "License Strings"),
+                                (rb"ValidateLicense|CheckLicense|VerifyKey", "License Functions"),
+                                (rb"Hardware.*ID|HWID|Machine.*ID", "Hardware Binding"),
+                                (rb"\d{4}-\d{2}-\d{2}", "Date Patterns"),
                             ]
 
                             for pattern, desc in patterns:
                                 matches = re.findall(pattern, binary_data, re.IGNORECASE)
                                 if matches:
-                                    self.protection_info['string_patterns'].append({
-                                        'type': desc,
-                                        'count': len(matches),
-                                        'samples': [m.decode('utf-8', errors='ignore')[:50] for m in matches[:3]]
-                                    })
+                                    self.protection_info["string_patterns"].append(
+                                        {
+                                            "type": desc,
+                                            "count": len(matches),
+                                            "samples": [m.decode("utf-8", errors="ignore")[:50] for m in matches[:3]],
+                                        }
+                                    )
 
                         # Detect protection level
                         protection_score = 0
-                        if self.protection_info['license_functions']:
+                        if self.protection_info["license_functions"]:
                             protection_score += 30
-                        if self.protection_info['string_patterns']:
+                        if self.protection_info["string_patterns"]:
                             protection_score += 20
-                        if any(p['type'] == 'Hardware Binding' for p in self.protection_info['string_patterns']):
+                        if any(p["type"] == "Hardware Binding" for p in self.protection_info["string_patterns"]):
                             protection_score += 25
-                        if any(p['type'] == 'Date Patterns' for p in self.protection_info['string_patterns']):
+                        if any(p["type"] == "Date Patterns" for p in self.protection_info["string_patterns"]):
                             protection_score += 15
 
-                        self.protection_info['protection_level'] = 'High' if protection_score >= 70 else \
-                                                                   'Medium' if protection_score >= 40 else 'Low'
-                        self.protection_info['protection_score'] = protection_score
+                        self.protection_info["protection_level"] = (
+                            "High" if protection_score >= 70 else "Medium" if protection_score >= 40 else "Low"
+                        )
+                        self.protection_info["protection_score"] = protection_score
 
                     except Exception as e:
-                        self.protection_info['error'] = str(e)
+                        self.protection_info["error"] = str(e)
                         analyzer_logger.error(f"Analysis error: {e}")
 
                     return self.protection_info
@@ -1794,14 +1809,14 @@ def validate_license_key(key: str) -> bool:
             self.chat_widget.add_message("System", f"Protection Level: {results.get('protection_level', 'Unknown')}")
             self.chat_widget.add_message("System", f"Protection Score: {results.get('protection_score', 0)}/100")
 
-            if results.get('license_functions'):
+            if results.get("license_functions"):
                 self.chat_widget.add_message("System", f"🔑 Found {len(results['license_functions'])} license functions:")
-                for func in results['license_functions'][:5]:  # Show first 5
+                for func in results["license_functions"][:5]:  # Show first 5
                     self.chat_widget.add_message("System", f"  • {func['function']} ({func['dll']})")
 
-            if results.get('string_patterns'):
+            if results.get("string_patterns"):
                 self.chat_widget.add_message("System", f"📋 Found {len(results['string_patterns'])} string patterns:")
-                for pattern in results['string_patterns']:
+                for pattern in results["string_patterns"]:
                     self.chat_widget.add_message("System", f"  • {pattern['type']}: {pattern['count']} occurrences")
 
             # Store results for other methods
@@ -1809,20 +1824,20 @@ def validate_license_key(key: str) -> bool:
 
         except Exception as e:
             logger.error(f"Error analyzing license protection: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"❌ Analysis failed: {e}")
 
     def generate_keygen_template(self):
         """Generate a keygen template for the current target."""
         try:
             logger.info("Generating keygen template...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", "Generating keygen template based on target binary analysis...")
 
             # Use analysis results if available
             target_name = "UnknownApp"
 
-            if hasattr(self, 'current_target_binary'):
+            if hasattr(self, "current_target_binary"):
                 target_name = Path(self.current_target_binary).stem
 
             # Generate comprehensive keygen template
@@ -2043,9 +2058,10 @@ if __name__ == "__main__":
 '''
 
             # Create the keygen file
-            if hasattr(self, 'editor_tabs'):
+            if hasattr(self, "editor_tabs"):
                 # Create new tab with template
                 from .ai_coding_assistant_dialog import CodeEditor
+
                 editor = CodeEditor()
                 editor.setPlainText(template_content)
 
@@ -2065,14 +2081,14 @@ if __name__ == "__main__":
 
         except Exception as e:
             logger.error(f"Error generating keygen template: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"❌ Template generation failed: {e}")
 
     def generate_hwid_spoof(self):
         """Generate hardware ID spoofing code."""
         try:
             logger.info("Generating hardware ID spoofing code...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", "Generating HWID spoofing code for license bypass...")
 
             # Generate comprehensive HWID spoofing script
@@ -2442,8 +2458,9 @@ if __name__ == "__main__":
 '''
 
             # Create the HWID spoofing file
-            if hasattr(self, 'editor_tabs'):
+            if hasattr(self, "editor_tabs"):
                 from .ai_coding_assistant_dialog import CodeEditor
+
                 editor = CodeEditor()
                 editor.setPlainText(hwid_spoof_content)
 
@@ -2462,7 +2479,7 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("AI", "• Command-line interface")
 
                 # Also generate Frida script
-                frida_content = '''// Hardware ID Spoofing - Frida Runtime Script
+                frida_content = """// Hardware ID Spoofing - Frida Runtime Script
 // Usage: frida -l hwid_hooks.js <target_process>
 
 console.log("[+] Hardware ID Spoofing Script Loaded");
@@ -2504,7 +2521,7 @@ if (GetComputerNameW) {
 }
 
 console.log("[+] All HWID hooks installed");
-'''
+"""
 
                 frida_editor = CodeEditor()
                 frida_editor.setPlainText(frida_content)
@@ -2515,17 +2532,17 @@ console.log("[+] All HWID hooks installed");
 
         except Exception as e:
             logger.error(f"Error generating HWID spoof: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"❌ HWID spoofing generation failed: {e}")
 
     def open_patch_assistant(self):
         """Open the binary patch assistant."""
         try:
             logger.info("Opening binary patch assistant...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", "Binary patch assistant opened - ready for license protection removal")
 
-            target_binary = getattr(self, 'current_target_binary', None)
+            target_binary = getattr(self, "current_target_binary", None)
             if not target_binary:
                 self.chat_widget.add_message("System", "No target binary loaded")
                 return
@@ -2535,7 +2552,7 @@ console.log("[+] All HWID hooks installed");
 """Binary Patch Assistant - Intellicrack
 
 Advanced binary patching tool for license protection removal.
-Target: {Path(target_binary).name if target_binary else 'Unknown'}
+Target: {Path(target_binary).name if target_binary else "Unknown"}
 """
 
 import os
@@ -2930,8 +2947,9 @@ if __name__ == "__main__":
 '''
 
             # Create patch assistant file
-            if hasattr(self, 'editor_tabs'):
+            if hasattr(self, "editor_tabs"):
                 from .ai_coding_assistant_dialog import CodeEditor
+
                 editor = CodeEditor()
                 editor.setPlainText(patch_assistant_content)
 
@@ -2950,32 +2968,32 @@ if __name__ == "__main__":
 
         except Exception as e:
             logger.error(f"Error opening patch assistant: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"❌ Patch assistant failed: {e}")
 
     def handle_license_ai_message(self, message: str):
         """Handle AI messages specifically for license research."""
         try:
             logger.info(f"Processing license research AI message: {message}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("User", message)
 
             if not self.ai_tools or not self.llm_enabled:
                 response = "AI is currently unavailable. Please check your AI configuration."
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", response)
                 return
 
             # Create license research context
             context = {
                 "task": "license_research",
-                "binary_loaded": bool(hasattr(self, 'current_target_binary') and self.current_target_binary),
-                "analysis_available": bool(hasattr(self, 'current_analysis_data') and self.current_analysis_data),
-                "research_focus": "licensing_protection_mechanisms"
+                "binary_loaded": bool(hasattr(self, "current_target_binary") and self.current_target_binary),
+                "analysis_available": bool(hasattr(self, "current_analysis_data") and self.current_analysis_data),
+                "research_focus": "licensing_protection_mechanisms",
             }
 
             # Add current binary context if available
-            if hasattr(self, 'current_target_binary') and self.current_target_binary:
+            if hasattr(self, "current_target_binary") and self.current_target_binary:
                 context["binary_path"] = str(self.current_target_binary)
                 context["binary_analysis"] = "Available for license protection research"
 
@@ -3001,24 +3019,24 @@ This research is for strengthening software protection mechanisms."""
                 # Parse and format AI response for license research
                 if response:
                     formatted_response = self._format_license_research_response(response)
-                    if hasattr(self, 'chat_widget'):
+                    if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", formatted_response)
                     logger.info("AI license research response generated successfully")
                 else:
                     fallback_response = self._generate_license_research_fallback(message)
-                    if hasattr(self, 'chat_widget'):
+                    if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
                 logger.error(f"AI processing failed: {ai_error}")
                 fallback_response = self._generate_license_research_fallback(message)
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", fallback_response)
 
         except Exception as e:
             logger.error(f"Error handling license AI message: {e}")
             error_response = f"❌ License research query failed: {e}\nPlease try again or check your AI configuration."
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
 
     def _format_license_research_response(self, response: str) -> str:
@@ -3112,7 +3130,7 @@ For specific technical guidance, please:
         try:
             if not self.ai_tools or not self.llm_enabled:
                 error_msg = "AI is currently unavailable. Using fallback bypass generation."
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", error_msg)
                 # Fall back to non-AI bypass generation
                 self.generate_bypass()
@@ -3120,11 +3138,11 @@ For specific technical guidance, please:
 
             # Determine bypass type
             bypass_type = "Registry Bypass"
-            if hasattr(self, 'bypass_type_combo') and self.bypass_type_combo.currentText():
+            if hasattr(self, "bypass_type_combo") and self.bypass_type_combo.currentText():
                 bypass_type = self.bypass_type_combo.currentText()
 
             logger.info(f"Generating {bypass_type} using AI...")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"🤖 Generating {bypass_type} code for license protection research...")
 
             # Create comprehensive context for AI bypass generation
@@ -3132,12 +3150,12 @@ For specific technical guidance, please:
                 "task": "bypass_generation",
                 "bypass_type": bypass_type,
                 "research_purpose": "defensive_security",
-                "target_loaded": bool(hasattr(self, 'current_target_binary') and self.current_target_binary),
-                "protection_analysis": {}
+                "target_loaded": bool(hasattr(self, "current_target_binary") and self.current_target_binary),
+                "protection_analysis": {},
             }
 
             # Add binary analysis context if available
-            if hasattr(self, 'current_analysis_data') and self.current_analysis_data:
+            if hasattr(self, "current_analysis_data") and self.current_analysis_data:
                 context["protection_analysis"] = self.current_analysis_data
 
             # Create AI prompt for bypass generation
@@ -3177,12 +3195,12 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                     enhanced_bypass = self._enhance_ai_bypass_response(ai_response, bypass_type)
 
                     # Create new tab with AI-generated bypass
-                    if hasattr(self, 'editor_tabs'):
+                    if hasattr(self, "editor_tabs"):
                         filename = f"ai_generated_{bypass_type.lower().replace(' ', '_')}_bypass.py"
                         self._create_editor_tab(filename, enhanced_bypass)
 
                     # Update chat with success
-                    if hasattr(self, 'chat_widget'):
+                    if hasattr(self, "chat_widget"):
                         success_msg = f"✅ AI-generated {bypass_type} bypass created successfully!\n\n"
                         success_msg += "Features included:\n"
                         success_msg += "• Registry manipulation techniques\n"
@@ -3200,34 +3218,40 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                 else:
                     # AI response was insufficient, fall back to standard generation
                     logger.warning("AI response insufficient, falling back to standard bypass generation")
-                    if hasattr(self, 'chat_widget'):
-                        self.chat_widget.add_message("AI", f"AI response was incomplete. Falling back to standard {bypass_type} generation...")
+                    if hasattr(self, "chat_widget"):
+                        self.chat_widget.add_message(
+                            "AI", f"AI response was incomplete. Falling back to standard {bypass_type} generation..."
+                        )
 
                     # Use existing bypass generation logic
                     standard_bypass = self.generate_bypass()
-                    if standard_bypass and hasattr(self, 'editor_tabs'):
+                    if standard_bypass and hasattr(self, "editor_tabs"):
                         filename = f"standard_{bypass_type.lower().replace(' ', '_')}_bypass.py"
                         self._create_editor_tab(filename, standard_bypass)
 
             except Exception as ai_error:
                 logger.error(f"AI bypass generation failed: {ai_error}")
-                if hasattr(self, 'chat_widget'):
-                    self.chat_widget.add_message("AI", f"❌ AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation...")
+                if hasattr(self, "chat_widget"):
+                    self.chat_widget.add_message(
+                        "AI", f"❌ AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation..."
+                    )
 
                 # Fall back to standard bypass generation
                 try:
                     standard_bypass = self.generate_bypass()
-                    if standard_bypass and hasattr(self, 'editor_tabs'):
+                    if standard_bypass and hasattr(self, "editor_tabs"):
                         filename = f"fallback_{bypass_type.lower().replace(' ', '_')}_bypass.py"
                         self._create_editor_tab(filename, standard_bypass)
                 except Exception as fallback_error:
                     logger.error(f"Fallback bypass generation also failed: {fallback_error}")
-                    if hasattr(self, 'chat_widget'):
-                        self.chat_widget.add_message("AI", "❌ Both AI and fallback bypass generation failed. Please check your configuration.")
+                    if hasattr(self, "chat_widget"):
+                        self.chat_widget.add_message(
+                            "AI", "❌ Both AI and fallback bypass generation failed. Please check your configuration."
+                        )
 
         except Exception as e:
             logger.error(f"Error generating AI license bypass: {e}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"❌ License bypass generation failed: {e}")
 
     def _enhance_ai_bypass_response(self, ai_response: str, bypass_type: str) -> str:
@@ -3263,7 +3287,7 @@ logger = logging.getLogger(__name__)
 '''
 
             # Create comprehensive footer
-            footer = '''
+            footer = """
 
 if __name__ == "__main__":
     logger.info(f"Starting {bypass_type} bypass research")
@@ -3281,7 +3305,7 @@ if __name__ == "__main__":
         sys.exit(1)
     finally:
         logger.info("Research session ended")
-'''
+"""
 
             # Combine header + AI response + footer
             enhanced_code = header + "\n\n" + ai_response.strip() + "\n\n" + footer
@@ -3304,7 +3328,7 @@ AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
     def _create_editor_tab(self, filename: str, content: str):
         """Create a new editor tab with the specified content."""
         try:
-            if hasattr(self, 'editor_tabs') and self.editor_tabs:
+            if hasattr(self, "editor_tabs") and self.editor_tabs:
                 # Create new tab
                 new_tab = CodeEditor()
                 new_tab.set_content(content)
@@ -3325,24 +3349,24 @@ AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
         """Send a quick license research message to AI."""
         try:
             logger.info(f"Sending quick license message: {message}")
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("User", message)
 
             if not message or not message.strip():
                 error_response = "❌ Empty message. Please provide a license research query."
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", error_response)
                 return
 
             # Check if AI is available
             if not self.ai_tools or not self.llm_enabled:
                 fallback_response = self._generate_quick_license_fallback(message)
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", fallback_response)
                 return
 
             # Process as quick license research query
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", "🔍 Processing quick license research query...")
 
             # Create context for quick processing
@@ -3350,11 +3374,11 @@ AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
                 "task": "quick_license_query",
                 "query_type": self._classify_quick_license_query(message),
                 "research_purpose": "defensive_security",
-                "quick_response": True
+                "quick_response": True,
             }
 
             # Add binary context if available
-            if hasattr(self, 'current_target_binary') and self.current_target_binary:
+            if hasattr(self, "current_target_binary") and self.current_target_binary:
                 context["target_available"] = True
                 context["target_path"] = str(self.current_target_binary)
             else:
@@ -3383,7 +3407,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 if ai_response and ai_response.strip():
                     # Format quick response
                     formatted_response = self._format_quick_license_response(ai_response, message)
-                    if hasattr(self, 'chat_widget'):
+                    if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", formatted_response)
 
                     logger.info("Quick license message processed successfully")
@@ -3391,19 +3415,19 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 else:
                     # AI didn't provide a useful response
                     fallback_response = self._generate_quick_license_fallback(message)
-                    if hasattr(self, 'chat_widget'):
+                    if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
                 logger.error(f"AI quick processing failed: {ai_error}")
                 fallback_response = self._generate_quick_license_fallback(message)
-                if hasattr(self, 'chat_widget'):
+                if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", f"⚠️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}")
 
         except Exception as e:
             logger.error(f"Error sending quick license message: {e}")
             error_response = f"❌ Quick license query failed: {e}"
-            if hasattr(self, 'chat_widget'):
+            if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
 
     def _classify_quick_license_query(self, message: str) -> str:
@@ -3468,7 +3492,6 @@ Vulnerabilities to research:
 • Client-side validation exposure
 
 🔬 Research Focus: Understanding these patterns helps strengthen key generation security.""",
-
                 "bypass_techniques": """💡 **Bypass Techniques Research (Offline):**
 
 Common bypass methods in security research:
@@ -3485,7 +3508,6 @@ Defensive countermeasures:
 • Encrypted validation communication
 
 🔬 Research Focus: Understanding bypass methods helps build stronger protections.""",
-
                 "registry_analysis": """💡 **Registry Analysis Research (Offline):**
 
 License storage in Windows Registry:
@@ -3501,7 +3523,6 @@ Research techniques:
 • Backup and restore mechanisms
 
 🔬 Research Focus: Registry analysis helps understand storage security.""",
-
                 "runtime_manipulation": """💡 **Runtime Manipulation Research (Offline):**
 
 Frida and API hooking techniques:
@@ -3516,7 +3537,7 @@ Research applications:
 • Identifying critical validation points
 • Developing anti-hooking countermeasures
 
-🔬 Research Focus: Runtime analysis helps strengthen protection mechanisms."""
+🔬 Research Focus: Runtime analysis helps strengthen protection mechanisms.""",
             }
 
             # Return specific response for query type, or general response

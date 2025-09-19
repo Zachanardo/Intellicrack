@@ -25,22 +25,24 @@ import logging
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Callable
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set
 
 try:
     import websockets
     from websockets.server import WebSocketServerProtocol
+
     HAS_WEBSOCKETS = True
 except ImportError:
     HAS_WEBSOCKETS = False
 
 try:
-    from flask import Flask, render_template, jsonify, request
+    from flask import Flask, jsonify, render_template, request
     from flask_cors import CORS
+
     HAS_FLASK = True
 except ImportError:
     HAS_FLASK = False
@@ -50,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 class DashboardEventType(Enum):
     """Types of dashboard events."""
+
     ANALYSIS_STARTED = "analysis_started"
     ANALYSIS_COMPLETED = "analysis_completed"
     ANALYSIS_FAILED = "analysis_failed"
@@ -70,6 +73,7 @@ class DashboardEventType(Enum):
 @dataclass
 class DashboardEvent:
     """Event for dashboard display."""
+
     event_type: DashboardEventType
     timestamp: datetime
     tool: str
@@ -82,20 +86,21 @@ class DashboardEvent:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'event_type': self.event_type.value,
-            'timestamp': self.timestamp.isoformat(),
-            'tool': self.tool,
-            'title': self.title,
-            'description': self.description,
-            'data': self.data,
-            'severity': self.severity,
-            'tags': self.tags
+            "event_type": self.event_type.value,
+            "timestamp": self.timestamp.isoformat(),
+            "tool": self.tool,
+            "title": self.title,
+            "description": self.description,
+            "data": self.data,
+            "severity": self.severity,
+            "tags": self.tags,
         }
 
 
 @dataclass
 class AnalysisMetrics:
     """Real-time analysis metrics."""
+
     total_functions_analyzed: int = 0
     total_vulnerabilities_found: int = 0
     total_protections_detected: int = 0
@@ -111,17 +116,17 @@ class AnalysisMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'total_functions_analyzed': self.total_functions_analyzed,
-            'total_vulnerabilities_found': self.total_vulnerabilities_found,
-            'total_protections_detected': self.total_protections_detected,
-            'total_bypasses_generated': self.total_bypasses_generated,
-            'analysis_duration_seconds': self.analysis_duration_seconds,
-            'memory_usage_mb': self.memory_usage_mb,
-            'cpu_usage_percent': self.cpu_usage_percent,
-            'cache_hit_rate': self.cache_hit_rate,
-            'tools_active': list(self.tools_active),
-            'errors_count': self.errors_count,
-            'warnings_count': self.warnings_count
+            "total_functions_analyzed": self.total_functions_analyzed,
+            "total_vulnerabilities_found": self.total_vulnerabilities_found,
+            "total_protections_detected": self.total_protections_detected,
+            "total_bypasses_generated": self.total_bypasses_generated,
+            "analysis_duration_seconds": self.analysis_duration_seconds,
+            "memory_usage_mb": self.memory_usage_mb,
+            "cpu_usage_percent": self.cpu_usage_percent,
+            "cache_hit_rate": self.cache_hit_rate,
+            "tools_active": list(self.tools_active),
+            "errors_count": self.errors_count,
+            "warnings_count": self.warnings_count,
         }
 
 
@@ -207,10 +212,7 @@ class RealTimeDashboard:
 
         # Broadcast to WebSocket clients
         if self.websocket_clients:
-            asyncio.run_coroutine_threadsafe(
-                self._broadcast_event(event),
-                self.websocket_loop
-            )
+            asyncio.run_coroutine_threadsafe(self._broadcast_event(event), self.websocket_loop)
 
     def register_callback(self, callback: Callable):
         """Register event callback.
@@ -220,8 +222,7 @@ class RealTimeDashboard:
         """
         self.event_callbacks.append(callback)
 
-    def start_analysis(self, analysis_id: str, tool: str, target: str,
-                       options: Optional[Dict[str, Any]] = None):
+    def start_analysis(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None):
         """Start tracking an analysis.
 
         Args:
@@ -232,11 +233,11 @@ class RealTimeDashboard:
         """
         with self.state_lock:
             self.active_analyses[analysis_id] = {
-                'tool': tool,
-                'target': target,
-                'options': options or {},
-                'start_time': datetime.now(),
-                'status': 'running'
+                "tool": tool,
+                "target": target,
+                "options": options or {},
+                "start_time": datetime.now(),
+                "status": "running",
             }
 
             with self.metrics_lock:
@@ -249,8 +250,8 @@ class RealTimeDashboard:
             tool=tool,
             title=f"Analysis Started: {Path(target).name}",
             description=f"Started {tool} analysis on {target}",
-            data={'analysis_id': analysis_id, 'options': options or {}},
-            tags=['analysis', 'started', tool]
+            data={"analysis_id": analysis_id, "options": options or {}},
+            tags=["analysis", "started", tool],
         )
         self.add_event(event)
 
@@ -264,27 +265,27 @@ class RealTimeDashboard:
         with self.state_lock:
             if analysis_id in self.active_analyses:
                 analysis = self.active_analyses[analysis_id]
-                analysis['status'] = 'completed'
-                analysis['end_time'] = datetime.now()
-                analysis['duration'] = (analysis['end_time'] - analysis['start_time']).total_seconds()
+                analysis["status"] = "completed"
+                analysis["end_time"] = datetime.now()
+                analysis["duration"] = (analysis["end_time"] - analysis["start_time"]).total_seconds()
 
                 # Store results
                 self.analysis_results[analysis_id] = results
 
                 # Update metrics
                 with self.metrics_lock:
-                    self.metrics.analysis_duration_seconds += analysis['duration']
+                    self.metrics.analysis_duration_seconds += analysis["duration"]
 
         # Create event
         event = DashboardEvent(
             event_type=DashboardEventType.ANALYSIS_COMPLETED,
             timestamp=datetime.now(),
-            tool=analysis.get('tool', 'unknown'),
-            title=f"Analysis Completed",
+            tool=analysis.get("tool", "unknown"),
+            title="Analysis Completed",
             description=f"Completed analysis {analysis_id}",
-            data={'analysis_id': analysis_id, 'results_summary': self._summarize_results(results)},
-            severity='info',
-            tags=['analysis', 'completed']
+            data={"analysis_id": analysis_id, "results_summary": self._summarize_results(results)},
+            severity="info",
+            tags=["analysis", "completed"],
         )
         self.add_event(event)
 
@@ -303,10 +304,10 @@ class RealTimeDashboard:
             timestamp=datetime.now(),
             tool=tool,
             title=f"Vulnerability: {vulnerability.get('type', 'Unknown')}",
-            description=vulnerability.get('description', 'Vulnerability detected'),
+            description=vulnerability.get("description", "Vulnerability detected"),
             data=vulnerability,
-            severity=vulnerability.get('severity', 'warning'),
-            tags=['vulnerability', tool, vulnerability.get('type', '')]
+            severity=vulnerability.get("severity", "warning"),
+            tags=["vulnerability", tool, vulnerability.get("type", "")],
         )
         self.add_event(event)
 
@@ -325,10 +326,10 @@ class RealTimeDashboard:
             timestamp=datetime.now(),
             tool=tool,
             title=f"Protection: {protection.get('type', 'Unknown')}",
-            description=protection.get('description', 'Protection detected'),
+            description=protection.get("description", "Protection detected"),
             data=protection,
-            severity='info',
-            tags=['protection', tool, protection.get('type', '')]
+            severity="info",
+            tags=["protection", tool, protection.get("type", "")],
         )
         self.add_event(event)
 
@@ -347,10 +348,10 @@ class RealTimeDashboard:
             timestamp=datetime.now(),
             tool=tool,
             title=f"Bypass Strategy: {bypass.get('target', 'Unknown')}",
-            description=bypass.get('description', 'Bypass strategy generated'),
+            description=bypass.get("description", "Bypass strategy generated"),
             data=bypass,
-            severity='info',
-            tags=['bypass', tool, bypass.get('type', '')]
+            severity="info",
+            tags=["bypass", tool, bypass.get("type", "")],
         )
         self.add_event(event)
 
@@ -362,12 +363,12 @@ class RealTimeDashboard:
             metrics: Performance metrics
         """
         with self.metrics_lock:
-            if 'memory_mb' in metrics:
-                self.metrics.memory_usage_mb = metrics['memory_mb']
-            if 'cpu_percent' in metrics:
-                self.metrics.cpu_usage_percent = metrics['cpu_percent']
-            if 'cache_hit_rate' in metrics:
-                self.metrics.cache_hit_rate = metrics['cache_hit_rate']
+            if "memory_mb" in metrics:
+                self.metrics.memory_usage_mb = metrics["memory_mb"]
+            if "cpu_percent" in metrics:
+                self.metrics.cpu_usage_percent = metrics["cpu_percent"]
+            if "cache_hit_rate" in metrics:
+                self.metrics.cache_hit_rate = metrics["cache_hit_rate"]
 
         event = DashboardEvent(
             event_type=DashboardEventType.PERFORMANCE_UPDATE,
@@ -376,8 +377,8 @@ class RealTimeDashboard:
             title="Performance Update",
             description=f"Performance metrics from {tool}",
             data=metrics,
-            severity='info',
-            tags=['performance', tool]
+            severity="info",
+            tags=["performance", tool],
         )
         self.add_event(event)
 
@@ -399,13 +400,13 @@ class RealTimeDashboard:
         uptime = (datetime.now() - self.start_time).total_seconds()
 
         return {
-            'timestamp': datetime.now().isoformat(),
-            'uptime_seconds': uptime,
-            'metrics': current_metrics,
-            'active_analyses': active,
-            'recent_events': recent_events,
-            'event_count': len(self.events),
-            'result_count': len(self.analysis_results)
+            "timestamp": datetime.now().isoformat(),
+            "uptime_seconds": uptime,
+            "metrics": current_metrics,
+            "active_analyses": active,
+            "recent_events": recent_events,
+            "event_count": len(self.events),
+            "result_count": len(self.analysis_results),
         }
 
     def get_metrics_history(self) -> List[Dict[str, Any]]:
@@ -441,28 +442,28 @@ class RealTimeDashboard:
             Summary dictionary
         """
         summary = {
-            'functions_count': len(results.get('functions', [])),
-            'vulnerabilities_count': len(results.get('vulnerabilities', [])),
-            'protections_count': len(results.get('protections', [])),
-            'imports_count': len(results.get('imports', [])),
-            'strings_count': len(results.get('strings', []))
+            "functions_count": len(results.get("functions", [])),
+            "vulnerabilities_count": len(results.get("vulnerabilities", [])),
+            "protections_count": len(results.get("protections", [])),
+            "imports_count": len(results.get("imports", [])),
+            "strings_count": len(results.get("strings", [])),
         }
 
         # Add vulnerability types
-        if results.get('vulnerabilities'):
+        if results.get("vulnerabilities"):
             vuln_types = set()
-            for vuln in results['vulnerabilities']:
-                if 'type' in vuln:
-                    vuln_types.add(vuln['type'])
-            summary['vulnerability_types'] = list(vuln_types)
+            for vuln in results["vulnerabilities"]:
+                if "type" in vuln:
+                    vuln_types.add(vuln["type"])
+            summary["vulnerability_types"] = list(vuln_types)
 
         # Add protection types
-        if results.get('protections'):
+        if results.get("protections"):
             prot_types = set()
-            for prot in results['protections']:
-                if 'type' in prot:
-                    prot_types.add(prot['type'])
-            summary['protection_types'] = list(prot_types)
+            for prot in results["protections"]:
+                if "type" in prot:
+                    prot_types.add(prot["type"])
+            summary["protection_types"] = list(prot_types)
 
         return summary
 
@@ -480,17 +481,14 @@ class RealTimeDashboard:
             try:
                 # Send initial state
                 state = self.get_dashboard_state()
-                await websocket.send(json.dumps({
-                    'type': 'state',
-                    'data': state
-                }))
+                await websocket.send(json.dumps({"type": "state", "data": state}))
 
                 # Keep connection alive
                 async for message in websocket:
                     try:
                         data = json.loads(message)
-                        if data.get('type') == 'ping':
-                            await websocket.send(json.dumps({'type': 'pong'}))
+                        if data.get("type") == "ping":
+                            await websocket.send(json.dumps({"type": "pong"}))
                     except json.JSONDecodeError:
                         self.logger.warning(f"Invalid WebSocket message: {message}")
 
@@ -502,11 +500,7 @@ class RealTimeDashboard:
         async def start_server():
             """Start the WebSocket server."""
             port = self.config.get("websocket_port", 8765)
-            self.websocket_server = await websockets.serve(
-                handle_client,
-                "localhost",
-                port
-            )
+            self.websocket_server = await websockets.serve(handle_client, "localhost", port)
             self.logger.info(f"WebSocket server started on port {port}")
             await asyncio.Future()  # Run forever
 
@@ -528,10 +522,7 @@ class RealTimeDashboard:
         if not self.websocket_clients:
             return
 
-        message = json.dumps({
-            'type': 'event',
-            'data': event.to_dict()
-        })
+        message = json.dumps({"type": "event", "data": event.to_dict()})
 
         # Send to all connected clients
         disconnected = set()
@@ -556,54 +547,49 @@ class RealTimeDashboard:
         self.flask_app = Flask(__name__)
         CORS(self.flask_app)  # Enable CORS for web clients
 
-        @self.flask_app.route('/api/state')
+        @self.flask_app.route("/api/state")
         def get_state():
             """Get dashboard state endpoint."""
             return jsonify(self.get_dashboard_state())
 
-        @self.flask_app.route('/api/events')
+        @self.flask_app.route("/api/events")
         def get_events():
             """Get recent events endpoint."""
-            limit = request.args.get('limit', 100, type=int)
+            limit = request.args.get("limit", 100, type=int)
             with self.events_lock:
                 events = [e.to_dict() for e in list(self.events)[-limit:]]
             return jsonify(events)
 
-        @self.flask_app.route('/api/metrics')
+        @self.flask_app.route("/api/metrics")
         def get_metrics():
             """Get current metrics endpoint."""
             with self.metrics_lock:
                 return jsonify(self.metrics.to_dict())
 
-        @self.flask_app.route('/api/metrics/history')
+        @self.flask_app.route("/api/metrics/history")
         def get_metrics_history():
             """Get metrics history endpoint."""
             return jsonify(self.get_metrics_history())
 
-        @self.flask_app.route('/api/analyses/active')
+        @self.flask_app.route("/api/analyses/active")
         def get_active_analyses():
             """Get active analyses endpoint."""
             with self.state_lock:
                 return jsonify(list(self.active_analyses.values()))
 
-        @self.flask_app.route('/api/results/<analysis_id>')
+        @self.flask_app.route("/api/results/<analysis_id>")
         def get_results(analysis_id):
             """Get analysis results endpoint."""
             with self.state_lock:
                 if analysis_id in self.analysis_results:
                     return jsonify(self.analysis_results[analysis_id])
                 else:
-                    return jsonify({'error': 'Analysis not found'}), 404
+                    return jsonify({"error": "Analysis not found"}), 404
 
         def run_flask():
             """Run Flask server."""
             port = self.config.get("http_port", 5000)
-            self.flask_app.run(
-                host='localhost',
-                port=port,
-                debug=False,
-                use_reloader=False
-            )
+            self.flask_app.run(host="localhost", port=port, debug=False, use_reloader=False)
 
         self.flask_thread = threading.Thread(target=run_flask, daemon=True)
         self.flask_thread.start()
@@ -612,24 +598,19 @@ class RealTimeDashboard:
 
     def _start_metrics_updater(self):
         """Start metrics update thread."""
+
         def update_loop():
             """Metrics update loop."""
             while True:
                 try:
                     # Create metrics snapshot
                     with self.metrics_lock:
-                        snapshot = {
-                            'timestamp': datetime.now().isoformat(),
-                            **self.metrics.to_dict()
-                        }
+                        snapshot = {"timestamp": datetime.now().isoformat(), **self.metrics.to_dict()}
                         self.metrics_history.append(snapshot)
 
                     # Broadcast metrics update
                     if self.websocket_clients:
-                        asyncio.run_coroutine_threadsafe(
-                            self._broadcast_metrics(snapshot),
-                            self.websocket_loop
-                        )
+                        asyncio.run_coroutine_threadsafe(self._broadcast_metrics(snapshot), self.websocket_loop)
 
                 except Exception as e:
                     self.logger.error(f"Error in metrics updater: {e}")
@@ -648,10 +629,7 @@ class RealTimeDashboard:
         if not self.websocket_clients:
             return
 
-        message = json.dumps({
-            'type': 'metrics',
-            'data': metrics
-        })
+        message = json.dumps({"type": "metrics", "data": metrics})
 
         disconnected = set()
         for client in self.websocket_clients:
@@ -671,10 +649,7 @@ class RealTimeDashboard:
 
         # Close WebSocket connections
         for client in list(self.websocket_clients):
-            asyncio.run_coroutine_threadsafe(
-                client.close(),
-                self.websocket_loop
-            )
+            asyncio.run_coroutine_threadsafe(client.close(), self.websocket_loop)
 
         # Stop WebSocket server
         if self.websocket_server:

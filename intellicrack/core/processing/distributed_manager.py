@@ -38,8 +38,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 try:
     import ray
+
     # Test Ray initialization to ensure dependencies are working
-    if hasattr(ray, '_raylet'):
+    if hasattr(ray, "_raylet"):
         try:
             _raylet_module = ray._raylet  # Access the module to trigger DLL loading
             RAY_AVAILABLE = True
@@ -288,6 +289,7 @@ class DistributedProcessingManager:
 
             # Define remote function with error handling
             try:
+
                 @ray.remote
                 def process_chunk(chunk_idx: int, binary_path: str, chunk_size: int) -> Any:
                     """Process a specific chunk of the binary file in a distributed manner using Ray.

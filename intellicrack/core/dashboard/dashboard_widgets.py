@@ -19,20 +19,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
 import logging
 import math
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     import matplotlib.pyplot as plt
-    from matplotlib.figure import Figure
     from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.figure import Figure
+
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
@@ -40,6 +39,7 @@ except ImportError:
 try:
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 class WidgetType(Enum):
     """Types of dashboard widgets."""
+
     LINE_CHART = "line_chart"
     BAR_CHART = "bar_chart"
     PIE_CHART = "pie_chart"
@@ -66,6 +67,7 @@ class WidgetType(Enum):
 @dataclass
 class WidgetConfig:
     """Configuration for a dashboard widget."""
+
     widget_id: str
     widget_type: WidgetType
     title: str
@@ -79,6 +81,7 @@ class WidgetConfig:
 @dataclass
 class WidgetData:
     """Data for widget rendering."""
+
     timestamp: datetime
     values: Dict[str, Any]
     labels: Optional[List[str]] = None
@@ -124,23 +127,23 @@ class DashboardWidget:
         current = self.get_current_data()
         if not current:
             return {
-                'type': 'widget',
-                'id': self.config.widget_id,
-                'title': self.config.title,
-                'status': 'no_data',
-                'last_update': self.last_update.isoformat() if self.last_update else None
+                "type": "widget",
+                "id": self.config.widget_id,
+                "title": self.config.title,
+                "status": "no_data",
+                "last_update": self.last_update.isoformat() if self.last_update else None,
             }
 
         return {
-            'type': self.config.widget_type.value if hasattr(self.config.widget_type, 'value') else 'widget',
-            'id': self.config.widget_id,
-            'title': self.config.title,
-            'timestamp': current.timestamp.isoformat(),
-            'values': current.values,
-            'labels': current.labels,
-            'categories': current.categories,
-            'metadata': current.metadata,
-            'last_update': self.last_update.isoformat()
+            "type": self.config.widget_type.value if hasattr(self.config.widget_type, "value") else "widget",
+            "id": self.config.widget_id,
+            "title": self.config.title,
+            "timestamp": current.timestamp.isoformat(),
+            "values": current.values,
+            "labels": current.labels,
+            "categories": current.categories,
+            "metadata": current.metadata,
+            "last_update": self.last_update.isoformat(),
         }
 
     def get_current_data(self) -> Optional[WidgetData]:
@@ -189,13 +192,10 @@ class LineChartWidget(DashboardWidget):
                 y_data[key].append(value)
 
         return {
-            'type': 'line_chart',
-            'title': self.config.title,
-            'x': x_data,
-            'series': [
-                {'name': key, 'data': values}
-                for key, values in y_data.items()
-            ]
+            "type": "line_chart",
+            "title": self.config.title,
+            "x": x_data,
+            "series": [{"name": key, "data": values} for key, values in y_data.items()],
         }
 
     def _render_plotly(self):
@@ -214,26 +214,17 @@ class LineChartWidget(DashboardWidget):
 
         # Add traces
         for name, values in series_data.items():
-            fig.add_trace(go.Scatter(
-                x=x_data,
-                y=values,
-                mode='lines+markers',
-                name=name
-            ))
+            fig.add_trace(go.Scatter(x=x_data, y=values, mode="lines+markers", name=name))
 
         fig.update_layout(
-            title=self.config.title,
-            xaxis_title="Time",
-            yaxis_title="Value",
-            width=self.config.width,
-            height=self.config.height
+            title=self.config.title, xaxis_title="Time", yaxis_title="Value", width=self.config.width, height=self.config.height
         )
 
         return fig
 
     def _render_matplotlib(self) -> Figure:
         """Render using Matplotlib."""
-        fig, ax = plt.subplots(figsize=(self.config.width/100, self.config.height/100))
+        fig, ax = plt.subplots(figsize=(self.config.width / 100, self.config.height / 100))
 
         x_data = [data.timestamp for data in self.data_history]
 
@@ -273,31 +264,33 @@ class GaugeWidget(DashboardWidget):
 
         if format == "json":
             return {
-                'type': 'gauge',
-                'title': self.config.title,
-                'value': value,
-                'min': min_val,
-                'max': max_val,
-                'units': self.config.options.get("units", ""),
-                'thresholds': self.config.options.get("thresholds", [])
+                "type": "gauge",
+                "title": self.config.title,
+                "value": value,
+                "min": min_val,
+                "max": max_val,
+                "units": self.config.options.get("units", ""),
+                "thresholds": self.config.options.get("thresholds", []),
             }
         elif format == "plotly" and HAS_PLOTLY:
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=value,
-                title={'text': self.config.title},
-                domain={'x': [0, 1], 'y': [0, 1]},
-                gauge={
-                    'axis': {'range': [min_val, max_val]},
-                    'bar': {'color': "darkblue"},
-                    'steps': self._get_gauge_steps(),
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': self.config.options.get("threshold", max_val * 0.9)
-                    }
-                }
-            ))
+            fig = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=value,
+                    title={"text": self.config.title},
+                    domain={"x": [0, 1], "y": [0, 1]},
+                    gauge={
+                        "axis": {"range": [min_val, max_val]},
+                        "bar": {"color": "darkblue"},
+                        "steps": self._get_gauge_steps(),
+                        "threshold": {
+                            "line": {"color": "red", "width": 4},
+                            "thickness": 0.75,
+                            "value": self.config.options.get("threshold", max_val * 0.9),
+                        },
+                    },
+                )
+            )
             fig.update_layout(width=self.config.width, height=self.config.height)
             return fig
         else:
@@ -312,10 +305,7 @@ class GaugeWidget(DashboardWidget):
         steps = []
         colors = ["green", "yellow", "orange", "red"]
         for i, threshold in enumerate(thresholds):
-            steps.append({
-                'range': [threshold.get('min', 0), threshold.get('max', 100)],
-                'color': colors[min(i, len(colors)-1)]
-            })
+            steps.append({"range": [threshold.get("min", 0), threshold.get("max", 100)], "color": colors[min(i, len(colors) - 1)]})
         return steps
 
 
@@ -340,12 +330,12 @@ class TableWidget(DashboardWidget):
             columns = current.values.get("columns", [])
 
             return {
-                'type': 'table',
-                'title': self.config.title,
-                'columns': columns,
-                'rows': rows,
-                'sortable': self.config.options.get("sortable", True),
-                'filterable': self.config.options.get("filterable", True)
+                "type": "table",
+                "title": self.config.title,
+                "columns": columns,
+                "rows": rows,
+                "sortable": self.config.options.get("sortable", True),
+                "filterable": self.config.options.get("filterable", True),
             }
         elif format == "html":
             return self._render_html_table(current)
@@ -402,25 +392,16 @@ class HeatmapWidget(DashboardWidget):
 
         if format == "json":
             return {
-                'type': 'heatmap',
-                'title': self.config.title,
-                'matrix': matrix,
-                'x_labels': x_labels,
-                'y_labels': y_labels,
-                'colorscale': self.config.options.get("colorscale", "viridis")
+                "type": "heatmap",
+                "title": self.config.title,
+                "matrix": matrix,
+                "x_labels": x_labels,
+                "y_labels": y_labels,
+                "colorscale": self.config.options.get("colorscale", "viridis"),
             }
         elif format == "plotly" and HAS_PLOTLY:
-            fig = go.Figure(data=go.Heatmap(
-                z=matrix,
-                x=x_labels,
-                y=y_labels,
-                colorscale=self.config.options.get("colorscale", "viridis")
-            ))
-            fig.update_layout(
-                title=self.config.title,
-                width=self.config.width,
-                height=self.config.height
-            )
+            fig = go.Figure(data=go.Heatmap(z=matrix, x=x_labels, y=y_labels, colorscale=self.config.options.get("colorscale", "viridis")))
+            fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
             return fig
         else:
             return self.render("json")
@@ -447,12 +428,12 @@ class NetworkGraphWidget(DashboardWidget):
 
         if format == "json":
             return {
-                'type': 'network_graph',
-                'title': self.config.title,
-                'nodes': nodes,
-                'edges': edges,
-                'layout': self.config.options.get("layout", "force"),
-                'directed': self.config.options.get("directed", True)
+                "type": "network_graph",
+                "title": self.config.title,
+                "nodes": nodes,
+                "edges": edges,
+                "layout": self.config.options.get("layout", "force"),
+                "directed": self.config.options.get("directed", True),
             }
         elif format == "plotly" and HAS_PLOTLY:
             return self._render_plotly_network(nodes, edges)
@@ -468,67 +449,57 @@ class NetworkGraphWidget(DashboardWidget):
             angle = 2 * math.pi * i / n
             x = math.cos(angle)
             y = math.sin(angle)
-            node_positions[node['id']] = (x, y)
+            node_positions[node["id"]] = (x, y)
 
         # Create edge traces
-        edge_trace = go.Scatter(
-            x=[],
-            y=[],
-            line=dict(width=0.5, color='#888'),
-            hoverinfo='none',
-            mode='lines'
-        )
+        edge_trace = go.Scatter(x=[], y=[], line=dict(width=0.5, color="#888"), hoverinfo="none", mode="lines")
 
         for edge in edges:
-            x0, y0 = node_positions.get(edge['source'], (0, 0))
-            x1, y1 = node_positions.get(edge['target'], (0, 0))
-            edge_trace['x'] += (x0, x1, None)
-            edge_trace['y'] += (y0, y1, None)
+            x0, y0 = node_positions.get(edge["source"], (0, 0))
+            x1, y1 = node_positions.get(edge["target"], (0, 0))
+            edge_trace["x"] += (x0, x1, None)
+            edge_trace["y"] += (y0, y1, None)
 
         # Create node trace
         node_trace = go.Scatter(
             x=[pos[0] for pos in node_positions.values()],
             y=[pos[1] for pos in node_positions.values()],
-            mode='markers+text',
-            hoverinfo='text',
-            text=[node.get('label', node['id']) for node in nodes],
+            mode="markers+text",
+            hoverinfo="text",
+            text=[node.get("label", node["id"]) for node in nodes],
             textposition="top center",
             marker=dict(
                 showscale=True,
-                colorscale='YlGnBu',
+                colorscale="YlGnBu",
                 size=10,
                 color=[],
-                colorbar=dict(
-                    thickness=15,
-                    title='Node Connections',
-                    xanchor='left',
-                    titleside='right'
-                ),
-                line_width=2
-            )
+                colorbar=dict(thickness=15, title="Node Connections", xanchor="left", titleside="right"),
+                line_width=2,
+            ),
         )
 
         # Color nodes by connections
         node_adjacencies = []
         for node in nodes:
-            adjacencies = sum(1 for edge in edges
-                            if edge['source'] == node['id'] or edge['target'] == node['id'])
+            adjacencies = sum(1 for edge in edges if edge["source"] == node["id"] or edge["target"] == node["id"])
             node_adjacencies.append(adjacencies)
 
         node_trace.marker.color = node_adjacencies
 
         # Create figure
-        fig = go.Figure(data=[edge_trace, node_trace],
-                       layout=go.Layout(
-                           title=self.config.title,
-                           showlegend=False,
-                           hovermode='closest',
-                           margin=dict(b=20, l=5, r=5, t=40),
-                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           width=self.config.width,
-                           height=self.config.height
-                       ))
+        fig = go.Figure(
+            data=[edge_trace, node_trace],
+            layout=go.Layout(
+                title=self.config.title,
+                showlegend=False,
+                hovermode="closest",
+                margin=dict(b=20, l=5, r=5, t=40),
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                width=self.config.width,
+                height=self.config.height,
+            ),
+        )
         return fig
 
 
@@ -550,21 +521,18 @@ class TimelineWidget(DashboardWidget):
         events = []
         for data in self.data_history:
             for event in data.values.get("events", []):
-                events.append({
-                    'timestamp': data.timestamp.isoformat(),
-                    'title': event.get('title', ''),
-                    'description': event.get('description', ''),
-                    'type': event.get('type', 'info'),
-                    'tool': event.get('tool', 'unknown')
-                })
+                events.append(
+                    {
+                        "timestamp": data.timestamp.isoformat(),
+                        "title": event.get("title", ""),
+                        "description": event.get("description", ""),
+                        "type": event.get("type", "info"),
+                        "tool": event.get("tool", "unknown"),
+                    }
+                )
 
         if format == "json":
-            return {
-                'type': 'timeline',
-                'title': self.config.title,
-                'events': events,
-                'groupBy': self.config.options.get("groupBy", "tool")
-            }
+            return {"type": "timeline", "title": self.config.title, "events": events, "groupBy": self.config.options.get("groupBy", "tool")}
         else:
             return self.render("json")
 
@@ -591,13 +559,13 @@ class ProgressWidget(DashboardWidget):
 
         if format == "json":
             return {
-                'type': 'progress',
-                'title': self.config.title,
-                'value': value,
-                'total': total,
-                'percentage': percentage,
-                'label': current.values.get("label", ""),
-                'color': self._get_progress_color(percentage)
+                "type": "progress",
+                "title": self.config.title,
+                "value": value,
+                "total": total,
+                "percentage": percentage,
+                "label": current.values.get("label", ""),
+                "color": self._get_progress_color(percentage),
             }
         else:
             return self.render("json")
@@ -634,7 +602,7 @@ class WidgetFactory:
             WidgetType.HEATMAP: HeatmapWidget,
             WidgetType.NETWORK_GRAPH: NetworkGraphWidget,
             WidgetType.TIMELINE: TimelineWidget,
-            WidgetType.PROGRESS: ProgressWidget
+            WidgetType.PROGRESS: ProgressWidget,
         }
 
         widget_class = widget_map.get(config.widget_type)
@@ -645,8 +613,7 @@ class WidgetFactory:
         return widget_class(config)
 
 
-def create_widget(widget_id: str, widget_type: WidgetType, title: str,
-                 **kwargs) -> DashboardWidget:
+def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs) -> DashboardWidget:
     """Helper function to create a widget.
 
     Args:
@@ -658,10 +625,5 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str,
     Returns:
         Dashboard widget instance
     """
-    config = WidgetConfig(
-        widget_id=widget_id,
-        widget_type=widget_type,
-        title=title,
-        **kwargs
-    )
+    config = WidgetConfig(widget_id=widget_id, widget_type=widget_type, title=title, **kwargs)
     return WidgetFactory.create_widget(config)

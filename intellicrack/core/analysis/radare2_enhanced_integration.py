@@ -31,10 +31,10 @@ from .radare2_bypass_generator import R2BypassGenerator
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_error_handler import get_error_handler, r2_error_context
 from .radare2_esil import ESILAnalysisEngine
-from .radare2_graph_view import R2GraphGenerator, create_graph_generator
+from .radare2_graph_view import R2GraphGenerator
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_json_standardizer import standardize_r2_result
-from .radare2_performance_metrics import R2PerformanceMonitor, create_performance_monitor
+from .radare2_performance_metrics import create_performance_monitor
 from .radare2_scripting import R2ScriptingEngine
 from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
@@ -94,9 +94,7 @@ class EnhancedR2Integration:
         }
 
         # Initialize performance monitor
-        self.performance_monitor = create_performance_monitor(
-            enable_real_time=self.config.get("enable_performance_monitoring", True)
-        )
+        self.performance_monitor = create_performance_monitor(enable_real_time=self.config.get("enable_performance_monitoring", True))
         self.performance_monitor.start_session(f"r2_session_{binary_path}")
 
         # Thread safety
@@ -576,7 +574,7 @@ class EnhancedR2Integration:
                         "similarity_score": d.similarity_score,
                         "opcodes_changed": d.opcodes_changed,
                         "calls_changed": d.calls_changed,
-                        "basic_block_diff": d.basic_block_diff
+                        "basic_block_diff": d.basic_block_diff,
                     }
                     for d in diffs
                 ]
@@ -609,7 +607,7 @@ class EnhancedR2Integration:
                         "instruction_count_diff": d.instruction_count_diff,
                         "edges_added": d.edges_added,
                         "edges_removed": d.edges_removed,
-                        "jump_targets_changed": d.jump_targets_changed
+                        "jump_targets_changed": d.jump_targets_changed,
                     }
                     for d in bb_diffs
                 ]
@@ -635,7 +633,7 @@ class EnhancedR2Integration:
             "current_session": current_metrics,
             "operation_statistics": operation_stats,
             "performance_stats": self.performance_stats,
-            "full_report": full_report
+            "full_report": full_report,
         }
 
     def export_performance_metrics(self, filepath: str):
@@ -668,22 +666,15 @@ class EnhancedR2Integration:
                             "address": n.address,
                             "size": n.size,
                             "color": n.color,
-                            "attributes": n.attributes
+                            "attributes": n.attributes,
                         }
                         for n in graph_data.nodes
                     ],
                     "edges": [
-                        {
-                            "source": e.source,
-                            "target": e.target,
-                            "type": e.type,
-                            "label": e.label,
-                            "color": e.color,
-                            "style": e.style
-                        }
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
                         for e in graph_data.edges
                     ],
-                    "metadata": graph_data.metadata
+                    "metadata": graph_data.metadata,
                 }
             else:
                 self.logger.error("Graph component not initialized")
@@ -713,22 +704,15 @@ class EnhancedR2Integration:
                             "address": n.address,
                             "size": n.size,
                             "color": n.color,
-                            "attributes": n.attributes
+                            "attributes": n.attributes,
                         }
                         for n in graph_data.nodes
                     ],
                     "edges": [
-                        {
-                            "source": e.source,
-                            "target": e.target,
-                            "type": e.type,
-                            "label": e.label,
-                            "color": e.color,
-                            "style": e.style
-                        }
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
                         for e in graph_data.edges
                     ],
-                    "metadata": graph_data.metadata
+                    "metadata": graph_data.metadata,
                 }
             else:
                 self.logger.error("Graph component not initialized")
@@ -751,27 +735,13 @@ class EnhancedR2Integration:
                 graph_data = self.components["graph"].generate_xref_graph(address)
                 return {
                     "nodes": [
-                        {
-                            "id": n.id,
-                            "label": n.label,
-                            "type": n.type,
-                            "address": n.address,
-                            "color": n.color
-                        }
-                        for n in graph_data.nodes
+                        {"id": n.id, "label": n.label, "type": n.type, "address": n.address, "color": n.color} for n in graph_data.nodes
                     ],
                     "edges": [
-                        {
-                            "source": e.source,
-                            "target": e.target,
-                            "type": e.type,
-                            "label": e.label,
-                            "color": e.color,
-                            "style": e.style
-                        }
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
                         for e in graph_data.edges
                     ],
-                    "metadata": graph_data.metadata
+                    "metadata": graph_data.metadata,
                 }
             else:
                 self.logger.error("Graph component not initialized")
@@ -831,8 +801,10 @@ class EnhancedR2Integration:
             final_metrics = self.performance_monitor.end_session()
             if final_metrics:
                 self.logger.info(f"Performance session ended: {final_metrics.session_id}")
-                self.logger.info(f"Total operations: {final_metrics.total_operations}, "
-                               f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}")
+                self.logger.info(
+                    f"Total operations: {final_metrics.total_operations}, "
+                    f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}"
+                )
 
             # Cleanup components
             for component in self.components.values():

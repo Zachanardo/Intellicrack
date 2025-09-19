@@ -1,7 +1,9 @@
 """Symbolic execution engine for dynamic path analysis and constraint solving."""
 
+import hashlib
 import logging
 import os
+import random
 import struct
 import time
 import traceback
@@ -549,7 +551,6 @@ class SymbolicExecutionEngine:
 
     def _generate_uaf_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate use-after-free exploit with object lifecycle manipulation."""
-        import random
         import struct
 
         uaf_info = vulnerability.get("uaf_info", {})
@@ -571,7 +572,7 @@ class SymbolicExecutionEngine:
 
         # Create spray pattern with markers for heap feng shui
         for i in range(spray_count):
-            # Each spray object contains markers and potential fake vtables
+            # Each spray object contains markers and hijacked vtable pointers
             marker = struct.pack("<Q", 0x4141414141410000 + i)
             # Include potential gadget addresses from module
             gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)

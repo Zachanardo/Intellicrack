@@ -26,7 +26,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..frida_manager import FridaManager
 from .ghidra_analyzer import run_advanced_ghidra_analysis
@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CorrelatedFunction:
     """Function data correlated across multiple tools."""
+
     name: str
     ghidra_data: Optional[Dict[str, Any]] = None
     r2_data: Optional[Dict[str, Any]] = None
@@ -52,6 +53,7 @@ class CorrelatedFunction:
 @dataclass
 class CorrelatedString:
     """String data correlated across tools."""
+
     value: str
     ghidra_refs: List[int] = field(default_factory=list)
     r2_refs: List[int] = field(default_factory=list)
@@ -64,6 +66,7 @@ class CorrelatedString:
 @dataclass
 class UnifiedAnalysisResult:
     """Unified result from cross-tool analysis."""
+
     binary_path: str
     timestamp: datetime
     functions: List[CorrelatedFunction] = field(default_factory=list)
@@ -96,16 +99,8 @@ class CrossToolOrchestrator:
         self.frida_manager: Optional[FridaManager] = None
 
         # Analysis state
-        self.analysis_complete = {
-            "ghidra": False,
-            "radare2": False,
-            "frida": False
-        }
-        self.analysis_results = {
-            "ghidra": None,
-            "radare2": None,
-            "frida": None
-        }
+        self.analysis_complete = {"ghidra": False, "radare2": False, "frida": False}
+        self.analysis_results = {"ghidra": None, "radare2": None, "frida": None}
 
         # Threading
         self.analysis_lock = threading.Lock()
@@ -142,22 +137,22 @@ class CrossToolOrchestrator:
             UnifiedAnalysisResult containing correlated data
         """
         if tools is None:
-            tools = ['ghidra', 'radare2', 'frida']
+            tools = ["ghidra", "radare2", "frida"]
 
         self.logger.info(f"Starting parallel analysis with tools: {tools}")
 
         # Start analysis threads
-        if 'ghidra' in tools:
+        if "ghidra" in tools:
             thread = threading.Thread(target=self._run_ghidra_analysis, daemon=True)
             thread.start()
             self.analysis_threads.append(thread)
 
-        if 'radare2' in tools:
+        if "radare2" in tools:
             thread = threading.Thread(target=self._run_radare2_analysis, daemon=True)
             thread.start()
             self.analysis_threads.append(thread)
 
-        if 'frida' in tools and self.frida_manager:
+        if "frida" in tools and self.frida_manager:
             thread = threading.Thread(target=self._run_frida_analysis, daemon=True)
             thread.start()
             self.analysis_threads.append(thread)
@@ -213,17 +208,11 @@ class CrossToolOrchestrator:
 
                 # Parse output from main_app
                 # This would normally parse the Ghidra output from the GUI
-                self.ghidra_results = GhidraAnalysisResult(
-                    binary_path=self.binary_path,
-                    timestamp=datetime.now()
-                )
+                self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
             else:
                 # Run headless
                 # In production, this would run Ghidra headless and parse results
-                self.ghidra_results = GhidraAnalysisResult(
-                    binary_path=self.binary_path,
-                    timestamp=datetime.now()
-                )
+                self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
 
             with self.analysis_lock:
                 self.analysis_complete["ghidra"] = True
@@ -303,11 +292,7 @@ class CrossToolOrchestrator:
 
     def _frida_memory_scan(self) -> Dict[str, Any]:
         """Perform memory scanning with Frida."""
-        results = {
-            "strings": [],
-            "patterns": [],
-            "suspicious_regions": []
-        }
+        results = {"strings": [], "patterns": [], "suspicious_regions": []}
 
         if not self.frida_manager:
             return results
@@ -345,8 +330,13 @@ class CrossToolOrchestrator:
         """
 
         try:
-            # In production, this would execute the script
-            self.logger.info("Would execute memory scan script")
+            # Execute the memory scan script
+            if hasattr(self.frida_manager, "inject_script"):
+                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                if script_result and "data" in script_result:
+                    results.update(script_result["data"])
+            else:
+                self.logger.debug("Frida script injection method not available")
         except Exception as e:
             self.logger.error(f"Memory scan failed: {e}")
 
@@ -386,8 +376,13 @@ class CrossToolOrchestrator:
         """
 
         try:
-            # In production, this would execute the script
-            self.logger.info("Would execute API monitoring script")
+            # Execute the API monitoring script
+            if hasattr(self.frida_manager, "inject_script"):
+                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                if script_result and "calls" in script_result:
+                    api_calls.extend(script_result["calls"])
+            else:
+                self.logger.debug("Frida script injection method not available")
         except Exception as e:
             self.logger.error(f"API monitoring failed: {e}")
 
@@ -395,11 +390,7 @@ class CrossToolOrchestrator:
 
     def _frida_hook_detection(self) -> Dict[str, Any]:
         """Detect hooks and patches with Frida."""
-        hooks = {
-            "inline_hooks": [],
-            "iat_hooks": [],
-            "patches": []
-        }
+        hooks = {"inline_hooks": [], "iat_hooks": [], "patches": []}
 
         if not self.frida_manager:
             return hooks
@@ -440,8 +431,13 @@ class CrossToolOrchestrator:
         """
 
         try:
-            # In production, this would execute the script
-            self.logger.info("Would execute hook detection script")
+            # Execute the hook detection script
+            if hasattr(self.frida_manager, "inject_script"):
+                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                if script_result and "hooks" in script_result:
+                    hooks.update(script_result["hooks"])
+            else:
+                self.logger.debug("Frida script injection method not available")
         except Exception as e:
             self.logger.error(f"Hook detection failed: {e}")
 
@@ -451,10 +447,7 @@ class CrossToolOrchestrator:
         """Correlate results from all tools."""
         self.logger.info("Correlating results from all tools")
 
-        result = UnifiedAnalysisResult(
-            binary_path=self.binary_path,
-            timestamp=datetime.now()
-        )
+        result = UnifiedAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
 
         # Correlate functions
         result.functions = self._correlate_functions()
@@ -478,7 +471,7 @@ class CrossToolOrchestrator:
         result.metadata = {
             "tools_used": list(self.analysis_complete.keys()),
             "analysis_complete": all(self.analysis_complete.values()),
-            "correlation_confidence": self._calculate_correlation_confidence()
+            "correlation_confidence": self._calculate_correlation_confidence(),
         }
 
         return result
@@ -523,11 +516,7 @@ class CrossToolOrchestrator:
 
         # Calculate confidence scores
         for name, cf in function_map.items():
-            sources = sum([
-                1 if cf.ghidra_data else 0,
-                1 if cf.r2_data else 0,
-                1 if cf.frida_data else 0
-            ])
+            sources = sum([1 if cf.ghidra_data else 0, 1 if cf.r2_data else 0, 1 if cf.frida_data else 0])
             cf.confidence_score = sources / 3.0
             correlated.append(cf)
 
@@ -606,13 +595,15 @@ class CrossToolOrchestrator:
         if frida_results and "hooks" in frida_results:
             inline_hooks = frida_results["hooks"].get("inline", [])
             if inline_hooks:
-                vulnerabilities.append({
-                    "type": "runtime_hooks",
-                    "severity": "high",
-                    "description": f"Detected {len(inline_hooks)} inline hooks",
-                    "source": "frida",
-                    "details": inline_hooks
-                })
+                vulnerabilities.append(
+                    {
+                        "type": "runtime_hooks",
+                        "severity": "high",
+                        "description": f"Detected {len(inline_hooks)} inline hooks",
+                        "source": "frida",
+                        "details": inline_hooks,
+                    }
+                )
 
         return vulnerabilities
 
@@ -624,36 +615,22 @@ class CrossToolOrchestrator:
         r2_results = self.analysis_results.get("radare2", {})
         if r2_results:
             # Check for common anti-debug functions
-            anti_debug_apis = [
-                "IsDebuggerPresent",
-                "CheckRemoteDebuggerPresent",
-                "NtQueryInformationProcess",
-                "OutputDebugString"
-            ]
+            anti_debug_apis = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess", "OutputDebugString"]
 
             components = r2_results.get("components", {})
             imports = components.get("imports", {})
             if "imports" in imports:
                 for imp in imports["imports"]:
                     if any(api in imp.get("name", "") for api in anti_debug_apis):
-                        protections.append({
-                            "type": "anti_debugging",
-                            "mechanism": imp.get("name"),
-                            "confidence": 0.9
-                        })
+                        protections.append({"type": "anti_debugging", "mechanism": imp.get("name"), "confidence": 0.9})
 
         # Check for obfuscation
         if self.ghidra_results:
             # High ratio of unnamed functions suggests obfuscation
             total_funcs = len(self.ghidra_results.functions)
-            unnamed_funcs = sum(1 for f in self.ghidra_results.functions
-                              if f.get("name", "").startswith("sub_"))
+            unnamed_funcs = sum(1 for f in self.ghidra_results.functions if f.get("name", "").startswith("sub_"))
             if total_funcs > 0 and unnamed_funcs / total_funcs > 0.7:
-                protections.append({
-                    "type": "obfuscation",
-                    "mechanism": "symbol_stripping",
-                    "confidence": unnamed_funcs / total_funcs
-                })
+                protections.append({"type": "obfuscation", "mechanism": "symbol_stripping", "confidence": unnamed_funcs / total_funcs})
 
         return protections
 
@@ -670,34 +647,34 @@ class CrossToolOrchestrator:
 
         # Add Frida-based strategies
         if self.frida_manager:
-            strategies.append({
-                "name": "Runtime Patching",
-                "description": "Use Frida to patch protection checks at runtime",
-                "tool": "frida",
-                "confidence": 0.9,
-                "implementation": "Hook protection functions and return success"
-            })
+            strategies.append(
+                {
+                    "name": "Runtime Patching",
+                    "description": "Use Frida to patch protection checks at runtime",
+                    "tool": "frida",
+                    "confidence": 0.9,
+                    "implementation": "Hook protection functions and return success",
+                }
+            )
 
         # Add strategies based on protections found
         for protection in self._identify_protections():
             if protection["type"] == "anti_debugging":
-                strategies.append({
-                    "name": f"Bypass {protection['mechanism']}",
-                    "description": f"Hook and bypass {protection['mechanism']} check",
-                    "tool": "frida",
-                    "confidence": 0.8,
-                    "implementation": f"Interceptor.replace({protection['mechanism']}, () => 0);"
-                })
+                strategies.append(
+                    {
+                        "name": f"Bypass {protection['mechanism']}",
+                        "description": f"Hook and bypass {protection['mechanism']} check",
+                        "tool": "frida",
+                        "confidence": 0.8,
+                        "implementation": f"Interceptor.replace({protection['mechanism']}, () => 0);",
+                    }
+                )
 
         return strategies
 
     def _build_unified_call_graph(self) -> Dict[str, Any]:
         """Build unified call graph from all tools."""
-        graph = {
-            "nodes": [],
-            "edges": [],
-            "metadata": {}
-        }
+        graph = {"nodes": [], "edges": [], "metadata": {}}
 
         # Get R2 call graph
         if self.r2_integration:
@@ -712,12 +689,7 @@ class CrossToolOrchestrator:
             for func in self.ghidra_results.functions:
                 node_id = func.get("name", "")
                 if not any(n["id"] == node_id for n in graph["nodes"]):
-                    graph["nodes"].append({
-                        "id": node_id,
-                        "label": node_id,
-                        "source": "ghidra",
-                        "address": func.get("address", 0)
-                    })
+                    graph["nodes"].append({"id": node_id, "label": node_id, "source": "ghidra", "address": func.get("address", 0)})
 
         return graph
 
@@ -744,13 +716,7 @@ class CrossToolOrchestrator:
             "binary_path": result.binary_path,
             "timestamp": result.timestamp.isoformat(),
             "functions": [
-                {
-                    "name": f.name,
-                    "addresses": f.addresses,
-                    "sizes": f.sizes,
-                    "confidence": f.confidence_score,
-                    "notes": f.notes
-                }
+                {"name": f.name, "addresses": f.addresses, "sizes": f.sizes, "confidence": f.confidence_score, "notes": f.notes}
                 for f in result.functions
             ],
             "strings": [
@@ -759,17 +725,17 @@ class CrossToolOrchestrator:
                     "is_license_related": s.is_license_related,
                     "is_crypto_related": s.is_crypto_related,
                     "importance": s.importance_score,
-                    "references": len(s.ghidra_refs) + len(s.r2_refs) + len(s.frida_refs)
+                    "references": len(s.ghidra_refs) + len(s.r2_refs) + len(s.frida_refs),
                 }
                 for s in result.strings
             ],
             "vulnerabilities": result.vulnerabilities,
             "protections": result.protection_mechanisms,
             "bypass_strategies": result.bypass_strategies,
-            "metadata": result.metadata
+            "metadata": result.metadata,
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
         self.logger.info(f"Exported unified report to {output_path}")

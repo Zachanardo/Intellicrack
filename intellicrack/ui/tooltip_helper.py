@@ -514,7 +514,9 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
         "Parallel Processing": ("Use multiple CPU cores for analysis tasks.\\nFaster analysis but higher resource usage."),
         "Auto Cleanup": ("Automatically clean up temporary files and memory.\\nKeeps system clean but may slow down repeated tasks."),
         "Debug Mode": ("Enable verbose logging and debug features.\\nUseful for troubleshooting but slower performance."),
-        "Advanced Features": ("Enable sophisticated AI-powered analysis features.\\nIncludes neural network predictions and advanced pattern recognition."),
+        "Advanced Features": (
+            "Enable sophisticated AI-powered analysis features.\\nIncludes neural network predictions and advanced pattern recognition."
+        ),
     }
 
 

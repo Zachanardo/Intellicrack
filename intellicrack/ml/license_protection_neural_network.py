@@ -33,6 +33,7 @@ try:
     import torch.nn.functional as functional
     import torch.optim as optim
     from torch.utils.data import DataLoader, Dataset
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -47,6 +48,7 @@ try:
     import tensorflow as tf
     from tensorflow import keras
     from tensorflow.keras import layers, models
+
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
@@ -146,12 +148,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
         self.bn3 = nn.BatchNorm2d(128)
 
         # Attention mechanism for important features
-        self.attention = nn.Sequential(
-            nn.Conv2d(128, 64, kernel_size=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=1),
-            nn.Sigmoid()
-        )
+        self.attention = nn.Sequential(nn.Conv2d(128, 64, kernel_size=1), nn.ReLU(), nn.Conv2d(64, 128, kernel_size=1), nn.Sigmoid())
 
         # Pooling layers
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -225,30 +222,21 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
         # Transformer encoder layers
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.model_dim,
-            nhead=num_heads,
-            dim_feedforward=2048,
-            dropout=0.1,
-            activation='gelu',
-            batch_first=True
+            d_model=self.model_dim, nhead=num_heads, dim_feedforward=2048, dropout=0.1, activation="gelu", batch_first=True
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         # Output layers for classification
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(self.model_dim, 256),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(256, len(LicenseProtectionType))
+            nn.Linear(self.model_dim, 256), nn.ReLU(), nn.Dropout(0.3), nn.Linear(256, len(LicenseProtectionType))
         )
 
     def _create_positional_encoding(self, max_len: int, d_model: int) -> torch.Tensor:
         """Create sinusoidal positional encoding."""
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() *
-                           (-np.log(10000.0) / d_model))
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
 
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
@@ -301,7 +289,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             nn.Dropout(0.3),
             nn.Linear(512, 256),
             nn.ReLU(),
-            nn.BatchNorm1d(256)
+            nn.BatchNorm1d(256),
         )
 
         # Multi-task output heads
@@ -313,13 +301,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
     def _create_gnn_branch(self):
         """Create Graph Neural Network branch for CFG analysis."""
         # Simplified GNN using standard layers
-        return nn.Sequential(
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.BatchNorm1d(256),
-            nn.Linear(256, 256),
-            nn.ReLU()
-        )
+        return nn.Sequential(nn.Linear(512, 256), nn.ReLU(), nn.BatchNorm1d(256), nn.Linear(256, 256), nn.ReLU())
 
     def forward(self, binary_features, sequence_features, graph_features):
         """Multi-modal forward pass."""
@@ -338,12 +320,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
         complexity = self.complexity_scorer(fused)
         difficulty = self.bypass_difficulty(fused)
 
-        return {
-            'protection_type': protection_type,
-            'version': version,
-            'complexity': complexity,
-            'bypass_difficulty': difficulty
-        }
+        return {"protection_type": protection_type, "version": version, "complexity": complexity, "bypass_difficulty": difficulty}
 
 
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
@@ -366,14 +343,14 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         # Load sample metadata
         metadata_file = self.data_path / "metadata.json"
         if metadata_file.exists():
-            with open(metadata_file, 'r') as f:
+            with open(metadata_file, "r") as f:
                 metadata = json.load(f)
 
-            for sample in metadata['samples']:
-                sample_path = self.data_path / sample['file']
+            for sample in metadata["samples"]:
+                sample_path = self.data_path / sample["file"]
                 if sample_path.exists():
                     self.samples.append(sample_path)
-                    self.labels.append(sample['protection_type'])
+                    self.labels.append(sample["protection_type"])
 
     def __len__(self):
         """Return dataset size."""
@@ -394,7 +371,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
     def _extract_features(self, binary_path: Path) -> LicenseFeatures:
         """Extract comprehensive features from binary."""
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         # Calculate various feature vectors
@@ -417,7 +394,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
             memory_access_patterns=self._analyze_memory(data),
             timing_patterns=self._analyze_timing(data),
             hardware_checks=self._detect_hardware_checks(data),
-            virtualization_checks=self._detect_vm_checks(data)
+            virtualization_checks=self._detect_vm_checks(data),
         )
 
         return features
@@ -432,7 +409,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         entropies = []
 
         for i in range(16):
-            chunk = data[i*chunk_size:(i+1)*chunk_size]
+            chunk = data[i * chunk_size : (i + 1) * chunk_size]
             if chunk:
                 # Calculate byte frequency
                 byte_counts = np.bincount(np.frombuffer(chunk, dtype=np.uint8), minlength=256)
@@ -451,12 +428,12 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Check for PE signature
         if len(data) > 0x3C:
-            pe_offset = struct.unpack('<I', data[0x3C:0x40])[0] if len(data) > 0x40 else 0
-            if len(data) > pe_offset + 4 and data[pe_offset:pe_offset+4] == b'PE\x00\x00':
+            pe_offset = struct.unpack("<I", data[0x3C:0x40])[0] if len(data) > 0x40 else 0
+            if len(data) > pe_offset + 4 and data[pe_offset : pe_offset + 4] == b"PE\x00\x00":
                 # Extract section information
                 num_sections_offset = pe_offset + 6
                 if len(data) > num_sections_offset + 2:
-                    num_sections = struct.unpack('<H', data[num_sections_offset:num_sections_offset+2])[0]
+                    num_sections = struct.unpack("<H", data[num_sections_offset : num_sections_offset + 2])[0]
                     features[0] = min(num_sections, 20) / 20.0  # Normalize
 
                     # Section header analysis
@@ -465,8 +442,8 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                         section_offset = section_table_offset + (i * 40)
                         if len(data) > section_offset + 40:
                             # Extract section characteristics
-                            characteristics = struct.unpack('<I', data[section_offset+36:section_offset+40])[0]
-                            features[i+1] = (characteristics & 0xE0000000) / 0xE0000000  # Normalize flags
+                            characteristics = struct.unpack("<I", data[section_offset + 36 : section_offset + 40])[0]
+                            features[i + 1] = (characteristics & 0xE0000000) / 0xE0000000  # Normalize flags
 
         return features
 
@@ -476,10 +453,18 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Common license-related imports
         license_apis = [
-            b'RegOpenKey', b'RegQueryValue', b'GetSystemTime',
-            b'GetTickCount', b'CryptHashData', b'CryptGenKey',
-            b'InternetOpen', b'HttpSendRequest', b'GetVolumeInformation',
-            b'GetComputerName', b'GetUserName', b'GetWindowsDirectory'
+            b"RegOpenKey",
+            b"RegQueryValue",
+            b"GetSystemTime",
+            b"GetTickCount",
+            b"CryptHashData",
+            b"CryptGenKey",
+            b"InternetOpen",
+            b"HttpSendRequest",
+            b"GetVolumeInformation",
+            b"GetComputerName",
+            b"GetUserName",
+            b"GetWindowsDirectory",
         ]
 
         for i, api in enumerate(license_apis[:64]):
@@ -498,9 +483,19 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # License-related keywords
         keywords = [
-            b'license', b'serial', b'key', b'trial', b'expired',
-            b'activation', b'register', b'unlock', b'premium',
-            b'subscription', b'valid', b'invalid', b'demo'
+            b"license",
+            b"serial",
+            b"key",
+            b"trial",
+            b"expired",
+            b"activation",
+            b"register",
+            b"unlock",
+            b"premium",
+            b"subscription",
+            b"valid",
+            b"invalid",
+            b"demo",
         ]
 
         text = data.lower()
@@ -529,11 +524,11 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(64, dtype=np.float32)
 
         # Look for CALL instructions (0xE8)
-        call_count = data.count(b'\xE8')
+        call_count = data.count(b"\xe8")
         features[0] = min(call_count, 1000) / 1000.0
 
         # Look for indirect calls (FF 15)
-        indirect_calls = data.count(b'\xFF\x15')
+        indirect_calls = data.count(b"\xff\x15")
         features[1] = min(indirect_calls, 500) / 500.0
 
         return features
@@ -544,13 +539,13 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Crypto constants
         crypto_constants = [
-            b'\x67\x45\x23\x01',  # MD5
-            b'\x98\xBA\xDC\xFE',  # MD5
-            b'\x10\x32\x54\x76',  # MD5
-            b'\x01\x23\x45\x67',  # SHA1
-            b'\x89\xAB\xCD\xEF',  # SHA1
-            b'\x6A\x09\xE6\x67',  # SHA256
-            b'\xBB\x67\xAE\x85',  # SHA256
+            b"\x67\x45\x23\x01",  # MD5
+            b"\x98\xba\xdc\xfe",  # MD5
+            b"\x10\x32\x54\x76",  # MD5
+            b"\x01\x23\x45\x67",  # SHA1
+            b"\x89\xab\xcd\xef",  # SHA1
+            b"\x6a\x09\xe6\x67",  # SHA256
+            b"\xbb\x67\xae\x85",  # SHA256
         ]
 
         for i, constant in enumerate(crypto_constants):
@@ -565,11 +560,11 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Anti-debug APIs
         anti_debug = [
-            b'IsDebuggerPresent',
-            b'CheckRemoteDebuggerPresent',
-            b'NtQueryInformationProcess',
-            b'OutputDebugString',
-            b'ZwQueryInformationProcess'
+            b"IsDebuggerPresent",
+            b"CheckRemoteDebuggerPresent",
+            b"NtQueryInformationProcess",
+            b"OutputDebugString",
+            b"ZwQueryInformationProcess",
         ]
 
         for i, api in enumerate(anti_debug):
@@ -588,9 +583,14 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Network APIs
         network_apis = [
-            b'socket', b'connect', b'send', b'recv',
-            b'InternetOpen', b'InternetConnect',
-            b'HttpOpenRequest', b'HttpSendRequest'
+            b"socket",
+            b"connect",
+            b"send",
+            b"recv",
+            b"InternetOpen",
+            b"InternetConnect",
+            b"HttpOpenRequest",
+            b"HttpSendRequest",
         ]
 
         for i, api in enumerate(network_apis):
@@ -604,10 +604,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(16, dtype=np.float32)
 
         # Registry APIs
-        reg_apis = [
-            b'RegOpenKey', b'RegCreateKey', b'RegSetValue',
-            b'RegQueryValue', b'RegDeleteKey'
-        ]
+        reg_apis = [b"RegOpenKey", b"RegCreateKey", b"RegSetValue", b"RegQueryValue", b"RegDeleteKey"]
 
         for i, api in enumerate(reg_apis):
             if api in data:
@@ -645,10 +642,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(8, dtype=np.float32)
 
         # Timing APIs
-        timing_apis = [
-            b'GetTickCount', b'QueryPerformanceCounter',
-            b'GetSystemTime', b'timeGetTime'
-        ]
+        timing_apis = [b"GetTickCount", b"QueryPerformanceCounter", b"GetSystemTime", b"timeGetTime"]
 
         for i, api in enumerate(timing_apis):
             if api in data:
@@ -661,10 +655,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(16, dtype=np.float32)
 
         # Hardware APIs
-        hw_apis = [
-            b'GetVolumeInformation', b'GetSystemInfo',
-            b'cpuid', b'GetComputerName', b'GetAdaptersInfo'
-        ]
+        hw_apis = [b"GetVolumeInformation", b"GetSystemInfo", b"cpuid", b"GetComputerName", b"GetAdaptersInfo"]
 
         for i, api in enumerate(hw_apis):
             if api in data:
@@ -677,10 +668,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(8, dtype=np.float32)
 
         # VM artifacts
-        vm_strings = [
-            b'VMware', b'VirtualBox', b'QEMU',
-            b'Xen', b'VBox', b'vmtoolsd'
-        ]
+        vm_strings = [b"VMware", b"VirtualBox", b"QEMU", b"Xen", b"VBox", b"vmtoolsd"]
 
         for i, vm_str in enumerate(vm_strings):
             if vm_str in data:
@@ -692,7 +680,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 class LicenseProtectionTrainer:
     """Trainer for license protection neural networks."""
 
-    def __init__(self, model, device='cuda' if torch and torch.cuda.is_available() else 'cpu'):
+    def __init__(self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu"):
         """Initialize trainer with model and training configuration."""
         self.model = model
         self.device = device
@@ -707,26 +695,14 @@ class LicenseProtectionTrainer:
         self.num_epochs = 100
 
         if TORCH_AVAILABLE:
-            self.optimizer = optim.AdamW(
-                self.model.parameters(),
-                lr=self.learning_rate,
-                weight_decay=0.01
-            )
+            self.optimizer = optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=0.01)
 
-            self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
-                self.optimizer,
-                T_max=self.num_epochs
-            )
+            self.scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.num_epochs)
 
             self.criterion = nn.CrossEntropyLoss()
 
         # Training history
-        self.history = {
-            'train_loss': [],
-            'train_acc': [],
-            'val_loss': [],
-            'val_acc': []
-        }
+        self.history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
 
     def train_epoch(self, dataloader):
         """Train for one epoch."""
@@ -750,7 +726,7 @@ class LicenseProtectionTrainer:
 
             # Handle multi-task outputs
             if isinstance(outputs, dict):
-                outputs = outputs['protection_type']
+                outputs = outputs["protection_type"]
 
             loss = self.criterion(outputs, labels)
 
@@ -769,7 +745,7 @@ class LicenseProtectionTrainer:
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
-        accuracy = 100. * correct / total
+        accuracy = 100.0 * correct / total
         avg_loss = total_loss / len(dataloader)
 
         return avg_loss, accuracy
@@ -792,7 +768,7 @@ class LicenseProtectionTrainer:
                 outputs = self.model(features)
 
                 if isinstance(outputs, dict):
-                    outputs = outputs['protection_type']
+                    outputs = outputs["protection_type"]
 
                 loss = self.criterion(outputs, labels)
 
@@ -801,7 +777,7 @@ class LicenseProtectionTrainer:
                 total += labels.size(0)
                 correct += predicted.eq(labels).sum().item()
 
-        accuracy = 100. * correct / total
+        accuracy = 100.0 * correct / total
         avg_loss = total_loss / len(dataloader)
 
         return avg_loss, accuracy
@@ -818,30 +794,27 @@ class LicenseProtectionTrainer:
         for epoch in range(self.num_epochs):
             # Training
             train_loss, train_acc = self.train_epoch(train_loader)
-            self.history['train_loss'].append(train_loss)
-            self.history['train_acc'].append(train_acc)
+            self.history["train_loss"].append(train_loss)
+            self.history["train_acc"].append(train_acc)
 
             # Validation
             if val_loader:
                 val_loss, val_acc = self.validate(val_loader)
-                self.history['val_loss'].append(val_loss)
-                self.history['val_acc'].append(val_acc)
+                self.history["val_loss"].append(val_loss)
+                self.history["val_acc"].append(val_acc)
 
                 # Save best model
                 if val_acc > best_val_acc:
                     best_val_acc = val_acc
-                    self.save_checkpoint(f'best_model_epoch_{epoch}.pth')
+                    self.save_checkpoint(f"best_model_epoch_{epoch}.pth")
 
                 self.logger.info(
-                    f'Epoch {epoch+1}/{self.num_epochs} - '
-                    f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% - '
-                    f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%'
+                    f"Epoch {epoch + 1}/{self.num_epochs} - "
+                    f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% - "
+                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%"
                 )
             else:
-                self.logger.info(
-                    f'Epoch {epoch+1}/{self.num_epochs} - '
-                    f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%'
-                )
+                self.logger.info(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
 
             # Learning rate scheduling
             self.scheduler.step()
@@ -852,10 +825,10 @@ class LicenseProtectionTrainer:
             return
 
         checkpoint = {
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.scheduler.state_dict(),
-            'history': self.history
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "scheduler_state_dict": self.scheduler.state_dict(),
+            "history": self.history,
         }
         torch.save(checkpoint, filepath)
         self.logger.info(f"Checkpoint saved to {filepath}")
@@ -866,10 +839,10 @@ class LicenseProtectionTrainer:
             return
 
         checkpoint = torch.load(filepath, map_location=self.device)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        self.history = checkpoint['history']
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        self.history = checkpoint["history"]
         self.logger.info(f"Checkpoint loaded from {filepath}")
 
 
@@ -881,7 +854,7 @@ class LicenseProtectionPredictor:
         self.logger = logging.getLogger(__name__)
 
         if TORCH_AVAILABLE:
-            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model = HybridLicenseAnalyzer()
 
             if model_path and os.path.exists(model_path):
@@ -889,7 +862,7 @@ class LicenseProtectionPredictor:
             else:
                 self.logger.warning("No pre-trained model loaded")
         else:
-            self.device = 'cpu'
+            self.device = "cpu"
             self.model = None
             self.logger.warning("PyTorch not available for predictions")
 
@@ -899,7 +872,7 @@ class LicenseProtectionPredictor:
             return
 
         checkpoint = torch.load(model_path, map_location=self.device)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
         self.model.eval()
         self.logger.info(f"Model loaded from {model_path}")
@@ -913,9 +886,9 @@ class LicenseProtectionPredictor:
         features = self._extract_features(binary_path)
 
         # Convert to tensors
-        binary_tensor = torch.tensor(features['binary'], dtype=torch.float32).unsqueeze(0)
-        sequence_tensor = torch.tensor(features['sequence'], dtype=torch.float32).unsqueeze(0)
-        graph_tensor = torch.tensor(features['graph'], dtype=torch.float32).unsqueeze(0)
+        binary_tensor = torch.tensor(features["binary"], dtype=torch.float32).unsqueeze(0)
+        sequence_tensor = torch.tensor(features["sequence"], dtype=torch.float32).unsqueeze(0)
+        graph_tensor = torch.tensor(features["graph"], dtype=torch.float32).unsqueeze(0)
 
         # Move to device
         binary_tensor = binary_tensor.to(self.device)
@@ -927,27 +900,24 @@ class LicenseProtectionPredictor:
             outputs = self.model(binary_tensor, sequence_tensor, graph_tensor)
 
         # Process outputs
-        protection_probs = functional.softmax(outputs['protection_type'], dim=1)
+        protection_probs = functional.softmax(outputs["protection_type"], dim=1)
         protection_idx = protection_probs.argmax(dim=1).item()
         protection_type = list(LicenseProtectionType)[protection_idx]
 
         result = {
-            'protection_type': protection_type.value,
-            'confidence': protection_probs.max().item(),
-            'version': outputs['version'].item(),
-            'complexity': outputs['complexity'].item(),
-            'bypass_difficulty': outputs['bypass_difficulty'].argmax(dim=1).item() + 1,
-            'all_probabilities': {
-                t.value: prob.item()
-                for t, prob in zip(LicenseProtectionType, protection_probs[0], strict=False)
-            }
+            "protection_type": protection_type.value,
+            "confidence": protection_probs.max().item(),
+            "version": outputs["version"].item(),
+            "complexity": outputs["complexity"].item(),
+            "bypass_difficulty": outputs["bypass_difficulty"].argmax(dim=1).item() + 1,
+            "all_probabilities": {t.value: prob.item() for t, prob in zip(LicenseProtectionType, protection_probs[0], strict=False)},
         }
 
         return result
 
     def _extract_features(self, binary_path: str) -> Dict[str, np.ndarray]:
         """Extract multi-modal features from binary."""
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         # Extract different feature modalities
@@ -955,11 +925,7 @@ class LicenseProtectionPredictor:
         sequence_features = self._extract_sequence_features(data)
         graph_features = self._extract_graph_features(data)
 
-        return {
-            'binary': binary_features,
-            'sequence': sequence_features,
-            'graph': graph_features
-        }
+        return {"binary": binary_features, "sequence": sequence_features, "graph": graph_features}
 
     def _extract_binary_features(self, data: bytes) -> np.ndarray:
         """Extract binary-level features."""
@@ -968,7 +934,7 @@ class LicenseProtectionPredictor:
         # Entropy distribution
         chunk_size = max(1, len(data) // 64)
         for i in range(64):
-            chunk = data[i*chunk_size:(i+1)*chunk_size]
+            chunk = data[i * chunk_size : (i + 1) * chunk_size]
             if chunk:
                 byte_counts = np.bincount(np.frombuffer(chunk, dtype=np.uint8), minlength=256)
                 probs = byte_counts / len(chunk)
@@ -991,9 +957,9 @@ class LicenseProtectionPredictor:
         stride = 128
 
         for i in range(0, min(len(data), 100000), stride):
-            window = data[i:i+window_size]
+            window = data[i : i + window_size]
             if len(window) < window_size:
-                window = window + b'\x00' * (window_size - len(window))
+                window = window + b"\x00" * (window_size - len(window))
             features.append(list(window))
 
         # Convert to numpy array
@@ -1014,9 +980,9 @@ class LicenseProtectionPredictor:
         features = []
 
         # Count different types of control flow instructions
-        jmp_count = data.count(b'\xE9') + data.count(b'\xEB')
-        call_count = data.count(b'\xE8')
-        ret_count = data.count(b'\xC3') + data.count(b'\xC2')
+        jmp_count = data.count(b"\xe9") + data.count(b"\xeb")
+        call_count = data.count(b"\xe8")
+        ret_count = data.count(b"\xc3") + data.count(b"\xc2")
 
         features.extend([jmp_count, call_count, ret_count])
 
@@ -1028,42 +994,43 @@ class LicenseProtectionPredictor:
 
     def _fallback_prediction(self, binary_path: str) -> Dict[str, Any]:
         """Fallback prediction using heuristics when ML models unavailable."""
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         # Simple heuristic-based detection
         protection_scores = {}
 
         # Check for known protection signatures
-        if b'FLEXlm' in data or b'lmgr' in data:
-            protection_scores['flexlm'] = 0.8
-        if b'HASP' in data or b'Sentinel' in data:
-            protection_scores['sentinel_hasp'] = 0.7
-        if b'VMProtect' in data:
-            protection_scores['vmprotect'] = 0.9
-        if b'Themida' in data or b'WinLicense' in data:
-            protection_scores['themida'] = 0.85
+        if b"FLEXlm" in data or b"lmgr" in data:
+            protection_scores["flexlm"] = 0.8
+        if b"HASP" in data or b"Sentinel" in data:
+            protection_scores["sentinel_hasp"] = 0.7
+        if b"VMProtect" in data:
+            protection_scores["vmprotect"] = 0.9
+        if b"Themida" in data or b"WinLicense" in data:
+            protection_scores["themida"] = 0.85
 
         # Default to unknown if no signatures found
         if not protection_scores:
-            protection_scores['unknown'] = 0.5
+            protection_scores["unknown"] = 0.5
 
         # Get highest scoring protection
         protection_type = max(protection_scores, key=protection_scores.get)
         confidence = protection_scores[protection_type]
 
         return {
-            'protection_type': protection_type,
-            'confidence': confidence,
-            'version': 0.0,
-            'complexity': 0.5,
-            'bypass_difficulty': 3,
-            'all_probabilities': protection_scores
+            "protection_type": protection_type,
+            "confidence": confidence,
+            "version": 0.0,
+            "complexity": 0.5,
+            "bypass_difficulty": 3,
+            "all_probabilities": protection_scores,
         }
 
 
 # Global instance for easy access
 _global_predictor = None
+
 
 def get_license_predictor(model_path: Optional[str] = None) -> LicenseProtectionPredictor:
     """Get or create global license protection predictor."""

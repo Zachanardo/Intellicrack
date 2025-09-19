@@ -300,6 +300,16 @@ class ToolCommunicationBridge:
                     empty = self.router.recv()
                     msg_bytes = self.router.recv()
 
+                    # Validate ZeroMQ router protocol (empty delimiter frame)
+                    if empty != b"":
+                        logger.warning(f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}")
+                        # Send error response
+                        error_msg = IPCMessage(
+                            type=MessageType.RESPONSE, data={"error": "Protocol violation: non-empty delimiter"}, sender="bridge"
+                        )
+                        self.router.send_multipart([identity, b"", error_msg.to_bytes()])
+                        continue
+
                     # Deserialize message
                     message = IPCMessage.from_bytes(msg_bytes)
 

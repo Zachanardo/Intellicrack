@@ -377,13 +377,25 @@ class IntelligentCorrelationEngine:
         text1 = self._extract_text_features(result1)[:100]
         text2 = self._extract_text_features(result2)[:100]
 
+        # Calculate Jaccard similarity between text features
+        set1 = set(text1.split()) if text1 else set()
+        set2 = set(text2.split()) if text2 else set()
+        intersection = set1 & set2
+        union = set1 | set2
+        similarity = len(intersection) / len(union) if union else 0.0
+
         return Correlation(
             id=hashlib.md5(f"{result1.id}_{result2.id}_sem".encode()).hexdigest(),
             type=CorrelationType.SEMANTIC,
             source_results=[result1.id, result2.id],
-            confidence=0.75,
-            evidence={"similarity_type": "semantic"},
-            description="Semantic similarity detected",
+            confidence=min(0.95, 0.5 + similarity),
+            evidence={
+                "similarity_type": "semantic",
+                "jaccard_similarity": similarity,
+                "text1_preview": text1[:30],
+                "text2_preview": text2[:30],
+            },
+            description=f"Semantic similarity detected (Jaccard: {similarity:.2f})",
         )
 
     def _perform_comprehensive_correlation(self):

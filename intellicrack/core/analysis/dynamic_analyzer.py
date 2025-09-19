@@ -799,7 +799,7 @@ class AdvancedDynamicAnalyzer:
             memory_maps = []
             try:
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
-            except:
+            except (AttributeError, OSError, PermissionError):
                 pass
 
             self.logger.info(f"Memory scan found {len(matches)} matches")
@@ -897,7 +897,7 @@ class AdvancedDynamicAnalyzer:
                                 # Try to decode context as string
                                 try:
                                     context_str = context.decode("utf-8", errors="replace")
-                                except:
+                                except (UnicodeDecodeError, AttributeError):
                                     context_str = context.hex()
 
                                 matches.append(
@@ -932,7 +932,7 @@ class AdvancedDynamicAnalyzer:
 
                                 try:
                                     context_str = context.decode("utf-16-le", errors="replace")
-                                except:
+                                except (UnicodeDecodeError, AttributeError):
                                     context_str = context.hex()
 
                                 matches.append(
@@ -1019,7 +1019,7 @@ class AdvancedDynamicAnalyzer:
 
                                 try:
                                     context_str = context.decode("utf-8", errors="replace")
-                                except:
+                                except (UnicodeDecodeError, AttributeError):
                                     context_str = context.hex()
 
                                 matches.append(
@@ -1098,9 +1098,12 @@ print(matches)
             try:
                 result = subprocess.run(["lldb", "-P"], capture_output=True, text=True)
                 if result.returncode == 0:
-                    # LLDB is available, use it for memory scanning
-                    pass
-            except:
+                    # LLDB is available, execute the memory scanning script
+                    lldb_cmd = ["lldb", "-b", "-o", f"command script import {script_path}", "-o", "quit"]
+                    scan_result = subprocess.run(lldb_cmd, capture_output=True, text=True, timeout=10)
+                    if scan_result.stdout:
+                        self.logger.debug(f"LLDB memory scan output: {scan_result.stdout}")
+            except (FileNotFoundError, OSError, subprocess.SubprocessError):
                 pass
 
             # Fallback to generic scanning
@@ -1141,7 +1144,7 @@ print(matches)
             try:
                 cmdline = " ".join(process.cmdline())
                 searchable_data.append(("cmdline", cmdline))
-            except:
+            except (AttributeError, OSError, PermissionError):
                 pass
 
             # Environment variables
@@ -1149,21 +1152,21 @@ print(matches)
                 environ = process.environ()
                 for key, value in environ.items():
                     searchable_data.append((f"env_{key}", value))
-            except:
+            except (AttributeError, OSError, PermissionError):
                 pass
 
             # Open files
             try:
                 for file in process.open_files():
                     searchable_data.append(("open_file", file.path))
-            except:
+            except (AttributeError, OSError, PermissionError):
                 pass
 
             # Connections
             try:
                 for conn in process.connections():
                     searchable_data.append(("connection", f"{conn.laddr}:{conn.raddr}"))
-            except:
+            except (AttributeError, OSError, PermissionError):
                 pass
 
             # Search for keywords in available data
@@ -1183,7 +1186,7 @@ print(matches)
                                         else:
                                             base_address = region["addr"]
                                         break
-                                    except:
+                                    except (ValueError, KeyError, TypeError):
                                         pass
 
                         offset = data.lower().find(keyword.lower())

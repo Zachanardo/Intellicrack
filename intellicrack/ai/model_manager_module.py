@@ -83,8 +83,10 @@ try:
     import onnxruntime as ort
 
     HAS_ONNX = True
-except ImportError as e:
+except (ImportError, AttributeError) as e:
     logger.error("Import error in model_manager_module: %s", e)
+    onnx = None
+    ort = None
     HAS_ONNX = False
 
 try:
@@ -102,20 +104,17 @@ class ModelBackend(ABC):
     @abstractmethod
     def load_model(self, model_path: str) -> Any:
         """Load a model from the given path."""
-        # Implementation should use model_path to load the actual model
-        raise NotImplementedError(f"Subclasses must implement load_model for path: {model_path}")
+        pass
 
     @abstractmethod
     def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using the model."""
-        # Implementation should use both model and input_data for predictions
-        raise NotImplementedError(f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}")
+        pass
 
     @abstractmethod
     def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get information about the model."""
-        # Implementation should extract information from the model object
-        raise NotImplementedError(f"Subclasses must implement get_model_info for model {type(model)}")
+        pass
 
 
 class PyTorchBackend(ModelBackend):

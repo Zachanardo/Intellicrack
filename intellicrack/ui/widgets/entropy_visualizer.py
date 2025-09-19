@@ -172,7 +172,7 @@ class EntropyVisualizer(QWidget):
                 raise ValueError("Mismatch between entropy data and position data")
 
             # Update plot with validation
-            if hasattr(self, 'entropy_curve') and self.entropy_curve:
+            if hasattr(self, "entropy_curve") and self.entropy_curve:
                 self.entropy_curve.setData(self.block_positions, self.entropy_data)
             else:
                 raise AttributeError("Entropy curve not properly initialized")
@@ -210,7 +210,7 @@ class EntropyVisualizer(QWidget):
             error_msg = f"Error updating entropy plot: {str(e)}"
             self.info_label.setText(error_msg)
             # Clear the plot on error
-            if hasattr(self, 'entropy_curve') and self.entropy_curve:
+            if hasattr(self, "entropy_curve") and self.entropy_curve:
                 self.entropy_curve.setData([], [])
 
     def find_suspicious_regions(self) -> list[tuple]:

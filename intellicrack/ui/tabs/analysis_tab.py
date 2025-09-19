@@ -156,7 +156,9 @@ class AnalysisTab(BaseTab):
         profile_layout.addWidget(QLabel("Profile:"))
 
         self.analysis_profile_combo = QComboBox()
-        self.analysis_profile_combo.setToolTip("Select a predefined analysis profile or create a custom configuration for your specific needs")
+        self.analysis_profile_combo.setToolTip(
+            "Select a predefined analysis profile or create a custom configuration for your specific needs"
+        )
         self.analysis_profile_combo.addItems(["Quick Scan", "Static Analysis", "Dynamic Analysis", "Full Analysis", "Custom"])
         self.analysis_profile_combo.currentTextChanged.connect(self.update_profile_settings)
         profile_layout.addWidget(self.analysis_profile_combo)
@@ -171,7 +173,9 @@ class AnalysisTab(BaseTab):
 
         # Primary action button
         self.run_analysis_btn = QPushButton("Run Analysis")
-        self.run_analysis_btn.setToolTip("Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first")
+        self.run_analysis_btn.setToolTip(
+            "Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first"
+        )
         self.run_analysis_btn.setMinimumHeight(40)
         self.run_analysis_btn.setStyleSheet("""
             QPushButton {
@@ -1102,18 +1106,19 @@ class AnalysisTab(BaseTab):
                 import capstone
 
                 # Read binary data
-                with open(self.current_binary, 'rb') as f:
+                with open(self.current_binary, "rb") as f:
                     binary_data = f.read(0x1000)  # Read first 4KB
 
                 # Detect architecture
-                if binary_data.startswith(b'MZ'):  # PE file
+                if binary_data.startswith(b"MZ"):  # PE file
                     # Parse PE header to find entry point
                     import struct
-                    e_lfanew = struct.unpack('<I', binary_data[0x3C:0x40])[0]
-                    pe_header = binary_data[e_lfanew:e_lfanew+6]
 
-                    if pe_header[:2] == b'PE':
-                        machine = struct.unpack('<H', pe_header[4:6])[0]
+                    e_lfanew = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+                    pe_header = binary_data[e_lfanew : e_lfanew + 6]
+
+                    if pe_header[:2] == b"PE":
+                        machine = struct.unpack("<H", pe_header[4:6])[0]
                         if machine == 0x8664:  # AMD64
                             cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
                         else:  # x86
@@ -1123,22 +1128,22 @@ class AnalysisTab(BaseTab):
 
                     # Find code section
                     nt_headers_offset = e_lfanew + 24
-                    size_of_optional_header = struct.unpack('<H', binary_data[nt_headers_offset+16:nt_headers_offset+18])[0]
+                    size_of_optional_header = struct.unpack("<H", binary_data[nt_headers_offset + 16 : nt_headers_offset + 18])[0]
                     section_table_offset = nt_headers_offset + 20 + size_of_optional_header
 
                     # Parse first section (usually .text)
-                    section_data = binary_data[section_table_offset:section_table_offset+40]
-                    virtual_address = struct.unpack('<I', section_data[12:16])[0]
-                    raw_offset = struct.unpack('<I', section_data[20:24])[0]
+                    section_data = binary_data[section_table_offset : section_table_offset + 40]
+                    virtual_address = struct.unpack("<I", section_data[12:16])[0]
+                    raw_offset = struct.unpack("<I", section_data[20:24])[0]
 
                     # Read code section
-                    with open(self.current_binary, 'rb') as f:
+                    with open(self.current_binary, "rb") as f:
                         f.seek(raw_offset)
                         code_data = f.read(0x1000)
 
                     base_address = 0x400000 + virtual_address
 
-                elif binary_data[:4] == b'\x7fELF':  # ELF file
+                elif binary_data[:4] == b"\x7fELF":  # ELF file
                     # Check architecture
                     ei_class = binary_data[4]
                     if ei_class == 2:  # 64-bit
@@ -1159,38 +1164,28 @@ class AnalysisTab(BaseTab):
                 disasm_output.append(f"; Disassembly of {os.path.basename(self.current_binary)}")
                 disasm_output.append(f"; Architecture: {cs.arch}")
                 disasm_output.append(f"; Mode: {cs.mode}")
-                disasm_output.append("; " + "="*60)
+                disasm_output.append("; " + "=" * 60)
                 disasm_output.append("")
 
                 for instruction in cs.disasm(code_data, base_address):
-                    hex_bytes = ' '.join(f'{b:02x}' for b in instruction.bytes)
+                    hex_bytes = " ".join(f"{b:02x}" for b in instruction.bytes)
                     disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")
 
                 if len(disasm_output) > 5:
-                    disasm_text.setPlainText('\n'.join(disasm_output))
+                    disasm_text.setPlainText("\n".join(disasm_output))
                 else:
                     disasm_text.setPlainText("No instructions found. Binary may be packed or encrypted.")
 
             except ImportError:
                 # Fallback to objdump if capstone not available
                 try:
-                    result = secure_run(
-                        ['objdump', '-d', '-M', 'intel', self.current_binary],
-                        capture_output=True,
-                        text=True,
-                        timeout=10
-                    )
+                    result = secure_run(["objdump", "-d", "-M", "intel", self.current_binary], capture_output=True, text=True, timeout=10)
 
                     if result.returncode == 0 and result.stdout:
                         disasm_text.setPlainText(result.stdout)
                     else:
                         # Try with radare2
-                        result = secure_run(
-                            ['r2', '-q', '-c', 'pd 500', self.current_binary],
-                            capture_output=True,
-                            text=True,
-                            timeout=10
-                        )
+                        result = secure_run(["r2", "-q", "-c", "pd 500", self.current_binary], capture_output=True, text=True, timeout=10)
 
                         if result.returncode == 0 and result.stdout:
                             disasm_text.setPlainText(result.stdout)
@@ -1228,12 +1223,12 @@ class AnalysisTab(BaseTab):
             self,
             "Save Disassembly",
             f"{os.path.splitext(os.path.basename(self.current_binary))[0]}_disasm.asm",
-            "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)"
+            "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)",
         )
 
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(disasm_text)
                 self.log_activity(f"Disassembly saved to {file_path}")
                 QMessageBox.information(self, "Success", "Disassembly saved successfully!")
@@ -1485,7 +1480,7 @@ class AnalysisTab(BaseTab):
 
     def update_fallback_entropy_visualization(self):
         """Update fallback entropy visualization with analysis results."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             self.fallback_entropy_results.setPlainText("No binary file loaded. Please load a binary first.")
             return
 
@@ -1512,7 +1507,7 @@ class AnalysisTab(BaseTab):
             low_entropy_blocks = 0
 
             for i in range(0, file_size, block_size):
-                block = file_data[i:i+block_size]
+                block = file_data[i : i + block_size]
                 if len(block) < 256:  # Skip small blocks
                     continue
 
@@ -1560,7 +1555,7 @@ class AnalysisTab(BaseTab):
 
     def analyze_binary_entropy(self):
         """Perform detailed binary entropy analysis for license protection detection."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1573,7 +1568,7 @@ class AnalysisTab(BaseTab):
             analysis_results = "🔍 COMPREHENSIVE ENTROPY ANALYSIS FOR LICENSE PROTECTION\n\n"
             analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
             analysis_results += f"Size: {len(file_data):,} bytes\n"
-            analysis_results += "="*60 + "\n\n"
+            analysis_results += "=" * 60 + "\n\n"
 
             # Analyze different block sizes for better detection
             block_sizes = [256, 512, 1024, 2048]
@@ -1585,7 +1580,7 @@ class AnalysisTab(BaseTab):
                 suspicious_regions = []
 
                 for i in range(0, len(file_data) - block_size + 1, block_size):
-                    block = file_data[i:i+block_size]
+                    block = file_data[i : i + block_size]
                     entropy = self.calculate_shannon_entropy(block)
 
                     if entropy > 7.8:  # Very high entropy
@@ -1605,8 +1600,11 @@ class AnalysisTab(BaseTab):
 
             # License protection assessment
             analysis_results += "LICENSE PROTECTION ASSESSMENT:\n"
-            total_high_entropy = sum(1 for block in range(0, len(file_data) - 1024 + 1, 1024)
-                                   if self.calculate_shannon_entropy(file_data[block:block+1024]) > 7.5)
+            total_high_entropy = sum(
+                1
+                for block in range(0, len(file_data) - 1024 + 1, 1024)
+                if self.calculate_shannon_entropy(file_data[block : block + 1024]) > 7.5
+            )
 
             protection_level = "NONE"
             if total_high_entropy > len(file_data) // 1024 * 0.1:
@@ -1642,7 +1640,7 @@ class AnalysisTab(BaseTab):
 
     def analyze_binary_structure(self):
         """Perform detailed binary structure analysis for license protection detection."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1651,7 +1649,7 @@ class AnalysisTab(BaseTab):
 
             analysis_results = "🏗️ BINARY STRUCTURE ANALYSIS FOR LICENSE PROTECTION\n\n"
             analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
-            analysis_results += "="*60 + "\n\n"
+            analysis_results += "=" * 60 + "\n\n"
 
             # Basic file analysis
             with open(self.current_file_path, "rb") as f:
@@ -1662,13 +1660,13 @@ class AnalysisTab(BaseTab):
             analysis_results += f"File Size: {file_size:,} bytes\n"
 
             # Detect file type
-            if file_header.startswith(b'MZ'):
+            if file_header.startswith(b"MZ"):
                 analysis_results += "File Type: Windows PE (Portable Executable)\n"
                 analysis_results += self.analyze_pe_structure(file_header)
-            elif file_header.startswith(b'\x7fELF'):
+            elif file_header.startswith(b"\x7fELF"):
                 analysis_results += "File Type: Linux ELF (Executable and Linkable Format)\n"
                 analysis_results += self.analyze_elf_structure(file_header)
-            elif file_header.startswith(b'\xfe\xed\xfa'):
+            elif file_header.startswith(b"\xfe\xed\xfa"):
                 analysis_results += "File Type: macOS Mach-O\n"
                 analysis_results += "Mach-O analysis not implemented in fallback mode.\n"
             else:
@@ -1699,7 +1697,7 @@ class AnalysisTab(BaseTab):
 
     def export_structure_analysis(self):
         """Export structure analysis results to file."""
-        if not hasattr(self, 'fallback_structure_results'):
+        if not hasattr(self, "fallback_structure_results"):
             QMessageBox.warning(self, "No Analysis", "No structure analysis results to export.")
             return
 
@@ -1725,7 +1723,7 @@ class AnalysisTab(BaseTab):
 
     def detect_license_protection(self):
         """Detect license protection mechanisms in the binary."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1734,7 +1732,7 @@ class AnalysisTab(BaseTab):
 
             protection_results = "🛡️ LICENSE PROTECTION DETECTION RESULTS\n\n"
             protection_results += f"Target: {os.path.basename(self.current_file_path)}\n"
-            protection_results += "="*60 + "\n\n"
+            protection_results += "=" * 60 + "\n\n"
 
             # Check for common protection indicators
             indicators_found = []
@@ -1744,14 +1742,29 @@ class AnalysisTab(BaseTab):
 
             # String-based detection
             protection_strings = [
-                b"license", b"License", b"LICENSE",
-                b"serial", b"Serial", b"SERIAL",
-                b"key", b"Key", b"KEY",
-                b"activation", b"Activation", b"ACTIVATION",
-                b"trial", b"Trial", b"TRIAL",
-                b"expired", b"Expired", b"EXPIRED",
-                b"hwid", b"HWID", b"hardware",
-                b"fingerprint", b"machine"
+                b"license",
+                b"License",
+                b"LICENSE",
+                b"serial",
+                b"Serial",
+                b"SERIAL",
+                b"key",
+                b"Key",
+                b"KEY",
+                b"activation",
+                b"Activation",
+                b"ACTIVATION",
+                b"trial",
+                b"Trial",
+                b"TRIAL",
+                b"expired",
+                b"Expired",
+                b"EXPIRED",
+                b"hwid",
+                b"HWID",
+                b"hardware",
+                b"fingerprint",
+                b"machine",
             ]
 
             for pattern in protection_strings:
@@ -1830,6 +1843,7 @@ class AnalysisTab(BaseTab):
         if len(header) > 64:
             try:
                 import struct
+
                 pe_offset = struct.unpack("<I", header[60:64])[0]
                 if pe_offset < len(header):
                     analysis += f"PE Header Offset: 0x{pe_offset:08x}\n"
@@ -1861,20 +1875,40 @@ class AnalysisTab(BaseTab):
 
     def find_license_indicators(self):
         """Find potential license-related strings in the binary."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             return []
 
         license_patterns = [
-            "license", "License", "LICENSE",
-            "serial", "Serial", "SERIAL",
-            "registration", "Registration", "REGISTRATION",
-            "activation", "Activation", "ACTIVATION",
-            "trial", "Trial", "TRIAL",
-            "expired", "Expired", "EXPIRED",
-            "valid", "Valid", "VALID",
-            "invalid", "Invalid", "INVALID",
-            "keygen", "Keygen", "KEYGEN",
-            "crack", "Crack", "CRACK"
+            "license",
+            "License",
+            "LICENSE",
+            "serial",
+            "Serial",
+            "SERIAL",
+            "registration",
+            "Registration",
+            "REGISTRATION",
+            "activation",
+            "Activation",
+            "ACTIVATION",
+            "trial",
+            "Trial",
+            "TRIAL",
+            "expired",
+            "Expired",
+            "EXPIRED",
+            "valid",
+            "Valid",
+            "VALID",
+            "invalid",
+            "Invalid",
+            "INVALID",
+            "keygen",
+            "Keygen",
+            "KEYGEN",
+            "crack",
+            "Crack",
+            "CRACK",
         ]
 
         found_strings = []
@@ -1885,10 +1919,11 @@ class AnalysisTab(BaseTab):
 
             # Simple string extraction (ASCII strings >= 4 chars)
             import re
-            strings = re.findall(b'[ -~]{4,}', content)
+
+            strings = re.findall(b"[ -~]{4,}", content)
 
             for string in strings:
-                string_text = string.decode('ascii', errors='ignore')
+                string_text = string.decode("ascii", errors="ignore")
                 for pattern in license_patterns:
                     if pattern in string_text:
                         if string_text not in found_strings:

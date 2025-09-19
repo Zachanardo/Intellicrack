@@ -660,7 +660,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return None
 
             # Parse PE header to find import directory
-            int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
+            pe_header_offset = pe_offset
+            size_of_optional_header = int.from_bytes(data[pe_offset + 20 : pe_offset + 22], "little")
             optional_header_offset = pe_offset + 24
 
             # Determine if PE32 or PE32+
@@ -699,8 +700,13 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
                     # Check if import RVA falls within this section
                     if virtual_addr <= import_rva < virtual_addr + virtual_size:
+                        # Validate raw size for section integrity
+                        offset_in_section = import_rva - virtual_addr
+                        if offset_in_section >= raw_size:
+                            # Import table extends beyond raw section - possible corruption or packing
+                            import_strings.append(f"[SECTION_OVERFLOW:{import_rva:08X}]")
                         # Convert RVA to file offset
-                        import_file_offset = raw_addr + (import_rva - virtual_addr)
+                        import_file_offset = raw_addr + offset_in_section
                         break
 
                 # Parse import descriptors if offset found
@@ -719,6 +725,25 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                         # Check for end of import descriptors
                         if name_rva == 0:
                             break
+
+                        # Analyze import descriptor characteristics
+                        if time_date_stamp != 0 and time_date_stamp != 0xFFFFFFFF:
+                            # Bound import - timestamp indicates pre-bound DLL
+                            import_strings.append(f"[BOUND:{time_date_stamp:08X}]")
+
+                        if forwarder_chain != 0xFFFFFFFF and forwarder_chain != 0:
+                            # Forwarded imports detected
+                            import_strings.append(f"[FORWARD:{forwarder_chain:08X}]")
+
+                        # Validate thunks for IAT hooking detection
+                        if first_thunk != 0 and original_first_thunk != 0:
+                            # Both thunks present - normal import
+                            if abs(first_thunk - original_first_thunk) > 0x10000:
+                                # Suspicious thunk separation - possible IAT manipulation
+                                import_strings.append(f"[IAT_ANOMALY:{first_thunk:08X}]")
+                        elif first_thunk != 0 and original_first_thunk == 0:
+                            # Only IAT present - could indicate runtime binding
+                            import_strings.append(f"[DYNAMIC_IMPORT:{first_thunk:08X}]")
 
                         # Convert name RVA to file offset
                         name_file_offset = 0

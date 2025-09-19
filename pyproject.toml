@@ -83,7 +83,7 @@ dependencies = [
     "defusedxml==0.7.1",
     "boto3==1.39.11",
     "azure-storage-blob==12.19.0",
-    "fastapi==0.111.0",
+    "fastapi==0.116.1",
     "httpie>=3.2.3",
 
     # ML Frameworks
@@ -166,7 +166,7 @@ dependencies = [
     "kombu==5.5.2",
     "keyring==24.2.0",
     "jmespath==1.0.0",
-    "hyperframe==6.0.0",
+    "hyperframe==6.1.0",
     "ply>=3.11",
     "narwhals>=1.0.0",
     "matplotlib-inline>=0.1.6",
@@ -256,7 +256,8 @@ dependencies = [
     "sniffio>=1.3.1",
     "sortedcontainers>=2.4.0",
     "soupsieve>=2.7",
-    "starlette>=0.37.2",
+    "starlette>=0.47.2,<0.48.0",
+    "anyio>=3.6.2,<5.0",
     "sympy>=1.14.0",
     "termcolor>=1.1.0",
     "threadpoolctl>=3.6.0",

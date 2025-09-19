@@ -11,67 +11,51 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from .real_time_dashboard import (
-    RealTimeDashboard,
-    DashboardEvent,
-    DashboardEventType,
-    AnalysisMetrics,
-    create_dashboard
-)
-
+from .dashboard_manager import DashboardLayout, DashboardManager, DataSource, DataSourceType, create_dashboard_manager
 from .dashboard_widgets import (
     DashboardWidget,
+    GaugeWidget,
+    HeatmapWidget,
+    LineChartWidget,
+    NetworkGraphWidget,
+    ProgressWidget,
+    TableWidget,
+    TimelineWidget,
     WidgetConfig,
     WidgetData,
-    WidgetType,
-    LineChartWidget,
-    GaugeWidget,
-    TableWidget,
-    HeatmapWidget,
-    NetworkGraphWidget,
-    TimelineWidget,
-    ProgressWidget,
     WidgetFactory,
-    create_widget
+    WidgetType,
+    create_widget,
 )
-
-from .dashboard_manager import (
-    DashboardManager,
-    DataSource,
-    DataSourceType,
-    DashboardLayout,
-    create_dashboard_manager
-)
+from .real_time_dashboard import AnalysisMetrics, DashboardEvent, DashboardEventType, RealTimeDashboard, create_dashboard
 
 __all__ = [
     # Real-time dashboard
-    'RealTimeDashboard',
-    'DashboardEvent',
-    'DashboardEventType',
-    'AnalysisMetrics',
-    'create_dashboard',
-
+    "RealTimeDashboard",
+    "DashboardEvent",
+    "DashboardEventType",
+    "AnalysisMetrics",
+    "create_dashboard",
     # Widgets
-    'DashboardWidget',
-    'WidgetConfig',
-    'WidgetData',
-    'WidgetType',
-    'LineChartWidget',
-    'GaugeWidget',
-    'TableWidget',
-    'HeatmapWidget',
-    'NetworkGraphWidget',
-    'TimelineWidget',
-    'ProgressWidget',
-    'WidgetFactory',
-    'create_widget',
-
+    "DashboardWidget",
+    "WidgetConfig",
+    "WidgetData",
+    "WidgetType",
+    "LineChartWidget",
+    "GaugeWidget",
+    "TableWidget",
+    "HeatmapWidget",
+    "NetworkGraphWidget",
+    "TimelineWidget",
+    "ProgressWidget",
+    "WidgetFactory",
+    "create_widget",
     # Manager
-    'DashboardManager',
-    'DataSource',
-    'DataSourceType',
-    'DashboardLayout',
-    'create_dashboard_manager'
+    "DashboardManager",
+    "DataSource",
+    "DataSourceType",
+    "DashboardLayout",
+    "create_dashboard_manager",
 ]
 
 __version__ = "1.0.0"

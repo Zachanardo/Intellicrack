@@ -56,6 +56,35 @@ class AdobeLicenseCompiler:
         else:
             self.startup_folder = Path(os.environ.get("PROGRAMDATA", "")) / service_name
 
+        # Initialize Adobe-specific patch patterns for AMTLIB.DLL
+        self.patch_patterns = {
+            "amtlib_activation": {
+                "search": b"\x48\x8b\x05\x00\x00\x00\x00\x48\x85\xc0\x74\x08",
+                "replace": b"\x48\xc7\xc0\x01\x00\x00\x00\x48\x85\xc0\x90\x90",
+                "description": "Force activation status to always return true",
+            },
+            "trial_check_bypass": {
+                "search": b"\x83\xf8\x1e\x7d\x0a\x48\x8b\x45\x10",
+                "replace": b"\x83\xf8\xff\x7d\x0a\x48\x8b\x45\x10",
+                "description": "Bypass 30-day trial check",
+            },
+            "license_validation": {
+                "search": b"\x48\x8b\x01\xff\x50\x18\x84\xc0\x74",
+                "replace": b"\x48\x8b\x01\xff\x50\x18\xb0\x01\x90",
+                "description": "Force license validation to succeed",
+            },
+            "network_check": {
+                "search": b"\xe8\x00\x00\x00\x00\x85\xc0\x75\x14",
+                "replace": b"\xb8\x01\x00\x00\x00\x85\xc0\x75\x14",
+                "description": "Skip network license verification",
+            },
+            "subscription_status": {
+                "search": b"\x48\x8b\x08\x48\x85\xc9\x74\x1a\x48\x8b\x01",
+                "replace": b"\x48\x8b\x08\x48\x85\xc9\x90\x90\x48\x8b\x01",
+                "description": "Override subscription status checks",
+            },
+        }
+
         # Validate platform compatibility
         if not self._is_windows():
             raise RuntimeError("Adobe License Compiler is only supported on Windows platforms")
@@ -808,3 +837,118 @@ process.stdin.resume();
         except (subprocess.SubprocessError, subprocess.TimeoutExpired, OSError) as e:
             logger.debug(f"Failed to check if {self.exe_name} is running: {e}")
             return False
+
+    def compile_patch(self, config):
+        """Compile a patch based on configuration.
+
+        Args:
+            config: Dictionary containing patch configuration
+                - target_dll: Path to the DLL to patch
+                - patch_type: Type of patch to apply
+                - output_path: Where to save the patched file
+
+        Returns:
+            Dictionary containing patch results
+        """
+        target_dll = config.get("target_dll")
+        patch_type = config.get("patch_type", "full_activation")
+        output_path = config.get("output_path")
+
+        if not target_dll or not os.path.exists(target_dll):
+            return {"success": False, "error": f"Target DLL not found: {target_dll}"}
+
+        # Read the target DLL
+        with open(target_dll, "rb") as f:
+            dll_data = bytearray(f.read())
+
+        # Apply patches based on type
+        patches_applied = []
+
+        if patch_type in ["full_activation", "all"]:
+            # Apply all activation patches
+            for pattern_name, pattern_data in self.patch_patterns.items():
+                search = pattern_data["search"]
+                replace = pattern_data["replace"]
+
+                # Find and replace patterns
+                index = dll_data.find(search)
+                if index != -1:
+                    dll_data[index : index + len(search)] = replace
+                    patches_applied.append({"pattern": pattern_name, "offset": index, "description": pattern_data["description"]})
+                    logger.info(f"Applied patch: {pattern_name} at offset 0x{index:X}")
+
+        elif patch_type == "trial_reset":
+            # Apply only trial-related patches
+            trial_patterns = ["trial_check_bypass", "subscription_status"]
+            for pattern_name in trial_patterns:
+                if pattern_name in self.patch_patterns:
+                    pattern_data = self.patch_patterns[pattern_name]
+                    search = pattern_data["search"]
+                    replace = pattern_data["replace"]
+
+                    index = dll_data.find(search)
+                    if index != -1:
+                        dll_data[index : index + len(search)] = replace
+                        patches_applied.append({"pattern": pattern_name, "offset": index, "description": pattern_data["description"]})
+
+        # Save the patched file
+        if output_path:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "wb") as f:
+                f.write(dll_data)
+
+        return {
+            "success": True,
+            "patches_applied": patches_applied,
+            "output_path": output_path,
+            "original_size": len(dll_data),
+            "checksum": compute_file_hash(output_path) if output_path else None,
+        }
+
+    def verify_patch(self, dll_path):
+        """Verify if a DLL has been properly patched.
+
+        Args:
+            dll_path: Path to the DLL to verify
+
+        Returns:
+            Dictionary containing verification results
+        """
+        if not os.path.exists(dll_path):
+            return {"valid": False, "error": f"File not found: {dll_path}"}
+
+        # Read the DLL
+        with open(dll_path, "rb") as f:
+            dll_data = f.read()
+
+        # Check for patched patterns
+        patches_found = []
+        patches_missing = []
+
+        for pattern_name, pattern_data in self.patch_patterns.items():
+            replace = pattern_data["replace"]
+            search = pattern_data["search"]
+
+            # Check if the replaced pattern exists
+            if replace in dll_data:
+                patches_found.append(
+                    {"pattern": pattern_name, "description": pattern_data["description"], "offset": dll_data.find(replace)}
+                )
+            # Check if original pattern still exists (not patched)
+            elif search in dll_data:
+                patches_missing.append(
+                    {"pattern": pattern_name, "description": pattern_data["description"], "offset": dll_data.find(search)}
+                )
+
+        # Determine if the file is validly patched
+        is_valid = len(patches_found) > 0 and len(patches_missing) < len(self.patch_patterns)
+
+        return {
+            "valid": is_valid,
+            "patches_found": patches_found,
+            "patches_missing": patches_missing,
+            "total_patterns": len(self.patch_patterns),
+            "patch_percentage": (len(patches_found) / len(self.patch_patterns)) * 100 if self.patch_patterns else 0,
+            "file_size": len(dll_data),
+            "checksum": compute_file_hash(dll_path),
+        }

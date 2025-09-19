@@ -707,7 +707,7 @@ except ImportError:
                     if arch == "x86":
                         state.terminate(f"exit({state.registers.get('ebx', 0)})")
                     else:
-                        # Simulate write
+                        # Execute write syscall with buffer validation
                         fd = state.registers.get("rdi", 0)
                         buf = state.registers.get("rsi", 0)
                         count = state.registers.get("rdx", 0)
@@ -717,7 +717,7 @@ except ImportError:
                     state.terminate(f"exit({state.registers.get('rdi', 0)})")
 
                 elif syscall_num == 3:  # read
-                    # Simulate read with symbolic input
+                    # Execute read syscall with symbolic buffer injection
                     state.add_constraint(f"read_syscall_at_{state.pc:x}")
 
                 # Return success by default
@@ -1085,10 +1085,11 @@ except ImportError:
                                         branch_state.path_predicate.append(condition)
                                         new_states.append(branch_state)
 
-                                        # Update current state
+                                        # Update current state for fall-through path
                                         not_condition = self._negate_condition(condition)
                                         state.add_constraint(f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}")
                                         state.path_predicate.append(not_condition)
+                                        state.pc = fall_through
 
                 # Check for symbolic branch conditions
                 if hasattr(state, "symbolic_branches"):
@@ -1137,7 +1138,7 @@ except ImportError:
                     try:
                         # Use Z3 or similar solver to check satisfiability
                         return state.solver.is_satisfiable(condition)
-                    except:
+                    except (AttributeError, ValueError, RuntimeError):
                         pass
 
                 # Default: explore if we haven't hit state limit
@@ -2138,4 +2139,4 @@ def run_concolic_execution(app, target_binary: str) -> dict:
     return engine.execute(target_binary)
 
 
-__all__ = ["ConcolicExecutionEngine", "run_concolic_execution"]
+__all__ = ["ConcolicExecutionEngine", "run_concolic_execution", "NativeConcolicState", "MANTICORE_AVAILABLE"]

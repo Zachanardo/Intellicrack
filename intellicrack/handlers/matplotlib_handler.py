@@ -64,6 +64,7 @@ try:
     if FigureCanvasQTAgg is None:
         try:
             import importlib.util
+
             if importlib.util.find_spec("PyQt6") is not None:
                 logger.debug("PyQt6 is available but matplotlib Qt backend failed to load")
         except ImportError:
@@ -71,6 +72,7 @@ try:
 
         try:
             import importlib.util
+
             if importlib.util.find_spec("PyQt5") is not None:
                 logger.debug("PyQt5 is available but matplotlib Qt backend failed to load")
         except ImportError:

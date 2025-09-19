@@ -21,9 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import logging
-import subprocess
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     import r2pipe
@@ -36,6 +35,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FunctionDiff:
     """Represents differences between functions in two binaries."""
+
     name: str
     status: str  # 'added', 'removed', 'modified', 'unchanged'
     primary_address: Optional[int] = None
@@ -54,6 +54,7 @@ class FunctionDiff:
 @dataclass
 class BasicBlockDiff:
     """Represents differences between basic blocks."""
+
     address: int
     status: str  # 'added', 'removed', 'modified', 'unchanged'
     primary_size: Optional[int] = None
@@ -67,6 +68,7 @@ class BasicBlockDiff:
 @dataclass
 class StringDiff:
     """Represents differences in strings between binaries."""
+
     value: str
     status: str  # 'added', 'removed', 'modified'
     primary_address: Optional[int] = None
@@ -176,9 +178,9 @@ class R2BinaryDiff:
                     # Function removed
                     diff = FunctionDiff(
                         name=func_name,
-                        status='removed',
+                        status="removed",
                         primary_address=primary_func.get("offset", 0),
-                        primary_size=primary_func.get("size", 0)
+                        primary_size=primary_func.get("size", 0),
                     )
                     diffs.append(diff)
 
@@ -186,9 +188,9 @@ class R2BinaryDiff:
                     # Function added
                     diff = FunctionDiff(
                         name=func_name,
-                        status='added',
+                        status="added",
                         secondary_address=secondary_func.get("offset", 0),
-                        secondary_size=secondary_func.get("size", 0)
+                        secondary_size=secondary_func.get("size", 0),
                     )
                     diffs.append(diff)
 
@@ -198,11 +200,9 @@ class R2BinaryDiff:
                     secondary_size = secondary_func.get("size", 0)
 
                     # Get detailed comparison
-                    similarity = self._calculate_function_similarity(
-                        func_name, primary_func, secondary_func
-                    )
+                    similarity = self._calculate_function_similarity(func_name, primary_func, secondary_func)
 
-                    status = 'unchanged' if similarity > 0.95 else 'modified'
+                    status = "unchanged" if similarity > 0.95 else "modified"
 
                     diff = FunctionDiff(
                         name=func_name,
@@ -212,11 +212,11 @@ class R2BinaryDiff:
                         primary_size=primary_size,
                         secondary_size=secondary_size,
                         size_diff=secondary_size - primary_size,
-                        similarity_score=similarity
+                        similarity_score=similarity,
                     )
 
                     # Get detailed changes if modified
-                    if status == 'modified':
+                    if status == "modified":
                         diff.basic_block_diff = self._get_function_bb_diff(func_name)
                         diff.opcodes_changed = self._count_opcode_changes(func_name)
                         diff.calls_changed = self._get_call_changes(func_name)
@@ -268,10 +268,10 @@ class R2BinaryDiff:
                     # Compare the blocks
                     diff = BasicBlockDiff(
                         address=primary_addr,
-                        status='modified' if self._blocks_differ(primary_bb, secondary_bb) else 'unchanged',
+                        status="modified" if self._blocks_differ(primary_bb, secondary_bb) else "unchanged",
                         primary_size=primary_bb.get("size", 0),
                         secondary_size=secondary_bb.get("size", 0),
-                        instruction_count_diff=len(secondary_bb.get("ops", [])) - len(primary_bb.get("ops", []))
+                        instruction_count_diff=len(secondary_bb.get("ops", [])) - len(primary_bb.get("ops", [])),
                     )
 
                     # Analyze edge changes
@@ -290,21 +290,13 @@ class R2BinaryDiff:
             # Find added blocks
             for addr, bb in secondary_by_addr.items():
                 if addr not in [v for v in matched_blocks.values()]:
-                    diff = BasicBlockDiff(
-                        address=addr,
-                        status='added',
-                        secondary_size=bb.get("size", 0)
-                    )
+                    diff = BasicBlockDiff(address=addr, status="added", secondary_size=bb.get("size", 0))
                     diffs.append(diff)
 
             # Find removed blocks
             for addr, bb in primary_by_addr.items():
                 if addr not in matched_blocks:
-                    diff = BasicBlockDiff(
-                        address=addr,
-                        status='removed',
-                        primary_size=bb.get("size", 0)
-                    )
+                    diff = BasicBlockDiff(address=addr, status="removed", primary_size=bb.get("size", 0))
                     diffs.append(diff)
 
             self.logger.info(f"Found {len(diffs)} basic block differences in {function_name}")
@@ -348,9 +340,9 @@ class R2BinaryDiff:
                     # String removed
                     diff = StringDiff(
                         value=string_val,
-                        status='removed',
+                        status="removed",
                         primary_address=primary_str.get("vaddr", 0),
-                        xrefs_primary=self._get_string_xrefs(self.r2_primary, primary_str.get("vaddr", 0))
+                        xrefs_primary=self._get_string_xrefs(self.r2_primary, primary_str.get("vaddr", 0)),
                     )
                     diffs.append(diff)
 
@@ -358,9 +350,9 @@ class R2BinaryDiff:
                     # String added
                     diff = StringDiff(
                         value=string_val,
-                        status='added',
+                        status="added",
                         secondary_address=secondary_str.get("vaddr", 0),
-                        xrefs_secondary=self._get_string_xrefs(self.r2_secondary, secondary_str.get("vaddr", 0))
+                        xrefs_secondary=self._get_string_xrefs(self.r2_secondary, secondary_str.get("vaddr", 0)),
                     )
                     diffs.append(diff)
 
@@ -372,11 +364,11 @@ class R2BinaryDiff:
                     if set(primary_xrefs) != set(secondary_xrefs):
                         diff = StringDiff(
                             value=string_val,
-                            status='modified',
+                            status="modified",
                             primary_address=primary_str.get("vaddr", 0),
                             secondary_address=secondary_str.get("vaddr", 0),
                             xrefs_primary=primary_xrefs,
-                            xrefs_secondary=secondary_xrefs
+                            xrefs_secondary=secondary_xrefs,
                         )
                         diffs.append(diff)
 
@@ -414,17 +406,9 @@ class R2BinaryDiff:
                     continue
 
                 if import_name in primary_by_name and import_name not in secondary_by_name:
-                    diffs.append({
-                        'name': import_name,
-                        'status': 'removed',
-                        'details': primary_by_name[import_name]
-                    })
+                    diffs.append({"name": import_name, "status": "removed", "details": primary_by_name[import_name]})
                 elif import_name not in primary_by_name and import_name in secondary_by_name:
-                    diffs.append({
-                        'name': import_name,
-                        'status': 'added',
-                        'details': secondary_by_name[import_name]
-                    })
+                    diffs.append({"name": import_name, "status": "added", "details": secondary_by_name[import_name]})
 
         except Exception as e:
             self.logger.error(f"Failed to get import diffs: {e}")
@@ -438,17 +422,17 @@ class R2BinaryDiff:
             Dictionary containing all diff results
         """
         return {
-            'functions': self.get_function_diffs(),
-            'strings': self.get_string_diffs(),
-            'imports': self.get_import_diffs(),
-            'metadata': {
-                'primary_path': self.primary_path,
-                'secondary_path': self.secondary_path,
-                'primary_hash': self._get_file_hash(self.r2_primary),
-                'secondary_hash': self._get_file_hash(self.r2_secondary),
-                'primary_size': self._get_file_size(self.r2_primary),
-                'secondary_size': self._get_file_size(self.r2_secondary)
-            }
+            "functions": self.get_function_diffs(),
+            "strings": self.get_string_diffs(),
+            "imports": self.get_import_diffs(),
+            "metadata": {
+                "primary_path": self.primary_path,
+                "secondary_path": self.secondary_path,
+                "primary_hash": self._get_file_hash(self.r2_primary),
+                "secondary_hash": self._get_file_hash(self.r2_secondary),
+                "primary_size": self._get_file_size(self.r2_primary),
+                "secondary_size": self._get_file_size(self.r2_secondary),
+            },
         }
 
     def _calculate_function_similarity(self, func_name: str, primary_func: Dict, secondary_func: Dict) -> float:
@@ -517,11 +501,11 @@ class R2BinaryDiff:
         """Get basic block diff summary for a function."""
         bb_diffs = self.get_basic_block_diffs(func_name)
         return {
-            'total_blocks': len(bb_diffs),
-            'added': len([d for d in bb_diffs if d.status == 'added']),
-            'removed': len([d for d in bb_diffs if d.status == 'removed']),
-            'modified': len([d for d in bb_diffs if d.status == 'modified']),
-            'unchanged': len([d for d in bb_diffs if d.status == 'unchanged'])
+            "total_blocks": len(bb_diffs),
+            "added": len([d for d in bb_diffs if d.status == "added"]),
+            "removed": len([d for d in bb_diffs if d.status == "removed"]),
+            "modified": len([d for d in bb_diffs if d.status == "modified"]),
+            "unchanged": len([d for d in bb_diffs if d.status == "unchanged"]),
         }
 
     def _count_opcode_changes(self, func_name: str) -> int:

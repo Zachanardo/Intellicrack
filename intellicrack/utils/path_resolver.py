@@ -50,8 +50,8 @@ def resolve_qemu_image_path(image_name: str) -> Path:
         # Strip common hardcoded prefixes - including legacy absolute paths
         for prefix in [
             "C:\\Intellicrack\\qemu\\images\\",  # Legacy Windows absolute
-            "C:/Intellicrack/qemu/images/",     # Legacy Windows absolute (forward slash)
-            "/Intellicrack/qemu/images/",        # Legacy Unix absolute
+            "C:/Intellicrack/qemu/images/",  # Legacy Windows absolute (forward slash)
+            "/Intellicrack/qemu/images/",  # Legacy Unix absolute
             "qemu/images/",
             "qemu\\images\\",
             "intellicrack/",

@@ -467,6 +467,7 @@ class SettingsTab(BaseTab):
 
         # Initialize tool discovery
         from intellicrack.core.tool_discovery import AdvancedToolDiscovery
+
         self.tool_discovery = AdvancedToolDiscovery()
 
         # Tool path widgets storage
@@ -479,7 +480,7 @@ class SettingsTab(BaseTab):
             ("x64dbg", "x64dbg", "Select x64dbg Executable"),
             ("nasm", "NASM", "Select NASM Executable"),
             ("masm", "MASM", "Select MASM Executable"),
-            ("accesschk", "AccessChk", "Select AccessChk Executable")
+            ("accesschk", "AccessChk", "Select AccessChk Executable"),
         ]
 
         for tool_key, tool_label, browse_title in tools_config:
@@ -491,21 +492,15 @@ class SettingsTab(BaseTab):
         output_layout = QVBoxLayout(output_group)
 
         # Output directory
-        output_dir_widget = self.create_directory_entry(
-            "output_directory", "Output Directory", "Select Output Directory"
-        )
+        output_dir_widget = self.create_directory_entry("output_directory", "Output Directory", "Select Output Directory")
         output_layout.addWidget(output_dir_widget)
 
         # Reports directory
-        reports_dir_widget = self.create_directory_entry(
-            "reports_directory", "Reports Directory", "Select Reports Directory"
-        )
+        reports_dir_widget = self.create_directory_entry("reports_directory", "Reports Directory", "Select Reports Directory")
         output_layout.addWidget(reports_dir_widget)
 
         # Scripts directory
-        scripts_dir_widget = self.create_directory_entry(
-            "scripts_directory", "Scripts Directory", "Select Scripts Directory"
-        )
+        scripts_dir_widget = self.create_directory_entry("scripts_directory", "Scripts Directory", "Select Scripts Directory")
         output_layout.addWidget(scripts_dir_widget)
 
         layout.addWidget(tools_group)
@@ -546,9 +541,7 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("📁")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title)
-        )
+        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title))
 
         # Clear/Reset button
         reset_btn = QPushButton("↻")
@@ -571,10 +564,10 @@ class SettingsTab(BaseTab):
 
         # Store widget references
         self.tool_widgets[tool_key] = {
-            'path_edit': path_edit,
-            'status_label': status_label,
-            'status_details': status_details,
-            'container': container
+            "path_edit": path_edit,
+            "status_label": status_label,
+            "status_details": status_details,
+            "container": container,
         }
 
         return container
@@ -599,9 +592,7 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("📁")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title)
-        )
+        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title))
 
         layout.addWidget(path_edit)
         layout.addWidget(browse_btn)
@@ -613,7 +604,7 @@ class SettingsTab(BaseTab):
 
     def discover_tools(self):
         """Discover all tools and update the UI with results."""
-        if not hasattr(self, 'tool_discovery'):
+        if not hasattr(self, "tool_discovery"):
             return
 
         self.auto_discovery_btn.setEnabled(False)
@@ -630,9 +621,9 @@ class SettingsTab(BaseTab):
                     self.update_tool_status(tool_key, tool_info)
 
                     # Auto-populate if path is empty and tool was found
-                    current_path = widgets['path_edit'].text().strip()
-                    if not current_path and tool_info.get('available') and tool_info.get('path'):
-                        widgets['path_edit'].setText(tool_info['path'])
+                    current_path = widgets["path_edit"].text().strip()
+                    if not current_path and tool_info.get("available") and tool_info.get("path"):
+                        widgets["path_edit"].setText(tool_info["path"])
 
         except Exception as e:
             self.log_message(f"Tool discovery failed: {e}", "error")
@@ -642,7 +633,7 @@ class SettingsTab(BaseTab):
 
     def refresh_tool_discovery(self):
         """Refresh tool discovery."""
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             self.tool_discovery.refresh_discovery()
             self.discover_tools()
 
@@ -652,25 +643,25 @@ class SettingsTab(BaseTab):
             return
 
         widgets = self.tool_widgets[tool_key]
-        status_label = widgets['status_label']
-        status_details = widgets['status_details']
+        status_label = widgets["status_label"]
+        status_details = widgets["status_details"]
 
-        if tool_info.get('available'):
+        if tool_info.get("available"):
             # Run health check for more detailed status
             try:
                 health_info = self.tool_discovery.health_check_tool(tool_key)
 
-                if health_info.get('healthy'):
+                if health_info.get("healthy"):
                     status_label.setText("🟢")
                     status_label.setToolTip("Tool found and healthy")
-                    version = health_info.get('version', 'Unknown version')
+                    version = health_info.get("version", "Unknown version")
                     status_details.setText(f"✓ Found: {version}")
                     status_details.setStyleSheet("color: #28a745; font-size: 10px; margin-left: 85px;")
 
-                elif health_info.get('available'):
+                elif health_info.get("available"):
                     status_label.setText("🟡")
                     status_label.setToolTip("Tool found but has issues")
-                    issues = ", ".join(health_info.get('issues', ['Unknown issues']))
+                    issues = ", ".join(health_info.get("issues", ["Unknown issues"]))
                     status_details.setText(f"⚠ Issues: {issues}")
                     status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
 
@@ -688,7 +679,7 @@ class SettingsTab(BaseTab):
         else:
             status_label.setText("⚫")
             status_label.setToolTip("Tool not found")
-            error_msg = tool_info.get('error', 'Not found in common locations')
+            error_msg = tool_info.get("error", "Not found in common locations")
             status_details.setText(f"✗ Not found: {error_msg}")
             status_details.setStyleSheet("color: #6c757d; font-size: 10px; margin-left: 85px;")
 
@@ -701,7 +692,7 @@ class SettingsTab(BaseTab):
             return
 
         # Validate the manually entered path
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             try:
                 self.tool_discovery.health_check_tool(tool_key)
 
@@ -709,10 +700,7 @@ class SettingsTab(BaseTab):
                 self.tool_discovery.set_manual_override(tool_key, path)
 
                 # Create mock tool info for status update
-                tool_info = {
-                    'available': os.path.exists(path),
-                    'path': path
-                }
+                tool_info = {"available": os.path.exists(path), "path": path}
                 self.update_tool_status(tool_key, tool_info)
 
             except Exception as e:
@@ -726,22 +714,20 @@ class SettingsTab(BaseTab):
         widgets = self.tool_widgets[tool_key]
 
         # Clear manual override
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             self.tool_discovery.clear_manual_override(tool_key)
 
         # Re-discover the tool
         try:
-            tool_info = self.tool_discovery.discover_tool(tool_key, {
-                "executables": self.get_tool_executables(tool_key),
-                "search_strategy": "installation_based",
-                "required": False
-            })
+            tool_info = self.tool_discovery.discover_tool(
+                tool_key, {"executables": self.get_tool_executables(tool_key), "search_strategy": "installation_based", "required": False}
+            )
 
-            if tool_info.get('available') and tool_info.get('path'):
-                widgets['path_edit'].setText(tool_info['path'])
+            if tool_info.get("available") and tool_info.get("path"):
+                widgets["path_edit"].setText(tool_info["path"])
                 self.update_tool_status(tool_key, tool_info)
             else:
-                widgets['path_edit'].clear()
+                widgets["path_edit"].clear()
                 self.update_tool_status(tool_key, tool_info)
 
         except Exception as e:
@@ -755,7 +741,7 @@ class SettingsTab(BaseTab):
             "x64dbg": ["x64dbg", "x32dbg", "x96dbg"],
             "nasm": ["nasm", "nasm.exe"],
             "masm": ["ml", "ml.exe", "ml64", "ml64.exe"],
-            "accesschk": ["accesschk", "accesschk.exe", "accesschk64.exe"]
+            "accesschk": ["accesschk", "accesschk.exe", "accesschk64.exe"],
         }
         return executables_map.get(tool_key, [tool_key])
 
@@ -1060,7 +1046,7 @@ class SettingsTab(BaseTab):
         # Tool path settings
         if hasattr(self, "tool_widgets"):
             for tool_key, widgets in self.tool_widgets.items():
-                path_value = widgets['path_edit'].text().strip()
+                path_value = widgets["path_edit"].text().strip()
                 self.settings[f"{tool_key}_path"] = path_value
 
         # Directory path settings
@@ -1115,7 +1101,7 @@ class SettingsTab(BaseTab):
         if hasattr(self, "tool_widgets"):
             for tool_key, widgets in self.tool_widgets.items():
                 path_value = self.settings.get(f"{tool_key}_path", "")
-                widgets['path_edit'].setText(path_value)
+                widgets["path_edit"].setText(path_value)
 
         # Update directory path widgets
         for dir_key in ["output_directory", "reports_directory", "scripts_directory"]:

@@ -134,6 +134,7 @@ class SecretsManager:
         Uses relative path to Intellicrack root for all platforms to ensure consistency.
         """
         import intellicrack
+
         root = Path(intellicrack.__file__).parent.parent
         return root / "config" / "secrets"
 
@@ -145,6 +146,7 @@ class SecretsManager:
 
         # Priority 1: Check unified config directory first
         import intellicrack
+
         root = Path(intellicrack.__file__).parent.parent
         unified_config_dir = root / "config"
         unified_env_file = unified_config_dir / ".env"

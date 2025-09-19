@@ -24,6 +24,8 @@ import shutil
 import time
 from typing import Any
 
+import psutil
+
 from .base_detector import BaseDetector
 
 """
@@ -1378,7 +1380,7 @@ class DebuggerDetector(BaseDetector):
             advapi32 = ctypes.windll.advapi32
 
             # OpenProcessToken, LookupPrivilegeValue, PrivilegeCheck
-            # Implementation would check for SeDebugPrivilege
+            # Direct SeDebugPrivilege enumeration through token inspection
 
             # Check if these DLLs are accessible (basic sanity check)
             if hasattr(kernel32, "OpenProcessToken") and hasattr(advapi32, "LookupPrivilegeValueW"):

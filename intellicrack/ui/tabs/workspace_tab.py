@@ -138,7 +138,9 @@ class WorkspaceTab(QWidget):
         actions_layout = QHBoxLayout()
 
         self.new_project_btn = QPushButton("New Project")
-        self.new_project_btn.setToolTip("Create a new analysis project with organized directory structure for binaries, scripts, and reports")
+        self.new_project_btn.setToolTip(
+            "Create a new analysis project with organized directory structure for binaries, scripts, and reports"
+        )
         self.new_project_btn.clicked.connect(self.create_new_project)
         actions_layout.addWidget(self.new_project_btn)
 
@@ -208,7 +210,9 @@ class WorkspaceTab(QWidget):
         actions_layout.addWidget(self.load_binary_btn)
 
         self.analyze_binary_btn = QPushButton("Quick Analysis")
-        self.analyze_binary_btn.setToolTip("Perform AI-powered rapid analysis to identify architecture, protections, and comprehensive binary characteristics with pattern recognition")
+        self.analyze_binary_btn.setToolTip(
+            "Perform AI-powered rapid analysis to identify architecture, protections, and comprehensive binary characteristics with pattern recognition"
+        )
         self.analyze_binary_btn.clicked.connect(self.quick_analyze_binary)
         self.analyze_binary_btn.setEnabled(False)
         actions_layout.addWidget(self.analyze_binary_btn)
@@ -231,7 +235,9 @@ class WorkspaceTab(QWidget):
         # File tree
         self.file_tree = QTreeWidget()
         self.file_tree.setHeaderLabels(["Name", "Type", "Size", "Modified"])
-        self.file_tree.setToolTip("Project file browser showing all files in the current project. Right-click files for context menu options")
+        self.file_tree.setToolTip(
+            "Project file browser showing all files in the current project. Right-click files for context menu options"
+        )
         self.file_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.file_tree.customContextMenuRequested.connect(self.show_file_context_menu)
         layout.addWidget(self.file_tree)

@@ -339,9 +339,24 @@ class ResultSerializer:
         version = struct.unpack("H", data[4:6])[0]
         data_length = struct.unpack("I", data[6:10])[0]
 
-        # Extract data
+        # Validate protocol version (support versions 1-3)
+        SUPPORTED_VERSIONS = [1, 2, 3]
+        if version not in SUPPORTED_VERSIONS:
+            raise ValueError(f"Unsupported protocol version: {version}. Supported: {SUPPORTED_VERSIONS}")
+
+        # Extract data with version-specific handling
         data_bytes = data[10 : 10 + data_length]
-        return msgpack.unpackb(data_bytes, raw=False)
+
+        # Version-specific deserialization
+        if version == 1:
+            # Version 1: Basic msgpack
+            return msgpack.unpackb(data_bytes, raw=False)
+        elif version == 2:
+            # Version 2: msgpack with strict_map_key
+            return msgpack.unpackb(data_bytes, raw=False, strict_map_key=False)
+        else:
+            # Version 3: msgpack with timestamp support
+            return msgpack.unpackb(data_bytes, raw=False, timestamp=3)
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""

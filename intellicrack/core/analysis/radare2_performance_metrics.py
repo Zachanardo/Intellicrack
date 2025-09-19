@@ -21,12 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import logging
-import psutil
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 try:
     import r2pipe
@@ -39,6 +40,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OperationMetrics:
     """Metrics for a single r2 operation."""
+
     operation_name: str
     start_time: float
     end_time: Optional[float] = None
@@ -56,6 +58,7 @@ class OperationMetrics:
 @dataclass
 class SessionMetrics:
     """Aggregated metrics for an r2 session."""
+
     session_id: str
     start_time: datetime
     total_operations: int = 0
@@ -92,12 +95,12 @@ class R2PerformanceMonitor:
 
         # Performance thresholds
         self.thresholds = {
-            'operation_duration_warn_ms': 5000,
-            'operation_duration_critical_ms': 10000,
-            'memory_usage_warn_mb': 500,
-            'memory_usage_critical_mb': 1000,
-            'cpu_usage_warn_percent': 70,
-            'cpu_usage_critical_percent': 90
+            "operation_duration_warn_ms": 5000,
+            "operation_duration_critical_ms": 10000,
+            "memory_usage_warn_mb": 500,
+            "memory_usage_critical_mb": 1000,
+            "cpu_usage_warn_percent": 70,
+            "cpu_usage_critical_percent": 90,
         }
 
         # Historical data
@@ -117,10 +120,7 @@ class R2PerformanceMonitor:
             if self.current_session:
                 self.end_session()
 
-            self.current_session = SessionMetrics(
-                session_id=session_id,
-                start_time=datetime.now()
-            )
+            self.current_session = SessionMetrics(session_id=session_id, start_time=datetime.now())
 
             if self.enable_real_time:
                 self._start_monitoring()
@@ -169,10 +169,7 @@ class R2PerformanceMonitor:
         Returns:
             New OperationMetrics object
         """
-        metrics = OperationMetrics(
-            operation_name=operation_name,
-            start_time=time.time()
-        )
+        metrics = OperationMetrics(operation_name=operation_name, start_time=time.time())
 
         # Capture initial memory
         if self.process_monitor:
@@ -190,9 +187,9 @@ class R2PerformanceMonitor:
         self.logger.debug(f"Started operation: {operation_name}")
         return metrics
 
-    def end_operation(self, operation_metrics: OperationMetrics,
-                     success: bool = True, error_message: Optional[str] = None,
-                     bytes_processed: int = 0) -> OperationMetrics:
+    def end_operation(
+        self, operation_metrics: OperationMetrics, success: bool = True, error_message: Optional[str] = None, bytes_processed: int = 0
+    ) -> OperationMetrics:
         """End tracking an operation.
 
         Args:
@@ -245,8 +242,9 @@ class R2PerformanceMonitor:
         # Check thresholds
         self._check_thresholds(operation_metrics)
 
-        self.logger.debug(f"Ended operation: {operation_metrics.operation_name} "
-                         f"(duration: {operation_metrics.duration_ms:.2f}ms, success: {success})")
+        self.logger.debug(
+            f"Ended operation: {operation_metrics.operation_name} (duration: {operation_metrics.duration_ms:.2f}ms, success: {success})"
+        )
 
         return operation_metrics
 
@@ -273,18 +271,18 @@ class R2PerformanceMonitor:
                 return {}
 
             return {
-                'session_id': self.current_session.session_id,
-                'uptime_seconds': (datetime.now() - self.current_session.start_time).total_seconds(),
-                'total_operations': self.current_session.total_operations,
-                'successful_operations': self.current_session.successful_operations,
-                'failed_operations': self.current_session.failed_operations,
-                'success_rate': self.current_session.successful_operations / max(1, self.current_session.total_operations),
-                'average_duration_ms': self.current_session.average_duration_ms,
-                'peak_memory_mb': self.current_session.peak_memory_mb,
-                'average_cpu_percent': self.current_session.average_cpu_percent,
-                'cache_hit_rate': self.current_session.cache_hit_rate,
-                'total_bytes_processed': self.current_session.total_bytes_processed,
-                'active_operations': len(self.operation_stack)
+                "session_id": self.current_session.session_id,
+                "uptime_seconds": (datetime.now() - self.current_session.start_time).total_seconds(),
+                "total_operations": self.current_session.total_operations,
+                "successful_operations": self.current_session.successful_operations,
+                "failed_operations": self.current_session.failed_operations,
+                "success_rate": self.current_session.successful_operations / max(1, self.current_session.total_operations),
+                "average_duration_ms": self.current_session.average_duration_ms,
+                "peak_memory_mb": self.current_session.peak_memory_mb,
+                "average_cpu_percent": self.current_session.average_cpu_percent,
+                "cache_hit_rate": self.current_session.cache_hit_rate,
+                "total_bytes_processed": self.current_session.total_bytes_processed,
+                "active_operations": len(self.operation_stack),
             }
 
     def get_operation_statistics(self) -> Dict[str, Any]:
@@ -311,12 +309,12 @@ class R2PerformanceMonitor:
                 durations = [op.duration_ms for op in ops if op.duration_ms is not None]
                 if durations:
                     stats[name] = {
-                        'count': len(ops),
-                        'total_ms': sum(durations),
-                        'average_ms': sum(durations) / len(durations),
-                        'min_ms': min(durations),
-                        'max_ms': max(durations),
-                        'success_rate': len([op for op in ops if op.success]) / len(ops)
+                        "count": len(ops),
+                        "total_ms": sum(durations),
+                        "average_ms": sum(durations) / len(durations),
+                        "min_ms": min(durations),
+                        "max_ms": max(durations),
+                        "success_rate": len([op for op in ops if op.success]) / len(ops),
                     }
 
             return stats
@@ -335,21 +333,21 @@ class R2PerformanceMonitor:
         if self.process_monitor:
             try:
                 system_metrics = {
-                    'cpu_percent': self.process_monitor.cpu_percent(),
-                    'memory_mb': self.process_monitor.memory_info().rss / (1024 * 1024),
-                    'num_threads': self.process_monitor.num_threads(),
-                    'open_files': len(self.process_monitor.open_files())
+                    "cpu_percent": self.process_monitor.cpu_percent(),
+                    "memory_mb": self.process_monitor.memory_info().rss / (1024 * 1024),
+                    "num_threads": self.process_monitor.num_threads(),
+                    "open_files": len(self.process_monitor.open_files()),
                 }
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 self.logger.warning(f"Failed to get system metrics: {e}")
 
         return {
-            'timestamp': datetime.now().isoformat(),
-            'current_session': current,
-            'operation_statistics': operations,
-            'system_metrics': system_metrics,
-            'thresholds': self.thresholds,
-            'historical_sessions': len(self.historical_sessions)
+            "timestamp": datetime.now().isoformat(),
+            "current_session": current,
+            "operation_statistics": operations,
+            "system_metrics": system_metrics,
+            "thresholds": self.thresholds,
+            "historical_sessions": len(self.historical_sessions),
         }
 
     def _start_monitoring(self):
@@ -397,9 +395,8 @@ class R2PerformanceMonitor:
                     current_time = time.time()
                     for op in self.operation_stack:
                         duration_ms = (current_time - op.start_time) * 1000
-                        if duration_ms > self.thresholds['operation_duration_critical_ms']:
-                            self.logger.warning(f"Operation '{op.operation_name}' "
-                                              f"exceeds critical duration: {duration_ms:.0f}ms")
+                        if duration_ms > self.thresholds["operation_duration_critical_ms"]:
+                            self.logger.warning(f"Operation '{op.operation_name}' exceeds critical duration: {duration_ms:.0f}ms")
 
             except Exception as e:
                 self.logger.error(f"Error in monitoring loop: {e}")
@@ -413,18 +410,16 @@ class R2PerformanceMonitor:
             metrics: Operation metrics to check
         """
         if metrics.duration_ms:
-            if metrics.duration_ms > self.thresholds['operation_duration_critical_ms']:
-                self.logger.warning(f"Operation '{metrics.operation_name}' exceeded critical duration: "
-                                  f"{metrics.duration_ms:.0f}ms")
-            elif metrics.duration_ms > self.thresholds['operation_duration_warn_ms']:
-                self.logger.info(f"Operation '{metrics.operation_name}' exceeded warning duration: "
-                                f"{metrics.duration_ms:.0f}ms")
+            if metrics.duration_ms > self.thresholds["operation_duration_critical_ms"]:
+                self.logger.warning(f"Operation '{metrics.operation_name}' exceeded critical duration: {metrics.duration_ms:.0f}ms")
+            elif metrics.duration_ms > self.thresholds["operation_duration_warn_ms"]:
+                self.logger.info(f"Operation '{metrics.operation_name}' exceeded warning duration: {metrics.duration_ms:.0f}ms")
 
         if metrics.memory_after:
             memory_mb = metrics.memory_after / (1024 * 1024)
-            if memory_mb > self.thresholds['memory_usage_critical_mb']:
+            if memory_mb > self.thresholds["memory_usage_critical_mb"]:
                 self.logger.warning(f"Memory usage critical: {memory_mb:.0f}MB")
-            elif memory_mb > self.thresholds['memory_usage_warn_mb']:
+            elif memory_mb > self.thresholds["memory_usage_warn_mb"]:
                 self.logger.info(f"Memory usage warning: {memory_mb:.0f}MB")
 
     def export_metrics(self, filepath: str):
@@ -441,7 +436,7 @@ class R2PerformanceMonitor:
                 return obj.isoformat()
             return obj
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report, f, indent=2, default=convert_datetime)
 
         self.logger.info(f"Exported metrics to {filepath}")

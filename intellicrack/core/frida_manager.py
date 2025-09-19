@@ -24,7 +24,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
 from .frida_constants import HookCategory, ProtectionType
@@ -2448,10 +2448,7 @@ class FridaManager:
                 "successful": self.logger.stats["bypasses_successful"],
                 "success_rate": self.logger.stats.get("bypass_success_rate", 0),
             },
-            "script_outputs": {
-                script_name: len(outputs)
-                for script_name, outputs in self.script_outputs.items()
-            }
+            "script_outputs": {script_name: len(outputs) for script_name, outputs in self.script_outputs.items()},
         }
 
         summary_file = Path(log_dir) / "analysis_summary.json"
@@ -2476,7 +2473,7 @@ class FridaManager:
             "script_name": script_name,
             "pid": output.get("pid", None),
             "process_name": output.get("process_name", None),
-            "data": output
+            "data": output,
         }
 
         self.script_outputs[script_name].append(output_with_metadata)

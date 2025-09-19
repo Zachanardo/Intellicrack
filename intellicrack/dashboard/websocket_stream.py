@@ -94,6 +94,7 @@ class WebSocketEventStream:
         self.host = host
         self.port = port
         self.clients: Set[WebSocketServerProtocol] = set()
+        self.client_registry: Dict[WebSocketServerProtocol, Dict[str, Any]] = {}
         self.event_queue: deque = deque(maxlen=10000)
         self.event_handlers: Dict[EventType, List[Callable]] = {}
         self.sessions: Dict[str, Dict[str, Any]] = {}
@@ -145,12 +146,18 @@ class WebSocketEventStream:
             "subscriptions": set(),
         }
 
-        # Add to clients
+        # Add to clients and registry
         self.clients.add(websocket)
+        self.client_registry[websocket] = client_info
         self.stats["clients_connected"] += 1
         self.stats["clients_total"] += 1
 
-        logger.info(f"Client {client_id} connected from {websocket.remote_address}")
+        logger.info(f"Client {client_id} connected from {websocket.remote_address} to path {path}")
+
+        # Send initial connection confirmation
+        await websocket.send(
+            json.dumps({"type": "connection_established", "client_id": client_id, "timestamp": client_info["connected_at"]})
+        )
 
         # Send welcome message
         await self._send_welcome(websocket, client_id)
@@ -167,6 +174,8 @@ class WebSocketEventStream:
         finally:
             # Remove client
             self.clients.discard(websocket)
+            if websocket in self.client_registry:
+                del self.client_registry[websocket]
             self.stats["clients_connected"] -= 1
 
             # Clean up filters and subscriptions

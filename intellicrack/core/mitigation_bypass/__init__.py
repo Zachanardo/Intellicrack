@@ -24,6 +24,7 @@ from .bypass_base import MitigationBypassBase
 from .bypass_engine import BypassEngine
 from .cfi_bypass import CFIBypass
 from .dep_bypass import DEPBypass
+from .stack_canary_bypass import StackCanaryBypass
 
 __all__ = [
     "ASLRBypass",
@@ -31,4 +32,5 @@ __all__ = [
     "BypassEngine",
     "CFIBypass",
     "DEPBypass",
+    "StackCanaryBypass",
 ]

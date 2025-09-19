@@ -1544,6 +1544,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
     try:
         # Create reports directory if it doesn't exist
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent.parent
         reports_dir = project_root / "data" / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)

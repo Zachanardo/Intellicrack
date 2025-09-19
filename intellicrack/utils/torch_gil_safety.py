@@ -162,6 +162,7 @@ def initialize_gil_safety():
 
         if not launcher_env:
             import warnings
+
             warnings.warn(
                 "GIL safety initialization called from non-main thread. This may cause pybind11 errors.",
                 RuntimeWarning,

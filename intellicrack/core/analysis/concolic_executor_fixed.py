@@ -343,3 +343,15 @@ class ConcolicExecutionEngine:
 
         # Similar implementation to angr but using manticore API
         return {"success": False, "error": "Manticore license bypass not implemented"}
+
+
+# Adding exports to concolic_executor_fixed.py
+
+__all__ = [
+    "ConcolicExecutionEngine",
+    "SYMBOLIC_ENGINE",
+    "SYMBOLIC_ENGINE_NAME",
+    "ANGR_AVAILABLE",
+    "MANTICORE_AVAILABLE",
+    "SIMCONCOLIC_AVAILABLE",
+]

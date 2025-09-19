@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 
-class FileApprovalDialog(QDialog):
+class FileApprovalDialog(QDialog if QDialog is not None else object):
     """Dialog for requesting user approval for AI file operations."""
 
     def __init__(self, operation_type: str, details: str, parent=None):

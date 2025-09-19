@@ -787,7 +787,9 @@ class AdvancedToolDiscovery:
             if sys.platform == "win32":
                 paths.extend(
                     [
-                        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"),  # Primary location
+                        os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"
+                        ),  # Primary location
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",

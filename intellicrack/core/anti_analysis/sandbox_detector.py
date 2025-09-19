@@ -23,7 +23,10 @@ import shutil
 import socket
 import subprocess
 import time
+import uuid
 from typing import Any
+
+import psutil
 
 from .base_detector import BaseDetector
 
@@ -530,7 +533,6 @@ class SandboxDetector(BaseDetector):
     def _profile_system(self):
         """Profile the current system to establish baseline."""
         import hashlib
-        import uuid
 
         profile = {
             "timestamp": psutil.time.time(),

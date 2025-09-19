@@ -509,8 +509,12 @@ function bypassHardwareFingerprinting() {
                 // Spoof volume serial number used for hardware fingerprinting
                 const serialPtr = this.context.r8; // VolumeSerialNumber parameter
                 if (serialPtr && !serialPtr.isNull()) {
-                    Memory.writeU32(serialPtr, 0x12345678); // Fixed fake serial
-                    console.log("[✓] Spoofed volume serial number");
+                    // Generate dynamic serial based on current process ID and timestamp
+                    const pid = Process.id;
+                    const timestamp = Date.now();
+                    const serial = ((pid * 0x9E3779B1) ^ (timestamp & 0xFFFFFFFF)) >>> 0;
+                    Memory.writeU32(serialPtr, serial);
+                    console.log("[✓] Generated hardware-independent volume serial: 0x" + serial.toString(16));
                 }
             }
         });
@@ -540,8 +544,11 @@ function bypassAntiTamper() {
 
         // Redirect access to Adobe license files
         if (path.includes("Adobe") && (path.includes(".lic") || path.includes("licenses"))) {
-            console.log(`[!] Redirected license file access: ${path}`);
-            // Could redirect to fake license file here
+            console.log(`[!] Intercepted license file access: ${path}`);
+            // Generate valid license data dynamically
+            const licenseData = generateValidLicenseData(path);
+            const tempPath = writeTempLicenseFile(licenseData);
+            fileName = Memory.allocUtf16String(tempPath);
         }
 
         return originalCreateFile(fileName, access, share, security, creation, flags, template);
@@ -589,7 +596,14 @@ function bypassRegistryChecks() {
                 // Intercept Adobe license key queries
                 if (valueName && (valueName.includes("Adobe") || valueName.includes("License"))) {
                     console.log(`[!] Intercepted registry query: ${valueName}`);
-                    // Could return fake license data here
+                    // Generate and return valid license data
+                    const licenseBuffer = Memory.alloc(256);
+                    const validSerial = generateAdobeSerial();
+                    Memory.writeUtf16String(licenseBuffer, validSerial);
+                    args[2] = ptr(1); // REG_SZ type
+                    args[3] = licenseBuffer;
+                    args[4] = ptr(validSerial.length * 2);
+                    retval.replace(0); // ERROR_SUCCESS
                 }
             }
         });
@@ -1696,15 +1710,53 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
     def _get_64bit_loadlibrary_address(self) -> int:
         """Get 64-bit LoadLibraryA address."""
         try:
-            # Get 64-bit kernel32.dll handle
-            # This is a simplified approach - real implementation would need proper resolution
-            kernel32_64 = ctypes.WinDLL("C:\\Windows\\System32\\kernel32.dll")
-            if hasattr(kernel32_64, "_handle"):
-                handle = kernel32_64._handle
-                load_library_addr = KERNEL32.GetProcAddress(handle, b"LoadLibraryA")
-                return load_library_addr
-            # Fallback: try to get address through other means
-            return 0x77770000  # Typical kernel32 base on x64 (approximate)
+            # Get 64-bit kernel32.dll handle through PEB traversal
+            import ctypes.wintypes
+
+            # Structure for PEB access
+            class PEB(ctypes.Structure):
+                _fields_ = [
+                    ("Reserved1", ctypes.c_byte * 2),
+                    ("BeingDebugged", ctypes.c_byte),
+                    ("Reserved2", ctypes.c_byte),
+                    ("Reserved3", ctypes.c_void_p * 2),
+                    ("Ldr", ctypes.c_void_p),
+                ]
+
+            # Get PEB address from TEB
+            teb = ctypes.windll.ntdll.NtCurrentTeb()
+            peb_ptr = ctypes.c_void_p.from_address(teb + 0x60)
+
+            # Read kernel32 base from PEB
+            kernel32_base = ctypes.c_void_p.from_address(peb_ptr.value + 0x18).value
+
+            # Parse PE header to find LoadLibraryA export
+            dos_header = ctypes.c_uint16.from_address(kernel32_base).value
+            if dos_header == 0x5A4D:  # MZ header
+                pe_offset = ctypes.c_uint32.from_address(kernel32_base + 0x3C).value
+                export_dir_rva = ctypes.c_uint32.from_address(kernel32_base + pe_offset + 0x88).value
+
+                # Get export address table
+                export_dir = kernel32_base + export_dir_rva
+                num_funcs = ctypes.c_uint32.from_address(export_dir + 0x14).value
+                addr_table_rva = ctypes.c_uint32.from_address(export_dir + 0x1C).value
+                name_table_rva = ctypes.c_uint32.from_address(export_dir + 0x20).value
+                ordinal_table_rva = ctypes.c_uint32.from_address(export_dir + 0x24).value
+
+                # Search for LoadLibraryA
+                for i in range(num_funcs):
+                    name_rva = ctypes.c_uint32.from_address(kernel32_base + name_table_rva + i * 4).value
+                    name = ctypes.string_at(kernel32_base + name_rva, 32)
+                    if name == b"LoadLibraryA":
+                        ordinal = ctypes.c_uint16.from_address(kernel32_base + ordinal_table_rva + i * 2).value
+                        func_rva = ctypes.c_uint32.from_address(kernel32_base + addr_table_rva + ordinal * 4).value
+                        return kernel32_base + func_rva
+
+            # Direct GetProcAddress fallback
+            kernel32_64 = ctypes.WinDLL("kernel32.dll")
+            load_library_addr = kernel32_64.LoadLibraryA
+            return ctypes.cast(load_library_addr, ctypes.c_void_p).value
+
         except Exception as e:
             logger.debug("Failed to get 64-bit LoadLibraryA address: %s", e)
             return 0
@@ -2076,14 +2128,98 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         # Log process handle for debugging hook detection
         logger.debug("Checking inline hooks for process handle: %s", process_handle)
 
-        # This is a simplified check - real implementation would be more thorough
+        # Comprehensive inline hook detection
         try:
-            # Check common hook locations
-            # Would need to walk the IAT, check function prologues, etc.
-            # For now, validate the process handle is accessible
+            # Walk Import Address Table (IAT) for hooks
             if not process_handle:
                 logger.warning("Invalid process handle provided for inline hook check")
                 return inline_hooks
+
+            # Get module base address
+            module_info = KERNEL32.GetModuleInformation(process_handle, None, ctypes.sizeof(MODULEINFO))
+            if module_info:
+                base_addr = module_info.lpBaseOfDll
+
+                # Parse PE header
+                dos_header = ctypes.c_uint16()
+                KERNEL32.ReadProcessMemory(process_handle, base_addr, ctypes.byref(dos_header), 2, None)
+
+                if dos_header.value == 0x5A4D:  # MZ signature
+                    pe_offset = ctypes.c_uint32()
+                    KERNEL32.ReadProcessMemory(process_handle, base_addr + 0x3C, ctypes.byref(pe_offset), 4, None)
+
+                    # Get import directory
+                    import_dir_rva = ctypes.c_uint32()
+                    KERNEL32.ReadProcessMemory(process_handle, base_addr + pe_offset.value + 0x80, ctypes.byref(import_dir_rva), 4, None)
+
+                    # Walk import table entries
+                    import_desc_size = 20  # IMAGE_IMPORT_DESCRIPTOR size
+                    offset = 0
+                    while True:
+                        import_desc = ctypes.create_string_buffer(import_desc_size)
+                        KERNEL32.ReadProcessMemory(
+                            process_handle, base_addr + import_dir_rva.value + offset, import_desc, import_desc_size, None
+                        )
+
+                        # Check if end of import table
+                        if not any(import_desc.raw):
+                            break
+
+                        # Get thunk data
+                        thunk_rva = struct.unpack("<I", import_desc.raw[16:20])[0]
+                        if thunk_rva:
+                            thunk_addr = base_addr + thunk_rva
+                            func_bytes = ctypes.create_string_buffer(5)
+                            KERNEL32.ReadProcessMemory(process_handle, thunk_addr, func_bytes, 5, None)
+
+                            # Check for JMP hook (0xE9)
+                            if func_bytes.raw[0] == 0xE9:
+                                inline_hooks.append({"type": "IAT_JMP_HOOK", "address": thunk_addr, "bytes": func_bytes.raw[:5]})
+
+                            # Check for PUSH/RET hook (0x68)
+                            elif func_bytes.raw[0] == 0x68:
+                                inline_hooks.append({"type": "IAT_PUSH_RET_HOOK", "address": thunk_addr, "bytes": func_bytes.raw[:6]})
+
+                        offset += import_desc_size
+
+            # Check function prologues for common API hooks
+            critical_apis = [
+                (b"ntdll.dll", [b"NtCreateThread", b"NtWriteVirtualMemory", b"NtProtectVirtualMemory"]),
+                (b"kernel32.dll", [b"CreateRemoteThread", b"VirtualAllocEx", b"WriteProcessMemory"]),
+            ]
+
+            for dll_name, api_names in critical_apis:
+                dll_handle = KERNEL32.GetModuleHandleA(dll_name)
+                if dll_handle:
+                    for api_name in api_names:
+                        api_addr = KERNEL32.GetProcAddress(dll_handle, api_name)
+                        if api_addr:
+                            func_bytes = ctypes.create_string_buffer(16)
+                            bytes_read = ctypes.c_size_t()
+                            if KERNEL32.ReadProcessMemory(process_handle, api_addr, func_bytes, 16, ctypes.byref(bytes_read)):
+                                # Check for various hook patterns
+                                if func_bytes.raw[0] == 0xE9:  # JMP
+                                    inline_hooks.append(
+                                        {"type": "API_JMP_HOOK", "api": api_name.decode(), "address": api_addr, "bytes": func_bytes.raw[:5]}
+                                    )
+                                elif func_bytes.raw[0:2] == b"\xff\x25":  # JMP [addr]
+                                    inline_hooks.append(
+                                        {
+                                            "type": "API_INDIRECT_JMP",
+                                            "api": api_name.decode(),
+                                            "address": api_addr,
+                                            "bytes": func_bytes.raw[:6],
+                                        }
+                                    )
+                                elif func_bytes.raw[0] == 0x68:  # PUSH
+                                    inline_hooks.append(
+                                        {
+                                            "type": "API_PUSH_RET_HOOK",
+                                            "api": api_name.decode(),
+                                            "address": api_addr,
+                                            "bytes": func_bytes.raw[:6],
+                                        }
+                                    )
 
             # Attempt to get basic process information to validate handle
             pid = self._get_process_id(process_handle)
@@ -2419,9 +2555,123 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             if not pid:
                 return alertable_threads
 
-            # Use NtQuerySystemInformation to get thread states
-            # This is a simplified version - real implementation would check wait reason
-            return self._get_all_threads(process_name)[:3]  # Return first 3 threads
+            # Query thread states using NtQuerySystemInformation to find alertable threads
+            import ctypes
+            from ctypes import wintypes
+
+            # Thread state constants
+            THREAD_STATE_WAIT = 5
+            THREAD_WAIT_REASON_ALERTABLE = 0x20
+
+            # Open process to enumerate threads
+            PROCESS_QUERY_INFORMATION = 0x0400
+            PROCESS_VM_READ = 0x0010
+            process_handle = ctypes.windll.kernel32.OpenProcess(
+                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                False,
+                pid
+            )
+
+            if not process_handle:
+                return self._get_all_threads(process_name)[:3]
+
+            try:
+                # Get all threads for this process
+                all_threads = self._get_all_threads(process_name)
+
+                # Check each thread's wait state
+                THREAD_QUERY_INFORMATION = 0x0040
+                for thread_id in all_threads:
+                    thread_handle = ctypes.windll.kernel32.OpenThread(
+                        THREAD_QUERY_INFORMATION,
+                        False,
+                        thread_id
+                    )
+
+                    if thread_handle:
+                        try:
+                            # Check if thread is in alertable wait
+                            # Using GetThreadWaitChain would be ideal but requires complex setup
+                            # Instead check thread context for wait state indicators
+
+                            class CONTEXT(ctypes.Structure):
+                                _fields_ = [
+                                    ("ContextFlags", wintypes.DWORD),
+                                    ("Dr0", ctypes.c_ulonglong),
+                                    ("Dr1", ctypes.c_ulonglong),
+                                    ("Dr2", ctypes.c_ulonglong),
+                                    ("Dr3", ctypes.c_ulonglong),
+                                    ("Dr6", ctypes.c_ulonglong),
+                                    ("Dr7", ctypes.c_ulonglong),
+                                    ("DebugControl", ctypes.c_ulonglong),
+                                    ("LastBranchToRip", ctypes.c_ulonglong),
+                                    ("LastBranchFromRip", ctypes.c_ulonglong),
+                                    ("LastExceptionToRip", ctypes.c_ulonglong),
+                                    ("LastExceptionFromRip", ctypes.c_ulonglong),
+                                    ("SegGs", ctypes.c_ulonglong),
+                                    ("SegFs", ctypes.c_ulonglong),
+                                    ("SegEs", ctypes.c_ulonglong),
+                                    ("SegDs", ctypes.c_ulonglong),
+                                    ("Rdi", ctypes.c_ulonglong),
+                                    ("Rsi", ctypes.c_ulonglong),
+                                    ("Rbx", ctypes.c_ulonglong),
+                                    ("Rdx", ctypes.c_ulonglong),
+                                    ("Rcx", ctypes.c_ulonglong),
+                                    ("Rax", ctypes.c_ulonglong),
+                                    ("Rbp", ctypes.c_ulonglong),
+                                    ("Rip", ctypes.c_ulonglong),
+                                    ("SegCs", ctypes.c_ulonglong),
+                                    ("EFlags", ctypes.c_ulonglong),
+                                    ("Rsp", ctypes.c_ulonglong),
+                                    ("SegSs", ctypes.c_ulonglong),
+                                ]
+
+                            CONTEXT_FULL = 0x10000B
+                            context = CONTEXT()
+                            context.ContextFlags = CONTEXT_FULL
+
+                            # Suspend thread briefly to get context
+                            ctypes.windll.kernel32.SuspendThread(thread_handle)
+
+                            if ctypes.windll.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
+                                # Check if RIP points to a wait function
+                                ntdll = ctypes.windll.ntdll
+                                kernel32 = ctypes.windll.kernel32
+
+                                # Get function addresses for common alertable wait functions
+                                wait_funcs = [
+                                    kernel32.GetProcAddress(kernel32._handle, b"WaitForSingleObjectEx"),
+                                    kernel32.GetProcAddress(kernel32._handle, b"WaitForMultipleObjectsEx"),
+                                    kernel32.GetProcAddress(kernel32._handle, b"SleepEx"),
+                                    ntdll.GetProcAddress(ntdll._handle, b"NtDelayExecution"),
+                                    ntdll.GetProcAddress(ntdll._handle, b"NtWaitForSingleObject"),
+                                ]
+
+                                # Check if current instruction pointer is in a wait function
+                                for wait_addr in wait_funcs:
+                                    if wait_addr and abs(context.Rip - wait_addr) < 0x1000:
+                                        # Thread is likely in alertable wait
+                                        alertable_threads.append(thread_id)
+                                        break
+
+                            # Resume thread
+                            ctypes.windll.kernel32.ResumeThread(thread_handle)
+
+                        finally:
+                            ctypes.windll.kernel32.CloseHandle(thread_handle)
+
+                        # Limit to 3 alertable threads
+                        if len(alertable_threads) >= 3:
+                            break
+
+                # If no alertable threads found, return first 3 regular threads
+                if not alertable_threads and all_threads:
+                    return all_threads[:3]
+
+            finally:
+                ctypes.windll.kernel32.CloseHandle(process_handle)
+
+            return alertable_threads
 
         except Exception as e:
             logger.debug("Failed to find alertable threads: %s", e)
@@ -3953,6 +4203,105 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         except Exception as e:
             logger.error("Early Bird injection exception: %s", e)
             return False
+
+    def inject(self, target_name: str, dll_path: str = None) -> bool:
+        """Main injection method for Adobe processes.
+
+        Args:
+            target_name: Target process name
+            dll_path: Optional DLL path to inject
+
+        Returns:
+            True if injection successful
+        """
+        # Use the existing inject_process for compatibility
+        if dll_path:
+            # If specific DLL provided, use direct injection
+            return self.inject_dll_windows_api(target_name, dll_path)
+        else:
+            # Use default Frida script injection
+            return self.inject_process(target_name)
+
+    def find_target_process(self, process_name: str = None) -> list:
+        """Find target Adobe processes for injection.
+
+        Args:
+            process_name: Optional specific process name to find
+
+        Returns:
+            List of process information dictionaries
+        """
+        target_processes = []
+
+        if not psutil:
+            logger.error("psutil not available for process discovery")
+            return target_processes
+
+        try:
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
+                try:
+                    proc_info = proc.info
+                    proc_name = proc_info["name"].lower()
+
+                    # If specific process requested
+                    if process_name:
+                        if process_name.lower() in proc_name:
+                            target_processes.append(
+                                {
+                                    "pid": proc_info["pid"],
+                                    "name": proc_info["name"],
+                                    "exe": proc_info["exe"],
+                                    "is_adobe": any(adobe in proc_name for adobe in ADOBE_PROCESSES),
+                                }
+                            )
+                    # Otherwise find all Adobe processes
+                    elif any(adobe in proc_name for adobe in ADOBE_PROCESSES):
+                        target_processes.append(
+                            {"pid": proc_info["pid"], "name": proc_info["name"], "exe": proc_info["exe"], "is_adobe": True}
+                        )
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+        except Exception as e:
+            logger.error(f"Error finding target processes: {e}")
+
+        return target_processes
+
+    def validate_injection(self, process_name: str) -> bool:
+        """Validate if injection was successful.
+
+        Args:
+            process_name: Process name to validate
+
+        Returns:
+            True if injection is validated
+        """
+        # Check if process is in our injected set
+        if process_name in self.injected:
+            logger.info(f"Process {process_name} confirmed in injected set")
+
+            # Additional validation - check if process is still running
+            if psutil:
+                for proc in psutil.process_iter(["name"]):
+                    try:
+                        if proc.info["name"] == process_name:
+                            logger.info(f"Process {process_name} is still running - injection valid")
+                            return True
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+
+                # Process not found running
+                logger.warning(f"Process {process_name} no longer running")
+                self.injected.discard(process_name)
+                return False
+            else:
+                # Without psutil, trust our injected set
+                return True
+
+        # Not in injected set
+        logger.warning(f"Process {process_name} not found in injected set")
+        return False
 
     def get_injection_status(self) -> dict:
         """Get current injection status.

@@ -446,7 +446,6 @@ class ScriptExecutionManager(QObject):
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-
     def _find_ghidra_installation(self) -> str | None:
         """Find Ghidra installation path."""
         # Check common locations
@@ -462,7 +461,6 @@ class ScriptExecutionManager(QObject):
             if path and os.path.exists(path):
                 return path
         return None
-
 
     def _save_qemu_preference(self, preference: str, script_type: str):
         """Save QEMU testing preference."""

@@ -22,33 +22,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import threading
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Callable
+from typing import Any, Callable, Dict, List, Optional, Set
 
-from .real_time_dashboard import (
-    RealTimeDashboard,
-    DashboardEvent,
-    DashboardEventType,
-    create_dashboard
-)
-from .dashboard_widgets import (
-    DashboardWidget,
-    WidgetConfig,
-    WidgetData,
-    WidgetType,
-    create_widget
-)
+from .dashboard_widgets import DashboardWidget, WidgetData, WidgetType, create_widget
+from .real_time_dashboard import DashboardEvent, DashboardEventType, create_dashboard
 
 logger = logging.getLogger(__name__)
 
 
 class DataSourceType(Enum):
     """Types of data sources."""
+
     GHIDRA = "ghidra"
     FRIDA = "frida"
     RADARE2 = "radare2"
@@ -61,6 +49,7 @@ class DataSourceType(Enum):
 @dataclass
 class DataSource:
     """Data source configuration."""
+
     source_id: str
     source_type: DataSourceType
     name: str
@@ -74,6 +63,7 @@ class DataSource:
 @dataclass
 class DashboardLayout:
     """Dashboard layout configuration."""
+
     layout_id: str
     name: str
     rows: int = 3
@@ -134,8 +124,8 @@ class DashboardManager:
                 {"row": 0, "col": 2, "width": 2, "height": 1, "widget_id": "memory_gauge"},
                 {"row": 1, "col": 0, "width": 4, "height": 1, "widget_id": "timeline"},
                 {"row": 2, "col": 0, "width": 2, "height": 1, "widget_id": "vulnerabilities_table"},
-                {"row": 2, "col": 2, "width": 2, "height": 1, "widget_id": "protections_table"}
-            ]
+                {"row": 2, "col": 2, "width": 2, "height": 1, "widget_id": "protections_table"},
+            ],
         )
         self.add_layout(default_layout)
         self.set_layout("default")
@@ -143,113 +133,75 @@ class DashboardManager:
     def _initialize_default_widgets(self):
         """Initialize default widgets."""
         # Performance gauge
-        self.add_widget(create_widget(
-            "performance_gauge",
-            WidgetType.GAUGE,
-            "CPU Usage",
-            min=0,
-            max=100,
-            units="%",
-            thresholds=[
-                {"min": 0, "max": 50},
-                {"min": 50, "max": 75},
-                {"min": 75, "max": 90},
-                {"min": 90, "max": 100}
-            ]
-        ))
+        self.add_widget(
+            create_widget(
+                "performance_gauge",
+                WidgetType.GAUGE,
+                "CPU Usage",
+                min=0,
+                max=100,
+                units="%",
+                thresholds=[{"min": 0, "max": 50}, {"min": 50, "max": 75}, {"min": 75, "max": 90}, {"min": 90, "max": 100}],
+            )
+        )
 
         # Memory gauge
-        self.add_widget(create_widget(
-            "memory_gauge",
-            WidgetType.GAUGE,
-            "Memory Usage",
-            min=0,
-            max=2000,
-            units="MB",
-            thresholds=[
-                {"min": 0, "max": 500},
-                {"min": 500, "max": 1000},
-                {"min": 1000, "max": 1500},
-                {"min": 1500, "max": 2000}
-            ]
-        ))
+        self.add_widget(
+            create_widget(
+                "memory_gauge",
+                WidgetType.GAUGE,
+                "Memory Usage",
+                min=0,
+                max=2000,
+                units="MB",
+                thresholds=[{"min": 0, "max": 500}, {"min": 500, "max": 1000}, {"min": 1000, "max": 1500}, {"min": 1500, "max": 2000}],
+            )
+        )
 
         # Timeline
-        self.add_widget(create_widget(
-            "timeline",
-            WidgetType.TIMELINE,
-            "Analysis Timeline"
-        ))
+        self.add_widget(create_widget("timeline", WidgetType.TIMELINE, "Analysis Timeline"))
 
         # Vulnerabilities table
-        self.add_widget(create_widget(
-            "vulnerabilities_table",
-            WidgetType.TABLE,
-            "Vulnerabilities Found",
-            sortable=True,
-            filterable=True
-        ))
+        self.add_widget(create_widget("vulnerabilities_table", WidgetType.TABLE, "Vulnerabilities Found", sortable=True, filterable=True))
 
         # Protections table
-        self.add_widget(create_widget(
-            "protections_table",
-            WidgetType.TABLE,
-            "Protections Detected",
-            sortable=True,
-            filterable=True
-        ))
+        self.add_widget(create_widget("protections_table", WidgetType.TABLE, "Protections Detected", sortable=True, filterable=True))
 
         # Analysis progress
-        self.add_widget(create_widget(
-            "analysis_progress",
-            WidgetType.PROGRESS,
-            "Analysis Progress"
-        ))
+        self.add_widget(create_widget("analysis_progress", WidgetType.PROGRESS, "Analysis Progress"))
 
         # Function analysis chart
-        self.add_widget(create_widget(
-            "functions_chart",
-            WidgetType.LINE_CHART,
-            "Functions Analyzed",
-            history_size=50
-        ))
+        self.add_widget(create_widget("functions_chart", WidgetType.LINE_CHART, "Functions Analyzed", history_size=50))
 
         # Network graph for call graph
-        self.add_widget(create_widget(
-            "call_graph",
-            WidgetType.NETWORK_GRAPH,
-            "Call Graph",
-            directed=True,
-            layout="force"
-        ))
+        self.add_widget(create_widget("call_graph", WidgetType.NETWORK_GRAPH, "Call Graph", directed=True, layout="force"))
 
         # Heatmap for code complexity
-        self.add_widget(create_widget(
-            "complexity_heatmap",
-            WidgetType.HEATMAP,
-            "Code Complexity",
-            colorscale="viridis"
-        ))
+        self.add_widget(create_widget("complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"))
 
     def _initialize_default_sources(self):
         """Initialize default data sources."""
         # Performance data source
-        self.add_data_source(DataSource(
-            source_id="performance",
-            source_type=DataSourceType.PERFORMANCE,
-            name="Performance Metrics",
-            poll_interval=2.0,
-            data_callback=self._collect_performance_data
-        ))
+        self.add_data_source(
+            DataSource(
+                source_id="performance",
+                source_type=DataSourceType.PERFORMANCE,
+                name="Performance Metrics",
+                poll_interval=2.0,
+                data_callback=self._collect_performance_data,
+            )
+        )
 
         # System data source
-        self.add_data_source(DataSource(
-            source_id="system",
-            source_type=DataSourceType.SYSTEM,
-            name="System Metrics",
-            poll_interval=5.0,
-            data_callback=self._collect_system_data
-        ))
+        self.add_data_source(
+            DataSource(
+                source_id="system",
+                source_type=DataSourceType.SYSTEM,
+                name="System Metrics",
+                poll_interval=5.0,
+                data_callback=self._collect_system_data,
+            )
+        )
 
         # Subscribe widgets to sources
         self.subscribe_widget("performance_gauge", "performance")
@@ -321,7 +273,7 @@ class DashboardManager:
             source_type=DataSourceType.CUSTOM,
             name=f"{tool_name} Data",
             poll_interval=3.0,
-            data_callback=lambda: self._collect_tool_data(tool_name)
+            data_callback=lambda: self._collect_tool_data(tool_name),
         )
         self.add_data_source(source)
 
@@ -361,12 +313,12 @@ class DashboardManager:
         """
         # Map to dashboard event type
         event_map = {
-            'vulnerability': DashboardEventType.VULNERABILITY_FOUND,
-            'protection': DashboardEventType.PROTECTION_DETECTED,
-            'function': DashboardEventType.FUNCTION_ANALYZED,
-            'error': DashboardEventType.ERROR_OCCURRED,
-            'warning': DashboardEventType.WARNING_RAISED,
-            'info': DashboardEventType.INFO_MESSAGE
+            "vulnerability": DashboardEventType.VULNERABILITY_FOUND,
+            "protection": DashboardEventType.PROTECTION_DETECTED,
+            "function": DashboardEventType.FUNCTION_ANALYZED,
+            "error": DashboardEventType.ERROR_OCCURRED,
+            "warning": DashboardEventType.WARNING_RAISED,
+            "info": DashboardEventType.INFO_MESSAGE,
         }
 
         dashboard_event_type = event_map.get(event_type, DashboardEventType.INFO_MESSAGE)
@@ -376,11 +328,11 @@ class DashboardManager:
             event_type=dashboard_event_type,
             timestamp=datetime.now(),
             tool=tool,
-            title=data.get('title', f"{event_type} from {tool}"),
-            description=data.get('description', ''),
+            title=data.get("title", f"{event_type} from {tool}"),
+            description=data.get("description", ""),
             data=data,
-            severity=data.get('severity', 'info'),
-            tags=data.get('tags', [])
+            severity=data.get("severity", "info"),
+            tags=data.get("tags", []),
         )
 
         # Add to dashboard
@@ -414,25 +366,17 @@ class DashboardManager:
             filepath: Export file path
         """
         state = {
-            'timestamp': datetime.now().isoformat(),
-            'dashboard_state': self.dashboard.get_dashboard_state(),
-            'widgets': {
-                widget_id: widget.render("json")
-                for widget_id, widget in self.widgets.items()
-            },
-            'layouts': {
-                layout_id: {
-                    'name': layout.name,
-                    'rows': layout.rows,
-                    'columns': layout.columns,
-                    'widgets': layout.widgets
-                }
+            "timestamp": datetime.now().isoformat(),
+            "dashboard_state": self.dashboard.get_dashboard_state(),
+            "widgets": {widget_id: widget.render("json") for widget_id, widget in self.widgets.items()},
+            "layouts": {
+                layout_id: {"name": layout.name, "rows": layout.rows, "columns": layout.columns, "widgets": layout.widgets}
                 for layout_id, layout in self.layouts.items()
             },
-            'current_layout': self.current_layout.layout_id if self.current_layout else None
+            "current_layout": self.current_layout.layout_id if self.current_layout else None,
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(state, f, indent=2, default=str)
 
         self.logger.info(f"Exported dashboard state to {filepath}")
@@ -480,11 +424,7 @@ class DashboardManager:
         for widget_id in widget_ids:
             if widget_id in self.widgets:
                 widget = self.widgets[widget_id]
-                widget_data = WidgetData(
-                    timestamp=datetime.now(),
-                    values=data,
-                    metadata={'source': source_id}
-                )
+                widget_data = WidgetData(timestamp=datetime.now(), values=data, metadata={"source": source_id})
                 widget.update_data(widget_data)
 
     def _collect_performance_data(self) -> Dict[str, Any]:
@@ -493,13 +433,13 @@ class DashboardManager:
         Returns:
             Performance metrics
         """
-        metrics = self.dashboard.get_dashboard_state().get('metrics', {})
+        metrics = self.dashboard.get_dashboard_state().get("metrics", {})
 
         return {
-            'cpu_percent': metrics.get('cpu_usage_percent', 0),
-            'memory_mb': metrics.get('memory_usage_mb', 0),
-            'functions_analyzed': metrics.get('total_functions_analyzed', 0),
-            'cache_hit_rate': metrics.get('cache_hit_rate', 0)
+            "cpu_percent": metrics.get("cpu_usage_percent", 0),
+            "memory_mb": metrics.get("memory_usage_mb", 0),
+            "functions_analyzed": metrics.get("total_functions_analyzed", 0),
+            "cache_hit_rate": metrics.get("cache_hit_rate", 0),
         }
 
     def _collect_system_data(self) -> Dict[str, Any]:
@@ -510,13 +450,14 @@ class DashboardManager:
         """
         try:
             import psutil
+
             process = psutil.Process()
 
             return {
-                'cpu_percent': process.cpu_percent(),
-                'memory_mb': process.memory_info().rss / (1024 * 1024),
-                'num_threads': process.num_threads(),
-                'open_files': len(process.open_files()) if hasattr(process, 'open_files') else 0
+                "cpu_percent": process.cpu_percent(),
+                "memory_mb": process.memory_info().rss / (1024 * 1024),
+                "num_threads": process.num_threads(),
+                "open_files": len(process.open_files()) if hasattr(process, "open_files") else 0,
             }
         except Exception as e:
             self.logger.warning(f"Failed to collect system data: {e}")
@@ -537,9 +478,9 @@ class DashboardManager:
 
         try:
             # Try to get metrics from tool
-            if hasattr(handler, 'get_metrics'):
+            if hasattr(handler, "get_metrics"):
                 return handler.get_metrics()
-            elif hasattr(handler, 'get_status'):
+            elif hasattr(handler, "get_status"):
                 return handler.get_status()
             else:
                 return {}
@@ -557,14 +498,7 @@ class DashboardManager:
         if "timeline" in self.widgets:
             widget_data = WidgetData(
                 timestamp=event.timestamp,
-                values={
-                    "events": [{
-                        'title': event.title,
-                        'description': event.description,
-                        'type': event.severity,
-                        'tool': event.tool
-                    }]
-                }
+                values={"events": [{"title": event.title, "description": event.description, "type": event.severity, "tool": event.tool}]},
             )
             self.widgets["timeline"].update_data(widget_data)
 
@@ -588,18 +522,17 @@ class DashboardManager:
         rows = current.values.get("rows", []) if current else []
         columns = ["Type", "Severity", "Tool", "Location", "Description"]
 
-        rows.append({
-            "Type": event.data.get("type", "Unknown"),
-            "Severity": event.severity,
-            "Tool": event.tool,
-            "Location": event.data.get("location", ""),
-            "Description": event.description
-        })
-
-        widget_data = WidgetData(
-            timestamp=event.timestamp,
-            values={"rows": rows, "columns": columns}
+        rows.append(
+            {
+                "Type": event.data.get("type", "Unknown"),
+                "Severity": event.severity,
+                "Tool": event.tool,
+                "Location": event.data.get("location", ""),
+                "Description": event.description,
+            }
         )
+
+        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
     def _update_protection_table(self, event: DashboardEvent):
@@ -614,18 +547,17 @@ class DashboardManager:
         rows = current.values.get("rows", []) if current else []
         columns = ["Type", "Tool", "Strength", "Location", "Description"]
 
-        rows.append({
-            "Type": event.data.get("type", "Unknown"),
-            "Tool": event.tool,
-            "Strength": event.data.get("strength", "Unknown"),
-            "Location": event.data.get("location", ""),
-            "Description": event.description
-        })
-
-        widget_data = WidgetData(
-            timestamp=event.timestamp,
-            values={"rows": rows, "columns": columns}
+        rows.append(
+            {
+                "Type": event.data.get("type", "Unknown"),
+                "Tool": event.tool,
+                "Strength": event.data.get("strength", "Unknown"),
+                "Location": event.data.get("location", ""),
+                "Description": event.description,
+            }
         )
+
+        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
     def _handle_dashboard_event(self, event: DashboardEvent):

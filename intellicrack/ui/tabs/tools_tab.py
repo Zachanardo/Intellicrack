@@ -467,16 +467,22 @@ class ToolsTab(BaseTab):
         frida_analysis_btn = QPushButton("Frida Analysis")
         frida_analysis_btn.clicked.connect(self.run_frida_analysis)
         frida_analysis_btn.setStyleSheet("font-weight: bold; color: #FF6B35;")
-        frida_analysis_btn.setToolTip("Dynamic binary instrumentation framework for real-time code injection, API hooking, and runtime manipulation")
+        frida_analysis_btn.setToolTip(
+            "Dynamic binary instrumentation framework for real-time code injection, API hooking, and runtime manipulation"
+        )
 
         symbolic_exec_btn = QPushButton("Symbolic Execution")
         symbolic_exec_btn.clicked.connect(self.run_symbolic_execution)
         symbolic_exec_btn.setStyleSheet("font-weight: bold; color: #2E86AB;")
-        symbolic_exec_btn.setToolTip("Explore multiple execution paths simultaneously using symbolic values to discover vulnerabilities and edge cases")
+        symbolic_exec_btn.setToolTip(
+            "Explore multiple execution paths simultaneously using symbolic values to discover vulnerabilities and edge cases"
+        )
 
         memory_forensics_btn = QPushButton("Memory Forensics")
         memory_forensics_btn.clicked.connect(self.run_memory_forensics)
-        memory_forensics_btn.setToolTip("Analyze memory dumps, heap structures, and runtime memory patterns for hidden data and exploitation vectors")
+        memory_forensics_btn.setToolTip(
+            "Analyze memory dumps, heap structures, and runtime memory patterns for hidden data and exploitation vectors"
+        )
 
         dynamic_layout.addWidget(frida_analysis_btn, 0, 0)
         dynamic_layout.addWidget(symbolic_exec_btn, 0, 1)
@@ -489,7 +495,9 @@ class ToolsTab(BaseTab):
         ghidra_analysis_btn = QPushButton("Ghidra Analysis")
         ghidra_analysis_btn.clicked.connect(self.run_ghidra_analysis)
         ghidra_analysis_btn.setStyleSheet("font-weight: bold; color: #7209B7;")
-        ghidra_analysis_btn.setToolTip("NSA's reverse engineering suite for decompilation, control flow analysis, and cross-references mapping")
+        ghidra_analysis_btn.setToolTip(
+            "NSA's reverse engineering suite for decompilation, control flow analysis, and cross-references mapping"
+        )
 
         protection_scan_btn = QPushButton("Protection Scanner")
         protection_scan_btn.clicked.connect(self.run_protection_scanner)
@@ -498,11 +506,15 @@ class ToolsTab(BaseTab):
 
         vulnerability_scan_btn = QPushButton("Vulnerability Engine")
         vulnerability_scan_btn.clicked.connect(self.run_vulnerability_engine)
-        vulnerability_scan_btn.setToolTip("Automated vulnerability scanning for buffer overflows, format strings, race conditions, and common weaknesses")
+        vulnerability_scan_btn.setToolTip(
+            "Automated vulnerability scanning for buffer overflows, format strings, race conditions, and common weaknesses"
+        )
 
         taint_analysis_btn = QPushButton("Taint Analysis")
         taint_analysis_btn.clicked.connect(self.run_taint_analysis)
-        taint_analysis_btn.setToolTip("Track data flow from untrusted sources to critical sinks to identify potential security vulnerabilities")
+        taint_analysis_btn.setToolTip(
+            "Track data flow from untrusted sources to critical sinks to identify potential security vulnerabilities"
+        )
 
         static_layout.addWidget(ghidra_analysis_btn, 0, 0)
         static_layout.addWidget(protection_scan_btn, 0, 1)
@@ -520,11 +532,15 @@ class ToolsTab(BaseTab):
 
         semantic_analysis_btn = QPushButton("Semantic Analysis")
         semantic_analysis_btn.clicked.connect(self.run_semantic_analysis)
-        semantic_analysis_btn.setToolTip("Use AI to understand code intent, identify algorithms, and recognize design patterns in decompiled code")
+        semantic_analysis_btn.setToolTip(
+            "Use AI to understand code intent, identify algorithms, and recognize design patterns in decompiled code"
+        )
 
         pattern_analysis_btn = QPushButton("Pattern Analysis")
         pattern_analysis_btn.clicked.connect(self.run_pattern_analysis)
-        pattern_analysis_btn.setToolTip("Machine learning-based detection of cryptographic routines, licensing checks, and protection patterns")
+        pattern_analysis_btn.setToolTip(
+            "Machine learning-based detection of cryptographic routines, licensing checks, and protection patterns"
+        )
 
         ai_layout.addWidget(ai_script_gen_btn, 0, 0)
         ai_layout.addWidget(semantic_analysis_btn, 0, 1)
@@ -542,7 +558,9 @@ class ToolsTab(BaseTab):
         payload_engine_btn = QPushButton("Payload Engine")
         payload_engine_btn.clicked.connect(self.run_payload_engine)
         payload_engine_btn.setStyleSheet("font-weight: bold; color: #FF8500;")
-        payload_engine_btn.setToolTip("Create, encode, and obfuscate exploitation payloads with bad character avoidance and size optimization")
+        payload_engine_btn.setToolTip(
+            "Create, encode, and obfuscate exploitation payloads with bad character avoidance and size optimization"
+        )
 
         shellcode_gen_btn = QPushButton("Shellcode Generator")
         shellcode_gen_btn.clicked.connect(self.run_shellcode_generator)
@@ -558,11 +576,15 @@ class ToolsTab(BaseTab):
 
         traffic_analysis_btn = QPushButton("Traffic Analysis")
         traffic_analysis_btn.clicked.connect(self.run_traffic_analysis)
-        traffic_analysis_btn.setToolTip("Capture and analyze network traffic to identify license servers, API calls, and communication protocols")
+        traffic_analysis_btn.setToolTip(
+            "Capture and analyze network traffic to identify license servers, API calls, and communication protocols"
+        )
 
         protocol_analysis_btn = QPushButton("Protocol Fingerprinting")
         protocol_analysis_btn.clicked.connect(self.run_protocol_analysis)
-        protocol_analysis_btn.setToolTip("Identify and decode proprietary protocols, license verification schemes, and encrypted communications")
+        protocol_analysis_btn.setToolTip(
+            "Identify and decode proprietary protocols, license verification schemes, and encrypted communications"
+        )
 
         network_layout.addWidget(traffic_analysis_btn, 0, 0)
         network_layout.addWidget(protocol_analysis_btn, 0, 1)
@@ -662,9 +684,15 @@ class ToolsTab(BaseTab):
         """Enable or disable tools that require a loaded binary."""
         # List of buttons that require a binary to be loaded
         binary_dependent_buttons = [
-            "file_info_btn", "file_hash_btn", "strings_btn",
-            "disassemble_btn", "decompile_btn", "ida_btn",
-            "ghidra_btn", "radare2_btn", "x64dbg_btn"
+            "file_info_btn",
+            "file_hash_btn",
+            "strings_btn",
+            "disassemble_btn",
+            "decompile_btn",
+            "ida_btn",
+            "ghidra_btn",
+            "radare2_btn",
+            "x64dbg_btn",
         ]
 
         for btn_name in binary_dependent_buttons:

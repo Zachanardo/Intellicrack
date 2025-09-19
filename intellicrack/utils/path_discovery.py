@@ -114,7 +114,6 @@ def _get_tool_search_paths(tool_name: str) -> list[str]:
                 ]
             )
 
-
     elif tool_name.lower() == "x64dbg":
         if system == "windows":
             paths.extend(

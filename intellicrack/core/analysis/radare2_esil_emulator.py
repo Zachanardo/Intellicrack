@@ -250,6 +250,15 @@ class RadareESILEmulator:
         mem_accesses = self._get_memory_accesses(inst_esil, inst_addr, new_registers)
         self.memory_accesses.extend(mem_accesses)
 
+        # Track control flow changes
+        control_flow_change = None
+        if new_pc != prev_pc + inst_info.get("size", 4):
+            control_flow_change = {
+                "from": prev_pc,
+                "to": new_pc,
+                "type": "jump" if "j" in inst_opcode.lower() else "call" if "call" in inst_opcode.lower() else "ret",
+            }
+
         # Check breakpoints
         if new_pc in self.breakpoints:
             bp = self.breakpoints[new_pc]
@@ -287,6 +296,7 @@ class RadareESILEmulator:
             "memory_accesses": mem_accesses,
             "new_pc": new_pc,
             "call_depth": len(self.call_stack),
+            "control_flow": control_flow_change,
         }
 
     def _get_register_state(self) -> Dict[str, int]:
@@ -331,7 +341,7 @@ class RadareESILEmulator:
                                     register_state=registers.copy(),
                                 )
                             )
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         pass
 
         if "=[" in esil:
@@ -357,7 +367,7 @@ class RadareESILEmulator:
                                         register_state=registers.copy(),
                                     )
                                 )
-                        except:
+                        except (ValueError, TypeError, AttributeError):
                             pass
 
         return accesses
@@ -375,14 +385,14 @@ class RadareESILEmulator:
         # Handle decimal values
         try:
             return int(expr)
-        except:
+        except (ValueError, TypeError, AttributeError):
             pass
 
         # Complex expression - use r2 to evaluate
         try:
             result = self.r2.cmd(f"?v {expr}")
             return int(result.strip())
-        except:
+        except (ValueError, TypeError, AttributeError):
             return None
 
     def _evaluate_condition(self, condition: str) -> bool:
@@ -420,7 +430,7 @@ class RadareESILEmulator:
 
             compiled = compile(node, "<string>", "eval")
             return eval(compiled, {"__builtins__": {}}, {})
-        except:
+        except (SyntaxError, NameError, TypeError, ValueError):
             return False
 
     def run_until(self, target: Union[int, str], max_steps: int = 10000) -> List[Dict[str, Any]]:
@@ -515,7 +525,7 @@ class RadareESILEmulator:
                     try:
                         arg_data = self.r2.cmd(f"pv @ {esp + 4 + i * 4}")
                         args.append(int(arg_data.strip()))
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         break
 
         elif self.arch == "arm":
