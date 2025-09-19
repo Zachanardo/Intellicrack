@@ -18,6 +18,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import re
 import struct
+import ctypes
+from ctypes import wintypes
 from typing import Any, Dict, List, Optional
 
 from .bypass_base import MitigationBypassBase
@@ -175,9 +177,6 @@ class StackCanaryBypass(MitigationBypassBase):
         if not process_handle or not format_input:
             return None
 
-        import ctypes
-        from ctypes import wintypes
-
         kernel32 = ctypes.windll.kernel32
 
         # Build format string to leak stack values
@@ -236,9 +235,6 @@ class StackCanaryBypass(MitigationBypassBase):
         if not process_handle:
             return None
 
-        import ctypes
-        from ctypes import wintypes
-
         kernel32 = ctypes.windll.kernel32
         canary_offset = 0x28 if target_info.get("arch") == "x86_64" else 0x14
 
@@ -256,9 +252,6 @@ class StackCanaryBypass(MitigationBypassBase):
 
     def _leak_via_partial_overwrite(self, target_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Leak canary byte-by-byte through partial overwrites."""
-        import ctypes
-        from ctypes import wintypes
-
         process_handle = target_info.get("process_handle")
         input_address = target_info.get("input_address")
         trigger_address = target_info.get("trigger_function_address")
@@ -316,9 +309,6 @@ class StackCanaryBypass(MitigationBypassBase):
 
         if not tls_base or not process_handle:
             return None
-
-        import ctypes
-        from ctypes import wintypes
 
         kernel32 = ctypes.windll.kernel32
 
