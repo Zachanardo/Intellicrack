@@ -34,6 +34,8 @@ MANIFEST
 
 # PyInstaller
 *.manifest
+# Exception for Windows application manifest required for build
+!intellicrack-launcher/intellicrack.exe.manifest
 *.spec
 
 # Installer logs
