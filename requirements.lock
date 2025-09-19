@@ -117,7 +117,7 @@ amqp==5.2.0
 kombu==5.5.2
 keyring==24.2.0
 jmespath==1.0.0
-hyperframe==6.0.0
+hyperframe==6.1.0
 
 # Task Management
 celery==5.5.3
