@@ -48,6 +48,7 @@ fn main() {
             }
         }
 
+        #[allow(non_snake_case)]
         match found_python {
             Some(p) => {
                 println!("cargo:warning=CI environment detected, using Python: {}", p.display());
@@ -119,145 +120,146 @@ fn main() {
 
         // Copy critical Python and runtime DLLs to target directory
         let dlls_to_copy = [
-        // Core Python DLLs
-        ("python312.dll", r"C:\Intellicrack\mamba_env\python312.dll"),
-        ("python3.dll", r"C:\Intellicrack\mamba_env\python3.dll"),
+            // Core Python DLLs
+            ("python312.dll", r"C:\Intellicrack\mamba_env\python312.dll"),
+            ("python3.dll", r"C:\Intellicrack\mamba_env\python3.dll"),
 
-        // Runtime DLLs
-        ("vcruntime140.dll", r"C:\Intellicrack\mamba_env\vcruntime140.dll"),
-        ("vcruntime140_1.dll", r"C:\Intellicrack\mamba_env\vcruntime140_1.dll"),
-        ("msvcp140.dll", r"C:\Intellicrack\mamba_env\msvcp140.dll"),
-        ("ucrtbase.dll", r"C:\Intellicrack\mamba_env\ucrtbase.dll"),
-        ("zlib.dll", r"C:\Intellicrack\mamba_env\zlib.dll"),
+            // Runtime DLLs
+            ("vcruntime140.dll", r"C:\Intellicrack\mamba_env\vcruntime140.dll"),
+            ("vcruntime140_1.dll", r"C:\Intellicrack\mamba_env\vcruntime140_1.dll"),
+            ("msvcp140.dll", r"C:\Intellicrack\mamba_env\msvcp140.dll"),
+            ("ucrtbase.dll", r"C:\Intellicrack\mamba_env\ucrtbase.dll"),
+            ("zlib.dll", r"C:\Intellicrack\mamba_env\zlib.dll"),
 
-        // Critical supporting libraries
-        ("sqlite3.dll", r"C:\Intellicrack\mamba_env\Library\bin\sqlite3.dll"),
-        ("libssl-3-x64.dll", r"C:\Intellicrack\mamba_env\Library\bin\libssl-3-x64.dll"),
-        ("libcrypto-3-x64.dll", r"C:\Intellicrack\mamba_env\Library\bin\libcrypto-3-x64.dll"),
-        ("libbz2.dll", r"C:\Intellicrack\mamba_env\Library\bin\libbz2.dll"),
-        ("ffi-8.dll", r"C:\Intellicrack\mamba_env\Library\bin\ffi-8.dll"),
-        ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
-        ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
+            // Critical supporting libraries
+            ("sqlite3.dll", r"C:\Intellicrack\mamba_env\Library\bin\sqlite3.dll"),
+            ("libssl-3-x64.dll", r"C:\Intellicrack\mamba_env\Library\bin\libssl-3-x64.dll"),
+            ("libcrypto-3-x64.dll", r"C:\Intellicrack\mamba_env\Library\bin\libcrypto-3-x64.dll"),
+            ("libbz2.dll", r"C:\Intellicrack\mamba_env\Library\bin\libbz2.dll"),
+            ("ffi-8.dll", r"C:\Intellicrack\mamba_env\Library\bin\ffi-8.dll"),
+            ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
+            ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
 
-        // XML parsing libraries (critical for pyexpat functionality)
-        ("libexpat.dll", r"C:\Intellicrack\mamba_env\Library\bin\libexpat.dll"),
+            // XML parsing libraries (critical for pyexpat functionality)
+            ("libexpat.dll", r"C:\Intellicrack\mamba_env\Library\bin\libexpat.dll"),
 
-        // Font and graphics libraries for matplotlib
-        ("freetype.dll", r"C:\Intellicrack\mamba_env\Library\bin\freetype.dll"),
-        ("fontconfig-1.dll", r"C:\Intellicrack\mamba_env\Library\bin\fontconfig-1.dll"),
-        ("libpng16.dll", r"C:\Intellicrack\mamba_env\Library\bin\libpng16.dll"),
+            // Font and graphics libraries for matplotlib
+            ("freetype.dll", r"C:\Intellicrack\mamba_env\Library\bin\freetype.dll"),
+            ("fontconfig-1.dll", r"C:\Intellicrack\mamba_env\Library\bin\fontconfig-1.dll"),
+            ("libpng16.dll", r"C:\Intellicrack\mamba_env\Library\bin\libpng16.dll"),
 
-        // Math libraries for scipy and numpy
-        ("libblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libblas.dll"),
-        ("libcblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libcblas.dll"),
-        ("liblapack.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapack.dll"),
-        ("liblapacke.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapacke.dll"),
+            // Math libraries for scipy and numpy
+            ("libblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libblas.dll"),
+            ("libcblas.dll", r"C:\Intellicrack\mamba_env\Library\bin\libcblas.dll"),
+            ("liblapack.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapack.dll"),
+            ("liblapacke.dll", r"C:\Intellicrack\mamba_env\Library\bin\liblapacke.dll"),
 
-        // Intel MKL libraries for high-performance math
-        ("mkl_core.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_core.2.dll"),
-        ("mkl_rt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_rt.2.dll"),
-        ("mkl_avx2.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_avx2.2.dll"),
-        ("mkl_avx512.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_avx512.2.dll"),
-        ("mkl_sequential.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_sequential.2.dll"),
-        ("mkl_intel_thread.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_intel_thread.2.dll"),
-        ("mkl_tbb_thread.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_tbb_thread.2.dll"),
-        ("mkl_def.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_def.2.dll"),
-        ("mkl_vml_avx2.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_avx2.2.dll"),
-        ("mkl_vml_avx512.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_avx512.2.dll"),
-        ("mkl_vml_def.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_def.2.dll"),
-        ("mkl_vml_cmpt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_cmpt.2.dll"),
-        ("mkl_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_mc3.2.dll"),
-        ("mkl_vml_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_mc3.2.dll"),
+            // Intel MKL libraries for high-performance math
+            ("mkl_core.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_core.2.dll"),
+            ("mkl_rt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_rt.2.dll"),
+            ("mkl_avx2.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_avx2.2.dll"),
+            ("mkl_avx512.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_avx512.2.dll"),
+            ("mkl_sequential.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_sequential.2.dll"),
+            ("mkl_intel_thread.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_intel_thread.2.dll"),
+            ("mkl_tbb_thread.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_tbb_thread.2.dll"),
+            ("mkl_def.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_def.2.dll"),
+            ("mkl_vml_avx2.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_avx2.2.dll"),
+            ("mkl_vml_avx512.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_avx512.2.dll"),
+            ("mkl_vml_def.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_def.2.dll"),
+            ("mkl_vml_cmpt.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_cmpt.2.dll"),
+            ("mkl_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_mc3.2.dll"),
+            ("mkl_vml_mc3.2.dll", r"C:\Intellicrack\mamba_env\Library\bin\mkl_vml_mc3.2.dll"),
 
-        // Intel threading libraries
-        ("libiomp5md.dll", r"C:\Intellicrack\mamba_env\Library\bin\libiomp5md.dll"),
-        ("tbb12.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbb12.dll"),
-        ("tbbmalloc.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc.dll"),
-        ("tbbmalloc_proxy.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc_proxy.dll"),
+            // Intel threading libraries
+            ("libiomp5md.dll", r"C:\Intellicrack\mamba_env\Library\bin\libiomp5md.dll"),
+            ("tbb12.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbb12.dll"),
+            ("tbbmalloc.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc.dll"),
+            ("tbbmalloc_proxy.dll", r"C:\Intellicrack\mamba_env\Library\bin\tbbmalloc_proxy.dll"),
 
-        // Tcl/Tk DLLs for _tkinter module
-        ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
-        ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
-    ];
+            // Tcl/Tk DLLs for _tkinter module
+            ("tcl86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tcl86t.dll"),
+            ("tk86t.dll", r"C:\Intellicrack\mamba_env\Library\bin\tk86t.dll"),
+        ];
 
-    // Copy Python extension modules (.pyd files)
-    let pyds_to_copy = [
-        ("_ctypes.pyd", r"C:\Intellicrack\mamba_env\DLLs\_ctypes.pyd"),
-        ("_sqlite3.pyd", r"C:\Intellicrack\mamba_env\DLLs\_sqlite3.pyd"),
-        ("_bz2.pyd", r"C:\Intellicrack\mamba_env\DLLs\_bz2.pyd"),
-        ("_ssl.pyd", r"C:\Intellicrack\mamba_env\DLLs\_ssl.pyd"),
-        ("_tkinter.pyd", r"C:\Intellicrack\mamba_env\DLLs\_tkinter.pyd"),
-        ("_hashlib.pyd", r"C:\Intellicrack\mamba_env\DLLs\_hashlib.pyd"),
-        ("select.pyd", r"C:\Intellicrack\mamba_env\DLLs\select.pyd"),
-        ("_socket.pyd", r"C:\Intellicrack\mamba_env\DLLs\_socket.pyd"),
-        ("unicodedata.pyd", r"C:\Intellicrack\mamba_env\DLLs\unicodedata.pyd"),
-        ("_lzma.pyd", r"C:\Intellicrack\mamba_env\DLLs\_lzma.pyd"),
+        // Copy Python extension modules (.pyd files)
+        let pyds_to_copy = [
+            ("_ctypes.pyd", r"C:\Intellicrack\mamba_env\DLLs\_ctypes.pyd"),
+            ("_sqlite3.pyd", r"C:\Intellicrack\mamba_env\DLLs\_sqlite3.pyd"),
+            ("_bz2.pyd", r"C:\Intellicrack\mamba_env\DLLs\_bz2.pyd"),
+            ("_ssl.pyd", r"C:\Intellicrack\mamba_env\DLLs\_ssl.pyd"),
+            ("_tkinter.pyd", r"C:\Intellicrack\mamba_env\DLLs\_tkinter.pyd"),
+            ("_hashlib.pyd", r"C:\Intellicrack\mamba_env\DLLs\_hashlib.pyd"),
+            ("select.pyd", r"C:\Intellicrack\mamba_env\DLLs\select.pyd"),
+            ("_socket.pyd", r"C:\Intellicrack\mamba_env\DLLs\_socket.pyd"),
+            ("unicodedata.pyd", r"C:\Intellicrack\mamba_env\DLLs\unicodedata.pyd"),
+            ("_lzma.pyd", r"C:\Intellicrack\mamba_env\DLLs\_lzma.pyd"),
 
-        // Critical XML parsing modules
-        ("pyexpat.pyd", r"C:\Intellicrack\mamba_env\DLLs\pyexpat.pyd"),
-        ("_elementtree.pyd", r"C:\Intellicrack\mamba_env\DLLs\_elementtree.pyd"),
+            // Critical XML parsing modules
+            ("pyexpat.pyd", r"C:\Intellicrack\mamba_env\DLLs\pyexpat.pyd"),
+            ("_elementtree.pyd", r"C:\Intellicrack\mamba_env\DLLs\_elementtree.pyd"),
 
-        // Additional critical modules for full functionality
-        ("_asyncio.pyd", r"C:\Intellicrack\mamba_env\DLLs\_asyncio.pyd"),
-        ("_decimal.pyd", r"C:\Intellicrack\mamba_env\DLLs\_decimal.pyd"),
-        ("_multiprocessing.pyd", r"C:\Intellicrack\mamba_env\DLLs\_multiprocessing.pyd"),
-        ("_overlapped.pyd", r"C:\Intellicrack\mamba_env\DLLs\_overlapped.pyd"),
-        ("_queue.pyd", r"C:\Intellicrack\mamba_env\DLLs\_queue.pyd"),
-        ("_uuid.pyd", r"C:\Intellicrack\mamba_env\DLLs\_uuid.pyd"),
-        ("_zoneinfo.pyd", r"C:\Intellicrack\mamba_env\DLLs\_zoneinfo.pyd"),
-        ("winsound.pyd", r"C:\Intellicrack\mamba_env\DLLs\winsound.pyd"),
-    ];
+            // Additional critical modules for full functionality
+            ("_asyncio.pyd", r"C:\Intellicrack\mamba_env\DLLs\_asyncio.pyd"),
+            ("_decimal.pyd", r"C:\Intellicrack\mamba_env\DLLs\_decimal.pyd"),
+            ("_multiprocessing.pyd", r"C:\Intellicrack\mamba_env\DLLs\_multiprocessing.pyd"),
+            ("_overlapped.pyd", r"C:\Intellicrack\mamba_env\DLLs\_overlapped.pyd"),
+            ("_queue.pyd", r"C:\Intellicrack\mamba_env\DLLs\_queue.pyd"),
+            ("_uuid.pyd", r"C:\Intellicrack\mamba_env\DLLs\_uuid.pyd"),
+            ("_zoneinfo.pyd", r"C:\Intellicrack\mamba_env\DLLs\_zoneinfo.pyd"),
+            ("winsound.pyd", r"C:\Intellicrack\mamba_env\DLLs\winsound.pyd"),
+        ];
 
-    // Copy DLL files
-    for (dll_name, src_path) in &dlls_to_copy {
-        let src = PathBuf::from(src_path);
-        let dst = target_dir.join(dll_name);
+        // Copy DLL files
+        for (dll_name, src_path) in &dlls_to_copy {
+            let src = PathBuf::from(src_path);
+            let dst = target_dir.join(dll_name);
 
-        if src.exists() {
-            if let Err(e) = std::fs::copy(&src, &dst) {
-                println!("cargo:warning=Failed to copy {}: {}", dll_name, e);
+            if src.exists() {
+                if let Err(e) = std::fs::copy(&src, &dst) {
+                    println!("cargo:warning=Failed to copy {}: {}", dll_name, e);
+                } else {
+                    println!("cargo:warning=Copied {} to target directory", dll_name);
+                }
             } else {
-                println!("cargo:warning=Copied {} to target directory", dll_name);
+                println!("cargo:warning={} not found at {}", dll_name, src.display());
             }
-        } else {
-            println!("cargo:warning={} not found at {}", dll_name, src.display());
         }
-    }
 
-    // Copy Python extension modules (.pyd files)
-    for (pyd_name, src_path) in &pyds_to_copy {
-        let src = PathBuf::from(src_path);
-        let dst = target_dir.join(pyd_name);
+        // Copy Python extension modules (.pyd files)
+        for (pyd_name, src_path) in &pyds_to_copy {
+            let src = PathBuf::from(src_path);
+            let dst = target_dir.join(pyd_name);
 
-        if src.exists() {
-            if let Err(e) = std::fs::copy(&src, &dst) {
-                println!("cargo:warning=Failed to copy {}: {}", pyd_name, e);
+            if src.exists() {
+                if let Err(e) = std::fs::copy(&src, &dst) {
+                    println!("cargo:warning=Failed to copy {}: {}", pyd_name, e);
+                } else {
+                    println!("cargo:warning=Copied {} to target directory", pyd_name);
+                }
             } else {
-                println!("cargo:warning=Copied {} to target directory", pyd_name);
+                println!("cargo:warning={} not found at {}", pyd_name, src.display());
             }
-        } else {
-            println!("cargo:warning={} not found at {}", pyd_name, src.display());
         }
-    }
 
-    // Copy Tcl/Tk library directories for _tkinter functionality
-    let tcl_tk_dirs = [
-        ("tcl8.6", r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6"),
-        ("tk8.6", r"C:\Intellicrack\mamba_env\Library\lib\tk8.6"),
-    ];
+        // Copy Tcl/Tk library directories for _tkinter functionality
+        let tcl_tk_dirs = [
+            ("tcl8.6", r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6"),
+            ("tk8.6", r"C:\Intellicrack\mamba_env\Library\lib\tk8.6"),
+        ];
 
-    for (dir_name, src_path) in &tcl_tk_dirs {
-        let src = PathBuf::from(src_path);
-        let dst = target_dir.join(dir_name);
+        for (dir_name, src_path) in &tcl_tk_dirs {
+            let src = PathBuf::from(src_path);
+            let dst = target_dir.join(dir_name);
 
-        if src.exists() && src.is_dir() {
-            if let Err(e) = copy_dir_all(&src, &dst) {
-                println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
+            if src.exists() && src.is_dir() {
+                if let Err(e) = copy_dir_all(&src, &dst) {
+                    println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
+                } else {
+                    println!("cargo:warning=Copied {} directory to target", dir_name);
+                }
             } else {
-                println!("cargo:warning=Copied {} directory to target", dir_name);
+                println!("cargo:warning=Directory {} not found at {}", dir_name, src.display());
             }
-        } else {
-            println!("cargo:warning=Directory {} not found at {}", dir_name, src.display());
         }
     }
 }
