@@ -634,3 +634,16 @@ build_log.txt
 build_output.txt
 sphinx_output.txt
 rollout-*.json
+.aider*
+
+# ==============================================================================
+# LARGE QEMU IMAGES
+# ==============================================================================
+# Ignore large VM/emulation images
+intellicrack/assets/qemu_images/*.iso
+intellicrack/assets/qemu_images/*.img
+intellicrack/assets/qemu_images/*.qcow2
+intellicrack/assets/qemu_images/*.vmdk
+intellicrack/assets/qemu_images/*.vdi
+intellicrack/assets/qemu_images/*.vhd
+intellicrack/assets/qemu_images/*.vhdx
