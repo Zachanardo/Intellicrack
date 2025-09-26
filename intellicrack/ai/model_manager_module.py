@@ -3061,10 +3061,10 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
             "provider": provider_name,
             "api_key": api_key[:4] + "..." + api_key[-4:] if api_key else None,  # Store masked key
             "timestamp": str(datetime.datetime.now()),
-            "settings": config
+            "settings": config,
         }
 
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f, indent=2)
 
         logger.info("Configured AI provider: %s (saved to %s)", provider_name, config_file)

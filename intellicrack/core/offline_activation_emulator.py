@@ -514,7 +514,7 @@ class OfflineActivationEmulator:
     def _vmware_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
         """VMware-style activation"""
         # VMware uses specific format
-        chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # pragma: allowlist secret
 
         # Generate based on hardware ID
         hw_hash = hashlib.sha256(request.hardware_id.encode()).digest()
@@ -719,7 +719,7 @@ class OfflineActivationEmulator:
 
         if product_type == "microsoft":
             # Microsoft format: 5 groups of 5 chars (BCDFG-HJKMP-QRTVW-XY234-6789B)
-            chars = "BCDFGHJKMPQRTVWXY2346789"
+            chars = "BCDFGHJKMPQRTVWXY2346789"  # pragma: allowlist secret
             key_parts = []
             for _ in range(5):
                 part = "".join(random.choices(chars, k=5))

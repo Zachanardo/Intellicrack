@@ -1244,7 +1244,7 @@ Licensing Files Found: {len(licensing_files)}"""
             bypass_section += f"### {b['technique']}\n"
             bypass_section += f"- **Target:** {b['target_protection']}\n"
             bypass_section += f"- **Success Rate:** {b['success_rate']}\n"
-            bypass_section += "- **Requirements:** " + ', '.join(b['requirements']) + "\n\n"
+            bypass_section += "- **Requirements:** " + ", ".join(b["requirements"]) + "\n\n"
 
         # Generate recommendations section
         recommendations_section = ""

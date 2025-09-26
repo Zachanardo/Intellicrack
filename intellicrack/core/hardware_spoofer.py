@@ -774,7 +774,7 @@ class HardwareFingerPrintSpoofer:
             r"SOFTWARE\Microsoft\Cryptography",
             r"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
             r"SYSTEM\CurrentControlSet\Control\SystemInformation",
-            r"HARDWARE\DESCRIPTION\System\CentralProcessor",
+            r"HARDWARE\DESCRIPTION\System\CentralProcessor",  # pragma: allowlist secret
             r"HARDWARE\DESCRIPTION\System\BIOS",
             r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
             r"SYSTEM\CurrentControlSet\Enum\IDE",
@@ -1665,7 +1665,9 @@ class HardwareFingerPrintSpoofer:
 
         # Update registry
         try:
-            with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+            with winreg.CreateKey(
+                winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0"
+            ) as key:  # pragma: allowlist secret
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
         except:

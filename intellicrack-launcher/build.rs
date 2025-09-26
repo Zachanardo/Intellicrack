@@ -15,8 +15,32 @@ fn main() {
         std::env::set_var("TMP", &output_dir);
         std::env::set_var("TEMP", &output_dir);
 
-        let empty_macros: &[&str] = &[];
-        embed_resource::compile("intellicrack.rc", empty_macros);
+        // Try to compile resources using available tools
+        let rc_compiled = if Command::new("llvm-rc").arg("/?").output().is_ok() {
+            // Use llvm-rc directly to compile the resource file
+            let output_dir = std::env::var("OUT_DIR").unwrap();
+            let res_file = PathBuf::from(&output_dir).join("intellicrack.res");
+
+            let llvm_rc_result = Command::new("llvm-rc")
+                .args(["/FO", res_file.to_str().unwrap(), "intellicrack.rc"])
+                .output();
+
+            if llvm_rc_result.is_ok() {
+                // Link the compiled resource
+                println!("cargo:rustc-link-arg={}", res_file.to_str().unwrap());
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        if !rc_compiled {
+            // Fall back to embed-resource if llvm-rc failed
+            let empty_macros: &[&str] = &[];
+            embed_resource::compile("intellicrack.rc", empty_macros);
+        }
         println!("cargo:warning=Windows manifest embedded");
 
         let nul_path = std::path::Path::new("NUL");

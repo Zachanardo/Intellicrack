@@ -24,27 +24,27 @@ def test_shared_context():
     print("=" * 60)
     print("Testing Shared Context Functionality")
     print("=" * 60)
-    
+
     # Create Qt application
     app = QApplication(sys.argv)
-    
+
     # Create app context
     app_context = AppContext()
-    
+
     # Create shared context dictionary
     shared_context = {
         "app_context": app_context,
         "task_manager": None,
         "main_window": None
     }
-    
+
     # Create tabs
     print("\n1. Creating tabs with shared context...")
     dashboard = DashboardTab(shared_context)
     analysis = AnalysisTab(shared_context)
     exploitation = ExploitationTab(shared_context)
     tools = ToolsTab(shared_context)
-    
+
     # Verify tabs have app_context
     print("\n2. Verifying app_context is available in all tabs...")
     assert dashboard.app_context == app_context, "Dashboard missing app_context"
@@ -52,60 +52,60 @@ def test_shared_context():
     assert exploitation.app_context == app_context, "Exploitation missing app_context"
     assert tools.app_context == app_context, "Tools missing app_context"
     print("✓ All tabs have app_context")
-    
+
     # Test binary loading
     print("\n3. Testing binary loading...")
-    
+
     # Create a test binary file
     test_binary = Path(__file__).parent / "test_binary.exe"
     test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)  # Minimal PE header
-    
+
     # Load binary via app_context (simulating dashboard action)
     print(f"   Loading test binary: {test_binary}")
     success = app_context.load_binary(str(test_binary))
     assert success, "Failed to load binary"
     print("✓ Binary loaded successfully")
-    
+
     # Check that all tabs received the binary
     print("\n4. Verifying binary is available in all tabs...")
-    
+
     # Analysis tab should have current_binary set
     if analysis.current_binary:
         print(f"✓ Analysis tab has binary: {analysis.current_binary}")
     else:
         print("✗ Analysis tab missing binary")
-    
+
     # Exploitation tab should have current_binary set
     if exploitation.current_binary:
         print(f"✓ Exploitation tab has binary: {exploitation.current_binary}")
     else:
         print("✗ Exploitation tab missing binary")
-    
+
     # Tools tab should have current_binary set
     if tools.current_binary:
         print(f"✓ Tools tab has binary: {tools.current_binary}")
     else:
         print("✗ Tools tab missing binary")
-    
+
     # Test binary unloading
     print("\n5. Testing binary unloading...")
     app_context.unload_binary()
     print("✓ Binary unloaded")
-    
+
     # Verify tabs cleared their binary references
     print("\n6. Verifying binary is cleared in all tabs...")
     assert analysis.current_binary is None, "Analysis tab still has binary"
     assert exploitation.current_binary is None, "Exploitation tab still has binary"
     assert tools.current_binary is None, "Tools tab still has binary"
     print("✓ All tabs cleared binary references")
-    
+
     # Clean up test file
     test_binary.unlink()
-    
+
     print("\n" + "=" * 60)
     print("✅ All tests passed! Shared context is working correctly.")
     print("=" * 60)
-    
+
     return True
 
 

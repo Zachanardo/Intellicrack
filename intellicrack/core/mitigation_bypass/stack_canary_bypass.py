@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import ctypes
 import re
 import struct
-import ctypes
 from ctypes import wintypes
 from typing import Any, Dict, List, Optional
 

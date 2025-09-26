@@ -89,8 +89,8 @@ class WindowsActivator:
         """
         status = self.get_activation_status()
         # Add 'activated' key for compatibility
-        if 'status' in status:
-            status['activated'] = status['status'] == 'activated'
+        if "status" in status:
+            status["activated"] = status["status"] == "activated"
         return status
 
     def generate_hwid(self) -> str:

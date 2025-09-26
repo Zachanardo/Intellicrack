@@ -47,7 +47,7 @@ class TestHardwareTokenEmulation:
         assert result['success'] is True
         assert 'otp' in result
         assert len(result['otp']) == 44  # 12 char public ID + 32 char OTP
-        
+
         # Verify modhex encoding
         modhex_chars = set('cbdefghijklnrtuv')
         assert all(c in modhex_chars for c in result['otp'][12:])

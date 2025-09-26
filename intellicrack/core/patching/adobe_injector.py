@@ -2581,11 +2581,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             # Open process to enumerate threads
             PROCESS_QUERY_INFORMATION = 0x0400
             PROCESS_VM_READ = 0x0010
-            process_handle = ctypes.windll.kernel32.OpenProcess(
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                False,
-                pid
-            )
+            process_handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
 
             if not process_handle:
                 return self._get_all_threads(process_name)[:3]
@@ -2597,11 +2593,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Check each thread's wait state
                 THREAD_QUERY_INFORMATION = 0x0040
                 for thread_id in all_threads:
-                    thread_handle = ctypes.windll.kernel32.OpenThread(
-                        THREAD_QUERY_INFORMATION,
-                        False,
-                        thread_id
-                    )
+                    thread_handle = ctypes.windll.kernel32.OpenThread(THREAD_QUERY_INFORMATION, False, thread_id)
 
                     if thread_handle:
                         try:
@@ -2716,13 +2708,12 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             # Check if GetThreadWaitChain is available (Wct.dll)
             wct = ctypes.WinDLL("wct.dll", use_last_error=True)
             if hasattr(wct, "GetThreadWaitChain"):
-
                 # WAITCHAIN_NODE structure for wait chain analysis
                 class WAITCHAIN_NODE(ctypes.Structure):
                     _fields_ = [
-                        ("Context", ctypes.c_int),      # WCT_OBJECT_CONTEXT
-                        ("ObjectType", ctypes.c_int),   # WCT_OBJECT_TYPE
-                        ("ObjectStatus", ctypes.c_int), # WCT_OBJECT_STATUS
+                        ("Context", ctypes.c_int),  # WCT_OBJECT_CONTEXT
+                        ("ObjectType", ctypes.c_int),  # WCT_OBJECT_TYPE
+                        ("ObjectStatus", ctypes.c_int),  # WCT_OBJECT_STATUS
                         ("ObjectName", ctypes.c_wchar_p * 128),
                         ("Timeout", ctypes.c_uint64),
                         ("Alertable", ctypes.c_bool),
@@ -2742,7 +2733,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     None,  # WCT_TIMEOUT (no timeout)
                     ctypes.c_ulong(node_count),
                     ctypes.byref(wait_chain),
-                    None  # IsCycle flag
+                    None,  # IsCycle flag
                 )
 
                 if result:
@@ -2790,7 +2781,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 0x11,  # ThreadWaitReason
                 ctypes.byref(wait_reason),
                 ctypes.sizeof(wait_reason),
-                ctypes.byref(return_length)
+                ctypes.byref(return_length),
             )
 
             if status == 0:  # STATUS_SUCCESS
@@ -2828,6 +2819,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         # Strategy 3: Use NtQueryInformationThread with ThreadBasicInformation + context analysis
         try:
+
             class THREAD_BASIC_INFORMATION(ctypes.Structure):
                 _fields_ = [
                     ("ExitStatus", ctypes.c_long),
@@ -2846,7 +2838,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 0,  # ThreadBasicInformation
                 ctypes.byref(thread_info),
                 ctypes.sizeof(thread_info),
-                None
+                None,
             )
 
             if status == 0:
@@ -2912,17 +2904,32 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             raise OSError("Failed to suspend thread for context analysis")
 
         try:
+
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
                     ("ContextFlags", ctypes.c_uint32),
-                    ("Dr0", ctypes.c_uint64), ("Dr1", ctypes.c_uint64), ("Dr2", ctypes.c_uint64),
-                    ("Dr3", ctypes.c_uint64), ("Dr6", ctypes.c_uint64), ("Dr7", ctypes.c_uint64),
+                    ("Dr0", ctypes.c_uint64),
+                    ("Dr1", ctypes.c_uint64),
+                    ("Dr2", ctypes.c_uint64),
+                    ("Dr3", ctypes.c_uint64),
+                    ("Dr6", ctypes.c_uint64),
+                    ("Dr7", ctypes.c_uint64),
                     ("FloatSave", ctypes.c_byte * 512),
-                    ("SegGs", ctypes.c_uint64), ("SegFs", ctypes.c_uint64), ("SegEs", ctypes.c_uint64),
-                    ("SegDs", ctypes.c_uint64), ("Rdi", ctypes.c_uint64), ("Rsi", ctypes.c_uint64),
-                    ("Rbx", ctypes.c_uint64), ("Rdx", ctypes.c_uint64), ("Rcx", ctypes.c_uint64),
-                    ("Rax", ctypes.c_uint64), ("Rbp", ctypes.c_uint64), ("Rip", ctypes.c_uint64),
-                    ("SegCs", ctypes.c_uint64), ("EFlags", ctypes.c_uint64), ("Rsp", ctypes.c_uint64),
+                    ("SegGs", ctypes.c_uint64),
+                    ("SegFs", ctypes.c_uint64),
+                    ("SegEs", ctypes.c_uint64),
+                    ("SegDs", ctypes.c_uint64),
+                    ("Rdi", ctypes.c_uint64),
+                    ("Rsi", ctypes.c_uint64),
+                    ("Rbx", ctypes.c_uint64),
+                    ("Rdx", ctypes.c_uint64),
+                    ("Rcx", ctypes.c_uint64),
+                    ("Rax", ctypes.c_uint64),
+                    ("Rbp", ctypes.c_uint64),
+                    ("Rip", ctypes.c_uint64),
+                    ("SegCs", ctypes.c_uint64),
+                    ("EFlags", ctypes.c_uint64),
+                    ("Rsp", ctypes.c_uint64),
                     ("SegSs", ctypes.c_uint64),
                 ]
 
@@ -2937,15 +2944,20 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                 # Common alertable wait functions
                 alertable_wait_funcs = [
-                    ("NtDelayExecution", True), ("NtWaitForSingleObject", True),
-                    ("NtWaitForMultipleObjects", True), ("SleepEx", True),
-                    ("WaitForSingleObjectEx", True), ("WaitForMultipleObjectsEx", True),
+                    ("NtDelayExecution", True),
+                    ("NtWaitForSingleObject", True),
+                    ("NtWaitForMultipleObjects", True),
+                    ("SleepEx", True),
+                    ("WaitForSingleObjectEx", True),
+                    ("WaitForMultipleObjectsEx", True),
                 ]
 
                 # Non-alertable wait functions
                 non_alertable_wait_funcs = [
-                    ("NtDelayExecution", False), ("WaitForSingleObject", False),
-                    ("WaitForMultipleObjects", False), ("Sleep", False),
+                    ("NtDelayExecution", False),
+                    ("WaitForSingleObject", False),
+                    ("WaitForMultipleObjects", False),
+                    ("Sleep", False),
                 ]
 
                 # Check if RIP is within any known wait function

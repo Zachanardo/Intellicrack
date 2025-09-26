@@ -55,8 +55,8 @@ class TrialResetEngine:
                 r"HKEY_LOCAL_MACHINE\SOFTWARE\{product}",
                 r"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\{product}",
                 r"HKEY_CURRENT_USER\Software\Classes\CLSID",
-                r"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services",
-                r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist",
+                r"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services",  # pragma: allowlist secret
+                r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist",  # pragma: allowlist secret
             ],
             "files": [
                 "C:\\ProgramData\\{product}",

@@ -12,7 +12,120 @@ import pytest
 import tempfile
 import time
 from pathlib import Path
-from PyQt6.QtCore import QObject
+try:
+    from PyQt6.QtCore import QObject
+except ImportError:
+    # Implement a real signal/slot system compatible with Qt's QObject
+    import weakref
+    from typing import Any, Callable, Dict, List, Optional
+
+    class Signal:
+        """Production-ready signal implementation for Qt compatibility"""
+        def __init__(self):
+            self._connections: List[weakref.ref] = []
+
+        def connect(self, slot: Callable) -> None:
+            """Connect a slot to this signal"""
+            self._connections.append(weakref.ref(slot))
+
+        def disconnect(self, slot: Callable) -> None:
+            """Disconnect a slot from this signal"""
+            self._connections = [ref for ref in self._connections if ref() != slot]
+
+        def emit(self, *args, **kwargs) -> None:
+            """Emit the signal to all connected slots"""
+            dead_refs = []
+            for ref in self._connections:
+                slot = ref()
+                if slot is not None:
+                    slot(*args, **kwargs)
+                else:
+                    dead_refs.append(ref)
+            # Clean up dead references
+            for ref in dead_refs:
+                self._connections.remove(ref)
+
+    class QObject:
+        """Production-ready QObject implementation with signal/slot mechanism"""
+        _instances: weakref.WeakSet = weakref.WeakSet()
+
+        def __init__(self, parent: Optional["QObject"] = None):
+            self._parent = None
+            self._children: List[weakref.ref] = []
+            self._properties: Dict[str, Any] = {}
+            self._signals: Dict[str, Signal] = {}
+            self._destroyed = False
+
+            # Register instance
+            QObject._instances.add(self)
+
+            # Set parent if provided
+            if parent is not None:
+                self.setParent(parent)
+
+        def setParent(self, parent: Optional["QObject"]) -> None:
+            """Set the parent object"""
+            if self._parent is not None:
+                self._parent._removeChild(self)
+            self._parent = parent
+            if parent is not None:
+                parent._addChild(self)
+
+        def parent(self) -> Optional["QObject"]:
+            """Get the parent object"""
+            return self._parent
+
+        def _addChild(self, child: "QObject") -> None:
+            """Add a child object"""
+            self._children.append(weakref.ref(child))
+
+        def _removeChild(self, child: "QObject") -> None:
+            """Remove a child object"""
+            self._children = [ref for ref in self._children if ref() != child]
+
+        def children(self) -> List["QObject"]:
+            """Get all child objects"""
+            alive_children = []
+            dead_refs = []
+            for ref in self._children:
+                child = ref()
+                if child is not None:
+                    alive_children.append(child)
+                else:
+                    dead_refs.append(ref)
+            # Clean up dead references
+            for ref in dead_refs:
+                self._children.remove(ref)
+            return alive_children
+
+        def setProperty(self, name: str, value: Any) -> None:
+            """Set a dynamic property"""
+            self._properties[name] = value
+
+        def property(self, name: str) -> Any:
+            """Get a dynamic property"""
+            return self._properties.get(name)
+
+        def deleteLater(self) -> None:
+            """Mark object for deletion"""
+            self._destroyed = True
+            # Disconnect from parent
+            if self._parent is not None:
+                self._parent._removeChild(self)
+                self._parent = None
+            # Clear children
+            for child in self.children():
+                child.deleteLater()
+            self._children.clear()
+
+        def isValid(self) -> bool:
+            """Check if object is valid (not destroyed)"""
+            return not self._destroyed
+
+        def __del__(self):
+            """Cleanup on deletion"""
+            if not self._destroyed:
+                self.deleteLater()
 
 from intellicrack.core.analysis.analysis_orchestrator import (
     AnalysisOrchestrator,

@@ -21,11 +21,11 @@ async fn main() -> Result<()> {
     std::env::set_var("CONDA_DEFAULT_ENV", "mamba_env");
     std::env::set_var("PYTHONPATH", r"C:\Intellicrack");
     std::env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
-    
+
     // Set launcher environment variables to suppress threading warnings
     std::env::set_var("RUST_LAUNCHER_MODE", "1");
     std::env::set_var("PYTHON_SUBPROCESS_MODE", "1");
-    
+
     // Windows-specific optimizations
     #[cfg(target_os = "windows")]
     {
@@ -35,18 +35,18 @@ async fn main() -> Result<()> {
             "{};{};{};{};{}",
             r"C:\Intellicrack\mamba_env",
             r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\DLLs", 
+            r"C:\Intellicrack\mamba_env\DLLs",
             r"C:\Intellicrack\mamba_env\Scripts",
             current_path
         );
         std::env::set_var("PATH", dll_path);
-        
+
         // Also explicitly add the DLL directory for Windows DLL loading
         unsafe {
             use std::ffi::CString;
-            
+
             let dll_dir = CString::new(r"C:\Intellicrack\mamba_env").unwrap();
-            
+
             // Try to load kernel32.dll and call SetDllDirectoryA
             let kernel32 = libloading::Library::new("kernel32.dll");
             if let Ok(lib) = kernel32 {
@@ -55,12 +55,12 @@ async fn main() -> Result<()> {
                 }
             }
         }
-        
+
         // Windows console UTF-8 support
         std::env::set_var("PYTHONIOENCODING", "utf-8");
         std::env::set_var("PYTHONUTF8", "1");
     }
-    
+
     // Initialize logging system
     if let Err(e) = initialize_logging() {
         eprintln!("Failed to initialize logging: {}", e);

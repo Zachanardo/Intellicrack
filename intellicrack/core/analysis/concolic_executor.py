@@ -43,6 +43,90 @@ except ImportError:
     if platform.system() != "Windows":
         logger.warning("Manticore not available on Linux/Unix - install with: pip install manticore")
 
+
+# Define NativeConcolicState at module level for consistent imports
+class NativeConcolicState:
+    """Native concolic execution state implementation.
+
+    Represents a single execution state in the concolic execution engine,
+    maintaining both concrete and symbolic values for program variables.
+    """
+
+    def __init__(self, pc: int = 0, memory: dict = None, registers: dict = None):
+        """Initialize a new execution state."""
+        self.pc = pc  # Program counter
+        self.memory = memory or {}  # Memory state
+        self.registers = registers or {
+            "eax": 0,
+            "ebx": 0,
+            "ecx": 0,
+            "edx": 0,
+            "esp": 0x7FFF0000,
+            "ebp": 0x7FFF0000,
+            "esi": 0,
+            "edi": 0,
+            "eflags": 0,
+        }
+        self.symbolic_memory = {}  # Symbolic memory locations
+        self.symbolic_registers = {}  # Symbolic register values
+        self.constraints = []  # Path constraints
+        self.input_symbols = {"stdin": b"", "argv": []}
+        self.is_terminated_flag = False
+        self.termination_reason = None
+        self.stack = []  # Call stack
+        self.execution_trace = []  # Execution history
+
+    def is_terminated(self) -> bool:
+        """Check if state is terminated."""
+        return self.is_terminated_flag
+
+    def terminate(self, reason: str = "normal"):
+        """Terminate the state."""
+        self.is_terminated_flag = True
+        self.termination_reason = reason
+
+    def fork(self):
+        """Create a copy of this state for branching."""
+        new_state = NativeConcolicState(self.pc, self.memory.copy(), self.registers.copy())
+        new_state.symbolic_memory = self.symbolic_memory.copy()
+        new_state.symbolic_registers = self.symbolic_registers.copy()
+        new_state.constraints = self.constraints.copy()
+        new_state.input_symbols = self.input_symbols.copy()
+        new_state.stack = self.stack.copy()
+        new_state.execution_trace = self.execution_trace.copy()
+        return new_state
+
+    def add_constraint(self, constraint: str):
+        """Add a path constraint."""
+        self.constraints.append(constraint)
+
+    def set_register(self, reg: str, value, symbolic: bool = False):
+        """Set register value."""
+        self.registers[reg] = value
+        if symbolic:
+            self.symbolic_registers[reg] = value
+
+    def get_register(self, reg: str):
+        """Get register value."""
+        return self.registers.get(reg, 0)
+
+    def write_memory(self, addr: int, value, size: int = 4, symbolic: bool = False):
+        """Write to memory."""
+        for i in range(size):
+            self.memory[addr + i] = (value >> (i * 8)) & 0xFF
+        if symbolic:
+            self.symbolic_memory[addr] = value
+
+    def read_memory(self, addr: int, size: int = 4):
+        """Read from memory."""
+        value = 0
+        for i in range(size):
+            byte = self.memory.get(addr + i, 0)
+            value |= byte << (i * 8)
+        return value
+
+
+if not MANTICORE_AVAILABLE:
     # Try to use simconcolic as a fallback
     try:
         from .simconcolic import BinaryAnalyzer as Manticore  # :no-index:
@@ -55,86 +139,6 @@ except ImportError:
         MANTICORE_AVAILABLE = False
 
         # Define functional fallback classes to prevent import errors
-        class NativeConcolicState:
-            """Native concolic execution state implementation.
-
-            Represents a single execution state in the concolic execution engine,
-            maintaining both concrete and symbolic values for program variables.
-            """
-
-            def __init__(self, pc: int = 0, memory: dict = None, registers: dict = None):
-                """Initialize a new execution state."""
-                self.pc = pc  # Program counter
-                self.memory = memory or {}  # Memory state
-                self.registers = registers or {
-                    "eax": 0,
-                    "ebx": 0,
-                    "ecx": 0,
-                    "edx": 0,
-                    "esp": 0x7FFF0000,
-                    "ebp": 0x7FFF0000,
-                    "esi": 0,
-                    "edi": 0,
-                    "eflags": 0,
-                }
-                self.symbolic_memory = {}  # Symbolic memory locations
-                self.symbolic_registers = {}  # Symbolic register values
-                self.constraints = []  # Path constraints
-                self.input_symbols = {"stdin": b"", "argv": []}
-                self.is_terminated_flag = False
-                self.termination_reason = None
-                self.stack = []  # Call stack
-                self.execution_trace = []  # Execution history
-
-            def is_terminated(self) -> bool:
-                """Check if state is terminated."""
-                return self.is_terminated_flag
-
-            def terminate(self, reason: str = "normal"):
-                """Terminate the state."""
-                self.is_terminated_flag = True
-                self.termination_reason = reason
-
-            def fork(self):
-                """Create a copy of this state for branching."""
-                new_state = NativeConcolicState(self.pc, self.memory.copy(), self.registers.copy())
-                new_state.symbolic_memory = self.symbolic_memory.copy()
-                new_state.symbolic_registers = self.symbolic_registers.copy()
-                new_state.constraints = self.constraints.copy()
-                new_state.input_symbols = self.input_symbols.copy()
-                new_state.stack = self.stack.copy()
-                new_state.execution_trace = self.execution_trace.copy()
-                return new_state
-
-            def add_constraint(self, constraint: str):
-                """Add a path constraint."""
-                self.constraints.append(constraint)
-
-            def set_register(self, reg: str, value, symbolic: bool = False):
-                """Set register value."""
-                self.registers[reg] = value
-                if symbolic:
-                    self.symbolic_registers[reg] = value
-
-            def get_register(self, reg: str):
-                """Get register value."""
-                return self.registers.get(reg, 0)
-
-            def write_memory(self, addr: int, value, size: int = 4, symbolic: bool = False):
-                """Write to memory."""
-                for i in range(size):
-                    self.memory[addr + i] = (value >> (i * 8)) & 0xFF
-                if symbolic:
-                    self.symbolic_memory[addr] = value
-
-            def read_memory(self, addr: int, size: int = 4):
-                """Read from memory."""
-                value = 0
-                for i in range(size):
-                    byte = self.memory.get(addr + i, 0)
-                    value |= byte << (i * 8)
-                return value
-
         class Manticore:
             """Native concolic execution engine implementation.
 

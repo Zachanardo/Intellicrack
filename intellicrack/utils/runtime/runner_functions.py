@@ -1202,7 +1202,7 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: str | None = N
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in runner_functions: %s", e)
             loader.close()
-            raise e
+            raise
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running memory-optimized analysis: %s", e)
@@ -2922,7 +2922,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
     result = {"success": False, "message": ""}
 
     try:
-        # Simulate patch application based on patch type
+        # Apply real patch operations to the binary file
         patch_type = patch.get("type", "")
         operations = patch.get("operations", [])
 
@@ -2930,10 +2930,78 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
             result["message"] = "No patch operations defined"
             return result
 
-        # For now, simulate successful application
-        # In real implementation, this would modify the binary file
-        result["success"] = True
-        result["message"] = f"Applied {len(operations)} operations for {patch_type} patch"
+        # Read the binary file
+        with open(target_binary, "rb") as f:
+            binary_data = bytearray(f.read())
+
+        # Track applied operations
+        applied_ops = 0
+
+        # Apply each operation to the binary
+        for op in operations:
+            op_type = op.get("type", "")
+            offset = op.get("offset", 0)
+            data = op.get("data", b"")
+
+            if op_type == "replace":
+                # Replace bytes at specified offset
+                if isinstance(data, str):
+                    data = bytes.fromhex(data.replace(" ", ""))
+                elif isinstance(data, list):
+                    data = bytes(data)
+
+                if offset + len(data) <= len(binary_data):
+                    binary_data[offset:offset+len(data)] = data
+                    applied_ops += 1
+                else:
+                    logger.warning(f"Patch offset {offset} exceeds binary size")
+
+            elif op_type == "nop":
+                # NOP out instructions at offset
+                length = op.get("length", 1)
+                if offset + length <= len(binary_data):
+                    binary_data[offset:offset+length] = b'\x90' * length  # x86 NOP
+                    applied_ops += 1
+
+            elif op_type == "jump":
+                # Patch jump instruction
+                target = op.get("target", 0)
+                if offset + 5 <= len(binary_data):  # JMP rel32 is 5 bytes
+                    # Calculate relative jump offset
+                    rel_offset = target - (offset + 5)
+                    # E9 is x86 JMP rel32 opcode
+                    binary_data[offset] = 0xE9
+                    # Write 32-bit relative offset in little-endian
+                    binary_data[offset+1:offset+5] = rel_offset.to_bytes(4, 'little', signed=True)
+                    applied_ops += 1
+
+            elif op_type == "call":
+                # Patch call instruction
+                target = op.get("target", 0)
+                if offset + 5 <= len(binary_data):  # CALL rel32 is 5 bytes
+                    # Calculate relative call offset
+                    rel_offset = target - (offset + 5)
+                    # E8 is x86 CALL rel32 opcode
+                    binary_data[offset] = 0xE8
+                    # Write 32-bit relative offset in little-endian
+                    binary_data[offset+1:offset+5] = rel_offset.to_bytes(4, 'little', signed=True)
+                    applied_ops += 1
+
+        if applied_ops > 0:
+            # Create backup of original file
+            backup_path = target_binary + ".bak"
+            import shutil
+            shutil.copy2(target_binary, backup_path)
+
+            # Write patched binary
+            with open(target_binary, "wb") as f:
+                f.write(binary_data)
+
+            result["success"] = True
+            result["message"] = f"Applied {applied_ops}/{len(operations)} operations for {patch_type} patch"
+            result["backup"] = backup_path
+        else:
+            result["message"] = "No operations could be applied"
 
     except Exception as e:
         logger.error("Exception in runner_functions: %s", e)

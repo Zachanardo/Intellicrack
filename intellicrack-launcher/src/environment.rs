@@ -14,7 +14,6 @@ use std::env;
 use std::path::PathBuf;
 use tracing::{debug, info, warn};
 
-
 pub struct EnvironmentManager {
     platform: PlatformInfo,
 }
@@ -223,7 +222,10 @@ impl EnvironmentManager {
 
         // Windows Error Reporting - disable for subprocess crashes
         env::set_var("WINDOWS_TRACING_FLAGS", "3");
-        env::set_var("WINDOWS_TRACING_LOGFILE", r"C:\Intellicrack\logs\launcher.etl");
+        env::set_var(
+            "WINDOWS_TRACING_LOGFILE",
+            r"C:\Intellicrack\logs\launcher.etl",
+        );
 
         info!("Native Windows environment configured");
         Ok(())
@@ -265,7 +267,10 @@ impl EnvironmentManager {
         let new_path = path_parts.join(";");
         env::set_var("PATH", &new_path);
 
-        info!("Configured Windows DLL search paths for {} directories", dll_directories.len());
+        info!(
+            "Configured Windows DLL search paths for {} directories",
+            dll_directories.len()
+        );
         Ok(())
     }
 
@@ -319,8 +324,10 @@ impl EnvironmentManager {
         let new_path = new_path_parts.join(";");
         env::set_var("PATH", &new_path);
 
-        info!("Configured PATH with launcher directory first + {} additional paths",
-              new_path_parts.len() - 1); // -1 because existing PATH counts as 1
+        info!(
+            "Configured PATH with launcher directory first + {} additional paths",
+            new_path_parts.len() - 1
+        ); // -1 because existing PATH counts as 1
 
         Ok(())
     }
@@ -361,13 +368,19 @@ impl EnvironmentManager {
 
                 if launcher_tcl.exists() {
                     env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                    info!("Set TCL_LIBRARY to launcher directory: {}", launcher_tcl.display());
+                    info!(
+                        "Set TCL_LIBRARY to launcher directory: {}",
+                        launcher_tcl.display()
+                    );
                     tcl_set = true;
                 }
 
                 if launcher_tk.exists() {
                     env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                    info!("Set TK_LIBRARY to launcher directory: {}", launcher_tk.display());
+                    info!(
+                        "Set TK_LIBRARY to launcher directory: {}",
+                        launcher_tk.display()
+                    );
                     tk_set = true;
                 }
             }
@@ -378,7 +391,10 @@ impl EnvironmentManager {
             let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
             if tcl_lib_path.exists() {
                 env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
-                info!("Set TCL_LIBRARY to mamba fallback: {}", tcl_lib_path.display());
+                info!(
+                    "Set TCL_LIBRARY to mamba fallback: {}",
+                    tcl_lib_path.display()
+                );
             }
         }
 
@@ -386,7 +402,10 @@ impl EnvironmentManager {
             let tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
             if tk_lib_path.exists() {
                 env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
-                info!("Set TK_LIBRARY to mamba fallback: {}", tk_lib_path.display());
+                info!(
+                    "Set TK_LIBRARY to mamba fallback: {}",
+                    tk_lib_path.display()
+                );
             }
         }
 

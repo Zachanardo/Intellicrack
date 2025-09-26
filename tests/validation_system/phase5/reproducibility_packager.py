@@ -57,7 +57,7 @@ class SystemSnapshot:
     kernel_version: str
     security_software: List[str]
     virtualization: Dict[str, bool]
-    
+
 
 @dataclass
 class DependencySnapshot:
@@ -73,7 +73,7 @@ class DependencySnapshot:
     environment_yml: str
     pipfile: Optional[str]
     poetry_lock: Optional[str]
-    
+
 
 @dataclass
 class ConfigurationSnapshot:
@@ -87,11 +87,11 @@ class ConfigurationSnapshot:
     license_keys: Dict[str, str]  # Encrypted
     debug_settings: Dict
     performance_settings: Dict
-    
+
 
 class EnvironmentRecorder:
     """Records complete environment state for reproducibility."""
-    
+
     def __init__(self):
         self.wmi_client = wmi.WMI() if platform.system() == "Windows" else None
         self.docker_client = None
@@ -99,10 +99,10 @@ class EnvironmentRecorder:
             self.docker_client = docker.from_env()
         except:
             pass
-            
+
     def capture_system_snapshot(self) -> SystemSnapshot:
         """Capture complete system state."""
-        
+
         # Basic system info
         system_info = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -115,7 +115,7 @@ class EnvironmentRecorder:
             "memory_total": psutil.virtual_memory().total,
             "memory_available": psutil.virtual_memory().available
         }
-        
+
         # Disk usage
         disk_usage = {}
         for partition in psutil.disk_partitions():
@@ -131,7 +131,7 @@ class EnvironmentRecorder:
                 }
             except:
                 continue
-                
+
         # GPU information
         gpu_info = []
         try:
@@ -147,7 +147,7 @@ class EnvironmentRecorder:
                 })
         except:
             pass
-            
+
         # Network interfaces
         network_interfaces = []
         for iface, addrs in psutil.net_if_addrs().items():
@@ -159,25 +159,25 @@ class EnvironmentRecorder:
                     "netmask": addr.netmask
                 })
             network_interfaces.append(iface_info)
-            
+
         # Environment variables
         env_vars = dict(os.environ)
-        
+
         # Installed software (Windows)
         installed_software = self._get_installed_software()
-        
+
         # System DLLs
         system_dlls = self._get_system_dlls()
-        
+
         # Kernel version
         kernel_version = platform.release()
-        
+
         # Security software
         security_software = self._detect_security_software()
-        
+
         # Virtualization detection
         virtualization = self._detect_virtualization()
-        
+
         return SystemSnapshot(
             timestamp=system_info["timestamp"],
             platform=system_info["platform"],
@@ -198,34 +198,34 @@ class EnvironmentRecorder:
             security_software=security_software,
             virtualization=virtualization
         )
-        
+
     def _get_installed_software(self) -> List[Dict]:
         """Get list of installed software on Windows."""
         software_list = []
-        
+
         if platform.system() != "Windows":
             return software_list
-            
+
         # Query Windows Registry for installed programs
         reg_paths = [
             r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
         ]
-        
+
         for reg_path in reg_paths:
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path)
-                
+
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     try:
                         subkey_name = winreg.EnumKey(key, i)
                         subkey = winreg.OpenKey(key, subkey_name)
-                        
+
                         try:
                             name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                             version = winreg.QueryValueEx(subkey, "DisplayVersion")[0]
                             publisher = winreg.QueryValueEx(subkey, "Publisher")[0]
-                            
+
                             software_list.append({
                                 "name": name,
                                 "version": version,
@@ -233,15 +233,15 @@ class EnvironmentRecorder:
                             })
                         except:
                             pass
-                            
+
                         winreg.CloseKey(subkey)
                     except:
                         pass
-                        
+
                 winreg.CloseKey(key)
             except:
                 pass
-                
+
         # Also check using WMI
         if self.wmi_client:
             try:
@@ -253,36 +253,36 @@ class EnvironmentRecorder:
                     })
             except:
                 pass
-                
+
         return software_list
-        
+
     def _get_system_dlls(self) -> List[str]:
         """Get list of system DLLs."""
         dlls = []
-        
+
         if platform.system() == "Windows":
             system32 = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32"
             if system32.exists():
                 dlls = [f.name for f in system32.glob("*.dll")][:100]  # Limit to 100 for size
-                
+
         return dlls
-        
+
     def _detect_security_software(self) -> List[str]:
         """Detect installed security software."""
         security_software = []
-        
+
         if platform.system() == "Windows" and self.wmi_client:
             try:
                 # Check for antivirus
                 for av in self.wmi_client.AntiVirusProduct():
                     security_software.append(f"Antivirus: {av.displayName}")
-                    
+
                 # Check for firewall
                 for fw in self.wmi_client.FirewallProduct():
                     security_software.append(f"Firewall: {fw.displayName}")
             except:
                 pass
-                
+
         # Check for common security tools in processes
         security_processes = [
             "MsMpEng.exe",  # Windows Defender
@@ -293,16 +293,16 @@ class EnvironmentRecorder:
             "nod32.exe",    # ESET
             "mcshield.exe"  # McAfee
         ]
-        
+
         for proc in psutil.process_iter(['name']):
             try:
                 if proc.info['name'] in security_processes:
                     security_software.append(f"Process: {proc.info['name']}")
             except:
                 pass
-                
+
         return security_software
-        
+
     def _detect_virtualization(self) -> Dict[str, bool]:
         """Detect if running in virtualized environment."""
         virt = {
@@ -313,11 +313,11 @@ class EnvironmentRecorder:
             "qemu": False,
             "xen": False
         }
-        
+
         # Check for Docker
         if Path("/.dockerenv").exists():
             virt["docker"] = True
-            
+
         # Check CPU info for hypervisor
         try:
             cpu_info = cpuinfo.get_cpu_info()
@@ -336,7 +336,7 @@ class EnvironmentRecorder:
                     virt["xen"] = True
         except:
             pass
-            
+
         # Windows-specific checks
         if platform.system() == "Windows" and self.wmi_client:
             try:
@@ -349,18 +349,18 @@ class EnvironmentRecorder:
                         virt["virtualbox"] = True
             except:
                 pass
-                
+
         return virt
-        
+
     def capture_dependency_snapshot(self) -> DependencySnapshot:
         """Capture all dependencies for reproduction."""
-        
+
         # Python information
         python_info = {
             "version": sys.version,
             "executable": sys.executable
         }
-        
+
         # Pip packages
         pip_packages = []
         try:
@@ -372,7 +372,7 @@ class EnvironmentRecorder:
                 pip_packages = json.loads(result.stdout)
         except:
             pass
-            
+
         # Conda packages (if in conda environment)
         conda_packages = []
         if "conda" in sys.executable.lower() or "mamba" in sys.executable.lower():
@@ -385,7 +385,7 @@ class EnvironmentRecorder:
                     conda_packages = json.loads(result.stdout)
             except:
                 pass
-                
+
         # System packages (Windows)
         system_packages = []
         if platform.system() == "Windows":
@@ -399,31 +399,31 @@ class EnvironmentRecorder:
                     system_packages = result.stdout.strip().split("\n")
             except:
                 pass
-                
+
         # DLL dependencies
         dll_dependencies = self._get_dll_dependencies()
-        
+
         # Virtual environment
         virtual_env = os.environ.get("VIRTUAL_ENV") or os.environ.get("CONDA_DEFAULT_ENV")
-        
+
         # Generate requirements.txt
         requirements_txt = self._generate_requirements_txt(pip_packages)
-        
+
         # Generate environment.yml
         environment_yml = self._generate_environment_yml(conda_packages)
-        
+
         # Check for Pipfile
         pipfile = None
         if Path("Pipfile").exists():
             with open("Pipfile") as f:
                 pipfile = f.read()
-                
+
         # Check for poetry.lock
         poetry_lock = None
         if Path("poetry.lock").exists():
             with open("poetry.lock") as f:
                 poetry_lock = f.read()
-                
+
         return DependencySnapshot(
             python_version=python_info["version"],
             python_executable=python_info["executable"],
@@ -437,21 +437,21 @@ class EnvironmentRecorder:
             pipfile=pipfile,
             poetry_lock=poetry_lock
         )
-        
+
     def _get_dll_dependencies(self) -> List[Dict]:
         """Get DLL dependencies for Python and key libraries."""
         dll_deps = []
-        
+
         if platform.system() != "Windows":
             return dll_deps
-            
+
         # Use dumpbin or similar to get DLL dependencies
         key_files = [
             sys.executable,  # Python.exe
             Path(sys.prefix) / "DLLs" / "sqlite3.dll",
             Path(sys.prefix) / "DLLs" / "_ssl.pyd"
         ]
-        
+
         for file_path in key_files:
             if file_path.exists():
                 try:
@@ -473,45 +473,45 @@ class EnvironmentRecorder:
                                     })
                 except:
                     pass
-                    
+
         return dll_deps
-        
+
     def _generate_requirements_txt(self, pip_packages: List[Dict]) -> str:
         """Generate requirements.txt from pip packages."""
         requirements = []
         for package in pip_packages:
             requirements.append(f"{package.get('name')}=={package.get('version')}")
         return "\n".join(requirements)
-        
+
     def _generate_environment_yml(self, conda_packages: List[Dict]) -> str:
         """Generate environment.yml from conda packages."""
         env_dict = {
             "name": "intellicrack_validation",
             "dependencies": []
         }
-        
+
         for package in conda_packages:
             env_dict["dependencies"].append(
                 f"{package.get('name')}={package.get('version')}"
             )
-            
+
         return yaml.dump(env_dict, default_flow_style=False)
 
 
 class ExecutionRecorder:
     """Records test execution for perfect reproduction."""
-    
+
     def __init__(self, recording_dir: Path):
         self.recording_dir = recording_dir
         self.recording_dir.mkdir(parents=True, exist_ok=True)
         self.recordings_db = self.recording_dir / "recordings.db"
         self._initialize_database()
-        
+
     def _initialize_database(self):
         """Initialize recording database."""
         conn = sqlite3.connect(self.recordings_db)
         cursor = conn.cursor()
-        
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS recordings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -529,10 +529,10 @@ class ExecutionRecorder:
                 file_changes TEXT
             )
         """)
-        
+
         conn.commit()
         conn.close()
-        
+
     def record_execution(
         self,
         test_id: str,
@@ -542,15 +542,15 @@ class ExecutionRecorder:
         working_dir: Path
     ) -> Dict:
         """Record a test execution with full reproducibility data."""
-        
+
         # Snapshot files before execution
         files_before = self._snapshot_directory(working_dir)
-        
+
         # Prepare execution
         start_time = datetime.now()
         process_env = os.environ.copy()
         process_env.update(environment)
-        
+
         # Execute and record
         process = subprocess.Popen(
             [command] + arguments,
@@ -560,20 +560,20 @@ class ExecutionRecorder:
             env=process_env,
             cwd=working_dir
         )
-        
+
         # Record stdin if interactive
         stdin_data = b""
-        
+
         # Get output
         stdout_data, stderr_data = process.communicate()
         return_code = process.returncode
-        
+
         execution_time = (datetime.now() - start_time).total_seconds()
-        
+
         # Snapshot files after execution
         files_after = self._snapshot_directory(working_dir)
         file_changes = self._detect_file_changes(files_before, files_after)
-        
+
         # Get memory usage
         memory_usage = 0
         try:
@@ -581,11 +581,11 @@ class ExecutionRecorder:
             memory_usage = process_info.memory_info().rss
         except:
             pass
-            
+
         # Store recording
         conn = sqlite3.connect(self.recordings_db)
         cursor = conn.cursor()
-        
+
         cursor.execute("""
             INSERT INTO recordings (
                 test_id, command, arguments, environment,
@@ -598,10 +598,10 @@ class ExecutionRecorder:
             stdout_data, stderr_data, return_code,
             execution_time, memory_usage, json.dumps(file_changes)
         ))
-        
+
         conn.commit()
         conn.close()
-        
+
         return {
             "test_id": test_id,
             "command": command,
@@ -611,11 +611,11 @@ class ExecutionRecorder:
             "memory_usage": memory_usage,
             "file_changes": file_changes
         }
-        
+
     def _snapshot_directory(self, directory: Path) -> Dict[str, str]:
         """Create snapshot of directory state."""
         snapshot = {}
-        
+
         for file_path in directory.rglob("*"):
             if file_path.is_file():
                 try:
@@ -624,9 +624,9 @@ class ExecutionRecorder:
                     snapshot[str(file_path)] = file_hash
                 except:
                     pass
-                    
+
         return snapshot
-        
+
     def _detect_file_changes(self, before: Dict[str, str], after: Dict[str, str]) -> Dict:
         """Detect file changes between snapshots."""
         changes = {
@@ -634,19 +634,19 @@ class ExecutionRecorder:
             "modified": [],
             "deleted": []
         }
-        
+
         # Find created and modified files
         for file_path, file_hash in after.items():
             if file_path not in before:
                 changes["created"].append(file_path)
             elif before[file_path] != file_hash:
                 changes["modified"].append(file_path)
-                
+
         # Find deleted files
         for file_path in before:
             if file_path not in after:
                 changes["deleted"].append(file_path)
-                
+
         return changes
 
 
@@ -655,18 +655,18 @@ class ReproducibilityPackager:
     Creates comprehensive reproducibility packages that allow exact
     recreation of validation test environments and executions.
     """
-    
+
     def __init__(self, validation_dir: Path):
         self.validation_dir = validation_dir
         self.package_dir = validation_dir / "reproducibility_packages"
         self.package_dir.mkdir(exist_ok=True)
         self.env_recorder = EnvironmentRecorder()
         self.exec_recorder = ExecutionRecorder(validation_dir / "recordings")
-        
+
         # Encryption for sensitive data
         self.cipher_key = Fernet.generate_key()
         self.cipher = Fernet(self.cipher_key)
-        
+
     def create_reproducibility_package(
         self,
         test_results: List[Any],
@@ -674,100 +674,100 @@ class ReproducibilityPackager:
         evidence_dir: Path
     ) -> Path:
         """Create complete reproducibility package."""
-        
+
         package_name = f"repro_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         package_path = self.package_dir / package_name
         package_path.mkdir()
-        
+
         print(f"Creating reproducibility package: {package_name}")
-        
+
         # 1. Capture environment snapshots
         print("  Capturing system snapshot...")
         system_snapshot = self.env_recorder.capture_system_snapshot()
         self._save_snapshot(package_path / "system_snapshot.json", asdict(system_snapshot))
-        
+
         print("  Capturing dependency snapshot...")
         dependency_snapshot = self.env_recorder.capture_dependency_snapshot()
         self._save_snapshot(package_path / "dependency_snapshot.json", asdict(dependency_snapshot))
-        
+
         # 2. Capture configuration
         print("  Capturing configuration...")
         config_snapshot = self._capture_configuration()
         self._save_snapshot(package_path / "config_snapshot.json", asdict(config_snapshot))
-        
+
         # 3. Create Docker container specification
         print("  Creating Docker specification...")
         dockerfile = self._generate_dockerfile(dependency_snapshot)
         (package_path / "Dockerfile").write_text(dockerfile)
-        
+
         docker_compose = self._generate_docker_compose()
         (package_path / "docker-compose.yml").write_text(docker_compose)
-        
+
         # 4. Create virtual machine specification
         print("  Creating VM specification...")
         vagrant_file = self._generate_vagrantfile(system_snapshot)
         (package_path / "Vagrantfile").write_text(vagrant_file)
-        
+
         # 5. Package test binaries and inputs
         print("  Packaging test binaries...")
         self._package_test_binaries(package_path / "test_binaries", test_configs)
-        
+
         # 6. Package evidence files
         print("  Packaging evidence...")
         self._package_evidence(package_path / "evidence", evidence_dir)
-        
+
         # 7. Create execution scripts
         print("  Creating execution scripts...")
         self._create_execution_scripts(package_path, test_configs)
-        
+
         # 8. Create validation scripts
         print("  Creating validation scripts...")
         self._create_validation_scripts(package_path)
-        
+
         # 9. Create Git repository for version control
         print("  Initializing Git repository...")
         self._initialize_git_repo(package_path)
-        
+
         # 10. Generate checksums
         print("  Generating checksums...")
         checksums = self._generate_checksums(package_path)
         (package_path / "checksums.sha256").write_text(checksums)
-        
+
         # 11. Create compressed archive
         print("  Creating archive...")
         archive_path = self._create_archive(package_path)
-        
+
         # 12. Generate reproduction instructions
         print("  Generating instructions...")
         instructions = self._generate_reproduction_instructions(
             system_snapshot, dependency_snapshot, package_name
         )
         (package_path / "REPRODUCE.md").write_text(instructions)
-        
+
         print(f"✓ Reproducibility package created: {archive_path}")
-        
+
         return archive_path
-        
+
     def _capture_configuration(self) -> ConfigurationSnapshot:
         """Capture all configuration settings."""
-        
+
         # Intellicrack configuration
         intellicrack_config = {}
         config_file = Path("intellicrack_config.json")
         if config_file.exists():
             with open(config_file) as f:
                 intellicrack_config = json.load(f)
-                
+
         # Frida configuration
         frida_config = {}
         frida_config_file = Path.home() / ".frida" / "config.json"
         if frida_config_file.exists():
             with open(frida_config_file) as f:
                 frida_config = json.load(f)
-                
+
         # Tool paths
         tool_paths = self._discover_tool_paths()
-        
+
         # Environment configuration
         env_config = {
             "PATH": os.environ.get("PATH", ""),
@@ -775,13 +775,13 @@ class ReproducibilityPackager:
             "LD_LIBRARY_PATH": os.environ.get("LD_LIBRARY_PATH", ""),
             "INTELLICRACK_HOME": os.environ.get("INTELLICRACK_HOME", "")
         }
-        
+
         # Encrypt sensitive data
         api_keys = self._encrypt_sensitive_data({
             k: v for k, v in os.environ.items()
             if "API" in k or "KEY" in k or "TOKEN" in k
         })
-        
+
         return ConfigurationSnapshot(
             intellicrack_config=intellicrack_config,
             frida_config=frida_config,
@@ -793,11 +793,11 @@ class ReproducibilityPackager:
             debug_settings={},  # Would load from debug config
             performance_settings={}  # Would load from performance config
         )
-        
+
     def _discover_tool_paths(self) -> Dict[str, str]:
         """Discover paths to all required tools."""
         tools = {}
-        
+
         # Common tools to find
         tool_names = [
             "python", "pip", "frida", "frida-server",
@@ -806,14 +806,14 @@ class ReproducibilityPackager:
             "gdb", "objdump", "nm", "strings",
             "upx", "pestudio", "processhacker"
         ]
-        
+
         for tool in tool_names:
             tool_path = shutil.which(tool)
             if tool_path:
                 tools[tool] = tool_path
-                
+
         return tools
-        
+
     def _encrypt_sensitive_data(self, data: Dict) -> Dict:
         """Encrypt sensitive configuration data."""
         encrypted = {}
@@ -821,13 +821,13 @@ class ReproducibilityPackager:
             if value:
                 encrypted[key] = self.cipher.encrypt(value.encode()).decode()
         return encrypted
-        
+
     def _generate_dockerfile(self, deps: DependencySnapshot) -> str:
         """Generate Dockerfile for environment reproduction."""
-        
+
         # Parse Python version
         python_version = deps.python_version.split()[0]
-        
+
         dockerfile = f"""# Intellicrack Validation Environment
 FROM python:{python_version}-windowsservercore
 
@@ -868,7 +868,7 @@ ENV PYTHONPATH=/intellicrack:$PYTHONPATH
 CMD ["python", "-m", "tests.validation_system.runner"]
 """
         return dockerfile
-        
+
     def _generate_docker_compose(self) -> str:
         """Generate docker-compose.yml for service orchestration."""
         return """version: '3.8'
@@ -891,7 +891,7 @@ services:
       - SYS_ADMIN
     security_opt:
       - seccomp:unconfined
-      
+
   frida-server:
     image: frida/frida
     container_name: frida_server
@@ -901,49 +901,49 @@ services:
       - SYS_PTRACE
       - SYS_ADMIN
 """
-        
+
     def _generate_vagrantfile(self, system: SystemSnapshot) -> str:
         """Generate Vagrantfile for VM-based reproduction."""
         return f"""# Intellicrack Validation VM
 Vagrant.configure("2") do |config|
   config.vm.box = "gusztavvargadr/windows-10"
-  
+
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "{system.memory_total // (1024**3)}GB"
     vb.cpus = {system.cpu_count}
     vb.customize ["modifyvm", :id, "--vram", "128"]
     vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
   end
-  
+
   # Provision with required software
   config.vm.provision "shell", inline: <<-SHELL
     # Install Chocolatey
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-    
+
     # Install Python
     choco install -y python3
-    
+
     # Install development tools
     choco install -y git visualstudio2019community
-    
+
     # Clone Intellicrack
     git clone https://github.com/intellicrack/intellicrack.git C:\\intellicrack
-    
+
     # Install dependencies
     cd C:\\intellicrack
     pip install -r requirements.txt
   SHELL
 end
 """
-        
+
     def _package_test_binaries(self, output_dir: Path, test_configs: Dict):
         """Package all test binaries with metadata."""
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         binaries_metadata = {}
-        
+
         for test_id, config in test_configs.items():
             if "binary_path" in config:
                 binary_path = Path(config["binary_path"])
@@ -951,11 +951,11 @@ end
                     # Copy binary
                     dest_path = output_dir / f"{test_id}_{binary_path.name}"
                     shutil.copy2(binary_path, dest_path)
-                    
+
                     # Calculate hash
                     with open(dest_path, "rb") as f:
                         file_hash = hashlib.sha256(f.read()).hexdigest()
-                        
+
                     # Store metadata
                     binaries_metadata[test_id] = {
                         "original_path": str(binary_path),
@@ -964,19 +964,19 @@ end
                         "size": dest_path.stat().st_size,
                         "protection": config.get("protection_type", "unknown")
                     }
-                    
+
         # Save metadata
         with open(output_dir / "binaries_metadata.json", "w") as f:
             json.dump(binaries_metadata, f, indent=2)
-            
+
     def _package_evidence(self, output_dir: Path, evidence_dir: Path):
         """Package evidence files with verification."""
         if evidence_dir.exists():
             shutil.copytree(evidence_dir, output_dir, dirs_exist_ok=True)
-            
+
     def _create_execution_scripts(self, package_path: Path, test_configs: Dict):
         """Create scripts to re-run validation tests."""
-        
+
         # Windows batch script
         batch_script = """@echo off
 echo Starting Intellicrack Validation Reproduction
@@ -999,7 +999,7 @@ echo Validation reproduction complete
 pause
 """
         (package_path / "run_validation.bat").write_text(batch_script)
-        
+
         # PowerShell script
         ps_script = """# Intellicrack Validation Reproduction
 Write-Host "Starting Intellicrack Validation Reproduction" -ForegroundColor Green
@@ -1026,7 +1026,7 @@ python -m tests.validation_system.runner --reproduce --config reproduce_config.j
 Write-Host "Validation reproduction complete" -ForegroundColor Green
 """
         (package_path / "run_validation.ps1").write_text(ps_script)
-        
+
         # Create configuration for reproduction
         reproduce_config = {
             "mode": "reproduce",
@@ -1035,22 +1035,22 @@ Write-Host "Validation reproduction complete" -ForegroundColor Green
             "results_dir": "results",
             "binary_dir": "test_binaries"
         }
-        
+
         with open(package_path / "reproduce_config.json", "w") as f:
             json.dump(reproduce_config, f, indent=2)
-            
+
     def _create_validation_scripts(self, package_path: Path):
         """Create scripts to validate reproduction accuracy."""
-        
+
         validation_script = """import json
 import hashlib
 from pathlib import Path
 
 def validate_reproduction():
     \"\"\"Validate that reproduction matches original results.\"\"\"
-    
+
     print("Validating reproduction accuracy...")
-    
+
     # Load original checksums
     with open("checksums.sha256") as f:
         original_checksums = {}
@@ -1058,7 +1058,7 @@ def validate_reproduction():
             if line.strip():
                 hash_val, file_path = line.strip().split("  ", 1)
                 original_checksums[file_path] = hash_val
-                
+
     # Validate files
     mismatches = []
     for file_path, expected_hash in original_checksums.items():
@@ -1072,26 +1072,26 @@ def validate_reproduction():
         else:
             mismatches.append(file_path)
             print(f"  ✗ {file_path}: File missing")
-            
+
     if mismatches:
         print(f"\\n✗ Validation failed: {len(mismatches)} mismatches")
         return False
     else:
         print("\\n✓ Validation successful: All files match")
         return True
-        
+
 if __name__ == "__main__":
     validate_reproduction()
 """
         (package_path / "validate_reproduction.py").write_text(validation_script)
-        
+
     def _initialize_git_repo(self, package_path: Path):
         """Initialize Git repository for version control."""
         try:
             repo = git.Repo.init(package_path)
             repo.git.add(".")
             repo.index.commit("Initial reproducibility package")
-            
+
             # Create .gitignore
             gitignore = """# Evidence files
 evidence/**/*.dmp
@@ -1108,14 +1108,14 @@ test_binaries/**/*.dll
 __pycache__/
 """
             (package_path / ".gitignore").write_text(gitignore)
-            
+
         except:
             pass  # Git not available
-            
+
     def _generate_checksums(self, package_path: Path) -> str:
         """Generate SHA256 checksums for all files."""
         checksums = []
-        
+
         for file_path in package_path.rglob("*"):
             if file_path.is_file() and not file_path.name.startswith("."):
                 try:
@@ -1125,18 +1125,18 @@ __pycache__/
                     checksums.append(f"{file_hash}  {relative_path}")
                 except:
                     pass
-                    
+
         return "\n".join(checksums)
-        
+
     def _create_archive(self, package_path: Path) -> Path:
         """Create compressed archive of package."""
         archive_path = package_path.with_suffix(".tar.gz")
-        
+
         with tarfile.open(archive_path, "w:gz") as tar:
             tar.add(package_path, arcname=package_path.name)
-            
+
         return archive_path
-        
+
     def _generate_reproduction_instructions(
         self,
         system: SystemSnapshot,
@@ -1144,7 +1144,7 @@ __pycache__/
         package_name: str
     ) -> str:
         """Generate detailed reproduction instructions."""
-        
+
         instructions = f"""# Intellicrack Validation Reproduction Instructions
 
 ## Package: {package_name}
@@ -1239,9 +1239,9 @@ For issues with reproduction, include:
 ---
 End of Instructions
 """
-        
+
         return instructions
-        
+
     def _save_snapshot(self, path: Path, data: Dict):
         """Save snapshot data as JSON."""
         with open(path, "w") as f:

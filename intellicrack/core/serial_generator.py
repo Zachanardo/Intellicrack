@@ -133,7 +133,7 @@ class SerialNumberGenerator:
             return SerialFormat.ALPHANUMERIC
         elif all(c in "0123456789ABCDEF" for c in sample.upper()):
             return SerialFormat.HEXADECIMAL
-        elif all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for c in sample.upper()):
+        elif all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for c in sample.upper()):  # pragma: allowlist secret
             return SerialFormat.BASE32
 
         return SerialFormat.CUSTOM

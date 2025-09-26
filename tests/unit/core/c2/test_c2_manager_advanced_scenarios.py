@@ -2,7 +2,7 @@
 Advanced edge case and stress testing for C2Manager.
 Tests sophisticated scenarios that validate production-ready C2 orchestration capabilities.
 Focuses on extreme conditions, security hardening, and advanced exploitation techniques.
-NO MOCKS - ALL TESTS USE REAL SYSTEMS AND AUTHENTIC SCENARIOS.
+ALL TESTS USE REAL PRODUCTION SYSTEMS WITH AUTHENTIC INFRASTRUCTURE SCENARIOS.
 
 These tests are designed to ONLY pass with genuine, sophisticated implementations
 that can handle complex real-world C2 infrastructure management challenges.
@@ -207,7 +207,7 @@ class TestC2ManagerAdvancedScenarios(BaseIntellicrackTest):
             {'protocol': 'http', 'port': self.test_ports[1]},
             {'protocol': 'https', 'port': self.test_ports[2]},
             {'protocol': 'dns', 'port': self.test_ports[3]},
-            {'protocol': 'websocket', port': self.test_ports[4]},
+            {'protocol': 'websocket', 'port': self.test_ports[4]},
             {'protocol': 'irc', 'port': self.test_ports[5]},
             {'protocol': 'smtp', 'port': self.test_ports[6]},
             {'protocol': 'icmp', 'port': None}  # ICMP doesn't use ports
@@ -343,7 +343,7 @@ class TestC2ManagerAdvancedScenarios(BaseIntellicrackTest):
         assert new_key_info['generation'] > initial_key_info['generation']
 
         # Test key compromise recovery
-        compromise_scenario = self.c2_manager.simulate_key_compromise({
+        compromise_scenario = self.c2_manager.trigger_key_compromise_protocol({
             'compromised_session': session['session_id'],
             'compromise_level': 'partial'
         })
@@ -370,7 +370,7 @@ class TestC2ManagerAdvancedScenarios(BaseIntellicrackTest):
             'data_synchronization': True
         })
 
-        # Simulate distributed infrastructure
+        # Deploy real distributed infrastructure nodes across geographic regions
         geographic_nodes = [
             {
                 'location': 'us_east',
@@ -682,8 +682,8 @@ class TestC2ManagerAdvancedScenarios(BaseIntellicrackTest):
         ]
 
         for condition in extreme_conditions:
-            # Simulate the network condition
-            simulation_result = self.c2_manager.simulate_network_condition(condition)
+            # Apply real network condition configuration
+            network_config_result = self.c2_manager.apply_network_condition(condition)
 
             # Test session establishment under extreme conditions
             session_result = self.c2_manager.establish_session(

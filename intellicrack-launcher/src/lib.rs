@@ -97,10 +97,10 @@ impl IntellicrackLauncher {
         // NOW initialize Python with the correct environment and GIL safety
         tracing::info!("Initializing Python with configured environment and GIL safety");
         let mut python = PythonIntegration::initialize()?;
-        
+
         // Configure PyBind11 compatibility
         python.configure_pybind11_compatibility()?;
-        
+
         self.python = Some(python);
 
         // Initialize security enforcement
@@ -111,7 +111,7 @@ impl IntellicrackLauncher {
 
         // Skip comprehensive dependency validation for faster startup
         // Just do minimal Python validation
-        
+
         // Create minimal validation results for compatibility
         let _validation_results = ValidationSummary {
             dependencies: std::collections::HashMap::new(),
@@ -155,10 +155,10 @@ impl IntellicrackLauncher {
             self.platform.os_type, self.platform.is_wsl
         );
         println!("GPU Vendor: {:?}", self.platform.gpu_vendor);
-        
+
         // Debug: Check what's in the dependencies HashMap
         tracing::debug!("Dependencies HashMap size: {}", results.dependencies.len());
-        
+
         // Only show dependency status if we actually validated dependencies
         if !results.dependencies.is_empty() {
             println!("\nDependency Status:");
@@ -167,7 +167,7 @@ impl IntellicrackLauncher {
                 let version = status.version.as_deref().unwrap_or("unknown");
                 println!("  [{}] {}: {}", status_symbol, name, version);
             }
-            
+
             if results.all_critical_available() {
                 println!("\nAll critical dependencies available - launching Intellicrack...\n");
             } else {

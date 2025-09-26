@@ -42,7 +42,7 @@ class TestTPMBypassRealWorld(TestCase):
 
         for i in range(attempts):
             nvram_index = 0x01400001 + (i % 3)
-            
+
             vmk_test_data = b'VMK\x00' + os.urandom(32)
             if nvram_index < len(self.tpm_engine.virtualized_tpm['nvram']):
                 self.tpm_engine.virtualized_tpm['nvram'][nvram_index:nvram_index+36] = vmk_test_data
@@ -144,7 +144,7 @@ class TestTPMBypassRealWorld(TestCase):
 
             for pcr_num, expected_value in expected_pcrs.items():
                 actual_value = bytes.fromhex(attestation_response['pcr_values'][pcr_num])
-                self.assertEqual(actual_value, expected_value, 
+                self.assertEqual(actual_value, expected_value,
                                f"PCR{pcr_num} mismatch for {validator['name']}")
 
             cert_size = len(attestation_response['aik_cert'])
@@ -212,7 +212,7 @@ class TestTPMBypassRealWorld(TestCase):
                     expected_check = bytes.fromhex('a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb')
                     self.assertEqual(actual_value, expected_check, "Secure Boot PCR should be set")
                 else:
-                    self.assertEqual(actual_value, expected_value, 
+                    self.assertEqual(actual_value, expected_value,
                                    f"PCR{pcr_num} not set correctly for {config['name']}")
 
             bypass_results.append({
@@ -233,7 +233,7 @@ class TestTPMBypassRealWorld(TestCase):
         """Benchmark sealed key extraction from different storage locations."""
         nvram_keys = 10
         persistent_keys = 7
-        
+
         for i in range(nvram_keys):
             index = 0x01400001 + i
             key_data = hashlib.sha256(f"NVRAM_KEY_{i}".encode()).digest()
@@ -280,14 +280,14 @@ class TestTPMBypassRealWorld(TestCase):
             attack_time = time.perf_counter() - start_time
 
             self.assertIsNotNone(captured_data, f"Bus attack failed for {description}")
-            
+
             if captured_data:
                 response_header = captured_data[:10]
                 tag, size, code = struct.unpack('>HII', response_header)
                 self.assertEqual(code, 0, f"Response should indicate success for {description}")
 
                 data_size = len(captured_data) - 10
-                self.assertGreaterEqual(data_size, expected_size, 
+                self.assertGreaterEqual(data_size, expected_size,
                                       f"Captured data too small for {description}")
 
             interception_results.append({
@@ -317,10 +317,10 @@ class TestTPMBypassRealWorld(TestCase):
             for region in memory_regions:
                 if region in self.tpm_engine.memory_map:
                     address = self.tpm_engine.memory_map[region]
-                    
+
                     test_data = b'\x00\x01\x00\x00' + os.urandom(252)  # RSA key pattern
                     test_data += b'\x00\x23\x00\x00' + os.urandom(252)  # ECC key pattern
-                    
+
         start_time = time.perf_counter()
         extracted_secrets = self.tpm_engine.cold_boot_attack()
         attack_time = time.perf_counter() - start_time
@@ -391,7 +391,7 @@ class TestTPMBypassRealWorld(TestCase):
 
         for pcr_num, expected_value in test_pcrs.items():
             sha256_value = self.tpm_engine.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num]
-            self.assertEqual(sha256_value, expected_value, 
+            self.assertEqual(sha256_value, expected_value,
                            f"SHA256 PCR{pcr_num} not set correctly")
 
             if TPM2Algorithm.SHA1 in self.tpm_engine.pcr_banks:
@@ -420,7 +420,7 @@ class TestTPMBypassRealWorld(TestCase):
                 command = struct.pack('>HII', 0x8001, 10, cmd_code)
 
             response = self.tpm_engine.process_virtualized_command(command)
-            
+
             self.assertIsNotNone(response, f"No response for {description}")
             self.assertGreaterEqual(len(response), 10, f"Response too short for {description}")
 
@@ -429,7 +429,7 @@ class TestTPMBypassRealWorld(TestCase):
 
             if cmd_code == TPM2CommandCode.GetRandom:
                 self.assertEqual(code, 0, f"GetRandom should succeed")
-                self.assertGreaterEqual(len(response), 10 + 2 + param, 
+                self.assertGreaterEqual(len(response), 10 + 2 + param,
                                       f"GetRandom response too short")
 
         print(f"\nVirtualized Command Processing:")
@@ -469,28 +469,28 @@ class TestTPMBypassRealWorld(TestCase):
 
         for target in software_targets:
             start_time = time.perf_counter()
-            
+
             target_pcrs = {}
             for pcr in target['pcrs']:
                 target_pcrs[pcr] = hashlib.sha256(f"{target['name']}_PCR{pcr}".encode()).digest()
-            
+
             self.tpm_engine.manipulate_pcr_values(target_pcrs)
-            
+
             license_data = hashlib.sha256(f"{target['name']}_LICENSE".encode()).digest()
             if target['nvram_index'] < len(self.tpm_engine.virtualized_tpm['nvram']):
                 self.tpm_engine.virtualized_tpm['nvram'][target['nvram_index']:target['nvram_index']+32] = license_data
-            
+
             extracted = self.tpm_engine.read_nvram_raw(target['nvram_index'], b'')
-            
+
             attestation = self.tpm_engine.spoof_remote_attestation(
-                self.test_nonce, 
+                self.test_nonce,
                 target_pcrs
             )
-            
+
             bypass_time = time.perf_counter() - start_time
-            
+
             success = extracted is not None and 'quote' in attestation
-            
+
             bypass_results.append({
                 'software': target['name'],
                 'tpm_usage': target['tpm_usage'],
@@ -513,10 +513,10 @@ class TestTPMBypassRealWorld(TestCase):
 
         success_rate = sum(1 for r in bypass_results if r['success']) / len(bypass_results) * 100
         avg_time = sum(r['time'] for r in bypass_results) / len(bypass_results)
-        
+
         print(f"\n  Overall Success Rate: {success_rate:.1f}%")
         print(f"  Average Bypass Time: {avg_time*1000:.2f}ms")
-        
+
         self.assertGreater(success_rate, 90, "Should bypass >90% of TPM-protected software")
         self.assertLess(avg_time, 0.05, "Average bypass should be <50ms")
 

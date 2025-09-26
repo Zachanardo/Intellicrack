@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Optional
+
 from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
@@ -153,7 +155,7 @@ class AnalysisResultOrchestrator(QObject):
                     f"ICP Error: {e!s}",
                 )
 
-    def get_current_result(self) -> UnifiedProtectionResult | None:
+    def get_current_result(self) -> Optional["UnifiedProtectionResult"]:
         """Get the most recent analysis result."""
         return self._current_result
 

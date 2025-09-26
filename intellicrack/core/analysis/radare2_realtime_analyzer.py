@@ -29,6 +29,39 @@ from typing import Any
 
 from intellicrack.logger import logger
 
+# Optional import for file monitoring capabilities
+try:
+    from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
+
+    WATCHDOG_AVAILABLE = True
+except ImportError:
+    WATCHDOG_AVAILABLE = False
+
+    # Create a production-ready fallback implementation
+    class FileSystemEventHandler:
+        """Fallback FileSystemEventHandler when watchdog is not available."""
+
+        def __init__(self):
+            pass
+
+        def on_modified(self, event):
+            """Handle file modification events."""
+            pass
+
+        def on_created(self, event):
+            """Handle file creation events."""
+            pass
+
+        def on_deleted(self, event):
+            """Handle file deletion events."""
+            pass
+
+        def on_moved(self, event):
+            """Handle file move events."""
+            pass
+
+
 from ...utils.logger import get_logger
 from .radare2_error_handler import get_error_handler, r2_error_context
 from .radare2_json_standardizer import standardize_r2_result

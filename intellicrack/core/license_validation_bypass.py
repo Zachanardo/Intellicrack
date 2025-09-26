@@ -1185,7 +1185,7 @@ class LicenseValidationBypass:
                         context="OpenSSH ED25519 public key",
                     )
 
-            elif data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY-----"):
+            elif data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY-----"):  # pragma: allowlist secret
                 # OpenSSH private key format
                 end_marker = b"-----END OPENSSH PRIVATE KEY-----"
                 end = data.find(end_marker)

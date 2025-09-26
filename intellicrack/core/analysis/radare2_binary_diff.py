@@ -640,3 +640,20 @@ class R2BinaryDiff:
                 self.r2_secondary.quit()
             except Exception as e:
                 self.logger.warning(f"Error closing secondary r2 session: {e}")
+
+
+def compare_binaries(primary_path: str, secondary_path: str) -> dict:
+    """Utility function to compare two binaries.
+
+    Args:
+        primary_path: Path to the primary binary
+        secondary_path: Path to the secondary binary
+
+    Returns:
+        Dict containing comparison results
+    """
+    diff_engine = R2BinaryDiff(primary_path, secondary_path)
+    try:
+        return diff_engine.compare()
+    finally:
+        diff_engine.close()
