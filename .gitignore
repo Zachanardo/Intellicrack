@@ -615,6 +615,11 @@ tests_mock_usage.txt
 /*.bat
 !RUN_INTELLICRACK.bat
 !LAUNCH_TESTING_SOFTWARE.bat
+!REMOVE_NUL.bat
+
+# Temporary test files
+run_production_tests.bat
+launch_fast.bat
 
 # Additional root files to ignore
 launch_intellicrack.py

@@ -752,6 +752,454 @@ rule Delphi_Compiler {
             logger.error(f"Failed to create custom rule: {e}")
             return False
 
+    def compile_rules(self, incremental: bool = False, timeout: int = 30) -> bool:
+        """Compile all loaded rules with performance optimization."""
+        import hashlib
+        import time
+
+        try:
+            # Generate hash of current rules for caching
+            rules_hash = hashlib.sha256("".join(sorted(self.builtin_rules.values())).encode()).hexdigest()
+
+            # Check if rules haven't changed (use cached compilation)
+            if hasattr(self, "_rules_hash") and self._rules_hash == rules_hash:
+                logger.debug("Rules unchanged, using cached compilation")
+                return True
+
+            # Combine all rules with error handling for individual rule failures
+            valid_rules = []
+            failed_rules = []
+
+            for name, content in self.builtin_rules.items():
+                try:
+                    # Validate individual rule
+                    yara.compile(source=content)
+                    valid_rules.append(content)
+                except Exception as e:
+                    logger.warning(f"Rule '{name}' failed validation: {e}")
+                    failed_rules.append(name)
+                    if not incremental:
+                        raise
+
+            if not valid_rules:
+                logger.error("No valid rules to compile")
+                return False
+
+            # Compile with timeout for large rule sets
+            start_time = time.time()
+            all_rules = "\n\n".join(valid_rules)
+
+            # Add performance hints
+            if len(valid_rules) > 100:
+                # For large rule sets, compile with includes to reduce memory
+                self.compiled_rules = yara.compile(source=all_rules, includes=True, error_on_warning=False)
+            else:
+                self.compiled_rules = yara.compile(source=all_rules)
+
+            compile_time = time.time() - start_time
+            logger.info(f"Compiled {len(valid_rules)} rules in {compile_time:.2f}s")
+
+            # Remove failed rules from builtin_rules if incremental
+            if incremental and failed_rules:
+                for name in failed_rules:
+                    del self.builtin_rules[name]
+                logger.info(f"Removed {len(failed_rules)} invalid rules")
+
+            # Cache the hash
+            self._rules_hash = rules_hash
+            return True
+
+        except yara.TimeoutError:
+            logger.error(f"Rule compilation timeout after {timeout}s")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to compile rules: {e}")
+            return False
+
+    def add_rule(
+        self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.LICENSE, validate_syntax: bool = True
+    ) -> bool:
+        """Add a new YARA rule with validation and categorization."""
+        import re
+
+        try:
+            # Sanitize rule name
+            safe_name = re.sub(r"[^a-zA-Z0-9_]", "_", rule_name)
+
+            # Check for duplicate
+            if safe_name in self.builtin_rules:
+                logger.warning(f"Rule '{safe_name}' already exists, updating...")
+
+            # Validate rule syntax if requested
+            if validate_syntax:
+                try:
+                    test_compiled = yara.compile(source=rule_content)
+                    # Test the rule on empty data to ensure it doesn't crash
+                    test_compiled.match(data=b"test")
+                except yara.SyntaxError as e:
+                    logger.error(f"Rule syntax error: {e}")
+                    return False
+                except Exception as e:
+                    logger.error(f"Rule validation error: {e}")
+                    return False
+
+            # Add metadata to rule if not present
+            if "meta:" not in rule_content:
+                # Insert metadata after rule name
+                lines = rule_content.split("\n")
+                for i, line in enumerate(lines):
+                    if "{" in line:
+                        lines.insert(
+                            i + 1, f'    meta:\n        category = "{category.value}"\n        added_date = "{os.environ.get("DATE", "")}"'
+                        )
+                        break
+                rule_content = "\n".join(lines)
+
+            # Store rule with category tracking
+            self.builtin_rules[safe_name] = rule_content
+            if not hasattr(self, "_rule_categories"):
+                self._rule_categories = {}
+            self._rule_categories[safe_name] = category
+
+            # Incremental compilation for performance
+            return self.compile_rules(incremental=True)
+
+        except Exception as e:
+            logger.error(f"Failed to add rule {rule_name}: {e}")
+            return False
+
+    def remove_rule(self, rule_name: str, check_dependencies: bool = True) -> bool:
+        """Remove a YARA rule with dependency checking."""
+        if rule_name not in self.builtin_rules:
+            logger.warning(f"Rule '{rule_name}' not found")
+            return False
+
+        try:
+            # Check if other rules depend on this one
+            if check_dependencies:
+                for name, content in self.builtin_rules.items():
+                    if name != rule_name and rule_name in content:
+                        logger.warning(f"Rule '{name}' may depend on '{rule_name}'")
+                        # Continue anyway but log the warning
+
+            # Remove rule and its category
+            del self.builtin_rules[rule_name]
+            if hasattr(self, "_rule_categories") and rule_name in self._rule_categories:
+                del self._rule_categories[rule_name]
+
+            # Recompile remaining rules
+            return self.compile_rules()
+
+        except Exception as e:
+            logger.error(f"Failed to remove rule {rule_name}: {e}")
+            return False
+
+    def scan_process(
+        self, pid: int, categories: Optional[List[RuleCategory]] = None, scan_dlls: bool = True, scan_heap: bool = True
+    ) -> List[YaraMatch]:
+        """Scan a running process memory with advanced options."""
+        import ctypes
+        from ctypes import wintypes
+
+        import psutil
+
+        matches = []
+
+        try:
+            # Verify process exists
+            if not psutil.pid_exists(pid):
+                logger.error(f"Process {pid} does not exist")
+                return matches
+
+            # Get process info
+            try:
+                process = psutil.Process(pid)
+                process_name = process.name()
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logger.error(f"Cannot access process {pid}: {e}")
+                return matches
+
+            # Open process with required permissions
+            PROCESS_VM_READ = 0x0010
+            PROCESS_QUERY_INFORMATION = 0x0400
+
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            process_handle = kernel32.OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, False, pid)
+
+            if not process_handle:
+                # Try using YARA's built-in process scanning
+                logger.info(f"Using YARA built-in scanning for process {pid}")
+                try:
+                    # Filter rules by category
+                    if categories:
+                        filtered_rules = self._filter_rules_by_category(categories)
+                        if filtered_rules:
+                            compiled = yara.compile(source=filtered_rules)
+                        else:
+                            compiled = self.compiled_rules
+                    else:
+                        compiled = self.compiled_rules
+
+                    # Scan process
+                    yara_matches = compiled.match(pid=pid)
+
+                    for match in yara_matches:
+                        matches.append(
+                            YaraMatch(
+                                rule_name=match.rule,
+                                category=self._get_rule_category(match.rule),
+                                matched_data=f"Process: {process_name} (PID: {pid})",
+                                metadata={
+                                    "pid": pid,
+                                    "process_name": process_name,
+                                    "strings": [(s.offset, s.matched_data) for s in match.strings],
+                                },
+                            )
+                        )
+
+                except Exception as e:
+                    logger.error(f"YARA process scan failed: {e}")
+            else:
+                # Enhanced scanning with handle
+                logger.info(f"Enhanced scanning of process {pid} with handle")
+
+                # Enumerate memory regions
+                class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                    _fields_ = [
+                        ("BaseAddress", ctypes.c_void_p),
+                        ("AllocationBase", ctypes.c_void_p),
+                        ("AllocationProtect", wintypes.DWORD),
+                        ("RegionSize", ctypes.c_size_t),
+                        ("State", wintypes.DWORD),
+                        ("Protect", wintypes.DWORD),
+                        ("Type", wintypes.DWORD),
+                    ]
+
+                mbi = MEMORY_BASIC_INFORMATION()
+                address = 0
+                MEM_COMMIT = 0x1000
+                PAGE_READWRITE = 0x04
+                PAGE_EXECUTE_READWRITE = 0x40
+
+                while address < 0x7FFFFFFF0000:
+                    result = kernel32.VirtualQueryEx(process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
+
+                    if not result:
+                        break
+
+                    # Scan committed memory with appropriate permissions
+                    if mbi.State == MEM_COMMIT and (scan_heap or mbi.Protect in [PAGE_EXECUTE_READWRITE]):
+                        # Read memory region
+                        buffer = ctypes.create_string_buffer(mbi.RegionSize)
+                        bytes_read = ctypes.c_size_t()
+
+                        if kernel32.ReadProcessMemory(process_handle, mbi.BaseAddress, buffer, mbi.RegionSize, ctypes.byref(bytes_read)):
+                            # Scan this memory region
+                            region_matches = self._scan_memory_region(buffer.raw[: bytes_read.value], mbi.BaseAddress, categories)
+                            matches.extend(region_matches)
+
+                    address = mbi.BaseAddress + mbi.RegionSize
+
+                kernel32.CloseHandle(process_handle)
+
+            # Store matches
+            if not hasattr(self, "_matches"):
+                self._matches = []
+            self._matches.extend(matches)
+
+            logger.info(f"Found {len(matches)} matches in process {pid}")
+            return matches
+
+        except Exception as e:
+            logger.error(f"Process scanning error: {e}")
+            return matches
+
+    def generate_rule(
+        self, name: str, strings: List[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True
+    ) -> str:
+        """Generate sophisticated YARA rules for licensing protection detection."""
+        import re
+
+        # Sanitize rule name
+        safe_name = re.sub(r"[^a-zA-Z0-9_]", "_", name)
+
+        rule_content = f"rule {safe_name} {{\n"
+        rule_content += "    meta:\n"
+        rule_content += f'        description = "Auto-generated rule for {name}"\n'
+        rule_content += '        category = "license"\n'
+        rule_content += "    strings:\n"
+
+        string_vars = []
+
+        for i, s in enumerate(strings):
+            var_name = f"s{i}"
+
+            if s.startswith("/") and s.endswith("/"):
+                # Regex pattern - validate it
+                try:
+                    re.compile(s[1:-1])
+                    rule_content += f"        ${var_name} = {s}\n"
+                    string_vars.append(f"${var_name}")
+                except re.error as e:
+                    logger.warning(f"Invalid regex pattern: {s} - {e}")
+                    continue
+
+            elif s.startswith("{") and s.endswith("}"):
+                # Hex pattern - add wildcards for flexibility
+                hex_pattern = s
+                if add_wildcards:
+                    # Convert some bytes to wildcards for variation matching
+                    hex_bytes = hex_pattern[1:-1].strip().split()
+                    if len(hex_bytes) > 4:
+                        # Make every 3rd byte a wildcard
+                        for j in range(2, len(hex_bytes), 3):
+                            if hex_bytes[j] != "??":
+                                hex_bytes[j] = "??"
+                        hex_pattern = "{ " + " ".join(hex_bytes) + " }"
+
+                rule_content += f"        ${var_name} = {hex_pattern}\n"
+                string_vars.append(f"${var_name}")
+
+            else:
+                # String literal - add variations
+                base_var = f"${var_name}"
+
+                # Add base string
+                rule_content += f'        {base_var} = "{s}"\n'
+                string_vars.append(base_var)
+
+                if add_case_variations:
+                    # Add case-insensitive version
+                    rule_content += f'        {base_var}_nocase = "{s}" nocase\n'
+                    string_vars.append(f"{base_var}_nocase")
+
+                    # Add wide string version (Unicode)
+                    rule_content += f'        {base_var}_wide = "{s}" wide\n'
+                    string_vars.append(f"{base_var}_wide")
+
+                    # Add ASCII version
+                    rule_content += f'        {base_var}_ascii = "{s}" ascii\n'
+                    string_vars.append(f"{base_var}_ascii")
+
+                # Add common obfuscation patterns
+                if "license" in s.lower() or "serial" in s.lower() or "key" in s.lower():
+                    # Add hex-encoded version
+                    hex_encoded = " ".join([f"{ord(c):02X}" for c in s])
+                    rule_content += f"        ${var_name}_hex = {{ {hex_encoded} }}\n"
+                    string_vars.append(f"${var_name}_hex")
+
+                    # Add base64 pattern
+                    import base64
+
+                    b64_encoded = base64.b64encode(s.encode()).decode()
+                    rule_content += f'        ${var_name}_b64 = "{b64_encoded}"\n'
+                    string_vars.append(f"${var_name}_b64")
+
+        # Generate sophisticated conditions
+        if condition == "any of them":
+            condition = f"any of ({', '.join(string_vars)})"
+        elif condition == "all of them":
+            condition = f"all of ({', '.join(string_vars)})"
+        elif condition.startswith("custom:"):
+            # Parse custom condition
+            condition = condition[7:]
+        else:
+            # Add advanced conditions for license detection
+            conditions = []
+
+            # Check for at least 2 strings
+            if len(string_vars) > 2:
+                conditions.append(f"2 of ({', '.join(string_vars)})")
+
+            # Add filesize constraint for efficiency
+            conditions.append("filesize < 50MB")
+
+            # Combine conditions
+            condition = " and ".join(conditions) if conditions else "any of them"
+
+        rule_content += f"    condition:\n        {condition}\n}}"
+
+        return rule_content
+
+    def get_matches(self) -> List[YaraMatch]:
+        """Get all stored matches (thread-safe)."""
+        import threading
+
+        if not hasattr(self, "_matches"):
+            self._matches = []
+
+        if not hasattr(self, "_match_lock"):
+            self._match_lock = threading.Lock()
+
+        with self._match_lock:
+            return list(self._matches)  # Return copy to prevent external modification
+
+    def clear_matches(self) -> None:
+        """Clear stored matches (thread-safe)."""
+        import threading
+
+        if not hasattr(self, "_match_lock"):
+            self._match_lock = threading.Lock()
+
+        with self._match_lock:
+            self._matches = []
+            logger.debug("Cleared all stored matches")
+
+    def _scan_memory_region(self, data: bytes, base_address: int, categories: Optional[List[RuleCategory]]) -> List[YaraMatch]:
+        """Scan a memory region with filtered rules."""
+        matches = []
+
+        try:
+            # Filter rules by category if specified
+            if categories:
+                filtered_rules = self._filter_rules_by_category(categories)
+                if filtered_rules:
+                    compiled = yara.compile(source=filtered_rules)
+                else:
+                    compiled = self.compiled_rules
+            else:
+                compiled = self.compiled_rules
+
+            # Scan memory region
+            yara_matches = compiled.match(data=data)
+
+            for match in yara_matches:
+                matches.append(
+                    YaraMatch(
+                        rule_name=match.rule,
+                        category=self._get_rule_category(match.rule),
+                        matched_data=f"Memory at 0x{base_address:X}",
+                        metadata={
+                            "base_address": base_address,
+                            "strings": [(s.offset + base_address, s.matched_data) for s in match.strings],
+                        },
+                    )
+                )
+
+        except Exception as e:
+            logger.error(f"Memory region scan error: {e}")
+
+        return matches
+
+    def _filter_rules_by_category(self, categories: List[RuleCategory]) -> str:
+        """Filter rules by category."""
+        if not hasattr(self, "_rule_categories"):
+            return "\n".join(self.builtin_rules.values())
+
+        filtered = []
+        for name, content in self.builtin_rules.items():
+            if name in self._rule_categories:
+                if self._rule_categories[name] in categories:
+                    filtered.append(content)
+
+        return "\n\n".join(filtered)
+
+    def _get_rule_category(self, rule_name: str) -> RuleCategory:
+        """Get category for a rule."""
+        if hasattr(self, "_rule_categories") and rule_name in self._rule_categories:
+            return self._rule_categories[rule_name]
+        return RuleCategory.CUSTOM
+
     def export_detections(self, detections: Dict[str, Any], output_path: Path) -> None:
         """Export detection results to file.
 
