@@ -575,7 +575,41 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
     def _embed_api_sequences(self, data: bytes) -> np.ndarray:
         """Create embeddings for API call sequences."""
-        return np.random.randn(128).astype(np.float32)  # Placeholder
+        import hashlib
+
+        # Generate deterministic embeddings from API sequences
+        embeddings = np.zeros(128, dtype=np.float32)
+
+        # Common API patterns for license checking
+        api_patterns = [
+            b"GetVolumeInformation", b"GetSystemInfo", b"GetComputerName",
+            b"RegOpenKey", b"RegQueryValue", b"CryptHashData",
+            b"InternetOpen", b"HttpOpenRequest", b"CreateFile",
+            b"ReadFile", b"WriteFile", b"GetModuleHandle"
+        ]
+
+        # Create feature vector based on API presence and frequency
+        for i, pattern in enumerate(api_patterns):
+            count = data.count(pattern)
+            if count > 0:
+                # Use hash for deterministic pseudo-random embedding
+                hasher = hashlib.sha256()
+                hasher.update(pattern)
+                hasher.update(str(count).encode())
+                hash_bytes = hasher.digest()
+
+                # Fill embedding positions based on pattern index
+                start_idx = (i * 10) % 128
+                end_idx = min(start_idx + 10, 128)
+                for j in range(start_idx, end_idx):
+                    embeddings[j] = float(hash_bytes[j % len(hash_bytes)]) / 255.0
+
+        # Normalize embeddings
+        norm = np.linalg.norm(embeddings)
+        if norm > 0:
+            embeddings = embeddings / norm
+
+        return embeddings
 
     def _analyze_network(self, data: bytes) -> np.ndarray:
         """Analyze network communication patterns."""

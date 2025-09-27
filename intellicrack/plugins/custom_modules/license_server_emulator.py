@@ -953,8 +953,16 @@ class AdobeEmulator:
             "iss": "intellicrack-adobe-emulator",
         }
 
-        # Sign with secret key
-        secret = "adobe_ngl_secret_2024"  # noqa: S105
+        # Generate dynamic signing key from runtime context
+        import hashlib
+        import os
+
+        # Derive key from system entropy and process context
+        key_material = hashlib.sha256(
+            f"{os.getpid()}{id(self)}{datetime.utcnow().timestamp()}".encode()
+        ).digest()
+        secret = key_material.hex()[:32]  # Use first 32 hex chars as secret
+
         token = jwt.encode(token_data, secret, algorithm="HS256")
 
         return token

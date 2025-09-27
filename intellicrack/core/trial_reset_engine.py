@@ -6,6 +6,7 @@ import os
 import struct
 import time
 import winreg
+from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -293,8 +294,48 @@ class TrialResetEngine:
         return found_files
 
     def _scan_alternate_data_streams(self, product_name: str) -> List[str]:
-        """Scan for NTFS alternate data streams"""
+        """Scan for NTFS alternate data streams using Windows APIs"""
         ads_files = []
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+
+        # Define WIN32_STREAM_ID structure for BackupRead
+        class WIN32_STREAM_ID(ctypes.Structure):
+            _fields_ = [
+                ("dwStreamId", wintypes.DWORD),
+                ("dwStreamAttributes", wintypes.DWORD),
+                ("Size", wintypes.LARGE_INTEGER),
+                ("dwStreamNameSize", wintypes.DWORD),
+            ]
+
+        # Define FindFirstStreamW structures
+        class STREAM_INFO_LEVELS(ctypes.c_int):
+            FindStreamInfoStandard = 0
+            FindStreamInfoMaxInfoLevel = 1
+
+        # Define stream info structure
+        class WIN32_FIND_STREAM_DATA(ctypes.Structure):
+            _fields_ = [
+                ("StreamSize", wintypes.LARGE_INTEGER),
+                ("cStreamName", wintypes.WCHAR * 296),
+            ]
+
+        # Setup FindFirstStreamW function
+        kernel32.FindFirstStreamW.argtypes = [
+            wintypes.LPCWSTR,
+            ctypes.c_int,
+            ctypes.POINTER(WIN32_FIND_STREAM_DATA),
+            wintypes.DWORD
+        ]
+        kernel32.FindFirstStreamW.restype = wintypes.HANDLE
+
+        kernel32.FindNextStreamW.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(WIN32_FIND_STREAM_DATA)
+        ]
+        kernel32.FindNextStreamW.restype = wintypes.BOOL
+
+        kernel32.FindClose.argtypes = [wintypes.HANDLE]
+        kernel32.FindClose.restype = wintypes.BOOL
 
         for template in self.common_trial_locations["alternate_streams"]:
             path = template.replace("{product}", product_name)
@@ -302,16 +343,104 @@ class TrialResetEngine:
 
             if os.path.exists(base_path):
                 try:
-                    # List alternate data streams
-                    import win32file
+                    # Enumerate streams using FindFirstStreamW
+                    stream_data = WIN32_FIND_STREAM_DATA()
+                    handle = kernel32.FindFirstStreamW(
+                        base_path,
+                        STREAM_INFO_LEVELS.FindStreamInfoStandard,
+                        ctypes.byref(stream_data),
+                        0
+                    )
 
-                    streams = win32file.FindStreams(base_path)
+                    if handle != -1:  # INVALID_HANDLE_VALUE
+                        try:
+                            while True:
+                                stream_name = stream_data.cStreamName
+                                # Skip the main data stream
+                                if stream_name and "::$DATA" not in stream_name:
+                                    ads_files.append(f"{base_path}{stream_name}")
 
-                    for stream in streams:
-                        if stream[0] != "::$DATA":  # Not the main stream
-                            ads_files.append(f"{base_path}{stream[0]}")
-                except:
+                                # Get next stream
+                                if not kernel32.FindNextStreamW(handle, ctypes.byref(stream_data)):
+                                    break
+                        finally:
+                            kernel32.FindClose(handle)
+
+                    # Also check for common trial-related ADS names directly
+                    common_ads_names = [
+                        ":trial", ":license", ":activation", ":expiry",
+                        ":usage", ":count", ":timestamp", ":evaluation",
+                        ":demo", ":registered", ":serial"
+                    ]
+
+                    for ads_name in common_ads_names:
+                        ads_path = f"{base_path}{ads_name}:$DATA"
+                        # Try to open the stream to check if it exists
+                        handle = kernel32.CreateFileW(
+                            ads_path,
+                            0x80000000,  # GENERIC_READ
+                            0x01 | 0x02,  # FILE_SHARE_READ | FILE_SHARE_WRITE
+                            None,
+                            3,  # OPEN_EXISTING
+                            0,
+                            None
+                        )
+                        if handle != -1:
+                            kernel32.CloseHandle(handle)
+                            ads_files.append(ads_path)
+
+                except Exception:
                     pass
+
+        # Scan for ADS in subdirectories if specified
+        for location in self.common_trial_locations.get("files", []):
+            if "{product}" in location:
+                dir_path = os.path.dirname(location.replace("{product}", product_name))
+                if os.path.exists(dir_path):
+                    ads_files.extend(self._scan_directory_for_ads(dir_path))
+
+        return ads_files
+
+    def _scan_directory_for_ads(self, directory: str) -> List[str]:
+        """Recursively scan directory for files with alternate data streams"""
+        ads_files = []
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+
+        class WIN32_FIND_STREAM_DATA(ctypes.Structure):
+            _fields_ = [
+                ("StreamSize", wintypes.LARGE_INTEGER),
+                ("cStreamName", wintypes.WCHAR * 296),
+            ]
+
+        kernel32.FindFirstStreamW.argtypes = [
+            wintypes.LPCWSTR, ctypes.c_int,
+            ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD
+        ]
+        kernel32.FindFirstStreamW.restype = wintypes.HANDLE
+
+        try:
+            for root, dirs, files in os.walk(directory):
+                for filename in files + dirs:
+                    filepath = os.path.join(root, filename)
+                    stream_data = WIN32_FIND_STREAM_DATA()
+
+                    handle = kernel32.FindFirstStreamW(
+                        filepath, 0, ctypes.byref(stream_data), 0
+                    )
+
+                    if handle != -1:
+                        try:
+                            while True:
+                                stream_name = stream_data.cStreamName
+                                if stream_name and "::$DATA" not in stream_name:
+                                    ads_files.append(f"{filepath}{stream_name}")
+
+                                if not kernel32.FindNextStreamW(handle, ctypes.byref(stream_data)):
+                                    break
+                        finally:
+                            kernel32.FindClose(handle)
+        except:
+            pass
 
         return ads_files
 
@@ -326,7 +455,7 @@ class TrialResetEngine:
                 continue
 
             try:
-                for root, dirs, files in os.walk(search_path):
+                for root, _dirs, files in os.walk(search_path):
                     for file in files:
                         file_path = os.path.join(root, file)
 
@@ -568,83 +697,151 @@ class TrialResetEngine:
         return False
 
     def _clear_alternate_data_streams(self, product_name: str):
-        """Clear NTFS alternate data streams"""
+        """Clear NTFS alternate data streams using Windows APIs"""
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+
+        # Define constants
+        DELETE = 0x00010000
+        FILE_SHARE_READ = 0x00000001
+        FILE_SHARE_WRITE = 0x00000002
+        FILE_SHARE_DELETE = 0x00000004
+        OPEN_EXISTING = 3
+        FILE_FLAG_DELETE_ON_CLOSE = 0x04000000
+        GENERIC_WRITE = 0x40000000
+
+        def remove_ads_from_file(file_path: str) -> None:
+            """Remove all alternate data streams from a file"""
+            try:
+                # First, enumerate all streams
+                class WIN32_FIND_STREAM_DATA(ctypes.Structure):
+                    _fields_ = [
+                        ("StreamSize", wintypes.LARGE_INTEGER),
+                        ("cStreamName", wintypes.WCHAR * 296),
+                    ]
+
+                kernel32.FindFirstStreamW.argtypes = [
+                    wintypes.LPCWSTR, ctypes.c_int,
+                    ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD
+                ]
+                kernel32.FindFirstStreamW.restype = wintypes.HANDLE
+
+                stream_data = WIN32_FIND_STREAM_DATA()
+                handle = kernel32.FindFirstStreamW(file_path, 0, ctypes.byref(stream_data), 0)
+
+                streams_to_delete = []
+                if handle != -1:
+                    try:
+                        while True:
+                            stream_name = stream_data.cStreamName
+                            # Collect non-main streams
+                            if stream_name and "::$DATA" not in stream_name:
+                                streams_to_delete.append(stream_name)
+
+                            if not kernel32.FindNextStreamW(handle, ctypes.byref(stream_data)):
+                                break
+                    finally:
+                        kernel32.FindClose(handle)
+
+                # Delete each alternate stream
+                for stream_name in streams_to_delete:
+                    stream_path = f"{file_path}{stream_name}"
+
+                    # Method 1: DeleteFileW
+                    if not kernel32.DeleteFileW(stream_path):
+                        # Method 2: CreateFileW with DELETE_ON_CLOSE flag
+                        handle = kernel32.CreateFileW(
+                            stream_path,
+                            DELETE | GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                            None,
+                            OPEN_EXISTING,
+                            FILE_FLAG_DELETE_ON_CLOSE,
+                            None
+                        )
+                        if handle != -1:
+                            kernel32.CloseHandle(handle)
+                        else:
+                            # Method 3: Zero out the stream
+                            handle = kernel32.CreateFileW(
+                                stream_path,
+                                GENERIC_WRITE,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                None,
+                                OPEN_EXISTING,
+                                0,
+                                None
+                            )
+                            if handle != -1:
+                                # Truncate stream to 0 bytes
+                                kernel32.SetEndOfFile(handle)
+                                kernel32.CloseHandle(handle)
+
+            except Exception:
+                pass
+
         for template in self.common_trial_locations["alternate_streams"]:
             path = template.replace("{product}", product_name)
             base_path = path.split(":")[0]
 
             if os.path.exists(base_path):
                 try:
-                    # Remove alternate data streams
-                    import pywintypes
-                    import win32api
-                    import win32file
-
-                    # Enumerate and remove all alternate data streams
-                    def remove_ads_from_file(file_path):
-                        """Remove all alternate data streams from a file"""
-                        try:
-                            # Enumerate streams
-                            streams = []
-                            for stream in win32file.FindStreams(file_path):
-                                stream_name = stream[0]
-                                if stream_name != "::$DATA":  # Skip main data stream
-                                    streams.append(stream_name)
-
-                            # Remove each alternate stream
-                            for stream in streams:
-                                stream_path = f"{file_path}{stream}"
-                                try:
-                                    # Delete the stream
-                                    win32api.DeleteFile(stream_path)
-                                except:
-                                    # Try alternative deletion method
-                                    handle = win32file.CreateFile(
-                                        stream_path,
-                                        win32file.GENERIC_WRITE,
-                                        win32file.FILE_SHARE_DELETE,
-                                        None,
-                                        win32file.OPEN_EXISTING,
-                                        win32file.FILE_FLAG_DELETE_ON_CLOSE,
-                                        None,
-                                    )
-                                    win32file.CloseHandle(handle)
-                        except pywintypes.error:
-                            pass
-
                     # Remove ADS from the base file
                     remove_ads_from_file(base_path)
 
-                    # Also check common ADS names used for trial data
+                    # Target common ADS names used for trial data
                     common_ads_names = [
-                        ":Zone.Identifier",
-                        ":trial",
-                        ":license",
-                        ":activation",
-                        ":expiry",
-                        ":usage",
-                        ":count",
-                        ":timestamp",
+                        ":Zone.Identifier", ":trial", ":license", ":activation",
+                        ":expiry", ":usage", ":count", ":timestamp", ":evaluation",
+                        ":demo", ":registered", ":serial", ":install", ":firstrun"
                     ]
 
                     for ads_name in common_ads_names:
                         ads_path = f"{base_path}{ads_name}"
-                        try:
-                            win32api.DeleteFile(ads_path)
-                        except:
-                            pass
+                        # Try multiple deletion methods
+                        if not kernel32.DeleteFileW(ads_path):
+                            ads_data_path = f"{ads_path}:$DATA"
+                            kernel32.DeleteFileW(ads_data_path)
 
-                    # Check subdirectories for ADS
+                    # Recursively check subdirectories for ADS
                     if os.path.isdir(base_path):
-                        for root, dirs, files in os.walk(base_path):
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                remove_ads_from_file(file_path)
-                            for dir_name in dirs:
-                                dir_path = os.path.join(root, dir_name)
-                                remove_ads_from_file(dir_path)
-                except:
+                        self._clear_directory_ads(base_path, remove_ads_from_file)
+
+                except Exception:
                     pass
+
+        # Also clear ADS from common file locations
+        for location in self.common_trial_locations.get("files", []):
+            if "{product}" in location:
+                file_path = location.replace("{product}", product_name)
+                if os.path.exists(file_path):
+                    remove_ads_from_file(file_path)
+
+                # Check parent directory
+                dir_path = os.path.dirname(file_path)
+                if os.path.exists(dir_path):
+                    self._clear_directory_ads(dir_path, remove_ads_from_file, max_depth=1)
+
+    def _clear_directory_ads(self, directory: str, remove_func, max_depth: int = 5) -> None:
+        """Recursively clear alternate data streams from directory"""
+        try:
+            for root, dirs, files in os.walk(directory):
+                # Limit recursion depth
+                depth = root[len(directory):].count(os.sep)
+                if depth > max_depth:
+                    continue
+
+                # Process files
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    remove_func(filepath)
+
+                # Process directories themselves (they can have ADS too)
+                for dirname in dirs:
+                    dirpath = os.path.join(root, dirname)
+                    remove_func(dirpath)
+
+        except Exception:
+            pass
 
     def _clear_prefetch_data(self, product_name: str):
         """Clear Windows prefetch data"""
@@ -848,6 +1045,7 @@ class TimeManipulator:
 
     def __init__(self):
         self.original_time = None
+        self.frozen_apps = {}  # Track frozen applications
 
     def reset_trial_time(self, trial_info: TrialInfo) -> bool:
         """Reset trial by manipulating time"""
@@ -898,11 +1096,9 @@ class TimeManipulator:
         import ctypes.wintypes as wintypes
 
         kernel32 = ctypes.windll.kernel32
-        ntdll = ctypes.windll.ntdll
 
         # Process and thread access rights
         PROCESS_ALL_ACCESS = 0x1F0FFF
-        THREAD_ALL_ACCESS = 0x1F03FF
 
         # Memory protection constants
         PAGE_EXECUTE_READWRITE = 0x40
@@ -945,44 +1141,6 @@ class TimeManipulator:
             return processes
 
         # Hook code to inject
-        hook_code_template = """
-        ; x64 assembly code for time hooks
-        ; Save original function addresses and frozen time
-
-        ; GetSystemTime hook
-        GetSystemTime_Hook:
-            push rcx
-            push rdx
-            mov rdx, {frozen_time_addr}  ; Address of frozen SYSTEMTIME structure
-            mov rcx, 16
-            rep movsb                     ; Copy frozen time to output
-            pop rdx
-            pop rcx
-            ret
-
-        ; GetLocalTime hook
-        GetLocalTime_Hook:
-            push rcx
-            push rdx
-            mov rdx, {frozen_time_addr}  ; Address of frozen SYSTEMTIME structure
-            mov rcx, 16
-            rep movsb                     ; Copy frozen time to output
-            pop rdx
-            pop rcx
-            ret
-
-        ; GetTickCount hook
-        GetTickCount_Hook:
-            mov eax, {tick_count}         ; Return frozen tick count
-            ret
-
-        ; QueryPerformanceCounter hook
-        QueryPerformanceCounter_Hook:
-            mov rax, rcx
-            mov qword ptr [rax], {perf_counter}
-            mov eax, 1                    ; Return TRUE
-            ret
-        """
 
         def inject_time_hooks(pid, frozen_time):
             """Inject time hooks into target process"""

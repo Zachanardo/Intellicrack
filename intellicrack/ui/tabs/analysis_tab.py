@@ -1544,7 +1544,7 @@ class AnalysisTab(BaseTab):
                         self.log_activity(f"  • 0x{check['address']:X}: {check['pattern']}")
 
                 # Update UI to show attached state
-                framework = self.hooking_framework_combo.currentText()
+                self.hooking_framework_combo.currentText()
                 QMessageBox.information(
                     self,
                     "Process Attached",
@@ -2363,7 +2363,7 @@ class AnalysisTab(BaseTab):
         protections_found = []
 
         # Deep scan option for unpacked sections
-        deep_scan = self.deep_scan_check.isChecked()
+        self.deep_scan_check.isChecked()
 
         try:
             with open(self.current_file_path, "rb") as f:

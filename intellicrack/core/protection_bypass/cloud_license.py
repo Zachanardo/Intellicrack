@@ -183,7 +183,6 @@ class CloudLicenseBypass:
             "cognito:username": config.get("username", "testuser"),
             "given_name": config.get("given_name", "Test"),
             "family_name": config.get("family_name", "User"),
-            "aud": client_id,
             "event_id": str(self._generate_uuid()),
             "token_use": "id",
             "auth_time": int(time.time()),
@@ -775,7 +774,7 @@ class CloudLicenseBypass:
 
         # Encode fields
         field_num = 1
-        for key, value in data.items():
+        for _key, value in data.items():
             if isinstance(value, dict):
                 # Nested message
                 nested = self._encode_protobuf_like(value)

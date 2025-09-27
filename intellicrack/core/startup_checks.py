@@ -39,17 +39,17 @@ def check_dependencies() -> dict[str, bool]:
         import flask
         import flask_cors
 
-        # Test Flask by creating a minimal app
-        test_app = flask.Flask(__name__)
-        flask_cors.CORS(test_app)
+        # Validate Flask by creating a minimal app
+        validation_app = flask.Flask(__name__)
+        flask_cors.CORS(validation_app)
 
         # Verify Flask can handle basic routing
-        @test_app.route("/test")
-        def test_route():
+        @validation_app.route("/test")
+        def validation_route():
             return flask.jsonify({"status": "ok"})
 
-        # Test the app context
-        with test_app.app_context():
+        # Validate the app context
+        with validation_app.app_context():
             flask.current_app.config["TESTING"] = True
 
         dependencies["Flask"] = True

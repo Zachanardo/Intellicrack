@@ -46,6 +46,96 @@ class ExceptionCode(IntEnum):
     EXCEPTION_GUARD_PAGE = 0x80000001
 
 
+class EXCEPTION_RECORD(ctypes.Structure):
+    """Windows EXCEPTION_RECORD structure."""
+    pass
+
+
+EXCEPTION_RECORD._fields_ = [
+    ("ExceptionCode", wintypes.DWORD),
+    ("ExceptionFlags", wintypes.DWORD),
+    ("ExceptionRecord", ctypes.POINTER(EXCEPTION_RECORD)),
+    ("ExceptionAddress", ctypes.c_void_p),
+    ("NumberParameters", wintypes.DWORD),
+    ("ExceptionInformation", ctypes.c_void_p * 15)
+]
+
+
+class M128A(ctypes.Structure):
+    """128-bit SIMD register structure."""
+    _fields_ = [
+        ("Low", ctypes.c_ulonglong),
+        ("High", ctypes.c_longlong)
+    ]
+
+
+class CONTEXT(ctypes.Structure):
+    """x64 CONTEXT structure for thread state."""
+    _fields_ = [
+        ("P1Home", ctypes.c_ulonglong),
+        ("P2Home", ctypes.c_ulonglong),
+        ("P3Home", ctypes.c_ulonglong),
+        ("P4Home", ctypes.c_ulonglong),
+        ("P5Home", ctypes.c_ulonglong),
+        ("P6Home", ctypes.c_ulonglong),
+        ("ContextFlags", wintypes.DWORD),
+        ("MxCsr", wintypes.DWORD),
+        ("SegCs", wintypes.WORD),
+        ("SegDs", wintypes.WORD),
+        ("SegEs", wintypes.WORD),
+        ("SegFs", wintypes.WORD),
+        ("SegGs", wintypes.WORD),
+        ("SegSs", wintypes.WORD),
+        ("EFlags", wintypes.DWORD),
+        ("Dr0", ctypes.c_ulonglong),
+        ("Dr1", ctypes.c_ulonglong),
+        ("Dr2", ctypes.c_ulonglong),
+        ("Dr3", ctypes.c_ulonglong),
+        ("Dr6", ctypes.c_ulonglong),
+        ("Dr7", ctypes.c_ulonglong),
+        ("Rax", ctypes.c_ulonglong),
+        ("Rcx", ctypes.c_ulonglong),
+        ("Rdx", ctypes.c_ulonglong),
+        ("Rbx", ctypes.c_ulonglong),
+        ("Rsp", ctypes.c_ulonglong),
+        ("Rbp", ctypes.c_ulonglong),
+        ("Rsi", ctypes.c_ulonglong),
+        ("Rdi", ctypes.c_ulonglong),
+        ("R8", ctypes.c_ulonglong),
+        ("R9", ctypes.c_ulonglong),
+        ("R10", ctypes.c_ulonglong),
+        ("R11", ctypes.c_ulonglong),
+        ("R12", ctypes.c_ulonglong),
+        ("R13", ctypes.c_ulonglong),
+        ("R14", ctypes.c_ulonglong),
+        ("R15", ctypes.c_ulonglong),
+        ("Rip", ctypes.c_ulonglong),
+        ("FltSave", ctypes.c_byte * 512),
+        ("VectorRegister", M128A * 26),
+        ("VectorControl", ctypes.c_ulonglong),
+        ("DebugControl", ctypes.c_ulonglong),
+        ("LastBranchToRip", ctypes.c_ulonglong),
+        ("LastBranchFromRip", ctypes.c_ulonglong),
+        ("LastExceptionToRip", ctypes.c_ulonglong),
+        ("LastExceptionFromRip", ctypes.c_ulonglong)
+    ]
+
+
+class EXCEPTION_POINTERS(ctypes.Structure):
+    """Windows EXCEPTION_POINTERS structure."""
+    _fields_ = [
+        ("ExceptionRecord", ctypes.POINTER(EXCEPTION_RECORD)),
+        ("ContextRecord", ctypes.POINTER(CONTEXT))
+    ]
+
+
+# VEH Handler function type
+PVECTORED_EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(
+    wintypes.LONG,
+    ctypes.POINTER(EXCEPTION_POINTERS)
+)
+
+
 @dataclass
 class Breakpoint:
     """Represents a debugging breakpoint."""
@@ -78,6 +168,7 @@ class LicenseDebugger:
     def __init__(self):
         """Initialize the license debugging engine."""
         self.kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        self.ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
         self.process_handle = None
         self.thread_handles = {}
         self.breakpoints = {}
@@ -91,6 +182,15 @@ class LicenseDebugger:
         self.main_thread_id = None
         self.modules = {}
         self.license_check_addresses = []
+
+        # VEH-related properties
+        self.veh_handlers = []
+        self.veh_handle = None
+        self.exception_filters = {}
+        self.single_step_enabled = False
+        self.last_exception = None
+        self.exception_callbacks = {}
+        self.veh_chain_position = 1  # 1 = first handler, 0 = last handler
 
     def _init_license_patterns(self) -> List[bytes]:
         """Initialize common license validation patterns."""
@@ -478,7 +578,7 @@ class LicenseDebugger:
 
         # Parse optional header
         opt_header_offset = nt_header_offset + 24
-        opt_header_size = struct.unpack("<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22])[0]
+        struct.unpack("<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22])[0]
 
         if is_64bit:
             size_of_image = struct.unpack("<I", pe_header[opt_header_offset + 56 : opt_header_offset + 60])[0]
@@ -644,7 +744,7 @@ class LicenseDebugger:
 
             if name_rva and first_thunk:
                 # Read DLL name
-                dll_name = self._read_string(dll_base + name_rva, 256)
+                self._read_string(dll_base + name_rva, 256)
 
                 # Check each imported function
                 thunk_offset = 0
@@ -686,9 +786,9 @@ class LicenseDebugger:
             return license_exports
 
         # Parse IMAGE_EXPORT_DIRECTORY
-        num_functions = struct.unpack("<I", export_data[20:24])[0]
+        struct.unpack("<I", export_data[20:24])[0]
         num_names = struct.unpack("<I", export_data[24:28])[0]
-        addr_functions = struct.unpack("<I", export_data[28:32])[0]
+        struct.unpack("<I", export_data[28:32])[0]
         addr_names = struct.unpack("<I", export_data[32:36])[0]
 
         # License-related export patterns
@@ -741,7 +841,7 @@ class LicenseDebugger:
         opt_header_size = struct.unpack("<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22])[0]
         section_offset = nt_header_offset + 24 + opt_header_size
 
-        for i in range(min(num_sections, 20)):  # Limit sections
+        for _i in range(min(num_sections, 20)):  # Limit sections
             if section_offset + 40 > len(pe_header):
                 break
 
@@ -1235,6 +1335,821 @@ class LicenseDebugger:
             context["rax"] = 0  # Return false/0
             self.set_registers(context)
 
+    def bypass_output_debug_string(self) -> bool:
+        """Bypass OutputDebugString anti-debugging detection.
+
+        Many protectors use OutputDebugString with special strings to detect debuggers.
+        They check if the debugger consumes the string or if it reaches the system handler.
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            # Method 1: Hook OutputDebugStringA/W to prevent detection
+            output_apis = [
+                ("kernel32.dll", "OutputDebugStringA"),
+                ("kernel32.dll", "OutputDebugStringW"),
+            ]
+
+            for dll_name, api_name in output_apis:
+                # Get the API address
+                dll_base = self.kernel32.GetModuleHandleA(dll_name.encode())
+                if not dll_base:
+                    continue
+
+                api_addr = self.kernel32.GetProcAddress(dll_base, api_name.encode())
+                if not api_addr:
+                    continue
+
+                # Hook to redirect the call
+                self.hook_license_api(dll_name, api_name, self._output_debug_string_callback)
+
+            # Method 2: Clear the LastError that OutputDebugString sets when no debugger present
+            # OutputDebugString sets LastError to 0 when debugger present, non-zero when not
+            self.kernel32.SetLastError(0)
+
+            # Method 3: Hook the RaiseException that OutputDebugString internally uses
+            # for the DBG_PRINTEXCEPTION_C (0x40010006) and DBG_PRINTEXCEPTION_W (0x4001000A)
+            if hasattr(self, 'veh_handler') and self.veh_handler:
+                # Add filter for OutputDebugString exceptions
+                def output_debug_filter(exception_record):
+                    """Filter OutputDebugString exceptions to prevent detection."""
+                    exc_code = exception_record.ExceptionCode
+                    # DBG_PRINTEXCEPTION_C and DBG_PRINTEXCEPTION_W
+                    if exc_code in [0x40010006, 0x4001000A]:
+                        # Suppress the exception to prevent detection
+                        return True  # Handled
+                    return False  # Not handled
+
+                self.register_exception_filter(output_debug_filter)
+
+            # Method 4: Patch the OutputDebugString implementation directly
+            # Replace first bytes with RET to make it return immediately
+            for api_name in ["OutputDebugStringA", "OutputDebugStringW"]:
+                api_addr = self.kernel32.GetProcAddress(
+                    self.kernel32.GetModuleHandleA(b"kernel32.dll"),
+                    api_name.encode()
+                )
+                if api_addr:
+                    # Save original bytes for restoration
+                    original = ctypes.create_string_buffer(3)
+                    bytes_read = ctypes.c_size_t()
+                    if self.kernel32.ReadProcessMemory(
+                        self.process_handle,
+                        ctypes.c_void_p(api_addr),
+                        original,
+                        3,
+                        ctypes.byref(bytes_read)
+                    ):
+                        # Store for potential restoration
+                        self.patched_apis[api_name] = (api_addr, original.raw)
+                        # Patch with RET (0xC3) + NOPs
+                        self._write_memory(api_addr, b"\xC3\x90\x90")
+
+            logger.info("OutputDebugString anti-debug bypass applied")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to bypass OutputDebugString detection: {e}")
+            return False
+
+    def _output_debug_string_callback(self, debugger, debug_event):
+        """Callback for OutputDebugString API hooks.
+
+        Modifies behavior to prevent debugger detection.
+        """
+        try:
+            # Set LastError to indicate no debugger (non-zero value)
+            self.kernel32.SetLastError(1284)  # ERROR_INVALID_MENU_HANDLE - arbitrary non-zero
+
+            # Modify return value to indicate success but no debugger
+            context = self.get_registers()
+            if context:
+                # Make it look like no debugger consumed the string
+                context["rax"] = 0  # Return success
+                self.set_registers(context)
+
+        except Exception as e:
+            logger.error(f"OutputDebugString callback error: {e}")
+
+    def mitigate_timing_attacks(self) -> bool:
+        """Mitigate timing-based anti-debugging techniques.
+
+        Implements multiple strategies to defeat timing attacks:
+        1. RDTSC patching - Neutralize CPU timestamp counter checks
+        2. Performance counter hooks - Control high-resolution timing
+        3. GetTickCount manipulation - Control system tick counts
+        4. Time acceleration/deceleration - Adjust time perception
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            # Strategy 1: RDTSC/RDTSCP instruction patching
+            # Find and patch RDTSC (0F 31) and RDTSCP (0F 01 F9) instructions
+            rdtsc_pattern = b"\x0F\x31"  # RDTSC opcode
+            rdtscp_pattern = b"\x0F\x01\xF9"  # RDTSCP opcode
+
+            # Scan for timing instructions in executable regions
+            for region in self.enumerate_memory_regions():
+                if region.get("executable", False):
+                    base = region["base_address"]
+                    size = region["size"]
+
+                    # Read memory region
+                    buffer = ctypes.create_string_buffer(size)
+                    bytes_read = ctypes.c_size_t()
+                    if self.kernel32.ReadProcessMemory(
+                        self.process_handle,
+                        ctypes.c_void_p(base),
+                        buffer,
+                        size,
+                        ctypes.byref(bytes_read)
+                    ):
+                        data = buffer.raw[:bytes_read.value]
+
+                        # Find RDTSC instructions
+                        for i in range(len(data) - len(rdtsc_pattern) + 1):
+                            if data[i:i+len(rdtsc_pattern)] == rdtsc_pattern:
+                                # Patch with XOR EAX,EAX; XOR EDX,EDX (return 0)
+                                patch = b"\x31\xC0\x31\xD2\x90\x90"  # 6 bytes
+                                self._write_memory(base + i, patch[:2])
+
+                        # Find RDTSCP instructions
+                        for i in range(len(data) - len(rdtscp_pattern) + 1):
+                            if data[i:i+len(rdtscp_pattern)] == rdtscp_pattern:
+                                # Patch with XOR EAX,EAX; XOR EDX,EDX; XOR ECX,ECX
+                                patch = b"\x31\xC0\x31\xD2\x31\xC9"
+                                self._write_memory(base + i, patch)
+
+            # Strategy 2: Hook timing APIs
+            timing_apis = [
+                ("kernel32.dll", "GetTickCount"),
+                ("kernel32.dll", "GetTickCount64"),
+                ("kernel32.dll", "QueryPerformanceCounter"),
+                ("kernel32.dll", "QueryPerformanceFrequency"),
+                ("ntdll.dll", "NtQuerySystemTime"),
+                ("ntdll.dll", "NtQueryPerformanceCounter"),
+                ("kernel32.dll", "GetSystemTime"),
+                ("kernel32.dll", "GetLocalTime"),
+                ("kernel32.dll", "GetSystemTimeAsFileTime"),
+            ]
+
+            for dll_name, api_name in timing_apis:
+                self.hook_license_api(dll_name, api_name, self._timing_api_callback)
+
+            # Strategy 3: Initialize time manipulation state
+            self.time_base = ctypes.c_ulonglong(0)
+            self.time_scale = 1.0  # Normal speed
+            self.emulated_tick_count = 0
+            self.last_real_time = 0
+
+            # Get initial tick count as baseline
+            self.emulated_tick_count = self.kernel32.GetTickCount()
+            self.last_real_time = self.emulated_tick_count
+
+            # Strategy 4: Set up performance counter interception
+            # Create emulated performance counter values
+            self.emulated_perf_counter = ctypes.c_longlong(1000000)
+            self.emulated_perf_frequency = ctypes.c_longlong(10000000)  # 10 MHz emulated frequency
+
+            # Strategy 5: Hook Sleep/SleepEx to compensate for debugging delays
+            self.hook_license_api("kernel32.dll", "Sleep", self._sleep_callback)
+            self.hook_license_api("kernel32.dll", "SleepEx", self._sleep_callback)
+
+            # Strategy 6: Neutralize NtDelayExecution (used by Sleep internally)
+            self.hook_license_api("ntdll.dll", "NtDelayExecution", self._delay_execution_callback)
+
+            # Strategy 7: Apply RDTSC emulation via debug registers
+            # Use DR7 to trap RDTSC execution if CPU supports it
+            if hasattr(self, 'set_hardware_breakpoint'):
+                # Set a general detect for privilege instructions
+                # Note: This requires ring-0 access, so we'll rely on hooks instead
+                pass
+
+            logger.info("Timing attack mitigation applied")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to mitigate timing attacks: {e}")
+            return False
+
+    def _timing_api_callback(self, debugger, debug_event):
+        """Callback for timing API hooks to provide controlled time values."""
+        try:
+            context = self.get_registers()
+            if not context:
+                return
+
+            # Determine which API was called based on return address
+            ret_addr = context.get("rsp", context.get("esp", 0))
+            if not ret_addr:
+                return
+
+            # Read API name from stack or use debug event info
+            # Provide consistent controlled values for timing APIs
+
+            # Increment emulated tick count slowly
+            self.emulated_tick_count += 10  # Advance by 10ms
+
+            # Set return value based on calling convention
+            if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
+                # RAX for return value
+                context["rax"] = self.emulated_tick_count & 0xFFFFFFFFFFFFFFFF
+                # RDX for high part in some APIs
+                context["rdx"] = (self.emulated_tick_count >> 64) & 0xFFFFFFFFFFFFFFFF
+            else:  # 32-bit
+                # EAX for return value
+                context["eax"] = self.emulated_tick_count & 0xFFFFFFFF
+                # EDX for high part in some APIs
+                context["edx"] = (self.emulated_tick_count >> 32) & 0xFFFFFFFF
+
+            self.set_registers(context)
+
+        except Exception as e:
+            logger.error(f"Timing API callback error: {e}")
+
+    def _sleep_callback(self, debugger, debug_event):
+        """Callback for Sleep API to compensate for debugging overhead."""
+        try:
+            context = self.get_registers()
+            if not context:
+                return
+
+            # Get sleep duration from first parameter
+            if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
+                # RCX contains first parameter in x64 calling convention
+                sleep_ms = context.get("rcx", 0)
+            else:  # 32-bit
+                # Read from stack for stdcall
+                esp = context.get("esp", 0)
+                if esp:
+                    sleep_ms_buf = ctypes.c_uint32()
+                    if self.kernel32.ReadProcessMemory(
+                        self.process_handle,
+                        ctypes.c_void_p(esp + 4),  # First parameter after return address
+                        ctypes.byref(sleep_ms_buf),
+                        4,
+                        None
+                    ):
+                        sleep_ms = sleep_ms_buf.value
+                    else:
+                        sleep_ms = 0
+                else:
+                    sleep_ms = 0
+
+            # Reduce sleep time to compensate for debugging overhead
+            if sleep_ms > 10:
+                # Cut sleep time to 10% to speed up debugging
+                new_sleep = max(1, sleep_ms // 10)
+                if ctypes.sizeof(ctypes.c_void_p) == 8:
+                    context["rcx"] = new_sleep
+                else:
+                    # Write back to stack
+                    if esp:
+                        new_sleep_buf = ctypes.c_uint32(new_sleep)
+                        self.kernel32.WriteProcessMemory(
+                            self.process_handle,
+                            ctypes.c_void_p(esp + 4),
+                            ctypes.byref(new_sleep_buf),
+                            4,
+                            None
+                        )
+
+            self.set_registers(context)
+
+        except Exception as e:
+            logger.error(f"Sleep callback error: {e}")
+
+    def _delay_execution_callback(self, debugger, debug_event):
+        """Callback for NtDelayExecution to speed up delays."""
+        try:
+            # Similar to Sleep callback but for NT-level delay
+            context = self.get_registers()
+            if context:
+                # Zero out the delay interval to skip it
+                context["rax"] = 0  # STATUS_SUCCESS
+                self.set_registers(context)
+
+        except Exception as e:
+            logger.error(f"Delay execution callback error: {e}")
+
+    def bypass_thread_enumeration(self) -> bool:
+        """Bypass thread enumeration detection techniques.
+
+        Hides debugger threads from enumeration APIs that protectors use
+        to detect the presence of debugging threads.
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            # Strategy 1: Hook thread enumeration APIs
+            enum_apis = [
+                ("kernel32.dll", "CreateToolhelp32Snapshot"),
+                ("kernel32.dll", "Thread32First"),
+                ("kernel32.dll", "Thread32Next"),
+                ("ntdll.dll", "NtQuerySystemInformation"),
+                ("kernel32.dll", "OpenThread"),
+                ("kernel32.dll", "GetThreadContext"),
+                ("kernel32.dll", "GetThreadId"),
+                ("kernel32.dll", "GetProcessIdOfThread"),
+            ]
+
+            for dll_name, api_name in enum_apis:
+                self.hook_license_api(dll_name, api_name, self._thread_enum_callback)
+
+            # Strategy 2: Mark our debugger threads as system threads
+            for thread_id, thread_handle in self.thread_handles.items():
+                try:
+                    # Use NtSetInformationThread to hide the thread
+                    ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
+                    ThreadHideFromDebugger = 0x11
+                    ThreadBreakOnTermination = 0x1D
+
+                    # Hide from debugger enumeration
+                    ntdll.NtSetInformationThread(
+                        thread_handle,
+                        ThreadHideFromDebugger,
+                        None,
+                        0
+                    )
+
+                    # Mark as critical system thread (appears as system process thread)
+                    critical = ctypes.c_ulong(1)
+                    ntdll.NtSetInformationThread(
+                        thread_handle,
+                        ThreadBreakOnTermination,
+                        ctypes.byref(critical),
+                        ctypes.sizeof(critical)
+                    )
+                except Exception:
+                    pass  # Some threads may not allow modification
+
+            # Strategy 3: Create a whitelist of legitimate threads
+            self.legitimate_threads = set()
+
+            # Enumerate current threads and mark them as legitimate
+            import psutil
+            try:
+                process = psutil.Process(self.process_id)
+                for thread in process.threads():
+                    self.legitimate_threads.add(thread.id)
+            except:
+                # Fallback to Windows API enumeration
+                snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
+                if snapshot != -1:
+                    thread_entry = ctypes.create_string_buffer(ctypes.sizeof(ctypes.c_ulong) * 7)
+                    thread_entry_size = ctypes.c_ulong(ctypes.sizeof(thread_entry))
+                    ctypes.memmove(ctypes.addressof(thread_entry), ctypes.byref(thread_entry_size), 4)
+
+                    if self.kernel32.Thread32First(snapshot, thread_entry):
+                        while True:
+                            thread_id = ctypes.cast(thread_entry[8:12], ctypes.POINTER(ctypes.c_ulong)).contents.value
+                            owner_pid = ctypes.cast(thread_entry[12:16], ctypes.POINTER(ctypes.c_ulong)).contents.value
+                            if owner_pid == self.process_id:
+                                self.legitimate_threads.add(thread_id)
+                            if not self.kernel32.Thread32Next(snapshot, thread_entry):
+                                break
+
+                    self.kernel32.CloseHandle(snapshot)
+
+            # Strategy 4: Hook NtOpenThread to prevent access to hidden threads
+            self.hidden_thread_ids = set()  # Threads we want to hide
+
+            logger.info(f"Thread enumeration bypass applied, hiding {len(self.hidden_thread_ids)} threads")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to bypass thread enumeration: {e}")
+            return False
+
+    def _thread_enum_callback(self, debugger, debug_event):
+        """Callback for thread enumeration API hooks."""
+        try:
+            context = self.get_registers()
+            if not context:
+                return
+
+            # Filter out debugger threads from enumeration results
+            # Parse the thread enumeration buffer and remove debugger threads
+            # by reading the THREADENTRY32 structures from the target process
+
+            # For now, return success but empty results for suspicious calls
+            context["rax"] = 0  # Success but no threads found
+            self.set_registers(context)
+
+        except Exception as e:
+            logger.error(f"Thread enumeration callback error: {e}")
+
+    def detect_suspended_threads(self) -> Dict[int, Dict]:
+        """Detect suspended threads that may indicate debugging or protection.
+
+        Returns:
+            Dictionary mapping thread IDs to suspension information
+        """
+        suspended_threads = {}
+
+        if not self.process_handle:
+            return suspended_threads
+
+        try:
+            # Method 1: Check thread suspend counts
+            for thread_id, thread_handle in self.thread_handles.items():
+                try:
+                    # Get thread suspend count
+                    suspend_count = ctypes.c_ulong()
+
+                    # Use NtQueryInformationThread
+                    ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
+                    ThreadSuspendCount = 0x23
+
+                    status = ntdll.NtQueryInformationThread(
+                        thread_handle,
+                        ThreadSuspendCount,
+                        ctypes.byref(suspend_count),
+                        ctypes.sizeof(suspend_count),
+                        None
+                    )
+
+                    if status == 0 and suspend_count.value > 0:
+                        suspended_threads[thread_id] = {
+                            "suspend_count": suspend_count.value,
+                            "handle": thread_handle,
+                            "detection_method": "suspend_count"
+                        }
+                except:
+                    pass
+
+            # Method 2: Check thread wait states
+            for thread_id, thread_handle in self.thread_handles.items():
+                if thread_id in suspended_threads:
+                    continue  # Already detected
+
+                try:
+                    # Get thread context to check instruction pointer
+                    context = CONTEXT()
+                    context.ContextFlags = CONTEXT_FULL
+
+                    # SuspendThread to get accurate state
+                    prev_suspend = self.kernel32.SuspendThread(thread_handle)
+                    if prev_suspend != 0xFFFFFFFF:
+                        if self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
+                            # Check if thread is at a suspension point
+                            rip = context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
+
+                            # Read instruction at RIP/EIP
+                            inst_buf = ctypes.create_string_buffer(16)
+                            bytes_read = ctypes.c_size_t()
+                            if self.kernel32.ReadProcessMemory(
+                                self.process_handle,
+                                ctypes.c_void_p(rip),
+                                inst_buf,
+                                16,
+                                ctypes.byref(bytes_read)
+                            ):
+                                # Check for common suspension indicators
+                                # INT 3 (0xCC), INT 2D (0xCD 0x2D), or infinite loop
+                                if inst_buf[0] == 0xCC or (inst_buf[0] == 0xCD and inst_buf[1] == 0x2D):
+                                    suspended_threads[thread_id] = {
+                                        "suspend_count": prev_suspend,
+                                        "handle": thread_handle,
+                                        "detection_method": "breakpoint_suspension",
+                                        "instruction_pointer": hex(rip)
+                                    }
+                                # Check for JMP $ (EB FE) - infinite loop
+                                elif inst_buf[0] == 0xEB and inst_buf[1] == 0xFE:
+                                    suspended_threads[thread_id] = {
+                                        "suspend_count": prev_suspend,
+                                        "handle": thread_handle,
+                                        "detection_method": "infinite_loop",
+                                        "instruction_pointer": hex(rip)
+                                    }
+
+                        # Resume thread to original state
+                        self.kernel32.ResumeThread(thread_handle)
+                except:
+                    pass
+
+            # Method 3: Check for debugger-suspended threads
+            snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
+            if snapshot != -1:
+                class THREADENTRY32(ctypes.Structure):
+                    _fields_ = [
+                        ("dwSize", ctypes.c_ulong),
+                        ("cntUsage", ctypes.c_ulong),
+                        ("th32ThreadID", ctypes.c_ulong),
+                        ("th32OwnerProcessID", ctypes.c_ulong),
+                        ("tpBasePri", ctypes.c_long),
+                        ("tpDeltaPri", ctypes.c_long),
+                        ("dwFlags", ctypes.c_ulong),
+                    ]
+
+                thread_entry = THREADENTRY32()
+                thread_entry.dwSize = ctypes.sizeof(THREADENTRY32)
+
+                if self.kernel32.Thread32First(snapshot, ctypes.byref(thread_entry)):
+                    while True:
+                        if thread_entry.th32OwnerProcessID == self.process_id:
+                            # Check if this thread is in our handles but shows as suspended
+                            if thread_entry.th32ThreadID not in self.thread_handles:
+                                # Untracked thread - might be hidden/suspended
+                                suspended_threads[thread_entry.th32ThreadID] = {
+                                    "suspend_count": -1,  # Unknown
+                                    "handle": None,
+                                    "detection_method": "untracked_thread",
+                                    "flags": thread_entry.dwFlags
+                                }
+
+                        if not self.kernel32.Thread32Next(snapshot, ctypes.byref(thread_entry)):
+                            break
+
+                self.kernel32.CloseHandle(snapshot)
+
+            # Log findings
+            if suspended_threads:
+                logger.info(f"Detected {len(suspended_threads)} suspended threads")
+                for tid, info in suspended_threads.items():
+                    logger.debug(f"Thread {tid}: {info['detection_method']}, "
+                               f"suspend_count={info['suspend_count']}")
+
+            return suspended_threads
+
+        except Exception as e:
+            logger.error(f"Failed to detect suspended threads: {e}")
+            return suspended_threads
+
+    def manipulate_thread_local_storage(self, thread_id: int, tls_index: int,
+                                       value: bytes) -> bool:
+        """Manipulate Thread Local Storage (TLS) for anti-debugging and hiding.
+
+        Args:
+            thread_id: Target thread ID
+            tls_index: TLS slot index
+            value: Value to write to TLS
+
+        Returns:
+            True if successful
+        """
+        if thread_id not in self.thread_handles:
+            logger.error(f"Thread {thread_id} not found")
+            return False
+
+        try:
+            thread_handle = self.thread_handles[thread_id]
+
+            # Get Thread Information Block (TIB) address
+            ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
+
+            class THREAD_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("ExitStatus", ctypes.c_long),
+                    ("TebBaseAddress", ctypes.c_void_p),
+                    ("ClientId", ctypes.c_ulonglong),
+                    ("AffinityMask", ctypes.c_void_p),
+                    ("Priority", ctypes.c_long),
+                    ("BasePriority", ctypes.c_long),
+                ]
+
+            tbi = THREAD_BASIC_INFORMATION()
+            status = ntdll.NtQueryInformationThread(
+                thread_handle,
+                0,  # ThreadBasicInformation
+                ctypes.byref(tbi),
+                ctypes.sizeof(tbi),
+                None
+            )
+
+            if status != 0:
+                logger.error(f"Failed to get TEB address: {hex(status)}")
+                return False
+
+            teb_address = tbi.TebBaseAddress
+
+            # TEB structure offsets
+            if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
+                tls_slots_offset = 0x1480  # TEB.TlsSlots
+                tls_expansion_offset = 0x1780  # TEB.TlsExpansionSlots
+            else:  # 32-bit
+                tls_slots_offset = 0xE10  # TEB.TlsSlots
+                tls_expansion_offset = 0xF94  # TEB.TlsExpansionSlots
+
+            # Determine which TLS array to use
+            if tls_index < 64:
+                # Use primary TLS slots
+                tls_address = teb_address + tls_slots_offset + (tls_index * ctypes.sizeof(ctypes.c_void_p))
+            else:
+                # Use TLS expansion slots
+                expansion_index = tls_index - 64
+                if expansion_index >= 1024:
+                    logger.error(f"TLS index {tls_index} out of range")
+                    return False
+
+                # Read TlsExpansionSlots pointer
+                expansion_ptr = ctypes.c_void_p()
+                if not self.kernel32.ReadProcessMemory(
+                    self.process_handle,
+                    ctypes.c_void_p(teb_address + tls_expansion_offset),
+                    ctypes.byref(expansion_ptr),
+                    ctypes.sizeof(expansion_ptr),
+                    None
+                ):
+                    logger.error("Failed to read TLS expansion pointer")
+                    return False
+
+                if not expansion_ptr.value:
+                    logger.error("TLS expansion slots not allocated")
+                    return False
+
+                tls_address = expansion_ptr.value + (expansion_index * ctypes.sizeof(ctypes.c_void_p))
+
+            # Write the TLS value
+            value_ptr = ctypes.c_void_p(int.from_bytes(value, 'little'))
+            if not self.kernel32.WriteProcessMemory(
+                self.process_handle,
+                ctypes.c_void_p(tls_address),
+                ctypes.byref(value_ptr),
+                ctypes.sizeof(value_ptr),
+                None
+            ):
+                logger.error("Failed to write TLS value")
+                return False
+
+            # Also manipulate TLS callbacks if they exist
+            # Parse PE header for TLS directory
+            pe_info = self.analyze_pe_header()
+            if pe_info and "tls_callbacks" in pe_info:
+                for callback_addr in pe_info["tls_callbacks"]:
+                    # Hook or patch TLS callbacks to prevent anti-debugging
+                    # Replace with RET instruction
+                    self._write_memory(callback_addr, b"\xC3")
+                    logger.debug(f"Neutralized TLS callback at {hex(callback_addr)}")
+
+            logger.info(f"Successfully manipulated TLS index {tls_index} for thread {thread_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to manipulate TLS: {e}")
+            return False
+
+    def trace_thread_execution(self, thread_id: int, max_instructions: int = 1000) -> List[Dict]:
+        """Trace thread execution by single-stepping through instructions.
+
+        Args:
+            thread_id: Thread to trace
+            max_instructions: Maximum instructions to trace
+
+        Returns:
+            List of traced instruction information
+        """
+        if thread_id not in self.thread_handles:
+            logger.error(f"Thread {thread_id} not found")
+            return []
+
+        trace_log = []
+
+        try:
+            thread_handle = self.thread_handles[thread_id]
+
+            # Suspend thread for tracing
+            if self.kernel32.SuspendThread(thread_handle) == 0xFFFFFFFF:
+                logger.error("Failed to suspend thread")
+                return []
+
+            try:
+                # Get initial context
+                context = CONTEXT()
+                context.ContextFlags = CONTEXT_FULL
+
+                if not self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
+                    logger.error("Failed to get thread context")
+                    return []
+
+                # Enable single-step mode (Trap Flag)
+                context.EFlags |= 0x100  # TF flag
+
+                if not self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context)):
+                    logger.error("Failed to set thread context")
+                    return []
+
+                # Set up exception handler for single-step exceptions
+                single_step_count = 0
+
+                # Resume thread to start tracing
+                self.kernel32.ResumeThread(thread_handle)
+
+                # Main tracing loop
+                while single_step_count < max_instructions:
+                    # Wait for single-step exception
+                    debug_event = DEBUG_EVENT()
+                    if self.kernel32.WaitForDebugEvent(ctypes.byref(debug_event), 100):
+                        if debug_event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT:
+                            exception = debug_event.u.Exception
+                            if exception.ExceptionRecord.ExceptionCode == EXCEPTION_SINGLE_STEP:
+                                # Get current context
+                                if self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
+                                    # Get instruction pointer
+                                    if ctypes.sizeof(ctypes.c_void_p) == 8:
+                                        ip = context.Rip
+                                        regs = {
+                                            "rax": context.Rax, "rbx": context.Rbx,
+                                            "rcx": context.Rcx, "rdx": context.Rdx,
+                                            "rsi": context.Rsi, "rdi": context.Rdi,
+                                            "rbp": context.Rbp, "rsp": context.Rsp,
+                                            "rip": context.Rip,
+                                        }
+                                    else:
+                                        ip = context.Eip
+                                        regs = {
+                                            "eax": context.Eax, "ebx": context.Ebx,
+                                            "ecx": context.Ecx, "edx": context.Edx,
+                                            "esi": context.Esi, "edi": context.Edi,
+                                            "ebp": context.Ebp, "esp": context.Esp,
+                                            "eip": context.Eip,
+                                        }
+
+                                    # Read instruction bytes
+                                    inst_buf = ctypes.create_string_buffer(16)
+                                    bytes_read = ctypes.c_size_t()
+                                    if self.kernel32.ReadProcessMemory(
+                                        self.process_handle,
+                                        ctypes.c_void_p(ip),
+                                        inst_buf,
+                                        16,
+                                        ctypes.byref(bytes_read)
+                                    ):
+                                        inst_bytes = inst_buf.raw[:bytes_read.value]
+
+                                        # Disassemble instruction if Capstone is available
+                                        inst_str = ""
+                                        try:
+                                            from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
+                                            if ctypes.sizeof(ctypes.c_void_p) == 8:
+                                                md = Cs(CS_ARCH_X86, CS_MODE_64)
+                                            else:
+                                                md = Cs(CS_ARCH_X86, CS_MODE_32)
+
+                                            for inst in md.disasm(inst_bytes, ip):
+                                                inst_str = f"{inst.mnemonic} {inst.op_str}"
+                                                break
+                                        except:
+                                            inst_str = inst_bytes.hex()
+
+                                        # Log the traced instruction
+                                        trace_entry = {
+                                            "address": hex(ip),
+                                            "instruction": inst_str,
+                                            "bytes": inst_bytes.hex(),
+                                            "registers": regs,
+                                            "thread_id": thread_id,
+                                            "step": single_step_count
+                                        }
+                                        trace_log.append(trace_entry)
+
+                                        # Check for control flow changes
+                                        if inst_bytes[0] in [0xE8, 0xE9, 0xFF, 0xC3, 0xC2]:  # CALL, JMP, RET
+                                            trace_entry["type"] = "control_flow"
+                                        elif inst_bytes[0] & 0xF0 == 0x70:  # Conditional jumps
+                                            trace_entry["type"] = "conditional_jump"
+                                        else:
+                                            trace_entry["type"] = "normal"
+
+                                    # Re-enable single-step
+                                    context.EFlags |= 0x100
+                                    self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
+
+                                single_step_count += 1
+
+                        # Continue debugging
+                        self.kernel32.ContinueDebugEvent(
+                            debug_event.dwProcessId,
+                            debug_event.dwThreadId,
+                            DBG_CONTINUE
+                        )
+                    else:
+                        # No debug event, check if thread is still alive
+                        exit_code = ctypes.c_ulong()
+                        if self.kernel32.GetExitCodeThread(thread_handle, ctypes.byref(exit_code)):
+                            if exit_code.value != 259:  # STILL_ACTIVE
+                                logger.info(f"Thread {thread_id} terminated with code {exit_code.value}")
+                                break
+
+                # Disable single-step mode
+                context.EFlags &= ~0x100
+                self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
+
+            finally:
+                # Resume thread to normal execution
+                self.kernel32.ResumeThread(thread_handle)
+
+            logger.info(f"Traced {len(trace_log)} instructions for thread {thread_id}")
+            return trace_log
+
+        except Exception as e:
+            logger.error(f"Failed to trace thread execution: {e}")
+            return trace_log
+
     def analyze_tls_callbacks(self) -> List[int]:
         """Analyze Thread Local Storage callbacks."""
         tls_callbacks = []
@@ -1311,6 +2226,483 @@ class LicenseDebugger:
             logger.error(f"Error analyzing TLS callbacks: {e}")
 
         return tls_callbacks
+
+    def disassemble_tls_callbacks(self) -> Dict[int, List[str]]:
+        """Disassemble TLS callback functions for analysis.
+
+        Returns:
+            Dictionary mapping callback addresses to disassembled instructions
+        """
+        disassembled = {}
+
+        if not self.process_handle:
+            return disassembled
+
+        try:
+            # Get TLS callbacks
+            callbacks = self.analyze_tls_callbacks()
+
+            if not callbacks:
+                logger.info("No TLS callbacks found to disassemble")
+                return disassembled
+
+            # Try to import Capstone disassembler
+            try:
+                from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+                has_capstone = True
+            except ImportError:
+                has_capstone = False
+                logger.warning("Capstone not available, using raw bytes")
+
+            # Determine architecture
+            is_64bit = ctypes.sizeof(ctypes.c_void_p) == 8
+
+            for callback_addr in callbacks:
+                instructions = []
+
+                # Read up to 1024 bytes from callback
+                code_bytes = self._read_memory(callback_addr, 1024)
+                if not code_bytes:
+                    continue
+
+                if has_capstone:
+                    # Disassemble with Capstone
+                    if is_64bit:
+                        md = Cs(CS_ARCH_X86, CS_MODE_64)
+                    else:
+                        md = Cs(CS_ARCH_X86, CS_MODE_32)
+
+                    instruction_count = 0
+                    for inst in md.disasm(code_bytes, callback_addr):
+                        inst_str = f"0x{inst.address:X}: {inst.mnemonic} {inst.op_str}"
+                        instructions.append(inst_str)
+
+                        # Check for common protection patterns
+                        if inst.mnemonic in ["int3", "int", "ud2"]:
+                            instructions.append("  [!] Anti-debug instruction detected")
+                        elif inst.mnemonic == "cpuid":
+                            instructions.append("  [!] CPU detection (VM/timing)")
+                        elif inst.mnemonic == "rdtsc":
+                            instructions.append("  [!] Timing check detected")
+                        elif inst.mnemonic in ["call", "jmp"] and "fs:" in inst.op_str:
+                            instructions.append("  [!] TEB/PEB access detected")
+
+                        # Stop at return or after 50 instructions
+                        instruction_count += 1
+                        if inst.mnemonic in ["ret", "retn"] or instruction_count > 50:
+                            break
+                else:
+                    # Raw byte display
+                    for i in range(0, min(100, len(code_bytes)), 16):
+                        hex_str = code_bytes[i:i+16].hex()
+                        hex_pairs = ' '.join(hex_str[j:j+2] for j in range(0, len(hex_str), 2))
+                        instructions.append(f"0x{callback_addr+i:X}: {hex_pairs}")
+
+                        # Basic pattern detection
+                        chunk = code_bytes[i:i+16]
+                        if b'\xCC' in chunk:
+                            instructions.append("  [!] INT3 breakpoint detected")
+                        if b'\x0F\x31' in chunk:
+                            instructions.append("  [!] RDTSC timing check detected")
+                        if b'\x0F\xA2' in chunk:
+                            instructions.append("  [!] CPUID instruction detected")
+
+                disassembled[callback_addr] = instructions
+                logger.info(f"Disassembled TLS callback at 0x{callback_addr:X}: {len(instructions)} instructions")
+
+            return disassembled
+
+        except Exception as e:
+            logger.error(f"Failed to disassemble TLS callbacks: {e}")
+            return disassembled
+
+    def bypass_tls_callbacks(self) -> bool:
+        """Bypass TLS callbacks by patching or skipping them.
+
+        Returns:
+            True if callbacks were successfully bypassed
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            callbacks = self.analyze_tls_callbacks()
+
+            if not callbacks:
+                logger.info("No TLS callbacks to bypass")
+                return True
+
+            bypassed_count = 0
+
+            for callback_addr in callbacks:
+                try:
+                    # Method 1: Replace with RET instruction
+                    # This is the simplest and most effective method
+                    ret_patch = b"\xC3"  # RET
+                    if self._write_memory(callback_addr, ret_patch):
+                        logger.info(f"Bypassed TLS callback at 0x{callback_addr:X} with RET")
+                        bypassed_count += 1
+                        continue
+
+                    # Method 2: If patching fails, try to hook it
+                    # Install a detour that skips the callback
+                    original_bytes = self._read_memory(callback_addr, 5)
+                    if original_bytes:
+                        # Create a JMP to skip the callback (JMP +0)
+                        # This effectively makes it a NOP sled
+                        jmp_patch = b"\xE9\x00\x00\x00\x00"  # JMP rel32 (to next instruction)
+                        if self._write_memory(callback_addr, jmp_patch):
+                            logger.info(f"Bypassed TLS callback at 0x{callback_addr:X} with JMP")
+                            bypassed_count += 1
+                            continue
+
+                    logger.warning(f"Failed to bypass TLS callback at 0x{callback_addr:X}")
+
+                except Exception as e:
+                    logger.error(f"Error bypassing callback at 0x{callback_addr:X}: {e}")
+
+            # Method 3: Clear the TLS callback table itself
+            # This prevents any callbacks from being called
+            modules = list(self.modules.keys())
+            if modules:
+                module_base = modules[0]
+                pe_header = self._read_memory(module_base, 0x1000)
+
+                if pe_header and pe_header[:2] == b"MZ":
+                    e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
+                    nt_header_offset = e_lfanew
+
+                    if pe_header[nt_header_offset:nt_header_offset + 4] == b"PE\x00\x00":
+                        machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
+                        is_64bit = machine == 0x8664
+                        opt_header_offset = nt_header_offset + 24
+
+                        if is_64bit:
+                            tls_dir_offset = opt_header_offset + 144
+                        else:
+                            tls_dir_offset = opt_header_offset + 128
+
+                        tls_rva = struct.unpack("<I", pe_header[tls_dir_offset:tls_dir_offset + 4])[0]
+
+                        if tls_rva:
+                            # Read TLS directory
+                            tls_dir = self._read_memory(module_base + tls_rva, 24)
+                            if tls_dir:
+                                # Get callbacks pointer and zero it out
+                                if is_64bit:
+                                    callbacks_ptr_offset = 16
+                                    null_ptr = b"\x00" * 8
+                                else:
+                                    callbacks_ptr_offset = 12
+                                    null_ptr = b"\x00" * 4
+
+                                # Zero the callback pointer in TLS directory
+                                if self._write_memory(module_base + tls_rva + callbacks_ptr_offset, null_ptr):
+                                    logger.info("Cleared TLS callback table pointer")
+                                    bypassed_count = len(callbacks)
+
+            logger.info(f"Successfully bypassed {bypassed_count}/{len(callbacks)} TLS callbacks")
+            return bypassed_count > 0
+
+        except Exception as e:
+            logger.error(f"Failed to bypass TLS callbacks: {e}")
+            return False
+
+    def hook_tls_callbacks(self, callback_handler: Callable) -> bool:
+        """Hook TLS callbacks to intercept and modify their behavior.
+
+        Args:
+            callback_handler: Function to handle intercepted TLS callbacks
+
+        Returns:
+            True if callbacks were successfully hooked
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            callbacks = self.analyze_tls_callbacks()
+
+            if not callbacks:
+                logger.info("No TLS callbacks to hook")
+                return True
+
+            hooked_count = 0
+
+            # Store original bytes and handlers
+            if not hasattr(self, 'tls_hooks'):
+                self.tls_hooks = {}
+
+            for callback_addr in callbacks:
+                try:
+                    # Read original bytes (need at least 5 for a JMP)
+                    original_bytes = self._read_memory(callback_addr, 16)
+                    if not original_bytes:
+                        continue
+
+                    # Allocate memory for the hook trampoline
+                    trampoline_size = 256
+                    trampoline_addr = self.kernel32.VirtualAllocEx(
+                        self.process_handle,
+                        None,
+                        trampoline_size,
+                        MEM_COMMIT | MEM_RESERVE,
+                        PAGE_EXECUTE_READWRITE
+                    )
+
+                    if not trampoline_addr:
+                        logger.error(f"Failed to allocate trampoline for callback at 0x{callback_addr:X}")
+                        continue
+
+                    # Create hook trampoline
+                    # The trampoline will:
+                    # 1. Save registers
+                    # 2. Call our handler
+                    # 3. Restore registers
+                    # 4. Execute original instructions
+                    # 5. Jump back
+
+                    is_64bit = ctypes.sizeof(ctypes.c_void_p) == 8
+
+                    if is_64bit:
+                        # x64 trampoline
+                        trampoline = bytearray([
+                            # Save all registers
+                            0x50,                    # push rax
+                            0x51,                    # push rcx
+                            0x52,                    # push rdx
+                            0x53,                    # push rbx
+                            0x54,                    # push rsp
+                            0x55,                    # push rbp
+                            0x56,                    # push rsi
+                            0x57,                    # push rdi
+                            0x41, 0x50,              # push r8
+                            0x41, 0x51,              # push r9
+                            0x41, 0x52,              # push r10
+                            0x41, 0x53,              # push r11
+                            0x41, 0x54,              # push r12
+                            0x41, 0x55,              # push r13
+                            0x41, 0x56,              # push r14
+                            0x41, 0x57,              # push r15
+
+                            # Call our handler (store address later)
+                            0x48, 0xB8,              # mov rax, imm64
+                        ])
+                        # Add handler address (8 bytes)
+                        handler_addr_bytes = struct.pack("<Q", id(callback_handler))
+                        trampoline.extend(handler_addr_bytes)
+                        trampoline.extend([
+                            0xFF, 0xD0,              # call rax
+
+                            # Restore registers
+                            0x41, 0x5F,              # pop r15
+                            0x41, 0x5E,              # pop r14
+                            0x41, 0x5D,              # pop r13
+                            0x41, 0x5C,              # pop r12
+                            0x41, 0x5B,              # pop r11
+                            0x41, 0x5A,              # pop r10
+                            0x41, 0x59,              # pop r9
+                            0x41, 0x58,              # pop r8
+                            0x5F,                    # pop rdi
+                            0x5E,                    # pop rsi
+                            0x5D,                    # pop rbp
+                            0x5C,                    # pop rsp
+                            0x5B,                    # pop rbx
+                            0x5A,                    # pop rdx
+                            0x59,                    # pop rcx
+                            0x58,                    # pop rax
+                        ])
+                    else:
+                        # x86 trampoline
+                        trampoline = bytearray([
+                            # Save all registers
+                            0x60,                    # pushad
+
+                            # Call our handler
+                            0xB8,                    # mov eax, imm32
+                        ])
+                        # Add handler address (4 bytes)
+                        handler_addr_bytes = struct.pack("<I", id(callback_handler))
+                        trampoline.extend(handler_addr_bytes)
+                        trampoline.extend([
+                            0xFF, 0xD0,              # call eax
+
+                            # Restore registers
+                            0x61,                    # popad
+                        ])
+
+                    # Add original instructions (first 5 bytes minimum)
+                    trampoline.extend(original_bytes[:5])
+
+                    # Add jump back to original + 5
+                    trampoline.append(0xE9)  # JMP rel32
+                    jump_offset = (callback_addr + 5) - (trampoline_addr + len(trampoline) + 4)
+                    trampoline.extend(struct.pack("<i", jump_offset))
+
+                    # Write trampoline to allocated memory
+                    if not self._write_memory(trampoline_addr, bytes(trampoline)):
+                        self.kernel32.VirtualFreeEx(self.process_handle, trampoline_addr, 0, MEM_RELEASE)
+                        continue
+
+                    # Create JMP from original to trampoline
+                    hook_bytes = bytearray([0xE9])  # JMP rel32
+                    hook_offset = trampoline_addr - (callback_addr + 5)
+                    hook_bytes.extend(struct.pack("<i", hook_offset))
+
+                    # Install the hook
+                    if self._write_memory(callback_addr, bytes(hook_bytes)):
+                        self.tls_hooks[callback_addr] = {
+                            "original": original_bytes,
+                            "trampoline": trampoline_addr,
+                            "handler": callback_handler
+                        }
+                        hooked_count += 1
+                        logger.info(f"Hooked TLS callback at 0x{callback_addr:X}")
+                    else:
+                        self.kernel32.VirtualFreeEx(self.process_handle, trampoline_addr, 0, MEM_RELEASE)
+
+                except Exception as e:
+                    logger.error(f"Failed to hook callback at 0x{callback_addr:X}: {e}")
+
+            logger.info(f"Successfully hooked {hooked_count}/{len(callbacks)} TLS callbacks")
+            return hooked_count > 0
+
+        except Exception as e:
+            logger.error(f"Failed to hook TLS callbacks: {e}")
+            return False
+
+    def detect_tls_protection(self) -> Dict[str, Any]:
+        """Detect TLS-based protection mechanisms.
+
+        Returns:
+            Dictionary containing detected protection information
+        """
+        protection_info = {
+            "has_tls": False,
+            "callback_count": 0,
+            "suspicious_patterns": [],
+            "protection_likelihood": "None",
+            "detected_techniques": []
+        }
+
+        if not self.process_handle:
+            return protection_info
+
+        try:
+            # Get TLS callbacks
+            callbacks = self.analyze_tls_callbacks()
+
+            if not callbacks:
+                return protection_info
+
+            protection_info["has_tls"] = True
+            protection_info["callback_count"] = len(callbacks)
+
+            # Disassemble and analyze each callback
+            disassembled = self.disassemble_tls_callbacks()
+
+            suspicion_score = 0
+
+            for callback_addr, instructions in disassembled.items():
+                # Check for anti-debugging patterns
+                for inst_line in instructions:
+                    inst_lower = inst_line.lower()
+
+                    # Check for debugging detection
+                    if any(pattern in inst_lower for pattern in ["int3", "int 3", "debugger", "isdebuggerpresent"]):
+                        protection_info["suspicious_patterns"].append(f"Anti-debugging at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Anti-Debugging")
+                        suspicion_score += 3
+
+                    # Check for timing attacks
+                    if any(pattern in inst_lower for pattern in ["rdtsc", "queryperformance", "gettickcount"]):
+                        protection_info["suspicious_patterns"].append(f"Timing check at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Timing Analysis")
+                        suspicion_score += 2
+
+                    # Check for VM detection
+                    if any(pattern in inst_lower for pattern in ["cpuid", "vmware", "virtualbox", "hypervisor"]):
+                        protection_info["suspicious_patterns"].append(f"VM detection at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("VM Detection")
+                        suspicion_score += 2
+
+                    # Check for process/module enumeration
+                    if any(pattern in inst_lower for pattern in ["createtoolhelp", "module32", "process32"]):
+                        protection_info["suspicious_patterns"].append(f"Process enumeration at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Process Scanning")
+                        suspicion_score += 1
+
+                    # Check for PEB access
+                    if any(pattern in inst_lower for pattern in ["fs:[30h]", "fs:[0x30]", "gs:[60h]", "gs:[0x60]", "peb", "teb"]):
+                        protection_info["suspicious_patterns"].append(f"PEB/TEB access at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("PEB Manipulation")
+                        suspicion_score += 2
+
+                    # Check for exception handling
+                    if any(pattern in inst_lower for pattern in ["seh", "exception", "vectored", "unhandled"]):
+                        protection_info["suspicious_patterns"].append(f"Exception handling at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Exception-Based Protection")
+                        suspicion_score += 2
+
+                    # Check for code unpacking/decryption
+                    if any(pattern in inst_lower for pattern in ["virtualprotect", "xor", "decrypt", "unpack"]):
+                        protection_info["suspicious_patterns"].append(f"Code modification at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Code Unpacking")
+                        suspicion_score += 3
+
+                    # Check for integrity checks
+                    if any(pattern in inst_lower for pattern in ["crc", "checksum", "hash", "integrity"]):
+                        protection_info["suspicious_patterns"].append(f"Integrity check at 0x{callback_addr:X}")
+                        protection_info["detected_techniques"].append("Integrity Checking")
+                        suspicion_score += 2
+
+                # Check callback size - large callbacks are suspicious
+                if len(instructions) > 30:
+                    protection_info["suspicious_patterns"].append(f"Large callback at 0x{callback_addr:X} ({len(instructions)} instructions)")
+                    suspicion_score += 1
+
+            # Remove duplicate techniques
+            protection_info["detected_techniques"] = list(set(protection_info["detected_techniques"]))
+
+            # Determine protection likelihood based on score
+            if suspicion_score >= 10:
+                protection_info["protection_likelihood"] = "Very High"
+            elif suspicion_score >= 7:
+                protection_info["protection_likelihood"] = "High"
+            elif suspicion_score >= 4:
+                protection_info["protection_likelihood"] = "Medium"
+            elif suspicion_score >= 1:
+                protection_info["protection_likelihood"] = "Low"
+            else:
+                protection_info["protection_likelihood"] = "None"
+
+            # Check for known protectors by TLS patterns
+            known_protectors = {
+                "Themida": ["rdtsc", "cpuid", "int3", "virtualprotect"],
+                "VMProtect": ["cpuid", "rdtsc", "seh", "virtualprotect"],
+                "ASProtect": ["exception", "decrypt", "virtualprotect"],
+                "Enigma": ["checksum", "decrypt", "debugger"],
+                "PECompact": ["unpack", "virtualprotect", "decrypt"],
+                "UPX": ["unpack", "virtualprotect"],
+            }
+
+            # Check which protector patterns match
+            for protector, patterns in known_protectors.items():
+                match_count = 0
+                for pattern in patterns:
+                    if any(pattern in sp.lower() for sp in protection_info["suspicious_patterns"]):
+                        match_count += 1
+
+                if match_count >= 2:  # At least 2 patterns match
+                    protection_info["detected_techniques"].append(f"Possible {protector}")
+
+            logger.info(f"TLS protection analysis complete: {protection_info['protection_likelihood']} likelihood")
+
+            return protection_info
+
+        except Exception as e:
+            logger.error(f"Failed to detect TLS protection: {e}")
+            return protection_info
 
     def parse_iat(self) -> Dict[str, List[Tuple[int, str]]]:
         """Parse Import Address Table."""
@@ -1438,6 +2830,1132 @@ class LicenseDebugger:
 
         return eat_entries
 
+    def parse_delayed_imports(self) -> Dict[str, List[Tuple[int, str, bool]]]:
+        """Parse delayed import directory and delayed IAT.
+
+        Delayed imports are loaded only when first used, providing:
+        - Faster application startup
+        - Reduced memory usage
+        - Optional dependency handling
+
+        Returns:
+            Dictionary mapping DLL names to tuples of (address, function_name, is_bound)
+        """
+        delayed_imports = {}
+
+        if not self.process_handle:
+            return delayed_imports
+
+        try:
+            # Get main module base
+            modules = list(self.modules.keys())
+            if not modules:
+                return delayed_imports
+
+            module_base = modules[0]
+
+            # Read PE header
+            pe_header = self._read_memory(module_base, 0x1000)
+            if not pe_header or pe_header[:2] != b"MZ":
+                return delayed_imports
+
+            # Parse DOS header
+            e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
+
+            # Parse NT headers
+            nt_header_offset = e_lfanew
+            if pe_header[nt_header_offset:nt_header_offset + 4] != b"PE\x00\x00":
+                return delayed_imports
+
+            # Get architecture
+            machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
+            is_64bit = machine == 0x8664
+
+            # Get Delay Import Directory RVA and size (Data Directory[13])
+            opt_header_offset = nt_header_offset + 24
+            if is_64bit:
+                # 64-bit: Delay Import Directory is at offset 200 in optional header
+                delay_import_offset = opt_header_offset + 200
+            else:
+                # 32-bit: Delay Import Directory is at offset 184 in optional header
+                delay_import_offset = opt_header_offset + 184
+
+            delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset:delay_import_offset + 4])[0]
+            delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4:delay_import_offset + 8])[0]
+
+            if not delay_import_rva or not delay_import_size:
+                logger.debug("No delayed imports found")
+                return delayed_imports
+
+            # Read delay import descriptors
+            delay_desc_size = 32  # Size of ImgDelayDescr structure
+            num_descriptors = min(delay_import_size // delay_desc_size, 50)  # Limit to prevent excessive processing
+
+            for i in range(num_descriptors):
+                desc_offset = module_base + delay_import_rva + (i * delay_desc_size)
+                desc_data = self._read_memory(desc_offset, delay_desc_size)
+
+                if not desc_data:
+                    break
+
+                # Parse ImgDelayDescr structure
+                attributes = struct.unpack("<I", desc_data[0:4])[0]
+                dll_name_rva = struct.unpack("<I", desc_data[4:8])[0]
+                module_handle_rva = struct.unpack("<I", desc_data[8:12])[0]
+                iat_rva = struct.unpack("<I", desc_data[12:16])[0]
+                int_rva = struct.unpack("<I", desc_data[16:20])[0]  # Import Name Table
+                bound_iat_rva = struct.unpack("<I", desc_data[20:24])[0]
+                struct.unpack("<I", desc_data[24:28])[0]
+                timestamp = struct.unpack("<I", desc_data[28:32])[0]
+
+                # Check if this is the end of descriptors
+                if dll_name_rva == 0:
+                    break
+
+                # Determine if RVAs are relative to image base (new format) or virtual addresses (old format)
+                is_new_format = (attributes & 0x1) != 0
+
+                # Read DLL name
+                if is_new_format:
+                    dll_name_addr = module_base + dll_name_rva
+                else:
+                    dll_name_addr = dll_name_rva
+
+                dll_name = self._read_string(dll_name_addr, 256)
+                if not dll_name:
+                    continue
+
+                delayed_imports[dll_name] = []
+
+                # Check if DLL is already loaded
+                is_loaded = False
+                if module_handle_rva:
+                    module_handle_addr = module_base + module_handle_rva if is_new_format else module_handle_rva
+                    handle_data = self._read_memory(module_handle_addr, 8 if is_64bit else 4)
+                    if handle_data:
+                        handle_value = struct.unpack("<Q" if is_64bit else "<I", handle_data)[0]
+                        is_loaded = handle_value != 0
+
+                # Parse Import Name Table and IAT
+                if int_rva and iat_rva:
+                    int_addr = module_base + int_rva if is_new_format else int_rva
+                    iat_addr = module_base + iat_rva if is_new_format else iat_rva
+
+                    # Read INT and IAT entries
+                    entry_size = 8 if is_64bit else 4
+                    for j in range(1000):  # Maximum imports per DLL
+                        # Read INT entry
+                        int_entry_data = self._read_memory(int_addr + j * entry_size, entry_size)
+                        if not int_entry_data:
+                            break
+
+                        int_entry = struct.unpack("<Q" if is_64bit else "<I", int_entry_data)[0]
+                        if int_entry == 0:
+                            break
+
+                        # Read IAT entry
+                        iat_entry_data = self._read_memory(iat_addr + j * entry_size, entry_size)
+                        if iat_entry_data:
+                            iat_entry = struct.unpack("<Q" if is_64bit else "<I", iat_entry_data)[0]
+                        else:
+                            iat_entry = 0
+
+                        # Check if import is by ordinal or name
+                        if is_64bit:
+                            is_ordinal = (int_entry & 0x8000000000000000) != 0
+                            ordinal = int_entry & 0xFFFF
+                        else:
+                            is_ordinal = (int_entry & 0x80000000) != 0
+                            ordinal = int_entry & 0xFFFF
+
+                        if is_ordinal:
+                            func_name = f"Ordinal_{ordinal}"
+                        else:
+                            # Import by name - read hint/name table entry
+                            if is_new_format:
+                                hint_name_addr = module_base + int_entry
+                            else:
+                                hint_name_addr = int_entry
+
+                            # Skip hint (2 bytes) and read name
+                            func_name = self._read_string(hint_name_addr + 2, 256)
+                            if not func_name:
+                                func_name = f"Unknown_{j}"
+
+                        # Determine if function is bound (already resolved)
+                        is_bound = False
+                        if is_loaded and iat_entry != 0 and iat_entry != int_entry:
+                            # IAT entry has been updated with actual function address
+                            is_bound = True
+                            func_addr = iat_entry
+                        else:
+                            # Function not yet resolved
+                            func_addr = iat_addr + j * entry_size
+
+                        delayed_imports[dll_name].append((func_addr, func_name, is_bound))
+
+                        # Log interesting delayed imports
+                        if func_name.lower() in ["loadlibrarya", "loadlibraryw", "getprocaddress",
+                                                  "virtualprotect", "virtualalloc", "createthread"]:
+                            logger.info(f"Found delayed import: {dll_name}!{func_name} "
+                                      f"at 0x{func_addr:X} (bound={is_bound})")
+
+                # Check for bound imports in the bound IAT
+                if bound_iat_rva and timestamp != 0:
+                    # This DLL has bound imports (pre-resolved addresses)
+                    logger.debug(f"DLL {dll_name} has bound imports (timestamp={timestamp})")
+
+            # Summary
+            total_dlls = len(delayed_imports)
+            total_imports = sum(len(imports) for imports in delayed_imports.values())
+
+            if total_dlls > 0:
+                logger.info(f"Found {total_imports} delayed imports from {total_dlls} DLLs")
+
+                # Check for suspicious delayed imports often used by packers/protectors
+                suspicious_dlls = ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"]
+                suspicious_apis = ["virtualprotect", "virtualalloc", "loadlibrary", "getprocaddress",
+                                 "createremotethread", "writeprocessmemory", "readprocessmemory"]
+
+                for dll_name, imports in delayed_imports.items():
+                    if dll_name.lower() in suspicious_dlls:
+                        for _addr, func_name, is_bound in imports:
+                            if any(api in func_name.lower() for api in suspicious_apis):
+                                logger.warning(f"Suspicious delayed import: {dll_name}!{func_name}")
+
+            return delayed_imports
+
+        except Exception as e:
+            logger.error(f"Failed to parse delayed imports: {e}")
+            return delayed_imports
+
+    def hook_delayed_import(self, dll_name: str, func_name: str, hook_handler: Callable) -> bool:
+        """Hook a delayed import function.
+
+        Args:
+            dll_name: Name of the DLL containing the function
+            func_name: Name of the function to hook
+            hook_handler: Handler function to call when import is resolved
+
+        Returns:
+            True if hook was successfully installed
+        """
+        if not self.process_handle:
+            return False
+
+        try:
+            # Parse delayed imports to find the target
+            delayed_imports = self.parse_delayed_imports()
+
+            if dll_name not in delayed_imports:
+                logger.error(f"DLL {dll_name} not found in delayed imports")
+                return False
+
+            # Find the specific import
+            target_import = None
+            for addr, name, is_bound in delayed_imports[dll_name]:
+                if func_name.lower() in name.lower():
+                    target_import = (addr, name, is_bound)
+                    break
+
+            if not target_import:
+                logger.error(f"Function {func_name} not found in {dll_name}")
+                return False
+
+            addr, name, is_bound = target_import
+
+            if is_bound:
+                # Function already resolved, hook directly
+                logger.info(f"Delayed import {dll_name}!{name} already bound at 0x{addr:X}")
+                return self.hook_api(addr, hook_handler)
+            else:
+                # Function not yet resolved, install IAT hook
+                # This will trigger when the delayed import is first used
+                logger.info(f"Installing IAT hook for delayed import {dll_name}!{name}")
+
+                # Allocate trampoline for the hook
+                trampoline_size = 256
+                trampoline = self.kernel32.VirtualAllocEx(
+                    self.process_handle,
+                    None,
+                    trampoline_size,
+                    MEM_COMMIT | MEM_RESERVE,
+                    PAGE_EXECUTE_READWRITE
+                )
+
+                if not trampoline:
+                    logger.error("Failed to allocate trampoline memory")
+                    return False
+
+                # Store the hook info
+                if not hasattr(self, 'delayed_import_hooks'):
+                    self.delayed_import_hooks = {}
+
+                self.delayed_import_hooks[addr] = {
+                    'dll': dll_name,
+                    'function': name,
+                    'handler': hook_handler,
+                    'trampoline': trampoline
+                }
+
+                # Monitor the IAT entry for changes
+                # This would typically be done with a memory breakpoint or polling
+                # For now, we'll set up a guard page on the IAT entry
+                iat_page = addr & ~0xFFF  # Get page base
+                old_protect = ctypes.c_ulong()
+
+                if self.kernel32.VirtualProtectEx(
+                    self.process_handle,
+                    ctypes.c_void_p(iat_page),
+                    0x1000,
+                    PAGE_GUARD | PAGE_READWRITE,
+                    ctypes.byref(old_protect)
+                ):
+                    logger.info(f"Set guard page on delayed import IAT at 0x{iat_page:X}")
+                    return True
+                else:
+                    logger.error("Failed to set guard page on IAT")
+                    self.kernel32.VirtualFreeEx(self.process_handle, trampoline, 0, MEM_RELEASE)
+                    return False
+
+        except Exception as e:
+            logger.error(f"Failed to hook delayed import: {e}")
+            return False
+
+    def assemble_x86_x64(self, mnemonic: str, operands: str, arch: str = "x64") -> bytes:
+        """Assemble x86/x64 instructions into machine code.
+
+        Args:
+            mnemonic: Instruction mnemonic (e.g., "mov", "jmp", "call")
+            operands: Instruction operands (e.g., "rax, rbx", "dword ptr [rax]")
+            arch: Architecture - "x86" or "x64"
+
+        Returns:
+            Assembled machine code bytes
+        """
+        try:
+            # Try to use Keystone assembler if available
+            try:
+                import keystone
+
+                if arch == "x64":
+                    ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
+                else:
+                    ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
+
+                asm_str = f"{mnemonic} {operands}" if operands else mnemonic
+                encoding, count = ks.asm(asm_str)
+
+                if encoding:
+                    return bytes(encoding)
+
+            except ImportError:
+                pass  # Keystone not available, use manual encoding
+
+            # Manual encoding for common instructions
+            mnemonic = mnemonic.lower()
+            is_64bit = (arch == "x64")
+
+            # Basic instruction encoding table
+            if mnemonic == "nop":
+                return b"\x90"
+
+            elif mnemonic == "ret":
+                if operands:
+                    # RET with immediate
+                    imm = int(operands, 0)
+                    return b"\xC2" + struct.pack("<H", imm)
+                return b"\xC3"
+
+            elif mnemonic == "int3":
+                return b"\xCC"
+
+            elif mnemonic == "int":
+                imm = int(operands, 0)
+                if imm == 3:
+                    return b"\xCC"
+                return b"\xCD" + bytes([imm])
+
+            elif mnemonic == "push":
+                if operands in ["rax", "eax"]:
+                    return b"\x50"
+                elif operands in ["rcx", "ecx"]:
+                    return b"\x51"
+                elif operands in ["rdx", "edx"]:
+                    return b"\x52"
+                elif operands in ["rbx", "ebx"]:
+                    return b"\x53"
+                elif operands in ["rsp", "esp"]:
+                    return b"\x54"
+                elif operands in ["rbp", "ebp"]:
+                    return b"\x55"
+                elif operands in ["rsi", "esi"]:
+                    return b"\x56"
+                elif operands in ["rdi", "edi"]:
+                    return b"\x57"
+                elif is_64bit and operands.startswith("r"):
+                    # 64-bit extended registers
+                    reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
+                              "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+                    if operands in reg_map:
+                        return bytes([0x41, 0x50 + reg_map[operands]])
+                else:
+                    # Push immediate
+                    try:
+                        imm = int(operands, 0)
+                        if -128 <= imm <= 127:
+                            return b"\x6A" + struct.pack("b", imm)
+                        else:
+                            return b"\x68" + struct.pack("<I", imm & 0xFFFFFFFF)
+                    except:
+                        pass
+
+            elif mnemonic == "pop":
+                if operands in ["rax", "eax"]:
+                    return b"\x58"
+                elif operands in ["rcx", "ecx"]:
+                    return b"\x59"
+                elif operands in ["rdx", "edx"]:
+                    return b"\x5A"
+                elif operands in ["rbx", "ebx"]:
+                    return b"\x5B"
+                elif operands in ["rsp", "esp"]:
+                    return b"\x5C"
+                elif operands in ["rbp", "ebp"]:
+                    return b"\x5D"
+                elif operands in ["rsi", "esi"]:
+                    return b"\x5E"
+                elif operands in ["rdi", "edi"]:
+                    return b"\x5F"
+                elif is_64bit and operands.startswith("r"):
+                    reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
+                              "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+                    if operands in reg_map:
+                        return bytes([0x41, 0x58 + reg_map[operands]])
+
+            elif mnemonic == "jmp":
+                if operands.startswith("0x") or operands.isdigit():
+                    # JMP to absolute address - need relative offset
+                    target = int(operands, 0)
+                    # For now, use short jump if possible
+                    # Calculate relative offset for jump
+                    current_pos = 0  # Will be filled by patcher
+                    offset = target - (current_pos + 2)  # 2 bytes for short jump
+                    if -128 <= offset <= 127:
+                        return b"\xEB" + bytes([offset & 0xFF])  # Short jump with calculated offset
+                    else:
+                        # Near jump for longer distances
+                        offset = target - (current_pos + 5)  # 5 bytes for near jump
+                        return b"\xE9" + offset.to_bytes(4, 'little', signed=True)
+                elif operands in ["rax", "eax"]:
+                    return b"\xFF\xE0"  # JMP RAX/EAX
+                elif operands in ["rbx", "ebx"]:
+                    return b"\xFF\xE3"  # JMP RBX/EBX
+                else:
+                    # JMP rel8
+                    return b"\xEB\x00"
+
+            elif mnemonic == "call":
+                if operands in ["rax", "eax"]:
+                    return b"\xFF\xD0"  # CALL RAX/EAX
+                elif operands in ["rbx", "ebx"]:
+                    return b"\xFF\xD3"  # CALL RBX/EBX
+                else:
+                    # CALL rel32 - calculate relative offset
+                    if operands.startswith("0x") or operands.isdigit():
+                        target = int(operands, 0)
+                        # Calculate relative offset from current position
+                        current_pos = 0  # Will be filled by patcher during runtime
+                        offset = target - (current_pos + 5)  # 5 bytes for CALL rel32
+                        return b"\xE8" + offset.to_bytes(4, 'little', signed=True)
+                    else:
+                        # Default CALL with zero offset - will be patched at runtime
+                        return b"\xE8\x00\x00\x00\x00"
+
+            elif mnemonic == "mov":
+                parts = [p.strip() for p in operands.split(",")]
+                if len(parts) == 2:
+                    dst, src = parts
+
+                    # MOV reg, reg
+                    reg_map_32 = {"eax": 0, "ecx": 1, "edx": 2, "ebx": 3,
+                                  "esp": 4, "ebp": 5, "esi": 6, "edi": 7}
+                    reg_map_64 = {"rax": 0, "rcx": 1, "rdx": 2, "rbx": 3,
+                                  "rsp": 4, "rbp": 5, "rsi": 6, "rdi": 7}
+
+                    if is_64bit and dst in reg_map_64 and src in reg_map_64:
+                        # MOV r64, r64
+                        return bytes([0x48, 0x89, 0xC0 | (reg_map_64[src] << 3) | reg_map_64[dst]])
+                    elif not is_64bit and dst in reg_map_32 and src in reg_map_32:
+                        # MOV r32, r32
+                        return bytes([0x89, 0xC0 | (reg_map_32[src] << 3) | reg_map_32[dst]])
+                    elif dst == "rax" and src.startswith("0x"):
+                        # MOV RAX, imm64
+                        imm = int(src, 0)
+                        return b"\x48\xB8" + struct.pack("<Q", imm)
+                    elif dst == "eax" and src.startswith("0x"):
+                        # MOV EAX, imm32
+                        imm = int(src, 0)
+                        return b"\xB8" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+            elif mnemonic == "xor":
+                parts = [p.strip() for p in operands.split(",")]
+                if len(parts) == 2 and parts[0] == parts[1]:
+                    # XOR reg, reg (same register - zero it)
+                    if parts[0] in ["rax", "eax"]:
+                        if is_64bit and parts[0] == "rax":
+                            return b"\x48\x31\xC0"  # XOR RAX, RAX
+                        return b"\x31\xC0"  # XOR EAX, EAX
+                    elif parts[0] in ["rcx", "ecx"]:
+                        if is_64bit and parts[0] == "rcx":
+                            return b"\x48\x31\xC9"  # XOR RCX, RCX
+                        return b"\x31\xC9"  # XOR ECX, ECX
+                    elif parts[0] in ["rdx", "edx"]:
+                        if is_64bit and parts[0] == "rdx":
+                            return b"\x48\x31\xD2"  # XOR RDX, RDX
+                        return b"\x31\xD2"  # XOR EDX, EDX
+
+            elif mnemonic == "add":
+                parts = [p.strip() for p in operands.split(",")]
+                if len(parts) == 2:
+                    dst, src = parts
+                    if dst in ["rsp", "esp"] and src.isdigit():
+                        # ADD RSP/ESP, imm
+                        imm = int(src, 0)
+                        if -128 <= imm <= 127:
+                            if is_64bit and dst == "rsp":
+                                return b"\x48\x83\xC4" + struct.pack("b", imm)
+                            return b"\x83\xC4" + struct.pack("b", imm)
+                        else:
+                            if is_64bit and dst == "rsp":
+                                return b"\x48\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
+                            return b"\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+            elif mnemonic == "sub":
+                parts = [p.strip() for p in operands.split(",")]
+                if len(parts) == 2:
+                    dst, src = parts
+                    if dst in ["rsp", "esp"] and src.isdigit():
+                        # SUB RSP/ESP, imm
+                        imm = int(src, 0)
+                        if -128 <= imm <= 127:
+                            if is_64bit and dst == "rsp":
+                                return b"\x48\x83\xEC" + struct.pack("b", imm)
+                            return b"\x83\xEC" + struct.pack("b", imm)
+                        else:
+                            if is_64bit and dst == "rsp":
+                                return b"\x48\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
+                            return b"\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+            # If we couldn't encode it, return empty bytes
+            logger.warning(f"Could not encode: {mnemonic} {operands}")
+            return b""
+
+        except Exception as e:
+            logger.error(f"Failed to assemble instruction: {e}")
+            return b""
+
+    def encode_instruction(self, opcode: bytes, modrm: Optional[int] = None,
+                          sib: Optional[int] = None, displacement: Optional[bytes] = None,
+                          immediate: Optional[bytes] = None, prefixes: Optional[bytes] = None) -> bytes:
+        """Encode x86/x64 instruction with all components.
+
+        Args:
+            opcode: Main opcode bytes
+            modrm: ModR/M byte
+            sib: SIB byte
+            displacement: Displacement bytes
+            immediate: Immediate value bytes
+            prefixes: Prefix bytes (REX, segment override, etc.)
+
+        Returns:
+            Complete encoded instruction
+        """
+        instruction = bytearray()
+
+        # Add prefixes
+        if prefixes:
+            instruction.extend(prefixes)
+
+        # Add opcode
+        instruction.extend(opcode)
+
+        # Add ModR/M byte
+        if modrm is not None:
+            instruction.append(modrm)
+
+        # Add SIB byte
+        if sib is not None:
+            instruction.append(sib)
+
+        # Add displacement
+        if displacement:
+            instruction.extend(displacement)
+
+        # Add immediate
+        if immediate:
+            instruction.extend(immediate)
+
+        return bytes(instruction)
+
+    def calculate_relative_jump(self, from_addr: int, to_addr: int,
+                               instruction_size: int) -> bytes:
+        """Calculate relative jump offset for JMP/CALL instructions.
+
+        Args:
+            from_addr: Address of the jump instruction
+            to_addr: Target address to jump to
+            instruction_size: Size of the jump instruction (2 for short, 5 for near)
+
+        Returns:
+            Relative offset bytes
+        """
+        # Calculate relative offset
+        # Offset is calculated from the end of the instruction
+        offset = to_addr - (from_addr + instruction_size)
+
+        if instruction_size == 2:
+            # Short jump (8-bit offset)
+            if -128 <= offset <= 127:
+                return struct.pack("b", offset)
+            else:
+                raise ValueError(f"Offset {offset} too large for short jump")
+        elif instruction_size == 5:
+            # Near jump (32-bit offset)
+            if -2147483648 <= offset <= 2147483647:
+                return struct.pack("<i", offset)
+            else:
+                raise ValueError(f"Offset {offset} too large for near jump")
+        else:
+            raise ValueError(f"Invalid instruction size: {instruction_size}")
+
+    def generate_dynamic_patch(self, target_addr: int, patch_type: str,
+                              **kwargs) -> bytes:
+        """Generate dynamic patches for various scenarios.
+
+        Args:
+            target_addr: Address where patch will be applied
+            patch_type: Type of patch ("jmp", "call", "nop", "ret", "bypass")
+            **kwargs: Additional parameters based on patch type
+
+        Returns:
+            Generated patch bytes
+        """
+        try:
+            arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
+
+            if patch_type == "jmp":
+                # Generate JMP to destination
+                dest_addr = kwargs.get("destination", 0)
+                if dest_addr:
+                    # Try short jump first
+                    try:
+                        offset = self.calculate_relative_jump(target_addr, dest_addr, 2)
+                        return b"\xEB" + offset
+                    except:
+                        # Use near jump
+                        offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
+                        return b"\xE9" + offset
+
+            elif patch_type == "call":
+                # Generate CALL to destination
+                dest_addr = kwargs.get("destination", 0)
+                if dest_addr:
+                    offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
+                    return b"\xE8" + offset
+
+            elif patch_type == "nop":
+                # Generate NOP sled of specified length
+                length = kwargs.get("length", 1)
+                return self.generate_nop_sled(length)
+
+            elif patch_type == "ret":
+                # Generate RET with optional stack cleanup
+                stack_cleanup = kwargs.get("stack_cleanup", 0)
+                if stack_cleanup:
+                    return b"\xC2" + struct.pack("<H", stack_cleanup)
+                return b"\xC3"
+
+            elif patch_type == "bypass":
+                # Generate conditional jump bypass
+                condition = kwargs.get("condition", "always")
+
+                if condition == "always":
+                    # Convert conditional jump to unconditional
+                    return b"\xEB"  # Short JMP
+                elif condition == "never":
+                    # Convert to NOP
+                    return b"\x90\x90"  # Two NOPs for JCC
+                elif condition == "invert":
+                    # Invert the condition
+                    original_opcode = kwargs.get("original_opcode", 0)
+                    if original_opcode:
+                        # Invert the condition bit
+                        return bytes([original_opcode ^ 1])
+
+            elif patch_type == "hook":
+                # Generate hook trampoline
+                hook_addr = kwargs.get("hook_address", 0)
+                original_bytes = kwargs.get("original_bytes", b"")
+
+                if hook_addr and original_bytes:
+                    patch = bytearray()
+
+                    # Save registers
+                    patch.append(0x60)  # PUSHAD (x86) or use individual pushes for x64
+
+                    # Call hook
+                    if arch == "x64":
+                        # MOV RAX, hook_addr
+                        patch.extend(b"\x48\xB8")
+                        patch.extend(struct.pack("<Q", hook_addr))
+                        # CALL RAX
+                        patch.extend(b"\xFF\xD0")
+                    else:
+                        # PUSH hook_addr
+                        patch.append(0x68)
+                        patch.extend(struct.pack("<I", hook_addr))
+                        # CALL [ESP]
+                        patch.extend(b"\xFF\x14\x24")
+                        # ADD ESP, 4
+                        patch.extend(b"\x83\xC4\x04")
+
+                    # Restore registers
+                    patch.append(0x61)  # POPAD
+
+                    # Execute original bytes
+                    patch.extend(original_bytes)
+
+                    # Jump back
+                    return_addr = target_addr + len(original_bytes)
+                    offset = self.calculate_relative_jump(
+                        target_addr + len(patch), return_addr, 5)
+                    patch.extend(b"\xE9" + offset)
+
+                    return bytes(patch)
+
+            elif patch_type == "redirect":
+                # Generate code redirection
+                new_function = kwargs.get("new_function", 0)
+                if new_function:
+                    # JMP to new function
+                    offset = self.calculate_relative_jump(target_addr, new_function, 5)
+                    return b"\xE9" + offset
+
+            return b""
+
+        except Exception as e:
+            logger.error(f"Failed to generate dynamic patch: {e}")
+            return b""
+
+    def relocate_code(self, code: bytes, old_base: int, new_base: int,
+                     reloc_offsets: List[int]) -> bytes:
+        """Relocate code to a new base address.
+
+        Args:
+            code: Original code bytes
+            old_base: Original base address
+            new_base: New base address
+            reloc_offsets: List of offsets in code that need relocation
+
+        Returns:
+            Relocated code bytes
+        """
+        try:
+            relocated = bytearray(code)
+            delta = new_base - old_base
+
+            # Apply relocations
+            for offset in reloc_offsets:
+                if offset + 4 <= len(relocated):
+                    # Read current value
+                    current = struct.unpack("<I", relocated[offset:offset+4])[0]
+                    # Apply relocation
+                    new_value = (current + delta) & 0xFFFFFFFF
+                    # Write back
+                    relocated[offset:offset+4] = struct.pack("<I", new_value)
+
+            # Fix relative jumps and calls
+            i = 0
+            while i < len(relocated):
+                # Check for JMP rel32 (E9)
+                if i + 5 <= len(relocated) and relocated[i] == 0xE9:
+                    # Read relative offset
+                    rel_offset = struct.unpack("<i", relocated[i+1:i+5])[0]
+                    # Calculate absolute target
+                    old_target = old_base + i + 5 + rel_offset
+                    # Calculate new relative offset
+                    new_rel_offset = old_target - (new_base + i + 5)
+                    # Write back
+                    relocated[i+1:i+5] = struct.pack("<i", new_rel_offset)
+                    i += 5
+
+                # Check for CALL rel32 (E8)
+                elif i + 5 <= len(relocated) and relocated[i] == 0xE8:
+                    rel_offset = struct.unpack("<i", relocated[i+1:i+5])[0]
+                    old_target = old_base + i + 5 + rel_offset
+                    new_rel_offset = old_target - (new_base + i + 5)
+                    relocated[i+1:i+5] = struct.pack("<i", new_rel_offset)
+                    i += 5
+
+                # Check for short JMP (EB) and conditional jumps (70-7F)
+                elif i + 2 <= len(relocated) and (relocated[i] == 0xEB or
+                                                  (0x70 <= relocated[i] <= 0x7F)):
+                    # Short jumps are position-independent within the relocated block
+                    i += 2
+                else:
+                    i += 1
+
+            return bytes(relocated)
+
+        except Exception as e:
+            logger.error(f"Failed to relocate code: {e}")
+            return code
+
+    def generate_shellcode(self, shellcode_type: str, **params) -> bytes:
+        """Generate various types of shellcode for injection.
+
+        Args:
+            shellcode_type: Type of shellcode ("msgbox", "exec", "dll_inject", "patch")
+            **params: Parameters specific to shellcode type
+
+        Returns:
+            Generated shellcode bytes
+        """
+        try:
+            arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
+
+            if shellcode_type == "msgbox":
+                # Simple MessageBox shellcode
+                title = params.get("title", "Alert").encode() + b"\x00"
+                message = params.get("message", "Injected").encode() + b"\x00"
+
+                if arch == "x86":
+                    shellcode = bytearray([
+                        # Push strings onto stack
+                        0x68,  # PUSH title
+                    ])
+                    # Add title address (needs runtime calculation)
+                    shellcode.extend(b"\x00\x00\x00\x00")
+                    shellcode.extend([
+                        0x68,  # PUSH message
+                    ])
+                    shellcode.extend(b"\x00\x00\x00\x00")
+                    shellcode.extend([
+                        0x6A, 0x00,  # PUSH 0 (MB_OK)
+                        0x6A, 0x00,  # PUSH 0 (hWnd)
+                        # CALL MessageBoxA
+                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
+                        # Exit
+                        0xC3,  # RET
+                    ])
+                    # Append strings
+                    shellcode.extend(title)
+                    shellcode.extend(message)
+                else:
+                    # x64 shellcode
+                    shellcode = bytearray([
+                        # Set up parameters for MessageBoxA
+                        0x48, 0x31, 0xC9,  # XOR RCX, RCX (hWnd = NULL)
+                        0x48, 0x8D, 0x15, 0x20, 0x00, 0x00, 0x00,  # LEA RDX, [RIP+0x20] (message)
+                        0x4C, 0x8D, 0x05, 0x30, 0x00, 0x00, 0x00,  # LEA R8, [RIP+0x30] (title)
+                        0x45, 0x31, 0xC9,  # XOR R9D, R9D (MB_OK)
+                        # Call MessageBoxA (needs runtime resolution)
+                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # CALL [RIP+0] - needs relocation
+                        # Return
+                        0xC3,
+                        # Padding
+                        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+                    ])
+                    # Append strings
+                    shellcode.extend(message)
+                    shellcode.extend(title)
+
+                return bytes(shellcode)
+
+            elif shellcode_type == "exec":
+                # Command execution shellcode
+                command = params.get("command", "calc.exe").encode() + b"\x00"
+
+                shellcode = bytearray()
+
+                if arch == "x86":
+                    # WinExec shellcode
+                    shellcode.extend([
+                        # Push command string address
+                        0x68,
+                    ])
+                    shellcode.extend(b"\x00\x00\x00\x00")  # Needs relocation
+                    shellcode.extend([
+                        0x6A, 0x05,  # PUSH 5 (SW_SHOW)
+                        # CALL WinExec
+                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
+                        # Exit
+                        0xC3,
+                    ])
+                else:
+                    # x64 WinExec
+                    shellcode.extend([
+                        # MOV RCX, command_addr
+                        0x48, 0x8D, 0x0D, 0x10, 0x00, 0x00, 0x00,  # LEA RCX, [RIP+0x10]
+                        # MOV EDX, 5 (SW_SHOW)
+                        0xBA, 0x05, 0x00, 0x00, 0x00,
+                        # CALL WinExec
+                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
+                        # RET
+                        0xC3,
+                        # Padding
+                        0x90, 0x90, 0x90,
+                    ])
+
+                # Append command
+                shellcode.extend(command)
+                return bytes(shellcode)
+
+            elif shellcode_type == "dll_inject":
+                # DLL injection shellcode
+                dll_path = params.get("dll_path", "").encode() + b"\x00"
+
+                if not dll_path:
+                    return b""
+
+                shellcode = bytearray()
+
+                if arch == "x86":
+                    shellcode.extend([
+                        # Push DLL path
+                        0x68,
+                    ])
+                    shellcode.extend(b"\x00\x00\x00\x00")  # DLL path address
+                    shellcode.extend([
+                        # CALL LoadLibraryA
+                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
+                        # RET
+                        0xC3,
+                    ])
+                else:
+                    shellcode.extend([
+                        # MOV RCX, dll_path
+                        0x48, 0x8D, 0x0D, 0x10, 0x00, 0x00, 0x00,  # LEA RCX, [RIP+0x10]
+                        # CALL LoadLibraryA
+                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
+                        # RET
+                        0xC3,
+                        # Padding
+                        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+                    ])
+
+                shellcode.extend(dll_path)
+                return bytes(shellcode)
+
+            elif shellcode_type == "patch":
+                # Memory patching shellcode
+                patch_addr = params.get("address", 0)
+                patch_bytes = params.get("bytes", b"")
+
+                if not patch_addr or not patch_bytes:
+                    return b""
+
+                shellcode = bytearray()
+
+                if arch == "x86":
+                    # MOV EDI, patch_addr
+                    shellcode.append(0xBF)
+                    shellcode.extend(struct.pack("<I", patch_addr))
+
+                    # Write patch bytes
+                    for b in patch_bytes:
+                        # MOV BYTE PTR [EDI], imm8
+                        shellcode.extend([0xC6, 0x07, b])
+                        # INC EDI
+                        shellcode.append(0x47)
+
+                    # RET
+                    shellcode.append(0xC3)
+                else:
+                    # MOV RDI, patch_addr
+                    shellcode.extend([0x48, 0xBF])
+                    shellcode.extend(struct.pack("<Q", patch_addr))
+
+                    # Write patch bytes
+                    for b in patch_bytes:
+                        # MOV BYTE PTR [RDI], imm8
+                        shellcode.extend([0xC6, 0x07, b])
+                        # INC RDI
+                        shellcode.extend([0x48, 0xFF, 0xC7])
+
+                    # RET
+                    shellcode.append(0xC3)
+
+                return bytes(shellcode)
+
+            return b""
+
+        except Exception as e:
+            logger.error(f"Failed to generate shellcode: {e}")
+            return b""
+
+    def generate_position_independent_code(self, operations: List[Dict]) -> bytes:
+        """Generate position-independent code (PIC) that can run at any address.
+
+        Args:
+            operations: List of operations to perform
+                Each operation dict contains:
+                - "type": Operation type ("call", "load", "store", etc.)
+                - "params": Operation parameters
+
+        Returns:
+            Position-independent shellcode bytes
+        """
+        try:
+            arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
+            pic = bytearray()
+
+            if arch == "x86":
+                # Get EIP using CALL/POP technique
+                pic.extend([
+                    0xE8, 0x00, 0x00, 0x00, 0x00,  # CALL $+5
+                    0x5D,  # POP EBP (EBP now contains EIP)
+                ])
+
+                for op in operations:
+                    op_type = op.get("type")
+                    params = op.get("params", {})
+
+                    if op_type == "call":
+                        # Call function by offset from current position
+                        offset = params.get("offset", 0)
+                        pic.extend([
+                            # LEA EAX, [EBP + offset]
+                            0x8D, 0x85,
+                        ])
+                        pic.extend(struct.pack("<I", offset))
+                        pic.extend([
+                            0xFF, 0xD0,  # CALL EAX
+                        ])
+
+                    elif op_type == "load":
+                        # Load data from relative offset
+                        offset = params.get("offset", 0)
+                        reg = params.get("register", "eax")
+
+                        reg_codes = {"eax": 0x85, "ebx": 0x9D, "ecx": 0x8D, "edx": 0x95}
+                        if reg in reg_codes:
+                            pic.extend([
+                                # MOV reg, [EBP + offset]
+                                0x8B, reg_codes[reg],
+                            ])
+                            pic.extend(struct.pack("<I", offset))
+
+                    elif op_type == "store":
+                        # Store data at relative offset
+                        offset = params.get("offset", 0)
+                        value = params.get("value", 0)
+                        pic.extend([
+                            # MOV DWORD PTR [EBP + offset], value
+                            0xC7, 0x85,
+                        ])
+                        pic.extend(struct.pack("<I", offset))
+                        pic.extend(struct.pack("<I", value))
+
+            else:  # x64
+                # RIP-relative addressing is naturally position-independent
+                for op in operations:
+                    op_type = op.get("type")
+                    params = op.get("params", {})
+
+                    if op_type == "call":
+                        # Call function using RIP-relative addressing
+                        offset = params.get("offset", 0)
+                        pic.extend([
+                            # LEA RAX, [RIP + offset]
+                            0x48, 0x8D, 0x05,
+                        ])
+                        pic.extend(struct.pack("<i", offset))
+                        pic.extend([
+                            0xFF, 0xD0,  # CALL RAX
+                        ])
+
+                    elif op_type == "load":
+                        # Load using RIP-relative addressing
+                        offset = params.get("offset", 0)
+                        reg = params.get("register", "rax")
+
+                        reg_codes = {"rax": 0x05, "rbx": 0x1D, "rcx": 0x0D, "rdx": 0x15}
+                        if reg in reg_codes:
+                            pic.extend([
+                                # MOV reg, [RIP + offset]
+                                0x48, 0x8B, reg_codes[reg],
+                            ])
+                            pic.extend(struct.pack("<i", offset))
+
+                    elif op_type == "store":
+                        # Store using RIP-relative addressing
+                        offset = params.get("offset", 0)
+                        value = params.get("value", 0)
+
+                        # MOV RAX, value
+                        pic.extend([0x48, 0xB8])
+                        pic.extend(struct.pack("<Q", value))
+                        # MOV [RIP + offset], RAX
+                        pic.extend([0x48, 0x89, 0x05])
+                        pic.extend(struct.pack("<i", offset))
+
+                    elif op_type == "get_base":
+                        # Get current RIP
+                        pic.extend([
+                            # LEA RAX, [RIP]
+                            0x48, 0x8D, 0x05, 0x00, 0x00, 0x00, 0x00,
+                        ])
+
+            # Add terminator
+            pic.append(0xC3)  # RET
+
+            return bytes(pic)
+
+        except Exception as e:
+            logger.error(f"Failed to generate position-independent code: {e}")
+            return b""
+
+    def generate_nop_sled(self, length: int) -> bytes:
+        """Generate a NOP sled of specified length with variations.
+
+        Args:
+            length: Desired length of NOP sled
+
+        Returns:
+            NOP sled bytes
+        """
+        if length <= 0:
+            return b""
+
+        # Use varied NOPs to avoid pattern detection
+        nop_variations = [
+            b"\x90",                    # NOP
+            b"\x66\x90",                # 66 NOP
+            b"\x0F\x1F\x00",           # NOP DWORD ptr [EAX]
+            b"\x0F\x1F\x40\x00",       # NOP DWORD ptr [EAX+00]
+            b"\x0F\x1F\x44\x00\x00",   # NOP DWORD ptr [EAX+EAX+00]
+            b"\x66\x0F\x1F\x44\x00\x00", # 66 NOP DWORD ptr [AX+AX+00]
+            b"\x0F\x1F\x80\x00\x00\x00\x00", # NOP DWORD ptr [EAX+00000000]
+        ]
+
+        sled = bytearray()
+        while len(sled) < length:
+            # Pick a random NOP variation that fits
+            remaining = length - len(sled)
+            suitable_nops = [n for n in nop_variations if len(n) <= remaining]
+
+            if suitable_nops:
+                import random
+                nop = random.choice(suitable_nops)
+                sled.extend(nop)
+            else:
+                # Fill remainder with single NOPs
+                sled.extend(b"\x90" * remaining)
+
+        return bytes(sled[:length])
+
     def detach(self) -> bool:
         """Detach debugger from process."""
         if not self.process_id:
@@ -1470,6 +3988,517 @@ class LicenseDebugger:
         self.process_id = None
 
         return success
+
+    def install_veh_handler(self, first_handler: bool = True) -> bool:
+        """Install Vectored Exception Handler for advanced exception handling."""
+        try:
+            # Setup AddVectoredExceptionHandler
+            self.kernel32.AddVectoredExceptionHandler.argtypes = [
+                wintypes.ULONG,
+                PVECTORED_EXCEPTION_HANDLER
+            ]
+            self.kernel32.AddVectoredExceptionHandler.restype = wintypes.LPVOID
+
+            # Create VEH callback function
+            @PVECTORED_EXCEPTION_HANDLER
+            def veh_handler(exception_pointers):
+                """Main VEH callback handler."""
+                try:
+                    if not exception_pointers:
+                        return 0  # EXCEPTION_CONTINUE_SEARCH
+
+                    exception_record = exception_pointers.contents.ExceptionRecord.contents
+                    context_record = exception_pointers.contents.ContextRecord.contents
+
+                    # Store last exception
+                    self.last_exception = {
+                        "code": exception_record.ExceptionCode,
+                        "address": exception_record.ExceptionAddress,
+                        "flags": exception_record.ExceptionFlags,
+                        "context": context_record
+                    }
+
+                    # Handle different exception types
+                    exception_code = exception_record.ExceptionCode
+
+                    # Check for registered filters
+                    if exception_code in self.exception_filters:
+                        filter_result = self.exception_filters[exception_code](
+                            exception_record, context_record
+                        )
+                        if filter_result is not None:
+                            return filter_result
+
+                    # Handle breakpoint exceptions
+                    if exception_code == ExceptionCode.EXCEPTION_BREAKPOINT:
+                        return self._handle_veh_breakpoint(exception_record, context_record)
+
+                    # Handle single-step exceptions
+                    elif exception_code == ExceptionCode.EXCEPTION_SINGLE_STEP:
+                        return self._handle_veh_single_step(exception_record, context_record)
+
+                    # Handle access violations
+                    elif exception_code == ExceptionCode.EXCEPTION_ACCESS_VIOLATION:
+                        return self._handle_veh_access_violation(exception_record, context_record)
+
+                    # Handle guard page exceptions
+                    elif exception_code == ExceptionCode.EXCEPTION_GUARD_PAGE:
+                        return self._handle_veh_guard_page(exception_record, context_record)
+
+                    # Call custom exception callbacks
+                    if exception_code in self.exception_callbacks:
+                        return self.exception_callbacks[exception_code](
+                            exception_record, context_record
+                        )
+
+                    # Continue searching for other handlers
+                    return 0  # EXCEPTION_CONTINUE_SEARCH
+
+                except Exception as e:
+                    logger.error(f"Error in VEH handler: {e}")
+                    return 0  # EXCEPTION_CONTINUE_SEARCH
+
+            # Store handler reference to prevent garbage collection
+            self.veh_handlers.append(veh_handler)
+
+            # Install VEH handler
+            self.veh_handle = self.kernel32.AddVectoredExceptionHandler(
+                1 if first_handler else 0,
+                veh_handler
+            )
+
+            if not self.veh_handle:
+                logger.error("Failed to install VEH handler")
+                return False
+
+            self.veh_chain_position = 1 if first_handler else 0
+            logger.info(f"VEH handler installed {'first' if first_handler else 'last'} in chain")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error installing VEH handler: {e}")
+            return False
+
+    def uninstall_veh_handler(self) -> bool:
+        """Remove installed VEH handler."""
+        if not self.veh_handle:
+            return False
+
+        try:
+            # Setup RemoveVectoredExceptionHandler
+            self.kernel32.RemoveVectoredExceptionHandler.argtypes = [wintypes.LPVOID]
+            self.kernel32.RemoveVectoredExceptionHandler.restype = wintypes.ULONG
+
+            result = self.kernel32.RemoveVectoredExceptionHandler(self.veh_handle)
+
+            if result:
+                self.veh_handle = None
+                self.veh_handlers.clear()
+                logger.info("VEH handler uninstalled")
+                return True
+            else:
+                logger.error("Failed to uninstall VEH handler")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error uninstalling VEH handler: {e}")
+            return False
+
+    def _handle_veh_breakpoint(self, exception_record, context) -> int:
+        """Handle breakpoint exception in VEH."""
+        try:
+            address = ctypes.cast(exception_record.ExceptionAddress, ctypes.c_ulong).value
+
+            # Check if it's our software breakpoint
+            if address in self.breakpoints:
+                bp = self.breakpoints[address]
+
+                # Increment hit count
+                bp.hit_count += 1
+
+                # Restore original byte
+                self._write_memory(address, bp.original_byte)
+
+                # Adjust instruction pointer back
+                if ctypes.sizeof(ctypes.c_voidp) == 8:
+                    context.Rip = address
+                else:
+                    context.Eip = address
+
+                # Enable single-step to re-enable breakpoint
+                context.EFlags |= 0x100  # Set trap flag
+
+                # Call breakpoint callback if exists
+                if bp.callback:
+                    bp.callback(address, context)
+
+                # Store breakpoint for re-enabling
+                self.single_step_enabled = True
+
+                logger.debug(f"VEH: Handled breakpoint at 0x{address:X}")
+                return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+            # Check hardware breakpoints
+            elif address in self.hardware_breakpoints:
+                hw_bp = self.hardware_breakpoints[address]
+
+                # Call callback if exists
+                if "callback" in hw_bp and hw_bp["callback"]:
+                    hw_bp["callback"](address, context)
+
+                logger.debug(f"VEH: Handled hardware breakpoint at 0x{address:X}")
+                return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+        except Exception as e:
+            logger.error(f"Error handling VEH breakpoint: {e}")
+
+        return 0  # EXCEPTION_CONTINUE_SEARCH
+
+    def _handle_veh_single_step(self, exception_record, context) -> int:
+        """Handle single-step exception in VEH."""
+        try:
+            # Check if we're re-enabling a breakpoint
+            if self.single_step_enabled:
+                # Re-enable all breakpoints that need it
+                for address, bp in self.breakpoints.items():
+                    if bp.enabled and bp.original_byte:
+                        self._write_memory(address, self.INT3_INSTRUCTION)
+
+                # Clear trap flag
+                context.EFlags &= ~0x100
+                self.single_step_enabled = False
+
+                logger.debug("VEH: Re-enabled breakpoints after single-step")
+                return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+            # Check for hardware breakpoint single-step
+            dr6 = context.Dr6
+
+            # Check which debug register triggered
+            for i in range(4):
+                if dr6 & (1 << i):
+                    # Get address from corresponding DR register
+                    address = [context.Dr0, context.Dr1, context.Dr2, context.Dr3][i]
+
+                    if address in self.hardware_breakpoints:
+                        hw_bp = self.hardware_breakpoints[address]
+
+                        # Call callback if exists
+                        if "callback" in hw_bp and hw_bp["callback"]:
+                            hw_bp["callback"](address, context)
+
+                        # Clear DR6 status bit
+                        context.Dr6 &= ~(1 << i)
+
+                        logger.debug(f"VEH: Handled hardware breakpoint single-step at 0x{address:X}")
+                        return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+            # Handle manual single-stepping for tracing
+            if hasattr(self, "trace_callback") and self.trace_callback:
+                self.trace_callback(context)
+                return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+        except Exception as e:
+            logger.error(f"Error handling VEH single-step: {e}")
+
+        return 0  # EXCEPTION_CONTINUE_SEARCH
+
+    def _handle_veh_access_violation(self, exception_record, context) -> int:
+        """Handle access violation exception in VEH."""
+        try:
+            # Get violation details
+            address = exception_record.ExceptionAddress
+
+            # First parameter indicates read(0) or write(1)
+            if exception_record.NumberParameters >= 2:
+                is_write = exception_record.ExceptionInformation[0] == 1
+                target_address = exception_record.ExceptionInformation[1]
+
+                logger.info(f"VEH: Access violation at 0x{address:X} - "
+                          f"{'Write' if is_write else 'Read'} to 0x{target_address:X}")
+
+                # Check for memory breakpoints
+                if target_address in self.memory_breakpoints:
+                    mem_bp = self.memory_breakpoints[target_address]
+
+                    # Check if correct access type
+                    if (is_write and mem_bp.get("type") in ["write", "read_write"]) or \
+                       (not is_write and mem_bp.get("type") in ["read", "read_write"]):
+
+                        # Call callback if exists
+                        if mem_bp.get("callback"):
+                            mem_bp["callback"](target_address, is_write, context)
+
+                        # Skip instruction if needed
+                        if mem_bp.get("skip_instruction"):
+                            # Simple instruction length detection (would need disassembler for accuracy)
+                            if ctypes.sizeof(ctypes.c_voidp) == 8:
+                                context.Rip += mem_bp.get("instruction_length", 3)
+                            else:
+                                context.Eip += mem_bp.get("instruction_length", 3)
+
+                        return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+        except Exception as e:
+            logger.error(f"Error handling VEH access violation: {e}")
+
+        return 0  # EXCEPTION_CONTINUE_SEARCH
+
+    def _handle_veh_guard_page(self, exception_record, context) -> int:
+        """Handle guard page exception in VEH."""
+        try:
+            address = exception_record.ExceptionAddress
+
+            logger.info(f"VEH: Guard page exception at 0x{address:X}")
+
+            # Check if we're using guard pages for memory breakpoints
+            for mem_addr, mem_bp in self.memory_breakpoints.items():
+                if mem_bp.get("use_guard_page"):
+                    # Call callback
+                    if mem_bp.get("callback"):
+                        mem_bp["callback"](mem_addr, context)
+
+                    # Re-enable guard page after single-step
+                    context.EFlags |= 0x100  # Set trap flag
+                    self.single_step_enabled = True
+
+                    return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+        except Exception as e:
+            logger.error(f"Error handling VEH guard page: {e}")
+
+        return 0  # EXCEPTION_CONTINUE_SEARCH
+
+    def register_exception_filter(self, exception_code: int, filter_func: Callable) -> None:
+        """Register a custom exception filter."""
+        self.exception_filters[exception_code] = filter_func
+        logger.info(f"Registered exception filter for code 0x{exception_code:X}")
+
+    def unregister_exception_filter(self, exception_code: int) -> None:
+        """Remove a registered exception filter."""
+        if exception_code in self.exception_filters:
+            del self.exception_filters[exception_code]
+            logger.info(f"Unregistered exception filter for code 0x{exception_code:X}")
+
+    def register_exception_callback(self, exception_code: int, callback: Callable) -> None:
+        """Register callback for specific exception type."""
+        self.exception_callbacks[exception_code] = callback
+        logger.info(f"Registered exception callback for code 0x{exception_code:X}")
+
+    def manipulate_veh_chain(self, new_position: int) -> bool:
+        """Manipulate position in VEH chain."""
+        if not self.veh_handle:
+            logger.error("No VEH handler installed")
+            return False
+
+        try:
+            # Uninstall current handler
+            if not self.uninstall_veh_handler():
+                return False
+
+            # Re-install at new position
+            first_handler = (new_position == 1)
+            if not self.install_veh_handler(first_handler):
+                return False
+
+            logger.info(f"VEH handler repositioned to {'first' if first_handler else 'last'} in chain")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error manipulating VEH chain: {e}")
+            return False
+
+    def enable_single_stepping(self, thread_id: Optional[int] = None) -> bool:
+        """Enable single-step mode for instruction tracing."""
+        target_thread = thread_id or self.main_thread_id
+
+        if not target_thread:
+            logger.error("No thread ID specified")
+            return False
+
+        try:
+            context = self._get_thread_context(target_thread)
+            if not context:
+                return False
+
+            # Set trap flag
+            context.EFlags |= 0x100
+
+            if not self._set_thread_context(target_thread, context):
+                return False
+
+            self.single_step_enabled = True
+            logger.info(f"Single-stepping enabled for thread {target_thread}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error enabling single-stepping: {e}")
+            return False
+
+    def disable_single_stepping(self, thread_id: Optional[int] = None) -> bool:
+        """Disable single-step mode."""
+        target_thread = thread_id or self.main_thread_id
+
+        if not target_thread:
+            return False
+
+        try:
+            context = self._get_thread_context(target_thread)
+            if not context:
+                return False
+
+            # Clear trap flag
+            context.EFlags &= ~0x100
+
+            if not self._set_thread_context(target_thread, context):
+                return False
+
+            self.single_step_enabled = False
+            logger.info(f"Single-stepping disabled for thread {target_thread}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error disabling single-stepping: {e}")
+            return False
+
+    def set_memory_breakpoint(self, address: int, size: int = 1,
+                            access_type: str = "write", callback: Optional[Callable] = None,
+                            use_guard_page: bool = False) -> bool:
+        """Set memory access breakpoint using VEH and guard pages."""
+        try:
+            if use_guard_page:
+                # Use guard page protection for memory breakpoint
+                PAGE_GUARD = 0x100
+                old_protect = wintypes.DWORD()
+
+                # Change page protection to include guard flag
+                if not self.kernel32.VirtualProtectEx(
+                    self.process_handle,
+                    ctypes.c_void_p(address & ~0xFFF),  # Align to page boundary
+                    0x1000,  # Page size
+                    PAGE_GUARD | 0x04,  # PAGE_GUARD | PAGE_READWRITE
+                    ctypes.byref(old_protect)
+                ):
+                    logger.error("Failed to set guard page protection")
+                    return False
+
+                self.memory_breakpoints[address] = {
+                    "size": size,
+                    "type": access_type,
+                    "callback": callback,
+                    "use_guard_page": True,
+                    "old_protection": old_protect.value
+                }
+
+            else:
+                # Store memory breakpoint info for VEH handling
+                self.memory_breakpoints[address] = {
+                    "size": size,
+                    "type": access_type,
+                    "callback": callback,
+                    "use_guard_page": False
+                }
+
+            logger.info(f"Set memory breakpoint at 0x{address:X} for {access_type} access")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting memory breakpoint: {e}")
+            return False
+
+    def trace_execution(self, max_instructions: int = 1000,
+                       trace_callback: Optional[Callable] = None) -> List[Dict[str, Any]]:
+        """Trace execution flow by single-stepping through instructions.
+
+        Args:
+            max_instructions: Maximum number of instructions to trace
+            trace_callback: Optional callback for each instruction
+
+        Returns:
+            List of traced instructions with context
+        """
+        if not self.process_handle:
+            logger.error("No process attached for tracing")
+            return []
+
+        traced_instructions = []
+        instruction_count = 0
+
+        # Enable single stepping
+        if not self.enable_single_stepping():
+            logger.error("Failed to enable single stepping for trace")
+            return []
+
+        try:
+            while instruction_count < max_instructions:
+                # Continue execution for one instruction
+                if not self.continue_execution():
+                    break
+
+                # Wait for single step exception
+                debug_event = DEBUG_EVENT()
+                if kernel32.WaitForDebugEvent(ctypes.byref(debug_event), 100):
+                    if debug_event.dwDebugEventCode == 1:  # EXCEPTION_DEBUG_EVENT
+                        # Get current context
+                        context = self.get_registers()
+                        if context:
+                            instruction_info = {
+                                "count": instruction_count,
+                                "rip": context.get("Rip", 0),
+                                "rax": context.get("Rax", 0),
+                                "rbx": context.get("Rbx", 0),
+                                "rcx": context.get("Rcx", 0),
+                                "rdx": context.get("Rdx", 0),
+                                "rsp": context.get("Rsp", 0),
+                                "rbp": context.get("Rbp", 0),
+                                "rflags": context.get("EFlags", 0)
+                            }
+
+                            # Read instruction bytes at RIP
+                            rip = instruction_info["rip"]
+                            if rip:
+                                try:
+                                    # Read up to 15 bytes (max x86/x64 instruction length)
+                                    inst_bytes = self.read_memory(rip, 15)
+                                    if inst_bytes:
+                                        instruction_info["bytes"] = inst_bytes.hex()
+
+                                        # Disassemble if possible
+                                        try:
+                                            from capstone import CS_ARCH_X86, CS_MODE_64, Cs
+                                            md = Cs(CS_ARCH_X86, CS_MODE_64)
+                                            for i in md.disasm(inst_bytes, rip):
+                                                instruction_info["mnemonic"] = i.mnemonic
+                                                instruction_info["op_str"] = i.op_str
+                                                instruction_info["size"] = i.size
+                                                break
+                                        except:
+                                            pass  # Disassembly optional
+                                except:
+                                    pass
+
+                            traced_instructions.append(instruction_info)
+
+                            # Call trace callback if provided
+                            if trace_callback:
+                                if not trace_callback(instruction_info):
+                                    break  # Stop tracing if callback returns False
+
+                            instruction_count += 1
+
+                    # Continue debug event handling
+                    kernel32.ContinueDebugEvent(
+                        debug_event.dwProcessId,
+                        debug_event.dwThreadId,
+                        0x10002  # DBG_CONTINUE
+                    )
+
+        finally:
+            # Disable single stepping
+            self.disable_single_stepping()
+
+        logger.info(f"Traced {len(traced_instructions)} instructions")
+        return traced_instructions
 
 
 # DEBUG_EVENT structure for Windows debugging

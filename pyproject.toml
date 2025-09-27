@@ -71,6 +71,7 @@ dependencies = [
     "scapy==2.6.1",
     "cryptography>=43.0,<44.0",
     "paramiko==3.5.1",
+    "docker==7.1.0",
     "pyshark==0.6",
     "dpkt==1.9.8",
     "pycryptodome==3.19.1",

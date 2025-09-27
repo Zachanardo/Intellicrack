@@ -90,9 +90,9 @@ class ModelTestThread(QThread):
     """Thread for testing model configurations."""
 
     #: success, message (type: bool, str)
-    test_complete = pyqtSignal(bool, str)
+    validation_complete = pyqtSignal(bool, str)
     #: progress message (type: str)
-    test_progress = pyqtSignal(str)
+    validation_progress = pyqtSignal(str)
 
     def __init__(self, config: "LLMConfig"):
         """Initialize the ModelTestThread with default values."""
@@ -102,46 +102,46 @@ class ModelTestThread(QThread):
     def run(self):
         """Test the model configuration."""
         try:
-            self.test_progress.emit("Initializing model backend...")
+            self.validation_progress.emit("Initializing model backend...")
 
             # Create temporary LLM manager for testing
             if not get_llm_manager:
-                self.test_complete.emit(False, "LLM Manager not available")
+                self.validation_complete.emit(False, "LLM Manager not available")
                 return
 
             llm_manager = get_llm_manager()
 
             # Register test configuration
-            test_id = f"test_{self.config.provider.value}_{int(time.time())}"
-            self.test_progress.emit(f"Testing {self.config.provider.value} model...")
+            validation_id = f"validation_{self.config.provider.value}_{int(time.time())}"
+            self.validation_progress.emit(f"Testing {self.config.provider.value} model...")
 
-            success = llm_manager.register_llm(test_id, self.config)
+            success = llm_manager.register_llm(validation_id, self.config)
 
             if success:
-                self.test_progress.emit("Sending test message...")
+                self.validation_progress.emit("Sending test message...")
 
                 # Send a simple test message
                 from ...ai.llm_backends import LLMMessage
 
-                test_messages = [
+                validation_messages = [
                     LLMMessage(
                         role="user",
                         content="Hello! Please respond with 'Test successful' to confirm the connection.",
                     ),
                 ]
 
-                response = llm_manager.chat(test_messages, test_id)
+                response = llm_manager.chat(validation_messages, validation_id)
 
                 if response and response.content:
-                    self.test_complete.emit(True, f"✓ Model test successful!\nResponse: {response.content[:100]}...")
+                    self.validation_complete.emit(True, f"✓ Model test successful!\nResponse: {response.content[:100]}...")
                 else:
-                    self.test_complete.emit(False, "Model loaded but failed to generate response")
+                    self.validation_complete.emit(False, "Model loaded but failed to generate response")
             else:
-                self.test_complete.emit(False, "Failed to initialize model backend")
+                self.validation_complete.emit(False, "Failed to initialize model backend")
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in llm_config_dialog: %s", e)
-            self.test_complete.emit(False, f"Test failed: {e!s}")
+            self.validation_complete.emit(False, f"Test failed: {e!s}")
 
 
 class LLMConfigDialog(BaseDialog):
@@ -235,7 +235,7 @@ class LLMConfigDialog(BaseDialog):
         self.llm_manager = get_llm_manager() if get_llm_manager else None
         self.config_manager = get_llm_config_manager() if get_llm_config_manager else None
         self.current_configs = {}
-        self.test_thread = None
+        self.validation_thread = None
 
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.load_existing_configs()
@@ -306,14 +306,14 @@ class LLMConfigDialog(BaseDialog):
         actions_layout = QHBoxLayout()
         self.set_active_btn = QPushButton("Set Active")
         self.remove_model_btn = QPushButton("Remove")
-        self.test_model_btn = QPushButton("Test")
+        self.validate_model_btn = QPushButton("Test")
 
         self.set_active_btn.clicked.connect(self.set_active_model)
         self.remove_model_btn.clicked.connect(self.remove_model)
-        self.test_model_btn.clicked.connect(self.test_selected_model)
+        self.validate_model_btn.clicked.connect(self.validate_selected_model)
 
         actions_layout.addWidget(self.set_active_btn)
-        actions_layout.addWidget(self.test_model_btn)
+        actions_layout.addWidget(self.validate_model_btn)
         actions_layout.addWidget(self.remove_model_btn)
         status_layout.addLayout(actions_layout)
 
@@ -354,7 +354,7 @@ class LLMConfigDialog(BaseDialog):
         # API Key
         self.openai_api_key = QLineEdit()
         self.openai_api_key.setEchoMode(QLineEdit.Password)
-        self.openai_api_key.setPlaceholderText("sk-...")
+        self.openai_api_key.setToolTip("Enter your OpenAI API key starting with sk-")
         layout.addRow("API Key:", self.openai_api_key)
 
         # Model selection
@@ -372,7 +372,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Custom base URL
         self.openai_base_url = QLineEdit()
-        self.openai_base_url.setPlaceholderText("https://api.openai.com/v1 (default)")
+        self.openai_base_url.setText("https://api.openai.com/v1")
         layout.addRow("Base URL:", self.openai_base_url)
 
         # Parameters
@@ -417,7 +417,7 @@ class LLMConfigDialog(BaseDialog):
         # API Key
         self.anthropic_api_key = QLineEdit()
         self.anthropic_api_key.setEchoMode(QLineEdit.Password)
-        self.anthropic_api_key.setPlaceholderText("sk-ant-...")
+        self.anthropic_api_key.setToolTip("Enter your Anthropic API key starting with sk-ant-")
         layout.addRow("API Key:", self.anthropic_api_key)
 
         # Model selection
@@ -476,7 +476,7 @@ class LLMConfigDialog(BaseDialog):
         # Model file selection
         model_layout = QHBoxLayout()
         self.gguf_model_path = QLineEdit()
-        self.gguf_model_path.setPlaceholderText("Select GGUF model file...")
+        self.gguf_model_path.setToolTip("Path to GGUF model file")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_gguf_model)
 
@@ -486,7 +486,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.gguf_model_name = QLineEdit()
-        self.gguf_model_name.setPlaceholderText("Custom model name (optional)")
+        self.gguf_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.gguf_model_name)
 
         # Context length
@@ -544,7 +544,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.ollama_model = QLineEdit()
-        self.ollama_model.setPlaceholderText("llama2, codellama, mistral, etc.")
+        self.ollama_model.setToolTip("Examples: llama2, codellama, mistral")
         layout.addRow("Model Name:", self.ollama_model)
 
         # Parameters
@@ -586,7 +586,7 @@ class LLMConfigDialog(BaseDialog):
         # Model file/directory selection
         model_layout = QHBoxLayout()
         self.pytorch_model_path = QLineEdit()
-        self.pytorch_model_path.setPlaceholderText("Select PyTorch model file or directory...")
+        self.pytorch_model_path.setToolTip("Path to PyTorch model file or directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_pytorch_model)
 
@@ -596,7 +596,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.pytorch_model_name = QLineEdit()
-        self.pytorch_model_name.setPlaceholderText("Custom model name (optional)")
+        self.pytorch_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.pytorch_model_name)
 
         # Device selection
@@ -644,7 +644,7 @@ class LLMConfigDialog(BaseDialog):
         # Model file/directory selection
         model_layout = QHBoxLayout()
         self.tensorflow_model_path = QLineEdit()
-        self.tensorflow_model_path.setPlaceholderText("Select TensorFlow model file or directory...")
+        self.tensorflow_model_path.setToolTip("Path to TensorFlow model file or directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_tensorflow_model)
 
@@ -654,7 +654,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.tensorflow_model_name = QLineEdit()
-        self.tensorflow_model_name.setPlaceholderText("Custom model name (optional)")
+        self.tensorflow_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.tensorflow_model_name)
 
         # Device selection
@@ -702,7 +702,7 @@ class LLMConfigDialog(BaseDialog):
         # Model file selection
         model_layout = QHBoxLayout()
         self.onnx_model_path = QLineEdit()
-        self.onnx_model_path.setPlaceholderText("Select ONNX model file...")
+        self.onnx_model_path.setToolTip("Path to ONNX model file")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_onnx_model)
 
@@ -712,7 +712,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.onnx_model_name = QLineEdit()
-        self.onnx_model_name.setPlaceholderText("Custom model name (optional)")
+        self.onnx_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.onnx_model_name)
 
         # Provider selection
@@ -760,7 +760,7 @@ class LLMConfigDialog(BaseDialog):
         # Model file/directory selection
         model_layout = QHBoxLayout()
         self.safetensors_model_path = QLineEdit()
-        self.safetensors_model_path.setPlaceholderText("Select Safetensors model file or directory...")
+        self.safetensors_model_path.setToolTip("Path to Safetensors model file or directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_safetensors_model)
 
@@ -770,7 +770,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.safetensors_model_name = QLineEdit()
-        self.safetensors_model_name.setPlaceholderText("Custom model name (optional)")
+        self.safetensors_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.safetensors_model_name)
 
         # Device selection
@@ -818,7 +818,7 @@ class LLMConfigDialog(BaseDialog):
         # Model directory selection
         model_layout = QHBoxLayout()
         self.gptq_model_path = QLineEdit()
-        self.gptq_model_path.setPlaceholderText("Select GPTQ model directory...")
+        self.gptq_model_path.setToolTip("Path to GPTQ model directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_gptq_model)
 
@@ -828,7 +828,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.gptq_model_name = QLineEdit()
-        self.gptq_model_name.setPlaceholderText("Custom model name (optional)")
+        self.gptq_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.gptq_model_name)
 
         # Device selection
@@ -876,7 +876,7 @@ class LLMConfigDialog(BaseDialog):
         # Model directory selection
         model_layout = QHBoxLayout()
         self.huggingface_model_path = QLineEdit()
-        self.huggingface_model_path.setPlaceholderText("Select Hugging Face model directory...")
+        self.huggingface_model_path.setToolTip("Path to Hugging Face model directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_huggingface_model)
 
@@ -886,7 +886,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Model name
         self.huggingface_model_name = QLineEdit()
-        self.huggingface_model_name.setPlaceholderText("Custom model name (optional)")
+        self.huggingface_model_name.setToolTip("Custom model name (optional)")
         layout.addRow("Model Name:", self.huggingface_model_name)
 
         # Device selection
@@ -935,7 +935,7 @@ class LLMConfigDialog(BaseDialog):
         model_layout = QHBoxLayout()
         self.lora_base_model = QComboBox()
         self.lora_base_model.setEditable(True)
-        self.lora_base_model.setPlaceholderText("Select or enter base model ID...")
+        self.lora_base_model.setToolTip("Select or enter base model ID")
 
         # Populate with registered models
         if self.llm_manager:
@@ -952,7 +952,7 @@ class LLMConfigDialog(BaseDialog):
         # Adapter path selection
         adapter_layout = QHBoxLayout()
         self.lora_adapter_path = QLineEdit()
-        self.lora_adapter_path.setPlaceholderText("Select LoRA adapter directory...")
+        self.lora_adapter_path.setToolTip("Path to LoRA adapter directory")
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.browse_lora_adapter)
 
@@ -962,7 +962,7 @@ class LLMConfigDialog(BaseDialog):
 
         # Adapter name
         self.lora_adapter_name = QLineEdit()
-        self.lora_adapter_name.setPlaceholderText("Adapter name (optional)")
+        self.lora_adapter_name.setToolTip("Adapter name (optional)")
         self.lora_adapter_name.setText("default")
         layout.addRow("Adapter Name:", self.lora_adapter_name)
 
@@ -1581,7 +1581,7 @@ class LLMConfigDialog(BaseDialog):
 
     def test_model_config(self, config: "LLMConfig"):
         """Test a model configuration."""
-        if self.test_thread and self.test_thread.isRunning():
+        if self.validation_thread and self.validation_thread.isRunning():
             QMessageBox.warning(self, "Test In Progress", "Please wait for the current test to complete")
             return
 
@@ -1589,10 +1589,10 @@ class LLMConfigDialog(BaseDialog):
         self.test_progress.setRange(0, 0)  # Indeterminate progress
         self.status_text.append(f"🧪 Testing {config.provider.value} model...")
 
-        self.test_thread = ModelTestThread(config)
-        self.test_thread.test_progress.connect(self.on_test_progress)
-        self.test_thread.test_complete.connect(self.on_test_complete)
-        self.test_thread.start()
+        self.validation_thread = ModelTestThread(config)
+        self.validation_thread.test_progress.connect(self.on_test_progress)
+        self.validation_thread.test_complete.connect(self.on_test_complete)
+        self.validation_thread.start()
 
     def on_test_progress(self, message: str):
         """Handle test progress updates."""
@@ -1608,9 +1608,9 @@ class LLMConfigDialog(BaseDialog):
             self.status_text.append(f"❌ {message}")
 
         # Clean up test thread
-        if self.test_thread:
-            self.test_thread.wait()
-            self.test_thread = None
+        if self.validation_thread:
+            self.validation_thread.wait()
+            self.validation_thread = None
 
     def load_existing_configs(self):
         """Load existing model configurations."""
@@ -2003,7 +2003,7 @@ class LLMConfigDialog(BaseDialog):
 
     def closeEvent(self, event):
         """Handle dialog close event."""
-        if self.test_thread and self.test_thread.isRunning():
+        if self.validation_thread and self.validation_thread.isRunning():
             reply = QMessageBox.question(
                 self,
                 "Test In Progress",
@@ -2016,9 +2016,9 @@ class LLMConfigDialog(BaseDialog):
                 return
 
             # Force terminate test thread
-            if self.test_thread:
-                self.test_thread.terminate()
-                self.test_thread.wait(3000)  # Wait up to 3 seconds
+            if self.validation_thread:
+                self.validation_thread.terminate()
+                self.validation_thread.wait(3000)  # Wait up to 3 seconds
 
         event.accept()
 

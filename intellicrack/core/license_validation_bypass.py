@@ -565,7 +565,7 @@ class LicenseValidationBypass:
             offset = 16  # Skip RSA magic and padding
 
             # Version field (4 bytes)
-            version = struct.unpack("<I", data[offset : offset + 4])[0]
+            struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             # Method pointer (8 bytes on 64-bit)
@@ -575,9 +575,9 @@ class LicenseValidationBypass:
             offset += 8
 
             # BIGNUM pointers for n, e, d, p, q, dmp1, dmq1, iqmp
-            n_ptr = struct.unpack("<Q", data[offset : offset + 8])[0]
+            struct.unpack("<Q", data[offset : offset + 8])[0]
             offset += 8
-            e_ptr = struct.unpack("<Q", data[offset : offset + 8])[0]
+            struct.unpack("<Q", data[offset : offset + 8])[0]
             offset += 8
             d_ptr = struct.unpack("<Q", data[offset : offset + 8])[0]
             offset += 8
@@ -592,7 +592,7 @@ class LicenseValidationBypass:
             if n and e:
                 if d_ptr != 0:
                     # Private key
-                    d = self._read_openssl_bignum_10x(data[offset:])
+                    self._read_openssl_bignum_10x(data[offset:])
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data[:1024],
@@ -626,9 +626,9 @@ class LicenseValidationBypass:
             offset += 16  # libctx and method pointers
 
             # Version and flags
-            version = struct.unpack("<I", data[offset : offset + 4])[0]
+            struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
-            flags = struct.unpack("<I", data[offset : offset + 4])[0]
+            struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             # Read BIGNUM structures inline (not pointers in 1.1.x)
@@ -682,7 +682,7 @@ class LicenseValidationBypass:
             offset += 8
 
             # Reference counting
-            refcount = struct.unpack("<I", data[offset : offset + 4])[0]
+            struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             # Flags
@@ -781,18 +781,18 @@ class LicenseValidationBypass:
                 return None
 
             # dmax (allocated words)
-            dmax = struct.unpack("<I", data[12:16])[0]
+            struct.unpack("<I", data[12:16])[0]
 
             # neg (sign)
             neg = struct.unpack("<I", data[16:20])[0]
 
             # flags
-            flags = struct.unpack("<I", data[20:24])[0]
+            struct.unpack("<I", data[20:24])[0]
 
             # Read actual number data
             offset = 24
             num_bytes = []
-            for i in range(top):
+            for _i in range(top):
                 if offset + 8 > len(data):
                     break
                 word = struct.unpack("<Q", data[offset : offset + 8])[0]
@@ -821,7 +821,7 @@ class LicenseValidationBypass:
                 return None
 
             # dmax
-            dmax = struct.unpack("<I", data[4:8])[0]
+            struct.unpack("<I", data[4:8])[0]
 
             # neg and flags packed
             neg_flags = struct.unpack("<I", data[8:12])[0]
@@ -830,7 +830,7 @@ class LicenseValidationBypass:
             # Read number data immediately following
             offset = 12
             num_bytes = []
-            for i in range(width):
+            for _i in range(width):
                 if offset + 8 > len(data):
                     break
                 word = struct.unpack("<Q", data[offset : offset + 8])[0]
@@ -922,7 +922,7 @@ class LicenseValidationBypass:
             if magic not in [b"RSA1", b"RSA2", b"RSA3"]:
                 return None
 
-            bit_length = struct.unpack("<I", data[4:8])[0]
+            struct.unpack("<I", data[4:8])[0]
             pub_exp_len = struct.unpack("<I", data[8:12])[0]
             mod_len = struct.unpack("<I", data[12:16])[0]
 
@@ -1175,7 +1175,7 @@ class LicenseValidationBypass:
                     # Read public key
                     if len(decoded) < offset + key_len:
                         return None
-                    public_bytes = decoded[offset : offset + key_len]
+                    decoded[offset : offset + key_len]
 
                     return ExtractedKey(
                         key_type=KeyType.ECC_PUBLIC,
@@ -1218,13 +1218,13 @@ class LicenseValidationBypass:
                 # Read KDF name
                 kdf_len = struct.unpack(">I", decoded[offset : offset + 4])[0]
                 offset += 4
-                kdf = decoded[offset : offset + kdf_len]
+                decoded[offset : offset + kdf_len]
                 offset += kdf_len
 
                 # Read KDF options
                 kdf_opts_len = struct.unpack(">I", decoded[offset : offset + 4])[0]
                 offset += 4
-                kdf_opts = decoded[offset : offset + kdf_opts_len]
+                decoded[offset : offset + kdf_opts_len]
                 offset += kdf_opts_len
 
                 # Number of keys
@@ -1232,10 +1232,10 @@ class LicenseValidationBypass:
                 offset += 4
 
                 # Read public keys
-                for i in range(num_keys):
+                for _i in range(num_keys):
                     pubkey_len = struct.unpack(">I", decoded[offset : offset + 4])[0]
                     offset += 4
-                    pubkey = decoded[offset : offset + pubkey_len]
+                    decoded[offset : offset + pubkey_len]
                     offset += pubkey_len
 
                 # Read private key section

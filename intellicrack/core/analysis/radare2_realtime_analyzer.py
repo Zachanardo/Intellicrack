@@ -43,15 +43,40 @@ except ImportError:
         """Fallback FileSystemEventHandler when watchdog is not available."""
 
         def __init__(self):
-            pass
+            self.event_queue = []
+            self.last_modified = {}
+            self.debounce_time = 0.5  # 500ms debounce
 
         def on_modified(self, event):
             """Handle file modification events."""
-            pass
+            import time
+            current_time = time.time()
+
+            # Debounce rapid modifications
+            if hasattr(event, 'src_path'):
+                last_time = self.last_modified.get(event.src_path, 0)
+                if current_time - last_time < self.debounce_time:
+                    return
+                self.last_modified[event.src_path] = current_time
+
+            # Queue event for processing
+            self.event_queue.append({
+                'type': 'modified',
+                'path': getattr(event, 'src_path', ''),
+                'timestamp': current_time,
+                'is_directory': getattr(event, 'is_directory', False)
+            })
 
         def on_created(self, event):
             """Handle file creation events."""
-            pass
+            import time
+            # Queue creation event
+            self.event_queue.append({
+                'type': 'created',
+                'path': getattr(event, 'src_path', ''),
+                'timestamp': time.time(),
+                'is_directory': getattr(event, 'is_directory', False)
+            })
 
         def on_deleted(self, event):
             """Handle file deletion events."""

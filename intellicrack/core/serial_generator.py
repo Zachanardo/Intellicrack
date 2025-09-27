@@ -97,7 +97,7 @@ class SerialNumberGenerator:
 
         # Test various algorithms
         algorithms_scores = {}
-        for algo_name, algo_func in self.common_algorithms.items():
+        for algo_name, _algo_func in self.common_algorithms.items():
             score = self._test_algorithm(valid_serials, algo_name)
             algorithms_scores[algo_name] = score
 
@@ -326,7 +326,7 @@ class SerialNumberGenerator:
 
         # Add checksum constraint if specified
         if constraints.checksum_algorithm and constraints.checksum_algorithm in self.checksum_functions:
-            checksum_func = self.checksum_functions[constraints.checksum_algorithm]
+            self.checksum_functions[constraints.checksum_algorithm]
             # This would require expressing checksum as Z3 constraints
             # Simplified for now
             pass
@@ -417,7 +417,7 @@ class SerialNumberGenerator:
         chars = "BCDFGHJKMPQRTVWXY2346789"  # pragma: allowlist secret
         groups = []
 
-        for i in range(5):
+        for _i in range(5):
             group = "".join(random.choices(chars, k=5))
             groups.append(group)
 
@@ -440,7 +440,7 @@ class SerialNumberGenerator:
         groups.append(str(random.randint(1000, 1999)))
 
         # Middle groups
-        for i in range(4):
+        for _i in range(4):
             groups.append(str(random.randint(0, 9999)).zfill(4))
 
         # Last group with checksum
@@ -665,7 +665,6 @@ class SerialNumberGenerator:
         # Simplified ECC-based generation
         # Use curve parameters
         p = 2**255 - 19  # Curve25519
-        a = 486662
         base_point = 9
 
         serial_parts = []
@@ -738,7 +737,7 @@ class SerialNumberGenerator:
         left = random.randint(0, 255)
         right = random.randint(0, 255)
 
-        for i in range(length):
+        for _i in range(length):
             # Multiple rounds
             for round_num in range(4):
                 left, right = feistel_round(left, right, round_num)
@@ -856,7 +855,7 @@ class SerialNumberGenerator:
 
         for i in range(count):
             max_retries = 10
-            for retry in range(max_retries):
+            for _retry in range(max_retries):
                 serial = self.generate_serial(constraints, seed=i if not unique else None)
 
                 if not unique or serial.serial not in generated_set:

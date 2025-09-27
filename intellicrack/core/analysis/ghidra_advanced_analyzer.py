@@ -15,9 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import lief
 import pefile
-from capstone import *
-from unicorn import *
-from unicorn.x86_const import *
+from capstone import Cs, CS_ARCH_X86, CS_MODE_64, CS_MODE_32
 
 from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalysisResult, GhidraDataType, GhidraFunction
 
@@ -135,14 +133,12 @@ class GhidraAdvancedAnalyzer:
         """Recover variables with type propagation."""
         variables = []
         stack_vars = {}
-        register_types = {}
 
         if not function.assembly_code:
             return variables
 
         # Parse assembly to track stack operations and type hints
         instructions = function.assembly_code.split("\n")
-        stack_offset = 0
 
         for i, inst_line in enumerate(instructions):
             inst_parts = inst_line.strip().split()
@@ -153,13 +149,12 @@ class GhidraAdvancedAnalyzer:
 
             # Track stack frame setup
             if mnemonic == "push" and "bp" in inst_line.lower():
-                stack_offset = 0
+                pass
             elif mnemonic == "sub" and "sp" in inst_line.lower():
                 # Extract stack size
                 if len(inst_parts) >= 3:
                     try:
-                        size = int(inst_parts[2].replace("0x", ""), 16)
-                        stack_offset = size
+                        int(inst_parts[2].replace("0x", ""), 16)
                     except:
                         pass
 
@@ -262,7 +257,7 @@ class GhidraAdvancedAnalyzer:
             # x86/x64 calling conventions
             param_regs = ["rcx", "rdx", "r8", "r9"] if "64" in function.signature else ["ecx", "edx"]
 
-            param_count = len(function.parameters)
+            len(function.parameters)
             for i, (param_type, param_name) in enumerate(function.parameters):
                 # Match stack parameters
                 for offset, var in variables.items():
@@ -287,7 +282,7 @@ class GhidraAdvancedAnalyzer:
         for func in analysis_result.functions.values():
             struct_accesses = self._analyze_struct_accesses(func)
 
-            for base_reg, offsets in struct_accesses.items():
+            for _base_reg, offsets in struct_accesses.items():
                 if len(offsets) > 2:  # Likely a structure if multiple offsets
                     struct_key = frozenset(offsets.keys())
                     if struct_key not in struct_candidates:
@@ -305,7 +300,7 @@ class GhidraAdvancedAnalyzer:
             offsets = sorted(info["offsets"].items())
             struct_size = 0
 
-            for j, (offset, access_info) in enumerate(offsets):
+            for _j, (offset, access_info) in enumerate(offsets):
                 member_name = f"field_{offset:x}"
                 member_type = access_info["type"]
                 member_size = access_info["size"]
@@ -679,7 +674,7 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     analyzer = GhidraAdvancedAnalyzer(binary_path)
 
     # Recover variables for each function
-    for func_addr, func in analysis_result.functions.items():
+    for _func_addr, func in analysis_result.functions.items():
         recovered_vars = analyzer.recover_variables(func)
 
         # Update function with recovered variables

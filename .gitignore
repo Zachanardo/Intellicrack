@@ -310,6 +310,9 @@ GeminiCLI.ps1
 Codex.ps1
 QWEN.ps1
 
+# GitHub Copilot config
+.github/copilot-instructions.md
+
 # AI cache and configs
 .llm_cache/
 llm_configs/
@@ -608,6 +611,15 @@ placeholder_todos.txt
 simulated_data.txt
 tests_mock_usage.txt
 
+# Project analysis and TODO files
+*_TODO.md
+*TODO.md
+ORPHANED_FILES.md
+
+# Roo directories (project analysis tool)
+.roo/
+.roo/**
+
 # Exclude PowerShell scripts in root
 /*.ps1
 
@@ -640,6 +652,12 @@ build_output.txt
 sphinx_output.txt
 rollout-*.json
 .aider*
+
+# Test reports in various formats
+tests/reports/*.xml
+tests/reports/*.json
+tests/reports/*.html
+tests/reports/Violations_*.xml
 
 # ==============================================================================
 # LARGE QEMU IMAGES

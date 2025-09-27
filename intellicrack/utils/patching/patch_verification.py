@@ -212,7 +212,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                 patch_results.append((False, f"Patch {i + 1}: Failed - {patch_error}"))
 
         # Report patch results
-        results.append("\nPatch simulation results:")
+        results.append("\nPatch verification results:")
         for success, message in patch_results:
             if success:
                 results.append(f"✓ {message}")
@@ -301,7 +301,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in patch_verification: %s", e)
-        results.append(f"Error during patch simulation: {e}")
+        results.append(f"Error during patch verification: {e}")
         results.append(traceback.format_exc())
 
     return results

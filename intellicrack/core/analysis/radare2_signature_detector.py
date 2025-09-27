@@ -744,7 +744,7 @@ rule CryptoAPI_Usage {
             # Get binary info
             info = self.r2.cmdj("ij")
             imports = self.r2.cmdj("iij")
-            sections = self.r2.cmdj("iSj")
+            self.r2.cmdj("iSj")
             strings = self.r2.cmdj("izj")
 
             compiler = "Unknown"

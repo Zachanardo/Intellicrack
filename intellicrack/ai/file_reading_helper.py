@@ -50,10 +50,25 @@ def read_file_with_ai_tools(
         - used_ai_tools: True if AIFileTools was used, False if direct read was used
 
     """
+    def _process_ai_content(raw_content):
+        """Normalize AI-provided content according to mode and max_bytes."""
+        if mode == "binary":
+            if isinstance(raw_content, str):
+                data = raw_content.encode("latin-1", errors="ignore")
+            else:
+                data = raw_content
+            if max_bytes and isinstance(data, (bytes, bytearray)) and len(data) > max_bytes:
+                return data[:max_bytes]
+            return data
+        else:
+            if isinstance(raw_content, (bytes, bytearray)):
+                return raw_content.decode(encoding, errors="ignore")
+            return raw_content
+
     content = None
     used_ai_tools = False
 
-    # Try to use AIFileTools first
+    # Attempt AIFileTools path and return early on success to keep flow simple.
     try:
         from .ai_file_tools import get_ai_file_tools
 
@@ -61,52 +76,31 @@ def read_file_with_ai_tools(
         file_data = ai_file_tools.read_file(file_path, purpose=purpose)
 
         if file_data.get("status") == "success" and file_data.get("content") is not None:
-            raw_content = file_data["content"]
-
-            if mode == "binary":
-                # Convert to bytes if needed
-                if isinstance(raw_content, str):
-                    content = raw_content.encode("latin-1", errors="ignore")
-                else:
-                    content = raw_content
-
-                # Apply max_bytes limit if specified
-                if max_bytes and len(content) > max_bytes:
-                    content = content[:max_bytes]
-            # Text mode - ensure string
-            elif isinstance(raw_content, bytes):
-                content = raw_content.decode(encoding, errors="ignore")
-            else:
-                content = raw_content
-
+            content = _process_ai_content(file_data["content"])
             used_ai_tools = True
             logger.debug(f"Successfully read file using AIFileTools: {file_path}")
+            return content, used_ai_tools
 
     except (ImportError, AttributeError, KeyError) as e:
         logger.debug(f"AIFileTools not available: {e}")
     except Exception as e:
         logger.warning(f"Error using AIFileTools for {file_path}: {e}")
 
-    # Fallback to direct file reading if AIFileTools didn't work
-    if content is None:
-        try:
-            if mode == "binary":
-                with open(file_path, "rb") as f:
-                    if max_bytes:
-                        content = f.read(max_bytes)
-                    else:
-                        content = f.read()
-            else:
-                with open(file_path, encoding=encoding) as f:
-                    content = f.read()
+    # Fallback to direct file reading
+    try:
+        if mode == "binary":
+            with open(file_path, "rb") as f:
+                content = f.read(max_bytes) if max_bytes else f.read()
+        else:
+            with open(file_path, encoding=encoding) as f:
+                content = f.read()
 
-            logger.debug(f"Read file using direct file access: {file_path}")
+        logger.debug(f"Read file using direct file access: {file_path}")
+        return content, False
 
-        except Exception as e:
-            logger.error(f"Failed to read file {file_path}: {e}")
-            return None, False
-
-    return content, used_ai_tools
+    except Exception as e:
+        logger.error(f"Failed to read file {file_path}: {e}")
+        return None, False
 
 
 def read_binary_header(

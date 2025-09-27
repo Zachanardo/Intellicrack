@@ -455,7 +455,7 @@ class HardwareFingerPrintSpoofer:
         ]
 
         adapters = []
-        for i, mac in enumerate(self.spoofed_hardware.mac_addresses if self.spoofed_hardware else []):
+        for _i, mac in enumerate(self.spoofed_hardware.mac_addresses if self.spoofed_hardware else []):
             adapters.append(
                 {
                     "name": random.choice(names),
@@ -575,8 +575,6 @@ class HardwareFingerPrintSpoofer:
         """Apply spoofing via API hooking"""
         try:
             # Load required DLLs
-            kernel32 = ctypes.windll.kernel32
-            ntdll = ctypes.windll.ntdll
 
             # Install inline hooks
             self._install_wmi_hooks()
@@ -605,19 +603,15 @@ class HardwareFingerPrintSpoofer:
         # COM interface definitions
         CLSID_WbemLocator = "{4590F811-1D3A-11D0-891F-00AA004B2E24}"
         IID_IWbemLocator = "{DC12A687-737F-11CF-884D-00AA004B2E24}"
-        IID_IWbemServices = "{9556DC99-828C-11CF-A37E-00AA003240C7}"
 
         # WMI namespace
         WMI_NAMESPACE = r"\\.\root\cimv2"
 
         # IWbemServices vtable indices
         IWBEMSERVICES_EXECQUERY = 20
-        IWBEMSERVICES_CREATEINSTANCEENUM = 16
 
         # Define COM types
         HRESULT = ctypes.c_long
-        BSTR = c_void_p
-        VARIANT_BOOL = ctypes.c_short
 
         # Load COM libraries
         ole32 = ctypes.windll.ole32
@@ -770,16 +764,6 @@ class HardwareFingerPrintSpoofer:
         self.original_RegEnumValueW = advapi32.RegEnumValueW
 
         # Hardware-related registry paths to intercept
-        hardware_keys = [
-            r"SOFTWARE\Microsoft\Cryptography",
-            r"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-            r"SYSTEM\CurrentControlSet\Control\SystemInformation",
-            r"HARDWARE\DESCRIPTION\System\CentralProcessor",  # pragma: allowlist secret
-            r"HARDWARE\DESCRIPTION\System\BIOS",
-            r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
-            r"SYSTEM\CurrentControlSet\Enum\IDE",
-            r"SYSTEM\CurrentControlSet\Control\Video",
-        ]
 
         # Create inline hook for RegQueryValueExW
         def create_inline_hook(target_func, hook_func):
@@ -1139,9 +1123,6 @@ class HardwareFingerPrintSpoofer:
 
         # Device property constants
         SPDRP_HARDWAREID = 0x00000001
-        SPDRP_DEVICEDESC = 0x00000000
-        SPDRP_FRIENDLYNAME = 0x0000000C
-        SPDRP_MFG = 0x0000000B
 
         # Hook SetupDiGetDeviceRegistryPropertyW
         def hooked_SetupDiGetDeviceRegistryPropertyW(
@@ -1423,7 +1404,6 @@ class HardwareFingerPrintSpoofer:
         from ctypes import byref, c_ulong, c_void_p, create_string_buffer, sizeof
 
         kernel32 = ctypes.windll.kernel32
-        psapi = ctypes.windll.psapi
 
         # Process access rights
         PROCESS_VM_READ = 0x0010
@@ -1602,8 +1582,8 @@ class HardwareFingerPrintSpoofer:
 
                                 # Try to patch nearby memory
                                 for offset in range(-512, 512, 2):  # Unicode alignment
-                                    test_addr = match + offset
-                                    patch_memory_value(hProcess, test_addr, old_id, new_id)
+                                    patch_addr = match + offset
+                                    patch_memory_value(hProcess, patch_addr, old_id, new_id)
 
                 # Patch motherboard information
                 if self.spoofed_hardware and self.spoofed_hardware.motherboard_serial:
@@ -1617,8 +1597,8 @@ class HardwareFingerPrintSpoofer:
 
                                 # Patch serial numbers near pattern
                                 for offset in range(-512, 512, 2):
-                                    test_addr = match + offset
-                                    patch_memory_value(hProcess, test_addr, old_serial, new_serial)
+                                    patch_addr = match + offset
+                                    patch_memory_value(hProcess, patch_addr, old_serial, new_serial)
 
                 # Patch BIOS information
                 if self.spoofed_hardware and self.spoofed_hardware.bios_serial:
@@ -1631,8 +1611,8 @@ class HardwareFingerPrintSpoofer:
                             new_bios = self.spoofed_hardware.bios_serial.encode("utf-16-le")
 
                             for offset in range(-1024, 1024, 2):
-                                test_addr = match + offset
-                                patch_memory_value(hProcess, test_addr, old_bios, new_bios)
+                                patch_addr = match + offset
+                                patch_memory_value(hProcess, patch_addr, old_bios, new_bios)
 
                 kernel32.CloseHandle(hProcess)
 
@@ -1746,7 +1726,7 @@ class HardwareFingerPrintSpoofer:
 
         # GPU spoofing via registry
         try:
-            with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video") as key:
+            with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video"):
                 # Update GPU entries
                 pass
         except:
@@ -1767,7 +1747,7 @@ class HardwareFingerPrintSpoofer:
 
         # USB device spoofing via registry
         try:
-            for device in devices:
+            for _device in devices:
                 # Create registry entries for spoofed USB devices
                 pass
         except:

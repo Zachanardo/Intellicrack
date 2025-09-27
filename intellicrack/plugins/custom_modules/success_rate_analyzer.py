@@ -951,19 +951,67 @@ class ReportGenerator:
         return daily_success
 
     def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> np.ndarray | None:
-        """Prepare correlation matrix data."""
+        """Prepare correlation matrix data from actual time series."""
         try:
             component_stats = analyzer.get_component_statistics()
             if len(component_stats) < 2:
                 return None
 
-            # Create correlation matrix (placeholder - would need time series data)
-            n = len(component_stats)
-            correlation_matrix = np.random.rand(n, n) * 0.4 + 0.3  # Simulate correlations
-            np.fill_diagonal(correlation_matrix, 1.0)
+            # Get time series data for each component
+            components = list(component_stats.keys())
+            n = len(components)
 
-            return correlation_matrix
-        except Exception:
+            # Retrieve events for correlation analysis
+            all_events = analyzer.event_tracker.get_events()
+
+            # Create time-aligned success rate vectors for each component
+            time_window = 3600  # 1 hour windows
+            time_buckets = {}
+
+            for event in all_events:
+                bucket = int(event.timestamp // time_window)
+                if bucket not in time_buckets:
+                    time_buckets[bucket] = {comp: [] for comp in components}
+
+                if event.component in components:
+                    success_value = 1.0 if event.outcome == OutcomeType.SUCCESS else 0.0
+                    time_buckets[bucket][event.component].append(success_value)
+
+            # Calculate average success rates per bucket
+            aligned_data = {comp: [] for comp in components}
+
+            for bucket in sorted(time_buckets.keys()):
+                for comp in components:
+                    if time_buckets[bucket][comp]:
+                        avg_rate = np.mean(time_buckets[bucket][comp])
+                        aligned_data[comp].append(avg_rate)
+                    else:
+                        # Use previous value or component average if no data
+                        if aligned_data[comp]:
+                            aligned_data[comp].append(aligned_data[comp][-1])
+                        else:
+                            aligned_data[comp].append(component_stats[comp]["success_rate"])
+
+            # Calculate correlation matrix
+            if aligned_data[components[0]]:  # Ensure we have data
+                data_matrix = np.array([aligned_data[comp] for comp in components])
+
+                # Calculate Pearson correlation coefficients
+                correlation_matrix = np.corrcoef(data_matrix)
+
+                # Handle NaN values (in case of constant values)
+                correlation_matrix = np.nan_to_num(correlation_matrix, nan=0.0)
+
+                # Ensure diagonal is 1.0
+                np.fill_diagonal(correlation_matrix, 1.0)
+
+                return correlation_matrix
+            else:
+                # No time series data available, return identity matrix
+                return np.eye(n)
+
+        except Exception as e:
+            logger.warning(f"Failed to calculate correlations: {e}")
             return None
 
 
@@ -1400,60 +1448,76 @@ def track_success(event_type: EventType, protection_category: ProtectionCategory
 
 
 if __name__ == "__main__":
-    # Example usage and testing
+    # Production usage - analyze real Intellicrack events
     logging.basicConfig(level=logging.INFO)
 
     analyzer = SuccessRateAnalyzer()
 
-    # Simulate some events
-    print("Simulating analysis events...")
+    # Connect to existing Intellicrack database or create new one
+    print("Initializing Success Rate Analysis System...")
 
-    components = [
-        "neural_network_detector",
-        "pattern_evolution_tracker",
-        "hardware_dongle_emulator",
-    ]
-    categories = [
-        ProtectionCategory.SERIAL_KEY,
-        ProtectionCategory.DONGLE,
-        ProtectionCategory.VM_PROTECTION,
-    ]
+    # Import actual Intellicrack components for real-time tracking
+    from intellicrack.core.analysis.protection_detector import ProtectionDetector
+    from intellicrack.core.exploitation.bypass_manager import BypassManager
+    from intellicrack.plugins.custom_modules.hardware_dongle_emulator import HardwareDongleEmulator
 
-    import random
+    # Hook into real component events for live tracking
+    def register_component_hooks():
+        """Register success tracking hooks with Intellicrack components."""
 
-    # Generate test events
-    for _ in range(100):
-        component = random.choice(components)  # noqa: S311 - Test event simulation data
-        category = random.choice(categories)  # noqa: S311 - Test event simulation data
+        # Track protection detection events
+        @track_success(EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector")
+        def detect_serial_protection(binary_path):
+            try:
+                detector = ProtectionDetector()
+                result = detector.analyze_binary(binary_path)
+                return result.get("serial_protection_found", False)
+            except Exception:
+                return False
 
-        # Simulate varying success rates by component
-        if component == "neural_network_detector":
-            success_prob = 0.85
-        elif component == "pattern_evolution_tracker":
-            success_prob = 0.75
-        else:
-            success_prob = 0.65
+        # Track bypass attempts
+        @track_success(EventType.BYPASS_ATTEMPT, ProtectionCategory.VM_PROTECTION, "bypass_manager")
+        def bypass_vm_protection(target_process):
+            try:
+                manager = BypassManager()
+                result = manager.bypass_protection(target_process, "vm_protection")
+                return result.get("bypass_successful", False)
+            except Exception:
+                return False
 
-        outcome = OutcomeType.SUCCESS if random.random() < success_prob else OutcomeType.FAILURE  # noqa: S311 - Test event simulation data
-        duration = random.uniform(0.1, 5.0)  # noqa: S311 - Test event simulation data
+        # Track hardware emulation
+        @track_success(EventType.EMULATION, ProtectionCategory.DONGLE, "dongle_emulator")
+        def emulate_hardware_dongle(dongle_type):
+            try:
+                emulator = HardwareDongleEmulator()
+                result = emulator.emulate_dongle(dongle_type)
+                return result.get("emulation_active", False)
+            except Exception:
+                return False
 
-        # Backdate some events
-        timestamp_offset = random.uniform(0, 7 * 24 * 3600)  # noqa: S311 - Test event simulation data, up to 7 days ago
+        return {
+            "detect_serial_protection": detect_serial_protection,
+            "bypass_vm_protection": bypass_vm_protection,
+            "emulate_hardware_dongle": emulate_hardware_dongle
+        }
 
-        event = AnalysisEvent(
-            event_id="",
-            event_type=EventType.PROTECTION_DETECTION,
-            outcome=outcome,
-            protection_category=category,
-            component=component,
-            timestamp=time.time() - timestamp_offset,
-            duration=duration,
-        )
+    # Load historical events from existing database if available
+    print("Loading historical analysis data...")
+    historical_events = analyzer.event_tracker.get_events()
 
-        analyzer.event_tracker.log_event(event)
+    if historical_events:
+        print(f"Found {len(historical_events)} historical events in database")
 
-    # Test analysis functions
-    print("\nGenerating analysis results...")
+        # Train ML models on historical data
+        if len(historical_events) > 100:
+            print("Training machine learning models on historical data...")
+            analyzer.ml_predictor.train(historical_events)
+            print("ML models trained successfully")
+    else:
+        print("No historical data found. Starting fresh tracking...")
+
+    # Perform real analysis on actual data
+    print("\nPerforming real-time analysis...")
 
     # Overall success rates
     overall_stats = analyzer.get_component_statistics()

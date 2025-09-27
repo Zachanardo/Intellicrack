@@ -509,7 +509,7 @@ class VisualizationRenderer:
         # Add values to cells
         for i in range(len(labels_y)):
             for j in range(len(labels_x)):
-                text = ax.text(j, i, f"{data[i, j]:.2f}", ha="center", va="center", color="white")
+                ax.text(j, i, f"{data[i, j]:.2f}", ha="center", va="center", color="white")
 
         ax.set_title(title)
         fig.tight_layout()

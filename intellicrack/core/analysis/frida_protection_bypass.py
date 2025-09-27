@@ -879,7 +879,7 @@ class FridaProtectionBypasser:
 
         try:
             # Get the main module
-            main_module = frida.get_local_device().enumerate_processes()[0]
+            frida.get_local_device().enumerate_processes()[0]
 
             # Read first 4KB of main module for signatures
             module_base = self.session.get_module_by_name(self.process_name if self.process_name else "main").base_address

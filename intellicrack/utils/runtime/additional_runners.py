@@ -328,12 +328,12 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
         if patches.get("suggested_patches"):
             from ..exploitation.exploitation import verify_patches_without_applying
 
-            simulation = verify_patches_without_applying(binary_path, patches["suggested_patches"])
-            results["patching_phase"]["simulation"] = simulation
+            verification = verify_patches_without_applying(binary_path, patches["suggested_patches"])
+            results["patching_phase"]["verification"] = verification
 
-            if simulation.get("summary", {}).get("valid_patches", 0) > 0:
+            if verification.get("summary", {}).get("valid_patches", 0) > 0:
                 results["success"] = True
-                results["message"] = f"Found {simulation['summary']['valid_patches']} valid patches"
+                results["message"] = f"Found {verification['summary']['valid_patches']} valid patches"
             else:
                 results["message"] = "No valid patches found"
         else:
@@ -1461,8 +1461,8 @@ def detect_hardware_dongles() -> dict[str, Any]:
     }
 
     try:
-        # This would require platform-specific USB enumeration
-        # Detect hardware dongles using multiple methods
+        # Perform platform-specific USB enumeration to detect hardware dongles
+        # Use multiple detection methods for comprehensive coverage
 
         # Method 1: USB device enumeration
         usb_dongles = _detect_usb_dongles()

@@ -98,7 +98,7 @@ def get_tooltip_definitions() -> dict[str, str]:
         ),
         "Activate Dongle Emulation": (
             "Emulates hardware dongle responses without the physical device.\n"
-            "Simulates the presence of USB license keys.\n"
+            "Emulates USB license key functionality.\n"
             "⚠️ Only for testing software you have licensed."
         ),
         # Dynamic Analysis
@@ -181,7 +181,7 @@ def get_tooltip_definitions() -> dict[str, str]:
             "⚠️ Only use on your own traffic - may trigger security alerts."
         ),
         "Start Emulated Server": (
-            "Creates fake license/activation server.\n"
+            "Creates emulated license/activation server.\n"
             "Responds to program's network requests with success.\n"
             "Useful for offline activation and testing."
         ),
@@ -203,9 +203,9 @@ def get_tooltip_definitions() -> dict[str, str]:
             "verification, and automated patch distribution."
         ),
         "API Emulator": (
-            "Simulates Windows API responses without real calls.\n"
+            "Intercepts and modifies Windows API responses.\n"
             "Useful for sandboxing and behavior analysis.\n"
-            "Can fake: File existence, registry values, system info."
+            "Can emulate: File existence, registry values, system info."
         ),
         "Binary Unpacker": (
             "Removes packing/compression from executables.\n"
@@ -323,15 +323,20 @@ def apply_tooltips_to_all_elements(parent_widget):
     # Apply tooltips to QLineEdit
     line_edits = parent_widget.findChildren(QLineEdit)
     for line_edit in line_edits:
-        placeholder = line_edit.placeholderText()
+        # Get hint text from widget property
+        hint_text = ""
+        for prop in line_edit.dynamicPropertyNames():
+            if prop.data().decode() == "hintText":
+                hint_text = line_edit.property("hintText") or ""
+                break
         object_name = line_edit.objectName()
 
-        if placeholder in all_tooltips:
-            line_edit.setToolTip(all_tooltips[placeholder])
+        if hint_text in all_tooltips:
+            line_edit.setToolTip(all_tooltips[hint_text])
         elif object_name in all_tooltips:
             line_edit.setToolTip(all_tooltips[object_name])
-        elif placeholder and _get_contextual_tooltip(placeholder):
-            line_edit.setToolTip(_get_contextual_tooltip(placeholder))
+        elif hint_text and _get_contextual_tooltip(hint_text):
+            line_edit.setToolTip(_get_contextual_tooltip(hint_text))
 
     # Apply tooltips to QComboBox
     combo_boxes = parent_widget.findChildren(QComboBox)
@@ -485,7 +490,7 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
         "theme_combo": "Select application theme",
         "opacity_slider": "Adjust window transparency",
         "icon_size_combo": "Choose UI icon size",
-        # Placeholder text tooltips
+        # Hint text tooltips
         "Select a binary file for analysis...": ("Click Browse to choose an executable file.\\nSupported formats: PE, ELF, Mach-O"),
         "Enter API key...": ("Paste your AI service API key here.\\nKeep this secret and secure!"),
         "Search files...": ("Enter filename or pattern to search.\\nSupports wildcards like *.exe or *crack*"),

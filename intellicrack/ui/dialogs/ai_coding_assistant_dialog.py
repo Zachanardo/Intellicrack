@@ -342,7 +342,7 @@ class ChatWidget(QWidget):
         input_layout = QHBoxLayout()
 
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Ask AI to help with your code...")
+        self.message_input.setToolTip("Ask AI to help with your code")
         self.message_input.returnPressed.connect(self.send_message)
 
         self.send_button = QPushButton("Send")
@@ -816,9 +816,9 @@ class LicenseAnalyzer:
 
                 # Common license patterns
                 patterns = [
-                    rb'[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}',  # XXXX-XXXX-XXXX-XXXX
-                    rb'[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}',  # XXXXX-XXXXX-XXXXX-XXXXX
-                    rb'[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}',              # XXXXXX-XXXXXX-XXXXXX
+                    rb'[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}',  # AAAA-AAAA-AAAA-AAAA
+                    rb'[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}',  # AAAAA-AAAAA-AAAAA-AAAAA
+                    rb'[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}',              # AAAAAA-AAAAAA-AAAAAA
                     rb'trial|demo|evaluation|expired|license|serial|activation',
                     rb'ValidateLicense|CheckLicense|VerifyKey|IsRegistered'
                 ]
@@ -879,7 +879,7 @@ class LicenseAnalyzer:
             bypass_code.append('            try:')
             bypass_code.append('                key = winreg.CreateKey(root, path)')
             bypass_code.append('                winreg.SetValueEx(key, "Licensed", 0, winreg.REG_DWORD, 1)')
-            bypass_code.append('                winreg.SetValueEx(key, "LicenseKey", 0, winreg.REG_SZ, "XXXX-XXXX-XXXX-XXXX")')
+            bypass_code.append('                winreg.SetValueEx(key, "LicenseKey", 0, winreg.REG_SZ, "AAAA-AAAA-AAAA-AAAA")')
             bypass_code.append('                winreg.SetValueEx(key, "ExpirationDate", 0, winreg.REG_SZ, "2099-12-31")')
             bypass_code.append('                winreg.CloseKey(key)')
             bypass_code.append('                print(f"[+] Patched registry: {path}")')
@@ -1260,7 +1260,7 @@ function bypassTimeBomb() {
     // Hook QueryPerformanceCounter (high-precision timing)
     var QueryPerformanceCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
     if (QueryPerformanceCounter) {
-        var fakeCounter = 1000000;
+        var emulatedCounter = 1000000;
         Interceptor.attach(QueryPerformanceCounter, {
             onEnter: function(args) {
                 this.counterPtr = args[0];
@@ -1268,8 +1268,8 @@ function bypassTimeBomb() {
             onLeave: function(retval) {
                 if (this.counterPtr) {
                     // Return slowly incrementing counter
-                    this.counterPtr.writeS64(fakeCounter);
-                    fakeCounter += 1000;
+                    this.counterPtr.writeS64(emulatedCounter);
+                    emulatedCounter += 1000;
                 }
             }
         });
@@ -1337,7 +1337,7 @@ def generate_license_key(user_info: str = "") -> str:
         hash_input = f"{base_data}_intellicrack_{random.randint(1000, 9999)}"
         md5_hash = hashlib.md5(hash_input.encode()).hexdigest().upper()
 
-        # Format as XXXX-XXXX-XXXX-XXXX
+        # Format as AAAA-AAAA-AAAA-AAAA
         key_parts = []
         for i in range(0, 16, 4):
             key_parts.append(md5_hash[i:i+4])
@@ -2243,15 +2243,15 @@ class HardwareSpoofer:
     def spoof_disk_serial(self) -> bool:
         """Spoof disk drive serial numbers."""
         try:
-            # Generate fake disk serials
-            fake_serials = [
+            # Generate spoofed disk serials
+            spoofed_serials = [
                 f"SPOOF{random.randint(100000, 999999)}",
-                f"FAKE{random.randint(100000, 999999)}",
-                f"TEST{random.randint(100000, 999999)}"
+                f"VIRT{random.randint(100000, 999999)}",
+                f"EMUL{random.randint(100000, 999999)}"
             ]
 
             print("[+] Disk serial spoofing prepared:")
-            for i, serial in enumerate(fake_serials):
+            for i, serial in enumerate(spoofed_serials):
                 print(f"    Drive {i}: {serial}")
 
             # This would require low-level disk access or driver hooking
@@ -2267,14 +2267,14 @@ class HardwareSpoofer:
     def spoof_processor_id(self) -> bool:
         """Spoof processor identification."""
         try:
-            # Generate fake processor info
-            fake_processors = [
+            # Generate spoofed processor info
+            spoofed_processors = [
                 "GenuineIntel Family 6 Model 158 Stepping 9",
                 "AuthenticAMD Family 25 Model 33 Stepping 0",
                 "GenuineIntel Family 6 Model 142 Stepping 12"
             ]
 
-            selected_proc = random.choice(fake_processors)
+            selected_proc = random.choice(spoofed_processors)
 
             # Registry spoofing for CPU info
             reg_key = winreg.HKEY_LOCAL_MACHINE
@@ -2717,9 +2717,9 @@ class BinaryPatcher:
             if offset >= 2:
                 # Check for TEST/CMP instructions before jump
                 prev_bytes = data[offset-2:offset]
-                test_cmp_patterns = [b'\x85\xc0', b'\x83\xf8', b'\x84\xc0', b'\x39']
+                comparison_patterns = [b'\x85\xc0', b'\x83\xf8', b'\x84\xc0', b'\x39']
 
-                for pattern in test_cmp_patterns:
+                for pattern in comparison_patterns:
                     if prev_bytes == pattern:
                         return True
 

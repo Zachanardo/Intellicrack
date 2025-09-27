@@ -395,10 +395,10 @@ class OptimizationManager:
 
             logger.debug(f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
 
-            # Create some load
-            test_data = []
+            # Create memory load for optimization measurement
+            memory_load_data = []
             for i in range(1000):
-                test_data.append({f"key_{i}": f"value_{i}" * 100})
+                memory_load_data.append({f"key_{i}": f"value_{i}" * 100})
 
             # Measure before optimization
             before_memory = process.memory_info().rss
@@ -418,8 +418,8 @@ class OptimizationManager:
             objects_cleaned = before_objects - after_objects
             memory_efficiency = memory_saved / optimization_time if optimization_time > 0 else 0
 
-            # Cleanup test data
-            del test_data
+            # Cleanup memory load data
+            del memory_load_data
             gc.collect()
 
             return {

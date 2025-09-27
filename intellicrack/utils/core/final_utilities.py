@@ -164,22 +164,22 @@ def browse_model(parent: Any = None) -> str | None:
     return file_path if file_path else None
 
 
-def show_simulation_results(results: dict[str, Any], parent: Any = None) -> None:
-    """Display simulation results in a dialog.
+def show_analysis_results(results: dict[str, Any], parent: Any = None) -> None:
+    """Display analysis results in a dialog.
 
     Args:
-        results: Dictionary containing simulation results
+        results: Dictionary containing analysis results
         parent: Parent widget for the dialog
 
     """
     if not HAS_PYQT:
-        logger.info(f"Simulation Results: {json.dumps(results, indent=2)}")
+        logger.info(f"Analysis Results: {json.dumps(results, indent=2)}")
         return
 
     from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
     dialog = QDialog(parent)
-    dialog.setWindowTitle("Simulation Results")
+    dialog.setWindowTitle("Analysis Results")
     dialog.resize(600, 400)
 
     layout = QVBoxLayout()
@@ -537,55 +537,76 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
 
         for module_name in protocol_modules:
             try:
-                # Try to get captured requests from protocol handlers
-                # In a real implementation, these would be singleton instances
-                # that maintain request histories
+                # Get captured requests from singleton protocol handlers
+                # These handlers maintain request histories in memory
+                module_path = f"intellicrack.plugins.custom_modules.{module_name}"
 
-                # Simulate getting requests from active handlers
+                try:
+                    module = importlib.import_module(module_path)
+                    # Get the singleton handler instance
+                    if hasattr(module, 'get_instance'):
+                        handler = module.get_instance()
+                        if hasattr(handler, 'get_captured_requests'):
+                            # Retrieve actual captured requests from handler
+                            captured = handler.get_captured_requests(limit=limit // len(protocol_modules))
+                            request_list.extend(captured)
+                    elif hasattr(module, 'GLOBAL_REQUEST_HISTORY'):
+                        # Some handlers use global history
+                        request_list.extend(module.GLOBAL_REQUEST_HISTORY[:limit // len(protocol_modules)])
+                except ImportError:
+                    # Handler not installed, skip
+                    pass
+
+                # For handlers that store requests in files/databases
                 if module_name == "license_protocol_handler":
-                    # FlexLM requests
-                    request_list.extend(
-                        [
-                            {
-                                "timestamp": time.time() - (i * 30),
-                                "source": "FlexLM_Handler",
-                                "type": "license_checkout",
-                                "protocol": "FlexLM",
-                                "src_ip": "192.168.1.100",
-                                "dst_ip": os.environ.get("LICENSE_SERVER_HOST", "license.internal"),
-                                "dst_port": 27000 + i,
-                                "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
-                                "response_data": f"GRANT feature_{i} 1.0 permanent",
-                                "status": "success",
-                                "license_feature": f"feature_{i}",
-                                "bytes_sent": 45 + i,
-                                "bytes_received": 38 + i,
-                            }
-                            for i in range(min(3, limit // 4))
-                        ]
-                    )
+                    # Check for FlexLM request log file
+                    flexlm_log = Path("logs/flexlm_requests.json")
+                    if flexlm_log.exists():
+                        with open(flexlm_log, "r") as f:
+                            try:
+                                flexlm_requests = json.load(f)
+                                request_list.extend(flexlm_requests[:limit // 4])
+                            except json.JSONDecodeError:
+                                pass
                 elif module_name == "cloud_license_hooker":
-                    # Cloud license API requests
-                    request_list.extend(
-                        [
-                            {
-                                "timestamp": time.time() - (i * 45),
-                                "source": "Cloud_License_Hooker",
-                                "type": "api_call",
-                                "protocol": "HTTPS",
-                                "src_ip": "192.168.1.100",
-                                "dst_ip": "api.adobe.com",
-                                "dst_port": 443,
-                                "request_data": f'POST /auth/validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{"token": "abc{i}"}}',
-                                "response_data": f'{{"valid": true, "expires": "{int(time.time()) + 3600}"}}',
-                                "status": "intercepted",
-                                "api_endpoint": "/auth/validate",
-                                "bytes_sent": 156 + i,
-                                "bytes_received": 89 + i,
-                            }
-                            for i in range(min(2, limit // 4))
-                        ]
-                    )
+                    # Check for cloud license API request log
+                    cloud_log = Path("logs/cloud_api_requests.json")
+                    if cloud_log.exists():
+                        with open(cloud_log, "r") as f:
+                            try:
+                                cloud_requests = json.load(f)
+                                request_list.extend(cloud_requests[:limit // 4])
+                            except json.JSONDecodeError:
+                                pass
+
+                    # Also check SQLite database for persistent storage
+                    db_path = Path("data/intercepted_requests.db")
+                    if db_path.exists():
+                        import sqlite3
+                        conn = sqlite3.connect(str(db_path))
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            SELECT timestamp, source, type, protocol, src_ip, dst_ip,
+                                   dst_port, request_data, response_data, status
+                            FROM cloud_api_requests
+                            ORDER BY timestamp DESC
+                            LIMIT ?
+                        """, (limit // 4,))
+                        rows = cursor.fetchall()
+                        for row in rows:
+                            request_list.append({
+                                "timestamp": row[0],
+                                "source": row[1],
+                                "type": row[2],
+                                "protocol": row[3],
+                                "src_ip": row[4],
+                                "dst_ip": row[5],
+                                "dst_port": row[6],
+                                "request_data": row[7],
+                                "response_data": row[8],
+                                "status": row[9]
+                            })
+                        conn.close()
 
             except ImportError as e:
                 logger.error("Import error in final_utilities: %s", e)

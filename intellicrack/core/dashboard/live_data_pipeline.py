@@ -324,7 +324,7 @@ class LiveDataPipeline:
         Args:
             event: Event to process
         """
-        start_time = time.time()
+        time.time()
 
         # Add to buffer
         with self.buffer_lock:
@@ -421,7 +421,7 @@ class LiveDataPipeline:
         # Extract numeric values from events
         numeric_values = []
         for event in events:
-            for key, value in event.data.items():
+            for _key, value in event.data.items():
                 if isinstance(value, (int, float)):
                     numeric_values.append(value)
 

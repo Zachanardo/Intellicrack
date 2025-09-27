@@ -638,30 +638,6 @@ class HardwareTokenBypass:
 
     def _create_yubikey_hook_dll(self) -> str:
         """Create Windows DLL for YubiKey API hooking."""
-        dll_code = """
-        #include <windows.h>
-
-        // Hook YubiKey verification functions
-        __declspec(dllexport) int yk_check_otp(const char* otp) {
-            return 0;  // Always return success
-        }
-
-        __declspec(dllexport) int yk_verify_otp(const char* otp, const char* key) {
-            return 0;  // Always return success
-        }
-
-        __declspec(dllexport) int yubikey_validate(void* ctx, const char* otp) {
-            return 0;  // Always return success
-        }
-
-        BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID reserved) {
-            if (reason == DLL_PROCESS_ATTACH) {
-                // Hook the actual functions
-                // In production, use proper API hooking techniques
-            }
-            return TRUE;
-        }
-        """
 
         # In production, compile this to actual DLL
         # For now, return path to pre-compiled DLL
@@ -677,22 +653,6 @@ class HardwareTokenBypass:
 
     def _create_yubikey_hook_lib(self) -> str:
         """Create Unix shared library for YubiKey API hooking."""
-        lib_code = """
-        #define _GNU_SOURCE
-        #include <dlfcn.h>
-
-        int yk_check_otp(const char* otp) {
-            return 0;  // Always return success
-        }
-
-        int yk_verify_otp(const char* otp, const char* key) {
-            return 0;  // Always return success
-        }
-
-        int yubikey_validate(void* ctx, const char* otp) {
-            return 0;  // Always return success
-        }
-        """
 
         # In production, compile this to actual .so file
         lib_path = Path(__file__).parent / "hooks" / "yubikey_hook.so"

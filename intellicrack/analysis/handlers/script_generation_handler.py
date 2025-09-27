@@ -93,7 +93,7 @@ class ScriptGenerationWorker(QRunnable):
         self.signals = ScriptGenerationWorkerSignals()
 
     def run(self):
-        """Generate the bypass script."""
+        """Generate the bypass script with AI enhancement."""
         try:
             self.signals.progress.emit(f"Generating {self.script_type} script...")
 
@@ -109,6 +109,32 @@ class ScriptGenerationWorker(QRunnable):
                     "success": False,
                     "error": f"Unknown script type: {self.script_type}",
                 }
+
+            # Apply AI enhancement if script generation was successful
+            if result.get("success", False):
+                self.signals.progress.emit("Applying AI enhancements...")
+
+                try:
+                    from ...ai.protection_aware_script_gen import enhance_ai_script_generation
+
+                    # Enhance the script with AI capabilities
+                    enhanced_result = enhance_ai_script_generation(None, self.file_path)
+
+                    # If enhanced script was generated, use it
+                    if enhanced_result.get("enhanced_script"):
+                        result["script"] = enhanced_result["enhanced_script"]
+                        result["ai_enhanced"] = True
+                        result["optimization_applied"] = enhanced_result.get("optimization_applied", [])
+                        self.signals.progress.emit("AI enhancement complete")
+
+                except ImportError:
+                    # AI enhancement not available, continue with base script
+                    self.signals.progress.emit("AI enhancement unavailable, using base script")
+                except Exception as ai_error:
+                    # Log AI enhancement error but continue with base script
+                    import logging
+                    logging.warning(f"AI enhancement failed: {ai_error}")
+                    self.signals.progress.emit("AI enhancement failed, using base script")
 
             self.signals.result.emit(result)
 

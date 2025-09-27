@@ -20,13 +20,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import os
+import platform
+import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
@@ -45,21 +47,25 @@ class ExecutionResult:
     error: str
     exit_code: int
     runtime_ms: int
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize timestamp if not provided."""
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
 
-class TestEnvironment(Enum):
+class ValidationEnvironment(Enum):
     """Testing environments available."""
 
     QEMU = "qemu"
     DOCKER = "docker"
     SANDBOX = "sandbox"
     DIRECT = "direct"
+
+
+# Keep a simple alias for backwards compatibility instead of a redundant Enum subclass.
+TestEnvironment = ValidationEnvironment
 
 
 class WorkflowState(Enum):
@@ -81,7 +87,7 @@ class TaskRequest:
 
     binary_path: str
     script_types: list[ScriptType]
-    test_environment: TestEnvironment
+    validation_environment: ValidationEnvironment
     max_iterations: int
     autonomous_mode: bool
     user_confirmation_required: bool
@@ -93,7 +99,7 @@ class AutonomousAgent:
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
-    def __init__(self, orchestrator=None, cli_interface=None):
+    def __init__(self, orchestrator: Optional[Any] = None, cli_interface: Optional[Any] = None) -> None:
         """Initialize the autonomous agent with orchestrator and CLI interface.
 
         Args:
@@ -114,7 +120,7 @@ class AutonomousAgent:
 
         # Results tracking
         self.generated_scripts = []
-        self.test_results = []
+        self.validation_results = []
         self.refinement_history = []
 
         # QEMU manager will be initialized when needed
@@ -190,7 +196,7 @@ class AutonomousAgent:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"Operation timed out: {e}", exc_info=True)
             return self._error_result(f"Operation timed out: {e!s}")
-        except (PermissionError, OSError) as e:
+        except OSError as e:
             self.workflow_state = WorkflowState.ERROR
             logger.error(f"File access error: {e}", exc_info=True)
             return self._error_result(f"File access error: {e!s}")
@@ -205,13 +211,13 @@ class AutonomousAgent:
 
         binary_path = self._extract_binary_path(request)
         script_types = self._extract_script_types(request_lower)
-        test_env = self._extract_test_environment(request_lower)
+        execution_env = self._extract_test_environment(request_lower)
         autonomous_mode = "auto" in request_lower or "autonomous" in request_lower
 
         return TaskRequest(
             binary_path=binary_path,
             script_types=script_types,
-            test_environment=test_env,
+            validation_environment=execution_env,
             max_iterations=10,
             autonomous_mode=autonomous_mode,
             user_confirmation_required=not autonomous_mode,
@@ -256,26 +262,28 @@ class AutonomousAgent:
             script_types = [ScriptType.FRIDA, ScriptType.GHIDRA]
         return script_types
 
-    def _extract_test_environment(self, request_lower: str) -> TestEnvironment:
+    def _extract_test_environment(self, request_lower: str) -> ValidationEnvironment:
         """Extract test environment from request.
 
         Args:
             request_lower: Lowercase user request string
 
         Returns:
-            TestEnvironment: Selected test environment, defaults to QEMU
+            ValidationEnvironment: Selected test environment, defaults to QEMU
 
         """
         if "qemu" in request_lower:
-            return TestEnvironment.QEMU
+            return ValidationEnvironment.QEMU
         if "docker" in request_lower:
-            return TestEnvironment.DOCKER
+            return ValidationEnvironment.DOCKER
+        if "sandbox" in request_lower:
+            return ValidationEnvironment.SANDBOX
         if "direct" in request_lower:
-            return TestEnvironment.DIRECT
-        return TestEnvironment.QEMU
+            return ValidationEnvironment.DIRECT
+        return ValidationEnvironment.QEMU
 
     def _analyze_target(self, binary_path: str) -> dict[str, Any] | None:
-        """Analyze the target binary for protection mechanisms.
+        """Run comprehensive analysis on the target binary.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -303,7 +311,7 @@ class AutonomousAgent:
             )
             return analysis_results
 
-        except (FileNotFoundError, PermissionError, OSError) as e:
+        except OSError as e:
             logger.error(f"Binary file access error: {e}", exc_info=True)
             self._log_to_user(f"File access error: {e}")
             return None
@@ -331,7 +339,7 @@ class AutonomousAgent:
                 "arch": "x64",  # Default assumption
                 "platform": "windows" if binary_path.endswith(".exe") else "unknown",
             }
-        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+        except OSError as e:
             logger.debug(f"Failed to get binary info: {e}", exc_info=True)
             return {"name": "unknown", "size": 0, "type": "unknown"}
 
@@ -374,7 +382,7 @@ class AutonomousAgent:
                 ]
             )
 
-        except (FileNotFoundError, PermissionError, OSError) as e:
+        except OSError as e:
             logger.error(f"String extraction failed: {e}", exc_info=True)
 
         return strings
@@ -427,7 +435,7 @@ class AutonomousAgent:
                 if result.returncode == 0:
                     all_strings = result.stdout.split("\n")
                     strings = self._filter_license_strings(all_strings, license_related)
-            except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
+            except (subprocess.SubprocessError, OSError) as e:
                 logger.error("Error running strings command: %s", e)
         else:
             logger.debug("strings command not found in PATH")
@@ -440,16 +448,22 @@ class AutonomousAgent:
         data = self._read_binary_data(binary_path)
 
         if data:
-            current_string = ""
-            for byte in data:
-                if 32 <= byte <= 126:  # Printable ASCII
-                    current_string += chr(byte)
-                else:
-                    if len(current_string) >= 4:
-                        if any(keyword.lower() in current_string.lower() for keyword in license_related):
-                            strings.append(current_string)
-                    current_string = ""
+            strings = self._process_binary_data(data, license_related)
 
+        return strings
+
+    def _process_binary_data(self, data: bytes, license_related: list[str]) -> list[str]:
+        """Process binary data to extract strings."""
+        strings = []
+        current_string = ""
+        for byte in data:
+            if 32 <= byte <= 126:  # Printable ASCII
+                current_string += chr(byte)
+            else:
+                if len(current_string) >= 4:
+                    if any(keyword.lower() in current_string.lower() for keyword in license_related):
+                        strings.append(current_string)
+                current_string = ""
         return strings
 
     def _read_binary_data(self, binary_path: str) -> bytes:
@@ -564,7 +578,7 @@ class AutonomousAgent:
             functions.extend(license_functions)
             logger.info(f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)")
 
-        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+        except OSError as e:
             logger.error(f"Function analysis failed for {binary_path}: {e}", exc_info=True)
 
         return functions
@@ -645,7 +659,7 @@ class AutonomousAgent:
             imports.extend(protection_imports)
             logger.info(f"Analyzed {len(imports)} imports from {binary_path} ({file_ext} binary)")
 
-        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+        except OSError as e:
             logger.error(f"Import analysis failed for {binary_path}: {e}", exc_info=True)
 
         return imports
@@ -739,7 +753,7 @@ class AutonomousAgent:
             protections.extend(detected_protections)
             logger.info(f"Detected {len(protections)} protection mechanisms in {binary_path}")
 
-        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+        except OSError as e:
             logger.error(f"Protection detection failed for {binary_path}: {e}", exc_info=True)
 
         return protections
@@ -833,7 +847,7 @@ class AutonomousAgent:
 
             return result
 
-        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+        except OSError as e:
             logger.error(f"Network activity check failed for {binary_path}: {e}", exc_info=True)
             return {"has_network": False, "endpoints": [], "protocols": [], "error": str(e)}
 
@@ -842,95 +856,12 @@ class AutonomousAgent:
         try:
             network_apis = []
 
-            # Try PE analysis first
-            try:
-                import pefile
+            # Analyze PE files
+            network_apis.extend(self._analyze_pe_imports(binary_path))
 
-                pe = pefile.PE(binary_path)
-
-                # Common Windows networking APIs
-                network_api_patterns = [
-                    "ws2_32.dll",
-                    "wininet.dll",
-                    "winhttp.dll",
-                    "urlmon.dll",
-                    "socket",
-                    "connect",
-                    "send",
-                    "recv",
-                    "WSAStartup",
-                    "WSAConnect",
-                    "InternetOpen",
-                    "InternetConnect",
-                    "HttpOpenRequest",
-                    "HttpSendRequest",
-                    "WinHttpOpen",
-                    "WinHttpConnect",
-                    "WinHttpOpenRequest",
-                    "URLDownloadToFile",
-                    "URLOpenStream",
-                ]
-
-                # Check imports
-                if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-                    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        dll_name = entry.dll.decode("utf-8").lower()
-                        if any(api.lower() in dll_name for api in network_api_patterns[:4]):  # DLL names
-                            network_apis.append(f"imports:{dll_name}")
-
-                        for func in entry.imports:
-                            if func.name:
-                                func_name = func.name.decode("utf-8")
-                                if any(api in func_name for api in network_api_patterns[4:]):  # API names
-                                    network_apis.append(f"api:{func_name}")
-
-            except ImportError:
-                logger.debug("pefile module not available for PE analysis")
-            except Exception as e:
-                logger.debug(f"Not a PE file or PE analysis failed: {e}")
-
-            # Try ELF analysis as fallback
+            # Analyze ELF files if no APIs found in PE analysis
             if not network_apis:
-                try:
-                    import lief
-
-                    binary = lief.parse(binary_path)
-
-                    if binary and binary.format == lief.EXE_FORMATS.ELF:
-                        # ELF network-related symbols
-                        network_symbols = [
-                            "socket",
-                            "connect",
-                            "bind",
-                            "listen",
-                            "accept",
-                            "send",
-                            "recv",
-                            "sendto",
-                            "recvfrom",
-                            "gethostbyname",
-                            "getaddrinfo",
-                            "curl_",
-                            "SSL_",
-                            "TLS_",
-                            "libssl",
-                            "libcurl",
-                        ]
-
-                        # Check dynamic symbols
-                        for symbol in binary.dynamic_symbols:
-                            if any(net_sym in symbol.name.lower() for net_sym in network_symbols):
-                                network_apis.append(f"symbol:{symbol.name}")
-
-                        # Check imported libraries
-                        for lib in binary.libraries:
-                            if any(net_lib in lib.lower() for net_lib in ["ssl", "curl", "net", "socket"]):
-                                network_apis.append(f"library:{lib}")
-
-                except ImportError:
-                    logger.debug("lief module not available for ELF analysis")
-                except Exception as e:
-                    logger.debug(f"ELF analysis failed: {e}")
+                network_apis.extend(self._analyze_elf_imports(binary_path))
 
             return list(set(network_apis))  # Remove duplicates
 
@@ -938,10 +869,121 @@ class AutonomousAgent:
             logger.debug(f"Import analysis failed for {binary_path}: {e}")
             return []
 
+    def _analyze_pe_imports(self, binary_path: str) -> list[str]:
+        """Analyze PE files for network-related imports."""
+        try:
+            import pefile
+
+            pe = pefile.PE(binary_path)
+            network_api_patterns = self._get_network_api_patterns()
+            network_apis = []
+
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                network_apis.extend(self._extract_dll_imports(pe, network_api_patterns))
+                network_apis.extend(self._extract_function_imports(pe, network_api_patterns))
+
+            return network_apis
+
+        except ImportError:
+            logger.debug("pefile module not available for PE analysis")
+        except Exception as e:
+            logger.debug(f"Not a PE file or PE analysis failed: {e}")
+        return []
+
+    def _extract_dll_imports(self, pe, network_api_patterns: list[str]) -> list[str]:
+        """Extract DLL imports matching network API patterns."""
+        dll_imports = []
+        for entry in pe.DIRECTORY_ENTRY_IMPORT:
+            dll_name = entry.dll.decode("utf-8").lower()
+            if any(api.lower() in dll_name for api in network_api_patterns[:4]):  # DLL names
+                dll_imports.append(f"imports:{dll_name}")
+        return dll_imports
+
+    def _extract_function_imports(self, pe, network_api_patterns: list[str]) -> list[str]:
+        """Extract function imports matching network API patterns."""
+        function_imports = []
+        for entry in pe.DIRECTORY_ENTRY_IMPORT:
+            for func in entry.imports:
+                if func.name:
+                    func_name = func.name.decode("utf-8")
+                    if any(api in func_name for api in network_api_patterns[4:]):  # API names
+                        function_imports.append(f"api:{func_name}")
+        return function_imports
+
+    def _analyze_elf_imports(self, binary_path: str) -> list[str]:
+        """Analyze ELF files for network-related imports."""
+        try:
+            import lief
+
+            binary = lief.parse(binary_path)
+            network_symbols = self._get_network_symbols()
+            network_apis = []
+
+            if binary and binary.format == lief.EXE_FORMATS.ELF:
+                for symbol in binary.dynamic_symbols:
+                    if any(net_sym in symbol.name.lower() for net_sym in network_symbols):
+                        network_apis.append(f"symbol:{symbol.name}")
+
+                for lib in binary.libraries:
+                    if any(net_lib in lib.lower() for net_lib in ["ssl", "curl", "net", "socket"]):
+                        network_apis.append(f"library:{lib}")
+
+            return network_apis
+
+        except ImportError:
+            logger.debug("lief module not available for ELF analysis")
+        except Exception as e:
+            logger.debug(f"ELF analysis failed: {e}")
+        return []
+
+    def _get_network_api_patterns(self) -> list[str]:
+        """Return common network API patterns."""
+        return [
+            "ws2_32.dll",
+            "wininet.dll",
+            "winhttp.dll",
+            "urlmon.dll",
+            "socket",
+            "connect",
+            "send",
+            "recv",
+            "WSAStartup",
+            "WSAConnect",
+            "InternetOpen",
+            "InternetConnect",
+            "HttpOpenRequest",
+            "HttpSendRequest",
+            "WinHttpOpen",
+            "WinHttpConnect",
+            "WinHttpOpenRequest",
+            "URLDownloadToFile",
+            "URLOpenStream",
+        ]
+
+    def _get_network_symbols(self) -> list[str]:
+        """Return common network-related symbols for ELF analysis."""
+        return [
+            "socket",
+            "connect",
+            "bind",
+            "listen",
+            "accept",
+            "send",
+            "recv",
+            "sendto",
+            "recvfrom",
+            "gethostbyname",
+            "getaddrinfo",
+            "curl_",
+            "SSL_",
+            "TLS_",
+            "libssl",
+            "libcurl",
+        ]
+
     def _analyze_network_strings(self, binary_path: str) -> dict[str, Any]:
         """Analyze strings for network-related content."""
         try:
-            import re
 
             result = {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
@@ -952,92 +994,11 @@ class AutonomousAgent:
             # Convert to string, handling encoding issues
             text_content = content.decode("utf-8", errors="ignore") + content.decode("latin-1", errors="ignore")
 
-            # URL patterns
-            url_patterns = [
-                r'https?://[^\s<>"{}|\\^`\[\]]+',  # HTTP(S) URLs
-                r'ftp://[^\s<>"{}|\\^`\[\]]+',  # FTP URLs
-                r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',  # WebSocket URLs
-            ]
-
-            # Domain patterns
-            domain_patterns = [
-                r"\b[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.([a-zA-Z]{2,})\b",
-                r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",  # IP addresses
-            ]
-
-            # Protocol indicators
-            protocol_patterns = [
-                r"\bHTTP[S]?\b",
-                r"\bTCP\b",
-                r"\bUDP\b",
-                r"\bSSL\b",
-                r"\bTLS\b",
-                r"\bFTP[S]?\b",
-                r"\bSMTP\b",
-                r"\bPOP3\b",
-                r"\bIMAP\b",
-            ]
-
-            # Find URLs
-            for pattern in url_patterns:
-                matches = re.findall(pattern, text_content, re.IGNORECASE)
-                for match in matches:
-                    if len(match) > 10:  # Filter out very short matches
-                        result["strings"].append(match)
-                        result["endpoints"].append(match)
-                        result["count"] += 1
-
-                        # Extract protocol
-                        if "://" in match:
-                            protocol = match.split("://")[0].upper()
-                            result["protocols"].append(protocol)
-
-            # Find domains and IPs
-            for pattern in domain_patterns:
-                matches = re.findall(pattern, text_content, re.IGNORECASE)
-                for match in matches:
-                    if isinstance(match, tuple):
-                        domain = ".".join(match)
-                    else:
-                        domain = match
-
-                    # Filter out common false positives
-                    if not any(
-                        exclude in domain.lower() for exclude in ["localhost", "example.", "test.", "sample.", ".txt", ".exe", ".dll"]
-                    ):
-                        result["strings"].append(domain)
-                        result["endpoints"].append(domain)
-                        result["count"] += 1
-
-            # Find protocols
-            for pattern in protocol_patterns:
-                matches = re.findall(pattern, text_content, re.IGNORECASE)
-                for match in matches:
-                    result["protocols"].append(match.upper())
-                    result["count"] += 1
-
-            # Look for common network-related strings
-            network_keywords = [
-                "User-Agent",
-                "Content-Type",
-                "Authorization",
-                "Cookie",
-                "GET ",
-                "POST ",
-                "PUT ",
-                "DELETE ",
-                "Content-Length",
-                "Host:",
-                "Accept:",
-                "license.server",
-                "activation.url",
-                "api.endpoint",
-            ]
-
-            for keyword in network_keywords:
-                if keyword in text_content:
-                    result["strings"].append(keyword)
-                    result["count"] += 1
+            # Extract URLs and endpoints
+            self._extract_urls(text_content, result)
+            self._extract_domains(text_content, result)
+            self._extract_protocols(text_content, result)
+            self._extract_network_keywords(text_content, result)
 
             # Remove duplicates
             result["strings"] = list(set(result["strings"]))
@@ -1049,6 +1010,85 @@ class AutonomousAgent:
         except Exception as e:
             logger.debug(f"String analysis failed for {binary_path}: {e}")
             return {"strings": [], "endpoints": [], "protocols": [], "count": 0}
+
+    def _extract_urls(self, text_content: str, result: dict) -> None:
+        import re
+        url_patterns = [
+            r'https?://[^\s<>"{}|\\^`\[\]]+',  # HTTP(S) URLs
+            r'ftp://[^\s<>"{}|\\^`\[\]]+',     # FTP URLs
+            r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',  # WebSocket URLs
+        ]
+        for pattern in url_patterns:
+            matches = re.findall(pattern, text_content, re.IGNORECASE)
+            for match in matches:
+                if len(match) > 10:
+                    result["strings"].append(match)
+                    result["endpoints"].append(match)
+                    result["count"] += 1
+                    if "://" in match:
+                        protocol = match.split("://")[0].upper()
+                        result["protocols"].append(protocol)
+
+    def _extract_domains(self, text_content: str, result: dict) -> None:
+        import re
+        domain_patterns = [
+            r"\b[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.([a-zA-Z]{2,})\b",
+            r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",  # IP addresses
+        ]
+        for pattern in domain_patterns:
+            matches = re.findall(pattern, text_content, re.IGNORECASE)
+            for match in matches:
+                if isinstance(match, tuple):
+                    domain = ".".join(match)
+                else:
+                    domain = match
+                if not any(
+                    exclude in domain.lower() for exclude in ["localhost", "example.", "test.", "sample.", ".txt", ".exe", ".dll"]
+                ):
+                    result["strings"].append(domain)
+                    result["endpoints"].append(domain)
+                    result["count"] += 1
+
+    def _extract_protocols(self, text_content: str, result: dict) -> None:
+        import re
+        protocol_patterns = [
+            r"\bHTTP[S]?\b",
+            r"\bTCP\b",
+            r"\bUDP\b",
+            r"\bSSL\b",
+            r"\bTLS\b",
+            r"\bFTP[S]?\b",
+            r"\bSMTP\b",
+            r"\bPOP3\b",
+            r"\bIMAP\b",
+        ]
+        for pattern in protocol_patterns:
+            matches = re.findall(pattern, text_content, re.IGNORECASE)
+            for match in matches:
+                result["protocols"].append(match.upper())
+                result["count"] += 1
+
+    def _extract_network_keywords(self, text_content: str, result: dict) -> None:
+        network_keywords = [
+            "User-Agent",
+            "Content-Type",
+            "Authorization",
+            "Cookie",
+            "GET ",
+            "POST ",
+            "PUT ",
+            "DELETE ",
+            "Content-Length",
+            "Host:",
+            "Accept:",
+            "license.server",
+            "activation.url",
+            "api.endpoint",
+        ]
+        for keyword in network_keywords:
+            if keyword in text_content:
+                result["strings"].append(keyword)
+                result["count"] += 1
 
     def _analyze_network_code_patterns(self, binary_path: str) -> dict[str, Any]:
         """Analyze code patterns for network functionality."""
@@ -1097,67 +1137,82 @@ class AutonomousAgent:
         """Analyze binary format specific networking features."""
         try:
             result = {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
-
             file_ext = Path(binary_path).suffix.lower()
 
-            # PE-specific analysis
             if file_ext in [".exe", ".dll"]:
-                try:
-                    import pefile
-
-                    pe = pefile.PE(binary_path)
-
-                    # Check for TLS callbacks (often used by network code)
-                    if hasattr(pe, "DIRECTORY_ENTRY_TLS"):
-                        result["has_network"] = True
-                        result["indicators"].append("TLS_callbacks")
-
-                    # Check for import forwarding (networking DLLs)
-                    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-                        network_dlls = ["ws2_32.dll", "wininet.dll", "winhttp.dll"]
-                        for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            dll_name = entry.dll.decode("utf-8").lower()
-                            if dll_name in network_dlls:
-                                result["has_network"] = True
-                                result["protocols"].append("TCP" if "ws2_32" in dll_name else "HTTP")
-                                result["indicators"].append(f"imports_{dll_name}")
-
-                except ImportError:
-                    logger.debug("pefile module not available for PE analysis")
-                except Exception as e:
-                    logger.debug(f"PE analysis failed: {e}")
-
-            # ELF-specific analysis
+                self._analyze_pe_format(binary_path, result)
             elif file_ext in [".so", ""] or "linux" in binary_path.lower():
-                try:
-                    import lief
-
-                    binary = lief.parse(binary_path)
-
-                    if binary and binary.format == lief.EXE_FORMATS.ELF:
-                        # Check for network-related sections
-                        for section in binary.sections:
-                            if "net" in section.name.lower() or "socket" in section.name.lower():
-                                result["has_network"] = True
-                                result["indicators"].append(f"section_{section.name}")
-
-                        # Check for SSL/TLS libraries
-                        for lib in binary.libraries:
-                            if any(net_lib in lib.lower() for net_lib in ["ssl", "crypto", "curl"]):
-                                result["has_network"] = True
-                                result["protocols"].append("HTTPS" if "ssl" in lib.lower() else "HTTP")
-                                result["indicators"].append(f"links_{lib}")
-
-                except ImportError:
-                    logger.debug("pefile module not available for PE analysis")
-                except Exception as e:
-                    logger.debug(f"PE analysis failed: {e}")
+                self._analyze_elf_format(binary_path, result)
 
             return result
-
         except Exception as e:
             logger.debug(f"Binary format analysis failed for {binary_path}: {e}")
             return {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
+
+    def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]):
+        """Analyze PE-specific networking features."""
+        try:
+            import pefile
+            pe = pefile.PE(binary_path)
+
+            if hasattr(pe, "DIRECTORY_ENTRY_TLS"):
+                result["has_network"] = True
+                result["indicators"].append("TLS_callbacks")
+
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                network_dlls = ["ws2_32.dll", "wininet.dll", "winhttp.dll"]
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode("utf-8").lower()
+                    if dll_name in network_dlls:
+                        result["has_network"] = True
+                        result["protocols"].append("TCP" if "ws2_32" in dll_name else "HTTP")
+                        result["indicators"].append(f"imports_{dll_name}")
+        except ImportError:
+            logger.debug("pefile module not available for PE analysis")
+        except Exception as e:
+            logger.debug(f"PE analysis failed: {e}")
+
+    def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]):
+        """Analyze ELF-specific networking features."""
+        try:
+            import lief
+            binary = lief.parse(binary_path)
+
+            # Early exit if not an ELF binary
+            if not (binary and binary.format == lief.EXE_FORMATS.ELF):
+                return
+
+            # Check sections for network-related names
+            for section in getattr(binary, "sections", []) or []:
+                if self._elf_section_indicates_network(section):
+                    result["has_network"] = True
+                    result["indicators"].append(f"section_{getattr(section, 'name', '')}")
+
+            # Check linked libraries for known networking libraries
+            for lib in getattr(binary, "libraries", []) or []:
+                proto = self._elf_lib_protocol(lib)
+                if proto:
+                    result["has_network"] = True
+                    result["protocols"].append(proto)
+                    result["indicators"].append(f"links_{lib}")
+        except ImportError:
+            logger.debug("lief module not available for ELF analysis")
+        except Exception as e:
+            logger.debug(f"ELF analysis failed: {e}")
+
+    def _elf_section_indicates_network(self, section) -> bool:
+        """Return True if a section name likely indicates networking functionality."""
+        name = getattr(section, "name", "") or ""
+        return "net" in name.lower() or "socket" in name.lower()
+
+    def _elf_lib_protocol(self, lib_name: str) -> Optional[str]:
+        """Map a library name to a protocol indicator when relevant."""
+        lib_l = (lib_name or "").lower()
+        if "ssl" in lib_l:
+            return "HTTPS"
+        if "crypto" in lib_l or "curl" in lib_l:
+            return "HTTP"
+        return None
 
     def _generate_initial_scripts(self, analysis: dict[str, Any]) -> list[GeneratedScript]:
         """Generate initial scripts based on analysis."""
@@ -1196,64 +1251,38 @@ class AutonomousAgent:
                 f"Testing iteration {self.iteration_count} for {script.metadata.script_type.value} script...",
             )
 
-            # Test the script
-            test_result = self._test_script(current_script, analysis)
-            self.test_results.append(test_result)
+            # Test the script and record results
+            execution_result = self._test_script(current_script, analysis)
+            self.validation_results.append(execution_result)
 
-            if test_result.success:
+            if execution_result.success:
                 self._log_to_user("✓ Script executed successfully!")
-
-                # Verify it actually achieved the goal
-                if self._verify_bypass(test_result, analysis):
+                if self._verify_bypass(execution_result, analysis):
                     self._log_to_user("✓ Protection bypass confirmed!")
                     return current_script
                 self._log_to_user("✗ Script ran but didn't achieve bypass goal")
             else:
-                self._log_to_user(f"✗ Script failed: {test_result.error}")
+                self._log_to_user(f"✗ Script failed: {execution_result.error}")
 
-            # Refine the script for next iteration
+            # Attempt a single refinement for the next iteration
             if iteration < self.max_iterations - 1:
                 self._log_to_user("Refining script based on test results...")
-                refined_script = self._refine_script(current_script, test_result, analysis)
-                if refined_script:
-                    current_script = refined_script
-                    self.refinement_history.append(
-                        {
-                            "iteration": iteration + 1,
-                            "changes": "Script refined based on test results",
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-                else:
+                refined_script = self._refine_script(current_script, execution_result, analysis)
+                if not refined_script:
                     self._log_to_user("Failed to refine script")
                     break
 
-        self._log_to_user(f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review.")
-        return current_script
+                current_script = refined_script
+                self.refinement_history.append(
+                    {
+                        "iteration": iteration + 1,
+                        "changes": "Script refined based on test results",
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                )
 
-    def _test_script(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
-        """Test the script in the appropriate environment."""
-        start_time = time.time()
-
-        try:
-            if self.current_task.test_environment == TestEnvironment.QEMU:
-                return self._test_in_qemu(script, analysis)
-            if self.current_task.test_environment == TestEnvironment.DOCKER:
-                return self._test_in_docker(script, analysis)
-            if self.current_task.test_environment == TestEnvironment.SANDBOX:
-                return self._test_in_sandbox(script, analysis)
-            return self._test_direct(script, analysis)
-
-        except (OSError, RuntimeError, AttributeError, ValueError, TypeError) as e:
-            logger.error("Error in autonomous_agent: %s", e)
-            runtime_ms = int((time.time() - start_time) * 1000)
-            return ExecutionResult(
-                success=False,
-                output="",
-                error=f"Test execution failed: {e!s}",
-                exit_code=-1,
-                runtime_ms=runtime_ms,
-            )
+        # No successful refinement achieved within allowed iterations
+        return None
 
     def _test_in_qemu(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in QEMU environment using real VM execution."""
@@ -1279,8 +1308,8 @@ class AutonomousAgent:
                 )
 
         try:
-            # Create a test configuration based on analysis
-            test_config = {
+            # Create execution configuration based on analysis
+            execution_config = {
                 "binary_path": binary_path,
                 "script_type": script.metadata.script_type.value,
                 "script_content": script.content,
@@ -1295,11 +1324,11 @@ class AutonomousAgent:
             )
 
             # Execute script in real QEMU VM
-            result = self.qemu_manager.test_script_in_vm(
+            result = self.qemu_manager.validate_script_in_vm(
                 script.content,
                 binary_path,
                 script_type=script.metadata.script_type.value,
-                timeout=test_config["timeout"],
+                timeout=execution_config["timeout"],
             )
 
             # Parse QEMU execution results
@@ -1446,29 +1475,81 @@ class AutonomousAgent:
 
     def _test_in_sandbox(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in sandbox environment using real sandboxing."""
-        # Use analysis data for sandbox configuration
         binary_path = analysis.get("binary_path", "unknown")
-        protections = analysis.get("protections", [])
         network_activity = analysis.get("network_activity", {})
+        has_network = network_activity.get("has_network", False)
 
         self._log_to_user(f"Testing {script.metadata.script_type.value} script in isolated sandbox...")
 
-        # Configure sandbox based on analysis
-        has_network = network_activity.get("has_network", False)
-
         try:
-            # Use Windows sandbox or Linux firejail based on platform
-            import platform
-            import subprocess
-            import tempfile
+            if platform.system() == "Windows":
+                return self._test_in_windows_sandbox(script, binary_path, has_network)
+            else:
+                return self._test_in_linux_firejail(script, binary_path, has_network)
+        except Exception as e:
+            logger.error(f"Sandbox execution failed: {e}")
+            return self._fallback_execution(script, binary_path)
+
+    def _test_in_windows_sandbox(self, script: GeneratedScript, binary_path: str, has_network: bool) -> ExecutionResult:
+        """Test script in Windows Sandbox."""
+        import shutil
+        import subprocess
+        import tempfile
+        import time
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            sandbox_config = self._create_windows_sandbox_config(temp_dir, binary_path, has_network)
+            config_path = Path(temp_dir) / "sandbox.wsb"
+            config_path.write_text(sandbox_config)
+
+            script_path = Path(temp_dir) / "script.py"
+            script_path.write_text(script.content)
+
+            if Path(binary_path).exists():
+                shutil.copy2(binary_path, temp_dir)
 
             start_time = time.time()
+            result = subprocess.run(
+                ["WindowsSandbox.exe", str(config_path)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
-            if platform.system() == "Windows":
-                # Windows Sandbox execution
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    # Create sandbox configuration
-                    sandbox_config = f"""
+    def _test_in_linux_firejail(self, script: GeneratedScript, binary_path: str, has_network: bool) -> ExecutionResult:
+        """Test script in Linux Firejail."""
+        import shutil
+        import subprocess
+        import tempfile
+        import time
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            script_path = Path(temp_dir) / "script.py"
+            script_path.write_text(script.content)
+
+            if Path(binary_path).exists():
+                binary_copy = Path(temp_dir) / Path(binary_path).name
+                shutil.copy2(binary_path, binary_copy)
+                sandboxed_binary = str(binary_copy)
+            else:
+                sandboxed_binary = binary_path
+
+            cmd = self._create_firejail_command(temp_dir, script_path, sandboxed_binary, has_network)
+            start_time = time.time()
+            result = subprocess.run(
+                cmd, check=False, capture_output=True, text=True, timeout=30
+            )
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return self._parse_sandbox_result(result, binary_path, runtime_ms)
+
+    def _create_windows_sandbox_config(self, temp_dir: str, binary_path: str, has_network: bool) -> str:
+        """Create Windows Sandbox configuration."""
+        return f"""
 <Configuration>
     <VGpu>Disable</VGpu>
     <Networking>{has_network}</Networking>
@@ -1484,120 +1565,67 @@ class AutonomousAgent:
     </LogonCommand>
 </Configuration>
 """
-                    config_path = Path(temp_dir) / "sandbox.wsb"
-                    config_path.write_text(sandbox_config)
 
-                    # Copy files
-                    script_path = Path(temp_dir) / "script.py"
-                    script_path.write_text(script.content)
+    def _create_firejail_command(self, temp_dir: str, script_path: Path, sandboxed_binary: str, has_network: bool) -> list[str]:
+        """Create Firejail command."""
+        cmd = ["firejail", "--quiet"]
+        if not has_network:
+            cmd.append("--net=none")
+        cmd.extend(["--private=" + temp_dir, "python3", str(script_path), sandboxed_binary])
+        return cmd
 
-                    if Path(binary_path).exists():
-                        import shutil
+    def _parse_sandbox_result(self, result: subprocess.CompletedProcess, binary_path: str, runtime_ms: int) -> ExecutionResult:
+        """Parse sandbox execution result."""
+        success = result.returncode == 0
+        output = result.stdout
+        error = result.stderr
+        if success and any(indicator in output.lower() for indicator in ["bypass", "success", "patched", "unlocked"]):
+            output = f"Sandbox: Script successfully tested against {binary_path}\n{output}"
+        else:
+            error = error or "Script execution completed but bypass not confirmed"
+        return ExecutionResult(
+            success=success,
+            output=output,
+            error=error,
+            exit_code=0 if success else 1,
+            runtime_ms=runtime_ms,
+        )
 
-                        shutil.copy2(binary_path, temp_dir)
+    def _fallback_execution(self, script: GeneratedScript, binary_path: str) -> ExecutionResult:
+        """Fallback execution in restricted environment."""
+        import subprocess
+        import tempfile
+        from pathlib import Path
 
-                    # Execute in Windows Sandbox
-                    result = subprocess.run(  # nosec S603 S607 - Using Windows Sandbox for secure script testing  # noqa: S603
-                        ["WindowsSandbox.exe", str(config_path)],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                        timeout=30,
-                    )
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                script_path = Path(temp_dir) / "test_script.py"
+                script_path.write_text(script.content)
 
-                    runtime_ms = int((time.time() - start_time) * 1000)
-                    success = result.returncode == 0
-                    output = result.stdout
-                    error = result.stderr
-
-            else:
-                # Linux sandbox using firejail
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    # Save script
-                    script_path = Path(temp_dir) / "script.py"
-                    script_path.write_text(script.content)
-
-                    # Copy binary if exists
-                    if Path(binary_path).exists():
-                        import shutil
-
-                        binary_copy = Path(temp_dir) / Path(binary_path).name
-                        shutil.copy2(binary_path, binary_copy)
-                        test_binary = str(binary_copy)
-                    else:
-                        test_binary = binary_path
-
-                    # Firejail command
-                    cmd = ["firejail", "--quiet"]
-                    if not has_network:
-                        cmd.append("--net=none")
-                    cmd.extend(["--private=" + temp_dir, "python3", str(script_path), test_binary])
-
-                    result = subprocess.run(  # nosec S603 S607 - Using firejail for secure sandboxed testing  # noqa: S603
-                        cmd, check=False, capture_output=True, text=True, timeout=30
-                    )
-
-                    runtime_ms = int((time.time() - start_time) * 1000)
-                    success = result.returncode == 0
-                    output = result.stdout
-                    error = result.stderr
-
-            # Check for bypass indicators in output
-            if success and any(indicator in output.lower() for indicator in ["bypass", "success", "patched", "unlocked"]):
-                output = f"Sandbox: Script successfully tested against {binary_path}\n{output}"
-                # Calculate protection targeting accuracy
-                script_types = script.metadata.protection_types
-                analysis_types = {p.get("type") for p in protections}
-                if script_types and analysis_types:
-                    targeting_accuracy = len(set(st.value for st in script_types) & analysis_types) / len(script_types)
-                    if targeting_accuracy > 0.5:
-                        output += f"\nGood protection targeting: {targeting_accuracy:.1%}"
-            else:
-                error = error or "Script execution completed but bypass not confirmed"
-
-            return ExecutionResult(
-                success=success,
-                output=output,
-                error=error,
-                exit_code=0 if success else 1,
-                runtime_ms=runtime_ms,
-            )
-
-        except Exception as e:
-            logger.error(f"Sandbox execution failed: {e}")
-            # Fallback to restricted subprocess execution
-            try:
-                import subprocess
-
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    script_path = Path(temp_dir) / "test_script.py"
-                    script_path.write_text(script.content)
-
-                    result = subprocess.run(  # nosec S603 S607 - Restricted fallback testing in isolated temp directory  # noqa: S603
-                        ["python3", str(script_path), binary_path],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                        cwd=temp_dir,  # Restrict to temp directory
-                    )
-
-                    runtime_ms = 1000
-                    return ExecutionResult(
-                        success=result.returncode == 0,
-                        output=f"Restricted execution: {result.stdout}",
-                        error=result.stderr,
-                        exit_code=result.returncode,
-                        runtime_ms=runtime_ms,
-                    )
-            except Exception as fallback_e:
-                return ExecutionResult(
-                    success=False,
-                    output="Sandbox: Execution failed",
-                    error=str(fallback_e),
-                    exit_code=1,
-                    runtime_ms=0,
+                result = subprocess.run(
+                    ["python3", str(script_path), binary_path],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    cwd=temp_dir,
                 )
+                runtime_ms = 1000
+                return ExecutionResult(
+                    success=result.returncode == 0,
+                    output=f"Restricted execution: {result.stdout}",
+                    error=result.stderr,
+                    exit_code=result.returncode,
+                    runtime_ms=runtime_ms,
+                )
+        except Exception as fallback_e:
+            return ExecutionResult(
+                success=False,
+                output="Sandbox: Execution failed",
+                error=str(fallback_e),
+                exit_code=1,
+                runtime_ms=0,
+            )
 
     def _test_direct(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script directly (high risk)."""
@@ -1659,9 +1687,9 @@ class AutonomousAgent:
 
         return ExecutionResult(success=True, output=result_output, error="", exit_code=0, runtime_ms=120)
 
-    def _verify_bypass(self, test_result: ExecutionResult, analysis: dict[str, Any]) -> bool:
+    def _verify_bypass(self, validation_result: ExecutionResult, analysis: dict[str, Any]) -> bool:
         """Verify that the script actually bypassed the protection."""
-        if not test_result.success:
+        if not validation_result.success:
             return False
 
         # Use analysis data for context-aware verification
@@ -1691,7 +1719,7 @@ class AutonomousAgent:
             elif prot_type == "anti_debug":
                 success_indicators.extend(["debug detected", "debugger hidden", "anti-debug bypassed"])
 
-        output_lower = test_result.output.lower()
+        output_lower = validation_result.output.lower()
         basic_success = any(indicator in output_lower for indicator in success_indicators)
 
         # Additional verification based on analysis context
@@ -1702,12 +1730,12 @@ class AutonomousAgent:
 
         # Check if test duration is reasonable (too fast might indicate failure)
         expected_duration = 500 + len(protections) * 200  # Base + complexity
-        duration_ratio = test_result.runtime_ms / max(expected_duration, 100)
+        duration_ratio = validation_result.runtime_ms / max(expected_duration, 100)
         if 0.5 <= duration_ratio <= 2.0:  # Reasonable duration range
             verification_score += 0.2
 
         # Check if error field is empty (good sign)
-        if not test_result.error:
+        if not validation_result.error:
             verification_score += 0.1
 
         # Bonus for mentioning the target binary
@@ -1717,7 +1745,7 @@ class AutonomousAgent:
         # Log verification details
         logger.info(
             f"Bypass verification for {binary_path}: score={verification_score:.2f}, "
-            f"protections={len(protections)}, duration={test_result.runtime_ms}ms",
+            f"protections={len(protections)}, duration={validation_result.runtime_ms}ms",
         )
 
         return verification_score >= 0.8
@@ -1725,7 +1753,7 @@ class AutonomousAgent:
     def _refine_script(
         self,
         script: GeneratedScript,
-        test_result: ExecutionResult,
+        validation_result: ExecutionResult,
         analysis: dict[str, Any],
     ) -> GeneratedScript | None:
         """Refine the script based on test results and analysis."""
@@ -1738,10 +1766,10 @@ class AutonomousAgent:
             refinement_notes = []
 
             # Apply failure-based refinements
-            if not test_result.success:
+            if not validation_result.success:
                 refined_content, failure_notes = self._apply_failure_refinements(
                     script,
-                    test_result,
+                    validation_result,
                     refined_content,
                 )
                 refinement_notes.extend(failure_notes)
@@ -1763,11 +1791,11 @@ class AutonomousAgent:
             )
             return None
 
-    def _apply_failure_refinements(self, script: GeneratedScript, test_result: ExecutionResult, content: str) -> tuple[str, list[str]]:
+    def _apply_failure_refinements(self, script: GeneratedScript, validation_result: ExecutionResult, content: str) -> tuple[str, list[str]]:
         """Apply refinements based on test failures."""
         refinement_notes = []
 
-        if "protection mechanism detected" in test_result.error.lower():
+        if "protection mechanism detected" in validation_result.error.lower():
             if script.metadata.script_type == ScriptType.FRIDA:
                 if "stealth" not in content.lower():
                     stealth_code = (
@@ -1916,7 +1944,7 @@ class AutonomousAgent:
 
                 self._log_to_user(f"✓ Script deployed: {script_path}")
 
-            except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            except (OSError, AttributeError) as e:
                 logger.error("Error in autonomous_agent: %s", e)
                 deployment_results.append(
                     {
@@ -1982,177 +2010,13 @@ class AutonomousAgent:
     def _test_script_in_qemu(self, script: str, target_binary: str) -> ExecutionResult:
         """Test script in QEMU virtual environment."""
         try:
-            # Try to use QEMU test manager if available
-            if hasattr(self, "qemu_manager") and self.qemu_manager:
-                # Use existing QEMU manager
-                result = self.qemu_manager.test_script_in_vm(script, target_binary)
-                return ExecutionResult(
-                    success=result.get("success", False),
-                    output=result.get("output", ""),
-                    error=result.get("error", ""),
-                    exit_code=result.get("exit_code", 1),
-                    runtime_ms=result.get("runtime_ms", 0),
-                )
-            # Real QEMU testing implementation with fallback alternatives
+            if self._use_qemu_manager(script):
+                return self._execute_with_qemu_manager(script, target_binary)
+
             logger.info("Creating real QEMU test environment for script execution")
+            return self._execute_in_temp_environment(script, target_binary)
 
-            import os
-            import subprocess
-            import tempfile
-            import time
-            from pathlib import Path
-
-            # Create temporary test environment
-            try:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    start_time = time.time()
-
-                    # Prepare script file
-                    script_path = Path(temp_dir) / "test_script.js"
-                    with open(script_path, "w", encoding="utf-8") as f:
-                        f.write(script)
-
-                    # Prepare target binary copy
-                    target_path = Path(temp_dir) / "target_binary"
-                    if Path(target_binary).exists():
-                        import shutil
-
-                        shutil.copy2(target_binary, target_path)
-                    else:
-                        # Create minimal test binary if original doesn't exist
-                        with open(target_path, "wb") as f:
-                            f.write(b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00")  # Minimal PE header
-
-                    # Try multiple execution approaches
-                    success = False
-                    output_lines = []
-                    error_msg = ""
-
-                    # Attempt 1: Try QEMU user-mode emulation
-                    try:
-                        qemu_cmd = ["qemu-x86_64", "-cpu", "qemu64", str(target_path)]
-                        if os.name == "nt":  # Windows
-                            qemu_cmd = ["qemu-system-x86_64", "-m", "256", "-nographic", "-no-reboot"]
-
-                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            qemu_cmd,
-                            cwd=temp_dir,
-                            capture_output=True,
-                            text=True,
-                            timeout=30,
-                            shell=False,  # Explicitly secure - using list format prevents shell injection
-                        )
-
-                        if result.returncode == 0 or "executed" in result.stdout.lower():
-                            success = True
-                            output_lines.append("✅ QEMU execution successful")
-                            output_lines.append(f"   Binary: {target_binary}")
-                            output_lines.append(f"   Script: {script_path.name}")
-                            output_lines.extend(result.stdout.split("\n")[:5])
-
-                    except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
-                        # Attempt 2: Try native script execution with sandbox
-                        try:
-                            if script.lower().startswith("java"):
-                                # Frida script execution
-                                frida_cmd = ["node", "-e", f"console.log('Testing script: {script[:100]}...')"]
-                                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    frida_cmd,
-                                    cwd=temp_dir,
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=15,
-                                    shell=False,  # Explicitly secure - using list format prevents shell injection
-                                )
-                                success = True
-                                output_lines.append("✅ Frida script validation successful")
-                                output_lines.append(f"   Script size: {len(script)} bytes")
-                                output_lines.append(f"   Target: {target_binary}")
-
-                            else:
-                                # Generic script validation
-                                output_lines.append("✅ Script syntax validation successful")
-                                output_lines.append("   Script analyzed and validated")
-                                output_lines.append(f"   Target binary: {Path(target_binary).name}")
-                                output_lines.append(f"   Test environment: {temp_dir}")
-                                success = True
-
-                        except Exception as native_error:
-                            error_msg = f"Script execution failed: {native_error}"
-                            output_lines.append("⚠️  Script validation completed with warnings")
-                            output_lines.append(f"   Reason: {error_msg}")
-                            success = False
-
-                    # Calculate runtime
-                    runtime_ms = int((time.time() - start_time) * 1000)
-
-                    # Generate comprehensive output
-                    final_output = "\n".join(
-                        [
-                            "=== Real QEMU/VM Testing Results ===",
-                            f"Target: {target_binary}",
-                            f"Script length: {len(script)} bytes",
-                            f"Test duration: {runtime_ms}ms",
-                            f"Environment: {temp_dir}",
-                            "",
-                            *output_lines,
-                            "",
-                            f"Test completed: {success}",
-                        ]
-                    )
-
-                    return ExecutionResult(
-                        success=success,
-                        output=final_output,
-                        error=error_msg,
-                        exit_code=0 if success else 1,
-                        runtime_ms=runtime_ms,
-                    )
-
-            except Exception as test_error:
-                logger.error(f"QEMU test environment creation failed: {test_error}")
-
-                # Final fallback: Real script analysis without execution
-                try:
-                    analysis_output = []
-                    analysis_output.append("=== Script Analysis Results (No VM Available) ===")
-                    analysis_output.append(f"Target binary: {target_binary}")
-                    analysis_output.append(f"Script size: {len(script)} bytes")
-
-                    # Real script content analysis
-                    if "Java" in script or "frida" in script.lower():
-                        analysis_output.append("✅ Frida JavaScript detected")
-                    if "Memory" in script or "patch" in script.lower():
-                        analysis_output.append("✅ Memory manipulation patterns detected")
-                    if "hook" in script.lower() or "intercept" in script.lower():
-                        analysis_output.append("✅ Function hooking patterns detected")
-
-                    # Analyze script for potential issues
-                    script_lines = script.split("\n")
-                    analysis_output.append(f"Script contains {len(script_lines)} lines")
-
-                    if len(script) > 1000:
-                        analysis_output.append("✅ Complex script detected")
-
-                    analysis_output.append("⚠️  VM execution not available - analysis only")
-
-                    return ExecutionResult(
-                        success=False,  # Mark as failed since we couldn't actually execute
-                        output="\n".join(analysis_output),
-                        error="VM execution environment not available",
-                        exit_code=2,  # Indicate partial success
-                        runtime_ms=50,
-                    )
-
-                except Exception as final_error:
-                    return ExecutionResult(
-                        success=False,
-                        output="Script analysis failed",
-                        error=f"Analysis error: {final_error}",
-                        exit_code=1,
-                        runtime_ms=10,
-                    )
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError) as e:
+        except Exception as e:
             logger.error(f"QEMU script testing failed: {e}", exc_info=True)
             return ExecutionResult(
                 success=False,
@@ -2161,6 +2025,174 @@ class AutonomousAgent:
                 exit_code=1,
                 runtime_ms=0,
             )
+
+    def _use_qemu_manager(self, script: str) -> bool:
+        """Check if QEMU manager is available for script execution."""
+        return hasattr(self, "qemu_manager") and self.qemu_manager
+
+    def _execute_with_qemu_manager(self, script: str, target_binary: str) -> ExecutionResult:
+        """Execute script using QEMU manager."""
+        result = self.qemu_manager.validate_script_in_vm(script, target_binary)
+        return ExecutionResult(
+            success=result.get("success", False),
+            output=result.get("output", ""),
+            error=result.get("error", ""),
+            exit_code=result.get("exit_code", 1),
+            runtime_ms=result.get("runtime_ms", 0),
+        )
+
+    def _execute_in_temp_environment(self, script: str, target_binary: str) -> ExecutionResult:
+        """Execute script in a temporary environment."""
+        import tempfile
+        import time
+
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                start_time = time.time()
+                _, target_path = self._prepare_test_files(script, target_binary, temp_dir)
+                return self._attempt_execution(script, target_binary, target_path, temp_dir, start_time)
+        except Exception as e:
+            logger.error(f"QEMU test environment creation failed: {e}")
+            return self._fallback_analysis(script, target_binary)
+
+    def _prepare_test_files(self, script: str, target_binary: str, temp_dir: str) -> tuple[Path, Path]:
+        """Prepare script and target binary files for testing."""
+        import shutil
+        from pathlib import Path
+
+        script_path = Path(temp_dir) / "test_script.js"
+        script_path.write_text(script, encoding="utf-8")
+
+        target_path = Path(temp_dir) / "target_binary"
+        if Path(target_binary).exists():
+            shutil.copy2(target_binary, target_path)
+        else:
+            target_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00")  # Minimal PE header
+
+        return script_path, target_path
+
+    def _attempt_execution(self, script: str, target_binary: str, target_path: Path, temp_dir: str, start_time: float) -> ExecutionResult:
+        """Attempt to execute the script using multiple approaches."""
+
+        success, output_lines, error_msg = False, [], ""
+
+        try:
+            success, output_lines = self._try_qemu_emulation(target_path, temp_dir)
+        except Exception:
+            success, output_lines, error_msg = self._try_native_execution(script, target_binary, temp_dir)
+
+        runtime_ms = int((time.time() - start_time) * 1000)
+        final_output = self._generate_execution_output(target_binary, script, runtime_ms, temp_dir, output_lines, success)
+
+        return ExecutionResult(
+            success=success,
+            output=final_output,
+            error=error_msg,
+            exit_code=0 if success else 1,
+            runtime_ms=runtime_ms,
+        )
+
+    def _try_qemu_emulation(self, target_path: Path, temp_dir: str) -> tuple[bool, list[str]]:
+        """Try QEMU user-mode emulation."""
+        import os
+        import subprocess
+
+        qemu_cmd = ["qemu-x86_64", "-cpu", "qemu64", str(target_path)]
+        if os.name == "nt":
+            qemu_cmd = ["qemu-system-x86_64", "-m", "256", "-nographic", "-no-reboot"]
+
+        result = subprocess.run(qemu_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=30, shell=False)
+        success = result.returncode == 0 or "executed" in result.stdout.lower()
+        output_lines = ["✅ QEMU execution successful"] if success else []
+        return success, output_lines
+
+    def _try_native_execution(self, script: str, target_binary: str, temp_dir: str) -> tuple[bool, list[str], str]:
+        """Try native script execution."""
+        success, output_lines, error_msg = False, [], ""
+        try:
+            if script.lower().startswith("java"):
+                success, output_lines = self._execute_frida_script(script, target_binary, temp_dir)
+            else:
+                success, output_lines = self._validate_generic_script(script, target_binary)
+        except Exception as e:
+            error_msg = f"Script execution failed: {e}"
+        return success, output_lines, error_msg
+
+    def _execute_frida_script(self, script: str, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
+        """Execute Frida script."""
+        import subprocess
+
+        frida_cmd = ["node", "-e", f"console.log('Testing script: {script[:100]}...')"]
+        subprocess.run(frida_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=15, shell=False)
+        success = True
+        output_lines = ["✅ Frida script validation successful", f"   Script size: {len(script)} bytes", f"   Target: {target_binary}"]
+        return success, output_lines
+
+    def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
+        """Validate generic script."""
+        success = True
+        output_lines = ["✅ Script syntax validation successful", "   Script analyzed and validated", f"   Target binary: {target_binary}", f"   Test environment: {temp_dir}"]
+        return success, output_lines
+
+    def _generate_execution_output(self, target_binary: str, script: str, runtime_ms: int, temp_dir: str, output_lines: list[str], success: bool) -> str:
+        """Generate comprehensive output for execution results."""
+        return "\n".join(
+            [
+                "=== Real QEMU/VM Testing Results ===",
+                f"Target: {target_binary}",
+                f"Script length: {len(script)} bytes",
+                f"Test duration: {runtime_ms}ms",
+                f"Environment: {temp_dir}",
+                "",
+                *output_lines,
+                "",
+                f"Test completed: {success}",
+            ]
+        )
+
+    def _fallback_analysis(self, script: str, target_binary: str) -> ExecutionResult:
+        """Fallback to script analysis if execution fails."""
+        try:
+            analysis_output = self._analyze_script_content(script, target_binary)
+            return ExecutionResult(
+                success=False,
+                output="\n".join(analysis_output),
+                error="VM execution environment not available",
+                exit_code=2,
+                runtime_ms=50,
+            )
+        except Exception as e:
+            return ExecutionResult(
+                success=False,
+                output="Script analysis failed",
+                error=f"Analysis error: {e}",
+                exit_code=1,
+                runtime_ms=10,
+            )
+
+    def _analyze_script_content(self, script: str, target_binary: str) -> list[str]:
+        """Analyze script content for fallback analysis."""
+        analysis_output = [
+            "=== Script Analysis Results (No VM Available) ===",
+            f"Target binary: {target_binary}",
+            f"Script size: {len(script)} bytes",
+        ]
+
+        if "Java" in script or "frida" in script.lower():
+            analysis_output.append("✅ Frida JavaScript detected")
+        if "Memory" in script or "patch" in script.lower():
+            analysis_output.append("✅ Memory manipulation patterns detected")
+        if "hook" in script.lower() or "intercept" in script.lower():
+            analysis_output.append("✅ Function hooking patterns detected")
+
+        script_lines = script.split("\n")
+        analysis_output.append(f"Script contains {len(script_lines)} lines")
+
+        if len(script) > 1000:
+            analysis_output.append("✅ Complex script detected")
+
+        analysis_output.append("⚠️  VM execution not available - analysis only")
+        return analysis_output
 
     def execute_autonomous_task(self, task_config: dict[str, Any]) -> dict[str, Any]:
         """Execute an autonomous task based on configuration."""
@@ -2194,15 +2226,15 @@ class AutonomousAgent:
                 if not script or not target_binary:
                     return self._error_result("Script and target binary required for testing")
 
-                test_result = self._test_script_in_qemu(script, target_binary)
+                execution_result = self._test_script_in_qemu(script, target_binary)
                 return {
-                    "success": test_result.success,
-                    "test_results": {
-                        "runtime_ms": test_result.runtime_ms,
-                        "exit_code": test_result.exit_code,
+                    "success": execution_result.success,
+                    "execution_results": {
+                        "runtime_ms": execution_result.runtime_ms,
+                        "exit_code": execution_result.exit_code,
                     },
-                    "output": test_result.output,
-                    "errors": test_result.error,
+                    "output": execution_result.output,
+                    "errors": execution_result.error,
                 }
 
             return self._error_result(f"Unknown task type: {task_type}")
@@ -2218,7 +2250,7 @@ class AutonomousAgent:
             "current_task": self.current_task.binary_path if self.current_task else None,
             "iteration": self.iteration_count,
             "scripts_generated": len(self.generated_scripts),
-            "tests_run": len(self.test_results),
+            "tests_run": len(self.validation_results),
             "last_update": datetime.now().isoformat(),
         }
 
@@ -2233,12 +2265,12 @@ class AutonomousAgent:
                 "agent_id": self.agent_id,
                 "status": self.get_status(),
                 "scripts": [script.__dict__ for script in self.generated_scripts],
-                "test_results": self.test_results,
+                "validation_results": self.validation_results,
                 "conversation_history": self.conversation_history,
                 "workflow_stats": {
                     "total_iterations": self.iteration_count,
                     "scripts_generated": len(self.generated_scripts),
-                    "tests_completed": len(self.test_results),
+                    "tests_completed": len(self.validation_results),
                     # Would track actual start time
                     "session_duration": (datetime.now() - datetime.now()).total_seconds(),
                 },
@@ -2258,23 +2290,22 @@ class AutonomousAgent:
             logger.info(f"Session data saved to: {output_path}")
             return output_path
 
+        # Removed redundant except OSError block as it is already handled earlier
+        except json.JSONEncodeError as e:
+            logger.error(f"Failed to encode session data as JSON: {e}")
         except OSError as e:
             logger.error(f"Failed to save session data: {e}")
             raise RuntimeError(f"Could not save session data: {e!s}") from e
-        except json.JSONEncodeError as e:
+        except (TypeError, ValueError) as e:
+            # json.dump can raise TypeError for non-serializable objects or ValueError in some edge cases
             logger.error(f"Failed to encode session data as JSON: {e}")
             raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except Exception as e:
             logger.error(f"Unexpected error saving session data: {e}")
             raise RuntimeError(f"Session save failed: {e!s}") from e
-
-    def reset(self):
-        """Reset agent state for new task."""
-        self.current_task = None
-        self.workflow_state = WorkflowState.IDLE
         self.iteration_count = 0
         self.generated_scripts.clear()
-        self.test_results.clear()
+        self.validation_results.clear()
         self.refinement_history.clear()
         self.conversation_history.clear()
 
@@ -2283,7 +2314,7 @@ class AutonomousAgent:
 
     # ==================== VM Lifecycle Management ====================
 
-    def _initialize_qemu_manager(self):
+    def _initialize_qemu_manager(self) -> None:
         """Initialize QEMU manager with proper configuration."""
         try:
             from .qemu_manager import QEMUManager
@@ -2655,7 +2686,7 @@ class AutonomousAgent:
             logger.error(f"Error cleaning up VM {vm_id}: {e}")
             return False
 
-    def _cleanup_all_vms(self):
+    def _cleanup_all_vms(self) -> None:
         """Clean up all active VMs."""
         vm_ids = list(self._active_vms.keys())  # Copy to avoid modification during iteration
 
@@ -2776,7 +2807,7 @@ class AutonomousAgent:
 
             return secrets.randbelow(16384) + 49152
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup on deletion."""
         try:
             self._cleanup_all_vms()
@@ -2786,7 +2817,7 @@ class AutonomousAgent:
 
     # ==================== Docker Container Lifecycle Management ====================
 
-    def _initialize_docker_client(self):
+    def _initialize_docker_client(self) -> None:
         """Initialize Docker client."""
         try:
             import docker
@@ -3103,7 +3134,7 @@ class AutonomousAgent:
 
         try:
             # Get archive from container
-            bits, stat = container.get_archive(src_path)
+            bits, _ = container.get_archive(src_path)
 
             # Extract to destination
             import io
@@ -3184,7 +3215,7 @@ class AutonomousAgent:
             logger.error(f"Error cleaning up container {container_id}: {e}")
             return False
 
-    def _cleanup_all_containers(self):
+    def _cleanup_all_containers(self) -> None:
         """Clean up all active containers."""
         if not hasattr(self, "_active_containers"):
             return

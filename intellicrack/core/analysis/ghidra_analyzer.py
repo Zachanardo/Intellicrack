@@ -929,7 +929,7 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> List[Tuple[in
 
         # Check imports that might be used for licensing
         licensing_imports = ["CryptGenRandom", "CryptHashData", "RegOpenKeyEx", "GetVolumeInformation", "GetComputerName", "GetUserName"]
-        for lib, imp_func, imp_addr in result.imports:
+        for _lib, imp_func, imp_addr in result.imports:
             if imp_func in licensing_imports and imp_addr in func.xrefs_from:
                 licensing_functions.append((addr, func))
                 break

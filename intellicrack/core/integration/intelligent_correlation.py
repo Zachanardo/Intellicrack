@@ -926,7 +926,7 @@ class IntelligentCorrelator:
             by_type[item.data_type].append(item)
 
         # Correlate within each type
-        for data_type, type_items in by_type.items():
+        for _data_type, type_items in by_type.items():
             for i in range(len(type_items)):
                 for j in range(i + 1, len(type_items)):
                     item1, item2 = type_items[i], type_items[j]

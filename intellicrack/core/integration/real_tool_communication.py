@@ -206,7 +206,7 @@ class SharedMemoryManager:
                 # Read message size
                 self.memory.seek(read_ptr)
                 msg_size = struct.unpack("<I", self.memory.read(4))[0]
-                timestamp = struct.unpack("<I", self.memory.read(4))[0]
+                struct.unpack("<I", self.memory.read(4))[0]
 
                 # Check for corruption
                 if msg_size > self.size or msg_size == 0:

@@ -333,7 +333,6 @@ class OfflineActivationEmulator:
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
         """Generate installation ID for product"""
         # Combine product and hardware
-        combined = f"{product_id}:{hardware_id}"
 
         # Generate installation ID
         h = hmac.new(key=product_id.encode(), msg=hardware_id.encode(), digestmod=hashlib.sha256)

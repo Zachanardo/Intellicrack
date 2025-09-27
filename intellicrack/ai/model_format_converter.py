@@ -329,8 +329,8 @@ class ModelFormatConverter:
                     batch_size = kwargs.get("batch_size", 1)
                     sequence_length = kwargs.get("sequence_length", 128)
 
-                    # Create dummy input
-                    dummy_input = torch.randint(
+                    # Create sample input tensor for model conversion
+                    sample_input = torch.randint(
                         0,
                         config.vocab_size,
                         (batch_size, sequence_length),
@@ -356,7 +356,7 @@ class ModelFormatConverter:
                     logger.error("input_shape required for standalone PyTorch models")
                     return None
 
-                dummy_input = torch.randn(*input_shape)
+                sample_input = torch.randn(*input_shape)
 
             # Set model to eval mode
             model.eval()
@@ -365,7 +365,7 @@ class ModelFormatConverter:
             if GPU_AUTOLOADER_AVAILABLE and to_device and device != "cpu":
                 try:
                     model = to_device(model, device)
-                    dummy_input = to_device(dummy_input, device)
+                    sample_input = to_device(sample_input, device)
                     logger.info(f"Model and inputs moved to {device} for conversion")
                 except Exception as e:
                     logger.debug(f"Could not move to GPU, continuing on CPU: {e}")
@@ -384,7 +384,7 @@ class ModelFormatConverter:
 
             torch.onnx.export(
                 model,
-                dummy_input,
+                sample_input,
                 str(output_path),
                 export_params=True,
                 opset_version=kwargs.get("opset_version", 14),
@@ -963,18 +963,18 @@ class ModelFormatConverter:
                 batch_size = kwargs.get("batch_size", 1)
                 seq_length = kwargs.get("sequence_length", 128)
 
-                # Create appropriate dummy input based on model type
+                # Create appropriate sample input tensor based on model type
                 if hasattr(config, "vocab_size"):
-                    dummy_input = torch.randint(0, config.vocab_size, (batch_size, seq_length))
+                    sample_input = torch.randint(0, config.vocab_size, (batch_size, seq_length))
                 else:
                     # For non-text models
                     input_shape = kwargs.get("input_shape", (batch_size, 3, 224, 224))
-                    dummy_input = torch.randn(*input_shape)
+                    sample_input = torch.randn(*input_shape)
 
                 # Export
                 torch.onnx.export(
                     model,
-                    dummy_input,
+                    sample_input,
                     str(output_path),
                     export_params=True,
                     opset_version=kwargs.get("opset_version", 14),

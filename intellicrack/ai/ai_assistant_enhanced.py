@@ -26,9 +26,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from ..handlers.pyqt6_handler import QWidget
 from .ai_file_tools import get_ai_file_tools
 
 logger = logging.getLogger(__name__)
+
+CLI_INTERFACE_NOT_AVAILABLE = "CLI interface not available"
 
 
 class ToolCategory(Enum):
@@ -59,7 +62,7 @@ class Tool:
 class IntellicrackAIAssistant:
     """Enhanced AI Assistant with Claude Code-like functionality."""
 
-    def __init__(self, cli_interface=None):
+    def __init__(self, cli_interface: Any | None = None) -> None:
         """Initialize AI assistant with CLI interface and tools."""
         self.cli_interface = cli_interface
         self.file_tools = get_ai_file_tools(cli_interface)
@@ -544,7 +547,7 @@ What security aspect interests you?"""
         """Analyze a binary file."""
         if self.cli_interface:
             return self.cli_interface.analyze_binary(binary_path, analyses)
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _detect_protections(self, binary_path: str) -> dict[str, Any]:
         """Detect protection mechanisms."""
@@ -554,7 +557,7 @@ What security aspect interests you?"""
                 "Detecting all protection mechanisms",
                 "Scanning for packing, anti-debug, licensing, and other protections",
             )
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _find_license_checks(self, binary_path: str) -> dict[str, Any]:
         """Find license validation routines."""
@@ -564,7 +567,7 @@ What security aspect interests you?"""
                 "Finding license validation routines",
                 "Searching for license checks, key validation, and activation logic",
             )
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _suggest_patches(self, binary_path: str, target: str = "auto") -> dict[str, Any]:
         """Suggest patches for the binary."""
@@ -589,7 +592,7 @@ What security aspect interests you?"""
                     "Analyzing protection mechanisms and suggesting bypass strategies",
                 )
             return self.cli_interface.suggest_patches(binary_path)
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _apply_patch(self, binary_path: str, patch_definition: dict[str, Any]) -> dict[str, Any]:
         """Apply a patch to the binary."""
@@ -606,7 +609,7 @@ What security aspect interests you?"""
             # Clean up
             os.unlink(patch_file)
             return result
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _analyze_network(self, binary_path: str) -> dict[str, Any]:
         """Analyze network communications."""
@@ -616,7 +619,7 @@ What security aspect interests you?"""
                 "Analyzing network protocols",
                 "Identifying network communication patterns and protocols",
             )
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _generate_bypass(self, binary_path: str, protection_type: str) -> dict[str, Any]:
         """Generate bypass for protection mechanism."""
@@ -639,7 +642,7 @@ What security aspect interests you?"""
                 f"Generating {protection_type} bypass",
                 f"Creating bypass strategy for {protection_type} protection",
             )
-        return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _view_hex(self, binary_path: str, address: str, size: int = 64) -> dict[str, Any]:
         """View hex dump at specific address."""
@@ -680,7 +683,7 @@ What security aspect interests you?"""
                 "status": "error",
                 "message": "Hex view module not available",
             }
-        except (FileNotFoundError, OSError) as e:
+        except OSError as e:
             logger.error(f"File access error for {binary_path}: {e}", exc_info=True)
             return {
                 "status": "error",
@@ -741,7 +744,7 @@ What security aspect interests you?"""
                 "status": "error",
                 "message": "Disassembly module not available",
             }
-        except (FileNotFoundError, OSError) as e:
+        except OSError as e:
             logger.error(f"File access error for {binary_path}: {e}", exc_info=True)
             return {
                 "status": "error",
@@ -1191,7 +1194,7 @@ What security aspect interests you?"""
             self.cli_interface.update_output.emit(f"[AI Tool] {message}")
 
 
-def create_ai_assistant_widget():
+def create_ai_assistant_widget() -> QWidget:
     """Create the AI assistant widget for the UI."""
     from ..handlers.pyqt6_handler import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
@@ -1220,7 +1223,7 @@ def create_ai_assistant_widget():
     assistant = IntellicrackAIAssistant()
 
     # Connect signals
-    def send_message():
+    def send_message() -> None:
         """Send a message to the AI assistant and display the response.
 
         Retrieves the text from the input area, sends it to the assistant,
