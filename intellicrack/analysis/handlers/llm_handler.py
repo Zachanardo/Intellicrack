@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
@@ -231,7 +231,7 @@ class LLMHandler(QObject):
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: UnifiedProtectionResult | None = None
+        self.current_result: Optional["UnifiedProtectionResult"] = None
         self.icp_tool = ICPAnalysisTool()
 
         # Register the tool with LLM manager
@@ -291,7 +291,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def get_cached_result(self) -> UnifiedProtectionResult | None:
+    def get_cached_result(self) -> Optional["UnifiedProtectionResult"]:
         """Get the current cached analysis result."""
         return self.current_result
 

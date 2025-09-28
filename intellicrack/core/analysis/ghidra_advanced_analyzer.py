@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import lief
 import pefile
-from capstone import Cs, CS_ARCH_X86, CS_MODE_64, CS_MODE_32
+from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
 from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalysisResult, GhidraDataType, GhidraFunction
 
@@ -292,7 +292,7 @@ class GhidraAdvancedAnalyzer:
                         struct_candidates[struct_key]["functions"].append(func.name)
 
         # Build structure definitions
-        for i, (struct_key, info) in enumerate(struct_candidates.items()):
+        for i, (_struct_key, info) in enumerate(struct_candidates.items()):
             if info["usage_count"] < 2:  # Skip rarely used patterns
                 continue
 

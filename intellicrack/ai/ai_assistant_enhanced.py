@@ -458,13 +458,75 @@ You are the autonomous expert - take complete ownership of binary analysis chall
         return f"I'll perform a comprehensive analysis of {binary}. This will include:\n- Binary structure and format\n- Protection mechanisms\n- Potential vulnerabilities\n- License/trial logic\n\nThis may take a few minutes. Shall I proceed?"
 
     def _handle_patching_intent(self, intent: dict[str, Any]) -> str:
-        """Handle patching intent."""
+        """Handle patching intent with automatic analysis trigger."""
         target = intent.get("target", "auto")
 
-        if not self.context.get("analysis_results"):
-            return "I need to analyze the binary first before suggesting patches. Would you like me to run a comprehensive analysis?"
+        # Check if we have a binary to work with
+        if not self.context.get("current_binary"):
+            return "Please specify a binary file to patch. You can say something like 'patch app.exe' or provide the full path."
 
-        return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
+        binary_path = self.context["current_binary"]
+
+        # If no analysis results exist, automatically trigger comprehensive analysis
+        if not self.context.get("analysis_results"):
+            self._log_action(f"No prior analysis found for {binary_path}. Starting comprehensive analysis...")
+
+            # Perform comprehensive analysis
+            analysis_types = ["protection", "license", "network", "code_flow", "strings", "imports"]
+            analysis_result = self._analyze_binary(binary_path, analysis_types)
+
+            if analysis_result.get("status") == "error":
+                return f"Failed to analyze binary: {analysis_result.get('message', 'Unknown error')}\n\nPlease verify the binary path and try again."
+
+            # Store analysis results
+            self.context["analysis_results"] = analysis_result
+
+            # Now proceed with patching suggestions
+            protection_summary = self._get_protection_summary(analysis_result)
+
+            return f"""Completed comprehensive analysis of {binary_path}.
+
+{protection_summary}
+
+Based on this analysis, I can suggest patches for {target} mechanisms.
+
+Would you like me to:
+1. Show specific patch suggestions for detected protections
+2. Apply recommended patches (with backup)
+3. Explain how each patch works
+4. Analyze a different aspect first"""
+
+        # Analysis already exists, proceed with patching
+        protection_summary = self._get_protection_summary(self.context["analysis_results"])
+
+        return f"""Based on my previous analysis, I can suggest patches for {target} mechanisms.
+
+Current Protection Status:
+{protection_summary}
+
+Would you like me to:
+1. Show suggested patches
+2. Explain how the patches work
+3. Create a backup before patching
+4. Re-analyze with different parameters"""
+
+    def _get_protection_summary(self, analysis_results: dict[str, Any]) -> str:
+        """Extract a summary of detected protections from analysis results."""
+        if not analysis_results:
+            return "No analysis data available."
+
+        protections = analysis_results.get("protections", {})
+        if not protections:
+            return "No specific protections detected."
+
+        summary = "Detected Protections:\n"
+        for protection_type, details in protections.items():
+            if isinstance(details, dict) and details.get("detected"):
+                summary += f"• {protection_type}: {details.get('confidence', 'Unknown')} confidence\n"
+            elif details:  # Simple boolean or truthy value
+                summary += f"• {protection_type}: Detected\n"
+
+        return summary if summary != "Detected Protections:\n" else "Standard binary with no advanced protections detected."
 
     def _handle_explanation_intent(self, intent: dict[str, Any]) -> str:
         """Handle explanation intent."""
@@ -515,7 +577,7 @@ What would you like to learn about?"""
 • **Server Discovery**: Identify license validation endpoints
 • **Protocol Analysis**: Decode license request/response formats
 • **Traffic Interception**: Monitor and modify license communications
-• **Offline Simulation**: Create local license server responses
+• **Offline Activation Bypass**: Generate valid activation responses without server connectivity
 
 Would you like me to start license server analysis?"""
         if aspect == "traffic":
@@ -595,20 +657,33 @@ What security aspect interests you?"""
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _apply_patch(self, binary_path: str, patch_definition: dict[str, Any]) -> dict[str, Any]:
-        """Apply a patch to the binary."""
+        """Apply a patch to the binary with proper cleanup."""
         if self.cli_interface:
-            # Save patch definition to temporary file
             import tempfile
+            patch_file = None
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-                json.dump(patch_definition, f)
-                patch_file = f.name
+            try:
+                # Save patch definition to temporary file
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+                    json.dump(patch_definition, f)
+                    patch_file = f.name
 
-            result = self.cli_interface.apply_patch(binary_path, patch_file)
+                # Apply the patch
+                result = self.cli_interface.apply_patch(binary_path, patch_file)
+                return result
 
-            # Clean up
-            os.unlink(patch_file)
-            return result
+            except Exception as e:
+                logger.error(f"Error applying patch: {e}")
+                return {"status": "error", "message": f"Failed to apply patch: {str(e)}"}
+
+            finally:
+                # Ensure temporary file is cleaned up even if an exception occurs
+                if patch_file and os.path.exists(patch_file):
+                    try:
+                        os.unlink(patch_file)
+                    except OSError as e:
+                        logger.warning(f"Failed to clean up temporary patch file {patch_file}: {e}")
+
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _analyze_network(self, binary_path: str) -> dict[str, Any]:
@@ -996,45 +1071,141 @@ What security aspect interests you?"""
             }
 
     def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: str | None = None) -> dict[str, Any]:
-        """Submit file to external analysis service."""
+        """Submit file to external analysis service with real API integration."""
         try:
             import hashlib
             import os
+            import requests
+            from datetime import datetime
 
             # Validate file exists
             if not os.path.exists(file_path):
-                return {"error": f"File not found: {file_path}"}
+                return {"status": "error", "message": f"File not found: {file_path}"}
 
             # Calculate file hash
             with open(file_path, "rb") as f:
-                file_hash = hashlib.sha256(f.read()).hexdigest()
+                file_data = f.read()
+                file_hash = hashlib.sha256(file_data).hexdigest()
+                file_size = len(file_data)
 
-            # Simulate external service interaction
-            result = {
-                "service": service,
-                "file": file_path,
-                "hash": file_hash,
-                "status": "submitted",
-                "message": f"File submitted to {service} for analysis",
-                "results": {
-                    "detection_ratio": "0/0",
-                    "scan_date": "Not available (API key required)",
-                    "permalink": f"https://{service}.com/file/{file_hash}",
-                },
-            }
+            if service.lower() == "virustotal":
+                # Real VirusTotal API integration
+                if not api_key:
+                    return {"status": "error", "message": "VirusTotal requires an API key for analysis"}
 
-            if api_key:
-                result["message"] = f"File submitted to {service} with API authentication"
-                result["results"]["status"] = "authenticated"
+                headers = {"x-apikey": api_key}
+
+                # Check if file already analyzed by hash lookup
+                hash_url = f"https://www.virustotal.com/api/v3/files/{file_hash}"
+                hash_response = requests.get(hash_url, headers=headers, timeout=30)
+
+                if hash_response.status_code == 200:
+                    # File already analyzed, return existing results
+                    data = hash_response.json()
+                    attributes = data.get("data", {}).get("attributes", {})
+                    stats = attributes.get("last_analysis_stats", {})
+
+                    return {
+                        "status": "success",
+                        "service": "virustotal",
+                        "file": file_path,
+                        "hash": file_hash,
+                        "analysis_id": data.get("data", {}).get("id"),
+                        "results": {
+                            "malicious": stats.get("malicious", 0),
+                            "suspicious": stats.get("suspicious", 0),
+                            "undetected": stats.get("undetected", 0),
+                            "harmless": stats.get("harmless", 0),
+                            "detection_ratio": f"{stats.get('malicious', 0)}/{sum(stats.values()) if stats else 0}",
+                            "scan_date": attributes.get("last_analysis_date"),
+                            "permalink": data.get("data", {}).get("links", {}).get("self"),
+                            "reputation": attributes.get("reputation", 0),
+                            "type_description": attributes.get("type_description", "Unknown")
+                        }
+                    }
+
+                # File not found, upload for analysis
+                if file_size > 32 * 1024 * 1024:  # 32MB limit for standard upload
+                    # Large file upload via special URL
+                    url_response = requests.get("https://www.virustotal.com/api/v3/files/upload_url", headers=headers, timeout=30)
+                    if url_response.status_code != 200:
+                        return {"status": "error", "message": f"Failed to get upload URL: {url_response.status_code}"}
+                    upload_url = url_response.json().get("data")
+                else:
+                    upload_url = "https://www.virustotal.com/api/v3/files"
+
+                # Upload file
+                with open(file_path, "rb") as f:
+                    files = {"file": (os.path.basename(file_path), f)}
+                    upload_response = requests.post(upload_url, headers=headers, files=files, timeout=120)
+
+                if upload_response.status_code in [200, 201]:
+                    analysis_data = upload_response.json()
+                    analysis_id = analysis_data.get("data", {}).get("id")
+
+                    return {
+                        "status": "success",
+                        "service": "virustotal",
+                        "file": file_path,
+                        "hash": file_hash,
+                        "analysis_id": analysis_id,
+                        "message": "File uploaded for analysis",
+                        "results": {
+                            "status": "analyzing",
+                            "analysis_url": f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
+                            "check_status_in": "60 seconds"
+                        }
+                    }
+                else:
+                    return {"status": "error", "message": f"Upload failed: {upload_response.status_code} - {upload_response.text}"}
+
+            elif service.lower() == "hybrid-analysis":
+                # Real Hybrid Analysis API integration
+                if not api_key:
+                    return {"status": "error", "message": "Hybrid Analysis requires an API key"}
+
+                headers = {
+                    "api-key": api_key,
+                    "user-agent": "Intellicrack Binary Analyzer"
+                }
+
+                # Submit file for analysis
+                url = "https://www.hybrid-analysis.com/api/v2/submit/file"
+                with open(file_path, "rb") as f:
+                    files = {"file": (os.path.basename(file_path), f)}
+                    data = {
+                        "environment_id": "120",  # Windows 10 64-bit
+                        "no_share_third_party": "true"
+                    }
+                    response = requests.post(url, headers=headers, files=files, data=data, timeout=120)
+
+                if response.status_code == 201:
+                    result_data = response.json()
+                    return {
+                        "status": "success",
+                        "service": "hybrid-analysis",
+                        "file": file_path,
+                        "hash": file_hash,
+                        "analysis_id": result_data.get("sha256"),
+                        "results": {
+                            "job_id": result_data.get("job_id"),
+                            "environment": result_data.get("environment_description"),
+                            "submission_type": result_data.get("submission_type"),
+                            "analysis_url": f"https://www.hybrid-analysis.com/sample/{result_data.get('sha256')}"
+                        }
+                    }
+                else:
+                    return {"status": "error", "message": f"Submission failed: {response.status_code}"}
+
             else:
-                result["warning"] = f"No API key provided for {service}. Results may be limited."
+                return {"status": "error", "message": f"Unsupported service: {service}. Supported: virustotal, hybrid-analysis"}
 
-            logger.info(f"External analysis requested for {file_path} using {service}")
-            return result
-
+        except requests.RequestException as e:
+            logger.error(f"Network error during external analysis: {e}")
+            return {"status": "error", "message": f"Network error: {str(e)}"}
         except Exception as e:
             logger.error(f"External analysis error: {e}")
-            return {"error": f"External analysis failed: {e!s}"}
+            return {"status": "error", "message": f"Analysis failed: {str(e)}"}
 
     def generate_insights(self, ai_request: dict[str, Any]) -> dict[str, Any]:
         """Generate AI insights from binary analysis data."""

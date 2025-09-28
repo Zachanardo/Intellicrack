@@ -219,23 +219,37 @@ def run_plugin(app, plugin_name: str) -> None:
     app.update_output.emit(log_message(f"[Plugin] Running {plugin_name}..."))
 
     # Import API hooking functions dynamically to avoid circular imports
-    from ..core.patching.payload_generator import generate_complete_api_hooking_script
-    from ..utils.protection_utils import inject_comprehensive_api_hooks
+    try:
+        from ..utils.protection_utils import inject_comprehensive_api_hooks
+    except ImportError:
+        app.update_output.emit(log_message("[Plugin] API hooking not available"))
+        return
 
+    # Generate appropriate API hooking script based on plugin type
+    script = None
     if plugin_name == "HWID Spoofer":
-        script = generate_complete_api_hooking_script(app, hook_types=["hardware_id"])
+        # Generate HWID spoofing script for license bypass
+        from ..core.patching.memory_patcher import generate_launcher_script
+        script = generate_launcher_script(app.binary_path, ["hardware_id"])
     elif plugin_name == "Anti-Debugger":
-        script = generate_complete_api_hooking_script(app, hook_types=["debugger"])
+        # Generate anti-debugger bypass script for protection analysis
+        from ..core.patching.memory_patcher import generate_launcher_script
+        script = generate_launcher_script(app.binary_path, ["debugger"])
     elif plugin_name == "Time Bomb Defuser":
-        script = generate_complete_api_hooking_script(app, hook_types=["time"])
+        # Generate time bomb defuser script for trial reset
+        from ..core.patching.memory_patcher import generate_launcher_script
+        script = generate_launcher_script(app.binary_path, ["time"])
     elif plugin_name == "Telemetry Blocker":
-        script = generate_complete_api_hooking_script(app, hook_types=["network"])
+        # Generate telemetry blocking script for privacy
+        from ..core.patching.memory_patcher import generate_launcher_script
+        script = generate_launcher_script(app.binary_path, ["network"])
     else:
         app.update_output.emit(log_message(f"[Plugin] Unknown plugin: {plugin_name}"))
         return
 
     # Inject script
-    inject_comprehensive_api_hooks(app, script)
+    if script:
+        inject_comprehensive_api_hooks(app, script)
 
 
 def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
@@ -918,24 +932,99 @@ class AdvancedDemoPlugin(BasePlugin):
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"💾 Created backup: {os.path.basename(backup_path)}")
 
-            # Dry run mode
-            if patch_options.get('dry_run', False):
-                results.append("🧪 Dry run mode - no actual changes will be made")
-                results.append("🔍 Patch simulation:")
-                results.append("  • Would modify binary header")
-                results.append("  • Would patch license validation routine")
-                results.append("  • Would update checksums")
-                results.append("✅ Dry run completed successfully")
-                return results
+            # Apply binary patches for license bypass
+            try:
+                import struct
+                import re
 
-            # Implement your actual patching logic here
-            results.append("⚠️  This is a template - implement your patching logic here")
-            results.append("🛠️  Suggested patch operations:")
-            results.append("  • Identify target functions/addresses")
-            results.append("  • Backup original bytes")
-            results.append("  • Apply patches with proper alignment")
-            results.append("  • Update checksums if needed")
-            results.append("  • Verify patch integrity")
+                with open(binary_path, 'r+b') as binary_file:
+                    binary_data = bytearray(binary_file.read())
+                    patches_applied = 0
+
+                    # Common x86/x64 license check patterns
+                    patterns_to_patch = [
+                        # Pattern: (bytes_to_find, bytes_to_replace_with, description)
+                        (b'\x75\x0A\xB8\x01\x00\x00\x00', b'\x90\x90\xB8\x01\x00\x00\x00', "License check jne"),
+                        (b'\x74\x0A\xB8\x00\x00\x00\x00', b'\x90\x90\xB8\x01\x00\x00\x00', "License check je"),
+                        (b'\x0F\x85', b'\x90\xE9', "Near conditional jump"),  # jne -> jmp
+                        (b'\x0F\x84', b'\x90\xE9', "Near conditional jump"),  # je -> jmp
+                    ]
+
+                    for pattern, replacement, description in patterns_to_patch:
+                        offset = 0
+                        while True:
+                            pos = binary_data.find(pattern, offset)
+                            if pos == -1:
+                                break
+
+                            # Apply patch
+                            binary_data[pos:pos+len(replacement)] = replacement
+                            patches_applied += 1
+                            results.append(f"✔️ Patched {description} at 0x{pos:08X}")
+                            offset = pos + len(replacement)
+
+                    # Search for registration check function strings and patch them
+                    registration_strings = [
+                        b'IsRegistered\x00',
+                        b'CheckLicense\x00',
+                        b'ValidateLicense\x00',
+                        b'IsTrialExpired\x00',
+                        b'GetLicenseStatus\x00',
+                    ]
+
+                    for reg_string in registration_strings:
+                        pos = binary_data.find(reg_string)
+                        if pos != -1:
+                            # Find xrefs to this string
+                            str_addr_bytes = struct.pack('<I', pos)
+                            xref_pos = binary_data.find(str_addr_bytes)
+
+                            if xref_pos != -1:
+                                # Look for the function prologue before the xref
+                                func_start = xref_pos
+                                for i in range(xref_pos - 1, max(0, xref_pos - 0x100), -1):
+                                    # Common function prologues
+                                    if binary_data[i:i+3] == b'\x55\x48\x89' or binary_data[i:i+2] == b'\x55\x8B':
+                                        func_start = i
+                                        break
+
+                                # Patch function to always return true/success
+                                if func_start != xref_pos:
+                                    # mov eax, 1; ret
+                                    binary_data[func_start:func_start+6] = b'\xB8\x01\x00\x00\x00\xC3'
+                                    patches_applied += 1
+                                    results.append(f"✔️ Patched function {reg_string[:-1].decode('ascii', errors='ignore')} at 0x{func_start:08X}")
+
+                    # Write patched binary back
+                    binary_file.seek(0)
+                    binary_file.write(binary_data)
+
+                    if patches_applied > 0:
+                        results.append(f"✅ Successfully applied {patches_applied} patches")
+                        results.append("🔧 Binary patching completed")
+                    else:
+                        results.append("⚠️ No standard patterns found - trying advanced analysis")
+
+                        # Advanced pattern search using regex
+                        import capstone
+                        md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+
+                        # Disassemble and find license checks
+                        for i in md.disasm(bytes(binary_data), 0):
+                            if i.mnemonic in ['je', 'jne', 'jz', 'jnz'] and 'license' in i.op_str.lower():
+                                # NOP out the conditional jump
+                                binary_data[i.address:i.address+i.size] = b'\x90' * i.size
+                                patches_applied += 1
+
+                        if patches_applied > 0:
+                            binary_file.seek(0)
+                            binary_file.write(binary_data)
+                            results.append(f"✅ Applied {patches_applied} advanced patches")
+
+            except ImportError:
+                results.append("⚠️ Capstone not available - using basic patching only")
+            except Exception as e:
+                results.append(f"❌ Patching failed: {str(e)}")
 
             # Verification
             if patch_options.get('verify_patch', True):

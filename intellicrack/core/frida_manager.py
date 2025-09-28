@@ -1718,7 +1718,7 @@ class FridaManager:
         # Load hardware spoofer
         self.load_script(
             session_id,
-            "enhanced_hardware_spoofer",
+            
             {
                 "spoof_all": True,
                 "persistent": True,

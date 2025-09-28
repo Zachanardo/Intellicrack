@@ -752,7 +752,7 @@ class DistributedWorkerThread(QThread):
 
         if not hash_value:
             # Generate test hash for demonstration
-            test_password = "demo_password_123"
+            test_password = "demo_password_123"  # noqa: S105
             hash_value = hashlib.md5(test_password.encode()).hexdigest()
 
         results = {
@@ -1583,7 +1583,7 @@ class DistributedProcessingDialog(QDialog):
             parameters = {"binary_path": f"./test_binaries/sample_{self.task_counter}.exe"}
         elif task_type == "password_cracking":
             # Generate real test hash
-            test_password = f"test{self.task_counter}"
+            test_password = f"test{self.task_counter}"  # noqa: S105
             test_hash = hashlib.md5(test_password.encode()).hexdigest()
             parameters = {"hash": test_hash, "hash_type": "md5", "wordlist": "./wordlists/common.txt", "max_attempts": 1000}
         elif task_type == "vulnerability_scan":

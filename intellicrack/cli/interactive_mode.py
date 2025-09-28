@@ -228,7 +228,7 @@ class IntellicrackShell(cmd.Cmd):
             return
 
         try:
-            from intellicrack.utils.protection.protection_detection import analyze_protections
+            from intellicrack.protection.protection_detector import detect_all_protections as analyze_protections
 
             print(f"Analyzing protections in {self.current_file}...")
             protections = analyze_protections(str(self.current_file))

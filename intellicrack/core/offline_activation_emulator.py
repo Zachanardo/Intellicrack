@@ -4,12 +4,17 @@ import hmac
 import json
 import os
 import platform
+import random
+import shutil
 import socket
 import struct
 import subprocess
+import time
 import uuid
 import winreg
 import xml.etree.ElementTree as ET
+
+SERIAL_NUMBER_LABEL = "Serial Number:"
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -19,6 +24,8 @@ import wmi
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
 
 
 class ActivationType(Enum):
@@ -27,8 +34,21 @@ class ActivationType(Enum):
     LICENSE_FILE = "license_file"
     REGISTRY_BASED = "registry_based"
     PHONE_ACTIVATION = "phone_activation"
-    OFFLINE_TOKEN = "offline_token"
+    OFFLINE_TOKEN = "offline_token"  # noqa: S105
     SIGNED_CERTIFICATE = "signed_certificate"
+    REQUEST_RESPONSE = "request_response"
+    FILE_BASED = "file_based"
+    QR_CODE = "qr_code"
+    TOKEN = "token"  # noqa: S105
+
+
+class RequestFormat(Enum):
+    """Activation request encoding formats."""
+    XML = "xml"
+    JSON = "json"
+    BASE64 = "base64"
+    BINARY = "binary"
+    PROPRIETARY = "proprietary"
 
 
 @dataclass
@@ -62,12 +82,48 @@ class ActivationResponse:
     features: List[str]
     hardware_locked: bool
     signature: Optional[bytes]
+    # Additional fields for exploitation version compatibility
+    response_id: Optional[str] = None
+    request_id: Optional[str] = None
+    expiration: Optional[int] = None
+    restrictions: Optional[Dict[str, Any]] = None
+    format: Optional[RequestFormat] = None
+
+
+@dataclass
+class MachineProfile:
+    """Hardware and system profile for activation (from exploitation version)."""
+    machine_id: str
+    cpu_id: str
+    motherboard_serial: str
+    disk_serial: str
+    mac_address: str
+    hostname: str
+    username: str
+    os_version: str
+    install_date: int
+    install_path: str
+    product_version: str
+
+
+@dataclass
+class ExtendedActivationRequest:
+    """Extended activation request data (from exploitation version)."""
+    request_id: str
+    product_id: str
+    product_version: str
+    machine_profile: MachineProfile
+    serial_number: str
+    timestamp: int
+    signature: Optional[bytes] = None
+    encrypted: bool = False
+    format: RequestFormat = RequestFormat.XML
 
 
 class OfflineActivationEmulator:
     """Production-ready offline activation emulation system"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.backend = default_backend()
         self.wmi_client = wmi.WMI() if platform.system() == "Windows" else None
         self.activation_algorithms = self._initialize_algorithms()
@@ -131,11 +187,12 @@ class OfflineActivationEmulator:
                 for line in result.stdout.split("\n"):
                     if "ID:" in line:
                         return line.split("ID:")[1].strip()
-        except:
+        except Exception:
             pass
 
         # Fallback
         return hashlib.md5(platform.processor().encode()).hexdigest()[:16].upper()
+
 
     def _get_motherboard_serial(self) -> str:
         """Get motherboard serial number"""
@@ -146,9 +203,9 @@ class OfflineActivationEmulator:
             else:
                 result = subprocess.run(["dmidecode", "-t", "baseboard"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
-                    if "Serial Number:" in line:
+                    if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
-        except:
+        except Exception:
             pass
 
         return hashlib.md5(socket.gethostname().encode()).hexdigest()[:16].upper()
@@ -163,9 +220,9 @@ class OfflineActivationEmulator:
             else:
                 result = subprocess.run(["hdparm", "-I", "/dev/sda"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
-                    if "Serial Number:" in line:
+                    if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
-        except:
+        except Exception:
             pass
 
         return hashlib.md5(os.urandom(16)).hexdigest()[:16].upper()
@@ -173,27 +230,41 @@ class OfflineActivationEmulator:
     def _get_mac_addresses(self) -> List[str]:
         """Get all MAC addresses"""
         macs = []
-        try:
-            if platform.system() == "Windows" and self.wmi_client:
-                for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
-                    if nic.MACAddress:
-                        macs.append(nic.MACAddress.replace(":", ""))
-            else:
-                import netifaces
+        system = platform.system()
+        if system == "Windows" and self.wmi_client:
+            macs = self._get_windows_macs()
+        else:
+            macs = self._get_non_windows_macs()
 
-                for interface in netifaces.interfaces():
-                    addrs = netifaces.ifaddresses(interface)
-                    if netifaces.AF_LINK in addrs:
-                        for addr in addrs[netifaces.AF_LINK]:
-                            if "addr" in addr:
-                                macs.append(addr["addr"].replace(":", "").upper())
-        except:
-            # Fallback to uuid-based MAC
-            node = uuid.getnode()
-            mac = ":".join(("%012X" % node)[i : i + 2] for i in range(0, 12, 2))
-            macs.append(mac.replace(":", ""))
+        if not macs:
+            macs = self._get_fallback_mac()
 
         return macs[:4]  # Return up to 4 MACs
+
+    def _get_windows_macs(self) -> List[str]:
+        macs = []
+        for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
+            if nic.MACAddress:
+                macs.append(nic.MACAddress.replace(":", ""))
+        return macs
+
+    def _get_non_windows_macs(self) -> List[str]:
+        macs = []
+        import netifaces
+
+        for interface in netifaces.interfaces():
+            addrs = netifaces.ifaddresses(interface)
+            if netifaces.AF_LINK in addrs:
+                for addr in addrs[netifaces.AF_LINK]:
+                    if "addr" in addr:
+                        macs.append(addr["addr"].replace(":", "").upper())
+        return macs
+
+    def _get_fallback_mac(self) -> List[str]:
+        # Fallback to uuid-based MAC
+        node = uuid.getnode()
+        mac = ":".join(("%012X" % node)[i : i + 2] for i in range(0, 12, 2))
+        return [mac.replace(":", "")]
 
     def _get_bios_serial(self) -> str:
         """Get BIOS serial number"""
@@ -204,9 +275,9 @@ class OfflineActivationEmulator:
             else:
                 result = subprocess.run(["dmidecode", "-t", "bios"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
-                    if "Serial Number:" in line:
+                    if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
-        except:
+        except Exception:
             pass
 
         return hashlib.md5(platform.node().encode()).hexdigest()[:16].upper()
@@ -220,7 +291,7 @@ class OfflineActivationEmulator:
             else:
                 result = subprocess.run(["dmidecode", "-s", "system-uuid"], capture_output=True, text=True)
                 return result.stdout.strip()
-        except:
+        except Exception:
             pass
 
         return str(uuid.uuid4()).upper()
@@ -236,7 +307,7 @@ class OfflineActivationEmulator:
             else:
                 result = subprocess.run(["blkid", "-o", "value", "-s", "UUID", "/dev/sda1"], capture_output=True, text=True)
                 return result.stdout.strip()[:8].upper()
-        except:
+        except Exception:
             pass
 
         return hashlib.md5(os.urandom(8)).hexdigest()[:8].upper()
@@ -251,7 +322,7 @@ class OfflineActivationEmulator:
                 # Linux machine-id
                 with open("/etc/machine-id", "r") as f:
                     return f.read().strip()
-        except:
+        except Exception:
             pass
 
         return str(uuid.uuid4()).upper()
@@ -296,7 +367,7 @@ class OfflineActivationEmulator:
             for comp in components:
                 try:
                     result ^= int(comp, 16)
-                except:
+                except ValueError:
                     result ^= int(hashlib.md5(comp.encode()).hexdigest()[:8], 16)
 
             return format(result, "08X")
@@ -323,12 +394,13 @@ class OfflineActivationEmulator:
         salt = profile.machine_guid.encode()[:16]
         password = (profile.cpu_id + profile.motherboard_serial).encode()
 
-        kdf = PBKDF2(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=10000, backend=self.backend)
-
-        key = kdf.derive(password)
-        hw_id = base64.b64encode(key[:24]).decode("ascii")
-
-        return hw_id
+        try:
+            kdf = PBKDF2(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=10000, backend=self.backend)
+            key = kdf.derive(password)
+            hw_id = base64.b64encode(key[:24]).decode("ascii")
+            return hw_id
+        except Exception:
+            return hashlib.sha256((profile.cpu_id + profile.motherboard_serial).encode()).hexdigest()[:32]
 
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
         """Generate installation ID for product"""
@@ -714,7 +786,6 @@ class OfflineActivationEmulator:
 
     def _generate_product_key(self, product_type: str) -> str:
         """Generate product key for specific product type"""
-        import random
 
         if product_type == "microsoft":
             # Microsoft format: 5 groups of 5 chars (BCDFG-HJKMP-QRTVW-XY234-6789B)
@@ -996,3 +1067,349 @@ class OfflineActivationEmulator:
             ],
             "proxy_config": {"http": "http://127.0.0.1:8888", "https": "http://127.0.0.1:8888"},
         }
+
+    # Methods merged from exploitation/offline_activation_emulator.py
+
+    def _generate_machine_profile(self) -> MachineProfile:
+        """Generate realistic machine profile."""
+        hostname = socket.gethostname()
+
+        # Get MAC address
+        mac_address = self._generate_realistic_mac()
+        try:
+            import psutil
+            for interface, addrs in psutil.net_if_addrs().items():
+                for addr in addrs:
+                    if hasattr(psutil, 'AF_LINK') and addr.family == psutil.AF_LINK:
+                        mac_address = addr.address
+                        break
+                if mac_address != self._generate_realistic_mac():
+                    break
+        except:
+            pass
+
+        # Get disk serial
+        disk_serial = self._get_disk_serial()
+
+        # Get CPU ID
+        cpu_id = self._get_cpu_id()
+
+        # Get motherboard serial
+        mb_serial = self._get_motherboard_serial()
+
+        return MachineProfile(
+            machine_id=hashlib.sha256(f"{hostname}{mac_address}".encode()).hexdigest()[:16].upper(),
+            cpu_id=cpu_id,
+            motherboard_serial=mb_serial,
+            disk_serial=disk_serial,
+            mac_address=mac_address,
+            hostname=hostname,
+            username=os.environ.get("USERNAME", "user"),
+            os_version=platform.platform(),
+            install_date=int(time.time() - 86400 * 30),  # 30 days ago
+            install_path="C:\\Program Files\\Application",
+            product_version="1.0.0",
+        )
+
+    def _generate_realistic_mac(self) -> str:
+        """Generate realistic MAC address."""
+        # Real OUI prefixes from major manufacturers
+        oui_prefixes = [
+            "00:1B:44",  # Cisco
+            "00:50:56",  # VMware
+            "00:0C:29",  # VMware
+            "00:1C:42",  # Parallels
+            "08:00:27",  # VirtualBox
+            "AC:DE:48",  # Private
+            "00:25:90",  # Dell
+            "F4:CE:46",  # HP
+            "00:1E:67",  # Intel
+            "3C:97:0E",  # Wistron
+        ]
+
+        prefix = random.choice(oui_prefixes)
+        suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])
+        return f"{prefix}:{suffix}"
+
+    def _load_product_database(self) -> Dict[str, Dict[str, Any]]:
+        """Load known product activation patterns."""
+        return {
+            "adobe_cc": {
+                "request_format": RequestFormat.XML,
+                "encryption": "AES256",
+                "signature": "RSA2048",
+                "machine_binding": ["cpu_id", "disk_serial"],
+                "response_validation": "HMAC-SHA256",
+            },
+            "autodesk": {
+                "request_format": RequestFormat.BASE64,
+                "encryption": None,
+                "signature": "ECDSA",
+                "machine_binding": ["mac_address", "hostname"],
+                "response_validation": "CRC32",
+            },
+            "microsoft": {
+                "request_format": RequestFormat.XML,
+                "encryption": "RSA",
+                "signature": "RSA4096",
+                "machine_binding": ["machine_id"],
+                "response_validation": "digital_signature",
+            },
+            "vmware": {
+                "request_format": RequestFormat.JSON,
+                "encryption": None,
+                "signature": "SHA256",
+                "machine_binding": ["cpu_id", "mac_address"],
+                "response_validation": "checksum",
+            },
+        }
+
+    def generate_activation_request(self, product_id: str, serial_number: str, format: RequestFormat = RequestFormat.XML) -> str:
+        """Generate offline activation request."""
+        # Generate machine profile if not exists
+        if not hasattr(self, 'machine_profile'):
+            self.machine_profile = self._generate_machine_profile()
+
+        request = ExtendedActivationRequest(
+            request_id=str(uuid.uuid4()),
+            product_id=product_id,
+            product_version=self.machine_profile.product_version,
+            machine_profile=self.machine_profile,
+            serial_number=serial_number,
+            timestamp=int(time.time()),
+            format=format,
+        )
+
+        # Format based on type
+        if format == RequestFormat.XML:
+            return self._format_xml_request(request)
+        elif format == RequestFormat.JSON:
+            return self._format_json_request(request)
+        elif format == RequestFormat.BASE64:
+            return self._format_base64_request(request)
+        else:
+            return self._format_binary_request(request)
+
+    def _format_xml_request(self, request: ExtendedActivationRequest) -> str:
+        """Format activation request as XML."""
+        root = ET.Element("ActivationRequest")
+
+        # Add request metadata
+        ET.SubElement(root, "RequestID").text = request.request_id
+        ET.SubElement(root, "ProductID").text = request.product_id
+        ET.SubElement(root, "ProductVersion").text = request.product_version
+        ET.SubElement(root, "SerialNumber").text = request.serial_number
+        ET.SubElement(root, "Timestamp").text = str(request.timestamp)
+
+        # Add machine profile
+        machine = ET.SubElement(root, "MachineProfile")
+        ET.SubElement(machine, "MachineID").text = request.machine_profile.machine_id
+        ET.SubElement(machine, "CPUID").text = request.machine_profile.cpu_id
+        ET.SubElement(machine, "MotherboardSerial").text = request.machine_profile.motherboard_serial
+        ET.SubElement(machine, "DiskSerial").text = request.machine_profile.disk_serial
+        ET.SubElement(machine, "MACAddress").text = request.machine_profile.mac_address
+        ET.SubElement(machine, "Hostname").text = request.machine_profile.hostname
+        ET.SubElement(machine, "Username").text = request.machine_profile.username
+        ET.SubElement(machine, "OSVersion").text = request.machine_profile.os_version
+        ET.SubElement(machine, "InstallDate").text = str(request.machine_profile.install_date)
+        ET.SubElement(machine, "InstallPath").text = request.machine_profile.install_path
+
+        # Sign the request
+        xml_str = ET.tostring(root, encoding="unicode")
+        signature = self._sign_request(xml_str.encode())
+        ET.SubElement(root, "Signature").text = base64.b64encode(signature).decode()
+
+        return ET.tostring(root, encoding="unicode")
+
+    def _format_json_request(self, request: ExtendedActivationRequest) -> str:
+        """Format activation request as JSON."""
+        data = {
+            "request_id": request.request_id,
+            "product_id": request.product_id,
+            "product_version": request.product_version,
+            "serial_number": request.serial_number,
+            "timestamp": request.timestamp,
+            "machine_profile": {
+                "machine_id": request.machine_profile.machine_id,
+                "cpu_id": request.machine_profile.cpu_id,
+                "motherboard_serial": request.machine_profile.motherboard_serial,
+                "disk_serial": request.machine_profile.disk_serial,
+                "mac_address": request.machine_profile.mac_address,
+                "hostname": request.machine_profile.hostname,
+                "username": request.machine_profile.username,
+                "os_version": request.machine_profile.os_version,
+                "install_date": request.machine_profile.install_date,
+                "install_path": request.machine_profile.install_path,
+            },
+        }
+
+        # Sign the request
+        json_str = json.dumps(data, sort_keys=True)
+        signature = self._sign_request(json_str.encode())
+        data["signature"] = base64.b64encode(signature).decode()
+
+        return json.dumps(data, indent=2)
+
+    def _format_base64_request(self, request: ExtendedActivationRequest) -> str:
+        """Format activation request as base64."""
+        # Pack data into binary format
+        data = struct.pack(
+            ">16s16s16s16s6s32s32s",
+            request.request_id[:16].encode().ljust(16, b"\0"),
+            request.product_id[:16].encode().ljust(16, b"\0"),
+            request.machine_profile.machine_id[:16].encode().ljust(16, b"\0"),
+            request.machine_profile.cpu_id[:16].encode().ljust(16, b"\0"),
+            bytes.fromhex(request.machine_profile.mac_address.replace(":", "")),
+            request.serial_number[:32].encode().ljust(32, b"\0"),
+            request.machine_profile.hostname[:32].encode().ljust(32, b"\0"),
+        )
+
+        # Add timestamp
+        data += struct.pack(">I", request.timestamp)
+
+        # Sign and append signature
+        signature = self._sign_request(data)
+        data += signature
+
+        # Encode to base64
+        return base64.b64encode(data).decode("ascii")
+
+    def _format_binary_request(self, request: ExtendedActivationRequest) -> str:
+        """Format activation request as binary."""
+        # Create binary packet
+        packet = bytearray()
+
+        # Header
+        packet.extend(b"ACTREQ01")  # Magic + version
+
+        # Request ID (16 bytes)
+        packet.extend(uuid.UUID(request.request_id).bytes)
+
+        # Product ID hash (32 bytes)
+        packet.extend(hashlib.sha256(request.product_id.encode()).digest())
+
+        # Machine fingerprint
+        fingerprint = hashlib.sha256(
+            f"{request.machine_profile.machine_id}{request.machine_profile.cpu_id}{request.machine_profile.disk_serial}".encode()
+        ).digest()
+        packet.extend(fingerprint)
+
+        # Serial number hash
+        packet.extend(hashlib.sha256(request.serial_number.encode()).digest())
+
+        # Timestamp
+        packet.extend(struct.pack(">I", request.timestamp))
+
+        # Sign the packet
+        signature = self._sign_request(bytes(packet))
+        packet.extend(signature)
+
+        # Return hex representation
+        return packet.hex()
+
+    def _sign_request(self, data: bytes) -> bytes:
+        """Sign activation request data."""
+        # Generate signing key
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+
+        # Sign data
+        signature = private_key.sign(
+            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+        )
+
+        return signature
+
+    def _generate_license_key(self, request: ExtendedActivationRequest) -> str:
+        """Generate license key for activation."""
+        # Create license data
+        data = f"{request.product_id}:{request.machine_profile.machine_id}:{request.serial_number}"
+
+        # Generate key using PBKDF2
+        kdf = PBKDF2(
+            algorithm=hashes.SHA256(), length=32, salt=request.machine_profile.cpu_id.encode(), iterations=100000, backend=default_backend()
+        )
+        key = kdf.derive(data.encode())
+
+        # Format as license key
+        key_hex = key.hex().upper()
+        formatted = "-".join(key_hex[i : i + 5] for i in range(0, 40, 5))
+
+        return formatted
+
+    def _generate_activation_code(self, request: ExtendedActivationRequest) -> str:
+        """Generate activation code."""
+        # Combine machine identifiers
+        machine_data = f"{request.machine_profile.cpu_id}{request.machine_profile.disk_serial}{request.machine_profile.mac_address}"
+
+        # Generate activation code
+        h = hmac.new(request.serial_number.encode(), machine_data.encode(), hashlib.sha256)
+
+        code = h.hexdigest()[:20].upper()
+        return "-".join(code[i : i + 4] for i in range(0, 20, 4))
+
+    def create_activation_file(self, response: ActivationResponse, output_path: str):
+        """Create activation file for file-based activation."""
+        data = {
+            "version": "1.0",
+            "response": {
+                "id": response.response_id or str(uuid.uuid4()),
+                "license_key": response.license_key,
+                "activation_code": response.activation_code,
+                "expiration": response.expiration or int(time.time() + 365 * 86400),
+                "features": response.features,
+            },
+            "signature": base64.b64encode(response.signature or b"").decode(),
+        }
+
+        # Encrypt the activation data
+        key = hashlib.sha256(response.license_key.encode()).digest()
+        iv = os.urandom(16)
+
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+
+        # Pad data
+        json_data = json.dumps(data).encode()
+        pad_len = 16 - (len(json_data) % 16)
+        json_data += bytes([pad_len] * pad_len)
+
+        # Encrypt
+        encrypted = encryptor.update(json_data) + encryptor.finalize()
+
+        # Write file
+        with open(output_path, "wb") as f:
+            f.write(b"ACTFILE1")  # Magic
+            f.write(iv)
+            f.write(encrypted)
+
+        return output_path
+
+    def bypass_challenge_response(self, challenge: str) -> str:
+        """Generate valid response for challenge-based activation."""
+        # Decode challenge
+        try:
+            challenge_bytes = base64.b64decode(challenge)
+        except:
+            challenge_bytes = challenge.encode()
+
+        # Extract challenge components
+        if len(challenge_bytes) >= 16:
+            nonce = challenge_bytes[:16]
+            data = challenge_bytes[16:]
+        else:
+            nonce = challenge_bytes
+            data = b""
+
+        # Generate machine profile if not exists
+        if not hasattr(self, 'machine_profile'):
+            self.machine_profile = self._generate_machine_profile()
+
+        # Generate response using machine profile and challenge data
+        response_data = hashlib.sha256(
+            nonce + data + self.machine_profile.machine_id.encode() + self.machine_profile.cpu_id.encode()
+        ).digest()
+
+        # Format response
+        response = base64.b64encode(response_data).decode("ascii")
+
+        return response

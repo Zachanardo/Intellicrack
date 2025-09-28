@@ -1019,7 +1019,7 @@ class IntelligentCorrelator:
                 result_map[key].append(result)
 
         # Combine scores
-        for key, results in result_map.items():
+        for _key, results in result_map.items():
             combined = self._combine_results(results)
             all_results.append(combined)
 

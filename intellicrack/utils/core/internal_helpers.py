@@ -2677,7 +2677,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
             # Write actual tensor data
             tensor_offsets = []
-            for tensor_name, tensor_data in tensors.items():
+            for _tensor_name, tensor_data in tensors.items():
                 tensor_offsets.append(f.tell())
 
                 # Convert to float32 if needed

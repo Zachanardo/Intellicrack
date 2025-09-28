@@ -25,6 +25,7 @@ import shutil
 from datetime import datetime
 
 from intellicrack.core.license_snapshot import LicenseSnapshot
+from intellicrack.core.license_validation_bypass import LicenseValidationBypass
 from intellicrack.core.process_manipulation import LicenseAnalyzer
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -101,6 +102,7 @@ class AnalysisTab(BaseTab):
         self.license_analyzer = LicenseAnalyzer()  # Initialize license analyzer
         self.attached_pid = None  # Track attached process
         self.license_snapshot = LicenseSnapshot()  # Initialize snapshot system
+        self.license_validation_bypass = LicenseValidationBypass()  # Initialize validation bypass for key extraction
 
         # Connect to app_context signals for binary loading
         if self.app_context:
@@ -242,6 +244,15 @@ class AnalysisTab(BaseTab):
         self.signature_analysis_cb = QCheckBox("Signature Detection")
         self.signature_analysis_cb.setChecked(True)
         static_group.add_widget(self.signature_analysis_cb)
+
+        self.crypto_key_extraction_cb = QCheckBox("Cryptographic Key Extraction")
+        self.crypto_key_extraction_cb.setChecked(True)
+        static_group.add_widget(self.crypto_key_extraction_cb)
+
+        self.subscription_bypass_cb = QCheckBox("Subscription Validation Bypass")
+        self.subscription_bypass_cb.setChecked(True)
+        self.subscription_bypass_cb.setToolTip("Detect and bypass subscription-based licensing schemes")
+        static_group.add_widget(self.subscription_bypass_cb)
 
         # Analysis depth
         depth_layout = QHBoxLayout()
@@ -388,6 +399,25 @@ class AnalysisTab(BaseTab):
         snapshot_btn.clicked.connect(self.take_system_snapshot)
         tools_layout.addWidget(snapshot_btn)
 
+        # License Snapshot management buttons
+        snapshot_controls = QHBoxLayout()
+
+        self.compare_snapshots_btn = QPushButton("Compare Snapshots")
+        self.compare_snapshots_btn.clicked.connect(self.compare_snapshots)
+        self.compare_snapshots_btn.setEnabled(False)  # Disabled until we have 2+ snapshots
+        snapshot_controls.addWidget(self.compare_snapshots_btn)
+
+        self.export_snapshot_btn = QPushButton("Export Snapshot")
+        self.export_snapshot_btn.clicked.connect(self.export_snapshot)
+        self.export_snapshot_btn.setEnabled(False)  # Disabled until we have snapshots
+        snapshot_controls.addWidget(self.export_snapshot_btn)
+
+        self.import_snapshot_btn = QPushButton("Import Snapshot")
+        self.import_snapshot_btn.clicked.connect(self.import_snapshot)
+        snapshot_controls.addWidget(self.import_snapshot_btn)
+
+        tools_layout.addLayout(snapshot_controls)
+
         export_btn = QPushButton("Export Results")
         export_btn.clicked.connect(self.export_analysis_results)
         tools_layout.addWidget(export_btn)
@@ -514,6 +544,12 @@ class AnalysisTab(BaseTab):
         self.generate_bypass_btn.setEnabled(False)
         self.generate_bypass_btn.clicked.connect(self.generate_bypass_strategy)
         bypass_controls.addWidget(self.generate_bypass_btn)
+
+        self.subscription_bypass_btn = QPushButton("Execute Subscription Bypass")
+        self.subscription_bypass_btn.setEnabled(False)
+        self.subscription_bypass_btn.clicked.connect(self.execute_subscription_bypass)
+        self.subscription_bypass_btn.setToolTip("Start subscription validation bypass for detected scheme")
+        bypass_controls.addWidget(self.subscription_bypass_btn)
 
         self.auto_patch_check = QCheckBox("Auto-Patch")
         self.auto_patch_check.setToolTip("Automatically apply bypass patches when safe")
@@ -888,6 +924,7 @@ class AnalysisTab(BaseTab):
             or self.imports_analysis_cb.isChecked()
             or self.entropy_analysis_cb.isChecked()
             or self.signature_analysis_cb.isChecked()
+            or self.crypto_key_extraction_cb.isChecked()
         )
 
         run_dynamic = (
@@ -949,14 +986,257 @@ class AnalysisTab(BaseTab):
                     if self.signature_analysis_cb.isChecked():
                         results["signatures"] = ["UPX", "VMProtect"]
 
+                    if self.crypto_key_extraction_cb.isChecked():
+                        # Extract cryptographic keys using LicenseValidationBypass
+                        self.log_activity("Extracting cryptographic keys...")
+                        try:
+                            extracted_keys = self.license_validation_bypass.extract_all_keys(self.current_binary)
+
+                            # Process extracted keys
+                            key_results = {
+                                "total_keys_found": 0,
+                                "rsa_keys": [],
+                                "ecc_keys": [],
+                                "symmetric_keys": [],
+                                "certificates": []
+                            }
+
+                            for key_type, keys in extracted_keys.items():
+                                if key_type == "rsa" and keys:
+                                    key_results["rsa_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "modulus_bits": key.modulus.bit_length() if key.modulus else 0,
+                                            "exponent": key.exponent,
+                                            "confidence": key.confidence,
+                                            "context": key.context
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                                elif key_type == "ecc" and keys:
+                                    key_results["ecc_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "curve": key.curve,
+                                            "confidence": key.confidence,
+                                            "context": key.context
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                                elif key_type == "symmetric" and keys:
+                                    key_results["symmetric_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "type": key.key_type.value,
+                                            "key_size": len(key.key_data) * 8,
+                                            "confidence": key.confidence
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                            # Extract certificates
+                            try:
+                                certs = self.license_validation_bypass.extract_certificates(self.current_binary)
+                                if certs:
+                                    key_results["certificates"] = [
+                                        {
+                                            "subject": cert.subject.rfc4514_string(),
+                                            "issuer": cert.issuer.rfc4514_string(),
+                                            "serial_number": str(cert.serial_number),
+                                            "not_valid_after": cert.not_valid_after_utc.isoformat()
+                                        }
+                                        for cert in certs
+                                    ]
+                                    key_results["total_keys_found"] += len(certs)
+                            except Exception as cert_error:
+                                self.log_activity(f"Certificate extraction error: {str(cert_error)}")
+
+                            results["crypto_keys"] = key_results
+                            self.log_activity(f"Found {key_results['total_keys_found']} cryptographic keys/certificates")
+
+                        except Exception as key_error:
+                            self.log_activity(f"Key extraction error: {str(key_error)}")
+                            results["crypto_keys"] = {"error": str(key_error)}
+
+                    if self.subscription_bypass_cb.isChecked():
+                        # Detect and analyze subscription validation bypass opportunities
+                        self.log_activity("Analyzing subscription validation mechanisms...")
+                        try:
+                            # Initialize the bypass system
+                            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+                            sub_bypass = SubscriptionValidationBypass()
+
+                            # Detect subscription type
+                            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
+                            sub_type = sub_bypass.detect_subscription_type(product_name)
+
+                            bypass_results = {
+                                "detected_type": sub_type.value if sub_type else "unknown",
+                                "bypass_methods": []
+                            }
+
+                            # Analyze available bypass methods
+                            if sub_type:
+                                if sub_type.value == "cloud_based":
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Local Server Emulation",
+                                        "description": "Start local license server to intercept cloud requests",
+                                        "confidence": 0.85
+                                    })
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Host Redirection",
+                                        "description": "Redirect license server domains to localhost",
+                                        "confidence": 0.90
+                                    })
+
+                                elif sub_type.value == "server_license":
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Server Response Emulation",
+                                        "description": "Emulate license server responses",
+                                        "confidence": 0.80
+                                    })
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Certificate Replacement",
+                                        "description": "Replace server certificates for validation",
+                                        "confidence": 0.75
+                                    })
+
+                                elif sub_type.value == "token_based":
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Token Generation",
+                                        "description": "Generate valid JWT/OAuth tokens",
+                                        "confidence": 0.70
+                                    })
+                                    bypass_results["bypass_methods"].append({
+                                        "method": "Token Injection",
+                                        "description": "Inject pre-generated tokens into memory",
+                                        "confidence": 0.85
+                                    })
+
+                                # Check for specific bypass opportunities
+                                bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name)
+                                bypass_results["local_server"] = sub_bypass._check_local_server_config(product_name)
+                                bypass_results["oauth_tokens"] = sub_bypass._check_oauth_tokens(product_name)
+                                bypass_results["floating_license"] = sub_bypass._check_floating_license(product_name)
+
+                            results["subscription_bypass"] = bypass_results
+                            self.log_activity(f"Subscription type detected: {bypass_results['detected_type']}")
+                            self.log_activity(f"Found {len(bypass_results['bypass_methods'])} potential bypass methods")
+
+                        except Exception as sub_error:
+                            self.log_activity(f"Subscription bypass analysis error: {str(sub_error)}")
+                            results["subscription_bypass"] = {"error": str(sub_error)}
+
                     return results
 
                 except Exception as e:
                     return {"error": str(e)}
 
+            # Submit task with callback
+            def on_static_analysis_complete(results):
+                """Display static analysis results when complete."""
+                if isinstance(results, dict) and not results.get("error"):
+                    # Display crypto key extraction results
+                    if "crypto_keys" in results:
+                        key_data = results["crypto_keys"]
+                        if not key_data.get("error"):
+                            self.results_display.append("\n=== CRYPTOGRAPHIC KEYS EXTRACTED ===\n")
+                            self.results_display.append(f"Total keys found: {key_data.get('total_keys_found', 0)}\n")
+
+                            # Display RSA keys
+                            if key_data.get("rsa_keys"):
+                                self.results_display.append(f"\nRSA Keys ({len(key_data['rsa_keys'])}):\n")
+                                for key in key_data["rsa_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Modulus: {key['modulus_bits']} bits\n")
+                                    self.results_display.append(f"    - Exponent: {key['exponent']}\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+                                    if key.get("context"):
+                                        self.results_display.append(f"    - Context: {key['context']}\n")
+
+                            # Display ECC keys
+                            if key_data.get("ecc_keys"):
+                                self.results_display.append(f"\nECC Keys ({len(key_data['ecc_keys'])}):\n")
+                                for key in key_data["ecc_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Curve: {key.get('curve', 'Unknown')}\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+
+                            # Display symmetric keys
+                            if key_data.get("symmetric_keys"):
+                                self.results_display.append(f"\nSymmetric Keys ({len(key_data['symmetric_keys'])}):\n")
+                                for key in key_data["symmetric_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Type: {key['type']}\n")
+                                    self.results_display.append(f"    - Key Size: {key['key_size']} bits\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+
+                            # Display certificates
+                            if key_data.get("certificates"):
+                                self.results_display.append(f"\nCertificates ({len(key_data['certificates'])}):\n")
+                                for cert in key_data["certificates"]:
+                                    self.results_display.append(f"  • Subject: {cert['subject']}\n")
+                                    self.results_display.append(f"    - Issuer: {cert['issuer']}\n")
+                                    self.results_display.append(f"    - Serial: {cert['serial_number']}\n")
+                                    self.results_display.append(f"    - Valid Until: {cert['not_valid_after']}\n")
+
+                            # Store extracted keys for later use
+                            self.analysis_results["extracted_keys"] = key_data
+
+                    # Display subscription validation bypass results
+                    if "subscription_bypass" in results:
+                        bypass_data = results["subscription_bypass"]
+                        if not bypass_data.get("error"):
+                            self.results_display.append("\n=== SUBSCRIPTION VALIDATION BYPASS ===\n")
+                            self.results_display.append(f"Detected Type: {bypass_data.get('detected_type', 'Unknown')}\n")
+
+                            # Display bypass methods
+                            if bypass_data.get("bypass_methods"):
+                                self.results_display.append(f"\nAvailable Bypass Methods ({len(bypass_data['bypass_methods'])}):\n")
+                                for method in bypass_data["bypass_methods"]:
+                                    self.results_display.append(f"  • {method['method']}\n")
+                                    self.results_display.append(f"    - {method['description']}\n")
+                                    self.results_display.append(f"    - Confidence: {method['confidence']:.0%}\n")
+
+                            # Display detection results
+                            self.results_display.append("\nDetection Results:\n")
+                            if bypass_data.get("registry_based"):
+                                self.results_display.append("  ✓ Registry-based subscription found\n")
+                            if bypass_data.get("local_server"):
+                                self.results_display.append("  ✓ Local server configuration detected\n")
+                            if bypass_data.get("oauth_tokens"):
+                                self.results_display.append("  ✓ OAuth tokens present\n")
+                            if bypass_data.get("floating_license"):
+                                self.results_display.append("  ✓ Floating license system detected\n")
+
+                            # Store bypass results for later use
+                            self.analysis_results["subscription_bypass"] = bypass_data
+                        else:
+                            self.results_display.append(f"\nSubscription bypass error: {bypass_data['error']}\n")
+
+                    # Display other static analysis results
+                    if "strings" in results:
+                        self.results_display.append(f"\nStrings: {results['strings'].get('total', 0)} found\n")
+                        if results['strings'].get('suspicious'):
+                            self.results_display.append(f"  Suspicious: {', '.join(results['strings']['suspicious'])}\n")
+
+                    if "entropy" in results:
+                        self.results_display.append(f"\nEntropy: {results['entropy'].get('overall', 0):.2f}\n")
+                        if results['entropy'].get('high_entropy_sections'):
+                            self.results_display.append(f"  High entropy sections: {results['entropy']['high_entropy_sections']}\n")
+
+                    self.log_activity("Static analysis completed successfully")
+
             # Submit task
             task_id = self.task_manager.submit_callable(
-                run_static_analysis, description=f"Static analysis of {os.path.basename(self.current_binary)}"
+                run_static_analysis,
+                description=f"Static analysis of {os.path.basename(self.current_binary)}",
+                callback=on_static_analysis_complete
             )
             self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
         else:
@@ -1658,9 +1938,11 @@ class AnalysisTab(BaseTab):
 
                 QMessageBox.information(self, "Snapshot Complete", "\n".join(summary))
 
-                # Enable compare button if we have 2+ snapshots
+                # Enable snapshot management buttons
                 if hasattr(self, "compare_snapshots_btn"):
                     self.compare_snapshots_btn.setEnabled(len(self.snapshots) >= 2)
+                if hasattr(self, "export_snapshot_btn"):
+                    self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
 
             def on_snapshot_error(error_msg):
                 progress.close()
@@ -2450,6 +2732,12 @@ class AnalysisTab(BaseTab):
             self.generate_bypass_btn.setEnabled(bool(protections_found))
             self.detect_license_btn.setEnabled(True)
 
+            # Enable subscription bypass if subscription scheme was detected
+            if self.analysis_results.get("subscription_bypass"):
+                bypass_data = self.analysis_results["subscription_bypass"]
+                if bypass_data.get("detected_type") and bypass_data["detected_type"] != "unknown":
+                    self.subscription_bypass_btn.setEnabled(True)
+
         except Exception as e:
             self.log_activity(f"Protection scan error: {str(e)}")
             self.protection_display.append(f"Error: {str(e)}")
@@ -2691,6 +2979,95 @@ class AnalysisTab(BaseTab):
 
         self.log_activity(f"Generated {len(strategies)} bypass strategies")
 
+    def execute_subscription_bypass(self):
+        """Execute subscription validation bypass for detected scheme."""
+        if not self.current_binary:
+            QMessageBox.warning(self, "Warning", "No binary loaded for bypass")
+            return
+
+        # Check if we have subscription bypass results
+        if not self.analysis_results.get("subscription_bypass"):
+            QMessageBox.information(
+                self, "Info",
+                "Please run static analysis with 'Subscription Validation Bypass' enabled first"
+            )
+            return
+
+        bypass_data = self.analysis_results["subscription_bypass"]
+        detected_type = bypass_data.get("detected_type", "unknown")
+
+        if detected_type == "unknown":
+            QMessageBox.warning(self, "Warning", "No subscription scheme detected")
+            return
+
+        self.log_activity(f"Executing subscription bypass for {detected_type} scheme...")
+
+        # Use the SubscriptionValidationBypass instance
+        try:
+            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+            sub_bypass = SubscriptionValidationBypass()
+
+            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
+
+            # Execute bypass based on detected type
+            bypass_success = sub_bypass.bypass_subscription(product_name)
+
+            if bypass_success:
+                self.bypass_display.append("\n=== SUBSCRIPTION BYPASS EXECUTED ===\n")
+                self.bypass_display.append(f"Type: {detected_type}\n")
+                self.bypass_display.append("Status: ✓ Bypass Active\n")
+
+                # Add specific details based on bypass type
+                if detected_type == "cloud_based":
+                    self.bypass_display.append("• Local license server started on port 443\n")
+                    self.bypass_display.append("• Host file redirections applied\n")
+                    self.bypass_display.append("• SSL certificate validation bypassed\n")
+                elif detected_type == "server_license":
+                    self.bypass_display.append("• License server emulator running\n")
+                    self.bypass_display.append("• Response hooks installed\n")
+                elif detected_type == "token_based":
+                    self.bypass_display.append("• Valid tokens generated\n")
+                    self.bypass_display.append("• Token store updated\n")
+                elif detected_type == "oauth":
+                    self.bypass_display.append("• OAuth tokens injected\n")
+                    self.bypass_display.append("• Refresh mechanism bypassed\n")
+
+                self.bypass_display.append("\n✓ Subscription validation bypass successful\n")
+                self.log_activity("Subscription bypass executed successfully")
+
+                # Enable the button for deactivation
+                self.subscription_bypass_btn.setText("Stop Subscription Bypass")
+                self.subscription_bypass_btn.clicked.disconnect()
+                self.subscription_bypass_btn.clicked.connect(self.stop_subscription_bypass)
+
+            else:
+                self.bypass_display.append("\n✗ Subscription bypass failed\n")
+                self.log_activity("Subscription bypass execution failed")
+
+        except Exception as e:
+            self.bypass_display.append(f"\n✗ Bypass error: {str(e)}\n")
+            self.log_activity(f"Subscription bypass error: {str(e)}")
+
+    def stop_subscription_bypass(self):
+        """Stop active subscription bypass."""
+        try:
+            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+            sub_bypass = SubscriptionValidationBypass()
+
+            # Stop any active local servers
+            sub_bypass.stop_local_server()
+
+            self.bypass_display.append("\n=== SUBSCRIPTION BYPASS STOPPED ===\n")
+            self.log_activity("Subscription bypass stopped")
+
+            # Restore button state
+            self.subscription_bypass_btn.setText("Execute Subscription Bypass")
+            self.subscription_bypass_btn.clicked.disconnect()
+            self.subscription_bypass_btn.clicked.connect(self.execute_subscription_bypass)
+
+        except Exception as e:
+            self.log_activity(f"Error stopping subscription bypass: {str(e)}")
+
     def start_license_monitoring(self):
         """Start real-time license monitoring."""
         self.log_activity("Starting license monitoring...")
@@ -2775,3 +3152,240 @@ class AnalysisTab(BaseTab):
         """Find trial period data locations."""
         # This would locate registry keys and files storing trial info
         return ["HKLM\\SOFTWARE\\CompanyName\\ProductName\\Trial", "C:\\ProgramData\\ProductName\\trial.dat"]
+
+    def compare_snapshots(self):
+        """Compare two license system snapshots to identify changes."""
+        if len(self.snapshots) < 2:
+            QMessageBox.warning(self, "Insufficient Snapshots", "At least two snapshots are required for comparison.")
+            return
+
+        # Create dialog to select snapshots
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QListWidget, QListWidgetItem
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Snapshots to Compare")
+        dialog.setMinimumWidth(400)
+        dialog.setMinimumHeight(300)
+
+        layout = QVBoxLayout(dialog)
+
+        # First snapshot selection
+        layout.addWidget(QLabel("Select first snapshot (baseline):"))
+        first_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            first_list.addItem(item)
+        layout.addWidget(first_list)
+
+        # Second snapshot selection
+        layout.addWidget(QLabel("Select second snapshot (current):"))
+        second_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            second_list.addItem(item)
+        layout.addWidget(second_list)
+
+        # Dialog buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            if first_list.currentItem() and second_list.currentItem():
+                snapshot1_name = first_list.currentItem().text()
+                snapshot2_name = second_list.currentItem().text()
+
+                if snapshot1_name == snapshot2_name:
+                    QMessageBox.warning(self, "Invalid Selection", "Please select two different snapshots.")
+                    return
+
+                self.log_activity(f"Comparing snapshots: {snapshot1_name} vs {snapshot2_name}")
+
+                # Perform comparison
+                try:
+                    comparison = self.license_snapshot.compare_snapshots(snapshot1_name, snapshot2_name)
+
+                    # Display results in the console
+                    self.log_activity("=" * 60)
+                    self.log_activity("SNAPSHOT COMPARISON RESULTS")
+                    self.log_activity("=" * 60)
+
+                    # Process changes
+                    if comparison.get("process_changes"):
+                        self.log_activity("\nProcess Changes:")
+                        for change in comparison["process_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']} (PID: {change.get('pid', 'N/A')})")
+
+                    if comparison.get("registry_changes"):
+                        self.log_activity("\nRegistry Changes:")
+                        for key, changes in comparison["registry_changes"].items():
+                            self.log_activity(f"  {key}:")
+                            for change in changes:
+                                self.log_activity(f"    • {change}")
+
+                    if comparison.get("file_changes"):
+                        self.log_activity("\nFile System Changes:")
+                        for change in comparison["file_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['path']}")
+
+                    if comparison.get("service_changes"):
+                        self.log_activity("\nService Changes:")
+                        for change in comparison["service_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']} ({change.get('status', 'unknown')})")
+
+                    if comparison.get("network_changes"):
+                        self.log_activity("\nNetwork Changes:")
+                        for change in comparison["network_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change.get('address', 'N/A')}:{change.get('port', 'N/A')}")
+
+                    if comparison.get("certificate_changes"):
+                        self.log_activity("\nCertificate Changes:")
+                        for change in comparison["certificate_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['subject']}")
+
+                    if comparison.get("dll_changes"):
+                        self.log_activity("\nDLL Changes:")
+                        for change in comparison["dll_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['path']}")
+
+                    if comparison.get("mutex_changes"):
+                        self.log_activity("\nMutex Changes:")
+                        for change in comparison["mutex_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']}")
+
+                    # Store comparison results
+                    self.comparison_results.append({
+                        "snapshot1": snapshot1_name,
+                        "snapshot2": snapshot2_name,
+                        "timestamp": datetime.now().isoformat(),
+                        "results": comparison
+                    })
+
+                    # Summary
+                    total_changes = sum(
+                        len(comparison.get(k, [])) if isinstance(comparison.get(k), list) else
+                        sum(len(v) if isinstance(v, list) else 0 for v in comparison.get(k, {}).values())
+                        if isinstance(comparison.get(k), dict) else 0
+                        for k in comparison.keys()
+                    )
+
+                    self.log_activity("=" * 60)
+                    self.log_activity(f"Total changes detected: {total_changes}")
+                    self.log_activity("=" * 60)
+
+                    QMessageBox.information(
+                        self,
+                        "Comparison Complete",
+                        f"Found {total_changes} changes between snapshots.\nCheck the console for detailed results."
+                    )
+
+                except Exception as e:
+                    self.log_activity(f"Comparison error: {str(e)}")
+                    QMessageBox.critical(self, "Comparison Error", f"Failed to compare snapshots:\n{str(e)}")
+            else:
+                QMessageBox.warning(self, "No Selection", "Please select both snapshots to compare.")
+
+    def export_snapshot(self):
+        """Export a license snapshot to file."""
+        if not self.snapshots:
+            QMessageBox.warning(self, "No Snapshots", "No snapshots available to export.")
+            return
+
+        # Select snapshot to export
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QListWidget, QListWidgetItem
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Snapshot to Export")
+        dialog.setMinimumWidth(350)
+        dialog.setMinimumHeight(250)
+
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel("Select snapshot to export:"))
+
+        snapshot_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            snapshot_list.addItem(item)
+        layout.addWidget(snapshot_list)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted and snapshot_list.currentItem():
+            snapshot_name = snapshot_list.currentItem().text()
+
+            # Get export file path
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export Snapshot",
+                f"{snapshot_name}.json",
+                "JSON Files (*.json);;All Files (*.*)"
+            )
+
+            if file_path:
+                try:
+                    if self.license_snapshot.export_snapshot(snapshot_name, file_path):
+                        self.log_activity(f"Exported snapshot '{snapshot_name}' to {file_path}")
+                        QMessageBox.information(
+                            self,
+                            "Export Successful",
+                            f"Snapshot exported successfully to:\n{file_path}"
+                        )
+                    else:
+                        QMessageBox.warning(self, "Export Failed", "Failed to export snapshot.")
+                except Exception as e:
+                    self.log_activity(f"Export error: {str(e)}")
+                    QMessageBox.critical(self, "Export Error", f"Failed to export snapshot:\n{str(e)}")
+
+    def import_snapshot(self):
+        """Import a license snapshot from file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Snapshot",
+            "",
+            "JSON Files (*.json);;All Files (*.*)"
+        )
+
+        if file_path:
+            try:
+                snapshot_name = self.license_snapshot.import_snapshot(file_path)
+
+                if snapshot_name:
+                    # Reload the imported snapshot data
+                    with open(file_path, 'r') as f:
+                        import json
+                        snapshot_data = json.load(f)
+
+                    # Store in our local snapshots dictionary
+                    self.snapshots[snapshot_name] = snapshot_data
+
+                    self.log_activity(f"Imported snapshot '{snapshot_name}' from {file_path}")
+
+                    # Enable buttons if we now have enough snapshots
+                    if hasattr(self, "compare_snapshots_btn"):
+                        self.compare_snapshots_btn.setEnabled(len(self.snapshots) >= 2)
+                    if hasattr(self, "export_snapshot_btn"):
+                        self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
+
+                    # Display summary
+                    summary = [
+                        f"Snapshot '{snapshot_name}' imported successfully!",
+                        "",
+                        f"• Timestamp: {snapshot_data.get('timestamp', 'Unknown')}",
+                        f"• System: {snapshot_data.get('system_info', {}).get('platform', 'Unknown')}",
+                        f"• Processes: {len(snapshot_data.get('processes', []))}",
+                        f"• Registry keys: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
+                        f"• Files: {len(snapshot_data.get('files', {}).get('license_files', []))}",
+                        f"• Services: {len(snapshot_data.get('services', []))}",
+                    ]
+
+                    QMessageBox.information(self, "Import Successful", "\n".join(summary))
+                else:
+                    QMessageBox.warning(self, "Import Failed", "Failed to import snapshot.")
+
+            except Exception as e:
+                self.log_activity(f"Import error: {str(e)}")
+                QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{str(e)}")

@@ -27,6 +27,8 @@ from intellicrack.handlers.numpy_handler import numpy as np
 
 logger = logging.getLogger(__name__)
 
+XPU_DEVICE = "xpu:0"
+
 # GPU framework availability flags
 PYCUDA_AVAILABLE = False
 CUPY_AVAILABLE = False
@@ -136,63 +138,77 @@ class GPUAccelerator:
 
     def _get_device_info(self) -> dict[str, Any]:
         """Get GPU device information."""
-        info = {}
-
         if self.framework == "ipex" and IPEX_AVAILABLE:
-            try:
-                device_count = torch.xpu.device_count()
-                if device_count > 0:
-                    device_name = torch.xpu.get_device_name(0)
-                    memory_info = torch.xpu.memory_stats(0) if hasattr(torch.xpu, "memory_stats") else {}
-                    info = {
-                        "name": device_name,
-                        "device_type": "Intel XPU",
-                        "device_count": device_count,
-                        "driver_version": getattr(torch.xpu, "version", "Unknown"),
-                        "memory_allocated": memory_info.get("allocated_bytes.all.current", 0),
-                        "memory_reserved": memory_info.get("reserved_bytes.all.current", 0),
-                    }
-            except Exception as e:
-                logger.debug(f"Failed to get Intel XPU device info: {e}")
-
+            return self._get_ipex_device_info()
         elif self.framework == "cupy" and CUPY_AVAILABLE:
-            try:
-                device = cp.cuda.Device()
-                info = {
-                    "name": device.name.decode(),
-                    "compute_capability": device.compute_capability,
-                    "memory_total": device.mem_info[1],
-                    "memory_free": device.mem_info[0],
-                    "multiprocessor_count": device.attributes["MultiProcessorCount"],
-                }
-            except Exception as e:
-                logger.debug(f"Failed to get CuPy device info: {e}")
-
+            return self._get_cupy_device_info()
         elif self.framework == "pycuda" and PYCUDA_AVAILABLE:
-            try:
-                device = cuda.Device(0)
-                attributes = device.get_attributes()
-                info = {
-                    "name": device.name(),
-                    "compute_capability": device.compute_capability(),
-                    "memory_total": device.total_memory(),
-                    "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT],
-                }
-            except Exception as e:
-                logger.debug(f"Failed to get PyCUDA device info: {e}")
-
+            return self._get_pycuda_device_info()
         elif self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
-            try:
-                device = numba_cuda.get_current_device()
-                info = {
-                    "name": device.name.decode(),
-                    "compute_capability": device.compute_capability,
-                    "memory_total": device.get_memory_info()[1],
-                    "memory_free": device.get_memory_info()[0],
-                }
-            except Exception as e:
-                logger.debug(f"Failed to get Numba device info: {e}")
+            return self._get_numba_device_info()
+        return {}
 
+    def _get_ipex_device_info(self) -> dict[str, Any]:
+        info = {}
+        try:
+            device_count = torch.xpu.device_count()
+            if device_count > 0:
+                device_name = torch.xpu.get_device_name(0)
+                memory_info = torch.xpu.memory_stats(0) if hasattr(torch.xpu, "memory_stats") else {}
+                info = {
+                    "name": device_name,
+                    "device_type": "Intel XPU",
+                    "device_count": device_count,
+                    "driver_version": getattr(torch.xpu, "version", "Unknown"),
+                    "memory_allocated": memory_info.get("allocated_bytes.all.current", 0),
+                    "memory_reserved": memory_info.get("reserved_bytes.all.current", 0),
+                }
+        except Exception as e:
+            logger.debug(f"Failed to get Intel XPU device info: {e}")
+        return info
+
+    def _get_cupy_device_info(self) -> dict[str, Any]:
+        info = {}
+        try:
+            device = cp.cuda.Device()
+            info = {
+                "name": device.name.decode(),
+                "compute_capability": device.compute_capability,
+                "memory_total": device.mem_info[1],
+                "memory_free": device.mem_info[0],
+                "multiprocessor_count": device.attributes["MultiProcessorCount"],
+            }
+        except Exception as e:
+            logger.debug(f"Failed to get CuPy device info: {e}")
+        return info
+
+    def _get_pycuda_device_info(self) -> dict[str, Any]:
+        info = {}
+        try:
+            device = cuda.Device(0)
+            attributes = device.get_attributes()
+            info = {
+                "name": device.name(),
+                "compute_capability": device.compute_capability(),
+                "memory_total": device.total_memory(),
+                "multiprocessor_count": attributes[cuda.device_attribute.MULTIPROCESSOR_COUNT],
+            }
+        except Exception as e:
+            logger.debug(f"Failed to get PyCUDA device info: {e}")
+        return info
+
+    def _get_numba_device_info(self) -> dict[str, Any]:
+        info = {}
+        try:
+            device = numba_cuda.get_current_device()
+            info = {
+                "name": device.name.decode(),
+                "compute_capability": device.compute_capability,
+                "memory_total": device.get_memory_info()[1],
+                "memory_free": device.get_memory_info()[0],
+            }
+        except Exception as e:
+            logger.debug(f"Failed to get Numba device info: {e}")
         return info
 
     def parallel_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
@@ -238,8 +254,8 @@ class GPUAccelerator:
                 pattern_np = np.frombuffer(pattern, dtype=np.uint8)
 
                 # Use IPEX-optimized tensor creation
-                data_tensor = torch.from_numpy(data_np).to(device="xpu:0", dtype=torch.uint8)
-                pattern_tensor = torch.from_numpy(pattern_np).to(device="xpu:0", dtype=torch.uint8)
+                data_tensor = torch.from_numpy(data_np).to(device=XPU_DEVICE, dtype=torch.uint8)
+                pattern_tensor = torch.from_numpy(pattern_np).to(device=XPU_DEVICE, dtype=torch.uint8)
 
                 # Apply IPEX memory optimizations
                 if hasattr(ipex, "optimize_memory_allocation"):
@@ -361,20 +377,7 @@ class GPUAccelerator:
             data_np = np.frombuffer(data, dtype=np.uint8)
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
 
-            @numba_cuda.jit
-            def pattern_match_kernel(data, pattern, matches, positions):
-                idx = numba_cuda.grid(1)
-                if idx <= len(data) - len(pattern):
-                    match = True
-                    for i in range(len(pattern)):
-                        if data[idx + i] != pattern[i]:
-                            match = False
-                            break
-
-                    if match:
-                        match_idx = numba_cuda.atomic.add(matches, 0, 1)
-                        if match_idx < len(positions):
-                            positions[match_idx] = idx
+            kernel = self._create_pattern_match_kernel()
 
             # Transfer to GPU
             d_data = numba_cuda.to_device(data_np)
@@ -387,7 +390,7 @@ class GPUAccelerator:
             blocks = (len(data_np) + threads_per_block - 1) // threads_per_block
 
             # Launch kernel
-            pattern_match_kernel[blocks, threads_per_block](
+            kernel[blocks, threads_per_block](
                 d_data,
                 d_pattern,
                 d_matches,
@@ -407,6 +410,23 @@ class GPUAccelerator:
         except Exception as e:
             logger.error(f"Numba pattern search failed: {e}")
             return self._cpu_pattern_search(data, pattern)
+
+    def _create_pattern_match_kernel(self):
+        @numba_cuda.jit
+        def pattern_match_kernel(data, pattern, matches, positions):
+            idx = numba_cuda.grid(1)
+            if idx <= len(data) - len(pattern):
+                match = True
+                for i in range(len(pattern)):
+                    if data[idx + i] != pattern[i]:
+                        match = False
+                        break
+
+                if match:
+                    match_idx = numba_cuda.atomic.add(matches, 0, 1)
+                    if match_idx < len(positions):
+                        positions[match_idx] = idx
+        return pattern_match_kernel
 
     def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """PyCUDA implementation of pattern search."""
@@ -533,7 +553,7 @@ class GPUAccelerator:
             # Process blocks on Intel XPU
             for i in range(num_blocks):
                 block = data_np[i * block_size : (i + 1) * block_size]
-                block_tensor = torch.from_numpy(block).to(device="xpu:0", dtype=torch.uint8)
+                block_tensor = torch.from_numpy(block).to(device=XPU_DEVICE, dtype=torch.uint8)
 
                 # Calculate histogram using bincount on XPU
                 hist = torch.bincount(block_tensor, minlength=256).float()
@@ -603,30 +623,7 @@ class GPUAccelerator:
     def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """Numba CUDA implementation of entropy calculation."""
         try:
-
-            @numba_cuda.jit
-            def entropy_kernel(data, block_size, entropies):
-                block_idx = numba_cuda.grid(1)
-                if block_idx < len(entropies):
-                    # Calculate histogram for this block
-                    hist = numba_cuda.local.array(256, numba.float32)
-                    for i in range(256):
-                        hist[i] = 0
-
-                    # Count byte occurrences
-                    start = block_idx * block_size
-                    end = min(start + block_size, len(data))
-                    for i in range(start, end):
-                        hist[data[i]] += 1
-
-                    # Normalize and calculate entropy
-                    entropy = 0.0
-                    for i in range(256):
-                        if hist[i] > 0:
-                            p = hist[i] / block_size
-                            entropy -= p * numba.cuda.libdevice.log2f(p)
-
-                    entropies[block_idx] = entropy
+            kernel = self._create_entropy_kernel()
 
             data_np = np.frombuffer(data, dtype=np.uint8)
             num_blocks = len(data_np) // block_size
@@ -638,7 +635,7 @@ class GPUAccelerator:
             # Launch kernel
             threads_per_block = 256
             blocks = (num_blocks + threads_per_block - 1) // threads_per_block
-            entropy_kernel[blocks, threads_per_block](d_data, block_size, d_entropies)
+            kernel[blocks, threads_per_block](d_data, block_size, d_entropies)
 
             # Get results
             entropies = d_entropies.copy_to_host().tolist()
@@ -654,6 +651,32 @@ class GPUAccelerator:
         except Exception as e:
             logger.error(f"Numba entropy calculation failed: {e}")
             return self._cpu_entropy(data, block_size)
+
+    def _create_entropy_kernel(self):
+        @numba_cuda.jit
+        def entropy_kernel(data, block_size, entropies):
+            block_idx = numba_cuda.grid(1)
+            if block_idx < len(entropies):
+                # Calculate histogram for this block
+                hist = numba_cuda.local.array(256, numba.float32)
+                for i in range(256):
+                    hist[i] = 0
+
+                # Count byte occurrences
+                start = block_idx * block_size
+                end = min(start + block_size, len(data))
+                for i in range(start, end):
+                    hist[data[i]] += 1
+
+                # Normalize and calculate entropy
+                entropy = 0.0
+                for i in range(256):
+                    if hist[i] > 0:
+                        p = hist[i] / block_size
+                        entropy -= p * numba.cuda.libdevice.log2f(p)
+
+                entropies[block_idx] = entropy
+        return entropy_kernel
 
     def _cpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """CPU fallback for entropy calculation."""

@@ -22,9 +22,28 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
+import platform
+import psutil
+import subprocess
+import struct
 import time
 import traceback
 from typing import Any, Dict, List
+
+try:
+    import capstone
+except ImportError:
+    capstone = None
+
+try:
+    import frida
+except ImportError:
+    frida = None
+
+try:
+    import pefile
+except ImportError:
+    pefile = None
 
 logger = logging.getLogger(__name__)
 
@@ -376,13 +395,75 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
             logger.warning("Disassemble attempt failed: No binary loaded.")
             return {"status": "error", "message": "No binary loaded. Load a binary first."}
 
-        # Simplified disassembly - would need actual disassembler integration
-        return {
-            "status": "success",
-            "address": f"0x{address:x}",
-            "num_instructions": num_instructions,
-            "disassembly": [f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)],
-        }
+        # Real disassembly using Capstone engine
+        if capstone is None:
+            # Fallback to objdump if Capstone not available
+            try:
+                binary_path = app_instance.binary_path
+                if platform.system() == "Windows":
+                    cmd = ["objdump", "-d", "--start-address", f"0x{address:x}",
+                           "--stop-address", f"0x{address + num_instructions * 16:x}", binary_path]
+                else:
+                    cmd = ["objdump", "-d", f"--start-address=0x{address:x}",
+                           f"--stop-address=0x{address + num_instructions * 16:x}", binary_path]
+
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    lines = result.stdout.split('\n')
+                    disassembly = []
+                    for line in lines:
+                        if ':' in line and '\t' in line:
+                            parts = line.split('\t')
+                            if len(parts) >= 2:
+                                addr_part = parts[0].strip()
+                                instr_part = ' '.join(parts[1:]).strip()
+                                disassembly.append(f"{addr_part}: {instr_part}")
+                    return {
+                        "status": "success",
+                        "address": f"0x{address:x}",
+                        "num_instructions": len(disassembly),
+                        "disassembly": disassembly[:num_instructions]
+                    }
+            except Exception as e:
+                logger.error(f"Objdump disassembly failed: {e}")
+
+        # Use Capstone for disassembly
+        try:
+            with open(app_instance.binary_path, 'rb') as f:
+                f.seek(address)
+                code = f.read(num_instructions * 16)  # Read enough bytes for instructions
+
+            # Determine architecture
+            if pefile and app_instance.binary_path.lower().endswith(('.exe', '.dll')):
+                pe = pefile.PE(app_instance.binary_path)
+                if pe.FILE_HEADER.Machine == 0x8664:  # AMD64
+                    cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+                else:  # x86
+                    cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+            else:
+                # Default to x64
+                cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+
+            disassembly = []
+            count = 0
+            for instr in cs.disasm(code, address):
+                disassembly.append(f"0x{instr.address:x}: {instr.mnemonic} {instr.op_str}")
+                count += 1
+                if count >= num_instructions:
+                    break
+
+            return {
+                "status": "success",
+                "address": f"0x{address:x}",
+                "num_instructions": len(disassembly),
+                "disassembly": disassembly
+            }
+        except Exception as e:
+            logger.error(f"Capstone disassembly failed: {e}")
+            return {
+                "status": "error",
+                "message": f"Disassembly failed: {str(e)}"
+            }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error disassembling address: 0x{address:x}")
@@ -450,12 +531,121 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
-        # Simplified launch - would need actual process launching
-        return {
-            "status": "success",
-            "process_id": 12345,  # Mock PID
-            "message": f"Target process launched: {app_instance.binary_path}",
-        }
+        # Real process launching with proper subprocess handling
+        binary_path = app_instance.binary_path
+        args = parameters.get("args", [])
+        suspended = parameters.get("suspended", False)
+
+        # Launch the process
+        if platform.system() == "Windows":
+            if suspended:
+                # Use Windows CREATE_SUSPENDED flag
+                import ctypes
+                from ctypes import wintypes
+
+                # Define Windows constants
+                CREATE_SUSPENDED = 0x00000004
+                CREATE_NEW_CONSOLE = 0x00000010
+
+                # Prepare startup info
+                class STARTUPINFO(ctypes.Structure):
+                    _fields_ = [
+                        ("cb", wintypes.DWORD),
+                        ("lpReserved", wintypes.LPWSTR),
+                        ("lpDesktop", wintypes.LPWSTR),
+                        ("lpTitle", wintypes.LPWSTR),
+                        ("dwX", wintypes.DWORD),
+                        ("dwY", wintypes.DWORD),
+                        ("dwXSize", wintypes.DWORD),
+                        ("dwYSize", wintypes.DWORD),
+                        ("dwXCountChars", wintypes.DWORD),
+                        ("dwYCountChars", wintypes.DWORD),
+                        ("dwFillAttribute", wintypes.DWORD),
+                        ("dwFlags", wintypes.DWORD),
+                        ("wShowWindow", wintypes.WORD),
+                        ("cbReserved2", wintypes.WORD),
+                        ("lpReserved2", ctypes.POINTER(ctypes.c_byte)),
+                        ("hStdInput", wintypes.HANDLE),
+                        ("hStdOutput", wintypes.HANDLE),
+                        ("hStdError", wintypes.HANDLE),
+                    ]
+
+                class PROCESS_INFORMATION(ctypes.Structure):
+                    _fields_ = [
+                        ("hProcess", wintypes.HANDLE),
+                        ("hThread", wintypes.HANDLE),
+                        ("dwProcessId", wintypes.DWORD),
+                        ("dwThreadId", wintypes.DWORD),
+                    ]
+
+                startup_info = STARTUPINFO()
+                startup_info.cb = ctypes.sizeof(STARTUPINFO)
+                process_info = PROCESS_INFORMATION()
+
+                # Create process in suspended state
+                kernel32 = ctypes.windll.kernel32
+                cmd_line = f'"{binary_path}"'
+                if args:
+                    cmd_line += ' ' + ' '.join(f'"{arg}"' for arg in args)
+
+                result = kernel32.CreateProcessW(
+                    None,
+                    cmd_line,
+                    None,
+                    None,
+                    False,
+                    CREATE_SUSPENDED | CREATE_NEW_CONSOLE,
+                    None,
+                    None,
+                    ctypes.byref(startup_info),
+                    ctypes.byref(process_info)
+                )
+
+                if result:
+                    pid = process_info.dwProcessId
+                    # Store handles for later use
+                    if hasattr(app_instance, "process_handles"):
+                        app_instance.process_handles[pid] = {
+                            "process": process_info.hProcess,
+                            "thread": process_info.hThread
+                        }
+                    return {
+                        "status": "success",
+                        "process_id": pid,
+                        "suspended": True,
+                        "message": f"Process launched in suspended state: {binary_path}"
+                    }
+                else:
+                    error = kernel32.GetLastError()
+                    return {
+                        "status": "error",
+                        "message": f"Failed to launch process: Windows error {error}"
+                    }
+            else:
+                # Normal launch
+                process = subprocess.Popen([binary_path] + args,
+                                         creationflags=subprocess.CREATE_NEW_CONSOLE if platform.system() == "Windows" else 0)
+                return {
+                    "status": "success",
+                    "process_id": process.pid,
+                    "message": f"Target process launched: {binary_path}"
+                }
+        else:
+            # Unix/Linux process launching
+            if suspended:
+                # Use ptrace to suspend on Unix
+                import signal
+                process = subprocess.Popen([binary_path] + args,
+                                         preexec_fn=lambda: os.kill(os.getpid(), signal.SIGSTOP))
+            else:
+                process = subprocess.Popen([binary_path] + args)
+
+            return {
+                "status": "success",
+                "process_id": process.pid,
+                "suspended": suspended,
+                "message": f"Target process launched: {binary_path}"
+            }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error launching target")
@@ -484,12 +674,68 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         app_instance.update_output.emit(log_message(f"[Tool] Attaching to process: {process_id}"))
         logger.info("Attaching to process: %s", process_id)
 
-        # Simplified attach - would need actual process attachment
-        return {
-            "status": "success",
-            "process_id": process_id,
-            "message": f"Successfully attached to process {process_id}",
-        }
+        # Real process attachment implementation
+        if platform.system() == "Windows":
+            # Windows debugger attachment using Windows Debug APIs
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+
+            # Try to attach as debugger
+            if kernel32.DebugActiveProcess(process_id):
+                # Store attached process info
+                if not hasattr(app_instance, "attached_processes"):
+                    app_instance.attached_processes = {}
+                app_instance.attached_processes[process_id] = True
+
+                return {
+                    "status": "success",
+                    "process_id": process_id,
+                    "message": f"Successfully attached to process {process_id}",
+                    "method": "windows_debug_api"
+                }
+            else:
+                error = kernel32.GetLastError()
+                return {
+                    "status": "error",
+                    "message": f"Failed to attach: Windows error {error}"
+                }
+        else:
+            # Unix/Linux ptrace attachment
+            import signal
+            try:
+                # Check if process exists
+                os.kill(process_id, 0)
+
+                # Try ptrace attachment (requires privileges)
+                import ctypes
+                libc = ctypes.CDLL("libc.so.6")
+                PTRACE_ATTACH = 16
+
+                result = libc.ptrace(PTRACE_ATTACH, process_id, 0, 0)
+                if result == 0:
+                    # Wait for process to stop
+                    os.waitpid(process_id, 0)
+
+                    if not hasattr(app_instance, "attached_processes"):
+                        app_instance.attached_processes = {}
+                    app_instance.attached_processes[process_id] = True
+
+                    return {
+                        "status": "success",
+                        "process_id": process_id,
+                        "message": f"Successfully attached to process {process_id}",
+                        "method": "ptrace"
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Failed to attach: ptrace failed (may need root privileges)"
+                    }
+            except ProcessLookupError:
+                return {
+                    "status": "error",
+                    "message": f"Process {process_id} not found"
+                }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error attaching to process: {process_id}")
@@ -522,14 +768,116 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
         if not os.path.exists(script_path):
             return {"status": "error", "message": f"Script file not found: {script_path}"}
 
-        # Simplified Frida execution - would need actual Frida integration
-        return {
-            "status": "success",
-            "script_path": script_path,
-            "process_id": process_id,
-            "output": "Script executed successfully",
-            "message": f"Frida script executed: {script_path}",
-        }
+        # Real Frida script execution
+        if frida is None:
+            # Fallback to subprocess if Frida module not available
+            try:
+                # Execute using frida CLI tool
+                cmd = ["frida"]
+                if process_id:
+                    cmd.extend(["-p", str(process_id)])
+                cmd.extend(["-l", script_path])
+
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    output_lines = result.stdout if result.stdout else "Script executed"
+                    return {
+                        "status": "success",
+                        "script_path": script_path,
+                        "process_id": process_id,
+                        "output": output_lines,
+                        "message": f"Frida script executed via CLI: {script_path}"
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": f"Frida execution failed: {result.stderr}"
+                    }
+            except subprocess.TimeoutExpired:
+                return {
+                    "status": "error",
+                    "message": "Frida script execution timed out"
+                }
+            except FileNotFoundError:
+                return {
+                    "status": "error",
+                    "message": "Frida CLI not found. Please install Frida."
+                }
+
+        # Use Frida Python API
+        try:
+            # Read script content
+            with open(script_path, 'r') as f:
+                script_content = f.read()
+
+            # Attach to process or spawn new one
+            session = None
+            if process_id:
+                # Attach to existing process
+                session = frida.attach(process_id)
+            else:
+                # Get process name from parameters or app_instance
+                process_name = parameters.get("process_name")
+                if not process_name and hasattr(app_instance, "binary_path"):
+                    process_name = os.path.basename(app_instance.binary_path)
+
+                if process_name:
+                    # Spawn new process
+                    pid = frida.spawn(process_name)
+                    session = frida.attach(pid)
+                    frida.resume(pid)
+                    process_id = pid
+                else:
+                    return {
+                        "status": "error",
+                        "message": "No process specified for Frida script"
+                    }
+
+            # Create and load script
+            script = session.create_script(script_content)
+
+            # Collect output messages
+            output_messages = []
+
+            def on_message(message, data):
+                if message['type'] == 'send':
+                    output_messages.append(str(message.get('payload', '')))
+                elif message['type'] == 'error':
+                    output_messages.append(f"Error: {message.get('description', '')}")
+
+            script.on('message', on_message)
+            script.load()
+
+            # Let script run for a bit to collect output
+            import time
+            time.sleep(2)
+
+            # Store session for later use
+            if not hasattr(app_instance, "frida_sessions"):
+                app_instance.frida_sessions = {}
+            if process_id:
+                app_instance.frida_sessions[process_id] = session
+
+            output_str = '\n'.join(output_messages) if output_messages else "Script loaded and running"
+            return {
+                "status": "success",
+                "script_path": script_path,
+                "process_id": process_id,
+                "output": output_str,
+                "message": f"Frida script executed: {script_path}"
+            }
+
+        except Exception as e:
+            if frida and isinstance(e, frida.ProcessNotFoundError):
+                return {
+                    "status": "error",
+                    "message": f"Process {process_id} not found"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Frida execution error: {str(e)}"
+                }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error running Frida script: {script_path}")
@@ -549,7 +897,71 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         app_instance.update_output.emit(log_message("[Tool] Detaching from target process"))
         logger.info("Detaching from target process")
 
-        # Simplified detach - would clean up actual process connections
+        # Real process detachment
+        process_id = parameters.get("process_id")
+
+        # Clean up Frida sessions if any
+        if hasattr(app_instance, "frida_sessions"):
+            for pid in list(app_instance.frida_sessions.keys()):
+                if process_id is None or pid == process_id:
+                    try:
+                        session = app_instance.frida_sessions[pid]
+                        session.detach()
+                        del app_instance.frida_sessions[pid]
+                    except Exception as e:
+                        logger.warning(f"Failed to detach Frida session from {pid}: {e}")
+
+        # Clean up debugger attachments
+        if hasattr(app_instance, "attached_processes"):
+            if platform.system() == "Windows":
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+
+                for pid in list(app_instance.attached_processes.keys()):
+                    if process_id is None or pid == process_id:
+                        try:
+                            # Windows debugger detach
+                            if kernel32.DebugActiveProcessStop(pid):
+                                del app_instance.attached_processes[pid]
+                            else:
+                                logger.warning(f"Failed to detach from process {pid}")
+                        except Exception as e:
+                            logger.warning(f"Error detaching from {pid}: {e}")
+            else:
+                # Unix/Linux ptrace detach
+                import ctypes
+                libc = ctypes.CDLL("libc.so.6")
+                PTRACE_DETACH = 17
+
+                for pid in list(app_instance.attached_processes.keys()):
+                    if process_id is None or pid == process_id:
+                        try:
+                            result = libc.ptrace(PTRACE_DETACH, pid, 0, 0)
+                            if result == 0:
+                                del app_instance.attached_processes[pid]
+                            else:
+                                logger.warning(f"Failed to detach from process {pid}")
+                        except Exception as e:
+                            logger.warning(f"Error detaching from {pid}: {e}")
+
+        # Clean up process handles
+        if hasattr(app_instance, "process_handles"):
+            if platform.system() == "Windows":
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+
+                for pid in list(app_instance.process_handles.keys()):
+                    if process_id is None or pid == process_id:
+                        try:
+                            handles = app_instance.process_handles[pid]
+                            if "process" in handles:
+                                kernel32.CloseHandle(handles["process"])
+                            if "thread" in handles:
+                                kernel32.CloseHandle(handles["thread"])
+                            del app_instance.process_handles[pid]
+                        except Exception as e:
+                            logger.warning(f"Error closing handles for {pid}: {e}")
+
         return {"status": "success", "message": "Successfully detached from target process"}
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -1122,13 +1534,107 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
         if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
-        # Simplified patch application - would need actual binary modification
-        return {
-            "status": "success",
-            "patch_id": patch_id,
-            "applied": True,
-            "message": f"Successfully applied patch {patch_id}",
-        }
+        # Real binary patch application
+        binary_path = app_instance.binary_path
+
+        # Get patch details from stored patches
+        patches = getattr(app_instance, "potential_patches", [])
+        patch = None
+        for p in patches:
+            if p.get("id") == patch_id:
+                patch = p
+                break
+
+        if not patch:
+            return {
+                "status": "error",
+                "message": f"Patch {patch_id} not found"
+            }
+
+        # Create backup of original file
+        import shutil
+        backup_path = f"{binary_path}.bak_{int(time.time())}"
+        try:
+            shutil.copy2(binary_path, backup_path)
+        except IOError as e:
+            return {
+                "status": "error",
+                "message": f"Failed to create backup: {str(e)}"
+            }
+
+        # Apply the patch
+        try:
+            with open(binary_path, 'r+b') as f:
+                # Apply each modification in the patch
+                modifications = patch.get("modifications", [])
+                for mod in modifications:
+                    offset = mod.get("offset")
+                    original_bytes = mod.get("original")
+                    new_bytes = mod.get("new")
+
+                    if offset is None or new_bytes is None:
+                        continue
+
+                    # Convert hex strings to bytes if needed
+                    if isinstance(new_bytes, str):
+                        new_bytes = bytes.fromhex(new_bytes.replace(' ', '').replace('0x', ''))
+                    if isinstance(original_bytes, str):
+                        original_bytes = bytes.fromhex(original_bytes.replace(' ', '').replace('0x', ''))
+
+                    # Verify original bytes match (if provided)
+                    if original_bytes:
+                        f.seek(offset)
+                        current_bytes = f.read(len(original_bytes))
+                        if current_bytes != original_bytes:
+                            # Restore backup and fail
+                            shutil.copy2(backup_path, binary_path)
+                            return {
+                                "status": "error",
+                                "message": f"Original bytes mismatch at offset 0x{offset:x}"
+                            }
+
+                    # Write new bytes
+                    f.seek(offset)
+                    f.write(new_bytes)
+
+            # Update PE checksum if it's a Windows PE file
+            if pefile and binary_path.lower().endswith(('.exe', '.dll')):
+                try:
+                    pe = pefile.PE(binary_path)
+                    pe.OPTIONAL_HEADER.CheckSum = pe.generate_checksum()
+                    pe.write(binary_path)
+                    pe.close()
+                except Exception as e:
+                    logger.warning(f"Failed to update PE checksum: {e}")
+
+            # Store patch info for rollback
+            if not hasattr(app_instance, "applied_patches"):
+                app_instance.applied_patches = []
+            app_instance.applied_patches.append({
+                "id": patch_id,
+                "backup_path": backup_path,
+                "timestamp": time.time(),
+                "patch": patch
+            })
+
+            return {
+                "status": "success",
+                "patch_id": patch_id,
+                "applied": True,
+                "backup_path": backup_path,
+                "message": f"Successfully applied patch {patch_id}"
+            }
+
+        except Exception as e:
+            # Restore backup on error
+            try:
+                shutil.copy2(backup_path, binary_path)
+            except:
+                pass
+            return {
+                "status": "error",
+                "message": f"Failed to apply patch: {str(e)}"
+            }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error applying patch: {patch_id}")

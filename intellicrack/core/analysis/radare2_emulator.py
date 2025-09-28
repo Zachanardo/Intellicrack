@@ -21,24 +21,48 @@ from typing import Any, Dict, List, Optional, Tuple
 import r2pipe
 import unicorn
 import z3
-from capstone import Cs
-from unicorn import Uc
-from unicorn.arm64_const import UC_ARM64_REG_X0, UC_ARM64_REG_SP, UC_ARM64_REG_PC
-from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_SP, UC_ARM_REG_LR, UC_ARM_REG_PC
+from unicorn import (
+    UC_ARCH_ARM,
+    UC_ARCH_ARM64,
+    UC_ARCH_X86,
+    UC_HOOK_CODE,
+    UC_HOOK_MEM_READ,
+    UC_HOOK_MEM_WRITE,
+    UC_MODE_32,
+    UC_MODE_64,
+    UC_MODE_ARM,
+    UC_PROT_ALL,
+)
+from unicorn.arm64_const import UC_ARM64_REG_PC, UC_ARM64_REG_SP, UC_ARM64_REG_X0
+from unicorn.arm_const import UC_ARM_REG_LR, UC_ARM_REG_PC, UC_ARM_REG_R0, UC_ARM_REG_SP
 from unicorn.mips_const import UC_ARCH_MIPS, UC_MODE_MIPS32
 from unicorn.x86_const import (
-    UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EDX,
-    UC_X86_REG_ESI, UC_X86_REG_EDI, UC_X86_REG_EBP, UC_X86_REG_ESP,
-    UC_X86_REG_EIP, UC_X86_REG_RAX, UC_X86_REG_RBX, UC_X86_REG_RCX,
-    UC_X86_REG_RDX, UC_X86_REG_RSI, UC_X86_REG_RDI, UC_X86_REG_RBP,
-    UC_X86_REG_RSP, UC_X86_REG_RIP, UC_X86_REG_R8, UC_X86_REG_R9,
-    UC_X86_REG_R10, UC_X86_REG_R11, UC_X86_REG_R12, UC_X86_REG_R13,
-    UC_X86_REG_R14, UC_X86_REG_R15
-)
-from unicorn import (
-    UC_ARCH_X86, UC_MODE_64, UC_MODE_32, UC_ARCH_ARM, UC_MODE_ARM,
-    UC_ARCH_ARM64, UC_PROT_ALL, UC_HOOK_CODE, UC_HOOK_MEM_WRITE,
-    UC_HOOK_MEM_READ
+    UC_X86_REG_EAX,
+    UC_X86_REG_EBP,
+    UC_X86_REG_EBX,
+    UC_X86_REG_ECX,
+    UC_X86_REG_EDI,
+    UC_X86_REG_EDX,
+    UC_X86_REG_EIP,
+    UC_X86_REG_ESI,
+    UC_X86_REG_ESP,
+    UC_X86_REG_R8,
+    UC_X86_REG_R9,
+    UC_X86_REG_R10,
+    UC_X86_REG_R11,
+    UC_X86_REG_R12,
+    UC_X86_REG_R13,
+    UC_X86_REG_R14,
+    UC_X86_REG_R15,
+    UC_X86_REG_RAX,
+    UC_X86_REG_RBP,
+    UC_X86_REG_RBX,
+    UC_X86_REG_RCX,
+    UC_X86_REG_RDI,
+    UC_X86_REG_RDX,
+    UC_X86_REG_RIP,
+    UC_X86_REG_RSI,
+    UC_X86_REG_RSP,
 )
 
 logger = logging.getLogger(__name__)

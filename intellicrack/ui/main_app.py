@@ -57,7 +57,7 @@ from intellicrack.core.analysis.rop_generator import ROPChainGenerator, run_rop_
 from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_taint_analysis
 from intellicrack.core.app_context import get_app_context
 from intellicrack.core.network.cloud_license_hooker import run_cloud_license_hooker
-from intellicrack.core.network.license_server_emulator import run_network_license_emulator
+from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.core.network.protocol_tool import (
     launch_protocol_tool,
     update_protocol_tool_description,

@@ -18,14 +18,27 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import hashlib
 import os
+import platform
 import subprocess
 import tempfile
+import uuid
+import winreg
 from enum import Enum
 from pathlib import Path
 
+try:
+    import wmi
+except ImportError:
+    wmi = None
+
 from ...utils.logger import get_logger
 from ...utils.system.system_utils import is_admin
+try:
+    from ...utils.system.subprocess_utils import run_subprocess_check
+except ImportError:
+    run_subprocess_check = None
 
 logger = get_logger(__name__)
 
@@ -99,14 +112,10 @@ class WindowsActivator:
         Returns:
             Hardware ID string for digital license activation
         """
-        import hashlib
-        import platform
-        import uuid
-
-        import wmi
-
         try:
             # Initialize WMI
+            if wmi is None:
+                raise ImportError("WMI module is not available")
             c = wmi.WMI()
 
             # Collect hardware information
@@ -487,7 +496,6 @@ class WindowsActivator:
 
             # Also check registry for C2R installations
             try:
-                import winreg
 
                 registry_paths = [
                     r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
@@ -641,9 +649,11 @@ class WindowsActivator:
 
             logger.info("Installing Office product key for version %s", office_version)
 
-            from ...utils.system.subprocess_utils import run_subprocess_check
-
-            result = run_subprocess_check(install_cmd, timeout=60)
+            if run_subprocess_check is None:
+                # Fallback to subprocess.run if run_subprocess_check is not available
+                result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=60)
+            else:
+                result = run_subprocess_check(install_cmd, timeout=60)
 
             if result.returncode != 0:
                 return {

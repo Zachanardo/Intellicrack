@@ -1,4 +1,4 @@
-"""Protection detection utilities - wrapper to redirect to protection/protection_detection.py.
+"""Protection detection utilities - wrapper to redirect to protection/protection_detector.py.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -18,8 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-# Import all functions from the protection/protection_detection module
-from .protection.protection_detection import (
+# Import all functions from the main protection detector module
+from ..protection.protection_detector import (
     detect_all_protections,
     detect_anti_debug,
     detect_anti_debugging,
@@ -35,8 +35,10 @@ from .protection.protection_detection import (
     detect_tpm_protection,
     detect_virtualization_protection,
     detect_vm_detection,
+    generate_checksum,
     run_comprehensive_protection_scan,
     scan_for_bytecode_protectors,
+    ProtectionDetector,
 )
 
 __all__ = [
@@ -55,6 +57,8 @@ __all__ = [
     "detect_tpm_protection",
     "detect_virtualization_protection",
     "detect_vm_detection",
+    "generate_checksum",
     "run_comprehensive_protection_scan",
     "scan_for_bytecode_protectors",
+    "ProtectionDetector",
 ]

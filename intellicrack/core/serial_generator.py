@@ -1,12 +1,19 @@
+import base64
 import hashlib
+import hmac
+import json
 import random
 import re
+import struct
+import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import z3
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 
 
 class SerialFormat(Enum):
@@ -37,10 +44,16 @@ class SerialConstraints:
 @dataclass
 class GeneratedSerial:
     serial: str
-    format: SerialFormat
-    confidence: float
-    validation_data: Dict[str, Any]
-    algorithm_used: str
+    format: SerialFormat = None
+    confidence: float = 0.0
+    validation_data: Dict[str, Any] = None
+    algorithm_used: str = None
+    raw_bytes: bytes = None
+    checksum: Optional[str] = None
+    hardware_id: Optional[str] = None
+    expiration: Optional[int] = None
+    features: List[str] = None
+    algorithm: str = None
 
 
 class SerialNumberGenerator:
@@ -890,6 +903,243 @@ class SerialNumberGenerator:
         analysis["generated_samples"] = [s.serial for s in samples]
 
         return analysis
+
+    def generate_rsa_signed(
+        self,
+        private_key: rsa.RSAPrivateKey,
+        product_id: str,
+        user_name: str,
+        features: Optional[List[str]] = None,
+        expiration: Optional[int] = None,
+    ) -> GeneratedSerial:
+        """Generate RSA-signed serial number with cryptographic validation."""
+        license_data = {
+            "product_id": product_id,
+            "user": user_name,
+            "features": features or [],
+            "issued": int(time.time()),
+            "expiration": expiration or 0,
+        }
+
+        data_bytes = json.dumps(license_data, sort_keys=True).encode()
+
+        signature = private_key.sign(
+            data_bytes, 
+            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), 
+            hashes.SHA256()
+        )
+
+        serial_data = base64.b32encode(data_bytes + signature)
+        serial = serial_data.decode("ascii").rstrip("=")
+
+        formatted = "-".join(serial[i : i + 5] for i in range(0, len(serial), 5))
+
+        return GeneratedSerial(
+            serial=formatted,
+            raw_bytes=data_bytes + signature,
+            checksum="RSA-PSS-SHA256",
+            hardware_id=None,
+            expiration=expiration,
+            features=features or [],
+            algorithm="rsa_signed",
+            confidence=0.95,
+        )
+
+    def generate_ecc_signed(self, private_key: ec.EllipticCurvePrivateKey, product_id: str, machine_code: str) -> GeneratedSerial:
+        """Generate ECC-signed serial number with elliptic curve cryptography."""
+        data = f"{product_id}:{machine_code}:{int(time.time())}"
+        data_bytes = data.encode()
+
+        signature = private_key.sign(data_bytes, ec.ECDSA(hashes.SHA256()))
+
+        serial_bytes = data_bytes + signature
+        serial = base64.b32encode(serial_bytes).decode("ascii").rstrip("=")
+
+        formatted = "-".join(serial[i : i + 6] for i in range(0, len(serial), 6))
+
+        return GeneratedSerial(
+            serial=formatted,
+            raw_bytes=serial_bytes,
+            checksum="ECDSA-SHA256",
+            hardware_id=machine_code,
+            expiration=None,
+            features=[],
+            algorithm="ecc_signed",
+            confidence=0.93,
+        )
+
+    def generate_time_based(self, secret_key: bytes, validity_days: int = 30, product_id: Optional[str] = None) -> GeneratedSerial:
+        """Generate time-based serial number using TOTP-like algorithm."""
+        time_counter = int(time.time()) // 86400  # Daily counter
+        expiration = int(time.time()) + (validity_days * 86400)
+
+        data = struct.pack(">Q", time_counter)
+        if product_id:
+            data += product_id.encode()
+
+        h = hmac.new(secret_key, data, hashlib.sha256)
+        digest = h.digest()
+
+        offset = digest[-1] & 0x0F
+        code = struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF
+
+        serial_parts = []
+        for i in range(5):
+            part = (code >> (i * 6)) & 0x3F
+            if part < 26:
+                serial_parts.append(chr(ord("A") + part))
+            elif part < 52:
+                serial_parts.append(chr(ord("a") + part - 26))
+            else:
+                serial_parts.append(str(part - 52))
+
+        exp_encoded = base64.b32encode(struct.pack(">I", expiration)).decode()[:6]
+        serial = f"{''.join(serial_parts)}-{exp_encoded}-{code % 10000:04d}"
+
+        return GeneratedSerial(
+            serial=serial,
+            raw_bytes=digest,
+            checksum="HMAC-SHA256",
+            hardware_id=None,
+            expiration=expiration,
+            features=[],
+            algorithm="time_based",
+            confidence=0.88,
+        )
+
+    def generate_feature_encoded(self, base_serial: str, features: List[str]) -> GeneratedSerial:
+        """Generate serial with encoded feature flags."""
+        feature_flags = {
+            "pro": 0x01,
+            "enterprise": 0x02,
+            "unlimited": 0x04,
+            "support": 0x08,
+            "updates": 0x10,
+            "api": 0x20,
+            "export": 0x40,
+            "multiuser": 0x80,
+        }
+
+        flags = 0
+        for feature in features:
+            flags |= feature_flags.get(feature.lower(), 0)
+
+        flags_encoded = f"{flags:04X}"
+
+        if "-" in base_serial:
+            parts = base_serial.split("-")
+            parts.insert(-1, flags_encoded)
+            serial = "-".join(parts)
+        else:
+            serial = f"{base_serial}-{flags_encoded}"
+
+        checksum = self._calculate_crc16(serial.encode())
+        serial = f"{serial}-{checksum:04X}"
+
+        return GeneratedSerial(
+            serial=serial,
+            raw_bytes=serial.encode(),
+            checksum="CRC16",
+            hardware_id=None,
+            expiration=None,
+            features=features,
+            algorithm="feature_encoded",
+            confidence=0.82,
+        )
+
+    def generate_mathematical(self, seed: int, algorithm: str = "quadratic") -> GeneratedSerial:
+        """Generate serial using mathematical relationships."""
+        if algorithm == "quadratic":
+            a, b, c = 1337, 42069, 314159
+            result = (a * seed * seed + b * seed + c) & 0xFFFFFFFF
+
+        elif algorithm == "fibonacci":
+            f1, f2 = seed, seed + 1
+            for _ in range(10):
+                f1, f2 = f2, (f1 + f2) & 0xFFFFFFFF
+            result = f2
+
+        elif algorithm == "mersenne":
+            mersenne_primes = [3, 7, 31, 127, 8191, 131071, 524287]
+            mp = mersenne_primes[seed % len(mersenne_primes)]
+            result = (seed * mp) & 0xFFFFFFFF
+
+        else:
+            result = hashlib.md5(str(seed).encode()).hexdigest()[:8]
+            result = int(result, 16)
+
+        serial = f"{seed:05d}-{result:08X}"
+
+        validation = self._calculate_crc32(serial.encode())
+        serial = f"{serial}-{validation:08X}"
+
+        return GeneratedSerial(
+            serial=serial,
+            raw_bytes=struct.pack(">II", seed, result),
+            checksum="CRC32",
+            hardware_id=None,
+            expiration=None,
+            features=[],
+            algorithm=f"mathematical_{algorithm}",
+            confidence=0.79,
+        )
+
+    def generate_blackbox(self, input_data: bytes, rounds: int = 1000) -> GeneratedSerial:
+        """Generate serial using blackbox algorithm for unknown protection schemes."""
+        state = bytearray(input_data)
+
+        for round_num in range(rounds):
+            # Substitution
+            for i in range(len(state)):
+                state[i] = (state[i] + round_num) & 0xFF
+
+            # Permutation
+            for i in range(0, len(state) - 1, 2):
+                state[i], state[i + 1] = state[i + 1], state[i]
+
+            # Diffusion
+            h = hashlib.sha256(state).digest()
+            for i in range(min(len(state), len(h))):
+                state[i] ^= h[i]
+
+        serial_bytes = bytes(state[:16])
+        serial = base64.b32encode(serial_bytes).decode().rstrip("=")
+
+        formatted = "-".join(serial[i : i + 4] for i in range(0, len(serial), 4))
+
+        return GeneratedSerial(
+            serial=formatted,
+            raw_bytes=serial_bytes,
+            checksum=None,
+            hardware_id=None,
+            expiration=None,
+            features=[],
+            algorithm="blackbox",
+            confidence=0.70,
+        )
+
+    def brute_force_checksum(self, partial_serial: str, checksum_length: int = 4) -> List[str]:
+        """Brute force missing checksum digits for incomplete serials."""
+        candidates = []
+        charset = "0123456789ABCDEF"
+
+        for i in range(16**checksum_length):
+            checksum = ""
+            val = i
+            for _ in range(checksum_length):
+                checksum = charset[val % 16] + checksum
+                val //= 16
+
+            full_serial = f"{partial_serial}-{checksum}"
+
+            if self._verify_checksum("CRC32", full_serial):
+                candidates.append(full_serial)
+            elif self._verify_checksum("CRC16", full_serial):
+                candidates.append(full_serial)
+            elif self._verify_checksum("LUHN", full_serial):
+                candidates.append(full_serial)
+
+        return candidates
 
     def _test_single_serial(self, serial: str, algorithm: str) -> bool:
         """Test if a serial matches an algorithm"""

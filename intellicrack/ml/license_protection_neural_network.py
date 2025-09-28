@@ -164,6 +164,50 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
         # Residual connections
         self.residual_conv = nn.Conv2d(32, 128, kernel_size=1, stride=4)
 
+        # Initialize weights properly
+        self._initialize_weights()
+
+        # Load pre-trained weights if available
+        self._load_pretrained_weights()
+
+    def _initialize_weights(self):
+        """Initialize weights using He initialization for ReLU networks."""
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                # He initialization (Kaiming) for ReLU activation
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                # Standard initialization for batch normalization
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                # Xavier initialization for linear layers
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+    def _load_pretrained_weights(self):
+        """Load pre-trained weights from saved model if available."""
+        pretrained_path = Path(__file__).parent / "pretrained" / "license_cnn_weights.pth"
+        if pretrained_path.exists():
+            try:
+                state_dict = torch.load(pretrained_path, map_location='cpu')
+                self.load_state_dict(state_dict, strict=False)
+                logging.getLogger(__name__).info(f"Loaded pre-trained weights from {pretrained_path}")
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Could not load pre-trained weights: {e}")
+
+    def save_weights(self, path: Optional[str] = None):
+        """Save model weights for future use."""
+        if path is None:
+            save_dir = Path(__file__).parent / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+            path = save_dir / "license_cnn_weights.pth"
+        torch.save(self.state_dict(), path)
+        logging.getLogger(__name__).info(f"Saved model weights to {path}")
+
     def forward(self, x):
         """Forward pass with attention and residual connections."""
         # Reshape input
@@ -232,6 +276,49 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             nn.Linear(self.model_dim, 256), nn.ReLU(), nn.Dropout(0.3), nn.Linear(256, len(LicenseProtectionType))
         )
 
+        # Initialize weights properly
+        self._initialize_weights()
+
+        # Load pre-trained weights if available
+        self._load_pretrained_weights()
+
+    def _initialize_weights(self):
+        """Initialize weights using Xavier initialization for Transformer."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+
+        # Special initialization for input projection
+        nn.init.xavier_uniform_(self.input_projection.weight)
+        nn.init.constant_(self.input_projection.bias, 0)
+
+        # Initialize classifier layers
+        for m in self.classifier:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+    def _load_pretrained_weights(self):
+        """Load pre-trained weights from saved model if available."""
+        pretrained_path = Path(__file__).parent / "pretrained" / "license_transformer_weights.pth"
+        if pretrained_path.exists():
+            try:
+                state_dict = torch.load(pretrained_path, map_location='cpu')
+                self.load_state_dict(state_dict, strict=False)
+                logging.getLogger(__name__).info(f"Loaded pre-trained Transformer weights from {pretrained_path}")
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Could not load pre-trained Transformer weights: {e}")
+
+    def save_weights(self, path: Optional[str] = None):
+        """Save model weights for future use."""
+        if path is None:
+            save_dir = Path(__file__).parent / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+            path = save_dir / "license_transformer_weights.pth"
+        torch.save(self.state_dict(), path)
+        logging.getLogger(__name__).info(f"Saved Transformer weights to {path}")
+
     def _create_positional_encoding(self, max_len: int, d_model: int) -> torch.Tensor:
         """Create sinusoidal positional encoding."""
         pe = torch.zeros(max_len, d_model)
@@ -298,6 +385,67 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
         self.complexity_scorer = nn.Linear(256, 1)  # Protection complexity score
         self.bypass_difficulty = nn.Linear(256, 5)  # Bypass difficulty levels
 
+        # Initialize weights for fusion and output layers
+        self._initialize_weights()
+
+        # Load pre-trained weights if available
+        self._load_pretrained_weights()
+
+    def _initialize_weights(self):
+        """Initialize weights for fusion and output layers."""
+        # Initialize fusion layers
+        for m in self.fusion_layer:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+        # Initialize output heads
+        nn.init.xavier_uniform_(self.protection_classifier.weight)
+        nn.init.constant_(self.protection_classifier.bias, 0)
+
+        nn.init.xavier_uniform_(self.version_regressor.weight)
+        nn.init.constant_(self.version_regressor.bias, 0)
+
+        nn.init.xavier_uniform_(self.complexity_scorer.weight)
+        nn.init.constant_(self.complexity_scorer.bias, 0)
+
+        nn.init.xavier_uniform_(self.bypass_difficulty.weight)
+        nn.init.constant_(self.bypass_difficulty.bias, 0)
+
+        # Initialize GNN branch
+        for m in self.gnn_branch:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def _load_pretrained_weights(self):
+        """Load pre-trained weights from saved model if available."""
+        pretrained_path = Path(__file__).parent / "pretrained" / "hybrid_analyzer_weights.pth"
+        if pretrained_path.exists():
+            try:
+                state_dict = torch.load(pretrained_path, map_location='cpu')
+                self.load_state_dict(state_dict, strict=False)
+                logging.getLogger(__name__).info(f"Loaded pre-trained Hybrid model weights from {pretrained_path}")
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Could not load pre-trained Hybrid weights: {e}")
+
+    def save_weights(self, path: Optional[str] = None):
+        """Save model weights for future use."""
+        if path is None:
+            save_dir = Path(__file__).parent / "pretrained"
+            save_dir.mkdir(exist_ok=True)
+            path = save_dir / "hybrid_analyzer_weights.pth"
+        torch.save(self.state_dict(), path)
+        logging.getLogger(__name__).info(f"Saved Hybrid model weights to {path}")
+
     def _create_gnn_branch(self):
         """Create Graph Neural Network branch for CFG analysis."""
         # Simplified GNN using standard layers
@@ -326,78 +474,168 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
-    def __init__(self, data_path: str, transform=None):
+    def __init__(self, data_path: str, transform=None, cache_features: bool = True):
         """Initialize dataset with protection samples."""
         self.data_path = Path(data_path)
         self.transform = transform
+        self.cache_features = cache_features
         self.samples = []
         self.labels = []
+        self.feature_cache = {}
+        self.label_to_idx = {}
+        self.idx_to_label = {}
 
         self._load_data()
+        self._build_label_mapping()
 
     def _load_data(self):
-        """Load binary samples and labels."""
+        """Load binary samples and labels from directory structure or metadata."""
         if not self.data_path.exists():
+            self.logger = logging.getLogger(__name__)
+            self.logger.warning(f"Dataset path does not exist: {self.data_path}")
             return
 
-        # Load sample metadata
+        # Try to load from metadata file
         metadata_file = self.data_path / "metadata.json"
         if metadata_file.exists():
-            with open(metadata_file, "r") as f:
-                metadata = json.load(f)
+            self._load_from_metadata(metadata_file)
+        else:
+            # Load from directory structure (protection_type/sample.exe)
+            self._load_from_directory_structure()
 
-            for sample in metadata["samples"]:
-                sample_path = self.data_path / sample["file"]
-                if sample_path.exists():
-                    self.samples.append(sample_path)
-                    self.labels.append(sample["protection_type"])
+    def _load_from_metadata(self, metadata_file: Path):
+        """Load samples from metadata JSON file."""
+        with open(metadata_file, "r") as f:
+            metadata = json.load(f)
+
+        for sample in metadata.get("samples", []):
+            sample_path = self.data_path / sample["file"]
+            if sample_path.exists():
+                self.samples.append(sample_path)
+                protection_type = sample.get("protection_type", "unknown")
+                self.labels.append(protection_type)
+
+    def _load_from_directory_structure(self):
+        """Load samples from directory structure where each subdirectory is a protection type."""
+        for protection_dir in self.data_path.iterdir():
+            if protection_dir.is_dir():
+                protection_type = protection_dir.name.lower()
+
+                # Map directory names to LicenseProtectionType enum values
+                if protection_type in [e.value for e in LicenseProtectionType]:
+                    # Load all binary files in this directory
+                    for file_path in protection_dir.glob("*"):
+                        if file_path.is_file() and file_path.suffix in ['.exe', '.dll', '.sys', '.bin', '']:
+                            self.samples.append(file_path)
+                            self.labels.append(protection_type)
+
+    def _build_label_mapping(self):
+        """Build mapping between labels and indices."""
+        unique_labels = sorted(set(self.labels))
+        for idx, label in enumerate(unique_labels):
+            self.label_to_idx[label] = idx
+            self.idx_to_label[idx] = label
 
     def __len__(self):
         """Return dataset size."""
         return len(self.samples)
 
     def __getitem__(self, idx):
-        """Get sample and label."""
+        """Get sample and label with caching support."""
         sample_path = self.samples[idx]
-        label = self.labels[idx]
+        label_str = self.labels[idx]
 
-        # Extract features from binary
-        features = self._extract_features(sample_path)
+        # Convert label to index
+        label_idx = self.label_to_idx[label_str]
+
+        # Check cache first
+        if self.cache_features and str(sample_path) in self.feature_cache:
+            features = self.feature_cache[str(sample_path)]
+        else:
+            # Extract features from binary
+            features = self._extract_features(sample_path)
+
+            # Cache features if enabled
+            if self.cache_features:
+                self.feature_cache[str(sample_path)] = features
 
         if self.transform:
             features = self.transform(features)
 
-        return features, label
+        # Convert to tensor
+        if TORCH_AVAILABLE:
+            feature_tensor = torch.tensor(features.to_tensor(), dtype=torch.float32)
+            label_tensor = torch.tensor(label_idx, dtype=torch.long)
+            return feature_tensor, label_tensor
+        else:
+            return features.to_tensor(), label_idx
 
     def _extract_features(self, binary_path: Path) -> LicenseFeatures:
-        """Extract comprehensive features from binary."""
-        with open(binary_path, "rb") as f:
-            data = f.read()
+        """Extract comprehensive features from binary using advanced feature extractor."""
+        # Try to use advanced feature extractor if available
+        try:
+            from .binary_feature_extractor import BinaryFeatureExtractor
 
-        # Calculate various feature vectors
-        features = LicenseFeatures(
-            entropy_scores=self._calculate_entropy(data),
-            section_characteristics=self._analyze_sections(data),
-            import_signatures=self._extract_imports(data),
-            export_signatures=self._extract_exports(data),
-            string_features=self._extract_strings(data),
-            opcode_histogram=self._analyze_opcodes(data),
-            call_graph_features=self._analyze_call_graph(data),
-            crypto_signatures=self._detect_crypto(data),
-            anti_debug_features=self._detect_anti_debug(data),
-            api_sequence_embedding=self._embed_api_sequences(data),
-            network_signatures=self._analyze_network(data),
-            registry_patterns=self._analyze_registry(data),
-            file_access_patterns=self._analyze_file_access(data),
-            control_flow_complexity=self._analyze_cfg(data),
-            data_flow_features=self._analyze_data_flow(data),
-            memory_access_patterns=self._analyze_memory(data),
-            timing_patterns=self._analyze_timing(data),
-            hardware_checks=self._detect_hardware_checks(data),
-            virtualization_checks=self._detect_vm_checks(data),
-        )
+            extractor = BinaryFeatureExtractor(str(binary_path))
+            advanced_features = extractor.extract_all_features()
 
-        return features
+            # Map advanced features to LicenseFeatures structure
+            with open(binary_path, "rb") as f:
+                data = f.read()
+
+            # Use advanced features where available, fallback to simple extraction for others
+            features = LicenseFeatures(
+                entropy_scores=extractor.calculate_section_entropy(),
+                section_characteristics=self._analyze_sections(data),
+                import_signatures=extractor.extract_api_sequences()[:64],  # Truncate to expected size
+                export_signatures=self._extract_exports(data),
+                string_features=extractor.extract_string_features(),
+                opcode_histogram=extractor.extract_opcode_histogram()[:256],  # Truncate to expected size
+                call_graph_features=extractor._cfg_to_vector(extractor.build_control_flow_graph()),
+                crypto_signatures=self._detect_crypto(data),
+                anti_debug_features=self._detect_anti_debug(data),
+                api_sequence_embedding=self._embed_api_sequences(data),
+                network_signatures=self._analyze_network(data),
+                registry_patterns=self._analyze_registry(data),
+                file_access_patterns=self._analyze_file_access(data),
+                control_flow_complexity=extractor._cfg_to_vector(extractor.build_control_flow_graph())[:8],
+                data_flow_features=self._analyze_data_flow(data),
+                memory_access_patterns=self._analyze_memory(data),
+                timing_patterns=self._analyze_timing(data),
+                hardware_checks=self._detect_hardware_checks(data),
+                virtualization_checks=self._detect_vm_checks(data),
+            )
+
+            return features
+
+        except ImportError:
+            # Fallback to original simple extraction if advanced extractor not available
+            with open(binary_path, "rb") as f:
+                data = f.read()
+
+            features = LicenseFeatures(
+                entropy_scores=self._calculate_entropy(data),
+                section_characteristics=self._analyze_sections(data),
+                import_signatures=self._extract_imports(data),
+                export_signatures=self._extract_exports(data),
+                string_features=self._extract_strings(data),
+                opcode_histogram=self._analyze_opcodes(data),
+                call_graph_features=self._analyze_call_graph(data),
+                crypto_signatures=self._detect_crypto(data),
+                anti_debug_features=self._detect_anti_debug(data),
+                api_sequence_embedding=self._embed_api_sequences(data),
+                network_signatures=self._analyze_network(data),
+                registry_patterns=self._analyze_registry(data),
+                file_access_patterns=self._analyze_file_access(data),
+                control_flow_complexity=self._analyze_cfg(data),
+                data_flow_features=self._analyze_data_flow(data),
+                memory_access_patterns=self._analyze_memory(data),
+                timing_patterns=self._analyze_timing(data),
+                hardware_checks=self._detect_hardware_checks(data),
+                virtualization_checks=self._detect_vm_checks(data),
+            )
+
+            return features
 
     def _calculate_entropy(self, data: bytes) -> np.ndarray:
         """Calculate Shannon entropy distribution."""
@@ -711,10 +949,91 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         return features
 
 
+class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
+    """Custom loss function for license protection detection."""
+
+    def __init__(self, num_classes: int = 20, class_weights: Optional[torch.Tensor] = None):
+        """Initialize multi-objective loss function."""
+        if not TORCH_AVAILABLE:
+            raise ImportError("PyTorch not available for loss function")
+
+        super().__init__()
+
+        # Classification loss with class weights for imbalanced data
+        self.classification_loss = nn.CrossEntropyLoss(weight=class_weights)
+
+        # Focal loss for handling hard examples
+        self.focal_gamma = 2.0
+        self.focal_alpha = 0.25
+
+        # Center loss for better feature clustering
+        self.center_loss_weight = 0.003
+        self.centers = nn.Parameter(torch.randn(num_classes, 256))
+
+        # Contrastive loss weight
+        self.contrastive_weight = 0.1
+
+    def forward(self, outputs, targets, features=None):
+        """Compute combined loss."""
+        if isinstance(outputs, dict):
+            # Multi-task learning
+            total_loss = 0.0
+
+            # Main classification loss
+            if "protection_type" in outputs:
+                class_loss = self.focal_loss(outputs["protection_type"], targets)
+                total_loss += class_loss
+
+            # Version regression loss
+            if "version" in outputs:
+                version_loss = functional.mse_loss(outputs["version"], targets.float() * 0.1)
+                total_loss += 0.1 * version_loss
+
+            # Complexity scoring loss
+            if "complexity" in outputs:
+                complexity_loss = functional.mse_loss(outputs["complexity"], targets.float() * 0.05)
+                total_loss += 0.05 * complexity_loss
+
+            # Bypass difficulty loss
+            if "bypass_difficulty" in outputs:
+                difficulty_loss = functional.cross_entropy(outputs["bypass_difficulty"], torch.clamp(targets // 4, 0, 4))
+                total_loss += 0.1 * difficulty_loss
+
+            # Center loss for feature clustering
+            if features is not None:
+                center_loss = self.compute_center_loss(features, targets)
+                total_loss += self.center_loss_weight * center_loss
+
+            return total_loss
+        else:
+            # Single task - use focal loss
+            return self.focal_loss(outputs, targets)
+
+    def focal_loss(self, logits, targets):
+        """Compute focal loss for addressing class imbalance."""
+        ce_loss = functional.cross_entropy(logits, targets, reduction='none')
+        pt = torch.exp(-ce_loss)
+        focal_loss = self.focal_alpha * (1 - pt) ** self.focal_gamma * ce_loss
+        return focal_loss.mean()
+
+    def compute_center_loss(self, features, targets):
+        """Compute center loss for feature clustering."""
+        batch_size = features.size(0)
+        features = features.view(batch_size, -1)
+
+        # Get centers for each target class
+        centers_batch = self.centers.index_select(0, targets.long())
+
+        # Compute L2 distance
+        center_loss = functional.mse_loss(features, centers_batch)
+
+        return center_loss
+
+
 class LicenseProtectionTrainer:
     """Trainer for license protection neural networks."""
 
-    def __init__(self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu"):
+    def __init__(self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu", class_weights: Optional[torch.Tensor] = None):
         """Initialize trainer with model and training configuration."""
         self.model = model
         self.device = device
@@ -729,11 +1048,27 @@ class LicenseProtectionTrainer:
         self.num_epochs = 100
 
         if TORCH_AVAILABLE:
-            self.optimizer = optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=0.01)
+            # Use AdamW with better hyperparameters
+            self.optimizer = optim.AdamW(
+                self.model.parameters(),
+                lr=self.learning_rate,
+                weight_decay=0.01,
+                betas=(0.9, 0.999),
+                eps=1e-8
+            )
 
-            self.scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.num_epochs)
+            # OneCycleLR scheduler for better convergence
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
+                self.optimizer,
+                max_lr=self.learning_rate * 10,
+                epochs=self.num_epochs,
+                steps_per_epoch=100,  # Will be updated based on dataloader
+                pct_start=0.3,
+                anneal_strategy='cos'
+            )
 
-            self.criterion = nn.CrossEntropyLoss()
+            # Use custom loss function
+            self.criterion = ProtectionLoss(num_classes=len(LicenseProtectionType), class_weights=class_weights)
 
         # Training history
         self.history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
@@ -854,30 +1189,81 @@ class LicenseProtectionTrainer:
             self.scheduler.step()
 
     def save_checkpoint(self, filepath):
-        """Save model checkpoint."""
+        """Save model checkpoint with enhanced metadata."""
         if not TORCH_AVAILABLE:
             return
+
+        # Create checkpoint directory if it doesn't exist
+        checkpoint_dir = Path(filepath).parent
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        # Get model architecture info
+        model_info = {
+            "model_class": self.model.__class__.__name__,
+            "input_size": getattr(self.model, 'input_size', 4096) if hasattr(self.model, 'input_size') else 4096,
+            "num_classes": len(LicenseProtectionType),
+            "device": self.device
+        }
 
         checkpoint = {
             "model_state_dict": self.model.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
             "history": self.history,
+            "model_info": model_info,
+            "epoch": len(self.history["train_loss"]),
+            "best_val_acc": max(self.history["val_acc"]) if self.history["val_acc"] else 0.0
         }
+
         torch.save(checkpoint, filepath)
         self.logger.info(f"Checkpoint saved to {filepath}")
 
+        # Also save weights separately for production use
+        if hasattr(self.model, 'save_weights'):
+            self.model.save_weights()
+
     def load_checkpoint(self, filepath):
-        """Load model checkpoint."""
+        """Load model checkpoint with validation."""
         if not TORCH_AVAILABLE:
             return
 
-        checkpoint = torch.load(filepath, map_location=self.device)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
-        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
-        self.history = checkpoint["history"]
-        self.logger.info(f"Checkpoint loaded from {filepath}")
+        if not Path(filepath).exists():
+            self.logger.error(f"Checkpoint file not found: {filepath}")
+            return False
+
+        try:
+            checkpoint = torch.load(filepath, map_location=self.device)
+
+            # Validate checkpoint structure
+            required_keys = ["model_state_dict", "optimizer_state_dict"]
+            if not all(key in checkpoint for key in required_keys):
+                self.logger.error(f"Invalid checkpoint format in {filepath}")
+                return False
+
+            # Load model state
+            self.model.load_state_dict(checkpoint["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+            # Load scheduler if present
+            if "scheduler_state_dict" in checkpoint:
+                self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+
+            # Load history if present
+            if "history" in checkpoint:
+                self.history = checkpoint["history"]
+
+            # Log model info if present
+            if "model_info" in checkpoint:
+                info = checkpoint["model_info"]
+                self.logger.info(f"Loaded {info.get('model_class', 'Unknown')} model from epoch {checkpoint.get('epoch', 0)}")
+                self.logger.info(f"Best validation accuracy: {checkpoint.get('best_val_acc', 0.0):.2f}%")
+
+            self.logger.info(f"Checkpoint loaded successfully from {filepath}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error loading checkpoint from {filepath}: {e}")
+            return False
 
 
 class LicenseProtectionPredictor:
@@ -1074,3 +1460,267 @@ def get_license_predictor(model_path: Optional[str] = None) -> LicenseProtection
         _global_predictor = LicenseProtectionPredictor(model_path)
 
     return _global_predictor
+
+
+def create_dataloaders(
+    data_path: str,
+    batch_size: int = 32,
+    train_split: float = 0.8,
+    val_split: float = 0.1,
+    num_workers: int = 4,
+    shuffle: bool = True,
+    pin_memory: bool = True
+) -> tuple:
+    """Create train, validation, and test dataloaders from dataset path."""
+    if not TORCH_AVAILABLE:
+        raise ImportError("PyTorch not available for creating dataloaders")
+
+    from torch.utils.data import random_split
+
+    # Create full dataset
+    dataset = LicenseDataset(data_path, cache_features=True)
+
+    # Calculate split sizes
+    total_size = len(dataset)
+    train_size = int(total_size * train_split)
+    val_size = int(total_size * val_split)
+    test_size = total_size - train_size - val_size
+
+    # Split dataset
+    train_dataset, val_dataset, test_dataset = random_split(
+        dataset,
+        [train_size, val_size, test_size],
+        generator=torch.Generator().manual_seed(42)
+    )
+
+    # Create dataloaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        drop_last=True
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=pin_memory
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=pin_memory
+    )
+
+    return train_loader, val_loader, test_loader
+
+
+def train_license_model(
+    data_path: str,
+    model_type: str = "hybrid",
+    epochs: int = 100,
+    batch_size: int = 32,
+    learning_rate: float = 0.001,
+    save_path: Optional[str] = None,
+    device: Optional[str] = None
+) -> Dict[str, Any]:
+    """Complete training pipeline for license protection models."""
+    if not TORCH_AVAILABLE:
+        raise ImportError("PyTorch not available for training")
+
+    # Setup logging
+    logger = logging.getLogger(__name__)
+
+    # Set device
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Create model based on type
+    if model_type == "cnn":
+        model = LicenseProtectionCNN()
+    elif model_type == "transformer":
+        model = LicenseProtectionTransformer()
+    elif model_type == "hybrid":
+        model = HybridLicenseAnalyzer()
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+
+    # Create dataloaders
+    try:
+        train_loader, val_loader, test_loader = create_dataloaders(
+            data_path,
+            batch_size=batch_size
+        )
+    except Exception as e:
+        logger.error(f"Failed to create dataloaders: {e}")
+        return {"error": str(e)}
+
+    # Calculate class weights for imbalanced dataset
+    if len(train_loader) > 0:
+        # Count label frequencies
+        label_counts = torch.zeros(len(LicenseProtectionType))
+        for _, labels in train_loader:
+            for label in labels:
+                label_counts[label] += 1
+
+        # Compute inverse frequency weights
+        class_weights = 1.0 / (label_counts + 1.0)
+        class_weights = class_weights / class_weights.sum()
+        class_weights = class_weights.to(device)
+    else:
+        class_weights = None
+
+    # Create trainer
+    trainer = LicenseProtectionTrainer(
+        model,
+        device=device,
+        class_weights=class_weights
+    )
+
+    # Update training parameters
+    trainer.learning_rate = learning_rate
+    trainer.num_epochs = epochs
+    trainer.batch_size = batch_size
+
+    # Update scheduler steps per epoch
+    if hasattr(trainer, 'scheduler') and hasattr(trainer.scheduler, 'total_steps'):
+        trainer.scheduler.total_steps = len(train_loader) * epochs
+
+    # Train model
+    logger.info(f"Starting training on {device} for {epochs} epochs...")
+    trainer.train(train_loader, val_loader)
+
+    # Evaluate on test set
+    test_loss, test_acc = trainer.validate(test_loader)
+    logger.info(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
+
+    # Save model
+    if save_path is None:
+        save_path = Path(__file__).parent / "models" / f"{model_type}_model_final.pth"
+
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    trainer.save_checkpoint(str(save_path))
+
+    # Return training results
+    results = {
+        "model_type": model_type,
+        "final_train_loss": trainer.history["train_loss"][-1] if trainer.history["train_loss"] else None,
+        "final_train_acc": trainer.history["train_acc"][-1] if trainer.history["train_acc"] else None,
+        "final_val_loss": trainer.history["val_loss"][-1] if trainer.history["val_loss"] else None,
+        "final_val_acc": trainer.history["val_acc"][-1] if trainer.history["val_acc"] else None,
+        "test_loss": test_loss,
+        "test_acc": test_acc,
+        "model_path": str(save_path),
+        "history": trainer.history
+    }
+
+    return results
+
+
+def evaluate_model(
+    model_path: str,
+    test_data_path: str,
+    batch_size: int = 32,
+    device: Optional[str] = None
+) -> Dict[str, Any]:
+    """Evaluate a trained model on test data."""
+    if not TORCH_AVAILABLE:
+        raise ImportError("PyTorch not available for evaluation")
+
+    # Setup
+    logger = logging.getLogger(__name__)
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Load model
+    predictor = LicenseProtectionPredictor(model_path)
+
+    # Create test dataset
+    test_dataset = LicenseDataset(test_data_path)
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4
+    )
+
+    # Evaluation metrics
+    correct = 0
+    total = 0
+    class_correct = {cls: 0 for cls in LicenseProtectionType}
+    class_total = {cls: 0 for cls in LicenseProtectionType}
+
+    # Confusion matrix data
+    predictions = []
+    true_labels = []
+
+    # Evaluate
+    logger.info("Starting evaluation...")
+    with torch.no_grad():
+        for features, labels in test_loader:
+            features = features.to(device)
+            labels = labels.to(device)
+
+            # Get predictions
+            if hasattr(predictor.model, 'forward'):
+                outputs = predictor.model(features)
+                if isinstance(outputs, dict):
+                    outputs = outputs["protection_type"]
+                _, predicted = outputs.max(1)
+            else:
+                # Fallback for non-neural models
+                predicted = []
+                for i in range(features.size(0)):
+                    result = predictor.predict(features[i])
+                    pred_idx = LicenseProtectionType[result["protection_type"]].value
+                    predicted.append(pred_idx)
+                predicted = torch.tensor(predicted)
+
+            # Update metrics
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+
+            # Per-class accuracy
+            for i in range(labels.size(0)):
+                label = labels[i].item()
+                cls = list(LicenseProtectionType)[label]
+                class_total[cls] += 1
+                if predicted[i] == labels[i]:
+                    class_correct[cls] += 1
+
+            predictions.extend(predicted.cpu().numpy())
+            true_labels.extend(labels.cpu().numpy())
+
+    # Calculate metrics
+    overall_accuracy = 100.0 * correct / total
+
+    per_class_accuracy = {}
+    for cls in LicenseProtectionType:
+        if class_total[cls] > 0:
+            per_class_accuracy[cls.value] = 100.0 * class_correct[cls] / class_total[cls]
+        else:
+            per_class_accuracy[cls.value] = 0.0
+
+    results = {
+        "overall_accuracy": overall_accuracy,
+        "per_class_accuracy": per_class_accuracy,
+        "total_samples": total,
+        "correct_predictions": correct,
+        "predictions": predictions,
+        "true_labels": true_labels
+    }
+
+    logger.info(f"Overall Accuracy: {overall_accuracy:.2f}%")
+    logger.info("Per-class Accuracy:")
+    for cls, acc in per_class_accuracy.items():
+        logger.info(f"  {cls}: {acc:.2f}%")
+
+    return results

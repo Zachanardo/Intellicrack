@@ -25,17 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Import patching modules with error handling
 try:
-    from .payload_generator import (
-        PayloadGenerator,
-        apply_patch,
-        create_nop_sled,
-        generate_complete_api_hooking_script,
-        inject_shellcode,
-    )
-except ImportError as e:
-    logger.warning("Failed to import payload_generator: %s", e)
-
-try:
     from .adobe_injector import (
         AdobeInjector,
         create_adobe_injector,
@@ -63,14 +52,14 @@ try:
 except ImportError as e:
     logger.warning("Failed to import memory_patcher: %s", e)
 
+try:
+    from .radare2_patch_integration import Radare2PatchIntegration
+except ImportError as e:
+    logger.warning("Failed to import radare2_patch_integration: %s", e)
+    Radare2PatchIntegration = None
+
 # Define package exports
 __all__ = [
-    # From payload_generator
-    "PayloadGenerator",
-    "apply_patch",
-    "create_nop_sled",
-    "inject_shellcode",
-    "generate_complete_api_hooking_script",
     # From adobe_injector
     "AdobeInjector",
     "create_adobe_injector",
@@ -87,6 +76,8 @@ __all__ = [
     # From memory_patcher
     "generate_launcher_script",
     "setup_memory_patching",
+    # From radare2_patch_integration
+    "Radare2PatchIntegration",
 ]
 
 # Package metadata

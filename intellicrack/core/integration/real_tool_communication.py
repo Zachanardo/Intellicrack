@@ -488,7 +488,7 @@ class ConflictResolver:
 
         # Find majority
         max_votes = max(len(v) for v in votes.values())
-        for data_hash, voters in votes.items():
+        for _data_hash, voters in votes.items():
             if len(voters) == max_votes:
                 return voters[0].data
 

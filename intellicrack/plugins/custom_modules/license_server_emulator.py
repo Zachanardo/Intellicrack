@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import ipaddress
 import json
 import logging
 import os
@@ -24,6 +25,7 @@ import platform
 import secrets
 import shutil
 import socket
+import ssl
 import struct
 import subprocess
 import threading
@@ -333,16 +335,36 @@ class FlexLMEmulator:
         self.logger = logging.getLogger(f"{__name__}.FlexLM")
         self.crypto = crypto_manager
         self.server_socket = None
+        self.vendor_socket = None
         self.running = False
+        self.features = {}
+        self.active_licenses = {}
+        self.vendor_keys = self._generate_vendor_keys()
+
+        # FlexLM ports
+        self.FLEXLM_PORT = 27000
+        self.VENDOR_PORT = 27001
+
+        # FlexLM message types
+        self.MSG_HELLO = 0x01
+        self.MSG_LICENSE_REQUEST = 0x02
+        self.MSG_LICENSE_RESPONSE = 0x03
+        self.MSG_HEARTBEAT = 0x04
+        self.MSG_RELEASE = 0x05
+        self.MSG_FEATURE_LIST = 0x06
+        self.MSG_STATUS = 0x07
 
         # FlexLM response codes
         self.SUCCESS = 0
         self.LICENSE_NOT_FOUND = 1
         self.LICENSE_EXPIRED = 2
         self.TOO_MANY_USERS = 3
+        self.ERR_BAD_VERSION = 4
+        self.ERR_NO_SERVER = 5
+        self.ERR_HOST_NOT_AUTHORIZED = 6
 
     def start_server(self, port: int = 27000):
-        """Start FlexLM TCP server."""
+        """Start FlexLM TCP server and vendor daemon."""
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -351,6 +373,9 @@ class FlexLMEmulator:
 
             self.running = True
             self.logger.info(f"FlexLM server started on port {port}")
+
+            # Start vendor daemon
+            self.start_vendor_daemon()
 
             # Start accepting connections
             threading.Thread(target=self._accept_connections, daemon=True).start()
@@ -448,6 +473,151 @@ class FlexLMEmulator:
         except Exception as e:
             self.logger.error(f"FlexLM request processing error: {e}")
             return b"ERROR: Internal server error\n"
+
+    def _generate_vendor_keys(self) -> dict:
+        """Generate vendor-specific encryption keys."""
+        import secrets
+        vendor_keys = {
+            'seed1': secrets.randbits(32),
+            'seed2': secrets.randbits(32),
+            'seed3': secrets.randbits(32),
+            'seed4': secrets.randbits(32),
+            'encryption_key': secrets.token_bytes(16)
+        }
+        return vendor_keys
+
+    def add_feature(self, feature: dict) -> None:
+        """Add a licensed feature."""
+        self.features[feature['name']] = feature
+
+    def _run_vendor_daemon(self) -> None:
+        """Run vendor daemon on separate port."""
+        try:
+            self.vendor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.vendor_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.vendor_socket.bind(("0.0.0.0", self.VENDOR_PORT))
+            self.vendor_socket.listen(5)
+            
+            self.logger.info(f"Vendor daemon started on port {self.VENDOR_PORT}")
+            
+            while self.running:
+                client_socket, addr = self.vendor_socket.accept()
+                thread = threading.Thread(target=self._handle_vendor_request, args=(client_socket, addr))
+                thread.daemon = True
+                thread.start()
+        except Exception as e:
+            self.logger.error(f"Vendor daemon error: {e}")
+
+    def _handle_vendor_request(self, client_socket: socket.socket, addr: tuple) -> None:
+        """Handle vendor-specific requests."""
+        try:
+            request_data = client_socket.recv(4096)
+            
+            # Process vendor request
+            response_data = self._process_vendor_request(request_data)
+            
+            # Send encrypted response
+            encrypted_response = self._vendor_encrypt(response_data)
+            client_socket.send(encrypted_response)
+            
+        except Exception as e:
+            self.logger.error(f"Error handling vendor request: {e}")
+        finally:
+            client_socket.close()
+
+    def _process_vendor_request(self, request_data: bytes) -> bytes:
+        """Process vendor-specific license requests."""
+        try:
+            decrypted_data = self._vendor_decrypt(request_data)
+            
+            # Validate vendor request
+            if self._vendor_validate(decrypted_data):
+                return b"LICENSE_GRANTED"
+            else:
+                return b"LICENSE_DENIED"
+        except Exception as e:
+            self.logger.error(f"Error processing vendor request: {e}")
+            return b"ERROR"
+
+    def _vendor_encrypt(self, data: bytes) -> bytes:
+        """Encrypt data using vendor-specific keys."""
+        try:
+            key = self.vendor_keys['encryption_key']
+            # Simple XOR encryption for demonstration
+            encrypted = bytearray()
+            for i, byte in enumerate(data):
+                encrypted.append(byte ^ key[i % len(key)])
+            return bytes(encrypted)
+        except Exception as e:
+            self.logger.error(f"Vendor encryption error: {e}")
+            return data
+
+    def _vendor_decrypt(self, data: bytes) -> bytes:
+        """Decrypt data using vendor-specific keys."""
+        # XOR is symmetric, so decrypt is same as encrypt
+        return self._vendor_encrypt(data)
+
+    def _vendor_validate(self, data: bytes) -> bool:
+        """Validate vendor-specific license request."""
+        try:
+            # Basic validation - check if request contains valid data
+            if len(data) < 4:
+                return False
+            
+            # Check vendor daemon protocol magic bytes
+            if data[:4] == b"VEND":
+                return True
+            
+            # Additional validation logic
+            return len(data) > 0
+        except Exception:
+            return False
+
+    def _create_feature_list(self) -> bytes:
+        """Create list of available features."""
+        feature_list = []
+        for name, feature in self.features.items():
+            feature_entry = (
+                f"FEATURE {name} "
+                f"VERSION {feature.get('version', '1.0')} "
+                f"COUNT {feature.get('count', 'uncounted')} "
+                f"EXPIRY {feature.get('expiry', 'permanent')}"
+            )
+            feature_list.append(feature_entry)
+        
+        return "\n".join(feature_list).encode()
+
+    def _create_status_response(self) -> bytes:
+        """Create server status response."""
+        status = {
+            'server_version': '11.16.2',
+            'vendor_daemon': 'active',
+            'active_licenses': len(self.active_licenses),
+            'available_features': len(self.features),
+            'uptime': int(time.time())
+        }
+        
+        status_text = []
+        for key, value in status.items():
+            status_text.append(f"{key}: {value}")
+        
+        return "\n".join(status_text).encode()
+
+    def start_vendor_daemon(self) -> None:
+        """Start the vendor daemon in a separate thread."""
+        vendor_thread = threading.Thread(target=self._run_vendor_daemon)
+        vendor_thread.daemon = True
+        vendor_thread.start()
+        self.logger.info("Vendor daemon thread started")
+
+    def stop_server(self) -> None:
+        """Stop both main server and vendor daemon."""
+        self.running = False
+        if self.server_socket:
+            self.server_socket.close()
+        if self.vendor_socket:
+            self.vendor_socket.close()
+        self.logger.info("FlexLM server and vendor daemon stopped")
 
 
 class HASPEmulator:
@@ -1566,6 +1736,12 @@ class LicenseServerEmulator:
         # Security
         self.security = HTTPBearer() if self.config["auth_required"] else None
 
+        # DNS and SSL components
+        self.dns_socket = None
+        self.dns_running = False
+        self.license_hostnames = {}
+        self.ssl_context = None
+
         self.logger.info("License server emulator initialized")
 
     def _setup_middleware(self):
@@ -1839,9 +2015,307 @@ class LicenseServerEmulator:
             self.logger.error(f"Adobe request error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
+    def _start_dns_server(self) -> None:
+        """Start a DNS server for redirecting license server hostnames."""
+        self.logger.info("Starting DNS server for license server redirection")
+        
+        self.license_hostnames = {
+            b"activate.adobe.com": "127.0.0.1",
+            b"practivate.adobe.com": "127.0.0.1", 
+            b"lm.licenses.adobe.com": "127.0.0.1",
+            b"na1r.services.adobe.com": "127.0.0.1",
+            b"hlrcv.stage.adobe.com": "127.0.0.1",
+            b"lcs-mobile-cops.adobe.com": "127.0.0.1",
+            b"autodesk.com": "127.0.0.1",
+            b"registeronce.adobe.com": "127.0.0.1",
+            b"3dns.adobe.com": "127.0.0.1",
+            b"3dns-1.adobe.com": "127.0.0.1",
+            b"3dns-2.adobe.com": "127.0.0.1",
+            b"3dns-3.adobe.com": "127.0.0.1",
+            b"3dns-4.adobe.com": "127.0.0.1",
+            b"adobe-dns.adobe.com": "127.0.0.1",
+            b"adobe-dns-1.adobe.com": "127.0.0.1",
+            b"adobe-dns-2.adobe.com": "127.0.0.1",
+            b"adobe-dns-3.adobe.com": "127.0.0.1",
+            b"adobe-dns-4.adobe.com": "127.0.0.1",
+            b"hl2rcv.adobe.com": "127.0.0.1",
+            b"activation.autodesk.com": "127.0.0.1",
+            b"webservices.autodesk.com": "127.0.0.1",
+            b"entitlements.autodesk.com": "127.0.0.1",
+            b"license.solidworks.com": "127.0.0.1",
+            b"activation.solidworks.com": "127.0.0.1",
+            b"flex1234.autodesk.com": "127.0.0.1",
+            b"flex-licensing.autodesk.com": "127.0.0.1",
+        }
+        
+        try:
+            self.dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.dns_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.dns_socket.bind(("127.0.0.1", 53))
+            self.dns_socket.settimeout(1.0)
+            
+            self.logger.info("DNS server started on port 53")
+            self.dns_running = True
+            
+            dns_thread = threading.Thread(target=self._dns_server_loop, daemon=True)
+            dns_thread.start()
+            
+        except PermissionError:
+            self.logger.warning("Cannot bind to port 53 (requires root/admin privileges)")
+            self.logger.info("DNS server functionality disabled")
+        except Exception as e:
+            self.logger.error(f"Failed to start DNS server: {e}")
+
+    def _dns_server_loop(self) -> None:
+        """Main DNS server loop."""
+        while self.dns_running:
+            try:
+                data, addr = self.dns_socket.recvfrom(512)
+                dns_thread = threading.Thread(
+                    target=self._handle_dns_query,
+                    args=(data, addr),
+                    daemon=True,
+                )
+                dns_thread.start()
+            except socket.timeout:
+                continue
+            except Exception as e:
+                if self.dns_running:
+                    self.logger.error(f"DNS server error: {e}")
+
+    def _handle_dns_query(self, data: bytes, addr: tuple) -> None:
+        """Handle individual DNS query."""
+        try:
+            if len(data) < 12:
+                return
+            
+            transaction_id = struct.unpack(">H", data[0:2])[0]
+            questions = struct.unpack(">H", data[4:6])[0]
+            
+            if questions != 1:
+                return
+            
+            query_offset = 12
+            query_name = b""
+            
+            while query_offset < len(data):
+                length = data[query_offset]
+                if length == 0:
+                    query_offset += 1
+                    break
+                if length > 63:
+                    return
+                query_name += data[query_offset + 1 : query_offset + 1 + length]
+                if query_offset + 1 + length < len(data) and data[query_offset + 1 + length] != 0:
+                    query_name += b"."
+                query_offset += 1 + length
+            
+            redirect_ip = None
+            for hostname, ip in self.license_hostnames.items():
+                if hostname in query_name.lower():
+                    redirect_ip = ip
+                    break
+            
+            if redirect_ip:
+                response = self._create_dns_response(
+                    transaction_id,
+                    query_name, 
+                    redirect_ip,
+                    data[12 : query_offset + 4],
+                )
+                self.dns_socket.sendto(response, addr)
+                self.logger.debug(
+                    f"Redirected {query_name.decode('utf-8', errors='ignore')} to {redirect_ip}"
+                )
+            else:
+                try:
+                    forward_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    forward_socket.settimeout(5.0)
+                    forward_socket.sendto(data, ("8.8.8.8", 53))
+                    response, _ = forward_socket.recvfrom(512)
+                    self.dns_socket.sendto(response, addr)
+                    forward_socket.close()
+                except Exception:
+                    response = self._create_dns_error_response(transaction_id, data[12 : query_offset + 4])
+                    self.dns_socket.sendto(response, addr)
+                    
+        except Exception as e:
+            self.logger.debug(f"Error handling DNS query: {e}")
+
+    def _create_dns_response(self, transaction_id: int, query_name: bytes, ip_address: str, question_section: bytes) -> bytes:
+        """Create a DNS A record response."""
+        header = struct.pack(
+            ">HHHHHH",
+            transaction_id,
+            0x8180,  # Response, authoritative
+            1,  # Questions
+            1,  # Answers
+            0,  # Authority RRs
+            0,  # Additional RRs
+        )
+        
+        ip_parts = [int(part) for part in ip_address.split(".")]
+        answer = (
+            question_section[:-4]
+            + struct.pack(">HH", 0x0001, 0x0001)  # Type A, Class IN
+            + struct.pack(">I", 300)  # TTL
+            + struct.pack(">H", 4)  # Data length
+            + struct.pack("BBBB", *ip_parts)
+        )
+        
+        return header + question_section + answer
+
+    def _create_dns_error_response(self, transaction_id: int, question_section: bytes) -> bytes:
+        """Create a DNS NXDOMAIN error response."""
+        header = struct.pack(
+            ">HHHHHH",
+            transaction_id,
+            0x8183,  # Response, NXDOMAIN
+            1,  # Questions
+            0,  # Answers
+            0,  # Authority RRs
+            0,  # Additional RRs
+        )
+        return header + question_section
+
+    def _start_ssl_interceptor(self) -> None:
+        """Start SSL interceptor for HTTPS license verification."""
+        try:
+            self.ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            
+            cert_dir = os.path.join(os.path.dirname(__file__), "certs")
+            cert_file = os.path.join(cert_dir, "server.crt")
+            key_file = os.path.join(cert_dir, "server.key")
+            
+            if not os.path.exists(cert_dir):
+                os.makedirs(cert_dir)
+            
+            if not os.path.exists(cert_file) or not os.path.exists(key_file):
+                self._generate_self_signed_cert(cert_file, key_file)
+            
+            self.ssl_context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
+            
+            self.logger.info("SSL interceptor initialized")
+            
+            https_ports = [443, 8443]
+            for port in https_ports:
+                thread = threading.Thread(
+                    target=self._run_ssl_server,
+                    args=(port,),
+                    daemon=True,
+                )
+                thread.start()
+                self.logger.info(f"SSL interceptor started on port {port}")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to start SSL interceptor: {e}")
+
+    def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
+        """Generate a self-signed certificate for SSL interception."""
+        try:
+            from cryptography import x509
+            from cryptography.x509.oid import NameOID
+            from cryptography.hazmat.primitives import hashes, serialization
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            import datetime
+            
+            key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "License Server"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+            ])
+            
+            cert = x509.CertificateBuilder().subject_name(
+                subject
+            ).issuer_name(
+                issuer
+            ).public_key(
+                key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.datetime.utcnow()
+            ).not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            ).add_extension(
+                x509.SubjectAlternativeName([
+                    x509.DNSName("localhost"),
+                    x509.DNSName("127.0.0.1"),
+                    x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                ]),
+                critical=False,
+            ).sign(key, hashes.SHA256())
+            
+            with open(cert_file, "wb") as f:
+                f.write(cert.public_bytes(serialization.Encoding.PEM))
+            
+            with open(key_file, "wb") as f:
+                f.write(key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
+            
+            self.logger.info("Generated self-signed certificate for SSL interception")
+            
+        except ImportError:
+            self.logger.error("cryptography module not available, using basic SSL")
+        except Exception as e:
+            self.logger.error(f"Error generating certificate: {e}")
+
+    def _run_ssl_server(self, port: int) -> None:
+        """Run SSL server on specified port."""
+        try:
+            ssl_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ssl_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            ssl_socket.bind(("127.0.0.1", port))
+            ssl_socket.listen(5)
+            
+            while True:
+                client_socket, addr = ssl_socket.accept()
+                thread = threading.Thread(
+                    target=self._handle_ssl_connection,
+                    args=(client_socket, addr),
+                    daemon=True,
+                )
+                thread.start()
+                
+        except Exception as e:
+            self.logger.error(f"SSL server error on port {port}: {e}")
+
+    def _handle_ssl_connection(self, client_socket: socket.socket, addr: tuple) -> None:
+        """Handle individual SSL connection."""
+        try:
+            ssl_socket = self.ssl_context.wrap_socket(client_socket, server_side=True)
+            request_data = ssl_socket.recv(8192)
+            
+            # Generate successful license response
+            response = b"HTTP/1.1 200 OK\r\n"
+            response += b"Content-Type: application/json\r\n"
+            response += b"Content-Length: 43\r\n\r\n"
+            response += b'{"status": "licensed", "valid": true}\r\n'
+            
+            ssl_socket.send(response)
+            ssl_socket.close()
+            
+        except Exception as e:
+            self.logger.debug(f"SSL connection error: {e}")
+
     def start_servers(self):
         """Start all license servers."""
         try:
+            # Start DNS server for hostname redirection
+            self._start_dns_server()
+
+            # Start SSL interceptor for HTTPS
+            self._start_ssl_interceptor()
+
             # Start FlexLM server
             self.flexlm.start_server(self.config["flexlm_port"])
 
@@ -1866,7 +2340,31 @@ class LicenseServerEmulator:
         except Exception as e:
             self.logger.error(f"Server startup failed: {e}")
             raise
+        finally:
+            # Cleanup on exit
+            if hasattr(self, 'dns_socket') and self.dns_socket:
+                self.dns_running = False
+                self.dns_socket.close()
 
+
+def run_network_license_emulator(config: dict = None) -> None:
+    """Compatibility function for running the network license emulator."""
+    if config is None:
+        config = {
+            "host": "0.0.0.0",
+            "port": 8080,
+            "flexlm_port": 27000,
+            "database_path": "license_server.db",
+            "log_level": "INFO",
+        }
+    
+    server = LicenseServerEmulator(config)
+    try:
+        server.start_servers()
+    except KeyboardInterrupt:
+        logging.info("License server emulator stopped")
+    except Exception as e:
+        logging.error(f"License server error: {e}")
 
 def main():
     """Main entry point."""

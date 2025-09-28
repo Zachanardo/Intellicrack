@@ -165,13 +165,21 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
         if not search_root.exists():
             return {"status": "error", "message": f"Path does not exist: {search_path}"}
 
+        if not search_root.is_dir():
+            return {"status": "error", "message": f"Path is not a directory: {search_path}"}
+
         for root, dirs, files in os.walk(search_root):
             results["directories_scanned"] += 1
             self._process_files_in_directory(root, files, patterns, results)
 
-            # Limit search depth for performance
-            if len(str(Path(root)).split(os.sep)) - len(str(search_root).split(os.sep)) > 5:
-                dirs.clear()  # Don't descend further
+            # Limit search depth for performance using Path methods
+            try:
+                rel_parts = Path(root).resolve().relative_to(search_root.resolve()).parts
+                if len(rel_parts) > 5:
+                    dirs.clear()  # Don't descend further
+            except ValueError:
+                # root is not under search_root (e.g., due to symlinks); skip limiting in this case
+                pass
 
         self._log_search_results(results)
         return results
@@ -228,10 +236,25 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 class FileReadTool:
     """Tool for AI to read files with user approval."""
 
-    def __init__(self, app_instance: Optional[Any] = None):
-        """Initialize file read tool with app instance."""
+    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024):
+        """Initialize file read tool with app instance and optional max file size.
+
+        Args:
+            app_instance: Optional Qt application instance for UI updates
+            max_file_size: Maximum file size limit in bytes (default: 10MB)
+        """
         self.app_instance = app_instance
-        self.max_file_size = 10 * 1024 * 1024  # 10MB limit
+        self.max_file_size = max_file_size  # File size limit in bytes
+
+    def set_max_file_size(self, max_file_size: int) -> None:
+        """Set the maximum file size limit for reading files.
+
+        Args:
+            max_file_size: Maximum file size in bytes
+        """
+        if max_file_size <= 0:
+            raise ValueError("Max file size must be positive")
+        self.max_file_size = max_file_size
 
     def read_file_content(self, file_path: str, purpose: str = DEFAULT_PURPOSE) -> dict[str, Any]:
         """Read the content of a file with user approval.
@@ -361,7 +384,7 @@ Files:
         }
 
         for _file_path in valid_paths:
-            file_result = self.read_file_content(str(file_path), f"{purpose} (batch)")
+            file_result = self.read_file_content(str(_file_path), f"{purpose} (batch)")
             if file_result["status"] == "success":
                 results["files_read"].append(file_result)
 
@@ -371,11 +394,16 @@ Files:
 class AIFileTools:
     """Main class providing file system tools for AI analysis."""
 
-    def __init__(self, app_instance: Optional[Any] = None):
-        """Initialize AI file tools with app instance."""
+    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024):
+        """Initialize AI file tools with app instance and optional max file size.
+
+        Args:
+            app_instance: Optional Qt application instance for UI updates
+            max_file_size: Maximum file size limit in bytes (default: 10MB)
+        """
         self.app_instance = app_instance
         self.search_tool = FileSearchTool(app_instance)
-        self.read_tool = FileReadTool(app_instance)
+        self.read_tool = FileReadTool(app_instance, max_file_size)
 
     def search_for_license_files(self, base_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files."""
@@ -441,14 +469,15 @@ class AIFileTools:
         return analysis
 
 
-def get_ai_file_tools(app_instance=None) -> AIFileTools:
+def get_ai_file_tools(app_instance=None, max_file_size: int = 10 * 1024 * 1024) -> AIFileTools:
     """Create AI file tools instance.
 
     Args:
         app_instance: Optional application instance for UI updates
+        max_file_size: Maximum file size limit in bytes (default: 10MB)
 
     Returns:
         AIFileTools: Configured AI file tools instance
 
     """
-    return AIFileTools(app_instance)
+    return AIFileTools(app_instance, max_file_size)

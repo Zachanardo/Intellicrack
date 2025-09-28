@@ -68,7 +68,7 @@ class AnalysisResultOrchestrator(QObject):
         """
         super().__init__(parent)
         self.handlers = []
-        self._current_result: UnifiedProtectionResult | None = None
+        self._current_result: Optional["UnifiedProtectionResult"] = None
 
     def register_handler(self, handler: QObject):
         """Register a handler to receive analysis results.
@@ -197,8 +197,8 @@ class AnalysisResultOrchestrator(QObject):
         return True
 
     def merge_icp_with_unified_result(
-        self, icp_result: "ICPScanResult", unified_result: UnifiedProtectionResult | None = None
-    ) -> UnifiedProtectionResult:
+        self, icp_result: "ICPScanResult", unified_result: Optional["UnifiedProtectionResult"] = None
+    ) -> "UnifiedProtectionResult":
         """Merge ICP scan results with unified protection result.
 
         Args:

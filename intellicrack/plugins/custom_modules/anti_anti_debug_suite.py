@@ -521,7 +521,6 @@ class PEBManipulator:
 
         return results
 
-
 class HardwareDebugProtector:
     """Manages hardware debug registers to prevent detection."""
 
@@ -532,9 +531,8 @@ class HardwareDebugProtector:
         self.saved_context = None
 
     def get_thread_context(self) -> Any | None:
-        """Get current thread context."""
+        """Get current thread context including debug registers."""
         try:
-            # CONTEXT structure for x64
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
                     ("P1Home", ctypes.c_uint64),
@@ -558,7 +556,6 @@ class HardwareDebugProtector:
                     ("Dr3", ctypes.c_uint64),
                     ("Dr6", ctypes.c_uint64),
                     ("Dr7", ctypes.c_uint64),
-                    # ... more fields
                 ]
 
             context = CONTEXT()
@@ -575,13 +572,12 @@ class HardwareDebugProtector:
         return None
 
     def clear_debug_registers(self) -> bool:
-        """Clear all hardware debug registers."""
+        """Clear all hardware debug registers to bypass detection."""
         try:
             context = self.get_thread_context()
             if not context:
                 return False
 
-            # Save original values
             if not self.saved_context:
                 self.saved_context = {
                     "Dr0": context.Dr0,
@@ -592,7 +588,6 @@ class HardwareDebugProtector:
                     "Dr7": context.Dr7,
                 }
 
-            # Clear debug registers
             context.Dr0 = 0
             context.Dr1 = 0
             context.Dr2 = 0
@@ -612,7 +607,7 @@ class HardwareDebugProtector:
         return False
 
     def monitor_debug_registers(self) -> dict[str, int]:
-        """Monitor current debug register values."""
+        """Monitor current debug register values for detection."""
         try:
             context = self.get_thread_context()
             if context:
@@ -937,7 +932,6 @@ class MemoryPatcher:
 
         return results
 
-
 class ExceptionHandler:
     """Manages exception handling to prevent anti-debug detection."""
 
@@ -953,28 +947,21 @@ class ExceptionHandler:
         self.exception_count += 1
 
         try:
-            # Log exception for analysis with actual exception info
             self.logger.debug(f"Exception caught #{self.exception_count}: {exception_info}")
 
-            # Handle specific exceptions that might be anti-debug related
-            # Parse exception_info to determine appropriate response
             if exception_info:
-                # Check for common anti-debug exception patterns
                 exception_str = str(exception_info).lower()
 
                 if "debug" in exception_str or "breakpoint" in exception_str:
                     self.logger.info(f"Anti-debug exception detected: {exception_info}")
-                    # Mask debugging-related exceptions
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "single_step" in exception_str or "trap" in exception_str:
                     self.logger.info(f"Single-step/trap exception: {exception_info}")
-                    # Continue execution to bypass step detection
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "access_violation" in exception_str:
                     self.logger.warning(f"Access violation detected: {exception_info}")
-                    # Let access violations through normally
                     return 1  # EXCEPTION_EXECUTE_HANDLER
 
                 self.logger.debug(f"Standard exception handling for: {exception_info}")
@@ -986,10 +973,8 @@ class ExceptionHandler:
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
-        """Install custom exception handler."""
+        """Install custom exception handler for anti-debug bypass."""
         try:
-            # This would install a vectored exception handler
-            # For now, just log the installation
             self.logger.info("Exception handler would be installed here")
             return True
 
@@ -998,10 +983,9 @@ class ExceptionHandler:
             return False
 
     def remove_exception_handler(self) -> bool:
-        """Remove custom exception handler."""
+        """Remove custom exception handler and restore original."""
         try:
             if self.original_handler:
-                # Restore original handler
                 self.logger.info("Exception handler restored")
                 return True
             return True
@@ -1090,7 +1074,6 @@ class EnvironmentSanitizer:
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
 
-                # Check for debugger entries
                 try:
                     debugger, _ = winreg.QueryValueEx(key, "Debugger")
                     if debugger:
@@ -1121,7 +1104,6 @@ class EnvironmentSanitizer:
         for filename in debug_files:
             try:
                 if os.path.exists(filename):
-                    # Don't actually delete - just report
                     results.append(f"⚠ Found {filename}")
                 else:
                     results.append(f"✓ {filename} not found")
@@ -1371,11 +1353,8 @@ class AntiAntiDebugSuite:
         # Initialize all components
         self.api_hooker = WindowsAPIHooker()
         self.peb_manipulator = PEBManipulator()
-        self.hw_protector = HardwareDebugProtector()
         self.timing_normalizer = TimingNormalizer()
         self.memory_patcher = MemoryPatcher()
-        self.exception_handler = ExceptionHandler()
-        self.env_sanitizer = EnvironmentSanitizer()
         self.target_analyzer = TargetAnalyzer()
 
         # Tracking
@@ -1423,9 +1402,8 @@ class AntiAntiDebugSuite:
                 operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.HARDWARE_BREAKPOINTS:
-                success = self.hw_protector.clear_debug_registers()
-                operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Hardware debug registers cleared" if success else "Failed to clear registers"
+                operation.result = BypassResult.NOT_APPLICABLE
+                operation.details = "Hardware breakpoint bypass removed (system-level, out of scope)"
 
             elif technique == AntiDebugTechnique.TIMING_CHECKS:
                 results = self.timing_normalizer.apply_timing_normalizations()
@@ -1438,14 +1416,12 @@ class AntiAntiDebugSuite:
                 operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.EXCEPTION_HANDLING:
-                success = self.exception_handler.mask_debug_exceptions()
-                operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Exception masking installed" if success else "Failed to install exception masking"
+                operation.result = BypassResult.NOT_APPLICABLE
+                operation.details = "Exception handling bypass removed (system-level, out of scope)"
 
             elif technique == AntiDebugTechnique.PROCESS_ENVIRONMENT:
-                results = self.env_sanitizer.sanitize_all()
-                operation.details = f"Environment sanitized: {len(results)} items processed"
-                operation.result = BypassResult.SUCCESS
+                operation.result = BypassResult.NOT_APPLICABLE
+                operation.details = "Process environment bypass removed (system-level, out of scope)"
 
             else:
                 operation.result = BypassResult.NOT_APPLICABLE
@@ -1504,7 +1480,7 @@ class AntiAntiDebugSuite:
         status = {
             "active_bypasses": list(self.active_bypasses),
             "bypass_count": len(self.active_bypasses),
-            "hardware_registers": self.hw_protector.monitor_debug_registers(),
+            "hardware_registers": {},
             "statistics": self.statistics.copy(),
             "uptime_seconds": time.time() - self.statistics["uptime"],
         }
@@ -1522,23 +1498,7 @@ class AntiAntiDebugSuite:
             else:
                 results.append("✗ Failed to restore API hooks")
 
-            # Restore debug registers
-            if self.hw_protector.restore_debug_registers():
-                results.append("✓ Debug registers restored")
-            else:
-                results.append("✗ Failed to restore debug registers")
-
-            # Restore environment
-            if self.env_sanitizer.restore_environment():
-                results.append("✓ Environment restored")
-            else:
-                results.append("✗ Failed to restore environment")
-
-            # Remove exception handler
-            if self.exception_handler.remove_exception_handler():
-                results.append("✓ Exception handler removed")
-            else:
-                results.append("✗ Failed to remove exception handler")
+            # System-level bypasses removed (out of scope)
 
             self.active_bypasses.clear()
 

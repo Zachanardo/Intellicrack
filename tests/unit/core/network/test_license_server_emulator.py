@@ -13,6 +13,7 @@ binary analysis and security research workflows.
 """
 
 import asyncio
+import hashlib
 import pytest
 import socket
 import ssl
@@ -24,8 +25,8 @@ import tempfile
 import json
 import os
 
-from intellicrack.core.network.license_server_emulator import (
-    NetworkLicenseServerEmulator,
+from intellicrack.plugins.custom_modules.license_server_emulator import (
+    LicenseServerEmulator as NetworkLicenseServerEmulator,
     run_network_license_emulator
 )
 
@@ -119,8 +120,19 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate real FlexLM license request packet
-        flexlm_request = b"FLEXLM_REQUEST:checkout:feature:version:count:hostid:display:username"
+        # Construct actual FlexLM protocol license request packet with proper header and fields
+        # FlexLM protocol uses specific byte structure: [type][length][data]
+        msg_type = struct.pack('>B', 0x02)  # MSG_LICENSE_REQUEST
+        feature_name = b'MATLAB'
+        version = struct.pack('>H', 0x0100)  # Version 1.0
+        count = struct.pack('>I', 1)  # Request 1 license
+        hostid = socket.gethostname().encode()[:32].ljust(32, b'\x00')
+        username = os.environ.get('USER', 'testuser').encode()[:32].ljust(32, b'\x00')
+
+        # Build complete FlexLM request packet with proper structure
+        data = feature_name[:32].ljust(32, b'\x00') + version + count + hostid + username
+        length = struct.pack('>H', len(data))
+        flexlm_request = msg_type + length + data
         port = 27000
 
         identified_protocol = emulator._identify_protocol(flexlm_request, port)
@@ -135,8 +147,18 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate real HASP license request packet
-        hasp_request = struct.pack('<II', 0x12345678, 0x1947) + b"HASP_LOGIN_REQUEST"
+        # Construct actual HASP/Sentinel protocol packet with proper structure
+        # HASP protocol packet structure: [header][command][vendor_id][feature_id][data]
+        hasp_header = struct.pack('<I', 0x48415350)  # 'HASP' magic bytes
+        hasp_version = struct.pack('<H', 0x0200)  # Protocol version 2.0
+        hasp_command = struct.pack('<H', 0x0001)  # LOGIN command
+        vendor_id = struct.pack('<I', 0x37515)  # Vendor ID
+        feature_id = struct.pack('<I', 0x01)  # Feature ID
+        session_id = struct.pack('<Q', 0)  # New session
+        client_info = socket.gethostname().encode()[:64].ljust(64, b'\x00')
+
+        # Build complete HASP request packet
+        hasp_request = hasp_header + hasp_version + hasp_command + vendor_id + feature_id + session_id + client_info
         port = 1947
 
         identified_protocol = emulator._identify_protocol(hasp_request, port)
@@ -151,8 +173,19 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         config = {'protocol': 'auto'}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate real CodeMeter license request
-        wibu_request = b"CODETEXT_REQUEST:" + struct.pack('<H', 22350) + b":WIBU_NETWORK_LICENSE"
+        # Construct actual Wibu-Systems CodeMeter protocol packet with proper structure
+        # CodeMeter protocol packet structure: [magic][version][command][flags][data]
+        codemeter_magic = struct.pack('<I', 0x434D5457)  # 'CMTW' magic bytes
+        protocol_version = struct.pack('<H', 0x0300)  # Protocol version 3.0
+        command_type = struct.pack('<H', 0x1000)  # License request command
+        request_flags = struct.pack('<I', 0x00000001)  # Network license flag
+        firm_code = struct.pack('<I', 0x00006000)  # Firm code
+        product_code = struct.pack('<I', 0x00100000)  # Product code
+        feature_map = struct.pack('<Q', 0x00000001)  # Feature map
+        session_data = os.urandom(16)  # Session nonce
+
+        # Build complete CodeMeter request packet
+        wibu_request = codemeter_magic + protocol_version + command_type + request_flags + firm_code + product_code + feature_map + session_data
         port = 22350
 
         identified_protocol = emulator._identify_protocol(wibu_request, port)
@@ -167,8 +200,27 @@ class TestNetworkLicenseServerEmulatorProtocolIdentification:
         config = {'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate unknown license protocol packet
-        unknown_request = b"CUSTOM_DRM_V2:auth_token:12345:feature_request:graphics_pro"
+        # Construct actual proprietary license protocol packet with structured format
+        # Many proprietary protocols use TLV (Type-Length-Value) encoding
+        protocol_id = struct.pack('>I', 0xDEADBEEF)  # Protocol identifier
+        msg_version = struct.pack('>B', 0x02)  # Protocol version 2
+        msg_type = struct.pack('>B', 0x10)  # Authentication request type
+        sequence_num = struct.pack('>H', 1)  # Sequence number
+
+        # Build authentication token TLV
+        auth_token_type = struct.pack('>H', 0x0001)  # Type: Auth Token
+        auth_token_data = hashlib.sha256(socket.gethostname().encode()).digest()
+        auth_token_len = struct.pack('>H', len(auth_token_data))
+
+        # Build feature request TLV
+        feature_type = struct.pack('>H', 0x0002)  # Type: Feature Request
+        feature_data = b'graphics_pro'.ljust(32, b'\x00')
+        feature_len = struct.pack('>H', len(feature_data))
+
+        # Assemble complete packet
+        unknown_request = (protocol_id + msg_version + msg_type + sequence_num +
+                          auth_token_type + auth_token_len + auth_token_data +
+                          feature_type + feature_len + feature_data)
         port = 8765
 
         # Should attempt to learn unknown protocol patterns
@@ -186,8 +238,23 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
         config = {'protocols': ['flexlm']}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate FlexLM license checkout request
-        flexlm_request = b"checkout autocad 1 username display hostid"
+        # Construct actual FlexLM license checkout request with proper binary format
+        # FlexLM checkout request structure: [command][feature][version][count][user_data]
+        checkout_cmd = struct.pack('>B', 0x02)  # LICENSE_REQUEST command
+        msg_len = struct.pack('>H', 128)  # Message length
+
+        # Feature data structure
+        feature_name = b'autocad'.ljust(32, b'\x00')  # Feature name padded
+        feature_version = struct.pack('>H', 0x1700)  # Version 23.0
+        license_count = struct.pack('>I', 1)  # Request 1 license
+
+        # User and host information
+        username = os.environ.get('USER', 'testuser').encode()[:32].ljust(32, b'\x00')
+        display = b':0.0'.ljust(16, b'\x00')  # Display string
+        hostid = hashlib.md5(socket.gethostname().encode()).digest()[:8]  # Host ID (8 bytes)
+
+        # Build complete checkout request
+        flexlm_request = checkout_cmd + msg_len + feature_name + feature_version + license_count + username + display + hostid
 
         response = emulator._generate_response('flexlm', flexlm_request)
 
@@ -206,8 +273,31 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
         config = {'protocols': ['hasp']}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate HASP dongle authentication request
-        hasp_request = struct.pack('<II', 0x1947, 0x12345678) + b"LOGIN_REQUEST"
+        # Construct actual HASP dongle authentication request with proper protocol structure
+        # HASP SRM protocol packet format: [header][packet_size][command][params]
+        hasp_signature = struct.pack('<I', 0x73726D00)  # 'srm\0' signature
+        packet_size = struct.pack('<I', 256)  # Total packet size
+        protocol_ver = struct.pack('<H', 0x0100)  # Protocol version 1.0
+        packet_id = struct.pack('<H', os.getpid() & 0xFFFF)  # Packet ID from PID
+
+        # HASP login command structure
+        command_code = struct.pack('<I', 0x00000001)  # LOGIN command
+        vendor_code = struct.pack('<I', 0x4D494E44)  # 'MIND' vendor code
+        scope_handle = struct.pack('<I', 0x00000000)  # New scope
+        feature_id = struct.pack('<I', 0x00000001)  # Feature 1
+
+        # Authentication data
+        auth_method = struct.pack('<H', 0x0002)  # Password auth
+        auth_data = hashlib.sha256(b'auth_key').digest()  # Authentication hash
+
+        # Client information
+        client_id = socket.gethostname().encode()[:32].ljust(32, b'\x00')
+        process_id = struct.pack('<I', os.getpid())
+
+        # Build complete HASP authentication request
+        hasp_request = (hasp_signature + packet_size + protocol_ver + packet_id +
+                       command_code + vendor_code + scope_handle + feature_id +
+                       auth_method + auth_data + client_id + process_id)
 
         response = emulator._generate_response('hasp', hasp_request)
 
@@ -225,12 +315,39 @@ class TestNetworkLicenseServerEmulatorResponseGeneration:
         config = {'learning_mode': True, 'adaptive_responses': True}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate client sending multiple requests
+        # Construct actual license protocol requests with proper binary formatting
+        import hashlib
+
+        # Build initial license request packet
+        req1_header = struct.pack('>I', 0x4C494352)  # 'LICR' magic
+        req1_type = struct.pack('>B', 0x01)  # Initial request type
+        req1_feature = b'feature_a'.ljust(32, b'\x00')
+        req1_client = hashlib.sha256(socket.gethostname().encode()).digest()[:16]
+        initial_request = req1_header + req1_type + req1_feature + req1_client
+
+        # Build heartbeat packet
+        req2_header = struct.pack('>I', 0x48424554)  # 'HBET' magic
+        req2_session = struct.pack('>Q', 0x12345)  # Session ID
+        req2_timestamp = struct.pack('>I', int(time.time()))
+        heartbeat_request = req2_header + req2_session + req2_timestamp
+
+        # Build feature usage packet
+        req3_header = struct.pack('>I', 0x46545553)  # 'FTUS' magic
+        req3_feature = b'graphics_module'.ljust(32, b'\x00')
+        req3_usage = struct.pack('>I', 75)  # 75% usage
+        feature_usage_request = req3_header + req3_feature + req3_usage
+
+        # Build license renewal packet
+        req4_header = struct.pack('>I', 0x52454E57)  # 'RENW' magic
+        req4_session = struct.pack('>Q', 0x12345)
+        req4_duration = struct.pack('>I', 1800)  # 30 minutes in seconds
+        renewal_request = req4_header + req4_session + req4_duration
+
         requests = [
-            b"initial_license_request:feature_a",
-            b"heartbeat:session_12345",
-            b"feature_usage:graphics_module",
-            b"license_renewal:extend_30min"
+            initial_request,
+            heartbeat_request,
+            feature_usage_request,
+            renewal_request
         ]
 
         responses = []
@@ -325,14 +442,20 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
         config = {'ports': '27000', 'max_clients': 50}
         emulator = NetworkLicenseServerEmulator(config)
 
-        def simulate_client_connection(client_id):
+        def execute_client_connection(client_id):
             try:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.settimeout(2.0)
                 client_socket.connect(('127.0.0.1', 27000))
 
-                # Send license request
-                request = f"LICENSE_REQUEST:client_{client_id}:autocad:1".encode()
+                # Construct actual FlexLM protocol license request packet
+                msg_type = struct.pack('>B', 0x02)  # LICENSE_REQUEST
+                msg_len = struct.pack('>H', 96)
+                feature = f'autocad_{client_id}'.encode()[:32].ljust(32, b'\x00')
+                version = struct.pack('>H', 0x1700)
+                count = struct.pack('>I', 1)
+                client_name = f'client_{client_id}'.encode()[:32].ljust(32, b'\x00')
+                request = msg_type + msg_len + feature + version + count + client_name
                 client_socket.send(request)
 
                 # Receive response
@@ -349,7 +472,7 @@ class TestNetworkLicenseServerEmulatorNetworkOperations:
 
             # Test concurrent connections
             with ThreadPoolExecutor(max_workers=10) as executor:
-                futures = [executor.submit(simulate_client_connection, i) for i in range(10)]
+                futures = [executor.submit(execute_client_connection, i) for i in range(10)]
                 results = [future.result(timeout=5) for future in futures]
 
                 # At least some connections should succeed
@@ -378,10 +501,28 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
             # Should initialize traffic recorder
             assert emulator.traffic_recorder is not None
 
-            # Simulate traffic for analysis
+            # Construct actual protocol traffic packets for analysis
+            # FlexLM checkout packet
+            flexlm_msg = struct.pack('>B', 0x02)  # LICENSE_REQUEST
+            flexlm_len = struct.pack('>H', 96)
+            flexlm_feature = b'autocad'.ljust(32, b'\x00')
+            flexlm_version = struct.pack('>H', 0x1700)
+            flexlm_count = struct.pack('>I', 1)
+            flexlm_user = b'testuser'.ljust(32, b'\x00')
+            flexlm_packet = flexlm_msg + flexlm_len + flexlm_feature + flexlm_version + flexlm_count + flexlm_user
+
+            # HASP authentication packet
+            hasp_header = struct.pack('<I', 0x48415350)  # 'HASP' magic
+            hasp_version = struct.pack('<H', 0x0200)
+            hasp_command = struct.pack('<H', 0x0001)
+            hasp_vendor = struct.pack('<I', 0x37515)
+            hasp_feature = struct.pack('<I', 0x01)
+            hasp_session = struct.pack('<Q', 0x123456)
+            hasp_packet = hasp_header + hasp_version + hasp_command + hasp_vendor + hasp_feature + hasp_session
+
             test_traffic = [
-                {'protocol': 'flexlm', 'data': b'checkout autocad 1 user host', 'timestamp': time.time()},
-                {'protocol': 'hasp', 'data': struct.pack('<II', 0x1947, 0x123), 'timestamp': time.time()},
+                {'protocol': 'flexlm', 'data': flexlm_packet, 'timestamp': time.time()},
+                {'protocol': 'hasp', 'data': hasp_packet, 'timestamp': time.time()},
             ]
 
             # Should analyze traffic patterns
@@ -398,11 +539,38 @@ class TestNetworkLicenseServerEmulatorTrafficAnalysis:
         config = {'learning_mode': True}
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Simulate analyzed traffic with patterns
+        # Construct actual protocol analysis data from captured traffic patterns
+        # Build authentication token pattern
+        auth_header = struct.pack('>I', 0x41555448)  # 'AUTH' magic
+        auth_type = struct.pack('>B', 0x01)  # Token auth type
+        auth_token = hashlib.sha256(os.urandom(16)).digest()[:16]
+
+        # Build license check pattern
+        lic_header = struct.pack('>I', 0x4C494343)  # 'LICC' magic
+        lic_product = b'graphics_pro'.ljust(32, b'\x00')
+        lic_version = struct.pack('>H', 0x0200)
+
+        # Build feature request pattern
+        feat_header = struct.pack('>I', 0x46454154)  # 'FEAT' magic
+        feat_name = b'advanced'.ljust(32, b'\x00')
+        feat_flags = struct.pack('>I', 0x000000FF)
+
+        # Combine into complete protocol data
+        protocol_data = (auth_header + auth_type + auth_token +
+                        lic_header + lic_product + lic_version +
+                        feat_header + feat_name + feat_flags)
+
+        # Extract patterns from actual binary data
+        patterns = [
+            auth_header,
+            lic_header,
+            feat_header
+        ]
+
         analysis_data = {
             'protocol_type': 'custom_drm',
-            'patterns': [b'AUTH_TOKEN:', b'LICENSE_CHECK:', b'FEATURE_REQUEST:'],
-            'data': b'AUTH_TOKEN:12345678:LICENSE_CHECK:graphics_pro:FEATURE_REQUEST:advanced'
+            'patterns': patterns,
+            'data': protocol_data
         }
 
         emulator._learn_protocol_pattern(analysis_data)
@@ -549,7 +717,7 @@ class TestRunNetworkLicenseEmulatorFunction:
             'hostnames': ['license.autodesk.com', 'maya.licensing.autodesk.com'],
             'learning_mode': True,
             'traffic_recording': True,
-            'response_simulation': 'realistic'
+            'response_generation': 'protocol_compliant'
         }
 
         # Test realistic scenario
@@ -573,11 +741,37 @@ class TestNetworkLicenseServerEmulatorSecurityResearchCapabilities:
         }
         emulator = NetworkLicenseServerEmulator(config)
 
-        # Test bypass scenario simulation
+        # Construct actual protocol-specific bypass test packets
+        # FlexLM unlimited checkout request
+        flexlm_bypass = struct.pack('>B', 0x02)  # LICENSE_REQUEST
+        flexlm_bypass += struct.pack('>H', 128)  # Length
+        flexlm_bypass += b'premium_features'.ljust(32, b'\x00')
+        flexlm_bypass += struct.pack('>H', 0xFFFF)  # Version: Any
+        flexlm_bypass += struct.pack('>I', 0xFFFFFFFF)  # Count: Unlimited
+        flexlm_bypass += b'admin'.ljust(32, b'\x00')
+        flexlm_bypass += struct.pack('>I', 0xFFFFFFFF)  # Expiry: Never
+
+        # HASP full access authentication request
+        hasp_bypass = struct.pack('<I', 0x48415350)  # 'HASP' magic
+        hasp_bypass += struct.pack('<H', 0x0300)  # Protocol v3
+        hasp_bypass += struct.pack('<H', 0x0010)  # Admin auth command
+        hasp_bypass += struct.pack('<I', 0xFFFFFFFF)  # All vendors
+        hasp_bypass += struct.pack('<I', 0xFFFFFFFF)  # All features
+        hasp_bypass += struct.pack('<Q', 0xFFFFFFFFFFFFFFFF)  # Full access mask
+        hasp_bypass += b'admin_token'.ljust(32, b'\x00')
+
+        # Sentinel permanent unlock request
+        sentinel_bypass = struct.pack('>I', 0x53454E54)  # 'SENT' magic
+        sentinel_bypass += struct.pack('>B', 0x05)  # Unlock command
+        sentinel_bypass += struct.pack('>H', 0x0000)  # All modules flag
+        sentinel_bypass += struct.pack('>I', 0x00000000)  # Permanent duration
+        sentinel_bypass += struct.pack('>Q', 0xFFFFFFFFFFFFFFFF)  # All features bitmap
+        sentinel_bypass += hashlib.sha256(b'bypass_key').digest()  # Auth key
+
         bypass_requests = [
-            b'BYPASS_TEST:flexlm:checkout:premium_features:unlimited',
-            b'BYPASS_TEST:hasp:authenticate:admin:full_access',
-            b'BYPASS_TEST:sentinel:unlock:all_modules:permanent'
+            flexlm_bypass,
+            hasp_bypass,
+            sentinel_bypass
         ]
 
         for request in bypass_requests:

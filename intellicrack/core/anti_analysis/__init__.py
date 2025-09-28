@@ -18,7 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from .api_obfuscation import APIObfuscator
 from .base_detector import BaseDetector
 from .debugger_detector import DebuggerDetector
-from .process_hollowing import ProcessHollowing
 from .sandbox_detector import SandboxDetector
 from .timing_attacks import TimingAttackDefense
 from .vm_detector import VMDetector
@@ -59,7 +58,6 @@ __all__ = [
     "AntiAnalysisEngine",
     "BaseDetector",
     "DebuggerDetector",
-    "ProcessHollowing",
     "SandboxDetector",
     "TimingAttackDefense",
     "VMDetector",

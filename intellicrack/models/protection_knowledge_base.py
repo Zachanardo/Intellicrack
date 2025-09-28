@@ -356,7 +356,7 @@ class ProtectionKnowledgeBase:
                     name="Full Devirtualization Framework",
                     description="Complete VM architecture reversal and x86/x64 reconstruction",
                     difficulty=BypassDifficulty.EXTREME,
-                    tools_required=["VMProtect Devirtualizer", "VTIL", "Custom VM tracer"],
+                    tools_required=["VMPImportFixer", "NoVmp", "VTIL-Core", "VMPDump", "Scylla"],
                     success_rate=0.3,
                     time_estimate="1-2 months",
                     risks=["Incomplete conversion", "Logic errors", "Mutations"],
@@ -415,19 +415,19 @@ class ProtectionKnowledgeBase:
             ],
         )
 
-        # Steam CEG/Stub
+        # Steam CEG/DRM Wrapper Implementation
         schemes["steam_ceg"] = ProtectionSchemeInfo(
-            name="Steam CEG/Stub",
+            name="Steam CEG/DRM Wrapper",
             vendor="Valve Corporation",
             category=ProtectionCategory.GAMING_DRM,
             description="Custom Executable Generation with user-specific binaries and Steam integration",
-            versions=["CEG v3", "CEG v4", "Steam Stub 3.x"],
+            versions=["CEG v3", "CEG v4", "Steam DRM Wrapper 3.x"],
             common_applications=["AAA games", "Indie games", "VR titles", "Software on Steam"],
             detection_signatures=[
                 "steam_api.dll", "steam_api64.dll", "steamclient.dll",
                 "SteamAPI_Init", "SteamAPI_RestartAppIfNecessary",
                 "tier0_s.dll", "vstdlib_s.dll", ".bind section",
-                "Steam Stub", "drm_wrapper", "steam_appid.txt"
+                "Steam DRM", "drm_wrapper", "steam_appid.txt"
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -435,7 +435,7 @@ class ProtectionKnowledgeBase:
                     name="Advanced CEG Unwrapping",
                     description="Complete CEG removal with AES key extraction",
                     difficulty=BypassDifficulty.MEDIUM,
-                    tools_required=["Steamless", "CEG Dumper", "x64dbg"],
+                    tools_required=["Steamless_CLI", "Steamless_GUI", "CEGPolisher", "x64dbg"],
                     success_rate=0.9,
                     time_estimate="1-3 hours",
                     risks=["Additional protections", "Integrity checks"],
@@ -445,7 +445,7 @@ class ProtectionKnowledgeBase:
                     name="Full Steam API Emulation",
                     description="Complete Steam client and overlay emulation",
                     difficulty=BypassDifficulty.LOW,
-                    tools_required=["Steam Emulator", "Goldberg Steam Emu"],
+                    tools_required=["GoldbergSteamEmu", "SmartSteamEmu", "ALI213Steam"],
                     success_rate=0.95,
                     time_estimate="30 minutes",
                     risks=["Multiplayer disabled", "Cloud saves broken"],
@@ -455,7 +455,7 @@ class ProtectionKnowledgeBase:
                     name="DLC and Workshop Unlock",
                     description="Enable all DLC and workshop content",
                     difficulty=BypassDifficulty.LOW,
-                    tools_required=["CreamAPI", "Workshop downloader"],
+                    tools_required=["CreamAPI_4.5.0.0", "SteamWorkshopDownloader", "DepotDownloader"],
                     success_rate=0.9,
                     time_estimate="15 minutes",
                     risks=["Version mismatches", "Missing content"],
@@ -465,7 +465,7 @@ class ProtectionKnowledgeBase:
                     name="Binary Reconstruction",
                     description="Rebuild clean executable from memory dump",
                     difficulty=BypassDifficulty.MEDIUM,
-                    tools_required=["Process dumper", "Import reconstructor"],
+                    tools_required=["PEDump", "Scylla_x64", "ImportREC", "LordPE"],
                     success_rate=0.8,
                     time_estimate="2-4 hours",
                     risks=["Incomplete dumps", "Runtime dependencies"],
@@ -744,6 +744,432 @@ class ProtectionKnowledgeBase:
             resources=[
                 "CodeMeter API documentation",
                 "AxProtector information",
+            ],
+        )
+
+        # SecuROM
+        schemes["securom"] = ProtectionSchemeInfo(
+            name="SecuROM",
+            vendor="Sony DADC",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Disc-based copy protection with online activation and virtual machine obfuscation",
+            versions=["SecuROM 7.x", "SecuROM 8.x", "SecuROM PA"],
+            common_applications=["Games (2005-2010 era)", "BioShock", "Mass Effect", "GTA IV", "Spore"],
+            detection_signatures=[
+                "SecuROM", "paul.dll", "drm.data", "securom_marker",
+                ".securom", "CmdLineExt.dll", "SecuROM_UserAccessService",
+                "securom32.dll", "securom64.dll", "SECDRV.SYS"
+            ],
+            bypass_difficulty=BypassDifficulty.MEDIUM,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="SecuROM Removal Tool",
+                    description="Complete removal of SecuROM protection layers including triggers",
+                    difficulty=BypassDifficulty.MEDIUM,
+                    tools_required=["SecuROM Unpacker", "Trigger Mapper", "Import Fixer"],
+                    success_rate=0.85,
+                    time_estimate="4-8 hours",
+                    risks=["Trigger points", "Activation checks", "VM detection"],
+                    prerequisites=["SecuROM version identification", "PE reconstruction"],
+                ),
+                BypassTechnique(
+                    name="Activation Server Emulation",
+                    description="Emulate SecuROM activation servers for offline play",
+                    difficulty=BypassDifficulty.LOW,
+                    tools_required=["SecuROM Activator", "Server Emulator"],
+                    success_rate=0.9,
+                    time_estimate="1-2 hours",
+                    risks=["Hardware binding", "Revocation lists"],
+                    prerequisites=["Network protocol knowledge"],
+                ),
+                BypassTechnique(
+                    name="VM Code Extraction",
+                    description="Extract and reconstruct virtualized code segments",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["VM Analyzer", "Code Rebuilder", "IDA Pro"],
+                    success_rate=0.75,
+                    time_estimate="2-3 days",
+                    risks=["Incomplete extraction", "Logic errors"],
+                    prerequisites=["VM architecture understanding", "x86 assembly"],
+                ),
+            ],
+            analysis_tips=[
+                "Look for SecuROM launcher wrapper",
+                "Check for disc check triggers at runtime",
+                "Monitor registry for activation data",
+                "Analyze VM entry points for protected functions",
+                "Track hardware fingerprinting routines",
+                "Check for multiple trigger layers",
+            ],
+            common_mistakes=[
+                "Missing delayed activation triggers",
+                "Incomplete VM code reconstruction",
+                "Not removing all SecuROM services",
+                "Ignoring online verification callbacks",
+            ],
+            resources=[
+                "SecuROM version databases",
+                "Trigger point documentation",
+                "VM handler analysis guides",
+            ],
+        )
+
+        # StarForce
+        schemes["starforce"] = ProtectionSchemeInfo(
+            name="StarForce",
+            vendor="Protection Technology",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Driver-level protection with anti-debugging, encryption, and disc checks",
+            versions=["StarForce 3", "StarForce 4", "StarForce 5", "StarForce ProActive"],
+            common_applications=["Splinter Cell: Chaos Theory", "King Kong", "Trackmania", "X3: Reunion"],
+            detection_signatures=[
+                "StarForce", "protect.dll", "protect.sys", "sfdrv01.sys",
+                "sfdrvup.exe", "StarForce Helper", "prodrv06.sys",
+                "StarForceA", "sfhlp02.sys", "Protection ID"
+            ],
+            bypass_difficulty=BypassDifficulty.HIGH,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Driver-Level Neutralization",
+                    description="Disable StarForce drivers and protection mechanisms at kernel level",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["Driver Disabler", "Kernel Debugger", "WinDbg"],
+                    success_rate=0.7,
+                    time_estimate="1 week",
+                    risks=["System instability", "BSOD", "Driver conflicts"],
+                    prerequisites=["Kernel debugging", "Driver analysis"],
+                ),
+                BypassTechnique(
+                    name="Protected Process Dumping",
+                    description="Dump and rebuild protected executable from memory",
+                    difficulty=BypassDifficulty.MEDIUM,
+                    tools_required=["StarForce Dumper", "Process Monitor", "IAT Rebuilder"],
+                    success_rate=0.75,
+                    time_estimate="6-12 hours",
+                    risks=["Anti-dump tricks", "Encrypted sections"],
+                    prerequisites=["Memory forensics", "PE format"],
+                ),
+                BypassTechnique(
+                    name="Optical Drive Emulation",
+                    description="Perfect emulation of physical disc including weak sectors",
+                    difficulty=BypassDifficulty.MEDIUM,
+                    tools_required=["DAEMON Tools", "Alcohol 120%", "StarForce Nightmare"],
+                    success_rate=0.8,
+                    time_estimate="2-4 hours",
+                    risks=["Blacklisting", "Version detection"],
+                    prerequisites=["Disc image formats", "SCSI emulation"],
+                ),
+            ],
+            analysis_tips=[
+                "Disable StarForce drivers before analysis",
+                "Monitor IOCTL communications with drivers",
+                "Check for encrypted code sections",
+                "Look for IDE/SCSI miniport hooks",
+                "Analyze disc authentication protocol",
+                "Track thread creation for anti-debug",
+            ],
+            common_mistakes=[
+                "Running with active StarForce drivers",
+                "Incomplete driver removal",
+                "Missing weak sector emulation",
+                "Not handling all protection versions",
+            ],
+            resources=[
+                "StarForce driver analysis papers",
+                "Optical drive emulation guides",
+                "Protection removal tutorials",
+            ],
+        )
+
+        # Arxan TransformIT
+        schemes["arxan"] = ProtectionSchemeInfo(
+            name="Arxan TransformIT/GuardIT",
+            vendor="Arxan Technologies (now Digital.ai)",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Advanced application protection with code obfuscation, anti-tamper, and white-box cryptography",
+            versions=["TransformIT 5.x", "GuardIT 4.x", "EnsureIT"],
+            common_applications=["Financial apps", "Healthcare software", "Gaming", "Enterprise applications"],
+            detection_signatures=[
+                "Arxan", "TransformIT", "GuardIT", "White-box crypto",
+                "Control flow flattening", "Instruction substitution",
+                "Anti-tamper checks", "Integrity guards", "Code mobility"
+            ],
+            bypass_difficulty=BypassDifficulty.VERY_HIGH,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Advanced Deobfuscation Pipeline",
+                    description="Multi-stage deobfuscation with pattern recognition and symbolic execution",
+                    difficulty=BypassDifficulty.VERY_HIGH,
+                    tools_required=["Tigress Killer", "OLLVM Deobfuscator", "Miasm", "Z3"],
+                    success_rate=0.5,
+                    time_estimate="2-4 weeks",
+                    risks=["Incomplete deobfuscation", "False patterns", "Performance overhead"],
+                    prerequisites=["Compiler theory", "Symbolic execution", "Pattern matching"],
+                ),
+                BypassTechnique(
+                    name="White-Box Crypto Attack",
+                    description="Extract keys from white-box cryptographic implementations",
+                    difficulty=BypassDifficulty.EXTREME,
+                    tools_required=["DFA tools", "SideChannelMarvels", "Tracer", "Custom scripts"],
+                    success_rate=0.4,
+                    time_estimate="3-6 weeks",
+                    risks=["Key extraction failure", "Multiple key layers"],
+                    prerequisites=["Cryptanalysis", "DFA attacks", "White-box theory"],
+                ),
+                BypassTechnique(
+                    name="Guard Network Mapping",
+                    description="Map and neutralize all integrity guard checkpoints",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["Guard Mapper", "Cross-reference analyzer", "IDA Pro"],
+                    success_rate=0.6,
+                    time_estimate="1-2 weeks",
+                    risks=["Hidden guards", "Cascading checks", "Time bombs"],
+                    prerequisites=["Graph analysis", "Anti-tamper knowledge"],
+                ),
+            ],
+            analysis_tips=[
+                "Start with control flow recovery",
+                "Map guard network before patching",
+                "Look for white-box crypto implementations",
+                "Identify obfuscation patterns systematically",
+                "Check for code mobility and polymorphism",
+                "Monitor for integrity check cascades",
+            ],
+            common_mistakes=[
+                "Patching guards individually",
+                "Ignoring white-box crypto layers",
+                "Incomplete control flow recovery",
+                "Missing time-delayed checks",
+            ],
+            resources=[
+                "Arxan protection whitepapers",
+                "Control flow deobfuscation research",
+                "White-box cryptography attacks",
+            ],
+        )
+
+        # Enigma Protector
+        schemes["enigma"] = ProtectionSchemeInfo(
+            name="Enigma Protector",
+            vendor="The Enigma Protector Developers Team",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Executable protector with virtualization, licensing, and anti-debugging features",
+            versions=["6.x", "7.x"],
+            common_applications=["Shareware", "Commercial tools", "Game trainers", "Utilities"],
+            detection_signatures=[
+                "Enigma", "enigma1", "enigma2", "enigma_ide.dll",
+                ".enigma1", ".enigma2", "EP_RegHardwareID",
+                "EP_RegistrationLoadKeyA", "EP_RegistrationSaveKeyA"
+            ],
+            bypass_difficulty=BypassDifficulty.MEDIUM,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Enigma Unpacker Suite",
+                    description="Complete unpacking with OEP finding and import reconstruction",
+                    difficulty=BypassDifficulty.MEDIUM,
+                    tools_required=["Enigma Unpacker", "OEP Finder", "ImportREC"],
+                    success_rate=0.8,
+                    time_estimate="3-6 hours",
+                    risks=["VM protected sections", "Anti-dump"],
+                    prerequisites=["Unpacking knowledge", "PE format"],
+                ),
+                BypassTechnique(
+                    name="Registration System Bypass",
+                    description="Bypass hardware-locked registration and licensing",
+                    difficulty=BypassDifficulty.LOW,
+                    tools_required=["Registration patcher", "HWID spoofer"],
+                    success_rate=0.85,
+                    time_estimate="1-2 hours",
+                    risks=["Online verification", "Time checks"],
+                    prerequisites=["Registration system knowledge"],
+                ),
+            ],
+            analysis_tips=[
+                "Look for Enigma sections in PE header",
+                "Check registration API usage",
+                "Monitor hardware ID generation",
+                "Trace VM entry points",
+                "Analyze anti-debugging tricks",
+            ],
+            common_mistakes=[
+                "Not fixing all imports",
+                "Missing VM protected code",
+                "Incomplete registration bypass",
+            ],
+            resources=[
+                "Enigma Protector documentation",
+                "Unpacking tutorials",
+            ],
+        )
+
+        # ASProtect/ASPack
+        schemes["asprotect"] = ProtectionSchemeInfo(
+            name="ASProtect/ASPack",
+            vendor="Alexey Solodovnikov",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Compression and protection with anti-debugging and CRC checking",
+            versions=["ASProtect 2.x", "ASPack 2.x"],
+            common_applications=["Shareware", "Cracking tools", "Small utilities"],
+            detection_signatures=[
+                "ASProtect", "ASPack", ".aspack", ".adata", ".aspr",
+                "aspr_ide.dll", "ASProtect SKE", "CRC Check"
+            ],
+            bypass_difficulty=BypassDifficulty.LOW,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Standard Unpacking",
+                    description="Unpack and rebuild original executable",
+                    difficulty=BypassDifficulty.LOW,
+                    tools_required=["ASProtect Unpacker", "OllyDbg", "x64dbg"],
+                    success_rate=0.9,
+                    time_estimate="30-60 minutes",
+                    risks=["CRC checks", "Stolen bytes"],
+                    prerequisites=["Basic unpacking"],
+                ),
+                BypassTechnique(
+                    name="SKE License Bypass",
+                    description="Bypass ASProtect SKE registration system",
+                    difficulty=BypassDifficulty.LOW,
+                    tools_required=["SKE patcher", "Registry editor"],
+                    success_rate=0.85,
+                    time_estimate="15-30 minutes",
+                    risks=["Hardware binding"],
+                    prerequisites=["Registry knowledge"],
+                ),
+            ],
+            analysis_tips=[
+                "Find OEP with hardware breakpoints",
+                "Dump at OEP and fix imports",
+                "Check for CRC verification routines",
+                "Look for stolen bytes at entry point",
+            ],
+            common_mistakes=[
+                "Not restoring stolen bytes",
+                "Missing CRC patches",
+                "Incomplete IAT reconstruction",
+            ],
+            resources=[
+                "ASProtect unpacking guides",
+                "SKE documentation",
+            ],
+        )
+
+        # Obsidium
+        schemes["obsidium"] = ProtectionSchemeInfo(
+            name="Obsidium",
+            vendor="Obsidium Software",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Software protection with strong encryption, anti-debugging, and licensing",
+            versions=["1.6.x", "1.7.x"],
+            common_applications=["Commercial software", "Games", "Professional tools"],
+            detection_signatures=[
+                "Obsidium", "obsidium.dll", ".obsidium",
+                "Obsidium©", "OBSIDIUM_SECTION", "obsidium_vm"
+            ],
+            bypass_difficulty=BypassDifficulty.HIGH,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Advanced Obsidium Unpacking",
+                    description="Multi-layer unpacking with anti-debug bypass",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["Obsidium Unpacker", "ScyllaHide", "TitanEngine"],
+                    success_rate=0.65,
+                    time_estimate="1-2 days",
+                    risks=["VM protection", "Encrypted layers"],
+                    prerequisites=["Advanced unpacking", "Anti-anti-debug"],
+                ),
+                BypassTechnique(
+                    name="License Key Generation",
+                    description="Generate valid license keys through cryptanalysis",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["Key analyzer", "Crypto tools"],
+                    success_rate=0.6,
+                    time_estimate="2-3 days",
+                    risks=["RSA protection", "Online validation"],
+                    prerequisites=["Cryptography", "Key algorithms"],
+                ),
+            ],
+            analysis_tips=[
+                "Use anti-anti-debug plugins",
+                "Look for multiple protection layers",
+                "Analyze VM protected sections",
+                "Check license validation routines",
+                "Monitor API redirection",
+            ],
+            common_mistakes=[
+                "Triggering anti-debug mechanisms",
+                "Incomplete layer removal",
+                "Missing VM code reconstruction",
+            ],
+            resources=[
+                "Obsidium SDK documentation",
+                "Advanced unpacking techniques",
+            ],
+        )
+
+        # SoftwarePassport/Armadillo
+        schemes["armadillo"] = ProtectionSchemeInfo(
+            name="SoftwarePassport/Armadillo",
+            vendor="Silicon Realms/Digital River",
+            category=ProtectionCategory.SOFTWARE_PROTECTION,
+            description="Professional protection with nanomites, code splicing, and strategic code mutation",
+            versions=["8.x", "9.x"],
+            common_applications=["Professional software", "Engineering tools", "Security applications"],
+            detection_signatures=[
+                "Armadillo", "SoftwarePassport", ".arm", ".data",
+                "ArmAccess.dll", "nanomites", "CopyMem2", "Strategic Code Splicing"
+            ],
+            bypass_difficulty=BypassDifficulty.VERY_HIGH,
+            bypass_techniques=[
+                BypassTechnique(
+                    name="Nanomite Processing",
+                    description="Process and remove nanomite protection with CC restoration",
+                    difficulty=BypassDifficulty.VERY_HIGH,
+                    tools_required=["ArmInline", "Nanomite Processor", "IDA Pro"],
+                    success_rate=0.6,
+                    time_estimate="1-2 weeks",
+                    risks=["Incomplete processing", "Logic errors"],
+                    prerequisites=["Nanomite theory", "Debugging expertise"],
+                ),
+                BypassTechnique(
+                    name="Code Splicing Reconstruction",
+                    description="Rebuild code sections split by strategic code splicing",
+                    difficulty=BypassDifficulty.HIGH,
+                    tools_required=["Code rebuilder", "Memory analyzer"],
+                    success_rate=0.65,
+                    time_estimate="3-5 days",
+                    risks=["Missing code fragments", "Incorrect reassembly"],
+                    prerequisites=["Code flow analysis", "Memory forensics"],
+                ),
+                BypassTechnique(
+                    name="Import Elimination Recovery",
+                    description="Recover eliminated imports and API redirections",
+                    difficulty=BypassDifficulty.MEDIUM,
+                    tools_required=["Import reconstructor", "API tracer"],
+                    success_rate=0.75,
+                    time_estimate="4-8 hours",
+                    risks=["Hidden imports", "Dynamic resolution"],
+                    prerequisites=["IAT reconstruction", "API knowledge"],
+                ),
+            ],
+            analysis_tips=[
+                "Map all nanomite INT3 locations",
+                "Trace parent-child debugging architecture",
+                "Analyze code splicing points",
+                "Look for import elimination",
+                "Check for debugger detection loops",
+                "Monitor inter-process communication",
+            ],
+            common_mistakes=[
+                "Not processing all nanomites",
+                "Incomplete code splicing recovery",
+                "Missing child process handling",
+                "Ignoring CopyMem2 protection",
+            ],
+            resources=[
+                "Armadillo protection analysis papers",
+                "Nanomite handling techniques",
+                "Strategic code splicing documentation",
             ],
         )
 

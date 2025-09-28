@@ -1660,7 +1660,7 @@ class LicenseDebugger:
                 self.hook_license_api(dll_name, api_name, self._thread_enum_callback)
 
             # Strategy 2: Mark our debugger threads as system threads
-            for thread_id, thread_handle in self.thread_handles.items():
+            for _thread_id, thread_handle in self.thread_handles.items():
                 try:
                     # Use NtSetInformationThread to hide the thread
                     ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
@@ -3019,7 +3019,7 @@ class LicenseDebugger:
 
                 for dll_name, imports in delayed_imports.items():
                     if dll_name.lower() in suspicious_dlls:
-                        for _addr, func_name, is_bound in imports:
+                        for _addr, func_name, _is_bound in imports:
                             if any(api in func_name.lower() for api in suspicious_apis):
                                 logger.warning(f"Suspicious delayed import: {dll_name}!{func_name}")
 

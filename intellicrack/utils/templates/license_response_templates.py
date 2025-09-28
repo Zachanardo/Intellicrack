@@ -97,12 +97,6 @@ def get_adobe_response_templates():
         if os.path.exists(path):
             detected_products.append({"id": product_id, "name": name, "status": "ACTIVATED"})
 
-    # If no products detected, simulate common installation
-    if not detected_products:
-        detected_products = [
-            {"id": "PHSP", "name": "Photoshop", "status": "TRIAL"},
-            {"id": "ILST", "name": "Illustrator", "status": "TRIAL"},
-        ]
 
     return {
         "json": {
@@ -170,11 +164,6 @@ def get_autodesk_response_templates():
             else:
                 detected_products.append({"id": product_id, "name": name, "status": "TRIAL"})
 
-    # Default products if none detected
-    if not detected_products:
-        detected_products = [
-            {"id": "AUTOCAD", "name": "AutoCAD", "status": "TRIAL"},
-        ]
 
     # Calculate expiry based on license type
     if license_type == "NETWORK":
@@ -262,11 +251,6 @@ def get_jetbrains_response_templates():
         except (OSError, PermissionError) as e:
             logger.error("Error in license_response_templates: %s", e)
 
-    # Default if no products detected
-    if not detected_products:
-        detected_products = [
-            {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"},
-        ]
 
     # Calculate expiry based on license type
     if license_type == "commercial":
@@ -434,11 +418,6 @@ def get_microsoft_response_templates():
         error_code = 2
         error_message = f"Microsoft license validation error: {e!s}"
 
-    # Default if no products detected
-    if not detected_products:
-        detected_products = [
-            {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"},
-        ]
 
     return {
         "json": {

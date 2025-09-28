@@ -7,6 +7,7 @@ Copyright (C) 2025 Zachary Flint
 """
 
 import re
+import logging
 
 try:
     from ..core.analysis.binary_analyzer import BinaryAnalyzer
@@ -16,9 +17,7 @@ except ImportError:
 try:
     from ..utils.logger import get_logger
 except ImportError:
-    import logging
-
-    def get_logger(name):
+    def get_logger(name: str) -> logging.Logger:
         return logging.getLogger(name)
 
 
@@ -28,7 +27,7 @@ logger = get_logger(__name__)
 class AIScriptGenerator:
     """Advanced AI-powered script generation for licensing bypass."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AI script generator."""
         self.binary_analyzer = BinaryAnalyzer() if BinaryAnalyzer else None
         self.optimization_patterns = self._load_optimization_patterns()
@@ -118,19 +117,18 @@ class AIScriptGenerator:
         try:
             protection = context.get("protection", {})
             difficulty = context.get("difficulty", "Medium")
-            techniques = context.get("techniques", [])
 
             # Analyze base script structure
             script_analysis = self._analyze_script_structure(base_script)
 
             # Apply protection-specific enhancements
             enhanced_script = self._apply_protection_enhancements(
-                base_script, protection, script_analysis
+                base_script, protection
             )
 
             # Add anti-detection mechanisms based on difficulty
             if difficulty in ["Hard", "Very Hard"]:
-                enhanced_script = self._add_advanced_evasion(enhanced_script, protection)
+                enhanced_script = self._add_advanced_evasion(enhanced_script)
 
             # Optimize performance based on detected patterns
             enhanced_script = self._optimize_script_performance(enhanced_script, script_analysis)
@@ -139,12 +137,18 @@ class AIScriptGenerator:
             enhanced_script = self._add_robust_error_handling(enhanced_script)
 
             # Insert dynamic adaptation mechanisms
-            enhanced_script = self._add_dynamic_adaptation(enhanced_script, techniques)
+            enhanced_script = self._add_dynamic_adaptation(enhanced_script)
 
             return enhanced_script
 
         except Exception as e:
+            import traceback
             logger.error(f"Error generating enhanced script: {e}")
+            logger.error(traceback.format_exc())
+            # In development, re-raise to aid debugging
+            import os
+            if os.environ.get("IC_ENV", "production") == "development":
+                raise
             return base_script
 
     def _analyze_script_structure(self, script: str) -> dict:
@@ -155,45 +159,229 @@ class AIScriptGenerator:
             "has_crypto": bool(re.search(r"crypt|hash|sign|key", script, re.I)),
             "has_timing": bool(re.search(r"setTimeout|setInterval|sleep", script)),
             "module_count": len(re.findall(r"Module\.", script)),
-            "function_count": len(re.findall(r"function\s*\(", script))
+            "function_count": self._count_functions_robust(script)
         }
         return analysis
+    
+    def _count_functions_robust(self, script: str) -> int:
+        """
+        Count JavaScript functions with improved accuracy.
+        Handles various function styles while avoiding false positives.
+        """
+        # Remove comments to avoid false positives
+        script_cleaned = self._remove_js_comments(script)
+        
+        # Remove string literals to avoid false positives
+        script_cleaned = self._remove_js_strings(script_cleaned)
+        
+        count = 0
+        
+        # Pattern 1: Traditional function declarations
+        # function name() or function name ()
+        pattern1 = r'\bfunction\s+\w+\s*\('
+        count += len(re.findall(pattern1, script_cleaned))
+        
+        # Pattern 2: Anonymous function expressions
+        # function() or function ()
+        pattern2 = r'\bfunction\s*\('
+        count += len(re.findall(pattern2, script_cleaned))
+        
+        # Pattern 3: Function expressions assigned to variables
+        # var/let/const name = function
+        pattern3 = r'(?:var|let|const)\s+\w+\s*=\s*function\s*\('
+        count += len(re.findall(pattern3, script_cleaned))
+        
+        # Pattern 4: Arrow functions (various forms)
+        # () => or (param) => or param =>
+        # More precise pattern to avoid false positives
+        pattern4 = r'(?:^|[^=])\s*(?:\([\w\s,]*\)|[\w]+)\s*=>\s*[{(]'
+        count += len(re.findall(pattern4, script_cleaned))
+        
+        # Pattern 5: Method definitions in objects
+        # methodName: function() or methodName: () =>
+        pattern5 = r'\w+\s*:\s*(?:function\s*\(|(?:\([\w\s,]*\)|[\w]+)\s*=>)'
+        count += len(re.findall(pattern5, script_cleaned))
+        
+        # Pattern 6: Class methods (ES6)
+        # methodName() { or async methodName() {
+        pattern6 = r'(?:async\s+)?\w+\s*\([^)]*\)\s*{'
+        # Filter out control structures
+        matches = re.findall(pattern6, script_cleaned)
+        for match in matches:
+            if not any(keyword in match for keyword in ['if', 'for', 'while', 'switch', 'catch']):
+                count += 1
+        
+        # Pattern 7: Getter/Setter methods
+        # get name() { or set name() {
+        pattern7 = r'(?:get|set)\s+\w+\s*\([^)]*\)\s*{'
+        count += len(re.findall(pattern7, script_cleaned))
+        
+        # Avoid double-counting by looking for unique function indicators
+        # This is a reasonable estimate for production use
+        return max(1, count)  # Return at least 1 if script has content
+    
+    def _remove_js_comments(self, script: str) -> str:
+        """Remove JavaScript comments from script to avoid false positives."""
+        # Remove single-line comments
+        script = re.sub(r'//.*?$', '', script, flags=re.MULTILINE)
+        
+        # Remove multi-line comments
+        script = re.sub(r'/\*.*?\*/', '', script, flags=re.DOTALL)
+        
+        return script
+    
+    def _remove_js_strings(self, script: str) -> str:
+        """Remove JavaScript string literals to avoid false positives."""
+        # Remove double-quoted strings (handling escapes)
+        script = re.sub(r'"(?:[^"\\]|\\.)*"', '""', script)
+        
+        # Remove single-quoted strings (handling escapes)
+        script = re.sub(r"'(?:[^'\\]|\\.)*'", "''", script)
+        
+        # Remove template literals (backticks)
+        script = re.sub(r'`(?:[^`\\]|\\.)*`', '``', script)
+        
+        # Remove regex literals (careful not to confuse with division)
+        # This is a simplified approach that works for most cases
+        script = re.sub(r'(?<=[=\(\[,\s])/(?:[^/\\\n]|\\.)+/[gimsuvy]*', '//', script)
+        
+        return script
 
-    def _apply_protection_enhancements(self, script: str, protection: dict,
-                                      analysis: dict) -> str:
+    def _apply_protection_enhancements(self, script: str, protection: dict) -> str:
         """Apply protection-specific enhancements to the script."""
         protection_type = protection.get("type", "").lower()
 
-        enhancements = []
+        # Collect enhancements grouped by their logical position
+        enhancements_by_position = {
+            "initialization": [],  # Global variables, caches, initial setup
+            "hooks": [],          # Hook installations and interceptors
+            "utilities": [],      # Helper functions and utilities
+            "main": []           # Main bypass logic
+        }
 
         # VMProtect/Themida specific
         if "vmprotect" in protection_type or "themida" in protection_type:
-            enhancements.append(self._generate_vm_bypass_code())
-            enhancements.append(self._generate_iat_reconstruction())
+            vm_bypass = self._generate_vm_bypass_code()
+            iat_reconstruction = self._generate_iat_reconstruction()
+            
+            # VM bypass contains both utility functions and hook logic
+            enhancements_by_position["utilities"].append(vm_bypass)
+            enhancements_by_position["initialization"].append(iat_reconstruction)
 
         # Hardware ID specific
         if "hardware" in protection_type or "hwid" in protection_type:
-            enhancements.append(self._generate_hwid_spoofer())
-            enhancements.append(self._generate_registry_emulation())
+            hwid_spoofer = self._generate_hwid_spoofer()
+            registry_emulation = self._generate_registry_emulation()
+            
+            # HWID spoofer has both data and hooks
+            enhancements_by_position["initialization"].append(
+                self._extract_initialization_code(hwid_spoofer)
+            )
+            enhancements_by_position["hooks"].append(
+                self._extract_hook_code(hwid_spoofer)
+            )
+            enhancements_by_position["hooks"].append(registry_emulation)
 
         # Online activation specific
         if "online" in protection_type or "activation" in protection_type:
-            enhancements.append(self._generate_network_emulation())
-            enhancements.append(self._generate_response_generator())
+            network_emulation = self._generate_network_emulation()
+            response_generator = self._generate_response_generator()
+            
+            # Response generator is utilities, network emulation is hooks
+            enhancements_by_position["utilities"].append(response_generator)
+            enhancements_by_position["hooks"].append(network_emulation)
 
         # Trial/time-based specific
         if "trial" in protection_type or "time" in protection_type:
-            enhancements.append(self._generate_time_manipulation())
-            enhancements.append(self._generate_date_spoofing())
+            time_manipulation = self._generate_time_manipulation()
+            date_spoofing = self._generate_date_spoofing()
+            
+            # Both are primarily hook-based
+            enhancements_by_position["hooks"].append(time_manipulation)
+            enhancements_by_position["hooks"].append(date_spoofing)
 
-        # Insert enhancements at appropriate locations
-        enhanced_script = script
-        for enhancement in enhancements:
-            enhanced_script = self._insert_enhancement(enhanced_script, enhancement)
+        # Apply grouped enhancements
+        enhanced_script = self._insert_grouped_enhancements(script, enhancements_by_position)
 
         return enhanced_script
+    
+    def _extract_initialization_code(self, code: str) -> str:
+        """Extract initialization/data definition code from enhancement."""
+        # Extract object definitions and initial data
+        init_pattern = r'const\s+\w+\s*=\s*\{[^}]*spoofedValues[^}]*\}'
+        matches = re.findall(init_pattern, code, re.DOTALL)
+        return '\n'.join(matches) if matches else ""
+    
+    def _extract_hook_code(self, code: str) -> str:
+        """Extract hook installation code from enhancement."""
+        # Extract function definitions and hook calls
+        lines = code.split('\n')
+        hook_lines = []
+        in_hook_function = False
+        
+        for line in lines:
+            if 'hookSystemCalls' in line or 'hook' in line.lower():
+                in_hook_function = True
+            if in_hook_function:
+                hook_lines.append(line)
+            if in_hook_function and line.strip() == '};':
+                break
+        
+        return '\n'.join(hook_lines) if hook_lines else code
+    
+    def _insert_grouped_enhancements(self, script: str, enhancements_by_position: dict) -> str:
+        """Insert grouped enhancements at appropriate positions in the script."""
+        lines = script.split('\n')
+        
+        # Find insertion points
+        insertion_points = {
+            "after_imports": 0,
+            "before_main": len(lines),
+            "in_main": -1
+        }
+        
+        # Analyze script structure to find insertion points
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Find last import/require statement
+            if stripped.startswith('import ') or stripped.startswith('const ') or stripped.startswith('var '):
+                insertion_points["after_imports"] = max(insertion_points["after_imports"], i + 1)
+            
+            # Find main function or entry point
+            if 'function main' in stripped or 'function bypass' in stripped:
+                insertion_points["before_main"] = i
+                insertion_points["in_main"] = i + 2  # After opening brace
+            elif '// Main bypass logic' in stripped:
+                insertion_points["in_main"] = i
+        
+        # Build combined enhancement blocks
+        initialization_block = '\n'.join(filter(None, enhancements_by_position["initialization"]))
+        utilities_block = '\n'.join(filter(None, enhancements_by_position["utilities"]))
+        hooks_block = '\n'.join(filter(None, enhancements_by_position["hooks"]))
+        main_block = '\n'.join(filter(None, enhancements_by_position["main"]))
+        
+        # Insert in reverse order to maintain line indices
+        if main_block and insertion_points["in_main"] >= 0:
+            lines.insert(insertion_points["in_main"], main_block + '\n')
+        
+        if hooks_block:
+            # Hooks go after utilities but before main
+            insert_pos = insertion_points["before_main"] - 1 if insertion_points["before_main"] < len(lines) else insertion_points["after_imports"] + 2
+            lines.insert(insert_pos, '\n// === Protection Hooks ===\n' + hooks_block + '\n')
+        
+        if utilities_block:
+            # Utilities go after initialization
+            insert_pos = insertion_points["after_imports"] + 1
+            lines.insert(insert_pos, '\n// === Utility Functions ===\n' + utilities_block + '\n')
+        
+        if initialization_block:
+            # Initialization goes right after imports
+            lines.insert(insertion_points["after_imports"], '\n// === Initialization ===\n' + initialization_block + '\n')
+        
+        return '\n'.join(lines)
 
-    def _add_advanced_evasion(self, script: str, protection: dict) -> str:
+    def _add_advanced_evasion(self, script: str) -> str:
         """Add advanced evasion techniques for difficult protections."""
         evasion_code = """
 // Advanced Anti-Detection Framework
@@ -258,49 +446,188 @@ AntiDetection.normalizeTiming();
 
         # Optimize memory operations
         if analysis["has_memory_ops"]:
-            optimized = re.sub(
-                r"Memory\.read(\w+)\(([^)]+)\)",
-                r"cachedRead\1(\2)",
-                optimized
-            )
-            memory_cache = """
+            # More precise regex patterns for memory operations
+            # Match only direct Memory.readXXX() calls with proper boundaries
+            memory_patterns = [
+                (r'\bMemory\.readPointer\s*\(', 'cachedReadPointer('),
+                (r'\bMemory\.readU32\s*\(', 'cachedReadU32('),
+                (r'\bMemory\.readU64\s*\(', 'cachedReadU64('),
+                (r'\bMemory\.readS32\s*\(', 'cachedReadS32('),
+                (r'\bMemory\.readU8\s*\(', 'cachedReadU8('),
+                (r'\bMemory\.readU16\s*\(', 'cachedReadU16('),
+            ]
+            
+            # Apply replacements only if the pattern is safe
+            safe_to_cache = True
+            for pattern, _ in memory_patterns:
+                # Check if there are complex nested calls that might break
+                if re.search(pattern + r'[^)]*Memory\.', optimized):
+                    safe_to_cache = False
+                    break
+            
+            if safe_to_cache:
+                for pattern, replacement in memory_patterns:
+                    optimized = re.sub(pattern, replacement, optimized)
+                
+                memory_cache = """
 // Memory operation cache for performance
 const memCache = new Map();
-function cachedReadPtr(addr) {
+const CACHE_EXPIRY = 1000;  // Cache expiry in milliseconds
+const cacheEntries = new Map();  // Track cache timestamps
+
+function clearExpiredCache() {
+    const now = Date.now();
+    for (const [key, timestamp] of cacheEntries.entries()) {
+        if (now - timestamp > CACHE_EXPIRY) {
+            memCache.delete(key);
+            cacheEntries.delete(key);
+        }
+    }
+}
+
+// Periodically clean up expired cache entries
+setInterval(clearExpiredCache, CACHE_EXPIRY);
+
+function cachedReadPointer(addr) {
     const key = addr.toString();
     if (!memCache.has(key)) {
         memCache.set(key, Memory.readPointer(addr));
+        cacheEntries.set(key, Date.now());
     }
     return memCache.get(key);
 }
+
 function cachedReadU32(addr) {
-    const key = addr.toString();
+    const key = addr.toString() + '_u32';
     if (!memCache.has(key)) {
         memCache.set(key, Memory.readU32(addr));
+        cacheEntries.set(key, Date.now());
     }
     return memCache.get(key);
 }
+
+function cachedReadU64(addr) {
+    const key = addr.toString() + '_u64';
+    if (!memCache.has(key)) {
+        memCache.set(key, Memory.readU64(addr));
+        cacheEntries.set(key, Date.now());
+    }
+    return memCache.get(key);
+}
+
+function cachedReadS32(addr) {
+    const key = addr.toString() + '_s32';
+    if (!memCache.has(key)) {
+        memCache.set(key, Memory.readS32(addr));
+        cacheEntries.set(key, Date.now());
+    }
+    return memCache.get(key);
+}
+
+function cachedReadU8(addr) {
+    const key = addr.toString() + '_u8';
+    if (!memCache.has(key)) {
+        memCache.set(key, Memory.readU8(addr));
+        cacheEntries.set(key, Date.now());
+    }
+    return memCache.get(key);
+}
+
+function cachedReadU16(addr) {
+    const key = addr.toString() + '_u16';
+    if (!memCache.has(key)) {
+        memCache.set(key, Memory.readU16(addr));
+        cacheEntries.set(key, Date.now());
+    }
+    return memCache.get(key);
+}
+
+// Function to invalidate cache for specific address ranges
+function invalidateCache(startAddr, size) {
+    const start = parseInt(startAddr.toString());
+    const end = start + size;
+    for (const key of memCache.keys()) {
+        const addr = parseInt(key.split('_')[0]);
+        if (addr >= start && addr < end) {
+            memCache.delete(key);
+            cacheEntries.delete(key);
+        }
+    }
+}
 """
-            optimized = memory_cache + "\n" + optimized
+                optimized = memory_cache + "\n" + optimized
 
         # Optimize module lookups
         if analysis["module_count"] > 3:
             module_cache = """
-// Module cache for faster lookups
+/*
+Module cache for faster lookups with dynamic invalidation.
+If modules are loaded/unloaded at runtime, the cache is cleared.
+*/
 const moduleCache = new Map();
+let knownModules = new Set(Process.enumerateModulesSync().map(m => m.name));
+
+function invalidateModuleCache() {
+    moduleCache.clear();
+    knownModules = new Set(Process.enumerateModulesSync().map(m => m.name));
+}
+
+// Periodically check for module changes (every 500ms)
+setInterval(function() {
+    const currentModules = new Set(Process.enumerateModulesSync().map(m => m.name));
+    if (currentModules.size !== knownModules.size ||
+        [...currentModules].some(m => !knownModules.has(m))) {
+        invalidateModuleCache();
+    }
+}, 500);
+
 function getCachedModule(name) {
     if (!moduleCache.has(name)) {
-        moduleCache.set(name, Process.getModuleByName(name));
+        try {
+            const module = Process.getModuleByName(name);
+            if (module) {
+                moduleCache.set(name, module);
+            }
+        } catch (e) {
+            // Module not found, cache null to avoid repeated lookups
+            moduleCache.set(name, null);
+        }
     }
     return moduleCache.get(name);
 }
+
+// Also cache Module.findExportByName results
+const exportCache = new Map();
+
+function getCachedExport(moduleName, exportName) {
+    const cacheKey = `${moduleName}:${exportName}`;
+    if (!exportCache.has(cacheKey)) {
+        try {
+            const addr = Module.findExportByName(moduleName, exportName);
+            exportCache.set(cacheKey, addr);
+        } catch (e) {
+            exportCache.set(cacheKey, null);
+        }
+    }
+    return exportCache.get(cacheKey);
+}
 """
             optimized = module_cache + "\n" + optimized
+            
+            # More targeted replacements with word boundaries
             optimized = re.sub(
-                r"Process\.getModuleByName\(([^)]+)\)",
-                r"getCachedModule(\1)",
+                r'\bProcess\.getModuleByName\s*\(([^)]+)\)',
+                r'getCachedModule(\1)',
                 optimized
             )
+            
+            # Also optimize Module.findExportByName if present
+            if re.search(r'\bModule\.findExportByName\s*\(', optimized):
+                optimized = re.sub(
+                    r'\bModule\.findExportByName\s*\(([^,]+),\s*([^)]+)\)',
+                    r'getCachedExport(\1, \2)',
+                    optimized
+                )
 
         return optimized
 
@@ -312,6 +639,7 @@ const ErrorHandler = {
     criticalErrors: [],
     recoveryAttempts: 0,
     maxRecoveryAttempts: 3,
+    wrappedFunctions: new WeakSet(),
 
     wrapFunction: function(fn, context, fallback) {
         return function() {
@@ -325,6 +653,34 @@ const ErrorHandler = {
                     return fallback.apply(context, arguments);
                 }
             }
+        };
+    },
+
+    wrapInterceptor: function(originalAttach) {
+        return function(target, callbacks) {
+            if (!callbacks || ErrorHandler.wrappedFunctions.has(callbacks)) {
+                return originalAttach.call(this, target, callbacks);
+            }
+            
+            const wrappedCallbacks = {};
+            for (const key in callbacks) {
+                if (typeof callbacks[key] === 'function') {
+                    const originalFn = callbacks[key];
+                    wrappedCallbacks[key] = function() {
+                        try {
+                            return originalFn.apply(this, arguments);
+                        } catch (e) {
+                            console.error('[!] Error in Interceptor.' + key + ':', e);
+                            ErrorHandler.handleError(e, originalFn, arguments);
+                        }
+                    };
+                } else {
+                    wrappedCallbacks[key] = callbacks[key];
+                }
+            }
+            
+            ErrorHandler.wrappedFunctions.add(wrappedCallbacks);
+            return originalAttach.call(this, target, wrappedCallbacks);
         };
     },
 
@@ -348,7 +704,7 @@ const ErrorHandler = {
 
     attemptRecovery: function(error, source) {
         // Re-resolve addresses if needed
-        if (error.message.includes('access violation')) {
+        if (error.message && error.message.includes('access violation')) {
             console.log('[*] Re-resolving addresses...');
             this.reResolveAddresses();
         }
@@ -356,31 +712,55 @@ const ErrorHandler = {
         // Retry with delay
         setTimeout(() => {
             console.log('[*] Retrying operation...');
-            source();
+            try {
+                source();
+            } catch(e) {
+                console.error('[!] Recovery retry failed:', e);
+            }
         }, 1000 * this.recoveryAttempts);
+    },
+
+    reResolveAddresses: function() {
+        // Force module re-enumeration
+        Process.enumerateModulesSync();
+        // Clear any cached addresses
+        if (typeof moduleCache !== 'undefined') {
+            moduleCache.clear();
+        }
+        if (typeof memCache !== 'undefined') {
+            memCache.clear();
+        }
     },
 
     fallbackToSafeMode: function() {
         console.warn('[!] Entering safe mode - basic bypass only');
         // Implement minimal bypass strategy
+        Interceptor.detachAll();
+        // Re-attach only critical hooks
     }
 };
+
+// Wrap Interceptor.attach globally to add error handling
+const originalAttach = Interceptor.attach;
+Interceptor.attach = ErrorHandler.wrapInterceptor(originalAttach);
 """
-        # Wrap existing functions with error handling
-        script = re.sub(
-            r"(Interceptor\.attach\([^{]+{)",
-            r"\1\n    try {",
-            script
-        )
-        script = re.sub(
-            r"(}\s*\)\s*;)",
-            r"    } catch(e) { ErrorHandler.handleError(e, arguments.callee, arguments); }\n\1",
-            script
-        )
+        
+        # Check if script already has try-catch blocks around Interceptor.attach
+        has_existing_error_handling = bool(re.search(
+            r'Interceptor\.attach\s*\([^)]+\)\s*\{[^}]*try\s*\{',
+            script,
+            re.DOTALL
+        ))
+        
+        if not has_existing_error_handling:
+            # Script doesn't have error handling, our wrapper will handle it
+            return error_handler + "\n\n" + script
+        else:
+            # Script already has some error handling, just add our framework
+            # without modifying existing code
+            return error_handler + "\n\n" + script
 
-        return error_handler + "\n\n" + script
-
-    def _add_dynamic_adaptation(self, script: str, techniques: list) -> str:
+    def _add_dynamic_adaptation(self, script: str) -> str:
         """Add dynamic adaptation based on runtime conditions."""
         adaptation_code = """
 // Dynamic adaptation engine
@@ -657,7 +1037,7 @@ const RegistryEmulator = {
                 }
             },
             onLeave: function(retval) {
-                if (this.isVirtual) {
+                if this.isVirtual) {
                     const key = 'SOFTWARE\\\\AppName\\\\' + this.valueName;
                     const value = RegistryEmulator.virtualRegistry.get(key);
                     if (value) {
@@ -1012,7 +1392,7 @@ const ResponseGenerator = {
         // Generate RSA public key structure
         const modulus = this.generateModulus();
         const exponent = '010001';  // 65537 in hex
-        return this.encodePublicKeyInfo(modulus, exponent);
+        return this.encodeSubjectPublicKeyInfo(modulus, exponent);
     },
 
     generateModulus: function() {
@@ -1024,7 +1404,7 @@ const ResponseGenerator = {
         return modulus;
     },
 
-    encodePublicKeyInfo: function(modulus, exponent) {
+    encodeSubjectPublicKeyInfo: function(modulus, exponent) {
         // Encode SubjectPublicKeyInfo structure
         const algorithmId = '06092A864886F70D010101';  // RSA OID
         const bitString = '0382010F00' + modulus + exponent;
@@ -1221,15 +1601,74 @@ DateSpoofer.spoofAllDateSources();
         elif "function bypass()" in script:
             return enhancement + "\n\n" + script
         else:
-            # Insert after initial comments
+            # More robust insertion logic that handles edge cases
             lines = script.split('\n')
             insert_index = 0
+            in_multiline_comment = False
+            
             for i, line in enumerate(lines):
-                if not line.startswith('//') and not line.startswith('/*'):
+                stripped = line.strip()
+                
+                # Handle empty lines - skip them
+                if not stripped:
+                    continue
+                
+                # Check for multiline comment start
+                if '/*' in line:
+                    in_multiline_comment = True
+                
+                # Check for multiline comment end
+                if '*/' in line:
+                    in_multiline_comment = False
+                    continue
+                
+                # Skip if we're inside a multiline comment
+                if in_multiline_comment:
+                    continue
+                
+                # Check various comment and directive patterns
+                is_comment_or_directive = (
+                    stripped.startswith('//') or           # Single line comment
+                    stripped.startswith('/*') or           # Start of multiline comment
+                    stripped.startswith('#!') or           # Shebang
+                    stripped.startswith('#') or            # Preprocessor directive
+                    stripped.startswith('*') or            # Continuation of multiline comment
+                    stripped.startswith('import ') or      # ES6 import
+                    stripped.startswith('from ') or        # Python-style import
+                    stripped.startswith('require(') or     # CommonJS require
+                    stripped.startswith('const require') or # CommonJS require assignment
+                    stripped.startswith('"use strict"') or # Strict mode directive
+                    stripped.startswith("'use strict'") or # Strict mode directive
+                    (stripped.startswith('const ') and 'require' in stripped) or  # const x = require()
+                    (stripped.startswith('var ') and 'require' in stripped) or    # var x = require()
+                    (stripped.startswith('let ') and 'require' in stripped)       # let x = require()
+                )
+                
+                # If we find a non-comment, non-directive line, this is where we insert
+                if not is_comment_or_directive:
                     insert_index = i
                     break
-
-            lines.insert(insert_index, enhancement)
+                
+                # Update insert_index to be after the last comment/directive
+                insert_index = i + 1
+            
+            # Handle case where entire script is comments/directives
+            if insert_index >= len(lines):
+                insert_index = len(lines)
+            
+            # Check if we should add spacing
+            add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ''
+            add_spacing_after = insert_index < len(lines) and lines[insert_index].strip() != ''
+            
+            # Build the insertion with appropriate spacing
+            insertion = ""
+            if add_spacing_before:
+                insertion = "\n"
+            insertion += enhancement
+            if add_spacing_after:
+                insertion += "\n"
+            
+            lines.insert(insert_index, insertion)
             return '\n'.join(lines)
 
 

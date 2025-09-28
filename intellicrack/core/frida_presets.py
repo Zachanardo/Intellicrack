@@ -73,7 +73,6 @@ FRIDA_PRESETS = {
         "target": "Autodesk software suite",
         "scripts": [
             "cloud_licensing_bypass",
-            "enhanced_hardware_spoofer",
             "time_bomb_defuser",
             "code_integrity_bypass",
         ],
@@ -96,7 +95,6 @@ FRIDA_PRESETS = {
         "scripts": [
             "registry_monitor",
             "time_bomb_defuser",
-            "enhanced_hardware_spoofer",
         ],
         "protections": ["LICENSE", "TIME", "HARDWARE"],
         "options": {
@@ -179,7 +177,6 @@ FRIDA_PRESETS = {
         "target": "SAP, Oracle, IBM software",
         "scripts": [
             "cloud_licensing_bypass",
-            "enhanced_hardware_spoofer",
             "registry_monitor",
             "telemetry_blocker",
         ],
@@ -202,7 +199,6 @@ FRIDA_PRESETS = {
         "scripts": [
             "cloud_licensing_bypass",
             "time_bomb_defuser",
-            "enhanced_hardware_spoofer",
         ],
         "protections": ["LICENSE", "TIME", "HARDWARE"],
         "options": {
@@ -221,7 +217,6 @@ FRIDA_PRESETS = {
         "description": "Bypass for HASP/Sentinel dongle protection",
         "target": "Industrial and specialized software",
         "scripts": [
-            "enhanced_hardware_spoofer",
             "registry_monitor",
             "memory_integrity_bypass",
         ],
@@ -284,7 +279,6 @@ FRIDA_PRESETS = {
         "target": "DAWs, NLEs, plugins",
         "scripts": [
             "registry_monitor",
-            "enhanced_hardware_spoofer",
             "code_integrity_bypass",
             "time_bomb_defuser",
         ],
@@ -347,7 +341,6 @@ FRIDA_PRESETS = {
             "code_integrity_bypass",
             "memory_integrity_bypass",
             "kernel_mode_bypass",
-            "enhanced_hardware_spoofer",
             "time_bomb_defuser",
             "registry_monitor",
             "telemetry_blocker",
@@ -443,7 +436,6 @@ QUICK_TEMPLATES = {
         "options": {"reset_trial": True, "freeze_time": True},
     },
     "hardware_spoof": {
-        "scripts": ["enhanced_hardware_spoofer"],
         "options": {"spoof_all": True, "persistent": True},
     },
     "cloud_bypass": {
@@ -592,7 +584,6 @@ def get_scripts_for_protection(protection_type: str) -> list:
         "LICENSE": ["cloud_licensing_bypass", "registry_monitor"],
         "CLOUD": ["cloud_licensing_bypass", "telemetry_blocker"],
         "TIME": ["time_bomb_defuser"],
-        "HARDWARE": ["enhanced_hardware_spoofer"],
         "ANTI_DEBUG": ["anti_debugger"],
         "ANTI_VM": ["virtualization_bypass"],
         "INTEGRITY": ["code_integrity_bypass", "memory_integrity_bypass"],

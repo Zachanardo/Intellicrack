@@ -84,8 +84,8 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
 
         # Try to use existing network license server
         try:
-            from intellicrack.core.network.license_server_emulator import (
-                NetworkLicenseServerEmulator,
+            from intellicrack.plugins.custom_modules.license_server_emulator import (
+                LicenseServerEmulator as NetworkLicenseServerEmulator,
             )
 
             config = {
