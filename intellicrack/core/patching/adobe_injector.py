@@ -7,7 +7,7 @@ import sys
 import time
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.constants import ADOBE_PROCESSES
 from ...utils.logger import get_logger

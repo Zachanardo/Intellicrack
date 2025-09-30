@@ -33,8 +33,8 @@ impl EnvironmentManager {
             self.platform.os_type
         );
 
-        // CRITICAL: Activate mamba environment FIRST
-        self.activate_mamba_environment()?;
+        // CRITICAL: Activate pixi environment FIRST
+        self.activate_pixi_environment()?;
 
         // Intel GPU settings (from RUN_INTELLICRACK.bat)
         self.set_intel_gpu_environment()?;
@@ -208,8 +208,8 @@ impl EnvironmentManager {
         // CRITICAL: Configure DLL search paths FIRST for Ray and other native modules
         self.configure_windows_dll_search_paths()?;
 
-        // Configure PATH for mamba environment (must be done early)
-        self.configure_mamba_path()?;
+        // Configure PATH for pixi environment (must be done early)
+        self.configure_pixi_path()?;
 
         // Windows-specific settings
         env::set_var("PYTHONIOENCODING", "utf-8");
@@ -238,12 +238,12 @@ impl EnvironmentManager {
 
         // Critical DLL directories for Ray and other native modules
         let dll_directories = vec![
-            r"C:\Intellicrack\mamba_env",
-            r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\DLLs",
-            r"C:\Intellicrack\mamba_env\Scripts",
-            r"C:\Intellicrack\mamba_env\Lib\site-packages\torchvision",
-            r"C:\Intellicrack\mamba_env\Lib\site-packages\h5py",
+            r"C:\Intellicrack\.pixi\envs\default",
+            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
+            r"C:\Intellicrack\.pixi\envs\default\DLLs",
+            r"C:\Intellicrack\.pixi\envs\default\Scripts",
+            r"C:\Intellicrack\.pixi\envs\default\Lib\site-packages\torchvision",
+            r"C:\Intellicrack\.pixi\envs\default\Lib\site-packages\h5py",
         ];
 
         // First, ensure all directories are in the system PATH
@@ -280,8 +280,8 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Configure PATH environment variable for mamba environment
-    fn configure_mamba_path(&self) -> Result<()> {
+    /// Configure PATH environment variable for pixi environment
+    fn configure_pixi_path(&self) -> Result<()> {
         let current_path = env::var("PATH").unwrap_or_default();
 
         // Build new PATH with launcher directory FIRST for DLL compatibility
@@ -296,23 +296,23 @@ impl EnvironmentManager {
             }
         }
 
-        // Mamba environment paths that need to be in PATH
-        let mamba_paths = vec![
-            r"C:\Intellicrack\mamba_env",
-            r"C:\Intellicrack\mamba_env\Scripts",
-            r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\Library\usr\bin",
-            r"C:\Intellicrack\mamba_env\Library\mingw64\bin",
-            r"C:\Intellicrack\mamba_env\Library\mingw-w64\bin",
-            r"C:\Intellicrack\mamba_env\DLLs",
+        // Pixi environment paths that need to be in PATH
+        let pixi_paths = vec[
+            r"C:\Intellicrack\.pixi\envs\default",
+            r"C:\Intellicrack\.pixi\envs\default\Scripts",
+            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
+            r"C:\Intellicrack\.pixi\envs\default\Library\usr\bin",
+            r"C:\Intellicrack\.pixi\envs\default\Library\mingw64\bin",
+            r"C:\Intellicrack\.pixi\envs\default\Library\mingw-w64\bin",
+            r"C:\Intellicrack\.pixi\envs\default\DLLs",
         ];
 
-        // Add mamba paths after launcher directory
-        for mamba_path in mamba_paths {
-            let path_buf = std::path::PathBuf::from(mamba_path);
+        // Add pixi paths after launcher directory
+        for pixi_path in pixi_paths {
+            let path_buf = std::path::PathBuf::from(pixi_path);
             if path_buf.exists() {
-                new_path_parts.push(mamba_path.to_string());
-                debug!("Added to PATH: {}", mamba_path);
+                new_path_parts.push(pixi_path.to_string());
+                debug!("Added to PATH: {}", pixi_path);
             }
         }
 
@@ -332,25 +332,25 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Properly activate mamba environment by setting all required environment variables
-    fn activate_mamba_environment(&self) -> Result<()> {
-        info!("Activating mamba environment");
+    /// Properly activate pixi environment by setting all required environment variables
+    fn activate_pixi_environment(&self) -> Result<()> {
+        info!("Activating pixi environment");
 
-        // Set CONDA environment variables for proper activation
-        env::set_var("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
-        env::set_var("CONDA_DEFAULT_ENV", "mamba_env");
-        env::set_var("CONDA_PYTHON_EXE", r"C:\Intellicrack\mamba_env\python.exe");
-        env::set_var("CONDA_SHLVL", "1");
-        env::set_var("CONDA_PROMPT_MODIFIER", "(mamba_env)");
-        env::set_var("CONDA_EXE", r"C:\Users\zachf\mambaforge\Scripts\conda.exe");
+        // Set PIXI environment variables for proper activation
+        env::set_var("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
+        env::set_var("PIXI_DEFAULT_ENV", "default");
+        env::set_var("PIXI_PYTHON_EXE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        env::set_var("PIXI_SHLVL", "1");
+        env::set_var("PIXI_PROMPT_MODIFIER", "(pixi)");
+        env::set_var("PIXI_EXE", r"pixi.exe");
 
         // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
         // This tells PyO3 where to find the Python runtime and standard library
-        env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+        env::set_var("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
 
-        // Set PYTHONPATH to include both mamba site-packages and Intellicrack source
+        // Set PYTHONPATH to include both pixi site-packages and Intellicrack source
         // This ensures all packages and local modules are importable
-        let pythonpath = r"C:\Intellicrack;C:\Intellicrack\mamba_env\Lib\site-packages".to_string();
+        let pythonpath = r"C:\Intellicrack;C:\Intellicrack\.pixi\envs\default\Lib\site-packages".to_string();
         env::set_var("PYTHONPATH", &pythonpath);
 
         // Set TCL/TK library paths for _tkinter functionality
@@ -386,30 +386,30 @@ impl EnvironmentManager {
             }
         }
 
-        // FALLBACK: Use mamba environment paths only if launcher paths don't exist
+        // FALLBACK: Use pixi environment paths only if launcher paths don't exist
         if !tcl_set {
-            let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
+            let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
             if tcl_lib_path.exists() {
                 env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
                 info!(
-                    "Set TCL_LIBRARY to mamba fallback: {}",
+                    "Set TCL_LIBRARY to pixi fallback: {}",
                     tcl_lib_path.display()
                 );
             }
         }
 
         if !tk_set {
-            let tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
+            let tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
             if tk_lib_path.exists() {
                 env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
                 info!(
-                    "Set TK_LIBRARY to mamba fallback: {}",
+                    "Set TK_LIBRARY to pixi fallback: {}",
                     tk_lib_path.display()
                 );
             }
         }
 
-        info!("Mamba environment activated successfully");
+        info!("Pixi environment activated successfully");
         Ok(())
     }
 

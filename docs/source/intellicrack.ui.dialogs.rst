@@ -20,14 +20,6 @@ intellicrack.ui.dialogs.base\_dialog module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.dialogs.c2\_management\_dialog module
------------------------------------------------------
-
-.. automodule:: intellicrack.ui.dialogs.c2_management_dialog
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ui.dialogs.ci\_cd\_dialog module
 ---------------------------------------------
 
@@ -40,6 +32,22 @@ intellicrack.ui.dialogs.code\_modification\_dialog module
 ---------------------------------------------------------
 
 .. automodule:: intellicrack.ui.dialogs.code_modification_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.dialogs.common\_imports module
+----------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.common_imports
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.dialogs.common\_imports\_old module
+---------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.common_imports_old
    :members:
    :show-inheritance:
    :undoc-members:
@@ -92,6 +100,14 @@ intellicrack.ui.dialogs.first\_run\_setup module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.dialogs.frida\_bypass\_wizard\_dialog module
+------------------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.frida_bypass_wizard_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.dialogs.frida\_manager\_dialog module
 -----------------------------------------------------
 
@@ -112,6 +128,14 @@ intellicrack.ui.dialogs.guided\_workflow\_wizard module
 -------------------------------------------------------
 
 .. automodule:: intellicrack.ui.dialogs.guided_workflow_wizard
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.dialogs.hardware\_spoofer\_dialog module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.hardware_spoofer_dialog
    :members:
    :show-inheritance:
    :undoc-members:
@@ -164,10 +188,18 @@ intellicrack.ui.dialogs.model\_manager\_dialog module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.dialogs.payload\_generator\_dialog module
----------------------------------------------------------
+intellicrack.ui.dialogs.nodejs\_setup\_dialog module
+----------------------------------------------------
 
-.. automodule:: intellicrack.ui.dialogs.payload_generator_dialog
+.. automodule:: intellicrack.ui.dialogs.nodejs_setup_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.dialogs.offline\_activation\_dialog module
+----------------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.offline_activation_dialog
    :members:
    :show-inheritance:
    :undoc-members:
@@ -260,6 +292,14 @@ intellicrack.ui.dialogs.script\_generator\_dialog module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.dialogs.serial\_generator\_dialog module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.serial_generator_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.dialogs.signature\_editor\_dialog module
 --------------------------------------------------------
 
@@ -316,6 +356,14 @@ intellicrack.ui.dialogs.text\_editor\_dialog module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.dialogs.trial\_reset\_dialog module
+---------------------------------------------------
+
+.. automodule:: intellicrack.ui.dialogs.trial_reset_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.dialogs.visual\_patch\_editor module
 ----------------------------------------------------
 
@@ -324,10 +372,10 @@ intellicrack.ui.dialogs.visual\_patch\_editor module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.dialogs.vulnerability\_research\_dialog module
---------------------------------------------------------------
+intellicrack.ui.dialogs.vm\_manager\_dialog module
+--------------------------------------------------
 
-.. automodule:: intellicrack.ui.dialogs.vulnerability_research_dialog
+.. automodule:: intellicrack.ui.dialogs.vm_manager_dialog
    :members:
    :show-inheritance:
    :undoc-members:

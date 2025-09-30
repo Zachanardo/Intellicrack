@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Import security enforcement early to apply patches
 try:

@@ -21,7 +21,7 @@ import random
 import threading
 from typing import Optional
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 TensorFlow Import Handler with Production-Ready Fallbacks

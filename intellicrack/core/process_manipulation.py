@@ -22,6 +22,8 @@ advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
 
 
 class ProcessAccess(IntEnum):
+    """Process access rights for Windows API."""
+
     PROCESS_VM_READ = 0x0010
     PROCESS_VM_WRITE = 0x0020
     PROCESS_VM_OPERATION = 0x0008
@@ -31,6 +33,8 @@ class ProcessAccess(IntEnum):
 
 
 class ProcessInformationClass(IntEnum):
+    """Process information classes for NtQueryInformationProcess."""
+
     ProcessBasicInformation = 0
     ProcessDebugPort = 7
     ProcessWow64Information = 26
@@ -40,6 +44,8 @@ class ProcessInformationClass(IntEnum):
 
 
 class LIST_ENTRY(ctypes.Structure):
+    """Windows LIST_ENTRY structure for doubly-linked lists."""
+
     _fields_ = [
         ("Flink", ctypes.c_void_p),
         ("Blink", ctypes.c_void_p),
@@ -47,6 +53,8 @@ class LIST_ENTRY(ctypes.Structure):
 
 
 class UNICODE_STRING(ctypes.Structure):
+    """Windows UNICODE_STRING structure for string handling."""
+
     _fields_ = [
         ("Length", ctypes.c_ushort),
         ("MaximumLength", ctypes.c_ushort),
@@ -55,6 +63,8 @@ class UNICODE_STRING(ctypes.Structure):
 
 
 class RTL_USER_PROCESS_PARAMETERS(ctypes.Structure):
+    """Windows RTL_USER_PROCESS_PARAMETERS structure from PEB."""
+
     _fields_ = [
         ("MaximumLength", ctypes.c_ulong),
         ("Length", ctypes.c_ulong),
@@ -74,6 +84,8 @@ class RTL_USER_PROCESS_PARAMETERS(ctypes.Structure):
 
 
 class PEB_LDR_DATA(ctypes.Structure):
+    """Windows PEB_LDR_DATA structure containing loader information."""
+
     _fields_ = [
         ("Length", ctypes.c_ulong),
         ("Initialized", ctypes.c_ubyte),
@@ -85,6 +97,8 @@ class PEB_LDR_DATA(ctypes.Structure):
 
 
 class PEB(ctypes.Structure):
+    """Windows Process Environment Block structure for process information."""
+
     _fields_ = [
         ("InheritedAddressSpace", ctypes.c_ubyte),
         ("ReadImageFileExecOptions", ctypes.c_ubyte),
@@ -119,6 +133,8 @@ class PEB(ctypes.Structure):
 
 
 class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+    """Windows PROCESS_BASIC_INFORMATION structure from NtQueryInformationProcess."""
+
     _fields_ = [
         ("ExitStatus", ctypes.c_void_p),
         ("PebBaseAddress", ctypes.POINTER(PEB)),
@@ -130,6 +146,8 @@ class PROCESS_BASIC_INFORMATION(ctypes.Structure):
 
 
 class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+    """Windows MEMORY_BASIC_INFORMATION structure for memory region information."""
+
     _fields_ = [
         ("BaseAddress", ctypes.c_void_p),
         ("AllocationBase", ctypes.c_void_p),
@@ -143,6 +161,8 @@ class MEMORY_BASIC_INFORMATION(ctypes.Structure):
 
 
 class MEMORY_INFORMATION_CLASS(IntEnum):
+    """Memory information classes for NtQueryVirtualMemory."""
+
     MemoryBasicInformation = 0
     MemoryWorkingSetList = 1
     MemorySectionName = 2

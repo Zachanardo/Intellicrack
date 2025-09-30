@@ -4,6 +4,14 @@ intellicrack.ui.widgets package
 Submodules
 ----------
 
+intellicrack.ui.widgets.ai\_assistant\_widget module
+----------------------------------------------------
+
+.. automodule:: intellicrack.ui.widgets.ai_assistant_widget
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.widgets.batch\_analysis\_widget module
 ------------------------------------------------------
 
@@ -56,14 +64,6 @@ intellicrack.ui.widgets.entropy\_visualizer module
 --------------------------------------------------
 
 .. automodule:: intellicrack.ui.widgets.entropy_visualizer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ui.widgets.file\_info\_integration module
-------------------------------------------------------
-
-.. automodule:: intellicrack.ui.widgets.file_info_integration
    :members:
    :show-inheritance:
    :undoc-members:

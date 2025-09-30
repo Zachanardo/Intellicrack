@@ -21,7 +21,7 @@ import hmac
 import os
 import struct
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Cryptography Import Handler with Production-Ready Fallbacks

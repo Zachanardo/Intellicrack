@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.handlers.psutil_handler import psutil
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 try:
     import pyqtgraph as pg

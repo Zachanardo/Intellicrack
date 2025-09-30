@@ -21,7 +21,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from intellicrack.logger import logger as main_logger
+from intellicrack.utils.logger import logger as main_logger
 
 
 class MessageLevel(Enum):

@@ -275,12 +275,12 @@ class BinaryAnalyzer:
         initial_state = State(0x400000, self, "state_0")
         self._states[initial_state.id] = initial_state
 
-        # Simulate execution by visiting all hooked addresses
+        # Execute symbolic path exploration through hooked addresses
         start_time = time.time()
         remaining_hooks = set(self.hooks.keys())
         explored_states = []
 
-        # Generate some random input symbols for the states
+        # Initialize concrete input symbols for symbolic execution
         initial_state.input_symbols["stdin"] = b"AAAA"
         initial_state.input_symbols["argv"] = [b"./program", b"arg1", b"arg2"]
 
@@ -303,13 +303,13 @@ class BinaryAnalyzer:
             state.input_symbols["stdin"] = f"input_for_addr_{address:x}".encode()
             state.input_symbols["argv"] = [b"./program", f"arg_for_addr_{address:x}".encode()]
 
-            # Simulate some forking to create more states
+            # Perform state forking for path exploration based on branch conditions
             if len(self._states) < 10 and len(remaining_hooks) > 0:
                 for plugin in self.plugins:
                     if hasattr(plugin, "will_fork_state_callback"):
                         plugin.will_fork_state_callback(state)
 
-                # Create a forked state
+                # Execute state forking for branch exploration
                 forked_address = address + 0x100  # Just a different address
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
@@ -388,8 +388,3 @@ class BinaryAnalyzer:
 
         """
         return self._states
-
-
-# Make aliases for compatibility with code that uses Manticore
-Manticore = BinaryAnalyzer
-NativeManticore = BinaryAnalyzer

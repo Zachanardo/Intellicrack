@@ -6,7 +6,7 @@ import os
 from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
 
 from intellicrack.handlers.pyqt6_handler import QAction
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Integration between enhanced hex viewer/editor and Intellicrack.

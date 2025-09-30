@@ -66,9 +66,8 @@ A comprehensive binary analysis and security research platform designed to help 
 3. **Create and activate virtual environment**
 
    ```bash
-   python -m venv mamba_env
-   mamba_env\Scripts\activate
-   ```
+   pixi init
+   pixi shell   ```
 
 4. **Install dependencies**
 

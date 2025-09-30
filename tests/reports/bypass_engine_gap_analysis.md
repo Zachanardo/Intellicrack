@@ -129,8 +129,8 @@ The test suite provides comprehensive coverage for:
 To run the tests with coverage:
 
 ```bash
-# Using mamba environment
-mamba activate C:\Intellicrack\mamba_env
+# Using pixi environment
+pixi shell
 python -m pytest tests\unit\core\mitigation_bypass\test_bypass_engine.py -v --cov=intellicrack.core.exploitation.bypass_engine --cov-report=term-missing
 
 # Or using the test runner scripts

@@ -9,18 +9,17 @@ Subpackages
 
    intellicrack.core.analysis
    intellicrack.core.anti_analysis
-   intellicrack.core.c2
-   intellicrack.core.config
+   intellicrack.core.dashboard
    intellicrack.core.execution
    intellicrack.core.exploitation
    intellicrack.core.logging
-   intellicrack.core.mitigation_bypass
    intellicrack.core.network
    intellicrack.core.patching
    intellicrack.core.processing
    intellicrack.core.protection_bypass
    intellicrack.core.reporting
    intellicrack.core.resources
+   intellicrack.core.security
    intellicrack.core.shared
    intellicrack.core.vulnerability_research
 
@@ -67,6 +66,30 @@ intellicrack.core.config\_manager\_clean module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.config\_migration\_handler module
+---------------------------------------------------
+
+.. automodule:: intellicrack.core.config_migration_handler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.debugging\_engine module
+------------------------------------------
+
+.. automodule:: intellicrack.core.debugging_engine
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.exceptions module
+-----------------------------------
+
+.. automodule:: intellicrack.core.exceptions
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.frida\_bypass\_wizard module
 ----------------------------------------------
 
@@ -107,10 +130,50 @@ intellicrack.core.gpu\_acceleration module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.hardware\_spoofer module
+------------------------------------------
+
+.. automodule:: intellicrack.core.hardware_spoofer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.license\_snapshot module
+------------------------------------------
+
+.. automodule:: intellicrack.core.license_snapshot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.license\_validation\_bypass module
+----------------------------------------------------
+
+.. automodule:: intellicrack.core.license_validation_bypass
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.network\_capture module
 -----------------------------------------
 
 .. automodule:: intellicrack.core.network_capture
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.offline\_activation\_emulator module
+------------------------------------------------------
+
+.. automodule:: intellicrack.core.offline_activation_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.process\_manipulation module
+----------------------------------------------
+
+.. automodule:: intellicrack.core.process_manipulation
    :members:
    :show-inheritance:
    :undoc-members:
@@ -139,10 +202,26 @@ intellicrack.core.security\_utils module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.serial\_generator module
+------------------------------------------
+
+.. automodule:: intellicrack.core.serial_generator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.startup\_checks module
 ----------------------------------------
 
 .. automodule:: intellicrack.core.startup_checks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.subscription\_validation\_bypass module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.core.subscription_validation_bypass
    :members:
    :show-inheritance:
    :undoc-members:
@@ -159,6 +238,14 @@ intellicrack.core.tool\_discovery module
 ----------------------------------------
 
 .. automodule:: intellicrack.core.tool_discovery
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.trial\_reset\_engine module
+---------------------------------------------
+
+.. automodule:: intellicrack.core.trial_reset_engine
    :members:
    :show-inheritance:
    :undoc-members:

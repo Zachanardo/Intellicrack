@@ -1,3 +1,5 @@
+"""System state snapshot tool for license analysis and differential comparison."""
+
 import hashlib
 import json
 import os

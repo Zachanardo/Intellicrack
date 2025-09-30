@@ -72,12 +72,15 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 # Fallback implementations for missing libraries
 if not SKLEARN_AVAILABLE:
     class DBSCAN:
+        """Fallback DBSCAN clustering implementation."""
+
         def __init__(self, eps=0.5, min_samples=5):
             self.eps = eps
             self.min_samples = min_samples
             self.labels_ = None
 
         def fit(self, X):
+            """Fit DBSCAN clustering model."""
             n = len(X)
             self.labels_ = np.zeros(n, dtype=int) - 1
             cluster_id = 0
@@ -103,10 +106,13 @@ if not SKLEARN_AVAILABLE:
             return self
 
         def fit_predict(self, X):
+            """Fit model and return cluster labels."""
             self.fit(X)
             return self.labels_
 
     class KMeans:
+        """Fallback K-Means clustering implementation."""
+
         def __init__(self, n_clusters=8, random_state=None, n_init=10):
             self.n_clusters = n_clusters
             self.random_state = random_state
@@ -114,11 +120,14 @@ if not SKLEARN_AVAILABLE:
             self.labels_ = None
 
         def fit(self, X):
+            """Fit K-Means clustering model."""
             n = len(X)
             self.labels_ = np.random.randint(0, self.n_clusters, n)
             return self
 
     class AgglomerativeClustering:
+        """Fallback agglomerative clustering implementation."""
+
         def __init__(self, n_clusters=None, distance_threshold=None, affinity='euclidean', linkage='average'):
             self.n_clusters = n_clusters
             self.distance_threshold = distance_threshold
@@ -127,6 +136,7 @@ if not SKLEARN_AVAILABLE:
             self.labels_ = None
 
         def fit_predict(self, X):
+            """Fit model and return cluster labels."""
             n = len(X)
             if self.n_clusters:
                 self.labels_ = np.arange(n) % self.n_clusters
@@ -135,16 +145,20 @@ if not SKLEARN_AVAILABLE:
             return self.labels_
 
     class StandardScaler:
+        """Fallback standard scaler implementation."""
+
         def __init__(self):
             self.mean_ = None
             self.std_ = None
 
         def fit_transform(self, X):
+            """Fit scaler and transform data."""
             self.mean_ = np.mean(X, axis=0)
             self.std_ = np.std(X, axis=0) + 1e-10
             return (X - self.mean_) / self.std_
 
     def silhouette_score(X, labels):
+        """Fallback silhouette score calculation."""
         return 0.5
 
 if not SCIPY_AVAILABLE:

@@ -31,7 +31,7 @@ from typing import Any
 
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.service_utils import get_service_url
 
 from ..utils.logger import setup_logger

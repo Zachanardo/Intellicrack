@@ -123,7 +123,7 @@ python C:\Intellicrack\test_dep_bypass_coverage.py
 ### Method 3: Direct pytest
 ```bash
 cd C:\Intellicrack
-mamba activate C:\Intellicrack\mamba_env
+pixi shell
 python -m pytest tests\unit\core\mitigation_bypass\test_dep_bypass.py -v --cov=intellicrack.core.mitigation_bypass.dep_bypass --cov-report=html
 ```
 

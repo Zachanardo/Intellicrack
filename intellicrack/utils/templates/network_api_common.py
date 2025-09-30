@@ -20,7 +20,7 @@ Common network API analysis utilities to avoid code duplication.
 from collections import defaultdict
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):

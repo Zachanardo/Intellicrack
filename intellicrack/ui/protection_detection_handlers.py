@@ -26,10 +26,10 @@ from ..core.analysis.core_analysis import decrypt_embedded_script
 from ..core.protection_bypass.dongle_emulator import HardwareDongleEmulator
 from ..core.protection_bypass.tpm_bypass import TPMProtectionBypass
 from ..core.protection_bypass.vm_bypass import VirtualizationDetectionBypass as VMDetectionBypass
-from ..utils.process_utils import detect_hardware_dongles, detect_tpm_protection
+from ..utils.system.process_utils import detect_hardware_dongles, detect_tpm_protection
 
 # Import protection detection functions
-from ..utils.protection_detection import (
+from ..protection.protection_detector import (
     detect_checksum_verification,
     detect_commercial_protections,
     detect_self_healing_code,

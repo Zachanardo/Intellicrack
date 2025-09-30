@@ -7,7 +7,7 @@ import os
 from collections.abc import Iterator
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Memory-Optimized Binary Loader

@@ -22,7 +22,7 @@ Common Ghidra plugin execution utilities to avoid code duplication.
 
 import os
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..core.misc_utils import log_message
 

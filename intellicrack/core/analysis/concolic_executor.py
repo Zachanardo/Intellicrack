@@ -24,24 +24,13 @@ import re
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
-# Optional dependencies - graceful fallback if not available
-try:
-    from manticore.core.plugin import Plugin
-    from manticore.native import Manticore
-
-    MANTICORE_AVAILABLE = True
-    MANTICORE_TYPE = "native"
-except ImportError:
-    MANTICORE_AVAILABLE = False
-    MANTICORE_TYPE = None
-
-    # Only show warning on Linux/Unix systems where manticore is expected
-    import platform
-
-    if platform.system() != "Windows":
-        logger.warning("Manticore not available on Linux/Unix - install with: pip install manticore")
+# Manticore is no longer supported (Windows-only focus)
+Plugin = None
+Manticore = None
+MANTICORE_AVAILABLE = False
+MANTICORE_TYPE = None
 
 
 # Define NativeConcolicState at module level for consistent imports
@@ -1318,7 +1307,7 @@ if not MANTICORE_AVAILABLE:
         import platform
 
         if platform.system() == "Windows":
-            logging.getLogger(__name__).info("Using angr for symbolic execution on Windows (manticore is Linux-only)")
+            logging.getLogger(__name__).info("Using angr for symbolic execution on Windows")
         else:
             logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
@@ -1370,22 +1359,13 @@ class ConcolicExecutionEngine:
 
     def _initialize_execution_engine(self):
         """Initialize the execution engine based on available frameworks."""
-        self.manticore_available = MANTICORE_AVAILABLE
-        self.engine_type = MANTICORE_TYPE
+        self.manticore_available = False  # Manticore no longer supported
+        self.engine_type = None
 
-        if self.manticore_available:
-            self.logger.info(f"Using {self.engine_type} engine for concolic execution")
-            # Set up engine-specific configurations
-            if self.engine_type == "native":
-                self.max_states = 1000
-                self.instruction_limit = 100000
-            elif self.engine_type == "simconcolic":
-                self.max_states = 500
-                self.instruction_limit = 50000
-        else:
-            self.logger.info("Using fallback native implementation")
-            self.max_states = 100
-            self.instruction_limit = 10000
+        # Always use native implementation (manticore is removed)
+        self.logger.info("Using native concolic execution implementation")
+        self.max_states = 1000
+        self.instruction_limit = 100000
 
     def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Perform concolic execution to explore program paths.
@@ -1398,15 +1378,7 @@ class ConcolicExecutionEngine:
             dict: Exploration results including discovered paths and inputs
 
         """
-        if not self.manticore_available:
-            import platform
-
-            if platform.system() == "Windows":
-                return {
-                    "error": "Concolic execution via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."
-                }
-            return {"error": "Required dependencies not available. Please install manticore."}
-
+        # Always use native implementation (manticore is removed)
         try:
             self.logger.info("Starting concolic execution on %s", self.binary_path)
 
@@ -1534,13 +1506,7 @@ class ConcolicExecutionEngine:
             dict: Bypass results including inputs that bypass license checks
 
         """
-        if not self.manticore_available:
-            import platform
-
-            if platform.system() == "Windows":
-                return {"error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
-            return {"error": "Required dependencies not available"}
-
+        # Always use native implementation (manticore is removed)
         try:
             self.logger.info("Finding license bypass for %s", self.binary_path)
 
@@ -1748,17 +1714,6 @@ class ConcolicExecutionEngine:
             "error": None,
         }
 
-    def _setup_manticore_hooks(self, m, target_functions: list, avoid_functions: list, analysis_data: dict) -> None:
-        """Set up hooks for target and avoid functions."""
-        for target in target_functions:
-            if isinstance(target, int):
-                m.add_hook(target, lambda s: self._target_reached(s, analysis_data))
-            else:
-                self.logger.debug(f"Target function {target} specified but name resolution not implemented")
-
-        for avoid in avoid_functions:
-            if isinstance(avoid, int):
-                m.add_hook(avoid, lambda s: s.abandon())
 
     def _setup_symbolic_input(self, m, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: Any) -> None:
         """Set up symbolic input for test case generation."""
@@ -1860,9 +1815,10 @@ class ConcolicExecutionEngine:
         params = self._extract_analysis_parameters(**kwargs)
         results = self._initialize_analysis_results(params["max_depth"])
 
-        if not self.manticore_available:
-            return self._native_analyze(binary_path, **kwargs)
+        # Always use native implementation (manticore is removed)
+        return self._native_analyze(binary_path, **kwargs)
 
+        # Legacy code kept for reference but never executed
         try:
             m = Manticore(self.binary_path)
             m.set_exec_timeout(params["timeout"])
@@ -1880,7 +1836,6 @@ class ConcolicExecutionEngine:
             plugin = self._create_analysis_plugin(analysis_data, params["find_vulnerabilities"])
             m.register_plugin(plugin)
 
-            self._setup_manticore_hooks(m, params["target_functions"], params["avoid_functions"], analysis_data)
             self._setup_symbolic_input(m, params["generate_test_cases"], params["symbolic_stdin_size"], params["concrete_seed"])
 
             self.logger.info("Running concolic execution...")

@@ -77,7 +77,7 @@
 ### Immediate Actions
 1. **Install critical dependencies in mamba environment**:
    ```bash
-   mamba install pyqt frida yara-python onnx ray dask cupy keyring paramiko aiohttp
+   pixi install pyqt frida yara-python onnx ray dask cupy keyring paramiko aiohttp
    ```
 
 2. **Create mock implementations** for external dependencies to enable unit testing

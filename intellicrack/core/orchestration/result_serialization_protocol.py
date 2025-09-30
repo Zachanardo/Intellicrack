@@ -421,6 +421,7 @@ class CustomJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder for complex types."""
 
     def default(self, obj):
+        """Encode complex objects to JSON-serializable format."""
         if isinstance(obj, bytes):
             return base64.b64encode(obj).decode("ascii")
         elif isinstance(obj, Enum):

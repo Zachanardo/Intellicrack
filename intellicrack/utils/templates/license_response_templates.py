@@ -1,6 +1,6 @@
 """License response templates for generating valid license responses."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Common license response templates for _network interception.

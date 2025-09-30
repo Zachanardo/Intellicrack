@@ -21,7 +21,7 @@ import subprocess
 import sys
 import time
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Psutil Import Handler with Production-Ready Fallbacks

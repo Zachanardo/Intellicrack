@@ -160,20 +160,20 @@ class TestFirmwareFixtures:
         uefi_header = (
             b'_FVH' +            # UEFI Firmware Volume signature
             b'\x00' * 12 +       # Reserved bytes
-            b'\x48\x00\x00\x00'  # Header length
-            b'\x5a\xfe'          # Checksum
-            b'\x00\x00'          # Extended header offset
-            b'\x00' * 4          # Reserved
+            b'\x48\x00\x00\x00' +  # Header length
+            b'\x5a\xfe' +          # Checksum
+            b'\x00\x00' +          # Extended header offset
+            b'\x00' * 4 +          # Reserved
             b'\x01'              # Revision
         )
 
         # UEFI modules and certificates
         uefi_data = (
-            b'DxeCore.efi\x00'
-            b'PlatformDxe.efi\x00'
-            b'-----BEGIN CERTIFICATE-----\x00'
-            b'MIIBIjANBgkqhkiG9w0BAQEF\x00'  # RSA public key start
-            b'SetupMode=0\x00'
+            b'DxeCore.efi\x00' +
+            b'PlatformDxe.efi\x00' +
+            b'-----BEGIN CERTIFICATE-----\x00' +
+            b'MIIBIjANBgkqhkiG9w0BAQEF\x00' +  # RSA public key start
+            b'SetupMode=0\x00' +
             b'SecureBoot=1\x00'
         )
 
@@ -194,29 +194,29 @@ class TestFirmwareFixtures:
 
         # Real firmware data to encrypt
         firmware_data = (
-            b'FIRM'              # Firmware signature
-            b'\x01\x00\x00\x00'  # Version
+            b'FIRM' +              # Firmware signature
+            b'\x01\x00\x00\x00' +  # Version
             # Real x86 boot loader code sequence
-            b'\xEA\x00\x7C\x00\x00'  # Far jump to boot sector
-            b'\x31\xC0'              # XOR AX, AX - Clear AX
-            b'\x8E\xD8'              # MOV DS, AX - Set data segment
-            b'\x8E\xC0'              # MOV ES, AX - Set extra segment
-            b'\x8E\xD0'              # MOV SS, AX - Set stack segment
-            b'\xBC\x00\x7C'          # MOV SP, 0x7C00 - Set stack pointer
-            b'\xFB'                  # STI - Enable interrupts
-            b'\xB8\x13\x00'          # MOV AX, 0x13 - Video mode
-            b'\xCD\x10'              # INT 0x10 - BIOS video interrupt
-            b'\xB8\x01\x13'          # MOV AX, 0x1301 - Write string
-            b'\xB9\x0C\x00'          # MOV CX, 12 - String length
-            b'\xB2\x00'              # MOV DL, 0 - Column
-            b'\xB6\x00'              # MOV DH, 0 - Row
-            b'\x90' * 64         # NOP sled for alignment
-            b'\xEB\xFE' * 16     # Jump loops for control flow
-            b'\x55\x48\x89\xE5'  # Function prologue (x64)
-            b'\x48\x83\xEC\x20'  # Stack frame setup
-            b'\x48\x8B\x45\xF8'  # MOV RAX, [RBP-8]
-            b'\xC9\xC3'          # LEAVE; RET
-            + b'\x00' * (2048 - 150)  # Padding to 2048 bytes
+            b'\xEA\x00\x7C\x00\x00' +  # Far jump to boot sector
+            b'\x31\xC0' +              # XOR AX, AX - Clear AX
+            b'\x8E\xD8' +              # MOV DS, AX - Set data segment
+            b'\x8E\xC0' +              # MOV ES, AX - Set extra segment
+            b'\x8E\xD0' +              # MOV SS, AX - Set stack segment
+            b'\xBC\x00\x7C' +          # MOV SP, 0x7C00 - Set stack pointer
+            b'\xFB' +                  # STI - Enable interrupts
+            b'\xB8\x13\x00' +          # MOV AX, 0x13 - Video mode
+            b'\xCD\x10' +              # INT 0x10 - BIOS video interrupt
+            b'\xB8\x01\x13' +          # MOV AX, 0x1301 - Write string
+            b'\xB9\x0C\x00' +          # MOV CX, 12 - String length
+            b'\xB2\x00' +              # MOV DL, 0 - Column
+            b'\xB6\x00' +              # MOV DH, 0 - Row
+            b'\x90' * 64 +         # NOP sled for alignment
+            b'\xEB\xFE' * 16 +     # Jump loops for control flow
+            b'\x55\x48\x89\xE5' +  # Function prologue (x64)
+            b'\x48\x83\xEC\x20' +  # Stack frame setup
+            b'\x48\x8B\x45\xF8' +  # MOV RAX, [RBP-8]
+            b'\xC9\xC3' +          # LEAVE; RET
+            b'\x00' * (2048 - 150)  # Padding to 2048 bytes
         )
 
         # Apply real AES-256-CBC encryption

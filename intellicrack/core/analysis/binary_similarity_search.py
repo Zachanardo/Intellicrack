@@ -24,7 +24,7 @@ import logging
 import os
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.protection.protection_utils import calculate_entropy
 

@@ -56,7 +56,7 @@ pip install psutil requests pefile capstone keystone unicorn lief yara cryptogra
 pip install PyQt6
 
 # Optional analysis tools
-pip install numpy scikit-learn matplotlib networkx frida angr manticore
+pip install numpy scikit-learn matplotlib networkx frida angr
 ```
 
 ## Platform-Specific Setup
@@ -92,11 +92,6 @@ pip install frida frida-tools
 pip install angr
 ```
 
-### Concolic Execution (Manticore)
-
-```bash
-pip install manticore
-```
 
 ### Development Tools
 

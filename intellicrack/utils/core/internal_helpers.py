@@ -33,7 +33,7 @@ from intellicrack.handlers.opencl_handler import HAS_OPENCL
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE as HAS_PSUTIL
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
 from intellicrack.handlers.torch_handler import HAS_TORCH
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..utils.logger import setup_logger
 

@@ -14,5 +14,5 @@ class TestBasicImport:
 
     def test_logger_import(self):
         """Test that logger can be imported successfully."""
-        from intellicrack.logger import logger
+        from intellicrack.utils.logger import logger
         assert logger is not None

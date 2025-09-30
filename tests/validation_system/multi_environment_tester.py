@@ -621,7 +621,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Hardware Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from tests.validation_system.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from tests.validation_system.'
                     'environment_validator import HardwareValidator; v = HardwareValidator(); '
                     'print(v.collect_hardware_info())"'
                 ),
@@ -631,7 +631,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'VM Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from tests.validation_system.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from tests.validation_system.'
                     'environment_validator import HardwareValidator; v = HardwareValidator(); '
                     'print(f\'Is VM: {v.is_virtual_machine()}\')"'
                 ),
@@ -641,7 +641,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Protection Analysis',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -m intellicrack '
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -m intellicrack '
                     '--analyze-protection notepad.exe'
                 ),
                 'expected_output_contains': ['Analysis complete'],
@@ -650,7 +650,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Binary Analysis',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from intellicrack.core.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from intellicrack.core.'
                     'binary_analyzer import BinaryAnalyzer; analyzer = BinaryAnalyzer(); '
                     'print(\'BinaryAnalyzer initialized\')"'
                 ),
@@ -660,7 +660,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Network License Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from intellicrack.core.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from intellicrack.core.'
                     'network.license_server import NetworkLicenseDetector; '
                     'detector = NetworkLicenseDetector(); print(\'NetworkLicenseDetector ready\')"'
                 ),

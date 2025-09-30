@@ -57,8 +57,8 @@ if platform.system() == "Windows":
 
     intellicrack_root = Path(intellicrack.__file__).parent.parent
     dll_paths = [
-        str(intellicrack_root / "mamba_env" / "Lib" / "site-packages" / "die"),
-        str(intellicrack_root / "mamba_env" / "DLLs"),
+        str(intellicrack_root / ".pixi" / "envs" / "default" / "Lib" / "site-packages" / "die"),
+        str(intellicrack_root / ".pixi" / "envs" / "default" / "DLLs"),
         os.path.dirname(sys.executable),
     ]
     for path in dll_paths:
@@ -1022,11 +1022,12 @@ class ICPBackend:
                 error=f"Analysis failed after {self.max_retries} retries: {last_error}",
             )
 
-        # scan_result contains the result from native scan
-        scan_result = result
+        try:
+            # scan_result contains the result from native scan
+            scan_result = result
 
-        # Run supplemental analysis if requested
-        if include_supplemental and SUPPLEMENTAL_ENGINES_AVAILABLE:
+            # Run supplemental analysis if requested
+            if include_supplemental and SUPPLEMENTAL_ENGINES_AVAILABLE:
                 try:
                     supplemental_data = await self._run_supplemental_analysis(str(file_path))
                     scan_result.supplemental_data = supplemental_data

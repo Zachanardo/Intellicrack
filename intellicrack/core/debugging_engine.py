@@ -275,8 +275,19 @@ class LicenseDebugger:
             logger.error(f"Failed to enable debug privilege: {e}")
             return False
 
-    def set_breakpoint(self, address: int, callback: Optional[Callable] = None, description: str = "") -> bool:
-        """Set a software breakpoint at specified address."""
+    def set_breakpoint(self, address: int, callback: Optional[Callable] = None,
+                      description: str = "", condition: Optional[str] = None) -> bool:
+        """Set a software breakpoint at specified address with optional condition.
+
+        Args:
+            address: Memory address for breakpoint
+            callback: Optional callback function
+            description: Breakpoint description
+            condition: Optional conditional expression (e.g., "rax == 0x1337", "rcx > 100")
+
+        Returns:
+            True if breakpoint was set successfully
+        """
         if address in self.breakpoints:
             logger.warning(f"Breakpoint already exists at {hex(address)}")
             return True
@@ -286,6 +297,11 @@ class LicenseDebugger:
             original_byte = self._read_memory(address, 1)
             if not original_byte:
                 logger.error(f"Failed to read memory at {hex(address)}")
+                return False
+
+            # Validate condition syntax if provided
+            if condition and not self._validate_condition_syntax(condition):
+                logger.error(f"Invalid condition syntax: {condition}")
                 return False
 
             # Write INT3 instruction
@@ -300,29 +316,120 @@ class LicenseDebugger:
                 enabled=True,
                 hit_count=0,
                 callback=callback,
+                condition=condition,
                 description=description or f"Breakpoint at {hex(address)}",
             )
 
             logger.info(f"Set breakpoint at {hex(address)}: {description}")
+            if condition:
+                logger.info(f"  Condition: {condition}")
             return True
 
         except Exception as e:
             logger.error(f"Error setting breakpoint: {e}")
             return False
 
-    def set_hardware_breakpoint(self, address: int, dr_index: int = 0, condition: str = "execute", size: int = 1) -> bool:
-        """Set hardware breakpoint using debug registers."""
+    def set_conditional_breakpoint(self, address: int, condition: str,
+                                  callback: Optional[Callable] = None,
+                                  description: str = "") -> bool:
+        """Set a conditional breakpoint that only triggers when condition is met.
+
+        Args:
+            address: Memory address for breakpoint
+            condition: Conditional expression (e.g., "rax == 0x1337", "mem[rsp] != 0")
+            callback: Optional callback function
+            description: Breakpoint description
+
+        Returns:
+            True if conditional breakpoint was set successfully
+        """
+        return self.set_breakpoint(address, callback, description, condition)
+
+    def set_hardware_breakpoint(self, address: int, dr_index: int = -1,
+                              access_type: str = "execute", size: int = 1,
+                              callback: Optional[Callable] = None,
+                              apply_to_all_threads: bool = True) -> bool:
+        """Set hardware breakpoint using debug registers.
+
+        Args:
+            address: Memory address to watch
+            dr_index: Debug register index (0-3), or -1 for auto-select
+            access_type: "execute", "write", "read_write", or "io"
+            size: Breakpoint size (1, 2, 4, or 8 bytes)
+            callback: Optional callback when breakpoint hits
+            apply_to_all_threads: Apply breakpoint to all threads
+
+        Returns:
+            True if hardware breakpoint was set successfully
+        """
+        # Auto-select available debug register if not specified
+        if dr_index == -1:
+            dr_index = self._find_available_debug_register()
+            if dr_index == -1:
+                logger.error("No available debug registers")
+                return False
+
         if dr_index not in range(4):
             logger.error("Invalid debug register index (must be 0-3)")
             return False
 
+        # Validate size
+        if size not in [1, 2, 4, 8]:
+            logger.error("Invalid size (must be 1, 2, 4, or 8 bytes)")
+            return False
+
+        try:
+            threads_to_update = []
+            if apply_to_all_threads:
+                # Apply to all threads
+                threads_to_update = list(self.thread_handles.keys())
+            else:
+                # Apply only to main thread
+                threads_to_update = [self.main_thread_id] if self.main_thread_id else []
+
+            if not threads_to_update:
+                logger.error("No threads available for hardware breakpoint")
+                return False
+
+            success_count = 0
+            for thread_id in threads_to_update:
+                if self._set_hardware_breakpoint_on_thread(thread_id, address, dr_index,
+                                                          access_type, size):
+                    success_count += 1
+
+            if success_count == 0:
+                logger.error("Failed to set hardware breakpoint on any thread")
+                return False
+
+            # Store hardware breakpoint info
+            self.hardware_breakpoints[address] = {
+                "dr_index": dr_index,
+                "access_type": access_type,
+                "size": size,
+                "callback": callback,
+                "threads": threads_to_update,
+                "hit_count": 0
+            }
+
+            logger.info(f"Set hardware breakpoint at {hex(address)} on {success_count} threads")
+            logger.info(f"  Type: {access_type}, Size: {size} bytes, DR{dr_index}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting hardware breakpoint: {e}")
+            return False
+
+    def _set_hardware_breakpoint_on_thread(self, thread_id: int, address: int,
+                                          dr_index: int, access_type: str,
+                                          size: int) -> bool:
+        """Set hardware breakpoint on specific thread."""
         try:
             # Get thread context
-            context = self._get_thread_context(self.main_thread_id)
+            context = self._get_thread_context(thread_id)
             if not context:
                 return False
 
-            # Set debug register
+            # Set debug register address
             if dr_index == 0:
                 context.Dr0 = address
             elif dr_index == 1:
@@ -335,41 +442,149 @@ class LicenseDebugger:
             # Configure DR7 (debug control register)
             dr7_value = context.Dr7
 
-            # Enable local breakpoint
-            dr7_value |= 1 << (dr_index * 2)
+            # Clear existing settings for this register
+            dr7_value &= ~(0xF << (16 + dr_index * 4))  # Clear RW and LEN fields
+            dr7_value &= ~(3 << (dr_index * 2))         # Clear L and G fields
 
-            # Set condition (00=execute, 01=write, 11=read/write)
-            condition_bits = 0
-            if condition == "write":
-                condition_bits = 1
-            elif condition == "read_write":
-                condition_bits = 3
+            # Enable local and global breakpoint
+            dr7_value |= (3 << (dr_index * 2))  # Set both L and G bits
 
-            dr7_value |= condition_bits << (16 + dr_index * 4)
+            # Set access type (RW field)
+            access_bits = {
+                "execute": 0b00,      # Break on instruction execution
+                "write": 0b01,        # Break on data write
+                "io": 0b10,          # Break on I/O read/write
+                "read_write": 0b11    # Break on data read or write
+            }
+            if access_type in access_bits:
+                dr7_value |= access_bits[access_type] << (16 + dr_index * 4)
 
-            # Set size (00=1byte, 01=2bytes, 11=4bytes)
-            size_bits = 0
-            if size == 2:
-                size_bits = 1
-            elif size == 4:
-                size_bits = 3
+            # Set size (LEN field)
+            size_bits = {
+                1: 0b00,  # 1 byte
+                2: 0b01,  # 2 bytes
+                4: 0b11,  # 4 bytes
+                8: 0b10   # 8 bytes (only valid on x64)
+            }
+            if size in size_bits:
+                dr7_value |= size_bits[size] << (18 + dr_index * 4)
 
-            dr7_value |= size_bits << (18 + dr_index * 4)
+            # Enable exact breakpoint (optional, for compatibility)
+            dr7_value |= (1 << 8)  # LE bit (Local Exact breakpoint enable)
+            dr7_value |= (1 << 9)  # GE bit (Global Exact breakpoint enable)
 
             context.Dr7 = dr7_value
 
+            # Clear debug status register (Dr6) to avoid confusion
+            context.Dr6 = 0
+
             # Set thread context
-            if not self._set_thread_context(self.main_thread_id, context):
+            if not self._set_thread_context(thread_id, context):
                 return False
 
-            self.hardware_breakpoints[address] = {"dr_index": dr_index, "condition": condition, "size": size}
-
-            logger.info(f"Set hardware breakpoint at {hex(address)}")
             return True
 
         except Exception as e:
-            logger.error(f"Error setting hardware breakpoint: {e}")
+            logger.error(f"Error setting hardware breakpoint on thread {thread_id}: {e}")
             return False
+
+    def _find_available_debug_register(self) -> int:
+        """Find an available debug register.
+
+        Returns:
+            Debug register index (0-3) or -1 if none available
+        """
+        used_registers = set()
+        for info in self.hardware_breakpoints.values():
+            used_registers.add(info["dr_index"])
+
+        for i in range(4):
+            if i not in used_registers:
+                return i
+
+        return -1
+
+    def remove_hardware_breakpoint(self, address: int) -> bool:
+        """Remove hardware breakpoint at specified address.
+
+        Args:
+            address: Memory address of breakpoint to remove
+
+        Returns:
+            True if breakpoint was removed successfully
+        """
+        if address not in self.hardware_breakpoints:
+            logger.warning(f"No hardware breakpoint at {hex(address)}")
+            return False
+
+        try:
+            bp_info = self.hardware_breakpoints[address]
+            dr_index = bp_info["dr_index"]
+            threads = bp_info.get("threads", [])
+
+            success_count = 0
+            for thread_id in threads:
+                if self._clear_hardware_breakpoint_on_thread(thread_id, dr_index):
+                    success_count += 1
+
+            del self.hardware_breakpoints[address]
+
+            logger.info(f"Removed hardware breakpoint at {hex(address)} from {success_count} threads")
+            return success_count > 0
+
+        except Exception as e:
+            logger.error(f"Error removing hardware breakpoint: {e}")
+            return False
+
+    def _clear_hardware_breakpoint_on_thread(self, thread_id: int, dr_index: int) -> bool:
+        """Clear hardware breakpoint on specific thread."""
+        try:
+            context = self._get_thread_context(thread_id)
+            if not context:
+                return False
+
+            # Clear debug register address
+            if dr_index == 0:
+                context.Dr0 = 0
+            elif dr_index == 1:
+                context.Dr1 = 0
+            elif dr_index == 2:
+                context.Dr2 = 0
+            elif dr_index == 3:
+                context.Dr3 = 0
+
+            # Clear DR7 settings for this register
+            dr7_value = context.Dr7
+            dr7_value &= ~(0xF << (16 + dr_index * 4))  # Clear RW and LEN fields
+            dr7_value &= ~(3 << (dr_index * 2))         # Clear L and G fields
+            context.Dr7 = dr7_value
+
+            # Clear corresponding bit in DR6 status register
+            context.Dr6 &= ~(1 << dr_index)
+
+            return self._set_thread_context(thread_id, context)
+
+        except Exception as e:
+            logger.error(f"Error clearing hardware breakpoint on thread {thread_id}: {e}")
+            return False
+
+    def list_hardware_breakpoints(self) -> List[Dict[str, Any]]:
+        """List all active hardware breakpoints.
+
+        Returns:
+            List of hardware breakpoint information
+        """
+        breakpoints = []
+        for address, info in self.hardware_breakpoints.items():
+            breakpoints.append({
+                "address": hex(address),
+                "dr_index": info["dr_index"],
+                "type": info["access_type"],
+                "size": info["size"],
+                "hit_count": info.get("hit_count", 0),
+                "threads": len(info.get("threads", []))
+            })
+        return breakpoints
 
     def find_license_checks(self) -> List[int]:
         """Scan process memory for potential license check locations."""
@@ -475,6 +690,12 @@ class LicenseDebugger:
             if exception_address in self.breakpoints:
                 bp = self.breakpoints[exception_address]
                 bp.hit_count += 1
+
+                # Evaluate conditional breakpoint
+                if bp.condition and not self._evaluate_breakpoint_condition(bp, debug_event):
+                    # Condition not met, restore original byte and continue
+                    self._restore_breakpoint_silently(bp)
+                    return self.DBG_CONTINUE
 
                 logger.info(f"Breakpoint hit at {hex(exception_address)}: {bp.description}")
 
@@ -1070,6 +1291,256 @@ class LicenseDebugger:
                 break
 
         return regions
+
+    def _validate_condition_syntax(self, condition: str) -> bool:
+        """Validate conditional breakpoint syntax.
+
+        Args:
+            condition: Condition string to validate
+
+        Returns:
+            True if syntax is valid
+        """
+        import re
+
+        # Allowed patterns for conditions
+        valid_patterns = [
+            r'^[a-z0-9]+\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # reg op value
+            r'^mem\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # mem[addr] op value
+            r'^\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # [addr] op value
+            r'^[a-z0-9]+\s*&\s*(?:0x[0-9a-f]+|\d+)\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # reg & mask op value
+        ]
+
+        condition_lower = condition.lower().strip()
+        for pattern in valid_patterns:
+            if re.match(pattern, condition_lower):
+                return True
+
+        return False
+
+    def _evaluate_breakpoint_condition(self, bp: Breakpoint, debug_event) -> bool:
+        """Evaluate conditional breakpoint expression.
+
+        Args:
+            bp: Breakpoint with condition
+            debug_event: Current debug event
+
+        Returns:
+            True if condition is met
+        """
+        if not bp.condition:
+            return True
+
+        try:
+            # Get current thread context
+            context = self._get_thread_context(debug_event.dwThreadId)
+            if not context:
+                logger.error("Failed to get thread context for condition evaluation")
+                return False
+
+            # Parse condition
+            condition = bp.condition.lower().strip()
+
+            # Register comparison (e.g., "rax == 0x1337")
+            if any(reg in condition for reg in ['rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']):
+                return self._evaluate_register_condition(condition, context)
+
+            # Memory comparison (e.g., "mem[rsp] != 0")
+            if 'mem[' in condition or '[' in condition:
+                return self._evaluate_memory_condition(condition, context)
+
+            # Flag comparison (e.g., "zf == 1")
+            if any(flag in condition for flag in ['cf', 'pf', 'af', 'zf', 'sf', 'tf', 'if', 'df', 'of']):
+                return self._evaluate_flag_condition(condition, context)
+
+            logger.warning(f"Unknown condition type: {bp.condition}")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error evaluating condition '{bp.condition}': {e}")
+            return False
+
+    def _evaluate_register_condition(self, condition: str, context) -> bool:
+        """Evaluate register-based condition."""
+        import re
+
+        # Extract register, operator, and value
+        match = re.match(r'([a-z0-9]+)\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+        if not match:
+            return False
+
+        reg_name = match.group(1)
+        operator = match.group(2)
+        value_str = match.group(3)
+
+        # Parse value
+        if value_str.startswith('0x'):
+            value = int(value_str, 16)
+        else:
+            value = int(value_str)
+
+        # Get register value
+        reg_value = self._get_register_value(reg_name, context)
+        if reg_value is None:
+            return False
+
+        # Evaluate condition
+        return self._compare_values(reg_value, operator, value)
+
+    def _evaluate_memory_condition(self, condition: str, context) -> bool:
+        """Evaluate memory-based condition."""
+        import re
+
+        # Extract memory address expression and comparison
+        if 'mem[' in condition:
+            match = re.match(r'mem\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+        else:
+            match = re.match(r'\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+
+        if not match:
+            return False
+
+        addr_expr = match.group(1)
+        operator = match.group(2)
+        value_str = match.group(3)
+
+        # Parse value
+        if value_str.startswith('0x'):
+            value = int(value_str, 16)
+        else:
+            value = int(value_str)
+
+        # Evaluate address expression
+        address = self._evaluate_address_expression(addr_expr, context)
+        if address is None:
+            return False
+
+        # Read memory at address
+        mem_data = self._read_memory(address, 8)  # Read 64-bit value
+        if not mem_data:
+            return False
+
+        mem_value = int.from_bytes(mem_data[:8], byteorder='little')
+
+        # Evaluate condition
+        return self._compare_values(mem_value, operator, value)
+
+    def _evaluate_flag_condition(self, condition: str, context) -> bool:
+        """Evaluate CPU flag condition."""
+        import re
+
+        # Extract flag name and comparison
+        match = re.match(r'([czspao][f])\s*([><=!]+)\s*(\d+)', condition)
+        if not match:
+            return False
+
+        flag_name = match.group(1)
+        operator = match.group(2)
+        value = int(match.group(3))
+
+        # Get EFLAGS value
+        eflags = context.EFlags
+
+        # Extract specific flag
+        flag_bits = {
+            'cf': 0,   # Carry flag
+            'pf': 2,   # Parity flag
+            'af': 4,   # Auxiliary flag
+            'zf': 6,   # Zero flag
+            'sf': 7,   # Sign flag
+            'tf': 8,   # Trap flag
+            'if': 9,   # Interrupt flag
+            'df': 10,  # Direction flag
+            'of': 11,  # Overflow flag
+        }
+
+        if flag_name not in flag_bits:
+            return False
+
+        flag_value = (eflags >> flag_bits[flag_name]) & 1
+
+        # Evaluate condition
+        return self._compare_values(flag_value, operator, value)
+
+    def _get_register_value(self, reg_name: str, context) -> Optional[int]:
+        """Get register value from context."""
+        reg_map = {
+            'rax': context.Rax, 'rbx': context.Rbx, 'rcx': context.Rcx, 'rdx': context.Rdx,
+            'rsp': context.Rsp, 'rbp': context.Rbp, 'rsi': context.Rsi, 'rdi': context.Rdi,
+            'r8': context.R8, 'r9': context.R9, 'r10': context.R10, 'r11': context.R11,
+            'r12': context.R12, 'r13': context.R13, 'r14': context.R14, 'r15': context.R15,
+            'rip': context.Rip
+        }
+
+        return reg_map.get(reg_name)
+
+    def _evaluate_address_expression(self, expr: str, context) -> Optional[int]:
+        """Evaluate address expression (e.g., 'rsp+8', 'rbp-4')."""
+        import re
+
+        # Simple register
+        if expr in ['rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi']:
+            return self._get_register_value(expr, context)
+
+        # Register with offset
+        match = re.match(r'([a-z0-9]+)\s*([+\-])\s*(0x[0-9a-f]+|\d+)', expr)
+        if match:
+            reg = match.group(1)
+            op = match.group(2)
+            offset_str = match.group(3)
+
+            reg_value = self._get_register_value(reg, context)
+            if reg_value is None:
+                return None
+
+            if offset_str.startswith('0x'):
+                offset = int(offset_str, 16)
+            else:
+                offset = int(offset_str)
+
+            if op == '+':
+                return reg_value + offset
+            else:
+                return reg_value - offset
+
+        # Hex address
+        if expr.startswith('0x'):
+            return int(expr, 16)
+
+        # Decimal address
+        if expr.isdigit():
+            return int(expr)
+
+        return None
+
+    def _compare_values(self, left: int, operator: str, right: int) -> bool:
+        """Compare two values with given operator."""
+        comparisons = {
+            '==': lambda a, b: a == b,
+            '!=': lambda a, b: a != b,
+            '<': lambda a, b: a < b,
+            '<=': lambda a, b: a <= b,
+            '>': lambda a, b: a > b,
+            '>=': lambda a, b: a >= b,
+        }
+
+        if operator in comparisons:
+            return comparisons[operator](left, right)
+
+        return False
+
+    def _restore_breakpoint_silently(self, bp: Breakpoint):
+        """Restore breakpoint without logging (for conditional breakpoints)."""
+        try:
+            # Restore original byte temporarily
+            self._write_memory(bp.address, bp.original_byte)
+
+            # Schedule re-insertion of breakpoint after single step
+            # This is handled in the single step handler
+            self.pending_breakpoint_restore = bp.address
+
+        except Exception as e:
+            logger.error(f"Error restoring breakpoint silently: {e}")
 
     def _get_thread_context(self, thread_id: int):
         """Get thread context including registers."""

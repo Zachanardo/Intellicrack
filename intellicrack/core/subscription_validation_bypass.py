@@ -1,3 +1,5 @@
+"""Subscription validation bypass for defeating cloud-based license checks."""
+
 import base64
 import ctypes
 import hashlib
@@ -48,6 +50,8 @@ from cryptography.x509.oid import NameOID
 
 
 class SubscriptionType(Enum):
+    """Enumeration of subscription license types for cloud-based validation."""
+
     CLOUD_BASED = "cloud_based"
     SERVER_LICENSE = "server_license"
     FLOATING_LICENSE = "floating_license"
@@ -60,6 +64,8 @@ class SubscriptionType(Enum):
 
 @dataclass
 class SubscriptionInfo:
+    """Subscription license information extracted from software installation."""
+
     subscription_id: str
     product_id: str
     user_id: str
@@ -77,6 +83,8 @@ class SubscriptionInfo:
 
 @dataclass
 class LicenseServerConfig:
+    """Configuration for license server connection and authentication."""
+
     server_address: str
     port: int
     protocol: str  # http, https, tcp
@@ -685,6 +693,8 @@ class SubscriptionValidationBypass:
         return pos + 1, 1
 
     def apply_standard_patterns(self, data: bytearray, patterns: list[tuple[bytes, bytes]]) -> int:
+        """Apply standard binary patterns to bypass subscription validation checks."""
+
         patches_applied = 0
         offset = 0
         for pattern, patch in patterns:
@@ -699,12 +709,16 @@ class SubscriptionValidationBypass:
         return patches_applied
 
     def patch_signature_direct(self, data: bytearray, pos: int, patch_data: bytes) -> int:
+        """Patch binary data at specific position with direct byte replacement."""
+
         for i in range(len(patch_data)):
             if pos + i < len(data):
                 data[pos + i] = patch_data[i]
         return 1
 
     def find_and_patch_nearby(self, data: bytearray, pos: int, nearby: dict) -> int:
+        """Find and patch nearby patterns relative to discovered signature location."""
+
         search_pos = pos + nearby.get("offset", 0)
         if search_pos < 0:
             return 0
@@ -717,6 +731,8 @@ class SubscriptionValidationBypass:
         return 0
 
     def apply_advanced_patterns(self, data: bytearray) -> int:
+        """Apply advanced binary patterns with signature-based patching for subscription checks."""
+
         advanced_patterns = [
             {
                 "signature": b"\x48\x83\xec\x28\x48\x8b\xf9\x48\x8b\xda",
@@ -743,12 +759,16 @@ class SubscriptionValidationBypass:
         return patches_applied
 
     def find_function_prologue(self, data: bytearray, pos: int) -> int:
+        """Locate function prologue pattern in binary data for validation patching."""
+
         for i in range(pos, min(pos + 0x1000, len(data))):
             if data[i:i+4] == b"\x48\x89\x5c\x24":  # Example prologue pattern for x64
                 return i
         return -1
 
     def patch_return_value(self, data: bytearray, start: int) -> int:
+        """Patch function return value to bypass validation checks."""
+
         for j in range(start, min(start + 0x200, len(data))):
             if data[j:j+2] == b"\x31\xc0":  # xor eax, eax
                 data[j:j+5] = b"\xb8\x01\x00\x00\x00"  # mov eax, 1
@@ -756,6 +776,8 @@ class SubscriptionValidationBypass:
         return 0
 
     def patch_validation_functions(self, data: bytearray) -> int:
+        """Patch certificate and signature validation functions in binary."""
+
         validation_functions = [
             b"CertVerifyCertificateChainPolicy",
             b"CertGetCertificateChain",
@@ -772,6 +794,8 @@ class SubscriptionValidationBypass:
         return patches_applied
 
     def read_process_memory_safe(self, h_process: wintypes.HANDLE, address: int, size: int) -> bytes:
+        """Read process memory safely with Windows API for runtime patching."""
+
         buffer = create_string_buffer(size)
         bytes_read = c_ulong()
         kernel32 = ctypes.windll.kernel32
@@ -780,6 +804,8 @@ class SubscriptionValidationBypass:
         return b''
 
     def write_patch_to_memory(self, h_process: wintypes.HANDLE, address: int, patch: bytes) -> bool:
+        """Write patch bytes to process memory with protection handling."""
+
         old_protect = c_ulong()
         kernel32 = ctypes.windll.kernel32
         if kernel32.VirtualProtectEx(h_process, address, len(patch), 0x40, byref(old_protect)):
@@ -790,6 +816,8 @@ class SubscriptionValidationBypass:
         return False
 
     def patch_process_memory_region(self, h_process: wintypes.HANDLE, base_address: int, patterns: list[dict]) -> int:
+        """Patch process memory region with multiple patterns for runtime bypass."""
+
         patches_applied = 0
         data = self.read_process_memory_safe(h_process, base_address, 0x100000)
         if not data:
@@ -821,7 +849,8 @@ class SubscriptionValidationBypass:
             return None
 
     def install_lc_checkout_hook(self, lib: ctypes.CDLL) -> bool:
-        """Install hook for lc_checkout."""
+        """Install hook for FlexLM lc_checkout function to bypass license checkout."""
+
         if not hasattr(lib, "lc_checkout"):
             return False
 
@@ -853,7 +882,8 @@ class SubscriptionValidationBypass:
         return True
 
     def install_lc_checkin_hook(self, lib: ctypes.CDLL) -> bool:
-        """Install hook for lc_checkin."""
+        """Install hook for FlexLM lc_checkin function to bypass license checkin."""
+
         if not hasattr(lib, "lc_checkin"):
             return False
 
@@ -876,6 +906,8 @@ class SubscriptionValidationBypass:
         return True
 
     def hook_flexlm_apis(self) -> None:
+        """Hook FlexLM API functions to bypass floating license validation."""
+
         flexlm_libs = ["lmgr.dll", "lmgr11.dll", "lmgr12.dll", "flexnet.dll", "fnp_act_installer.dll"]
 
         for lib_name in flexlm_libs:
@@ -886,6 +918,8 @@ class SubscriptionValidationBypass:
                 # Add other hooks if needed
 
     def load_and_hook_hasp_lib(self, lib_name: str) -> bool:
+        """Load and hook HASP dongle library to bypass hardware key validation."""
+
         try:
             lib = ctypes.CDLL(lib_name)
             # Hook hasp_login
@@ -913,6 +947,8 @@ class SubscriptionValidationBypass:
             return False
 
     def hook_hasp_apis(self) -> bool:
+        """Hook HASP API functions across common HASP library variants."""
+
         hasp_libs = ["hasp_windows.dll", "hasp_rt.dll", "haspapi.dll"]
         hooked = 0
         for lib_name in hasp_libs:
@@ -921,6 +957,8 @@ class SubscriptionValidationBypass:
         return hooked > 0
 
     def _process_request(self, request: bytes) -> bytes:
+        """Process dongle emulation request and return appropriate response."""
+
         if len(request) < 1:
             return b"\x00"
 
@@ -938,6 +976,8 @@ class SubscriptionValidationBypass:
             return b"\xff"
 
     def handle_read_memory(self, request: bytes) -> bytes:
+        """Handle dongle memory read request for license data emulation."""
+
         if len(request) >= 5:
             offset = struct.unpack("<H", request[1:3])[0]
             length = struct.unpack("<H", request[3:5])[0]
@@ -946,6 +986,8 @@ class SubscriptionValidationBypass:
         return b"\x01"
 
     def handle_write_memory(self, request: bytes) -> bytes:
+        """Handle dongle memory write request for license state emulation."""
+
         if len(request) >= 5:
             offset = struct.unpack("<H", request[1:3])[0]
             length = struct.unpack("<H", request[3:5])[0]
@@ -955,12 +997,16 @@ class SubscriptionValidationBypass:
         return b"\x01"
 
     def handle_get_dongle_id(self) -> bytes:
+        """Handle dongle ID request for hardware key emulation."""
+
         # Implementation as before
         hw_data = b""  # ...
         dongle_id = hashlib.sha256(hw_data).digest()[:8]
         return bytes([0x00]) + dongle_id
 
     def handle_check_feature(self, request: bytes) -> bytes:
+        """Handle feature check request for license feature validation emulation."""
+
         if len(request) >= 3:
             feature_id = struct.unpack("<H", request[1:3])[0]
             if feature_id in self.features:
@@ -968,6 +1014,8 @@ class SubscriptionValidationBypass:
         return b"\x01"
 
 def generate_flexlm_license(product_name: str, features: list) -> str:
+    """Generate FlexLM license file for bypassing floating license validation."""
+
     # Original implementation
     license_content = []
 

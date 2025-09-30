@@ -1,6 +1,14 @@
 intellicrack.core.network package
 =================================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   intellicrack.core.network.protocols
+
 Submodules
 ----------
 
@@ -44,18 +52,18 @@ intellicrack.core.network.license\_protocol\_handler module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.network.license\_server\_emulator module
-----------------------------------------------------------
-
-.. automodule:: intellicrack.core.network.license_server_emulator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.core.network.protocol\_fingerprinter module
 --------------------------------------------------------
 
 .. automodule:: intellicrack.core.network.protocol_fingerprinter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.network.protocol\_tool module
+-----------------------------------------------
+
+.. automodule:: intellicrack.core.network.protocol_tool
    :members:
    :show-inheritance:
    :undoc-members:

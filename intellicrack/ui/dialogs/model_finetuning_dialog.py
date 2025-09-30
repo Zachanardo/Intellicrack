@@ -62,7 +62,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Try to import enhanced training interface components
 try:

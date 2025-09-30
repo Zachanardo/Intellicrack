@@ -29,7 +29,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from urllib3.util.retry import Retry
 
 from intellicrack.core.config_manager import ConfigManager
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 class SecureHTTPClient:

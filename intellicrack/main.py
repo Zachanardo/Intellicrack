@@ -42,6 +42,13 @@ try:
 except ImportError as e:
     logger.warning(f"Security enforcement not available: {e}")
 
+# Apply security mitigations for known vulnerabilities
+try:
+    from intellicrack.utils.security_mitigations import apply_all_mitigations
+    apply_all_mitigations()
+except ImportError as e:
+    logger.warning(f"Security mitigations not available: {e}")
+
 # Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow

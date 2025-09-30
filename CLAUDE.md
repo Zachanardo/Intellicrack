@@ -44,8 +44,8 @@ This tool is developed for **defensive security research** to help software deve
 
 **Environment Usage:**
 
-- **Mamba environment location**: `C:\Intellicrack\mamba_env`
-- **Activation**: `mamba activate C:\Intellicrack\mamba_env`
+- **Pixi environment location**: `C:\Intellicrack\.pixi\envs\default`
+- **Activation**: `pixi shell` or use `pixi run <command>`
 - **Claude Code runs natively on Windows**
 
 ## 🔧 CRITICAL CODING RULES

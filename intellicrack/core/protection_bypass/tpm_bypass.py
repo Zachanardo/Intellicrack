@@ -763,3 +763,58 @@ class TPMBypassEngine:
 
 # Create alias for compatibility with existing codebase
 TPMProtectionBypass = TPMBypassEngine
+
+
+def detect_tpm_usage(binary_path: str) -> bool:
+    """Detect if binary uses TPM protection.
+
+    Args:
+        binary_path: Path to binary to analyze
+
+    Returns:
+        True if TPM usage detected, False otherwise
+    """
+    engine = TPMBypassEngine()
+    return engine.detect_tpm_usage(binary_path)
+
+
+def analyze_tpm_protection(binary_path: str) -> dict:
+    """Analyze TPM protection in binary.
+
+    Args:
+        binary_path: Path to binary to analyze
+
+    Returns:
+        Dictionary containing analysis results
+    """
+    engine = TPMBypassEngine()
+    return engine.analyze_tpm_protection(binary_path)
+
+
+def bypass_tpm_protection(binary_path: str, output_path: str = None) -> bool:
+    """Bypass TPM protection in binary.
+
+    Args:
+        binary_path: Path to protected binary
+        output_path: Path for patched output (optional)
+
+    Returns:
+        True if bypass successful, False otherwise
+    """
+    engine = TPMBypassEngine()
+    return engine.bypass_tpm_protection(binary_path, output_path)
+
+
+def tpm_research_tools() -> dict:
+    """Get available TPM research tools and utilities.
+
+    Returns:
+        Dictionary of available tools and their descriptions
+    """
+    return {
+        "tpm_bypass_engine": "Main TPM bypass engine with full capabilities",
+        "tpm_protection_bypass": "Alias for TPMBypassEngine",
+        "detect_tpm_usage": "Detect TPM usage in binaries",
+        "analyze_tpm_protection": "Analyze TPM protection mechanisms",
+        "bypass_tpm_protection": "Bypass TPM protection in binaries",
+    }

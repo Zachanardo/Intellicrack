@@ -42,7 +42,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWizard,
     QWizardPage,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
 
 """

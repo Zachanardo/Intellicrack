@@ -21,7 +21,7 @@ Menu Utilities
 Common functionality for menu operations to eliminate code duplication.
 """
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 try:
     from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar

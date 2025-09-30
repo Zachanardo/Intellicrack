@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import time
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Tkinter Import Handler with Production-Ready Fallbacks

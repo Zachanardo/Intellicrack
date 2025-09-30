@@ -26,7 +26,7 @@ Generated: {{timestamp}}
 
 # Script metadata
 try:
-    from intellicrack.logger import logger
+    from intellicrack.utils.logger import logger
 except ImportError:
     import logging
 

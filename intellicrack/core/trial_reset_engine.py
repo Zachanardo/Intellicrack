@@ -1,3 +1,5 @@
+"""Trial reset engine for bypassing software trial period limitations."""
+
 import ctypes
 import datetime
 import hashlib
@@ -16,6 +18,8 @@ import psutil
 
 
 class TrialType(Enum):
+    """Enumeration of software trial limitation types."""
+
     TIME_BASED = "time_based"
     USAGE_BASED = "usage_based"
     FEATURE_LIMITED = "feature_limited"
@@ -24,6 +28,8 @@ class TrialType(Enum):
 
 @dataclass
 class TrialInfo:
+    """Trial information extracted from software installation."""
+
     product_name: str
     trial_type: TrialType
     trial_days: int

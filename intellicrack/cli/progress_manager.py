@@ -492,7 +492,6 @@ def _demo_network_analysis(pm: ProgressManager, binary_path: str) -> None:
     network_checks = [
         ("Identifying network protocols", 20),
         ("Extracting URLs/IPs", 30),
-        ("Analyzing C2 patterns", 25),
         ("Detecting beaconing", 25),
     ]
 

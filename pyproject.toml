@@ -43,9 +43,9 @@ dependencies = [
     "bitsandbytes>=0.41.0",
 
     # Binary Analysis
-    "angr==9.2.95",
-    "claripy==9.2.95",
-    "capstone==5.0.0.post1",
+    "angr==9.2.176",
+    "claripy==9.2.176",
+    "capstone==5.0.3",
     "keystone_engine==0.9.2",
     "binwalk @ https://github.com/ReFirmLabs/binwalk/archive/v2.3.4.tar.gz",
     "volatility3==2.26.0",
@@ -53,7 +53,7 @@ dependencies = [
     "lief==0.16.6",
     "pefile==2024.8.26 ; sys_platform == 'win32'",
     "pyelftools==0.32",
-    "z3-solver==4.10.2.0",
+    "z3-solver==4.13.0.0",
     "r2pipe==1.9.4",
     "frida==17.2.12",
     "frida-tools==14.4.2",
@@ -61,15 +61,13 @@ dependencies = [
     "qiling>=1.4.6,<1.5.0",
     "unicorn==2.0.1.post1",
     "python-fx @ git+https://github.com/Zachanardo/pyfx.git",  # Forked to fix typing-extensions conflict
-    # Manticore - Linux/Unix only symbolic execution engine
-    "manticore==0.3.7 ; sys_platform != 'win32'",
     # Native ICP Engine Integration
     "die-python<=0.4.0",
 
     # Security & Network
     "mitmproxy==12.1.2",
     "scapy==2.6.1",
-    "cryptography>=43.0,<44.0",
+    "cryptography>=44.0.1,<45.0",
     "paramiko==3.5.1",
     "docker==7.1.0",
     "pyshark==0.6",
@@ -93,7 +91,7 @@ dependencies = [
     "torchaudio==2.8.0",
     # Intel extension installed separately: intel-extension-for-pytorch==2.8.10+xpu
     "pyopencl==2025.2.4",
-    "tensorflow>=2.15.0",
+    "tensorflow==2.18.1",
 
     # Database & Storage
     "pymongo==4.13.2",
@@ -162,7 +160,7 @@ dependencies = [
 
     "jiter==0.6.1",
     "importlib_metadata==6.8.0",
-    "idna==3.8",
+    "idna>=3.8",
     "amqp==5.2.0",
     "kombu==5.5.2",
     "keyring==25.1.0",
@@ -184,13 +182,13 @@ dependencies = [
     "click==8.1.7",
     "python-dotenv==1.0.1",
 
-    # Additional Core Dependencies from current_pip.txt
+    # Additional Core Dependencies
     "pwntools>=4.14.1",
     "ROPGadget>=7.3",
-    "archinfo==9.2.95",
-    "cle==9.2.95",
-    "pyvex==9.2.95",
-    "ailment==9.2.95",
+    "archinfo==9.2.176",
+    "cle==9.2.176",
+    "pyvex==9.2.176",
+    "ailment>=9.2.95",
     "mulpyplexer>=0.9",
     "ghidra-bridge>=1.0.0",
     "jfx-bridge>=1.0.0",
@@ -230,7 +228,6 @@ dependencies = [
     "isort>=6.0.1",
     "itsdangerous>=2.2.0",
     "kiwisolver>=1.4.9",
-    "lldb>=18.0.0 ; sys_platform != 'win32'",
     "lxml>=6.0.1",
     "lz4>=4.3.3",
     "markdown>=3.9",
@@ -285,7 +282,6 @@ dependencies = [
 [project.optional-dependencies]
 linux = [
     # Linux-specific symbolic execution and analysis tools
-    "manticore==0.3.7",
     "unicorn==2.0.1.post1",  # CPU emulator framework - matches angr requirement
     # Additional Linux-specific tools can be added here
 ]
@@ -293,9 +289,9 @@ linux = [
 nvidia-gpu = [
     # NVIDIA GPU acceleration packages (requires CUDA)
     "cupy>=13.0.0",  # GPU arrays and CUDA support
-    "torch==2.7.1+cu121",  # CUDA 12.1 enabled PyTorch
-    "torchvision==0.22.1+cu121",  # CUDA 12.1 enabled torchvision
-    "torchaudio==2.7.1+cu121",  # CUDA 12.1 enabled torchaudio
+    # "torch==2.7.1+cu121",  # CUDA 12.1 enabled PyTorch
+    # "torchvision==0.22.1+cu121",  # CUDA 12.1 enabled torchvision
+    # "torchaudio==2.7.1+cu121",  # CUDA 12.1 enabled torchaudio
 ]
 
 ai-local = [
@@ -407,7 +403,6 @@ packages = [
     "intellicrack.core",
     "intellicrack.core.analysis",
     "intellicrack.core.anti_analysis",
-    "intellicrack.core.c2",
     "intellicrack.core.dashboard",
     "intellicrack.core.execution",
     "intellicrack.core.exploitation",
@@ -594,3 +589,23 @@ ignore = [
 [tool.bandit]
 exclude_dirs = ["tests", "docs"]
 skips = ["B101", "B601"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tool.pixi.dependencies]
+python = "3.12.*"
+
+[tool.pixi.pypi-dependencies]
+intellicrack = { path = ".", editable = true }
+
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+ai-local = { features = ["ai-local"], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+linux = { features = ["linux"], solve-group = "default" }
+nvidia-gpu = { features = ["nvidia-gpu"], solve-group = "default" }
+
+[tool.pixi.tasks]

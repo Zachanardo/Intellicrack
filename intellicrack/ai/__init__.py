@@ -133,12 +133,6 @@ except ImportError as e:
     logger.warning("Failed to import vulnerability_research_integration: %s", e)
     VulnerabilityResearchAI = None
 
-try:
-    from .exploitation_orchestrator import ExploitationOrchestrator
-except ImportError as e:
-    logger.warning("Failed to import exploitation_orchestrator: %s", e)
-    ExploitationOrchestrator = None
-
 # Import advanced AI system components
 try:
     from .learning_engine_simple import (
@@ -392,7 +386,6 @@ __all__ = [
     "ToolCategory",
     # From exploitation modules
     "VulnerabilityResearchAI",
-    "ExploitationOrchestrator",
     # From advanced AI system components
     "AILearningEngine",
     "LearningRecord",

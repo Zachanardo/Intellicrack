@@ -299,7 +299,6 @@ class ConfigManager:
                     "models_directory": str(config.get_cache_dir() / "models"),
                 },
             },
-            "c2": {},
             "api_cache": {
                 "enabled": True,
                 "ttl": 3600,

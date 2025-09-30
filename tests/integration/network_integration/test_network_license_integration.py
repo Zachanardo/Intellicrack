@@ -6,13 +6,10 @@ import threading
 import socket
 from pathlib import Path
 
-from intellicrack.core.c2.c2_server import C2Server
-from intellicrack.core.c2.c2_client import C2Client
-from intellicrack.core.c2.session_manager import SessionManager
 from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
 from intellicrack.core.network_capture import NetworkCapture
-from intellicrack.core.c2.communication_protocols import CommunicationProtocols
-from intellicrack.core.c2.encryption_manager import EncryptionManager
+from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator
+from intellicrack.core.network.license_protocol_analyzer import LicenseProtocolAnalyzer
 
 
 class TestNetworkLicenseIntegration:
@@ -91,50 +88,51 @@ class TestNetworkLicenseIntegration:
             finally:
                 hooker.close_emulation_session(emulation_session)
 
-    def test_c2_server_client_integration_workflow(self):
-        """Test REAL C2 server-client integration workflow."""
-        server = C2Server(host='127.0.0.1', port=0)
-        session_manager = SessionManager()
+    def test_license_server_client_integration_workflow(self):
+        """Test REAL license server-client integration workflow."""
+        emulator = LicenseServerEmulator()
+        analyzer = LicenseProtocolAnalyzer()
 
         try:
+            server = emulator.create_license_server(host='127.0.0.1', port=0)
             server.start_async()
             server_port = server.get_port()
-            assert server_port > 0, "Server must provide valid port"
+            assert server_port > 0, "License server must provide valid port"
 
             time.sleep(0.5)
 
-            client = C2Client()
+            client = emulator.create_license_client()
             connection_result = client.connect('127.0.0.1', server_port, timeout=5.0)
-            assert connection_result, "Client must connect successfully"
+            assert connection_result, "License client must connect successfully"
             assert client.is_connected(), "Client must report connected status"
 
-            session_id = session_manager.register_client_session(
+            session_id = analyzer.register_license_session(
                 client.get_client_id(),
                 client.get_remote_address()
             )
-            assert session_id is not None, "Session must be registered"
+            assert session_id is not None, "License session must be registered"
 
-            test_messages = [
-                b'test_message_1',
-                b'system_info_request',
-                b'file_upload_command',
-                b'execute_payload'
+            test_license_requests = [
+                b'LICENSE_CHECK:PRODUCT_2024',
+                b'FEATURE_REQUEST:professional_edition',
+                b'VALIDATION:A3B7-K9M2-P5R8-Q4N6',
+                b'RENEWAL_CHECK:subscription_status'
             ]
 
-            for message in test_messages:
-                send_result = client.send_message(message)
-                assert send_result, f"Message send must succeed: {message}"
+            for request in test_license_requests:
+                send_result = client.send_license_request(request)
+                assert send_result, f"License request must succeed: {request}"
 
-                session_manager.update_session_activity(session_id)
+                analyzer.update_session_activity(session_id)
 
                 time.sleep(0.1)
 
-                response = client.receive_message(timeout=2.0)
+                response = client.receive_license_response(timeout=2.0)
                 if response is not None:
-                    assert len(response) > 0, "Response must not be empty"
+                    assert len(response) > 0, "License response must not be empty"
 
             client.disconnect()
-            session_manager.close_session(session_id)
+            analyzer.close_session(session_id)
 
         finally:
             server.stop()
@@ -164,10 +162,10 @@ class TestNetworkLicenseIntegration:
                     assert 'packet_structure' in analysis_result, "Analysis must identify packet structure"
                     assert 'license_info' in analysis_result, "Analysis must extract license information"
 
-    def test_encrypted_c2_communication_workflow(self):
-        """Test REAL encrypted C2 communication workflow."""
-        encryption_manager = EncryptionManager()
-        server = C2Server(host='127.0.0.1', port=0, encryption=True)
+    def test_encrypted_license_communication_workflow(self):
+        """Test REAL encrypted license communication workflow."""
+        emulator = LicenseServerEmulator()
+        server = emulator.create_encrypted_license_server(host='127.0.0.1', port=0)
 
         try:
             server.start_async()
@@ -175,27 +173,27 @@ class TestNetworkLicenseIntegration:
 
             time.sleep(0.5)
 
-            client = C2Client(encryption=True)
+            client = emulator.create_encrypted_license_client()
             connection_result = client.connect('127.0.0.1', server_port, timeout=5.0)
-            assert connection_result, "Encrypted client must connect successfully"
+            assert connection_result, "Encrypted license client must connect successfully"
 
             key_exchange_result = client.perform_key_exchange()
             assert key_exchange_result, "Key exchange must succeed"
 
-            test_data = b"sensitive_command_data"
+            test_license_data = b"LICENSE_KEY:A3B7-K9M2-P5R8-Q4N6"
 
-            encrypted_message = client.encrypt_message(test_data)
-            assert encrypted_message is not None, "Message encryption must succeed"
-            assert encrypted_message != test_data, "Encrypted message must be different"
+            encrypted_message = client.encrypt_license_request(test_license_data)
+            assert encrypted_message is not None, "License request encryption must succeed"
+            assert encrypted_message != test_license_data, "Encrypted request must be different"
 
-            send_result = client.send_encrypted_message(encrypted_message)
-            assert send_result, "Encrypted message send must succeed"
+            send_result = client.send_encrypted_license_request(encrypted_message)
+            assert send_result, "Encrypted license request send must succeed"
 
-            encrypted_response = client.receive_encrypted_message(timeout=3.0)
+            encrypted_response = client.receive_encrypted_response(timeout=3.0)
             if encrypted_response is not None:
-                decrypted_response = client.decrypt_message(encrypted_response)
-                assert decrypted_response is not None, "Message decryption must succeed"
-                assert len(decrypted_response) > 0, "Decrypted response must not be empty"
+                decrypted_response = client.decrypt_license_response(encrypted_response)
+                assert decrypted_response is not None, "License response decryption must succeed"
+                assert len(decrypted_response) > 0, "Decrypted license response must not be empty"
 
             client.disconnect()
 
@@ -235,43 +233,41 @@ class TestNetworkLicenseIntegration:
         finally:
             hooker.stop_emulation_server(emulation_server)
 
-    def test_network_protocol_switching_workflow(self):
-        """Test REAL network protocol switching workflow."""
-        protocols = CommunicationProtocols()
-        c2_server = C2Server(host='127.0.0.1', port=0)
+    def test_license_protocol_switching_workflow(self):
+        """Test REAL license protocol switching workflow."""
+        emulator = LicenseServerEmulator()
+        license_server = emulator.create_adaptive_license_server(host='127.0.0.1', port=0)
 
         try:
-            c2_server.start_async()
-            server_port = c2_server.get_port()
+            license_server.start_async()
+            server_port = license_server.get_port()
 
             protocol_configs = [
-                {'name': 'http', 'port': server_port, 'encryption': False},
-                {'name': 'https', 'port': server_port, 'encryption': True},
-                {'name': 'dns', 'port': 53, 'encryption': False},
-                {'name': 'tcp', 'port': server_port, 'encryption': False}
+                {'name': 'flexlm', 'port': server_port, 'encryption': False},
+                {'name': 'hasp', 'port': server_port, 'encryption': True},
+                {'name': 'adobe', 'port': server_port, 'encryption': True},
+                {'name': 'custom', 'port': server_port, 'encryption': False}
             ]
 
             for config in protocol_configs:
-                switch_result = protocols.switch_to_protocol(config['name'], config)
+                switch_result = license_server.switch_to_protocol(config['name'], config)
                 assert switch_result, f"Must switch to {config['name']} protocol"
 
-                current_protocol = protocols.get_current_protocol()
+                current_protocol = license_server.get_current_protocol()
                 assert current_protocol == config['name'], f"Current protocol must be {config['name']}"
 
-                if config['name'] in ['http', 'https', 'tcp']:
-                    client = protocols.create_client(config['name'])
-                    assert client is not None, f"Must create client for {config['name']}"
+                client = emulator.create_protocol_client(config['name'])
+                assert client is not None, f"Must create license client for {config['name']}"
 
-                    try:
-                        if config['name'] != 'dns':
-                            connection_test = client.test_connection('127.0.0.1', config['port'])
-                            if connection_test:
-                                assert True, f"Connection test passed for {config['name']}"
-                    except Exception:
-                        pass
+                try:
+                    connection_test = client.test_connection('127.0.0.1', config['port'])
+                    if connection_test:
+                        assert True, f"Connection test passed for {config['name']}"
+                except Exception:
+                    pass
 
         finally:
-            c2_server.stop()
+            license_server.stop()
 
     def test_concurrent_license_emulation_workflow(self, test_license_packets):
         """Test REAL concurrent license emulation workflow."""
@@ -382,7 +378,7 @@ class TestNetworkLicenseIntegration:
             primary_health = failover_manager.check_server_health(primary_server)
             assert primary_health, "Primary server must be healthy"
 
-            hooker.simulate_server_failure(primary_server)
+            hooker.trigger_server_shutdown(primary_server)
 
             time.sleep(2.0)
 

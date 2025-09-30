@@ -41,7 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWizardPage,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Plugin Creation Wizard for Intellicrack.

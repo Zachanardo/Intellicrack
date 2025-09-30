@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.

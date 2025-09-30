@@ -28,10 +28,58 @@ intellicrack.hexview.api module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.hexview.checksum\_dialog module
+--------------------------------------------
+
+.. automodule:: intellicrack.hexview.checksum_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.checksums module
+-------------------------------------
+
+.. automodule:: intellicrack.hexview.checksums
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.compare\_dialog module
+-------------------------------------------
+
+.. automodule:: intellicrack.hexview.compare_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.config\_defaults module
+--------------------------------------------
+
+.. automodule:: intellicrack.hexview.config_defaults
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.hexview.data\_inspector module
 -------------------------------------------
 
 .. automodule:: intellicrack.hexview.data_inspector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.export\_dialog module
+------------------------------------------
+
+.. automodule:: intellicrack.hexview.export_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.file\_compare module
+-----------------------------------------
+
+.. automodule:: intellicrack.hexview.file_compare
    :members:
    :show-inheritance:
    :undoc-members:
@@ -112,6 +160,30 @@ intellicrack.hexview.performance\_monitor module
 ------------------------------------------------
 
 .. automodule:: intellicrack.hexview.performance_monitor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.print\_dialog module
+-----------------------------------------
+
+.. automodule:: intellicrack.hexview.print_dialog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.statistics module
+--------------------------------------
+
+.. automodule:: intellicrack.hexview.statistics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.hexview.statistics\_dialog module
+----------------------------------------------
+
+.. automodule:: intellicrack.hexview.statistics_dialog
    :members:
    :show-inheritance:
    :undoc-members:

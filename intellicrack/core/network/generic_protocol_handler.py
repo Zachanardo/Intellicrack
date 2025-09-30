@@ -5,7 +5,7 @@ import threading
 import time
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .license_protocol_handler import LicenseProtocolHandler
 

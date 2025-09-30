@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 - Core: psutil, requests, pefile, capstone, keystone, unicorn, lief, yara, cryptography
 - GUI: PyQt6
-- Optional: numpy, scikit-learn, matplotlib, networkx, frida, angr, manticore
+- Optional: numpy, scikit-learn, matplotlib, networkx, frida, angr
 
 ### Platform Support
 - Windows (10+)

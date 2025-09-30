@@ -23,7 +23,7 @@ including installation instructions, alternative suggestions, and graceful degra
 import platform
 from typing import Dict, List
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 class DependencyFeedback:

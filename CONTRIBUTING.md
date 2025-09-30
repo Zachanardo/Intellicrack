@@ -46,9 +46,8 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 
    ```bash
    # Windows 11 (using actual project structure)
-   python -m venv mamba_env
-   mamba_env\Scripts\activate
-   ```
+   pixi init
+   pixi shell   ```
 
 2. Install dependencies:
 

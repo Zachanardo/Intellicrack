@@ -27,7 +27,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Optional import for file monitoring capabilities
 try:

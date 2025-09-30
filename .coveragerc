@@ -1,7 +1,7 @@
 [run]
 source = intellicrack
 omit =
-    */mamba_env/*
+    */.pixi/envs/default/*
     */dev/*
     */tools/*
     */tests/*

@@ -28,14 +28,6 @@ intellicrack.core.anti\_analysis.debugger\_detector module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.anti\_analysis.process\_hollowing module
-----------------------------------------------------------
-
-.. automodule:: intellicrack.core.anti_analysis.process_hollowing
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.core.anti\_analysis.sandbox\_detector module
 ---------------------------------------------------------
 

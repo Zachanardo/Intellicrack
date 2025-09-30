@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import ast
 import importlib
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 class ImportValidator:

@@ -248,14 +248,14 @@ docker run -it --rm \
 
 **Create Conda Environment:**
 ```bash
-# Create conda environment
-conda create -n intellicrack python=3.12
+# Initialize pixi project
+pixi init
 
 # Activate environment
-conda activate intellicrack
+pixi shell
 
-# Install conda packages
-conda install -c conda-forge pyqt=5.15 psutil
+# Install packages
+pixi add pyqt psutil
 
 # Install pip packages
 pip install die-python>=0.4.0

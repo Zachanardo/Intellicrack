@@ -8,9 +8,13 @@ Subpackages
    :maxdepth: 4
 
    intellicrack.ai
+   intellicrack.analysis
    intellicrack.cli
    intellicrack.core
+   intellicrack.data
+   intellicrack.handlers
    intellicrack.hexview
+   intellicrack.ml
    intellicrack.models
    intellicrack.plugins
    intellicrack.protection
@@ -26,14 +30,6 @@ intellicrack.config module
 --------------------------
 
 .. automodule:: intellicrack.config
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.logger module
---------------------------
-
-.. automodule:: intellicrack.logger
    :members:
    :show-inheritance:
    :undoc-members:

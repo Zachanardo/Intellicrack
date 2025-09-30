@@ -8,7 +8,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...config import get_config
 

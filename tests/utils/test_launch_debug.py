@@ -11,7 +11,7 @@ print("Starting Intellicrack import debug...")
 
 try:
     print("1. Importing logger...")
-    from intellicrack.logger import logger
+    from intellicrack.utils.logger import logger
     print("   ✓ Logger imported")
 
     print("2. Importing config...")

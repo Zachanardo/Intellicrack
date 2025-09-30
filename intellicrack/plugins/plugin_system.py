@@ -31,10 +31,10 @@ from typing import Any
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from intellicrack.handlers.frida_handler import HAS_FRIDA as FRIDA_AVAILABLE
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..config import CONFIG
-from ..utils.process_utils import get_target_process_pid
+from ..utils.system.process_utils import get_target_process_pid
 from .remote_executor import RemotePluginExecutor
 
 """

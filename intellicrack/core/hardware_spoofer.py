@@ -1,3 +1,5 @@
+"""Hardware fingerprint spoofing for bypassing hardware-based license checks."""
+
 import ctypes
 import platform
 import random
@@ -14,6 +16,8 @@ import wmi
 
 
 class SpoofMethod(Enum):
+    """Enumeration of hardware spoofing methods."""
+
     REGISTRY = "registry"
     MEMORY = "memory"
     DRIVER = "driver"
@@ -23,6 +27,8 @@ class SpoofMethod(Enum):
 
 @dataclass
 class HardwareIdentifiers:
+    """Container for hardware identification values targeted by license checks."""
+
     cpu_id: str
     cpu_name: str
     motherboard_serial: str

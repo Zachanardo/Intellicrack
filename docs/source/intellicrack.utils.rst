@@ -20,6 +20,7 @@ Subpackages
    intellicrack.utils.tools
    intellicrack.utils.ui
    intellicrack.utils.utils
+   intellicrack.utils.validation
 
 Submodules
 ----------
@@ -48,10 +49,26 @@ intellicrack.utils.api\_client module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.utils.certificate\_utils module
+--------------------------------------------
+
+.. automodule:: intellicrack.utils.certificate_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.utils.config module
 --------------------------------
 
 .. automodule:: intellicrack.utils.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.config\_cleanup module
+-----------------------------------------
+
+.. automodule:: intellicrack.utils.config_cleanup
    :members:
    :show-inheritance:
    :undoc-members:
@@ -76,6 +93,22 @@ intellicrack.utils.dependency\_fallbacks module
 -----------------------------------------------
 
 .. automodule:: intellicrack.utils.dependency_fallbacks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.deprecation\_warnings module
+-----------------------------------------------
+
+.. automodule:: intellicrack.utils.deprecation_warnings
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.env\_file\_manager module
+--------------------------------------------
+
+.. automodule:: intellicrack.utils.env_file_manager
    :members:
    :show-inheritance:
    :undoc-members:
@@ -128,6 +161,14 @@ intellicrack.utils.gpu\_benchmark module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.utils.http\_utils module
+-------------------------------------
+
+.. automodule:: intellicrack.utils.http_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.utils.import\_checks module
 ----------------------------------------
 
@@ -148,6 +189,14 @@ intellicrack.utils.license\_response\_templates module
 ------------------------------------------------------
 
 .. automodule:: intellicrack.utils.license_response_templates
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.log\_message module
+--------------------------------------
+
+.. automodule:: intellicrack.utils.log_message
    :members:
    :show-inheritance:
    :undoc-members:
@@ -216,22 +265,6 @@ intellicrack.utils.pe\_common module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.process\_utils module
-----------------------------------------
-
-.. automodule:: intellicrack.utils.process_utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.utils.protection\_detection module
------------------------------------------------
-
-.. automodule:: intellicrack.utils.protection_detection
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.utils.protection\_utils module
 -------------------------------------------
 
@@ -272,6 +305,30 @@ intellicrack.utils.secrets\_manager module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.utils.security\_mitigations module
+-----------------------------------------------
+
+.. automodule:: intellicrack.utils.security_mitigations
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.service\_health\_checker module
+--------------------------------------------------
+
+.. automodule:: intellicrack.utils.service_health_checker
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.service\_utils module
+----------------------------------------
+
+.. automodule:: intellicrack.utils.service_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.utils.severity\_levels module
 ------------------------------------------
 
@@ -284,6 +341,14 @@ intellicrack.utils.string\_utils module
 ---------------------------------------
 
 .. automodule:: intellicrack.utils.string_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.utils.subprocess\_security module
+----------------------------------------------
+
+.. automodule:: intellicrack.utils.subprocess_security
    :members:
    :show-inheritance:
    :undoc-members:

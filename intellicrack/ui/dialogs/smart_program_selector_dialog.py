@@ -34,7 +34,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """Smart program selector dialog for choosing target applications."""
 

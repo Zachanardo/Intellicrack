@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import struct
 import warnings
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Capstone Import Handler with Production-Ready Fallbacks

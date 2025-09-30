@@ -26,7 +26,7 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 
 from ...utils.logger import get_logger
-from ...utils.protection.protection_detection import (
+from ...protection.protection_detector import (
     detect_checksum_verification,
     detect_obfuscation,
     detect_self_healing_code,

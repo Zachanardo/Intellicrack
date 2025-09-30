@@ -1,6 +1,6 @@
 """Tooltip helper utilities for enhanced UI tooltips."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Comprehensive tooltip definitions for Intellicrack UI.

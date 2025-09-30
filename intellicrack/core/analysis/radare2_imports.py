@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 

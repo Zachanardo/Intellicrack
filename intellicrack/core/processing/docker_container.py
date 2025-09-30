@@ -6,7 +6,7 @@ import subprocess
 import time
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .base_snapshot_handler import BaseSnapshotHandler
 

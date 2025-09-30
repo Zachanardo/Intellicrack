@@ -26,15 +26,18 @@ logger = logging.getLogger(__name__)
 # Import protection bypass modules with error handling
 try:
     from .tpm_bypass import (
-        TPMAnalyzer,
+        TPMBypassEngine,
         TPMProtectionBypass,
         analyze_tpm_protection,
         bypass_tpm_protection,
         detect_tpm_usage,
         tpm_research_tools,
     )
+    TPMAnalyzer = TPMBypassEngine  # Alias for backward compatibility
 except ImportError as e:
     logger.warning("Failed to import tpm_bypass: %s", e)
+    TPMAnalyzer = TPMBypassEngine = TPMProtectionBypass = None
+    analyze_tpm_protection = bypass_tpm_protection = detect_tpm_usage = tpm_research_tools = None
 
 try:
     from .vm_bypass import (
@@ -52,6 +55,18 @@ try:
     from .dongle_emulator import HardwareDongleEmulator, activate_hardware_dongle_emulation
 except ImportError as e:
     logger.warning("Failed to import dongle_emulator: %s", e)
+
+try:
+    from .hardware_id_spoofer import HardwareIDSpoofer
+except ImportError as e:
+    logger.warning("Failed to import hardware_id_spoofer: %s", e)
+
+try:
+    from .integrity_check_defeat import IntegrityCheckDefeatSystem
+    IntegrityCheckDefeat = IntegrityCheckDefeatSystem  # Alias for backward compatibility
+except ImportError as e:
+    logger.warning("Failed to import integrity_check_defeat: %s", e)
+    IntegrityCheckDefeat = IntegrityCheckDefeatSystem = None
 
 # Define package exports
 __all__ = [
@@ -72,6 +87,10 @@ __all__ = [
     # From dongle_emulator
     "HardwareDongleEmulator",
     "activate_hardware_dongle_emulation",
+    # From hardware_id_spoofer
+    "HardwareIDSpoofer",
+    # From integrity_check_defeat
+    "IntegrityCheckDefeat",
 ]
 
 # Package metadata

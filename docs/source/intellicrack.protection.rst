@@ -12,6 +12,14 @@ intellicrack.protection.analysis\_cache module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.protection.commercial\_protectors\_database module
+---------------------------------------------------------------
+
+.. automodule:: intellicrack.protection.commercial_protectors_database
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.protection.icp\_backend module
 -------------------------------------------
 

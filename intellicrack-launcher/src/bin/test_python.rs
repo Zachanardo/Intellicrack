@@ -5,8 +5,8 @@ fn main() {
     println!("Test Python embedding");
 
     // Set environment variables
-    env::set_var("PYO3_PYTHON", r"C:\Intellicrack\mamba_env\python.exe");
-    env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+    env::set_var("PYO3_PYTHON", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+    env::set_var("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
     env::set_var("PYTHONPATH", r"C:\Intellicrack");
 
     println!("Environment variables set");

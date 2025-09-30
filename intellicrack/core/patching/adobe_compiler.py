@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from intellicrack.core.config_manager import get_config
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.binary.binary_utils import compute_file_hash
 
 

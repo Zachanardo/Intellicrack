@@ -12,6 +12,14 @@ intellicrack.utils.core.core\_utilities module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.utils.core.dependency\_feedback module
+---------------------------------------------------
+
+.. automodule:: intellicrack.utils.core.dependency_feedback
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.utils.core.exception\_utils module
 -----------------------------------------------
 

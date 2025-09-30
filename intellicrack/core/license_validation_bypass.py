@@ -1,3 +1,5 @@
+"""License validation bypass engine for extracting and manipulating cryptographic keys."""
+
 import re
 import struct
 from dataclasses import dataclass
@@ -16,6 +18,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPubl
 
 
 class KeyType(Enum):
+    """Enumeration of cryptographic key types found in license validation code."""
+
     RSA_PUBLIC = "rsa_public"
     RSA_PRIVATE = "rsa_private"
     ECC_PUBLIC = "ecc_public"
@@ -28,6 +32,8 @@ class KeyType(Enum):
 
 @dataclass
 class ExtractedKey:
+    """Container for extracted cryptographic key from binary analysis."""
+
     key_type: KeyType
     key_data: bytes
     modulus: Optional[int] = None

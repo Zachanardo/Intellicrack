@@ -9,7 +9,7 @@ import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Symbolic Execution Engine for Automatic Vulnerability Discovery

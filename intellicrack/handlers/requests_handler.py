@@ -22,7 +22,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Requests Import Handler with Production-Ready Fallbacks

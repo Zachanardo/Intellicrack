@@ -1,5 +1,3 @@
-.. Intellicrack documentation master file
-
 Intellicrack Documentation
 ===========================
 
@@ -45,14 +43,13 @@ Indices and Tables
 Quick Links
 -----------
 
-* `GitHub Repository <https://github.com/yourusername/intellicrack>`_
-* `Issue Tracker <https://github.com/yourusername/intellicrack/issues>`_
-* `Discussions <https://github.com/yourusername/intellicrack/discussions>`_
+* `GitHub Repository <https://github.com/Zachanardo/Intellicrack>`_
+* `Issue Tracker <https://github.com/Zachanardo/Intellicrack/issues>`_
 
 License
 -------
 
-This project is licensed under the terms specified in the LICENSE file.
+This project is licensed under the GNU General Public License v3.0 or later.
 
 .. note::
 

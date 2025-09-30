@@ -22,7 +22,7 @@ from datetime import datetime
 from threading import Thread
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
 
 """

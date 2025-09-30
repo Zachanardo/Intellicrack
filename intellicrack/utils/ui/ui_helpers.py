@@ -1,6 +1,6 @@
 """UI helper utilities for common interface operations."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Common UI helper functions to reduce code duplication.

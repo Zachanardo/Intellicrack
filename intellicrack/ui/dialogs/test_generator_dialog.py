@@ -27,7 +27,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget, pyqtSignal,
 )
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...tools.plugin_test_generator import MockDataGenerator, PluginTestGenerator, PluginTestRunner
 from .plugin_dialog_base import PluginDialogBase

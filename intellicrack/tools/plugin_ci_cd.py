@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 import yaml
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 CI/CD Integration for Intellicrack Plugin Development.

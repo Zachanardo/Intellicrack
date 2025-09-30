@@ -140,7 +140,6 @@ class IntellicrackApp(QMainWindow):
             model_manager: AI/ML model management
             ai_orchestrator: AI-powered analysis orchestration
             autonomous_agent: Autonomous analysis agent
-            exploitation_orchestrator: AI-guided exploitation framework
             theme_manager: UI theming and styling
             icon_manager: Icon management system
             dashboard_manager: Dashboard monitoring and metrics
@@ -337,9 +336,7 @@ class IntellicrackApp(QMainWindow):
             self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
 
             # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
-            from ..ai.exploitation_orchestrator import ExploitationOrchestrator
 
-            self.exploitation_orchestrator = ExploitationOrchestrator(ai_model=None)
             self.logger.info("Exploitation Orchestrator initialized successfully")
 
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
@@ -349,7 +346,6 @@ class IntellicrackApp(QMainWindow):
             self.logger.error(f"Exception details: {traceback.format_exc()}")
             self.ai_orchestrator = None
             self.ai_coordinator = None
-            self.exploitation_orchestrator = None
             self.logger.warning("Continuing without agentic AI system")
 
     def _initialize_adobe_compiler(self):
@@ -526,14 +522,6 @@ class IntellicrackApp(QMainWindow):
 
         self.generate_advanced_payload = partial(exploitation_handlers.generate_advanced_payload, self)
         self.test_generated_payload = partial(exploitation_handlers.test_generated_payload, self)
-        self.start_c2_server = partial(exploitation_handlers.start_c2_server, self)
-        self.stop_c2_server = partial(exploitation_handlers.stop_c2_server, self)
-        self.open_c2_management = partial(exploitation_handlers.open_c2_management, self)
-        self.establish_persistence = partial(exploitation_handlers.establish_persistence, self)
-        self.escalate_privileges = partial(exploitation_handlers.escalate_privileges, self)
-        self.perform_lateral_movement = partial(exploitation_handlers.perform_lateral_movement, self)
-        self.harvest_credentials = partial(exploitation_handlers.harvest_credentials, self)
-        self.collect_system_info = partial(exploitation_handlers.collect_system_info, self)
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
         self.open_vulnerability_research = partial(exploitation_handlers.open_vulnerability_research, self)
         self.run_quick_vulnerability_analysis = partial(exploitation_handlers.run_quick_vulnerability_analysis, self)

@@ -136,7 +136,6 @@ def check_and_install_dependencies() -> bool:
         "networkx": "Graph analysis",
         "frida": "Dynamic analysis",
         "angr": "Symbolic execution",
-        "manticore": "Concolic execution",
     }
 
     for dep, description in optional_deps.items():

@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 def setup_cli_logging(verbose: bool = False) -> None:

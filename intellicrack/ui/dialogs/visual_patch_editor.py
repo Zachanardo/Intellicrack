@@ -37,7 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     QWidget,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Visual Patch Editor Dialog

@@ -7,7 +7,7 @@ import tempfile
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.resource_helper import get_resource_path
 

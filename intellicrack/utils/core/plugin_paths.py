@@ -26,7 +26,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from pathlib import Path
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..resource_helper import get_resource_path
 

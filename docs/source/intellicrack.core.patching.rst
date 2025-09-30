@@ -4,6 +4,14 @@ intellicrack.core.patching package
 Submodules
 ----------
 
+intellicrack.core.patching.adobe\_compiler module
+-------------------------------------------------
+
+.. automodule:: intellicrack.core.patching.adobe_compiler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.patching.adobe\_injector module
 -------------------------------------------------
 
@@ -20,18 +28,10 @@ intellicrack.core.patching.base\_patcher module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.patching.early\_bird\_injection module
---------------------------------------------------------
+intellicrack.core.patching.license\_check\_remover module
+---------------------------------------------------------
 
-.. automodule:: intellicrack.core.patching.early_bird_injection
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.patching.kernel\_injection module
----------------------------------------------------
-
-.. automodule:: intellicrack.core.patching.kernel_injection
+.. automodule:: intellicrack.core.patching.license_check_remover
    :members:
    :show-inheritance:
    :undoc-members:
@@ -44,26 +44,10 @@ intellicrack.core.patching.memory\_patcher module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.patching.payload\_generator module
-----------------------------------------------------
+intellicrack.core.patching.radare2\_patch\_integration module
+-------------------------------------------------------------
 
-.. automodule:: intellicrack.core.patching.payload_generator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.patching.process\_hollowing module
-----------------------------------------------------
-
-.. automodule:: intellicrack.core.patching.process_hollowing
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.patching.syscalls module
-------------------------------------------
-
-.. automodule:: intellicrack.core.patching.syscalls
+.. automodule:: intellicrack.core.patching.radare2_patch_integration
    :members:
    :show-inheritance:
    :undoc-members:

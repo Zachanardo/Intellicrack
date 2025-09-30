@@ -12,25 +12,18 @@ Intellicrack supports multiple symbolic execution engines with automatic platfor
 - **Features**: Full symbolic execution, path exploration, constraint solving
 - **UI Option**: "Symbolic Execution" button
 
-### 2. manticore (Secondary Engine - Not Available on Windows)
-- **Platforms**: Not supported on Windows 11
-- **Installation**: Not available for Windows platforms
-- **Features**: N/A for Windows users
-- **UI Option**: Disabled on Windows 11
-
-### 3. simconcolic (Fallback Engine)
+### 2. simconcolic (Fallback Engine)
 - **Platforms**: Windows 11 (built-in)
 - **Installation**: No installation needed
 - **Features**: Basic symbolic execution, limited functionality
 
 ## Platform-Specific Behavior
 
-### Windows 11 Users
+### Windows Users
 1. **Available Engines**: angr (full features), simconcolic (fallback)
 2. **Recommended**: Always use "Symbolic Execution" (angr)
 3. **UI Behavior**:
    - "Concolic Execution" shows informative message directing to angr
-   - No manticore errors or missing dependency warnings
    - Automatic fallback to simconcolic if angr fails
 
 ## Code Architecture
@@ -38,7 +31,6 @@ Intellicrack supports multiple symbolic execution engines with automatic platfor
 ### Engine Detection (main_app.py)
 ```python
 execution_engines = {
-    'manticore': False,
     'angr': False,
     'triton': False,
     'z3': False,
@@ -52,11 +44,7 @@ try:
 except ImportError:
     pass
 
-try:
-    from manticore.native import Manticore
-    execution_engines['manticore'] = True
-except ImportError:
-    pass  # Expected on Windows 11
+# Manticore is no longer supported (Windows-only focus)
 ```
 
 ### Execution Priority

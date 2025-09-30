@@ -1365,7 +1365,7 @@ class AnalysisTab(BaseTab):
 
         # Perform actual protection detection
         try:
-            from ...utils.protection.protection_detection import ProtectionDetector
+            from ...protection.protection_detector import ProtectionDetector
 
             detector = ProtectionDetector()
 

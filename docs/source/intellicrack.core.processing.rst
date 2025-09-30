@@ -68,10 +68,10 @@ intellicrack.core.processing.memory\_optimizer module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.processing.qemu\_emulator module
---------------------------------------------------
+intellicrack.core.processing.qemu\_emulator\_backup module
+----------------------------------------------------------
 
-.. automodule:: intellicrack.core.processing.qemu_emulator
+.. automodule:: intellicrack.core.processing.qemu_emulator_backup
    :members:
    :show-inheritance:
    :undoc-members:
@@ -80,6 +80,14 @@ intellicrack.core.processing.qiling\_emulator module
 ----------------------------------------------------
 
 .. automodule:: intellicrack.core.processing.qiling_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.processing.vm\_workflow\_manager module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.core.processing.vm_workflow_manager
    :members:
    :show-inheritance:
    :undoc-members:

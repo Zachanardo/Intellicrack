@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import struct
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Pefile Import Handler with Production-Ready Fallbacks

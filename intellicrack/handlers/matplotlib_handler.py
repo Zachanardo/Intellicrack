@@ -17,7 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import traceback
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Matplotlib Import Handler with Production-Ready Fallbacks

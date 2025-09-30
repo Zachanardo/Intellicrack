@@ -22,7 +22,7 @@ This module provides shared utilities for reading and analyzing binary files.
 import os
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:

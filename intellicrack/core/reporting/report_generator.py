@@ -31,7 +31,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.subprocess_security import secure_run
 
 try:

@@ -44,7 +44,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
 from ..icon_manager import set_button_icon

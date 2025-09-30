@@ -19,7 +19,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..utils.analysis.entropy_utils import calculate_byte_entropy
 

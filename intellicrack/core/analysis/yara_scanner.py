@@ -151,9 +151,26 @@ class YaraScanner:
         Args:
             rules_dir: Directory containing YARA rule files
         """
+        import threading
+
         self.rules_dir = rules_dir or Path(__file__).parent / "yara_rules"
         self.compiled_rules: Dict[RuleCategory, yara.Rules] = {}
         self.custom_rules: Dict[str, yara.Rules] = {}
+
+        # Initialize thread-safe components
+        self._matches: List[YaraMatch] = []
+        self._match_lock = threading.Lock()
+        self._scan_progress_lock = threading.Lock()
+        self._scan_progress: Dict[str, Any] = {"status": "idle", "scanned": 0, "total": 0, "matches": 0, "current_region": None}
+
+        # Initialize rule categories
+        self._rule_categories: Dict[str, RuleCategory] = {}
+
+        # Initialize execution log with max size limit
+        self._execution_log: List[Dict[str, Any]] = []
+        self._execution_log_max_size = 10000  # Max entries before rotation
+        self._execution_log_lock = threading.Lock()
+
         self._load_builtin_rules()
         if self.rules_dir.exists():
             self._load_custom_rules()
@@ -1170,8 +1187,6 @@ rule Delphi_Compiler {
 
             # Store rule with category tracking
             self.builtin_rules[safe_name] = rule_content
-            if not hasattr(self, "_rule_categories"):
-                self._rule_categories = {}
             self._rule_categories[safe_name] = category
 
             # Incremental compilation for performance
@@ -1315,9 +1330,8 @@ rule Delphi_Compiler {
                 kernel32.CloseHandle(process_handle)
 
             # Store matches
-            if not hasattr(self, "_matches"):
-                self._matches = []
-            self._matches.extend(matches)
+            with self._match_lock:
+                self._matches.extend(matches)
 
             logger.info(f"Found {len(matches)} matches in process {pid}")
             return matches
@@ -1437,22 +1451,11 @@ rule Delphi_Compiler {
         """Get all stored matches (thread-safe)."""
         import threading
 
-        if not hasattr(self, "_matches"):
-            self._matches = []
-
-        if not hasattr(self, "_match_lock"):
-            self._match_lock = threading.Lock()
-
         with self._match_lock:
             return list(self._matches)  # Return copy to prevent external modification
 
     def clear_matches(self) -> None:
         """Clear stored matches (thread-safe)."""
-        import threading
-
-        if not hasattr(self, "_match_lock"):
-            self._match_lock = threading.Lock()
-
         with self._match_lock:
             self._matches = []
             logger.debug("Cleared all stored matches")
@@ -1495,9 +1498,6 @@ rule Delphi_Compiler {
 
     def _filter_rules_by_category(self, categories: List[RuleCategory]) -> str:
         """Filter rules by category."""
-        if not hasattr(self, "_rule_categories"):
-            return "\n".join(self.builtin_rules.values())
-
         filtered = []
         for name, content in self.builtin_rules.items():
             if name in self._rule_categories:
@@ -1508,7 +1508,7 @@ rule Delphi_Compiler {
 
     def _get_rule_category(self, rule_name: str) -> RuleCategory:
         """Get category for a rule."""
-        if hasattr(self, "_rule_categories") and rule_name in self._rule_categories:
+        if rule_name in self._rule_categories:
             return self._rule_categories[rule_name]
         return RuleCategory.CUSTOM
 
@@ -1519,8 +1519,10 @@ rule Delphi_Compiler {
             detections: Detection results
             output_path: Path to save results
         """
+        import time
+
         export_data = {
-            "timestamp": os.path.getmtime(output_path.parent),
+            "timestamp": time.time(),
             "detections": detections,
             "statistics": {
                 "total_packers": len(detections.get("packers", [])),
@@ -1895,10 +1897,8 @@ rule Delphi_Compiler {
         Returns:
             Dictionary with progress details
         """
-        if not hasattr(self, "_scan_progress"):
-            return {"status": "idle", "scanned": 0, "total": 0, "matches": 0, "current_region": None}
-
-        return dict(self._scan_progress)
+        with self._scan_progress_lock:
+            return dict(self._scan_progress)
 
     def set_scan_progress_callback(self, callback):
         """Set callback for scan progress updates.
@@ -3282,9 +3282,6 @@ extern "C" {{
         import json
         import time
 
-        if not hasattr(self, "_execution_log"):
-            self._execution_log = []
-
         log_entry = {
             "timestamp": time.time(),
             "rule_name": match.rule_name,
@@ -3297,7 +3294,15 @@ extern "C" {{
             },
         }
 
-        self._execution_log.append(log_entry)
+        with self._execution_log_lock:
+            # Check if log has reached maximum size
+            if len(self._execution_log) >= self._execution_log_max_size:
+                # Rotate log by removing oldest entries (keep last 75% of max size)
+                keep_count = int(self._execution_log_max_size * 0.75)
+                self._execution_log = self._execution_log[-keep_count:]
+                logger.debug(f"Execution log rotated, kept {keep_count} most recent entries")
+
+            self._execution_log.append(log_entry)
 
         # Also write to debug log
         logger.debug(f"Match execution: {json.dumps(log_entry, indent=2)}")

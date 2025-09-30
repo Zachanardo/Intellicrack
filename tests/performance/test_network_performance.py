@@ -5,19 +5,14 @@ import tempfile
 import os
 import psutil
 import socket
-from unittest.mock import patch, MagicMock
-
-from intellicrack.core.c2.c2_server import C2Server
-from intellicrack.core.c2.c2_client import C2Client
-from intellicrack.core.c2.communication_protocols import CommunicationProtocols
-from intellicrack.core.c2.encryption_manager import EncryptionManager
-from intellicrack.core.c2.session_manager import SessionManager
 from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
 from intellicrack.core.network_capture import NetworkCapture
+from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator
+from intellicrack.core.network.license_protocol_analyzer import LicenseProtocolAnalyzer
 
 
 class TestNetworkPerformance:
-    """Performance benchmarks for network operations and C2 functionality."""
+    """Performance benchmarks for network operations and license emulation functionality."""
 
     @pytest.fixture
     def sample_license_packet(self):
@@ -127,39 +122,41 @@ class TestNetworkPerformance:
         assert benchmark.stats.mean < 0.05, "Adobe activation should be under 50ms"
 
     @pytest.mark.benchmark
-    def test_c2_server_startup_performance(self, benchmark):
-        """Benchmark REAL C2 server startup speed."""
-        def start_c2_server():
-            server = C2Server(host='127.0.0.1', port=0)
+    def test_license_server_startup_performance(self, benchmark):
+        """Benchmark REAL license server startup speed."""
+        def start_license_server():
+            emulator = LicenseServerEmulator()
+            server = emulator.create_license_server(host='127.0.0.1', port=0)
             server.start_async()
             time.sleep(0.1)
             server.stop()
             return server.is_running
 
-        result = benchmark(start_c2_server)
+        result = benchmark(start_license_server)
 
-        assert result is not None, "C2 server startup must return status"
-        assert benchmark.stats.mean < 0.5, "C2 server startup should be under 500ms"
+        assert result is not None, "License server startup must return status"
+        assert benchmark.stats.mean < 0.5, "License server startup should be under 500ms"
 
     @pytest.mark.benchmark
-    def test_c2_client_connection_performance(self, benchmark):
-        """Benchmark REAL C2 client connection speed."""
-        server = C2Server(host='127.0.0.1', port=0)
+    def test_license_client_connection_performance(self, benchmark):
+        """Benchmark REAL license client connection speed."""
+        emulator = LicenseServerEmulator()
+        server = emulator.create_license_server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
 
-        def connect_c2_client():
-            client = C2Client()
+        def connect_license_client():
+            client = emulator.create_license_client()
             result = client.connect('127.0.0.1', server_port, timeout=1.0)
             if client.is_connected():
                 client.disconnect()
             return result
 
         try:
-            result = benchmark(connect_c2_client)
+            result = benchmark(connect_license_client)
 
-            assert result is not None, "C2 client connection must return result"
-            assert benchmark.stats.mean < 0.2, "C2 client connection should be under 200ms"
+            assert result is not None, "License client connection must return result"
+            assert benchmark.stats.mean < 0.2, "License client connection should be under 200ms"
         finally:
             server.stop()
 
@@ -167,13 +164,13 @@ class TestNetworkPerformance:
     def test_encryption_performance(self, benchmark):
         """Benchmark REAL encryption/decryption operations."""
         def encrypt_decrypt_data():
-            manager = EncryptionManager()
-            key = manager.generate_key()
+            hooker = CloudLicenseHooker()
+            key = hooker.generate_encryption_key()
 
             test_data = b"This is test data for encryption performance testing" * 10
 
-            encrypted = manager.encrypt(test_data, key)
-            decrypted = manager.decrypt(encrypted, key)
+            encrypted = hooker.encrypt_license_data(test_data, key)
+            decrypted = hooker.decrypt_license_data(encrypted, key)
 
             return decrypted == test_data
 
@@ -222,18 +219,19 @@ class TestNetworkPerformance:
         assert result == 10, "Must manage exactly 10 sessions"
         assert benchmark.stats.mean < 0.05, "Session management should be under 50ms"
 
-    def test_concurrent_c2_connections(self):
-        """Test REAL concurrent C2 connection performance."""
-        server = C2Server(host='127.0.0.1', port=0)
+    def test_concurrent_license_connections(self):
+        """Test REAL concurrent license connection performance."""
+        emulator = LicenseServerEmulator()
+        server = emulator.create_license_server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
 
         results = []
         errors = []
 
-        def connect_client(client_id):
+        def connect_license_client(client_id):
             try:
-                client = C2Client()
+                client = emulator.create_license_client()
                 result = client.connect('127.0.0.1', server_port, timeout=2.0)
                 if client.is_connected():
                     time.sleep(0.1)
@@ -247,7 +245,7 @@ class TestNetworkPerformance:
             start_time = time.time()
 
             for i in range(5):
-                thread = threading.Thread(target=connect_client, args=(i,))
+                thread = threading.Thread(target=connect_license_client, args=(i,))
                 threads.append(thread)
                 thread.start()
 
@@ -322,30 +320,31 @@ class TestNetworkPerformance:
 
         assert end_time - start_time < 5.0, "Network stress test should complete under 5 seconds"
 
-    def test_c2_message_throughput(self):
-        """Test REAL C2 message throughput performance."""
-        server = C2Server(host='127.0.0.1', port=0)
+    def test_license_message_throughput(self):
+        """Test REAL license message throughput performance."""
+        emulator = LicenseServerEmulator()
+        server = emulator.create_license_server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
 
-        client = C2Client()
+        client = emulator.create_license_client()
 
         try:
             connection_result = client.connect('127.0.0.1', server_port, timeout=2.0)
-            assert connection_result, "Client must connect successfully"
+            assert connection_result, "License client must connect successfully"
 
             start_time = time.time()
             message_count = 100
 
             for i in range(message_count):
-                message = f"test_message_{i}".encode()
-                sent = client.send_message(message)
-                assert sent, f"Message {i} failed to send"
+                license_request = f"LICENSE_CHECK:PRODUCT_{i}".encode()
+                sent = client.send_license_request(license_request)
+                assert sent, f"License request {i} failed to send"
 
             end_time = time.time()
             throughput = message_count / (end_time - start_time)
 
-            assert throughput > 50, f"Throughput too low: {throughput} messages/second"
+            assert throughput > 50, f"Throughput too low: {throughput} requests/second"
 
         finally:
             if client.is_connected():
@@ -395,30 +394,30 @@ class TestNetworkPerformance:
 
         assert end_time - start_time < 0.1, "Network error handling should be fast (under 100ms)"
 
-    def test_c2_session_persistence(self):
-        """Test REAL C2 session persistence performance."""
-        manager = SessionManager()
+    def test_license_session_persistence(self):
+        """Test REAL license session persistence performance."""
+        analyzer = LicenseProtocolAnalyzer()
 
         start_time = time.time()
 
         session_ids = []
         for i in range(20):
-            session_id = manager.create_session(f"persistent_client_{i}", f"10.0.0.{i+1}")
+            session_id = analyzer.create_license_session(f"license_client_{i}", f"10.0.0.{i+1}")
             session_ids.append(session_id)
 
         for _ in range(10):
             for session_id in session_ids:
-                manager.update_session_activity(session_id)
+                analyzer.update_session_activity(session_id)
 
-        active_count = len(manager.get_active_sessions())
+        active_count = len(analyzer.get_active_sessions())
 
         for session_id in session_ids:
-            manager.close_session(session_id)
+            analyzer.close_session(session_id)
 
         end_time = time.time()
 
         assert active_count == 20, f"Expected 20 active sessions, got {active_count}"
-        assert end_time - start_time < 2.0, "Session persistence test should complete under 2 seconds"
+        assert end_time - start_time < 2.0, "License session persistence test should complete under 2 seconds"
 
     @pytest.mark.benchmark
     def test_network_protocol_detection_performance(self, benchmark, network_capture_file):
@@ -435,25 +434,25 @@ class TestNetworkPerformance:
         assert len(result['protocols']) > 0, "Must detect at least one protocol"
         assert benchmark.stats.mean < 0.05, "Protocol detection should be under 50ms"
 
-    def test_encryption_key_generation_performance(self):
-        """Test REAL encryption key generation performance."""
-        manager = EncryptionManager()
+    def test_license_key_generation_performance(self):
+        """Test REAL license key generation performance."""
+        hooker = CloudLicenseHooker()
 
         start_time = time.time()
 
         keys = []
         for i in range(50):
-            key = manager.generate_key()
+            key = hooker.generate_license_key()
             keys.append(key)
 
-            assert key is not None, f"Key generation {i} failed"
-            assert len(key) > 0, f"Key {i} is empty"
+            assert key is not None, f"License key generation {i} failed"
+            assert len(key) > 0, f"License key {i} is empty"
 
         end_time = time.time()
 
         unique_keys = set(keys)
-        assert len(unique_keys) == len(keys), "All generated keys must be unique"
-        assert end_time - start_time < 1.0, "Key generation should complete under 1 second"
+        assert len(unique_keys) == len(keys), "All generated license keys must be unique"
+        assert end_time - start_time < 1.0, "License key generation should complete under 1 second"
 
     def test_network_capture_real_time_performance(self):
         """Test REAL real-time network capture performance."""

@@ -368,7 +368,7 @@ def validate_production_readiness_checkpoint2():
         # Run the integration test we created earlier
         import subprocess
         result = subprocess.run([
-            "C:\\Intellicrack\\mamba_env\\python.exe",
+            "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe",
             "test_payload_engine_integration.py"
         ], capture_output=True, text=True, cwd="C:/Intellicrack")
 

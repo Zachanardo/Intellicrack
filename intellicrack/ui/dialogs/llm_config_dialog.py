@@ -30,7 +30,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.env_file_manager import EnvFileManager
 from ...utils.secrets_manager import get_secret

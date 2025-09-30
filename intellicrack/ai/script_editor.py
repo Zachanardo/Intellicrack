@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from intellicrack.ai.qemu_manager import QEMUManager
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .ai_script_generator import LLMScriptInterface, PromptEngineer, ScriptType
 

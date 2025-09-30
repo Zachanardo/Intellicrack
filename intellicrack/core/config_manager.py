@@ -1571,8 +1571,6 @@ class IntellicrackConfig:
         Example:
             >>> config.get('tools.ghidra.path')
             '/opt/ghidra/ghidraRun'
-            >>> config.get('service_urls.c2_server')  # ${C2_SERVER_URL:http://localhost:8888}
-            'https://c2.mycompany.com'  # From environment variable
 
         Complexity:
             Time: O(n) where n is the number of dots in key

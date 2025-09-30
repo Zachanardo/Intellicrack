@@ -516,12 +516,16 @@ class ProtectionDetector:
                 for sig in checksum_signatures:
                     if sig in content:
                         results["has_checksum_verification"] = True
-                        if sig.startswith(b"\x"):
-                            results["indicators"].append(f"Assembly pattern: {sig.hex()}")
-                        else:
+                        # Check if signature contains non-printable characters (binary pattern)
+                        try:
+                            sig.decode('ascii')
+                            # It's a text string
                             results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
                             if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
                                 results["checksum_types"].append(sig.decode('utf-8'))
+                        except UnicodeDecodeError:
+                            # It's a binary pattern with non-ASCII bytes
+                            results["indicators"].append(f"Assembly pattern: {sig.hex()}")
 
         except Exception as e:
             logger.error(f"Error detecting checksum verification: {e}")
@@ -567,8 +571,12 @@ class ProtectionDetector:
 
                         if b"Virtual" in pattern or b"Process" in pattern or b"protect" in pattern:
                             results["techniques"].append("Memory Protection Manipulation")
-                        elif pattern.startswith(b"\x"):
-                            results["techniques"].append("Direct Code Modification")
+                        else:
+                            # Check if pattern contains non-printable characters (binary pattern)
+                            try:
+                                pattern.decode('ascii')
+                            except UnicodeDecodeError:
+                                results["techniques"].append("Direct Code Modification")
 
                 # Remove duplicates
                 results["techniques"] = list(set(results["techniques"]))
@@ -706,10 +714,12 @@ class ProtectionDetector:
                     if pattern in content:
                         results["has_anti_debug"] = True
                         results["techniques"].append(description)
-                        if pattern.startswith(b"\x"):
-                            results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
-                        else:
+                        # Check if pattern contains non-printable characters (binary pattern)
+                        try:
+                            pattern.decode('ascii')
                             results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
+                        except UnicodeDecodeError:
+                            results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
 
                 # Check for heap flag manipulation
                 if b"Heap32First" in content or b"Heap32Next" in content:

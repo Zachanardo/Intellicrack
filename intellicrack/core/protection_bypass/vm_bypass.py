@@ -5,7 +5,7 @@ import platform
 import shutil
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # from ...utils.driver_utils import get_driver_path  # Removed unused import
 from ...utils.binary.binary_io import analyze_binary_for_strings

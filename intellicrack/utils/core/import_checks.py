@@ -22,7 +22,7 @@ to avoid code duplication across modules.
 
 import platform
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Binary analysis libraries
 try:

@@ -14,13 +14,13 @@ use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // CRITICAL: Configure mamba environment BEFORE any Python operations
-    std::env::set_var("PYO3_PYTHON", r"C:\Intellicrack\mamba_env\python.exe");
-    std::env::set_var("PYTHON_SYS_EXECUTABLE", r"C:\Intellicrack\mamba_env\python.exe");
-    std::env::set_var("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
-    std::env::set_var("CONDA_DEFAULT_ENV", "mamba_env");
+    // CRITICAL: Configure pixi environment BEFORE any Python operations
+    std::env::set_var("PYO3_PYTHON", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+    std::env::set_var("PYTHON_SYS_EXECUTABLE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+    std::env::set_var("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
+    std::env::set_var("PIXI_DEFAULT_ENV", "default");
     std::env::set_var("PYTHONPATH", r"C:\Intellicrack");
-    std::env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+    std::env::set_var("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
 
     // Set launcher environment variables to suppress threading warnings
     std::env::set_var("RUST_LAUNCHER_MODE", "1");
@@ -29,14 +29,14 @@ async fn main() -> Result<()> {
     // Windows-specific optimizations
     #[cfg(target_os = "windows")]
     {
-        // CRITICAL: Add mamba_env to PATH FIRST so python312.dll and vcruntime140.dll are found
+        // CRITICAL: Add pixi env to PATH FIRST so python312.dll and vcruntime140.dll are found
         let current_path = std::env::var("PATH").unwrap_or_default();
         let dll_path = format!(
             "{};{};{};{};{}",
-            r"C:\Intellicrack\mamba_env",
-            r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\DLLs",
-            r"C:\Intellicrack\mamba_env\Scripts",
+            r"C:\Intellicrack\.pixi\envs\default",
+            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
+            r"C:\Intellicrack\.pixi\envs\default\DLLs",
+            r"C:\Intellicrack\.pixi\envs\default\Scripts",
             current_path
         );
         std::env::set_var("PATH", dll_path);
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         unsafe {
             use std::ffi::CString;
 
-            let dll_dir = CString::new(r"C:\Intellicrack\mamba_env").unwrap();
+            let dll_dir = CString::new(r"C:\Intellicrack\.pixi\envs\default").unwrap();
 
             // Try to load kernel32.dll and call SetDllDirectoryA
             let kernel32 = libloading::Library::new("kernel32.dll");

@@ -5,7 +5,7 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Emulator Manager for automatic emulator lifecycle management.

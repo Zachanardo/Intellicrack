@@ -45,7 +45,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 

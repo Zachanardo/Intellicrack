@@ -1,3 +1,5 @@
+"""Serial number generator for cracking software license key validation."""
+
 import base64
 import hashlib
 import hmac
@@ -17,6 +19,8 @@ from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 
 
 class SerialFormat(Enum):
+    """Enumeration of serial number formats used by various software vendors."""
+
     NUMERIC = "numeric"
     ALPHANUMERIC = "alphanumeric"
     BASE32 = "base32"
@@ -29,6 +33,8 @@ class SerialFormat(Enum):
 
 @dataclass
 class SerialConstraints:
+    """Constraints for serial number generation based on observed patterns."""
+
     length: int
     format: SerialFormat
     groups: int = 1
@@ -43,6 +49,8 @@ class SerialConstraints:
 
 @dataclass
 class GeneratedSerial:
+    """Generated serial number with validation metadata."""
+
     serial: str
     format: SerialFormat = None
     confidence: float = 0.0
@@ -924,8 +932,8 @@ class SerialNumberGenerator:
         data_bytes = json.dumps(license_data, sort_keys=True).encode()
 
         signature = private_key.sign(
-            data_bytes, 
-            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), 
+            data_bytes,
+            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
             hashes.SHA256()
         )
 

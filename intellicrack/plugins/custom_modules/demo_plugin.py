@@ -22,7 +22,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.analysis.entropy_utils import calculate_byte_entropy
 from ...utils.core.string_utils import extract_ascii_strings

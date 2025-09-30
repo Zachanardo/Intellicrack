@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.ui.ui_common import ask_open_report
 

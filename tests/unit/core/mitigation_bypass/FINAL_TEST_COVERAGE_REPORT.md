@@ -84,7 +84,7 @@ All tests follow the Testing Agent's core principles:
 
 To validate the coverage claims, run:
 ```batch
-C:\Intellicrack\mamba_env\python.exe -m pytest tests\unit\core\mitigation_bypass\ -v --cov=intellicrack.core.mitigation_bypass --cov-report=term-missing
+pixi run python -m pytest tests\unit\core\mitigation_bypass\ -v --cov=intellicrack.core.mitigation_bypass --cov-report=term-missing
 ```
 
 ## Conclusion

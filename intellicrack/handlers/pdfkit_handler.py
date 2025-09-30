@@ -20,7 +20,7 @@ import os
 import re
 import sys
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 PDFKit Import Handler with Production-Ready Fallbacks

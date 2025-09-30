@@ -6,7 +6,7 @@ import os
 import time
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Memory Optimizer

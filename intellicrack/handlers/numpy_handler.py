@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import math
 import random as _random
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 NumPy Import Handler with Production-Ready Fallbacks

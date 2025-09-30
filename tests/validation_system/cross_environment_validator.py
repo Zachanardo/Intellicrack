@@ -846,7 +846,7 @@ class CrossEnvironmentValidator:
                 </MappedFolder>
               </MappedFolders>
               <LogonCommand>
-                <Command>powershell.exe -Command "C:\\Intellicrack\\mamba_env\\python.exe -m intellicrack --analyze C:\\TestEnvironment\\{Path(binary_path).name} --no-gui --output-json"</Command>
+                <Command>powershell.exe -Command "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -m intellicrack --analyze C:\\TestEnvironment\\{Path(binary_path).name} --no-gui --output-json"</Command>
               </LogonCommand>
               <Networking>Enable</Networking>
             </Configuration>
@@ -900,7 +900,7 @@ class CrossEnvironmentValidator:
                 "-v", f"{Path(binary_path).parent}:C:\\TestEnvironment:ro",
                 config["base_image"],
                 "powershell", "-Command",
-                f"C:\\Intellicrack\\mamba_env\\python.exe -m intellicrack --analyze C:\\TestEnvironment\\{Path(binary_path).name} --no-gui"
+                f"C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -m intellicrack --analyze C:\\TestEnvironment\\{Path(binary_path).name} --no-gui"
             ]
 
             logger.info(f"Testing in container: {config['platform']}")

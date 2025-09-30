@@ -7,7 +7,7 @@ import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..exploitation.exploitation import run_automated_patch_agent
 from ..logger import log_message

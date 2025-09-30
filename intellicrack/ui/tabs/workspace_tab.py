@@ -516,7 +516,7 @@ class WorkspaceTab(QWidget):
         # Perform actual binary analysis
         try:
             from ...utils.binary.pe_analysis_common import analyze_pe_file
-            from ...utils.protection.protection_detection import detect_basic_protections
+            from ...protection.protection_detector import detect_basic_protections
 
             # Analyze the binary file
             analysis_results = analyze_pe_file(self.loaded_binary_path)

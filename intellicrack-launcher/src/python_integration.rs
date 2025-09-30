@@ -36,7 +36,7 @@ impl PythonIntegration {
 
         // Locate Python interpreter
         let interpreter_path = Self::locate_python_interpreter()?;
-        let virtual_env_path = PathBuf::from(r"C:\Intellicrack\mamba_env");
+        let virtual_env_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default");
 
         info!("Python interpreter: {:?}", interpreter_path);
         info!("Virtual environment: {:?}", virtual_env_path);
@@ -80,18 +80,18 @@ impl PythonIntegration {
 
     /// Locate the Python interpreter with multiple fallback strategies
     fn locate_python_interpreter() -> Result<PathBuf> {
-        // Primary path: Intellicrack mamba environment
-        let mamba_python = PathBuf::from(r"C:\Intellicrack\mamba_env\python.exe");
-        if mamba_python.exists() {
-            info!("Found Python in mamba environment: {:?}", mamba_python);
-            return Ok(mamba_python);
+        // Primary path: Intellicrack pixi environment
+        let pixi_python = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        if pixi_python.exists() {
+            info!("Found Python in pixi environment: {:?}", pixi_python);
+            return Ok(pixi_python);
         }
 
         // Secondary path: Scripts subdirectory
-        let mamba_scripts_python = PathBuf::from(r"C:\Intellicrack\mamba_env\Scripts\python.exe");
-        if mamba_scripts_python.exists() {
-            info!("Found Python in mamba Scripts: {:?}", mamba_scripts_python);
-            return Ok(mamba_scripts_python);
+        let pixi_scripts_python = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+        if pixi_scripts_python.exists() {
+            info!("Found Python in pixi Scripts: {:?}", pixi_scripts_python);
+            return Ok(pixi_scripts_python);
         }
 
         // Fallback: System Python
@@ -326,12 +326,12 @@ impl PythonIntegration {
         cmd.env("PYTHONUNBUFFERED", "1");
 
         // Set conda environment variables
-        cmd.env("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
-        cmd.env("CONDA_DEFAULT_ENV", "mamba_env");
-        cmd.env("CONDA_PYTHON_EXE", r"C:\Intellicrack\mamba_env\python.exe");
+        cmd.env("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
+        cmd.env("PIXI_DEFAULT_ENV", "default");
+        cmd.env("PIXI_PYTHON_EXE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
         cmd.env("CONDA_SHLVL", "1");
 
-        cmd.env("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+        cmd.env("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
 
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
@@ -349,15 +349,15 @@ impl PythonIntegration {
                 info!("Subprocess: Proposed TK_LIBRARY path: {}", tk_lib_path.display());
             } else {
                 warn!("Subprocess: Could not get parent directory of executable");
-                // Fallback to mamba environment paths
-                tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
-                tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
+                // Fallback to pixi environment paths
+                tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
+                tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
             }
         } else {
             warn!("Subprocess: Could not get current executable path");
-            // Fallback to mamba environment paths
-            tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
-            tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
+            // Fallback to pixi environment paths
+            tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
+            tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
         }
 
         if tcl_lib_path.exists() {
@@ -414,11 +414,11 @@ impl PythonIntegration {
                 let system_path = std::env::var_os("PATH").unwrap_or_default();
                 let exe_dir_str = exe_dir.to_string_lossy();
 
-                let python_base_dir = PathBuf::from(r"C:\Intellicrack\mamba_env");
-                let python_dll_dir = PathBuf::from(r"C:\Intellicrack\mamba_env\DLLs");
-                let python_lib_bin_dir = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\bin");
+                let python_base_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default");
+                let python_dll_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\DLLs");
+                let python_lib_bin_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\bin");
 
-                // Build PATH: launcher_dir;mamba_env\DLLs;mamba_env;mamba_env\Library\bin;system_path
+                // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
                 let mut final_path = exe_dir_str.to_string();
                 info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
@@ -687,7 +687,7 @@ mod tests {
 
     #[test]
     fn test_locate_python_interpreter_fallback() {
-        // Test the fallback mechanism when mamba env doesn't exist
+        // Test the fallback mechanism when pixi env doesn't exist
         let result = PythonIntegration::locate_python_interpreter();
 
         // Should either find system Python or fail gracefully
@@ -706,21 +706,21 @@ mod tests {
     }
 
     #[test]
-    fn test_locate_python_interpreter_with_mamba() {
-        // This test checks the priority system (mamba over system)
-        let mamba_path = PathBuf::from(r"C:\Intellicrack\mamba_env\python.exe");
+    fn test_locate_python_interpreter_with_pixi() {
+        // This test checks the priority system (pixi over system)
+        let pixi_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
 
-        // If the actual mamba Python exists, it should be preferred
-        if mamba_path.exists() {
+        // If the actual pixi Python exists, it should be preferred
+        if pixi_path.exists() {
             let result = PythonIntegration::locate_python_interpreter().unwrap();
-            assert_eq!(result, mamba_path);
+            assert_eq!(result, pixi_path);
         }
 
         // Test scripts subdirectory fallback
-        let mamba_scripts_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Scripts\python.exe");
-        if mamba_scripts_path.exists() && !mamba_path.exists() {
+        let pixi_scripts_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+        if pixi_scripts_path.exists() && !pixi_path.exists() {
             let result = PythonIntegration::locate_python_interpreter().unwrap();
-            assert_eq!(result, mamba_scripts_path);
+            assert_eq!(result, pixi_scripts_path);
         }
     }
 
@@ -1084,19 +1084,19 @@ mod tests {
     #[test]
     fn test_python_path_precedence() {
         // Test the precedence logic for Python path detection
-        let mamba_path = PathBuf::from(r"C:\Intellicrack\mamba_env\python.exe");
-        let mamba_scripts_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Scripts\python.exe");
+        let pixi_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        let pixi_scripts_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
 
         // Test path construction
-        assert!(mamba_path.to_string_lossy().contains("mamba_env"));
-        assert!(mamba_scripts_path.to_string_lossy().contains("Scripts"));
+        assert!(pixi_path.to_string_lossy().contains("pixi"));
+        assert!(pixi_scripts_path.to_string_lossy().contains("Scripts"));
 
         // Test that paths are different
-        assert_ne!(mamba_path, mamba_scripts_path);
+        assert_ne!(pixi_path, pixi_scripts_path);
 
         // Test that both are absolute paths
-        assert!(mamba_path.is_absolute());
-        assert!(mamba_scripts_path.is_absolute());
+        assert!(pixi_path.is_absolute());
+        assert!(pixi_scripts_path.is_absolute());
     }
 
     #[test]

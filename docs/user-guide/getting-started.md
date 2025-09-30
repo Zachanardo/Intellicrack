@@ -33,7 +33,7 @@ Before getting started with Intellicrack, ensure you have the following:
 
 4. **Optional: Install additional analysis tools:**
    ```bash
-   pip install numpy scikit-learn matplotlib networkx frida angr manticore
+   pip install numpy scikit-learn matplotlib networkx frida angr
    ```
 
 ## First Launch

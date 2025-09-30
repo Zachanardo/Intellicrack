@@ -20,14 +20,6 @@ intellicrack.ui.tabs.analysis\_tab module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.tabs.analysis\_tab\_original module
----------------------------------------------------
-
-.. automodule:: intellicrack.ui.tabs.analysis_tab_original
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ui.tabs.base\_tab module
 -------------------------------------
 
@@ -36,26 +28,10 @@ intellicrack.ui.tabs.base\_tab module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.tabs.base\_tab\_original module
------------------------------------------------
-
-.. automodule:: intellicrack.ui.tabs.base_tab_original
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ui.tabs.dashboard\_tab module
 ------------------------------------------
 
 .. automodule:: intellicrack.ui.tabs.dashboard_tab
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ui.tabs.dashboard\_tab\_original module
-----------------------------------------------------
-
-.. automodule:: intellicrack.ui.tabs.dashboard_tab_original
    :members:
    :show-inheritance:
    :undoc-members:
@@ -88,6 +64,14 @@ intellicrack.ui.tabs.tools\_tab module
 --------------------------------------
 
 .. automodule:: intellicrack.ui.tabs.tools_tab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.tabs.workspace\_tab module
+------------------------------------------
+
+.. automodule:: intellicrack.ui.tabs.workspace_tab
    :members:
    :show-inheritance:
    :undoc-members:

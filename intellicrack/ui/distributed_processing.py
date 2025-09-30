@@ -28,7 +28,7 @@ import capstone
 import pefile
 import yara
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 try:
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
@@ -69,6 +69,8 @@ except ImportError:
             self._properties = {}
 
         def setParent(self, parent):
+            """Set parent object for hierarchy management."""
+
             if self._parent:
                 self._parent._children.remove(self)
             self._parent = parent
@@ -76,18 +78,26 @@ except ImportError:
                 parent._children.append(self)
 
         def parent(self):
+            """Get parent object in hierarchy."""
+
             return self._parent
 
         def children(self):
+            """Get list of child objects."""
+
             return self._children.copy()
 
         def setProperty(self, name, value):
+            """Set property value by name."""
             self._properties[name] = value
 
         def property(self, name):
+            """Get property value by name."""
+
             return self._properties.get(name)
 
         def deleteLater(self):
+            """Mark object for deletion and clean up hierarchy."""
             if self._parent:
                 self._parent._children.remove(self)
             self._children.clear()
@@ -106,29 +116,43 @@ except ImportError:
             self._stop_event = threading.Event()
 
         def start(self):
+            """Start thread execution with tracking state."""
+
             self._running = True
             self._stop_event.clear()
             super().start()
 
         def wait(self, timeout_ms=None):
+            """Wait for thread completion with optional timeout in milliseconds."""
+
             timeout = timeout_ms / 1000.0 if timeout_ms else None
             self.join(timeout)
             return not self.is_alive()
 
         def isRunning(self):
+            """Check if thread is currently running."""
+
             return self._running and self.is_alive()
 
         def requestInterruption(self):
+            """Request thread interruption via stop event."""
+
             self._stop_event.set()
 
         def isInterruptionRequested(self):
+            """Check if thread interruption has been requested."""
+
             return self._stop_event.is_set()
 
         def quit(self):
+            """Request thread to stop and set stop event."""
+
             self._running = False
             self._stop_event.set()
 
         def run(self):
+            """Thread execution method to be overridden in subclass."""
+
             # Override in subclass
             pass
 
@@ -149,43 +173,65 @@ except ImportError:
             self._position = (100, 100)
 
         def show(self):
+            """Show dialog in console mode."""
+
             self._visible = True
             logger.info(f"Dialog '{self._title}' opened (console mode)")
 
         def hide(self):
+            """Hide dialog and log action."""
+
             self._visible = False
             logger.info(f"Dialog '{self._title}' hidden")
 
         def exec(self):
+            """Execute modal dialog and return result."""
+
             self._modal = True
             self._visible = True
             logger.info(f"Modal dialog '{self._title}' executing")
             return self._result
 
         def accept(self):
+            """Accept dialog with result code 1."""
+
             self._result = 1
             self.hide()
 
         def reject(self):
+            """Reject dialog with result code 0."""
+
             self._result = 0
             self.hide()
 
         def setWindowTitle(self, title):
+            """Set dialog window title."""
+
             self._title = title
 
         def resize(self, width, height):
+            """Resize dialog to specified dimensions."""
+
             self._size = (width, height)
 
         def move(self, x, y):
+            """Move dialog to specified position."""
+
             self._position = (x, y)
 
         def raise_(self):
+            """Raise dialog to front in console mode."""
+
             logger.debug(f"Raising dialog '{self._title}'")
 
         def activateWindow(self):
+            """Activate dialog window in console mode."""
+
             logger.debug(f"Activating dialog '{self._title}'")
 
         def closeEvent(self, event):
+            """Handle close event to be overridden in subclass."""
+
             # Override in subclass
             pass
 
@@ -210,6 +256,8 @@ except ImportError:
                 parent._children.append(self)
 
         def setParent(self, parent):
+            """Set parent widget for hierarchy management."""
+
             if self._parent:
                 self._parent._children.remove(self)
             self._parent = parent
@@ -217,51 +265,81 @@ except ImportError:
                 parent._children.append(self)
 
         def parent(self):
+            """Get parent widget in hierarchy."""
+
             return self._parent
 
         def children(self):
+            """Get list of child widgets."""
+
             return self._children.copy()
 
         def setVisible(self, visible):
+            """Set widget visibility state."""
+
             self._visible = visible
 
         def isVisible(self):
+            """Check if widget is visible."""
+
             return self._visible
 
         def setEnabled(self, enabled):
+            """Set widget enabled state and propagate to children."""
+
             self._enabled = enabled
             for child in self._children:
                 if hasattr(child, 'setEnabled'):
                     child.setEnabled(enabled)
 
         def isEnabled(self):
+            """Check if widget is enabled."""
+
             return self._enabled
 
         def setGeometry(self, x, y, width, height):
+            """Set widget geometry with position and dimensions."""
+
             self._geometry = (x, y, width, height)
 
         def geometry(self):
+            """Get widget geometry tuple."""
+
             return self._geometry
 
         def setLayout(self, layout):
+            """Set widget layout manager."""
+
             self._layout = layout
 
         def layout(self):
+            """Get widget layout manager."""
+
             return self._layout
 
         def setStyleSheet(self, style):
+            """Set widget style sheet for appearance."""
+
             self._style_sheet = style
 
         def setObjectName(self, name):
+            """Set widget object name for identification."""
+
             self._object_name = name
 
         def objectName(self):
+            """Get widget object name."""
+
             return self._object_name
 
         def update(self):
+            """Update widget display in console mode."""
+
             logger.debug(f"Widget {self._object_name} updated")
 
         def repaint(self):
+            """Repaint widget display in console mode."""
+
             logger.debug(f"Widget {self._object_name} repainted")
 
     class pyqtSignal:
@@ -353,11 +431,15 @@ except ImportError:
             self._mutex = threading.RLock()
 
         def connect(self, slot):
+            """Connect slot to bound signal instance."""
+
             with self._mutex:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
         def disconnect(self, slot=None):
+            """Disconnect slot from bound signal instance."""
+
             with self._mutex:
                 if slot is None:
                     self.slots.clear()
@@ -365,6 +447,8 @@ except ImportError:
                     self.slots.remove(slot)
 
         def emit(self, *args):
+            """Emit bound signal with arguments to connected slots."""
+
             if hasattr(self.signal, '_blocked') and self.signal._blocked:
                 return
 

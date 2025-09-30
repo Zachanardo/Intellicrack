@@ -4,7 +4,7 @@ import os
 import time
 
 from intellicrack.handlers.psutil_handler import psutil
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.constants import ADOBE_PROCESSES
 

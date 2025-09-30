@@ -9,7 +9,7 @@ print("Starting import test...")
 # Test basic imports
 try:
     print("1. Testing logger import...")
-    from intellicrack.logger import logger
+    from intellicrack.utils.logger import logger
     print("   SUCCESS: logger imported")
 except Exception as e:
     print(f"   FAILED: {e}")
