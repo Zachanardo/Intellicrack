@@ -375,7 +375,7 @@ class EnvironmentRecorder:
 
         # Conda packages (if in conda environment)
         conda_packages = []
-        if "conda" in sys.executable.lower() or "mamba" in sys.executable.lower():
+        if ".pixi" in sys.executable.lower():
             try:
                 result = subprocess.run(
                     ["conda", "list", "--json"],

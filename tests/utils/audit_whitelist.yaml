@@ -18,7 +18,7 @@ directory_patterns:
   - "test_files"    # <1% risk - test file directories
   - "fixtures"      # <2% risk - test fixtures directory
   - "docs"          # <2% risk - documentation directory
-  - "mamba_env"     # <1% risk - conda environment directory (EXCLUDED)
+  - ".pixi"     # <1% risk - pixi environment directory (EXCLUDED)
   - "dev"           # <1% risk - development tools and scripts directory (EXCLUDED)
   - "tools"         # <1% risk - third-party tools and dependencies directory (EXCLUDED)
   - "tools/**"      # <1% risk - all subdirectories in tools (EXCLUDED)

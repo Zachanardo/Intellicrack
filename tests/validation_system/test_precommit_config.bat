@@ -3,13 +3,13 @@ echo Testing Pre-Commit Hook Configuration
 echo =====================================
 
 echo.
-echo 1. Testing Mamba Environment (Already Active)
+echo 1. Testing Pixi Environment (Already Active)
 cd /d C:\Intellicrack
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
-    echo   ✅ Mamba environment access: SUCCESS
+    echo   ✅ Pixi environment access: SUCCESS
 ) else (
-    echo   ❌ Mamba environment access: FAILED
+    echo   ❌ Pixi environment access: FAILED
     exit /b 1
 )
 
@@ -45,10 +45,10 @@ if %errorlevel% equ 0 (
 
 echo.
 echo 5. Testing Directory Exclusions
-if exist "mamba_env\" (
-    echo   ✅ mamba_env directory found (will be excluded from testing)
+if exist ".pixi\" (
+    echo   ✅ .pixi directory found (will be excluded from testing)
 ) else (
-    echo   ⚠️  mamba_env directory not found
+    echo   ⚠️  .pixi directory not found
 )
 
 if exist "dev\" (

@@ -53,10 +53,10 @@ except ImportError as e:
     logger.warning("Failed to import memory_patcher: %s", e)
 
 try:
-    from .radare2_patch_integration import Radare2PatchIntegration
+    from .radare2_patch_integration import R2PatchIntegrator
 except ImportError as e:
     logger.warning("Failed to import radare2_patch_integration: %s", e)
-    Radare2PatchIntegration = None
+    R2PatchIntegrator = None
 
 # Define package exports
 __all__ = [
@@ -77,7 +77,7 @@ __all__ = [
     "generate_launcher_script",
     "setup_memory_patching",
     # From radare2_patch_integration
-    "Radare2PatchIntegration",
+    "R2PatchIntegrator",
 ]
 
 # Package metadata

@@ -10,8 +10,7 @@ from intellicrack.core.patching.memory_patcher import MemoryPatcher
 from intellicrack.core.patching.payload_generator import PayloadGenerator
 from intellicrack.core.patching.adobe_injector import AdobeInjector
 from intellicrack.utils.patching.patch_generator import PatchGenerator
-from intellicrack.utils.patching.patch_verification import PatchVerification
-from intellicrack.utils.patch_verification import verify_patch
+from intellicrack.utils.patching.patch_verification import PatchVerification, verify_patch
 from intellicrack.core.app_context import AppContext
 
 

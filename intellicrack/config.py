@@ -25,10 +25,21 @@ import logging
 import os
 from typing import Any
 
-# Import the new configuration system
-from .core.config_manager import get_config as get_new_config
-
 logger = logging.getLogger(__name__)
+
+# Lazy import of config_manager to prevent circular imports
+_get_new_config = None
+
+
+def _ensure_config_manager_imported():
+    """Lazy import of config_manager to avoid circular dependencies."""
+    global _get_new_config
+    if _get_new_config is None:
+        from .core.config_manager import get_config as imported_get_config
+
+        _get_new_config = imported_get_config
+    return _get_new_config
+
 
 # Load environment variables
 try:
@@ -60,6 +71,7 @@ def _get_modern_config():
     """
     global _modern_config  # pylint: disable=global-statement
     if _modern_config is None:
+        get_new_config = _ensure_config_manager_imported()
         _modern_config = get_new_config()
     return _modern_config
 
@@ -479,15 +491,60 @@ def save_config() -> bool:
     return False
 
 
-# Backward compatibility - create a legacy config dict
-try:
-    _legacy_config_dict = load_config()
-    CONFIG = _legacy_config_dict
-except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
-    logger.warning("Failed to load modern config, using empty dict: %s", e, exc_info=True)
-    CONFIG = {}
+# Lazy initialization of CONFIG to prevent blocking during import
+# CONFIG will be loaded on first access via the _LazyConfig class
+_config_initialized = False
+_config_dict = {}
 
-# Create a DEFAULT_CONFIG for compatibility
+
+class _LazyConfig(dict):
+    """Lazy-loading configuration dictionary that initializes on first access."""
+
+    def __init__(self):
+        super().__init__()
+        self._initialized = False
+
+    def _ensure_loaded(self):
+        """Load configuration if not already loaded."""
+        if not self._initialized:
+            try:
+                config_data = load_config()
+                self.update(config_data)
+            except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
+                logger.warning("Failed to load config, using empty dict: %s", e)
+            self._initialized = True
+
+    def __getitem__(self, key):
+        self._ensure_loaded()
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self._ensure_loaded()
+        return super().__setitem__(key, value)
+
+    def __contains__(self, key):
+        self._ensure_loaded()
+        return super().__contains__(key)
+
+    def get(self, key, default=None):
+        self._ensure_loaded()
+        return super().get(key, default)
+
+    def keys(self):
+        self._ensure_loaded()
+        return super().keys()
+
+    def values(self):
+        self._ensure_loaded()
+        return super().values()
+
+    def items(self):
+        self._ensure_loaded()
+        return super().items()
+
+
+# Create lazy-loading CONFIG instance
+CONFIG = _LazyConfig()
 DEFAULT_CONFIG = CONFIG
 
 # Export main components

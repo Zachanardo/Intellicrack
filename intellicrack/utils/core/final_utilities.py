@@ -544,15 +544,15 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                 try:
                     module = importlib.import_module(module_path)
                     # Get the singleton handler instance
-                    if hasattr(module, 'get_instance'):
+                    if hasattr(module, "get_instance"):
                         handler = module.get_instance()
-                        if hasattr(handler, 'get_captured_requests'):
+                        if hasattr(handler, "get_captured_requests"):
                             # Retrieve actual captured requests from handler
                             captured = handler.get_captured_requests(limit=limit // len(protocol_modules))
                             request_list.extend(captured)
-                    elif hasattr(module, 'GLOBAL_REQUEST_HISTORY'):
+                    elif hasattr(module, "GLOBAL_REQUEST_HISTORY"):
                         # Some handlers use global history
-                        request_list.extend(module.GLOBAL_REQUEST_HISTORY[:limit // len(protocol_modules)])
+                        request_list.extend(module.GLOBAL_REQUEST_HISTORY[: limit // len(protocol_modules)])
                 except ImportError:
                     # Handler not installed, skip
                     pass
@@ -565,7 +565,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                         with open(flexlm_log, "r") as f:
                             try:
                                 flexlm_requests = json.load(f)
-                                request_list.extend(flexlm_requests[:limit // 4])
+                                request_list.extend(flexlm_requests[: limit // 4])
                             except json.JSONDecodeError:
                                 pass
                 elif module_name == "cloud_license_hooker":
@@ -575,7 +575,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                         with open(cloud_log, "r") as f:
                             try:
                                 cloud_requests = json.load(f)
-                                request_list.extend(cloud_requests[:limit // 4])
+                                request_list.extend(cloud_requests[: limit // 4])
                             except json.JSONDecodeError:
                                 pass
 
@@ -583,29 +583,35 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                     db_path = Path("data/intercepted_requests.db")
                     if db_path.exists():
                         import sqlite3
+
                         conn = sqlite3.connect(str(db_path))
                         cursor = conn.cursor()
-                        cursor.execute("""
+                        cursor.execute(
+                            """
                             SELECT timestamp, source, type, protocol, src_ip, dst_ip,
                                    dst_port, request_data, response_data, status
                             FROM cloud_api_requests
                             ORDER BY timestamp DESC
                             LIMIT ?
-                        """, (limit // 4,))
+                        """,
+                            (limit // 4,),
+                        )
                         rows = cursor.fetchall()
                         for row in rows:
-                            request_list.append({
-                                "timestamp": row[0],
-                                "source": row[1],
-                                "type": row[2],
-                                "protocol": row[3],
-                                "src_ip": row[4],
-                                "dst_ip": row[5],
-                                "dst_port": row[6],
-                                "request_data": row[7],
-                                "response_data": row[8],
-                                "status": row[9]
-                            })
+                            request_list.append(
+                                {
+                                    "timestamp": row[0],
+                                    "source": row[1],
+                                    "type": row[2],
+                                    "protocol": row[3],
+                                    "src_ip": row[4],
+                                    "dst_ip": row[5],
+                                    "dst_port": row[6],
+                                    "request_data": row[7],
+                                    "response_data": row[8],
+                                    "status": row[9],
+                                }
+                            )
                         conn.close()
 
             except ImportError as e:
@@ -2562,6 +2568,125 @@ def do_GET(request_handler: Any) -> None:
     request_handler.send_header("Content-type", "text/html")
     request_handler.end_headers()
     request_handler.wfile.write(b"Intellicrack Server Running")
+
+
+def show_simulation_results(results: dict[str, Any], display_mode: str = "console") -> None:
+    """Display patch testing and validation results in various formats.
+
+    Args:
+        results: Dictionary containing patch testing results with validation data
+        display_mode: Output format - 'console', 'gui', or 'json'
+
+    """
+    try:
+        if not results:
+            logger.warning("No results to display")
+            return
+
+        if display_mode == "json":
+            import json
+
+            print(json.dumps(results, indent=2))
+            return
+
+        # Extract key information
+        success = results.get("success", False)
+        patches_total = results.get("patches_total", 0)
+        patches_validated = results.get("patches_validated", 0)
+        patches_failed = results.get("patches_failed", 0)
+        validation_results = results.get("validation_results", [])
+
+        if display_mode == "gui" and HAS_PYQT:
+            from PyQt6.QtWidgets import QDialog, QTextEdit, QVBoxLayout
+
+            dialog = QDialog()
+            dialog.setWindowTitle("Patch Testing Results")
+            dialog.resize(800, 600)
+
+            layout = QVBoxLayout()
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+
+            output = []
+            output.append("=== PATCH TESTING RESULTS ===\n")
+            output.append(f"Status: {'SUCCESS' if success else 'FAILED'}\n")
+            output.append(f"Total Patches: {patches_total}\n")
+            output.append(f"Validated: {patches_validated}\n")
+            output.append(f"Failed: {patches_failed}\n\n")
+
+            if validation_results:
+                output.append("=== PATCH DETAILS ===\n")
+                for i, patch_result in enumerate(validation_results):
+                    output.append(f"\nPatch {i + 1}:")
+                    output.append(f"  Offset: {hex(patch_result.get('offset', 0))}\n")
+                    output.append(f"  Description: {patch_result.get('description', 'N/A')}\n")
+                    output.append(f"  Success: {patch_result.get('success', False)}\n")
+
+                    if "error" in patch_result:
+                        output.append(f"  Error: {patch_result['error']}\n")
+                    if "warning" in patch_result:
+                        output.append(f"  Warning: {patch_result['warning']}\n")
+
+                    validation = patch_result.get("validation", {})
+                    if validation:
+                        output.append("  Validation:\n")
+                        for key, value in validation.items():
+                            output.append(f"    {key}: {value}\n")
+
+            text_edit.setPlainText("".join(output))
+            layout.addWidget(text_edit)
+            dialog.setLayout(layout)
+            dialog.exec()
+
+        else:
+            # Console output
+            print("=" * 60)
+            print("PATCH TESTING RESULTS")
+            print("=" * 60)
+            print(f"Status: {'SUCCESS' if success else 'FAILED'}")
+            print(f"Total Patches: {patches_total}")
+            print(f"Validated: {patches_validated}")
+            print(f"Failed: {patches_failed}")
+
+            if results.get("binary_path"):
+                print(f"Binary: {results['binary_path']}")
+            if results.get("test_mode") is not None:
+                print(f"Test Mode: {results['test_mode']}")
+            if results.get("temp_output"):
+                print(f"Output File: {results['temp_output']}")
+
+            if validation_results:
+                print("\n" + "=" * 60)
+                print("PATCH DETAILS")
+                print("=" * 60)
+
+                for i, patch_result in enumerate(validation_results):
+                    print(f"\nPatch {i + 1}:")
+                    print(f"  Offset: {hex(patch_result.get('offset', 0))}")
+                    print(f"  Description: {patch_result.get('description', 'N/A')}")
+                    print(f"  Success: {patch_result.get('success', False)}")
+
+                    if "error" in patch_result:
+                        print(f"  Error: {patch_result['error']}")
+                    if "warning" in patch_result:
+                        print(f"  Warning: {patch_result['warning']}")
+
+                    validation = patch_result.get("validation", {})
+                    if validation:
+                        print("  Validation:")
+                        for key, value in validation.items():
+                            print(f"    {key}: {value}")
+
+            print("\n" + "=" * 60)
+
+            if results.get("summary"):
+                print(f"\nSummary: {results['summary']}")
+
+        logger.info(f"Displayed patch testing results: {patches_validated}/{patches_total} validated")
+
+    except Exception as e:
+        logger.error(f"Error displaying results: {e}")
+        print(f"Error displaying results: {e}")
 
 
 # Note: Exports are handled by the package-level __init__.py to avoid duplication

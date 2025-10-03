@@ -35,7 +35,6 @@ from intellicrack.utils.logger import logger
 
 from ..config import CONFIG
 from ..utils.system.process_utils import get_target_process_pid
-from .remote_executor import RemotePluginExecutor
 
 """
 Plugin System Foundation for Intellicrack
@@ -230,18 +229,22 @@ def run_plugin(app, plugin_name: str) -> None:
     if plugin_name == "HWID Spoofer":
         # Generate HWID spoofing script for license bypass
         from ..core.patching.memory_patcher import generate_launcher_script
+
         script = generate_launcher_script(app.binary_path, ["hardware_id"])
     elif plugin_name == "Anti-Debugger":
         # Generate anti-debugger bypass script for protection analysis
         from ..core.patching.memory_patcher import generate_launcher_script
+
         script = generate_launcher_script(app.binary_path, ["debugger"])
     elif plugin_name == "Time Bomb Defuser":
         # Generate time bomb defuser script for trial reset
         from ..core.patching.memory_patcher import generate_launcher_script
+
         script = generate_launcher_script(app.binary_path, ["time"])
     elif plugin_name == "Telemetry Blocker":
         # Generate telemetry blocking script for privacy
         from ..core.patching.memory_patcher import generate_launcher_script
+
         script = generate_launcher_script(app.binary_path, ["network"])
     else:
         app.update_output.emit(log_message(f"[Plugin] Unknown plugin: {plugin_name}"))
@@ -944,10 +947,10 @@ class AdvancedDemoPlugin(BasePlugin):
                     # Common x86/x64 license check patterns
                     patterns_to_patch = [
                         # Pattern: (bytes_to_find, bytes_to_replace_with, description)
-                        (b'\x75\x0A\xB8\x01\x00\x00\x00', b'\x90\x90\xB8\x01\x00\x00\x00', "License check jne"),
-                        (b'\x74\x0A\xB8\x00\x00\x00\x00', b'\x90\x90\xB8\x01\x00\x00\x00', "License check je"),
-                        (b'\x0F\x85', b'\x90\xE9', "Near conditional jump"),  # jne -> jmp
-                        (b'\x0F\x84', b'\x90\xE9', "Near conditional jump"),  # je -> jmp
+                        (b'\x75\x0a\xb8\x01\x00\x00\x00', b'\x90\x90\xb8\x01\x00\x00\x00', "License check jne"),
+                        (b'\x74\x0a\xb8\x00\x00\x00\x00', b'\x90\x90\xb8\x01\x00\x00\x00', "License check je"),
+                        (b'\x0f\x85', b'\x90\xe9', "Near conditional jump"),  # jne -> jmp
+                        (b'\x0f\x84', b'\x90\xe9', "Near conditional jump"),  # je -> jmp
                     ]
 
                     for pattern, replacement, description in patterns_to_patch:
@@ -984,14 +987,14 @@ class AdvancedDemoPlugin(BasePlugin):
                                 func_start = xref_pos
                                 for i in range(xref_pos - 1, max(0, xref_pos - 0x100), -1):
                                     # Common function prologues
-                                    if binary_data[i:i+3] == b'\x55\x48\x89' or binary_data[i:i+2] == b'\x55\x8B':
+                                    if binary_data[i:i+3] == b'\x55\x48\x89' or binary_data[i:i+2] == b'\x55\x8b':
                                         func_start = i
                                         break
 
                                 # Patch function to always return true/success
                                 if func_start != xref_pos:
                                     # mov eax, 1; ret
-                                    binary_data[func_start:func_start+6] = b'\xB8\x01\x00\x00\x00\xC3'
+                                    binary_data[func_start:func_start+6] = b'\xb8\x01\x00\x00\x00\xc3'
                                     patches_applied += 1
                                     results.append(f"✔️ Patched function {reg_string[:-1].decode('ascii', errors='ignore')} at 0x{func_start:08X}")
 
@@ -1778,7 +1781,9 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 
     app.update_output.emit(log_message(f"[Plugin] Executing {plugin_info['name']} on {host}:{port}..."))
 
-    # Create remote executor
+    # Create remote executor (lazy import to avoid circular dependency)
+    from .remote_executor import RemotePluginExecutor
+
     executor = RemotePluginExecutor(host, port)
 
     try:

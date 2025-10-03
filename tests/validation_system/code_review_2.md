@@ -147,21 +147,21 @@ S324: 1 instance - MD5 usage for ID generation annotated
 
 ```bash
 # Comprehensive linting performed on all Phase 2 files
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/ --statistics
+pixi run python -m ruff check tests/validation_system/phase2/ --statistics
 # Result: 1093+ errors found initially
 
 # Individual file fixes with auto-fix and manual corrections
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/detection_evidence_collector.py --fix
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/cross_validation.py --fix --unsafe-fixes
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/detection_validator.py --fix --unsafe-fixes
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/evidence_verifier.py --fix --unsafe-fixes
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/validation_orchestrator.py --fix --unsafe-fixes
-"C:\Intellicrack\mamba_env\python.exe" -m ruff check tests/validation_system/phase2/detection_depth_validator.py --fix --unsafe-fixes
+pixi run python -m ruff check tests/validation_system/phase2/detection_evidence_collector.py --fix
+pixi run python -m ruff check tests/validation_system/phase2/cross_validation.py --fix --unsafe-fixes
+pixi run python -m ruff check tests/validation_system/phase2/detection_validator.py --fix --unsafe-fixes
+pixi run python -m ruff check tests/validation_system/phase2/evidence_verifier.py --fix --unsafe-fixes
+pixi run python -m ruff check tests/validation_system/phase2/validation_orchestrator.py --fix --unsafe-fixes
+pixi run python -m ruff check tests/validation_system/phase2/detection_depth_validator.py --fix --unsafe-fixes
 
 # Final verification of all files
 for file in detection_evidence_collector.py cross_validation.py detection_validator.py evidence_verifier.py validation_orchestrator.py detection_depth_validator.py; do
     echo "=== $file ===";
-    "C:\Intellicrack\mamba_env\python.exe" -m ruff check "tests/validation_system/phase2/$file";
+    pixi run python -m ruff check "tests/validation_system/phase2/$file";
 done
 # Result: ALL CHECKS PASSED for all files
 ```

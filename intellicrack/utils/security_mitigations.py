@@ -18,11 +18,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +35,14 @@ def mitigate_future_vulnerability() -> None:
     """
     try:
         import builtins
+
         original_import = builtins.__import__
 
         def secure_import(name, *args, **kwargs):
             """Wrapper to prevent automatic import of test.py by future package."""
             if name == "test" and len(args) > 0 and args[0] is not None:
-                fromlist = args[2] if len(args) > 2 else kwargs.get('fromlist', ())
-                level = args[3] if len(args) > 3 else kwargs.get('level', 0)
+                fromlist = args[2] if len(args) > 2 else kwargs.get("fromlist", ())
+                level = args[3] if len(args) > 3 else kwargs.get("level", 0)
 
                 caller_globals = args[0]
                 if caller_globals and "__name__" in caller_globals:
@@ -50,10 +50,9 @@ def mitigate_future_vulnerability() -> None:
 
                     if "future" in caller_module or "nampa" in caller_module:
                         logger.warning(
-                            f"Blocked potential exploitation attempt: "
-                            f"future/nampa tried to import 'test' module from {caller_module}"
+                            f"Blocked potential exploitation attempt: future/nampa tried to import 'test' module from {caller_module}"
                         )
-                        return type(sys)('test')
+                        return type(sys)("test")
 
             return original_import(name, *args, **kwargs)
 
@@ -82,22 +81,24 @@ def scan_for_malicious_test_files() -> list[Path]:
         try:
             test_file = base_path / "test.py"
             if test_file.exists() and test_file.is_file():
-                with open(test_file, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(test_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read(1000)
 
                     suspicious_patterns = [
-                        "exec(", "eval(", "__import__",
-                        "subprocess", "os.system",
-                        "socket", "requests",
-                        "ctypes", "win32api",
+                        "exec(",
+                        "eval(",
+                        "__import__",
+                        "subprocess",
+                        "os.system",
+                        "socket",
+                        "requests",
+                        "ctypes",
+                        "win32api",
                     ]
 
                     if any(pattern in content for pattern in suspicious_patterns):
                         suspicious_files.append(test_file)
-                        logger.warning(
-                            f"Found suspicious test.py at {test_file} - "
-                            f"potential future package vulnerability exploit"
-                        )
+                        logger.warning(f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit")
         except (OSError, PermissionError) as e:
             logger.debug(f"Could not scan {base_path}: {e}")
 
@@ -145,10 +146,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
 
         parent = file_path.parent.name
 
-        legitimate_test_dirs = [
-            "tests", "test", "testing", "unittest",
-            "pytest", "specs", "spec", "__pycache__"
-        ]
+        legitimate_test_dirs = ["tests", "test", "testing", "unittest", "pytest", "specs", "spec", "__pycache__"]
 
         if any(test_dir in parent.lower() for test_dir in legitimate_test_dirs):
             return False
@@ -156,15 +154,16 @@ def _is_safe_to_remove(file_path: Path) -> bool:
         if file_path.stat().st_size < 50:
             return True
 
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             first_lines = f.read(500)
             if "unittest" in first_lines or "pytest" in first_lines:
                 return False
             if "#!/usr/bin/env python" not in first_lines:
                 return True
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Error checking safety of {file_path}: {e}")
+        return False
 
     return False
 
