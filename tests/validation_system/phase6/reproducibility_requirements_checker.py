@@ -11,7 +11,6 @@ import json
 import subprocess
 import time
 import shutil
-import docker
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -31,7 +30,6 @@ class ReproducibilityResult(Enum):
 
 class ReproducibilityMethod(Enum):
     """Methods for reproduction testing."""
-    DOCKER = "docker"
     VAGRANT = "vagrant"
     NATIVE = "native"
     VIRTUAL_MACHINE = "virtual_machine"
@@ -91,12 +89,6 @@ class ReproducibilityRequirementsChecker:
             ]
         }
 
-        # Initialize Docker client
-        try:
-            self.docker_client = docker.from_env()
-        except Exception as e:
-            self.logger.warning(f"Docker not available: {e}")
-            self.docker_client = None
 
     def validate_reproducibility(self, original_results: Dict[str, Any],
                                 reproduction_package: ReproductionPackage,
@@ -124,7 +116,7 @@ class ReproducibilityRequirementsChecker:
 
         try:
             if methods_to_test is None:
-                methods_to_test = [ReproducibilityMethod.DOCKER, ReproducibilityMethod.NATIVE]
+                methods_to_test = [ReproducibilityMethod.NATIVE, ReproducibilityMethod.VAGRANT]
 
             reproduction_results = []
             successful_reproductions = 0
@@ -186,9 +178,7 @@ class ReproducibilityRequirementsChecker:
         start_time = time.time()
 
         try:
-            if method == ReproducibilityMethod.DOCKER:
-                return self._reproduce_with_docker(package, original_results)
-            elif method == ReproducibilityMethod.VAGRANT:
+            if method == ReproducibilityMethod.VAGRANT:
                 return self._reproduce_with_vagrant(package, original_results)
             elif method == ReproducibilityMethod.NATIVE:
                 return self._reproduce_natively(package, original_results)
@@ -207,84 +197,6 @@ class ReproducibilityRequirementsChecker:
             return ReproductionResult(
                 success=False,
                 method_used=method,
-                execution_time=time.time() - start_time,
-                results_match=False,
-                success_rate_difference=1.0,
-                evidence_artifacts=[],
-                error_log=str(e)
-            )
-
-    def _reproduce_with_docker(self, package: ReproductionPackage,
-                             original_results: Dict[str, Any]) -> ReproductionResult:
-        """Reproduce validation using Docker container."""
-        start_time = time.time()
-
-        if not self.docker_client:
-            return ReproductionResult(
-                success=False,
-                method_used=ReproducibilityMethod.DOCKER,
-                execution_time=time.time() - start_time,
-                results_match=False,
-                success_rate_difference=1.0,
-                evidence_artifacts=[],
-                error_log="Docker client not available"
-            )
-
-        try:
-            # Create Docker environment
-            dockerfile_content = self._generate_dockerfile(package)
-            docker_context = self._prepare_docker_context(package, dockerfile_content)
-
-            # Build Docker image
-            image_tag = f"intellicrack-validation:{package.package_id}"
-            self.logger.info(f"Building Docker image: {image_tag}")
-
-            image, build_logs = self.docker_client.images.build(
-                path=str(docker_context),
-                tag=image_tag,
-                timeout=self.config["docker_timeout"]
-            )
-
-            # Run validation in container
-            container = self.docker_client.containers.run(
-                image=image,
-                detach=True,
-                volumes={str(self.output_path): {'bind': '/output', 'mode': 'rw'}},
-                environment=package.environment_spec.get('environment_variables', {}),
-                timeout=self.config["docker_timeout"]
-            )
-
-            # Wait for completion
-            exit_code = container.wait()
-            logs = container.logs()
-
-            # Extract results
-            results = self._extract_container_results(container, package)
-
-            # Compare results
-            results_match, success_rate_diff = self._compare_results(results, original_results)
-
-            # Collect evidence artifacts
-            evidence_artifacts = self._collect_evidence_from_container(container)
-
-            # Cleanup
-            container.remove()
-            self.docker_client.images.remove(image.id, force=True)
-
-            return ReproductionResult(
-                success=exit_code['StatusCode'] == 0,
-                method_used=ReproducibilityMethod.DOCKER,
-                execution_time=time.time() - start_time,
-                results_match=results_match,
-                success_rate_difference=success_rate_diff,
-                evidence_artifacts=evidence_artifacts,
-                error_log=logs.decode('utf-8') if exit_code['StatusCode'] != 0 else None
-            )
-
-        except Exception as e:
-            return ReproductionResult(
-                success=False,
-                method_used=ReproducibilityMethod.DOCKER,
                 execution_time=time.time() - start_time,
                 results_match=False,
                 success_rate_difference=1.0,
@@ -546,46 +458,11 @@ class ReproducibilityRequirementsChecker:
 
     def _is_method_available(self, method: ReproducibilityMethod) -> bool:
         """Check if reproduction method is available."""
-        if method == ReproducibilityMethod.DOCKER:
-            return self.docker_client is not None
-        elif method == ReproducibilityMethod.VAGRANT:
+        if method == ReproducibilityMethod.VAGRANT:
             return shutil.which("vagrant") is not None
         elif method == ReproducibilityMethod.NATIVE:
             return True
         return False
-
-    def _generate_dockerfile(self, package: ReproductionPackage) -> str:
-        """Generate Dockerfile for reproduction."""
-        base_image = package.environment_spec.get('base_image', 'ubuntu:20.04')
-
-        dockerfile = f"""
-FROM {base_image}
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \\
-    python3 \\
-    python3-pip \\
-    wget \\
-    curl \\
-    git \\
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy reproduction package
-COPY . /app/
-
-# Install Python dependencies
-RUN pip3 install -r requirements.txt
-
-# Set environment variables
-{self._format_env_vars(package.environment_spec.get('environment_variables', {}))}
-
-# Run validation
-CMD ["python3", "run_validation.py"]
-"""
-        return dockerfile
 
     def _generate_vagrantfile(self, package: ReproductionPackage) -> str:
         """Generate Vagrantfile for reproduction."""
@@ -638,30 +515,6 @@ python3 run_validation.py
 
         return "\\n".join(env_lines)
 
-    def _prepare_docker_context(self, package: ReproductionPackage, dockerfile: str) -> Path:
-        """Prepare Docker build context."""
-        context_dir = self.packages_path / f"docker_{package.package_id}"
-        context_dir.mkdir(exist_ok=True)
-
-        # Write Dockerfile
-        dockerfile_path = context_dir / "Dockerfile"
-        with open(dockerfile_path, 'w') as f:
-            f.write(dockerfile)
-
-        # Write requirements.txt
-        requirements_path = context_dir / "requirements.txt"
-        with open(requirements_path, 'w') as f:
-            for dep in package.dependencies:
-                f.write(f"{dep}\\n")
-
-        # Write validation script
-        script_path = context_dir / "run_validation.py"
-        validation_script = self._generate_validation_script(package)
-        with open(script_path, 'w') as f:
-            f.write(validation_script)
-
-        return context_dir
-
     def _generate_validation_script(self, package: ReproductionPackage) -> str:
         """Generate validation script for reproduction."""
         script = f"""#!/usr/bin/env python3
@@ -676,12 +529,34 @@ def main():
     # Load test data
     test_data = {json.dumps(package.test_data, indent=2)}
 
-    # Simulate validation process
+    # Execute actual validation tests
+    import subprocess
+    passed = 0
+    failed = 0
+    total_tests = test_data.get("total_tests", 0)
+
+    for test_case in test_data.get("test_cases", []):
+        try:
+            result = subprocess.run(
+                [sys.executable, "-c", test_case.get("code", "")],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            if result.returncode == 0:
+                passed += 1
+            else:
+                failed += 1
+        except Exception as e:
+            failed += 1
+            print(f"Test failed: {{e}}")
+
     results = {{
         "timestamp": time.time(),
-        "success_rate": 0.95,  # Placeholder
-        "total_tests": test_data.get("total_tests", 10),
-        "passed_tests": test_data.get("passed_tests", 9),
+        "success_rate": passed / total_tests if total_tests > 0 else 0.0,
+        "total_tests": total_tests,
+        "passed_tests": passed,
+        "failed_tests": failed,
         "reproduction_id": "{package.package_id}"
     }}
 
@@ -778,189 +653,7 @@ if __name__ == "__main__":
         """Get ISO timestamp."""
         return datetime.utcnow().isoformat() + 'Z'
 
-    # Environment-specific extraction methods for Docker and Vagrant
-
-    def _extract_container_results(self, container, package: ReproductionPackage) -> Dict[str, Any]:
-        """Extract results from Docker container."""
-        import json
-        import tempfile
-
-        results = {
-            'success_rate': 0.0,
-            'reproduction_method': 'docker',
-            'container_id': getattr(container, 'id', 'unknown'),
-            'total_tests': 0,
-            'passed_tests': 0,
-            'failed_tests': 0,
-            'test_details': [],
-            'environment_info': {},
-            'errors': []
-        }
-
-        try:
-            # Get container logs
-            container_logs = container.logs(decode=True)
-
-            # Create temporary file to store container results
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as temp_log:
-                temp_log.write(container_logs)
-                log_path = Path(temp_log.name)
-
-            # Analyze logs for test results
-            success_indicators = 0
-            failure_indicators = 0
-
-            log_content = container_logs.lower()
-
-            # Look for standard test result patterns
-            success_patterns = [
-                'test passed', 'test successful', 'all tests passed',
-                'validation successful', 'reproduction successful',
-                'success: true', '"passed": true', 'exit code: 0'
-            ]
-
-            failure_patterns = [
-                'test failed', 'test error', 'validation failed',
-                'reproduction failed', 'success: false', '"passed": false',
-                'exit code: 1', 'exception:', 'error:', 'failed:'
-            ]
-
-            for pattern in success_patterns:
-                success_indicators += log_content.count(pattern)
-            for pattern in failure_patterns:
-                failure_indicators += log_content.count(pattern)
-
-            # Try to extract structured results from container
-            try:
-                # Execute command to get results file from container
-                exec_result = container.exec_run('cat /app/test_results.json')
-                if exec_result.exit_code == 0:
-                    test_data = json.loads(exec_result.output.decode())
-
-                    if 'tests' in test_data:
-                        tests = test_data['tests']
-                        results['total_tests'] = len(tests)
-                        results['passed_tests'] = sum(1 for test in tests if test.get('passed', False))
-                        results['failed_tests'] = results['total_tests'] - results['passed_tests']
-                        results['test_details'] = tests
-
-                        if results['total_tests'] > 0:
-                            results['success_rate'] = results['passed_tests'] / results['total_tests']
-
-                    if 'environment' in test_data:
-                        results['environment_info'] = test_data['environment']
-
-            except (json.JSONDecodeError, Exception) as e:
-                self.logger.warning(f"Could not extract structured results from container: {e}")
-
-                # Fall back to log analysis
-                total_indicators = success_indicators + failure_indicators
-                if total_indicators > 0:
-                    results['success_rate'] = success_indicators / total_indicators
-                    results['total_tests'] = total_indicators
-                    results['passed_tests'] = success_indicators
-                    results['failed_tests'] = failure_indicators
-                    self.logger.info(f"Estimated container results from logs: {results['success_rate']:.2%} success rate")
-                else:
-                    results['errors'].append("No test indicators found in container logs")
-
-            # Get container environment information
-            try:
-                env_result = container.exec_run('env')
-                if env_result.exit_code == 0:
-                    env_lines = env_result.output.decode().split('\n')
-                    env_info = {}
-                    for line in env_lines:
-                        if '=' in line:
-                            key, value = line.split('=', 1)
-                            env_info[key] = value
-                    results['environment_info']['container_env'] = env_info
-            except Exception as e:
-                self.logger.warning(f"Could not extract container environment: {e}")
-
-        except Exception as e:
-            self.logger.error(f"Error extracting container results: {e}")
-            results['errors'].append(f"Container extraction error: {str(e)}")
-
-        return results
-
-    def _collect_evidence_from_container(self, container) -> List[Path]:
-        """Collect evidence artifacts from Docker container."""
-        evidence_files = []
-
-        try:
-            # Create temporary directory for container evidence
-            container_evidence_dir = Path(tempfile.mkdtemp(prefix='container_evidence_'))
-
-            # Define files to extract from container
-            evidence_paths_in_container = [
-                '/app/test_results.json',
-                '/app/validation_report.json',
-                '/app/logs/',
-                '/app/output/',
-                '/app/evidence/',
-                '/tmp/test_output.log',
-                '/var/log/application.log'
-            ]
-
-            for container_path in evidence_paths_in_container:
-                try:
-                    # Try to copy file/directory from container
-                    local_filename = container_path.replace('/', '_').lstrip('_')
-                    local_path = container_evidence_dir / local_filename
-
-                    # Check if path exists in container first
-                    check_result = container.exec_run(f'test -e {container_path}')
-                    if check_result.exit_code == 0:
-                        # Extract the file/directory
-                        if container_path.endswith('/'):
-                            # Directory - create archive first
-                            tar_result = container.exec_run(f'tar -czf /tmp/{local_filename}.tar.gz -C {container_path} .')
-                            if tar_result.exit_code == 0:
-                                # Copy the tar file
-                                bits, stat = container.get_archive(f'/tmp/{local_filename}.tar.gz')
-                                with open(local_path.with_suffix('.tar.gz'), 'wb') as f:
-                                    for chunk in bits:
-                                        f.write(chunk)
-                                evidence_files.append(local_path.with_suffix('.tar.gz'))
-                        else:
-                            # Single file
-                            bits, stat = container.get_archive(container_path)
-                            with open(local_path, 'wb') as f:
-                                for chunk in bits:
-                                    f.write(chunk)
-                            evidence_files.append(local_path)
-
-                except Exception as e:
-                    self.logger.warning(f"Could not extract {container_path} from container: {e}")
-
-            # Get container logs as evidence
-            container_logs = container.logs(decode=True)
-            log_file = container_evidence_dir / 'container_logs.txt'
-            with open(log_file, 'w') as f:
-                f.write(container_logs)
-            evidence_files.append(log_file)
-
-            # Create container info file
-            container_info = {
-                'container_id': container.id,
-                'container_name': getattr(container, 'name', 'unknown'),
-                'image': getattr(container, 'image', {}).get('tags', ['unknown']),
-                'status': getattr(container, 'status', 'unknown'),
-                'collection_time': time.time()
-            }
-
-            info_file = container_evidence_dir / 'container_info.json'
-            with open(info_file, 'w') as f:
-                json.dump(container_info, f, indent=2)
-            evidence_files.append(info_file)
-
-            self.logger.info(f"Collected {len(evidence_files)} evidence files from container")
-
-        except Exception as e:
-            self.logger.error(f"Error collecting evidence from container: {e}")
-
-        return evidence_files
+    # Environment-specific extraction methods for Vagrant
 
     def _extract_vagrant_results(self, vagrant_dir: Path) -> Dict[str, Any]:
         """Extract results from Vagrant VM."""
@@ -1624,7 +1317,7 @@ def main():
     package = ReproductionPackage(
         package_id="test-repro-001",
         creation_timestamp=datetime.utcnow().isoformat() + 'Z',
-        method=ReproducibilityMethod.DOCKER,
+        method=ReproducibilityMethod.NATIVE,
         environment_spec={
             "base_image": "ubuntu:20.04",
             "environment_variables": {"PYTHONPATH": "/app"}

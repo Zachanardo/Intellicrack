@@ -58,7 +58,7 @@ except ImportError:
 
 
 try:
-    from ..utils.protection.protection_utils import calculate_entropy
+    from ..utils.protection_utils import calculate_entropy
 except ImportError:
 
     def calculate_entropy(data: bytes) -> float:

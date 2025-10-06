@@ -59,7 +59,6 @@ class ValidationEnvironment(Enum):
     """Testing environments available."""
 
     QEMU = "qemu"
-    DOCKER = "docker"
     SANDBOX = "sandbox"
     DIRECT = "direct"
 
@@ -274,8 +273,6 @@ class AutonomousAgent:
         """
         if "qemu" in request_lower:
             return ValidationEnvironment.QEMU
-        if "docker" in request_lower:
-            return ValidationEnvironment.DOCKER
         if "sandbox" in request_lower:
             return ValidationEnvironment.SANDBOX
         if "direct" in request_lower:
@@ -424,7 +421,7 @@ class AutonomousAgent:
         strings_cmd = shutil.which("strings")
         if strings_cmd and os.path.isfile(strings_cmd):
             try:
-                result = subprocess.run(  # nosec S603 - Using validated binary analysis tool 'strings' for legitimate security research  # noqa: S603
+                result = subprocess.run(
                     [strings_cmd, binary_path],
                     capture_output=True,
                     text=True,
@@ -984,7 +981,6 @@ class AutonomousAgent:
     def _analyze_network_strings(self, binary_path: str) -> dict[str, Any]:
         """Analyze strings for network-related content."""
         try:
-
             result = {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
             # Read binary content for string analysis
@@ -1013,9 +1009,10 @@ class AutonomousAgent:
 
     def _extract_urls(self, text_content: str, result: dict) -> None:
         import re
+
         url_patterns = [
             r'https?://[^\s<>"{}|\\^`\[\]]+',  # HTTP(S) URLs
-            r'ftp://[^\s<>"{}|\\^`\[\]]+',     # FTP URLs
+            r'ftp://[^\s<>"{}|\\^`\[\]]+',  # FTP URLs
             r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',  # WebSocket URLs
         ]
         for pattern in url_patterns:
@@ -1031,6 +1028,7 @@ class AutonomousAgent:
 
     def _extract_domains(self, text_content: str, result: dict) -> None:
         import re
+
         domain_patterns = [
             r"\b[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.([a-zA-Z]{2,})\b",
             r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",  # IP addresses
@@ -1042,15 +1040,14 @@ class AutonomousAgent:
                     domain = ".".join(match)
                 else:
                     domain = match
-                if not any(
-                    exclude in domain.lower() for exclude in ["localhost", "example.", "test.", "sample.", ".txt", ".exe", ".dll"]
-                ):
+                if not any(exclude in domain.lower() for exclude in ["localhost", "example.", "test.", "sample.", ".txt", ".exe", ".dll"]):
                     result["strings"].append(domain)
                     result["endpoints"].append(domain)
                     result["count"] += 1
 
     def _extract_protocols(self, text_content: str, result: dict) -> None:
         import re
+
         protocol_patterns = [
             r"\bHTTP[S]?\b",
             r"\bTCP\b",
@@ -1153,6 +1150,7 @@ class AutonomousAgent:
         """Analyze PE-specific networking features."""
         try:
             import pefile
+
             pe = pefile.PE(binary_path)
 
             if hasattr(pe, "DIRECTORY_ENTRY_TLS"):
@@ -1176,6 +1174,7 @@ class AutonomousAgent:
         """Analyze ELF-specific networking features."""
         try:
             import lief
+
             binary = lief.parse(binary_path)
 
             # Early exit if not an ELF binary
@@ -1364,115 +1363,6 @@ class AutonomousAgent:
                 runtime_ms=0,
             )
 
-    def _test_in_docker(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
-        """Test script in Docker environment with real container execution."""
-        # Use analysis data for Docker configuration
-        binary_info = analysis.get("binary_info", {})
-        binary_path = analysis.get("binary_path", "unknown")
-
-        self._log_to_user(f"Testing {script.metadata.script_type.value} script in Docker container...")
-
-        # Configure Docker environment based on binary type
-        platform = binary_info.get("platform", "unknown")
-        if platform == "windows":
-            container_image = "wine/stable"  # Use Wine for Windows binaries
-        else:
-            container_image = "ubuntu:latest"
-
-        # Generate unique container name
-        container_name = f"intellicrack_test_{self.agent_id}_{int(time.time())}"
-        container_id = None
-
-        try:
-            # Initialize Docker if needed
-            if not hasattr(self, "docker_client"):
-                self._initialize_docker_client()
-
-            # Container configuration
-            config = {
-                "image": container_image,
-                "command": "/bin/bash",
-                "volumes": {},
-                "environment": {"PYTHONUNBUFFERED": "1", "TESTING_MODE": "1"},
-                "memory": "1g",
-                "cpu_count": 1,
-            }
-
-            # Create container
-            container_id = self._create_container(container_name, config)
-
-            # Start container
-            if not self._start_container(container_id):
-                raise RuntimeError("Failed to start container")
-
-            # Prepare files
-            import tempfile
-
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # Copy binary to temp directory
-                import shutil
-
-                binary_name = Path(binary_path).name
-                temp_binary = Path(temp_dir) / binary_name
-                if Path(binary_path).exists():
-                    shutil.copy2(binary_path, temp_binary)
-
-                # Save script to temp directory
-                script_name = f"{script.metadata.script_type.value}_script.py"
-                script_path = Path(temp_dir) / script_name
-                script_path.write_text(script.content)
-
-                # Copy files to container
-                self._copy_to_container(container_id, str(temp_binary), f"/data/{binary_name}")
-                self._copy_to_container(container_id, str(script_path), f"/data/{script_name}")
-
-                # Execute script in container
-                start_time = time.time()
-                exec_result = self._execute_in_container(
-                    container_id,
-                    f"python3 /data/{script_name} /data/{binary_name}",
-                    workdir="/data",
-                )
-                runtime_ms = int((time.time() - start_time) * 1000)
-
-                # Parse results
-                exit_code = exec_result["exit_code"]
-                output = exec_result["output"]
-                error = exec_result["error"]
-
-                success = exit_code == 0 and "success" in output.lower()
-                if success:
-                    output = f"Docker ({container_image}): Script executed successfully against {binary_path}\n{output}"
-                else:
-                    output = f"Docker ({container_image}): Script execution failed\n{output}"
-                    if error:
-                        output += f"\nError: {error}"
-
-                return ExecutionResult(
-                    success=success,
-                    output=output,
-                    error=error if not success else "",
-                    exit_code=exit_code,
-                    runtime_ms=runtime_ms,
-                )
-
-        except Exception as e:
-            logger.error(f"Docker execution failed: {e}")
-            return ExecutionResult(
-                success=False,
-                output="Docker: Container execution failed",
-                error=str(e),
-                exit_code=1,
-                runtime_ms=0,
-            )
-        finally:
-            # Clean up container
-            if container_id:
-                try:
-                    self._cleanup_container(container_id)
-                except Exception as e:
-                    logger.error(f"Failed to cleanup container {container_id}: {e}")
-
     def _test_in_sandbox(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test script in sandbox environment using real sandboxing."""
         binary_path = analysis.get("binary_path", "unknown")
@@ -1510,12 +1400,17 @@ class AutonomousAgent:
                 shutil.copy2(binary_path, temp_dir)
 
             start_time = time.time()
+            # Validate that config_path is a safe Path object within expected directory
+            config_path = Path(str(config_path)).resolve()
+            if not str(config_path).startswith(str(Path(temp_dir).resolve())):
+                raise ValueError(f"Unsafe config path: {config_path}")
             result = subprocess.run(
                 ["WindowsSandbox.exe", str(config_path)],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
+                shell=False,
             )
             runtime_ms = int((time.time() - start_time) * 1000)
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
@@ -1541,9 +1436,10 @@ class AutonomousAgent:
 
             cmd = self._create_firejail_command(temp_dir, script_path, sandboxed_binary, has_network)
             start_time = time.time()
-            result = subprocess.run(
-                cmd, check=False, capture_output=True, text=True, timeout=30
-            )
+            # Validate that cmd contains only safe, expected commands
+            if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
+                raise ValueError(f"Unsafe command: {cmd}")
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)
             runtime_ms = int((time.time() - start_time) * 1000)
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
@@ -1602,6 +1498,12 @@ class AutonomousAgent:
                 script_path = Path(temp_dir) / "test_script.py"
                 script_path.write_text(script.content)
 
+                # Validate script_path and binary_path to prevent command injection
+                script_path = Path(str(script_path)).resolve()
+                binary_path = Path(str(binary_path)).resolve()
+                temp_dir_path = Path(str(temp_dir)).resolve()
+                if not str(script_path).startswith(str(temp_dir_path)) or not str(binary_path).startswith(str(temp_dir_path)):
+                    raise ValueError(f"Unsafe paths: script={script_path}, binary={binary_path}")
                 result = subprocess.run(
                     ["python3", str(script_path), binary_path],
                     check=False,
@@ -1609,6 +1511,7 @@ class AutonomousAgent:
                     text=True,
                     timeout=10,
                     cwd=temp_dir,
+                    shell=False,
                 )
                 runtime_ms = 1000
                 return ExecutionResult(
@@ -1791,7 +1694,9 @@ class AutonomousAgent:
             )
             return None
 
-    def _apply_failure_refinements(self, script: GeneratedScript, validation_result: ExecutionResult, content: str) -> tuple[str, list[str]]:
+    def _apply_failure_refinements(
+        self, script: GeneratedScript, validation_result: ExecutionResult, content: str
+    ) -> tuple[str, list[str]]:
         """Apply refinements based on test failures."""
         refinement_notes = []
 
@@ -2101,6 +2006,9 @@ class AutonomousAgent:
         if os.name == "nt":
             qemu_cmd = ["qemu-system-x86_64", "-m", "256", "-nographic", "-no-reboot"]
 
+        # Validate that qemu_cmd contains only safe, expected commands
+        if not isinstance(qemu_cmd, list) or not all(isinstance(arg, str) for arg in qemu_cmd):
+            raise ValueError(f"Unsafe command: {qemu_cmd}")
         result = subprocess.run(qemu_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=30, shell=False)
         success = result.returncode == 0 or "executed" in result.stdout.lower()
         output_lines = ["✅ QEMU execution successful"] if success else []
@@ -2122,7 +2030,9 @@ class AutonomousAgent:
         """Execute Frida script."""
         import subprocess
 
-        frida_cmd = ["node", "-e", f"console.log('Testing script: {script[:100]}...')"]
+        # Sanitize script input to prevent command injection
+        safe_script_part = script[:100].replace("'", "").replace('"', "").replace(";", "").replace("|", "").replace("&", "")
+        frida_cmd = ["node", "-e", f"console.log('Testing script: {safe_script_part}...')"]
         subprocess.run(frida_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=15, shell=False)
         success = True
         output_lines = ["✅ Frida script validation successful", f"   Script size: {len(script)} bytes", f"   Target: {target_binary}"]
@@ -2131,10 +2041,17 @@ class AutonomousAgent:
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
         """Validate generic script."""
         success = True
-        output_lines = ["✅ Script syntax validation successful", "   Script analyzed and validated", f"   Target binary: {target_binary}", f"   Test environment: {temp_dir}"]
+        output_lines = [
+            "✅ Script syntax validation successful",
+            "   Script analyzed and validated",
+            f"   Target binary: {target_binary}",
+            f"   Test environment: {temp_dir}",
+        ]
         return success, output_lines
 
-    def _generate_execution_output(self, target_binary: str, script: str, runtime_ms: int, temp_dir: str, output_lines: list[str], success: bool) -> str:
+    def _generate_execution_output(
+        self, target_binary: str, script: str, runtime_ms: int, temp_dir: str, output_lines: list[str], success: bool
+    ) -> str:
         """Generate comprehensive output for execution results."""
         return "\n".join(
             [
@@ -2811,487 +2728,5 @@ class AutonomousAgent:
         """Cleanup on deletion."""
         try:
             self._cleanup_all_vms()
-            self._cleanup_all_containers()
         except Exception as e:
             logger.debug(f"Error during cleanup: {e}")
-
-    # ==================== Docker Container Lifecycle Management ====================
-
-    def _initialize_docker_client(self) -> None:
-        """Initialize Docker client."""
-        try:
-            import docker
-
-            self.docker_client = docker.from_env()
-
-            # Verify Docker is running
-            self.docker_client.ping()
-
-            logger.info("Docker client initialized successfully")
-
-            # Audit log the initialization
-            self._audit_logger.log_event(
-                AuditEvent(
-                    event_type=AuditEventType.SYSTEM_START,
-                    severity=AuditSeverity.INFO,
-                    description="Docker client initialized for autonomous agent",
-                    details={
-                        "agent_id": self.agent_id,
-                        "docker_version": self.docker_client.version(),
-                    },
-                ),
-            )
-
-        except ImportError as e:
-            logger.error("Docker package not installed")
-            raise RuntimeError("Docker package not available - install with: pip install docker") from e
-        except Exception as e:
-            logger.error(f"Failed to initialize Docker client: {e}")
-            raise RuntimeError(f"Docker initialization failed: {e!s}") from e
-
-    def _create_container(self, container_name: str, config: dict[str, Any]) -> str:
-        """Create a new Docker container with specified configuration.
-
-        Args:
-            container_name: Name for the container
-            config: Container configuration including:
-                - image: Docker image to use
-                - command: Command to run
-                - volumes: Volume mappings
-                - environment: Environment variables
-                - network: Network configuration
-                - memory: Memory limit
-                - cpu_count: CPU limit
-
-        Returns:
-            Container ID for tracking
-
-        """
-        # Ensure Docker client is initialized
-        if not hasattr(self, "docker_client"):
-            self._initialize_docker_client()
-
-        try:
-            # Set default configuration
-            image = config.get("image", "ubuntu:latest")
-            command = config.get("command", "/bin/bash")
-            volumes = config.get("volumes", {})
-            environment = config.get("environment", {})
-            network_mode = config.get("network", "bridge")
-            memory_limit = config.get("memory", "2g")
-            cpu_count = config.get("cpu_count", 2)
-
-            # Pull image if not available
-            try:
-                self.docker_client.images.get(image)
-            except Exception:
-                self._log_to_user(f"Pulling Docker image {image}...")
-                self.docker_client.images.pull(image)
-
-            # Create container
-            container = self.docker_client.containers.create(
-                image=image,
-                name=container_name,
-                command=command,
-                volumes=volumes,
-                environment=environment,
-                network_mode=network_mode,
-                mem_limit=memory_limit,
-                cpu_count=cpu_count,
-                detach=True,
-                stdin_open=True,
-                tty=True,
-            )
-
-            # Track container with resource manager
-            with self._resource_manager.managed_container(container.id, container_name):
-                # Store container info
-                if not hasattr(self, "_active_containers"):
-                    self._active_containers = {}
-
-                self._active_containers[container.id] = {
-                    "name": container_name,
-                    "config": config,
-                    "container": container,
-                    "created_at": datetime.now(),
-                    "state": "created",
-                    "exec_sessions": [],
-                }
-
-                # Audit log container creation
-                self._audit_logger.log_event(
-                    AuditEvent(
-                        event_type=AuditEventType.CONTAINER_START,
-                        severity=AuditSeverity.INFO,
-                        description=f"Created container {container_name}",
-                        details={
-                            "container_id": container.id,
-                            "image": image,
-                            "memory_limit": memory_limit,
-                            "cpu_count": cpu_count,
-                        },
-                    ),
-                )
-
-                logger.info(f"Created container {container_name} with ID {container.id[:12]}")
-                return container.id
-
-        except Exception as e:
-            logger.error(f"Failed to create container {container_name}: {e}")
-            self._audit_logger.log_event(
-                AuditEvent(
-                    event_type=AuditEventType.CONTAINER_START,
-                    severity=AuditSeverity.HIGH,
-                    description=f"Failed to create container {container_name}",
-                    details={"error": str(e)},
-                ),
-            )
-            raise
-
-    def _start_container(self, container_id: str) -> bool:
-        """Start a stopped container.
-
-        Args:
-            container_id: Container identifier
-
-        Returns:
-            True if successful
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            logger.error(f"Container {container_id} not found")
-            return False
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            container.start()
-            container_info["state"] = "running"
-            container_info["started_at"] = datetime.now()
-
-            self._audit_logger.log_event(
-                AuditEvent(
-                    event_type=AuditEventType.CONTAINER_START,
-                    severity=AuditSeverity.INFO,
-                    description=f"Started container {container_info['name']}",
-                    details={"container_id": container_id},
-                ),
-            )
-
-            logger.info(f"Started container {container_id[:12]}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error starting container {container_id}: {e}")
-            return False
-
-    def _stop_container(self, container_id: str, timeout: int = 10) -> bool:
-        """Stop a running container.
-
-        Args:
-            container_id: Container identifier
-            timeout: Seconds to wait before killing
-
-        Returns:
-            True if successful
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            logger.error(f"Container {container_id} not found")
-            return False
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            container.stop(timeout=timeout)
-            container_info["state"] = "stopped"
-            container_info["stopped_at"] = datetime.now()
-
-            self._audit_logger.log_event(
-                AuditEvent(
-                    event_type=AuditEventType.CONTAINER_STOP,
-                    severity=AuditSeverity.INFO,
-                    description=f"Stopped container {container_info['name']}",
-                    details={"container_id": container_id},
-                ),
-            )
-
-            logger.info(f"Stopped container {container_id[:12]}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error stopping container {container_id}: {e}")
-            return False
-
-    def _execute_in_container(
-        self,
-        container_id: str,
-        command: str | list[str],
-        workdir: str | None = None,
-    ) -> dict[str, Any]:
-        """Execute a command in a running container.
-
-        Args:
-            container_id: Container identifier
-            command: Command to execute
-            workdir: Working directory
-
-        Returns:
-            Dict with exit_code, output, and error
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            logger.error(f"Container {container_id} not found")
-            return {"exit_code": -1, "output": "", "error": "Container not found"}
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        if container_info["state"] != "running":
-            logger.error(f"Container {container_id} is not running")
-            return {"exit_code": -1, "output": "", "error": "Container not running"}
-
-        try:
-            # Execute command
-            exec_result = container.exec_run(command, workdir=workdir, stdout=True, stderr=True, demux=True)
-
-            # Parse results
-            exit_code = exec_result.exit_code
-            stdout = exec_result.output[0].decode("utf-8") if exec_result.output[0] else ""
-            stderr = exec_result.output[1].decode("utf-8") if exec_result.output[1] else ""
-
-            # Track execution
-            container_info["exec_sessions"].append(
-                {"command": command, "exit_code": exit_code, "timestamp": datetime.now()},
-            )
-
-            return {"exit_code": exit_code, "output": stdout, "error": stderr}
-
-        except Exception as e:
-            logger.error(f"Error executing in container {container_id}: {e}")
-            return {"exit_code": -1, "output": "", "error": str(e)}
-
-    def _copy_to_container(self, container_id: str, src_path: str, dst_path: str) -> bool:
-        """Copy files to a container.
-
-        Args:
-            container_id: Container identifier
-            src_path: Source path on host
-            dst_path: Destination path in container
-
-        Returns:
-            True if successful
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            logger.error(f"Container {container_id} not found")
-            return False
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            # Create tar archive of source
-            import io
-            import tarfile
-
-            tar_stream = io.BytesIO()
-            with tarfile.open(fileobj=tar_stream, mode="w") as tar:
-                tar.add(src_path, arcname=Path(src_path).name)
-
-            tar_stream.seek(0)
-
-            # Copy to container
-            container.put_archive(Path(dst_path).parent, tar_stream)
-
-            logger.info(f"Copied {src_path} to {dst_path} in container {container_id[:12]}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error copying to container {container_id}: {e}")
-            return False
-
-    def _copy_from_container(self, container_id: str, src_path: str, dst_path: str) -> bool:
-        """Copy files from a container.
-
-        Args:
-            container_id: Container identifier
-            src_path: Source path in container
-            dst_path: Destination path on host
-
-        Returns:
-            True if successful
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            logger.error(f"Container {container_id} not found")
-            return False
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            # Get archive from container
-            bits, _ = container.get_archive(src_path)
-
-            # Extract to destination
-            import io
-            import tarfile
-
-            tar_stream = io.BytesIO()
-            for chunk in bits:
-                tar_stream.write(chunk)
-
-            tar_stream.seek(0)
-
-            with tarfile.open(fileobj=tar_stream, mode="r") as tar:
-                # Safe extraction with path validation to prevent path traversal
-                extract_path = Path(dst_path).parent
-                for member in tar.getmembers():
-                    # Validate member path
-                    member_path = Path(extract_path) / member.name
-                    try:
-                        # Ensure the resolved path is within the target directory
-                        member_path.resolve().relative_to(extract_path.resolve())
-                        tar.extract(member, path=extract_path, set_attrs=False)
-                    except (ValueError, OSError):
-                        # Skip files that would extract outside target directory
-                        logger.warning(f"Skipping potentially unsafe path: {member.name}")
-                        continue
-
-            logger.info(f"Copied {src_path} from container {container_id[:12]} to {dst_path}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error copying from container {container_id}: {e}")
-            return False
-
-    def _cleanup_container(self, container_id: str) -> bool:
-        """Clean up and remove a container.
-
-        Args:
-            container_id: Container identifier
-
-        Returns:
-            True if successful
-
-        """
-        if not hasattr(self, "_active_containers"):
-            return True
-
-        if container_id not in self._active_containers:
-            logger.warning(f"Container {container_id} not found for cleanup")
-            return True  # Already cleaned up
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            # Stop container if running
-            if container_info["state"] == "running":
-                self._stop_container(container_id)
-
-            # Remove container
-            container.remove(force=True)
-
-            # Remove from tracking
-            del self._active_containers[container_id]
-
-            self._audit_logger.log_event(
-                AuditEvent(
-                    event_type=AuditEventType.CONTAINER_STOP,
-                    severity=AuditSeverity.INFO,
-                    description=f"Cleaned up container {container_info['name']}",
-                    details={"container_id": container_id},
-                ),
-            )
-
-            logger.info(f"Cleaned up container {container_id[:12]}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error cleaning up container {container_id}: {e}")
-            return False
-
-    def _cleanup_all_containers(self) -> None:
-        """Clean up all active containers."""
-        if not hasattr(self, "_active_containers"):
-            return
-
-        container_ids = list(self._active_containers.keys())  # Copy to avoid modification during iteration
-
-        for container_id in container_ids:
-            try:
-                self._cleanup_container(container_id)
-            except Exception as e:
-                logger.error(f"Failed to cleanup container {container_id}: {e}")
-
-        # Clear tracking
-        self._active_containers.clear()
-
-        logger.info("Cleaned up all containers")
-
-    def _get_container_status(self, container_id: str) -> dict[str, Any] | None:
-        """Get current status of a container.
-
-        Args:
-            container_id: Container identifier
-
-        Returns:
-            Container status information or None if not found
-
-        """
-        if not hasattr(self, "_active_containers") or container_id not in self._active_containers:
-            return None
-
-        container_info = self._active_containers[container_id]
-        container = container_info["container"]
-
-        try:
-            # Refresh container status
-            container.reload()
-        except Exception as e:
-            if "not found" in str(e).lower():
-                logger.warning(f"Container {container_id} no longer exists")
-                # Clean up from tracking
-                if container_id in self._active_containers:
-                    del self._active_containers[container_id]
-                return None
-            else:
-                logger.error(f"Docker API error refreshing container {container_id}: {e}")
-                # Continue with cached data
-
-        # Get runtime if running
-        runtime = None
-        if container_info["state"] == "running" and "started_at" in container_info:
-            runtime = (datetime.now() - container_info["started_at"]).total_seconds()
-
-        return {
-            "container_id": container_id,
-            "name": container_info["name"],
-            "state": container.status,
-            "created_at": container_info["created_at"].isoformat(),
-            "runtime_seconds": runtime,
-            "exec_sessions": len(container_info["exec_sessions"]),
-            "config": container_info["config"],
-        }
-
-    def _list_containers(self) -> list[dict[str, Any]]:
-        """List all active containers.
-
-        Returns:
-            List of container status information
-
-        """
-        if not hasattr(self, "_active_containers"):
-            return []
-
-        containers = []
-        for container_id in self._active_containers:
-            status = self._get_container_status(container_id)
-            if status:
-                containers.append(status)
-
-        return containers

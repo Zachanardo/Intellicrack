@@ -22,8 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import wmi
-
+from intellicrack.handlers.wmi_handler import wmi
 from tests.validation_system.environment_validator import HardwareValidator
 
 logger = logging.getLogger(__name__)

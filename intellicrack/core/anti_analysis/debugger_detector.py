@@ -458,8 +458,8 @@ class DebuggerDetector(BaseDetector):
                             if len(connections) > 10:  # Debuggers often have many connections
                                 return True
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Process connection analysis failed: {e}")
             else:
                 # Linux: Check for ptrace capability
                 try:
@@ -478,8 +478,8 @@ class DebuggerDetector(BaseDetector):
                                     CAP_SYS_PTRACE = 1 << 19
                                     if cap_value & CAP_SYS_PTRACE:
                                         return True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Ptrace capability check failed: {e}")
 
             # Check if process has child processes (debuggers often spawn debuggees)
             children = process.children()

@@ -21,17 +21,25 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
+import bz2
 import concurrent.futures
 import math
 import os
 import zlib
-import lzma
-import bz2
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
+
 import numpy as np
+
+try:
+    import lzma
+
+    HAS_LZMA = True
+except ImportError:
+    HAS_LZMA = False
+    lzma = None
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
@@ -42,6 +50,11 @@ from .intellicrack_protection_advanced import (
     IntellicrackAdvancedProtection,
     ScanMode,
 )
+
+logger = get_logger(__name__)
+
+if not HAS_LZMA:
+    logger.warning("LZMA module not available - using zlib compression fallback")
 
 logger = get_logger(__name__)
 
@@ -734,7 +747,7 @@ class UnifiedProtectionEngine:
             "chi_square_random": False,
             "chi_square_pvalue": 1.0,
             "byte_distribution": {},
-            "entropy_variance": 0.0
+            "entropy_variance": 0.0,
         }
 
         # Sliding window entropy analysis
@@ -807,7 +820,7 @@ class UnifiedProtectionEngine:
 
         entropies = []
         for i in range(0, len(data) - window_size + 1, step_size):
-            window_data = data[i:i + window_size]
+            window_data = data[i : i + window_size]
             entropy = self._calculate_shannon_entropy(window_data)
             entropies.append(entropy)
 
@@ -827,12 +840,15 @@ class UnifiedProtectionEngine:
             return 0.0
 
         try:
-            # Use LZMA compression which gives good complexity estimation
-            compressed = lzma.compress(data, preset=9)
-            complexity = len(compressed) / len(data)
-            return min(1.0, complexity)
+            if HAS_LZMA:
+                compressed = lzma.compress(data, preset=9)
+                complexity = len(compressed) / len(data)
+                return min(1.0, complexity)
+            else:
+                compressed = zlib.compress(data, level=9)
+                complexity = len(compressed) / len(data)
+                return min(1.0, complexity)
         except Exception:
-            # Fallback to zlib if LZMA fails
             try:
                 compressed = zlib.compress(data, level=9)
                 complexity = len(compressed) / len(data)
@@ -856,13 +872,14 @@ class UnifiedProtectionEngine:
         original_size = len(data)
         ratios = {}
 
-        # Try different compression algorithms
         compression_methods = [
             ("zlib", lambda d: zlib.compress(d, level=9)),
             ("gzip", lambda d: zlib.compress(d, level=9)),
             ("bz2", lambda d: bz2.compress(d, compresslevel=9)),
-            ("lzma", lambda d: lzma.compress(d, preset=9))
         ]
+
+        if HAS_LZMA:
+            compression_methods.append(("lzma", lambda d: lzma.compress(d, preset=9)))
 
         for name, compress_func in compression_methods:
             try:
@@ -931,7 +948,7 @@ class UnifiedProtectionEngine:
             "p_value": p_value,
             "statistic": chi_square,
             "critical_value": critical_value,
-            "degrees_of_freedom": degrees_of_freedom
+            "degrees_of_freedom": degrees_of_freedom,
         }
 
     def _analyze_byte_distribution(self, data: bytes) -> Dict[str, Any]:
@@ -966,10 +983,10 @@ class UnifiedProtectionEngine:
         return {
             "unique_bytes": unique_bytes,
             "uniformity_score": max(0, min(1, uniformity)),
-            "most_common_bytes": [(byte, count/len(data)) for byte, count in most_common],
+            "most_common_bytes": [(byte, count / len(data)) for byte, count in most_common],
             "zero_frequency_bytes": len(least_common_bytes),
             "byte_coverage": unique_bytes / 256,
-            "frequency_variance": np.var(frequencies) if frequencies else 0
+            "frequency_variance": np.var(frequencies) if frequencies else 0,
         }
 
 

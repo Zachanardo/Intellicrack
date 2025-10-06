@@ -76,9 +76,10 @@ except ImportError as e:
 
 # Instrumentation
 try:
-    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+    import frida
 
-    FRIDA_AVAILABLE = HAS_FRIDA
+    HAS_FRIDA = True
+    FRIDA_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False

@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Tuple
 
 import psutil
 import win32api
-import wmi
+from intellicrack.handlers.wmi_handler import wmi
 
 logger = logging.getLogger(__name__)
 

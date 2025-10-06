@@ -32,9 +32,8 @@ from typing import Any
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.utils.logger import logger
-from intellicrack.utils.service_utils import get_service_url
 
-from ..utils.logger import setup_logger
+from ..logger import setup_logger
 
 """
 Final utility functions to complete the Intellicrack refactoring.
@@ -1934,6 +1933,8 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                 import psycopg2
 
                 # Get database server from configuration
+                from intellicrack.utils.service_utils import get_service_url
+
                 db_url = get_service_url("database_server")
                 db_host = db_url.replace("postgresql://", "").split(":")[0]
                 db_port = int(db_url.split(":")[-1].split("/")[0]) if ":" in db_url else 5432
@@ -2007,6 +2008,8 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                 import pymongo
 
                 # Get MongoDB server from configuration
+                from intellicrack.utils.service_utils import get_service_url
+
                 mongo_url = get_service_url("mongodb_server")
 
                 client = pymongo.MongoClient(config.get("connection_string", mongo_url))

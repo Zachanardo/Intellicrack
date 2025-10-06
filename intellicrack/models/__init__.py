@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+from ..utils.severity_levels import SeverityLevel, VulnerabilityLevel
 from .model_manager import ModelManager
 
 """
@@ -37,25 +38,6 @@ try:
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     get_protection_knowledge_base = None
-
-# Import severity levels for backwards compatibility
-try:
-    from ..utils.analysis.severity_levels import SeverityLevel, VulnerabilityLevel
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    # Fallback enum if severity_levels not available
-    from enum import Enum
-
-    class VulnerabilityLevel(Enum):
-        """Fallback vulnerability severity levels when module unavailable."""
-
-        CRITICAL = "critical"
-        HIGH = "high"
-        MEDIUM = "medium"
-        LOW = "low"
-        INFO = "info"
-
-    SeverityLevel = VulnerabilityLevel
 
 # Export main interface
 __all__ = [

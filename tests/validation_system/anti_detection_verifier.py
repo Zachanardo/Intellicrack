@@ -23,7 +23,7 @@ import pefile
 import psutil
 import win32con
 import win32process
-import wmi
+from intellicrack.handlers.wmi_handler import wmi
 
 logger = logging.getLogger(__name__)
 

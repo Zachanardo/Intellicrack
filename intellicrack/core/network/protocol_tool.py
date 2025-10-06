@@ -362,7 +362,7 @@ class ProtocolToolWindow(QWidget):
                                     self.output_text_edit.append(f"[SUCCESS] Parsed as {parser_name}")
                                     self.output_text_edit.append(f"[COMMAND] {result.command}")
                                     return
-                            except:
+                            except (AttributeError, KeyError):
                                 continue
 
                 self.output_text_edit.append("[FAILED] No parser recognized the data")

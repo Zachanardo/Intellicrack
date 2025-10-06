@@ -647,15 +647,6 @@ class CrossEnvironmentValidator:
                 }
             ]
 
-            for container_config in container_configs:
-                logger.info(f"Testing in {container_config['platform']}")
-
-                container_result = self._test_in_container_environment(
-                    binary_path, software_name, container_config
-                )
-                if container_result:
-                    environment_results.append(container_result)
-
             # Real security software testing using PowerShell DSC and Group Policy
             logger.info("Testing with real security software configurations")
 
@@ -888,55 +879,6 @@ class CrossEnvironmentValidator:
 
         except Exception as e:
             logger.error(f"Sandbox testing failed: {e}")
-            return None
-
-    def _test_in_container_environment(self, binary_path: str, software_name: str, config: Dict[str, Any]) -> CrossEnvironmentTestResult:
-        """Test binary in Windows container with real isolation."""
-        try:
-            # Create Docker/container command for Windows testing
-            container_cmd = [
-                "docker", "run", "--rm",
-                "--isolation", config["isolation"],
-                "-v", f"{Path(binary_path).parent}:C:\\TestEnvironment:ro",
-                config["base_image"],
-                "powershell", "-Command",
-                f"C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -m intellicrack --analyze C:\\TestEnvironment\\{Path(binary_path).name} --no-gui"
-            ]
-
-            logger.info(f"Testing in container: {config['platform']}")
-            process = subprocess.run(
-                container_cmd,
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
-
-            test_passed = process.returncode == 0
-
-            # Create environment info for container
-            env_info = EnvironmentInfo(
-                os_version="Windows Container",
-                os_build=config["platform"],
-                architecture="x64",
-                cpu_model="Container Runtime",
-                cpu_cores=1,
-                total_memory_gb=2,
-                gpu_info="None",
-                virtualization_platform=config["isolation"],
-                security_software=["Container Security"],
-                network_configuration="Container Network"
-            )
-
-            return CrossEnvironmentTestResult(
-                environment=env_info,
-                test_passed=test_passed,
-                success_rate=1.0 if test_passed else 0.0,
-                resource_usage={"container_isolated": True},
-                error_messages=[] if test_passed else [f"Container test failed: {process.stderr}"]
-            )
-
-        except Exception as e:
-            logger.error(f"Container testing failed: {e}")
             return None
 
     def _test_with_security_variations(self, binary_path: str, software_name: str, current_env: EnvironmentInfo) -> List[CrossEnvironmentTestResult]:

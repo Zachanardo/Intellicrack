@@ -68,6 +68,14 @@ from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
 from ..widgets.syntax_highlighters import JavaScriptHighlighter
 
+try:
+    from ...core.terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for Frida Manager")
+
 """Frida script manager dialog for managing dynamic instrumentation scripts."""
 
 """

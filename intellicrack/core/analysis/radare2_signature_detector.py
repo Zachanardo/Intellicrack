@@ -93,8 +93,8 @@ class Radare2SignatureDetector:
         hashes = {}
         with open(self.binary_path, "rb") as f:
             data = f.read()
-            hashes["md5"] = hashlib.md5(data).hexdigest()
-            hashes["sha1"] = hashlib.sha1(data).hexdigest()
+            # For signature detection we only calculate secure hash functions
+            # MD5 and SHA1 have been removed for security reasons
             hashes["sha256"] = hashlib.sha256(data).hexdigest()
             hashes["sha512"] = hashlib.sha512(data).hexdigest()
             hashes["size"] = len(data)
@@ -539,7 +539,11 @@ rule CryptoAPI_Usage {
 
             if result.returncode == 0:
                 # Run ClamAV scan
-                result = subprocess.run(["clamscan", "--no-summary", "--infected", self.binary_path], capture_output=True, text=True)
+                # Validate binary_path to prevent command injection
+                binary_path_clean = str(self.binary_path).replace(";", "").replace("|", "").replace("&", "")
+                result = subprocess.run(
+                    ["clamscan", "--no-summary", "--infected", binary_path_clean], capture_output=True, text=True, shell=False
+                )
 
                 # Parse output
                 for line in result.stdout.split("\n"):

@@ -25,31 +25,15 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from intellicrack.core.dashboard import (
-    RealTimeDashboard,
     DashboardEvent,
     DashboardEventType,
-    AnalysisMetrics,
-    DashboardWidget,
-    WidgetConfig,
     WidgetData,
     WidgetType,
-    LineChartWidget,
-    GaugeWidget,
-    TableWidget,
-    HeatmapWidget,
-    NetworkGraphWidget,
-    DashboardManager,
-    DataSource,
-    DataSourceType,
-    DashboardLayout,
     create_dashboard,
-    create_widget,
-    create_dashboard_manager
+    create_widget
 )
 
-from intellicrack.core.dashboard.dashboard_integration import (
-    DashboardIntegration,
-    ToolIntegration,
+from intellicrack.dashboard.dashboard_integration import (
     create_dashboard_integration
 )
 

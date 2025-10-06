@@ -16,7 +16,6 @@ import json
 import logging
 import mmap
 import os
-import pickle
 import queue
 import struct
 import sys
@@ -63,7 +62,6 @@ class SerializationFormat(Enum):
     """Serialization formats for data exchange"""
 
     JSON = "json"
-    PICKLE = "pickle"
     MSGPACK = "msgpack"
     PROTOBUF = "protobuf"
     BINARY = "binary"
@@ -114,7 +112,7 @@ class SharedMemoryManager:
             try:
                 # Try to open existing shared memory
                 self.memory = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
-            except:
+            except (OSError, ValueError):
                 # Create new shared memory
                 self.memory = mmap.mmap(-1, self.size, tagname=self.name)
                 # Initialize with header
@@ -263,8 +261,6 @@ class SerializationProtocol:
 
         if format == SerializationFormat.JSON:
             return json.dumps(data).encode("utf-8")
-        elif format == SerializationFormat.PICKLE:
-            return pickle.dumps(data)
         elif format == SerializationFormat.MSGPACK:
             packed = msgpack.packb(data)
             # Compress with LZ4 for efficiency
@@ -279,14 +275,12 @@ class SerializationProtocol:
         try:
             if format == SerializationFormat.JSON:
                 msg_dict = json.loads(data.decode("utf-8"))
-            elif format == SerializationFormat.PICKLE:
-                msg_dict = pickle.loads(data)
             elif format == SerializationFormat.MSGPACK:
                 # Try decompression first
                 try:
                     decompressed = lz4.frame.decompress(data)
                     msg_dict = msgpack.unpackb(decompressed, raw=False)
-                except:
+                except (lz4.frame.LZ4FrameError, msgpack.ExtraData):
                     msg_dict = msgpack.unpackb(data, raw=False)
             else:
                 msg_dict = msgpack.unpackb(data, raw=False)

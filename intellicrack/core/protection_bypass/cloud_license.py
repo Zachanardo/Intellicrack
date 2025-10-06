@@ -527,8 +527,8 @@ class CloudLicenseBypass:
             # Relay data with interception
             self._relay_with_intercept(client_ssl, target_ssl, config["intercept_rules"])
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"SSL proxy relay failed: {e}")
         finally:
             client_sock.close()
 

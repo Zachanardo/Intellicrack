@@ -1449,7 +1449,6 @@ rule Delphi_Compiler {
 
     def get_matches(self) -> List[YaraMatch]:
         """Get all stored matches (thread-safe)."""
-        import threading
 
         with self._match_lock:
             return list(self._matches)  # Return copy to prevent external modification
@@ -1708,8 +1707,8 @@ rule Delphi_Compiler {
                     if module["base"] <= region["base_address"] < module["base"] + module["size"]:
                         return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Module region comparison failed: {e}")
 
         return False
 
@@ -1721,8 +1720,8 @@ rule Delphi_Compiler {
                 if region.get("type") == 0x20000:  # MEM_PRIVATE
                     return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Heap region analysis failed: {e}")
 
         return False
 
@@ -1805,7 +1804,9 @@ rule Delphi_Compiler {
             # Execute concurrent scanning
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Submit scanning tasks
-                future_to_region = {executor.submit(scan_region_chunk, region): region for region in memory_regions if region["state"] == 0x1000}
+                future_to_region = {
+                    executor.submit(scan_region_chunk, region): region for region in memory_regions if region["state"] == 0x1000
+                }
 
                 # Collect results
                 for future in as_completed(future_to_region):
@@ -2027,7 +2028,7 @@ rule Delphi_Compiler {
                 if ascii_str and len(ascii_str) > 3:
                     rule += f'\n        $ascii = "{ascii_str}"'
                     rule += f'\n        $wide = "{ascii_str}" wide'
-            except:
+            except (ValueError, OSError):
                 pass
 
         # Add condition
@@ -2121,7 +2122,7 @@ rule Delphi_Compiler {
                     s = match.group().decode("utf-16le", errors="ignore")
                     if is_interesting(s):
                         extracted.add(s)
-                except:
+                except (TypeError, ValueError):
                     pass
 
         # Extract UTF-16BE strings
@@ -2132,7 +2133,7 @@ rule Delphi_Compiler {
                     s = match.group().decode("utf-16be", errors="ignore")
                     if is_interesting(s):
                         extracted.add(s)
-                except:
+                except (TypeError, ValueError):
                     pass
 
         # Extract URLs
@@ -2291,7 +2292,7 @@ rule Delphi_Compiler {
         # Calculate hashes
         with open(file_path, "rb") as f:
             data = f.read()
-            metadata["md5"] = hashlib.md5(data).hexdigest()
+            # For YARA scanning we calculate SHA256; MD5 is deprecated for security reasons
             metadata["sha256"] = hashlib.sha256(data).hexdigest()
 
         # Extract PE metadata
@@ -2423,7 +2424,11 @@ rule Delphi_Compiler {
             return False, f"Validation error: {e}"
 
     def generate_rule_from_sample(
-        self, file_path: Path, rule_name: str = "auto_generated", category: RuleCategory = RuleCategory.LICENSE, advanced_analysis: bool = True
+        self,
+        file_path: Path,
+        rule_name: str = "auto_generated",
+        category: RuleCategory = RuleCategory.LICENSE,
+        advanced_analysis: bool = True,
     ) -> str:
         """Generate comprehensive YARA rule from sample file.
 
@@ -2463,7 +2468,7 @@ rule Delphi_Compiler {
     meta:
         description = "Auto-generated rule from {file_path.name}"
         category = "{category.value}"
-        file_size = {metadata.get('file_size', len(data))}"""
+        file_size = {metadata.get("file_size", len(data))}"""
 
         if metadata.get("md5"):
             rule += f'\n        md5 = "{metadata["md5"]}"'
@@ -2648,8 +2653,8 @@ rule Delphi_Compiler {
                 {
                     "match_pattern": "rdtsc",
                     "patch_type": "instruction_patch",
-                    "original": b"\x0F\x31",  # RDTSC
-                    "replacement": b"\x31\xC0",  # XOR EAX,EAX
+                    "original": b"\x0f\x31",  # RDTSC
+                    "replacement": b"\x31\xc0",  # XOR EAX,EAX
                     "confidence": 0.80,
                     "description": "Replace RDTSC with constant value",
                 },
@@ -2785,10 +2790,10 @@ rule Delphi_Compiler {
         # MOV EAX, return_value
         # RET
         if return_value == 0:
-            return b"\x31\xC0\xC3"  # XOR EAX,EAX; RET
+            return b"\x31\xc0\xc3"  # XOR EAX,EAX; RET
         else:
             # MOV EAX, imm32; RET
-            return b"\xB8" + return_value.to_bytes(4, "little") + b"\xC3"
+            return b"\xb8" + return_value.to_bytes(4, "little") + b"\xc3"
 
     def _generate_proxy_dll_code(self, dll_name: str) -> str:
         """Generate proxy DLL code template.
@@ -3033,9 +3038,7 @@ extern "C" {{
 
         import time
 
-        self._patch_history.append(
-            {"patch_id": patch_id, "timestamp": time.time(), "success": success, "notes": notes}
-        )
+        self._patch_history.append({"patch_id": patch_id, "timestamp": time.time(), "success": success, "notes": notes})
 
         # Update statistics
         if success:
@@ -3120,9 +3123,7 @@ extern "C" {{
             try:
                 if bp_type == "hardware":
                     # Use hardware breakpoint for critical matches
-                    bp_id = self.debugger.set_hardware_breakpoint(
-                        match.offset, condition="exec" if not condition else condition, size=1
-                    )
+                    bp_id = self.debugger.set_hardware_breakpoint(match.offset, condition="exec" if not condition else condition, size=1)
                 else:
                     # Use software breakpoint
                     bp_id = self.debugger.set_breakpoint(match.offset)
@@ -3508,7 +3509,7 @@ extern "C" {{
                 if condition:
                     # Convert to WinDbg syntax
                     condition = condition.replace("EAX", "@eax").replace("&&", "and")
-                    script.append(f"bp 0x{match.offset:X} \"{condition}\"")
+                    script.append(f'bp 0x{match.offset:X} "{condition}"')
 
                 script.append("")
 

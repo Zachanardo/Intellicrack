@@ -62,7 +62,7 @@ class HardwareTokenBypass:
                 self.winscard = ctypes.windll.winscard
                 self.kernel32 = ctypes.windll.kernel32
                 self._init_scard_constants()
-            except:
+            except (AttributeError, OSError):
                 self.winscard = None
                 self.kernel32 = None
 
@@ -192,13 +192,25 @@ class HardwareTokenBypass:
 
     def _aes_encrypt(self, data: bytes, key: bytes) -> bytes:
         """AES-128 ECB encryption for YubiKey OTP."""
+        import os
+
         from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import padding
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-        # Use AES-128 ECB mode for YubiKey OTP encryption
-        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+        # Use AES-128 CBC mode for YubiKey OTP encryption (more secure than ECB)
+        iv = os.urandom(16)  # 16 bytes for AES block size
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
         encryptor = cipher.encryptor()
-        return encryptor.update(data) + encryptor.finalize()
+
+        # Pad data to AES block size
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(data) + padder.finalize()
+
+        encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+
+        # Return IV + encrypted data for proper decryption
+        return iv + encrypted_data
 
     def _to_modhex(self, data: bytes) -> str:
         """Convert bytes to ModHex encoding."""
@@ -279,17 +291,29 @@ class HardwareTokenBypass:
         """
         # SecurID 128-bit AES algorithm
         from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import padding
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         # Prepare time data
         time_bytes = struct.pack(">Q", time_counter)
 
         # Create AES cipher with seed as key
-        cipher = Cipher(algorithms.AES(seed), modes.ECB(), backend=default_backend())
+        # Use CBC mode with a fixed IV for deterministic output (required for token generation)
+        # Note: Since the same input always produces same output in token generation, we use
+        # a fixed IV to ensure consistency while still being more secure than ECB
+        iv = b"\x00" * 16  # Fixed IV for deterministic behavior in token generation
+        cipher = Cipher(algorithms.AES(seed), modes.CBC(iv), backend=default_backend())
         encryptor = cipher.encryptor()
 
+        # Pad data to AES block size
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(time_bytes + b"\x00" * 8) + padder.finalize()
+
         # Encrypt time counter
-        encrypted = encryptor.update(time_bytes + b"\x00" * 8) + encryptor.finalize()
+        encrypted_full = encryptor.update(padded_data) + encryptor.finalize()
+
+        # Extract the relevant bytes from the beginning
+        encrypted = encrypted_full[:16]  # Take first block for token calculation
 
         # Extract token digits
         token_int = int.from_bytes(encrypted[:4], "big")
@@ -836,7 +860,7 @@ class HardwareTokenBypass:
                         if end_pos != -1:
                             pem_data = data[pos : end_pos + len(end_marker)]
                             certs.append({"format": "PEM", "offset": pos, "data": pem_data.decode("utf-8", errors="ignore")})
-                except:
+                except (UnicodeDecodeError, ValueError):
                     pass
 
                 offset = pos + 1

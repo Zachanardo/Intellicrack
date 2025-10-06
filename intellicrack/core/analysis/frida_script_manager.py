@@ -101,18 +101,22 @@ class FridaScriptManager:
             "00:25:90",  # Dell
             "00:1C:42",  # Parallels
         ]
-        prefix = random.choice(oui_prefixes)
+        # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
+        prefix = random.choice(oui_prefixes)  # noqa: S311
         # Generate random last 3 octets
-        suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])
+        # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
+        suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
         return f"{prefix}:{suffix}"
 
     def _generate_disk_serial(self) -> str:
         """Generate a realistic disk serial number."""
         # Common disk serial formats
         prefixes = ["WD", "ST", "HGST", "TOSHIBA", "SAMSUNG", "INTEL"]
-        prefix = random.choice(prefixes)
+        # Note: Using random module for generating fake disk serials, not cryptographic purposes
+        prefix = random.choice(prefixes)  # noqa: S311
         # Generate alphanumeric serial
-        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]
+        # Note: Using random module for generating fake disk serials, not cryptographic purposes
+        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]  # noqa: S311, S311
         return "-".join(serial_parts)
 
     def _generate_motherboard_id(self) -> str:
@@ -121,10 +125,11 @@ class FridaScriptManager:
         models = ["PRIME", "ROG", "TUF", "GAMING", "PRO", "MASTER"]
         chipsets = ["Z790", "B760", "H610", "X670", "B650", "A620"]
 
-        manufacturer = random.choice(manufacturers)
-        model = random.choice(models)
-        chipset = random.choice(chipsets)
-        serial = "".join(random.choices("0123456789ABCDEF", k=12))
+        # Note: Using random module for generating fake motherboard IDs, not cryptographic purposes
+        manufacturer = random.choice(manufacturers)  # noqa: S311
+        model = random.choice(models)  # noqa: S311
+        chipset = random.choice(chipsets)  # noqa: S311
+        serial = "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311
 
         return f"{manufacturer}-{model}-{chipset}-{serial}"
 
@@ -140,9 +145,11 @@ class FridaScriptManager:
             ("AMD", "Ryzen-5", "7600X"),
         ]
 
-        brand, family, model = random.choice(cpu_families)
+        # Note: Using random module for generating fake CPU IDs, not cryptographic purposes
+        brand, family, model = random.choice(cpu_families)  # noqa: S311
         # Generate a CPUID-like string
-        cpuid_hash = hashlib.md5(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()
+        # Note: Using random module for generating fake CPU IDs, not cryptographic purposes
+        cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()  # noqa: S311
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 

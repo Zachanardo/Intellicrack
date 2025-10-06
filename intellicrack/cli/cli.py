@@ -15,18 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import asyncio
 import json
 import logging
 import os
 import sys
 import threading
 import time
-from typing import Any
 
-from intellicrack.utils.logger import logger
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
+from intellicrack.utils.logger import logger
 from intellicrack.utils.patching.patch_generator import generate_patch
 
 """
@@ -77,19 +75,9 @@ except ImportError as e:
     PayloadResultHandler = None
 
 
-# Import new exploitation modules
+# Import licensing protection analysis modules
 try:
-    from intellicrack.ai.vulnerability_research_integration import VulnerabilityResearchAI
-    # PayloadEngine removed - out of scope functionality
-    AdvancedPayloadEngine = None
-    from intellicrack.core.vulnerability_research.research_manager import (
-        CampaignType,
-        ResearchManager,
-    )
-    from intellicrack.core.vulnerability_research.vulnerability_analyzer import (
-        AnalysisMethod,
-        VulnerabilityAnalyzer,
-    )
+    from intellicrack.ai.vulnerability_research_integration import LicensingProtectionAnalyzer
 
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
@@ -511,8 +499,6 @@ def from_template(category: str, template_name: str, architecture: str, param: t
         logger.error("Template payload generation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
-
-
 
 
 @cli.command()
@@ -1064,100 +1050,10 @@ def advanced_generate(
 ):
     """Generate advanced payload with evasion techniques."""
     try:
-        from intellicrack.core.exploitation.payload_types import (
-            Architecture as AdvancedArchitecture,
-        )
-        from intellicrack.core.exploitation.payload_types import (
-            EncodingType,
-        )
-        from intellicrack.core.exploitation.payload_types import PayloadType as AdvancedPayloadType
-
-        engine = AdvancedPayloadEngine()
-
-        # Map CLI values to enum values
-        payload_type_mapping = {
-            "reverse_shell": AdvancedPayloadType.REVERSE_SHELL,
-            "bind_shell": AdvancedPayloadType.BIND_SHELL,
-            "meterpreter": AdvancedPayloadType.METERPRETER,
-            "staged_payload": AdvancedPayloadType.STAGED_PAYLOAD,
-            "custom": AdvancedPayloadType.CUSTOM,
-        }
-
-        arch_mapping = {
-            "x86": AdvancedArchitecture.X86,
-            "x64": AdvancedArchitecture.X64,
-            "arm": AdvancedArchitecture.ARM,
-            "arm64": AdvancedArchitecture.ARM64,
-        }
-
-        encoding_mapping = {
-            "none": EncodingType.NONE,
-            "polymorphic": EncodingType.POLYMORPHIC,
-            "metamorphic": EncodingType.METAMORPHIC,
-            "xor": EncodingType.XOR,
-            "alpha": EncodingType.ALPHANUMERIC,
-        }
-
-        target_info = {
-            "os_type": "windows",
-            "architecture": architecture,
-            "protections": ["aslr", "dep"],
-            "av_products": [],
-        }
-
-        options = {
-            "lhost": lhost,
-            "lport": lport,
-            "encoding": encoding_mapping[encoding],
-            "evasion_level": evasion,
-            "output_format": output_format,
-        }
-
-        click.echo(f"Generating {payload_type} payload...")
-        click.echo(f"Target: {architecture}, Encoding: {encoding}, Evasion: {evasion}, Format: {output_format}")
-
-        result = engine.generate_payload(
-            payload_type=payload_type_mapping[payload_type],
-            architecture=arch_mapping[architecture],
-            target_info=target_info,
-            options=options,
-        )
-
-        # Define save callback for file output
-        def save_payload(payload_data: bytes, metadata: dict):
-            if output:
-                with open(output, "wb") as f:
-                    f.write(payload_data)
-                click.echo(f"Payload saved to: {output}")
-                # Save metadata alongside if available
-                if metadata:
-                    metadata_file = output + ".metadata.json"
-                    with open(metadata_file, "w", encoding="utf-8") as f:
-                        json.dump(metadata, f, indent=2)
-                    click.echo(f"Metadata saved to: {metadata_file}")
-            else:
-                # Display hex dump
-                hex_dump = payload_data[:256].hex()  # First 256 bytes
-                click.echo("\nPayload preview (first 256 bytes):")
-                for i in range(0, len(hex_dump), 32):
-                    click.echo(hex_dump[i : i + 32])
-                # Display metadata if available
-                if metadata:
-                    click.echo("\nPayload metadata:")
-                    for key, value in metadata.items():
-                        click.echo(f"  {key}: {value}")
-
-        # Use common payload result handler
-        if PayloadResultHandler:
-            success = PayloadResultHandler.process_payload_result(result, click.echo, save_payload)
-            if not success:
-                sys.exit(1)
-        # Fallback for missing handler
-        elif result["success"]:
-            save_payload(result["payload"], result["metadata"])
-        else:
-            click.echo(f"✗ Payload generation failed: {result.get('error', 'Unknown error')}")
-            sys.exit(1)
+        # This functionality has been removed as it was part of out-of-scope exploitation code.
+        click.echo("Advanced payload generation has been removed from this version.")
+        click.echo("Intellicrack now focuses on binary analysis and security research capabilities.")
+        return
 
     except (
         OSError,
@@ -1173,8 +1069,6 @@ def advanced_generate(
         logger.error("Advanced payload generation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
-
-
 
 
 @advanced.group()
@@ -1212,7 +1106,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
 
         if use_ai:
             # Use AI-guided analysis
-            ai_researcher = VulnerabilityResearchAI()
+            ai_researcher = LicensingProtectionAnalyzer()
 
             click.echo(f"Running AI-guided analysis on {target_path} (timeout: {timeout}s)...")
             # Set timeout for the analysis
@@ -1230,13 +1124,13 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     signal.alarm(timeout)
 
                     try:
-                        result = ai_researcher.analyze_target_with_ai(target_path)
+                        result = ai_researcher.analyze_licensing_protection(target_path)
                     finally:
                         if hasattr(signal, "alarm"):
                             signal.alarm(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
-                    result = ai_researcher.analyze_target_with_ai(target_path)
+                    result = ai_researcher.analyze_licensing_protection(target_path)
             except (AttributeError, OSError) as e:
                 logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support - use threading for timeout
@@ -1246,7 +1140,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                 def run_analysis():
                     try:
                         nonlocal result
-                        result = ai_researcher.analyze_target_with_ai(target_path)
+                        result = ai_researcher.analyze_licensing_protection(target_path)
                     except (
                         OSError,
                         ValueError,
@@ -1303,42 +1197,12 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         click.echo(f"    Confidence: {strategy['confidence']:.2f}")
 
         else:
-            # Use standard research manager
-            manager = ResearchManager()
-            analyzer = VulnerabilityAnalyzer()
+            # Use standard binary analysis
+            from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
 
-            # Select campaign type based on campaign_type parameter
-            campaign_type_mapping = {
-                "binary_analysis": CampaignType.BINARY_ANALYSIS,
-                "fuzzing": CampaignType.FUZZING,
-                "vulnerability_assessment": CampaignType.VULNERABILITY_ASSESSMENT,
-                "patch_analysis": CampaignType.PATCH_ANALYSIS,
-                "hybrid_research": CampaignType.HYBRID_RESEARCH,
-            }
+            analyzer = BinaryAnalyzer()
 
-            # Get actual campaign type from mapping
-            selected_campaign_type = campaign_type_mapping.get(campaign_type, CampaignType.BINARY_ANALYSIS)
-
-            # Create a campaign using the manager's proper interface
-            campaign_result = manager.create_campaign(
-                name=f"CLI_Campaign_{int(time.time())}",
-                campaign_type=selected_campaign_type,
-                targets=[target_path],
-            )
-
-            if campaign_result:
-                click.echo(f"✅ Created research campaign: {campaign_result.get('name', 'Unknown')}")
-                click.echo(f"📁 Campaign ID: {campaign_result.get('campaign_id', 'Unknown')}")
-            else:
-                click.echo("❌ Failed to create research campaign")
-                return
-
-            # Use analyzer for initial vulnerability assessment
-            initial_assessment = analyzer.analyze_target(target_path)
-            if initial_assessment.get("vulnerabilities"):
-                click.echo(f"⚠️  {len(initial_assessment['vulnerabilities'])} vulnerabilities detected")
-
-            click.echo(f"Running {campaign_type} analysis on {target_path}...")
+            click.echo(f"Running binary analysis on {target_path}...")
 
             # Run direct analysis with timeout
             import platform
@@ -1349,7 +1213,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
 
                     def timeout_handler(signum, frame):
                         logger.warning(
-                            "Vulnerability analysis timeout handler: signal %s, frame %s",
+                            "Binary analysis timeout handler: signal %s, frame %s",
                             signum,
                             frame,
                         )
@@ -1359,48 +1223,36 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     signal.alarm(timeout)
 
                     try:
-                        result = analyzer.analyze_vulnerability(
-                            target_path=target_path,
-                            analysis_method=AnalysisMethod.HYBRID,
-                            vulnerability_types=None,
-                        )
+                        result = analyzer.analyze_binary(target_path=target_path)
                     finally:
                         if hasattr(signal, "alarm"):
                             signal.alarm(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
-                    result = analyzer.analyze_vulnerability(
-                        target_path=target_path,
-                        analysis_method=AnalysisMethod.HYBRID,
-                        vulnerability_types=None,
-                    )
+                    result = analyzer.analyze_binary(target_path=target_path)
             except (AttributeError, OSError) as e:
                 logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support
-                result = analyzer.analyze_vulnerability(
-                    target_path=target_path,
-                    analysis_method=AnalysisMethod.HYBRID,
-                    vulnerability_types=None,
-                )
+                result = analyzer.analyze_binary(target_path=target_path)
 
             if result["success"]:
-                vulnerabilities = result["vulnerabilities"]
-                click.echo(f"✓ Analysis completed - {len(vulnerabilities)} vulnerabilities found")
+                protections = result.get("protections", [])
+                click.echo(f"✓ Analysis completed - {len(protections)} protections found")
 
-                # Categorize vulnerabilities
-                critical = [v for v in vulnerabilities if v["severity"] == "critical"]
-                high = [v for v in vulnerabilities if v["severity"] == "high"]
-                medium = [v for v in vulnerabilities if v["severity"] == "medium"]
+                # Categorize protections
+                licensing_protections = [p for p in protections if "licensing" in p.get("type", "").lower()]
+                obfuscation_protections = [p for p in protections if "obfuscation" in p.get("type", "").lower()]
 
-                click.echo(f"  Critical: {len(critical)}")
-                click.echo(f"  High: {len(high)}")
-                click.echo(f"  Medium: {len(medium)}")
+                click.echo(f"  Licensing Protections: {len(licensing_protections)}")
+                click.echo(f"  Obfuscation Protections: {len(obfuscation_protections)}")
 
-                # Show top vulnerabilities
-                if vulnerabilities:
-                    click.echo("\nTop Vulnerabilities:")
-                    for vuln in vulnerabilities[:5]:
-                        click.echo(f"  • {vuln['type']} ({vuln['severity']}) - {vuln['description']}")
+                # Show top protections
+                if protections:
+                    click.echo("\nTop Protections:")
+                    for protection in protections[:5]:
+                        type_name = protection.get("type", "Unknown")
+                        description = protection.get("description", "No description")
+                        click.echo(f"  • {type_name} - {description}")
 
         # Save results if output specified
         if output and result["success"]:
@@ -1448,53 +1300,45 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
             click.echo(f"Target file not found: {target_path}", err=True)
             sys.exit(1)
 
-        ai_researcher = VulnerabilityResearchAI()
+        ai_researcher = LicensingProtectionAnalyzer()
 
-        target_info = {
-            "binary_path": target_path,
-            "platform": target_platform,
-            "network_config": {
-                "lhost": lhost,
-                "lport": lport,
-            },
-        }
-
-        click.echo(f"Starting automated exploitation of {os.path.basename(target_path)}...")
+        click.echo(f"Starting automated licensing protection analysis of {os.path.basename(target_path)}...")
         click.echo(f"Target platform: {target_platform}")
-        click.echo(f"Callback: {lhost}:{lport}")
+        click.echo(f"Analysis configuration: {lhost}:{lport}")
         click.echo("=" * 50)
 
-        result = ai_researcher.execute_automated_exploitation(target_info)
+        result = ai_researcher.analyze_licensing_protection(target_path)
 
         if result["success"]:
-            click.echo("✓ Automated exploitation completed successfully!")
-            click.echo(f"  Workflow ID: {result['workflow_id']}")
-            click.echo(f"  Final Status: {result['final_status']}")
+            click.echo("✓ Licensing protection analysis completed successfully!")
+            click.echo(f"  Target: {result.get('target_path', 'N/A')}")
 
-            # Show exploitation timeline
-            timeline = result["exploitation_timeline"]
-            click.echo(f"\nExploitation Timeline ({len(timeline)} phases):")
-            for entry in timeline:
-                status_symbol = "✓" if entry["status"] == "completed" else "✗"
-                click.echo(f"  {status_symbol} {entry['phase'].replace('_', ' ').title()}")
+            # Show protection mechanisms found
+            mechanisms = result.get("protection_mechanisms", [])
+            click.echo(f"\nProtection Mechanisms Found ({len(mechanisms)}):")
+            for mech in mechanisms:
+                confidence = mech.get("confidence", 0)
+                conf_str = "HIGH" if confidence > 0.8 else "MEDIUM" if confidence > 0.5 else "LOW"
+                click.echo(f"  • {mech['type']} [{conf_str} confidence]")
 
-            # Show AI adaptations
-            adaptations = result["ai_adaptations"]
-            if adaptations:
-                click.echo(f"\nAI Adaptations Applied ({len(adaptations)}):")
-                for adaptation in adaptations[:3]:
-                    click.echo(f"  • {adaptation}")
+            # Show AI recommendations
+            recommendations = result.get("ai_recommendations", [])
+            if recommendations:
+                click.echo(f"\nAI Recommendations ({len(recommendations)}):")
+                for rec in recommendations[:5]:
+                    click.echo(f"  • {rec}")
 
         else:
-            click.echo(f"✗ Automated exploitation failed: {result.get('error')}")
+            click.echo(f"✗ Licensing protection analysis failed: {result.get('error')}")
 
-            # Show what phases completed
-            if "exploitation_phases" in result:
-                phases = result["exploitation_phases"]
-                click.echo("\nPhase Results:")
-                for phase_name, phase_result in phases.items():
-                    phase_status = "✓" if phase_result.get("success") else "✗"
-                    click.echo(f"  {phase_status} {phase_name.replace('_', ' ').title()}")
+            # Show analysis results summary
+            if "analysis_results" in result:
+                analysis = result["analysis_results"]
+                click.echo("\nAnalysis Results:")
+                for key, value in analysis.items():
+                    if isinstance(value, dict) and "success" in value:
+                        status = "✓" if value.get("success") else "✗"
+                        click.echo(f"  {status} {key.replace('_', ' ').title()}")
 
             sys.exit(1)
 
@@ -1699,7 +1543,7 @@ def ai_generate(
 @click.option("--binary", help="Target binary for testing")
 @click.option(
     "--environment",
-    type=click.Choice(["qemu", "docker", "sandbox", "direct"]),
+    type=click.Choice(["qemu", "sandbox", "direct"]),
     default="qemu",
     help="Testing environment",
 )
@@ -1947,7 +1791,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
 @click.option("--max-iterations", default=10, help="Maximum refinement iterations")
 @click.option(
     "--test-environment",
-    type=click.Choice(["qemu", "docker", "sandbox"]),
+    type=click.Choice(["qemu", "sandbox"]),
     default="qemu",
     help="Testing environment",
 )
@@ -1981,13 +1825,9 @@ def autonomous(
         agent = AutonomousAgent(orchestrator=orchestrator, cli_interface=None)
         agent.max_iterations = max_iterations
 
-        # Process request
         click.echo("\n🚀 Executing autonomous workflow...")
 
-        # Simple progress simulation for CLI
-        with click.progressbar(length=max_iterations, label="Processing") as bar:
-            result = agent.process_request(request)
-            bar.update(max_iterations)
+        result = agent.process_request(request)
 
         # Handle results
         if result.get("status") == "success":

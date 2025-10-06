@@ -293,7 +293,7 @@ class ResultSerializer:
         try:
             if data[:2] == b"\x78\x9c":  # zlib magic bytes
                 data = zlib.decompress(data)
-        except:
+        except (zlib.error, ValueError):
             pass
 
         # Deserialize based on format
@@ -444,7 +444,7 @@ class ResultConverter:
         # Convert functions
         for func in ghidra_data.get("functions", []):
             result = FunctionResult(
-                id=hashlib.md5(f"{func['address']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{func['address']}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
@@ -461,7 +461,7 @@ class ResultConverter:
         # Convert strings
         for string in ghidra_data.get("strings", []):
             result = StringResult(
-                id=hashlib.md5(f"{string['address']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{string['address']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
@@ -482,7 +482,7 @@ class ResultConverter:
         # Convert functions
         for addr, func in ida_data.get("functions", {}).items():
             result = FunctionResult(
-                id=hashlib.md5(f"{addr}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{addr}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="ida_pro",
                 timestamp=datetime.now().timestamp(),
@@ -499,7 +499,7 @@ class ResultConverter:
         for struct_name, struct_data in ida_data.get("structures", {}).items():
             # Store as metadata since we don't have a dedicated structure result
             result = BaseResult(
-                id=hashlib.md5(struct_name.encode()).hexdigest(),
+                id=hashlib.sha256(struct_name.encode()).hexdigest(),
                 type=ResultType.STRUCTURE,
                 source_tool="ida_pro",
                 timestamp=datetime.now().timestamp(),
@@ -517,7 +517,7 @@ class ResultConverter:
         # Convert functions from aflj output
         for func in r2_data.get("functions", []):
             result = FunctionResult(
-                id=hashlib.md5(f"{func['offset']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{func['offset']}".encode()).hexdigest(),
                 type=ResultType.FUNCTION,
                 source_tool="radare2",
                 timestamp=datetime.now().timestamp(),
@@ -532,7 +532,7 @@ class ResultConverter:
         # Convert strings from izj output
         for string in r2_data.get("strings", []):
             result = StringResult(
-                id=hashlib.md5(f"{string['vaddr']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{string['vaddr']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="radare2",
                 timestamp=datetime.now().timestamp(),
@@ -553,7 +553,7 @@ class ResultConverter:
         # Convert API calls
         for call in frida_data.get("api_calls", []):
             result = BaseResult(
-                id=hashlib.md5(f"{call['timestamp']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{call['timestamp']}".encode()).hexdigest(),
                 type=ResultType.API_CALL,
                 source_tool="frida",
                 timestamp=call["timestamp"],
@@ -570,7 +570,7 @@ class ResultConverter:
         # Convert memory dumps
         for dump in frida_data.get("memory_dumps", []):
             result = MemoryDumpResult(
-                id=hashlib.md5(f"{dump['address']}".encode()).hexdigest(),
+                id=hashlib.sha256(f"{dump['address']}".encode()).hexdigest(),
                 type=ResultType.MEMORY_DUMP,
                 source_tool="frida",
                 timestamp=datetime.now().timestamp(),

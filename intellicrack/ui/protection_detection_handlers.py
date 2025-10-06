@@ -26,7 +26,6 @@ from ..core.analysis.core_analysis import decrypt_embedded_script
 from ..core.protection_bypass.dongle_emulator import HardwareDongleEmulator
 from ..core.protection_bypass.tpm_bypass import TPMProtectionBypass
 from ..core.protection_bypass.vm_bypass import VirtualizationDetectionBypass as VMDetectionBypass
-from ..utils.system.process_utils import detect_hardware_dongles, detect_tpm_protection
 
 # Import protection detection functions
 from ..protection.protection_detector import (
@@ -34,6 +33,7 @@ from ..protection.protection_detector import (
     detect_commercial_protections,
     detect_self_healing_code,
 )
+from ..utils.system.process_utils import detect_hardware_dongles, detect_tpm_protection
 
 logger = logging.getLogger(__name__)
 

@@ -29,7 +29,7 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
-from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult
+from .ai_script_generator import AIScriptGenerator
 from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
@@ -263,14 +263,15 @@ Script Analysis:
                 text_section += struct.pack("<I", 0x60000020)  # Characteristics
 
                 # License validation code section
-                license_code = b"\x48\x83\xEC\x28"  # sub rsp, 0x28
-                license_code += b"\x48\x8D\x0D" + struct.pack("<I", random.randint(0x100, 0x1000))  # lea rcx, [license_key]
-                license_code += b"\xFF\x15" + struct.pack("<I", random.randint(0x100, 0x1000))  # call [CheckLicense]
-                license_code += b"\x85\xC0"  # test eax, eax
+                license_code = b"\x48\x83\xec\x28"  # sub rsp, 0x28
+                # Note: Using random module for generating dummy addresses in simulation code
+                license_code += b"\x48\x8d\x0d" + struct.pack("<I", random.randint(0x100, 0x1000))  # lea rcx, [license_key]  # noqa: S311
+                license_code += b"\xff\x15" + struct.pack("<I", random.randint(0x100, 0x1000))  # call [CheckLicense]  # noqa: S311
+                license_code += b"\x85\xc0"  # test eax, eax
                 license_code += b"\x74\x05"  # jz invalid_license
-                license_code += b"\x31\xC0"  # xor eax, eax
-                license_code += b"\x48\x83\xC4\x28"  # add rsp, 0x28
-                license_code += b"\xC3"  # ret
+                license_code += b"\x31\xc0"  # xor eax, eax
+                license_code += b"\x48\x83\xc4\x28"  # add rsp, 0x28
+                license_code += b"\xc3"  # ret
                 license_code += b"\x90" * (0x200 - len(license_code))  # Padding
 
                 # Write complete protected binary
@@ -281,7 +282,7 @@ Script Analysis:
                     f.write(b"\x00" * (0x200 - f.tell() % 0x200))  # Align to file alignment
                     f.write(license_code)
 
-                os.chmod(target_path, 0o755)
+                os.chmod(target_path, 0o700)  # Restrictive permissions: only owner can read/write/execute
 
             except Exception as create_error:
                 logger.error(f"Protected binary creation error: {create_error}")
@@ -290,7 +291,7 @@ Script Analysis:
                     # Minimal ELF with protection check
                     elf_header = b"\x7fELF\x02\x01\x01\x00" + b"\x00" * 8  # ELF magic
                     elf_header += struct.pack("<H", 2)  # e_type (executable)
-                    elf_header += struct.pack("<H", 0x3e)  # e_machine (x86-64)
+                    elf_header += struct.pack("<H", 0x3E)  # e_machine (x86-64)
                     elf_header += struct.pack("<I", 1)  # e_version
                     elf_header += b"\x00" * 32  # Rest of header
                     f.write(elf_header)
@@ -633,7 +634,7 @@ class IntegrationManager:
                 del self.active_tasks[task.task_id]
             self.completed_tasks[task.task_id] = task
 
-    def _execute_script_generation(self, task: IntegrationTask) -> ScriptGenerationResult:
+    def _execute_script_generation(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute script generation task."""
         request = task.input_data["request"]
         script_type = task.input_data.get("script_type", "frida")
@@ -949,7 +950,7 @@ class IntegrationManager:
         # Check active tasks
         if task_id in self.active_tasks:
             task = self.active_tasks[task_id]
-            if hasattr(task, 'terminate'):
+            if hasattr(task, "terminate"):
                 task.terminate()
             del self.active_tasks[task_id]
             cancelled = True

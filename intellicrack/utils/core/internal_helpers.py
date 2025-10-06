@@ -33,9 +33,7 @@ from intellicrack.handlers.opencl_handler import HAS_OPENCL
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE as HAS_PSUTIL
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
 from intellicrack.handlers.torch_handler import HAS_TORCH
-from intellicrack.utils.logger import logger
-
-from ..utils.logger import setup_logger
+from intellicrack.utils.logger import logger, setup_logger
 
 """
 Internal helper functions for Intellicrack.
@@ -382,6 +380,7 @@ def _handle_get_info() -> dict[str, Any]:
     # Calculate real system uptime
     if platform.system() == "Windows":
         import ctypes
+
         kernel32 = ctypes.windll.kernel32
         uptime_ms = kernel32.GetTickCount64()
         uptime_seconds = uptime_ms // 1000
@@ -393,10 +392,12 @@ def _handle_get_info() -> dict[str, Any]:
         except (FileNotFoundError, IOError):
             # Fallback to boot time
             import psutil
+
             boot_time = psutil.boot_time()
             uptime_seconds = int(time.time() - boot_time)
     uptime_hours = uptime_seconds // 3600
     uptime_minutes = (uptime_seconds % 3600) // 60
+    start_time = time.time()  # Define start_time to fix undefined variable
 
     return {
         "server": {
@@ -658,6 +659,7 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
     # Store and retrieve from registry on Windows or config file
     if platform.system() == "Windows":
         import winreg
+
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ) as key:
                 last_checkin_str = winreg.QueryValueEx(key, f"last_check_{license_id}")[0]
@@ -1093,16 +1095,10 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         bytes_read = wintypes.SIZE_T()
 
         # Read process memory
-        result = kernel32.ReadProcessMemory(
-            current_process,
-            ctypes.c_void_p(address),
-            buffer,
-            size,
-            ctypes.byref(bytes_read)
-        )
+        result = kernel32.ReadProcessMemory(current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read))
 
         if result:
-            return bytes(buffer[:bytes_read.value])
+            return bytes(buffer[: bytes_read.value])
         else:
             # Memory not accessible, return zeros
             return b"\x00" * size
@@ -1126,8 +1122,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
                 libc = CDLL("libc.so.6")
                 process_vm_readv = libc.process_vm_readv
-                process_vm_readv.argtypes = [c_int, POINTER(iovec), c_ulong,
-                                            POINTER(iovec), c_ulong, c_ulong]
+                process_vm_readv.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
                 process_vm_readv.restype = c_ssize_t
 
                 pid = os.getpid()
@@ -1140,12 +1135,11 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 remote_iov.iov_base = address
                 remote_iov.iov_len = size
 
-                result = process_vm_readv(pid, ctypes.byref(local_iov), 1,
-                                         ctypes.byref(remote_iov), 1, 0)
+                result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
                 if result > 0:
                     return bytes(local_buf[:result])
-            except:
+            except (ValueError, TypeError, AttributeError):
                 pass
 
             # If all methods fail, return zeros
@@ -1225,13 +1219,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
         bytes_written = wintypes.SIZE_T()
 
         # Write to process memory
-        result = kernel32.WriteProcessMemory(
-            current_process,
-            ctypes.c_void_p(address),
-            buffer,
-            len(data),
-            ctypes.byref(bytes_written)
-        )
+        result = kernel32.WriteProcessMemory(current_process, ctypes.c_void_p(address), buffer, len(data), ctypes.byref(bytes_written))
 
         return bool(result) and bytes_written.value == len(data)
     else:
@@ -1254,8 +1242,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
                 libc = CDLL("libc.so.6")
                 process_vm_writev = libc.process_vm_writev
-                process_vm_writev.argtypes = [c_int, POINTER(iovec), c_ulong,
-                                             POINTER(iovec), c_ulong, c_ulong]
+                process_vm_writev.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
                 process_vm_writev.restype = c_ssize_t
 
                 pid = os.getpid()
@@ -1273,11 +1260,10 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
                 remote_iov.iov_base = address
                 remote_iov.iov_len = len(data)
 
-                result = process_vm_writev(pid, ctypes.byref(local_iov), 1,
-                                         ctypes.byref(remote_iov), 1, 0)
+                result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
                 return result == len(data)
-            except:
+            except (ValueError, TypeError, AttributeError):
                 return False
 
     return False
@@ -2068,16 +2054,15 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None
 
             # Execute kernel
             func = mod.get_function("sha256_transform")
-            func(data_gpu, np.int32(len(data)), hash_gpu,
-                 block=(256, 1, 1), grid=((len(data) + 63) // 64, 1))
+            func(data_gpu, np.int32(len(data)), hash_gpu, block=(256, 1, 1), grid=((len(data) + 63) // 64, 1))
 
             # Copy result back
             cuda.memcpy_dtoh(hash_output, hash_gpu)
 
             # Convert to bytes
-            result = b''
+            result = b""
             for val in hash_output:
-                result += val.to_bytes(4, 'big')
+                result += val.to_bytes(4, "big")
 
             return result.hex()
         else:
@@ -2141,8 +2126,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         count_func = mod.get_function("count_bytes")
         block_size = 256
         grid_size = (len(data) + block_size - 1) // block_size
-        count_func(data_gpu, np.int32(len(data)), counts_gpu,
-                   block=(block_size, 1, 1), grid=(grid_size, 1))
+        count_func(data_gpu, np.int32(len(data)), counts_gpu, block=(block_size, 1, 1), grid=(grid_size, 1))
 
         # Calculate entropy
         entropy_val = np.array([0.0], dtype=np.float32)
@@ -2150,8 +2134,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         cuda.memcpy_htod(entropy_gpu, entropy_val)
 
         entropy_func = mod.get_function("calculate_entropy")
-        entropy_func(counts_gpu, np.int32(len(data)), entropy_gpu,
-                     block=(256, 1, 1), grid=(1, 1))
+        entropy_func(counts_gpu, np.int32(len(data)), entropy_gpu, block=(256, 1, 1), grid=(1, 1))
 
         # Copy result back
         cuda.memcpy_dtoh(entropy_val, entropy_gpu)
@@ -2558,6 +2541,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                 # PyTorch format
                 try:
                     import torch
+
                     model = torch.load(model_path, map_location="cpu")
                     if isinstance(model, dict):
                         for key, value in model.items():
@@ -2571,13 +2555,14 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                         if isinstance(data, dict):
                             tensors = data
                             tensor_count = len(data)
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         # Raw binary format - parse manually
                         pass
             elif model_path.endswith(".safetensors"):
                 # SafeTensors format
                 try:
                     from safetensors import safe_open
+
                     with safe_open(model_path, framework="np") as sf:
                         for key in sf.keys():
                             tensors[key] = sf.get_tensor(key)
@@ -2651,11 +2636,11 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                 f.write(tensor_name.encode("utf-8"))
 
                 # Number of dimensions
-                n_dims = len(tensor_data.shape) if hasattr(tensor_data, 'shape') else 1
+                n_dims = len(tensor_data.shape) if hasattr(tensor_data, "shape") else 1
                 f.write(struct.pack("<I", n_dims))
 
                 # Dimensions
-                if hasattr(tensor_data, 'shape'):
+                if hasattr(tensor_data, "shape"):
                     for dim in tensor_data.shape:
                         f.write(struct.pack("<Q", dim))
                 else:
@@ -3198,7 +3183,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
             kernel_size = min(5, total_elements // 20)
             if kernel_size > 1:
                 kernel = np.ones(kernel_size) / kernel_size
-                tensor_data = np.convolve(tensor_data, kernel, mode='same')
+                tensor_data = np.convolve(tensor_data, kernel, mode="same")
                 # Rescale to maintain variance
                 tensor_data *= limit / np.std(tensor_data)
 
@@ -3218,7 +3203,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
             kernel_size = min(3, total_elements // 30)
             if kernel_size > 1:
                 kernel = np.ones(kernel_size) / kernel_size
-                tensor_data = np.convolve(tensor_data.astype(np.float32), kernel, mode='same').astype(np.float16)
+                tensor_data = np.convolve(tensor_data.astype(np.float32), kernel, mode="same").astype(np.float16)
                 # Rescale
                 std = np.std(tensor_data)
                 if std > 0:
@@ -3244,7 +3229,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
             scale = 1000
 
         # Generate normally distributed integers
-        tensor_data = np.random.normal(0, scale/3, total_elements)
+        tensor_data = np.random.normal(0, scale / 3, total_elements)
         tensor_data = np.clip(tensor_data, -scale, scale).astype(np.int32)
 
         # Add structured patterns for certain positions (common in embeddings)

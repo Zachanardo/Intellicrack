@@ -1,13 +1,12 @@
 # Development environment configuration
 # CI environments will override these via environment variables
-# Commented out to prevent hardcoded paths in CI
-#
-# [env]
-# PYO3_PYTHON = "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
-# PYTHONHOME = "C:\\Intellicrack\\.pixi\\envs\\default"
-# PYTHON_SYS_EXECUTABLE = "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
-#
-# [build]
-# rustflags = [
-#     "-C", "link-arg=/LIBPATH:C:\\Intellicrack\\.pixi\\envs\\default\\libs",
-# ]
+
+[env]
+PYO3_PYTHON = "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
+PYTHONHOME = "C:\\Intellicrack\\.pixi\\envs\\default"
+PYTHON_SYS_EXECUTABLE = "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
+
+[build]
+rustflags = [
+    "-C", "link-arg=/LIBPATH:C:\\Intellicrack\\.pixi\\envs\\default\\libs",
+]

@@ -297,7 +297,7 @@ impl EnvironmentManager {
         }
 
         // Pixi environment paths that need to be in PATH
-        let pixi_paths = vec[
+        let pixi_paths = vec![
             r"C:\Intellicrack\.pixi\envs\default",
             r"C:\Intellicrack\.pixi\envs\default\Scripts",
             r"C:\Intellicrack\.pixi\envs\default\Library\bin",
@@ -339,7 +339,10 @@ impl EnvironmentManager {
         // Set PIXI environment variables for proper activation
         env::set_var("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
         env::set_var("PIXI_DEFAULT_ENV", "default");
-        env::set_var("PIXI_PYTHON_EXE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        env::set_var(
+            "PIXI_PYTHON_EXE",
+            r"C:\Intellicrack\.pixi\envs\default\python.exe",
+        );
         env::set_var("PIXI_SHLVL", "1");
         env::set_var("PIXI_PROMPT_MODIFIER", "(pixi)");
         env::set_var("PIXI_EXE", r"pixi.exe");
@@ -350,7 +353,8 @@ impl EnvironmentManager {
 
         // Set PYTHONPATH to include both pixi site-packages and Intellicrack source
         // This ensures all packages and local modules are importable
-        let pythonpath = r"C:\Intellicrack;C:\Intellicrack\.pixi\envs\default\Lib\site-packages".to_string();
+        let pythonpath =
+            r"C:\Intellicrack;C:\Intellicrack\.pixi\envs\default\Lib\site-packages".to_string();
         env::set_var("PYTHONPATH", &pythonpath);
 
         // Set TCL/TK library paths for _tkinter functionality
@@ -388,7 +392,8 @@ impl EnvironmentManager {
 
         // FALLBACK: Use pixi environment paths only if launcher paths don't exist
         if !tcl_set {
-            let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
+            let tcl_lib_path =
+                PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
             if tcl_lib_path.exists() {
                 env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
                 info!(
@@ -399,13 +404,11 @@ impl EnvironmentManager {
         }
 
         if !tk_set {
-            let tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
+            let tk_lib_path =
+                PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
             if tk_lib_path.exists() {
                 env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
-                info!(
-                    "Set TK_LIBRARY to pixi fallback: {}",
-                    tk_lib_path.display()
-                );
+                info!("Set TK_LIBRARY to pixi fallback: {}", tk_lib_path.display());
             }
         }
 

@@ -4,28 +4,55 @@ Intellicrack Directory Tree Generator - Fixed Version
 Generates an HTA application with clickable file links using data attributes to avoid escaping issues
 """
 
-import os
-import json
-from pathlib import Path
-from datetime import datetime
 import hashlib
+import os
 import subprocess
+from datetime import datetime
+from pathlib import Path
+
 
 def get_file_icon(file_path):
     """Return appropriate icon based on file extension"""
     ext = Path(file_path).suffix.lower()
     icons = {
-        '.py': '🐍', '.js': '📜', '.json': '📋', '.md': '📝',
-        '.txt': '📄', '.html': '🌐', '.css': '🎨', '.exe': '⚙️',
-        '.dll': '📦', '.so': '📚', '.java': '☕', '.c': '🔧',
-        '.cpp': '🔧', '.h': '📎', '.rs': '🦀', '.go': '🐹',
-        '.yaml': '⚙️', '.yml': '⚙️', '.xml': '📰', '.svg': '🖼️',
-        '.png': '🖼️', '.jpg': '🖼️', '.jpeg': '🖼️', '.gif': '🖼️',
-        '.ico': '🎭', '.zip': '📦', '.rar': '📦', '.7z': '📦',
-        '.tar': '📦', '.gz': '📦', '.pdf': '📕', '.doc': '📘',
-        '.docx': '📘', '.xls': '📊', '.xlsx': '📊'
+        ".py": "🐍",
+        ".js": "📜",
+        ".json": "📋",
+        ".md": "📝",
+        ".txt": "📄",
+        ".html": "🌐",
+        ".css": "🎨",
+        ".exe": "⚙️",
+        ".dll": "📦",
+        ".so": "📚",
+        ".java": "☕",
+        ".c": "🔧",
+        ".cpp": "🔧",
+        ".h": "📎",
+        ".rs": "🦀",
+        ".go": "🐹",
+        ".yaml": "⚙️",
+        ".yml": "⚙️",
+        ".xml": "📰",
+        ".svg": "🖼️",
+        ".png": "🖼️",
+        ".jpg": "🖼️",
+        ".jpeg": "🖼️",
+        ".gif": "🖼️",
+        ".ico": "🎭",
+        ".zip": "📦",
+        ".rar": "📦",
+        ".7z": "📦",
+        ".tar": "📦",
+        ".gz": "📦",
+        ".pdf": "📕",
+        ".doc": "📘",
+        ".docx": "📘",
+        ".xls": "📊",
+        ".xlsx": "📊",
     }
-    return icons.get(ext, '📄')
+    return icons.get(ext, "📄")
+
 
 def scan_directory(root_path):
     """Recursively scan directory and build HTML directly"""
@@ -37,18 +64,18 @@ def scan_directory(root_path):
         nonlocal file_count, folder_count
 
         # Generate unique ID for this item
-        item_id = hashlib.md5(path.encode()).hexdigest()[:8]
+        item_id = hashlib.sha256(path.encode()).hexdigest()[:8]
 
-        html = ''
+        html = ""
         name = os.path.basename(path) or path
 
         if os.path.isdir(path):
             folder_count += 1
-            icon = '📁'
-            html += f'<li>'
+            icon = "📁"
+            html += "<li>"
             html += f'<span class="item folder expanded" data-path="{path}" data-id="{item_id}" data-type="folder">'
-            html += f'{icon} {name}'
-            html += f'</span>'
+            html += f"{icon} {name}"
+            html += "</span>"
 
             try:
                 items = []
@@ -60,70 +87,70 @@ def scan_directory(root_path):
                 items.sort(key=lambda x: (not os.path.isdir(x), x.lower()))
 
                 if items:
-                    html += '<ul>'
+                    html += "<ul>"
                     for item_path in items:
                         html += build_html(item_path, level + 1)
-                    html += '</ul>'
+                    html += "</ul>"
             except PermissionError:
                 pass
 
-            html += '</li>'
+            html += "</li>"
         else:
             file_count += 1
             icon = get_file_icon(path)
             ext = Path(path).suffix.lower()
-            file_class = 'file'
+            file_class = "file"
 
             # Add specific classes for syntax highlighting
-            if ext == '.py':
-                file_class += ' python'
-            elif ext in ['.js', '.jsx']:
-                file_class += ' javascript'
-            elif ext == '.json':
-                file_class += ' json'
+            if ext == ".py":
+                file_class += " python"
+            elif ext in [".js", ".jsx"]:
+                file_class += " javascript"
+            elif ext == ".json":
+                file_class += " json"
 
             try:
                 size = os.path.getsize(path)
                 size_str = format_size(size)
-            except:
-                size_str = ''
+            except (OSError, ValueError, TypeError):
+                size_str = ""
 
-            html += f'<li>'
+            html += "<li>"
             html += f'<span class="item {file_class}" data-path="{path}" data-id="{item_id}" data-type="file">'
-            html += f'{icon} {name}'
+            html += f"{icon} {name}"
             if size_str:
                 html += f' <span class="size">({size_str})</span>'
-            html += f'</span>'
-            html += '</li>'
+            html += "</span>"
+            html += "</li>"
 
         return html
 
-    html_tree = '<ul class="root-list">' + build_html(root_path) + '</ul>'
+    html_tree = '<ul class="root-list">' + build_html(root_path) + "</ul>"
     return html_tree, file_count, folder_count
+
 
 def format_size(bytes):
     """Format file size in human readable format"""
     if bytes == 0:
-        return '0 B'
+        return "0 B"
     k = 1024
-    sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    sizes = ["B", "KB", "MB", "GB", "TB"]
     i = 0
     while bytes >= k and i < len(sizes) - 1:
         bytes /= k
         i += 1
     return f"{bytes:.2f} {sizes[i]}"
 
+
 def generate_txt_tree(root_path, output_file):
     """Generate plain text tree structure file"""
-    import subprocess
-    from datetime import datetime
 
     print(f"Generating text tree for: {root_path}")
 
     header_content = f"""INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: {datetime.now().strftime('%a, %b %d, %Y %I:%M:%S %p')}
+Generated: {datetime.now().strftime("%a, %b %d, %Y %I:%M:%S %p")}
 Directory: {root_path}
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -134,16 +161,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 """
 
     try:
-        if os.name == 'nt':
+        if os.name == "nt":
             tree_output = generate_fallback_tree(root_path)
         else:
-            result = subprocess.run(
-                ['tree', '-F'],
-                capture_output=True,
-                text=True,
-                shell=False,
-                cwd=root_path
-            )
+            result = subprocess.run(["tree", "-F"], capture_output=True, text=True, shell=False, cwd=root_path)
             tree_output = result.stdout if result.returncode == 0 else ""
 
             if not tree_output:
@@ -153,12 +174,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
         print(f"Warning: Could not generate tree with system command: {e}")
         tree_output = generate_fallback_tree(root_path)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(header_content)
         f.write(tree_output)
 
-    line_count = tree_output.count('\n')
+    line_count = tree_output.count("\n")
     print(f"✅ TXT tree generated: {output_file} ({line_count} lines)")
+
 
 def generate_fallback_tree(root_path, prefix="", is_last=True):
     """Generate tree structure as fallback if tree command fails"""
@@ -173,7 +195,7 @@ def generate_fallback_tree(root_path, prefix="", is_last=True):
         items.sort(key=lambda x: (not os.path.isdir(x[1]), x[0].lower()))
 
         for i, (name, path) in enumerate(items):
-            is_last_item = (i == len(items) - 1)
+            is_last_item = i == len(items) - 1
             connector = "└── " if is_last_item else "├── "
             tree_str += f"{prefix}{connector}{name}"
 
@@ -187,6 +209,7 @@ def generate_fallback_tree(root_path, prefix="", is_last=True):
         pass
 
     return tree_str
+
 
 def generate_hta(root_path, output_file):
     """Generate HTA file with clickable directory tree"""
@@ -623,13 +646,14 @@ function hasHighlightedChildren(element) {{
 </body>
 </html>"""
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(hta_content)
 
     print(f"✅ HTA file generated successfully: {output_file}")
     print(f"📁 Root path: {root_path}")
     print(f"📊 Processed: {file_count} files, {folder_count} folders")
     print("\n🚀 Double-click the HTA file to open")
+
 
 if __name__ == "__main__":
     root_path = r"C:\Intellicrack\intellicrack"

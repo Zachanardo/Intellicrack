@@ -25,13 +25,11 @@ import base64
 import sqlite3
 import yaml
 import toml
-import docker
 import git
 import virtualenv
-import pkg_resources
 import cpuinfo
 import GPUtil
-import wmi
+from intellicrack.handlers.wmi_handler import wmi
 import winreg
 from cryptography.fernet import Fernet
 
@@ -94,11 +92,6 @@ class EnvironmentRecorder:
 
     def __init__(self):
         self.wmi_client = wmi.WMI() if platform.system() == "Windows" else None
-        self.docker_client = None
-        try:
-            self.docker_client = docker.from_env()
-        except:
-            pass
 
     def capture_system_snapshot(self) -> SystemSnapshot:
         """Capture complete system state."""
@@ -306,17 +299,12 @@ class EnvironmentRecorder:
     def _detect_virtualization(self) -> Dict[str, bool]:
         """Detect if running in virtualized environment."""
         virt = {
-            "docker": False,
             "vmware": False,
             "virtualbox": False,
             "hyperv": False,
             "qemu": False,
             "xen": False
         }
-
-        # Check for Docker
-        if Path("/.dockerenv").exists():
-            virt["docker"] = True
 
         # Check CPU info for hypervisor
         try:
@@ -695,15 +683,7 @@ class ReproducibilityPackager:
         config_snapshot = self._capture_configuration()
         self._save_snapshot(package_path / "config_snapshot.json", asdict(config_snapshot))
 
-        # 3. Create Docker container specification
-        print("  Creating Docker specification...")
-        dockerfile = self._generate_dockerfile(dependency_snapshot)
-        (package_path / "Dockerfile").write_text(dockerfile)
-
-        docker_compose = self._generate_docker_compose()
-        (package_path / "docker-compose.yml").write_text(docker_compose)
-
-        # 4. Create virtual machine specification
+        # 3. Create virtual machine specification
         print("  Creating VM specification...")
         vagrant_file = self._generate_vagrantfile(system_snapshot)
         (package_path / "Vagrantfile").write_text(vagrant_file)
@@ -821,86 +801,6 @@ class ReproducibilityPackager:
             if value:
                 encrypted[key] = self.cipher.encrypt(value.encode()).decode()
         return encrypted
-
-    def _generate_dockerfile(self, deps: DependencySnapshot) -> str:
-        """Generate Dockerfile for environment reproduction."""
-
-        # Parse Python version
-        python_version = deps.python_version.split()[0]
-
-        dockerfile = f"""# Intellicrack Validation Environment
-FROM python:{python_version}-windowsservercore
-
-# Set working directory
-WORKDIR /intellicrack
-
-# Install system dependencies
-RUN powershell -Command \\
-    Set-ExecutionPolicy Bypass -Scope Process -Force; \\
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \\
-    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-
-# Install required tools
-RUN choco install -y git cmake visualstudio2019buildtools
-
-# Copy requirements
-COPY requirements.txt .
-COPY environment.yml .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Frida
-RUN pip install frida frida-tools
-
-# Copy Intellicrack source
-COPY intellicrack/ ./intellicrack/
-COPY tests/ ./tests/
-
-# Copy test binaries
-COPY test_binaries/ ./test_binaries/
-
-# Set environment variables
-ENV INTELLICRACK_HOME=/intellicrack
-ENV PYTHONPATH=/intellicrack:$PYTHONPATH
-
-# Entry point
-CMD ["python", "-m", "tests.validation_system.runner"]
-"""
-        return dockerfile
-
-    def _generate_docker_compose(self) -> str:
-        """Generate docker-compose.yml for service orchestration."""
-        return """version: '3.8'
-
-services:
-  intellicrack:
-    build: .
-    container_name: intellicrack_validation
-    volumes:
-      - ./results:/intellicrack/results
-      - ./evidence:/intellicrack/evidence
-    environment:
-      - DISPLAY=:0
-    network_mode: host
-    privileged: true
-    devices:
-      - /dev/dri:/dev/dri
-    cap_add:
-      - SYS_PTRACE
-      - SYS_ADMIN
-    security_opt:
-      - seccomp:unconfined
-
-  frida-server:
-    image: frida/frida
-    container_name: frida_server
-    network_mode: host
-    privileged: true
-    cap_add:
-      - SYS_PTRACE
-      - SYS_ADMIN
-"""
 
     def _generate_vagrantfile(self, system: SystemSnapshot) -> str:
         """Generate Vagrantfile for VM-based reproduction."""
@@ -1165,17 +1065,7 @@ __pycache__/
 
 ## Reproduction Methods
 
-### Method 1: Docker (Recommended)
-
-1. Install Docker Desktop for Windows
-2. Extract the package archive
-3. Navigate to the package directory
-4. Build and run:
-   ```
-   docker-compose up
-   ```
-
-### Method 2: Virtual Machine
+### Method 1: Virtual Machine (Recommended)
 
 1. Install VirtualBox and Vagrant
 2. Extract the package archive
@@ -1186,7 +1076,7 @@ __pycache__/
    vagrant ssh
    ```
 
-### Method 3: Native Installation
+### Method 2: Native Installation
 
 1. Ensure system meets requirements above
 2. Install Python {deps.python_version.split()[0]}
@@ -1215,7 +1105,7 @@ python validate_reproduction.py
 
 ### Permission Errors
 - Run as Administrator on Windows
-- Ensure Docker has proper privileges
+- Ensure VM software has proper privileges
 
 ### Network Issues
 - Some tests may require internet access

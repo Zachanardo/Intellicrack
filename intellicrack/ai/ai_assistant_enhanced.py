@@ -660,6 +660,7 @@ What security aspect interests you?"""
         """Apply a patch to the binary with proper cleanup."""
         if self.cli_interface:
             import tempfile
+
             patch_file = None
 
             try:
@@ -1075,8 +1076,8 @@ What security aspect interests you?"""
         try:
             import hashlib
             import os
+
             import requests
-            from datetime import datetime
 
             # Validate file exists
             if not os.path.exists(file_path):
@@ -1120,8 +1121,8 @@ What security aspect interests you?"""
                             "scan_date": attributes.get("last_analysis_date"),
                             "permalink": data.get("data", {}).get("links", {}).get("self"),
                             "reputation": attributes.get("reputation", 0),
-                            "type_description": attributes.get("type_description", "Unknown")
-                        }
+                            "type_description": attributes.get("type_description", "Unknown"),
+                        },
                     }
 
                 # File not found, upload for analysis
@@ -1153,8 +1154,8 @@ What security aspect interests you?"""
                         "results": {
                             "status": "analyzing",
                             "analysis_url": f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
-                            "check_status_in": "60 seconds"
-                        }
+                            "check_status_in": "60 seconds",
+                        },
                     }
                 else:
                     return {"status": "error", "message": f"Upload failed: {upload_response.status_code} - {upload_response.text}"}
@@ -1164,10 +1165,7 @@ What security aspect interests you?"""
                 if not api_key:
                     return {"status": "error", "message": "Hybrid Analysis requires an API key"}
 
-                headers = {
-                    "api-key": api_key,
-                    "user-agent": "Intellicrack Binary Analyzer"
-                }
+                headers = {"api-key": api_key, "user-agent": "Intellicrack Binary Analyzer"}
 
                 # Submit file for analysis
                 url = "https://www.hybrid-analysis.com/api/v2/submit/file"
@@ -1175,7 +1173,7 @@ What security aspect interests you?"""
                     files = {"file": (os.path.basename(file_path), f)}
                     data = {
                         "environment_id": "120",  # Windows 10 64-bit
-                        "no_share_third_party": "true"
+                        "no_share_third_party": "true",
                     }
                     response = requests.post(url, headers=headers, files=files, data=data, timeout=120)
 
@@ -1191,8 +1189,8 @@ What security aspect interests you?"""
                             "job_id": result_data.get("job_id"),
                             "environment": result_data.get("environment_description"),
                             "submission_type": result_data.get("submission_type"),
-                            "analysis_url": f"https://www.hybrid-analysis.com/sample/{result_data.get('sha256')}"
-                        }
+                            "analysis_url": f"https://www.hybrid-analysis.com/sample/{result_data.get('sha256')}",
+                        },
                     }
                 else:
                     return {"status": "error", "message": f"Submission failed: {response.status_code}"}

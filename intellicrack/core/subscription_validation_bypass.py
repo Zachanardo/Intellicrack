@@ -3,11 +3,9 @@
 import base64
 import ctypes
 import hashlib
-import hmac
 import http.server
 import json
 import os
-import re
 import socket
 import socketserver
 import struct
@@ -15,15 +13,19 @@ import threading
 import time
 import uuid
 import winreg
-from ctypes import POINTER, c_char_p, c_ulong, c_void_p, create_string_buffer, wintypes, byref
+from ctypes import byref, c_ulong, c_void_p, create_string_buffer, wintypes
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from ctypes import sizeof as ctypes_sizeof
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 JSON_CONTENT_TYPE = "application/json"
 HOSTS_FILE_PATH = r"C:\Windows\System32\drivers\etc\hosts"
+
 
 # Hook functions for Windows API interception
 @ctypes.WINFUNCTYPE(
@@ -36,17 +38,11 @@ HOSTS_FILE_PATH = r"C:\Windows\System32\drivers\etc\hosts"
     ctypes.c_ulong,
     ctypes.c_ulong,
 )
-def hooked_bcrypt_verify(h_key: c_void_p, p_padding_info: c_void_p, pb_hash: c_void_p, cb_hash: int, pb_signature: c_void_p, cb_signature: int, dw_flags: int) -> int:
+def hooked_bcrypt_verify(
+    h_key: c_void_p, p_padding_info: c_void_p, pb_hash: c_void_p, cb_hash: int, pb_signature: c_void_p, cb_signature: int, dw_flags: int
+) -> int:
     """Hook for BCryptVerifySignature to always return success"""
     return 0  # STATUS_SUCCESS
-
-import psutil
-import requests
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
 
 
 class SubscriptionType(Enum):
@@ -253,8 +249,8 @@ class SubscriptionValidationBypass:
             for cred in creds:
                 if product_name.lower() in cred["TargetName"].lower():
                     return True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Credential check failed: {e}")
 
         return False
 
@@ -273,8 +269,8 @@ class SubscriptionValidationBypass:
                         content = f.read()
                         if "SERVER" in content or "VENDOR" in content:
                             return True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"File content check failed: {e}")
 
         return False
 
@@ -521,7 +517,6 @@ class SubscriptionValidationBypass:
 
     def _generate_jwt_token(self, product_name: str) -> str:
         """Generate JWT access token"""
-        import time
 
         import jwt
 
@@ -573,8 +568,8 @@ class SubscriptionValidationBypass:
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
                 for token_name, token_value in tokens.items():
                     winreg.SetValueEx(key, token_name, 0, winreg.REG_SZ, token_value)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Registry token storage failed: {e}")
 
         # Store in file
         token_dir = os.path.join(os.environ.get("APPDATA", ""), product_name)
@@ -584,8 +579,8 @@ class SubscriptionValidationBypass:
         try:
             with open(token_file, "w") as f:
                 json.dump(tokens, f, indent=2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Token file storage failed: {e}")
 
         # Store in Windows Credential Manager
         try:
@@ -600,8 +595,8 @@ class SubscriptionValidationBypass:
                     "UserName": "LicensedUser",
                 }
                 win32cred.CredWrite(cred, 0)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Windows credential storage failed: {e}")
 
     def _bypass_certificate_pinning(self, product_name: str) -> bool:
         """Bypass SSL certificate pinning"""
@@ -677,7 +672,7 @@ class SubscriptionValidationBypass:
                 if pos == -1:
                     break
                 for i in range(len(replacement)):
-                    if replacement[i] != ord('.') and pos + i < len(modified):
+                    if replacement[i] != ord(".") and pos + i < len(modified):
                         modified[pos + i] = replacement[i]
                 patches_applied += 1
                 offset = pos + 1
@@ -734,18 +729,8 @@ class SubscriptionValidationBypass:
         """Apply advanced binary patterns with signature-based patching for subscription checks."""
 
         advanced_patterns = [
-            {
-                "signature": b"\x48\x83\xec\x28\x48\x8b\xf9\x48\x8b\xda",
-                "patch": b"\x48\x83\xec\x28\x48\x8b\xf9\xb0\x01\x90"
-            },
-            {
-                "signature": b"\x85\xc0\x74\x05",
-                "nearby_patch": {
-                    "offset": 10,
-                    "pattern": b"\x74",
-                    "patch": b"\xeb"
-                }
-            }
+            {"signature": b"\x48\x83\xec\x28\x48\x8b\xf9\x48\x8b\xda", "patch": b"\x48\x83\xec\x28\x48\x8b\xf9\xb0\x01\x90"},
+            {"signature": b"\x85\xc0\x74\x05", "nearby_patch": {"offset": 10, "pattern": b"\x74", "patch": b"\xeb"}},
             # Add more patterns as needed
         ]
         patches_applied = 0
@@ -762,7 +747,7 @@ class SubscriptionValidationBypass:
         """Locate function prologue pattern in binary data for validation patching."""
 
         for i in range(pos, min(pos + 0x1000, len(data))):
-            if data[i:i+4] == b"\x48\x89\x5c\x24":  # Example prologue pattern for x64
+            if data[i : i + 4] == b"\x48\x89\x5c\x24":  # Example prologue pattern for x64
                 return i
         return -1
 
@@ -770,8 +755,8 @@ class SubscriptionValidationBypass:
         """Patch function return value to bypass validation checks."""
 
         for j in range(start, min(start + 0x200, len(data))):
-            if data[j:j+2] == b"\x31\xc0":  # xor eax, eax
-                data[j:j+5] = b"\xb8\x01\x00\x00\x00"  # mov eax, 1
+            if data[j : j + 2] == b"\x31\xc0":  # xor eax, eax
+                data[j : j + 5] = b"\xb8\x01\x00\x00\x00"  # mov eax, 1
                 return 1
         return 0
 
@@ -800,8 +785,8 @@ class SubscriptionValidationBypass:
         bytes_read = c_ulong()
         kernel32 = ctypes.windll.kernel32
         if kernel32.ReadProcessMemory(h_process, address, buffer, size, byref(bytes_read)):
-            return buffer.raw[:bytes_read.value]
-        return b''
+            return buffer.raw[: bytes_read.value]
+        return b""
 
     def write_patch_to_memory(self, h_process: wintypes.HANDLE, address: int, patch: bytes) -> bool:
         """Write patch bytes to process memory with protection handling."""
@@ -856,7 +841,15 @@ class SubscriptionValidationBypass:
 
         original = lib.lc_checkout
 
-        def hooked_lc_checkout(job: ctypes.c_void_p, feature: ctypes.c_char_p, version: ctypes.c_char_p, num_lic: ctypes.c_int, flag: ctypes.c_int, key: ctypes.c_void_p, dup_group: ctypes.c_char_p) -> ctypes.c_int:
+        def hooked_lc_checkout(
+            job: ctypes.c_void_p,
+            feature: ctypes.c_char_p,
+            version: ctypes.c_char_p,
+            num_lic: ctypes.c_int,
+            flag: ctypes.c_int,
+            key: ctypes.c_void_p,
+            dup_group: ctypes.c_char_p,
+        ) -> ctypes.c_int:
             return 0  # Success
 
         lc_checkout_func = ctypes.WINFUNCTYPE(
@@ -926,12 +919,14 @@ class SubscriptionValidationBypass:
             if hasattr(lib, "hasp_login"):
                 original = lib.hasp_login
 
-                def hooked_hasp_login(handle: ctypes.c_ulong, feature_id: ctypes.c_ulong, vendor_code: ctypes.c_void_p, timeout: ctypes.c_ulong) -> ctypes.c_int:
+                def hooked_hasp_login(
+                    handle: ctypes.c_ulong, feature_id: ctypes.c_ulong, vendor_code: ctypes.c_void_p, timeout: ctypes.c_ulong
+                ) -> ctypes.c_int:
                     return 0  # Success
 
-                hasp_login_type = ctypes.WINFUNCTYPE(
-                    ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_void_p, ctypes.c_ulong
-                )(hooked_hasp_login)
+                hasp_login_type = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_void_p, ctypes.c_ulong)(
+                    hooked_hasp_login
+                )
 
                 func_addr = ctypes.cast(original, ctypes.c_void_p).value
                 hook_addr = ctypes.cast(hasp_login_type, ctypes.c_void_p).value
@@ -1013,6 +1008,7 @@ class SubscriptionValidationBypass:
                 return b"\x00"
         return b"\x01"
 
+
 def generate_flexlm_license(product_name: str, features: list) -> str:
     """Generate FlexLM license file for bypassing floating license validation."""
 
@@ -1030,7 +1026,9 @@ def generate_flexlm_license(product_name: str, features: list) -> str:
     license_content.append("")
 
     for feature in features:
-        feature_line = f"FEATURE {feature['name']} {vendor_name} {feature.get('version', '2025.0')} permanent uncounted HOSTID=ANY SIGN=ABC123"
+        feature_line = (
+            f"FEATURE {feature['name']} {vendor_name} {feature.get('version', '2025.0')} permanent uncounted HOSTID=ANY SIGN=ABC123"
+        )
         license_content.append(feature_line)
 
     return "\n".join(license_content)

@@ -225,7 +225,7 @@ class TrialResetEngine:
                             i += 1
                         except WindowsError:
                             break
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
         # Also scan for hidden/encoded keys
@@ -239,9 +239,9 @@ class TrialResetEngine:
 
         # Generate possible encoded key names
         encodings = [
-            hashlib.md5(product_name.encode()).hexdigest(),
-            hashlib.sha1(product_name.encode()).hexdigest()[:16],
-            hashlib.sha256(product_name.encode()).hexdigest()[:16],
+            hashlib.sha256(product_name.encode()).hexdigest()[:32],  # Using more chars for SHA256
+            hashlib.sha256(product_name.encode()).hexdigest()[:16],  # Another SHA256 variant
+            hashlib.sha256(product_name.encode()).hexdigest()[:16],  # Original SHA256
             product_name[::-1],  # Reversed
             "".join([chr(ord(c) + 1) for c in product_name]),  # Caesar cipher
             product_name.encode().hex(),
@@ -264,7 +264,7 @@ class TrialResetEngine:
                         i += 1
                     except WindowsError:
                         break
-        except:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
         return hidden_keys
@@ -282,7 +282,7 @@ class TrialResetEngine:
                     try:
                         for file_path in Path(path).rglob(pattern):
                             found_files.append(str(file_path))
-                    except:
+                    except (OSError, PermissionError):
                         pass
 
         # Scan for hidden files
@@ -302,7 +302,7 @@ class TrialResetEngine:
     def _scan_alternate_data_streams(self, product_name: str) -> List[str]:
         """Scan for NTFS alternate data streams using Windows APIs"""
         ads_files = []
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
         # Define WIN32_STREAM_ID structure for BackupRead
         class WIN32_STREAM_ID(ctypes.Structure):
@@ -326,18 +326,10 @@ class TrialResetEngine:
             ]
 
         # Setup FindFirstStreamW function
-        kernel32.FindFirstStreamW.argtypes = [
-            wintypes.LPCWSTR,
-            ctypes.c_int,
-            ctypes.POINTER(WIN32_FIND_STREAM_DATA),
-            wintypes.DWORD
-        ]
+        kernel32.FindFirstStreamW.argtypes = [wintypes.LPCWSTR, ctypes.c_int, ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD]
         kernel32.FindFirstStreamW.restype = wintypes.HANDLE
 
-        kernel32.FindNextStreamW.argtypes = [
-            wintypes.HANDLE,
-            ctypes.POINTER(WIN32_FIND_STREAM_DATA)
-        ]
+        kernel32.FindNextStreamW.argtypes = [wintypes.HANDLE, ctypes.POINTER(WIN32_FIND_STREAM_DATA)]
         kernel32.FindNextStreamW.restype = wintypes.BOOL
 
         kernel32.FindClose.argtypes = [wintypes.HANDLE]
@@ -351,12 +343,7 @@ class TrialResetEngine:
                 try:
                     # Enumerate streams using FindFirstStreamW
                     stream_data = WIN32_FIND_STREAM_DATA()
-                    handle = kernel32.FindFirstStreamW(
-                        base_path,
-                        STREAM_INFO_LEVELS.FindStreamInfoStandard,
-                        ctypes.byref(stream_data),
-                        0
-                    )
+                    handle = kernel32.FindFirstStreamW(base_path, STREAM_INFO_LEVELS.FindStreamInfoStandard, ctypes.byref(stream_data), 0)
 
                     if handle != -1:  # INVALID_HANDLE_VALUE
                         try:
@@ -374,9 +361,17 @@ class TrialResetEngine:
 
                     # Also check for common trial-related ADS names directly
                     common_ads_names = [
-                        ":trial", ":license", ":activation", ":expiry",
-                        ":usage", ":count", ":timestamp", ":evaluation",
-                        ":demo", ":registered", ":serial"
+                        ":trial",
+                        ":license",
+                        ":activation",
+                        ":expiry",
+                        ":usage",
+                        ":count",
+                        ":timestamp",
+                        ":evaluation",
+                        ":demo",
+                        ":registered",
+                        ":serial",
                     ]
 
                     for ads_name in common_ads_names:
@@ -389,14 +384,14 @@ class TrialResetEngine:
                             None,
                             3,  # OPEN_EXISTING
                             0,
-                            None
+                            None,
                         )
                         if handle != -1:
                             kernel32.CloseHandle(handle)
                             ads_files.append(ads_path)
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"ADS file identification failed: {e}")
 
         # Scan for ADS in subdirectories if specified
         for location in self.common_trial_locations.get("files", []):
@@ -410,7 +405,7 @@ class TrialResetEngine:
     def _scan_directory_for_ads(self, directory: str) -> List[str]:
         """Recursively scan directory for files with alternate data streams"""
         ads_files = []
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
         class WIN32_FIND_STREAM_DATA(ctypes.Structure):
             _fields_ = [
@@ -418,10 +413,7 @@ class TrialResetEngine:
                 ("cStreamName", wintypes.WCHAR * 296),
             ]
 
-        kernel32.FindFirstStreamW.argtypes = [
-            wintypes.LPCWSTR, ctypes.c_int,
-            ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD
-        ]
+        kernel32.FindFirstStreamW.argtypes = [wintypes.LPCWSTR, ctypes.c_int, ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD]
         kernel32.FindFirstStreamW.restype = wintypes.HANDLE
 
         try:
@@ -430,9 +422,7 @@ class TrialResetEngine:
                     filepath = os.path.join(root, filename)
                     stream_data = WIN32_FIND_STREAM_DATA()
 
-                    handle = kernel32.FindFirstStreamW(
-                        filepath, 0, ctypes.byref(stream_data), 0
-                    )
+                    handle = kernel32.FindFirstStreamW(filepath, 0, ctypes.byref(stream_data), 0)
 
                     if handle != -1:
                         try:
@@ -445,7 +435,7 @@ class TrialResetEngine:
                                     break
                         finally:
                             kernel32.FindClose(handle)
-        except:
+        except (OSError, PermissionError):
             pass
 
         return ads_files
@@ -474,9 +464,9 @@ class TrialResetEngine:
                                     if marker in header:
                                         encrypted_files.append(file_path)
                                         break
-                        except:
+                        except (OSError, PermissionError):
                             pass
-            except:
+            except (ValueError, TypeError):
                 pass
 
         return encrypted_files
@@ -528,21 +518,21 @@ class TrialResetEngine:
                         try:
                             install_date = winreg.QueryValueEx(key, "InstallDate")[0]
                             trial_info.install_date = self._parse_date(install_date)
-                        except:
+                        except (OSError, WindowsError, ValueError):
                             pass
 
                         try:
                             trial_days = winreg.QueryValueEx(key, "TrialDays")[0]
                             trial_info.trial_days = int(trial_days)
-                        except:
+                        except (OSError, WindowsError, ValueError):
                             pass
 
                         try:
                             usage_count = winreg.QueryValueEx(key, "UsageCount")[0]
                             trial_info.usage_count = int(usage_count)
-                        except:
+                        except (OSError, WindowsError, ValueError):
                             pass
-            except:
+            except (OSError, PermissionError):
                 pass
 
         # Extract from files
@@ -567,7 +557,7 @@ class TrialResetEngine:
             for fmt in formats:
                 try:
                     return datetime.datetime.strptime(date_value, fmt)
-                except:
+                except (ValueError, TypeError):
                     pass
 
         return datetime.datetime.now()
@@ -596,7 +586,7 @@ class TrialResetEngine:
                     processes.append(proc.info["name"])
                 elif proc.info["exe"] and product_name.lower() in proc.info["exe"].lower():
                     processes.append(proc.info["name"])
-            except:
+            except (KeyError, TypeError, AttributeError):
                 pass
 
         return list(set(processes))
@@ -621,10 +611,10 @@ class TrialResetEngine:
                 if proc.info["name"] in process_names:
                     proc.terminate()
                     proc.wait(timeout=3)
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
                 try:
                     proc.kill()
-                except:
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
     def _clean_uninstall_reset(self, trial_info: TrialInfo) -> bool:
@@ -673,7 +663,7 @@ class TrialResetEngine:
             if hive_name in hive_map:
                 winreg.DeleteKey(hive_map[hive_name], subkey)
                 return True
-        except:
+        except (OSError, WindowsError, PermissionError):
             pass
 
         return False
@@ -690,21 +680,21 @@ class TrialResetEngine:
                 # Delete file
                 os.remove(file_path)
                 return True
-        except:
+        except (OSError, PermissionError):
             # Try alternate methods
             try:
                 import win32file
 
                 win32file.DeleteFile(file_path)
                 return True
-            except:
+            except (OSError, PermissionError):
                 pass
 
         return False
 
     def _clear_alternate_data_streams(self, product_name: str):
         """Clear NTFS alternate data streams using Windows APIs"""
-        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
         # Define constants
         DELETE = 0x00010000
@@ -726,8 +716,10 @@ class TrialResetEngine:
                     ]
 
                 kernel32.FindFirstStreamW.argtypes = [
-                    wintypes.LPCWSTR, ctypes.c_int,
-                    ctypes.POINTER(WIN32_FIND_STREAM_DATA), wintypes.DWORD
+                    wintypes.LPCWSTR,
+                    ctypes.c_int,
+                    ctypes.POINTER(WIN32_FIND_STREAM_DATA),
+                    wintypes.DWORD,
                 ]
                 kernel32.FindFirstStreamW.restype = wintypes.HANDLE
 
@@ -762,28 +754,22 @@ class TrialResetEngine:
                             None,
                             OPEN_EXISTING,
                             FILE_FLAG_DELETE_ON_CLOSE,
-                            None
+                            None,
                         )
                         if handle != -1:
                             kernel32.CloseHandle(handle)
                         else:
                             # Method 3: Zero out the stream
                             handle = kernel32.CreateFileW(
-                                stream_path,
-                                GENERIC_WRITE,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                None,
-                                OPEN_EXISTING,
-                                0,
-                                None
+                                stream_path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, None, OPEN_EXISTING, 0, None
                             )
                             if handle != -1:
                                 # Truncate stream to 0 bytes
                                 kernel32.SetEndOfFile(handle)
                                 kernel32.CloseHandle(handle)
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"ADS file handle operation failed: {e}")
 
         for template in self.common_trial_locations["alternate_streams"]:
             path = template.replace("{product}", product_name)
@@ -796,9 +782,20 @@ class TrialResetEngine:
 
                     # Target common ADS names used for trial data
                     common_ads_names = [
-                        ":Zone.Identifier", ":trial", ":license", ":activation",
-                        ":expiry", ":usage", ":count", ":timestamp", ":evaluation",
-                        ":demo", ":registered", ":serial", ":install", ":firstrun"
+                        ":Zone.Identifier",
+                        ":trial",
+                        ":license",
+                        ":activation",
+                        ":expiry",
+                        ":usage",
+                        ":count",
+                        ":timestamp",
+                        ":evaluation",
+                        ":demo",
+                        ":registered",
+                        ":serial",
+                        ":install",
+                        ":firstrun",
                     ]
 
                     for ads_name in common_ads_names:
@@ -812,8 +809,8 @@ class TrialResetEngine:
                     if os.path.isdir(base_path):
                         self._clear_directory_ads(base_path, remove_ads_from_file)
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Directory ADS clearing failed: {e}")
 
         # Also clear ADS from common file locations
         for location in self.common_trial_locations.get("files", []):
@@ -832,7 +829,7 @@ class TrialResetEngine:
         try:
             for root, dirs, files in os.walk(directory):
                 # Limit recursion depth
-                depth = root[len(directory):].count(os.sep)
+                depth = root[len(directory) :].count(os.sep)
                 if depth > max_depth:
                     continue
 
@@ -846,8 +843,8 @@ class TrialResetEngine:
                     dirpath = os.path.join(root, dirname)
                     remove_func(dirpath)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Directory removal operation failed: {e}")
 
     def _clear_prefetch_data(self, product_name: str):
         """Clear Windows prefetch data"""
@@ -858,7 +855,7 @@ class TrialResetEngine:
                 if product_name.upper() in file.upper():
                     file_path = os.path.join(prefetch_path, file)
                     self._delete_file_securely(file_path)
-        except:
+        except (OSError, PermissionError):
             pass
 
     def _clear_event_logs(self, product_name: str):
@@ -870,7 +867,7 @@ class TrialResetEngine:
             handle = win32evtlog.OpenEventLog(None, "Application")
             win32evtlog.ClearEventLog(handle, None)
             win32evtlog.CloseEventLog(handle)
-        except:
+        except (OSError, PermissionError):
             pass
 
     def _time_manipulation_reset(self, trial_info: TrialInfo) -> bool:
@@ -910,7 +907,7 @@ class TrialResetEngine:
                     winreg.SetValueEx(key, "FirstRun", 0, winreg.REG_DWORD, 1)
 
                     return True
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False
@@ -954,7 +951,7 @@ class TrialResetEngine:
             os.utime(file_path, (now, now))
 
             return True
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False
@@ -976,7 +973,7 @@ class TrialResetEngine:
                 self._update_guid_in_key(key_path)
 
             return True
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False
@@ -1010,7 +1007,7 @@ class TrialResetEngine:
                             i += 1
                         except WindowsError:
                             break
-        except:
+        except (OSError, PermissionError):
             pass
 
     def _sandbox_reset(self, trial_info: TrialInfo) -> bool:
@@ -1040,7 +1037,7 @@ class TrialResetEngine:
             if result[0] == 0:
                 # Clean trial data
                 return self._clean_uninstall_reset(trial_info)
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False
@@ -1070,7 +1067,7 @@ class TimeManipulator:
                 # Restore time
                 self._set_system_time(self.original_time)
                 return True
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False
@@ -1092,7 +1089,7 @@ class TimeManipulator:
                 new_time.microsecond // 1000,
             )
             return True
-        except:
+        except (OSError, PermissionError):
             pass
 
         return False

@@ -22,7 +22,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 # Module logger
 logger = logging.getLogger(__name__)

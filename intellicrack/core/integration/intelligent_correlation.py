@@ -476,7 +476,7 @@ class ConfidenceScorer:
 
     def _values_match(self, val1: Any, val2: Any) -> bool:
         """Check if values match"""
-        if type(val1) != type(val2):
+        if type(val1) is not type(val2):
             return False
 
         if isinstance(val1, (int, float)):

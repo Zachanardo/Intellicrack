@@ -25,16 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Import patching modules with error handling
 try:
-    from .adobe_injector import (
-        AdobeInjector,
-        create_adobe_injector,
-        inject_running_adobe_processes,
-        start_adobe_monitoring,
-    )
-except ImportError as e:
-    logger.warning("Failed to import adobe_injector: %s", e)
-
-try:
     from .windows_activator import (
         ActivationMethod,
         ActivationStatus,
@@ -44,6 +34,17 @@ try:
         check_windows_activation,
         create_windows_activator,
     )
+
+    def activate_windows_interactive(output_callback=None):
+        """Launch Windows activation interactively."""
+        activator = create_windows_activator()
+        return activator.activate_windows_interactive(output_callback)
+
+    def activate_windows_in_terminal():
+        """Activate Windows using embedded terminal (recommended)."""
+        activator = create_windows_activator()
+        return activator.activate_windows_in_terminal()
+
 except ImportError as e:
     logger.warning("Failed to import windows_activator: %s", e)
 
@@ -60,11 +61,6 @@ except ImportError as e:
 
 # Define package exports
 __all__ = [
-    # From adobe_injector
-    "AdobeInjector",
-    "create_adobe_injector",
-    "inject_running_adobe_processes",
-    "start_adobe_monitoring",
     # From windows_activator
     "WindowsActivator",
     "ActivationMethod",
@@ -73,6 +69,8 @@ __all__ = [
     "check_windows_activation",
     "activate_windows_hwid",
     "activate_windows_kms",
+    "activate_windows_interactive",
+    "activate_windows_in_terminal",
     # From memory_patcher
     "generate_launcher_script",
     "setup_memory_patching",

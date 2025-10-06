@@ -49,6 +49,8 @@ _handler_modules = [
     ("tensorflow_handler", "TensorFlow machine learning"),
     ("tkinter_handler", "Tkinter GUI framework"),
     ("torch_handler", "PyTorch machine learning"),
+    ("wmi_handler", "WMI Windows Management"),
+    ("ipex_handler", "Intel Extension for PyTorch"),
 ]
 
 # Load handlers with error tolerance

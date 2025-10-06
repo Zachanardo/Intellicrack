@@ -24,29 +24,6 @@ in commonly protected software categories.
 
 # Preset configurations for various software types
 FRIDA_PRESETS = {
-    "Adobe Creative Cloud": {
-        "description": "Comprehensive bypass for Adobe CC applications",
-        "target": "Adobe Photoshop, Illustrator, Premiere Pro, After Effects",
-        "scripts": [
-            "adobe_bypass",
-            "cloud_licensing_bypass",
-            "time_bomb_defuser",
-            "registry_monitor",
-        ],
-        "protections": ["LICENSE", "CLOUD", "TIME", "INTEGRITY"],
-        "options": {
-            "aggressive": True,
-            "patch_checksums": True,
-            "emulate_server": True,
-            "hook_priority": "HIGH",
-        },
-        "hooks": [
-            "advapi32.dll!RegQueryValueExW",
-            "wininet.dll!InternetOpenUrlW",
-            "kernel32.dll!GetSystemTime",
-            "advapi32.dll!CryptHashData",
-        ],
-    },
     "Microsoft Office 365": {
         "description": "Bypass for Microsoft Office licensing and activation",
         "target": "Word, Excel, PowerPoint, Outlook",

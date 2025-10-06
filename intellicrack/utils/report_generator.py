@@ -58,13 +58,13 @@ try:
     )
 
     # Verify reportlab page size formats are available for document layout
-    _ = A4.__name__  # Used for A4 page size specification
+    assert isinstance(A4, tuple) and len(A4) == 2  # A4 is a tuple of (width, height)
 
     # Verify reportlab image handling components are available
-    _ = Image.__name__  # Used for image embedding in PDF documents
+    assert Image is not None  # Image class is available for embedding
 
     # Verify reportlab page break functionality is available
-    _ = PageBreak.__name__  # Used for forcing page breaks in PDF documents
+    assert PageBreak is not None  # PageBreak class available for forcing page breaks
     HAS_REPORTLAB = True
 except ImportError:
     HAS_REPORTLAB = False
@@ -683,6 +683,16 @@ def generate_report(analysis_data: Dict[str, Any], format: str = "html", output_
     """Convenience function to generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
+
+
+def export_report(analysis_data: Dict[str, Any], format: str = "html", output_path: Optional[str] = None) -> str:
+    """Export analysis report to file."""
+    output_dir = Path(output_path).parent if output_path else Path("reports")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    generator = ReportGenerator(str(output_dir))
+    output_file = Path(output_path).name if output_path else None
+    return generator.generate_report(analysis_data, format, output_file)
 
 
 def generate_comparison_report(results: List[Dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:

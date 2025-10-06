@@ -17,15 +17,15 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-import struct
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
 try:
     import capstone
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -33,6 +33,7 @@ except ImportError:
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -40,6 +41,7 @@ except ImportError:
 
 try:
     import networkx as nx
+
     NETWORKX_AVAILABLE = True
 except ImportError:
     NETWORKX_AVAILABLE = False
@@ -47,6 +49,7 @@ except ImportError:
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -84,7 +87,7 @@ class BinaryFeatureExtractor:
                 self.pe.parse_data_directories()
 
                 # Determine architecture
-                if self.pe.FILE_HEADER.Machine == 0x014c:  # IMAGE_FILE_MACHINE_I386
+                if self.pe.FILE_HEADER.Machine == 0x014C:  # IMAGE_FILE_MACHINE_I386
                     self.arch = CS_ARCH_X86
                     self.mode = CS_MODE_32
                 elif self.pe.FILE_HEADER.Machine == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
@@ -153,11 +156,53 @@ class BinaryFeatureExtractor:
 
         # Create feature vector for most common opcodes
         common_opcodes = [
-            'mov', 'push', 'call', 'pop', 'ret', 'jmp', 'je', 'jne', 'cmp', 'test',
-            'lea', 'add', 'sub', 'xor', 'and', 'or', 'shl', 'shr', 'nop', 'int',
-            'inc', 'dec', 'mul', 'div', 'jg', 'jl', 'jge', 'jle', 'jz', 'jnz',
-            'movzx', 'movsx', 'imul', 'idiv', 'cdq', 'cbw', 'cwde', 'cdqe', 'rep',
-            'repe', 'repne', 'loop', 'loope', 'loopne', 'syscall', 'sysenter', 'cpuid'
+            "mov",
+            "push",
+            "call",
+            "pop",
+            "ret",
+            "jmp",
+            "je",
+            "jne",
+            "cmp",
+            "test",
+            "lea",
+            "add",
+            "sub",
+            "xor",
+            "and",
+            "or",
+            "shl",
+            "shr",
+            "nop",
+            "int",
+            "inc",
+            "dec",
+            "mul",
+            "div",
+            "jg",
+            "jl",
+            "jge",
+            "jle",
+            "jz",
+            "jnz",
+            "movzx",
+            "movsx",
+            "imul",
+            "idiv",
+            "cdq",
+            "cbw",
+            "cwde",
+            "cdqe",
+            "rep",
+            "repe",
+            "repne",
+            "loop",
+            "loope",
+            "loopne",
+            "syscall",
+            "sysenter",
+            "cpuid",
         ]
 
         histogram = np.zeros(len(common_opcodes) + 1, dtype=np.float32)
@@ -201,13 +246,13 @@ class BinaryFeatureExtractor:
         """Build control flow graph and extract graph features."""
         if not NETWORKX_AVAILABLE:
             return {
-                'num_nodes': 0,
-                'num_edges': 0,
-                'avg_degree': 0.0,
-                'max_degree': 0,
-                'density': 0.0,
-                'num_components': 0,
-                'largest_component': 0
+                "num_nodes": 0,
+                "num_edges": 0,
+                "avg_degree": 0.0,
+                "max_degree": 0,
+                "density": 0.0,
+                "num_components": 0,
+                "largest_component": 0,
             }
 
         cfg = nx.DiGraph()
@@ -215,31 +260,31 @@ class BinaryFeatureExtractor:
 
         # Build graph from basic blocks
         for block in basic_blocks:
-            cfg.add_node(block['start'], size=block['size'], type=block['type'])
+            cfg.add_node(block["start"], size=block["size"], type=block["type"])
 
-            for target in block.get('targets', []):
-                cfg.add_edge(block['start'], target)
+            for target in block.get("targets", []):
+                cfg.add_edge(block["start"], target)
 
         # Extract graph features
         features = {
-            'num_nodes': cfg.number_of_nodes(),
-            'num_edges': cfg.number_of_edges(),
-            'avg_degree': 0.0,
-            'max_degree': 0,
-            'density': nx.density(cfg) if cfg.number_of_nodes() > 0 else 0.0,
-            'num_components': nx.number_weakly_connected_components(cfg),
-            'largest_component': 0
+            "num_nodes": cfg.number_of_nodes(),
+            "num_edges": cfg.number_of_edges(),
+            "avg_degree": 0.0,
+            "max_degree": 0,
+            "density": nx.density(cfg) if cfg.number_of_nodes() > 0 else 0.0,
+            "num_components": nx.number_weakly_connected_components(cfg),
+            "largest_component": 0,
         }
 
         if cfg.number_of_nodes() > 0:
             degrees = [d for n, d in cfg.degree()]
-            features['avg_degree'] = np.mean(degrees)
-            features['max_degree'] = max(degrees)
+            features["avg_degree"] = np.mean(degrees)
+            features["max_degree"] = max(degrees)
 
             # Get largest component size
             components = list(nx.weakly_connected_components(cfg))
             if components:
-                features['largest_component'] = len(max(components, key=len))
+                features["largest_component"] = len(max(components, key=len))
 
         return features
 
@@ -253,44 +298,34 @@ class BinaryFeatureExtractor:
         exec_sections = self._get_executable_sections()
 
         for section_data, section_va in exec_sections:
-            current_block = {
-                'start': section_va,
-                'size': 0,
-                'type': 'normal',
-                'targets': []
-            }
+            current_block = {"start": section_va, "size": 0, "type": "normal", "targets": []}
 
             try:
                 for insn in self.disassembler.disasm(section_data, section_va):
-                    current_block['size'] += insn.size
+                    current_block["size"] += insn.size
 
                     # Check if instruction ends basic block
-                    if insn.mnemonic in ['ret', 'retn', 'jmp', 'je', 'jne', 'jg', 'jl', 'jge', 'jle', 'jz', 'jnz', 'call']:
-                        if insn.mnemonic == 'ret':
-                            current_block['type'] = 'return'
-                        elif insn.mnemonic == 'call':
-                            current_block['type'] = 'call'
-                        elif insn.mnemonic.startswith('j'):
-                            current_block['type'] = 'conditional'
+                    if insn.mnemonic in ["ret", "retn", "jmp", "je", "jne", "jg", "jl", "jge", "jle", "jz", "jnz", "call"]:
+                        if insn.mnemonic == "ret":
+                            current_block["type"] = "return"
+                        elif insn.mnemonic == "call":
+                            current_block["type"] = "call"
+                        elif insn.mnemonic.startswith("j"):
+                            current_block["type"] = "conditional"
 
                         # Extract jump/call targets
                         if insn.operands:
                             op = insn.operands[0]
                             if op.type == capstone.x86.X86_OP_IMM:
-                                current_block['targets'].append(op.imm)
+                                current_block["targets"].append(op.imm)
 
                         blocks.append(current_block)
 
                         # Start new block
-                        current_block = {
-                            'start': insn.address + insn.size,
-                            'size': 0,
-                            'type': 'normal',
-                            'targets': []
-                        }
+                        current_block = {"start": insn.address + insn.size, "size": 0, "type": "normal", "targets": []}
 
                 # Add final block if it has content
-                if current_block['size'] > 0:
+                if current_block["size"] > 0:
                     blocks.append(current_block)
 
             except Exception as e:
@@ -304,21 +339,21 @@ class BinaryFeatureExtractor:
 
         # License-related API categories
         api_categories = {
-            'registry': ['RegOpenKey', 'RegQueryValue', 'RegSetValue', 'RegCreateKey', 'RegDeleteKey', 'RegEnumKey'],
-            'crypto': ['CryptHashData', 'CryptGenKey', 'CryptEncrypt', 'CryptDecrypt', 'CryptCreateHash', 'CryptAcquireContext'],
-            'network': ['InternetOpen', 'InternetConnect', 'HttpOpenRequest', 'HttpSendRequest', 'WSAStartup', 'connect', 'send', 'recv'],
-            'hardware': ['GetVolumeInformation', 'GetSystemInfo', 'GetComputerName', 'GetAdaptersInfo', 'DeviceIoControl'],
-            'time': ['GetSystemTime', 'GetTickCount', 'QueryPerformanceCounter', 'GetLocalTime', 'timeGetTime'],
-            'process': ['CreateProcess', 'OpenProcess', 'TerminateProcess', 'GetCurrentProcess', 'GetProcessId'],
-            'file': ['CreateFile', 'ReadFile', 'WriteFile', 'GetFileAttributes', 'FindFirstFile'],
-            'memory': ['VirtualAlloc', 'VirtualProtect', 'VirtualFree', 'HeapAlloc', 'GlobalAlloc']
+            "registry": ["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey", "RegDeleteKey", "RegEnumKey"],
+            "crypto": ["CryptHashData", "CryptGenKey", "CryptEncrypt", "CryptDecrypt", "CryptCreateHash", "CryptAcquireContext"],
+            "network": ["InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest", "WSAStartup", "connect", "send", "recv"],
+            "hardware": ["GetVolumeInformation", "GetSystemInfo", "GetComputerName", "GetAdaptersInfo", "DeviceIoControl"],
+            "time": ["GetSystemTime", "GetTickCount", "QueryPerformanceCounter", "GetLocalTime", "timeGetTime"],
+            "process": ["CreateProcess", "OpenProcess", "TerminateProcess", "GetCurrentProcess", "GetProcessId"],
+            "file": ["CreateFile", "ReadFile", "WriteFile", "GetFileAttributes", "FindFirstFile"],
+            "memory": ["VirtualAlloc", "VirtualProtect", "VirtualFree", "HeapAlloc", "GlobalAlloc"],
         }
 
         imports = self._extract_imports()
 
         # Create feature vector based on API presence
         feature_idx = 0
-        for category, apis in api_categories.items():
+        for _category, apis in api_categories.items():
             category_count = 0
             for api in apis:
                 for imp in imports:
@@ -339,11 +374,11 @@ class BinaryFeatureExtractor:
 
         if self.pe:
             try:
-                if hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+                if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
                     for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
                         for imp in entry.imports:
                             if imp.name:
-                                imports.append(imp.name.decode('utf-8', errors='ignore'))
+                                imports.append(imp.name.decode("utf-8", errors="ignore"))
             except Exception as e:
                 self.logger.debug(f"Import extraction error: {e}")
         elif self.lief_binary:
@@ -375,7 +410,7 @@ class BinaryFeatureExtractor:
             # Calculate entropy for whole binary in chunks
             chunk_size = len(self.data) // 8
             for i in range(8):
-                chunk = self.data[i * chunk_size:(i + 1) * chunk_size]
+                chunk = self.data[i * chunk_size : (i + 1) * chunk_size]
                 if chunk:
                     entropy = self._calculate_entropy(chunk)
                     entropies.append(entropy)
@@ -412,26 +447,26 @@ class BinaryFeatureExtractor:
         features = np.zeros(128, dtype=np.float32)
 
         # Extract strings with different encoding
-        ascii_strings = self._extract_strings(self.data, min_length=4, encoding='ascii')
-        unicode_strings = self._extract_strings(self.data, min_length=4, encoding='utf-16le')
+        ascii_strings = self._extract_strings(self.data, min_length=4, encoding="ascii")
+        unicode_strings = self._extract_strings(self.data, min_length=4, encoding="utf-16le")
 
         all_strings = ascii_strings + unicode_strings
 
         # License-related patterns
         patterns = {
-            'license': ['license', 'licence', 'licensed', 'licensing'],
-            'serial': ['serial', 'key', 'code', 'productkey', 'activation'],
-            'trial': ['trial', 'evaluation', 'demo', 'expired', 'days_left'],
-            'registration': ['register', 'registration', 'activate', 'unlock'],
-            'hardware': ['hwid', 'hardware', 'machine', 'computer_id'],
-            'network': ['http', 'https', 'server', 'validate', 'check_license'],
-            'crypto': ['rsa', 'aes', 'signature', 'hash', 'encrypt'],
-            'protection': ['protected', 'tamper', 'integrity', 'checksum']
+            "license": ["license", "licence", "licensed", "licensing"],
+            "serial": ["serial", "key", "code", "productkey", "activation"],
+            "trial": ["trial", "evaluation", "demo", "expired", "days_left"],
+            "registration": ["register", "registration", "activate", "unlock"],
+            "hardware": ["hwid", "hardware", "machine", "computer_id"],
+            "network": ["http", "https", "server", "validate", "check_license"],
+            "crypto": ["rsa", "aes", "signature", "hash", "encrypt"],
+            "protection": ["protected", "tamper", "integrity", "checksum"],
         }
 
         # Count pattern occurrences
         feature_idx = 0
-        for category, keywords in patterns.items():
+        for _category, keywords in patterns.items():
             if feature_idx >= len(features):
                 break
 
@@ -454,14 +489,13 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = 'ascii') -> List[str]:
+    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> List[str]:
         """Extract strings from binary data."""
         strings = []
 
-        if encoding == 'ascii':
+        if encoding == "ascii":
             # ASCII string extraction
-            ascii_pattern = b'[\\x20-\\x7E]'
-            current_string = b''
+            current_string = b""
 
             for byte in data:
                 if 0x20 <= byte <= 0x7E:  # Printable ASCII
@@ -469,24 +503,24 @@ class BinaryFeatureExtractor:
                 else:
                     if len(current_string) >= min_length:
                         try:
-                            strings.append(current_string.decode('ascii'))
-                        except:
+                            strings.append(current_string.decode("ascii"))
+                        except (UnicodeDecodeError, ValueError):
                             pass
-                    current_string = b''
+                    current_string = b""
 
             # Check final string
             if len(current_string) >= min_length:
                 try:
-                    strings.append(current_string.decode('ascii'))
-                except:
+                    strings.append(current_string.decode("ascii"))
+                except (UnicodeDecodeError, ValueError):
                     pass
 
-        elif encoding == 'utf-16le':
+        elif encoding == "utf-16le":
             # UTF-16LE string extraction (common in Windows)
             i = 0
             while i < len(data) - 1:
                 # Look for sequences of printable characters with null bytes
-                current_string = b''
+                current_string = b""
                 while i < len(data) - 1:
                     if 0x20 <= data[i] <= 0x7E and data[i + 1] == 0:
                         current_string += bytes([data[i]])
@@ -496,8 +530,8 @@ class BinaryFeatureExtractor:
 
                 if len(current_string) >= min_length:
                     try:
-                        strings.append(current_string.decode('ascii'))
-                    except:
+                        strings.append(current_string.decode("ascii"))
+                    except (UnicodeDecodeError, ValueError):
                         pass
 
                 i += 1
@@ -507,11 +541,11 @@ class BinaryFeatureExtractor:
     def extract_all_features(self) -> Dict[str, np.ndarray]:
         """Extract all features from binary."""
         features = {
-            'opcode_histogram': self.extract_opcode_histogram(),
-            'cfg_features': self._cfg_to_vector(self.build_control_flow_graph()),
-            'api_sequences': self.extract_api_sequences(),
-            'section_entropy': self.calculate_section_entropy(),
-            'string_features': self.extract_string_features()
+            "opcode_histogram": self.extract_opcode_histogram(),
+            "cfg_features": self._cfg_to_vector(self.build_control_flow_graph()),
+            "api_sequences": self.extract_api_sequences(),
+            "section_entropy": self.calculate_section_entropy(),
+            "string_features": self.extract_string_features(),
         }
 
         return features
@@ -520,13 +554,13 @@ class BinaryFeatureExtractor:
         """Convert CFG dictionary to feature vector."""
         vector = np.zeros(16, dtype=np.float32)
 
-        vector[0] = cfg_dict.get('num_nodes', 0) / 10000.0  # Normalize
-        vector[1] = cfg_dict.get('num_edges', 0) / 10000.0
-        vector[2] = cfg_dict.get('avg_degree', 0) / 100.0
-        vector[3] = cfg_dict.get('max_degree', 0) / 1000.0
-        vector[4] = cfg_dict.get('density', 0)
-        vector[5] = cfg_dict.get('num_components', 0) / 100.0
-        vector[6] = cfg_dict.get('largest_component', 0) / 10000.0
+        vector[0] = cfg_dict.get("num_nodes", 0) / 10000.0  # Normalize
+        vector[1] = cfg_dict.get("num_edges", 0) / 10000.0
+        vector[2] = cfg_dict.get("avg_degree", 0) / 100.0
+        vector[3] = cfg_dict.get("max_degree", 0) / 1000.0
+        vector[4] = cfg_dict.get("density", 0)
+        vector[5] = cfg_dict.get("num_components", 0) / 100.0
+        vector[6] = cfg_dict.get("largest_component", 0) / 10000.0
 
         return vector
 
@@ -537,12 +571,14 @@ def extract_features_for_ml(binary_path: str) -> np.ndarray:
     features = extractor.extract_all_features()
 
     # Concatenate all features into single vector
-    feature_vector = np.concatenate([
-        features['opcode_histogram'],
-        features['cfg_features'],
-        features['api_sequences'],
-        features['section_entropy'],
-        features['string_features']
-    ])
+    feature_vector = np.concatenate(
+        [
+            features["opcode_histogram"],
+            features["cfg_features"],
+            features["api_sequences"],
+            features["section_entropy"],
+            features["string_features"],
+        ]
+    )
 
     return feature_vector

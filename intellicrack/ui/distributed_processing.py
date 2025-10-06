@@ -289,7 +289,7 @@ except ImportError:
 
             self._enabled = enabled
             for child in self._children:
-                if hasattr(child, 'setEnabled'):
+                if hasattr(child, "setEnabled"):
                     child.setEnabled(enabled)
 
         def isEnabled(self):
@@ -416,7 +416,7 @@ except ImportError:
             # Create bound signal for specific instance
             bound_signal = BoundSignal(self, obj)
             # Cache it on the instance to maintain connections
-            if not hasattr(obj, '_bound_signals'):
+            if not hasattr(obj, "_bound_signals"):
                 obj._bound_signals = {}
             obj._bound_signals[id(self)] = bound_signal
             return bound_signal
@@ -449,7 +449,7 @@ except ImportError:
         def emit(self, *args):
             """Emit bound signal with arguments to connected slots."""
 
-            if hasattr(self.signal, '_blocked') and self.signal._blocked:
+            if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
 
             with self._mutex:
@@ -628,14 +628,14 @@ class DistributedWorkerThread(QThread):
         if not binary_path or not os.path.exists(binary_path):
             # Create test binary if path doesn't exist for testing
             if binary_path and not os.path.exists(binary_path):
-                os.makedirs(os.path.dirname(binary_path) or '.', exist_ok=True)
+                os.makedirs(os.path.dirname(binary_path) or ".", exist_ok=True)
                 # Create minimal PE header for testing
-                with open(binary_path, 'wb') as f:
-                    f.write(b'MZ' + b'\x00' * 58 + b'\x40\x00\x00\x00')  # Minimal DOS header
-                    f.write(b'\x00' * 64)  # Padding
-                    f.write(b'PE\x00\x00')  # PE signature
-                    f.write(b'\x64\x86' + b'\x00' * 18)  # Minimal COFF header
-                    f.write(b'\x0b\x02' + b'\x00' * 238)  # Minimal optional header
+                with open(binary_path, "wb") as f:
+                    f.write(b"MZ" + b"\x00" * 58 + b"\x40\x00\x00\x00")  # Minimal DOS header
+                    f.write(b"\x00" * 64)  # Padding
+                    f.write(b"PE\x00\x00")  # PE signature
+                    f.write(b"\x64\x86" + b"\x00" * 18)  # Minimal COFF header
+                    f.write(b"\x0b\x02" + b"\x00" * 238)  # Minimal optional header
 
         results = {
             "binary_path": binary_path,
@@ -646,33 +646,33 @@ class DistributedWorkerThread(QThread):
             "strings_found": [],
             "entropy_map": {},
             "functions_identified": [],
-            "license_indicators": []
+            "license_indicators": [],
         }
 
         # Step 1: Load and parse PE file
         self._update_progress(task, 10, "Loading binary")
         try:
             pe = pefile.PE(binary_path)
-            results["file_type"] = "PE32+" if pe.PE_TYPE == 0x20b else "PE32"
+            results["file_type"] = "PE32+" if pe.PE_TYPE == 0x20B else "PE32"
             results["image_base"] = hex(pe.OPTIONAL_HEADER.ImageBase)
             results["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
         except Exception as e:
             logger.warning(f"Not a valid PE file, analyzing as raw binary: {e}")
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 raw_data = f.read()
             results["file_type"] = "Raw Binary"
             results["file_size"] = len(raw_data)
 
         # Step 2: Analyze sections
         self._update_progress(task, 25, "Analyzing sections")
-        if 'pe' in locals():
+        if "pe" in locals():
             for section in pe.sections:
                 section_data = {
-                    "name": section.Name.decode('utf-8').rstrip('\x00'),
+                    "name": section.Name.decode("utf-8").rstrip("\x00"),
                     "virtual_address": hex(section.VirtualAddress),
                     "virtual_size": section.Misc_VirtualSize,
                     "raw_size": section.SizeOfRawData,
-                    "entropy": self._calculate_entropy(section.get_data())
+                    "entropy": self._calculate_entropy(section.get_data()),
                 }
                 results["sections"].append(section_data)
 
@@ -686,7 +686,7 @@ class DistributedWorkerThread(QThread):
         results["strings_found"] = strings[:100]  # Limit to first 100
 
         # Look for license-related strings
-        license_keywords = ['license', 'serial', 'registration', 'trial', 'activation', 'key']
+        license_keywords = ["license", "serial", "registration", "trial", "activation", "key"]
         for string in strings:
             for keyword in license_keywords:
                 if keyword.lower() in string.lower():
@@ -694,16 +694,16 @@ class DistributedWorkerThread(QThread):
 
         # Step 4: Analyze imports for protection APIs
         self._update_progress(task, 55, "Analyzing imports")
-        if 'pe' in locals() and hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if "pe" in locals() and hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8')
+                dll_name = entry.dll.decode("utf-8")
                 results["imports"].append({"dll": dll_name, "functions": []})
                 for imp in entry.imports:
                     if imp.name:
-                        func_name = imp.name.decode('utf-8')
+                        func_name = imp.name.decode("utf-8")
                         results["imports"][-1]["functions"].append(func_name)
                         # Check for protection-related APIs
-                        if any(api in func_name.lower() for api in ['crypt', 'protect', 'verify', 'check']):
+                        if any(api in func_name.lower() for api in ["crypt", "protect", "verify", "check"]):
                             results["license_indicators"].append(f"Protection API: {dll_name}!{func_name}")
 
         # Step 5: Disassemble and identify functions
@@ -751,7 +751,7 @@ class DistributedWorkerThread(QThread):
         """Extract ASCII strings from binary."""
         strings = []
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 data = f.read()
 
             current = []
@@ -760,11 +760,11 @@ class DistributedWorkerThread(QThread):
                     current.append(chr(byte))
                 else:
                     if len(current) >= min_length:
-                        strings.append(''.join(current))
+                        strings.append("".join(current))
                     current = []
 
             if len(current) >= min_length:
-                strings.append(''.join(current))
+                strings.append("".join(current))
         except Exception as e:
             logger.error(f"String extraction failed: {e}")
 
@@ -774,7 +774,7 @@ class DistributedWorkerThread(QThread):
         """Identify functions using Capstone disassembler."""
         functions = []
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 code = f.read(0x1000)  # Read first 4KB
 
             # Initialize x86-64 disassembler
@@ -782,20 +782,12 @@ class DistributedWorkerThread(QThread):
 
             # Look for function prologues
             for i in md.disasm(code, 0x1000):
-                if i.mnemonic == 'push' and 'rbp' in i.op_str:
+                if i.mnemonic == "push" and "rbp" in i.op_str:
                     # Potential function start
-                    functions.append({
-                        "address": hex(i.address),
-                        "instruction": f"{i.mnemonic} {i.op_str}",
-                        "type": "prologue"
-                    })
-                elif i.mnemonic == 'call':
+                    functions.append({"address": hex(i.address), "instruction": f"{i.mnemonic} {i.op_str}", "type": "prologue"})
+                elif i.mnemonic == "call":
                     # Function call
-                    functions.append({
-                        "address": hex(i.address),
-                        "instruction": f"{i.mnemonic} {i.op_str}",
-                        "type": "call"
-                    })
+                    functions.append({"address": hex(i.address), "instruction": f"{i.mnemonic} {i.op_str}", "type": "call"})
         except Exception as e:
             logger.warning(f"Function identification failed: {e}")
 
@@ -805,7 +797,7 @@ class DistributedWorkerThread(QThread):
         """Compute entropy map of file in blocks."""
         entropy_map = {}
         try:
-            with open(filepath, 'rb') as f:
+            with open(filepath, "rb") as f:
                 offset = 0
                 while True:
                     block = f.read(block_size)
@@ -837,7 +829,7 @@ class DistributedWorkerThread(QThread):
         if not hash_value:
             # Generate test hash for demonstration
             test_password = "demo_password_123"  # noqa: S105
-            hash_value = hashlib.md5(test_password.encode()).hexdigest()
+            hash_value = hashlib.sha256(test_password.encode()).hexdigest()
 
         results = {
             "hash": hash_value,
@@ -847,18 +839,13 @@ class DistributedWorkerThread(QThread):
             "found": False,
             "password": None,
             "candidates_tested": [],
-            "time_elapsed": 0.0
+            "time_elapsed": 0.0,
         }
 
         start_time = time.time()
 
         # Get hash function
-        hash_funcs = {
-            "md5": hashlib.md5,
-            "sha1": hashlib.sha1,
-            "sha256": hashlib.sha256,
-            "sha512": hashlib.sha512
-        }
+        hash_funcs = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256, "sha512": hashlib.sha512}
         hash_func = hash_funcs.get(hash_type, hashlib.md5)
 
         # Generate wordlist if not provided
@@ -868,7 +855,7 @@ class DistributedWorkerThread(QThread):
         else:
             # Load wordlist from file
             try:
-                with open(wordlist_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
                     wordlist = [line.strip() for line in f.readlines()[:max_attempts]]
             except Exception as e:
                 logger.warning(f"Failed to load wordlist: {e}")
@@ -880,7 +867,7 @@ class DistributedWorkerThread(QThread):
             if not self.running:
                 raise Exception("Task cancelled")
 
-            batch = wordlist[i:i+batch_size]
+            batch = wordlist[i : i + batch_size]
 
             # Process batch in parallel
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -920,14 +907,14 @@ class DistributedWorkerThread(QThread):
         passwords = []
 
         # Common base passwords
-        bases = ['password', 'admin', 'user', 'test', 'demo', 'login', 'pass']
+        bases = ["password", "admin", "user", "test", "demo", "login", "pass"]
 
         # Common patterns
         for base in bases:
             passwords.append(base)
-            passwords.append(base + '123')
-            passwords.append(base + '1234')
-            passwords.append(base + '12345')
+            passwords.append(base + "123")
+            passwords.append(base + "1234")
+            passwords.append(base + "12345")
             passwords.append(base.capitalize())
             passwords.append(base.upper())
 
@@ -936,7 +923,7 @@ class DistributedWorkerThread(QThread):
                 passwords.append(f"{base}{year}")
 
             # Add special char patterns
-            for char in ['!', '@', '#', '$']:
+            for char in ["!", "@", "#", "$"]:
                 passwords.append(f"{base}{char}")
                 passwords.append(f"{base}123{char}")
 
@@ -946,7 +933,7 @@ class DistributedWorkerThread(QThread):
             passwords.append(str(i).zfill(6))
 
         # Add keyboard patterns
-        passwords.extend(['qwerty', 'asdfgh', '12345678', '123456789', 'abcdef'])
+        passwords.extend(["qwerty", "asdfgh", "12345678", "123456789", "abcdef"])
 
         return passwords
 
@@ -971,9 +958,9 @@ class DistributedWorkerThread(QThread):
         if not target or not os.path.exists(target):
             # Create test target if needed
             if target:
-                os.makedirs(os.path.dirname(target) or '.', exist_ok=True)
-                with open(target, 'wb') as f:
-                    f.write(b'MZ' + os.urandom(1024))  # Test binary
+                os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
+                with open(target, "wb") as f:
+                    f.write(b"MZ" + os.urandom(1024))  # Test binary
 
         results = {
             "target": target,
@@ -982,7 +969,7 @@ class DistributedWorkerThread(QThread):
             "protection_mechanisms": [],
             "weak_points": [],
             "bypass_techniques": [],
-            "risk_assessment": {}
+            "risk_assessment": {},
         }
 
         # Step 1: Scan for protection mechanisms
@@ -1022,49 +1009,41 @@ class DistributedWorkerThread(QThread):
         protections = []
 
         try:
-            with open(target, 'rb') as f:
-                data = f.read(min(os.path.getsize(target), 1024*1024))  # Read up to 1MB
+            with open(target, "rb") as f:
+                data = f.read(min(os.path.getsize(target), 1024 * 1024))  # Read up to 1MB
 
             # Check for common protection patterns
             protection_signatures = {
-                b'UPX': {'name': 'UPX Packer', 'type': 'packer'},
-                b'ASPack': {'name': 'ASPack', 'type': 'packer'},
-                b'Themida': {'name': 'Themida', 'type': 'protector'},
-                b'VMProtect': {'name': 'VMProtect', 'type': 'virtualizer'},
-                b'.vmp': {'name': 'VMProtect Section', 'type': 'virtualizer'},
-                b'SecuROM': {'name': 'SecuROM', 'type': 'drm'},
-                b'SafeDisc': {'name': 'SafeDisc', 'type': 'drm'}
+                b"UPX": {"name": "UPX Packer", "type": "packer"},
+                b"ASPack": {"name": "ASPack", "type": "packer"},
+                b"Themida": {"name": "Themida", "type": "protector"},
+                b"VMProtect": {"name": "VMProtect", "type": "virtualizer"},
+                b".vmp": {"name": "VMProtect Section", "type": "virtualizer"},
+                b"SecuROM": {"name": "SecuROM", "type": "drm"},
+                b"SafeDisc": {"name": "SafeDisc", "type": "drm"},
             }
 
             for signature, info in protection_signatures.items():
                 if signature in data:
-                    protections.append({
-                        'name': info['name'],
-                        'type': info['type'],
-                        'offset': data.find(signature),
-                        'confidence': 'high'
-                    })
+                    protections.append({"name": info["name"], "type": info["type"], "offset": data.find(signature), "confidence": "high"})
 
             # Check for anti-debugging techniques
-            anti_debug_apis = [b'IsDebuggerPresent', b'CheckRemoteDebuggerPresent', b'NtQueryInformationProcess']
+            anti_debug_apis = [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtQueryInformationProcess"]
             for api in anti_debug_apis:
                 if api in data:
-                    protections.append({
-                        'name': f'Anti-Debug: {api.decode("utf-8", errors="ignore")}',
-                        'type': 'anti-debug',
-                        'offset': data.find(api),
-                        'confidence': 'medium'
-                    })
+                    protections.append(
+                        {
+                            "name": f"Anti-Debug: {api.decode('utf-8', errors='ignore')}",
+                            "type": "anti-debug",
+                            "offset": data.find(api),
+                            "confidence": "medium",
+                        }
+                    )
 
             # Check for encryption/obfuscation
             entropy = self._calculate_entropy(data[:4096])
             if entropy > 7.5:
-                protections.append({
-                    'name': 'High Entropy Code',
-                    'type': 'obfuscation',
-                    'entropy': entropy,
-                    'confidence': 'medium'
-                })
+                protections.append({"name": "High Entropy Code", "type": "obfuscation", "entropy": entropy, "confidence": "medium"})
 
         except Exception as e:
             logger.error(f"Protection scan failed: {e}")
@@ -1076,41 +1055,29 @@ class DistributedWorkerThread(QThread):
         weak_points = []
 
         # Check for unprotected entry points
-        if not any(p['type'] == 'packer' for p in protections):
-            weak_points.append({
-                'type': 'unpacked_code',
-                'description': 'Binary is not packed, code is directly accessible',
-                'severity': 'high'
-            })
+        if not any(p["type"] == "packer" for p in protections):
+            weak_points.append(
+                {"type": "unpacked_code", "description": "Binary is not packed, code is directly accessible", "severity": "high"}
+            )
 
         # Check for weak encryption
-        if any(p.get('entropy', 0) < 6 for p in protections):
-            weak_points.append({
-                'type': 'weak_encryption',
-                'description': 'Low entropy suggests weak or no encryption',
-                'severity': 'medium'
-            })
+        if any(p.get("entropy", 0) < 6 for p in protections):
+            weak_points.append(
+                {"type": "weak_encryption", "description": "Low entropy suggests weak or no encryption", "severity": "medium"}
+            )
 
         # Check for missing anti-debug
-        if not any(p['type'] == 'anti-debug' for p in protections):
-            weak_points.append({
-                'type': 'no_anti_debug',
-                'description': 'No anti-debugging protection detected',
-                'severity': 'medium'
-            })
+        if not any(p["type"] == "anti-debug" for p in protections):
+            weak_points.append({"type": "no_anti_debug", "description": "No anti-debugging protection detected", "severity": "medium"})
 
         # Check for standard CRT initialization
         try:
-            with open(target, 'rb') as f:
+            with open(target, "rb") as f:
                 data = f.read(4096)
-            if b'__scrt_common_main' in data or b'mainCRTStartup' in data:
-                weak_points.append({
-                    'type': 'standard_crt',
-                    'description': 'Standard CRT initialization found',
-                    'severity': 'low'
-                })
-        except Exception:
-            pass
+            if b"__scrt_common_main" in data or b"mainCRTStartup" in data:
+                weak_points.append({"type": "standard_crt", "description": "Standard CRT initialization found", "severity": "low"})
+        except Exception as e:
+            logger.debug(f"Weak point detection failed: {e}")
 
         return weak_points
 
@@ -1120,7 +1087,7 @@ class DistributedWorkerThread(QThread):
 
         try:
             # Create YARA rules for vulnerability patterns
-            rules_source = '''
+            rules_source = """
             rule WeakSerialCheck {
                 strings:
                     $serial1 = "strcmp" nocase
@@ -1141,40 +1108,38 @@ class DistributedWorkerThread(QThread):
                 condition:
                     any of them
             }
-            '''
+            """
 
             rules = yara.compile(source=rules_source)
             matches = rules.match(target)
 
             for match in matches:
-                vulnerabilities.append({
-                    'rule': match.rule,
-                    'description': match.meta.get('description', 'Unknown'),
-                    'matches': len(match.strings),
-                    'severity': 'medium'
-                })
+                vulnerabilities.append(
+                    {
+                        "rule": match.rule,
+                        "description": match.meta.get("description", "Unknown"),
+                        "matches": len(match.strings),
+                        "severity": "medium",
+                    }
+                )
 
         except Exception as e:
             logger.warning(f"YARA scan failed: {e}")
             # Fallback pattern matching
             try:
-                with open(target, 'rb') as f:
+                with open(target, "rb") as f:
                     data = f.read(min(os.path.getsize(target), 100000))
 
                 # Look for weak patterns
-                if b'strcmp' in data or b'strcmpi' in data:
-                    vulnerabilities.append({
-                        'pattern': 'String comparison',
-                        'description': 'Direct string comparison for license check',
-                        'severity': 'high'
-                    })
+                if b"strcmp" in data or b"strcmpi" in data:
+                    vulnerabilities.append(
+                        {"pattern": "String comparison", "description": "Direct string comparison for license check", "severity": "high"}
+                    )
 
-                if b'trial' in data.lower() or b'expire' in data.lower():
-                    vulnerabilities.append({
-                        'pattern': 'Trial/Expiration',
-                        'description': 'Trial or expiration logic detected',
-                        'severity': 'medium'
-                    })
+                if b"trial" in data.lower() or b"expire" in data.lower():
+                    vulnerabilities.append(
+                        {"pattern": "Trial/Expiration", "description": "Trial or expiration logic detected", "severity": "medium"}
+                    )
 
             except Exception as e2:
                 logger.error(f"Fallback vulnerability check failed: {e2}")
@@ -1187,58 +1152,42 @@ class DistributedWorkerThread(QThread):
 
         # Based on protections found
         for protection in protections:
-            if protection['type'] == 'packer':
-                techniques.append({
-                    'technique': 'Unpacking',
-                    'description': f"Unpack {protection['name']} to access original code",
-                    'difficulty': 'medium'
-                })
-            elif protection['type'] == 'anti-debug':
-                techniques.append({
-                    'technique': 'Anti-Debug Bypass',
-                    'description': f"Patch or hook {protection['name']}",
-                    'difficulty': 'easy'
-                })
-            elif protection['type'] == 'virtualizer':
-                techniques.append({
-                    'technique': 'Devirtualization',
-                    'description': f"Analyze {protection['name']} VM bytecode",
-                    'difficulty': 'hard'
-                })
+            if protection["type"] == "packer":
+                techniques.append(
+                    {
+                        "technique": "Unpacking",
+                        "description": f"Unpack {protection['name']} to access original code",
+                        "difficulty": "medium",
+                    }
+                )
+            elif protection["type"] == "anti-debug":
+                techniques.append(
+                    {"technique": "Anti-Debug Bypass", "description": f"Patch or hook {protection['name']}", "difficulty": "easy"}
+                )
+            elif protection["type"] == "virtualizer":
+                techniques.append(
+                    {"technique": "Devirtualization", "description": f"Analyze {protection['name']} VM bytecode", "difficulty": "hard"}
+                )
 
         # Based on weak points
         for weak_point in weak_points:
-            if weak_point['type'] == 'unpacked_code':
-                techniques.append({
-                    'technique': 'Direct Patching',
-                    'description': 'Patch license checks directly in unpacked code',
-                    'difficulty': 'easy'
-                })
-            elif weak_point['type'] == 'no_anti_debug':
-                techniques.append({
-                    'technique': 'Runtime Debugging',
-                    'description': 'Use debugger to trace and modify execution',
-                    'difficulty': 'easy'
-                })
-            elif weak_point['type'] == 'weak_encryption':
-                techniques.append({
-                    'technique': 'Cryptanalysis',
-                    'description': 'Analyze weak encryption scheme',
-                    'difficulty': 'medium'
-                })
+            if weak_point["type"] == "unpacked_code":
+                techniques.append(
+                    {"technique": "Direct Patching", "description": "Patch license checks directly in unpacked code", "difficulty": "easy"}
+                )
+            elif weak_point["type"] == "no_anti_debug":
+                techniques.append(
+                    {"technique": "Runtime Debugging", "description": "Use debugger to trace and modify execution", "difficulty": "easy"}
+                )
+            elif weak_point["type"] == "weak_encryption":
+                techniques.append({"technique": "Cryptanalysis", "description": "Analyze weak encryption scheme", "difficulty": "medium"})
 
         # General techniques
-        techniques.append({
-            'technique': 'API Hooking',
-            'description': 'Hook license validation APIs',
-            'difficulty': 'medium'
-        })
+        techniques.append({"technique": "API Hooking", "description": "Hook license validation APIs", "difficulty": "medium"})
 
-        techniques.append({
-            'technique': 'Memory Patching',
-            'description': 'Patch license checks in memory at runtime',
-            'difficulty': 'easy'
-        })
+        techniques.append(
+            {"technique": "Memory Patching", "description": "Patch license checks in memory at runtime", "difficulty": "easy"}
+        )
 
         return techniques
 
@@ -1252,18 +1201,18 @@ class DistributedWorkerThread(QThread):
 
         # Score based on vulnerabilities (higher risk)
         for vuln in vulnerabilities:
-            if vuln.get('severity') == 'high':
+            if vuln.get("severity") == "high":
                 risk_score += 15
-            elif vuln.get('severity') == 'medium':
+            elif vuln.get("severity") == "medium":
                 risk_score += 10
             else:
                 risk_score += 5
 
         # Score based on weak points
         for weak in weak_points:
-            if weak.get('severity') == 'high':
+            if weak.get("severity") == "high":
                 risk_score += 12
-            elif weak.get('severity') == 'medium':
+            elif weak.get("severity") == "medium":
                 risk_score += 8
             else:
                 risk_score += 4
@@ -1273,38 +1222,38 @@ class DistributedWorkerThread(QThread):
 
         # Determine risk level
         if risk_score >= 70:
-            risk_level = 'critical'
+            risk_level = "critical"
         elif risk_score >= 50:
-            risk_level = 'high'
+            risk_level = "high"
         elif risk_score >= 30:
-            risk_level = 'medium'
+            risk_level = "medium"
         else:
-            risk_level = 'low'
+            risk_level = "low"
 
         return {
-            'score': risk_score,
-            'level': risk_level,
-            'protections_count': len(protections),
-            'vulnerabilities_count': len(vulnerabilities),
-            'weak_points_count': len(weak_points)
+            "score": risk_score,
+            "level": risk_level,
+            "protections_count": len(protections),
+            "vulnerabilities_count": len(vulnerabilities),
+            "weak_points_count": len(weak_points),
         }
 
     def _generate_recommendations(self, risk_assessment: Dict) -> List[str]:
         """Generate security recommendations."""
         recommendations = []
 
-        if risk_assessment['level'] in ['critical', 'high']:
-            recommendations.append('Implement strong packing/obfuscation')
-            recommendations.append('Add multiple layers of anti-debugging')
-            recommendations.append('Use hardware-based license verification')
-            recommendations.append('Implement code virtualization')
-        elif risk_assessment['level'] == 'medium':
-            recommendations.append('Enhance encryption algorithms')
-            recommendations.append('Add integrity checks')
-            recommendations.append('Implement anti-tampering measures')
+        if risk_assessment["level"] in ["critical", "high"]:
+            recommendations.append("Implement strong packing/obfuscation")
+            recommendations.append("Add multiple layers of anti-debugging")
+            recommendations.append("Use hardware-based license verification")
+            recommendations.append("Implement code virtualization")
+        elif risk_assessment["level"] == "medium":
+            recommendations.append("Enhance encryption algorithms")
+            recommendations.append("Add integrity checks")
+            recommendations.append("Implement anti-tampering measures")
         else:
-            recommendations.append('Consider adding obfuscation')
-            recommendations.append('Monitor for suspicious activity')
+            recommendations.append("Consider adding obfuscation")
+            recommendations.append("Monitor for suspicious activity")
 
         return recommendations
 
@@ -1328,7 +1277,7 @@ class DistributedWorkerThread(QThread):
             "validation_methods": [],
             "key_algorithms": [],
             "bypass_strategies": [],
-            "confidence": 0.0
+            "confidence": 0.0,
         }
 
         # Perform deep license analysis
@@ -1354,27 +1303,23 @@ class DistributedWorkerThread(QThread):
         methods = []
 
         validation_patterns = {
-            'online': ['http', 'https', 'socket', 'connect'],
-            'offline': ['registry', 'file', 'local'],
-            'hardware': ['cpuid', 'mac', 'disk', 'hwid'],
-            'time': ['trial', 'expire', 'date', 'time']
+            "online": ["http", "https", "socket", "connect"],
+            "offline": ["registry", "file", "local"],
+            "hardware": ["cpuid", "mac", "disk", "hwid"],
+            "time": ["trial", "expire", "date", "time"],
         }
 
         try:
             if target and os.path.exists(target):
-                with open(target, 'rb') as f:
+                with open(target, "rb") as f:
                     data = f.read(100000)  # Read first 100KB
             else:
-                data = b'test_data'
+                data = b"test_data"
 
             for method_type, patterns in validation_patterns.items():
                 for pattern in patterns:
                     if pattern.encode() in data.lower():
-                        methods.append({
-                            'type': method_type,
-                            'pattern': pattern,
-                            'confidence': 'high' if len(pattern) > 5 else 'medium'
-                        })
+                        methods.append({"type": method_type, "pattern": pattern, "confidence": "high" if len(pattern) > 5 else "medium"})
         except Exception as e:
             logger.warning(f"Validation analysis failed: {e}")
 
@@ -1385,18 +1330,18 @@ class DistributedWorkerThread(QThread):
         algorithms = []
 
         crypto_signatures = {
-            'RSA': [b'RSA', b'rsa', b'modulus', b'exponent'],
-            'AES': [b'AES', b'aes', b'rijndael'],
-            'MD5': [b'MD5', b'md5'],
-            'SHA': [b'SHA', b'sha256', b'sha1']
+            "RSA": [b"RSA", b"rsa", b"modulus", b"exponent"],
+            "AES": [b"AES", b"aes", b"rijndael"],
+            "MD5": [b"MD5", b"md5"],
+            "SHA": [b"SHA", b"sha256", b"sha1"],
         }
 
         try:
             if target and os.path.exists(target):
-                with open(target, 'rb') as f:
+                with open(target, "rb") as f:
                     data = f.read(50000)
             else:
-                data = b'test'
+                data = b"test"
 
             for algo, signatures in crypto_signatures.items():
                 for sig in signatures:
@@ -1410,51 +1355,51 @@ class DistributedWorkerThread(QThread):
 
     def _determine_license_type(self, validation_methods: List, key_algorithms: List) -> str:
         """Determine the type of license protection."""
-        if any(m['type'] == 'online' for m in validation_methods):
-            if any(m['type'] == 'hardware' for m in validation_methods):
-                return 'cloud_hardware_locked'
-            return 'cloud_based'
-        elif any(m['type'] == 'hardware' for m in validation_methods):
-            return 'hardware_locked'
-        elif any(m['type'] == 'time' for m in validation_methods):
-            return 'trial_based'
+        if any(m["type"] == "online" for m in validation_methods):
+            if any(m["type"] == "hardware" for m in validation_methods):
+                return "cloud_hardware_locked"
+            return "cloud_based"
+        elif any(m["type"] == "hardware" for m in validation_methods):
+            return "hardware_locked"
+        elif any(m["type"] == "time" for m in validation_methods):
+            return "trial_based"
         elif key_algorithms:
-            return 'key_based'
+            return "key_based"
         else:
-            return 'simple_check'
+            return "simple_check"
 
     def _develop_bypass_strategies(self, license_type: str, validation_methods: List) -> List[Dict[str, str]]:
         """Develop strategies to bypass the license."""
         strategies = []
 
         strategy_map = {
-            'cloud_based': [
-                {'method': 'Server Emulation', 'description': 'Emulate license server responses'},
-                {'method': 'Response Interception', 'description': 'Intercept and modify server responses'}
+            "cloud_based": [
+                {"method": "Server Emulation", "description": "Emulate license server responses"},
+                {"method": "Response Interception", "description": "Intercept and modify server responses"},
             ],
-            'hardware_locked': [
-                {'method': 'Hardware Spoofing', 'description': 'Spoof hardware identifiers'},
-                {'method': 'Registry Modification', 'description': 'Modify stored hardware IDs'}
+            "hardware_locked": [
+                {"method": "Hardware Spoofing", "description": "Spoof hardware identifiers"},
+                {"method": "Registry Modification", "description": "Modify stored hardware IDs"},
             ],
-            'trial_based': [
-                {'method': 'Time Manipulation', 'description': 'Manipulate system time'},
-                {'method': 'Trial Reset', 'description': 'Reset trial period data'}
+            "trial_based": [
+                {"method": "Time Manipulation", "description": "Manipulate system time"},
+                {"method": "Trial Reset", "description": "Reset trial period data"},
             ],
-            'key_based': [
-                {'method': 'Keygen Development', 'description': 'Reverse engineer key algorithm'},
-                {'method': 'Key Validation Bypass', 'description': 'Patch key validation routine'}
+            "key_based": [
+                {"method": "Keygen Development", "description": "Reverse engineer key algorithm"},
+                {"method": "Key Validation Bypass", "description": "Patch key validation routine"},
             ],
-            'simple_check': [
-                {'method': 'Direct Patch', 'description': 'Patch the validation check'},
-                {'method': 'Jump Modification', 'description': 'Modify conditional jumps'}
-            ]
+            "simple_check": [
+                {"method": "Direct Patch", "description": "Patch the validation check"},
+                {"method": "Jump Modification", "description": "Modify conditional jumps"},
+            ],
         }
 
         strategies.extend(strategy_map.get(license_type, []))
 
         # Add universal strategies
-        strategies.append({'method': 'Memory Patching', 'description': 'Patch validation in memory'})
-        strategies.append({'method': 'API Hooking', 'description': 'Hook validation APIs'})
+        strategies.append({"method": "Memory Patching", "description": "Patch validation in memory"})
+        strategies.append({"method": "API Hooking", "description": "Hook validation APIs"})
 
         return strategies
 
@@ -1462,12 +1407,12 @@ class DistributedWorkerThread(QThread):
         """Calculate confidence score for the analysis."""
         confidence = 0.0
 
-        if results['license_type'] != 'unknown':
+        if results["license_type"] != "unknown":
             confidence += 0.3
 
-        confidence += min(len(results['validation_methods']) * 0.1, 0.3)
-        confidence += min(len(results['key_algorithms']) * 0.15, 0.3)
-        confidence += min(len(results['bypass_strategies']) * 0.05, 0.1)
+        confidence += min(len(results["validation_methods"]) * 0.1, 0.3)
+        confidence += min(len(results["key_algorithms"]) * 0.15, 0.3)
+        confidence += min(len(results["bypass_strategies"]) * 0.05, 0.1)
 
         return min(confidence, 1.0)
 
@@ -1484,13 +1429,7 @@ class DistributedWorkerThread(QThread):
         operation = task.parameters.get("operation", "analyze")
         target = task.parameters.get("target", "")
 
-        results = {
-            "task_type": task.task_type,
-            "operation": operation,
-            "target": target,
-            "processed_data": {},
-            "status": "processing"
-        }
+        results = {"task_type": task.task_type, "operation": operation, "target": target, "processed_data": {}, "status": "processing"}
 
         # Perform real operations based on task parameters
         if operation == "analyze":
@@ -1498,22 +1437,15 @@ class DistributedWorkerThread(QThread):
             results["processed_data"] = {
                 "file_exists": os.path.exists(target) if target else False,
                 "file_size": os.path.getsize(target) if target and os.path.exists(target) else 0,
-                "quick_scan": "complete"
+                "quick_scan": "complete",
             }
         elif operation == "process":
             # Process data
             data_size = task.parameters.get("data_size", 1000)
-            results["processed_data"] = {
-                "bytes_processed": data_size,
-                "chunks": data_size // 256,
-                "status": "processed"
-            }
+            results["processed_data"] = {"bytes_processed": data_size, "chunks": data_size // 256, "status": "processed"}
         else:
             # Default processing
-            results["processed_data"] = {
-                "parameters_received": len(task.parameters),
-                "processing_complete": True
-            }
+            results["processed_data"] = {"parameters_received": len(task.parameters), "processing_complete": True}
 
         # Update progress
         task.progress = 100.0
@@ -1668,8 +1600,8 @@ class DistributedProcessingDialog(QDialog):
         elif task_type == "password_cracking":
             # Generate real test hash
             test_password = f"test{self.task_counter}"  # noqa: S105
-            test_hash = hashlib.md5(test_password.encode()).hexdigest()
-            parameters = {"hash": test_hash, "hash_type": "md5", "wordlist": "./wordlists/common.txt", "max_attempts": 1000}
+            test_hash = hashlib.sha256(test_password.encode()).hexdigest()
+            parameters = {"hash": test_hash, "hash_type": "sha256", "wordlist": "./wordlists/common.txt", "max_attempts": 1000}
         elif task_type == "vulnerability_scan":
             parameters = {"target": f"./test_binaries/target_{self.task_counter}.exe", "scan_type": "license_protection"}
         elif task_type == "license_analysis":

@@ -111,9 +111,7 @@ try:
     try:
         from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     except ImportError:
-        # Fallback to a basic canvas if Tk backend is not available
         FigureCanvasTkAgg = None
-        logger.warning("Tk backend for matplotlib not available, some features may be limited")
 
     HAS_MATPLOTLIB = True
     MATPLOTLIB_VERSION = matplotlib.__version__
@@ -293,25 +291,26 @@ except ImportError as e:
 
                     def generate_png(width, height, pixels):
                         """Generate complete PNG file from raw pixel data."""
+
                         def png_chunk(chunk_type, data):
                             """Create PNG chunk with CRC."""
                             chunk = chunk_type + data
                             # CRC-32 calculation
-                            crc = zlib.crc32(chunk) & 0xffffffff
-                            return struct.pack('>I', len(data)) + chunk + struct.pack('>I', crc)
+                            crc = zlib.crc32(chunk) & 0xFFFFFFFF
+                            return struct.pack(">I", len(data)) + chunk + struct.pack(">I", crc)
 
                         # PNG signature
-                        png_data = b'\x89PNG\r\n\x1a\n'
+                        png_data = b"\x89PNG\r\n\x1a\n"
 
                         # IHDR chunk (image header)
-                        ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
-                        png_data += png_chunk(b'IHDR', ihdr_data)
+                        ihdr_data = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+                        png_data += png_chunk(b"IHDR", ihdr_data)
 
                         # IDAT chunk (image data)
-                        raw_data = b''
+                        raw_data = b""
                         for y in range(height):
                             # Filter type 0 (None)
-                            raw_data += b'\x00'
+                            raw_data += b"\x00"
                             for x in range(width):
                                 # RGB pixel (white background with content)
                                 if pixels and (x, y) in pixels:
@@ -321,10 +320,10 @@ except ImportError as e:
                                 raw_data += bytes([r, g, b])
 
                         compressed = zlib.compress(raw_data)
-                        png_data += png_chunk(b'IDAT', compressed)
+                        png_data += png_chunk(b"IDAT", compressed)
 
                         # IEND chunk
-                        png_data += png_chunk(b'IEND', b'')
+                        png_data += png_chunk(b"IEND", b"")
 
                         return png_data
 
@@ -334,10 +333,10 @@ except ImportError as e:
                     # Draw border
                     for x in range(width):
                         pixels[(x, 0)] = (0, 0, 0)  # Top border
-                        pixels[(x, height-1)] = (0, 0, 0)  # Bottom border
+                        pixels[(x, height - 1)] = (0, 0, 0)  # Bottom border
                     for y in range(height):
                         pixels[(0, y)] = (0, 0, 0)  # Left border
-                        pixels[(width-1, y)] = (0, 0, 0)  # Right border
+                        pixels[(width - 1, y)] = (0, 0, 0)  # Right border
 
                     # Draw title if present
                     if self._suptitle:
@@ -348,7 +347,7 @@ except ImportError as e:
 
                     # Generate and save PNG
                     png_bytes = generate_png(width, height, pixels)
-                    with open(fname, 'wb') as f:
+                    with open(fname, "wb") as f:
                         f.write(png_bytes)
 
                 else:
@@ -357,23 +356,23 @@ except ImportError as e:
                         """Generate BMP file from pixel data."""
                         # BMP header
                         file_size = 54 + (width * height * 3)
-                        bmp_header = b'BM'
-                        bmp_header += struct.pack('<I', file_size)  # File size
-                        bmp_header += struct.pack('<HH', 0, 0)  # Reserved
-                        bmp_header += struct.pack('<I', 54)  # Offset to pixel data
+                        bmp_header = b"BM"
+                        bmp_header += struct.pack("<I", file_size)  # File size
+                        bmp_header += struct.pack("<HH", 0, 0)  # Reserved
+                        bmp_header += struct.pack("<I", 54)  # Offset to pixel data
 
                         # DIB header
-                        dib_header = struct.pack('<I', 40)  # Header size
-                        dib_header += struct.pack('<ii', width, height)  # Width, height
-                        dib_header += struct.pack('<HH', 1, 24)  # Planes, bits per pixel
-                        dib_header += struct.pack('<I', 0)  # Compression (none)
-                        dib_header += struct.pack('<I', 0)  # Image size (can be 0)
-                        dib_header += struct.pack('<ii', 2835, 2835)  # Resolution
-                        dib_header += struct.pack('<II', 0, 0)  # Colors
+                        dib_header = struct.pack("<I", 40)  # Header size
+                        dib_header += struct.pack("<ii", width, height)  # Width, height
+                        dib_header += struct.pack("<HH", 1, 24)  # Planes, bits per pixel
+                        dib_header += struct.pack("<I", 0)  # Compression (none)
+                        dib_header += struct.pack("<I", 0)  # Image size (can be 0)
+                        dib_header += struct.pack("<ii", 2835, 2835)  # Resolution
+                        dib_header += struct.pack("<II", 0, 0)  # Colors
 
                         # Pixel data (bottom-up)
-                        pixel_data = b''
-                        for y in range(height-1, -1, -1):
+                        pixel_data = b""
+                        for y in range(height - 1, -1, -1):
                             for x in range(width):
                                 if pixels and (x, y) in pixels:
                                     b, g, r = pixels[(x, y)][::-1]  # BMP uses BGR
@@ -382,7 +381,7 @@ except ImportError as e:
                                 pixel_data += bytes([b, g, r])
                             # Padding to 4-byte boundary
                             padding = (4 - (width * 3) % 4) % 4
-                            pixel_data += b'\x00' * padding
+                            pixel_data += b"\x00" * padding
 
                         return bmp_header + dib_header + pixel_data
 
@@ -390,14 +389,14 @@ except ImportError as e:
                     pixels = {}
                     for x in range(width):
                         pixels[(x, 0)] = (0, 0, 0)
-                        pixels[(x, height-1)] = (0, 0, 0)
+                        pixels[(x, height - 1)] = (0, 0, 0)
                     for y in range(height):
                         pixels[(0, y)] = (0, 0, 0)
-                        pixels[(width-1, y)] = (0, 0, 0)
+                        pixels[(width - 1, y)] = (0, 0, 0)
 
                     # Save as BMP then convert extension
                     bmp_bytes = generate_bmp(width, height, pixels)
-                    with open(fname, 'wb') as f:
+                    with open(fname, "wb") as f:
                         f.write(bmp_bytes)
 
         def clear(self):
@@ -938,12 +937,7 @@ except ImportError as e:
                 # Generate basic PDF stream
                 pdf_stream = self._generate_basic_pdf_stream()
 
-            page_data = {
-                "figure": figure,
-                "timestamp": self._get_timestamp(),
-                "kwargs": kwargs,
-                "pdf_stream": pdf_stream
-            }
+            page_data = {"figure": figure, "timestamp": self._get_timestamp(), "kwargs": kwargs, "pdf_stream": pdf_stream}
             self.pages.append(page_data)
 
         def close(self):
@@ -1007,25 +1001,25 @@ startxref
             pdf_stream.append("q")
 
             # Set up coordinate system (PDF uses bottom-left origin)
-            if hasattr(figure, 'figsize'):
+            if hasattr(figure, "figsize"):
                 width = figure.figsize[0] * 72  # Convert inches to points
                 height = figure.figsize[1] * 72
                 pdf_stream.append(f"0 0 {width:.2f} {height:.2f} re W n")  # Clip to figure size
 
             # Draw figure background
-            if hasattr(figure, 'facecolor'):
+            if hasattr(figure, "facecolor"):
                 pdf_stream.append("1 1 1 rg")  # White background
                 pdf_stream.append(f"0 0 {width:.2f} {height:.2f} re f")
 
             # Draw axes
-            if hasattr(figure, 'axes'):
+            if hasattr(figure, "axes"):
                 for ax in figure.axes:
                     # Draw axis frame
                     pdf_stream.append("0 0 0 RG")  # Black color
                     pdf_stream.append("1 w")  # Line width
 
                     # Get axis position (convert to PDF coordinates)
-                    if hasattr(ax, 'get_position'):
+                    if hasattr(ax, "get_position"):
                         bbox = ax.get_position()
                         x = bbox.x0 * width
                         y = bbox.y0 * height
@@ -1040,9 +1034,9 @@ startxref
                     pdf_stream.append(f"{x:.2f} {y:.2f} {w:.2f} {h:.2f} re S")
 
                     # Draw axis data if available
-                    if hasattr(ax, 'lines'):
+                    if hasattr(ax, "lines"):
                         for line in ax.lines:
-                            if hasattr(line, 'get_xydata'):
+                            if hasattr(line, "get_xydata"):
                                 data = line.get_xydata()
                                 if len(data) > 0:
                                     # Move to first point

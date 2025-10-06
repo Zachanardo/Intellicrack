@@ -25,25 +25,37 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
-# Local imports
+if TYPE_CHECKING:
+    from .model_manager_module import ModelManager
+    from .orchestrator import AIEventBus, AISharedContext
+else:
+    AISharedContext = type(None)
+    AIEventBus = type(None)
+    ModelManager = type(None)
+
 try:
     from ..utils.logger import get_logger
 
     logger = get_logger(__name__)
-    from .model_manager_module import ModelManager
-    from .orchestrator import AIEventBus, AISharedContext
 except ImportError as e:
-    # Create a basic logger if get_logger fails
     import logging
 
     logger = logging.getLogger(__name__)
     logger.error("Import error in coordination_layer: %s", e)
-    # Fallback for testing
-    ModelManager = None
-    AISharedContext = None
-    AIEventBus = None
+
+if not TYPE_CHECKING:
+    try:
+        from .model_manager_module import ModelManager
+    except ImportError:
+        ModelManager = None
+
+    try:
+        from .orchestrator import AIEventBus, AISharedContext
+    except ImportError:
+        AISharedContext = None
+        AIEventBus = None
 
 
 class AnalysisStrategy(Enum):
@@ -94,7 +106,7 @@ class AICoordinationLayer:
     intelligent workflows that leverage LLM capabilities.
     """
 
-    def __init__(self, shared_context: AISharedContext | None = None, event_bus: AIEventBus | None = None):
+    def __init__(self, shared_context: Optional["AISharedContext"] = None, event_bus: Optional["AIEventBus"] = None):
         """Initialize the coordination layer."""
         logger.info("Initializing AI Coordination Layer...")
 
@@ -122,7 +134,7 @@ class AICoordinationLayer:
 
         logger.info("AI Coordination Layer initialized")
 
-    def _initialize_components(self):
+    def _initialize_components(self) -> None:
         """Initialize LLM components."""
         # Initialize model manager
         try:
@@ -326,7 +338,7 @@ class AICoordinationLayer:
         elif result.llm_results:
             result.combined_confidence = result.llm_results.get("confidence", 0.0)
 
-    def _cleanup_threads(self, threads):
+    def _cleanup_threads(self, threads) -> None:
         """Ensure all threads complete gracefully."""
         ml_thread_obj, llm_thread_obj = threads
         ml_thread_obj.join(timeout=1)
@@ -598,7 +610,7 @@ class AICoordinationLayer:
             },
         }
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the analysis cache."""
         self.analysis_cache.clear()
         logger.info("Analysis cache cleared")

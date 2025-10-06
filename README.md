@@ -28,6 +28,7 @@ A comprehensive binary analysis and security research platform designed to help 
 - **Three-Panel Layout**: Professional IDE-like interface with tabs and output panel
 - **Hex Editor**: Built-in viewer/editor with pattern highlighting and data inspection
 - **AI Assistant Tab**: Integrated AI-powered analysis and script generation
+- **Embedded Terminal**: Full-featured terminal emulator with multi-session support and PTY integration
 - **Plugin System**: Extensible architecture for custom tools
 - **Real-time Logging**: Comprehensive logging with adjustable verbosity
 
@@ -131,12 +132,63 @@ print(f"File type: {result.file_format}")
 print(f"Protections: {result.protections}")
 ```
 
+## Terminal Tab & Activation Tools
+
+Intellicrack features an embedded terminal emulator for interactive process execution and activation workflows.
+
+### Features
+- **Full PTY Support**: Windows ConPTY integration for native terminal experience
+- **Multi-Session Management**: Create and manage multiple terminal sessions simultaneously
+- **ANSI Color Support**: Full color and formatting support for terminal output
+- **Smart Auto-Navigation**: Interactive processes automatically switch to Terminal tab
+- **Process Control**: Start, stop, and monitor processes with real-time feedback
+- **Copy/Paste**: Full clipboard integration with right-click context menu
+- **Scrollback Buffer**: Configurable buffer (10,000 lines default) with export functionality
+
+### Windows & Adobe Activation
+
+The integrated Activation Tools provide streamlined access to licensing analysis capabilities:
+
+**Windows Activation**:
+- Interactive menu-driven activation via embedded terminal
+- Real-time activation status checking
+- Multiple activation method support (HWID, KMS38, Online KMS)
+- No external console windows - all operations within Intellicrack GUI
+
+**Adobe Product Activation**:
+- Frida-based injection for Adobe licensing analysis
+- Interactive terminal-based workflow
+- Live process monitoring and feedback
+
+### Usage
+
+1. **Access Activation Tools**:
+   - Navigate to **Tools** tab → **Activation Tools** sub-tab
+   - Click "Check Windows Activation Status" for current status
+   - Click "Activate Windows (Interactive)" to launch activation workflow
+
+2. **Interactive Terminal**:
+   - Automatically switches to **Terminal** tab when activation starts
+   - Full menu interaction with keyboard input
+   - Real-time process output with color formatting
+   - Use Ctrl+C to interrupt, right-click for copy/paste
+
+3. **Manual Terminal Usage**:
+   - Navigate to **Terminal** tab (7th tab, between Tools and Settings)
+   - Click "+" to create new terminal session
+   - Execute custom commands and scripts interactively
+
+For detailed terminal usage instructions, see the [Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md).
+
 ## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
 - [Architecture Overview](docs/architecture/COMPREHENSIVE_ARCHITECTURE.md)
 - [User Guide](docs/guides/COMPREHENSIVE_USER_GUIDE.md)
+- [Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md)
+- [Terminal Widget API Documentation](docs/TERMINAL_WIDGET_API.md)
+- [Terminal Migration Guide](docs/TERMINAL_MIGRATION_GUIDE.md)
 - [AI Assistant Guide](docs/usage/ai_assistant.md)
 - [AI Models Quick Reference](docs/reference/AI_MODELS_QUICK_REFERENCE.md)
 - [Plugin Development](docs/development/plugins.md)

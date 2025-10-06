@@ -193,10 +193,7 @@ class WindowsAPIHooker:
     def hook_nt_query_information_process(self) -> bool:
         """Hook NtQueryInformationProcess for debug-related queries."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtQueryInformationProcess"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryInformationProcess")
 
             if not func_addr:
                 return False
@@ -239,10 +236,7 @@ class WindowsAPIHooker:
     def hook_nt_set_information_thread(self) -> bool:
         """Hook NtSetInformationThread to prevent thread hiding."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtSetInformationThread"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtSetInformationThread")
 
             if not func_addr:
                 return False
@@ -256,11 +250,11 @@ class WindowsAPIHooker:
             # Hook to prevent ThreadHideFromDebugger (0x11)
             # Check if ThreadInformationClass == 0x11, if so, return success without action
             hook_code = (
-                b"\x8b\x54\x24\x08"      # mov edx, [esp+8] (ThreadInformationClass)
-                b"\x83\xfa\x11"          # cmp edx, 0x11 (ThreadHideFromDebugger)
-                b"\x75\x05"              # jne original_function
-                b"\x33\xc0"              # xor eax, eax (STATUS_SUCCESS)
-                b"\xc2\x10\x00"          # ret 0x10
+                b"\x8b\x54\x24\x08"  # mov edx, [esp+8] (ThreadInformationClass)
+                b"\x83\xfa\x11"  # cmp edx, 0x11 (ThreadHideFromDebugger)
+                b"\x75\x05"  # jne original_function
+                b"\x33\xc0"  # xor eax, eax (STATUS_SUCCESS)
+                b"\xc2\x10\x00"  # ret 0x10
             )
 
             old_protect = ctypes.c_ulong()
@@ -330,10 +324,7 @@ class WindowsAPIHooker:
     def hook_nt_close(self) -> bool:
         """Hook NtClose to prevent invalid handle detection."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtClose"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtClose")
 
             if not func_addr:
                 return False
@@ -373,10 +364,7 @@ class WindowsAPIHooker:
     def hook_close_handle(self) -> bool:
         """Hook CloseHandle to prevent invalid handle detection."""
         try:
-            func_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"CloseHandle"
-            )
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"CloseHandle")
 
             if not func_addr:
                 return False
@@ -416,10 +404,7 @@ class WindowsAPIHooker:
     def hook_get_last_error(self) -> bool:
         """Hook GetLastError to hide debug-related errors."""
         try:
-            func_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"GetLastError"
-            )
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetLastError")
 
             if not func_addr:
                 return False
@@ -459,10 +444,7 @@ class WindowsAPIHooker:
     def hook_set_last_error(self) -> bool:
         """Hook SetLastError to prevent error code manipulation."""
         try:
-            func_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"SetLastError"
-            )
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SetLastError")
 
             if not func_addr:
                 return False
@@ -502,10 +484,7 @@ class WindowsAPIHooker:
     def hook_nt_query_object(self) -> bool:
         """Hook NtQueryObject to prevent debug object detection."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtQueryObject"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryObject")
 
             if not func_addr:
                 return False
@@ -545,10 +524,7 @@ class WindowsAPIHooker:
     def hook_nt_query_system_information(self) -> bool:
         """Hook NtQuerySystemInformation to hide debugger processes."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtQuerySystemInformation"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQuerySystemInformation")
 
             if not func_addr:
                 return False
@@ -588,10 +564,7 @@ class WindowsAPIHooker:
     def hook_find_window(self) -> bool:
         """Hook FindWindow to hide debugger windows."""
         try:
-            func_addr = self.user32.GetProcAddress(
-                self.user32.GetModuleHandleW("user32.dll"),
-                b"FindWindowA"
-            )
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"FindWindowA")
 
             if not func_addr:
                 return False
@@ -631,10 +604,7 @@ class WindowsAPIHooker:
     def hook_enum_windows(self) -> bool:
         """Hook EnumWindows to skip debugger windows."""
         try:
-            func_addr = self.user32.GetProcAddress(
-                self.user32.GetModuleHandleW("user32.dll"),
-                b"EnumWindows"
-            )
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"EnumWindows")
 
             if not func_addr:
                 return False
@@ -674,10 +644,7 @@ class WindowsAPIHooker:
     def hook_get_foreground_window(self) -> bool:
         """Hook GetForegroundWindow to hide debugger focus."""
         try:
-            func_addr = self.user32.GetProcAddress(
-                self.user32.GetModuleHandleW("user32.dll"),
-                b"GetForegroundWindow"
-            )
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"GetForegroundWindow")
 
             if not func_addr:
                 return False
@@ -718,10 +685,7 @@ class WindowsAPIHooker:
     def hook_nt_yield_execution(self) -> bool:
         """Hook NtYieldExecution to prevent thread timing detection."""
         try:
-            func_addr = self.ntdll.GetProcAddress(
-                self.ntdll.LoadLibraryW("ntdll.dll"),
-                b"NtYieldExecution"
-            )
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtYieldExecution")
 
             if not func_addr:
                 return False
@@ -761,10 +725,7 @@ class WindowsAPIHooker:
     def hook_switch_to_thread(self) -> bool:
         """Hook SwitchToThread to prevent thread timing detection."""
         try:
-            func_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"SwitchToThread"
-            )
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SwitchToThread")
 
             if not func_addr:
                 return False
@@ -1074,17 +1035,15 @@ class PEBManipulator:
 
         return results
 
-class HardwareDebugProtector:
-    """Manages hardware debug registers to prevent detection."""
+
+class ThreadContextHooker:
+    """Hooks GetThreadContext to prevent detection of hardware breakpoints."""
 
     def hook_get_thread_context(self) -> bool:
         """Hook GetThreadContext to hide hardware breakpoints."""
         try:
             kernel32 = ctypes.windll.kernel32
-            func_addr = kernel32.GetProcAddress(
-                kernel32.GetModuleHandleW("kernel32.dll"),
-                b"GetThreadContext"
-            )
+            func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
 
             if not func_addr:
                 return False
@@ -1092,25 +1051,25 @@ class HardwareDebugProtector:
             # Create trampoline to filter debug registers
             # This hook will zero out DR0-DR7 in returned CONTEXT
             hook_code = (
-                b"\x55"                    # push ebp
-                b"\x89\xe5"                # mov ebp, esp
-                b"\x60"                    # pushad
+                b"\x55"  # push ebp
+                b"\x89\xe5"  # mov ebp, esp
+                b"\x60"  # pushad
                 # Call original function
-                b"\xff\x75\x0c"            # push [ebp+0xc] (lpContext)
-                b"\xff\x75\x08"            # push [ebp+0x08] (hThread)
+                b"\xff\x75\x0c"  # push [ebp+0xc] (lpContext)
+                b"\xff\x75\x08"  # push [ebp+0x08] (hThread)
                 b"\xe8\x00\x00\x00\x00"  # call original (will patch offset)
                 # Zero debug registers in returned context
-                b"\x8b\x45\x0c"            # mov eax, [ebp+0xc]
-                b"\x31\xc9"                # xor ecx, ecx
-                b"\x89\x88\x04\x01\x00\x00" # mov [eax+0x104], ecx (DR0)
-                b"\x89\x88\x08\x01\x00\x00" # mov [eax+0x108], ecx (DR1)
-                b"\x89\x88\x0c\x01\x00\x00" # mov [eax+0x10c], ecx (DR2)
-                b"\x89\x88\x10\x01\x00\x00" # mov [eax+0x110], ecx (DR3)
-                b"\x89\x88\x14\x01\x00\x00" # mov [eax+0x114], ecx (DR6)
-                b"\x89\x88\x18\x01\x00\x00" # mov [eax+0x118], ecx (DR7)
-                b"\x61"                    # popad
-                b"\x5d"                    # pop ebp
-                b"\xc2\x08\x00"          # ret 8
+                b"\x8b\x45\x0c"  # mov eax, [ebp+0xc]
+                b"\x31\xc9"  # xor ecx, ecx
+                b"\x89\x88\x04\x01\x00\x00"  # mov [eax+0x104], ecx (DR0)
+                b"\x89\x88\x08\x01\x00\x00"  # mov [eax+0x108], ecx (DR1)
+                b"\x89\x88\x0c\x01\x00\x00"  # mov [eax+0x10c], ecx (DR2)
+                b"\x89\x88\x10\x01\x00\x00"  # mov [eax+0x110], ecx (DR3)
+                b"\x89\x88\x14\x01\x00\x00"  # mov [eax+0x114], ecx (DR6)
+                b"\x89\x88\x18\x01\x00\x00"  # mov [eax+0x118], ecx (DR7)
+                b"\x61"  # popad
+                b"\x5d"  # pop ebp
+                b"\xc2\x08\x00"  # ret 8
             )
 
             old_protect = ctypes.c_ulong()
@@ -1141,33 +1100,30 @@ class HardwareDebugProtector:
         """Hook SetThreadContext to prevent hardware breakpoint setting."""
         try:
             kernel32 = ctypes.windll.kernel32
-            func_addr = kernel32.GetProcAddress(
-                kernel32.GetModuleHandleW("kernel32.dll"),
-                b"SetThreadContext"
-            )
+            func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
 
             if not func_addr:
                 return False
 
             # Hook to strip debug registers from context before setting
             hook_code = (
-                b"\x55"                    # push ebp
-                b"\x89\xe5"                # mov ebp, esp
-                b"\x8b\x45\x0c"            # mov eax, [ebp+0xc] (lpContext)
-                b"\x31\xc9"                # xor ecx, ecx
+                b"\x55"  # push ebp
+                b"\x89\xe5"  # mov ebp, esp
+                b"\x8b\x45\x0c"  # mov eax, [ebp+0xc] (lpContext)
+                b"\x31\xc9"  # xor ecx, ecx
                 # Clear debug registers in context
-                b"\x89\x88\x04\x01\x00\x00" # mov [eax+0x104], ecx (DR0)
-                b"\x89\x88\x08\x01\x00\x00" # mov [eax+0x108], ecx (DR1)
-                b"\x89\x88\x0c\x01\x00\x00" # mov [eax+0x10c], ecx (DR2)
-                b"\x89\x88\x10\x01\x00\x00" # mov [eax+0x110], ecx (DR3)
-                b"\x89\x88\x14\x01\x00\x00" # mov [eax+0x114], ecx (DR6)
-                b"\x89\x88\x18\x01\x00\x00" # mov [eax+0x118], ecx (DR7)
+                b"\x89\x88\x04\x01\x00\x00"  # mov [eax+0x104], ecx (DR0)
+                b"\x89\x88\x08\x01\x00\x00"  # mov [eax+0x108], ecx (DR1)
+                b"\x89\x88\x0c\x01\x00\x00"  # mov [eax+0x10c], ecx (DR2)
+                b"\x89\x88\x10\x01\x00\x00"  # mov [eax+0x110], ecx (DR3)
+                b"\x89\x88\x14\x01\x00\x00"  # mov [eax+0x114], ecx (DR6)
+                b"\x89\x88\x18\x01\x00\x00"  # mov [eax+0x118], ecx (DR7)
                 # Call original with modified context
-                b"\xff\x75\x0c"            # push [ebp+0xc]
-                b"\xff\x75\x08"            # push [ebp+0x08]
+                b"\xff\x75\x0c"  # push [ebp+0xc]
+                b"\xff\x75\x08"  # push [ebp+0x08]
                 b"\xe8\x00\x00\x00\x00"  # call original (will patch)
-                b"\x5d"                    # pop ebp
-                b"\xc2\x08\x00"          # ret 8
+                b"\x5d"  # pop ebp
+                b"\xc2\x08\x00"  # ret 8
             )
 
             old_protect = ctypes.c_ulong()
@@ -1194,6 +1150,7 @@ class HardwareDebugProtector:
             self.logger.error(f"Failed to hook SetThreadContext: {e}")
             return False
 
+
 class HardwareDebugProtector:
     """Manages hardware debug registers to prevent detection."""
 
@@ -1206,6 +1163,7 @@ class HardwareDebugProtector:
     def get_thread_context(self) -> Any | None:
         """Get current thread context including debug registers."""
         try:
+
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
                     ("P1Home", ctypes.c_uint64),
@@ -1363,10 +1321,7 @@ class TimingNormalizer:
         """Normalize GetTickCount to prevent timing detection."""
         try:
             # Hook GetTickCount to return consistent values
-            func_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("kernel32.dll"),
-                b"GetTickCount"
-            )
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetTickCount")
 
             if not func_addr:
                 return False
@@ -1380,9 +1335,9 @@ class TimingNormalizer:
             # Hook to return incremental consistent values
             # mov eax, [counter]; add dword [counter], 10; ret
             hook_code = (
-                b"\xa1\x00\x00\x00\x00"    # mov eax, [counter_addr] (will patch)
-                b"\x83\x05\x00\x00\x00\x00\x0a" # add dword [counter_addr], 10
-                b"\xc3"                      # ret
+                b"\xa1\x00\x00\x00\x00"  # mov eax, [counter_addr] (will patch)
+                b"\x83\x05\x00\x00\x00\x00\x0a"  # add dword [counter_addr], 10
+                b"\xc3"  # ret
             )
 
             old_protect = ctypes.c_ulong()
@@ -1435,7 +1390,7 @@ class TimingNormalizer:
                     self.timing_hooks[location] = bytes(original)
 
                 # Replace with INT 3 followed by NOP
-                ctypes.memmove(location, b"\xCC\x90", 2)
+                ctypes.memmove(location, b"\xcc\x90", 2)
 
                 self.kernel32.VirtualProtect(
                     location,
@@ -1489,7 +1444,7 @@ class TimingNormalizer:
                 data = bytes(buffer)
                 offset = 0
                 while True:
-                    pos = data.find(b"\x0F\x31", offset)
+                    pos = data.find(b"\x0f\x31", offset)
                     if pos == -1:
                         break
                     rdtsc_locations.append(mod_info.lpBaseOfDll + pos)
@@ -1723,6 +1678,7 @@ class MemoryPatcher:
 
         return results
 
+
 class ExceptionHandler:
     """Manages exception handling to prevent anti-debug detection."""
 
@@ -1767,20 +1723,14 @@ class ExceptionHandler:
         """Install custom exception handler for anti-debug bypass."""
         try:
             # Use AddVectoredExceptionHandler for first-chance exception handling
-            EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(
-                ctypes.c_long,
-                ctypes.POINTER(ctypes.c_void_p)
-            )
+            EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
 
             def exception_filter(exception_pointers):
                 """Filter exceptions to hide debugging."""
                 try:
                     # Get exception code
                     if exception_pointers:
-                        exception_record = ctypes.cast(
-                            exception_pointers.contents,
-                            ctypes.POINTER(ctypes.c_ulong)
-                        )
+                        exception_record = ctypes.cast(exception_pointers.contents, ctypes.POINTER(ctypes.c_ulong))
                         exception_code = exception_record[0]
 
                         # Common anti-debug exception codes
@@ -1793,7 +1743,7 @@ class ExceptionHandler:
                             return -1  # EXCEPTION_CONTINUE_EXECUTION
 
                     return 0  # EXCEPTION_CONTINUE_SEARCH
-                except:
+                except (ValueError, TypeError):
                     return 0
 
             # Create handler function
@@ -1802,7 +1752,7 @@ class ExceptionHandler:
             # Install vectored exception handler
             self.original_handler = self.kernel32.AddVectoredExceptionHandler(
                 1,  # First handler in chain
-                self.exception_filter_func
+                self.exception_filter_func,
             )
 
             if self.original_handler:

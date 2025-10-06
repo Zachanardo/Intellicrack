@@ -37,7 +37,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from ..utils.logger import get_logger
 
@@ -381,37 +381,37 @@ class NativeICPLibrary:
         # Define function signatures
         try:
             # Initialize function
-            self.functions['init'] = self.lib.die_init
-            self.functions['init'].argtypes = []
-            self.functions['init'].restype = ctypes.c_int
+            self.functions["init"] = self.lib.die_init
+            self.functions["init"].argtypes = []
+            self.functions["init"].restype = ctypes.c_int
 
             # Scan file function
-            self.functions['scan'] = self.lib.die_scan_file
-            self.functions['scan'].argtypes = [ctypes.c_char_p, ctypes.c_int]
-            self.functions['scan'].restype = ctypes.c_char_p
+            self.functions["scan"] = self.lib.die_scan_file
+            self.functions["scan"].argtypes = [ctypes.c_char_p, ctypes.c_int]
+            self.functions["scan"].restype = ctypes.c_char_p
 
             # Get entropy function
-            self.functions['entropy'] = self.lib.die_get_entropy
-            self.functions['entropy'].argtypes = [ctypes.c_char_p, ctypes.c_int]
-            self.functions['entropy'].restype = ctypes.c_double
+            self.functions["entropy"] = self.lib.die_get_entropy
+            self.functions["entropy"].argtypes = [ctypes.c_char_p, ctypes.c_int]
+            self.functions["entropy"].restype = ctypes.c_double
 
             # Get file type function
-            self.functions['filetype'] = self.lib.die_get_filetype
-            self.functions['filetype'].argtypes = [ctypes.c_char_p]
-            self.functions['filetype'].restype = ctypes.c_char_p
+            self.functions["filetype"] = self.lib.die_get_filetype
+            self.functions["filetype"].argtypes = [ctypes.c_char_p]
+            self.functions["filetype"].restype = ctypes.c_char_p
 
             # Extract strings function
-            self.functions['strings'] = self.lib.die_extract_strings
-            self.functions['strings'].argtypes = [ctypes.c_char_p, ctypes.c_int]
-            self.functions['strings'].restype = ctypes.POINTER(ctypes.c_char_p)
+            self.functions["strings"] = self.lib.die_extract_strings
+            self.functions["strings"].argtypes = [ctypes.c_char_p, ctypes.c_int]
+            self.functions["strings"].restype = ctypes.POINTER(ctypes.c_char_p)
 
             # Free memory function
-            self.functions['free'] = self.lib.die_free_memory
-            self.functions['free'].argtypes = [ctypes.c_void_p]
-            self.functions['free'].restype = None
+            self.functions["free"] = self.lib.die_free_memory
+            self.functions["free"].argtypes = [ctypes.c_void_p]
+            self.functions["free"].restype = None
 
             # Initialize the library
-            self.functions['init']()
+            self.functions["init"]()
 
         except AttributeError as e:
             logger.warning(f"Some native functions not available: {e}")
@@ -421,10 +421,10 @@ class NativeICPLibrary:
         if isinstance(self.lib, type(_die_module)):
             # Use Python module
             return self.lib.scan_file(file_path, flags)
-        elif 'scan' in self.functions:
+        elif "scan" in self.functions:
             # Use native function
-            result = self.functions['scan'](file_path.encode('utf-8'), flags)
-            return result.decode('utf-8') if result else ""
+            result = self.functions["scan"](file_path.encode("utf-8"), flags)
+            return result.decode("utf-8") if result else ""
         else:
             raise RuntimeError("Native scan function not available")
 
@@ -433,9 +433,9 @@ class NativeICPLibrary:
         if isinstance(self.lib, type(_die_module)):
             # Calculate entropy using Python module or manual calculation
             return self._calculate_entropy_python(file_path, max_bytes)
-        elif 'entropy' in self.functions:
+        elif "entropy" in self.functions:
             # Use native function
-            return self.functions['entropy'](file_path.encode('utf-8'), max_bytes)
+            return self.functions["entropy"](file_path.encode("utf-8"), max_bytes)
         else:
             return self._calculate_entropy_python(file_path, max_bytes)
 
@@ -443,7 +443,7 @@ class NativeICPLibrary:
         """Calculate Shannon entropy in Python."""
         import math
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             if max_bytes > 0:
                 data = f.read(max_bytes)
             else:
@@ -479,11 +479,7 @@ class ResultCache:
         cache_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = cache_dir / "icp_cache.db"
         self.memory_cache = {}
-        self.cache_stats = {
-            "hits": 0,
-            "misses": 0,
-            "evictions": 0
-        }
+        self.cache_stats = {"hits": 0, "misses": 0, "evictions": 0}
 
         # Initialize database
         self._init_database()
@@ -520,6 +516,7 @@ class ResultCache:
 
     def _start_cleanup_thread(self):
         """Start background thread for cache cleanup."""
+
         def cleanup_worker():
             while True:
                 time.sleep(3600)  # Run every hour
@@ -533,10 +530,7 @@ class ResultCache:
         cutoff_time = time.time() - (max_age_days * 86400)
 
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "DELETE FROM cache WHERE accessed_at < ?",
-                (cutoff_time,)
-            )
+            cursor = conn.execute("DELETE FROM cache WHERE accessed_at < ?", (cutoff_time,))
 
             if cursor.rowcount > 0:
                 self.cache_stats["evictions"] += cursor.rowcount
@@ -546,7 +540,7 @@ class ResultCache:
         """Calculate file hash for cache key."""
         sha256_hash = hashlib.sha256()
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             # Read file in chunks for memory efficiency
             for chunk in iter(lambda: f.read(65536), b""):
                 sha256_hash.update(chunk)
@@ -574,7 +568,7 @@ class ResultCache:
                     FROM cache
                     WHERE file_hash = ? AND scan_mode = ?
                     """,
-                    (file_hash, scan_mode)
+                    (file_hash, scan_mode),
                 )
 
                 row = cursor.fetchone()
@@ -590,7 +584,7 @@ class ResultCache:
                             SET accessed_at = ?, access_count = access_count + 1
                             WHERE file_hash = ? AND scan_mode = ?
                             """,
-                            (time.time(), file_hash, scan_mode)
+                            (time.time(), file_hash, scan_mode),
                         )
 
                         result = json.loads(result_json)
@@ -634,16 +628,7 @@ class ResultCache:
                      result_json, created_at, accessed_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (
-                        file_hash,
-                        file_path,
-                        stat.st_size,
-                        stat.st_mtime,
-                        scan_mode,
-                        json.dumps(result),
-                        time.time(),
-                        time.time()
-                    )
+                    (file_hash, file_path, stat.st_size, stat.st_mtime, scan_mode, json.dumps(result), time.time(), time.time()),
                 )
 
         except Exception as e:
@@ -659,10 +644,7 @@ class ResultCache:
 
             # Remove from database
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    "DELETE FROM cache WHERE file_path = ?",
-                    (file_path,)
-                )
+                conn.execute("DELETE FROM cache WHERE file_path = ?", (file_path,))
 
         except Exception as e:
             logger.debug(f"Cache invalidate error: {e}")
@@ -687,8 +669,7 @@ class ResultCache:
 
         stats["memory_entries"] = len(self.memory_cache)
         stats["hit_rate"] = (
-            self.cache_stats["hits"] /
-            (self.cache_stats["hits"] + self.cache_stats["misses"])
+            self.cache_stats["hits"] / (self.cache_stats["hits"] + self.cache_stats["misses"])
             if self.cache_stats["hits"] + self.cache_stats["misses"] > 0
             else 0
         )
@@ -709,10 +690,7 @@ class ParallelScanner:
         self.active_scans = set()
 
     async def scan_files_parallel(
-        self,
-        file_paths: List[str],
-        scan_mode: ScanMode,
-        progress_callback: Optional[callable] = None
+        self, file_paths: List[str], scan_mode: ScanMode, progress_callback: Optional[callable] = None
     ) -> Dict[str, ICPScanResult]:
         """Scan multiple files in parallel with progress tracking."""
         results = {}
@@ -722,9 +700,7 @@ class ParallelScanner:
         # Create scan tasks
         scan_tasks = []
         for file_path in file_paths:
-            task = asyncio.create_task(
-                self._scan_single_file(file_path, scan_mode)
-            )
+            task = asyncio.create_task(self._scan_single_file(file_path, scan_mode))
             scan_tasks.append((file_path, task))
 
         # Process results as they complete
@@ -739,18 +715,11 @@ class ParallelScanner:
 
             except Exception as e:
                 logger.error(f"Parallel scan error for {file_path}: {e}")
-                results[file_path] = ICPScanResult(
-                    file_path=file_path,
-                    error=str(e)
-                )
+                results[file_path] = ICPScanResult(file_path=file_path, error=str(e))
 
         return results
 
-    async def _scan_single_file(
-        self,
-        file_path: str,
-        scan_mode: ScanMode
-    ) -> ICPScanResult:
+    async def _scan_single_file(self, file_path: str, scan_mode: ScanMode) -> ICPScanResult:
         """Scan a single file asynchronously."""
         loop = asyncio.get_event_loop()
 
@@ -758,27 +727,23 @@ class ParallelScanner:
         def do_scan():
             try:
                 # Memory map file for efficient access
-                with open(file_path, 'rb') as f:
-                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
+                with open(file_path, "rb") as f:
+                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
                         # Perform native scan
                         scan_flags = self._get_scan_flags(scan_mode)
-                        result_text = self.native_lib.scan_file_native(
-                            file_path, scan_flags
-                        )
+                        result_text = self.native_lib.scan_file_native(file_path, scan_flags)
 
                         # Get additional data
                         entropy = self.native_lib.get_entropy_native(file_path)
 
                         # Parse result
-                        scan_result = ICPScanResult.from_icp_text(
-                            file_path, result_text
-                        )
+                        scan_result = ICPScanResult.from_icp_text(file_path, result_text)
 
                         # Add entropy metadata
-                        if not hasattr(scan_result, 'metadata'):
+                        if not hasattr(scan_result, "metadata"):
                             scan_result.metadata = {}
-                        scan_result.metadata['entropy'] = entropy
-                        scan_result.metadata['entropy_high'] = entropy > 7.5
+                        scan_result.metadata["entropy"] = entropy
+                        scan_result.metadata["entropy_high"] = entropy > 7.5
 
                         return scan_result
 
@@ -797,7 +762,7 @@ class ParallelScanner:
             ScanMode.DEEP: 0x0001 | 0x0002,  # Deep scan + version info
             ScanMode.HEURISTIC: 0x0004 | 0x0008,  # Heuristic + suspicious
             ScanMode.AGGRESSIVE: 0x000F,  # All basic flags
-            ScanMode.ALL: 0xFFFF  # All possible flags
+            ScanMode.ALL: 0xFFFF,  # All possible flags
         }
 
         return flags.get(scan_mode, 0)
@@ -884,16 +849,16 @@ class ICPBackend:
     def _get_icp_scan_flags(self, scan_mode: ScanMode) -> int:
         """Convert scan mode to ICP Engine scan flags."""
         # Use native flags or module flags
-        if hasattr(self.icp_module, 'ScanFlags'):
+        if hasattr(self.icp_module, "ScanFlags"):
             flag_map = {
                 ScanMode.NORMAL: 0,  # Default scanning
                 ScanMode.DEEP: self.icp_module.ScanFlags.DEEP_SCAN,
                 ScanMode.HEURISTIC: self.icp_module.ScanFlags.HEURISTIC_SCAN,
                 ScanMode.AGGRESSIVE: self.icp_module.ScanFlags.DEEP_SCAN | self.icp_module.ScanFlags.HEURISTIC_SCAN,
                 ScanMode.ALL: (
-                    self.icp_module.ScanFlags.DEEP_SCAN |
-                    self.icp_module.ScanFlags.HEURISTIC_SCAN |
-                    self.icp_module.ScanFlags.ALL_TYPES_SCAN
+                    self.icp_module.ScanFlags.DEEP_SCAN
+                    | self.icp_module.ScanFlags.HEURISTIC_SCAN
+                    | self.icp_module.ScanFlags.ALL_TYPES_SCAN
                 ),
             }
         else:
@@ -965,9 +930,7 @@ class ICPBackend:
         while retry_count < self.max_retries:
             try:
                 # Use native scanning with memory-mapped file access
-                result = await self._perform_native_scan(
-                    file_path, scan_flags, timeout
-                )
+                result = await self._perform_native_scan(file_path, scan_flags, timeout)
 
                 if result and not result.error:
                     # Cache successful result
@@ -979,15 +942,9 @@ class ICPBackend:
                                     "size": info.size,
                                     "offset": info.offset,
                                     "values": [
-                                        {
-                                            "name": d.name,
-                                            "type": d.type,
-                                            "version": d.version,
-                                            "info": d.info,
-                                            "string": d.string
-                                        }
+                                        {"name": d.name, "type": d.type, "version": d.version, "info": d.info, "string": d.string}
                                         for d in info.detections
-                                    ]
+                                    ],
                                 }
                                 for info in result.file_infos
                             ]
@@ -1010,7 +967,7 @@ class ICPBackend:
 
                 if retry_count < self.max_retries:
                     # Exponential backoff
-                    await asyncio.sleep(0.5 * (2 ** retry_count))
+                    await asyncio.sleep(0.5 * (2**retry_count))
 
         # Handle persistent failure
         if retry_count >= self.max_retries:
@@ -1095,7 +1052,7 @@ class ICPBackend:
         file_paths: list[str],
         scan_mode: ScanMode = ScanMode.NORMAL,
         max_concurrent: int = 4,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
     ) -> dict[str, ICPScanResult]:
         """Analyze multiple files concurrently with native parallel scanning.
 
@@ -1115,9 +1072,7 @@ class ICPBackend:
             self.parallel_scanner = ParallelScanner(max_workers=max_concurrent)
 
         # Use native parallel scanning
-        results = await self.parallel_scanner.scan_files_parallel(
-            file_paths, scan_mode, progress_callback
-        )
+        results = await self.parallel_scanner.scan_files_parallel(file_paths, scan_mode, progress_callback)
 
         # Add supplemental data if enabled
         if SUPPLEMENTAL_ENGINES_AVAILABLE:
@@ -1131,56 +1086,38 @@ class ICPBackend:
 
         return results
 
-    async def _perform_native_scan(
-        self,
-        file_path: Path,
-        scan_flags: int,
-        timeout: float
-    ) -> ICPScanResult:
+    async def _perform_native_scan(self, file_path: Path, scan_flags: int, timeout: float) -> ICPScanResult:
         """Perform native scan with error handling."""
         loop = asyncio.get_event_loop()
 
         def native_scan():
             try:
                 # Use memory-mapped file for efficiency
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     # Check if file is too large for memory mapping
                     file_size = os.path.getsize(file_path)
                     if file_size > 2 * 1024 * 1024 * 1024:  # 2GB limit
                         # Use streaming scan for large files
                         return self._scan_large_file(file_path, scan_flags)
 
-                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
+                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
                         # Perform native scan
                         if isinstance(self.icp_module, NativeICPLibrary):
-                            result_text = self.icp_module.scan_file_native(
-                                str(file_path), scan_flags
-                            )
+                            result_text = self.icp_module.scan_file_native(str(file_path), scan_flags)
                         else:
-                            result_text = self.icp_module.scan_file(
-                                str(file_path), scan_flags
-                            )
+                            result_text = self.icp_module.scan_file(str(file_path), scan_flags)
 
                         return ICPScanResult.from_icp_text(str(file_path), result_text)
 
             except Exception as e:
                 logger.error(f"Native scan error: {e}")
-                return ICPScanResult(
-                    file_path=str(file_path),
-                    error=str(e)
-                )
+                return ICPScanResult(file_path=str(file_path), error=str(e))
 
         try:
-            result = await asyncio.wait_for(
-                loop.run_in_executor(None, native_scan),
-                timeout=timeout
-            )
+            result = await asyncio.wait_for(loop.run_in_executor(None, native_scan), timeout=timeout)
             return result
         except asyncio.TimeoutError:
-            return ICPScanResult(
-                file_path=str(file_path),
-                error=f"Analysis timed out after {timeout} seconds"
-            )
+            return ICPScanResult(file_path=str(file_path), error=f"Analysis timed out after {timeout} seconds")
 
     def _scan_large_file(self, file_path: Path, scan_flags: int) -> ICPScanResult:
         """Scan large files that can't be memory-mapped."""
@@ -1190,7 +1127,7 @@ class ICPBackend:
             detections = []
             file_type = "Unknown"
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 chunk_num = 0
                 while True:
                     chunk = f.read(chunk_size)
@@ -1217,11 +1154,7 @@ class ICPBackend:
                     chunk_num += 1
 
             # Create result
-            file_info = ICPFileInfo(
-                filetype=file_type,
-                size=str(os.path.getsize(file_path)),
-                detections=detections
-            )
+            file_info = ICPFileInfo(filetype=file_type, size=str(os.path.getsize(file_path)), detections=detections)
 
             result = ICPScanResult(file_path=str(file_path))
             result.file_infos.append(file_info)
@@ -1229,10 +1162,7 @@ class ICPBackend:
             return result
 
         except Exception as e:
-            return ICPScanResult(
-                file_path=str(file_path),
-                error=f"Large file scan error: {e}"
-            )
+            return ICPScanResult(file_path=str(file_path), error=f"Large file scan error: {e}")
 
     def _detect_file_type_from_bytes(self, data: bytes) -> str:
         """Detect file type from first bytes."""
@@ -1245,30 +1175,30 @@ class ICPBackend:
             if len(data) > 0x3C + 4:
                 pe_offset = struct.unpack("<I", data[0x3C:0x40])[0]
                 if len(data) > pe_offset + 6:
-                    machine = struct.unpack("<H", data[pe_offset + 4:pe_offset + 6])[0]
+                    machine = struct.unpack("<H", data[pe_offset + 4 : pe_offset + 6])[0]
                     if machine == 0x8664:
                         return "PE64"
                     elif machine == 0x014C:
                         return "PE32"
             return "PE"
-        elif data[:4] == b"\x7FELF":
+        elif data[:4] == b"\x7fELF":
             if len(data) > 4:
                 if data[4] == 2:
                     return "ELF64"
                 elif data[4] == 1:
                     return "ELF32"
             return "ELF"
-        elif data[:4] == b"\xCA\xFE\xBA\xBE":
+        elif data[:4] == b"\xca\xfe\xba\xbe":
             return "Mach-O"
-        elif data[:4] == b"\xCE\xFA\xED\xFE":
+        elif data[:4] == b"\xce\xfa\xed\xfe":
             return "Mach-O64"
-        elif data[:4] == b"\xCF\xFA\xED\xFE":
+        elif data[:4] == b"\xcf\xfa\xed\xfe":
             return "Mach-O64"
         elif data[:2] == b"PK":
             return "ZIP/JAR"
         elif data[:4] == b"Rar!":
             return "RAR"
-        elif data[:6] == b"7z\xBC\xAF\x27\x1C":
+        elif data[:6] == b"7z\xbc\xaf\x27\x1c":
             return "7Z"
 
         return "Binary"
@@ -1288,7 +1218,6 @@ class ICPBackend:
             (b"PEC2", "Packer", "PECompact"),
             (b"PEtite", "Packer", "PEtite"),
             (b"NSPack", "Packer", "NSPack"),
-
             # Protectors
             (b"VMProtect", "Protector", "VMProtect"),
             (b".vmp0", "Protector", "VMProtect"),
@@ -1301,7 +1230,6 @@ class ICPBackend:
             (b"MPRESS", "Protector", "MPRESS"),
             (b"Armadillo", "Protector", "Armadillo"),
             (b"SecuROM", "Protector", "SecuROM"),
-
             # License systems
             (b"FLEXlm", "License", "FlexLM"),
             (b"FLEXnet", "License", "FlexNet"),
@@ -1325,8 +1253,8 @@ class ICPBackend:
                     type=detection_type,
                     version="",
                     info=f"Found at offset 0x{offset + pos:08X}",
-                    string=signature.decode('utf-8', errors='ignore'),
-                    confidence=0.9
+                    string=signature.decode("utf-8", errors="ignore"),
+                    confidence=0.9,
                 )
                 detections.append(detection)
 
@@ -1337,9 +1265,9 @@ class ICPBackend:
         try:
             if isinstance(self.icp_module, NativeICPLibrary):
                 return "ICP Native Library v1.0.0"
-            elif hasattr(self.icp_module, '__version__'):
+            elif hasattr(self.icp_module, "__version__"):
                 version = self.icp_module.__version__
-                if hasattr(self.icp_module, 'die_version'):
+                if hasattr(self.icp_module, "die_version"):
                     return f"ICP Engine {version} (Core {self.icp_module.die_version})"
                 return f"ICP Engine {version}"
             else:
@@ -1378,11 +1306,7 @@ class ICPBackend:
 
     def get_error_stats(self) -> Dict[str, Any]:
         """Get error recovery statistics."""
-        return {
-            "last_error": self.last_error,
-            "error_count": self.error_count,
-            "max_retries": self.max_retries
-        }
+        return {"last_error": self.last_error, "error_count": self.error_count, "max_retries": self.max_retries}
 
     def reset_error_state(self):
         """Reset error tracking state."""

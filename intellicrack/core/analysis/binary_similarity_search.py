@@ -26,7 +26,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 try:
     from intellicrack.handlers.pefile_handler import pefile

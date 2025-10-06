@@ -181,11 +181,11 @@ class LicenseValidationBypass:
                             context="ASN.1 DER encoded private key",
                             key_object=key,
                         )
-                except:
+                except (AttributeError, KeyError):
                     pass
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Private key extraction failed: {e}")
 
         return None
 
@@ -275,8 +275,8 @@ class LicenseValidationBypass:
                     data = section.get_data()
                     keys.extend(self._scan_section_for_keys(data, section.VirtualAddress))
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Section scanning failed: {e}")
 
         return keys
 
@@ -316,8 +316,8 @@ class LicenseValidationBypass:
                     code = text_section.get_data()
                     keys.extend(self._analyze_crypto_api_usage(code, crypto_imports, text_section.VirtualAddress))
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Crypto API analysis failed: {e}")
 
         return keys
 
@@ -340,7 +340,7 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
-            except:
+            except (ValueError, TypeError):
                 pass
 
             offset += 1
@@ -358,7 +358,7 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
-            except:
+            except (ValueError, TypeError):
                 pass
 
             offset += 1
@@ -438,7 +438,7 @@ class LicenseValidationBypass:
                 key = parser(data)
                 if key:
                     keys.append(key)
-            except:
+            except (ValueError, TypeError):
                 continue
 
         return keys
@@ -516,7 +516,7 @@ class LicenseValidationBypass:
                                                 for key in extracted:
                                                     key.context = f"Found near {imp_name.decode('utf-8', errors='ignore')} call"
                                                 keys.extend(extracted)
-                                except:
+                                except (UnicodeDecodeError, AttributeError):
                                     pass
 
         return keys
@@ -541,8 +541,8 @@ class LicenseValidationBypass:
                 # Generic parser for unknown versions
                 return self._parse_generic_openssl_rsa(data)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"OpenSSL RSA parsing failed: {e}")
 
         return None
 
@@ -617,8 +617,8 @@ class LicenseValidationBypass:
                         confidence=0.85,
                         context="OpenSSL 1.0.x RSA public key structure",
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"OpenSSL 1.0.x RSA parsing failed: {e}")
 
         return None
 
@@ -670,8 +670,8 @@ class LicenseValidationBypass:
                 context="OpenSSL 1.1.x RSA public key structure",
             )
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"OpenSSL 1.1.x RSA parsing failed: {e}")
 
         return None
 
@@ -728,8 +728,8 @@ class LicenseValidationBypass:
                 context="OpenSSL 3.x RSA public key structure",
             )
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"OpenSSL 3.x RSA parsing failed: {e}")
 
         return None
 
@@ -764,8 +764,8 @@ class LicenseValidationBypass:
                     context="OpenSSL RSA structure (generic parser)",
                 )
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Generic OpenSSL RSA parsing failed: {e}")
 
         return None
 
@@ -809,8 +809,8 @@ class LicenseValidationBypass:
                 value = int.from_bytes(bytes(num_bytes), "little")
                 return value if neg == 0 else -value
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"BIGNUM reading failed: {e}")
 
         return None
 
@@ -847,8 +847,8 @@ class LicenseValidationBypass:
                 value = int.from_bytes(bytes(num_bytes), "little")
                 return value if neg == 0 else -value
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"BIGNUM reading failed: {e}")
 
         return None
 
@@ -883,8 +883,8 @@ class LicenseValidationBypass:
                 value = int.from_bytes(num_bytes, "little")
                 return value if neg == 0 else -value
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"BIGNUM reading failed: {e}")
 
         return None
 
@@ -913,7 +913,7 @@ class LicenseValidationBypass:
             # Read number bytes
             num_bytes = data[8 : 8 + size]
             return int.from_bytes(num_bytes, byteorder="big")
-        except:
+        except (ValueError, IndexError):
             return None
 
     def _bignum_size(self, n: int) -> int:
@@ -954,7 +954,7 @@ class LicenseValidationBypass:
                 confidence=0.9,
                 context="Windows BCRYPT_RSAKEY_BLOB",
             )
-        except:
+        except (ValueError, TypeError):
             return None
 
     def _has_key_structure(self, data: bytes) -> bool:
@@ -1021,7 +1021,7 @@ class LicenseValidationBypass:
                         context="PEM encoded RSA public key",
                         key_object=key,
                     )
-        except:
+        except (AttributeError, KeyError):
             pass
 
         return None
@@ -1066,7 +1066,7 @@ class LicenseValidationBypass:
                         context="PKCS#8 RSA private key",
                         key_object=key,
                     )
-        except:
+        except (AttributeError, KeyError):
             pass
 
         return None
@@ -1335,8 +1335,8 @@ class LicenseValidationBypass:
                         context=f"OpenSSH private key (encrypted with {cipher.decode('utf-8')})",
                     )
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"RSA parsing failed: {e}")
 
         return None
 
@@ -1355,7 +1355,7 @@ class LicenseValidationBypass:
                 return ExtractedKey(
                     key_type=KeyType.RSA_PUBLIC, key_data=data, modulus=n, exponent=e, confidence=0.95, context="JSON Web Key (JWK)"
                 )
-        except:
+        except (ValueError, TypeError):
             pass
 
         return None
@@ -1441,7 +1441,7 @@ class LicenseValidationBypass:
                     context="ASN.1 DER encoded ECC private key",
                     key_object=key,
                 )
-        except:
+        except (AttributeError, KeyError):
             pass
 
         return None
@@ -1462,7 +1462,7 @@ class LicenseValidationBypass:
                     cert_data = data[offset : offset + 8192]
                     cert = x509.load_der_x509_certificate(cert_data, backend=self.backend)
                     certificates.append(cert)
-                except:
+                except (ValueError, TypeError):
                     # Try PEM format
                     try:
                         end = data.find(b"-----END CERTIFICATE-----", offset)
@@ -1470,7 +1470,7 @@ class LicenseValidationBypass:
                             cert_data = data[offset : end + 25]
                             cert = x509.load_pem_x509_certificate(cert_data, backend=self.backend)
                             certificates.append(cert)
-                    except:
+                    except (ValueError, TypeError):
                         pass
 
         return certificates
@@ -1558,7 +1558,7 @@ class LicenseValidationBypass:
         try:
             data.decode("ascii")
             return False  # Keys shouldn't be ASCII text
-        except:
+        except UnicodeDecodeError:
             pass
 
         return True

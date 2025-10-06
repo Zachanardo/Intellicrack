@@ -56,10 +56,12 @@ except ImportError as e:
 
 # Try to import Intel GPU libraries
 try:
-    import intel_extension_for_pytorch as ipex
+    from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
 
-    HAS_INTEL_GPU = True
-except ImportError as e:
+    HAS_INTEL_GPU = HAS_IPEX
+    if not HAS_INTEL_GPU:
+        logger.debug("Intel Extension for PyTorch not available (see ipex_handler for details)")
+except Exception as e:
     logger.error("Import error in local_gguf_server: %s", e)
     ipex = None
     HAS_INTEL_GPU = False

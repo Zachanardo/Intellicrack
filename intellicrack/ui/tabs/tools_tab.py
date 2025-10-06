@@ -23,6 +23,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from intellicrack.core.patching.windows_activator import WindowsActivator
+from intellicrack.core.terminal_manager import get_terminal_manager
 from intellicrack.handlers.pyqt6_handler import (
     QColor,
     QComboBox,
@@ -47,6 +49,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.ui.tabs.adobe_injector_tab import AdobeInjectorTab
 from intellicrack.utils.core.dependency_feedback import dependency_feedback, get_user_friendly_error
 
 from .base_tab import BaseTab
@@ -118,6 +121,11 @@ class ToolsTab(BaseTab):
         self.tools_tabs.addTab(self.create_advanced_analysis_tab(), "Advanced Analysis")
         self.tools_tabs.addTab(self.create_plugin_manager_tab(), "Plugin Manager")
         self.tools_tabs.addTab(self.create_network_tools_tab(), "Network Tools")
+        self.tools_tabs.addTab(self.create_activation_tools_tab(), "Activation Tools")
+
+        # Add Adobe Injector as sub-tab
+        self.adobe_injector = AdobeInjectorTab(self.shared_context, self)
+        self.tools_tabs.addTab(self.adobe_injector, "Adobe Injector")
 
         layout.addWidget(self.tools_tabs)
         return panel
@@ -185,7 +193,7 @@ class ToolsTab(BaseTab):
         reg_query_layout = QHBoxLayout()
         reg_query_layout.addWidget(QLabel("Registry Key:"))
         self.reg_key_edit = QLineEdit()
-        self.reg_key_edit.setPlaceholderText("HKEY_LOCAL_MACHINE\\SOFTWARE\\...")
+        self.reg_key_edit.setText("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion")
         reg_query_layout.addWidget(self.reg_key_edit)
 
         reg_query_btn = QPushButton("Query Registry")
@@ -385,7 +393,7 @@ class ToolsTab(BaseTab):
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("Filter:"))
         self.capture_filter_edit = QLineEdit()
-        self.capture_filter_edit.setPlaceholderText("e.g., tcp port 80, host 192.168.1.1")
+        self.capture_filter_edit.setText("tcp port 443")
         filter_layout.addWidget(self.capture_filter_edit)
 
         # Capture controls
@@ -417,7 +425,7 @@ class ToolsTab(BaseTab):
         target_layout = QHBoxLayout()
         target_layout.addWidget(QLabel("Target:"))
         self.scan_target_edit = QLineEdit()
-        self.scan_target_edit.setPlaceholderText("IP address or range (e.g., 192.168.1.1/24)")
+        self.scan_target_edit.setText("127.0.0.1")
         target_layout.addWidget(self.scan_target_edit)
 
         # Scan types
@@ -445,6 +453,80 @@ class ToolsTab(BaseTab):
         layout.addStretch()
 
         return tab
+
+    def create_activation_tools_tab(self):
+        """Create activation tools tab for Windows activation."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        windows_group = QGroupBox("Windows Activation")
+        windows_layout = QVBoxLayout(windows_group)
+
+        self.windows_activation_status = QLabel("Status: Unknown")
+        self.windows_activation_status.setStyleSheet("font-weight: bold;")
+        windows_layout.addWidget(self.windows_activation_status)
+
+        check_windows_btn = QPushButton("Check Windows Activation Status")
+        check_windows_btn.clicked.connect(self.check_windows_activation)
+        windows_layout.addWidget(check_windows_btn)
+
+        activate_windows_btn = QPushButton("Activate Windows (Interactive)")
+        activate_windows_btn.setStyleSheet("font-weight: bold; color: green; padding: 10px;")
+        activate_windows_btn.clicked.connect(self.activate_windows_interactive)
+        windows_layout.addWidget(activate_windows_btn)
+
+        help_text = QLabel("Launches WindowsActivator.cmd in embedded terminal.\nYou can select activation method in the menu.")
+        help_text.setStyleSheet("color: gray; font-style: italic;")
+        windows_layout.addWidget(help_text)
+
+        layout.addWidget(windows_group)
+
+        layout.addStretch()
+        return tab
+
+    def check_windows_activation(self):
+        """Check current Windows activation status."""
+        try:
+            activator = WindowsActivator()
+            status = activator.get_activation_status()
+
+            status_text = status.get("status", "unknown")
+            self.windows_activation_status.setText(f"Status: {status_text}")
+
+            if status_text == "activated":
+                self.windows_activation_status.setStyleSheet("font-weight: bold; color: green;")
+            else:
+                self.windows_activation_status.setStyleSheet("font-weight: bold; color: orange;")
+
+            if hasattr(self.parent(), "append_output"):
+                self.parent().append_output(f"Windows Activation Status: {status_text}")
+                if "raw_output" in status:
+                    self.parent().append_output(status["raw_output"])
+
+        except Exception as e:
+            self.windows_activation_status.setText("Status: Error checking")
+            self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
+            if hasattr(self.parent(), "append_output"):
+                self.parent().append_output(f"Error checking Windows activation: {e}")
+
+    def activate_windows_interactive(self):
+        """Launch Windows activation in embedded terminal."""
+        try:
+            terminal_mgr = get_terminal_manager()
+
+            script_path = "Windows_Patch/WindowsActivator.cmd"
+
+            terminal_mgr.execute_script(script_path=script_path, interactive=True, auto_switch=True)
+
+            self.windows_activation_status.setText("Status: Activation in progress...")
+            self.windows_activation_status.setStyleSheet("font-weight: bold; color: blue;")
+
+        except Exception as e:
+            self.windows_activation_status.setText("Status: Error launching")
+            self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
+
+            if hasattr(self.parent(), "append_output"):
+                self.parent().append_output(f"Error launching Windows activation: {e}")
 
     def create_advanced_analysis_tab(self):
         """Create advanced analysis tools tab with sophisticated backend integration."""
@@ -1275,15 +1357,37 @@ class ToolsTab(BaseTab):
         plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         try:
-            # Simulate plugin loading
-            self.loaded_plugins[plugin_name] = {
-                "name": plugin_name,
-                "status": "loaded",
-                "description": f"Plugin: {plugin_name}",
-            }
+            from intellicrack.plugins.plugin_system import load_plugins
 
-            # Update plugin info
-            self.plugin_info_text.setText(f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module")
+            available_plugins = load_plugins()
+
+            plugin_found = None
+            for category in available_plugins.values():
+                for plugin in category:
+                    if plugin.get("name") == plugin_name or plugin.get("module") == plugin_name:
+                        plugin_found = plugin
+                        break
+                if plugin_found:
+                    break
+
+            if plugin_found:
+                self.loaded_plugins[plugin_name] = {
+                    "name": plugin_found.get("name", plugin_name),
+                    "status": "loaded",
+                    "description": plugin_found.get("description", f"Plugin: {plugin_name}"),
+                    "instance": plugin_found.get("instance"),
+                }
+
+                plugin_info = f"Plugin: {plugin_found.get('name', plugin_name)}\nStatus: Loaded\nDescription: {plugin_found.get('description', 'No description')}"
+            else:
+                self.loaded_plugins[plugin_name] = {
+                    "name": plugin_name,
+                    "status": "loaded",
+                    "description": f"Plugin: {plugin_name}",
+                }
+                plugin_info = f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module"
+
+            self.plugin_info_text.setText(plugin_info)
 
             # Update list display
             self.populate_plugin_list()
@@ -1447,33 +1551,70 @@ def get_plugin():
             return
 
         try:
-            # Simulate packet capture start
+            from intellicrack.ui.traffic_analyzer import start_network_capture
+
             self.packets_table.setRowCount(0)
 
-            # Add sample packets for demonstration
-            sample_packets = [
-                ["12:34:56.789", "192.168.1.100", "192.168.1.1", "TCP", "74", "HTTP GET request"],
-                ["12:34:56.790", "192.168.1.1", "192.168.1.100", "TCP", "60", "ACK"],
-                ["12:34:56.791", "192.168.1.1", "192.168.1.100", "HTTP", "1514", "HTTP Response"],
-            ]
+            self._capture_active = True
+            self._captured_packets = []
 
-            for i, packet in enumerate(sample_packets):
-                self.packets_table.insertRow(i)
-                for j, data in enumerate(packet):
-                    self.packets_table.setItem(i, j, QTableWidgetItem(str(data)))
+            success = start_network_capture(self, interface=interface, filter_str=filter_text if filter_text else None)
 
-            self.network_capture_started.emit(interface)
-            self.output_console.append(f"Started packet capture on {interface}")
-            if filter_text:
-                self.output_console.append(f"Using filter: {filter_text}")
+            if success:
+                import threading
 
-            self.log_message(f"Packet capture started on {interface}")
+                update_thread = threading.Thread(target=self._update_packet_table_periodically, daemon=True)
+                update_thread.start()
+
+                self.network_capture_started.emit(interface)
+                self.output_console.append(f"Started packet capture on {interface}")
+                if filter_text:
+                    self.output_console.append(f"Using filter: {filter_text}")
+
+                self.log_message(f"Packet capture started on {interface}")
+            else:
+                self.output_console.append("Failed to start packet capture")
+
+        except ImportError:
+            self.output_console.append("Network capture module not available")
+            self.log_message("Network capture requires additional dependencies")
 
         except Exception as e:
             self.output_console.append(f"Error starting packet capture: {e!s}")
 
+    def _update_packet_table_periodically(self):
+        """Update packet table with captured packets in background."""
+        import time
+
+        while self._capture_active:
+            try:
+                if hasattr(self, "_captured_packets") and self._captured_packets:
+                    for packet in self._captured_packets[-10:]:
+                        row_count = self.packets_table.rowCount()
+                        self.packets_table.insertRow(row_count)
+
+                        timestamp = packet.get("timestamp", time.strftime("%H:%M:%S"))
+                        src_ip = packet.get("src_ip", "N/A")
+                        dst_ip = packet.get("dst_ip", "N/A")
+                        protocol = packet.get("protocol", "N/A")
+                        length = str(packet.get("length", "0"))
+                        info = packet.get("info", "")
+
+                        self.packets_table.setItem(row_count, 0, QTableWidgetItem(timestamp))
+                        self.packets_table.setItem(row_count, 1, QTableWidgetItem(src_ip))
+                        self.packets_table.setItem(row_count, 2, QTableWidgetItem(dst_ip))
+                        self.packets_table.setItem(row_count, 3, QTableWidgetItem(protocol))
+                        self.packets_table.setItem(row_count, 4, QTableWidgetItem(length))
+                        self.packets_table.setItem(row_count, 5, QTableWidgetItem(info))
+
+                time.sleep(1)
+
+            except Exception:
+                break
+
     def stop_packet_capture(self):
         """Stop packet capture."""
+        self._capture_active = False
         self.output_console.append("Packet capture stopped")
         self.log_message("Packet capture stopped")
 
@@ -1498,14 +1639,28 @@ def get_plugin():
             return
 
         try:
-            # Simulate ping scan results
-            results = [
-                f"Ping scan results for {target}:",
-                "Host is up (0.0012s latency)",
-                "MAC Address: 00:11:22:33:44:55 (Vendor)",
-            ]
+            import platform
+            import subprocess
 
-            self.tool_output.append("\n".join(results))
+            # Determine ping command based on OS
+            param = "-n" if platform.system().lower() == "windows" else "-c"
+
+            # Execute real ping command
+            # Sanitize param and target to prevent command injection
+            param_clean = str(param).replace(";", "").replace("|", "").replace("&", "")
+            target_clean = str(target).replace(";", "").replace("|", "").replace("&", "")
+            cmd = ["ping", param_clean, "4", target_clean]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, shell=False)
+
+            if result.returncode == 0:
+                self.tool_output.append(f"Ping scan results for {target}:\n")
+                self.tool_output.append(result.stdout)
+                self.log_message(f"Host {target} is up")
+            else:
+                self.tool_output.append(f"Host {target} appears to be down or unreachable")
+                if result.stderr:
+                    self.tool_output.append(f"Error details: {result.stderr}")
+
             self.log_message(f"Ping scan completed for {target}")
 
         except Exception as e:
@@ -1519,17 +1674,60 @@ def get_plugin():
             return
 
         try:
-            # Simulate port scan results
-            results = [
-                f"Port scan results for {target}:",
-                "PORT     STATE SERVICE",
-                "22/tcp   open  ssh",
-                "80/tcp   open  http",
-                "443/tcp  open  https",
-                "3389/tcp open  ms-wbt-server",
-            ]
+            import socket
+            import threading
 
-            self.tool_output.append("\n".join(results))
+            # Common ports to scan
+            common_ports = {
+                21: "ftp",
+                22: "ssh",
+                23: "telnet",
+                25: "smtp",
+                53: "dns",
+                80: "http",
+                110: "pop3",
+                443: "https",
+                445: "smb",
+                3306: "mysql",
+                3389: "rdp",
+                8080: "http-alt",
+            }
+
+            self.tool_output.append(f"Port scan results for {target}:")
+            self.tool_output.append("PORT     STATE SERVICE")
+
+            open_ports = []
+
+            def scan_port(host, port, service):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(0.5)
+                try:
+                    result = sock.connect_ex((host, port))
+                    if result == 0:
+                        open_ports.append(f"{port}/tcp   open  {service}")
+                except (ValueError, TypeError, AttributeError):
+                    pass
+                finally:
+                    sock.close()
+
+            # Scan ports in parallel
+            threads = []
+            for port, service in common_ports.items():
+                t = threading.Thread(target=scan_port, args=(target, port, service))
+                threads.append(t)
+                t.start()
+
+            # Wait for all threads to complete
+            for t in threads:
+                t.join()
+
+            # Display results
+            for port_info in sorted(open_ports):
+                self.tool_output.append(port_info)
+
+            if not open_ports:
+                self.tool_output.append("No open ports found in common port range")
+
             self.log_message(f"Port scan completed for {target}")
 
         except Exception as e:
@@ -1543,17 +1741,87 @@ def get_plugin():
             return
 
         try:
-            # Simulate service scan results
-            results = [
-                f"Service scan results for {target}:",
-                "PORT     STATE SERVICE    VERSION",
-                "22/tcp   open  ssh        OpenSSH 7.4",
-                "80/tcp   open  http       Apache httpd 2.4.6",
-                "443/tcp  open  ssl/http   Apache httpd 2.4.6",
-                "3389/tcp open  ms-wbt-server Microsoft Terminal Services",
-            ]
+            import socket
+            import ssl
 
-            self.tool_output.append("\n".join(results))
+            # Service signatures for common ports
+            service_probes = {
+                21: (b"", b"220"),  # FTP
+                22: (b"", b"SSH"),  # SSH
+                25: (b"", b"220"),  # SMTP
+                80: (b"GET / HTTP/1.0\r\n\r\n", b"HTTP"),  # HTTP
+                110: (b"", b"+OK"),  # POP3
+                443: (b"", b""),  # HTTPS (SSL/TLS)
+                3306: (b"", b"mysql"),  # MySQL
+                3389: (b"", b"\x03\x00"),  # RDP
+            }
+
+            self.tool_output.append(f"Service scan results for {target}:")
+            self.tool_output.append("PORT     STATE SERVICE    VERSION")
+
+            for port, (probe, signature) in service_probes.items():
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(2)
+
+                try:
+                    sock.connect((target, port))
+
+                    # Special handling for HTTPS
+                    if port == 443:
+                        context = ssl.create_default_context()
+                        context.check_hostname = False
+                        context.verify_mode = ssl.CERT_NONE
+                        with context.wrap_socket(sock, server_hostname=target) as ssock:
+                            ssock.getpeercert()
+                            self.tool_output.append(f"{port}/tcp   open  ssl/https  TLS/SSL enabled")
+                    else:
+                        # Send probe if needed
+                        if probe:
+                            sock.send(probe)
+
+                        # Receive banner/response
+                        response = sock.recv(1024)
+
+                        # Identify service
+                        service_name = "unknown"
+                        version_info = ""
+
+                        if signature and signature in response:
+                            if port == 21:
+                                service_name = "ftp"
+                                version_info = response.decode("utf-8", errors="ignore").strip()
+                            elif port == 22:
+                                service_name = "ssh"
+                                version_info = response.decode("utf-8", errors="ignore").split("\n")[0]
+                            elif port == 25:
+                                service_name = "smtp"
+                                version_info = response.decode("utf-8", errors="ignore").strip()
+                            elif port == 80:
+                                service_name = "http"
+                                lines = response.decode("utf-8", errors="ignore").split("\n")
+                                for line in lines:
+                                    if "Server:" in line:
+                                        version_info = line.split("Server:")[1].strip()
+                                        break
+                            elif port == 110:
+                                service_name = "pop3"
+                                version_info = response.decode("utf-8", errors="ignore").strip()
+                            elif port == 3306:
+                                service_name = "mysql"
+                                version_info = "MySQL Server"
+                            elif port == 3389:
+                                service_name = "ms-wbt-server"
+                                version_info = "Microsoft Terminal Services"
+
+                        self.tool_output.append(f"{port}/tcp   open  {service_name:10} {version_info[:40]}")
+
+                except (socket.timeout, socket.error, ConnectionRefusedError):
+                    pass  # Port closed or filtered
+                except Exception as e:
+                    logger.debug(f"Service detection failed: {e}")  # Service detection failed
+                finally:
+                    sock.close()
+
             self.log_message(f"Service scan completed for {target}")
 
         except Exception as e:

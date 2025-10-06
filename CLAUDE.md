@@ -55,6 +55,10 @@ This tool is developed for **defensive security research** to help software deve
 - **NEVER add unnecessary comments** - Keep code clean
 - **NO explanatory comments** about imports, fixes, or obvious code
 - **Comments ONLY when user explicitly requests**
+- **Follow common development principles (where relevant) including:**
+    • **SOLID** (Single Responsibility Principle, Open/Closed Principle, Liskov Substitution Principle, Interface Segregation Principle, and Dependency Inversion Principle)
+    • **DRY** (Don't Repeat Yourself)
+    • **KISS** (Keep It Simple, Stupid)
 
 ### Implementation Standards
 
@@ -67,20 +71,11 @@ This tool is developed for **defensive security research** to help software deve
 - **MAINTAIN FUNCTIONALITY** - Never sacrifice features for "cleaner" code
 - **SCOPE ENFORCEMENT** - Every feature must relate to SOFTWARE LICENSING CRACKING
 - **NO MALWARE CAPABILITIES** - No injection, payload delivery, or system exploitation code
-- **LICENSING FOCUS ONLY** - All analysis must target registration, activation, and protection systems
-
-### Production-Ready Code Only
-
-***Claude MUST adhere to these absolute requirements when writing code:***
-
-- **NEVER write placeholder, stub, mock, fake, or simulated code under ANY circumstances**
-- **ALL code must be production-ready and fully functional**
-- **NO TODO comments or unimplemented sections**
-- **NO mock data, dummy data, or hardcoded values**
-- **NO placeholder functions or methods that don't actually work**
+- **LICENSING FOCUS ONLY** - All analysis must target registration, activation, and licensing protection systems
 - **NO "example" implementations that would need to be replaced**
 - **NO simple implementations that would be ineffective in real world scenarios**
-- **NEVER use scripting to automate fixes unless explicitly requested by the user**
+
+### Production-Ready Code Only
 
 **When writing code, Claude must:**
 

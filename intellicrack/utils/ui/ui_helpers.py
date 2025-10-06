@@ -57,7 +57,7 @@ def emit_log_message(app_instance, message):
     """
     if hasattr(app_instance, "update_output") and hasattr(app_instance.update_output, "emit"):
         try:
-            from ..utils.logger import log_message
+            from ..core.misc_utils import log_message
 
             app_instance.update_output.emit(log_message(message))
         except ImportError as e:
@@ -138,7 +138,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
         if payload_type == "License Bypass":
             # Generate license bypass patch bytes
             # Common x86/x64 license bypass: mov eax, 1; ret
-            bypass_patch = b'\xB8\x01\x00\x00\x00\xC3'
+            bypass_patch = b"\xb8\x01\x00\x00\x00\xc3"
             payload_result = {
                 "method": "patch",
                 "payload_bytes": bypass_patch.hex(),
@@ -147,13 +147,13 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
                 "instructions": [
                     "Locate license validation function",
                     "Replace function prologue with payload bytes",
-                    "Function will always return true (1)"
-                ]
+                    "Function will always return true (1)",
+                ],
             }
         elif payload_type == "Function Hijack":
             # Generate function hijacking payload for license checks
             # JMP to custom handler that returns success
-            hijack_payload = b'\xE9\x00\x00\x00\x00'  # JMP rel32
+            hijack_payload = b"\xe9\x00\x00\x00\x00"  # JMP rel32
             payload_result = {
                 "method": "function_hijacking",
                 "payload_bytes": hijack_payload.hex(),
@@ -162,12 +162,12 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
                 "instructions": [
                     "Replace license check function entry with JMP",
                     "Redirect to handler that returns success",
-                    "Calculate relative offset for JMP target"
-                ]
+                    "Calculate relative offset for JMP target",
+                ],
             }
         elif payload_type == "NOP Slide":
             # Generate NOP slide to bypass checks
-            nop_slide = b'\x90' * 10  # 10 NOPs
+            nop_slide = b"\x90" * 10  # 10 NOPs
             payload_result = {
                 "method": "nop_slide",
                 "payload_bytes": nop_slide.hex(),
@@ -176,8 +176,8 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
                 "instructions": [
                     "Locate conditional jump for license check",
                     "Replace with NOP instructions",
-                    "Execution flows through without checking"
-                ]
+                    "Execution flows through without checking",
+                ],
             }
         else:
             payload_result = {"error": f"Unknown payload type: {payload_type}"}

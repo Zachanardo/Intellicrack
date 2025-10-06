@@ -20,8 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import ctypes
 import json
-import logging
-import mmap
 import os
 import platform
 import shutil
@@ -34,8 +32,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from queue import Queue
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import psutil
 
@@ -95,7 +92,7 @@ class MonitorEvent:
             "pid": self.process_id,
             "tid": self.thread_id,
             "data": self.data,
-            "context": self.context
+            "context": self.context,
         }
 
 
@@ -138,7 +135,7 @@ class QEMUController:
             if self.config.initrd:
                 cmd.extend(["-initrd", str(self.config.initrd)])
 
-            cmd.extend(["-netdev", f"user,id=net0", "-device", "e1000,netdev=net0"])
+            cmd.extend(["-netdev", "user,id=net0", "-device", "e1000,netdev=net0"])
 
             cmd.extend(["-monitor", f"tcp:127.0.0.1:{self.config.monitor_port},server,nowait"])
             cmd.extend(["-qmp", f"tcp:127.0.0.1:{self.config.qmp_port},server,nowait"])
@@ -156,12 +153,10 @@ class QEMUController:
 
             logger.info(f"Starting QEMU: {' '.join(cmd)}")
 
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE
-            )
+            # Validate that cmd contains only safe, expected commands
+            if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
+                raise ValueError(f"Unsafe command: {cmd}")
+            self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=False)
 
             time.sleep(2)
 
@@ -183,7 +178,7 @@ class QEMUController:
             if self.monitor_socket:
                 try:
                     self.send_monitor_command("quit")
-                except:
+                except (ConnectionError, OSError):
                     pass
                 self.monitor_socket.close()
                 self.monitor_socket = None
@@ -277,17 +272,18 @@ class QEMUController:
         mount_dir = tempfile.mkdtemp(prefix="qemu_mount_")
         try:
             if platform.system() == "Linux":
-                subprocess.run(
-                    ["sudo", "mount", "-o", "loop,offset=1048576",
-                     str(self.config.disk_image), mount_dir],
-                    check=False
-                )
+                # Sanitize inputs to prevent command injection
+                disk_image_path = str(self.config.disk_image).replace(";", "").replace("|", "").replace("&", "")
+                mount_path = mount_dir.replace(";", "").replace("|", "").replace("&", "")
+                subprocess.run(["sudo", "mount", "-o", "loop,offset=1048576", disk_image_path, mount_path], check=False, shell=False)
 
                 target_path = Path(mount_dir) / "target" / binary_path.name
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(binary_path, target_path)
 
-                subprocess.run(["sudo", "umount", mount_dir], check=False)
+                # Sanitize mount_dir to prevent command injection
+                mount_path = mount_dir.replace(";", "").replace("|", "").replace("&", "")
+                subprocess.run(["sudo", "umount", mount_path], check=False, shell=False)
 
         finally:
             shutil.rmtree(mount_dir, ignore_errors=True)
@@ -301,7 +297,7 @@ class QEMUController:
             self.qmp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.qmp_socket.connect(("127.0.0.1", self.config.qmp_port))
 
-            qmp_greeting = self.qmp_socket.recv(4096)
+            self.qmp_socket.recv(4096)
             self.send_qmp_command({"execute": "qmp_capabilities"})
 
             if self.config.enable_gdb:
@@ -316,18 +312,12 @@ class QEMUController:
 
     def take_snapshot(self, name: str) -> bool:
         """Take VM snapshot."""
-        response = self.send_qmp_command({
-            "execute": "savevm",
-            "arguments": {"name": name}
-        })
+        response = self.send_qmp_command({"execute": "savevm", "arguments": {"name": name}})
         return response.get("return") is not None
 
     def restore_snapshot(self, name: str) -> bool:
         """Restore VM snapshot."""
-        response = self.send_qmp_command({
-            "execute": "loadvm",
-            "arguments": {"name": name}
-        })
+        response = self.send_qmp_command({"execute": "loadvm", "arguments": {"name": name}})
         return response.get("return") is not None
 
 
@@ -355,119 +345,39 @@ class APIHookingFramework:
 
     def _setup_windows_hooks(self):
         """Setup Windows API hooks."""
-        self.add_hook(HookPoint(
-            module="kernel32.dll",
-            function="CreateFileW",
-            on_enter=self._hook_create_file,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="kernel32.dll", function="CreateFileW", on_enter=self._hook_create_file, priority=100))
 
-        self.add_hook(HookPoint(
-            module="kernel32.dll",
-            function="ReadFile",
-            on_enter=self._hook_read_file,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="kernel32.dll", function="ReadFile", on_enter=self._hook_read_file, priority=90))
 
-        self.add_hook(HookPoint(
-            module="kernel32.dll",
-            function="WriteFile",
-            on_enter=self._hook_write_file,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="kernel32.dll", function="WriteFile", on_enter=self._hook_write_file, priority=90))
 
-        self.add_hook(HookPoint(
-            module="advapi32.dll",
-            function="RegOpenKeyExW",
-            on_enter=self._hook_reg_open_key,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="advapi32.dll", function="RegOpenKeyExW", on_enter=self._hook_reg_open_key, priority=100))
 
-        self.add_hook(HookPoint(
-            module="advapi32.dll",
-            function="RegQueryValueExW",
-            on_enter=self._hook_reg_query_value,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="advapi32.dll", function="RegQueryValueExW", on_enter=self._hook_reg_query_value, priority=90))
 
-        self.add_hook(HookPoint(
-            module="advapi32.dll",
-            function="RegSetValueExW",
-            on_enter=self._hook_reg_set_value,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="advapi32.dll", function="RegSetValueExW", on_enter=self._hook_reg_set_value, priority=90))
 
-        self.add_hook(HookPoint(
-            module="ws2_32.dll",
-            function="connect",
-            on_enter=self._hook_connect,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="ws2_32.dll", function="connect", on_enter=self._hook_connect, priority=100))
 
-        self.add_hook(HookPoint(
-            module="ws2_32.dll",
-            function="send",
-            on_enter=self._hook_send,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="ws2_32.dll", function="send", on_enter=self._hook_send, priority=90))
 
-        self.add_hook(HookPoint(
-            module="ws2_32.dll",
-            function="recv",
-            on_enter=self._hook_recv,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="ws2_32.dll", function="recv", on_enter=self._hook_recv, priority=90))
 
-        self.add_hook(HookPoint(
-            module="ntdll.dll",
-            function="NtCreateProcess",
-            on_enter=self._hook_create_process,
-            priority=110
-        ))
+        self.add_hook(HookPoint(module="ntdll.dll", function="NtCreateProcess", on_enter=self._hook_create_process, priority=110))
 
-        self.add_hook(HookPoint(
-            module="ntdll.dll",
-            function="NtOpenProcess",
-            on_enter=self._hook_open_process,
-            priority=110
-        ))
+        self.add_hook(HookPoint(module="ntdll.dll", function="NtOpenProcess", on_enter=self._hook_open_process, priority=110))
 
     def _setup_linux_hooks(self):
         """Setup Linux syscall hooks."""
-        self.add_hook(HookPoint(
-            module="libc.so.6",
-            function="open",
-            on_enter=self._hook_open,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="libc.so.6", function="open", on_enter=self._hook_open, priority=100))
 
-        self.add_hook(HookPoint(
-            module="libc.so.6",
-            function="read",
-            on_enter=self._hook_read,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="libc.so.6", function="read", on_enter=self._hook_read, priority=90))
 
-        self.add_hook(HookPoint(
-            module="libc.so.6",
-            function="write",
-            on_enter=self._hook_write,
-            priority=90
-        ))
+        self.add_hook(HookPoint(module="libc.so.6", function="write", on_enter=self._hook_write, priority=90))
 
-        self.add_hook(HookPoint(
-            module="libc.so.6",
-            function="socket",
-            on_enter=self._hook_socket,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="libc.so.6", function="socket", on_enter=self._hook_socket, priority=100))
 
-        self.add_hook(HookPoint(
-            module="libc.so.6",
-            function="connect",
-            on_enter=self._hook_connect_linux,
-            priority=100
-        ))
+        self.add_hook(HookPoint(module="libc.so.6", function="connect", on_enter=self._hook_connect_linux, priority=100))
 
     def add_hook(self, hook: HookPoint):
         """Add a hook point."""
@@ -508,13 +418,8 @@ class APIHookingFramework:
                 event_type="file_create",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "filename": filename,
-                    "access": hex(access),
-                    "share_mode": hex(share_mode),
-                    "creation": creation
-                },
-                context=context
+                data={"filename": filename, "access": hex(access), "share_mode": hex(share_mode), "creation": creation},
+                context=context,
             )
             self.events.append(event)
             logger.debug(f"File create: {filename}")
@@ -528,7 +433,7 @@ class APIHookingFramework:
         """Hook ReadFile."""
         try:
             handle = args[0]
-            buffer = args[1]
+            args[1]
             size = args[2]
 
             event = MonitorEvent(
@@ -536,11 +441,8 @@ class APIHookingFramework:
                 event_type="file_read",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "handle": hex(handle),
-                    "size": size
-                },
-                context=context
+                data={"handle": hex(handle), "size": size},
+                context=context,
             )
             self.events.append(event)
 
@@ -563,12 +465,8 @@ class APIHookingFramework:
                 event_type="file_write",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "handle": hex(handle),
-                    "size": size,
-                    "preview": data_preview.hex() if data_preview else ""
-                },
-                context=context
+                data={"handle": hex(handle), "size": size, "preview": data_preview.hex() if data_preview else ""},
+                context=context,
             )
             self.events.append(event)
 
@@ -589,12 +487,8 @@ class APIHookingFramework:
                 event_type="registry_open",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "hkey": hex(hkey),
-                    "subkey": subkey,
-                    "access": hex(access)
-                },
-                context=context
+                data={"hkey": hex(hkey), "subkey": subkey, "access": hex(access)},
+                context=context,
             )
             self.events.append(event)
             logger.debug(f"Registry open: {subkey}")
@@ -615,11 +509,8 @@ class APIHookingFramework:
                 event_type="registry_query",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "hkey": hex(hkey),
-                    "value": value_name
-                },
-                context=context
+                data={"hkey": hex(hkey), "value": value_name},
+                context=context,
             )
             self.events.append(event)
 
@@ -640,12 +531,8 @@ class APIHookingFramework:
                 event_type="registry_set",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "hkey": hex(hkey),
-                    "value": value_name,
-                    "type": data_type
-                },
-                context=context
+                data={"hkey": hex(hkey), "value": value_name, "type": data_type},
+                context=context,
             )
             self.events.append(event)
             logger.debug(f"Registry set: {value_name}")
@@ -668,12 +555,8 @@ class APIHookingFramework:
                 event_type="network_connect",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "socket": socket_fd,
-                    "address": addr_info.get("address", ""),
-                    "port": addr_info.get("port", 0)
-                },
-                context=context
+                data={"socket": socket_fd, "address": addr_info.get("address", ""), "port": addr_info.get("port", 0)},
+                context=context,
             )
             self.events.append(event)
             logger.debug(f"Network connect: {addr_info.get('address')}:{addr_info.get('port')}")
@@ -697,12 +580,8 @@ class APIHookingFramework:
                 event_type="network_send",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "socket": socket_fd,
-                    "length": length,
-                    "preview": data_preview.hex() if data_preview else ""
-                },
-                context=context
+                data={"socket": socket_fd, "length": length, "preview": data_preview.hex() if data_preview else ""},
+                context=context,
             )
             self.events.append(event)
 
@@ -715,7 +594,7 @@ class APIHookingFramework:
         """Hook recv."""
         try:
             socket_fd = args[0]
-            buffer = args[1]
+            args[1]
             length = args[2]
 
             event = MonitorEvent(
@@ -723,11 +602,8 @@ class APIHookingFramework:
                 event_type="network_recv",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "socket": socket_fd,
-                    "length": length
-                },
-                context=context
+                data={"socket": socket_fd, "length": length},
+                context=context,
             )
             self.events.append(event)
 
@@ -747,11 +623,8 @@ class APIHookingFramework:
                 event_type="process_create",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "handle": hex(process_handle),
-                    "access": hex(desired_access)
-                },
-                context=context
+                data={"handle": hex(process_handle), "access": hex(desired_access)},
+                context=context,
             )
             self.events.append(event)
             logger.debug("Process create detected")
@@ -764,7 +637,7 @@ class APIHookingFramework:
     def _hook_open_process(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
         """Hook NtOpenProcess."""
         try:
-            process_handle = args[0]
+            args[0]
             desired_access = args[1]
             process_id = args[3]
 
@@ -773,11 +646,8 @@ class APIHookingFramework:
                 event_type="process_open",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "target_pid": process_id,
-                    "access": hex(desired_access)
-                },
-                context=context
+                data={"target_pid": process_id, "access": hex(desired_access)},
+                context=context,
             )
             self.events.append(event)
             logger.debug(f"Process open: PID {process_id}")
@@ -798,11 +668,8 @@ class APIHookingFramework:
                 event_type="file_open",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "path": pathname,
-                    "flags": hex(flags)
-                },
-                context=context
+                data={"path": pathname, "flags": hex(flags)},
+                context=context,
             )
             self.events.append(event)
 
@@ -815,7 +682,7 @@ class APIHookingFramework:
         """Hook read (Linux)."""
         try:
             fd = args[0]
-            buffer = args[1]
+            args[1]
             count = args[2]
 
             event = MonitorEvent(
@@ -823,11 +690,8 @@ class APIHookingFramework:
                 event_type="file_read",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "fd": fd,
-                    "count": count
-                },
-                context=context
+                data={"fd": fd, "count": count},
+                context=context,
             )
             self.events.append(event)
 
@@ -850,12 +714,8 @@ class APIHookingFramework:
                 event_type="file_write",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "fd": fd,
-                    "count": count,
-                    "preview": data_preview.hex() if data_preview else ""
-                },
-                context=context
+                data={"fd": fd, "count": count, "preview": data_preview.hex() if data_preview else ""},
+                context=context,
             )
             self.events.append(event)
 
@@ -876,12 +736,8 @@ class APIHookingFramework:
                 event_type="socket_create",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "domain": domain,
-                    "type": socket_type,
-                    "protocol": protocol
-                },
-                context=context
+                data={"domain": domain, "type": socket_type, "protocol": protocol},
+                context=context,
             )
             self.events.append(event)
 
@@ -903,12 +759,8 @@ class APIHookingFramework:
                 event_type="network_connect",
                 process_id=context.get("pid", 0),
                 thread_id=context.get("tid", 0),
-                data={
-                    "socket": sockfd,
-                    "address": addr_info.get("address", ""),
-                    "port": addr_info.get("port", 0)
-                },
-                context=context
+                data={"socket": sockfd, "address": addr_info.get("address", ""), "port": addr_info.get("port", 0)},
+                context=context,
             )
             self.events.append(event)
 
@@ -926,11 +778,7 @@ class APIHookingFramework:
                 bytes_read = ctypes.c_size_t()
 
                 if kernel32.ReadProcessMemory(
-                    ctypes.c_void_p(-1),
-                    ctypes.c_void_p(address),
-                    buffer,
-                    max_length * 2,
-                    ctypes.byref(bytes_read)
+                    ctypes.c_void_p(-1), ctypes.c_void_p(address), buffer, max_length * 2, ctypes.byref(bytes_read)
                 ):
                     return buffer.value
 
@@ -947,13 +795,7 @@ class APIHookingFramework:
                 kernel32 = ctypes.windll.kernel32
                 bytes_read = ctypes.c_size_t()
 
-                if kernel32.ReadProcessMemory(
-                    ctypes.c_void_p(-1),
-                    ctypes.c_void_p(address),
-                    buffer,
-                    max_length,
-                    ctypes.byref(bytes_read)
-                ):
+                if kernel32.ReadProcessMemory(ctypes.c_void_p(-1), ctypes.c_void_p(address), buffer, max_length, ctypes.byref(bytes_read)):
                     return buffer.value.decode("utf-8", errors="replace")
 
             return f"<address: 0x{address:x}>"
@@ -969,13 +811,7 @@ class APIHookingFramework:
                 kernel32 = ctypes.windll.kernel32
                 bytes_read = ctypes.c_size_t()
 
-                if kernel32.ReadProcessMemory(
-                    ctypes.c_void_p(-1),
-                    ctypes.c_void_p(address),
-                    buffer,
-                    size,
-                    ctypes.byref(bytes_read)
-                ):
+                if kernel32.ReadProcessMemory(ctypes.c_void_p(-1), ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)):
                     return bytes(buffer)
 
             return None
@@ -1003,8 +839,7 @@ class APIHookingFramework:
                 sockaddr_bytes = self._read_bytes(address, 28)
                 if sockaddr_bytes:
                     port = struct.unpack(">H", sockaddr_bytes[2:4])[0]
-                    ip = ":".join(f"{sockaddr_bytes[i]:02x}{sockaddr_bytes[i+1]:02x}"
-                                 for i in range(8, 24, 2))
+                    ip = ":".join(f"{sockaddr_bytes[i]:02x}{sockaddr_bytes[i + 1]:02x}" for i in range(8, 24, 2))
                     return {"family": "AF_INET6", "address": ip, "port": port}
 
             return {"family": family}
@@ -1027,7 +862,7 @@ class AntiAnalysisDetector:
             self._detect_api_hooks,
             self._detect_sandbox_artifacts,
             self._detect_memory_protections,
-            self._detect_code_obfuscation
+            self._detect_code_obfuscation,
         ]
 
     def scan(self, process_id: int) -> List[Dict[str, Any]]:
@@ -1056,17 +891,12 @@ class AntiAnalysisDetector:
                     checks.append("IsDebuggerPresent")
 
                 remote_debugger = ctypes.c_bool()
-                kernel32.CheckRemoteDebuggerPresent(
-                    kernel32.GetCurrentProcess(),
-                    ctypes.byref(remote_debugger)
-                )
+                kernel32.CheckRemoteDebuggerPresent(kernel32.GetCurrentProcess(), ctypes.byref(remote_debugger))
                 if remote_debugger.value:
                     checks.append("CheckRemoteDebuggerPresent")
 
                 class PEB(ctypes.Structure):
-                    _fields_ = [("Reserved1", ctypes.c_byte * 2),
-                               ("BeingDebugged", ctypes.c_byte),
-                               ("Reserved2", ctypes.c_byte * 21)]
+                    _fields_ = [("Reserved1", ctypes.c_byte * 2), ("BeingDebugged", ctypes.c_byte), ("Reserved2", ctypes.c_byte * 21)]
 
                 peb = PEB()
                 process_handle = kernel32.OpenProcess(0x0400 | 0x0010, False, process_id)
@@ -1075,21 +905,11 @@ class AntiAnalysisDetector:
                     return_length = ctypes.c_ulong()
 
                     ntdll.NtQueryInformationProcess(
-                        process_handle,
-                        0,
-                        ctypes.byref(process_basic_info),
-                        ctypes.sizeof(process_basic_info),
-                        ctypes.byref(return_length)
+                        process_handle, 0, ctypes.byref(process_basic_info), ctypes.sizeof(process_basic_info), ctypes.byref(return_length)
                     )
 
                     if process_basic_info.value:
-                        kernel32.ReadProcessMemory(
-                            process_handle,
-                            process_basic_info,
-                            ctypes.byref(peb),
-                            ctypes.sizeof(peb),
-                            None
-                        )
+                        kernel32.ReadProcessMemory(process_handle, process_basic_info, ctypes.byref(peb), ctypes.sizeof(peb), None)
 
                         if peb.BeingDebugged:
                             checks.append("PEB.BeingDebugged")
@@ -1106,7 +926,7 @@ class AntiAnalysisDetector:
                     with open(status_file, "r") as f:
                         status = f.read()
                         if "TracerPid:" in status:
-                            tracer_line = [l for l in status.split("\n") if "TracerPid:" in l][0]
+                            tracer_line = [line for line in status.split("\n") if "TracerPid:" in line][0]
                             tracer_pid = int(tracer_line.split(":")[1].strip())
                             if tracer_pid != 0:
                                 checks.append(f"TracerPid: {tracer_pid}")
@@ -1120,28 +940,29 @@ class AntiAnalysisDetector:
                 logger.error(f"Linux debugger detection failed: {e}")
 
         if checks:
-            self.detections.append({
-                "type": "debugger_presence",
-                "methods": checks,
-                "severity": "high"
-            })
+            self.detections.append({"type": "debugger_presence", "methods": checks, "severity": "high"})
 
     def _detect_vm_artifacts(self, process_id: int):
         """Detect virtual machine artifacts."""
         vm_indicators = []
 
         try:
-            proc = psutil.Process(process_id)
+            psutil.Process(process_id)
 
             vm_processes = [
-                "vmtoolsd", "vmwaretray", "vmwareuser",
-                "vboxservice", "vboxtray",
-                "qemu-ga", "spice-vdagent",
-                "xenservice", "xen-detect"
+                "vmtoolsd",
+                "vmwaretray",
+                "vmwareuser",
+                "vboxservice",
+                "vboxtray",
+                "qemu-ga",
+                "spice-vdagent",
+                "xenservice",
+                "xen-detect",
             ]
 
-            for p in psutil.process_iter(['name']):
-                if p.info['name'] and any(vm in p.info['name'].lower() for vm in vm_processes):
+            for p in psutil.process_iter(["name"]):
+                if p.info["name"] and any(vm in p.info["name"].lower() for vm in vm_processes):
                     vm_indicators.append(f"VM process: {p.info['name']}")
 
             vm_files = [
@@ -1150,7 +971,7 @@ class AntiAnalysisDetector:
                 r"C:\Windows\System32\drivers\vboxmouse.sys",
                 r"C:\Windows\System32\drivers\vboxguest.sys",
                 "/proc/xen",
-                "/sys/class/dmi/id/product_name"
+                "/sys/class/dmi/id/product_name",
             ]
 
             for file_path in vm_files:
@@ -1167,11 +988,7 @@ class AntiAnalysisDetector:
             logger.error(f"VM detection failed: {e}")
 
         if vm_indicators:
-            self.detections.append({
-                "type": "vm_artifacts",
-                "indicators": vm_indicators,
-                "severity": "medium"
-            })
+            self.detections.append({"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"})
 
     def _detect_timing_attacks(self, process_id: int):
         """Detect timing-based anti-debugging."""
@@ -1226,11 +1043,7 @@ class AntiAnalysisDetector:
             logger.error(f"Timing detection failed: {e}")
 
         if timing_checks:
-            self.detections.append({
-                "type": "timing_attacks",
-                "checks": timing_checks,
-                "severity": "medium"
-            })
+            self.detections.append({"type": "timing_attacks", "checks": timing_checks, "severity": "medium"})
 
     def _detect_process_hollowing(self, process_id: int):
         """Detect process hollowing indicators."""
@@ -1257,11 +1070,7 @@ class AntiAnalysisDetector:
             logger.error(f"Process hollowing detection failed: {e}")
 
         if hollowing_indicators:
-            self.detections.append({
-                "type": "process_hollowing",
-                "indicators": hollowing_indicators,
-                "severity": "high"
-            })
+            self.detections.append({"type": "process_hollowing", "indicators": hollowing_indicators, "severity": "high"})
 
     def _detect_api_hooks(self, process_id: int):
         """Detect API hooking."""
@@ -1278,7 +1087,7 @@ class AntiAnalysisDetector:
                         ("kernel32.dll", "IsDebuggerPresent"),
                         ("kernel32.dll", "CheckRemoteDebuggerPresent"),
                         ("kernel32.dll", "CreateFileW"),
-                        ("advapi32.dll", "RegOpenKeyExW")
+                        ("advapi32.dll", "RegOpenKeyExW"),
                     ]
 
                     for dll_name, func_name in common_apis:
@@ -1291,18 +1100,14 @@ class AntiAnalysisDetector:
                                     bytes_read = ctypes.c_size_t()
 
                                     if kernel32.ReadProcessMemory(
-                                        process_handle,
-                                        ctypes.c_void_p(func_addr),
-                                        first_bytes,
-                                        5,
-                                        ctypes.byref(bytes_read)
+                                        process_handle, ctypes.c_void_p(func_addr), first_bytes, 5, ctypes.byref(bytes_read)
                                     ):
                                         if first_bytes[0] == 0xE9 or first_bytes[0] == 0xE8:
                                             hooked_apis.append(f"{dll_name}!{func_name}")
 
                                 kernel32.FreeLibrary(dll_handle)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"Failed to free library handle: {e}")
 
                     kernel32.CloseHandle(process_handle)
 
@@ -1310,32 +1115,23 @@ class AntiAnalysisDetector:
                 logger.error(f"API hook detection failed: {e}")
 
         if hooked_apis:
-            self.detections.append({
-                "type": "api_hooks",
-                "hooked_functions": hooked_apis,
-                "severity": "high"
-            })
+            self.detections.append({"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"})
 
     def _detect_sandbox_artifacts(self, process_id: int):
         """Detect sandbox environment indicators."""
         sandbox_indicators = []
 
         try:
-            sandbox_files = [
-                r"C:\agent\agent.py",
-                r"C:\sandbox\starter.exe",
-                "/tmp/.X11-unix",
-                "/tmp/.wine-"
-            ]
+            sandbox_files = [r"C:\agent\agent.py", r"C:\sandbox\starter.exe", "/tmp/.X11-unix", "/tmp/.wine-"]
 
             for file_path in sandbox_files:
                 if os.path.exists(file_path):
                     sandbox_indicators.append(f"Sandbox file: {file_path}")
 
             sandbox_processes = ["python", "analyzer", "agent", "monitor"]
-            for p in psutil.process_iter(['name', 'cmdline']):
-                if p.info['name'] and any(s in p.info['name'].lower() for s in sandbox_processes):
-                    cmdline = p.info.get('cmdline', [])
+            for p in psutil.process_iter(["name", "cmdline"]):
+                if p.info["name"] and any(s in p.info["name"].lower() for s in sandbox_processes):
+                    cmdline = p.info.get("cmdline", [])
                     if cmdline and any("sandbox" in arg.lower() for arg in cmdline if arg):
                         sandbox_indicators.append(f"Sandbox process: {p.info['name']}")
 
@@ -1343,25 +1139,21 @@ class AntiAnalysisDetector:
                 hostname = socket.gethostname()
                 if any(s in hostname.lower() for s in ["sandbox", "malware", "virus", "analysis"]):
                     sandbox_indicators.append(f"Suspicious hostname: {hostname}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Hostname analysis failed: {e}")
 
             try:
                 username = os.environ.get("USERNAME", os.environ.get("USER", ""))
                 if any(s in username.lower() for s in ["sandbox", "admin", "test", "malware"]):
                     sandbox_indicators.append(f"Suspicious username: {username}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Username analysis failed: {e}")
 
         except Exception as e:
             logger.error(f"Sandbox detection failed: {e}")
 
         if sandbox_indicators:
-            self.detections.append({
-                "type": "sandbox_artifacts",
-                "indicators": sandbox_indicators,
-                "severity": "medium"
-            })
+            self.detections.append({"type": "sandbox_artifacts", "indicators": sandbox_indicators, "severity": "medium"})
 
     def _detect_memory_protections(self, process_id: int):
         """Detect memory protection mechanisms."""
@@ -1389,29 +1181,21 @@ class AntiAnalysisDetector:
                         dep_flags = ctypes.c_ulong()
                         permanent = ctypes.c_bool()
 
-                        result = kernel32.GetProcessDEPPolicy(
-                            process_handle,
-                            ctypes.byref(dep_flags),
-                            ctypes.byref(permanent)
-                        )
+                        result = kernel32.GetProcessDEPPolicy(process_handle, ctypes.byref(dep_flags), ctypes.byref(permanent))
 
                         if result and dep_flags.value:
                             protections.append(f"DEP enabled: {hex(dep_flags.value)}")
 
                         kernel32.CloseHandle(process_handle)
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Error during memory protection detection cleanup: {e}")
 
         except Exception as e:
             logger.error(f"Memory protection detection failed: {e}")
 
         if protections:
-            self.detections.append({
-                "type": "memory_protections",
-                "mechanisms": protections,
-                "severity": "low"
-            })
+            self.detections.append({"type": "memory_protections", "mechanisms": protections, "severity": "low"})
 
     def _detect_code_obfuscation(self, process_id: int):
         """Detect code obfuscation techniques."""
@@ -1436,8 +1220,8 @@ class AntiAnalysisDetector:
                         pe_header_offset = struct.unpack("<I", header[0x3C:0x40])[0] if len(header) > 0x40 else 0
                         if pe_header_offset > 0x1000:
                             obfuscation_indicators.append(f"Unusual PE header offset: {pe_header_offset:#x}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"PE header analysis failed: {e}")
 
             memory_maps = proc.memory_maps() if hasattr(proc, "memory_maps") else []
             exec_regions = [m for m in memory_maps if "x" in getattr(m, "perms", "")]
@@ -1456,29 +1240,21 @@ class AntiAnalysisDetector:
                                 base_addr = int(region.addr.split("-")[0], 16) if isinstance(region.addr, str) else region.addr
 
                                 if kernel32.ReadProcessMemory(
-                                    process_handle,
-                                    ctypes.c_void_p(base_addr),
-                                    buffer,
-                                    1024,
-                                    ctypes.byref(bytes_read)
+                                    process_handle, ctypes.c_void_p(base_addr), buffer, 1024, ctypes.byref(bytes_read)
                                 ):
                                     entropy = self._calculate_entropy(bytes(buffer))
                                     if entropy > 7.0:
                                         obfuscation_indicators.append(f"High entropy region: {region.addr} ({entropy:.2f})")
 
                                 kernel32.CloseHandle(process_handle)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Error during obfuscation detection cleanup: {e}")
 
         except Exception as e:
             logger.error(f"Obfuscation detection failed: {e}")
 
         if obfuscation_indicators:
-            self.detections.append({
-                "type": "code_obfuscation",
-                "indicators": obfuscation_indicators,
-                "severity": "medium"
-            })
+            self.detections.append({"type": "code_obfuscation", "indicators": obfuscation_indicators, "severity": "medium"})
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
@@ -1529,7 +1305,7 @@ class BehavioralAnalyzer:
             "file_operations": [],
             "registry_activity": [],
             "process_activity": [],
-            "summary": {}
+            "summary": {},
         }
 
         try:
@@ -1572,12 +1348,7 @@ class BehavioralAnalyzer:
 
     def _run_qemu_analysis(self, duration: int) -> Dict[str, Any]:
         """Run analysis in QEMU virtual machine."""
-        qemu_results = {
-            "started": False,
-            "snapshots": [],
-            "monitor_output": [],
-            "events": []
-        }
+        qemu_results = {"started": False, "snapshots": [], "monitor_output": [], "events": []}
 
         try:
             if self.qemu_controller.start(self.binary_path):
@@ -1609,19 +1380,14 @@ class BehavioralAnalyzer:
 
     def _run_native_analysis(self, duration: int) -> Dict[str, Any]:
         """Run analysis natively without virtualization."""
-        native_results = {
-            "process_started": False,
-            "pid": None,
-            "memory_usage": {},
-            "cpu_usage": []
-        }
+        native_results = {"process_started": False, "pid": None, "memory_usage": {}, "cpu_usage": []}
 
         try:
-            process = subprocess.Popen(
-                [str(self.binary_path)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            # Validate binary_path to prevent command injection
+            binary_path_str = str(self.binary_path)
+            if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
+                raise ValueError(f"Unsafe binary path: {binary_path_str}")
+            process = subprocess.Popen([binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 
             native_results["process_started"] = True
             native_results["pid"] = process.pid
@@ -1633,11 +1399,7 @@ class BehavioralAnalyzer:
                 try:
                     native_results["cpu_usage"].append(proc.cpu_percent())
                     mem_info = proc.memory_info()
-                    native_results["memory_usage"] = {
-                        "rss": mem_info.rss,
-                        "vms": mem_info.vms,
-                        "timestamp": time.time()
-                    }
+                    native_results["memory_usage"] = {"rss": mem_info.rss, "vms": mem_info.vms, "timestamp": time.time()}
                     time.sleep(1)
                 except psutil.NoSuchProcess:
                     break
@@ -1654,24 +1416,20 @@ class BehavioralAnalyzer:
 
     def _run_api_monitoring(self, duration: int) -> Dict[str, Any]:
         """Run API monitoring."""
-        monitoring_results = {
-            "hooks_installed": 0,
-            "events_captured": 0,
-            "unique_apis_called": set()
-        }
+        monitoring_results = {"hooks_installed": 0, "events_captured": 0, "unique_apis_called": set()}
 
         try:
             for key in self.api_hooks.hooks:
                 self.api_hooks.enable_hook(*key.split(":"))
                 monitoring_results["hooks_installed"] += 1
 
-            process = subprocess.Popen(
-                [str(self.binary_path)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            # Validate binary_path to prevent command injection
+            binary_path_str = str(self.binary_path)
+            if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
+                raise ValueError(f"Unsafe binary path: {binary_path_str}")
+            process = subprocess.Popen([binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 
-            context = {"pid": process.pid, "tid": threading.get_ident()}
+            {"pid": process.pid, "tid": threading.get_ident()}
 
             start_time = time.time()
             while time.time() - start_time < duration and process.poll() is None:
@@ -1702,14 +1460,14 @@ class BehavioralAnalyzer:
             "network_communications": [],
             "persistence_mechanisms": [],
             "data_exfiltration": [],
-            "evasion_techniques": []
+            "evasion_techniques": [],
         }
 
         license_keywords = ["license", "serial", "key", "activation", "registration", "trial"]
         persistence_locations = [
             "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
             "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
-            "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+            "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup",
         ]
 
         for event in self.events:
@@ -1742,12 +1500,12 @@ class BehavioralAnalyzer:
         """Get the process ID of the target binary."""
         target_name = self.binary_path.name.lower()
 
-        for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        for proc in psutil.process_iter(["pid", "name", "exe"]):
             try:
-                if proc.info['name'] and target_name in proc.info['name'].lower():
-                    return proc.info['pid']
-                if proc.info['exe'] and target_name in proc.info['exe'].lower():
-                    return proc.info['pid']
+                if proc.info["name"] and target_name in proc.info["name"].lower():
+                    return proc.info["pid"]
+                if proc.info["exe"] and target_name in proc.info["exe"].lower():
+                    return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
@@ -1760,7 +1518,7 @@ class BehavioralAnalyzer:
             "unique_event_types": len(set(e.event_type for e in self.events)),
             "suspicious_activities": 0,
             "risk_level": "low",
-            "key_findings": []
+            "key_findings": [],
         }
 
         if results.get("anti_analysis", {}).get("detections"):

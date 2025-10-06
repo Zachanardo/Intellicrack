@@ -17,8 +17,10 @@ import pefile
 
 logger = logging.getLogger(__name__)
 
+
 class IntegrityCheckType(IntEnum):
     """Types of integrity checks"""
+
     UNKNOWN = 0
     CRC32 = 1
     MD5_HASH = 2
@@ -33,9 +35,11 @@ class IntegrityCheckType(IntEnum):
     CODE_SIGNING = 11
     ANTI_TAMPER = 12
 
+
 @dataclass
 class IntegrityCheck:
     """Represents detected integrity check"""
+
     check_type: IntegrityCheckType
     address: int
     size: int
@@ -45,14 +49,17 @@ class IntegrityCheck:
     bypass_method: str
     confidence: float
 
+
 @dataclass
 class BypassStrategy:
     """Strategy for bypassing integrity check"""
+
     name: str
     check_types: List[IntegrityCheckType]
     frida_script: str
     success_rate: float
     priority: int
+
 
 class IntegrityCheckDetector:
     """Detects integrity checking mechanisms in binaries"""
@@ -66,46 +73,46 @@ class IntegrityCheckDetector:
     def _load_check_patterns(self) -> Dict[str, Dict]:
         """Load patterns for detecting integrity checks"""
         return {
-            'crc32': {
-                'pattern': b'\xC1\xE8\x08\x33',  # SHR EAX, 8; XOR
-                'type': IntegrityCheckType.CRC32,
-                'description': 'CRC32 calculation'
+            "crc32": {
+                "pattern": b"\xc1\xe8\x08\x33",  # SHR EAX, 8; XOR
+                "type": IntegrityCheckType.CRC32,
+                "description": "CRC32 calculation",
             },
-            'md5': {
-                'pattern': b'\x67\x45\x23\x01',  # MD5 constants
-                'type': IntegrityCheckType.MD5_HASH,
-                'description': 'MD5 hash calculation'
+            "md5": {
+                "pattern": b"\x67\x45\x23\x01",  # MD5 constants
+                "type": IntegrityCheckType.MD5_HASH,
+                "description": "MD5 hash calculation",
             },
-            'sha1': {
-                'pattern': b'\x67\x45\x23\x01\xEF\xCD\xAB\x89',
-                'type': IntegrityCheckType.SHA1_HASH,
-                'description': 'SHA1 hash calculation'
+            "sha1": {
+                "pattern": b"\x67\x45\x23\x01\xef\xcd\xab\x89",
+                "type": IntegrityCheckType.SHA1_HASH,
+                "description": "SHA1 hash calculation",
             },
-            'sha256': {
-                'pattern': b'\x6A\x09\xE6\x67',  # SHA256 init values
-                'type': IntegrityCheckType.SHA256_HASH,
-                'description': 'SHA256 hash calculation'
+            "sha256": {
+                "pattern": b"\x6a\x09\xe6\x67",  # SHA256 init values
+                "type": IntegrityCheckType.SHA256_HASH,
+                "description": "SHA256 hash calculation",
             },
-            'size_check': {
-                'pattern': b'\x81\x7D.\x00\x00',  # CMP [EBP+x], size
-                'type': IntegrityCheckType.SIZE_CHECK,
-                'description': 'File size verification'
+            "size_check": {
+                "pattern": b"\x81\x7d.\x00\x00",  # CMP [EBP+x], size
+                "type": IntegrityCheckType.SIZE_CHECK,
+                "description": "File size verification",
             },
         }
 
     def _load_api_signatures(self) -> Dict[str, IntegrityCheckType]:
         """Load Windows API signatures for integrity checks"""
         return {
-            'GetFileSize': IntegrityCheckType.SIZE_CHECK,
-            'GetFileTime': IntegrityCheckType.TIMESTAMP,
-            'CryptHashData': IntegrityCheckType.SHA256_HASH,
-            'CryptVerifySignature': IntegrityCheckType.SIGNATURE,
-            'WinVerifyTrust': IntegrityCheckType.CERTIFICATE,
-            'CertVerifyCertificateChainPolicy': IntegrityCheckType.CERTIFICATE,
-            'CheckSumMappedFile': IntegrityCheckType.CHECKSUM,
-            'MapFileAndCheckSum': IntegrityCheckType.CHECKSUM,
-            'ImageGetCertificateData': IntegrityCheckType.CODE_SIGNING,
-            'CryptCATAdminCalcHashFromFileHandle': IntegrityCheckType.SHA256_HASH,
+            "GetFileSize": IntegrityCheckType.SIZE_CHECK,
+            "GetFileTime": IntegrityCheckType.TIMESTAMP,
+            "CryptHashData": IntegrityCheckType.SHA256_HASH,
+            "CryptVerifySignature": IntegrityCheckType.SIGNATURE,
+            "WinVerifyTrust": IntegrityCheckType.CERTIFICATE,
+            "CertVerifyCertificateChainPolicy": IntegrityCheckType.CERTIFICATE,
+            "CheckSumMappedFile": IntegrityCheckType.CHECKSUM,
+            "MapFileAndCheckSum": IntegrityCheckType.CHECKSUM,
+            "ImageGetCertificateData": IntegrityCheckType.CODE_SIGNING,
+            "CryptCATAdminCalcHashFromFileHandle": IntegrityCheckType.SHA256_HASH,
         }
 
     def detect_checks(self, binary_path: str) -> List[IntegrityCheck]:
@@ -138,7 +145,7 @@ class IntegrityCheckDetector:
         """Scan for integrity check API imports"""
         checks = []
 
-        if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             return checks
 
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -151,11 +158,11 @@ class IntegrityCheckDetector:
                             check_type=self.api_signatures[func_name],
                             address=imp.address,
                             size=0,
-                            expected_value=b'',
-                            actual_value=b'',
+                            expected_value=b"",
+                            actual_value=b"",
                             function_name=func_name,
-                            bypass_method='hook_api',
-                            confidence=0.9
+                            bypass_method="hook_api",
+                            confidence=0.9,
                         )
                         checks.append(check)
 
@@ -170,8 +177,8 @@ class IntegrityCheckDetector:
             if section.IMAGE_SCN_MEM_EXECUTE:
                 section_data = section.get_data()
 
-                for pattern_name, pattern_info in self.check_patterns.items():
-                    pattern = pattern_info['pattern']
+                for _pattern_name, pattern_info in self.check_patterns.items():
+                    pattern = pattern_info["pattern"]
                     offset = 0
 
                     while True:
@@ -180,14 +187,14 @@ class IntegrityCheckDetector:
                             break
 
                         check = IntegrityCheck(
-                            check_type=pattern_info['type'],
+                            check_type=pattern_info["type"],
                             address=section.VirtualAddress + pos,
                             size=len(pattern),
-                            expected_value=b'',
-                            actual_value=b'',
-                            function_name=pattern_info['description'],
-                            bypass_method='patch_inline',
-                            confidence=0.7
+                            expected_value=b"",
+                            actual_value=b"",
+                            function_name=pattern_info["description"],
+                            bypass_method="patch_inline",
+                            confidence=0.7,
                         )
                         checks.append(check)
                         offset = pos + 1
@@ -206,22 +213,22 @@ class IntegrityCheckDetector:
                     check_type=IntegrityCheckType.ANTI_TAMPER,
                     address=section.VirtualAddress,
                     size=section.SizeOfRawData,
-                    expected_value=b'',
-                    actual_value=b'',
-                    function_name='Packed/Encrypted Section',
-                    bypass_method='unpack_section',
-                    confidence=0.8
+                    expected_value=b"",
+                    actual_value=b"",
+                    function_name="Packed/Encrypted Section",
+                    bypass_method="unpack_section",
+                    confidence=0.8,
                 )
                 checks.append(check)
 
         # Check for self-modifying code patterns
         smc_patterns = [
-            b'\xF0\x0F\xC1',  # LOCK XADD - often used in SMC
-            b'\x0F\xBA\x2D',  # BTS with memory operand
-            b'\x0F\xC7\x08',  # CMPXCHG8B - atomic compare and swap
-            b'\x0F\xB0',      # CMPXCHG - compare and exchange
-            b'\xF0\x0F\xB1',  # LOCK CMPXCHG - atomic operation
-            b'\x66\x0F\xC7',  # CMPXCHG16B - 16-byte atomic operation
+            b"\xf0\x0f\xc1",  # LOCK XADD - often used in SMC
+            b"\x0f\xba\x2d",  # BTS with memory operand
+            b"\x0f\xc7\x08",  # CMPXCHG8B - atomic compare and swap
+            b"\x0f\xb0",  # CMPXCHG - compare and exchange
+            b"\xf0\x0f\xb1",  # LOCK CMPXCHG - atomic operation
+            b"\x66\x0f\xc7",  # CMPXCHG16B - 16-byte atomic operation
         ]
 
         for section in pe.sections:
@@ -232,11 +239,11 @@ class IntegrityCheckDetector:
                         check_type=IntegrityCheckType.ANTI_TAMPER,
                         address=section.VirtualAddress + section_data.find(pattern),
                         size=len(pattern),
-                        expected_value=b'',
-                        actual_value=b'',
-                        function_name='Self-Modifying Code',
-                        bypass_method='hook_smc',
-                        confidence=0.6
+                        expected_value=b"",
+                        actual_value=b"",
+                        function_name="Self-Modifying Code",
+                        bypass_method="hook_smc",
+                        confidence=0.6,
                     )
                     checks.append(check)
 
@@ -248,6 +255,7 @@ class IntegrityCheckDetector:
             return 0
 
         import math
+
         frequency_map = {}
         for byte in data:
             frequency_map[byte] = frequency_map.get(byte, 0) + 1
@@ -260,6 +268,7 @@ class IntegrityCheckDetector:
                 entropy -= frequency * math.log2(frequency)
 
         return entropy
+
 
 class IntegrityBypassEngine:
     """Bypasses detected integrity checks using Frida"""
@@ -277,10 +286,11 @@ class IntegrityBypassEngine:
         strategies = []
 
         # CRC32 bypass
-        strategies.append(BypassStrategy(
-            name='crc32_bypass',
-            check_types=[IntegrityCheckType.CRC32],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="crc32_bypass",
+                check_types=[IntegrityCheckType.CRC32],
+                frida_script="""
                 Interceptor.attach(Module.findExportByName(null, 'RtlComputeCrc32'), {
                     onEnter: function(args) {
                         this.buffer = args[1];
@@ -293,15 +303,17 @@ class IntegrityBypassEngine:
                     }
                 });
             """,
-            success_rate=0.95,
-            priority=1
-        ))
+                success_rate=0.95,
+                priority=1,
+            )
+        )
 
         # Hash verification bypass
-        strategies.append(BypassStrategy(
-            name='hash_bypass',
-            check_types=[IntegrityCheckType.MD5_HASH, IntegrityCheckType.SHA1_HASH, IntegrityCheckType.SHA256_HASH],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="hash_bypass",
+                check_types=[IntegrityCheckType.MD5_HASH, IntegrityCheckType.SHA1_HASH, IntegrityCheckType.SHA256_HASH],
+                frida_script="""
                 var cryptHashDataAddr = Module.findExportByName('Advapi32.dll', 'CryptHashData');
                 if (cryptHashDataAddr) {
                     Interceptor.attach(cryptHashDataAddr, {
@@ -337,15 +349,17 @@ class IntegrityBypassEngine:
                     }
                 });
             """,
-            success_rate=0.90,
-            priority=2
-        ))
+                success_rate=0.90,
+                priority=2,
+            )
+        )
 
         # Signature verification bypass
-        strategies.append(BypassStrategy(
-            name='signature_bypass',
-            check_types=[IntegrityCheckType.SIGNATURE, IntegrityCheckType.CERTIFICATE],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="signature_bypass",
+                check_types=[IntegrityCheckType.SIGNATURE, IntegrityCheckType.CERTIFICATE],
+                frida_script="""
                 // Hook WinVerifyTrust
                 var winVerifyTrustAddr = Module.findExportByName('Wintrust.dll', 'WinVerifyTrust');
                 if (winVerifyTrustAddr) {
@@ -368,15 +382,17 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.85,
-            priority=3
-        ))
+                success_rate=0.85,
+                priority=3,
+            )
+        )
 
         # Size check bypass
-        strategies.append(BypassStrategy(
-            name='size_check_bypass',
-            check_types=[IntegrityCheckType.SIZE_CHECK],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="size_check_bypass",
+                check_types=[IntegrityCheckType.SIZE_CHECK],
+                frida_script="""
                 // Hook GetFileSize
                 var getFileSizeAddr = Module.findExportByName('kernel32.dll', 'GetFileSize');
                 if (getFileSizeAddr) {
@@ -406,15 +422,17 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.92,
-            priority=4
-        ))
+                success_rate=0.92,
+                priority=4,
+            )
+        )
 
         # Checksum bypass
-        strategies.append(BypassStrategy(
-            name='checksum_bypass',
-            check_types=[IntegrityCheckType.CHECKSUM],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="checksum_bypass",
+                check_types=[IntegrityCheckType.CHECKSUM],
+                frida_script="""
                 // Hook CheckSumMappedFile
                 var checkSumAddr = Module.findExportByName('Imagehlp.dll', 'CheckSumMappedFile');
                 if (checkSumAddr) {
@@ -435,15 +453,17 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.88,
-            priority=5
-        ))
+                success_rate=0.88,
+                priority=5,
+            )
+        )
 
         # Anti-tamper bypass
-        strategies.append(BypassStrategy(
-            name='antitamper_bypass',
-            check_types=[IntegrityCheckType.ANTI_TAMPER],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="antitamper_bypass",
+                check_types=[IntegrityCheckType.ANTI_TAMPER],
+                frida_script="""
                 // Hook memory protection functions
                 var virtualProtectAddr = Module.findExportByName('kernel32.dll', 'VirtualProtect');
                 if (virtualProtectAddr) {
@@ -485,15 +505,17 @@ class IntegrityBypassEngine:
                 peb.add(ntGlobalFlagOffset).writeU32(0);
                 console.log('[AntiTamper] Cleared PEB debugger flags');
             """,
-            success_rate=0.75,
-            priority=6
-        ))
+                success_rate=0.75,
+                priority=6,
+            )
+        )
 
         # Memory hash bypass
-        strategies.append(BypassStrategy(
-            name='memory_hash_bypass',
-            check_types=[IntegrityCheckType.MEMORY_HASH],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="memory_hash_bypass",
+                check_types=[IntegrityCheckType.MEMORY_HASH],
+                frida_script="""
                 // Track memory regions being hashed
                 var protectedRegions = [];
 
@@ -532,15 +554,17 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.80,
-            priority=7
-        ))
+                success_rate=0.80,
+                priority=7,
+            )
+        )
 
         # Timestamp bypass
-        strategies.append(BypassStrategy(
-            name='timestamp_bypass',
-            check_types=[IntegrityCheckType.TIMESTAMP],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="timestamp_bypass",
+                check_types=[IntegrityCheckType.TIMESTAMP],
+                frida_script="""
                 // Hook GetFileTime
                 var getFileTimeAddr = Module.findExportByName('kernel32.dll', 'GetFileTime');
                 if (getFileTimeAddr) {
@@ -566,15 +590,17 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.93,
-            priority=8
-        ))
+                success_rate=0.93,
+                priority=8,
+            )
+        )
 
         # Code signing bypass
-        strategies.append(BypassStrategy(
-            name='code_signing_bypass',
-            check_types=[IntegrityCheckType.CODE_SIGNING],
-            frida_script="""
+        strategies.append(
+            BypassStrategy(
+                name="code_signing_bypass",
+                check_types=[IntegrityCheckType.CODE_SIGNING],
+                frida_script="""
                 // Hook WinVerifyTrustEx
                 var winVerifyTrustExAddr = Module.findExportByName('Wintrust.dll', 'WinVerifyTrustEx');
                 if (winVerifyTrustExAddr) {
@@ -608,9 +634,10 @@ class IntegrityBypassEngine:
                     });
                 }
             """,
-            success_rate=0.82,
-            priority=9
-        ))
+                success_rate=0.82,
+                priority=9,
+            )
+        )
 
         return strategies
 
@@ -625,7 +652,7 @@ class IntegrityBypassEngine:
 
             # Create and load script
             self.script = self.session.create_script(combined_script)
-            self.script.on('message', self._on_message)
+            self.script.on("message", self._on_message)
             self.script.load()
 
             logger.info(f"Installed {len(checks)} integrity check bypasses")
@@ -655,7 +682,7 @@ class IntegrityBypassEngine:
                 script_parts.append(script)
 
         # Combine all scripts
-        return '\n'.join(script_parts)
+        return "\n".join(script_parts)
 
     def _get_best_strategy(self, check_type: IntegrityCheckType) -> Optional[BypassStrategy]:
         """Get best bypass strategy for check type"""
@@ -681,7 +708,7 @@ class IntegrityBypassEngine:
             # Replace expected values
             if first_check.expected_value:
                 expected_hex = first_check.expected_value.hex()
-                script = script.replace('%EXPECTED_VALUE%', f'0x{expected_hex}')
+                script = script.replace("%EXPECTED_VALUE%", f"0x{expected_hex}")
             else:
                 # Calculate expected CRC32 for the original binary
                 if first_check.check_type == IntegrityCheckType.CRC32:
@@ -689,19 +716,19 @@ class IntegrityBypassEngine:
                     if first_check.address in self.original_bytes_cache:
                         original_data = self.original_bytes_cache[first_check.address]
                         expected_crc = self._calculate_crc32(original_data)
-                        script = script.replace('%EXPECTED_VALUE%', str(expected_crc))
+                        script = script.replace("%EXPECTED_VALUE%", str(expected_crc))
                     else:
-                        script = script.replace('%EXPECTED_VALUE%', '0x00000000')
+                        script = script.replace("%EXPECTED_VALUE%", "0x00000000")
 
             # Replace address ranges
             min_addr = min(c.address for c in checks)
             max_addr = max(c.address + c.size for c in checks)
-            script = script.replace('%PROTECTED_START%', str(min_addr))
-            script = script.replace('%PROTECTED_END%', str(max_addr))
+            script = script.replace("%PROTECTED_START%", str(min_addr))
+            script = script.replace("%PROTECTED_END%", str(max_addr))
 
             # Calculate actual values from binary analysis
             try:
-                binary_path = getattr(first_check, 'binary_path', None)
+                binary_path = getattr(first_check, "binary_path", None)
                 if binary_path and os.path.exists(binary_path):
                     pe = pefile.PE(binary_path)
                     actual_size = pe.OPTIONAL_HEADER.SizeOfImage
@@ -718,16 +745,16 @@ class IntegrityBypassEngine:
                     actual_header_checksum = 0
                     actual_image_checksum = 0
                     actual_timestamp = 0
-            except:
+            except (struct.error, ValueError):
                 actual_size = 1048576
                 actual_header_checksum = 0
                 actual_image_checksum = 0
                 actual_timestamp = 0
 
-            script = script.replace('%EXPECTED_SIZE%', str(actual_size))
-            script = script.replace('%HEADER_CHECKSUM%', str(actual_header_checksum))
-            script = script.replace('%IMAGE_CHECKSUM%', str(actual_image_checksum))
-            script = script.replace('%EXPECTED_TIMESTAMP%', str(actual_timestamp))
+            script = script.replace("%EXPECTED_SIZE%", str(actual_size))
+            script = script.replace("%HEADER_CHECKSUM%", str(actual_header_checksum))
+            script = script.replace("%IMAGE_CHECKSUM%", str(actual_image_checksum))
+            script = script.replace("%EXPECTED_TIMESTAMP%", str(actual_timestamp))
 
         return script
 
@@ -762,8 +789,8 @@ class IntegrityBypassEngine:
             if i * 2 == checksum_offset:  # Skip checksum field
                 continue
 
-            if i*2+2 <= len(pe.__data__):
-                word = struct.unpack('<H', pe.__data__[i*2:i*2+2])[0]
+            if i * 2 + 2 <= len(pe.__data__):
+                word = struct.unpack("<H", pe.__data__[i * 2 : i * 2 + 2])[0]
             else:
                 word = 0
 
@@ -778,9 +805,9 @@ class IntegrityBypassEngine:
 
     def _on_message(self, message, data):
         """Handle Frida script messages"""
-        if message['type'] == 'send':
+        if message["type"] == "send":
             logger.info(f"[Frida] {message['payload']}")
-        elif message['type'] == 'error':
+        elif message["type"] == "error":
             logger.error(f"[Frida Error] {message['stack']}")
 
     def cleanup(self):
@@ -789,6 +816,7 @@ class IntegrityBypassEngine:
             self.script.unload()
         if self.session:
             self.session.detach()
+
 
 class IntegrityCheckDefeatSystem:
     """Main integrity check defeat system"""
@@ -799,50 +827,46 @@ class IntegrityCheckDefeatSystem:
         self.patch_history = []
         self.binary_backups = {}
 
-    def defeat_integrity_checks(self, binary_path: str,
-                               process_name: str = None) -> Dict[str, Any]:
+    def defeat_integrity_checks(self, binary_path: str, process_name: str = None) -> Dict[str, Any]:
         """Complete integrity check defeat workflow"""
-        result = {
-            'success': False,
-            'checks_detected': 0,
-            'checks_bypassed': 0,
-            'details': []
-        }
+        result = {"success": False, "checks_detected": 0, "checks_bypassed": 0, "details": []}
 
         # Detect integrity checks
         logger.info(f"Detecting integrity checks in: {binary_path}")
         checks = self.detector.detect_checks(binary_path)
-        result['checks_detected'] = len(checks)
+        result["checks_detected"] = len(checks)
 
         if not checks:
             logger.info("No integrity checks detected")
-            result['success'] = True
+            result["success"] = True
             return result
 
         logger.info(f"Detected {len(checks)} integrity checks")
 
         # Log detected checks
         for check in checks:
-            result['details'].append({
-                'type': check.check_type.name,
-                'address': hex(check.address),
-                'function': check.function_name,
-                'bypass_method': check.bypass_method,
-                'confidence': check.confidence
-            })
+            result["details"].append(
+                {
+                    "type": check.check_type.name,
+                    "address": hex(check.address),
+                    "function": check.function_name,
+                    "bypass_method": check.bypass_method,
+                    "confidence": check.confidence,
+                }
+            )
 
         # Apply bypasses if process is running
         if process_name:
             logger.info(f"Applying bypasses to process: {process_name}")
             if self.bypasser.bypass_checks(process_name, checks):
-                result['checks_bypassed'] = len(checks)
-                result['success'] = True
+                result["checks_bypassed"] = len(checks)
+                result["success"] = True
                 logger.info("Successfully bypassed all integrity checks")
             else:
                 logger.error("Failed to bypass some integrity checks")
         else:
             logger.info("No process specified, bypasses not applied")
-            result['success'] = True
+            result["success"] = True
 
         return result
 
@@ -862,11 +886,11 @@ class IntegrityCheckDefeatSystem:
     def patch_binary_integrity(self, binary_path: str, output_path: str = None) -> bool:
         """Patch binary to remove integrity checks"""
         if output_path is None:
-            output_path = binary_path + '.patched'
+            output_path = binary_path + ".patched"
 
         try:
             # Backup original
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 original_data = f.read()
             self.binary_backups[binary_path] = original_data
 
@@ -880,7 +904,7 @@ class IntegrityCheckDefeatSystem:
             patch_data = bytearray(original_data)
 
             for check in checks:
-                if check.bypass_method == 'patch_inline':
+                if check.bypass_method == "patch_inline":
                     # NOP out integrity check code
                     offset = self._rva_to_offset(pe, check.address)
                     if offset:
@@ -888,12 +912,14 @@ class IntegrityCheckDefeatSystem:
                         for i in range(check.size):
                             patch_data[offset + i] = 0x90
 
-                        self.patch_history.append({
-                            'address': check.address,
-                            'size': check.size,
-                            'original': original_data[offset:offset+check.size],
-                            'patched': bytes([0x90] * check.size)
-                        })
+                        self.patch_history.append(
+                            {
+                                "address": check.address,
+                                "size": check.size,
+                                "original": original_data[offset : offset + check.size],
+                                "patched": bytes([0x90] * check.size),
+                            }
+                        )
 
                 elif check.check_type == IntegrityCheckType.CRC32:
                     # Patch CRC32 checks to always return expected value
@@ -901,18 +927,20 @@ class IntegrityCheckDefeatSystem:
                     if offset:
                         # MOV EAX, expected_crc; RET
                         expected_crc = self.bypasser._calculate_crc32(original_data)
-                        patch_bytes = struct.pack('<BI', 0xB8, expected_crc) + b'\xC3'
+                        patch_bytes = struct.pack("<BI", 0xB8, expected_crc) + b"\xc3"
 
                         for i, byte in enumerate(patch_bytes):
                             if offset + i < len(patch_data):
                                 patch_data[offset + i] = byte
 
-                        self.patch_history.append({
-                            'address': check.address,
-                            'size': len(patch_bytes),
-                            'original': original_data[offset:offset+len(patch_bytes)],
-                            'patched': patch_bytes
-                        })
+                        self.patch_history.append(
+                            {
+                                "address": check.address,
+                                "size": len(patch_bytes),
+                                "original": original_data[offset : offset + len(patch_bytes)],
+                                "patched": patch_bytes,
+                            }
+                        )
 
             # Fix PE checksum
             pe_patched = pefile.PE(data=bytes(patch_data))
@@ -920,7 +948,7 @@ class IntegrityCheckDefeatSystem:
             patch_data = bytearray(pe_patched.write())
 
             # Write patched file
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(patch_data)
 
             logger.info(f"Binary patched successfully: {output_path}")
@@ -946,7 +974,7 @@ class IntegrityCheckDefeatSystem:
         """Restore original binary from backup"""
         if binary_path in self.binary_backups:
             try:
-                with open(binary_path, 'wb') as f:
+                with open(binary_path, "wb") as f:
                     f.write(self.binary_backups[binary_path])
                 logger.info(f"Binary restored: {binary_path}")
                 return True
@@ -954,17 +982,16 @@ class IntegrityCheckDefeatSystem:
                 logger.error(f"Failed to restore binary: {e}")
         return False
 
+
 def main():
     """Testing entry point"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Integrity Check Defeat System')
-    parser.add_argument('binary', help='Binary file to analyze')
-    parser.add_argument('-p', '--process', help='Process name to attach to')
-    parser.add_argument('-s', '--script', action='store_true',
-                       help='Generate bypass script only')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                       help='Verbose output')
+    parser = argparse.ArgumentParser(description="Integrity Check Defeat System")
+    parser.add_argument("binary", help="Binary file to analyze")
+    parser.add_argument("-p", "--process", help="Process name to attach to")
+    parser.add_argument("-s", "--script", action="store_true", help="Generate bypass script only")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -989,13 +1016,14 @@ def main():
         print(f"Checks Bypassed: {result['checks_bypassed']}")
         print(f"Success: {result['success']}")
 
-        if result['details']:
+        if result["details"]:
             print("\n=== Detected Checks ===")
-            for detail in result['details']:
+            for detail in result["details"]:
                 print(f"- {detail['type']} at {detail['address']}")
                 print(f"  Function: {detail['function']}")
                 print(f"  Bypass: {detail['bypass_method']}")
                 print(f"  Confidence: {detail['confidence']:.1%}")
+
 
 if __name__ == "__main__":
     main()

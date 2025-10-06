@@ -428,8 +428,76 @@ class RadareESILEmulator:
                 ):
                     return False
 
-            compiled = compile(node, "<string>", "eval")
-            return eval(compiled, {"__builtins__": {}}, {})
+            # Evaluate the parsed AST manually instead of using eval
+            def eval_node(node):
+                if isinstance(node, ast.Expression):
+                    return eval_node(node.body)
+                elif isinstance(node, ast.Constant):
+                    return node.value
+                elif isinstance(node, ast.Num):  # For Python < 3.8 compatibility
+                    return node.n
+                elif isinstance(node, ast.Str):  # For Python < 3.8 compatibility
+                    return node.s
+                elif isinstance(node, ast.NameConstant):  # For Python < 3.8 compatibility
+                    return node.value
+                elif isinstance(node, ast.Name):
+                    # Handle variable names (should not occur if register replacement worked properly)
+                    raise ValueError(f"Unexpected variable name: {node.id}")
+                elif isinstance(node, ast.BinOp):
+                    left = eval_node(node.left)
+                    right = eval_node(node.right)
+                    if isinstance(node.op, ast.Add):
+                        return left + right
+                    elif isinstance(node.op, ast.Sub):
+                        return left - right
+                    elif isinstance(node.op, ast.Mult):
+                        return left * right
+                    elif isinstance(node.op, ast.Div):
+                        return left / right if right != 0 else 0  # Prevent division by zero
+                    elif isinstance(node.op, ast.Mod):
+                        return left % right
+                    elif isinstance(node.op, ast.Pow):
+                        return left**right
+                    elif isinstance(node.op, ast.BitAnd):
+                        return left & right
+                    elif isinstance(node.op, ast.BitOr):
+                        return left | right
+                    elif isinstance(node.op, ast.BitXor):
+                        return left ^ right
+                    elif isinstance(node.op, ast.LShift):
+                        return left << right
+                    elif isinstance(node.op, ast.RShift):
+                        return left >> right
+                elif isinstance(node, ast.UnaryOp):
+                    operand = eval_node(node.operand)
+                    if isinstance(node.op, ast.UAdd):
+                        return +operand
+                    elif isinstance(node.op, ast.USub):
+                        return -operand
+                    elif isinstance(node.op, ast.Invert):
+                        return ~operand
+                elif isinstance(node, ast.Compare):
+                    left = eval_node(node.left)
+                    result = True
+                    for op, comparator in zip(node.ops, node.comparators, strict=False):
+                        right = eval_node(comparator)
+                        if isinstance(op, ast.Eq):
+                            result = result and (left == right)
+                        elif isinstance(op, ast.NotEq):
+                            result = result and (left != right)
+                        elif isinstance(op, ast.Lt):
+                            result = result and (left < right)
+                        elif isinstance(op, ast.LtE):
+                            result = result and (left <= right)
+                        elif isinstance(op, ast.Gt):
+                            result = result and (left > right)
+                        elif isinstance(op, ast.GtE):
+                            result = result and (left >= right)
+                        left = right  # For chaining comparisons like a < b < c
+                    return result
+                raise ValueError(f"Unsupported AST node type: {type(node)}")
+
+            return eval_node(node.body)
         except (SyntaxError, NameError, TypeError, ValueError):
             return False
 

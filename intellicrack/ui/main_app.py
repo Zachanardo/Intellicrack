@@ -42,7 +42,7 @@ import traceback
 from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
-from intellicrack.config import CONFIG, get_config
+from intellicrack.config import CONFIG
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
 from intellicrack.core.analysis.concolic_executor import (
     run_concolic_execution,
@@ -61,7 +61,6 @@ from intellicrack.core.network.protocol_tool import (
     launch_protocol_tool,
     update_protocol_tool_description,
 )
-from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
 from intellicrack.core.patching.memory_patcher import setup_memory_patching
 from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
 from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
@@ -101,6 +100,7 @@ from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 from intellicrack.ui.tabs.dashboard_tab import DashboardTab
 from intellicrack.ui.tabs.exploitation_tab import ExploitationTab
 from intellicrack.ui.tabs.settings_tab import SettingsTab
+from intellicrack.ui.tabs.terminal_tab import TerminalTab
 from intellicrack.ui.tabs.tools_tab import ToolsTab
 from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 from intellicrack.ui.theme_manager import get_theme_manager
@@ -218,7 +218,6 @@ class IntellicrackApp(QMainWindow):
         # Initialize core components and managers
         self._initialize_core_components()
         self._initialize_ai_orchestrator()
-        self._initialize_adobe_compiler()
 
         # Set up connections and properties
         self._connect_signals()
@@ -347,31 +346,6 @@ class IntellicrackApp(QMainWindow):
             self.ai_orchestrator = None
             self.ai_coordinator = None
             self.logger.warning("Continuing without agentic AI system")
-
-    def _initialize_adobe_compiler(self):
-        """Initialize Adobe License Compiler and configuration."""
-        print("[INIT] Initializing Adobe License Compiler...")
-
-        try:
-            self.adobe_compiler = AdobeLicenseCompiler()
-
-            # Get Adobe configuration from unified config system
-            config = get_config()
-            adobe_config = config.get("adobe_license_compiler", {})
-            deployment_config = adobe_config.get("deployment", {})
-
-            # Store configurable service name and display elements
-            self.adobe_service_name = deployment_config.get("service_name", "AdobeLicenseX")
-            self.adobe_display_name = f"Adobe {self.adobe_service_name}"
-
-            self.logger.info("Adobe License Compiler initialized successfully")
-
-        except Exception as e:
-            self.logger.error(f"Failed to initialize Adobe License Compiler: {e}")
-            self.adobe_compiler = None
-            # Fallback to default names if config unavailable
-            self.adobe_service_name = "AdobeLicenseX"
-            self.adobe_display_name = "Adobe AdobeLicenseX"
 
     def _connect_signals(self):
         """Connect all Qt signals to their respective slots."""
@@ -792,6 +766,7 @@ class IntellicrackApp(QMainWindow):
         self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
         self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
         self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
+        self.terminal_tab = TerminalTab(shared_context, self) if TerminalTab else QWidget()
         self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
         self.workspace_tab = WorkspaceTab(shared_context, self) if WorkspaceTab else QWidget()
 
@@ -806,6 +781,7 @@ class IntellicrackApp(QMainWindow):
         self.tabs.addTab(self.exploitation_tab, "Exploitation")
         self.tabs.addTab(self.ai_assistant_tab, "AI Assistant")
         self.tabs.addTab(self.tools_tab, "Tools")
+        self.tabs.addTab(self.terminal_tab, "Terminal")
         self.tabs.addTab(self.settings_tab, "Settings")
 
         # Set comprehensive tooltips for main tabs
@@ -815,7 +791,8 @@ class IntellicrackApp(QMainWindow):
         self.tabs.setTabToolTip(3, "Advanced exploitation toolkit for vulnerability research and security testing")
         self.tabs.setTabToolTip(4, "AI-powered assistant for code analysis, script generation, and intelligent guidance")
         self.tabs.setTabToolTip(5, "Collection of specialized security research and binary manipulation tools")
-        self.tabs.setTabToolTip(6, "Configure application preferences, model settings, and advanced options")
+        self.tabs.setTabToolTip(6, "Interactive terminal for running scripts and commands with full I/O support")
+        self.tabs.setTabToolTip(7, "Configure application preferences, model settings, and advanced options")
 
         # Initialize dashboard manager
         self.dashboard_manager = DashboardManager(self)
@@ -899,6 +876,13 @@ class IntellicrackApp(QMainWindow):
     def _finalize_ui_initialization(self):
         """Finalize UI initialization with tooltips, plugins, and final configuration."""
         print("[INIT] Finalizing UI initialization...")
+
+        # Register terminal manager with main app
+        from intellicrack.core.terminal_manager import get_terminal_manager
+
+        terminal_mgr = get_terminal_manager()
+        terminal_mgr.set_main_app(self)
+        self.logger.info("Terminal manager registered with main app")
 
         # Mark UI as initialized
         self._ui_initialized = True

@@ -114,7 +114,7 @@ class LicenseSnapshot:
                 try:
                     volume_info = win32api.GetVolumeInformation(drive)
                     volumes.append({"drive": drive, "name": volume_info[0], "serial": volume_info[1], "filesystem": volume_info[4]})
-                except:
+                except (win32api.error, OSError):
                     pass
             info["volumes"] = volumes
 
@@ -134,7 +134,7 @@ class LicenseSnapshot:
                     info["bios_version"] = bios.Version
                     info["bios_manufacturer"] = bios.Manufacturer
                     break
-            except:
+            except (AttributeError, IndexError):
                 pass
 
         except Exception as e:
@@ -170,7 +170,7 @@ class LicenseSnapshot:
                                 if "license_modules" not in process_data:
                                     process_data["license_modules"] = []
                                 process_data["license_modules"].append(module.path)
-                    except:
+                    except (AttributeError, KeyError):
                         pass
 
                 processes.append(process_data)
@@ -243,8 +243,8 @@ class LicenseSnapshot:
                     except WindowsError:
                         break
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Registry snapshot failed: {e}")
 
         return result if (result["values"] or result["subkeys"]) else {}
 
@@ -279,12 +279,12 @@ class LicenseSnapshot:
                                         j += 1
                                     except WindowsError:
                                         break
-                        except:
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
                             pass
                         i += 1
                     except WindowsError:
                         break
-        except:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
         return license_keys
@@ -360,13 +360,13 @@ class LicenseSnapshot:
                         service_info["binary_path"] = service_config[3]
                         service_info["start_type"] = service_config[1]
                         win32service.CloseServiceHandle(hs)
-                    except:
+                    except (win32service.error, OSError):
                         pass
 
                     services.append(service_info)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Service enumeration failed: {e}")
 
         return services
 
@@ -392,8 +392,8 @@ class LicenseSnapshot:
                 elif conn.status == "LISTEN":
                     network_data["listening_ports"].append({"address": f"{conn.laddr.ip}:{conn.laddr.port}", "pid": conn.pid})
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Network connection enumeration failed: {e}")
 
         return network_data
 
@@ -426,9 +426,9 @@ class LicenseSnapshot:
                         for cert_info in certs_in_store:
                             if not any(std in cert_info["issuer"] for std in ["Microsoft", "Windows", "Verisign", "DigiCert"]):
                                 certificates.append(cert_info)
-                except:
+                except (KeyError, TypeError):
                     pass
-        except:
+        except (OSError, PermissionError):
             pass
 
         return certificates
@@ -490,7 +490,7 @@ class LicenseSnapshot:
                             # Check for license-related mutex names
                             if any(lic in mutex_name.lower() for lic in ["license", "trial", "demo", "eval", "single", "instance"]):
                                 mutexes.append(mutex_name)
-        except:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
         return mutexes
@@ -526,7 +526,7 @@ class LicenseSnapshot:
                                 "state": row.get("State", ""),
                             }
                         )
-        except:
+        except (OSError, PermissionError):
             pass
 
         return drivers
@@ -559,7 +559,7 @@ class LicenseSnapshot:
                                 "command": row.get("Task To Run", ""),
                             }
                         )
-        except:
+        except (OSError, PermissionError):
             pass
 
         return tasks
@@ -572,7 +572,7 @@ class LicenseSnapshot:
                 for byte_block in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
-        except:
+        except (OSError, IOError):
             return ""
 
     def compare_snapshots(self, snapshot1_name: str, snapshot2_name: str) -> Dict[str, Any]:

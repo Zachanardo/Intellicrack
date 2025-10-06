@@ -1037,7 +1037,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         import hashlib
 
         # Generate serial from binary hash
-        hash_obj = hashlib.md5(binary_data[:10000])
+        hash_obj = hashlib.sha256(binary_data[:10000])
         serial = hash_obj.hexdigest()[:16].upper()
 
         return f"HASP-{serial[:4]}-{serial[4:8]}-{serial[8:12]}-{serial[12:16]}"

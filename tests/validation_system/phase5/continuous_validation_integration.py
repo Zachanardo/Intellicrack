@@ -24,7 +24,6 @@ from enum import Enum
 import asyncio
 import aiohttp
 import schedule
-import docker
 import jenkins
 import github
 import gitlab

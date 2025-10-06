@@ -252,7 +252,7 @@ class Radare2Emulator:
                             addr = int(addr_str[1:-1], 16)
                             value = int(value_str, 16) if value_str.startswith("0x") else int(value_str)
                             changes.append((addr, struct.pack("<I", value)))
-                    except:
+                    except (ValueError, struct.error):
                         continue
 
         return changes
@@ -465,7 +465,7 @@ class Radare2Emulator:
         for name, const in reg_map.items():
             try:
                 registers[name] = self.uc.reg_read(const)
-            except:
+            except (AttributeError, OSError):
                 pass
 
         return registers
@@ -662,7 +662,7 @@ class Radare2Emulator:
                 addr_str = operand[operand.index("[") + 1 : operand.index("]")]
                 if "0x" in addr_str:
                     return int(addr_str.split("0x")[1], 16)
-        except:
+        except (ValueError, struct.error):
             pass
         return None
 

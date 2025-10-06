@@ -35,6 +35,14 @@ from intellicrack.core.config_manager import get_config
 
 logger = logging.getLogger(__name__)
 
+try:
+    from .terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for tool discovery")
+
 
 class ToolValidator:
     """Validates tool installations and capabilities."""
@@ -1250,53 +1258,7 @@ class AdvancedToolDiscovery:
 
     def _try_container_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
         """Try containerized versions of tools."""
-        container_configs = {
-            "radare2": {"image": "radare/radare2:latest", "command": "r2"},
-            "ghidra": {"image": "ghidra/ghidra:latest", "command": "ghidraRun"},
-        }
-
-        if tool_name in container_configs:
-            # Check if Docker is available
-            docker_path = shutil.which("docker")
-            if docker_path:
-                container_cfg = container_configs[tool_name]
-                # Create wrapper script for containerized tool
-                wrapper_script = self._create_container_wrapper(tool_name, container_cfg)
-                if wrapper_script:
-                    return {
-                        "available": True,
-                        "path": wrapper_script,
-                        "containerized": True,
-                        "container_image": container_cfg["image"],
-                    }
-
         return None
-
-    def _create_container_wrapper(self, tool_name: str, container_cfg: dict) -> str | None:
-        """Create a wrapper script for containerized tools."""
-        wrapper_dir = Path.home() / ".intellicrack" / "container_wrappers"
-        wrapper_dir.mkdir(parents=True, exist_ok=True)
-
-        wrapper_ext = ".bat" if sys.platform == "win32" else ".sh"
-        wrapper_path = wrapper_dir / f"{tool_name}_container{wrapper_ext}"
-
-        if sys.platform == "win32":
-            wrapper_content = f"""@echo off
-docker run --rm -it -v "%cd%":/workspace {container_cfg["image"]} {container_cfg["command"]} %*
-"""
-        else:
-            wrapper_content = f"""#!/bin/bash
-docker run --rm -it -v "$(pwd)":/workspace {container_cfg["image"]} {container_cfg["command"]} "$@"
-"""
-
-        try:
-            wrapper_path.write_text(wrapper_content)
-            if sys.platform != "win32":
-                os.chmod(wrapper_path, 0o700)
-            return str(wrapper_path)
-        except Exception as e:
-            logger.debug(f"Failed to create container wrapper: {e}")
-            return None
 
     def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict]:
         """Get alternative tools for a given tool."""

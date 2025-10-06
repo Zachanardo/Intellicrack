@@ -297,7 +297,7 @@ class IntelligentCorrelationEngine:
             vec2 = self.tfidf_vectorizer.transform([text2])
             similarity = cosine_similarity(vec1, vec2)[0][0]
             return similarity >= self.semantic_similarity_threshold
-        except:
+        except (ValueError, IndexError):
             return False
 
     def _extract_text_features(self, result: BaseResult) -> str:
@@ -327,7 +327,7 @@ class IntelligentCorrelationEngine:
         confidence = 1.0 - (distance / self.address_proximity_threshold)
 
         return Correlation(
-            id=hashlib.md5(f"{result1.id}_{result2.id}_addr".encode()).hexdigest(),
+            id=hashlib.sha256(f"{result1.id}_{result2.id}_addr".encode()).hexdigest(),
             type=CorrelationType.ADDRESS_MATCH,
             source_results=[result1.id, result2.id],
             confidence=confidence,
@@ -353,7 +353,7 @@ class IntelligentCorrelationEngine:
             confidence = 0.7
 
         return Correlation(
-            id=hashlib.md5(f"{func1.id}_{func2.id}_xref".encode()).hexdigest(),
+            id=hashlib.sha256(f"{func1.id}_{func2.id}_xref".encode()).hexdigest(),
             type=CorrelationType.XREF_RELATED,
             source_results=[func1.id, func2.id],
             confidence=confidence,
@@ -364,7 +364,7 @@ class IntelligentCorrelationEngine:
     def _create_string_correlation(self, string: StringResult, result: BaseResult) -> Correlation:
         """Create string reference correlation."""
         return Correlation(
-            id=hashlib.md5(f"{string.id}_{result.id}_str".encode()).hexdigest(),
+            id=hashlib.sha256(f"{string.id}_{result.id}_str".encode()).hexdigest(),
             type=CorrelationType.STRING_REFERENCE,
             source_results=[string.id, result.id],
             confidence=0.85,
@@ -385,7 +385,7 @@ class IntelligentCorrelationEngine:
         similarity = len(intersection) / len(union) if union else 0.0
 
         return Correlation(
-            id=hashlib.md5(f"{result1.id}_{result2.id}_sem".encode()).hexdigest(),
+            id=hashlib.sha256(f"{result1.id}_{result2.id}_sem".encode()).hexdigest(),
             type=CorrelationType.SEMANTIC,
             source_results=[result1.id, result2.id],
             confidence=min(0.95, 0.5 + similarity),
@@ -429,7 +429,7 @@ class IntelligentCorrelationEngine:
             # Create correlation if multiple matches
             if len(matching_results) >= 2:
                 correlation = Correlation(
-                    id=hashlib.md5(f"license_{pattern_name}_{time.time()}".encode()).hexdigest(),
+                    id=hashlib.sha256(f"license_{pattern_name}_{time.time()}".encode()).hexdigest(),
                     type=CorrelationType.LICENSE,
                     source_results=matching_results,
                     confidence=0.85,
@@ -460,7 +460,7 @@ class IntelligentCorrelationEngine:
 
             if len(matching_results) >= 2:
                 correlation = Correlation(
-                    id=hashlib.md5(f"crypto_{algo_name}_{time.time()}".encode()).hexdigest(),
+                    id=hashlib.sha256(f"crypto_{algo_name}_{time.time()}".encode()).hexdigest(),
                     type=CorrelationType.CRYPTO,
                     source_results=matching_results,
                     confidence=0.9,
@@ -486,7 +486,7 @@ class IntelligentCorrelationEngine:
 
             if len(matching_results) >= 2:
                 correlation = Correlation(
-                    id=hashlib.md5(f"protection_{protection_name}_{time.time()}".encode()).hexdigest(),
+                    id=hashlib.sha256(f"protection_{protection_name}_{time.time()}".encode()).hexdigest(),
                     type=CorrelationType.PROTECTION,
                     source_results=matching_results,
                     confidence=0.88,
@@ -529,7 +529,7 @@ class IntelligentCorrelationEngine:
             cluster_results = [self.results[result_ids[i]] for i in cluster_indices]
 
             cluster = CorrelationCluster(
-                id=hashlib.md5(f"cluster_{label}_{time.time()}".encode()).hexdigest(),
+                id=hashlib.sha256(f"cluster_{label}_{time.time()}".encode()).hexdigest(),
                 results=cluster_results,
                 correlations=[],
                 cluster_type="density_based",
@@ -592,7 +592,7 @@ class IntelligentCorrelationEngine:
                                     cluster_correlations.append(edge_data["correlation"])
 
                     cluster = CorrelationCluster(
-                        id=hashlib.md5(f"graph_cluster_{time.time()}".encode()).hexdigest(),
+                        id=hashlib.sha256(f"graph_cluster_{time.time()}".encode()).hexdigest(),
                         results=cluster_results,
                         correlations=cluster_correlations,
                         cluster_type="graph_component",

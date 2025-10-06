@@ -32,7 +32,10 @@ impl PythonIntegration {
         // Debug environment variables
         println!("DEBUG: PYO3_PYTHON = {:?}", env::var("PYO3_PYTHON"));
         println!("DEBUG: PYTHONHOME = {:?}", env::var("PYTHONHOME"));
-        println!("DEBUG: PYTHON_SYS_EXECUTABLE = {:?}", env::var("PYTHON_SYS_EXECUTABLE"));
+        println!(
+            "DEBUG: PYTHON_SYS_EXECUTABLE = {:?}",
+            env::var("PYTHON_SYS_EXECUTABLE")
+        );
 
         // Locate Python interpreter
         let interpreter_path = Self::locate_python_interpreter()?;
@@ -88,7 +91,8 @@ impl PythonIntegration {
         }
 
         // Secondary path: Scripts subdirectory
-        let pixi_scripts_python = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+        let pixi_scripts_python =
+            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
         if pixi_scripts_python.exists() {
             info!("Found Python in pixi Scripts: {:?}", pixi_scripts_python);
             return Ok(pixi_scripts_python);
@@ -255,20 +259,29 @@ impl PythonIntegration {
 
         // Verify the interpreter exists
         if !self.interpreter_path.exists() {
-            error!("Python interpreter not found at: {:?}", self.interpreter_path);
-            return Err(anyhow::anyhow!("Python interpreter not found: {:?}", self.interpreter_path));
+            error!(
+                "Python interpreter not found at: {:?}",
+                self.interpreter_path
+            );
+            return Err(anyhow::anyhow!(
+                "Python interpreter not found: {:?}",
+                self.interpreter_path
+            ));
         }
 
         let python_launcher_path = PathBuf::from(r"C:\Intellicrack\launch_intellicrack.py");
-        info!("Executing Python launcher: {:?}", python_launcher_path.display());
+        info!(
+            "Executing Python launcher: {:?}",
+            python_launcher_path.display()
+        );
 
         // On Windows, add launcher directory to DLL search path BEFORE launching Python
         #[cfg(target_os = "windows")]
         {
             if let Ok(exe_path) = std::env::current_exe() {
                 if let Some(exe_dir) = exe_path.parent() {
-                    use std::os::windows::ffi::OsStrExt;
                     use std::ffi::OsStr;
+                    use std::os::windows::ffi::OsStrExt;
 
                     let exe_dir_str = exe_dir.to_string_lossy();
                     info!("Setting DLL directory for Windows: {}", exe_dir_str);
@@ -315,7 +328,10 @@ impl PythonIntegration {
         if let Ok(exe_path) = std::env::current_exe() {
             if let Some(exe_dir) = exe_path.parent() {
                 cmd.current_dir(exe_dir);
-                info!("Set subprocess working directory to launcher directory: {}", exe_dir.display());
+                info!(
+                    "Set subprocess working directory to launcher directory: {}",
+                    exe_dir.display()
+                );
             }
         }
 
@@ -328,7 +344,10 @@ impl PythonIntegration {
         // Set conda environment variables
         cmd.env("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
         cmd.env("PIXI_DEFAULT_ENV", "default");
-        cmd.env("PIXI_PYTHON_EXE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        cmd.env(
+            "PIXI_PYTHON_EXE",
+            r"C:\Intellicrack\.pixi\envs\default\python.exe",
+        );
         cmd.env("CONDA_SHLVL", "1");
 
         cmd.env("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
@@ -340,18 +359,29 @@ impl PythonIntegration {
         let tk_lib_path;
 
         if let Ok(exe_path) = std::env::current_exe() {
-            info!("Subprocess: Current executable path: {}", exe_path.display());
+            info!(
+                "Subprocess: Current executable path: {}",
+                exe_path.display()
+            );
             if let Some(exe_dir) = exe_path.parent() {
                 info!("Subprocess: Executable directory: {}", exe_dir.display());
                 tcl_lib_path = exe_dir.join("tcl8.6");
                 tk_lib_path = exe_dir.join("tk8.6");
-                info!("Subprocess: Proposed TCL_LIBRARY path: {}", tcl_lib_path.display());
-                info!("Subprocess: Proposed TK_LIBRARY path: {}", tk_lib_path.display());
+                info!(
+                    "Subprocess: Proposed TCL_LIBRARY path: {}",
+                    tcl_lib_path.display()
+                );
+                info!(
+                    "Subprocess: Proposed TK_LIBRARY path: {}",
+                    tk_lib_path.display()
+                );
             } else {
                 warn!("Subprocess: Could not get parent directory of executable");
                 // Fallback to pixi environment paths
-                tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
-                tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
+                tcl_lib_path =
+                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
+                tk_lib_path =
+                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
             }
         } else {
             warn!("Subprocess: Could not get current executable path");
@@ -362,32 +392,50 @@ impl PythonIntegration {
 
         if tcl_lib_path.exists() {
             cmd.env("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
-            info!("Subprocess: Set TCL_LIBRARY to launcher path: {}", tcl_lib_path.display());
+            info!(
+                "Subprocess: Set TCL_LIBRARY to launcher path: {}",
+                tcl_lib_path.display()
+            );
 
             // DEBUG: Check if init.tcl exists
             let init_tcl = tcl_lib_path.join("init.tcl");
             if init_tcl.exists() {
-                info!("Subprocess: Confirmed init.tcl exists at: {}", init_tcl.display());
+                info!(
+                    "Subprocess: Confirmed init.tcl exists at: {}",
+                    init_tcl.display()
+                );
             } else {
                 warn!("Subprocess: init.tcl NOT FOUND at: {}", init_tcl.display());
             }
         } else {
-            warn!("Subprocess: TCL_LIBRARY path does not exist: {}", tcl_lib_path.display());
+            warn!(
+                "Subprocess: TCL_LIBRARY path does not exist: {}",
+                tcl_lib_path.display()
+            );
         }
 
         if tk_lib_path.exists() {
             cmd.env("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
-            info!("Subprocess: Set TK_LIBRARY to launcher path: {}", tk_lib_path.display());
+            info!(
+                "Subprocess: Set TK_LIBRARY to launcher path: {}",
+                tk_lib_path.display()
+            );
 
             // DEBUG: Check if tk.tcl exists
             let tk_tcl = tk_lib_path.join("tk.tcl");
             if tk_tcl.exists() {
-                info!("Subprocess: Confirmed tk.tcl exists at: {}", tk_tcl.display());
+                info!(
+                    "Subprocess: Confirmed tk.tcl exists at: {}",
+                    tk_tcl.display()
+                );
             } else {
                 warn!("Subprocess: tk.tcl NOT FOUND at: {}", tk_tcl.display());
             }
         } else {
-            warn!("Subprocess: TK_LIBRARY path does not exist: {}", tk_lib_path.display());
+            warn!(
+                "Subprocess: TK_LIBRARY path does not exist: {}",
+                tk_lib_path.display()
+            );
         }
 
         // Also check for launcher's directories as fallback
@@ -397,7 +445,10 @@ impl PythonIntegration {
                     let launcher_tcl = exe_dir.join("tcl8.6");
                     if launcher_tcl.exists() {
                         cmd.env("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                        info!("Subprocess: Fallback TCL_LIBRARY to launcher: {}", launcher_tcl.display());
+                        info!(
+                            "Subprocess: Fallback TCL_LIBRARY to launcher: {}",
+                            launcher_tcl.display()
+                        );
                     }
                 }
 
@@ -405,7 +456,10 @@ impl PythonIntegration {
                     let launcher_tk = exe_dir.join("tk8.6");
                     if launcher_tk.exists() {
                         cmd.env("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                        info!("Subprocess: Fallback TK_LIBRARY to launcher: {}", launcher_tk.display());
+                        info!(
+                            "Subprocess: Fallback TK_LIBRARY to launcher: {}",
+                            launcher_tk.display()
+                        );
                     }
                 }
 
@@ -416,7 +470,8 @@ impl PythonIntegration {
 
                 let python_base_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default");
                 let python_dll_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\DLLs");
-                let python_lib_bin_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\bin");
+                let python_lib_bin_dir =
+                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\bin");
 
                 // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
@@ -457,7 +512,10 @@ impl PythonIntegration {
                     format!("{};{}", exe_dir_str, current_pythonpath)
                 };
                 cmd.env("PYTHONPATH", &new_pythonpath);
-                info!("Subprocess: Added {} to PYTHONPATH for DLL discovery", exe_dir_str);
+                info!(
+                    "Subprocess: Added {} to PYTHONPATH for DLL discovery",
+                    exe_dir_str
+                );
 
                 // Set DLL directory hint for Windows to launcher directory where DLLs are bundled
                 // This helps launch_intellicrack.py add the correct directory to DLL search path
@@ -471,7 +529,8 @@ impl PythonIntegration {
         cmd.env_remove("PYTHONEXECUTABLE");
 
         // Execute and wait for completion
-        let output = cmd.output()
+        let output = cmd
+            .output()
             .context("Failed to execute Python launcher subprocess")?;
 
         // Print output
@@ -494,64 +553,77 @@ impl PythonIntegration {
 
         if exit_code != 0 {
             error!("Intellicrack launcher exited with code: {}", exit_code);
+
+            eprintln!("\n========================================");
+            eprintln!("Intellicrack crashed with exit code: {}", exit_code);
+            eprintln!("========================================");
+            eprintln!("Press Enter to close this window...");
+
+            use std::io::{self, BufRead};
+            let stdin = io::stdin();
+            let mut lines = stdin.lock().lines();
+            let _ = lines.next();
         }
 
-        info!("Intellicrack launcher completed with exit code: {}", exit_code);
+        info!(
+            "Intellicrack launcher completed with exit code: {}",
+            exit_code
+        );
         Ok(exit_code)
     }
 
     /* Original PyO3 approach - keeping for reference
-        Python::with_gil(|py| -> Result<i32> {
-            // sys.path is already configured during initialization
+    Python::with_gil(|py| -> Result<i32> {
+        // sys.path is already configured during initialization
 
-            // Import the main module
-            match py.import("intellicrack.main") {
-                Ok(main_module) => {
-                    info!("Successfully imported intellicrack.main module");
+        // Import the main module
+        match py.import("intellicrack.main") {
+            Ok(main_module) => {
+                info!("Successfully imported intellicrack.main module");
 
-                    // Call the main() function
-                    match main_module.call_method0("main") {
-                        Ok(result) => {
-                            // Extract the return value if it's an integer exit code
-                            let exit_code: i32 = result.extract().unwrap_or(0);
-                            info!("Intellicrack main() completed with exit code: {}", exit_code);
-                            Ok(exit_code)
-                        }
-                        Err(e) => {
-                            error!("Error running intellicrack.main:main(): {:?}", e);
+                // Call the main() function
+                match main_module.call_method0("main") {
+                    Ok(result) => {
+                        // Extract the return value if it's an integer exit code
+                        let exit_code: i32 = result.extract().unwrap_or(0);
+                        info!("Intellicrack main() completed with exit code: {}", exit_code);
+                        Ok(exit_code)
+                    }
+                    Err(e) => {
+                        error!("Error running intellicrack.main:main(): {:?}", e);
 
-                            // Check if it's an ImportError for better error reporting
-                            if e.is_instance_of::<pyo3::exceptions::PyImportError>(py) {
-                                error!("Import error - ensure Intellicrack is properly installed");
-                            } else if e.is_instance_of::<pyo3::exceptions::PySystemExit>(py) {
-                                // Handle SystemExit specially
-                                if let Ok(exit_code) = e.value(py).getattr("code") {
-                                    if let Ok(code) = exit_code.extract::<i32>() {
-                                        info!("Intellicrack exited with SystemExit code: {}", code);
-                                        return Ok(code);
-                                    }
+                        // Check if it's an ImportError for better error reporting
+                        if e.is_instance_of::<pyo3::exceptions::PyImportError>(py) {
+                            error!("Import error - ensure Intellicrack is properly installed");
+                        } else if e.is_instance_of::<pyo3::exceptions::PySystemExit>(py) {
+                            // Handle SystemExit specially
+                            if let Ok(exit_code) = e.value(py).getattr("code") {
+                                if let Ok(code) = exit_code.extract::<i32>() {
+                                    info!("Intellicrack exited with SystemExit code: {}", code);
+                                    return Ok(code);
                                 }
-                                return Ok(0); // Default to 0 for normal SystemExit
                             }
-
-                            Err(anyhow::anyhow!("Failed to run intellicrack.main:main(): {}", e))
+                            return Ok(0); // Default to 0 for normal SystemExit
                         }
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to import intellicrack.main module: {:?}", e);
 
-                    // Try to provide helpful error messages
-                    if e.is_instance_of::<pyo3::exceptions::PyModuleNotFoundError>(py) {
-                        error!("Module not found - ensure Intellicrack is in PYTHONPATH");
-                        error!("Current working directory: {:?}", std::env::current_dir());
+                        Err(anyhow::anyhow!("Failed to run intellicrack.main:main(): {}", e))
                     }
-
-                    Err(anyhow::anyhow!("Failed to import intellicrack.main: {}", e))
                 }
             }
-        })
-        */
+            Err(e) => {
+                error!("Failed to import intellicrack.main module: {:?}", e);
+
+                // Try to provide helpful error messages
+                if e.is_instance_of::<pyo3::exceptions::PyModuleNotFoundError>(py) {
+                    error!("Module not found - ensure Intellicrack is in PYTHONPATH");
+                    error!("Current working directory: {:?}", std::env::current_dir());
+                }
+
+                Err(anyhow::anyhow!("Failed to import intellicrack.main: {}", e))
+            }
+        }
+    })
+    */
 
     /// Test mode: Run environment verification script
     pub fn run_environment_test(&self) -> Result<i32> {
@@ -564,7 +636,11 @@ impl PythonIntegration {
             let test_script = std::fs::read_to_string("test_rust_launcher_env.py")
                 .context("Failed to read test script")?;
 
-            match py.run(CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or_else(|_| c"pass"), None, None) {
+            match py.run(
+                CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or_else(|_| c"pass"),
+                None,
+                None,
+            ) {
                 Ok(_) => {
                     info!("Environment test completed successfully");
                     Ok(0)
@@ -632,7 +708,6 @@ impl PythonIntegration {
         info!("Python environment variables configured");
         Ok(())
     }
-
 }
 
 #[cfg(test)]
@@ -717,7 +792,8 @@ mod tests {
         }
 
         // Test scripts subdirectory fallback
-        let pixi_scripts_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+        let pixi_scripts_path =
+            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
         if pixi_scripts_path.exists() && !pixi_path.exists() {
             let result = PythonIntegration::locate_python_interpreter().unwrap();
             assert_eq!(result, pixi_scripts_path);
@@ -744,7 +820,11 @@ mod tests {
         let dist_info_dir = site_packages_dir.join("test_package-1.0.0.dist-info");
         fs::create_dir_all(&dist_info_dir).unwrap();
         let metadata_file = dist_info_dir.join("METADATA");
-        fs::write(&metadata_file, b"Metadata-Version: 2.1\nName: test-package\nVersion: 1.0.0\n").unwrap();
+        fs::write(
+            &metadata_file,
+            b"Metadata-Version: 2.1\nName: test-package\nVersion: 1.0.0\n",
+        )
+        .unwrap();
 
         let python_integration = PythonIntegration {
             interpreter_path: PathBuf::from("python"),
@@ -916,8 +996,13 @@ mod tests {
         assert_eq!(expected_dll, "python312.dll");
 
         // Test version string construction using all fields
-        let version_str = format!("{}.{}.{}{}", version_info.major, version_info.minor, version_info.patch,
-                                 version_info.suffix.as_deref().unwrap_or(""));
+        let version_str = format!(
+            "{}.{}.{}{}",
+            version_info.major,
+            version_info.minor,
+            version_info.patch,
+            version_info.suffix.as_deref().unwrap_or("")
+        );
         assert_eq!(version_str, "3.12.0");
 
         // Test alternative paths are constructed correctly
@@ -1045,9 +1130,21 @@ mod tests {
 
         // Attempt to load the actual Python library in test environment
         #[cfg(target_os = "windows")]
-        let lib_names = vec!["python312.dll", "python311.dll", "python310.dll", "python39.dll", "python38.dll"];
+        let lib_names = vec![
+            "python312.dll",
+            "python311.dll",
+            "python310.dll",
+            "python39.dll",
+            "python38.dll",
+        ];
         #[cfg(not(target_os = "windows"))]
-        let lib_names = vec!["libpython3.12.so", "libpython3.11.so", "libpython3.10.so", "libpython3.9.so", "libpython3.8.so"];
+        let lib_names = vec![
+            "libpython3.12.so",
+            "libpython3.11.so",
+            "libpython3.10.so",
+            "libpython3.9.so",
+            "libpython3.8.so",
+        ];
 
         // Check for actual Python library availability
         for lib_name in &lib_names {
@@ -1085,7 +1182,8 @@ mod tests {
     fn test_python_path_precedence() {
         // Test the precedence logic for Python path detection
         let pixi_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
-        let pixi_scripts_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+        let pixi_scripts_path =
+            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
 
         // Test path construction
         assert!(pixi_path.to_string_lossy().contains("pixi"));

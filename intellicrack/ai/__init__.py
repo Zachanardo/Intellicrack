@@ -126,12 +126,12 @@ except ImportError as e:
     logger.warning("Failed to import parsing_utils: %s", e)
     ResponseLineParser = None
 
-# Import new exploitation AI modules
+# Import licensing protection analysis AI modules
 try:
-    from .vulnerability_research_integration import VulnerabilityResearchAI
+    from .vulnerability_research_integration import LicensingProtectionAnalyzer
 except ImportError as e:
     logger.warning("Failed to import vulnerability_research_integration: %s", e)
-    VulnerabilityResearchAI = None
+    LicensingProtectionAnalyzer = None
 
 # Import advanced AI system components
 try:
@@ -275,10 +275,10 @@ except ImportError as e:
 
 # Import AI script generation system components
 try:
-    from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult, ScriptType
+    from .ai_script_generator import AIScriptGenerator, ScriptType
 except ImportError as e:
     logger.warning("Failed to import ai_script_generator: %s", e)
-    AIScriptGenerator = ScriptType = ScriptGenerationResult = None
+    AIScriptGenerator = ScriptType = None
 
 try:
     from .autonomous_agent import AutonomousAgent
@@ -384,8 +384,8 @@ __all__ = [
     "IntellicrackAIAssistant",
     "Tool",
     "ToolCategory",
-    # From exploitation modules
-    "VulnerabilityResearchAI",
+    # From licensing protection analysis modules
+    "LicensingProtectionAnalyzer",
     # From advanced AI system components
     "AILearningEngine",
     "LearningRecord",
@@ -422,7 +422,6 @@ __all__ = [
     # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
-    "ScriptGenerationResult",
     "AutonomousAgent",
     "IntelligentCodeModifier",
     "CodeChange",

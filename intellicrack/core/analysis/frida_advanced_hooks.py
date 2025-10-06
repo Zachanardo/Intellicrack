@@ -518,7 +518,7 @@ send({ type: 'heap_tracking_ready' });
     def find_leaks(self) -> List[HeapAllocation]:
         """Find potential memory leaks."""
         leaks = self.script.exports.find_leaks()
-        return [self.allocations.get(l["address"]) for l in leaks if l["address"] in self.allocations]
+        return [self.allocations.get(leak["address"]) for leak in leaks if leak["address"] in self.allocations]
 
 
 class FridaThreadMonitor:

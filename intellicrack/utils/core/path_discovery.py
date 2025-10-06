@@ -179,29 +179,6 @@ class PathDiscovery:
                 "env_vars": ["PYTHON_HOME", "PYTHON_PATH"],
                 "validation": self._validate_python,
             },
-            "docker": {
-                "executables": {
-                    "win32": ["docker.exe", "Docker Desktop.exe"],
-                    "linux": ["docker"],
-                    "darwin": ["docker"],
-                },
-                "search_paths": {
-                    "win32": [
-                        r"C:\Program Files\Docker\Docker\resources\bin",
-                        r"C:\Program Files\Docker\Docker",
-                    ],
-                    "linux": [
-                        "/usr/bin",
-                        "/usr/local/bin",
-                    ],
-                    "darwin": [
-                        "/usr/local/bin",
-                        "/opt/homebrew/bin",
-                    ],
-                },
-                "env_vars": ["DOCKER_PATH"],
-                "validation": self._validate_docker,
-            },
             "wireshark": {
                 "executables": {
                     "win32": ["Wireshark.exe", "tshark.exe"],
@@ -654,17 +631,6 @@ class PathDiscovery:
                 [path, "--version"], capture_output=True, text=True, timeout=5, check=False
             )
             return "python" in result.stdout.lower() or "python" in result.stderr.lower()
-        except Exception as e:
-            logger.error("Exception in path_discovery: %s", e)
-            return False
-
-    def _validate_docker(self, path: str) -> bool:
-        """Validate Docker installation."""
-        try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
-            )
-            return "docker" in result.stdout.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
             return False

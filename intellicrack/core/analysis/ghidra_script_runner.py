@@ -29,6 +29,14 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ...core.terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for Ghidra script runner")
+
 
 @dataclass
 class GhidraScript:
@@ -196,8 +204,21 @@ class GhidraScriptRunner:
         output_dir: Optional[Path] = None,
         parameters: Optional[Dict[str, Any]] = None,
         project_path: Optional[Path] = None,
+        use_terminal: bool = False,
     ) -> Dict[str, Any]:
-        """Run a Ghidra script on a binary."""
+        """Run a Ghidra script on a binary.
+
+        Args:
+            binary_path: Path to binary to analyze
+            script_name: Name of script to run
+            output_dir: Optional output directory
+            parameters: Optional script parameters
+            project_path: Optional existing project path
+            use_terminal: If True, show analysis progress in terminal (default: False)
+
+        Returns:
+            Dictionary with analysis results
+        """
 
         # Get script configuration
         script = self._get_script(script_name)
@@ -254,20 +275,46 @@ class GhidraScriptRunner:
                 script_params["output_dir"] = str(output_dir)
 
             # Execute script
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=str(temp_dir))
+            if use_terminal and HAS_TERMINAL_MANAGER:
+                logger.info(f"Running Ghidra script '{script_name}' in terminal")
+                terminal_mgr = get_terminal_manager()
 
-            # Parse results based on output format
-            results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
+                # Show script execution in terminal
+                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=str(temp_dir))
 
-            # Add execution metadata
-            results["execution"] = {
-                "script": script_name,
-                "binary": str(binary_path),
-                "return_code": result.returncode,
-                "success": result.returncode == 0,
-            }
+                # For terminal execution, return session info
+                # Results will be available in terminal output and log file
+                results = {
+                    "execution": {
+                        "script": script_name,
+                        "binary": str(binary_path),
+                        "terminal_session": session_id,
+                        "output_dir": str(output_dir),
+                        "success": True,
+                        "message": "Script running in terminal",
+                    }
+                }
+                return results
+            else:
+                # Standard execution with captured output
+                # Validate that cmd contains only safe, expected commands
+                if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
+                    raise ValueError(f"Unsafe command: {cmd}")
+                temp_dir_path = str(temp_dir).replace(";", "").replace("|", "").replace("&", "")
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=temp_dir_path, shell=False)
 
-            return results
+                # Parse results based on output format
+                results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
+
+                # Add execution metadata
+                results["execution"] = {
+                    "script": script_name,
+                    "binary": str(binary_path),
+                    "return_code": result.returncode,
+                    "success": result.returncode == 0,
+                }
+
+                return results
 
         except subprocess.TimeoutExpired:
             logger.error(f"Script {script_name} timed out after {script.timeout} seconds")

@@ -575,7 +575,8 @@ class SymbolicExecutionEngine:
             # Each spray object contains markers and hijacked vtable pointers
             marker = struct.pack("<Q", 0x4141414141410000 + i)
             # Include potential gadget addresses from module
-            gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)
+            # Note: Using random module for generating memory addresses in simulation, not cryptographic purposes
+            gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)  # noqa: S311
             spray_payload += marker
             spray_payload += struct.pack("<Q", gadget_addr)
 
@@ -1078,7 +1079,7 @@ int main() {{
             layout += struct.pack("<Q", base + vtable_offset)
 
         # Add type identifier based on class name hash
-        type_hash = int(hashlib.md5(class_data["type"].encode()).hexdigest()[:8], 16)
+        type_hash = int(hashlib.sha256(class_data["type"].encode()).hexdigest()[:8], 16)
         layout += struct.pack("<I", type_hash)
 
         # Add reference counter (common in many C++ objects)
@@ -1209,7 +1210,7 @@ int main() {{
         if ".rodata" in sections:
             rodata = sections[".rodata"]
             # Estimate based on class name hash
-            offset = int(hashlib.md5(class_name.encode()).hexdigest()[:4], 16)
+            offset = int(hashlib.sha256(class_name.encode()).hexdigest()[:4], 16)
             return rodata["address"] + (offset & 0xFFF0)
 
         # Fallback to base + offset

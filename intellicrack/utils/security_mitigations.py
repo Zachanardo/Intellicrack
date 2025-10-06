@@ -41,8 +41,8 @@ def mitigate_future_vulnerability() -> None:
         def secure_import(name, *args, **kwargs):
             """Wrapper to prevent automatic import of test.py by future package."""
             if name == "test" and len(args) > 0 and args[0] is not None:
-                fromlist = args[2] if len(args) > 2 else kwargs.get("fromlist", ())
-                level = args[3] if len(args) > 3 else kwargs.get("level", 0)
+                args[2] if len(args) > 2 else kwargs.get("fromlist", ())
+                args[3] if len(args) > 3 else kwargs.get("level", 0)
 
                 caller_globals = args[0]
                 if caller_globals and "__name__" in caller_globals:

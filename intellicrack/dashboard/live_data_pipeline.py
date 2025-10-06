@@ -499,13 +499,13 @@ class LiveDataPipeline:
             )
 
         # Check queue sizes
-        for priority, queue in self.event_queues.items():
-            if queue.qsize() > self.alert_thresholds.get("queue_size", 5000):
+        for priority, queue_obj in self.event_queues.items():
+            if queue_obj.qsize() > self.alert_thresholds.get("queue_size", 5000):
                 alerts.append(
                     {
                         "type": "queue_overflow",
                         "priority": priority.name,
-                        "size": queue.qsize(),
+                        "size": queue_obj.qsize(),
                         "threshold": self.alert_thresholds["queue_size"],
                     }
                 )

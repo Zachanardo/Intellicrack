@@ -155,7 +155,7 @@ class GhidraAdvancedAnalyzer:
                 if len(inst_parts) >= 3:
                     try:
                         int(inst_parts[2].replace("0x", ""), 16)
-                    except:
+                    except ValueError:
                         pass
 
             # Detect local variables from stack accesses
@@ -638,14 +638,14 @@ class GhidraAdvancedAnalyzer:
         """Create custom data types for Ghidra."""
         custom_types = []
 
-        for struct in structures:
+        for struct_obj in structures:
             # Create Ghidra-compatible data type
             ghidra_type = GhidraDataType(
-                name=struct.name,
-                size=struct.size,
-                category="struct" if not struct.is_union else "union",
-                members=struct.members,
-                alignment=struct.alignment,
+                name=struct_obj.name,
+                size=struct_obj.size,
+                category="struct" if not struct_obj.is_union else "union",
+                members=struct_obj.members,
+                alignment=struct_obj.alignment,
             )
 
             custom_types.append(ghidra_type)
@@ -686,11 +686,11 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
 
     # Recover structures
     structures = analyzer.recover_structures(analysis_result)
-    for struct in structures:
+    for struct_obj in structures:
         ghidra_type = GhidraDataType(
-            name=struct.name, size=struct.size, category="struct", members=struct.members, alignment=struct.alignment
+            name=struct_obj.name, size=struct_obj.size, category="struct", members=struct_obj.members, alignment=struct_obj.alignment
         )
-        analysis_result.data_types[struct.name] = ghidra_type
+        analysis_result.data_types[struct_obj.name] = ghidra_type
 
     # Analyze vtables
     vtables = analyzer.analyze_vtables(analysis_result)

@@ -12,7 +12,8 @@ from enum import Enum
 from typing import Any, Dict, List
 
 import netifaces
-import wmi
+
+from intellicrack.handlers.wmi_handler import wmi
 
 
 class SpoofMethod(Enum):
@@ -107,7 +108,7 @@ class HardwareFingerPrintSpoofer:
                     for line in f:
                         if "serial" in line.lower():
                             return line.split(":")[1].strip()
-        except:
+        except (OSError, IOError):
             pass
         return "BFEBFBFF000306C3"  # Default Intel CPU ID
 
@@ -119,7 +120,7 @@ class HardwareFingerPrintSpoofer:
                     return cpu.Name.strip()
             else:
                 return platform.processor()
-        except:
+        except (AttributeError, NotImplementedError):
             pass
         return "Intel(R) Core(TM) i7-4770K CPU @ 3.50GHz"
 
@@ -129,9 +130,10 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
                     return board.SerialNumber.strip()
-        except:
+        except (AttributeError, WMIError):
             pass
-        return "MB-" + "".join(random.choices("0123456789ABCDEF", k=12))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return "MB-" + "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311
 
     def _get_motherboard_manufacturer(self) -> str:
         """Get motherboard manufacturer"""
@@ -139,7 +141,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
                     return board.Manufacturer.strip()
-        except:
+        except (AttributeError, WMIError):
             pass
         return "ASUSTeK COMPUTER INC."
 
@@ -149,9 +151,10 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
                     return bios.SerialNumber.strip()
-        except:
+        except (AttributeError, WMIError):
             pass
-        return "BIOS-" + "".join(random.choices("0123456789", k=10))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return "BIOS-" + "".join(random.choices("0123456789", k=10))  # noqa: S311
 
     def _get_bios_version(self) -> str:
         """Get BIOS version"""
@@ -159,7 +162,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
                     return bios.SMBIOSBIOSVersion.strip()
-        except:
+        except (AttributeError, WMIError):
             pass
         return "2.17.1246"
 
@@ -171,11 +174,11 @@ class HardwareFingerPrintSpoofer:
                 for disk in self.wmi_client.Win32_PhysicalMedia():
                     if disk.SerialNumber:
                         serials.append(disk.SerialNumber.strip())
-        except:
+        except (AttributeError, WMIError):
             pass
 
         if not serials:
-            serials.append("WD-" + "".join(random.choices("0123456789ABCDEF", k=10)))
+            serials.append("WD-" + "".join(random.choices("0123456789ABCDEF", k=10)))  # noqa: S311
 
         return serials
 
@@ -187,7 +190,7 @@ class HardwareFingerPrintSpoofer:
                 for disk in self.wmi_client.Win32_DiskDrive():
                     if disk.Model:
                         models.append(disk.Model.strip())
-        except:
+        except (AttributeError, WMIError):
             pass
 
         if not models:
@@ -205,13 +208,14 @@ class HardwareFingerPrintSpoofer:
                     for addr in addrs[netifaces.AF_LINK]:
                         if "addr" in addr and addr["addr"] != "00:00:00:00:00:00":
                             macs.append(addr["addr"].upper().replace(":", ""))
-        except:
+        except (AttributeError, WMIError):
             pass
 
         if not macs:
             # Generate realistic MAC
             mac = "00:50:56:"  # VMware OUI
-            mac += ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])
+            # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
+            mac += ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])  # noqa: S311
             macs.append(mac.replace(":", ""))
 
         return macs
@@ -222,7 +226,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
                     return system.UUID.strip()
-        except:
+        except (AttributeError, WMIError):
             pass
         return str(uuid.uuid4()).upper()
 
@@ -231,7 +235,7 @@ class HardwareFingerPrintSpoofer:
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 return winreg.QueryValueEx(key, "MachineGuid")[0]
-        except:
+        except (AttributeError, WMIError):
             pass
         return str(uuid.uuid4()).upper()
 
@@ -243,16 +247,17 @@ class HardwareFingerPrintSpoofer:
                 for line in result.stdout.split("\n"):
                     if "Serial Number" in line:
                         return line.split()[-1]
-        except:
+        except (AttributeError, WMIError):
             pass
-        return "".join(random.choices("0123456789ABCDEF", k=8))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
 
     def _get_product_id(self) -> str:
         """Get Windows product ID"""
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
                 return winreg.QueryValueEx(key, "ProductId")[0]
-        except:
+        except (AttributeError, WMIError):
             pass
         return "00000-00000-00000-AAOEM"
 
@@ -271,7 +276,7 @@ class HardwareFingerPrintSpoofer:
                                 "pnp_id": nic.PNPDeviceID if hasattr(nic, "PNPDeviceID") else "",
                             }
                         )
-        except:
+        except (AttributeError, WMIError):
             pass
 
         return adapters
@@ -283,7 +288,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for gpu in self.wmi_client.Win32_VideoController():
                     gpu_ids.append(gpu.PNPDeviceID)
-        except:
+        except (AttributeError, WMIError):
             pass
 
         if not gpu_ids:
@@ -299,11 +304,11 @@ class HardwareFingerPrintSpoofer:
                 for mem in self.wmi_client.Win32_PhysicalMemory():
                     if hasattr(mem, "SerialNumber") and mem.SerialNumber:
                         serials.append(mem.SerialNumber.strip())
-        except:
+        except (AttributeError, WMIError):
             pass
 
         if not serials:
-            serials.append("".join(random.choices("0123456789", k=8)))
+            serials.append("".join(random.choices("0123456789", k=8)))  # noqa: S311
 
         return serials
 
@@ -314,7 +319,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 for usb in self.wmi_client.Win32_USBHub():
                     devices.append({"device_id": usb.DeviceID, "pnp_id": usb.PNPDeviceID})
-        except:
+        except (AttributeError, WMIError):
             pass
 
         return devices
@@ -358,7 +363,8 @@ class HardwareFingerPrintSpoofer:
             "BFEBFBFF000506E3",  # i7-6700K
             "BFEBFBFF000806EC",  # i7-10700K
         ]
-        return random.choice(intel_ids)
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return random.choice(intel_ids)  # noqa: S311
 
     def _generate_cpu_name(self) -> str:
         """Generate realistic CPU name"""
@@ -369,36 +375,42 @@ class HardwareFingerPrintSpoofer:
             "AMD Ryzen 9 5900X 12-Core Processor",
             "AMD Ryzen 7 5800X 8-Core Processor",
         ]
-        return random.choice(cpus)
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return random.choice(cpus)  # noqa: S311
 
     def _generate_mb_serial(self) -> str:
         """Generate motherboard serial"""
         prefixes = ["MB", "SN", "BASE", "BOARD"]
-        return random.choice(prefixes) + "-" + "".join(random.choices("0123456789ABCDEF", k=12))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return random.choice(prefixes) + "-" + "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311, S311
 
     def _generate_mb_manufacturer(self) -> str:
         """Generate motherboard manufacturer"""
         manufacturers = ["ASUSTeK COMPUTER INC.", "Gigabyte Technology Co., Ltd.", "MSI", "ASRock", "EVGA", "Dell Inc.", "HP", "Lenovo"]
-        return random.choice(manufacturers)
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return random.choice(manufacturers)  # noqa: S311
 
     def _generate_bios_serial(self) -> str:
         """Generate BIOS serial"""
-        return "".join(random.choices("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=10))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return "".join(random.choices("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=10))  # noqa: S311
 
     def _generate_bios_version(self) -> str:
         """Generate BIOS version"""
-        major = random.randint(1, 5)
-        minor = random.randint(0, 99)
-        build = random.randint(1000, 9999)
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        major = random.randint(1, 5)  # noqa: S311
+        minor = random.randint(0, 99)  # noqa: S311
+        build = random.randint(1000, 9999)  # noqa: S311
         return f"{major}.{minor}.{build}"
 
     def _generate_disk_serials(self) -> List[str]:
         """Generate disk serials"""
         prefixes = ["WD", "ST", "SAMSUNG", "CRUCIAL", "KINGSTON"]
         serials = []
-        for _ in range(random.randint(1, 3)):
-            prefix = random.choice(prefixes)
-            serial = prefix + "-" + "".join(random.choices("0123456789ABCDEF", k=10))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        for _ in range(random.randint(1, 3)):  # noqa: S311
+            prefix = random.choice(prefixes)  # noqa: S311
+            serial = prefix + "-" + "".join(random.choices("0123456789ABCDEF", k=10))  # noqa: S311
             serials.append(serial)
         return serials
 
@@ -412,7 +424,8 @@ class HardwareFingerPrintSpoofer:
             "Crucial MX500 500GB",
             "Kingston SA400S37240G",
         ]
-        return [random.choice(models) for _ in range(len(self.spoofed_hardware.disk_serial) if self.spoofed_hardware else 1)]
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return [random.choice(models) for _ in range(len(self.spoofed_hardware.disk_serial) if self.spoofed_hardware else 1)]  # noqa: S311
 
     def _generate_mac_addresses(self) -> List[str]:
         """Generate MAC addresses"""
@@ -428,9 +441,10 @@ class HardwareFingerPrintSpoofer:
         ]
 
         macs = []
-        for _ in range(random.randint(1, 3)):
-            oui = random.choice(ouis)
-            nic = ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        for _ in range(random.randint(1, 3)):  # noqa: S311
+            oui = random.choice(ouis)  # noqa: S311
+            nic = ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])  # noqa: S311
             mac = f"{oui}:{nic}"
             macs.append(mac.replace(":", ""))
 
@@ -438,16 +452,17 @@ class HardwareFingerPrintSpoofer:
 
     def _generate_volume_serial(self) -> str:
         """Generate volume serial"""
-        return "".join(random.choices("0123456789ABCDEF", k=8))
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
 
     def _generate_product_id(self) -> str:
         """Generate Windows product ID"""
         # Realistic Windows product ID format
         segments = [
-            "".join(random.choices("0123456789", k=5)),
-            "".join(random.choices("0123456789", k=5)),
-            "".join(random.choices("0123456789", k=5)),
-            random.choice(["AAOEM", "AAAAA", "BBBBB", "OEM"]),
+            "".join(random.choices("0123456789", k=5)),  # noqa: S311
+            "".join(random.choices("0123456789", k=5)),  # noqa: S311
+            "".join(random.choices("0123456789", k=5)),  # noqa: S311
+            random.choice(["AAOEM", "AAAAA", "BBBBB", "OEM"]),  # noqa: S311
         ]
         return "-".join(segments)
 
@@ -464,10 +479,11 @@ class HardwareFingerPrintSpoofer:
         for _i, mac in enumerate(self.spoofed_hardware.mac_addresses if self.spoofed_hardware else []):
             adapters.append(
                 {
-                    "name": random.choice(names),
+                    # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+                    "name": random.choice(names),  # noqa: S311
                     "mac": mac,
                     "guid": str(uuid.uuid4()).upper(),
-                    "pnp_id": f"PCI\\VEN_8086&DEV_{random.randint(1000, 9999):04X}",
+                    "pnp_id": f"PCI\\VEN_8086&DEV_{random.randint(1000, 9999):04X}",  # noqa: S311
                 }
             )
 
@@ -482,11 +498,13 @@ class HardwareFingerPrintSpoofer:
             "PCI\\VEN_1002&DEV_731F&SUBSYS_E4111DA2",  # RX 6900 XT
             "PCI\\VEN_1002&DEV_73BF&SUBSYS_23181462",  # RX 6800 XT
         ]
-        return [random.choice(gpu_ids)]
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return [random.choice(gpu_ids)]  # noqa: S311
 
     def _generate_ram_serials(self) -> List[str]:
         """Generate RAM serials"""
-        return ["".join(random.choices("0123456789ABCDEF", k=8)) for _ in range(random.randint(2, 4))]
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        return ["".join(random.choices("0123456789ABCDEF", k=8)) for _ in range(random.randint(2, 4))]  # noqa: S311, S311
 
     def _generate_usb_devices(self) -> List[Dict[str, str]]:
         """Generate USB device info"""
@@ -498,9 +516,10 @@ class HardwareFingerPrintSpoofer:
             {"device_id": "USB\\VID_0951&PID_1666", "pnp_id": "USB\\VID_0951&PID_1666\\001A92053B93F4A0A7C0EA09"},  # Kingston USB
         ]
 
-        num_devices = random.randint(1, 3)
+        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        num_devices = random.randint(1, 3)  # noqa: S311
         for _ in range(num_devices):
-            devices.append(random.choice(common_devices))
+            devices.append(random.choice(common_devices))  # noqa: S311
 
         return devices
 
@@ -569,12 +588,12 @@ class HardwareFingerPrintSpoofer:
                                         if self.spoofed_hardware.mac_addresses:
                                             mac = self.spoofed_hardware.mac_addresses[i % len(self.spoofed_hardware.mac_addresses)]
                                             winreg.SetValueEx(subkey, "NetworkAddress", 0, winreg.REG_SZ, mac)
-                                except:
+                                except (OSError, PermissionError):
                                     pass
                         i += 1
                     except WindowsError:
                         break
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _apply_hook_spoof(self) -> bool:
@@ -1116,7 +1135,7 @@ class HardwareFingerPrintSpoofer:
 
         try:
             setupapi = ctypes.windll.setupapi
-        except:
+        except (AttributeError, OSError):
             return False  # SetupAPI not available
 
         kernel32 = ctypes.windll.kernel32
@@ -1249,7 +1268,7 @@ class HardwareFingerPrintSpoofer:
 
         try:
             iphlpapi = ctypes.windll.iphlpapi
-        except:
+        except (AttributeError, OSError):
             return False
 
         kernel32 = ctypes.windll.kernel32
@@ -1656,7 +1675,7 @@ class HardwareFingerPrintSpoofer:
             ) as key:  # pragma: allowlist secret
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_motherboard(self, serial: str = None, manufacturer: str = None):
@@ -1673,7 +1692,7 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, "Custom Board")
                 winreg.SetValueEx(key, "BaseBoardManufacturer", 0, winreg.REG_SZ, manufacturer)
                 winreg.SetValueEx(key, "BaseBoardProduct", 0, winreg.REG_SZ, serial)
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_bios(self, serial: str = None, version: str = None):
@@ -1689,7 +1708,7 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "BIOSVersion", 0, winreg.REG_MULTI_SZ, [version])
                 winreg.SetValueEx(key, "SystemManufacturer", 0, winreg.REG_SZ, "System Manufacturer")
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, serial)
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_disk(self, serials: List[str] = None):
@@ -1703,7 +1722,7 @@ class HardwareFingerPrintSpoofer:
             for i, serial in enumerate(serials):
                 with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\IDE\\Disk{i}") as key:
                     winreg.SetValueEx(key, "SerialNumber", 0, winreg.REG_SZ, serial)
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_mac_address(self, mac_addresses: List[str] = None):
@@ -1722,7 +1741,7 @@ class HardwareFingerPrintSpoofer:
         try:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation") as key:
                 winreg.SetValueEx(key, "ComputerHardwareId", 0, winreg.REG_SZ, uuid_str)
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_gpu(self, gpu_ids: List[str] = None):
@@ -1735,7 +1754,7 @@ class HardwareFingerPrintSpoofer:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video"):
                 # Update GPU entries
                 pass
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _spoof_ram(self, serials: List[str] = None):
@@ -1756,7 +1775,7 @@ class HardwareFingerPrintSpoofer:
             for _device in devices:
                 # Create registry entries for spoofed USB devices
                 pass
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def restore_original(self) -> bool:
@@ -1799,12 +1818,12 @@ class HardwareFingerPrintSpoofer:
                                 try:
                                     # Delete NetworkAddress to restore original MAC
                                     winreg.DeleteValue(subkey, "NetworkAddress")
-                                except:
+                                except (OSError, PermissionError):
                                     pass
                         i += 1
                     except WindowsError:
                         break
-        except:
+        except (AttributeError, WMIError):
             pass
 
     def _remove_hooks(self):
@@ -1848,7 +1867,7 @@ class HardwareFingerPrintSpoofer:
             if "spoofed" in config and config["spoofed"]:
                 self.spoofed_hardware = HardwareIdentifiers(**config["spoofed"])
                 return True
-        except:
+        except (AttributeError, WMIError):
             pass
 
         return False

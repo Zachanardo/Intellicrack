@@ -103,109 +103,53 @@ def real_network_capture():
 @pytest.fixture
 def isolated_test_env():
     """
-    Provide an isolated environment for testing dangerous operations.
-    This ensures exploit tests don't affect the host system.
+    Provide an isolated environment for testing dangerous operations using Windows Sandbox.
     """
-    # Check if Docker is available
-    docker_available = False
-    try:
-        import docker
-        client = docker.from_env()
-        client.ping()
-        docker_available = True
-    except:
-        pass
+    temp_dir = tempfile.mkdtemp(prefix="intellicrack_isolated_")
 
-    if docker_available and os.environ.get('INTELLICRACK_USE_DOCKER', '').lower() == 'true':
-        # Use Docker container for isolation
-        import docker
-        client = docker.from_env()
+    restricted_env = os.environ.copy()
+    restricted_env['INTELLICRACK_ISOLATED'] = '1'
+    restricted_env['PATH'] = ''
 
-        # Create a minimal container for testing
-        container = client.containers.run(
-            "python:3.9-slim",
-            command="sleep infinity",
-            detach=True,
-            remove=True,
-            volumes={
-                os.path.abspath('.'): {'bind': '/intellicrack', 'mode': 'rw'}
-            },
-            working_dir="/intellicrack",
-            environment={
-                'PYTHONPATH': '/intellicrack',
-                'INTELLICRACK_TEST_MODE': 'isolated'
-            },
-            mem_limit='512m',
-            cpu_quota=50000,  # Limit CPU usage
-            network_mode='none'  # No network access for safety
-        )
-
+    if sys.platform == "win32":
         try:
-            # Return container exec function for running commands
-            def run_in_container(cmd):
-                result = container.exec_run(cmd, workdir='/intellicrack')
-                return result.exit_code, result.output.decode()
+            import win32api
+            import win32con
+            import win32security
 
-            yield run_in_container
-        finally:
-            container.stop()
-            container.remove(force=True)
-    else:
-        # Fallback to isolated directory with enhanced security
-        temp_dir = tempfile.mkdtemp(prefix="intellicrack_isolated_")
+            user_sid = win32security.GetTokenInformation(
+                win32security.GetCurrentProcessToken(),
+                win32security.TokenUser
+            )[0]
 
-        # Create a restricted environment
-        restricted_env = os.environ.copy()
-        restricted_env['INTELLICRACK_ISOLATED'] = '1'
-        restricted_env['PATH'] = ''  # Clear PATH for safety
+            dacl = win32security.ACL()
+            dacl.AddAccessAllowedAce(
+                win32security.ACL_REVISION,
+                win32con.GENERIC_READ | win32con.GENERIC_WRITE,
+                user_sid
+            )
 
-        # Set restrictive permissions
-        if sys.platform == "win32":
-            try:
-                import win32api
-                import win32con
-                import win32security
-
-                # Get current user SID
-                user_sid = win32security.GetTokenInformation(
-                    win32security.GetCurrentProcessToken(),
-                    win32security.TokenUser
-                )[0]
-
-                # Create DACL with minimal permissions
-                dacl = win32security.ACL()
-                dacl.AddAccessAllowedAce(
-                    win32security.ACL_REVISION,
-                    win32con.GENERIC_READ | win32con.GENERIC_WRITE,
-                    user_sid
-                )
-
-                # Apply security descriptor
-                sd = win32security.SECURITY_DESCRIPTOR()
-                sd.SetSecurityDescriptorDacl(1, dacl, 0)
-                win32security.SetFileSecurity(
-                    temp_dir,
-                    win32security.DACL_SECURITY_INFORMATION,
-                    sd
-                )
-            except ImportError:
-                # Fallback if pywin32 not available
-                os.chmod(temp_dir, 0o700)
-        else:
-            # Unix-like systems
+            sd = win32security.SECURITY_DESCRIPTOR()
+            sd.SetSecurityDescriptorDacl(1, dacl, 0)
+            win32security.SetFileSecurity(
+                temp_dir,
+                win32security.DACL_SECURITY_INFORMATION,
+                sd
+            )
+        except ImportError:
             os.chmod(temp_dir, 0o700)
+    else:
+        os.chmod(temp_dir, 0o700)
 
-        # Create sandbox info
-        sandbox_info = {
-            'path': Path(temp_dir),
-            'env': restricted_env,
-            'is_docker': False
-        }
+    sandbox_info = {
+        'path': Path(temp_dir),
+        'env': restricted_env,
+        'is_isolated': True
+    }
 
-        yield sandbox_info
+    yield sandbox_info
 
-        # Cleanup
-        shutil.rmtree(temp_dir, ignore_errors=True)
+    shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

@@ -114,13 +114,13 @@ class FridaWorkerThread(QThread):
 
     def run_manual_bypass(self):
         """Run manual script injection"""
-        script_path = self.options.get('script_path')
+        script_path = self.options.get("script_path")
         if not script_path:
             raise Exception("No script path provided")
 
         self.progress_update.emit(f"Loading script: {script_path}")
 
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             script_content = f.read()
 
         self.progress_update.emit("Injecting custom script...")
@@ -257,22 +257,22 @@ setInterval(function() {
 
         # Set up message handler for receiving data from script
         def on_message(message, data):
-            if message['type'] == 'send':
-                payload = message['payload']
-                if payload['type'] == 'api_call':
+            if message["type"] == "send":
+                payload = message["payload"]
+                if payload["type"] == "api_call":
                     self.progress_update.emit(f"[API] {payload['dll']}!{payload['api']} called")
-                elif payload['type'] == 'api_return':
+                elif payload["type"] == "api_return":
                     self.progress_update.emit(f"[RET] {payload['api']} returned: {payload['retval']}")
-                elif payload['type'] == 'license_api':
+                elif payload["type"] == "license_api":
                     self.progress_update.emit(f"[LICENSE] {payload['module']}!{payload['api']} detected")
-                elif payload['type'] == 'stats_update':
+                elif payload["type"] == "stats_update":
                     self.status_update.emit(f"Hooks: {payload['hooks']} | Calls: {payload['calls']}", "blue")
-                elif payload['type'] == 'monitor_started':
+                elif payload["type"] == "monitor_started":
                     self.progress_update.emit(f"Hook monitoring active with {payload['hooks']} hooks")
 
         # Register message handler with Frida session
         if self.wizard.session:
-            self.wizard.session.on('message', on_message)
+            self.wizard.session.on("message", on_message)
 
         self.progress_update.emit("Hook monitoring active")
 
@@ -281,8 +281,9 @@ setInterval(function() {
             # Process Frida events and check for messages
             if self.wizard.session:
                 try:
-                    # Keep session alive and process callbacks
-                    self.wizard.session.is_detached
+                    # Check if session is detached
+                    if self.wizard.session.is_detached:
+                        break
                 except Exception:
                     break
             self.msleep(100)
@@ -429,13 +430,9 @@ class FridaBypassWizardDialog(QDialog):
         mode_layout = QVBoxLayout()
 
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems([
-            "Auto-detect & Bypass",
-            "Manual Script Injection",
-            "Protection Analysis",
-            "Hook Monitoring",
-            "Custom Workflow"
-        ])
+        self.mode_combo.addItems(
+            ["Auto-detect & Bypass", "Manual Script Injection", "Protection Analysis", "Hook Monitoring", "Custom Workflow"]
+        )
         self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
         mode_layout.addWidget(self.mode_combo)
 
@@ -455,9 +452,15 @@ class FridaBypassWizardDialog(QDialog):
         # Checkboxes for different protections
         self.protection_checks = {}
         protections = [
-            "License Validation", "Hardware ID", "Trial Expiration",
-            "Online Activation", "Anti-Debug", "Integrity Checks",
-            "DRM Systems", "Network License", "Dongles"
+            "License Validation",
+            "Hardware ID",
+            "Trial Expiration",
+            "Online Activation",
+            "Anti-Debug",
+            "Integrity Checks",
+            "DRM Systems",
+            "Network License",
+            "Dongles",
         ]
 
         for protection in protections:
@@ -713,14 +716,14 @@ class FridaBypassWizardDialog(QDialog):
         """Refresh the list of running processes"""
         self.process_table.setRowCount(0)
 
-        for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        for proc in psutil.process_iter(["pid", "name", "exe"]):
             try:
                 row = self.process_table.rowCount()
                 self.process_table.insertRow(row)
 
-                self.process_table.setItem(row, 0, QTableWidgetItem(str(proc.info['pid'])))
-                self.process_table.setItem(row, 1, QTableWidgetItem(proc.info['name']))
-                self.process_table.setItem(row, 2, QTableWidgetItem(proc.info['exe'] or ""))
+                self.process_table.setItem(row, 0, QTableWidgetItem(str(proc.info["pid"])))
+                self.process_table.setItem(row, 1, QTableWidgetItem(proc.info["name"]))
+                self.process_table.setItem(row, 2, QTableWidgetItem(proc.info["exe"] or ""))
                 self.process_table.setItem(row, 3, QTableWidgetItem("Running"))
 
             except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -733,7 +736,7 @@ class FridaBypassWizardDialog(QDialog):
             "Manual Script Injection": "Inject custom Frida scripts for specific bypass requirements",
             "Protection Analysis": "Analyze the target for protection mechanisms without applying bypasses",
             "Hook Monitoring": "Monitor API calls and hooks in real-time",
-            "Custom Workflow": "Create custom bypass workflow with multiple steps"
+            "Custom Workflow": "Create custom bypass workflow with multiple steps",
         }
 
         self.mode_description.setText(descriptions.get(mode, ""))
@@ -749,7 +752,7 @@ class FridaBypassWizardDialog(QDialog):
             "Steam API Hooks",
             "Denuvo Triggers",
             "VMProtect Analyzer",
-            "Custom Template"
+            "Custom Template",
         ]
 
         self.template_list.addItems(templates)
@@ -768,7 +771,7 @@ class FridaBypassWizardDialog(QDialog):
             "Steam API Hooks": self.get_steam_api_template(),
             "Denuvo Triggers": self.get_denuvo_template(),
             "VMProtect Analyzer": self.get_vmprotect_template(),
-            "Custom Template": self.get_custom_template()
+            "Custom Template": self.get_custom_template(),
         }
 
         content = templates.get(template_name, "// Custom template\n")
@@ -1225,9 +1228,9 @@ console.log("[+] Custom script loaded");
         else:
             # Check if it's a valid process name
             found = False
-            for proc in psutil.process_iter(['name']):
+            for proc in psutil.process_iter(["name"]):
                 try:
-                    if text.lower() in proc.info['name'].lower():
+                    if text.lower() in proc.info["name"].lower():
                         found = True
                         break
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -1293,14 +1296,15 @@ setTimeout(function() {{
             self.wizard.inject_script(test_wrapper, "test_script")
 
             def on_test_message(message, data):
-                if message['type'] == 'send' and message['payload'].get('type') == 'test_complete':
-                    duration = message['payload']['duration']
-                    QMessageBox.information(self, "Test Complete",
-                        f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details")
+                if message["type"] == "send" and message["payload"].get("type") == "test_complete":
+                    duration = message["payload"]["duration"]
+                    QMessageBox.information(
+                        self, "Test Complete", f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details"
+                    )
                     self.wizard.detach()
 
             if self.wizard.session:
-                self.wizard.session.on('message', on_test_message)
+                self.wizard.session.on("message", on_test_message)
 
             self.log_message("Test script injected - will auto-detach in 5 seconds", "blue")
 
@@ -1369,7 +1373,7 @@ setTimeout(function() {{
 
         # Filter the monitor output
         all_text = self.monitor_output.toPlainText()
-        lines = all_text.split('\n')
+        lines = all_text.split("\n")
         filtered_lines = []
 
         filter_lower = filter_text.lower()
@@ -1438,14 +1442,14 @@ setTimeout(function() {{
     def get_bypass_options(self) -> dict:
         """Get current bypass options"""
         return {
-            'protections': [name for name, check in self.protection_checks.items() if check.isChecked()],
-            'aggressive': self.aggressive_check.isChecked(),
-            'stealth': self.stealth_check.isChecked(),
-            'log_api': self.log_api_check.isChecked(),
-            'hook_delay': self.hook_delay_spin.value(),
-            'spawn': self.spawn_process_check.isChecked(),
-            'pause': self.pause_on_attach_check.isChecked(),
-            'persistent': self.persistent_check.isChecked()
+            "protections": [name for name, check in self.protection_checks.items() if check.isChecked()],
+            "aggressive": self.aggressive_check.isChecked(),
+            "stealth": self.stealth_check.isChecked(),
+            "log_api": self.log_api_check.isChecked(),
+            "hook_delay": self.hook_delay_spin.value(),
+            "spawn": self.spawn_process_check.isChecked(),
+            "pause": self.pause_on_attach_check.isChecked(),
+            "persistent": self.persistent_check.isChecked(),
         }
 
     def on_progress_update(self, message):
@@ -1468,9 +1472,9 @@ setTimeout(function() {{
         summary = "Bypass completed successfully\n"
         summary += f"Mode: {results.get('mode', 'Unknown')}\n"
 
-        if 'detections' in results:
+        if "detections" in results:
             summary += f"Protections found: {len(results['detections'])}\n"
-            for protection, confidence in results['detections'].items():
+            for protection, confidence in results["detections"].items():
                 summary += f"  - {protection}: {confidence:.1%} confidence\n"
 
         self.summary_text.setText(summary)
@@ -1504,52 +1508,47 @@ setTimeout(function() {{
     def save_configuration(self):
         """Save current configuration to file"""
         config = {
-            'mode': self.mode_combo.currentText(),
-            'protections': [name for name, check in self.protection_checks.items() if check.isChecked()],
-            'options': self.get_bypass_options(),
-            'script': self.script_editor.toPlainText()
+            "mode": self.mode_combo.currentText(),
+            "protections": [name for name, check in self.protection_checks.items() if check.isChecked()],
+            "options": self.get_bypass_options(),
+            "script": self.script_editor.toPlainText(),
         }
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Configuration", "", "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Configuration", "", "JSON Files (*.json)")
 
         if file_path:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(config, f, indent=2)
 
             QMessageBox.information(self, "Success", "Configuration saved successfully")
 
     def load_configuration(self):
         """Load configuration from file"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Configuration", "", "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Configuration", "", "JSON Files (*.json)")
 
         if file_path:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 config = json.load(f)
 
             # Apply configuration
-            self.mode_combo.setCurrentText(config.get('mode', ''))
+            self.mode_combo.setCurrentText(config.get("mode", ""))
 
             for name, check in self.protection_checks.items():
-                check.setChecked(name in config.get('protections', []))
+                check.setChecked(name in config.get("protections", []))
 
-            if 'script' in config:
-                self.script_editor.setText(config['script'])
+            if "script" in config:
+                self.script_editor.setText(config["script"])
 
             QMessageBox.information(self, "Success", "Configuration loaded successfully")
 
     def export_logs(self):
         """Export logs to file"""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Logs", f"frida_bypass_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
-            "Log Files (*.log);;Text Files (*.txt)"
+            self, "Export Logs", f"frida_bypass_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", "Log Files (*.log);;Text Files (*.txt)"
         )
 
         if file_path:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(self.log_output.toPlainText())
 
             QMessageBox.information(self, "Success", "Logs exported successfully")
@@ -1557,44 +1556,45 @@ setTimeout(function() {{
     def load_settings(self):
         """Load saved settings"""
         import json
+
         settings_file = os.path.join(os.path.expanduser("~"), ".intellicrack", "frida_wizard_settings.json")
 
         if os.path.exists(settings_file):
             try:
-                with open(settings_file, 'r') as f:
+                with open(settings_file, "r") as f:
                     settings = json.load(f)
 
                 # Apply loaded settings
-                if 'device' in settings:
-                    index = self.device_combo.findText(settings['device'])
+                if "device" in settings:
+                    index = self.device_combo.findText(settings["device"])
                     if index >= 0:
                         self.device_combo.setCurrentIndex(index)
 
-                if 'mode' in settings:
-                    index = self.mode_combo.findText(settings['mode'])
+                if "mode" in settings:
+                    index = self.mode_combo.findText(settings["mode"])
                     if index >= 0:
                         self.mode_combo.setCurrentIndex(index)
 
-                if 'spawn_process' in settings:
-                    self.spawn_process_check.setChecked(settings['spawn_process'])
+                if "spawn_process" in settings:
+                    self.spawn_process_check.setChecked(settings["spawn_process"])
 
-                if 'pause_on_attach' in settings:
-                    self.pause_on_attach_check.setChecked(settings['pause_on_attach'])
+                if "pause_on_attach" in settings:
+                    self.pause_on_attach_check.setChecked(settings["pause_on_attach"])
 
-                if 'persistent' in settings:
-                    self.persistent_check.setChecked(settings['persistent'])
+                if "persistent" in settings:
+                    self.persistent_check.setChecked(settings["persistent"])
 
-                if 'aggressive' in settings:
-                    self.aggressive_check.setChecked(settings['aggressive'])
+                if "aggressive" in settings:
+                    self.aggressive_check.setChecked(settings["aggressive"])
 
-                if 'stealth' in settings:
-                    self.stealth_check.setChecked(settings['stealth'])
+                if "stealth" in settings:
+                    self.stealth_check.setChecked(settings["stealth"])
 
-                if 'log_api' in settings:
-                    self.log_api_check.setChecked(settings['log_api'])
+                if "log_api" in settings:
+                    self.log_api_check.setChecked(settings["log_api"])
 
-                if 'hook_delay' in settings:
-                    self.hook_delay_spin.setValue(settings['hook_delay'])
+                if "hook_delay" in settings:
+                    self.hook_delay_spin.setValue(settings["hook_delay"])
 
             except Exception as e:
                 self.log_message(f"Failed to load settings: {str(e)}", "orange")
@@ -1603,9 +1603,10 @@ setTimeout(function() {{
         """Handle dialog close"""
         if self.worker_thread and self.worker_thread.isRunning():
             reply = QMessageBox.question(
-                self, "Confirm Exit",
+                self,
+                "Confirm Exit",
                 "Bypass operation is still running. Stop and exit?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
             if reply == QMessageBox.StandardButton.Yes:

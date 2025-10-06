@@ -46,6 +46,9 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
 
+# Standard library imports
+import logging
+
 # GIL safety will be initialized lazily if needed
 _gil_safety_initialized = False
 
@@ -62,9 +65,6 @@ def _initialize_gil_safety():
             pass  # Environment variables already set above
         _gil_safety_initialized = True
 
-
-# Standard library imports
-import logging
 
 __version__ = "1.0.0"
 __author__ = "Intellicrack Team"
@@ -153,9 +153,9 @@ def _lazy_import_config():
     """Lazy import of CONFIG."""
     global _CONFIG
     if _CONFIG is None:
-        from .config import CONFIG as _imported_config
+        from .config import CONFIG
 
-        _CONFIG = _imported_config
+        _CONFIG = CONFIG
     return _CONFIG
 
 
@@ -193,9 +193,9 @@ def _lazy_import_app():
     global _IntellicrackApp
     if _IntellicrackApp is None:
         try:
-            from .ui.main_app import IntellicrackApp as _imported_app
+            from .ui.main_app import IntellicrackApp
 
-            _IntellicrackApp = _imported_app
+            _IntellicrackApp = IntellicrackApp
         except ImportError as e:
             logger.warning("UI application not available: %s", e)
             _IntellicrackApp = False

@@ -195,7 +195,7 @@ class GhidraOutputParser:
                 exception_handlers=exception_handlers,
             )
         except Exception as e:
-            raise ValueError(f"Failed to parse XML output: {e}")
+            raise ValueError(f"Failed to parse XML output: {e}") from e
 
     def _parse_xml_function(self, func_elem) -> GhidraFunction:
         """Parse a function element from XML."""
@@ -355,7 +355,7 @@ class GhidraOutputParser:
                 metadata=data.get("metadata", {}),
             )
         except Exception as e:
-            raise ValueError(f"Failed to parse JSON output: {e}")
+            raise ValueError(f"Failed to parse JSON output: {e}") from e
 
     def _parse_json_function(self, func_data: Dict) -> GhidraFunction:
         """Parse function data from JSON."""
@@ -715,7 +715,7 @@ class GhidraScriptManager:
         try:
             content = script_file.read_text(encoding="utf-8", errors="ignore")
             return any(marker in content for marker in intellicrack_markers)
-        except:
+        except (OSError, UnicodeDecodeError):
             return False
 
     def _parse_script_metadata(self, script_file: Path) -> Dict[str, Any]:
@@ -735,7 +735,7 @@ class GhidraScriptManager:
                         metadata["params"][param_match.group(1)] = param_match.group(2)
                 elif "@output" in line:
                     metadata["output_format"] = line.split("@output")[-1].strip()
-        except:
+        except (IndexError, ValueError):
             pass
 
         return metadata

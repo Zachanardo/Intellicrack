@@ -49,17 +49,17 @@ if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
         logger.debug("PyTorch available")
 
         try:
-            import intel_extension_for_pytorch as ipex
+            from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
 
-            if torch.xpu.is_available():
+            if HAS_IPEX and torch.xpu.is_available():
                 IPEX_AVAILABLE = True
                 logger.info(f"Intel Extension for PyTorch initialized successfully - {torch.xpu.device_count()} XPU device(s) found")
                 for i in range(torch.xpu.device_count()):
                     logger.info(f"XPU Device {i}: {torch.xpu.get_device_name(i)}")
             else:
                 logger.debug("Intel XPU not available")
-        except ImportError:
-            logger.debug("Intel Extension for PyTorch not available")
+        except Exception as e:
+            logger.debug("Intel Extension for PyTorch initialization error: %s", e)
     except ImportError:
         logger.debug("PyTorch not available")
 
@@ -426,6 +426,7 @@ class GPUAccelerator:
                     match_idx = numba_cuda.atomic.add(matches, 0, 1)
                     if match_idx < len(positions):
                         positions[match_idx] = idx
+
         return pattern_match_kernel
 
     def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
@@ -676,6 +677,7 @@ class GPUAccelerator:
                         entropy -= p * numba.cuda.libdevice.log2f(p)
 
                 entropies[block_idx] = entropy
+
         return entropy_kernel
 
     def _cpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:

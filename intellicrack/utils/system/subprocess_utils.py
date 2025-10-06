@@ -25,6 +25,40 @@ import subprocess
 logger = logging.getLogger(__name__)
 
 
+def run_in_terminal(
+    cmd: str | list[str],
+    interactive: bool = True,
+    auto_switch: bool = False,
+    cwd: str | None = None,
+) -> str:
+    """Run command in embedded terminal.
+
+    Args:
+        cmd: Command to run (string or list)
+        interactive: Whether command requires user interaction
+        auto_switch: Whether to auto-switch to Terminal tab
+        cwd: Working directory
+
+    Returns:
+        Session ID of terminal session
+    """
+    try:
+        from ...core.terminal_manager import get_terminal_manager
+
+        terminal_mgr = get_terminal_manager()
+
+        if isinstance(cmd, str):
+            cmd = cmd.split()
+
+        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
+
+        return session_id
+
+    except Exception as e:
+        logger.error("Error running command in terminal: %s", e)
+        raise
+
+
 def run_subprocess(
     cmd: str | list[str],
     timeout: int | None = None,
@@ -32,6 +66,7 @@ def run_subprocess(
     text: bool = True,
     cwd: str | None = None,
     env: dict | None = None,
+    use_terminal: bool = False,
 ) -> tuple[int, str, str]:
     """Run a subprocess command with standard error handling.
 
@@ -42,11 +77,16 @@ def run_subprocess(
         text: Whether to return text instead of bytes
         cwd: Working directory
         env: Environment variables
+        use_terminal: If True, run in embedded terminal instead of capturing output
 
     Returns:
         Tuple of (returncode, stdout, stderr)
 
     """
+    if use_terminal:
+        session_id = run_in_terminal(cmd, interactive=False, auto_switch=False, cwd=cwd)
+        return (0, f"Running in terminal session: {session_id}", "")
+
     try:
         # Convert string command to list if needed
         if isinstance(cmd, str):
@@ -82,7 +122,7 @@ def run_subprocess_check(
     text: bool = True,
     check: bool = False,
 ) -> subprocess.CompletedProcess:
-    """Run subprocess with standard settings used in docker_container and qemu_emulator.
+    """Run subprocess with standard settings used in qemu_emulator and other modules.
 
     This is the common pattern extracted from duplicate code.
 

@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.path_resolver import get_qemu_images_dir
 
 from .base_snapshot_handler import BaseSnapshotHandler
 
@@ -167,7 +168,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         rootfs_dir = self.config.get("rootfs_directory", None)
         if not rootfs_dir:
             # Use a subdirectory in the project root
-            rootfs_dir = project_root / "data" / "qemu_images"
+            rootfs_dir = get_qemu_images_dir()
         else:
             # Make sure it's a Path object
             rootfs_dir = Path(rootfs_dir)

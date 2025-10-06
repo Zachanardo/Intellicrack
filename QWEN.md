@@ -63,6 +63,11 @@ intellicrack/
   - Include positive and negative test cases.
   - Must test Intellcirack functionality with genuine real tests
 
+### Environment Usage
+
+- **Pixi environment location**: `C:\Intellicrack\.pixi\\envs\default`
+- **Activation**: `pixi shell` or use `pixi run <command>`
+
 ### Submitting Changes
 
 1. Create a new branch for your feature or fix.

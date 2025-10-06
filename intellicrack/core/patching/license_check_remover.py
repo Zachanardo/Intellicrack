@@ -12,7 +12,6 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import logging
-import os
 import shutil
 import struct
 from dataclasses import dataclass
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class CheckType(Enum):
     """Types of license checks."""
+
     SERIAL_VALIDATION = "serial_validation"
     REGISTRATION_CHECK = "registration_check"
     ACTIVATION_CHECK = "activation_check"
@@ -43,6 +43,7 @@ class CheckType(Enum):
 @dataclass
 class LicenseCheck:
     """Represents a detected license check in the binary."""
+
     check_type: CheckType
     address: int
     size: int
@@ -66,22 +67,15 @@ class PatternMatcher:
         return {
             # Traditional patterns
             "serial_cmp": {
-                "pattern": [
-                    ("call", "strcmp|lstrcmp|memcmp|wcscmp|_stricmp"),
-                    ("test", "eax|rax"),
-                    ("j", "nz|ne")
-                ],
+                "pattern": [("call", "strcmp|lstrcmp|memcmp|wcscmp|_stricmp"), ("test", "eax|rax"), ("j", "nz|ne")],
                 "type": CheckType.SERIAL_VALIDATION,
-                "confidence": 0.9
+                "confidence": 0.9,
             },
             # Modern .NET/C# patterns
             "dotnet_license": {
-                "pattern": [
-                    ("call", "String.Equals|String.Compare"),
-                    ("brfalse|brtrue", "")
-                ],
+                "pattern": [("call", "String.Equals|String.Compare"), ("brfalse|brtrue", "")],
                 "type": CheckType.SERIAL_VALIDATION,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             # Cloud-based licensing
             "cloud_validation": {
@@ -90,96 +84,59 @@ class PatternMatcher:
                     ("*", ""),
                     ("call", "Task.Result|GetAwaiter"),
                     ("test|cmp", ""),
-                    ("j", "")
+                    ("j", ""),
                 ],
                 "type": CheckType.ONLINE_VALIDATION,
-                "confidence": 0.9
+                "confidence": 0.9,
             },
             # Modern cryptographic validation (ECDSA, Ed25519)
             "modern_crypto": {
-                "pattern": [
-                    ("call", "ECDSA_verify|Ed25519_verify|EVP_DigestVerify"),
-                    ("test", "eax|rax"),
-                    ("j", "z|nz")
-                ],
+                "pattern": [("call", "ECDSA_verify|Ed25519_verify|EVP_DigestVerify"), ("test", "eax|rax"), ("j", "z|nz")],
                 "type": CheckType.SIGNATURE_CHECK,
-                "confidence": 0.95
+                "confidence": 0.95,
             },
             # Hardware fingerprinting (modern)
             "tpm_check": {
-                "pattern": [
-                    ("call", "Tbsi_GetDeviceInfo|NCryptOpenStorageProvider"),
-                    ("*", ""),
-                    ("test", "eax|rax"),
-                    ("j", "")
-                ],
+                "pattern": [("call", "Tbsi_GetDeviceInfo|NCryptOpenStorageProvider"), ("*", ""), ("test", "eax|rax"), ("j", "")],
                 "type": CheckType.HARDWARE_CHECK,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             # Machine learning based checks
             "ml_validation": {
-                "pattern": [
-                    ("call", "TensorFlow|ONNX|ML.NET"),
-                    ("*", ""),
-                    ("cmp", "threshold"),
-                    ("j", "")
-                ],
+                "pattern": [("call", "TensorFlow|ONNX|ML.NET"), ("*", ""), ("cmp", "threshold"), ("j", "")],
                 "type": CheckType.ACTIVATION_CHECK,
-                "confidence": 0.8
+                "confidence": 0.8,
             },
             # Blockchain validation
             "blockchain_check": {
-                "pattern": [
-                    ("call", "Web3|ethers|BlockCypher"),
-                    ("*", ""),
-                    ("test", ""),
-                    ("j", "")
-                ],
+                "pattern": [("call", "Web3|ethers|BlockCypher"), ("*", ""), ("test", ""), ("j", "")],
                 "type": CheckType.ONLINE_VALIDATION,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             # Anti-tamper checks
             "integrity_check": {
-                "pattern": [
-                    ("call", "CRC32|SHA256|HMAC"),
-                    ("cmp", "expected_hash"),
-                    ("j", "ne|nz")
-                ],
+                "pattern": [("call", "CRC32|SHA256|HMAC"), ("cmp", "expected_hash"), ("j", "ne|nz")],
                 "type": CheckType.INTEGRITY_CHECK,
-                "confidence": 0.9
+                "confidence": 0.9,
             },
             # Time-based checks with NTP
             "ntp_time_check": {
-                "pattern": [
-                    ("call", "NtpClient|GetNetworkTime"),
-                    ("*", ""),
-                    ("cmp", "expiry_time"),
-                    ("j", "g|ge")
-                ],
+                "pattern": [("call", "NtpClient|GetNetworkTime"), ("*", ""), ("cmp", "expiry_time"), ("j", "g|ge")],
                 "type": CheckType.DATE_CHECK,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             # Docker/Container checks
             "container_check": {
-                "pattern": [
-                    ("call", "File.Exists.*dockerenv|File.Exists.*containerenv"),
-                    ("test", ""),
-                    ("j", "")
-                ],
+                "pattern": [("call", "File.Exists.*dockerenv|File.Exists.*containerenv"), ("test", ""), ("j", "")],
                 "type": CheckType.INTEGRITY_CHECK,
-                "confidence": 0.75
+                "confidence": 0.75,
             },
             # USB dongle checks (modern)
             "usb_dongle": {
-                "pattern": [
-                    ("call", "SetupDiGetClassDevs|HidD_GetAttributes"),
-                    ("*", ""),
-                    ("cmp", "vendor_id|product_id"),
-                    ("j", "")
-                ],
+                "pattern": [("call", "SetupDiGetClassDevs|HidD_GetAttributes"), ("*", ""), ("cmp", "vendor_id|product_id"), ("j", "")],
                 "type": CheckType.HARDWARE_CHECK,
-                "confidence": 0.85
-            }
+                "confidence": 0.85,
+            },
         }
 
     def _initialize_obfuscation_patterns(self) -> Dict[str, Dict]:
@@ -192,35 +149,23 @@ class PatternMatcher:
                     ("*", ""),  # Multiple instructions
                     ("switch|cmp", "state_var"),
                     ("*", ""),
-                    ("mov", "eax|rax, 0|1")  # Result
+                    ("mov", "eax|rax, 0|1"),  # Result
                 ],
                 "type": CheckType.SERIAL_VALIDATION,
-                "confidence": 0.7
+                "confidence": 0.7,
             },
             # Opaque predicates
             "opaque_predicate": {
-                "pattern": [
-                    ("xor", "reg, reg"),
-                    ("add", "reg, constant"),
-                    ("imul", ""),
-                    ("cmp", ""),
-                    ("j", "always_taken")
-                ],
+                "pattern": [("xor", "reg, reg"), ("add", "reg, constant"), ("imul", ""), ("cmp", ""), ("j", "always_taken")],
                 "type": CheckType.INTEGRITY_CHECK,
-                "confidence": 0.65
+                "confidence": 0.65,
             },
             # MBA (Mixed Boolean Arithmetic) obfuscation
             "mba_check": {
-                "pattern": [
-                    ("and|or|xor", ""),
-                    ("not|neg", ""),
-                    ("add|sub", ""),
-                    ("and|or|xor", ""),
-                    ("cmp", "magic_value")
-                ],
+                "pattern": [("and|or|xor", ""), ("not|neg", ""), ("add|sub", ""), ("and|or|xor", ""), ("cmp", "magic_value")],
                 "type": CheckType.SERIAL_VALIDATION,
-                "confidence": 0.7
-            }
+                "confidence": 0.7,
+            },
         }
 
     def _initialize_vm_patterns(self) -> Dict[str, Dict]:
@@ -233,10 +178,10 @@ class PatternMatcher:
                     ("call", "vm_enter"),
                     ("*", ""),  # VM execution
                     ("pop", "result"),
-                    ("test", "result")
+                    ("test", "result"),
                 ],
                 "type": CheckType.ACTIVATION_CHECK,
-                "confidence": 0.75
+                "confidence": 0.75,
             },
             # Themida patterns
             "themida_check": {
@@ -245,11 +190,11 @@ class PatternMatcher:
                     ("push", "marker"),
                     ("call", "vm_dispatcher"),
                     ("*", ""),
-                    ("cmp", "vm_result")
+                    ("cmp", "vm_result"),
                 ],
                 "type": CheckType.REGISTRATION_CHECK,
-                "confidence": 0.7
-            }
+                "confidence": 0.7,
+            },
         }
 
     def find_patterns(self, instructions: List[Tuple[int, str, str]]) -> List[Dict]:
@@ -263,13 +208,15 @@ class PatternMatcher:
             # Sliding window pattern matching
             for i in range(len(instructions) - len(pattern) + 1):
                 if self._match_pattern(instructions[i:], pattern):
-                    matches.append({
-                        "name": pattern_name,
-                        "type": pattern_data["type"],
-                        "confidence": pattern_data["confidence"],
-                        "start": i,
-                        "length": len(pattern)
-                    })
+                    matches.append(
+                        {
+                            "name": pattern_name,
+                            "type": pattern_data["type"],
+                            "confidence": pattern_data["confidence"],
+                            "start": i,
+                            "length": len(pattern),
+                        }
+                    )
 
         # Check obfuscation patterns
         for pattern_name, pattern_data in self.obfuscation_patterns.items():
@@ -277,13 +224,15 @@ class PatternMatcher:
 
             for i in range(len(instructions) - len(pattern) + 1):
                 if self._match_pattern(instructions[i:], pattern):
-                    matches.append({
-                        "name": pattern_name + "_obfuscated",
-                        "type": pattern_data["type"],
-                        "confidence": pattern_data["confidence"] * 0.9,  # Slightly lower confidence
-                        "start": i,
-                        "length": len(pattern)
-                    })
+                    matches.append(
+                        {
+                            "name": pattern_name + "_obfuscated",
+                            "type": pattern_data["type"],
+                            "confidence": pattern_data["confidence"] * 0.9,  # Slightly lower confidence
+                            "start": i,
+                            "length": len(pattern),
+                        }
+                    )
 
         # Check VM patterns
         for pattern_name, pattern_data in self.vm_patterns.items():
@@ -291,18 +240,19 @@ class PatternMatcher:
 
             for i in range(len(instructions) - len(pattern) + 1):
                 if self._match_pattern(instructions[i:], pattern):
-                    matches.append({
-                        "name": pattern_name + "_virtualized",
-                        "type": pattern_data["type"],
-                        "confidence": pattern_data["confidence"] * 0.85,  # Lower confidence for VM
-                        "start": i,
-                        "length": len(pattern)
-                    })
+                    matches.append(
+                        {
+                            "name": pattern_name + "_virtualized",
+                            "type": pattern_data["type"],
+                            "confidence": pattern_data["confidence"] * 0.85,  # Lower confidence for VM
+                            "start": i,
+                            "length": len(pattern),
+                        }
+                    )
 
         return matches
 
-    def _match_pattern(self, instructions: List[Tuple[int, str, str]],
-                       pattern: List[Tuple[str, str]]) -> bool:
+    def _match_pattern(self, instructions: List[Tuple[int, str, str]], pattern: List[Tuple[str, str]]) -> bool:
         """Check if instructions match pattern."""
         for i, (p_mnem, p_ops) in enumerate(pattern):
             if i >= len(instructions):
@@ -375,7 +325,7 @@ class LicenseCheckRemover:
             self.pe = pefile.PE(self.binary_path)
 
             # Determine architecture
-            if self.pe.FILE_HEADER.Machine == 0x14c:  # x86
+            if self.pe.FILE_HEADER.Machine == 0x14C:  # x86
                 self.disassembler = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
                 self.assembler = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
             elif self.pe.FILE_HEADER.Machine == 0x8664:  # x64
@@ -396,17 +346,17 @@ class LicenseCheckRemover:
             return
 
         # Check if it's a .NET binary
-        if hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
-                if entry.dll and b'mscoree.dll' in entry.dll.lower():
+                if entry.dll and b"mscoree.dll" in entry.dll.lower():
                     self.is_dotnet = True
                     logger.info("Detected .NET binary")
                     break
 
         # Check for packers
-        packer_sections = ['.UPX', '.aspack', '.themida', '.vmp', '.enigma']
+        packer_sections = [".UPX", ".aspack", ".themida", ".vmp", ".enigma"]
         for section in self.pe.sections:
-            section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\x00')
+            section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
             if any(packer in section_name.lower() for packer in packer_sections):
                 self.is_packed = True
                 logger.info(f"Detected packed binary: {section_name}")
@@ -420,11 +370,15 @@ class LicenseCheckRemover:
 
         # Check for anti-debug tricks
         anti_debug_imports = [
-            'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
-            'OutputDebugString', 'NtSetInformationThread', 'RtlQueryProcessDebugInformation'
+            "IsDebuggerPresent",
+            "CheckRemoteDebuggerPresent",
+            "NtQueryInformationProcess",
+            "OutputDebugString",
+            "NtSetInformationThread",
+            "RtlQueryProcessDebugInformation",
         ]
 
-        if hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     if imp.name and any(api in str(imp.name) for api in anti_debug_imports):
@@ -433,9 +387,9 @@ class LicenseCheckRemover:
 
         # Check for virtualization
         vm_signatures = [
-            b'\x0F\x3F',  # VMProtect signature
-            b'\x60\xE8\x00\x00\x00\x00',  # Themida signature
-            b'\x50\x51\x52\x53\x54\x55',  # Code virtualizer markers
+            b"\x0f\x3f",  # VMProtect signature
+            b"\x60\xe8\x00\x00\x00\x00",  # Themida signature
+            b"\x50\x51\x52\x53\x54\x55",  # Code virtualizer markers
         ]
 
         for section in self.pe.sections:
@@ -456,25 +410,21 @@ class LicenseCheckRemover:
             current_block.append((addr, mnem, ops))
 
             # Check if this is a control flow instruction
-            if mnem.startswith('j') or mnem in ['call', 'ret', 'retn']:
+            if mnem.startswith("j") or mnem in ["call", "ret", "retn"]:
                 # End current block
-                cfg[block_start] = {
-                    'instructions': current_block.copy(),
-                    'successors': [],
-                    'type': mnem
-                }
+                cfg[block_start] = {"instructions": current_block.copy(), "successors": [], "type": mnem}
 
                 # Calculate successors
-                if mnem.startswith('j') and i + 1 < len(instructions):
+                if mnem.startswith("j") and i + 1 < len(instructions):
                     # Conditional jump - two successors
-                    cfg[block_start]['successors'].append(instructions[i + 1][0])  # Fall through
+                    cfg[block_start]["successors"].append(instructions[i + 1][0])  # Fall through
 
                     # Try to parse jump target
                     try:
-                        if '0x' in ops:
-                            target = int(ops.split('0x')[1].split()[0], 16)
-                            cfg[block_start]['successors'].append(target)
-                    except:
+                        if "0x" in ops:
+                            target = int(ops.split("0x")[1].split()[0], 16)
+                            cfg[block_start]["successors"].append(target)
+                    except (ValueError, IndexError, KeyError):
                         pass
 
                 # Start new block
@@ -500,23 +450,23 @@ class LicenseCheckRemover:
             if addr in self.control_flow_graph:
                 block = self.control_flow_graph[addr]
 
-                for insn_addr, mnem, ops in block['instructions']:
+                for insn_addr, mnem, ops in block["instructions"]:
                     # Track taint propagation
-                    if mnem == 'mov':
-                        parts = ops.split(',')
+                    if mnem == "mov":
+                        parts = ops.split(",")
                         if len(parts) == 2:
                             dst, src = parts[0].strip(), parts[1].strip()
                             if any(t in src for t in current_taint):
                                 current_taint.add(dst)
 
                     # Check if tainted data reaches comparison
-                    if mnem in ['cmp', 'test'] and any(t in ops for t in current_taint):
+                    if mnem in ["cmp", "test"] and any(t in ops for t in current_taint):
                         if insn_addr not in self.taint_analysis_results:
                             self.taint_analysis_results[insn_addr] = []
                         self.taint_analysis_results[insn_addr].append(taint_source)
 
                 # Add successors to worklist
-                for successor in block.get('successors', []):
+                for successor in block.get("successors", []):
                     worklist.append((successor, current_taint.copy()))
 
     def analyze(self) -> List[LicenseCheck]:
@@ -561,7 +511,7 @@ class LicenseCheckRemover:
             length = match["length"]
 
             # Extract matched instructions
-            matched_instructions = instructions[start_idx:start_idx + length]
+            matched_instructions = instructions[start_idx : start_idx + length]
 
             if matched_instructions:
                 # Calculate address range
@@ -571,14 +521,10 @@ class LicenseCheckRemover:
                 # Get original bytes
                 offset = start_addr - section_va
                 size = end_addr - start_addr
-                original_bytes = section_data[offset:offset + size]
+                original_bytes = section_data[offset : offset + size]
 
                 # Generate patch
-                patched_bytes = self._generate_patch(
-                    match["type"],
-                    matched_instructions,
-                    size
-                )
+                patched_bytes = self._generate_patch(match["type"], matched_instructions, size)
 
                 check = LicenseCheck(
                     check_type=match["type"],
@@ -588,7 +534,7 @@ class LicenseCheckRemover:
                     confidence=match["confidence"],
                     patch_strategy=self._get_patch_strategy(match["type"]),
                     original_bytes=original_bytes,
-                    patched_bytes=patched_bytes
+                    patched_bytes=patched_bytes,
                 )
 
                 self.detected_checks.append(check)
@@ -608,14 +554,14 @@ class LicenseCheckRemover:
             "GetVolumeInformation": CheckType.HARDWARE_CHECK,
             "GetComputerName": CheckType.HARDWARE_CHECK,
             "CryptVerifySignature": CheckType.SIGNATURE_CHECK,
-            "CryptHashData": CheckType.SIGNATURE_CHECK
+            "CryptHashData": CheckType.SIGNATURE_CHECK,
         }
 
-        if hasattr(self.pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     if imp.name:
-                        func_name = imp.name.decode('utf-8') if isinstance(imp.name, bytes) else imp.name
+                        func_name = imp.name.decode("utf-8") if isinstance(imp.name, bytes) else imp.name
 
                         for api_name, check_type in license_apis.items():
                             if api_name.lower() in func_name.lower():
@@ -632,8 +578,8 @@ class LicenseCheckRemover:
 
                 # Look for indirect calls/jumps (FF 15 for call, FF 25 for jmp)
                 patterns = [
-                    b'\xFF\x15',  # CALL DWORD PTR
-                    b'\xFF\x25',  # JMP DWORD PTR
+                    b"\xff\x15",  # CALL DWORD PTR
+                    b"\xff\x25",  # JMP DWORD PTR
                 ]
 
                 for pattern in patterns:
@@ -645,7 +591,7 @@ class LicenseCheckRemover:
 
                         if pos + 6 <= len(section_data):
                             # Get the address being called
-                            target = struct.unpack('<I', section_data[pos+2:pos+6])[0]
+                            target = struct.unpack("<I", section_data[pos + 2 : pos + 6])[0]
 
                             if target == import_address:
                                 # Found reference to license API
@@ -658,8 +604,8 @@ class LicenseCheckRemover:
                                     instructions=[(ref_address, "call/jmp", hex(import_address))],
                                     confidence=0.7,
                                     patch_strategy="nop_call",
-                                    original_bytes=section_data[pos:pos+6],
-                                    patched_bytes=b'\x90' * 6  # NOP
+                                    original_bytes=section_data[pos : pos + 6],
+                                    patched_bytes=b"\x90" * 6,  # NOP
                                 )
 
                                 self.detected_checks.append(check)
@@ -678,7 +624,7 @@ class LicenseCheckRemover:
             "Serial number",
             "Activation",
             "Invalid key",
-            "License not found"
+            "License not found",
         ]
 
         for section in self.pe.sections:
@@ -686,7 +632,7 @@ class LicenseCheckRemover:
 
             for target_string in license_strings:
                 # Search for string in section
-                for encoding in [target_string.encode('utf-8'), target_string.encode('utf-16le')]:
+                for encoding in [target_string.encode("utf-8"), target_string.encode("utf-16le")]:
                     pos = section_data.find(encoding)
                     if pos != -1:
                         # String found, look for references
@@ -696,7 +642,7 @@ class LicenseCheckRemover:
     def _find_string_references(self, string_address: int, string_content: str):
         """Find references to a string address."""
         # Convert address to bytes for searching
-        addr_bytes = struct.pack('<I', string_address)
+        addr_bytes = struct.pack("<I", string_address)
 
         for section in self.pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
@@ -714,7 +660,7 @@ class LicenseCheckRemover:
                     # Check context around reference
                     context_start = max(0, offset - 20)
                     context_end = min(len(section_data), offset + 20)
-                    context = section_data[context_start:context_end]
+                    section_data[context_start:context_end]
 
                     # Determine check type based on string content
                     if "trial" in string_content.lower():
@@ -734,15 +680,13 @@ class LicenseCheckRemover:
                         confidence=0.6,
                         patch_strategy="redirect_string",
                         original_bytes=addr_bytes,
-                        patched_bytes=self._get_success_string_address(check_type)
+                        patched_bytes=self._get_success_string_address(check_type),
                     )
 
                     self.detected_checks.append(check)
                     pos = offset + 1
 
-    def _generate_patch(self, check_type: CheckType,
-                       instructions: List[Tuple[int, str, str]],
-                       size: int) -> bytes:
+    def _generate_patch(self, check_type: CheckType, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
         """Generate sophisticated patch bytes for modern license checks."""
         # Detect architecture for proper patching
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
@@ -752,43 +696,43 @@ class LicenseCheckRemover:
             if self.is_dotnet:
                 # .NET specific - patch IL bytecode pattern
                 # Replace comparison with true constant
-                return b'\x17\x2A' + b'\x00' * (size - 2)  # ldc.i4.1, ret
+                return b"\x17\x2a" + b"\x00" * (size - 2)  # ldc.i4.1, ret
             elif any("cmov" in insn[1] for insn in instructions):
                 # Modern conditional move - always select success path
                 if is_x64:
-                    return b'\x48\x89\xF0' + b'\x90' * (size - 3)  # mov rax, rsi (success value)
+                    return b"\x48\x89\xf0" + b"\x90" * (size - 3)  # mov rax, rsi (success value)
                 else:
-                    return b'\x89\xF0' + b'\x90' * (size - 2)  # mov eax, esi
+                    return b"\x89\xf0" + b"\x90" * (size - 2)  # mov eax, esi
             elif any("jz" in insn[1] or "je" in insn[1] for insn in instructions):
                 # Smart jump patching - check context
                 # Use short jump if possible, long jump if needed
                 if size <= 127:
-                    return b'\xEB' + bytes([size - 2]) + b'\x90' * (size - 2)
+                    return b"\xeb" + bytes([size - 2]) + b"\x90" * (size - 2)
                 else:
-                    return b'\xE9' + struct.pack('<I', size - 5) + b'\x90' * (size - 5)
+                    return b"\xe9" + struct.pack("<I", size - 5) + b"\x90" * (size - 5)
             elif any("jnz" in insn[1] or "jne" in insn[1] for insn in instructions):
                 # NOP the jump for fail path
-                return b'\x90' * size
+                return b"\x90" * size
             else:
                 # Set success with stack preservation
                 if is_x64:
                     # Preserve flags with LAHF/SAHF
-                    return b'\x9F\x48\xC7\xC0\x01\x00\x00\x00\x9E' + b'\x90' * (size - 9)
+                    return b"\x9f\x48\xc7\xc0\x01\x00\x00\x00\x9e" + b"\x90" * (size - 9)
                 else:
-                    return b'\x9C\xB8\x01\x00\x00\x00\x9D' + b'\x90' * (size - 7)
+                    return b"\x9c\xb8\x01\x00\x00\x00\x9d" + b"\x90" * (size - 7)
 
         elif check_type == CheckType.TRIAL_CHECK:
             # Advanced trial bypass
             if self.is_dotnet:
                 # .NET DateTime manipulation
-                return b'\x20\xFF\xFF\xFF\x7F' + b'\x00' * (size - 5)  # ldc.i4 MaxValue
+                return b"\x20\xff\xff\xff\x7f" + b"\x00" * (size - 5)  # ldc.i4 MaxValue
             else:
                 # Set infinite days with proper register preservation
                 if is_x64:
                     # Use LEA for efficiency
-                    return b'\x48\x8D\x05\xFF\xFF\xFF\x7F' + b'\x90' * (size - 7)
+                    return b"\x48\x8d\x05\xff\xff\xff\x7f" + b"\x90" * (size - 7)
                 else:
-                    return b'\xB8\xFF\xFF\xFF\x7F' + b'\x90' * (size - 5)
+                    return b"\xb8\xff\xff\xff\x7f" + b"\x90" * (size - 5)
 
         elif check_type == CheckType.REGISTRATION_CHECK:
             # Modern registration bypass
@@ -798,30 +742,30 @@ class LicenseCheckRemover:
                 if is_x64:
                     # Advanced VM bypass sequence for x64
                     # Clear VM detection flag, set registration status, restore context
-                    deobfuscation_code = b'\x50\x53\x51\x52'  # Save registers
-                    deobfuscation_code += b'\x48\x31\xDB'  # xor rbx, rbx (clear VM flag)
-                    deobfuscation_code += b'\x48\xC7\xC0\x01\x00\x00\x00'  # mov rax, 1
-                    deobfuscation_code += b'\x5A\x59\x5B\x58'  # Restore registers
+                    deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
+                    deobfuscation_code += b"\x48\x31\xdb"  # xor rbx, rbx (clear VM flag)
+                    deobfuscation_code += b"\x48\xc7\xc0\x01\x00\x00\x00"  # mov rax, 1
+                    deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
                     if len(deobfuscation_code) <= size:
-                        return deobfuscation_code + b'\x90' * (size - len(deobfuscation_code))
+                        return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
                     else:
-                        return b'\x48\xC7\xC0\x01\x00\x00\x00' + b'\x90' * (size - 7)
+                        return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
                 else:
                     # Advanced VM bypass sequence for x86
-                    deobfuscation_code = b'\x50\x53\x51\x52'  # Save registers
-                    deobfuscation_code += b'\x31\xDB'  # xor ebx, ebx (clear VM flag)
-                    deobfuscation_code += b'\xB8\x01\x00\x00\x00'  # mov eax, 1
-                    deobfuscation_code += b'\x5A\x59\x5B\x58'  # Restore registers
+                    deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
+                    deobfuscation_code += b"\x31\xdb"  # xor ebx, ebx (clear VM flag)
+                    deobfuscation_code += b"\xb8\x01\x00\x00\x00"  # mov eax, 1
+                    deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
                     if len(deobfuscation_code) <= size:
-                        return deobfuscation_code + b'\x90' * (size - len(deobfuscation_code))
+                        return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
                     else:
-                        return b'\xB8\x01\x00\x00\x00' + b'\x90' * (size - 5)
+                        return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
             else:
                 # Standard registration bypass
                 if is_x64:
-                    return b'\x48\x31\xC0\x48\xFF\xC0' + b'\x90' * (size - 6)  # xor rax,rax; inc rax
+                    return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)  # xor rax,rax; inc rax
                 else:
-                    return b'\x31\xC0\x40' + b'\x90' * (size - 3)  # xor eax,eax; inc eax
+                    return b"\x31\xc0\x40" + b"\x90" * (size - 3)  # xor eax,eax; inc eax
 
         elif check_type == CheckType.HARDWARE_CHECK:
             # Sophisticated hardware check bypass
@@ -830,12 +774,12 @@ class LicenseCheckRemover:
                 # Return valid hardware ID pattern
                 if is_x64:
                     # Return pointer to valid data
-                    return b'\x48\x8D\x05\x00\x10\x00\x00' + b'\x90' * (size - 7)
+                    return b"\x48\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 7)
                 else:
-                    return b'\x8D\x05\x00\x10\x00\x00' + b'\x90' * (size - 6)
+                    return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
             else:
                 # Simple hardware bypass
-                return b'\x90' * size
+                return b"\x90" * size
 
         elif check_type == CheckType.ONLINE_VALIDATION:
             # Modern cloud/online validation bypass
@@ -844,34 +788,34 @@ class LicenseCheckRemover:
                 if is_x64:
                     # Build real HTTP response status code and validation result
                     # This sequence emulates successful license server response with proper status codes
-                    response_code = b'\x50\x51\x52'  # Save context
-                    response_code += b'\x48\xC7\xC0\xC8\x00\x00\x00'  # mov rax, 200 (HTTP OK status)
-                    response_code += b'\x48\xC7\xC1\x01\x00\x00\x00'  # mov rcx, 1 (License valid flag)
-                    response_code += b'\x48\x89\x0D\x00\x00\x00\x00'  # mov [validation_result], rcx
-                    response_code += b'\x5A\x59\x58'  # Restore context
+                    response_code = b"\x50\x51\x52"  # Save context
+                    response_code += b"\x48\xc7\xc0\xc8\x00\x00\x00"  # mov rax, 200 (HTTP OK status)
+                    response_code += b"\x48\xc7\xc1\x01\x00\x00\x00"  # mov rcx, 1 (License valid flag)
+                    response_code += b"\x48\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], rcx
+                    response_code += b"\x5a\x59\x58"  # Restore context
                     if len(response_code) <= size:
-                        return response_code + b'\x90' * (size - len(response_code))
+                        return response_code + b"\x90" * (size - len(response_code))
                     else:
                         # Compact version - set success status directly
-                        return b'\x48\xC7\xC0\xC8\x00\x00\x00' + b'\x90' * (size - 7)
+                        return b"\x48\xc7\xc0\xc8\x00\x00\x00" + b"\x90" * (size - 7)
                 else:
                     # Build real HTTP response status code and validation result for x86
-                    response_code = b'\x50\x51\x52'  # Save context
-                    response_code += b'\xB8\xC8\x00\x00\x00'  # mov eax, 200 (HTTP OK status)
-                    response_code += b'\xB9\x01\x00\x00\x00'  # mov ecx, 1 (License valid flag)
-                    response_code += b'\x89\x0D\x00\x00\x00\x00'  # mov [validation_result], ecx
-                    response_code += b'\x5A\x59\x58'  # Restore context
+                    response_code = b"\x50\x51\x52"  # Save context
+                    response_code += b"\xb8\xc8\x00\x00\x00"  # mov eax, 200 (HTTP OK status)
+                    response_code += b"\xb9\x01\x00\x00\x00"  # mov ecx, 1 (License valid flag)
+                    response_code += b"\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], ecx
+                    response_code += b"\x5a\x59\x58"  # Restore context
                     if len(response_code) <= size:
-                        return response_code + b'\x90' * (size - len(response_code))
+                        return response_code + b"\x90" * (size - len(response_code))
                     else:
                         # Compact version - set success status directly
-                        return b'\xB8\xC8\x00\x00\x00' + b'\x90' * (size - 5)
+                        return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
             else:
                 # Synchronous online check
                 if is_x64:
-                    return b'\x48\x31\xC0\x48\xFF\xC0\xC3' + b'\x90' * (size - 6)
+                    return b"\x48\x31\xc0\x48\xff\xc0\xc3" + b"\x90" * (size - 6)
                 else:
-                    return b'\xB8\x01\x00\x00\x00\xC3' + b'\x90' * (size - 6)
+                    return b"\xb8\x01\x00\x00\x00\xc3" + b"\x90" * (size - 6)
 
         elif check_type == CheckType.SIGNATURE_CHECK:
             # Modern cryptographic signature bypass
@@ -879,15 +823,15 @@ class LicenseCheckRemover:
                 # ECDSA verification - return valid
                 if is_x64:
                     # Set verify result and clear error
-                    return b'\x48\x31\xC0\x48\xFF\xC0\x48\x31\xDB' + b'\x90' * (size - 8)
+                    return b"\x48\x31\xc0\x48\xff\xc0\x48\x31\xdb" + b"\x90" * (size - 8)
                 else:
-                    return b'\x31\xC0\x40\x31\xDB' + b'\x90' * (size - 5)
+                    return b"\x31\xc0\x40\x31\xdb" + b"\x90" * (size - 5)
             else:
                 # RSA or generic signature
                 if is_x64:
-                    return b'\x48\xC7\xC0\x01\x00\x00\x00' + b'\x90' * (size - 7)
+                    return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
                 else:
-                    return b'\xB8\x01\x00\x00\x00' + b'\x90' * (size - 5)
+                    return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
 
         elif check_type == CheckType.INTEGRITY_CHECK:
             # Anti-tamper bypass
@@ -895,24 +839,24 @@ class LicenseCheckRemover:
                 # For packed binaries, use stealth patching
                 # Minimal modification to avoid detection
                 if size >= 2:
-                    return b'\x74\x00' + b'\x90' * (size - 2)  # je +0 (always jump)
+                    return b"\x74\x00" + b"\x90" * (size - 2)  # je +0 (always jump)
                 else:
-                    return b'\x90' * size
+                    return b"\x90" * size
             else:
                 # Standard integrity bypass
-                return b'\x90' * size
+                return b"\x90" * size
 
         else:
             # Advanced default patch based on context
             if self.virtualization_detected:
                 # For VM protected code
                 if is_x64:
-                    return b'\x48\x31\xC0\x48\xFF\xC0' + b'\x90' * (size - 6)
+                    return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
                 else:
-                    return b'\x31\xC0\x40' + b'\x90' * (size - 3)
+                    return b"\x31\xc0\x40" + b"\x90" * (size - 3)
             else:
                 # Standard NOP slide
-                return b'\x90' * size
+                return b"\x90" * size
 
     def _get_patch_strategy(self, check_type: CheckType) -> str:
         """Get patching strategy for check type."""
@@ -926,7 +870,7 @@ class LicenseCheckRemover:
             CheckType.HARDWARE_CHECK: "skip_hardware_validation",
             CheckType.DATE_CHECK: "freeze_date",
             CheckType.SIGNATURE_CHECK: "force_signature_valid",
-            CheckType.INTEGRITY_CHECK: "disable_integrity_check"
+            CheckType.INTEGRITY_CHECK: "disable_integrity_check",
         }
         return strategies.get(check_type, "nop_check")
 
@@ -934,10 +878,9 @@ class LicenseCheckRemover:
         """Get address of success string for redirection."""
         # In production, this would find or create success strings
         # For now, return null pointer (will need proper implementation)
-        return b'\x00\x00\x00\x00'
+        return b"\x00\x00\x00\x00"
 
-    def patch(self, checks: Optional[List[LicenseCheck]] = None,
-             create_backup: bool = True) -> bool:
+    def patch(self, checks: Optional[List[LicenseCheck]] = None, create_backup: bool = True) -> bool:
         """Apply patches to remove license checks."""
         if not checks:
             checks = self.detected_checks
@@ -958,7 +901,7 @@ class LicenseCheckRemover:
 
         try:
             # Read entire file
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 data = bytearray(f.read())
 
             for check in checks:
@@ -969,13 +912,13 @@ class LicenseCheckRemover:
                 if offset:
                     # Apply patch
                     patch_size = len(check.patched_bytes)
-                    data[offset:offset + patch_size] = check.patched_bytes
+                    data[offset : offset + patch_size] = check.patched_bytes
                     patched_count += 1
 
                     logger.info(f"Patched {check.check_type.value} at 0x{check.address:08X}")
 
             # Write patched file
-            with open(self.binary_path, 'wb') as f:
+            with open(self.binary_path, "wb") as f:
                 f.write(data)
 
             # Update PE checksum
@@ -1032,7 +975,7 @@ class LicenseCheckRemover:
 
                 if offset:
                     # Read patched bytes
-                    with open(self.binary_path, 'rb') as f:
+                    with open(self.binary_path, "rb") as f:
                         f.seek(offset)
                         actual_bytes = f.read(len(check.patched_bytes))
 
@@ -1091,16 +1034,11 @@ def main():
 
     parser = argparse.ArgumentParser(description="Remove license checks from binaries")
     parser.add_argument("binary", help="Path to binary file")
-    parser.add_argument("-a", "--analyze", action="store_true",
-                       help="Only analyze, don't patch")
-    parser.add_argument("-p", "--patch", action="store_true",
-                       help="Apply patches to remove checks")
-    parser.add_argument("-r", "--report", action="store_true",
-                       help="Generate detailed report")
-    parser.add_argument("-c", "--confidence", type=float, default=0.7,
-                       help="Minimum confidence threshold (0.0-1.0)")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                       help="Verbose output")
+    parser.add_argument("-a", "--analyze", action="store_true", help="Only analyze, don't patch")
+    parser.add_argument("-p", "--patch", action="store_true", help="Apply patches to remove checks")
+    parser.add_argument("-r", "--report", action="store_true", help="Generate detailed report")
+    parser.add_argument("-c", "--confidence", type=float, default=0.7, help="Minimum confidence threshold (0.0-1.0)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 

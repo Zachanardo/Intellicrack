@@ -10,7 +10,7 @@ import struct
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import z3
 from cryptography.hazmat.backends import default_backend
@@ -27,7 +27,6 @@ class SerialFormat(Enum):
     HEXADECIMAL = "hexadecimal"
     CUSTOM = "custom"
     MICROSOFT = "microsoft"  # 5 groups of 5 chars: ABCDE-FGHIJ-KLMNO-PQRST-UVWXY
-    ADOBE = "adobe"  # 6 groups of 4 digits: 1234-5678-9012-3456-7890-1234
     UUID = "uuid"  # Standard UUID format: 8-4-4-4-12 hex chars
 
 
@@ -138,10 +137,6 @@ class SerialNumberGenerator:
         if all(re.match(r"^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$", s) for s in serials):
             return SerialFormat.MICROSOFT
 
-        # Check Adobe format
-        if all(re.match(r"^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$", s) for s in serials):
-            return SerialFormat.ADOBE
-
         # Check UUID format
         if all(re.match(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", s) for s in serials):
             return SerialFormat.UUID
@@ -227,7 +222,7 @@ class SerialNumberGenerator:
                         return True
 
             return False
-        except:
+        except (ValueError, TypeError):
             return False
 
     def _detect_patterns(self, serials: List[str]) -> List[Dict[str, Any]]:
@@ -292,8 +287,6 @@ class SerialNumberGenerator:
         # Select algorithm based on format
         if constraints.format == SerialFormat.MICROSOFT:
             return self._generate_microsoft_serial(constraints)
-        elif constraints.format == SerialFormat.ADOBE:
-            return self._generate_adobe_serial(constraints)
         elif constraints.format == SerialFormat.UUID:
             return self._generate_uuid_serial(constraints)
         else:
@@ -372,11 +365,12 @@ class SerialNumberGenerator:
                 else:
                     # Fallback to random valid character
                     if constraints.custom_alphabet:
-                        serial_chars.append(random.choice(constraints.custom_alphabet))
+                        # Note: Using random module for generating serials, not cryptographic purposes
+                        serial_chars.append(random.choice(constraints.custom_alphabet))  # noqa: S311
                     elif constraints.format == SerialFormat.NUMERIC:
-                        serial_chars.append(random.choice("0123456789"))
+                        serial_chars.append(random.choice("0123456789"))  # noqa: S311
                     else:
-                        serial_chars.append(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
+                        serial_chars.append(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))  # noqa: S311
 
             # Format with groups if specified
             serial = "".join(serial_chars)
@@ -409,7 +403,7 @@ class SerialNumberGenerator:
         else:
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-        serial_chars = [random.choice(alphabet) for _ in range(constraints.length)]
+        serial_chars = [random.choice(alphabet) for _ in range(constraints.length)]  # noqa: S311
 
         # Apply checksum if specified
         if constraints.checksum_algorithm and constraints.checksum_algorithm in self.checksum_functions:
@@ -439,7 +433,7 @@ class SerialNumberGenerator:
         groups = []
 
         for _i in range(5):
-            group = "".join(random.choices(chars, k=5))
+            group = "".join(random.choices(chars, k=5))  # noqa: S311
             groups.append(group)
 
         serial = "-".join(groups)
@@ -450,30 +444,6 @@ class SerialNumberGenerator:
             confidence=0.9,
             validation_data={"algorithm": "microsoft_mod7"},
             algorithm_used="microsoft",
-        )
-
-    def _generate_adobe_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
-        """Generate Adobe-style serial number"""
-        # Adobe uses 24 digits in 6 groups
-        groups = []
-
-        # First group often indicates product
-        groups.append(str(random.randint(1000, 1999)))
-
-        # Middle groups
-        for _i in range(4):
-            groups.append(str(random.randint(0, 9999)).zfill(4))
-
-        # Last group with checksum
-        data = "".join(groups)
-        checksum = self._calculate_luhn(data)
-        last_group = str(random.randint(0, 999)).zfill(3) + checksum
-        groups.append(last_group)
-
-        serial = "-".join(groups)
-
-        return GeneratedSerial(
-            serial=serial, format=SerialFormat.ADOBE, confidence=0.85, validation_data={"checksum": "luhn"}, algorithm_used="adobe"
         )
 
     def _generate_uuid_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
@@ -489,7 +459,8 @@ class SerialNumberGenerator:
 
     def _generate_luhn_serial(self, length: int = 16) -> str:
         """Generate serial with Luhn checksum"""
-        digits = [random.randint(0, 9) for _ in range(length - 1)]
+        # Note: Using random module for generating serials, not cryptographic purposes
+        digits = [random.randint(0, 9) for _ in range(length - 1)]  # noqa: S311
         checksum = self._calculate_luhn_digit(digits)
         digits.append(checksum)
         return "".join(map(str, digits))
@@ -553,7 +524,8 @@ class SerialNumberGenerator:
             [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
         ]
 
-        digits = [random.randint(0, 9) for _ in range(length - 1)]
+        # Note: Using random module for generating serials, not cryptographic purposes
+        digits = [random.randint(0, 9) for _ in range(length - 1)]  # noqa: S311
 
         # Calculate checksum
         c = 0
@@ -589,7 +561,8 @@ class SerialNumberGenerator:
             [2, 5, 8, 1, 4, 3, 6, 7, 9, 0],
         ]
 
-        digits = [random.randint(0, 9) for _ in range(length - 1)]
+        # Note: Using random module for generating serials, not cryptographic purposes
+        digits = [random.randint(0, 9) for _ in range(length - 1)]  # noqa: S311
 
         # Calculate checksum
         interim = 0
@@ -608,8 +581,8 @@ class SerialNumberGenerator:
         """Generate serial with CRC32 checksum"""
         import zlib
 
-        # Generate random data
-        data = "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=length - 8))
+        # Note: Using random module for generating serials, not cryptographic purposes
+        data = "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=length - 8))  # noqa: S311
 
         # Calculate CRC32
         crc = zlib.crc32(data.encode()) & 0xFFFFFFFF
@@ -631,7 +604,7 @@ class SerialNumberGenerator:
             expected_crc = zlib.crc32(data.encode()) & 0xFFFFFFFF
             expected_checksum = format(expected_crc, "08X")
             return checksum == expected_checksum
-        except:
+        except (ValueError, TypeError):
             return False
 
     def _calculate_crc32(self, data: str) -> str:
@@ -643,8 +616,8 @@ class SerialNumberGenerator:
 
     def _generate_mod97_serial(self, length: int = 16) -> str:
         """Generate serial with mod97 checksum (IBAN-style)"""
-        # Generate random digits
-        data = "".join(random.choices("0123456789", k=length - 2))
+        # Note: Using random module for generating serials, not cryptographic purposes
+        data = "".join(random.choices("0123456789", k=length - 2))  # noqa: S311
 
         # Calculate mod97 checksum
         num = int(data + "00")
@@ -666,7 +639,8 @@ class SerialNumberGenerator:
         poly = 0x11D  # x^8 + x^4 + x^3 + x^2 + 1
 
         serial = []
-        state = random.randint(1, 255)
+        # Note: Using random module for generating serials, not cryptographic purposes
+        state = random.randint(1, 255)  # noqa: S311
 
         for _ in range(length):
             # LFSR step
@@ -689,7 +663,8 @@ class SerialNumberGenerator:
         base_point = 9
 
         serial_parts = []
-        x = random.randint(1, p - 1)
+        # Note: Using random module for generating serials, not cryptographic purposes
+        x = random.randint(1, p - 1)  # noqa: S311
 
         for _ in range(length // 8):
             # Scalar multiplication (simplified)
@@ -716,7 +691,8 @@ class SerialNumberGenerator:
         # Generate serial
         serial_parts = []
         for _ in range(length // 4):
-            m = random.randint(2, n - 1)
+            # Note: Using random module for generating serials, not cryptographic purposes
+            m = random.randint(2, n - 1)  # noqa: S311
             # Sign with private key
             s = pow(m, d, n)
             serial_parts.append(format(s, "04X"))
@@ -726,8 +702,8 @@ class SerialNumberGenerator:
 
     def _generate_hash_chain_serial(self, length: int = 16) -> str:
         """Generate serial using hash chain"""
-        # Start with random seed
-        seed = random.randbytes(16)
+        # Note: Using random module for generating serials, not cryptographic purposes
+        seed = random.randbytes(16)  # noqa: S311
         hash_value = hashlib.sha256(seed).digest()
 
         serial = ""
@@ -755,8 +731,9 @@ class SerialNumberGenerator:
 
         # Generate serial in blocks
         serial = []
-        left = random.randint(0, 255)
-        right = random.randint(0, 255)
+        # Note: Using random module for generating serials, not cryptographic purposes
+        left = random.randint(0, 255)  # noqa: S311
+        right = random.randint(0, 255)  # noqa: S311
 
         for _i in range(length):
             # Multiple rounds
@@ -932,9 +909,7 @@ class SerialNumberGenerator:
         data_bytes = json.dumps(license_data, sort_keys=True).encode()
 
         signature = private_key.sign(
-            data_bytes,
-            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-            hashes.SHA256()
+            data_bytes, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
         )
 
         serial_data = base64.b32encode(data_bytes + signature)
@@ -1073,7 +1048,7 @@ class SerialNumberGenerator:
             result = (seed * mp) & 0xFFFFFFFF
 
         else:
-            result = hashlib.md5(str(seed).encode()).hexdigest()[:8]
+            result = hashlib.sha256(str(seed).encode()).hexdigest()[:8]
             result = int(result, 16)
 
         serial = f"{seed:05d}-{result:08X}"

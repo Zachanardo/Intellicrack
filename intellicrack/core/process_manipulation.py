@@ -235,6 +235,7 @@ class LicenseAnalyzer:
         self._cache_lock = None
 
         import threading
+
         self._cache_lock = threading.RLock()
 
         self._setup_windows_apis()
@@ -577,7 +578,7 @@ class LicenseAnalyzer:
         if not self.process_handle:
             return {}
 
-        results = {pattern['name']: [] for pattern in patterns}
+        results = {pattern["name"]: [] for pattern in patterns}
         regions = self._get_memory_regions()
 
         # Filter for executable regions
@@ -591,7 +592,7 @@ class LicenseAnalyzer:
 
         def scan_region_for_patterns(region: Dict[str, Any]) -> Dict[str, List[int]]:
             """Worker function to scan a single region for all patterns."""
-            local_results = {pattern['name']: [] for pattern in patterns}
+            local_results = {pattern["name"]: [] for pattern in patterns}
 
             try:
                 # Read memory region once
@@ -601,9 +602,9 @@ class LicenseAnalyzer:
 
                 # Scan for each pattern in this region
                 for pattern in patterns:
-                    pattern_bytes = pattern['bytes']
-                    pattern_mask = pattern.get('mask')
-                    pattern_name = pattern['name']
+                    pattern_bytes = pattern["bytes"]
+                    pattern_mask = pattern.get("mask")
+                    pattern_name = pattern["name"]
 
                     if pattern_mask:
                         matches = self._masked_pattern_scan(memory, pattern_bytes, pattern_mask, region["base_address"])
@@ -628,10 +629,7 @@ class LicenseAnalyzer:
         # Use ThreadPoolExecutor for concurrent scanning
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all region scan tasks
-            future_to_region = {
-                executor.submit(scan_region_for_patterns, region): region
-                for region in exec_regions
-            }
+            future_to_region = {executor.submit(scan_region_for_patterns, region): region for region in exec_regions}
 
             # Collect results as they complete
             for future in concurrent.futures.as_completed(future_to_region):
@@ -676,8 +674,8 @@ class LicenseAnalyzer:
             return {"references_to": [], "references_from": []}
 
         references = {
-            "references_to": [],    # Instructions that reference this address
-            "references_from": []   # Addresses referenced from this location
+            "references_to": [],  # Instructions that reference this address
+            "references_from": [],  # Addresses referenced from this location
         }
 
         # Initialize Capstone disassembler for x86/x64
@@ -699,9 +697,7 @@ class LicenseAnalyzer:
 
         # Get memory regions in range
         regions = self._get_memory_regions()
-        regions_in_range = [r for r in regions if
-                           (r["base_address"] <= end_addr and
-                            r["base_address"] + r["size"] >= start_addr)]
+        regions_in_range = [r for r in regions if (r["base_address"] <= end_addr and r["base_address"] + r["size"] >= start_addr)]
 
         for region in regions_in_range:
             if not (region["protection"] & 0x10):  # Skip non-executable regions for disassembly
@@ -726,46 +722,54 @@ class LicenseAnalyzer:
                             if op.type == capstone.x86.X86_OP_IMM:
                                 target = op.value.imm
                                 if target == address:
-                                    references["references_to"].append({
-                                        "from_address": insn.address,
-                                        "instruction": insn.mnemonic,
-                                        "bytes": insn.bytes.hex(),
-                                        "type": "direct_branch"
-                                    })
+                                    references["references_to"].append(
+                                        {
+                                            "from_address": insn.address,
+                                            "instruction": insn.mnemonic,
+                                            "bytes": insn.bytes.hex(),
+                                            "type": "direct_branch",
+                                        }
+                                    )
 
                     # Check for memory references (MOV, LEA, etc.)
                     if insn.mnemonic in ["mov", "lea", "push", "cmp", "test"]:
                         for op in insn.operands:
                             if op.type == capstone.x86.X86_OP_MEM:
                                 if op.mem.disp == address:
-                                    references["references_to"].append({
-                                        "from_address": insn.address,
-                                        "instruction": insn.mnemonic,
-                                        "bytes": insn.bytes.hex(),
-                                        "type": "memory_reference"
-                                    })
+                                    references["references_to"].append(
+                                        {
+                                            "from_address": insn.address,
+                                            "instruction": insn.mnemonic,
+                                            "bytes": insn.bytes.hex(),
+                                            "type": "memory_reference",
+                                        }
+                                    )
                             elif op.type == capstone.x86.X86_OP_IMM:
                                 if op.value.imm == address:
-                                    references["references_to"].append({
-                                        "from_address": insn.address,
-                                        "instruction": insn.mnemonic,
-                                        "bytes": insn.bytes.hex(),
-                                        "type": "immediate_reference"
-                                    })
+                                    references["references_to"].append(
+                                        {
+                                            "from_address": insn.address,
+                                            "instruction": insn.mnemonic,
+                                            "bytes": insn.bytes.hex(),
+                                            "type": "immediate_reference",
+                                        }
+                                    )
 
                 # Also scan for raw pointer references (data references)
                 ptr_size = 8 if is_64bit else 4
                 ptr_format = "<Q" if is_64bit else "<I"
 
                 for offset in range(0, len(memory) - ptr_size + 1, ptr_size):
-                    ptr_value = struct.unpack(ptr_format, memory[offset:offset + ptr_size])[0]
+                    ptr_value = struct.unpack(ptr_format, memory[offset : offset + ptr_size])[0]
                     if ptr_value == address:
-                        references["references_to"].append({
-                            "from_address": region_start + offset,
-                            "instruction": "DATA_PTR",
-                            "bytes": memory[offset:offset + ptr_size].hex(),
-                            "type": "data_pointer"
-                        })
+                        references["references_to"].append(
+                            {
+                                "from_address": region_start + offset,
+                                "instruction": "DATA_PTR",
+                                "bytes": memory[offset : offset + ptr_size].hex(),
+                                "type": "data_pointer",
+                            }
+                        )
 
             except Exception as e:
                 logger.error(f"Error analyzing region 0x{region['base_address']:X}: {e}")
@@ -786,39 +790,42 @@ class LicenseAnalyzer:
                             op = insn.operands[0]
                             if op.type == capstone.x86.X86_OP_IMM:
                                 target = op.value.imm
-                                references["references_from"].append({
-                                    "to_address": target,
-                                    "instruction": insn.mnemonic,
-                                    "offset": insn.address - address,
-                                    "type": "branch"
-                                })
+                                references["references_from"].append(
+                                    {"to_address": target, "instruction": insn.mnemonic, "offset": insn.address - address, "type": "branch"}
+                                )
 
                     # Check for memory accesses
                     for op in insn.operands:
                         if op.type == capstone.x86.X86_OP_MEM:
                             if op.mem.disp != 0:
-                                references["references_from"].append({
-                                    "to_address": op.mem.disp,
-                                    "instruction": insn.mnemonic,
-                                    "offset": insn.address - address,
-                                    "type": "memory_access"
-                                })
+                                references["references_from"].append(
+                                    {
+                                        "to_address": op.mem.disp,
+                                        "instruction": insn.mnemonic,
+                                        "offset": insn.address - address,
+                                        "type": "memory_access",
+                                    }
+                                )
                         elif op.type == capstone.x86.X86_OP_IMM:
                             # Check if immediate looks like an address
                             imm_val = op.value.imm
                             if (0x400000 <= imm_val <= 0x7FFFFFFF) or (0x10000000000 <= imm_val <= 0x7FFFFFFFFFFF):
-                                references["references_from"].append({
-                                    "to_address": imm_val,
-                                    "instruction": insn.mnemonic,
-                                    "offset": insn.address - address,
-                                    "type": "immediate"
-                                })
+                                references["references_from"].append(
+                                    {
+                                        "to_address": imm_val,
+                                        "instruction": insn.mnemonic,
+                                        "offset": insn.address - address,
+                                        "type": "immediate",
+                                    }
+                                )
 
         except Exception as e:
             logger.error(f"Error analyzing references from 0x{address:X}: {e}")
 
-        logger.info(f"Cross-reference analysis: {len(references['references_to'])} refs to, "
-                   f"{len(references['references_from'])} refs from 0x{address:X}")
+        logger.info(
+            f"Cross-reference analysis: {len(references['references_to'])} refs to, "
+            f"{len(references['references_from'])} refs from 0x{address:X}"
+        )
 
         return references
 
@@ -893,11 +900,13 @@ class LicenseAnalyzer:
             "wildcard_bytes": len([b for b in refined_mask if b == 0x00]),
             "yara_hex": yara_hex,
             "sample_count": len(samples),
-            "signature_length": len(refined_pattern)
+            "signature_length": len(refined_pattern),
         }
 
-        logger.info(f"Generated signature: {signature['common_bytes']} fixed bytes, "
-                   f"{signature['wildcard_bytes']} wildcards, confidence: {overall_confidence:.2%}")
+        logger.info(
+            f"Generated signature: {signature['common_bytes']} fixed bytes, "
+            f"{signature['wildcard_bytes']} wildcards, confidence: {overall_confidence:.2%}"
+        )
 
         return signature
 
@@ -912,7 +921,7 @@ class LicenseAnalyzer:
         # Find all subsequences in reference sample
         for start in range(len(reference) - min_length + 1):
             for length in range(min_length, min(16, len(reference) - start + 1)):
-                subsequence = reference[start:start + length]
+                subsequence = reference[start : start + length]
 
                 # Check if this subsequence appears in all other samples
                 if all(subsequence in sample for sample in samples[1:]):
@@ -925,8 +934,7 @@ class LicenseAnalyzer:
 
         return common_sequences[:10]  # Return top 10 sequences
 
-    def _refine_signature(self, pattern: bytearray, mask: bytearray,
-                         common_sequences: List[bytes]) -> tuple[bytearray, bytearray]:
+    def _refine_signature(self, pattern: bytearray, mask: bytearray, common_sequences: List[bytes]) -> tuple[bytearray, bytearray]:
         """Refine signature using common sequences."""
         refined_pattern = bytearray(pattern)
         refined_mask = bytearray(mask)
@@ -935,8 +943,7 @@ class LicenseAnalyzer:
         for sequence in common_sequences:
             # Find sequence in pattern
             for i in range(len(pattern) - len(sequence) + 1):
-                if all(pattern[i + j] == sequence[j] or mask[i + j] == 0x00
-                      for j in range(len(sequence))):
+                if all(pattern[i + j] == sequence[j] or mask[i + j] == 0x00 for j in range(len(sequence))):
                     # Update pattern and mask for this sequence
                     for j in range(len(sequence)):
                         refined_pattern[i + j] = sequence[j]
@@ -1000,7 +1007,7 @@ class LicenseAnalyzer:
             "GetHardwareID": [
                 b"\x55\x8b\xec\x83\xec",  # Standard x86 prologue
                 b"\x48\x89\x4c\x24",  # mov [rsp+X], rcx (x64)
-            ]
+            ],
         }
 
         for func_name in target_functions:
@@ -1018,8 +1025,7 @@ class LicenseAnalyzer:
 
                     if signature["confidence"] > 0.5:
                         signatures[func_name] = signature
-                        logger.info(f"Generated signature for {func_name}: "
-                                   f"confidence {signature['confidence']:.2%}")
+                        logger.info(f"Generated signature for {func_name}: confidence {signature['confidence']:.2%}")
             else:
                 # Try generic function prologue search
                 generic_patterns = [
@@ -1044,6 +1050,7 @@ class LicenseAnalyzer:
     def _get_cache_key(self, pattern: bytes, mask: Optional[bytes] = None) -> str:
         """Generate unique cache key for pattern."""
         import hashlib
+
         key_data = pattern
         if mask:
             key_data += b"|" + mask
@@ -1052,6 +1059,7 @@ class LicenseAnalyzer:
     def _is_cache_valid(self, key: str) -> bool:
         """Check if cache entry is still valid."""
         import time
+
         if key not in self._cache_timestamps:
             return False
         age = time.time() - self._cache_timestamps[key]
@@ -1060,6 +1068,7 @@ class LicenseAnalyzer:
     def _evict_oldest_cache(self):
         """Evict oldest cache entries when cache is full."""
         import time
+
         if len(self._pattern_cache) >= self._cache_max_size:
             # Find oldest entry
             oldest_key = None
@@ -1132,7 +1141,7 @@ class LicenseAnalyzer:
                 "hit_rate": hit_rate,
                 "cache_size": len(self._pattern_cache),
                 "max_size": self._cache_max_size,
-                "ttl_seconds": self._cache_ttl
+                "ttl_seconds": self._cache_ttl,
             }
 
     def optimize_cache_performance(self):
@@ -1142,10 +1151,7 @@ class LicenseAnalyzer:
         with self._cache_lock:
             # Remove expired entries
             current_time = time.time()
-            expired_keys = [
-                key for key, timestamp in self._cache_timestamps.items()
-                if current_time - timestamp >= self._cache_ttl
-            ]
+            expired_keys = [key for key, timestamp in self._cache_timestamps.items() if current_time - timestamp >= self._cache_ttl]
 
             for key in expired_keys:
                 del self._pattern_cache[key]
@@ -1169,7 +1175,7 @@ class LicenseAnalyzer:
 
         # Separate cached and uncached patterns
         for pattern in patterns:
-            cache_key = self._get_cache_key(pattern['bytes'], pattern.get('mask'))
+            cache_key = self._get_cache_key(pattern["bytes"], pattern.get("mask"))
             if cache_key in self._pattern_cache and self._is_cache_valid(cache_key):
                 cached_patterns.append(pattern)
             else:
@@ -1178,8 +1184,8 @@ class LicenseAnalyzer:
         # Get cached results immediately
         with self._cache_lock:
             for pattern in cached_patterns:
-                cache_key = self._get_cache_key(pattern['bytes'], pattern.get('mask'))
-                results[pattern['name']] = self._pattern_cache[cache_key].copy()
+                cache_key = self._get_cache_key(pattern["bytes"], pattern.get("mask"))
+                results[pattern["name"]] = self._pattern_cache[cache_key].copy()
                 self._cache_stats["hits"] += 1
 
         # Scan uncached patterns concurrently
@@ -1189,9 +1195,9 @@ class LicenseAnalyzer:
             # Update cache with new results
             with self._cache_lock:
                 for pattern in uncached_patterns:
-                    pattern_name = pattern['name']
+                    pattern_name = pattern["name"]
                     if pattern_name in new_results:
-                        cache_key = self._get_cache_key(pattern['bytes'], pattern.get('mask'))
+                        cache_key = self._get_cache_key(pattern["bytes"], pattern.get("mask"))
                         self._evict_oldest_cache()
                         self._pattern_cache[cache_key] = new_results[pattern_name].copy()
                         self._cache_timestamps[cache_key] = time.time()
@@ -1213,7 +1219,7 @@ class LicenseAnalyzer:
                 ctypes.c_int,
                 ctypes.c_void_p,
                 ctypes.c_ulong,
-                ctypes.POINTER(ctypes.c_ulong)
+                ctypes.POINTER(ctypes.c_ulong),
             ]
             self.ntdll.NtQueryInformationProcess.restype = ctypes.c_long
 
@@ -1225,7 +1231,7 @@ class LicenseAnalyzer:
                 ProcessInformationClass.ProcessBasicInformation,
                 ctypes.byref(pbi),
                 ctypes.sizeof(pbi),
-                ctypes.byref(return_length)
+                ctypes.byref(return_length),
             )
 
             if status == 0:  # STATUS_SUCCESS
@@ -1252,11 +1258,7 @@ class LicenseAnalyzer:
             bytes_read = ctypes.c_size_t()
 
             success = self.kernel32.ReadProcessMemory(
-                self.process_handle,
-                ctypes.c_void_p(peb_addr),
-                ctypes.byref(peb),
-                ctypes.sizeof(PEB),
-                ctypes.byref(bytes_read)
+                self.process_handle, ctypes.c_void_p(peb_addr), ctypes.byref(peb), ctypes.sizeof(PEB), ctypes.byref(bytes_read)
             )
 
             if success:
@@ -1269,9 +1271,9 @@ class LicenseAnalyzer:
             logger.error(f"Error reading PEB: {e}")
             return None
 
-    def manipulate_peb_flags(self, clear_being_debugged: bool = True,
-                            clear_nt_global_flag: bool = True,
-                            clear_heap_flags: bool = True) -> bool:
+    def manipulate_peb_flags(
+        self, clear_being_debugged: bool = True, clear_nt_global_flag: bool = True, clear_heap_flags: bool = True
+    ) -> bool:
         """Manipulate PEB flags to bypass anti-debugging checks."""
         if not self.process_handle:
             return False
@@ -1294,7 +1296,7 @@ class LicenseAnalyzer:
                     ctypes.c_void_p(peb_addr + being_debugged_offset),
                     ctypes.byref(zero_byte),
                     1,
-                    ctypes.byref(bytes_written)
+                    ctypes.byref(bytes_written),
                 )
 
                 if success:
@@ -1315,7 +1317,7 @@ class LicenseAnalyzer:
                     ctypes.c_void_p(peb_addr + nt_global_flag_offset),
                     ctypes.byref(zero_dword),
                     ctypes.sizeof(zero_dword),
-                    ctypes.byref(bytes_written)
+                    ctypes.byref(bytes_written),
                 )
 
                 if success:
@@ -1339,7 +1341,7 @@ class LicenseAnalyzer:
                         ctypes.c_void_p(int(peb.ProcessHeap) + heap_flags_offset),
                         ctypes.byref(flags_value),
                         ctypes.sizeof(flags_value),
-                        ctypes.byref(bytes_written)
+                        ctypes.byref(bytes_written),
                     )
 
                     if success:
@@ -1350,7 +1352,7 @@ class LicenseAnalyzer:
                             ctypes.c_void_p(int(peb.ProcessHeap) + heap_force_flags_offset),
                             ctypes.byref(zero_dword),
                             ctypes.sizeof(zero_dword),
-                            ctypes.byref(bytes_written)
+                            ctypes.byref(bytes_written),
                         )
 
                         modifications_made.append("HeapFlags")
@@ -1380,20 +1382,12 @@ class LicenseAnalyzer:
 
         # 2. Set DebugPort to 0
         try:
-            self.ntdll.NtSetInformationProcess.argtypes = [
-                ctypes.wintypes.HANDLE,
-                ctypes.c_int,
-                ctypes.c_void_p,
-                ctypes.c_ulong
-            ]
+            self.ntdll.NtSetInformationProcess.argtypes = [ctypes.wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, ctypes.c_ulong]
             self.ntdll.NtSetInformationProcess.restype = ctypes.c_long
 
             debug_port = ctypes.c_void_p(0)
             status = self.ntdll.NtSetInformationProcess(
-                self.process_handle,
-                ProcessInformationClass.ProcessDebugPort,
-                ctypes.byref(debug_port),
-                ctypes.sizeof(debug_port)
+                self.process_handle, ProcessInformationClass.ProcessDebugPort, ctypes.byref(debug_port), ctypes.sizeof(debug_port)
             )
 
             if status == 0:
@@ -1410,7 +1404,7 @@ class LicenseAnalyzer:
                 self.process_handle,
                 ProcessInformationClass.ProcessDebugObjectHandle,
                 ctypes.byref(debug_object),
-                ctypes.sizeof(debug_object)
+                ctypes.sizeof(debug_object),
             )
 
             if status == 0:
@@ -1424,10 +1418,7 @@ class LicenseAnalyzer:
         try:
             debug_flags = ctypes.c_ulong(0)
             status = self.ntdll.NtSetInformationProcess(
-                self.process_handle,
-                ProcessInformationClass.ProcessDebugFlags,
-                ctypes.byref(debug_flags),
-                ctypes.sizeof(debug_flags)
+                self.process_handle, ProcessInformationClass.ProcessDebugFlags, ctypes.byref(debug_flags), ctypes.sizeof(debug_flags)
             )
 
             if status == 0:
@@ -1446,12 +1437,7 @@ class LicenseAnalyzer:
 
     def check_peb_for_debugger(self) -> Dict[str, bool]:
         """Check PEB for various debugger indicators."""
-        indicators = {
-            "BeingDebugged": False,
-            "NtGlobalFlag": False,
-            "HeapFlags": False,
-            "DebuggerPresent": False
-        }
+        indicators = {"BeingDebugged": False, "NtGlobalFlag": False, "HeapFlags": False, "DebuggerPresent": False}
 
         peb = self.read_peb()
         if not peb:
@@ -1475,7 +1461,7 @@ class LicenseAnalyzer:
                     ctypes.c_void_p(int(peb.ProcessHeap) + heap_flags_offset),
                     ctypes.byref(heap_flags),
                     ctypes.sizeof(heap_flags),
-                    ctypes.byref(bytes_read)
+                    ctypes.byref(bytes_read),
                 )
 
                 # Check for debug heap flags
@@ -1487,7 +1473,7 @@ class LicenseAnalyzer:
         # Check IsDebuggerPresent API
         try:
             indicators["DebuggerPresent"] = bool(kernel32.IsDebuggerPresent())
-        except:
+        except (AttributeError, OSError):
             pass
 
         return indicators
@@ -1507,18 +1493,14 @@ class LicenseAnalyzer:
             bytes_read = ctypes.c_size_t()
 
             success = self.kernel32.ReadProcessMemory(
-                self.process_handle,
-                peb.ProcessParameters,
-                ctypes.byref(params),
-                ctypes.sizeof(params),
-                ctypes.byref(bytes_read)
+                self.process_handle, peb.ProcessParameters, ctypes.byref(params), ctypes.sizeof(params), ctypes.byref(bytes_read)
             )
 
             if not success:
                 return False
 
             # Create new Unicode string for image path
-            new_path_unicode = (new_path + '\0').encode('utf-16le')
+            new_path_unicode = (new_path + "\0").encode("utf-16le")
             new_path_len = len(new_path_unicode) - 2  # Exclude null terminator
 
             # Allocate memory in target process for new path
@@ -1527,7 +1509,7 @@ class LicenseAnalyzer:
                 None,
                 len(new_path_unicode),
                 0x3000,  # MEM_COMMIT | MEM_RESERVE
-                0x04     # PAGE_READWRITE
+                0x04,  # PAGE_READWRITE
             )
 
             if not new_path_addr:
@@ -1536,11 +1518,7 @@ class LicenseAnalyzer:
             # Write new path to allocated memory
             bytes_written = ctypes.c_size_t()
             success = self.kernel32.WriteProcessMemory(
-                self.process_handle,
-                new_path_addr,
-                new_path_unicode,
-                len(new_path_unicode),
-                ctypes.byref(bytes_written)
+                self.process_handle, new_path_addr, new_path_unicode, len(new_path_unicode), ctypes.byref(bytes_written)
             )
 
             if success:
@@ -1551,11 +1529,7 @@ class LicenseAnalyzer:
 
                 # Write updated parameters back
                 success = self.kernel32.WriteProcessMemory(
-                    self.process_handle,
-                    peb.ProcessParameters,
-                    ctypes.byref(params),
-                    ctypes.sizeof(params),
-                    ctypes.byref(bytes_written)
+                    self.process_handle, peb.ProcessParameters, ctypes.byref(params), ctypes.sizeof(params), ctypes.byref(bytes_written)
                 )
 
                 if success:
@@ -1583,7 +1557,7 @@ class LicenseAnalyzer:
             ctypes.c_int,
             ctypes.c_void_p,
             ctypes.c_size_t,
-            ctypes.POINTER(ctypes.c_size_t)
+            ctypes.POINTER(ctypes.c_size_t),
         ]
         self.ntdll.NtQueryVirtualMemory.restype = ctypes.c_long
 
@@ -1597,7 +1571,7 @@ class LicenseAnalyzer:
                 MEMORY_INFORMATION_CLASS.MemoryBasicInformation,
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi),
-                ctypes.byref(return_length)
+                ctypes.byref(return_length),
             )
 
             if status == 0:  # STATUS_SUCCESS
@@ -1615,9 +1589,9 @@ class LicenseAnalyzer:
                     "type": mem_type,
                     "allocation_protect": self._parse_protection_flags(mbi.AllocationProtect),
                     "is_executable": bool(mbi.Protect & 0xF0),  # Any execute permission
-                    "is_writable": bool(mbi.Protect & 0xCC),   # Any write permission
-                    "is_guarded": bool(mbi.Protect & 0x100),   # PAGE_GUARD
-                    "is_nocache": bool(mbi.Protect & 0x200),   # PAGE_NOCACHE
+                    "is_writable": bool(mbi.Protect & 0xCC),  # Any write permission
+                    "is_guarded": bool(mbi.Protect & 0x100),  # PAGE_GUARD
+                    "is_nocache": bool(mbi.Protect & 0x200),  # PAGE_NOCACHE
                 }
 
                 # Only add committed memory regions
@@ -1668,20 +1642,12 @@ class LicenseAnalyzer:
 
     def _parse_memory_state(self, state: int) -> str:
         """Parse memory state to human-readable string."""
-        states = {
-            0x1000: "COMMIT",
-            0x2000: "RESERVE",
-            0x10000: "FREE"
-        }
+        states = {0x1000: "COMMIT", 0x2000: "RESERVE", 0x10000: "FREE"}
         return states.get(state, f"UNKNOWN(0x{state:X})")
 
     def _parse_memory_type(self, mem_type: int) -> str:
         """Parse memory type to human-readable string."""
-        types = {
-            0x20000: "PRIVATE",
-            0x40000: "MAPPED",
-            0x1000000: "IMAGE"
-        }
+        types = {0x20000: "PRIVATE", 0x40000: "MAPPED", 0x1000000: "IMAGE"}
         return types.get(mem_type, f"UNKNOWN(0x{mem_type:X})")
 
     def find_hidden_memory_regions(self) -> List[Dict[str, Any]]:
@@ -1720,11 +1686,9 @@ class LicenseAnalyzer:
                 suspicious_indicators.append("protection_changed")
 
             if suspicious_indicators:
-                hidden_regions.append({
-                    **entry,
-                    "suspicious_indicators": suspicious_indicators,
-                    "suspicion_level": len(suspicious_indicators)
-                })
+                hidden_regions.append(
+                    {**entry, "suspicious_indicators": suspicious_indicators, "suspicion_level": len(suspicious_indicators)}
+                )
 
         # Sort by suspicion level
         hidden_regions.sort(key=lambda x: x["suspicion_level"], reverse=True)
@@ -1740,11 +1704,7 @@ class LicenseAnalyzer:
         for entry in vad_entries:
             if entry["is_executable"]:
                 # Try to identify the region
-                region_info = {
-                    **entry,
-                    "identified_as": "unknown",
-                    "confidence": 0.0
-                }
+                region_info = {**entry, "identified_as": "unknown", "confidence": 0.0}
 
                 # Check if it's a loaded module
                 if entry["type"] == "IMAGE":
@@ -1753,13 +1713,11 @@ class LicenseAnalyzer:
 
                     # Try to get module name
                     try:
-                        module_name = self._get_module_name_at_address(
-                            ctypes.cast(entry["base_address"], ctypes.c_ulong).value
-                        )
+                        module_name = self._get_module_name_at_address(ctypes.cast(entry["base_address"], ctypes.c_ulong).value)
                         if module_name:
                             region_info["module_name"] = module_name
                             region_info["confidence"] = 1.0
-                    except:
+                    except (KeyError, TypeError):
                         pass
 
                 # Check for JIT code characteristics
@@ -1786,8 +1744,9 @@ class LicenseAnalyzer:
 
                 if module_base <= address < module_end:
                     import os
+
                     return os.path.basename(module["path"])
-        except:
+        except (KeyError, TypeError, ImportError):
             pass
 
         return None
@@ -1813,17 +1772,13 @@ class LicenseAnalyzer:
                     "size": gap_size,
                     "size_kb": gap_size // 1024,
                     "size_mb": gap_size // (1024 * 1024),
-                    "before_region": {
-                        "address": current["base_address"],
-                        "type": current["type"],
-                        "protection": current["protection"]
-                    },
+                    "before_region": {"address": current["base_address"], "type": current["type"], "protection": current["protection"]},
                     "after_region": {
                         "address": next_region["base_address"],
                         "type": next_region["type"],
-                        "protection": next_region["protection"]
+                        "protection": next_region["protection"],
                     },
-                    "suitable_for_injection": gap_size >= 0x1000 and gap_size <= 0x100000
+                    "suitable_for_injection": gap_size >= 0x1000 and gap_size <= 0x100000,
                 }
 
                 gaps.append(gap_info)
@@ -1836,12 +1791,7 @@ class LicenseAnalyzer:
 
     def detect_vad_manipulation(self) -> Dict[str, Any]:
         """Detect signs of VAD manipulation or hiding techniques."""
-        detection_results = {
-            "vad_hiding_detected": False,
-            "anomalies": [],
-            "suspicious_regions": [],
-            "confidence": 0.0
-        }
+        detection_results = {"vad_hiding_detected": False, "anomalies": [], "suspicious_regions": [], "confidence": 0.0}
 
         vad_entries = self.walk_vad_tree()
 
@@ -1851,26 +1801,18 @@ class LicenseAnalyzer:
 
         for region in all_regions:
             if region["base_address"] not in vad_addresses and region["is_executable"]:
-                detection_results["anomalies"].append({
-                    "type": "unlisted_executable",
-                    "address": region["base_address"],
-                    "size": region["size"]
-                })
+                detection_results["anomalies"].append(
+                    {"type": "unlisted_executable", "address": region["base_address"], "size": region["size"]}
+                )
                 detection_results["vad_hiding_detected"] = True
 
         # 2. Check for manual memory allocations with suspicious permissions
-        private_exec_regions = [
-            e for e in vad_entries
-            if e["type"] == "PRIVATE" and e["is_executable"]
-        ]
+        private_exec_regions = [e for e in vad_entries if e["type"] == "PRIVATE" and e["is_executable"]]
 
         for region in private_exec_regions:
             # Check if region starts with common shellcode patterns
             try:
-                first_bytes = self.read_memory(
-                    ctypes.cast(region["base_address"], ctypes.c_ulong).value,
-                    min(16, region["region_size"])
-                )
+                first_bytes = self.read_memory(ctypes.cast(region["base_address"], ctypes.c_ulong).value, min(16, region["region_size"]))
 
                 if first_bytes:
                     # Common shellcode/injection patterns
@@ -1884,23 +1826,17 @@ class LicenseAnalyzer:
 
                     for pattern in suspicious_patterns:
                         if first_bytes.startswith(pattern):
-                            detection_results["suspicious_regions"].append({
-                                "address": region["base_address"],
-                                "pattern_matched": pattern.hex(),
-                                "type": "shellcode_signature"
-                            })
+                            detection_results["suspicious_regions"].append(
+                                {"address": region["base_address"], "pattern_matched": pattern.hex(), "type": "shellcode_signature"}
+                            )
                             break
-            except:
+            except (KeyError, TypeError):
                 pass
 
         # 3. Check for VAD unlink signs
         if len(vad_entries) < 10 and self.pid:
             # Suspiciously few VAD entries for an active process
-            detection_results["anomalies"].append({
-                "type": "low_vad_count",
-                "count": len(vad_entries),
-                "expected_minimum": 10
-            })
+            detection_results["anomalies"].append({"type": "low_vad_count", "count": len(vad_entries), "expected_minimum": 10})
 
         # Calculate confidence score
         confidence = 0.0
@@ -1913,8 +1849,7 @@ class LicenseAnalyzer:
 
         detection_results["confidence"] = confidence
 
-        logger.info(f"VAD manipulation detection: {confidence:.1%} confidence, "
-                   f"{len(detection_results['anomalies'])} anomalies found")
+        logger.info(f"VAD manipulation detection: {confidence:.1%} confidence, {len(detection_results['anomalies'])} anomalies found")
 
         return detection_results
 
@@ -1928,21 +1863,18 @@ class LicenseAnalyzer:
         size = ctypes.sizeof(mbi)
 
         while current_address < max_address:
-            result = kernel32.VirtualQueryEx(
-                self.process_handle,
-                ctypes.c_void_p(current_address),
-                ctypes.byref(mbi),
-                size
-            )
+            result = kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(current_address), ctypes.byref(mbi), size)
 
             if result:
                 if mbi.State == 0x1000:  # MEM_COMMIT
-                    regions.append({
-                        "base_address": ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value,
-                        "size": mbi.RegionSize,
-                        "protection": mbi.Protect,
-                        "is_executable": bool(mbi.Protect & 0xF0)
-                    })
+                    regions.append(
+                        {
+                            "base_address": ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value,
+                            "size": mbi.RegionSize,
+                            "protection": mbi.Protect,
+                            "is_executable": bool(mbi.Protect & 0xF0),
+                        }
+                    )
 
                 current_address = ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize
             else:
@@ -1998,12 +1930,12 @@ class LicenseAnalyzer:
                     continue
 
                 # Check PE signature
-                if pe_header[e_lfanew:e_lfanew+4] != b"PE\x00\x00":
+                if pe_header[e_lfanew : e_lfanew + 4] != b"PE\x00\x00":
                     continue
 
                 # Get number of sections
-                num_sections = struct.unpack("<H", pe_header[e_lfanew+6:e_lfanew+8])[0]
-                optional_header_size = struct.unpack("<H", pe_header[e_lfanew+20:e_lfanew+22])[0]
+                num_sections = struct.unpack("<H", pe_header[e_lfanew + 6 : e_lfanew + 8])[0]
+                optional_header_size = struct.unpack("<H", pe_header[e_lfanew + 20 : e_lfanew + 22])[0]
 
                 # Section headers start after optional header
                 section_header_offset = e_lfanew + 24 + optional_header_size
@@ -2015,7 +1947,7 @@ class LicenseAnalyzer:
                         break
 
                     # Parse section header
-                    section_data = pe_header[section_offset:section_offset+40]
+                    section_data = pe_header[section_offset : section_offset + 40]
 
                     virtual_size = struct.unpack("<I", section_data[8:12])[0]
                     virtual_address = struct.unpack("<I", section_data[12:16])[0]
@@ -2039,15 +1971,17 @@ class LicenseAnalyzer:
                                 padding_ratio = null_count / len(slack_data)
 
                                 if padding_ratio > 0.8:  # 80% padding
-                                    caves.append({
-                                        "address": slack_start,
-                                        "size": slack_size,
-                                        "type": "section_slack",
-                                        "module": module["path"],
-                                        "is_executable": is_executable,
-                                        "score": 10 if is_executable else 5,
-                                        "characteristics": f"0x{characteristics:08X}"
-                                    })
+                                    caves.append(
+                                        {
+                                            "address": slack_start,
+                                            "size": slack_size,
+                                            "type": "section_slack",
+                                            "module": module["path"],
+                                            "is_executable": is_executable,
+                                            "score": 10 if is_executable else 5,
+                                            "characteristics": f"0x{characteristics:08X}",
+                                        }
+                                    )
 
         except Exception as e:
             logger.error(f"Error finding section slack caves: {e}")
@@ -2065,23 +1999,24 @@ class LicenseAnalyzer:
                 score = 5
 
                 # Higher score if between executable regions
-                if "EXECUTE" in gap["before_region"]["protection"] or \
-                   "EXECUTE" in gap["after_region"]["protection"]:
+                if "EXECUTE" in gap["before_region"]["protection"] or "EXECUTE" in gap["after_region"]["protection"]:
                     score += 3
 
                 # Higher score if moderate size
                 if 0x100 <= gap["size"] <= 0x1000:
                     score += 2
 
-                caves.append({
-                    "address": gap["start_address"],
-                    "size": gap["size"],
-                    "type": "memory_gap",
-                    "is_executable": False,  # Would need allocation
-                    "score": score,
-                    "before_region": gap["before_region"]["type"],
-                    "after_region": gap["after_region"]["type"]
-                })
+                caves.append(
+                    {
+                        "address": gap["start_address"],
+                        "size": gap["size"],
+                        "type": "memory_gap",
+                        "is_executable": False,  # Would need allocation
+                        "score": score,
+                        "before_region": gap["before_region"]["type"],
+                        "after_region": gap["after_region"]["type"],
+                    }
+                )
 
         return caves
 
@@ -2115,30 +2050,34 @@ class LicenseAnalyzer:
                                 cave_size += 1
                         else:
                             if cave_start is not None and min_size <= cave_size <= max_size:
-                                caves.append({
-                                    "address": region_addr + cave_start,
-                                    "size": cave_size,
-                                    "type": "unused_region",
-                                    "is_executable": entry["is_executable"],
-                                    "score": 7 if entry["is_executable"] else 4,
-                                    "region_protection": entry["protection"]
-                                })
+                                caves.append(
+                                    {
+                                        "address": region_addr + cave_start,
+                                        "size": cave_size,
+                                        "type": "unused_region",
+                                        "is_executable": entry["is_executable"],
+                                        "score": 7 if entry["is_executable"] else 4,
+                                        "region_protection": entry["protection"],
+                                    }
+                                )
                             cave_start = None
                             cave_size = 0
 
                     # Check last cave
                     if cave_start is not None and min_size <= cave_size <= max_size:
-                        caves.append({
-                            "address": region_addr + cave_start,
-                            "size": cave_size,
-                            "type": "unused_region",
-                            "is_executable": entry["is_executable"],
-                            "score": 7 if entry["is_executable"] else 4,
-                            "region_protection": entry["protection"]
-                        })
+                        caves.append(
+                            {
+                                "address": region_addr + cave_start,
+                                "size": cave_size,
+                                "type": "unused_region",
+                                "is_executable": entry["is_executable"],
+                                "score": 7 if entry["is_executable"] else 4,
+                                "region_protection": entry["protection"],
+                            }
+                        )
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Cave identification failed: {e}")
 
         return caves
 
@@ -2163,12 +2102,12 @@ class LicenseAnalyzer:
 
                 # Common function padding patterns
                 padding_patterns = [
-                    b"\xCC" * 8,  # INT3 padding
+                    b"\xcc" * 8,  # INT3 padding
                     b"\x90" * 8,  # NOP padding
                     b"\x00" * 8,  # NULL padding
-                    b"\x0F\x1F\x44\x00\x00",  # Multi-byte NOP
-                    b"\x0F\x1F\x40\x00",  # Multi-byte NOP
-                    b"\x0F\x1F\x00",  # Multi-byte NOP
+                    b"\x0f\x1f\x44\x00\x00",  # Multi-byte NOP
+                    b"\x0f\x1f\x40\x00",  # Multi-byte NOP
+                    b"\x0f\x1f\x00",  # Multi-byte NOP
                 ]
 
                 for pattern in padding_patterns:
@@ -2200,19 +2139,21 @@ class LicenseAnalyzer:
 
                             if padding_end < len(memory) - 3:
                                 # Check for following function prologue
-                                next_bytes = memory[padding_end:padding_end+3]
-                                if next_bytes in [b"\x55\x8B\xEC", b"\x55\x89\xE5", b"\x48\x89\x5C"]:
+                                next_bytes = memory[padding_end : padding_end + 3]
+                                if next_bytes in [b"\x55\x8b\xec", b"\x55\x89\xe5", b"\x48\x89\x5c"]:
                                     is_inter_function = True
 
-                            caves.append({
-                                "address": region_addr + index,
-                                "size": padding_size,
-                                "type": "function_padding",
-                                "is_executable": True,
-                                "score": 9 if is_inter_function else 6,
-                                "padding_byte": f"0x{padding_byte:02X}",
-                                "is_inter_function": is_inter_function
-                            })
+                            caves.append(
+                                {
+                                    "address": region_addr + index,
+                                    "size": padding_size,
+                                    "type": "function_padding",
+                                    "is_executable": True,
+                                    "score": 9 if is_inter_function else 6,
+                                    "padding_byte": f"0x{padding_byte:02X}",
+                                    "is_inter_function": is_inter_function,
+                                }
+                            )
 
                         offset = padding_end
 
@@ -2223,13 +2164,7 @@ class LicenseAnalyzer:
 
     def validate_code_cave(self, address: int, size: int) -> Dict[str, Any]:
         """Validate a code cave for safety and accessibility."""
-        validation = {
-            "is_valid": False,
-            "is_safe": False,
-            "is_accessible": False,
-            "issues": [],
-            "score": 0
-        }
+        validation = {"is_valid": False, "is_safe": False, "is_accessible": False, "issues": [], "score": 0}
 
         try:
             # Check if we can read/write to the cave
@@ -2249,12 +2184,7 @@ class LicenseAnalyzer:
 
             # Check protection
             mbi = MEMORY_BASIC_INFORMATION()
-            result = kernel32.VirtualQueryEx(
-                self.process_handle,
-                ctypes.c_void_p(address),
-                ctypes.byref(mbi),
-                ctypes.sizeof(mbi)
-            )
+            result = kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
 
             if result:
                 if mbi.Protect & 0xF0:  # Executable
@@ -2296,11 +2226,7 @@ class LicenseAnalyzer:
                     if cave["size"] < required_size * 2:
                         cave_score += 2
 
-                    suitable_caves.append({
-                        **cave,
-                        "final_score": cave_score,
-                        "validation": validation
-                    })
+                    suitable_caves.append({**cave, "final_score": cave_score, "validation": validation})
 
         if not suitable_caves:
             return None
@@ -2308,8 +2234,9 @@ class LicenseAnalyzer:
         # Select cave with highest score
         best_cave = max(suitable_caves, key=lambda x: x["final_score"])
 
-        logger.info(f"Selected optimal cave at 0x{best_cave['address']:X}, "
-                   f"size: 0x{best_cave['size']:X}, score: {best_cave['final_score']}")
+        logger.info(
+            f"Selected optimal cave at 0x{best_cave['address']:X}, size: 0x{best_cave['size']:X}, score: {best_cave['final_score']}"
+        )
 
         return best_cave
 
@@ -2325,92 +2252,92 @@ class LicenseAnalyzer:
         if arch == "x86":
             # x86 NOP variations
             nop_variants = [
-                (b"\x90", 1),                          # NOP
-                (b"\x87\xc0", 2),                      # XCHG EAX,EAX
-                (b"\x87\xdb", 2),                      # XCHG EBX,EBX
-                (b"\x87\xc9", 2),                      # XCHG ECX,ECX
-                (b"\x87\xd2", 2),                      # XCHG EDX,EDX
-                (b"\x8b\xc0", 2),                      # MOV EAX,EAX
-                (b"\x8b\xdb", 2),                      # MOV EBX,EBX
-                (b"\x8b\xc9", 2),                      # MOV ECX,ECX
-                (b"\x8b\xd2", 2),                      # MOV EDX,EDX
-                (b"\x66\x90", 2),                      # 66 NOP (2-byte NOP)
-                (b"\x0f\x1f\x00", 3),                  # NOP DWORD PTR [EAX]
-                (b"\x0f\x1f\x40\x00", 4),              # NOP DWORD PTR [EAX+0]
-                (b"\x0f\x1f\x44\x00\x00", 5),          # NOP DWORD PTR [EAX+EAX+0]
-                (b"\x66\x0f\x1f\x44\x00\x00", 6),      # NOP WORD PTR [EAX+EAX+0]
+                (b"\x90", 1),  # NOP
+                (b"\x87\xc0", 2),  # XCHG EAX,EAX
+                (b"\x87\xdb", 2),  # XCHG EBX,EBX
+                (b"\x87\xc9", 2),  # XCHG ECX,ECX
+                (b"\x87\xd2", 2),  # XCHG EDX,EDX
+                (b"\x8b\xc0", 2),  # MOV EAX,EAX
+                (b"\x8b\xdb", 2),  # MOV EBX,EBX
+                (b"\x8b\xc9", 2),  # MOV ECX,ECX
+                (b"\x8b\xd2", 2),  # MOV EDX,EDX
+                (b"\x66\x90", 2),  # 66 NOP (2-byte NOP)
+                (b"\x0f\x1f\x00", 3),  # NOP DWORD PTR [EAX]
+                (b"\x0f\x1f\x40\x00", 4),  # NOP DWORD PTR [EAX+0]
+                (b"\x0f\x1f\x44\x00\x00", 5),  # NOP DWORD PTR [EAX+EAX+0]
+                (b"\x66\x0f\x1f\x44\x00\x00", 6),  # NOP WORD PTR [EAX+EAX+0]
                 (b"\x0f\x1f\x80\x00\x00\x00\x00", 7),  # NOP DWORD PTR [EAX+00000000]
                 (b"\x0f\x1f\x84\x00\x00\x00\x00\x00", 8),  # NOP DWORD PTR [EAX+EAX+00000000]
                 (b"\x66\x0f\x1f\x84\x00\x00\x00\x00\x00", 9),  # NOP WORD PTR [EAX+EAX+00000000]
-                (b"\x8d\x04\x20", 3),                  # LEA EAX,[EAX]
-                (b"\x8d\x1c\x23", 3),                  # LEA EBX,[EBX]
-                (b"\x8d\x0c\x21", 3),                  # LEA ECX,[ECX]
-                (b"\x8d\x14\x22", 3),                  # LEA EDX,[EDX]
-                (b"\x8d\x40\x00", 3),                  # LEA EAX,[EAX+0]
-                (b"\x8d\x49\x00", 3),                  # LEA ECX,[ECX+0]
-                (b"\x8d\x52\x00", 3),                  # LEA EDX,[EDX+0]
-                (b"\x8d\x5b\x00", 3),                  # LEA EBX,[EBX+0]
-                (b"\x8d\x80\x00\x00\x00\x00", 6),      # LEA EAX,[EAX+00000000]
-                (b"\x8d\x89\x00\x00\x00\x00", 6),      # LEA ECX,[ECX+00000000]
-                (b"\x25\xff\xff\xff\xff", 5),          # AND EAX,FFFFFFFF
-                (b"\x81\xe1\xff\xff\xff\xff", 6),      # AND ECX,FFFFFFFF
-                (b"\x0d\x00\x00\x00\x00", 5),          # OR EAX,00000000
-                (b"\x81\xc9\x00\x00\x00\x00", 6),      # OR ECX,00000000
-                (b"\x35\x00\x00\x00\x00", 5),          # XOR EAX,00000000
-                (b"\x81\xf1\x00\x00\x00\x00", 6),      # XOR ECX,00000000
-                (b"\x05\x00\x00\x00\x00", 5),          # ADD EAX,00000000
-                (b"\x81\xc1\x00\x00\x00\x00", 6),      # ADD ECX,00000000
-                (b"\x2d\x00\x00\x00\x00", 5),          # SUB EAX,00000000
-                (b"\x81\xe9\x00\x00\x00\x00", 6),      # SUB ECX,00000000
+                (b"\x8d\x04\x20", 3),  # LEA EAX,[EAX]
+                (b"\x8d\x1c\x23", 3),  # LEA EBX,[EBX]
+                (b"\x8d\x0c\x21", 3),  # LEA ECX,[ECX]
+                (b"\x8d\x14\x22", 3),  # LEA EDX,[EDX]
+                (b"\x8d\x40\x00", 3),  # LEA EAX,[EAX+0]
+                (b"\x8d\x49\x00", 3),  # LEA ECX,[ECX+0]
+                (b"\x8d\x52\x00", 3),  # LEA EDX,[EDX+0]
+                (b"\x8d\x5b\x00", 3),  # LEA EBX,[EBX+0]
+                (b"\x8d\x80\x00\x00\x00\x00", 6),  # LEA EAX,[EAX+00000000]
+                (b"\x8d\x89\x00\x00\x00\x00", 6),  # LEA ECX,[ECX+00000000]
+                (b"\x25\xff\xff\xff\xff", 5),  # AND EAX,FFFFFFFF
+                (b"\x81\xe1\xff\xff\xff\xff", 6),  # AND ECX,FFFFFFFF
+                (b"\x0d\x00\x00\x00\x00", 5),  # OR EAX,00000000
+                (b"\x81\xc9\x00\x00\x00\x00", 6),  # OR ECX,00000000
+                (b"\x35\x00\x00\x00\x00", 5),  # XOR EAX,00000000
+                (b"\x81\xf1\x00\x00\x00\x00", 6),  # XOR ECX,00000000
+                (b"\x05\x00\x00\x00\x00", 5),  # ADD EAX,00000000
+                (b"\x81\xc1\x00\x00\x00\x00", 6),  # ADD ECX,00000000
+                (b"\x2d\x00\x00\x00\x00", 5),  # SUB EAX,00000000
+                (b"\x81\xe9\x00\x00\x00\x00", 6),  # SUB ECX,00000000
             ]
 
         elif arch == "x64":
             # x64 NOP variations
             nop_variants = [
-                (b"\x90", 1),                          # NOP
-                (b"\x48\x87\xc0", 3),                  # XCHG RAX,RAX
-                (b"\x48\x87\xdb", 3),                  # XCHG RBX,RBX
-                (b"\x48\x87\xc9", 3),                  # XCHG RCX,RCX
-                (b"\x48\x87\xd2", 3),                  # XCHG RDX,RDX
-                (b"\x48\x8b\xc0", 3),                  # MOV RAX,RAX
-                (b"\x48\x8b\xdb", 3),                  # MOV RBX,RBX
-                (b"\x48\x8b\xc9", 3),                  # MOV RCX,RCX
-                (b"\x48\x8b\xd2", 3),                  # MOV RDX,RDX
-                (b"\x66\x90", 2),                      # 66 NOP
-                (b"\x0f\x1f\x00", 3),                  # NOP DWORD PTR [RAX]
-                (b"\x0f\x1f\x40\x00", 4),              # NOP DWORD PTR [RAX+0]
-                (b"\x0f\x1f\x44\x00\x00", 5),          # NOP DWORD PTR [RAX+RAX+0]
-                (b"\x66\x0f\x1f\x44\x00\x00", 6),      # NOP WORD PTR [RAX+RAX+0]
+                (b"\x90", 1),  # NOP
+                (b"\x48\x87\xc0", 3),  # XCHG RAX,RAX
+                (b"\x48\x87\xdb", 3),  # XCHG RBX,RBX
+                (b"\x48\x87\xc9", 3),  # XCHG RCX,RCX
+                (b"\x48\x87\xd2", 3),  # XCHG RDX,RDX
+                (b"\x48\x8b\xc0", 3),  # MOV RAX,RAX
+                (b"\x48\x8b\xdb", 3),  # MOV RBX,RBX
+                (b"\x48\x8b\xc9", 3),  # MOV RCX,RCX
+                (b"\x48\x8b\xd2", 3),  # MOV RDX,RDX
+                (b"\x66\x90", 2),  # 66 NOP
+                (b"\x0f\x1f\x00", 3),  # NOP DWORD PTR [RAX]
+                (b"\x0f\x1f\x40\x00", 4),  # NOP DWORD PTR [RAX+0]
+                (b"\x0f\x1f\x44\x00\x00", 5),  # NOP DWORD PTR [RAX+RAX+0]
+                (b"\x66\x0f\x1f\x44\x00\x00", 6),  # NOP WORD PTR [RAX+RAX+0]
                 (b"\x0f\x1f\x80\x00\x00\x00\x00", 7),  # NOP DWORD PTR [RAX+00000000]
                 (b"\x0f\x1f\x84\x00\x00\x00\x00\x00", 8),  # NOP DWORD PTR [RAX+RAX+00000000]
                 (b"\x66\x0f\x1f\x84\x00\x00\x00\x00\x00", 9),  # NOP WORD PTR [RAX+RAX+00000000]
-                (b"\x48\x8d\x04\x20", 4),              # LEA RAX,[RAX]
-                (b"\x48\x8d\x1c\x23", 4),              # LEA RBX,[RBX]
-                (b"\x48\x8d\x0c\x21", 4),              # LEA RCX,[RCX]
-                (b"\x48\x8d\x14\x22", 4),              # LEA RDX,[RDX]
-                (b"\x48\x8d\x40\x00", 4),              # LEA RAX,[RAX+0]
-                (b"\x48\x8d\x49\x00", 4),              # LEA RCX,[RCX+0]
-                (b"\x48\x8d\x52\x00", 4),              # LEA RDX,[RDX+0]
-                (b"\x48\x8d\x5b\x00", 4),              # LEA RBX,[RBX+0]
+                (b"\x48\x8d\x04\x20", 4),  # LEA RAX,[RAX]
+                (b"\x48\x8d\x1c\x23", 4),  # LEA RBX,[RBX]
+                (b"\x48\x8d\x0c\x21", 4),  # LEA RCX,[RCX]
+                (b"\x48\x8d\x14\x22", 4),  # LEA RDX,[RDX]
+                (b"\x48\x8d\x40\x00", 4),  # LEA RAX,[RAX+0]
+                (b"\x48\x8d\x49\x00", 4),  # LEA RCX,[RCX+0]
+                (b"\x48\x8d\x52\x00", 4),  # LEA RDX,[RDX+0]
+                (b"\x48\x8d\x5b\x00", 4),  # LEA RBX,[RBX+0]
                 (b"\x48\x8d\x80\x00\x00\x00\x00", 7),  # LEA RAX,[RAX+00000000]
-                (b"\x48\x25\xff\xff\xff\xff", 6),      # AND RAX,FFFFFFFF
+                (b"\x48\x25\xff\xff\xff\xff", 6),  # AND RAX,FFFFFFFF
                 (b"\x48\x81\xe1\xff\xff\xff\xff", 7),  # AND RCX,FFFFFFFF
-                (b"\x48\x0d\x00\x00\x00\x00", 6),      # OR RAX,00000000
+                (b"\x48\x0d\x00\x00\x00\x00", 6),  # OR RAX,00000000
                 (b"\x48\x81\xc9\x00\x00\x00\x00", 7),  # OR RCX,00000000
-                (b"\x48\x35\x00\x00\x00\x00", 6),      # XOR RAX,00000000
+                (b"\x48\x35\x00\x00\x00\x00", 6),  # XOR RAX,00000000
                 (b"\x48\x81\xf1\x00\x00\x00\x00", 7),  # XOR RCX,00000000
-                (b"\x48\x05\x00\x00\x00\x00", 6),      # ADD RAX,00000000
+                (b"\x48\x05\x00\x00\x00\x00", 6),  # ADD RAX,00000000
                 (b"\x48\x81\xc1\x00\x00\x00\x00", 7),  # ADD RCX,00000000
-                (b"\x48\x2d\x00\x00\x00\x00", 6),      # SUB RAX,00000000
+                (b"\x48\x2d\x00\x00\x00\x00", 6),  # SUB RAX,00000000
                 (b"\x48\x81\xe9\x00\x00\x00\x00", 7),  # SUB RCX,00000000
-                (b"\x40\x90", 2),                      # REX.B NOP
-                (b"\x41\x90", 2),                      # REX.B NOP
-                (b"\x42\x90", 2),                      # REX.X NOP
-                (b"\x43\x90", 2),                      # REX.XB NOP
-                (b"\x44\x90", 2),                      # REX.R NOP
-                (b"\x45\x90", 2),                      # REX.RB NOP
-                (b"\x46\x90", 2),                      # REX.RX NOP
-                (b"\x47\x90", 2),                      # REX.RXB NOP
+                (b"\x40\x90", 2),  # REX.B NOP
+                (b"\x41\x90", 2),  # REX.B NOP
+                (b"\x42\x90", 2),  # REX.X NOP
+                (b"\x43\x90", 2),  # REX.XB NOP
+                (b"\x44\x90", 2),  # REX.R NOP
+                (b"\x45\x90", 2),  # REX.RB NOP
+                (b"\x46\x90", 2),  # REX.RX NOP
+                (b"\x47\x90", 2),  # REX.RXB NOP
             ]
         else:
             # Default to simple NOPs
@@ -2428,16 +2355,19 @@ class LicenseAnalyzer:
                 nop_sled.extend(b"\x90" * remaining)
                 break
 
-            # Randomly select a NOP variant
-            if random.random() < 0.7:  # 70% chance of using diverse NOPs
-                # Prefer longer NOPs for better diversity
-                weights = [size for _, size in fitting_variants]
-                chosen_nop, _ = random.choices(fitting_variants, weights=weights)[0]
-            else:
-                # Use simple NOP occasionally
-                chosen_nop, _ = random.choice(fitting_variants)
+        # Randomly select a NOP variant
+        # Note: Using random module for generating NOP sleds, not cryptographic purposes
+        if random.random() < 0.7:  # noqa: S311  # 70% chance of using diverse NOPs
+            # Prefer longer NOPs for better diversity
+            weights = [size for _, size in fitting_variants]
+            # Note: Using random module for generating NOP sleds, not cryptographic purposes
+            chosen_nop, _ = random.choices(fitting_variants, weights=weights)[0]  # noqa: S311
+        else:
+            # Use simple NOP occasionally
+            # Note: Using random module for generating NOP sleds, not cryptographic purposes
+            chosen_nop, _ = random.choice(fitting_variants)  # noqa: S311
 
-            nop_sled.extend(chosen_nop)
+        nop_sled.extend(chosen_nop)
 
         # Ensure exact length (trim if necessary)
         return bytes(nop_sled[:length])
@@ -2458,30 +2388,24 @@ class LicenseAnalyzer:
             (b"\x51\x59", 2, "PUSH ECX; POP ECX"),
             (b"\x52\x5a", 2, "PUSH EDX; POP EDX"),
             (b"\x53\x5b", 2, "PUSH EBX; POP EBX"),
-
             # Increment/Decrement pairs
             (b"\x40\x48", 2, "INC EAX; DEC EAX"),
             (b"\x41\x49", 2, "INC ECX; DEC ECX"),
             (b"\x42\x4a", 2, "INC EDX; DEC EDX"),
             (b"\x43\x4b", 2, "INC EBX; DEC EBX"),
-
             # Add/Sub cancellation
             (b"\x83\xc0\x01\x83\xe8\x01", 5, "ADD EAX,1; SUB EAX,1"),
             (b"\x83\xc1\x01\x83\xe9\x01", 5, "ADD ECX,1; SUB ECX,1"),
             (b"\x83\xc2\x01\x83\xea\x01", 5, "ADD EDX,1; SUB EDX,1"),
-
             # XOR twice (restore original value)
             (b"\x34\x42\x34\x42", 4, "XOR AL,42h; XOR AL,42h"),
             (b"\x35\x12\x34\x56\x78\x35\x12\x34\x56\x78", 10, "XOR EAX,12345678h; XOR EAX,12345678h"),
-
             # ROL/ROR pairs
             (b"\xd0\xc0\xd0\xc8", 4, "ROL AL,1; ROR AL,1"),
             (b"\xd0\xc1\xd0\xc9", 4, "ROL CL,1; ROR CL,1"),
-
             # NEG twice
             (b"\xf6\xd8\xf6\xd8", 4, "NEG AL; NEG AL"),
             (b"\xf7\xd8\xf7\xd8", 4, "NEG EAX; NEG EAX"),
-
             # NOT twice
             (b"\xf6\xd0\xf6\xd0", 4, "NOT AL; NOT AL"),
             (b"\xf7\xd0\xf7\xd0", 4, "NOT EAX; NOT EAX"),
@@ -2489,23 +2413,23 @@ class LicenseAnalyzer:
 
         if not preserve_registers:
             # Add patterns that modify registers
-            semantic_patterns.extend([
-                (b"\x31\xc0", 2, "XOR EAX,EAX"),
-                (b"\x31\xc9", 2, "XOR ECX,ECX"),
-                (b"\x31\xd2", 2, "XOR EDX,EDX"),
-                (b"\x31\xdb", 2, "XOR EBX,EBX"),
-                (b"\xb8\x00\x00\x00\x00", 5, "MOV EAX,0"),
-                (b"\xb9\x00\x00\x00\x00", 5, "MOV ECX,0"),
-                (b"\xba\x00\x00\x00\x00", 5, "MOV EDX,0"),
-            ])
+            semantic_patterns.extend(
+                [
+                    (b"\x31\xc0", 2, "XOR EAX,EAX"),
+                    (b"\x31\xc9", 2, "XOR ECX,ECX"),
+                    (b"\x31\xd2", 2, "XOR EDX,EDX"),
+                    (b"\x31\xdb", 2, "XOR EBX,EBX"),
+                    (b"\xb8\x00\x00\x00\x00", 5, "MOV EAX,0"),
+                    (b"\xb9\x00\x00\x00\x00", 5, "MOV ECX,0"),
+                    (b"\xba\x00\x00\x00\x00", 5, "MOV EDX,0"),
+                ]
+            )
 
         while len(semantic_sled) < length:
             remaining = length - len(semantic_sled)
 
             # Filter patterns that fit
-            fitting_patterns = [(pattern, size, desc)
-                              for pattern, size, desc in semantic_patterns
-                              if size <= remaining]
+            fitting_patterns = [(pattern, size, desc) for pattern, size, desc in semantic_patterns if size <= remaining]
 
             if not fitting_patterns:
                 # Fill with simple NOPs
@@ -2513,7 +2437,8 @@ class LicenseAnalyzer:
                 break
 
             # Choose random semantic pattern
-            pattern, size, desc = random.choice(fitting_patterns)
+            # Note: Using random module for generating semantic patterns, not cryptographic purposes
+            pattern, size, desc = random.choice(fitting_patterns)  # noqa: S311
             semantic_sled.extend(pattern)
 
         return bytes(semantic_sled[:length])
@@ -2532,16 +2457,13 @@ class LicenseAnalyzer:
             (b"\xeb\x01\x90\x90", 3),  # JMP +1; NOP (jump into middle)
             (b"\xe8\xff\xff\xff\xff\x58", 6),  # CALL $+5; POP EAX (gets EIP)
             (b"\xeb\x00", 2),  # JMP $+2 (null jump)
-
             # Conditional jumps that always/never execute
             (b"\x74\x01\x75", 3),  # JZ +1; JNZ (one will always execute)
             (b"\x72\x02\x90\x90", 4),  # JB +2; NOPs
             (b"\x73\x02\x90\x90", 4),  # JNC +2; NOPs
-
             # Garbage bytes between valid instructions
             (b"\x90\xf1\x90", 3),  # NOP; ICEBP; NOP
             (b"\x90\xf4\x90", 3),  # NOP; HLT; NOP (if skipped)
-
             # Multi-byte NOPs that look like other instructions
             (b"\x0f\x0b", 2),  # UD2 (undefined instruction if not handled)
             (b"\x0f\x05", 2),  # SYSCALL (on x64, harmless on x86)
@@ -2579,10 +2501,12 @@ class LicenseAnalyzer:
 
         while remaining > 0:
             # Choose technique for this segment
-            technique = random.choice(techniques)
+            # Note: Using random module for generating polymorphic code, not cryptographic purposes
+            technique = random.choice(techniques)  # noqa: S311
 
             # Determine segment size (variable for more randomness)
-            segment_size = min(remaining, random.randint(4, min(32, remaining)))
+            # Note: Using random module for generating polymorphic code, not cryptographic purposes
+            segment_size = min(remaining, random.randint(4, min(32, remaining)))  # noqa: S311
 
             if technique == "polymorphic":
                 segment = self.generate_polymorphic_nops(segment_size, arch)
@@ -2809,8 +2733,8 @@ class LicenseAnalyzer:
             for dll in process.memory_maps():
                 if module_name.lower() in dll.path.lower():
                     return dll.addr
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Module base address lookup failed: {e}")
 
         return None
 
@@ -2883,13 +2807,7 @@ class LicenseAnalyzer:
         MEM_COMMIT = 0x1000
         MEM_RESERVE = 0x2000
 
-        address = kernel32.VirtualAllocEx(
-            self.process_handle,
-            None,
-            size,
-            MEM_RESERVE | MEM_COMMIT,
-            protection
-        )
+        address = kernel32.VirtualAllocEx(self.process_handle, None, size, MEM_RESERVE | MEM_COMMIT, protection)
 
         if address:
             logger.info(f"Allocated {size} bytes at 0x{address:X}")
@@ -2913,13 +2831,7 @@ class LicenseAnalyzer:
             return False
 
         old_protect = ctypes.wintypes.DWORD()
-        success = kernel32.VirtualProtectEx(
-            self.process_handle,
-            ctypes.c_void_p(address),
-            size,
-            protection,
-            ctypes.byref(old_protect)
-        )
+        success = kernel32.VirtualProtectEx(self.process_handle, ctypes.c_void_p(address), size, protection, ctypes.byref(old_protect))
 
         if success:
             logger.info(f"Changed protection at 0x{address:X} from 0x{old_protect.value:X} to 0x{protection:X}")
@@ -2952,12 +2864,7 @@ class LicenseAnalyzer:
             ]
 
         mbi = MEMORY_BASIC_INFORMATION()
-        result = kernel32.VirtualQueryEx(
-            self.process_handle,
-            ctypes.c_void_p(address),
-            ctypes.byref(mbi),
-            ctypes.sizeof(mbi)
-        )
+        result = kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
 
         if result:
             return {
@@ -2967,7 +2874,7 @@ class LicenseAnalyzer:
                 "size": mbi.RegionSize,
                 "state": mbi.State,
                 "protection": mbi.Protect,
-                "type": mbi.Type
+                "type": mbi.Type,
             }
         else:
             logger.error(f"Failed to query memory at 0x{address:X}")
@@ -2992,16 +2899,18 @@ class LicenseAnalyzer:
                 break
 
             if info["state"] == 0x1000:  # MEM_COMMIT
-                regions.append({
-                    "base_address": info["base_address"],
-                    "size": info["size"],
-                    "protection": info["protection"],
-                    "type": info["type"],
-                    "state": "committed",
-                    "is_executable": bool(info["protection"] & 0xF0),  # Any execute permission
-                    "is_writable": bool(info["protection"] & 0x0C),    # Write or copy-on-write
-                    "is_readable": bool(info["protection"] & 0x06)     # Read or execute_read
-                })
+                regions.append(
+                    {
+                        "base_address": info["base_address"],
+                        "size": info["size"],
+                        "protection": info["protection"],
+                        "type": info["type"],
+                        "state": "committed",
+                        "is_executable": bool(info["protection"] & 0xF0),  # Any execute permission
+                        "is_writable": bool(info["protection"] & 0x0C),  # Write or copy-on-write
+                        "is_readable": bool(info["protection"] & 0x06),  # Read or execute_read
+                    }
+                )
 
             # Move to next region
             if info.get("size", 0) > 0:

@@ -33,8 +33,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
-
 from .base_dialog import BaseDialog
 
 
@@ -45,10 +43,9 @@ class NodeJSInstallWorker(QThread):
     progress_value = pyqtSignal(int)  # Real progress tracking
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, compiler):
-        """Initialize Node.js installation worker with compiler instance."""
+    def __init__(self):
+        """Initialize Node.js installation worker."""
         super().__init__()
-        self.compiler = compiler
 
     def run(self):
         """Install Node.js in background thread with real progress tracking."""
@@ -69,8 +66,45 @@ class NodeJSInstallWorker(QThread):
             self.progress.emit("Downloading Node.js v20.15.1 LTS...")
             self.progress_value.emit(40)
 
-            # Install with real progress tracking
-            success = self.compiler.install_nodejs()
+            import subprocess
+            import tempfile
+
+            node_url = "https://nodejs.org/dist/v20.15.1/node-v20.15.1-x64.msi"
+            temp_installer = os.path.join(tempfile.gettempdir(), "node_installer.msi")
+
+            try:
+                # Validate URL scheme to prevent file:// or other unexpected schemes
+                from urllib.parse import urlparse
+
+                parsed_url = urlparse(node_url)
+                if parsed_url.scheme not in ("http", "https"):
+                    raise ValueError(f"Invalid URL scheme: {parsed_url.scheme}. Only http/https are allowed.")
+
+                # Use requests library for safer URL handling
+                import requests
+
+                response = requests.get(node_url, stream=True, timeout=30)
+                response.raise_for_status()
+
+                # Download file in chunks to temp_installer
+                with open(temp_installer, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+                self.progress_value.emit(70)
+
+                self.progress.emit("Installing Node.js...")
+                self.progress_value.emit(75)
+
+                # Sanitize temp_installer to prevent command injection
+                temp_installer_clean = str(temp_installer).replace(";", "").replace("|", "").replace("&", "")
+                result = subprocess.run(
+                    ["msiexec", "/i", temp_installer_clean, "/quiet", "/norestart"], capture_output=True, timeout=300, shell=False
+                )
+                success = result.returncode == 0
+            except Exception as e:
+                success = False
+                self.progress.emit(f"Installation failed: {str(e)}")
 
             if success:
                 # Phase 5: Installation (80%)
@@ -99,7 +133,6 @@ class NodeJSSetupDialog(BaseDialog):
     def __init__(self, parent=None):
         """Initialize Node.js setup dialog."""
         super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
-        self.compiler = AdobeLicenseCompiler()
         self.install_worker = None
         self.setup_content(self.content_layout)
 
@@ -227,7 +260,19 @@ class NodeJSSetupDialog(BaseDialog):
                 self.show_error("Please provide a Node.js installation path.")
                 return False
 
-            if self.compiler.check_nodejs(custom_path):
+            import subprocess
+
+            node_exe = os.path.join(custom_path, "node.exe")
+
+            try:
+                # Sanitize node_exe to prevent command injection
+                node_exe_clean = str(node_exe).replace(";", "").replace("|", "").replace("&", "")
+                result = subprocess.run([node_exe_clean, "--version"], capture_output=True, timeout=5, text=True, shell=False)
+                nodejs_found = result.returncode == 0 and result.stdout.startswith("v")
+            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+                nodejs_found = False
+
+            if nodejs_found:
                 QMessageBox.information(self, "Success", "Node.js found at the specified path!")
                 return True
             else:
@@ -251,7 +296,7 @@ class NodeJSSetupDialog(BaseDialog):
         self.browse_btn.setEnabled(False)
 
         # Start installation in worker thread with real progress tracking
-        self.install_worker = NodeJSInstallWorker(self.compiler)
+        self.install_worker = NodeJSInstallWorker()
         self.install_worker.progress.connect(self.on_install_progress)
         self.install_worker.progress_value.connect(self.progress_bar.setValue)  # Connect real progress values
         self.install_worker.finished.connect(self.on_install_finished)

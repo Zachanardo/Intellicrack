@@ -11,8 +11,8 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from .dashboard_manager import DashboardLayout, DashboardManager, DataSource, DataSourceType, create_dashboard_manager
-from .dashboard_widgets import (
+from intellicrack.dashboard.dashboard_manager import DashboardLayout, DashboardManager, DataSource, DataSourceType, create_dashboard_manager
+from intellicrack.dashboard.dashboard_widgets import (
     DashboardWidget,
     GaugeWidget,
     HeatmapWidget,
@@ -27,7 +27,13 @@ from .dashboard_widgets import (
     WidgetType,
     create_widget,
 )
-from .real_time_dashboard import AnalysisMetrics, DashboardEvent, DashboardEventType, RealTimeDashboard, create_dashboard
+from intellicrack.dashboard.real_time_dashboard import (
+    AnalysisMetrics,
+    DashboardEvent,
+    DashboardEventType,
+    RealTimeDashboard,
+    create_dashboard,
+)
 
 __all__ = [
     # Real-time dashboard

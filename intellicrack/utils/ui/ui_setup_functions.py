@@ -23,7 +23,7 @@ from typing import Any
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT
 
-from ..utils.logger import setup_logger
+from ..logger import setup_logger
 
 if HAS_PYQT:
     from intellicrack.handlers.pyqt6_handler import (
@@ -56,11 +56,11 @@ else:
             self._parent = None
             self._visible = False
             self._enabled = True
-            self._name = kwargs.get('objectName', f'widget_{id(self)}')
+            self._name = kwargs.get("objectName", f"widget_{id(self)}")
 
         def setParent(self, parent):
             self._parent = parent
-            if parent and hasattr(parent, '_children'):
+            if parent and hasattr(parent, "_children"):
                 parent._children.append(self)
 
         def show(self):
@@ -73,16 +73,16 @@ else:
             self._enabled = enabled
 
         def setText(self, text):
-            self._attributes['text'] = text
+            self._attributes["text"] = text
 
         def text(self):
-            return self._attributes.get('text', '')
+            return self._attributes.get("text", "")
 
         def setValue(self, value):
-            self._attributes['value'] = value
+            self._attributes["value"] = value
 
         def value(self):
-            return self._attributes.get('value', 0)
+            return self._attributes.get("value", 0)
 
         def addWidget(self, widget):
             if widget:
@@ -96,6 +96,7 @@ else:
             # Return a callable that stores the call but doesn't fail
             def method(*args, **kwargs):
                 return None
+
             return method
 
     class HeadlessLayout(HeadlessWidget):
@@ -142,6 +143,7 @@ else:
 
     class HeadlessQt:
         """Production fallback Qt namespace for headless operation."""
+
         AlignCenter = 0x0004
         AlignLeft = 0x0001
         AlignRight = 0x0002

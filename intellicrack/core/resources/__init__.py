@@ -7,7 +7,6 @@ Licensed under GNU General Public License v3.0
 """
 
 from .resource_manager import (
-    ContainerResource,
     ManagedResource,
     ProcessResource,
     ResourceManager,
@@ -18,7 +17,6 @@ from .resource_manager import (
 )
 
 __all__ = [
-    "ContainerResource",
     "ManagedResource",
     "ProcessResource",
     "ResourceManager",

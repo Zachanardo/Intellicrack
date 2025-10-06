@@ -1,29 +1,26 @@
 """TPM and Secure Enclave bypass for defeating hardware-based license protections."""
 
+import base64
 import ctypes
 import ctypes.wintypes
-import struct
-import os
 import hashlib
 import hmac
-import secrets
-import threading
-import queue
-import time
 import json
-import base64
-import pickle
+import logging
+import os
 import platform
-from typing import Dict, List, Tuple, Optional, Any, Callable, Union, ByteString
-from pathlib import Path
-from dataclasses import dataclass, field
+import secrets
+import struct
+import subprocess
+import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import IntEnum
-import logging
-import winreg
-import subprocess
-from cryptography.hazmat.primitives.asymmetric import padding
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 logger = logging.getLogger(__name__)
 
@@ -205,18 +202,15 @@ class TPMEmulator:
     def __init__(self):
         """Initialize TPM emulator with default state."""
         self.tpm_state = {}
-        self.pcr_banks = {
-            TPM_ALG.SHA1: [b'\x00' * 20 for _ in range(24)],
-            TPM_ALG.SHA256: [b'\x00' * 32 for _ in range(24)]
-        }
+        self.pcr_banks = {TPM_ALG.SHA1: [b"\x00" * 20 for _ in range(24)], TPM_ALG.SHA256: [b"\x00" * 32 for _ in range(24)]}
         self.nv_storage = {}
         self.keys = {}
         self.sessions = {}
         self.hierarchy_auth = {
-            0x40000001: b'',  # TPM_RH_OWNER
-            0x4000000C: b'',  # TPM_RH_ENDORSEMENT
-            0x4000000B: b'',  # TPM_RH_PLATFORM
-            0x40000010: b''   # TPM_RH_NULL
+            0x40000001: b"",  # TPM_RH_OWNER
+            0x4000000C: b"",  # TPM_RH_ENDORSEMENT
+            0x4000000B: b"",  # TPM_RH_PLATFORM
+            0x40000010: b"",  # TPM_RH_NULL
         }
         self.driver_handle = None
         self._init_emulation_driver()
@@ -243,7 +237,7 @@ class TPMEmulator:
         # The driver intercepts TPM commands and provides emulated responses
 
         import pefile
-        from keystone import Ks, KS_ARCH_X86, KS_MODE_64
+        from keystone import KS_ARCH_X86, KS_MODE_64, Ks
 
         asm_code = """
         BITS 64
@@ -475,7 +469,7 @@ class TPMEmulator:
 
         # Add code section
         text_section = pefile.SectionStructure()
-        text_section.Name = b'.text\x00\x00\x00'
+        text_section.Name = b".text\x00\x00\x00"
         text_section.Misc_VirtualSize = len(encoding)
         text_section.VirtualAddress = 0x1000
         text_section.SizeOfRawData = ((len(encoding) + 0x1FF) // 0x200) * 0x200
@@ -510,7 +504,11 @@ class TPMEmulator:
             SERVICE_DEMAND_START,
             1,  # SERVICE_ERROR_NORMAL
             str(driver_path),
-            None, None, None, None, None
+            None,
+            None,
+            None,
+            None,
+            None,
         )
 
         if not h_service:
@@ -530,18 +528,18 @@ class TPMEmulator:
             None,
             3,  # OPEN_EXISTING
             0,
-            None
+            None,
         )
 
     def startup(self, startup_type: int = 0) -> TPM_RC:
         """Initialize TPM emulator."""
-        self.tpm_state['started'] = True
-        self.tpm_state['startup_type'] = startup_type
+        self.tpm_state["started"] = True
+        self.tpm_state["startup_type"] = startup_type
 
         # Reset PCRs if clear startup
         if startup_type == 0:  # TPM_SU_CLEAR
             for alg in self.pcr_banks:
-                self.pcr_banks[alg] = [b'\x00' * (20 if alg == TPM_ALG.SHA1 else 32) for _ in range(24)]
+                self.pcr_banks[alg] = [b"\x00" * (20 if alg == TPM_ALG.SHA1 else 32) for _ in range(24)]
 
         return TPM_RC.SUCCESS
 
@@ -555,24 +553,20 @@ class TPMEmulator:
             return TPM_RC.AUTH_FAIL, None
 
         # Generate key based on template
-        key_alg = key_template.get('algorithm', TPM_ALG.RSA)
-        key_size = key_template.get('key_size', 2048)
+        key_alg = key_template.get("algorithm", TPM_ALG.RSA)
+        key_size = key_template.get("key_size", 2048)
 
         if key_alg == TPM_ALG.RSA:
-            from cryptography.hazmat.primitives.asymmetric import rsa
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives.asymmetric import rsa
 
-            private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=key_size,
-                backend=default_backend()
-            )
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
             public_key = private_key.public_key()
 
         elif key_alg == TPM_ALG.ECC:
-            from cryptography.hazmat.primitives.asymmetric import ec
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives.asymmetric import ec
 
             curve = ec.SECP256R1()
             private_key = ec.generate_private_key(curve, default_backend())
@@ -592,7 +586,7 @@ class TPMEmulator:
             auth_value=secrets.token_bytes(32),
             algorithm=key_alg,
             key_size=key_size,
-            attributes=key_template.get('attributes', 0)
+            attributes=key_template.get("attributes", 0),
         )
 
         self.keys[handle] = tpm_key
@@ -602,18 +596,13 @@ class TPMEmulator:
     def _serialize_public_key(self, public_key) -> bytes:
         from cryptography.hazmat.primitives import serialization
 
-        return public_key.public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+        return public_key.public_bytes(encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
     def _serialize_private_key(self, private_key) -> bytes:
         from cryptography.hazmat.primitives import serialization
 
         return private_key.private_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encoding=serialization.Encoding.DER, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()
         )
 
     def sign(self, key_handle: int, data: bytes, auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
@@ -628,33 +617,21 @@ class TPMEmulator:
             return TPM_RC.AUTH_FAIL, None
 
         # Perform signing
+        from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import padding
-        from cryptography.hazmat.backends import default_backend
 
         # Deserialize private key
-        private_key = serialization.load_der_private_key(
-            key.private_key,
-            password=None,
-            backend=default_backend()
-        )
+        private_key = serialization.load_der_private_key(key.private_key, password=None, backend=default_backend())
 
         if key.algorithm == TPM_ALG.RSA:
             signature = private_key.sign(
-                data,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
-                ),
-                hashes.SHA256()
+                data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
             )
         elif key.algorithm == TPM_ALG.ECC:
             from cryptography.hazmat.primitives.asymmetric import ec
 
-            signature = private_key.sign(
-                data,
-                ec.ECDSA(hashes.SHA256())
-            )
+            signature = private_key.sign(data, ec.ECDSA(hashes.SHA256()))
         else:
             return TPM_RC.TYPE, None
 
@@ -671,12 +648,12 @@ class TPMEmulator:
         # Calculate hash
         if hash_alg == TPM_ALG.SHA1:
             import hashlib
+
             hash_func = hashlib.sha1
-            hash_size = 20
         elif hash_alg == TPM_ALG.SHA256:
             import hashlib
+
             hash_func = hashlib.sha256
-            hash_size = 32
         else:
             return TPM_RC.TYPE
 
@@ -708,42 +685,42 @@ class TPMEmulator:
     def seal(self, data: bytes, pcr_selection: List[int], auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
         """Seal data to PCR state."""
         # Create sealed blob structure
-        sealed_blob = {
-            'data': data,
-            'pcr_selection': pcr_selection,
-            'pcr_values': {},
-            'auth': hashlib.sha256(auth).digest()
-        }
+        sealed_blob = {"data": data, "pcr_selection": pcr_selection, "pcr_values": {}, "auth": hashlib.sha256(auth).digest()}
 
         # Capture current PCR values
         for pcr in pcr_selection:
             if pcr >= 24:
                 return TPM_RC.PCR, None
 
-            sealed_blob['pcr_values'][pcr] = self.pcr_banks[TPM_ALG.SHA256][pcr]
+            sealed_blob["pcr_values"][pcr] = self.pcr_banks[TPM_ALG.SHA256][pcr]
 
         # Encrypt sealed blob
         import json
+
         from cryptography.fernet import Fernet
 
         key = base64.urlsafe_b64encode(hashlib.sha256(b"TPMSealKey").digest()[:32])
         f = Fernet(key)
 
-        sealed_data = f.encrypt(json.dumps({
-            'data': base64.b64encode(data).decode('ascii'),
-            'pcrs': {str(k): base64.b64encode(v).decode('ascii')
-                    for k, v in sealed_blob['pcr_values'].items()},
-            'auth': base64.b64encode(sealed_blob['auth']).decode('ascii')
-        }).encode())
+        sealed_data = f.encrypt(
+            json.dumps(
+                {
+                    "data": base64.b64encode(data).decode("ascii"),
+                    "pcrs": {str(k): base64.b64encode(v).decode("ascii") for k, v in sealed_blob["pcr_values"].items()},
+                    "auth": base64.b64encode(sealed_blob["auth"]).decode("ascii"),
+                }
+            ).encode()
+        )
 
         return TPM_RC.SUCCESS, sealed_data
 
     def unseal(self, sealed_data: bytes, auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
         """Unseal data if PCR state matches."""
         # Decrypt sealed blob
-        from cryptography.fernet import Fernet
-        import json
         import base64
+        import json
+
+        from cryptography.fernet import Fernet
 
         key = base64.urlsafe_b64encode(hashlib.sha256(b"TPMSealKey").digest()[:32])
         f = Fernet(key)
@@ -751,18 +728,18 @@ class TPMEmulator:
         try:
             decrypted = f.decrypt(sealed_data)
             blob = json.loads(decrypted)
-        except:
+        except (cryptography.fernet.InvalidToken, json.JSONDecodeError):
             return TPM_RC.INTEGRITY, None
 
         # Verify authorization
         auth_hash = hashlib.sha256(auth).digest()
-        stored_auth = base64.b64decode(blob['auth'])
+        stored_auth = base64.b64decode(blob["auth"])
 
         if auth_hash != stored_auth:
             return TPM_RC.AUTH_FAIL, None
 
         # Verify PCR values
-        for pcr_str, expected_b64 in blob['pcrs'].items():
+        for pcr_str, expected_b64 in blob["pcrs"].items():
             pcr = int(pcr_str)
             expected = base64.b64decode(expected_b64)
             current = self.pcr_banks[TPM_ALG.SHA256][pcr]
@@ -771,7 +748,7 @@ class TPMEmulator:
                 return TPM_RC.PCR_CHANGED, None
 
         # Return unsealed data
-        data = base64.b64decode(blob['data'])
+        data = base64.b64decode(blob["data"])
         return TPM_RC.SUCCESS, data
 
 
@@ -807,13 +784,13 @@ class SGXEmulator:
 
         # Create enclave structure
         self.enclaves[enclave_id] = {
-            'file': str(enclave_file),
-            'debug': debug,
-            'mr_enclave': mr_enclave,
-            'mr_signer': hashlib.sha256(b"IntellicrackSigner").digest(),
-            'attributes': 0x04 if debug else 0x00,
-            'isv_prod_id': 0,
-            'isv_svn': 0
+            "file": str(enclave_file),
+            "debug": debug,
+            "mr_enclave": mr_enclave,
+            "mr_signer": hashlib.sha256(b"IntellicrackSigner").digest(),
+            "attributes": 0x04 if debug else 0x00,
+            "isv_prod_id": 0,
+            "isv_svn": 0,
         }
 
         self.measurements[enclave_id] = mr_enclave
@@ -828,13 +805,14 @@ class SGXEmulator:
         enclave = self.enclaves[enclave_id]
 
         # Derive key from enclave measurement
-        key_material = enclave['mr_enclave'] + enclave['mr_signer']
+        key_material = enclave["mr_enclave"] + enclave["mr_signer"]
         sealing_key = hashlib.sha256(key_material).digest()
 
         self.sealing_keys[enclave_id] = sealing_key
 
-    def get_report(self, enclave_id: int, target_info: Optional[bytes] = None,
-                   report_data: Optional[bytes] = None) -> Tuple[Optional[SGXReport], SGX_ERROR]:
+    def get_report(
+        self, enclave_id: int, target_info: Optional[bytes] = None, report_data: Optional[bytes] = None
+    ) -> Tuple[Optional[SGXReport], SGX_ERROR]:
         """Get enclave report."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -842,13 +820,13 @@ class SGXEmulator:
         enclave = self.enclaves[enclave_id]
 
         report = SGXReport(
-            measurement=enclave['mr_enclave'],
-            attributes=enclave['attributes'],
-            mr_enclave=enclave['mr_enclave'],
-            mr_signer=enclave['mr_signer'],
-            isv_prod_id=enclave['isv_prod_id'],
-            isv_svn=enclave['isv_svn'],
-            report_data=report_data or b'\x00' * 64
+            measurement=enclave["mr_enclave"],
+            attributes=enclave["attributes"],
+            mr_enclave=enclave["mr_enclave"],
+            mr_signer=enclave["mr_signer"],
+            isv_prod_id=enclave["isv_prod_id"],
+            isv_svn=enclave["isv_svn"],
+            report_data=report_data or b"\x00" * 64,
         )
 
         return report, SGX_ERROR.SUCCESS
@@ -884,11 +862,10 @@ class SGXEmulator:
         try:
             data = f.decrypt(sealed_data)
             return data, SGX_ERROR.SUCCESS
-        except:
+        except (cryptography.fernet.InvalidToken, ValueError):
             return None, SGX_ERROR.MAC_MISMATCH
 
-    def get_quote(self, enclave_id: int, report: SGXReport,
-                  quote_type: int = 0) -> Tuple[Optional[bytes], SGX_ERROR]:
+    def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> Tuple[Optional[bytes], SGX_ERROR]:
         """Generate quote for remote attestation."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -897,31 +874,31 @@ class SGXEmulator:
         quote = bytearray()
 
         # Version
-        quote.extend(struct.pack('<H', 2))
+        quote.extend(struct.pack("<H", 2))
 
         # Sign type
-        quote.extend(struct.pack('<H', quote_type))
+        quote.extend(struct.pack("<H", quote_type))
 
         # EPID group ID
-        quote.extend(b'\x00' * 4)
+        quote.extend(b"\x00" * 4)
 
         # QE SVN
-        quote.extend(struct.pack('<H', 0))
+        quote.extend(struct.pack("<H", 0))
 
         # PCE SVN
-        quote.extend(struct.pack('<H', 0))
+        quote.extend(struct.pack("<H", 0))
 
         # XEID
-        quote.extend(b'\x00' * 16)
+        quote.extend(b"\x00" * 16)
 
         # Basename
-        quote.extend(b'\x00' * 32)
+        quote.extend(b"\x00" * 32)
 
         # Report
         quote.extend(report.mr_enclave)
         quote.extend(report.mr_signer)
-        quote.extend(struct.pack('<Q', report.isv_prod_id))
-        quote.extend(struct.pack('<H', report.isv_svn))
+        quote.extend(struct.pack("<Q", report.isv_prod_id))
+        quote.extend(struct.pack("<H", report.isv_svn))
         quote.extend(report.report_data)
 
         # Signature
@@ -934,11 +911,7 @@ class SGXEmulator:
         """Sign quote for attestation."""
         # Generate EPID-like signature
         # In real SGX, this would use Intel's attestation key
-        signature = hmac.new(
-            b"IntellicrackAttestationKey",
-            quote_data,
-            hashlib.sha256
-        ).digest()
+        signature = hmac.new(b"IntellicrackAttestationKey", quote_data, hashlib.sha256).digest()
 
         return signature
 
@@ -974,7 +947,7 @@ class SecureEnclaveBypass:
 
         session = frida.attach(pid)
         script = session.create_script(self._generate_hook_script())
-        script.on('message', self._on_message)
+        script.on("message", self._on_message)
         script.load()
 
     def _generate_hook_script(self) -> str:
@@ -1214,41 +1187,41 @@ class SecureEnclaveBypass:
 
     def _on_message(self, message, data):
         """Handle messages from injected script."""
-        if message['type'] == 'send':
-            payload = message['payload']
+        if message["type"] == "send":
+            payload = message["payload"]
 
-            if payload['type'] == 'tpm_command':
+            if payload["type"] == "tpm_command":
                 # Process TPM command through emulator
-                response = self._handle_tpm_command(payload['data'])
+                self._handle_tpm_command(payload["data"])
                 # Response will be handled in the hook
 
-            elif payload['type'] == 'hooks_installed':
+            elif payload["type"] == "hooks_installed":
                 logger.info("TPM/SGX bypass hooks installed")
 
     def _handle_tpm_command(self, command_data: List[int]) -> bytes:
         """Process TPM command through emulator."""
         # Parse command header
         if len(command_data) < 10:
-            return b'\x80\x01\x00\x00\x00\x0A\x00\x00\x01\x00'  # Error response
+            return b"\x80\x01\x00\x00\x00\x0a\x00\x00\x01\x00"  # Error response
 
-        command_code = struct.unpack('>I', bytes(command_data[6:10]))[0]
+        command_code = struct.unpack(">I", bytes(command_data[6:10]))[0]
 
         # Route to appropriate emulator function
         if command_code == 0x00000144:  # TPM2_Clear
             rc = self.tpm_emulator.startup(0)
         elif command_code == 0x0000017B:  # TPM2_GetRandom
-            num_bytes = struct.unpack('>H', bytes(command_data[10:12]))[0]
+            num_bytes = struct.unpack(">H", bytes(command_data[10:12]))[0]
             rc, random_data = self.tpm_emulator.get_random(num_bytes)
             if rc == TPM_RC.SUCCESS:
-                response = struct.pack('>HI', 0x8001, 12 + len(random_data))
-                response += struct.pack('>IH', 0, len(random_data))
+                response = struct.pack(">HI", 0x8001, 12 + len(random_data))
+                response += struct.pack(">IH", 0, len(random_data))
                 response += random_data
                 return response
         else:
             rc = TPM_RC.SUCCESS
 
         # Build response
-        response = struct.pack('>HIH', 0x8001, 10, rc)
+        response = struct.pack(">HIH", 0x8001, 10, rc)
         return response
 
     def _install_system_hooks(self):
@@ -1261,10 +1234,10 @@ class SecureEnclaveBypass:
         """Generate valid attestation response by intercepting and replaying legitimate attestations."""
         # Intercept and replay real attestation from legitimate hardware
         response = {
-            'tpm_quote': self._create_tpm_quote(challenge),
-            'sgx_quote': self._create_sgx_quote(challenge),
-            'certificates': self._extract_platform_certificates(),
-            'platform_manifest': self._capture_platform_manifest()
+            "tpm_quote": self._create_tpm_quote(challenge),
+            "sgx_quote": self._create_sgx_quote(challenge),
+            "certificates": self._extract_platform_certificates(),
+            "platform_manifest": self._capture_platform_manifest(),
         }
 
         return json.dumps(response).encode()
@@ -1285,40 +1258,42 @@ class SecureEnclaveBypass:
 
         # TPMS_ATTEST structure
         # Magic value for TPM_GENERATED_VALUE
-        quote_info.extend(struct.pack('>I', 0xFF544347))
+        quote_info.extend(struct.pack(">I", 0xFF544347))
 
         # Type: TPM_ST_ATTEST_QUOTE
-        quote_info.extend(struct.pack('>H', 0x8018))
+        quote_info.extend(struct.pack(">H", 0x8018))
 
         # Qualified signer name (handle of signing key)
         signer_name = self._get_attestation_key_name()
-        quote_info.extend(struct.pack('>H', len(signer_name)))
+        quote_info.extend(struct.pack(">H", len(signer_name)))
         quote_info.extend(signer_name)
 
         # Extra data (nonce/challenge)
-        quote_info.extend(struct.pack('>H', len(challenge)))
+        quote_info.extend(struct.pack(">H", len(challenge)))
         quote_info.extend(challenge)
 
         # Clock info
-        clock_info = struct.pack('>QIQB',
-                                int(time.time() * 1000),  # Clock
-                                0,  # Reset count
-                                0,  # Restart count
-                                1)  # Safe
+        clock_info = struct.pack(
+            ">QIQB",
+            int(time.time() * 1000),  # Clock
+            0,  # Reset count
+            0,  # Restart count
+            1,
+        )  # Safe
         quote_info.extend(clock_info)
 
         # Firmware version
-        quote_info.extend(struct.pack('>Q', 0x20200101))
+        quote_info.extend(struct.pack(">Q", 0x20200101))
 
         # PCR selection and digest
         pcr_digest = self._compute_pcr_digest(pcr_selection)
-        quote_info.extend(struct.pack('>H', len(pcr_selection)))
+        quote_info.extend(struct.pack(">H", len(pcr_selection)))
         quote_info.extend(pcr_selection)
-        quote_info.extend(struct.pack('>H', len(pcr_digest)))
+        quote_info.extend(struct.pack(">H", len(pcr_digest)))
         quote_info.extend(pcr_digest)
 
         # Add size prefix for TPM2B structure
-        quote.extend(struct.pack('>H', len(quote_info)))
+        quote.extend(struct.pack(">H", len(quote_info)))
         quote.extend(quote_info)
 
         # Sign the quote using extracted or emulated attestation key
@@ -1326,14 +1301,14 @@ class SecureEnclaveBypass:
 
         # TPMT_SIGNATURE structure
         sig_struct = bytearray()
-        sig_struct.extend(struct.pack('>H', TPM_ALG.RSASSA))
-        sig_struct.extend(struct.pack('>H', TPM_ALG.SHA256))
-        sig_struct.extend(struct.pack('>H', len(signature)))
+        sig_struct.extend(struct.pack(">H", TPM_ALG.RSASSA))
+        sig_struct.extend(struct.pack(">H", TPM_ALG.SHA256))
+        sig_struct.extend(struct.pack(">H", len(signature)))
         sig_struct.extend(signature)
 
         quote.extend(sig_struct)
 
-        return base64.b64encode(bytes(quote)).decode('ascii')
+        return base64.b64encode(bytes(quote)).decode("ascii")
 
     def _create_sgx_quote(self, challenge: bytes) -> str:
         """Create SGX quote using real enclave measurements or extracted attestation."""
@@ -1342,76 +1317,70 @@ class SecureEnclaveBypass:
 
         if not enclave_data:
             # Use SGX emulator with realistic values
-            enclave_id, error = self.sgx_emulator.create_enclave(
-                Path(__file__).parent / "enclave.signed.dll",
-                debug=False
-            )
+            enclave_id, error = self.sgx_emulator.create_enclave(Path(__file__).parent / "enclave.signed.dll", debug=False)
 
             if error == SGX_ERROR.SUCCESS:
-                report, error = self.sgx_emulator.get_report(
-                    enclave_id,
-                    report_data=hashlib.sha256(challenge).digest() + b'\x00' * 32
-                )
+                report, error = self.sgx_emulator.get_report(enclave_id, report_data=hashlib.sha256(challenge).digest() + b"\x00" * 32)
 
                 if error == SGX_ERROR.SUCCESS:
                     quote_data, error = self.sgx_emulator.get_quote(enclave_id, report)
                     if error == SGX_ERROR.SUCCESS:
-                        return base64.b64encode(quote_data).decode('ascii')
+                        return base64.b64encode(quote_data).decode("ascii")
 
         # Build quote from extracted enclave data
         quote = bytearray()
 
         # Quote header according to Intel SGX specification
-        quote.extend(struct.pack('<H', 3))  # Version 3 for ECDSA quotes
-        quote.extend(struct.pack('<H', 2))  # Attestation key type
-        quote.extend(struct.pack('<I', 0))  # TEE type = SGX
-        quote.extend(struct.pack('<H', 0))  # Reserved
-        quote.extend(struct.pack('<H', 0))  # Reserved
-        quote.extend(enclave_data.get('qe_vendor_id', b'\x00' * 16))
-        quote.extend(enclave_data.get('user_data', challenge[:20] + b'\x00' * 12))
+        quote.extend(struct.pack("<H", 3))  # Version 3 for ECDSA quotes
+        quote.extend(struct.pack("<H", 2))  # Attestation key type
+        quote.extend(struct.pack("<I", 0))  # TEE type = SGX
+        quote.extend(struct.pack("<H", 0))  # Reserved
+        quote.extend(struct.pack("<H", 0))  # Reserved
+        quote.extend(enclave_data.get("qe_vendor_id", b"\x00" * 16))
+        quote.extend(enclave_data.get("user_data", challenge[:20] + b"\x00" * 12))
 
         # ISV enclave report
         report_body = bytearray()
-        report_body.extend(enclave_data.get('cpu_svn', b'\x00' * 16))
-        report_body.extend(struct.pack('<I', enclave_data.get('misc_select', 0)))
-        report_body.extend(b'\x00' * 12)  # Reserved
-        report_body.extend(b'\x00' * 16)  # Reserved
-        report_body.extend(enclave_data.get('attributes', struct.pack('<QQ', 0x04, 0x00)))
-        report_body.extend(enclave_data.get('mr_enclave', hashlib.sha256(b"RealEnclave").digest()))
-        report_body.extend(b'\x00' * 32)  # Reserved
-        report_body.extend(enclave_data.get('mr_signer', hashlib.sha256(b"RealSigner").digest()))
-        report_body.extend(b'\x00' * 96)  # Reserved
-        report_body.extend(struct.pack('<H', enclave_data.get('isv_prod_id', 0)))
-        report_body.extend(struct.pack('<H', enclave_data.get('isv_svn', 0)))
-        report_body.extend(b'\x00' * 60)  # Reserved
+        report_body.extend(enclave_data.get("cpu_svn", b"\x00" * 16))
+        report_body.extend(struct.pack("<I", enclave_data.get("misc_select", 0)))
+        report_body.extend(b"\x00" * 12)  # Reserved
+        report_body.extend(b"\x00" * 16)  # Reserved
+        report_body.extend(enclave_data.get("attributes", struct.pack("<QQ", 0x04, 0x00)))
+        report_body.extend(enclave_data.get("mr_enclave", hashlib.sha256(b"RealEnclave").digest()))
+        report_body.extend(b"\x00" * 32)  # Reserved
+        report_body.extend(enclave_data.get("mr_signer", hashlib.sha256(b"RealSigner").digest()))
+        report_body.extend(b"\x00" * 96)  # Reserved
+        report_body.extend(struct.pack("<H", enclave_data.get("isv_prod_id", 0)))
+        report_body.extend(struct.pack("<H", enclave_data.get("isv_svn", 0)))
+        report_body.extend(b"\x00" * 60)  # Reserved
 
         # Report data with challenge
         report_data_hash = hashlib.sha256(challenge).digest()
         report_body.extend(report_data_hash)
-        report_body.extend(b'\x00' * 32)
+        report_body.extend(b"\x00" * 32)
 
         quote.extend(report_body)
 
         # Sign using ECDSA with attestation key
         signature = self._sign_sgx_quote(bytes(report_body))
-        quote.extend(struct.pack('<I', len(signature)))
+        quote.extend(struct.pack("<I", len(signature)))
         quote.extend(signature)
 
-        return base64.b64encode(bytes(quote)).decode('ascii')
+        return base64.b64encode(bytes(quote)).decode("ascii")
 
     def _extract_cached_tpm_quote(self, challenge: bytes) -> str:
         """Extract and modify cached TPM quote from previous attestation."""
-        cache_file = Path(__file__).parent / "attestation_cache" / "tpm_quotes.dat"
+        cache_file = Path(__file__).parent / "attestation_cache" / "tpm_quotes.json"
 
         if cache_file.exists():
-            with open(cache_file, 'rb') as f:
-                cached_quotes = pickle.load(f)
+            with open(cache_file, "r") as f:
+                cached_quotes = json.load(f)
 
             # Find suitable quote and update challenge
             for quote_data in cached_quotes:
                 modified_quote = self._update_quote_challenge(quote_data, challenge)
                 if modified_quote:
-                    return base64.b64encode(modified_quote).decode('ascii')
+                    return base64.b64encode(modified_quote).decode("ascii")
 
         # Generate using TPM emulator as fallback
         return self._emulate_tpm_quote(challenge)
@@ -1428,7 +1397,7 @@ class SecureEnclaveBypass:
                 None,
                 3,  # OPEN_EXISTING
                 0,
-                None
+                None,
             )
 
             if handle != -1:
@@ -1438,22 +1407,15 @@ class SecureEnclaveBypass:
                 bytes_returned = ctypes.wintypes.DWORD()
 
                 result = ctypes.windll.kernel32.DeviceIoControl(
-                    handle,
-                    IOCTL_SGX_GET_ENCLAVE_INFO,
-                    None,
-                    0,
-                    buffer,
-                    512,
-                    ctypes.byref(bytes_returned),
-                    None
+                    handle, IOCTL_SGX_GET_ENCLAVE_INFO, None, 0, buffer, 512, ctypes.byref(bytes_returned), None
                 )
 
                 ctypes.windll.kernel32.CloseHandle(handle)
 
                 if result:
                     # Parse enclave info
-                    return self._parse_enclave_info(buffer.raw[:bytes_returned.value])
-        except:
+                    return self._parse_enclave_info(buffer.raw[: bytes_returned.value])
+        except (OSError, AttributeError):
             pass
 
         return None
@@ -1464,25 +1426,25 @@ class SecureEnclaveBypass:
         offset = 0
 
         # Parse according to SGX driver structure
-        info['cpu_svn'] = data[offset:offset+16]
+        info["cpu_svn"] = data[offset : offset + 16]
         offset += 16
 
-        info['misc_select'] = struct.unpack('<I', data[offset:offset+4])[0]
+        info["misc_select"] = struct.unpack("<I", data[offset : offset + 4])[0]
         offset += 4
 
-        info['attributes'] = data[offset:offset+16]
+        info["attributes"] = data[offset : offset + 16]
         offset += 16
 
-        info['mr_enclave'] = data[offset:offset+32]
+        info["mr_enclave"] = data[offset : offset + 32]
         offset += 32
 
-        info['mr_signer'] = data[offset:offset+32]
+        info["mr_signer"] = data[offset : offset + 32]
         offset += 32
 
-        info['isv_prod_id'] = struct.unpack('<H', data[offset:offset+2])[0]
+        info["isv_prod_id"] = struct.unpack("<H", data[offset : offset + 2])[0]
         offset += 2
 
-        info['isv_svn'] = struct.unpack('<H', data[offset:offset+2])[0]
+        info["isv_svn"] = struct.unpack("<H", data[offset : offset + 2])[0]
 
         return info
 
@@ -1500,12 +1462,7 @@ class SecureEnclaveBypass:
         # Fall back to software signing with extracted key
         attestation_key = self._load_attestation_key()
         return attestation_key.sign(
-            quote_data,
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            hashes.SHA256()
+            quote_data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
         )
 
     def _sign_sgx_quote(self, report_data: bytes) -> bytes:
@@ -1515,10 +1472,7 @@ class SecureEnclaveBypass:
         # Load or generate attestation key
         attestation_key = self._load_sgx_attestation_key()
 
-        signature = attestation_key.sign(
-            report_data,
-            ec.ECDSA(hashes.SHA256())
-        )
+        signature = attestation_key.sign(report_data, ec.ECDSA(hashes.SHA256()))
 
         return signature
 
@@ -1527,25 +1481,17 @@ class SecureEnclaveBypass:
         key_file = Path(__file__).parent / "keys" / "tpm_attestation_key.pem"
 
         if key_file.exists():
-            from cryptography.hazmat.primitives import serialization
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives import serialization
 
-            with open(key_file, 'rb') as f:
-                return serialization.load_pem_private_key(
-                    f.read(),
-                    password=None,
-                    backend=default_backend()
-                )
+            with open(key_file, "rb") as f:
+                return serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
 
         # Generate new attestation key
-        from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.asymmetric import rsa
 
-        key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-            backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Save for future use
         key_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1553,7 +1499,7 @@ class SecureEnclaveBypass:
             key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         )
 
@@ -1564,19 +1510,15 @@ class SecureEnclaveBypass:
         key_file = Path(__file__).parent / "keys" / "sgx_attestation_key.pem"
 
         if key_file.exists():
-            from cryptography.hazmat.primitives import serialization
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives import serialization
 
-            with open(key_file, 'rb') as f:
-                return serialization.load_pem_private_key(
-                    f.read(),
-                    password=None,
-                    backend=default_backend()
-                )
+            with open(key_file, "rb") as f:
+                return serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
 
         # Generate new ECDSA key
-        from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.asymmetric import ec
 
         key = ec.generate_private_key(ec.SECP256R1(), default_backend())
 
@@ -1586,7 +1528,7 @@ class SecureEnclaveBypass:
             key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         )
 
@@ -1598,12 +1540,12 @@ class SecureEnclaveBypass:
         selection = bytearray()
 
         # TPML_PCR_SELECTION structure
-        selection.extend(struct.pack('>I', 1))  # count
+        selection.extend(struct.pack(">I", 1))  # count
 
         # TPMS_PCR_SELECTION
-        selection.extend(struct.pack('>H', TPM_ALG.SHA256))
-        selection.extend(struct.pack('B', 3))  # sizeofSelect (3 bytes for 24 PCRs)
-        selection.extend(b'\xFF\xFF\xFF')  # Select all 24 PCRs
+        selection.extend(struct.pack(">H", TPM_ALG.SHA256))
+        selection.extend(struct.pack("B", 3))  # sizeofSelect (3 bytes for 24 PCRs)
+        selection.extend(b"\xff\xff\xff")  # Select all 24 PCRs
 
         return TPM_RC.SUCCESS, bytes(selection)
 
@@ -1625,7 +1567,7 @@ class SecureEnclaveBypass:
         """Get name of TPM attestation key."""
         # TPM name is hash of public area
         if self.tpm_emulator.keys:
-            for handle, key in self.tpm_emulator.keys.items():
+            for _handle, key in self.tpm_emulator.keys.items():
                 if key.attributes & 0x00040000:  # Restricted key
                     return hashlib.sha256(key.public_key).digest()
 
@@ -1646,12 +1588,12 @@ class SecureEnclaveBypass:
 
         # Create attestation key
         key_template = {
-            'algorithm': TPM_ALG.RSA,
-            'key_size': 2048,
-            'attributes': 0x00040000  # Restricted
+            "algorithm": TPM_ALG.RSA,
+            "key_size": 2048,
+            "attributes": 0x00040000,  # Restricted
         }
 
-        rc, key = self.tpm_emulator.create_primary_key(0x40000001, b'', key_template)
+        rc, key = self.tpm_emulator.create_primary_key(0x40000001, b"", key_template)
         if rc != TPM_RC.SUCCESS:
             return ""
 
@@ -1660,7 +1602,7 @@ class SecureEnclaveBypass:
         rc, signature = self.tpm_emulator.sign(key.handle, quote_data, key.auth_value)
 
         if rc == TPM_RC.SUCCESS:
-            return base64.b64encode(signature).decode('ascii')
+            return base64.b64encode(signature).decode("ascii")
 
         return ""
 
@@ -1671,12 +1613,12 @@ class SecureEnclaveBypass:
         # Try to extract TPM EK certificate
         ek_cert = self._extract_tpm_ek_certificate()
         if ek_cert:
-            certs.append(base64.b64encode(ek_cert).decode('ascii'))
+            certs.append(base64.b64encode(ek_cert).decode("ascii"))
 
         # Try to extract SGX PCK certificate
         pck_cert = self._extract_sgx_pck_certificate()
         if pck_cert:
-            certs.append(base64.b64encode(pck_cert).decode('ascii'))
+            certs.append(base64.b64encode(pck_cert).decode("ascii"))
 
         if not certs:
             # Generate certificates that match platform
@@ -1688,14 +1630,13 @@ class SecureEnclaveBypass:
         """Extract TPM Endorsement Key certificate."""
         try:
             # Try to read from TPM NV
-            NV_EK_CERT_INDEX = 0x01C00002
 
             # This would use TPM commands to read certificate
             # For now, check if cached
             cert_file = Path(__file__).parent / "certs" / "tpm_ek_cert.der"
             if cert_file.exists():
                 return cert_file.read_bytes()
-        except:
+        except (OSError, IOError):
             pass
 
         return None
@@ -1707,18 +1648,13 @@ class SecureEnclaveBypass:
             cert_file = Path(__file__).parent / "certs" / "sgx_pck_cert.der"
             if cert_file.exists():
                 return cert_file.read_bytes()
-        except:
+        except (OSError, IOError):
             pass
 
         return None
 
     def _generate_platform_certificates(self) -> List[str]:
         """Generate valid platform attestation certificates matching system configuration."""
-        from cryptography import x509
-        from cryptography.x509.oid import NameOID, ExtensionOID
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa
-        from cryptography.hazmat.backends import default_backend
 
         certs = []
 
@@ -1726,15 +1662,15 @@ class SecureEnclaveBypass:
         platform_info = self._detect_platform_info()
 
         # Generate appropriate certificates based on platform
-        if platform_info['has_tpm']:
+        if platform_info["has_tpm"]:
             tpm_cert = self._generate_tpm_certificate(platform_info)
             if tpm_cert:
-                certs.append(base64.b64encode(tpm_cert).decode('ascii'))
+                certs.append(base64.b64encode(tpm_cert).decode("ascii"))
 
-        if platform_info['has_sgx']:
+        if platform_info["has_sgx"]:
             sgx_cert = self._generate_sgx_certificate(platform_info)
             if sgx_cert:
-                certs.append(base64.b64encode(sgx_cert).decode('ascii'))
+                certs.append(base64.b64encode(sgx_cert).decode("ascii"))
 
         return certs
 
@@ -1743,36 +1679,30 @@ class SecureEnclaveBypass:
         import cpuinfo
         import wmi
 
-        info = {
-            'has_tpm': False,
-            'has_sgx': False,
-            'manufacturer': 'Unknown',
-            'cpu_model': 'Unknown',
-            'platform_id': None
-        }
+        info = {"has_tpm": False, "has_sgx": False, "manufacturer": "Unknown", "cpu_model": "Unknown", "platform_id": None}
 
         try:
             # Check TPM presence
             try:
                 wmi_conn = wmi.WMI()
                 tpm_instances = wmi_conn.Win32_Tpm()
-                info['has_tpm'] = len(tpm_instances) > 0
-            except:
+                info["has_tpm"] = len(tpm_instances) > 0
+            except (AttributeError, WMIException):
                 pass
 
             # Check SGX support
             cpu_info = cpuinfo.get_cpu_info()
-            info['has_sgx'] = 'sgx' in cpu_info.get('flags', [])
-            info['cpu_model'] = cpu_info.get('brand_raw', 'Unknown')
+            info["has_sgx"] = "sgx" in cpu_info.get("flags", [])
+            info["cpu_model"] = cpu_info.get("brand_raw", "Unknown")
 
             # Get platform manufacturer
             for board in wmi_conn.Win32_BaseBoard():
-                info['manufacturer'] = board.Manufacturer
+                info["manufacturer"] = board.Manufacturer
                 break
 
             # Generate platform ID from hardware characteristics
             hw_string = f"{info['manufacturer']}:{info['cpu_model']}"
-            info['platform_id'] = hashlib.sha256(hw_string.encode()).hexdigest()[:16]
+            info["platform_id"] = hashlib.sha256(hw_string.encode()).hexdigest()[:16]
 
         except Exception as e:
             logger.debug(f"Platform detection: {e}")
@@ -1782,31 +1712,31 @@ class SecureEnclaveBypass:
     def _generate_tpm_certificate(self, platform_info: Dict[str, Any]) -> bytes:
         """Generate TPM Endorsement Key certificate matching platform."""
         from cryptography import x509
-        from cryptography.x509.oid import NameOID, ExtensionOID
+        from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import rsa
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.x509.oid import NameOID
 
         # Generate TPM EK key pair
-        key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-            backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Build certificate with TPM-specific attributes
-        subject = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, platform_info['manufacturer']),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "TPM"),
-            x509.NameAttribute(NameOID.COMMON_NAME, f"TPM EK {platform_info['platform_id']}"),
-        ])
+        subject = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, platform_info["manufacturer"]),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "TPM"),
+                x509.NameAttribute(NameOID.COMMON_NAME, f"TPM EK {platform_info['platform_id']}"),
+            ]
+        )
 
-        issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, f"{platform_info['manufacturer']} Root CA"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "Platform CA"),
-        ])
+        issuer = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, f"{platform_info['manufacturer']} Root CA"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "Platform CA"),
+            ]
+        )
 
         cert_builder = x509.CertificateBuilder()
         cert_builder = cert_builder.subject_name(subject)
@@ -1820,8 +1750,8 @@ class SecureEnclaveBypass:
         # TCG specification OID for TPM
         tcg_oid = x509.ObjectIdentifier("2.23.133.8.1")
         cert_builder = cert_builder.add_extension(
-            x509.UnrecognizedExtension(tcg_oid, b'\x30\x00'),  # TPM specification version
-            critical=False
+            x509.UnrecognizedExtension(tcg_oid, b"\x30\x00"),  # TPM specification version
+            critical=False,
         )
 
         # Add key usage
@@ -1835,9 +1765,9 @@ class SecureEnclaveBypass:
                 key_cert_sign=False,
                 crl_sign=False,
                 encipher_only=False,
-                decipher_only=False
+                decipher_only=False,
             ),
-            critical=True
+            critical=True,
         )
 
         cert = cert_builder.sign(key, hashes.SHA256(), default_backend())
@@ -1849,7 +1779,7 @@ class SecureEnclaveBypass:
             key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         )
 
@@ -1858,28 +1788,32 @@ class SecureEnclaveBypass:
     def _generate_sgx_certificate(self, platform_info: Dict[str, Any]) -> bytes:
         """Generate SGX Platform Certification Key certificate."""
         from cryptography import x509
-        from cryptography.x509.oid import NameOID
+        from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import ec
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.x509.oid import NameOID
 
         # SGX uses ECDSA P-256
         key = ec.generate_private_key(ec.SECP256R1(), default_backend())
 
         # Build certificate with SGX-specific attributes
-        subject = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel SGX"),
-            x509.NameAttribute(NameOID.COMMON_NAME, f"SGX PCK {platform_info['platform_id']}"),
-        ])
+        subject = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel SGX"),
+                x509.NameAttribute(NameOID.COMMON_NAME, f"SGX PCK {platform_info['platform_id']}"),
+            ]
+        )
 
-        issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel PCS"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "Intel SGX PCK Platform CA"),
-        ])
+        issuer = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel PCS"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "Intel SGX PCK Platform CA"),
+            ]
+        )
 
         cert_builder = x509.CertificateBuilder()
         cert_builder = cert_builder.subject_name(subject)
@@ -1892,17 +1826,14 @@ class SecureEnclaveBypass:
         # Add SGX-specific extensions
         # Intel SGX extensions OID
         sgx_extensions = {
-            '1.2.840.113741.1.13.1': b'\x05\x05\x02\x04\x01\x80\x00',  # SGX Type
-            '1.2.840.113741.1.13.1.1': platform_info['platform_id'].encode()[:16],  # Platform ID
-            '1.2.840.113741.1.13.1.2': b'\x00\x00',  # TCB
-            '1.2.840.113741.1.13.1.4': b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'  # FMSPC
+            "1.2.840.113741.1.13.1": b"\x05\x05\x02\x04\x01\x80\x00",  # SGX Type
+            "1.2.840.113741.1.13.1.1": platform_info["platform_id"].encode()[:16],  # Platform ID
+            "1.2.840.113741.1.13.1.2": b"\x00\x00",  # TCB
+            "1.2.840.113741.1.13.1.4": b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",  # FMSPC
         }
 
         for oid, value in sgx_extensions.items():
-            cert_builder = cert_builder.add_extension(
-                x509.UnrecognizedExtension(x509.ObjectIdentifier(oid), value),
-                critical=False
-            )
+            cert_builder = cert_builder.add_extension(x509.UnrecognizedExtension(x509.ObjectIdentifier(oid), value), critical=False)
 
         cert = cert_builder.sign(key, hashes.SHA256(), default_backend())
 
@@ -1913,7 +1844,7 @@ class SecureEnclaveBypass:
             key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         )
 
@@ -1921,9 +1852,8 @@ class SecureEnclaveBypass:
 
     def _capture_platform_manifest(self) -> Dict[str, Any]:
         """Capture real platform security manifest from system."""
-        import platform
-        import wmi
         import cpuinfo
+        import wmi
 
         manifest = {}
 
@@ -1935,68 +1865,68 @@ class SecureEnclaveBypass:
                 tpm_instances = wmi_conn.Win32_Tpm()
                 if tpm_instances:
                     tpm = tpm_instances[0]
-                    manifest['tpm_version'] = tpm.SpecVersion.split(',')[0] if hasattr(tpm, 'SpecVersion') else '2.0'
+                    manifest["tpm_version"] = tpm.SpecVersion.split(",")[0] if hasattr(tpm, "SpecVersion") else "2.0"
                 else:
-                    manifest['tpm_version'] = None
-            except:
-                manifest['tpm_version'] = None
+                    manifest["tpm_version"] = None
+            except (KeyError, TypeError):
+                manifest["tpm_version"] = None
 
             # Get CPU info for SGX support
             cpu_info = cpuinfo.get_cpu_info()
-            manifest['sgx_version'] = 2 if 'sgx' in cpu_info.get('flags', []) else 0
+            manifest["sgx_version"] = 2 if "sgx" in cpu_info.get("flags", []) else 0
 
             # Get BIOS/UEFI info
             for bios in wmi_conn.Win32_BIOS():
-                manifest['bios_version'] = bios.Version
-                manifest['secure_boot'] = self._check_secure_boot()
-                manifest['measured_boot'] = manifest['tpm_version'] is not None
+                manifest["bios_version"] = bios.Version
+                manifest["secure_boot"] = self._check_secure_boot()
+                manifest["measured_boot"] = manifest["tpm_version"] is not None
                 break
 
             # Get processor info
             for proc in wmi_conn.Win32_Processor():
-                manifest['microcode_version'] = proc.ProcessorId[-2:] if hasattr(proc, 'ProcessorId') else 'FF'
+                manifest["microcode_version"] = proc.ProcessorId[-2:] if hasattr(proc, "ProcessorId") else "FF"
                 break
 
             # Platform configuration
-            manifest['platform_configuration'] = {
-                'cpu_model': cpu_info.get('brand_raw', 'Unknown'),
-                'memory_encryption': 'sme' in cpu_info.get('flags', []) or 'sev' in cpu_info.get('flags', []),
-                'iommu_enabled': self._check_iommu(),
-                'hypervisor': self._detect_hypervisor()
+            manifest["platform_configuration"] = {
+                "cpu_model": cpu_info.get("brand_raw", "Unknown"),
+                "memory_encryption": "sme" in cpu_info.get("flags", []) or "sev" in cpu_info.get("flags", []),
+                "iommu_enabled": self._check_iommu(),
+                "hypervisor": self._detect_hypervisor(),
             }
 
             # Security features
-            manifest['txt_enabled'] = 'txt' in cpu_info.get('flags', [])
-            manifest['sev_enabled'] = 'sev' in cpu_info.get('flags', [])
-            manifest['tdx_enabled'] = 'tdx' in cpu_info.get('flags', [])
+            manifest["txt_enabled"] = "txt" in cpu_info.get("flags", [])
+            manifest["sev_enabled"] = "sev" in cpu_info.get("flags", [])
+            manifest["tdx_enabled"] = "tdx" in cpu_info.get("flags", [])
 
             # Generate platform ID
             hw_string = f"{manifest['platform_configuration']['cpu_model']}:{manifest.get('bios_version', '')}"
-            manifest['platform_id'] = hashlib.sha256(hw_string.encode()).hexdigest()
+            manifest["platform_id"] = hashlib.sha256(hw_string.encode()).hexdigest()
 
-            manifest['security_version'] = 1
+            manifest["security_version"] = 1
 
         except Exception as e:
             logger.debug(f"Error capturing platform manifest: {e}")
             # Return minimal manifest
             manifest = {
-                'platform_id': hashlib.sha256(os.urandom(32)).hexdigest(),
-                'tpm_version': '2.0',
-                'sgx_version': 2,
-                'secure_boot': True,
-                'measured_boot': True,
-                'txt_enabled': True,
-                'sev_enabled': False,
-                'tdx_enabled': False,
-                'security_version': 1,
-                'microcode_version': 'DE',
-                'bios_version': '1.0.0',
-                'platform_configuration': {
-                    'cpu_model': platform.processor(),
-                    'memory_encryption': False,
-                    'iommu_enabled': True,
-                    'hypervisor': 'none'
-                }
+                "platform_id": hashlib.sha256(os.urandom(32)).hexdigest(),
+                "tpm_version": "2.0",
+                "sgx_version": 2,
+                "secure_boot": True,
+                "measured_boot": True,
+                "txt_enabled": True,
+                "sev_enabled": False,
+                "tdx_enabled": False,
+                "security_version": 1,
+                "microcode_version": "DE",
+                "bios_version": "1.0.0",
+                "platform_configuration": {
+                    "cpu_model": platform.processor(),
+                    "memory_encryption": False,
+                    "iommu_enabled": True,
+                    "hypervisor": "none",
+                },
             }
 
         return manifest
@@ -2004,44 +1934,43 @@ class SecureEnclaveBypass:
     def _check_secure_boot(self) -> bool:
         """Check if Secure Boot is enabled."""
         try:
-            result = subprocess.run(['bcdedit', '/enum', '{current}'],
-                                  capture_output=True, text=True)
-            return 'secureboot' in result.stdout.lower()
-        except:
+            result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
+            return "secureboot" in result.stdout.lower()
+        except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
     def _check_iommu(self) -> bool:
         """Check if IOMMU is enabled."""
         try:
-            result = subprocess.run(['bcdedit', '/enum', '{current}'],
-                                  capture_output=True, text=True)
-            return 'hypervisorlaunchtype' in result.stdout.lower()
-        except:
+            result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
+            return "hypervisorlaunchtype" in result.stdout.lower()
+        except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
     def _detect_hypervisor(self) -> str:
         """Detect hypervisor presence."""
         try:
             import cpuinfo
+
             cpu_info = cpuinfo.get_cpu_info()
 
-            if 'hypervisor' in cpu_info.get('flags', []):
+            if "hypervisor" in cpu_info.get("flags", []):
                 # Try to identify specific hypervisor
-                vendor_id = cpu_info.get('vendor_id_raw', '').lower()
-                if 'vmware' in vendor_id:
-                    return 'vmware'
-                elif 'microsoft' in vendor_id:
-                    return 'hyperv'
-                elif 'xen' in vendor_id:
-                    return 'xen'
-                elif 'kvm' in vendor_id:
-                    return 'kvm'
+                vendor_id = cpu_info.get("vendor_id_raw", "").lower()
+                if "vmware" in vendor_id:
+                    return "vmware"
+                elif "microsoft" in vendor_id:
+                    return "hyperv"
+                elif "xen" in vendor_id:
+                    return "xen"
+                elif "kvm" in vendor_id:
+                    return "kvm"
                 else:
-                    return 'unknown'
-        except:
+                    return "unknown"
+        except (ValueError, TypeError):
             pass
 
-        return 'none'
+        return "none"
 
     def cleanup(self):
         """Clean up bypass resources."""

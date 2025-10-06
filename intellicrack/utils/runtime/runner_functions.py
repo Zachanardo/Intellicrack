@@ -29,7 +29,6 @@ import traceback
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
-from intellicrack.utils.service_utils import get_service_url
 
 from ..core.misc_utils import log_message
 
@@ -68,6 +67,8 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
         # Configure server based on kwargs
         port = kwargs.get("port", 27000)
         # Get license server URL from configuration
+        from intellicrack.utils.service_utils import get_service_url
+
         license_url = get_service_url("license_server")
         default_host = license_url.replace("http://", "").replace("https://", "").split(":")[0]
         host = kwargs.get("host", default_host)
@@ -2951,7 +2952,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
                     data = bytes(data)
 
                 if offset + len(data) <= len(binary_data):
-                    binary_data[offset:offset+len(data)] = data
+                    binary_data[offset : offset + len(data)] = data
                     applied_ops += 1
                 else:
                     logger.warning(f"Patch offset {offset} exceeds binary size")
@@ -2960,7 +2961,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
                 # NOP out instructions at offset
                 length = op.get("length", 1)
                 if offset + length <= len(binary_data):
-                    binary_data[offset:offset+length] = b'\x90' * length  # x86 NOP
+                    binary_data[offset : offset + length] = b"\x90" * length  # x86 NOP
                     applied_ops += 1
 
             elif op_type == "jump":
@@ -2972,7 +2973,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
                     # E9 is x86 JMP rel32 opcode
                     binary_data[offset] = 0xE9
                     # Write 32-bit relative offset in little-endian
-                    binary_data[offset+1:offset+5] = rel_offset.to_bytes(4, 'little', signed=True)
+                    binary_data[offset + 1 : offset + 5] = rel_offset.to_bytes(4, "little", signed=True)
                     applied_ops += 1
 
             elif op_type == "call":
@@ -2984,13 +2985,14 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
                     # E8 is x86 CALL rel32 opcode
                     binary_data[offset] = 0xE8
                     # Write 32-bit relative offset in little-endian
-                    binary_data[offset+1:offset+5] = rel_offset.to_bytes(4, 'little', signed=True)
+                    binary_data[offset + 1 : offset + 5] = rel_offset.to_bytes(4, "little", signed=True)
                     applied_ops += 1
 
         if applied_ops > 0:
             # Create backup of original file
             backup_path = target_binary + ".bak"
             import shutil
+
             shutil.copy2(target_binary, backup_path)
 
             # Write patched binary

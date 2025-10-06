@@ -177,8 +177,8 @@ class YaraPatternEngine:
                 try:
                     with open(rules_dir / "basic.yar", "r", encoding="utf-8") as f:
                         self.rule_sources["basic"] = f.read()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to read basic.yar rule file: {e}")
 
             # Compile rules
             self.compiled_rules = yara.compile(filepaths=rule_files)
@@ -637,7 +637,7 @@ rule Basic_PE_Detection
                     total_rules=self._count_total_rules(),
                     scan_time=0.0,
                     error=f"File already scanned and unchanged: {file_path} (skipping duplicate scan)",
-                    metadata={"cached": True, "file_hash": cached_hash}
+                    metadata={"cached": True, "file_hash": cached_hash},
                 )
             else:
                 logger.debug(f"File changed since last scan, rescanning: {abs_file_path}")
@@ -698,10 +698,10 @@ rule Basic_PE_Detection
                     else:
                         # Try to access as attributes first, fall back to indexing
                         try:
-                            offset = string_match.offset if hasattr(string_match, 'offset') else string_match[0]
-                            identifier = string_match.identifier if hasattr(string_match, 'identifier') else string_match[1]
+                            offset = string_match.offset if hasattr(string_match, "offset") else string_match[0]
+                            identifier = string_match.identifier if hasattr(string_match, "identifier") else string_match[1]
                             # The matched data is typically at index 2
-                            if hasattr(string_match, '__getitem__'):
+                            if hasattr(string_match, "__getitem__"):
                                 matched_data = string_match[2] if len(string_match) > 2 else b""
                             else:
                                 matched_data = b""
@@ -715,15 +715,15 @@ rule Basic_PE_Detection
                     if isinstance(matched_data, bytes):
                         try:
                             string_data = matched_data.decode("utf-8", errors="replace")[:100]
-                        except:
+                        except UnicodeDecodeError:
                             string_data = str(matched_data)[:100]  # Limit length for safety
                     else:
                         string_data = str(matched_data)[:100] if matched_data else ""
 
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace if hasattr(match, 'namespace') else "",
-                        tags=list(match.tags) if hasattr(match, 'tags') else [],
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
                         offset=offset,
@@ -738,8 +738,8 @@ rule Basic_PE_Detection
                 if not match.strings:
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace if hasattr(match, 'namespace') else "",
-                        tags=list(match.tags) if hasattr(match, 'tags') else [],
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
                         offset=0,
@@ -760,7 +760,7 @@ rule Basic_PE_Detection
                     "file_hash": file_hash,
                     "file_size": file_size,
                     "file_mtime": file_mtime,
-                }
+                },
             )
 
             return result
@@ -882,7 +882,7 @@ rule Basic_PE_Detection
                             identifier = string_match.identifier
                             # Note: 'instances' is not a valid attribute in yara-python
                             # The matched data is typically at index 2 of the tuple
-                            if hasattr(string_match, '__getitem__'):
+                            if hasattr(string_match, "__getitem__"):
                                 matched_data = string_match[2] if len(string_match) > 2 else b""
                             else:
                                 matched_data = b""
@@ -894,7 +894,7 @@ rule Basic_PE_Detection
                                 identifier = string_match[1]
                                 matched_data = string_match[2] if len(string_match) > 2 else b""
                                 length = len(matched_data) if matched_data else 0
-                            except:
+                            except (IndexError, ValueError):
                                 # Skip malformed matches
                                 logger.debug(f"Skipping malformed string match: {string_match}")
                                 continue
@@ -903,15 +903,15 @@ rule Basic_PE_Detection
                     if isinstance(matched_data, bytes):
                         try:
                             string_data = matched_data.decode("utf-8", errors="replace")[:100]
-                        except:
+                        except UnicodeDecodeError:
                             string_data = str(matched_data)[:100]
                     else:
                         string_data = str(matched_data)[:100] if matched_data else ""
 
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace if hasattr(match, 'namespace') else "",
-                        tags=list(match.tags) if hasattr(match, 'tags') else [],
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
                         offset=offset,

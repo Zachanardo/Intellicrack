@@ -221,9 +221,7 @@ class HeadlessTrainingInterface:
                 self.current_epoch = epoch
                 self._wait_if_paused()
 
-                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(
-                    epoch, dataset_path, model_config, config
-                )
+                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(epoch, dataset_path, model_config, config)
                 self._update_metrics(epoch, train_loss, train_acc, val_loss, val_acc, model_config, learning_rate, batch_size, start_time)
                 self._invoke_callbacks(epoch, train_loss, train_acc, val_loss, val_acc)
 
@@ -257,7 +255,18 @@ class HeadlessTrainingInterface:
         while self.is_paused and self.is_training:
             time.sleep(0.5)
 
-    def _update_metrics(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float, model_config: Dict[str, Any], learning_rate: float, batch_size: int, start_time: float) -> None:
+    def _update_metrics(
+        self,
+        epoch: int,
+        train_loss: float,
+        train_acc: float,
+        val_loss: float,
+        val_acc: float,
+        model_config: Dict[str, Any],
+        learning_rate: float,
+        batch_size: int,
+        start_time: float,
+    ) -> None:
         self.metrics_history.append(
             {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc}
         )
@@ -603,7 +612,8 @@ class HeadlessTrainingInterface:
                 # Apply slight perturbation to indicate error recovery
                 import random
 
-                perturbation = 1.0 + random.uniform(-0.05, 0.05)
+                # Note: Using random module for simulation noise, not cryptographic purposes
+                perturbation = 1.0 + random.uniform(-0.05, 0.05)  # noqa: S311
 
                 # Add trend adjustment based on epoch progression
                 if len(self.metrics_history) >= 5:
@@ -639,7 +649,8 @@ class HeadlessTrainingInterface:
             # Apply exponential decay based on epoch
             epoch_factor = convergence_rate**epoch
             train_loss = base_loss * epoch_factor
-            val_loss = train_loss * random.uniform(1.05, 1.15)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            val_loss = train_loss * random.uniform(1.05, 1.15)  # noqa: S311
 
             # Estimate accuracy based on loss (inverse relationship)
             # Using sigmoid-like curve for accuracy progression
@@ -647,13 +658,15 @@ class HeadlessTrainingInterface:
 
             loss_normalized = train_loss / base_loss
             train_acc = 1.0 / (1.0 + math.exp(3.0 * (loss_normalized - 0.5)))
-            val_acc = train_acc * random.uniform(0.92, 0.98)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            val_acc = train_acc * random.uniform(0.92, 0.98)  # noqa: S311
 
             # Add noise to make it realistic
-            train_loss *= random.uniform(0.95, 1.05)
-            val_loss *= random.uniform(0.95, 1.05)
-            train_acc *= random.uniform(0.98, 1.02)
-            val_acc *= random.uniform(0.98, 1.02)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            train_loss *= random.uniform(0.95, 1.05)  # noqa: S311
+            val_loss *= random.uniform(0.95, 1.05)  # noqa: S311
+            train_acc *= random.uniform(0.98, 1.02)  # noqa: S311
+            val_acc *= random.uniform(0.98, 1.02)  # noqa: S311
 
             # Ensure bounds
             train_loss = max(0.01, min(10.0, train_loss))
@@ -721,6 +734,7 @@ class HeadlessTrainingInterface:
             if not validation and model_config.get("dropout_rate", 0) > 0:
                 dropout_rate = model_config.get("dropout_rate", 0.1)
                 import numpy as np
+
                 rng = np.random.default_rng(seed=42)
                 dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
                 a1 = a1 * dropout_mask

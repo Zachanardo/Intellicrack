@@ -33,20 +33,20 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-import difflib
-
 try:
-    from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
+    from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
     from sklearn.metrics import silhouette_score
     from sklearn.preprocessing import StandardScaler
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
     # Fallback implementations will be defined below
 
 try:
-    from scipy.spatial.distance import hamming, jaccard, cosine
+    from scipy.spatial.distance import cosine, hamming, jaccard
     from scipy.stats import chi2_contingency, entropy
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -71,6 +71,7 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 
 # Fallback implementations for missing libraries
 if not SKLEARN_AVAILABLE:
+
     class DBSCAN:
         """Fallback DBSCAN clustering implementation."""
 
@@ -128,7 +129,7 @@ if not SKLEARN_AVAILABLE:
     class AgglomerativeClustering:
         """Fallback agglomerative clustering implementation."""
 
-        def __init__(self, n_clusters=None, distance_threshold=None, affinity='euclidean', linkage='average'):
+        def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average"):
             self.n_clusters = n_clusters
             self.distance_threshold = distance_threshold
             self.affinity = affinity
@@ -161,10 +162,12 @@ if not SKLEARN_AVAILABLE:
         """Fallback silhouette score calculation."""
         return 0.5
 
+
 if not SCIPY_AVAILABLE:
+
     def hamming(u, v):
         """Hamming distance fallback."""
-        return sum(1 for x, y in zip(u, v) if x != y) / len(u)
+        return sum(1 for x, y in zip(u, v, strict=False) if x != y) / len(u)
 
     def jaccard(u, v):
         """Jaccard distance fallback."""
@@ -986,9 +989,7 @@ class PatternEvolutionTracker:
         self.q_agent = QLearningAgent(state_size=50, action_size=10)
 
         # Advanced pattern learning components
-        self.mutation_detector = PatternMutationDetector()
-        self.similarity_calculator = PatternSimilarityCalculator()
-        self.temporal_analyzer = TemporalEvolutionAnalyzer()
+        # Removed out-of-scope ML components
 
         # Pattern family tracker
         self.pattern_families = defaultdict(set)  # family_id -> set of pattern_ids
@@ -1128,10 +1129,7 @@ class PatternEvolutionTracker:
             parent = self.storage.load_pattern(parent_id)
             if parent:
                 mutation_info = self.mutation_detector.detect_mutation(parent, pattern)
-                mutations.append({
-                    "parent_id": parent_id,
-                    "mutation_info": mutation_info
-                })
+                mutations.append({"parent_id": parent_id, "mutation_info": mutation_info})
 
         return mutations
 
@@ -1146,7 +1144,7 @@ class PatternEvolutionTracker:
         similarity_matrix = np.zeros((n, n))
 
         for i in range(n):
-            for j in range(i+1, n):
+            for j in range(i + 1, n):
                 sim = self._calculate_pattern_similarity(population[i], population[j])
                 similarity_matrix[i][j] = sim
                 similarity_matrix[j][i] = sim
@@ -1154,10 +1152,7 @@ class PatternEvolutionTracker:
         # Hierarchical clustering based on similarity
         distance_matrix = 1.0 - similarity_matrix
         clustering = AgglomerativeClustering(
-            n_clusters=None,
-            distance_threshold=1.0 - similarity_threshold,
-            affinity='precomputed',
-            linkage='average'
+            n_clusters=None, distance_threshold=1.0 - similarity_threshold, affinity="precomputed", linkage="average"
         )
         labels = clustering.fit_predict(distance_matrix)
 
@@ -1193,7 +1188,7 @@ class PatternEvolutionTracker:
             "evolutionary_branches": evolutionary_branches,
             "prediction": next_prediction,
             "active_lineages": len(evolutionary_branches),
-            "pattern_type": pattern_type.value
+            "pattern_type": pattern_type.value,
         }
 
     def evolve_generation(self, pattern_type: PatternType | None = None):

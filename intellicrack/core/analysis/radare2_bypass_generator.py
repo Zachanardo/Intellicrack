@@ -1970,7 +1970,7 @@ void apply_patch() {{
                         "machine_id": machine_id,
                         "cpu": cpu_info,
                         "system": system_info,
-                        "binding": hashlib.md5(machine_id.encode()).hexdigest(),
+                        "binding": hashlib.sha256(machine_id.encode()).hexdigest(),
                     },
                     "dates": {"issued": now.isoformat(), "expires": expiry.isoformat(), "last_validated": now.isoformat()},
                     "features": {"max_users": "unlimited", "modules": "all", "support_level": "priority", "updates": "lifetime"},
@@ -1992,7 +1992,7 @@ void apply_patch() {{
         <machine_id>{machine_id}</machine_id>
         <cpu>{cpu_info}</cpu>
         <system>{system_info}</system>
-        <binding>{hashlib.md5(machine_id.encode()).hexdigest()}</binding>
+        <binding>{hashlib.sha256(machine_id.encode()).hexdigest()}</binding>
     </hardware>
     <dates>
         <issued>{now.strftime("%Y-%m-%d")}</issued>
@@ -2071,7 +2071,7 @@ void apply_patch() {{
             result += "Algorithm=XOR256\n"
             result += "KeyDerivation=SHA256(MachineID)\n"
             result += f"Data={base64.b64encode(encrypted).decode('ascii')}\n"
-            result += f"Checksum={hashlib.md5(encrypted).hexdigest()}"
+            result += f"Checksum={hashlib.sha256(encrypted).hexdigest()}"
             return result
 
         else:
@@ -2091,7 +2091,7 @@ Version=2.0
 MachineID={machine_id}
 CPU={cpu_info}
 System={system_info}
-Binding={hashlib.md5(machine_id.encode()).hexdigest()}
+Binding={hashlib.sha256(machine_id.encode()).hexdigest()}
 VolumeSerial={hex(hash(machine_id) & 0xFFFFFFFF)[2:].upper()}
 
 [Dates]

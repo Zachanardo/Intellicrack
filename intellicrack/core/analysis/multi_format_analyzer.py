@@ -44,7 +44,7 @@ from ...utils.core.import_patterns import (
     pefile,
     zipfile,
 )
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 
 class BinaryInfo:

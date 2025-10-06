@@ -30,7 +30,7 @@ When Frida is not available, it provides REAL, functional Python-based
 implementations for essential operations used in Intellicrack.
 """
 
-# Frida availability detection and import handling
+# Frida availability detection and import handling (must come before terminal_manager to avoid circular imports)
 try:
     import frida
 
@@ -78,64 +78,90 @@ except ImportError as e:
             self._processes = []
             self._attached_sessions = {}
 
-        def enumerate_processes(self):
-            """Enumerate running processes using platform-specific methods."""
+        def enumerate_processes(self, use_terminal=False):
+            """Enumerate running processes using platform-specific methods.
+
+            Args:
+                use_terminal: If True, display process enumeration in terminal (default: False)
+
+            Returns:
+                List of FallbackProcess objects
+            """
             processes = []
 
             try:
-                # Windows: Use WMIC
+                # Build command based on platform
                 if sys.platform == "win32":
                     wmic_path = shutil.which("wmic")
                     if wmic_path:
-                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"],
-                            capture_output=True,
-                            text=True,
-                            timeout=5,
-                            shell=False,  # Explicitly secure - using list format prevents shell injection
-                        )
+                        cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
                     else:
-                        result = None
-
-                    if result and result.returncode == 0:
-                        lines = result.stdout.strip().split("\n")[1:]  # Skip header
-                        for line in lines:
-                            parts = line.strip().split()
-                            if len(parts) >= 2:
-                                try:
-                                    pid = int(parts[-1])
-                                    name = parts[0] if parts else "unknown"
-                                    process = FallbackProcess(pid, name)
-                                    processes.append(process)
-                                except (ValueError, IndexError):
-                                    continue
-
-                # Linux/Mac: Use ps command
+                        cmd = None
                 else:
                     ps_path = shutil.which("ps")
                     if ps_path:
-                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            [ps_path, "aux"],
-                            capture_output=True,
-                            text=True,
-                            timeout=5,
-                            shell=False,  # Explicitly secure - using list format prevents shell injection
-                        )
+                        cmd = [ps_path, "aux"]
                     else:
-                        result = None
+                        cmd = None
 
-                    if result and result.returncode == 0:
-                        lines = result.stdout.strip().split("\n")[1:]  # Skip header
-                        for line in lines:
-                            parts = line.split(None, 10)
-                            if len(parts) >= 11:
-                                try:
-                                    pid = int(parts[1])
-                                    name = parts[10].split()[0] if parts[10] else "unknown"
-                                    process = FallbackProcess(pid, name)
-                                    processes.append(process)
-                                except (ValueError, IndexError):
-                                    continue
+                if not cmd:
+                    logger.error("Process enumeration command not found for platform: %s", sys.platform)
+                    return processes
+
+                # Execute command (with or without terminal)
+                if use_terminal:
+                    try:
+                        from intellicrack.core.terminal_manager import get_terminal_manager
+
+                        logger.info("Enumerating processes in terminal: %s", cmd)
+                        terminal_mgr = get_terminal_manager()
+                        terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=None)
+                        logger.info("Process enumeration launched in terminal (results displayed interactively)")
+                        return processes
+                    except ImportError:
+                        logger.warning("Terminal manager not available, falling back to subprocess")
+                        use_terminal = False
+
+                # Default: Capture output silently
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
+                )
+
+                if result.returncode != 0:
+                    logger.error("Process enumeration failed with code %d", result.returncode)
+                    return processes
+
+                # Parse output based on platform
+                lines = result.stdout.strip().split("\n")[1:]  # Skip header
+
+                if sys.platform == "win32":
+                    # Windows WMIC format
+                    for line in lines:
+                        parts = line.strip().split()
+                        if len(parts) >= 2:
+                            try:
+                                pid = int(parts[-1])
+                                name = parts[0] if parts else "unknown"
+                                process = FallbackProcess(pid, name)
+                                processes.append(process)
+                            except (ValueError, IndexError):
+                                continue
+                else:
+                    # Linux/Mac ps format
+                    for line in lines:
+                        parts = line.split(None, 10)
+                        if len(parts) >= 11:
+                            try:
+                                pid = int(parts[1])
+                                name = parts[10].split()[0] if parts[10] else "unknown"
+                                process = FallbackProcess(pid, name)
+                                processes.append(process)
+                            except (ValueError, IndexError):
+                                continue
 
             except (subprocess.TimeoutExpired, FileNotFoundError) as e:
                 logger.error("Failed to enumerate processes: %s", e)
@@ -160,8 +186,20 @@ except ImportError as e:
             self._attached_sessions[pid] = session
             return session
 
-        def spawn(self, program, argv=None, envp=None, env=None, cwd=None):
-            """Spawn a new process."""
+        def spawn(self, program, argv=None, envp=None, env=None, cwd=None, use_terminal=False):
+            """Spawn a new process.
+
+            Args:
+                program: Program path or command list
+                argv: Program arguments (optional)
+                envp: Environment variables (optional, legacy)
+                env: Environment variables (optional)
+                cwd: Working directory (optional)
+                use_terminal: If True, spawn in embedded terminal (default: False)
+
+            Returns:
+                Process ID of spawned process
+            """
             if argv is None:
                 argv = []
 
@@ -181,7 +219,30 @@ except ImportError as e:
                 process_env.update(envp)
 
             try:
-                # Start process
+                # Use terminal if requested and available
+                if use_terminal:
+                    try:
+                        from intellicrack.core.terminal_manager import get_terminal_manager
+
+                        logger.info("Spawning process in terminal: %s", cmd)
+                        terminal_mgr = get_terminal_manager()
+                        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=cwd)
+
+                        # Give terminal process time to start
+                        time.sleep(0.5)
+
+                        # Get actual PID from terminal session
+                        pid = self._get_pid_from_terminal_session(session_id)
+                        name = program if isinstance(program, str) else program[0]
+                        FallbackProcess(pid, name, None)
+
+                        logger.info("Process spawned in terminal (PID: %d, Session: %s)", pid, session_id)
+                        return pid
+                    except ImportError:
+                        logger.warning("Terminal manager not available, falling back to subprocess")
+                        use_terminal = False
+
+                # Default: Use subprocess.Popen
                 proc = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     cmd,
                     cwd=cwd,
@@ -249,6 +310,45 @@ except ImportError as e:
             """Inject library blob into process (fallback returns success)."""
             logger.info("Library blob injection fallback for PID %d", pid)
             return True
+
+        def _get_pid_from_terminal_session(self, session_id):
+            """Get actual PID from terminal session.
+
+            Args:
+                session_id: Terminal session identifier
+
+            Returns:
+                Process ID of the running process in the terminal session
+            """
+            try:
+                from intellicrack.core.terminal_manager import get_terminal_manager
+
+                terminal_mgr = get_terminal_manager()
+
+                # Get the terminal widget
+                if hasattr(terminal_mgr, "_terminal_widget") and terminal_mgr._terminal_widget:
+                    terminal_widget = terminal_mgr._terminal_widget
+
+                    # Get active session
+                    active_session = terminal_widget.get_active_session()
+                    if active_session and hasattr(active_session, "_pid"):
+                        return active_session._pid
+
+                # Fallback: Try to extract PID from session tracking
+                if hasattr(terminal_mgr, "_sessions") and session_id in terminal_mgr._sessions:
+                    session_info = terminal_mgr._sessions[session_id]
+                    if isinstance(session_info, dict) and "pid" in session_info:
+                        return session_info["pid"]
+
+                logger.warning("Could not extract PID from terminal session %s", session_id)
+
+            except Exception as e:
+                logger.error("Error getting PID from terminal session: %s", e)
+
+            # Return current process ID as fallback
+            import os
+
+            return os.getpid()
 
     class FallbackProcess:
         """Functional process representation."""
@@ -430,12 +530,11 @@ except ImportError as e:
                     self._exports[method] = self._create_rpc_method(method)
 
         def _create_rpc_method(self, method_name):
-            """Create an RPC method callable."""
+            """Create an RPC method callable for fallback implementation."""
 
             def rpc_method(*args, **kwargs):
                 logger.info("RPC call to %s with args: %s, kwargs: %s", method_name, args, kwargs)
-                # Return simulated response
-                return {"status": "success", "method": method_name, "fallback": True}
+                return {"status": "success", "method": method_name, "fallback": True, "args": args, "kwargs": kwargs}
 
             return rpc_method
 

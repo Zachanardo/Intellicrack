@@ -24,13 +24,12 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Optional YAML support
 HAS_YAML = False
 try:
     import yaml
@@ -38,15 +37,103 @@ try:
     HAS_YAML = True
 except ImportError:
     logger.warning("PyYAML not available - YAML support disabled. Install with: pip install pyyaml")
+    yaml = None
 
-# Optional JSON Schema validation
 HAS_JSONSCHEMA = False
-try:
+if TYPE_CHECKING:
     import jsonschema
+else:
+    try:
+        import jsonschema
 
-    HAS_JSONSCHEMA = True
-except ImportError:
-    logger.warning("jsonschema not available - schema validation disabled. Install with: pip install jsonschema")
+        HAS_JSONSCHEMA = True
+    except ImportError:
+        logger.info(
+            "jsonschema not installed - using built-in validation. Install jsonschema for full JSON Schema support: pip install jsonschema"
+        )
+
+        class _BasicValidator:
+            """Production-ready basic validation when jsonschema is unavailable."""
+
+            class ValidationError(Exception):
+                """Validation error for basic validator."""
+
+                def __init__(self, message: str, path: list[str] | None = None):
+                    super().__init__(message)
+                    self.message = message
+                    self.absolute_path = path or []
+
+            @staticmethod
+            def validate(instance: Any, schema: dict[str, Any]) -> None:
+                """Basic schema validation implementation."""
+                _BasicValidator._validate_recursive(instance, schema, [])
+
+            @staticmethod
+            def _validate_recursive(instance: Any, schema: dict[str, Any], path: list[str]) -> None:
+                """Recursively validate instance against schema."""
+                if "type" in schema:
+                    expected_type = schema["type"]
+                    type_map = {
+                        "object": dict,
+                        "array": list,
+                        "string": str,
+                        "number": (int, float),
+                        "integer": int,
+                        "boolean": bool,
+                        "null": type(None),
+                    }
+
+                    if expected_type in type_map:
+                        expected_python_type = type_map[expected_type]
+                        if not isinstance(instance, expected_python_type):
+                            raise _BasicValidator.ValidationError(f"Expected type {expected_type}, got {type(instance).__name__}", path)
+
+                if "properties" in schema and isinstance(instance, dict):
+                    for prop_name, prop_schema in schema["properties"].items():
+                        if prop_name in instance:
+                            _BasicValidator._validate_recursive(instance[prop_name], prop_schema, path + [prop_name])
+
+                    if "required" in schema:
+                        for required_prop in schema["required"]:
+                            if required_prop not in instance:
+                                raise _BasicValidator.ValidationError(f"Missing required property: {required_prop}", path)
+
+                if "items" in schema and isinstance(instance, list):
+                    item_schema = schema["items"]
+                    for i, item in enumerate(instance):
+                        _BasicValidator._validate_recursive(item, item_schema, path + [str(i)])
+
+                if "enum" in schema:
+                    if instance not in schema["enum"]:
+                        raise _BasicValidator.ValidationError(f"Value {instance} not in allowed values: {schema['enum']}", path)
+
+                if "minLength" in schema and isinstance(instance, str):
+                    if len(instance) < schema["minLength"]:
+                        raise _BasicValidator.ValidationError(
+                            f"String length {len(instance)} less than minimum {schema['minLength']}", path
+                        )
+
+                if "maxLength" in schema and isinstance(instance, str):
+                    if len(instance) > schema["maxLength"]:
+                        raise _BasicValidator.ValidationError(
+                            f"String length {len(instance)} greater than maximum {schema['maxLength']}", path
+                        )
+
+                if "minimum" in schema and isinstance(instance, (int, float)):
+                    if instance < schema["minimum"]:
+                        raise _BasicValidator.ValidationError(f"Value {instance} less than minimum {schema['minimum']}", path)
+
+                if "maximum" in schema and isinstance(instance, (int, float)):
+                    if instance > schema["maximum"]:
+                        raise _BasicValidator.ValidationError(f"Value {instance} greater than maximum {schema['maximum']}", path)
+
+                if "pattern" in schema and isinstance(instance, str):
+                    import re
+
+                    if not re.match(schema["pattern"], instance):
+                        raise _BasicValidator.ValidationError(f"String does not match pattern {schema['pattern']}", path)
+
+        jsonschema = _BasicValidator()
 
 
 class ConfigValidationError(Exception):
@@ -377,10 +464,9 @@ class ConfigAsCodeManager:
 
     def _substitute_string_vars(self, text: str) -> str:
         """Substitute environment variables in a string."""
-        # Pattern: ${VAR_NAME} or ${VAR_NAME:default}
         pattern = r"\$\{([^}:]+)(?::([^}]*))?\}"
 
-        def replace_var(match):
+        def replace_var(match: re.Match[str]) -> str:
             var_name = match.group(1)
             default_value = match.group(2) if match.group(2) is not None else ""
 

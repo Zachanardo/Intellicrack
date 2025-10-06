@@ -29,7 +29,6 @@ from typing import Any
 
 # Third-party imports
 import keystone
-from unicorn import x86_const
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
@@ -128,7 +127,7 @@ class VMProtectHandler:
         self.key_schedules = {
             ProtectionType.VMPROTECT_1X: self._vmprotect_1x_key_schedule,
             ProtectionType.VMPROTECT_2X: self._vmprotect_2x_key_schedule,
-            ProtectionType.VMPROTECT_3X: self._vmprotect_3x_key_schedule
+            ProtectionType.VMPROTECT_3X: self._vmprotect_3x_key_schedule,
         }
 
     def identify_version(self, vm_data: bytes) -> ProtectionType:
@@ -404,7 +403,7 @@ class CodeVirtualizerHandler:
             0x52: ("CV_LOAD_WORD", VMInstructionType.MEMORY),
             0x53: ("CV_STORE_WORD", VMInstructionType.MEMORY),
             0x60: ("CV_MOV", VMInstructionType.REGISTER),
-            0x61: ("CV_XCHG", VMInstructionType.REGISTER)
+            0x61: ("CV_XCHG", VMInstructionType.REGISTER),
         }
 
     def decrypt_cv_vm(self, vm_data: bytes, key: bytes) -> bytes:
@@ -476,7 +475,7 @@ class ThemidaHandler:
             0x40: ("VM_LOAD", VMInstructionType.MEMORY),
             0x41: ("VM_STORE", VMInstructionType.MEMORY),
             0x42: ("VM_LOAD_BYTE", VMInstructionType.MEMORY),
-            0x43: ("VM_STORE_BYTE", VMInstructionType.MEMORY)
+            0x43: ("VM_STORE_BYTE", VMInstructionType.MEMORY),
         }
 
     def decrypt_themida_vm(self, vm_data: bytes, key: bytes) -> bytes:
@@ -525,7 +524,8 @@ class VMEmulator:
     def _init_unicorn(self):
         """Initialize Unicorn emulation engine."""
         try:
-            from unicorn import Uc, UC_ARCH_X86, UC_MODE_32
+            from unicorn import UC_ARCH_X86, UC_MODE_32, Uc
+
             self.uc = Uc(UC_ARCH_X86, UC_MODE_32)
             self._setup_unicorn()
         except ImportError:
@@ -537,6 +537,7 @@ class VMEmulator:
             return
         try:
             from unicorn import x86_const
+
             self.uc.mem_map(0x400000, 2 * 1024 * 1024)  # 2MB for code
             self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
             self.uc.reg_write(x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
@@ -957,7 +958,7 @@ class VMProtectionUnwrapper:
             "files_processed": 0,
             "successful_unwraps": 0,
             "failed_unwraps": 0,
-            "protection_types_detected": {pt: 0 for pt in ProtectionType}
+            "protection_types_detected": {pt: 0 for pt in ProtectionType},
         }
 
     def unwrap_file(self, input_file: str, output_file: str) -> dict[str, Any]:
@@ -1068,7 +1069,7 @@ class VMProtectionUnwrapper:
             self._extract_key_from_init_routines,
             self._extract_key_from_data_sections,
             self._extract_key_from_tls_callbacks,
-            self._extract_key_from_resource_section
+            self._extract_key_from_resource_section,
         ]
 
         for extractor in key_extractors:
@@ -1085,13 +1086,13 @@ class VMProtectionUnwrapper:
     def _extract_key_from_constants(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from constant pool analysis."""
         # Scan for AES S-box patterns indicating key schedule
-        aes_sbox = bytes([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5])
+        aes_sbox = bytes([0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5])
         pos = binary_data.find(aes_sbox)
         if pos != -1:
             # Key likely stored before S-box
             key_offset = max(0, pos - 256)
             for i in range(key_offset, pos - 32, 4):
-                candidate = binary_data[i:i+32]
+                candidate = binary_data[i : i + 32]
                 if self._is_valid_key_material(candidate):
                     return candidate
         return None
@@ -1102,31 +1103,31 @@ class VMProtectionUnwrapper:
         init_patterns = [
             b"\x8b\x45\x08\x89\x45",  # mov eax,[ebp+8]; mov [ebp+X],eax
             b"\x8b\x4d\x0c\x89\x4d",  # mov ecx,[ebp+0xc]; mov [ebp+X],ecx
-            b"\xc7\x45\xf0",          # mov [ebp-0x10],immediate
+            b"\xc7\x45\xf0",  # mov [ebp-0x10],immediate
         ]
 
         for pattern in init_patterns:
             pos = binary_data.find(pattern, entry_point, min(entry_point + 0x1000, len(binary_data)))
             if pos != -1:
                 # Extract potential key data following pattern
-                key_data = binary_data[pos+len(pattern):pos+len(pattern)+32]
+                key_data = binary_data[pos + len(pattern) : pos + len(pattern) + 32]
                 if len(key_data) >= 16 and self._is_valid_key_material(key_data):
-                    return key_data[:32] if len(key_data) >= 32 else key_data[:16].ljust(32, b'\x00')
+                    return key_data[:32] if len(key_data) >= 32 else key_data[:16].ljust(32, b"\x00")
         return None
 
     def _extract_key_from_data_sections(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from data sections using PE structure analysis."""
         try:
             # Parse PE header
-            if binary_data[:2] != b'MZ':
+            if binary_data[:2] != b"MZ":
                 return None
 
-            pe_offset = struct.unpack('<I', binary_data[0x3C:0x40])[0]
-            if binary_data[pe_offset:pe_offset+4] != b'PE\x00\x00':
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+            if binary_data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
                 return None
 
             # Get section headers
-            num_sections = struct.unpack('<H', binary_data[pe_offset+6:pe_offset+8])[0]
+            num_sections = struct.unpack("<H", binary_data[pe_offset + 6 : pe_offset + 8])[0]
             section_table = pe_offset + 0xF8
 
             for i in range(num_sections):
@@ -1134,81 +1135,81 @@ class VMProtectionUnwrapper:
                 if section_offset + 40 > len(binary_data):
                     break
 
-                name = binary_data[section_offset:section_offset+8].rstrip(b'\x00')
-                if name in [b'.data', b'.rdata', b'.bss']:
-                    raw_offset = struct.unpack('<I', binary_data[section_offset+20:section_offset+24])[0]
-                    raw_size = struct.unpack('<I', binary_data[section_offset+16:section_offset+20])[0]
+                name = binary_data[section_offset : section_offset + 8].rstrip(b"\x00")
+                if name in [b".data", b".rdata", b".bss"]:
+                    raw_offset = struct.unpack("<I", binary_data[section_offset + 20 : section_offset + 24])[0]
+                    raw_size = struct.unpack("<I", binary_data[section_offset + 16 : section_offset + 20])[0]
 
                     # Scan section for key material
                     for j in range(raw_offset, min(raw_offset + raw_size, len(binary_data)) - 32, 16):
-                        candidate = binary_data[j:j+32]
+                        candidate = binary_data[j : j + 32]
                         entropy = self.analyzer._calculate_entropy(candidate)
                         if 5.5 <= entropy <= 7.8:
                             return candidate
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Key material extraction failed: {e}")
         return None
 
     def _extract_key_from_tls_callbacks(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from TLS callback analysis."""
         try:
-            pe_offset = struct.unpack('<I', binary_data[0x3C:0x40])[0]
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # TLS directory is at index 9 in data directories
             tls_dir_offset = pe_offset + 0x78 + (9 * 8)
-            tls_rva = struct.unpack('<I', binary_data[tls_dir_offset:tls_dir_offset+4])[0]
+            tls_rva = struct.unpack("<I", binary_data[tls_dir_offset : tls_dir_offset + 4])[0]
 
             if tls_rva:
                 # Convert RVA to file offset
                 tls_offset = self._rva_to_offset(binary_data, tls_rva)
                 if tls_offset:
                     # TLS callbacks often initialize keys
-                    callback_data = binary_data[tls_offset:tls_offset+0x100]
+                    callback_data = binary_data[tls_offset : tls_offset + 0x100]
                     for i in range(0, len(callback_data) - 32, 4):
-                        candidate = callback_data[i:i+32]
+                        candidate = callback_data[i : i + 32]
                         if self._is_valid_key_material(candidate):
                             return candidate
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"TLS callback key extraction failed: {e}")
         return None
 
     def _extract_key_from_resource_section(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from resource section."""
         try:
-            pe_offset = struct.unpack('<I', binary_data[0x3C:0x40])[0]
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # Resource directory is at index 2
             res_dir_offset = pe_offset + 0x78 + (2 * 8)
-            res_rva = struct.unpack('<I', binary_data[res_dir_offset:res_dir_offset+4])[0]
+            res_rva = struct.unpack("<I", binary_data[res_dir_offset : res_dir_offset + 4])[0]
 
             if res_rva:
                 res_offset = self._rva_to_offset(binary_data, res_rva)
                 if res_offset and res_offset < len(binary_data) - 0x100:
                     # Scan resource data for key material
-                    res_data = binary_data[res_offset:res_offset+0x1000]
+                    res_data = binary_data[res_offset : res_offset + 0x1000]
                     for i in range(0, len(res_data) - 32, 16):
-                        candidate = res_data[i:i+32]
+                        candidate = res_data[i : i + 32]
                         if self._is_valid_key_material(candidate):
                             return candidate
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Resource section key extraction failed: {e}")
         return None
 
     def _rva_to_offset(self, binary_data: bytes, rva: int) -> int | None:
         """Convert RVA to file offset."""
         try:
-            pe_offset = struct.unpack('<I', binary_data[0x3C:0x40])[0]
-            num_sections = struct.unpack('<H', binary_data[pe_offset+6:pe_offset+8])[0]
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+            num_sections = struct.unpack("<H", binary_data[pe_offset + 6 : pe_offset + 8])[0]
             section_table = pe_offset + 0xF8
 
             for i in range(num_sections):
                 section_offset = section_table + (i * 40)
-                virtual_addr = struct.unpack('<I', binary_data[section_offset+12:section_offset+16])[0]
-                virtual_size = struct.unpack('<I', binary_data[section_offset+8:section_offset+12])[0]
-                raw_offset = struct.unpack('<I', binary_data[section_offset+20:section_offset+24])[0]
+                virtual_addr = struct.unpack("<I", binary_data[section_offset + 12 : section_offset + 16])[0]
+                virtual_size = struct.unpack("<I", binary_data[section_offset + 8 : section_offset + 12])[0]
+                raw_offset = struct.unpack("<I", binary_data[section_offset + 20 : section_offset + 24])[0]
 
                 if virtual_addr <= rva < virtual_addr + virtual_size:
                     return raw_offset + (rva - virtual_addr)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"RVA to offset conversion failed: {e}")
         return None
 
     def _is_valid_key_material(self, data: bytes) -> bool:
@@ -1226,7 +1227,7 @@ class VMProtectionUnwrapper:
             return False
 
         # Check for null bytes concentration
-        null_count = data.count(b'\x00')
+        null_count = data.count(b"\x00")
         if null_count > len(data) * 0.5:
             return False
 
@@ -1239,7 +1240,7 @@ class VMProtectionUnwrapper:
         if test_offset + 16 > len(binary_data):
             return True  # Can't validate, assume valid
 
-        test_data = binary_data[test_offset:test_offset+16]
+        test_data = binary_data[test_offset : test_offset + 16]
 
         # Try simple XOR decryption
         decrypted = bytes(test_data[i] ^ key[i % len(key)] for i in range(len(test_data)))
@@ -1256,37 +1257,38 @@ class VMProtectionUnwrapper:
         characteristics = bytearray()
 
         # Entry point bytes
-        characteristics.extend(binary_data[entry_point:entry_point+16])
+        characteristics.extend(binary_data[entry_point : entry_point + 16])
 
         # PE timestamp if available
         try:
-            pe_offset = struct.unpack('<I', binary_data[0x3C:0x40])[0]
-            timestamp = binary_data[pe_offset+8:pe_offset+12]
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+            timestamp = binary_data[pe_offset + 8 : pe_offset + 12]
             characteristics.extend(timestamp)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"PE header analysis failed: {e}")
 
         # Protection-specific markers
         protection_markers = {
-            ProtectionType.VMPROTECT_1X: b'VMProtect',
-            ProtectionType.VMPROTECT_2X: b'.vmp0',
-            ProtectionType.VMPROTECT_3X: b'.vmp1',
-            ProtectionType.THEMIDA: b'Themida',
+            ProtectionType.VMPROTECT_1X: b"VMProtect",
+            ProtectionType.VMPROTECT_2X: b".vmp0",
+            ProtectionType.VMPROTECT_3X: b".vmp1",
+            ProtectionType.THEMIDA: b"Themida",
         }
 
-        marker = protection_markers.get(protection_type, b'PROTECTION')
+        marker = protection_markers.get(protection_type, b"PROTECTION")
         pos = binary_data.find(marker)
         if pos != -1:
-            characteristics.extend(binary_data[pos:pos+16])
+            characteristics.extend(binary_data[pos : pos + 16])
 
         # Use PBKDF2 for key derivation
         import hmac
-        salt = binary_data[:16] if len(binary_data) >= 16 else b'INTELLICRACK2025'
+
+        salt = binary_data[:16] if len(binary_data) >= 16 else b"INTELLICRACK2025"
 
         # Simple PBKDF2 implementation
         derived_key = bytearray()
         for i in range(2):  # Generate 32 bytes
-            block = hmac.new(characteristics, salt + struct.pack('>I', i+1), hashlib.sha256).digest()
+            block = hmac.new(characteristics, salt + struct.pack(">I", i + 1), hashlib.sha256).digest()
             derived_key.extend(block[:16])
 
         return bytes(derived_key[:32])
@@ -1332,11 +1334,11 @@ class VMProtectionUnwrapper:
                 # Enhance instruction with context
                 if offset > 0 and instructions:
                     prev_inst = instructions[-1]
-                    instruction.metadata['prev_mnemonic'] = prev_inst.mnemonic
+                    instruction.metadata["prev_mnemonic"] = prev_inst.mnemonic
 
                     # Detect instruction patterns
                     if prev_inst.vm_type == VMInstructionType.STACK and instruction.vm_type == VMInstructionType.ARITHMETIC:
-                        instruction.metadata['pattern'] = 'stack_arithmetic'
+                        instruction.metadata["pattern"] = "stack_arithmetic"
 
                 instructions.append(instruction)
                 offset += instruction.size
@@ -1357,31 +1359,30 @@ class VMProtectionUnwrapper:
             current = instructions[i]
 
             # Pattern: PUSH followed by POP to same location
-            if (i + 1 < len(instructions) and
-                'PUSH' in current.mnemonic and
-                'POP' in instructions[i+1].mnemonic):
+            if i + 1 < len(instructions) and "PUSH" in current.mnemonic and "POP" in instructions[i + 1].mnemonic:
                 # Skip both instructions if they cancel out
-                if current.operands == instructions[i+1].operands:
+                if current.operands == instructions[i + 1].operands:
                     i += 2
                     continue
 
             # Pattern: Multiple NOPs
-            if 'NOP' in current.mnemonic:
+            if "NOP" in current.mnemonic:
                 # Skip consecutive NOPs
-                while i + 1 < len(instructions) and 'NOP' in instructions[i+1].mnemonic:
+                while i + 1 < len(instructions) and "NOP" in instructions[i + 1].mnemonic:
                     i += 1
                 i += 1
                 continue
 
             # Pattern: Redundant moves
-            if (i + 1 < len(instructions) and
-                'MOV' in current.mnemonic and
-                'MOV' in instructions[i+1].mnemonic):
+            if i + 1 < len(instructions) and "MOV" in current.mnemonic and "MOV" in instructions[i + 1].mnemonic:
                 # Check if second move overwrites first
-                if (len(current.operands) > 0 and len(instructions[i+1].operands) > 0 and
-                    current.operands[0] == instructions[i+1].operands[0]):
+                if (
+                    len(current.operands) > 0
+                    and len(instructions[i + 1].operands) > 0
+                    and current.operands[0] == instructions[i + 1].operands[0]
+                ):
                     # Skip first move
-                    optimized.append(instructions[i+1])
+                    optimized.append(instructions[i + 1])
                     i += 2
                     continue
 
@@ -1435,25 +1436,31 @@ class VMProtectionUnwrapper:
             return None
 
         # Pattern: Function prologue
-        if ('PUSH' in instructions[start].mnemonic and
-            instructions[start].operands == [0x5] and  # EBP register code
-            'MOV' in instructions[start+1].mnemonic):
+        if (
+            "PUSH" in instructions[start].mnemonic
+            and instructions[start].operands == [0x5]  # EBP register code
+            and "MOV" in instructions[start + 1].mnemonic
+        ):
             # Standard function prologue
-            return b'\x55\x89\xe5'  # push ebp; mov ebp,esp
+            return b"\x55\x89\xe5"  # push ebp; mov ebp,esp
 
         # Pattern: Function epilogue
-        if ('MOV' in instructions[start].mnemonic and
-            'POP' in instructions[start+1].mnemonic and
-            'RET' in instructions[start+2].mnemonic):
+        if (
+            "MOV" in instructions[start].mnemonic
+            and "POP" in instructions[start + 1].mnemonic
+            and "RET" in instructions[start + 2].mnemonic
+        ):
             # Standard function epilogue
-            return b'\x89\xec\x5d\xc3'  # mov esp,ebp; pop ebp; ret
+            return b"\x89\xec\x5d\xc3"  # mov esp,ebp; pop ebp; ret
 
         # Pattern: Loop construct
-        if ('CMP' in instructions[start].mnemonic and
-            start + 1 < len(instructions) and
-            instructions[start+1].vm_type == VMInstructionType.CONTROL_FLOW):
+        if (
+            "CMP" in instructions[start].mnemonic
+            and start + 1 < len(instructions)
+            and instructions[start + 1].vm_type == VMInstructionType.CONTROL_FLOW
+        ):
             # Loop pattern
-            return b'\x39\xc1\x75\xfe'  # cmp ecx,eax; jne -2
+            return b"\x39\xc1\x75\xfe"  # cmp ecx,eax; jne -2
 
         return None
 
@@ -1463,108 +1470,105 @@ class VMProtectionUnwrapper:
         operands = instruction.operands
 
         # Context-aware conversion
-        if instruction.metadata.get('pattern') == 'stack_arithmetic':
+        if instruction.metadata.get("pattern") == "stack_arithmetic":
             # Optimized stack-based arithmetic
-            if 'ADD' in mnemonic:
+            if "ADD" in mnemonic:
                 return "add dword [esp], eax"
-            elif 'SUB' in mnemonic:
+            elif "SUB" in mnemonic:
                 return "sub dword [esp], eax"
 
         # Register allocation for VM registers
-        vm_reg_map = {
-            0: 'eax', 1: 'ecx', 2: 'edx', 3: 'ebx',
-            4: 'esp', 5: 'ebp', 6: 'esi', 7: 'edi'
-        }
+        vm_reg_map = {0: "eax", 1: "ecx", 2: "edx", 3: "ebx", 4: "esp", 5: "ebp", 6: "esi", 7: "edi"}
 
         # Enhanced instruction mapping
-        if 'PUSH' in mnemonic:
+        if "PUSH" in mnemonic:
             if operands and isinstance(operands[0], int):
                 if operands[0] in vm_reg_map:
                     return f"push {vm_reg_map[operands[0]]}"
                 return f"push 0x{operands[0]:x}"
             return "push eax"
 
-        if 'POP' in mnemonic:
+        if "POP" in mnemonic:
             if operands and operands[0] in vm_reg_map:
                 return f"pop {vm_reg_map[operands[0]]}"
             return "pop eax"
 
         # Arithmetic with immediate values
         if operands and len(operands) >= 1:
-            if 'ADD' in mnemonic:
+            if "ADD" in mnemonic:
                 return f"add eax, 0x{operands[0]:x}"
-            if 'SUB' in mnemonic:
+            if "SUB" in mnemonic:
                 return f"sub eax, 0x{operands[0]:x}"
-            if 'MUL' in mnemonic:
+            if "MUL" in mnemonic:
                 return f"imul eax, eax, 0x{operands[0]:x}"
 
         # Memory operations with addressing modes
-        if 'LOAD' in mnemonic:
+        if "LOAD" in mnemonic:
             if operands:
                 return f"mov eax, dword [0x{operands[0]:x}]"
             return "mov eax, dword [ebx]"
 
-        if 'STORE' in mnemonic:
+        if "STORE" in mnemonic:
             if operands:
                 return f"mov dword [0x{operands[0]:x}], eax"
             return "mov dword [ebx], eax"
 
         # Control flow with relative addressing
-        if 'JMP' in mnemonic and operands:
+        if "JMP" in mnemonic and operands:
             return f"jmp 0x{operands[0]:x}"
 
-        if ('JZ' in mnemonic or 'JE' in mnemonic) and operands:
+        if ("JZ" in mnemonic or "JE" in mnemonic) and operands:
             return f"je 0x{operands[0]:x}"
 
-        if ('JNZ' in mnemonic or 'JNE' in mnemonic) and operands:
+        if ("JNZ" in mnemonic or "JNE" in mnemonic) and operands:
             return f"jne 0x{operands[0]:x}"
 
-        if 'CALL' in mnemonic and operands:
+        if "CALL" in mnemonic and operands:
             return f"call 0x{operands[0]:x}"
 
-        if 'RET' in mnemonic:
+        if "RET" in mnemonic:
             if operands:
                 return f"ret 0x{operands[0]:x}"
             return "ret"
 
         # Logical operations
-        if 'XOR' in mnemonic:
+        if "XOR" in mnemonic:
             if operands:
                 return f"xor eax, 0x{operands[0]:x}"
             return "xor eax, ebx"
 
-        if 'AND' in mnemonic:
+        if "AND" in mnemonic:
             if operands:
                 return f"and eax, 0x{operands[0]:x}"
             return "and eax, ebx"
 
-        if 'OR' in mnemonic:
+        if "OR" in mnemonic:
             if operands:
                 return f"or eax, 0x{operands[0]:x}"
             return "or eax, ebx"
 
-        if 'SHL' in mnemonic:
+        if "SHL" in mnemonic:
             if operands:
-                return f"shl eax, {operands[0] & 0x1f}"
+                return f"shl eax, {operands[0] & 0x1F}"
             return "shl eax, cl"
 
-        if 'SHR' in mnemonic:
+        if "SHR" in mnemonic:
             if operands:
-                return f"shr eax, {operands[0] & 0x1f}"
+                return f"shr eax, {operands[0] & 0x1F}"
             return "shr eax, cl"
 
         # Default register operations
-        if 'MOV' in mnemonic:
+        if "MOV" in mnemonic:
             if len(operands) >= 2:
-                src = vm_reg_map.get(operands[1], 'ebx')
-                dst = vm_reg_map.get(operands[0], 'eax')
+                src = vm_reg_map.get(operands[1], "ebx")
+                dst = vm_reg_map.get(operands[0], "eax")
                 return f"mov {dst}, {src}"
             return "mov eax, ebx"
 
-        if 'XCHG' in mnemonic:
+        if "XCHG" in mnemonic:
             if len(operands) >= 2:
-                reg1 = vm_reg_map.get(operands[0], 'eax')
-                reg2 = vm_reg_map.get(operands[1], 'ebx')
+                reg1 = vm_reg_map.get(operands[0], "eax")
+                reg2 = vm_reg_map.get(operands[1], "ebx")
                 return f"xchg {reg1}, {reg2}"
             return "xchg eax, ebx"
 
@@ -1576,49 +1580,49 @@ class VMProtectionUnwrapper:
 
         # Pre-compiled x86 opcodes for common operations
         opcode_map = {
-            'PUSH_EAX': b'\x50',
-            'POP_EAX': b'\x58',
-            'PUSH_EBX': b'\x53',
-            'POP_EBX': b'\x5b',
-            'MOV_EAX_EBX': b'\x89\xd8',
-            'ADD_EAX_EBX': b'\x01\xd8',
-            'SUB_EAX_EBX': b'\x29\xd8',
-            'XOR_EAX_EBX': b'\x31\xd8',
-            'RET': b'\xc3',
-            'NOP': b'\x90',
-            'JMP_SHORT': b'\xeb\x00',
-            'JE_SHORT': b'\x74\x00',
-            'JNE_SHORT': b'\x75\x00',
+            "PUSH_EAX": b"\x50",
+            "POP_EAX": b"\x58",
+            "PUSH_EBX": b"\x53",
+            "POP_EBX": b"\x5b",
+            "MOV_EAX_EBX": b"\x89\xd8",
+            "ADD_EAX_EBX": b"\x01\xd8",
+            "SUB_EAX_EBX": b"\x29\xd8",
+            "XOR_EAX_EBX": b"\x31\xd8",
+            "RET": b"\xc3",
+            "NOP": b"\x90",
+            "JMP_SHORT": b"\xeb\x00",
+            "JE_SHORT": b"\x74\x00",
+            "JNE_SHORT": b"\x75\x00",
         }
 
         for inst in vm_instructions:
             # Map VM instruction to x86 opcode
-            key = inst.mnemonic.replace('VM_', '').upper()
+            key = inst.mnemonic.replace("VM_", "").upper()
 
             if key in opcode_map:
                 x86_code.extend(opcode_map[key])
-            elif 'PUSH' in key:
-                x86_code.extend(opcode_map.get('PUSH_EAX', b'\x50'))
-            elif 'POP' in key:
-                x86_code.extend(opcode_map.get('POP_EAX', b'\x58'))
-            elif 'MOV' in key:
-                x86_code.extend(opcode_map.get('MOV_EAX_EBX', b'\x89\xd8'))
-            elif 'ADD' in key:
-                x86_code.extend(opcode_map.get('ADD_EAX_EBX', b'\x01\xd8'))
-            elif 'SUB' in key:
-                x86_code.extend(opcode_map.get('SUB_EAX_EBX', b'\x29\xd8'))
-            elif 'XOR' in key:
-                x86_code.extend(opcode_map.get('XOR_EAX_EBX', b'\x31\xd8'))
-            elif 'RET' in key:
-                x86_code.extend(opcode_map.get('RET', b'\xc3'))
-            elif 'JMP' in key:
-                x86_code.extend(opcode_map.get('JMP_SHORT', b'\xeb\x00'))
-            elif 'JE' in key or 'JZ' in key:
-                x86_code.extend(opcode_map.get('JE_SHORT', b'\x74\x00'))
-            elif 'JNE' in key or 'JNZ' in key:
-                x86_code.extend(opcode_map.get('JNE_SHORT', b'\x75\x00'))
+            elif "PUSH" in key:
+                x86_code.extend(opcode_map.get("PUSH_EAX", b"\x50"))
+            elif "POP" in key:
+                x86_code.extend(opcode_map.get("POP_EAX", b"\x58"))
+            elif "MOV" in key:
+                x86_code.extend(opcode_map.get("MOV_EAX_EBX", b"\x89\xd8"))
+            elif "ADD" in key:
+                x86_code.extend(opcode_map.get("ADD_EAX_EBX", b"\x01\xd8"))
+            elif "SUB" in key:
+                x86_code.extend(opcode_map.get("SUB_EAX_EBX", b"\x29\xd8"))
+            elif "XOR" in key:
+                x86_code.extend(opcode_map.get("XOR_EAX_EBX", b"\x31\xd8"))
+            elif "RET" in key:
+                x86_code.extend(opcode_map.get("RET", b"\xc3"))
+            elif "JMP" in key:
+                x86_code.extend(opcode_map.get("JMP_SHORT", b"\xeb\x00"))
+            elif "JE" in key or "JZ" in key:
+                x86_code.extend(opcode_map.get("JE_SHORT", b"\x74\x00"))
+            elif "JNE" in key or "JNZ" in key:
+                x86_code.extend(opcode_map.get("JNE_SHORT", b"\x75\x00"))
             else:
-                x86_code.extend(opcode_map.get('NOP', b'\x90'))
+                x86_code.extend(opcode_map.get("NOP", b"\x90"))
 
         return bytes(x86_code)
 
@@ -1633,8 +1637,8 @@ class VMProtectionUnwrapper:
             if i < len(code) - 1:
                 if code[i] == 0xEB or (0x70 <= code[i] <= 0x7F):
                     # Ensure jump offset is valid
-                    if code[i+1] == 0:
-                        code[i+1] = 0x02  # Jump forward 2 bytes minimum
+                    if code[i + 1] == 0:
+                        code[i + 1] = 0x02  # Jump forward 2 bytes minimum
                     i += 2
                     continue
 
@@ -1642,10 +1646,10 @@ class VMProtectionUnwrapper:
             if i < len(code) - 4:
                 if code[i] in [0xE8, 0xE9]:
                     # Ensure valid offset
-                    offset = struct.unpack('<i', code[i+1:i+5])[0]
+                    offset = struct.unpack("<i", code[i + 1 : i + 5])[0]
                     if offset == 0:
                         # Point to next instruction
-                        struct.pack_into('<i', code, i+1, 5)
+                        struct.pack_into("<i", code, i + 1, 5)
                     i += 5
                     continue
 

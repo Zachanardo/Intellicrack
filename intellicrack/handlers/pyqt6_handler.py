@@ -542,8 +542,8 @@ except ImportError as e:
                 try:
                     with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
                         f.write(f"[{timestamp}] CRITICAL: {title}: {message}\n")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Log file write failed: {e}")
 
             return default if default is not None else 0
 
@@ -557,8 +557,8 @@ except ImportError as e:
                 try:
                     with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
                         f.write(f"[{timestamp}] WARNING: {title}: {message}\n")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Log file write failed: {e}")
 
             return default if default is not None else 0
 
@@ -572,8 +572,8 @@ except ImportError as e:
                 try:
                     with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
                         f.write(f"[{timestamp}] INFO: {title}: {message}\n")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Log file write failed: {e}")
 
             return default if default is not None else 0
 
@@ -587,8 +587,8 @@ except ImportError as e:
                 try:
                     with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
                         f.write(f"[{timestamp}] QUESTION: {title}: {message}\n")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Log file write failed: {e}")
 
             if os.environ.get("INTELLICRACK_AUTO_ANSWER"):
                 answer = os.environ.get("INTELLICRACK_AUTO_ANSWER")

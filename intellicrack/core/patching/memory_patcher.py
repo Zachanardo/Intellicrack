@@ -25,12 +25,12 @@ from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 
-from ...utils.logger import get_logger
 from ...protection.protection_detector import (
     detect_checksum_verification,
     detect_obfuscation,
     detect_self_healing_code,
 )
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 

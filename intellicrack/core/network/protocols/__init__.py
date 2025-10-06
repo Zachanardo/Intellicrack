@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 # Import protocol parsers
 _parsers = {}
 _parser_modules = [
-    ("adobe_parser", "Adobe licensing protocol parser"),
     ("autodesk_parser", "Autodesk licensing protocol parser"),
     ("codemeter_parser", "CodeMeter protocol parser"),
     ("flexlm_parser", "FlexLM licensing protocol parser"),
@@ -82,7 +81,6 @@ def get_supported_protocols():
     """Get list of protocols supported by available parsers."""
     protocols = []
     parser_protocol_map = {
-        "adobe_parser": "adobe",
         "autodesk_parser": "autodesk",
         "codemeter_parser": "codemeter",
         "flexlm_parser": "flexlm",

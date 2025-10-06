@@ -45,22 +45,6 @@ except ImportError as e:
     _init_logger.warning("Failed to import logger: %s", e)
 
 try:
-    from .core.misc_utils import (
-        ensure_directory_exists,
-        format_bytes,
-        get_file_extension,
-        get_timestamp,
-        log_message,
-        parse_size_string,
-        safe_str,
-        sanitize_filename,
-        truncate_string,
-        validate_path,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import misc_utils: %s", e)
-
-try:
     from .patching.patch_utils import (
         apply_patch,
         convert_rva_to_offset,
@@ -74,18 +58,18 @@ except ImportError as e:
     _init_logger.warning("Failed to import patch_utils: %s", e)
 
 try:
-    from .protection.protection_utils import (
-        analyze_protection,
-        bypass_protection,
-        detect_packing,
-        detect_protection,
+    from .protection_utils import (
+        calculate_entropy,
+        detect_protection_mechanisms,
+        generate_bypass_strategy,
+        generate_hwid_spoof_config,
         inject_comprehensive_api_hooks,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import protection_utils: %s", e)
 
 try:
-    from .reporting.report_generator import ReportGenerator, export_report, generate_report
+    from .report_generator import ReportGenerator, export_report, generate_report
 except ImportError as e:
     _init_logger.warning("Failed to import report_generator: %s", e)
 
@@ -203,15 +187,16 @@ try:
 except ImportError as e:
     _init_logger.warning("Failed to import exception_utils: %s", e)
 
-try:
-    from .protection.protection_detection import (
-        detect_anti_debugging_techniques,
-        detect_commercial_protections,
-        detect_virtualization_protection,
-        scan_for_bytecode_protectors,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import protection_detection: %s", e)
+# Protection detection module not yet implemented
+# try:
+#     from .protection.protection_detection import (
+#         detect_anti_debugging_techniques,
+#         detect_commercial_protections,
+#         detect_virtualization_protection,
+#         scan_for_bytecode_protectors,
+#     )
+# except ImportError as e:
+#     _init_logger.warning("Failed to import protection_detection: %s", e)
 
 try:
     from .system.process_utils import (
@@ -277,7 +262,7 @@ try:
         generate_response,
         patch_selected,
         run_automated_patch_agent,
-        run_simulate_patch,
+        run_patch_validation,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import exploitation: %s", e)
@@ -301,12 +286,10 @@ except ImportError as e:
 
 try:
     from .runtime.additional_runners import (
-        check_adobe_licensex_status,
         compute_file_hash,
         create_sample_plugins,
         get_target_process_pid,
         load_ai_model,
-        run_adobe_licensex_manually,
         run_analysis,
         run_autonomous_crack,
         run_comprehensive_analysis,
@@ -382,7 +365,7 @@ try:
         predict_vulnerabilities,
         sandbox_process,
         select_backend_for_workload,
-        show_simulation_results,
+        show_analysis_results,
         showEvent,
         start_training,
         stop_training,
@@ -449,15 +432,6 @@ try:
 except ImportError as e:
     _init_logger.warning("Failed to import gpu_autoloader functions: %s", e)
 
-# Import exploit common functions
-try:
-    from .exploitation.exploit_common import (
-        create_analysis_button,
-        handle_exploit_payload_generation,
-        handle_exploit_strategy_generation,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import exploit_common functions: %s", e)
 
 # Import UI button common functions
 try:
@@ -512,13 +486,19 @@ except ImportError as e:
     _init_logger.warning("Failed to import pattern_search functions: %s", e)
 
 try:
-    from .analysis.severity_levels import (
-        SecurityRelevance,
-        SeverityLevel,
-        VulnerabilityLevel,
+    from .json_utils import (
+        DateTimeEncoder,
+        datetime_decoder,
+        dump,
+        dumps,
+        load,
+        loads,
+        safe_deserialize,
+        safe_serialize,
     )
 except ImportError as e:
-    _init_logger.warning("Failed to import severity_levels: %s", e)
+    _init_logger.warning("Failed to import json_utils functions: %s", e)
+
 
 __all__ = [
     # From binary_utils
@@ -557,11 +537,11 @@ __all__ = [
     "get_section_info",
     "create_nop_patch",
     # From protection_utils
-    "detect_packing",
+    "detect_protection_mechanisms",
+    "generate_bypass_strategy",
     "inject_comprehensive_api_hooks",
-    "detect_protection",
-    "analyze_protection",
-    "bypass_protection",
+    "calculate_entropy",
+    "generate_hwid_spoof_config",
     # From report_generator
     "ReportGenerator",
     "generate_report",
@@ -645,11 +625,11 @@ __all__ = [
     "setup_file_logging",
     "create_sample_plugins",
     "load_ai_model",
-    # From protection_detection
-    "detect_anti_debugging_techniques",
-    "detect_commercial_protections",
-    "detect_virtualization_protection",
-    "scan_for_bytecode_protectors",
+    # From protection_detection - module not yet implemented
+    # "detect_anti_debugging_techniques",
+    # "detect_commercial_protections",
+    # "detect_virtualization_protection",
+    # "scan_for_bytecode_protectors",
     # From process_utils
     "detect_hardware_dongles",
     "detect_tpm_protection",
@@ -691,7 +671,7 @@ __all__ = [
     "generate_response",
     "patch_selected",
     "run_automated_patch_agent",
-    "run_simulate_patch",
+    "run_patch_validation",
     # From distributed_processing
     "process_binary_chunks",
     "process_chunk",
@@ -711,8 +691,6 @@ __all__ = [
     "run_deep_cfg_analysis",
     "run_external_tool",
     "run_windows_activator",
-    "check_adobe_licensex_status",
-    "run_adobe_licensex_manually",
     "validate_dataset",
     "verify_hash",
     "run_external_command",
@@ -732,7 +710,7 @@ __all__ = [
     "add_table",
     "browse_dataset",
     "browse_model",
-    "show_simulation_results",
+    "show_analysis_results",
     "update_training_progress",
     "update_visualization",
     "center_on_screen",
@@ -837,6 +815,15 @@ __all__ = [
     "get_gpu_info",
     "to_device",
     "optimize_for_gpu",
+    # From json_utils
+    "DateTimeEncoder",
+    "datetime_decoder",
+    "dumps",
+    "dump",
+    "loads",
+    "load",
+    "safe_serialize",
+    "safe_deserialize",
 ]
 
 # Package metadata

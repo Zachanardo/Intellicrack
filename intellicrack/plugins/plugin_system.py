@@ -30,50 +30,13 @@ from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
-from intellicrack.handlers.frida_handler import HAS_FRIDA as FRIDA_AVAILABLE
+from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 from intellicrack.utils.logger import logger
 
 from ..config import CONFIG
 from ..utils.system.process_utils import get_target_process_pid
 
-"""
-Plugin System Foundation for Intellicrack
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
-
-#!/usr/bin/env python3
-"""
-Plugin System Foundation for Intellicrack
-
-This module provides the core plugin system functionality including:
-- Plugin loading from different sources (Frida scripts, Ghidra scripts, custom Python modules)
-- Plugin execution and management
-- Cross-platform plugin distribution and execution
-
-Author: Intellicrack Development Team
-"""
-
-
-if FRIDA_AVAILABLE:
-    from intellicrack.handlers.frida_handler import frida
-else:
-    frida = None
+FRIDA_AVAILABLE = HAS_FRIDA
 
 try:
     import resource

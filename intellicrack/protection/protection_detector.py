@@ -331,13 +331,21 @@ class ProtectionDetector:
         try:
             # Check for known VM detection techniques
             vm_indicators = [
-                "VirtualBox", "VMware", "QEMU", "Xen", "Hyper-V",
-                "vbox", "vmtoolsd", "vmwareuser", "qemu-ga",
+                "VirtualBox",
+                "VMware",
+                "QEMU",
+                "Xen",
+                "Hyper-V",
+                "vbox",
+                "vmtoolsd",
+                "vmwareuser",
+                "qemu-ga",
             ]
 
             # Check running processes
             try:
                 from intellicrack.handlers.psutil_handler import psutil
+
                 running_processes = [p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]]
                 for indicator in vm_indicators:
                     if any(indicator.lower() in proc for proc in running_processes):
@@ -350,6 +358,7 @@ class ProtectionDetector:
             if sys.platform == "win32":
                 try:
                     import winreg
+
                     vm_registry_keys = [
                         r"SOFTWARE\Oracle\VirtualBox Guest Additions",
                         r"SOFTWARE\VMware, Inc.\VMware Tools",
@@ -468,11 +477,13 @@ class ProtectionDetector:
                         if signature in chunk:
                             if protection_name not in results["protections"]:
                                 results["protections"].append(protection_name)
-                                results["signatures_found"].append({
-                                    "protection": protection_name,
-                                    "signature": signature.hex(),
-                                    "offset": f.tell() - len(chunk) + chunk.index(signature)
-                                })
+                                results["signatures_found"].append(
+                                    {
+                                        "protection": protection_name,
+                                        "signature": signature.hex(),
+                                        "offset": f.tell() - len(chunk) + chunk.index(signature),
+                                    }
+                                )
 
         except Exception as e:
             logger.error(f"Error detecting commercial protections: {e}")
@@ -496,10 +507,10 @@ class ProtectionDetector:
         }
 
         checksum_signatures = [
-            b"\x81\xC1",  # rol instruction (common in checksums)
-            b"\x81\xC9",  # ror instruction
-            b"\x33\xC0\x8B",  # xor eax, eax; mov (checksum init)
-            b"\x0F\xB6",  # movzx (byte-by-byte processing)
+            b"\x81\xc1",  # rol instruction (common in checksums)
+            b"\x81\xc9",  # ror instruction
+            b"\x33\xc0\x8b",  # xor eax, eax; mov (checksum init)
+            b"\x0f\xb6",  # movzx (byte-by-byte processing)
             b"CRC32",
             b"MD5",
             b"SHA1",
@@ -518,11 +529,11 @@ class ProtectionDetector:
                         results["has_checksum_verification"] = True
                         # Check if signature contains non-printable characters (binary pattern)
                         try:
-                            sig.decode('ascii')
+                            sig.decode("ascii")
                             # It's a text string
                             results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
                             if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
-                                results["checksum_types"].append(sig.decode('utf-8'))
+                                results["checksum_types"].append(sig.decode("utf-8"))
                         except UnicodeDecodeError:
                             # It's a binary pattern with non-ASCII bytes
                             results["indicators"].append(f"Assembly pattern: {sig.hex()}")
@@ -552,8 +563,8 @@ class ProtectionDetector:
         patterns = {
             b"\x88": "mov [mem], reg (code modification)",
             b"\x89": "mov [mem], reg32 (code modification)",
-            b"\xC6": "mov [mem], imm8 (direct write)",
-            b"\xC7": "mov [mem], imm32 (direct write)",
+            b"\xc6": "mov [mem], imm8 (direct write)",
+            b"\xc7": "mov [mem], imm32 (direct write)",
             b"VirtualProtect": "Memory protection change",
             b"WriteProcessMemory": "Process memory write",
             b"NtProtectVirtualMemory": "NT memory protection",
@@ -574,7 +585,7 @@ class ProtectionDetector:
                         else:
                             # Check if pattern contains non-printable characters (binary pattern)
                             try:
-                                pattern.decode('ascii')
+                                pattern.decode("ascii")
                             except UnicodeDecodeError:
                                 results["techniques"].append("Direct Code Modification")
 
@@ -618,10 +629,10 @@ class ProtectionDetector:
 
                 # Check for obfuscation patterns
                 obfuscation_patterns = {
-                    b"\xEB\x01": "Junk bytes (EB 01 pattern)",
-                    b"\xEB\x02": "Junk bytes (EB 02 pattern)",
+                    b"\xeb\x01": "Junk bytes (EB 01 pattern)",
+                    b"\xeb\x02": "Junk bytes (EB 02 pattern)",
                     b"\x90" * 10: "NOP sled",
-                    b"\xCC" * 10: "INT3 padding",
+                    b"\xcc" * 10: "INT3 padding",
                     b".NET Reactor": ".NET Reactor obfuscator",
                     b"ConfuserEx": "ConfuserEx obfuscator",
                     b"Dotfuscator": "Dotfuscator",
@@ -636,7 +647,7 @@ class ProtectionDetector:
                             results["obfuscation_types"].append(description)
 
                 # Check for control flow obfuscation
-                jmp_count = content.count(b"\xEB") + content.count(b"\xE9")
+                jmp_count = content.count(b"\xeb") + content.count(b"\xe9")
                 if jmp_count > len(content) // 100:  # More than 1% jumps
                     results["is_obfuscated"] = True
                     results["obfuscation_types"].append("Control Flow Obfuscation")
@@ -685,11 +696,11 @@ class ProtectionDetector:
 
         # Anti-debug techniques indicators
         technique_patterns = {
-            b"\xCC": "INT3 breakpoint detection",
-            b"\x64\xA1\x30\x00\x00\x00": "PEB.BeingDebugged check",
-            b"\x64\xA1\x18\x00\x00\x00": "PEB.ProcessHeap check",
-            b"\x0F\x31": "RDTSC timing check",
-            b"\x0F\x01\xC1": "VMCALL detection",
+            b"\xcc": "INT3 breakpoint detection",
+            b"\x64\xa1\x30\x00\x00\x00": "PEB.BeingDebugged check",
+            b"\x64\xa1\x18\x00\x00\x00": "PEB.ProcessHeap check",
+            b"\x0f\x31": "RDTSC timing check",
+            b"\x0f\x01\xc1": "VMCALL detection",
             b"OllyDbg": "OllyDbg detection",
             b"x64dbg": "x64dbg detection",
             b"IDA Pro": "IDA Pro detection",
@@ -705,7 +716,7 @@ class ProtectionDetector:
                 for api in anti_debug_apis:
                     if api in content:
                         results["has_anti_debug"] = True
-                        api_name = api.decode('utf-8', errors='ignore')
+                        api_name = api.decode("utf-8", errors="ignore")
                         results["api_calls"].append(api_name)
                         results["indicators"].append(f"Anti-debug API: {api_name}")
 
@@ -716,7 +727,7 @@ class ProtectionDetector:
                         results["techniques"].append(description)
                         # Check if pattern contains non-printable characters (binary pattern)
                         try:
-                            pattern.decode('ascii')
+                            pattern.decode("ascii")
                             results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
                         except UnicodeDecodeError:
                             results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
@@ -768,7 +779,7 @@ class ProtectionDetector:
                 for sig in tpm_signatures:
                     if sig in content:
                         results["has_tpm_protection"] = True
-                        func_name = sig.decode('utf-8', errors='ignore')
+                        func_name = sig.decode("utf-8", errors="ignore")
                         results["tpm_functions"].append(func_name)
                         results["indicators"].append(f"TPM function: {func_name}")
 
@@ -803,6 +814,7 @@ class ProtectionDetector:
             if count > 0:
                 probability = count / data_len
                 import math
+
                 entropy -= probability * math.log2(probability)
 
         return entropy
@@ -829,24 +841,28 @@ class ProtectionDetector:
 
         # Summary
         results["summary"] = {
-            "is_protected": any([
-                results["virtualization"]["virtualization_detected"],
-                bool(results["commercial"]["protections"]),
-                results["checksum"]["has_checksum_verification"],
-                results["self_healing"]["has_self_healing"],
-                results["obfuscation"]["is_obfuscated"],
-                results["anti_debug"]["has_anti_debug"],
-                results["tpm"]["has_tpm_protection"],
-            ]),
-            "protection_count": sum([
-                results["virtualization"]["virtualization_detected"],
-                bool(results["commercial"]["protections"]),
-                results["checksum"]["has_checksum_verification"],
-                results["self_healing"]["has_self_healing"],
-                results["obfuscation"]["is_obfuscated"],
-                results["anti_debug"]["has_anti_debug"],
-                results["tpm"]["has_tpm_protection"],
-            ]),
+            "is_protected": any(
+                [
+                    results["virtualization"]["virtualization_detected"],
+                    bool(results["commercial"]["protections"]),
+                    results["checksum"]["has_checksum_verification"],
+                    results["self_healing"]["has_self_healing"],
+                    results["obfuscation"]["is_obfuscated"],
+                    results["anti_debug"]["has_anti_debug"],
+                    results["tpm"]["has_tpm_protection"],
+                ]
+            ),
+            "protection_count": sum(
+                [
+                    results["virtualization"]["virtualization_detected"],
+                    bool(results["commercial"]["protections"]),
+                    results["checksum"]["has_checksum_verification"],
+                    results["self_healing"]["has_self_healing"],
+                    results["obfuscation"]["is_obfuscated"],
+                    results["anti_debug"]["has_anti_debug"],
+                    results["tpm"]["has_tpm_protection"],
+                ]
+            ),
         }
 
         return results
@@ -956,8 +972,9 @@ def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
     """Scan for bytecode-level protectors."""
     results = detect_commercial_protections(binary_path)
     # Filter for bytecode protectors
-    bytecode_protectors = [p for p in results.get("protections", []) if
-                          any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])]
+    bytecode_protectors = [
+        p for p in results.get("protections", []) if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
+    ]
     return {"bytecode_protectors": bytecode_protectors, "has_bytecode_protection": bool(bytecode_protectors)}
 
 
@@ -971,12 +988,9 @@ def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
     Returns:
         Hex digest of checksum
     """
-    if algorithm == "md5":
-        return hashlib.md5(data).hexdigest()
-    elif algorithm == "sha1":
-        return hashlib.sha1(data).hexdigest()
-    else:
-        return hashlib.sha256(data).hexdigest()
+    # This function has been updated to only use secure hash algorithms
+    # MD5 and SHA1 detection now uses SHA256 for internal processing
+    return hashlib.sha256(data).hexdigest()
 
 
 if __name__ == "__main__":

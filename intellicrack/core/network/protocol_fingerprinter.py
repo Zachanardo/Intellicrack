@@ -29,7 +29,7 @@ from collections import Counter
 from typing import Any
 
 # Import shared entropy calculation
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 
 class ProtocolFingerprinter:
@@ -79,7 +79,7 @@ class ProtocolFingerprinter:
             22350,  # CodeMeter
             2080,  # Autodesk
             8080,
-            443,  # Adobe
+            443,  # HTTPS (various licensing)
             1688,  # Microsoft KMS
             5093,  # Sentinel RMS
             8224,  # Generic license server
@@ -162,28 +162,6 @@ class ProtocolFingerprinter:
             "response_templates": {
                 "heartbeat": b"\x00\x01\x02\x03\x00\x00\x00",
                 "license_ok": b"\x00\x01\x02\x03\x01\x00\x01\x01",
-            },
-        }
-
-        # Adobe licensing protocol
-        self.signatures["adobe"] = {
-            "name": "Adobe Licensing",
-            "description": "Adobe Creative Cloud licensing protocol",
-            "ports": [443, 8080],
-            "patterns": [
-                {"offset": 0, "bytes": b"LCSAP", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b"ADOBE_LICENSE", "mask": None, "weight": 0.5},
-                {"offset": 0, "bytes": b'{"licensing":', "mask": None, "weight": 0.3},
-            ],
-            "header_format": [
-                {"name": "signature", "type": "string", "length": 5},
-                {"name": "version", "type": "uint8", "length": 1},
-                {"name": "command", "type": "uint8", "length": 1},
-                {"name": "payload_length", "type": "uint16", "length": 2},
-            ],
-            "response_templates": {
-                "heartbeat": b"LCSAP\x01\x00\x00\x00",
-                "license_ok": b"LCSAP\x01\x01\x00\x01\x01",
             },
         }
 
@@ -609,10 +587,6 @@ class ProtocolFingerprinter:
                 # Copy signature field
                 response[0:4] = request_packet[0:4]
 
-            elif protocol_id == "adobe" and len(response) >= 5 and len(request_packet) >= 5:
-                # Copy signature and version fields
-                response[0:6] = request_packet[0:6]
-
             elif protocol_id == "autodesk" and len(response) >= 6 and len(request_packet) >= 6:
                 # Copy signature and version fields
                 response[0:5] = request_packet[0:5]
@@ -988,7 +962,6 @@ class ProtocolFingerprinter:
                 "HASP": [b"hasp", b"aksusbd", b"hasplms", b"sentinel", b"1947"],
                 "CodeMeter": [b"codemeter", b"cmact", b"wibu", b"22350", b"CmDongle"],
                 "Sentinel": [b"sentinel", b"sntlkeyssrvr", b"RMS License Manager", b"5093"],
-                "Adobe": [b"adobe_license", b"activation.adobe.com", b"lm.licenses.adobe.com"],
                 "Autodesk": [b"adskflex", b"autodesk", b"flexnet", b"2080"],
                 "Microsoft KMS": [b"KMSClient", b"SLMgr", b"1688", b"kms."],
                 "Generic": [b"LICENSE", b"ACTIVATION", b"serial", b"product_key", b"registration"],

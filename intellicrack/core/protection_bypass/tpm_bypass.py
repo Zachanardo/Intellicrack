@@ -227,7 +227,7 @@ class TPMBypassEngine:
                     self.logger.debug("Memory access initialized successfully, system information available") if hasattr(
                         self, "logger"
                     ) else None
-            except:
+            except (AttributeError, KeyError):
                 self.mem_handle = None
 
             self.memory_map = {
@@ -472,7 +472,7 @@ class TPMBypassEngine:
 
             if kernel32.ReadFile(self.mem_handle, buffer, size, ctypes.byref(bytes_read), None):
                 return buffer.raw[: bytes_read.value]
-        except:
+        except (OSError, AttributeError):
             pass
 
         return None
@@ -561,7 +561,7 @@ class TPMBypassEngine:
 
                 win32file.CloseHandle(tpm_device)
                 return response
-            except:
+            except (OSError, AttributeError):
                 pass
 
         return self.process_virtualized_command(command)

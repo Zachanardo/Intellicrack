@@ -24,7 +24,6 @@ import json
 import logging
 import mmap
 import os
-import pickle
 import queue
 import struct
 import threading
@@ -48,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 class MessageType(Enum):
     """Types of IPC messages."""
+
     DATA = 1
     STATUS = 2
     COMMAND = 3
@@ -59,6 +59,7 @@ class MessageType(Enum):
 
 class ToolStatus(Enum):
     """Tool execution status."""
+
     IDLE = "idle"
     INITIALIZING = "initializing"
     RUNNING = "running"
@@ -95,16 +96,14 @@ class SharedMemoryIPC:
         """Create or connect to shared memory segment."""
         try:
             # Try to create new shared memory
-            self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name,
-                                     access=mmap.ACCESS_WRITE)
-            self.mmap_obj[0:self.size] = b'\x00' * self.size
+            self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
+            self.mmap_obj[0 : self.size] = b"\x00" * self.size
             self.is_creator = True
             logger.info(f"Created shared memory segment: {self.name}")
         except Exception:
             # Connect to existing shared memory
             try:
-                self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name,
-                                         access=mmap.ACCESS_WRITE)
+                self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
                 logger.info(f"Connected to existing shared memory: {self.name}")
             except Exception as conn_err:
                 logger.error(f"Failed to initialize shared memory: {conn_err}")
@@ -123,16 +122,16 @@ class SharedMemoryIPC:
         with self.lock:
             try:
                 # Serialize data
-                serialized = pickle.dumps(data)
+                serialized = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 if len(serialized) > self.max_data_size:
                     logger.error(f"Message too large: {len(serialized)} > {self.max_data_size}")
                     return False
 
                 # Calculate checksum
-                checksum = hashlib.md5(serialized).hexdigest().encode('utf-8')
+                checksum = hashlib.sha256(serialized).hexdigest().encode("utf-8")
 
                 # Pack message
-                header = struct.pack('!BI', msg_type.value, len(serialized))
+                header = struct.pack("!BI", msg_type.value, len(serialized))
                 message = header + checksum + serialized
 
                 # Write to shared memory
@@ -157,10 +156,10 @@ class SharedMemoryIPC:
                 # Read header
                 self.mmap_obj.seek(0)
                 header_data = self.mmap_obj.read(5)
-                if not header_data or header_data == b'\x00' * 5:
+                if not header_data or header_data == b"\x00" * 5:
                     return None
 
-                msg_type_val, data_size = struct.unpack('!BI', header_data)
+                msg_type_val, data_size = struct.unpack("!BI", header_data)
                 msg_type = MessageType(msg_type_val)
 
                 # Read checksum
@@ -170,17 +169,17 @@ class SharedMemoryIPC:
                 data = self.mmap_obj.read(data_size)
 
                 # Verify checksum
-                calculated = hashlib.md5(data).hexdigest().encode('utf-8')
+                calculated = hashlib.sha256(data).hexdigest().encode("utf-8")
                 if checksum != calculated:
                     logger.error("Checksum mismatch in received message")
                     return None
 
                 # Deserialize
-                deserialized = pickle.loads(data)
+                deserialized = json.loads(data.decode("utf-8"))
 
                 # Clear the message area
                 self.mmap_obj.seek(0)
-                self.mmap_obj.write(b'\x00' * (self.header_size + data_size))
+                self.mmap_obj.write(b"\x00" * (self.header_size + data_size))
                 self.mmap_obj.flush()
 
                 return (msg_type, deserialized)
@@ -221,14 +220,26 @@ class ResultSerializer:
             "tool": tool_name,
             "timestamp": datetime.now().isoformat(),
             "result": result,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         # Handle special types
         if hasattr(result, "__dict__"):
             package["result"] = result.__dict__
 
-        return pickle.dumps(package)
+        # Convert result to JSON-serializable format by converting datetime objects to strings
+        def make_serializable(obj):
+            if isinstance(obj, (datetime,)):
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {key: make_serializable(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [make_serializable(item) for item in obj]
+            else:
+                return obj
+
+        package = make_serializable(package)
+        return json.dumps(package, ensure_ascii=False).encode("utf-8")
 
     @staticmethod
     def deserialize_result(data: bytes) -> Dict[str, Any]:
@@ -241,7 +252,7 @@ class ResultSerializer:
             Deserialized package
         """
         try:
-            package = pickle.loads(data)
+            package = json.loads(data.decode("utf-8"))
 
             # Validate version
             if package.get("version") != ResultSerializer.PROTOCOL_VERSION:
@@ -276,12 +287,7 @@ class ToolMonitor:
             process = psutil.Process(pid)
             self.processes[tool_name] = process
             self.status[tool_name] = ToolStatus.RUNNING
-            self.metrics[tool_name] = {
-                "cpu_percent": [],
-                "memory_mb": [],
-                "io_read_mb": 0,
-                "io_write_mb": 0
-            }
+            self.metrics[tool_name] = {"cpu_percent": [], "memory_mb": [], "io_read_mb": 0, "io_write_mb": 0}
             logger.info(f"Registered process {pid} for tool {tool_name}")
         except psutil.NoSuchProcess:
             logger.error(f"Process {pid} not found for tool {tool_name}")
@@ -293,6 +299,7 @@ class ToolMonitor:
         Args:
             interval: Monitoring interval in seconds
         """
+
         def monitor_loop():
             while not self.stop_monitoring.is_set():
                 for tool_name, process in list(self.processes.items()):
@@ -397,11 +404,7 @@ class FailureRecovery:
             True if recovery successful
         """
         # Record failure
-        self.failure_history[tool_name].append({
-            "timestamp": datetime.now().isoformat(),
-            "error": str(error),
-            "context": context or {}
-        })
+        self.failure_history[tool_name].append({"timestamp": datetime.now().isoformat(), "error": str(error), "context": context or {}})
 
         # Check retry count
         self.retry_counts[tool_name] = self.retry_counts.get(tool_name, 0) + 1
@@ -463,7 +466,7 @@ class ResultConflictResolver:
         self.resolution_rules.append((priority, rule))
         self.resolution_rules.sort(key=lambda x: x[0], reverse=True)
 
-    def resolve_function_conflicts(self, functions: List[CorrelatedFunction]) -> List[CorrelatedFunction]:
+    def resolve_function_conflicts(self, functions: List[dict]) -> List[dict]:
         """Resolve conflicts in function data.
 
         Args:
@@ -501,12 +504,7 @@ class ResultConflictResolver:
                     resolved.append(merged)
 
                 # Log conflict
-                self.conflict_log.append({
-                    "type": "function",
-                    "name": name,
-                    "sources": len(group),
-                    "resolution": "merged"
-                })
+                self.conflict_log.append({"type": "function", "name": name, "sources": len(group), "resolution": "merged"})
 
         return resolved
 
@@ -552,7 +550,7 @@ class ResultConflictResolver:
         common = sum(1 for c1, c2 in zip(s1, s2, strict=False) if c1 == c2)
         return common / max(len(s1), len(s2))
 
-    def _apply_resolution_rules(self, group: List[CorrelatedFunction]) -> Optional[CorrelatedFunction]:
+    def _apply_resolution_rules(self, group: List[dict]) -> Optional[dict]:
         """Apply resolution rules to conflicting functions.
 
         Args:
@@ -570,7 +568,7 @@ class ResultConflictResolver:
                 logger.error(f"Resolution rule failed: {e}")
         return None
 
-    def _merge_functions(self, group: List[CorrelatedFunction]) -> CorrelatedFunction:
+    def _merge_functions(self, group: List[dict]) -> dict:
         """Merge multiple functions into one.
 
         Args:
@@ -580,31 +578,29 @@ class ResultConflictResolver:
             Merged function
         """
         # Start with highest confidence function
-        group.sort(key=lambda f: f.confidence_score, reverse=True)
-        merged = group[0]
+        group.sort(key=lambda f: f.get("confidence_score", 0), reverse=True)
+        merged = group[0].copy()  # Make a copy to avoid modifying original
 
         # Merge data from others
         for func in group[1:]:
-            if func.ghidra_data and not merged.ghidra_data:
-                merged.ghidra_data = func.ghidra_data
-            if func.r2_data and not merged.r2_data:
-                merged.r2_data = func.r2_data
-            if func.frida_data and not merged.frida_data:
-                merged.frida_data = func.frida_data
+            if func.get("ghidra_data") and merged.get("ghidra_data") is None:
+                merged["ghidra_data"] = func["ghidra_data"]
+            if func.get("r2_data") and merged.get("r2_data") is None:
+                merged["r2_data"] = func["r2_data"]
+            if func.get("frida_data") and merged.get("frida_data") is None:
+                merged["frida_data"] = func["frida_data"]
 
             # Merge addresses
-            for tool, addr in func.addresses.items():
-                if tool not in merged.addresses:
-                    merged.addresses[tool] = addr
+            for tool, addr in func.get("addresses", {}).items():
+                if tool not in merged.get("addresses", {}):
+                    merged.setdefault("addresses", {})[tool] = addr
 
             # Combine notes
-            merged.notes.extend(func.notes)
+            merged.setdefault("notes", []).extend(func.get("notes", []))
 
         # Recalculate confidence
-        sources = sum([1 if merged.ghidra_data else 0,
-                      1 if merged.r2_data else 0,
-                      1 if merged.frida_data else 0])
-        merged.confidence_score = sources / 3.0
+        sources = sum([1 if merged.get("ghidra_data") else 0, 1 if merged.get("r2_data") else 0, 1 if merged.get("frida_data") else 0])
+        merged["confidence_score"] = sources / 3.0
 
         return merged
 
@@ -634,7 +630,7 @@ class LoadBalancer:
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
-            "disk_io": psutil.disk_io_counters()
+            "disk_io": psutil.disk_io_counters(),
         }
 
     def can_start_tool(self, tool_name: str, estimated_resources: Dict[str, float]) -> bool:
@@ -664,8 +660,7 @@ class LoadBalancer:
 
         return True
 
-    def schedule_tool(self, tool_name: str, priority: int = 5,
-                     estimated_resources: Dict[str, float] = None):
+    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: Dict[str, float] = None):
         """Schedule tool for execution.
 
         Args:
@@ -707,7 +702,7 @@ class LoadBalancer:
             "ghidra": {"cpu": 30, "memory": 20},
             "radare2": {"cpu": 25, "memory": 15},
             "frida": {"cpu": 20, "memory": 10},
-            "ida": {"cpu": 35, "memory": 25}
+            "ida": {"cpu": 35, "memory": 25},
         }
 
         batches = []
@@ -718,8 +713,7 @@ class LoadBalancer:
         for tool in tools:
             resources = tool_resources.get(tool, {"cpu": 20, "memory": 10})
 
-            if (current_cpu + resources["cpu"] <= self.cpu_threshold and
-                current_memory + resources["memory"] <= self.memory_threshold):
+            if current_cpu + resources["cpu"] <= self.cpu_threshold and current_memory + resources["memory"] <= self.memory_threshold:
                 current_batch.append(tool)
                 current_cpu += resources["cpu"]
                 current_memory += resources["memory"]
@@ -830,6 +824,7 @@ class CrossToolOrchestrator:
 
     def _setup_resolution_rules(self):
         """Setup conflict resolution rules for tool results."""
+
         # Rule 1: Prefer results with debug symbols
         def prefer_debug_symbols(functions: List[CorrelatedFunction]) -> Optional[CorrelatedFunction]:
             for func in functions:
@@ -859,21 +854,23 @@ class CrossToolOrchestrator:
 
     def _setup_recovery_strategies(self):
         """Setup recovery strategies for tool failures."""
+
         # Ghidra recovery strategy
         def ghidra_recovery(error: Exception, context: Dict):
             self.logger.info("Attempting Ghidra recovery")
             # Kill any hanging Ghidra process
-            for proc in psutil.process_iter(['name']):
-                if 'ghidra' in proc.info['name'].lower():
+            for proc in psutil.process_iter(["name"]):
+                if "ghidra" in proc.info["name"].lower():
                     try:
                         proc.terminate()
                         proc.wait(timeout=5)
-                    except:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                         proc.kill()
             # Clear temp files
-            temp_dir = Path(os.environ.get('TEMP', '/tmp')) / 'ghidra_temp'
+            temp_dir = Path(os.environ.get("TEMP", "/tmp")) / "ghidra_temp"
             if temp_dir.exists():
                 import shutil
+
                 shutil.rmtree(temp_dir, ignore_errors=True)
             time.sleep(2)
 
@@ -945,9 +942,11 @@ class CrossToolOrchestrator:
 
             for tool in batch:
                 # Check if tool can be started
-                resources = {"ghidra": {"cpu": 30, "memory": 20},
-                            "radare2": {"cpu": 25, "memory": 15},
-                            "frida": {"cpu": 20, "memory": 10}}.get(tool, {"cpu": 20, "memory": 10})
+                resources = {
+                    "ghidra": {"cpu": 30, "memory": 20},
+                    "radare2": {"cpu": 25, "memory": 15},
+                    "frida": {"cpu": 20, "memory": 10},
+                }.get(tool, {"cpu": 20, "memory": 10})
 
                 if not self.load_balancer.can_start_tool(tool, resources):
                     self.logger.warning(f"Skipping {tool} due to resource constraints")
@@ -1028,11 +1027,9 @@ class CrossToolOrchestrator:
             self.logger.info("Starting Ghidra analysis with IPC")
 
             # Send start message via IPC
-            self.ipc_channel.send_message(MessageType.STATUS, {
-                "tool": "ghidra",
-                "status": "starting",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.ipc_channel.send_message(
+                MessageType.STATUS, {"tool": "ghidra", "status": "starting", "timestamp": datetime.now().isoformat()}
+            )
 
             if self.main_app:
                 # Use GUI integration
@@ -1044,8 +1041,8 @@ class CrossToolOrchestrator:
                 import tempfile
                 import xml.etree.ElementTree as ET
 
-                ghidra_path = os.environ.get('GHIDRA_HOME', 'C:\\ghidra')
-                script_path = os.path.join(ghidra_path, 'support', 'analyzeHeadless.bat')
+                ghidra_path = os.environ.get("GHIDRA_HOME", "C:\\ghidra")
+                script_path = os.path.join(ghidra_path, "support", "analyzeHeadless.bat")
 
                 with tempfile.TemporaryDirectory() as project_dir:
                     project_name = "intellicrack_analysis"
@@ -1055,13 +1052,19 @@ class CrossToolOrchestrator:
                         script_path,
                         project_dir,
                         project_name,
-                        '-import', self.binary_path,
-                        '-scriptPath', os.path.join(os.path.dirname(__file__), 'ghidra_scripts'),
-                        '-postScript', 'ExportAnalysisData.java',
-                        '-overwrite'
+                        "-import",
+                        self.binary_path,
+                        "-scriptPath",
+                        os.path.join(os.path.dirname(__file__), "ghidra_scripts"),
+                        "-postScript",
+                        "ExportAnalysisData.java",
+                        "-overwrite",
                     ]
 
-                    subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                    # Validate that cmd contains only safe, expected commands
+                    if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
+                        raise ValueError(f"Unsafe command: {cmd}")
+                    subprocess.run(cmd, capture_output=True, text=True, timeout=300, shell=False)
 
                     # Parse Ghidra output files
                     output_file = os.path.join(project_dir, f"{os.path.basename(self.binary_path)}_analysis.xml")
@@ -1074,44 +1077,45 @@ class CrossToolOrchestrator:
                         root = tree.getroot()
 
                         # Parse functions
-                        for func_elem in root.findall('.//function'):
-                            functions.append({
-                                'name': func_elem.get('name'),
-                                'address': int(func_elem.get('address', '0'), 16),
-                                'size': int(func_elem.get('size', '0')),
-                                'signature': func_elem.get('signature', ''),
-                                'xrefs': [int(x.text, 16) for x in func_elem.findall('.//xref')]
-                            })
+                        for func_elem in root.findall(".//function"):
+                            functions.append(
+                                {
+                                    "name": func_elem.get("name"),
+                                    "address": int(func_elem.get("address", "0"), 16),
+                                    "size": int(func_elem.get("size", "0")),
+                                    "signature": func_elem.get("signature", ""),
+                                    "xrefs": [int(x.text, 16) for x in func_elem.findall(".//xref")],
+                                }
+                            )
 
                         # Parse strings
-                        for str_elem in root.findall('.//string'):
-                            strings.append({
-                                'value': str_elem.get('value'),
-                                'address': int(str_elem.get('address', '0'), 16),
-                                'xrefs': [int(x.text, 16) for x in str_elem.findall('.//xref')]
-                            })
+                        for str_elem in root.findall(".//string"):
+                            strings.append(
+                                {
+                                    "value": str_elem.get("value"),
+                                    "address": int(str_elem.get("address", "0"), 16),
+                                    "xrefs": [int(x.text, 16) for x in str_elem.findall(".//xref")],
+                                }
+                            )
 
                         # Parse imports
-                        for imp_elem in root.findall('.//import'):
-                            imports.append({
-                                'name': imp_elem.get('name'),
-                                'library': imp_elem.get('library'),
-                                'address': int(imp_elem.get('address', '0'), 16)
-                            })
+                        for imp_elem in root.findall(".//import"):
+                            imports.append(
+                                {
+                                    "name": imp_elem.get("name"),
+                                    "library": imp_elem.get("library"),
+                                    "address": int(imp_elem.get("address", "0"), 16),
+                                }
+                            )
 
                     # Create analysis result
-                    self.ghidra_results = GhidraAnalysisResult(
-                        binary_path=self.binary_path,
-                        timestamp=datetime.now()
-                    )
+                    self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
                     self.ghidra_results.functions = functions
                     self.ghidra_results.strings = strings
                     self.ghidra_results.imports = imports
 
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result(
-                "ghidra", self.ghidra_results, {"config": config}
-            )
+            serialized = self.result_serializer.serialize_result("ghidra", self.ghidra_results, {"config": config})
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1145,11 +1149,9 @@ class CrossToolOrchestrator:
             self.logger.info("Starting Radare2 analysis with IPC")
 
             # Send start message via IPC
-            self.ipc_channel.send_message(MessageType.STATUS, {
-                "tool": "radare2",
-                "status": "starting",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.ipc_channel.send_message(
+                MessageType.STATUS, {"tool": "radare2", "status": "starting", "timestamp": datetime.now().isoformat()}
+            )
 
             if not self.r2_integration:
                 self.r2_integration = EnhancedR2Integration(self.binary_path)
@@ -1159,9 +1161,7 @@ class CrossToolOrchestrator:
             results = self.r2_integration.run_comprehensive_analysis(analysis_types)
 
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result(
-                "radare2", results, {"config": config}
-            )
+            serialized = self.result_serializer.serialize_result("radare2", results, {"config": config})
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1202,11 +1202,9 @@ class CrossToolOrchestrator:
             self.logger.info("Starting Frida analysis with IPC")
 
             # Send start message via IPC
-            self.ipc_channel.send_message(MessageType.STATUS, {
-                "tool": "frida",
-                "status": "starting",
-                "timestamp": datetime.now().isoformat()
-            })
+            self.ipc_channel.send_message(
+                MessageType.STATUS, {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()}
+            )
 
             # Attach to process or spawn
             pid = config.get("pid") if config else None
@@ -1215,7 +1213,11 @@ class CrossToolOrchestrator:
             else:
                 # Spawn process for real analysis
                 import subprocess
-                proc = subprocess.Popen([self.binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                # Validate binary_path to prevent command injection
+                if not Path(str(self.binary_path)).is_absolute() or ".." in str(self.binary_path):
+                    raise ValueError(f"Unsafe binary path: {self.binary_path}")
+                proc = subprocess.Popen([self.binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
                 pid = proc.pid
                 time.sleep(1)  # Let process initialize
                 self.frida_manager.attach_to_process(pid)
@@ -1233,9 +1235,7 @@ class CrossToolOrchestrator:
                     results["hooks"] = self._frida_hook_detection()
 
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result(
-                "frida", results, {"config": config}
-            )
+            serialized = self.result_serializer.serialize_result("frida", results, {"config": config})
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1445,11 +1445,9 @@ class CrossToolOrchestrator:
             "tools_used": list(self.analysis_complete.keys()),
             "analysis_complete": all(self.analysis_complete.values()),
             "correlation_confidence": self._calculate_correlation_confidence(),
-            "tool_metrics": {tool: self.tool_monitor.get_metrics(tool)
-                           for tool in self.analysis_complete.keys()},
+            "tool_metrics": {tool: self.tool_monitor.get_metrics(tool) for tool in self.analysis_complete.keys()},
             "conflict_count": len(self.conflict_resolver.conflict_log),
-            "failure_count": sum(len(self.failure_recovery.get_failure_history(tool))
-                               for tool in self.analysis_complete.keys())
+            "failure_count": sum(len(self.failure_recovery.get_failure_history(tool)) for tool in self.analysis_complete.keys()),
         }
 
         return result
@@ -1487,7 +1485,7 @@ class CrossToolOrchestrator:
 
         return result
 
-    def _correlate_functions(self) -> List[CorrelatedFunction]:
+    def _correlate_functions(self) -> List[dict]:
         """Correlate function data across tools."""
         correlated = []
         function_map = defaultdict(CorrelatedFunction)
