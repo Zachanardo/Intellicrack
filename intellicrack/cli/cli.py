@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Command-line interface for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -174,7 +176,7 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
             if result.get("protections"):
                 click.echo("\nSecurity Features:")
                 for protection, enabled in result["protections"].items():
-                    status = "✓" if enabled else "✗"
+                    status = "OK" if enabled else "FAIL"
                     click.echo(f"  {status} {protection}")
 
         if output:
@@ -701,7 +703,7 @@ def _display_ai_integration_results(result: dict) -> None:
         if auto_confidence > 0.8:
             click.echo(f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
         elif auto_confidence > 0.5:
-            click.echo(f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
+            click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
         if ai_data.get("autonomous_generation", {}).get("started"):
             click.echo("  🔄 Autonomous script generation started in background")
@@ -709,7 +711,7 @@ def _display_ai_integration_results(result: dict) -> None:
 
     elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
         ai_error = result["ai_integration"].get("error", "Unknown error")
-        click.echo(f"\n⚠️  AI integration failed: {ai_error}")
+        click.echo(f"\nWARNING️  AI integration failed: {ai_error}")
 
 
 @cli.command("analyze")
@@ -881,7 +883,7 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
             if auto_confidence > 0.8:
                 click.echo(f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
             elif auto_confidence > 0.5:
-                click.echo(f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
+                click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
             # Display autonomous generation status
             if ai_data.get("autonomous_generation", {}).get("started"):
@@ -890,7 +892,7 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
 
         elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
             ai_error = result["ai_integration"].get("error", "Unknown error")
-            click.echo(f"\n⚠️  AI integration failed: {ai_error}")
+            click.echo(f"\nWARNING️  AI integration failed: {ai_error}")
 
         if output:
             with open(output, "w", encoding="utf-8") as f:
@@ -1172,7 +1174,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         raise RuntimeError("Analysis failed in thread") from exception_to_raise
 
             if result["success"]:
-                click.echo("✓ AI analysis completed!")
+                click.echo("OK AI analysis completed!")
 
                 # Show risk assessment
                 risk = result["risk_assessment"]
@@ -1237,7 +1239,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
 
             if result["success"]:
                 protections = result.get("protections", [])
-                click.echo(f"✓ Analysis completed - {len(protections)} protections found")
+                click.echo(f"OK Analysis completed - {len(protections)} protections found")
 
                 # Categorize protections
                 licensing_protections = [p for p in protections if "licensing" in p.get("type", "").lower()]
@@ -1310,7 +1312,7 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
         result = ai_researcher.analyze_licensing_protection(target_path)
 
         if result["success"]:
-            click.echo("✓ Licensing protection analysis completed successfully!")
+            click.echo("OK Licensing protection analysis completed successfully!")
             click.echo(f"  Target: {result.get('target_path', 'N/A')}")
 
             # Show protection mechanisms found
@@ -1329,7 +1331,7 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
                     click.echo(f"  • {rec}")
 
         else:
-            click.echo(f"✗ Licensing protection analysis failed: {result.get('error')}")
+            click.echo(f"FAIL Licensing protection analysis failed: {result.get('error')}")
 
             # Show analysis results summary
             if "analysis_results" in result:
@@ -1337,7 +1339,7 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
                 click.echo("\nAnalysis Results:")
                 for key, value in analysis.items():
                     if isinstance(value, dict) and "success" in value:
-                        status = "✓" if value.get("success") else "✗"
+                        status = "OK" if value.get("success") else "FAIL"
                         click.echo(f"  {status} {key.replace('_', ' ').title()}")
 
             sys.exit(1)
@@ -1515,11 +1517,11 @@ def ai_generate(
                     TimeoutError,
                 ) as e:
                     logger.error("Error in cli: %s", e)
-                    click.echo(f"❌ Failed to save script: {e}", err=True)
+                    click.echo(f"ERROR Failed to save script: {e}", err=True)
 
         else:
             error_msg = result.get("message", "Unknown error")
-            click.echo(f"❌ Generation failed: {error_msg}", err=True)
+            click.echo(f"ERROR Generation failed: {error_msg}", err=True)
             sys.exit(1)
 
     except (
@@ -1534,7 +1536,7 @@ def ai_generate(
         TimeoutError,
     ) as e:
         logger.error("AI script generation failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -1604,7 +1606,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
                         click.echo("\n📋 Script Output:")
                         click.echo(result.output)
                 else:
-                    click.echo("❌ Script execution failed!")
+                    click.echo("ERROR Script execution failed!")
                     if result.error:
                         click.echo(f"Error: {result.error}")
                     sys.exit(1)
@@ -1629,7 +1631,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
         TimeoutError,
     ) as e:
         logger.error("Script testing failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -1690,7 +1692,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
                         bar.update(100 - last_progress)
                         break
                     elif task_status.get("status") == "failed":
-                        click.echo("\n❌ Analysis failed: " + task_status.get("error", "Unknown error"))
+                        click.echo("\nERROR Analysis failed: " + task_status.get("error", "Unknown error"))
                         return
 
                 # Brief sleep to avoid excessive CPU usage during polling
@@ -1781,7 +1783,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         TimeoutError,
     ) as e:
         logger.error("AI analysis failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -1876,7 +1878,7 @@ def autonomous(
                         click.echo(f"      • {prot.get('type', 'unknown')}")
         else:
             error_msg = result.get("message", "Unknown error")
-            click.echo(f"❌ Autonomous workflow failed: {error_msg}", err=True)
+            click.echo(f"ERROR Autonomous workflow failed: {error_msg}", err=True)
             sys.exit(1)
 
     except (
@@ -1891,7 +1893,7 @@ def autonomous(
         TimeoutError,
     ) as e:
         logger.error("Autonomous workflow failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -1946,13 +1948,13 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 
         # Display what was included
         click.echo("\n📋 Session includes:")
-        click.echo("  ✓ Agent conversation history")
-        click.echo("  ✓ Analysis results")
-        click.echo("  ✓ Generated scripts")
+        click.echo("  OK Agent conversation history")
+        click.echo("  OK Analysis results")
+        click.echo("  OK Generated scripts")
         if include_ui:
-            click.echo("  ✓ UI conversation history")
+            click.echo("  OK UI conversation history")
         else:
-            click.echo("  ✗ UI conversation history (use --include-ui to add)")
+            click.echo("  FAIL UI conversation history (use --include-ui to add)")
 
         # Show session summary
         history = agent.get_conversation_history()
@@ -1972,7 +1974,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
         TimeoutError,
     ) as e:
         logger.error("Failed to save session: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -1984,8 +1986,8 @@ def reset(confirm: bool):
         from intellicrack.ai.autonomous_agent import AutonomousAgent
 
         if not confirm:
-            if not click.confirm("⚠️  Reset AI agent? This will clear all conversation history."):
-                click.echo("❌ Reset cancelled")
+            if not click.confirm("WARNING️  Reset AI agent? This will clear all conversation history."):
+                click.echo("ERROR Reset cancelled")
                 return
 
         click.echo("🔄 Resetting AI agent...")
@@ -2012,7 +2014,7 @@ def reset(confirm: bool):
         TimeoutError,
     ) as e:
         logger.error("Failed to reset agent: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -2092,7 +2094,7 @@ def task(
 
         else:
             error_msg = result.get("error", "Unknown error")
-            click.echo(f"❌ Task failed: {error_msg}", err=True)
+            click.echo(f"ERROR Task failed: {error_msg}", err=True)
             sys.exit(1)
 
     except (
@@ -2107,12 +2109,12 @@ def task(
         TimeoutError,
     ) as e:
         logger.error("Task execution failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
 
 def main():
-    """Main entry point for CLI."""
+    """Run main entry point for CLI."""
     # Check for --gui flag in command line arguments
     if "--gui" in sys.argv:
         # Remove --gui from argv before passing to click

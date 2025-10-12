@@ -1,6 +1,7 @@
 """Hardware fingerprint spoofing for bypassing hardware-based license checks."""
 
 import ctypes
+import datetime
 import platform
 import random
 import struct
@@ -14,6 +15,9 @@ from typing import Any, Dict, List
 import netifaces
 
 from intellicrack.handlers.wmi_handler import wmi
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SpoofMethod(Enum):
@@ -50,9 +54,10 @@ class HardwareIdentifiers:
 
 
 class HardwareFingerPrintSpoofer:
-    """Production-ready hardware fingerprint spoofing system"""
+    """Production-ready hardware fingerprint spoofing system."""
 
     def __init__(self):
+        """Initialize the HardwareFingerPrintSpoofer with WMI client and spoof methods."""
         self.original_hardware = None
         self.spoofed_hardware = None
         self.wmi_client = wmi.WMI() if platform.system() == "Windows" else None
@@ -60,7 +65,7 @@ class HardwareFingerPrintSpoofer:
         self.hooks_installed = False
 
     def _initialize_spoof_methods(self) -> Dict[str, Any]:
-        """Initialize spoofing methods for different hardware components"""
+        """Initialize spoofing methods for different hardware components."""
         return {
             "cpu": self._spoof_cpu,
             "motherboard": self._spoof_motherboard,
@@ -74,7 +79,7 @@ class HardwareFingerPrintSpoofer:
         }
 
     def capture_original_hardware(self) -> HardwareIdentifiers:
-        """Capture original hardware identifiers"""
+        """Capture original hardware identifiers."""
         self.original_hardware = HardwareIdentifiers(
             cpu_id=self._get_cpu_id(),
             cpu_name=self._get_cpu_name(),
@@ -97,7 +102,7 @@ class HardwareFingerPrintSpoofer:
         return self.original_hardware
 
     def _get_cpu_id(self) -> str:
-        """Get actual CPU ID"""
+        """Get actual CPU ID."""
         try:
             if self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
@@ -108,74 +113,78 @@ class HardwareFingerPrintSpoofer:
                     for line in f:
                         if "serial" in line.lower():
                             return line.split(":")[1].strip()
-        except (OSError, IOError):
-            pass
+        except (OSError, IOError) as e:
+            logger.debug(f"Failed to retrieve CPU ID from /proc/cpuinfo: {e}")
         return "BFEBFBFF000306C3"  # Default Intel CPU ID
 
     def _get_cpu_name(self) -> str:
-        """Get CPU name"""
+        """Get CPU name from system or generate realistic spoof value."""
         try:
             if self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
                     return cpu.Name.strip()
-            else:
-                return platform.processor()
-        except (AttributeError, NotImplementedError):
-            pass
+        except AttributeError as e:
+            logger.debug(f"WMI CPU name query failed: {e}")
+
+        try:
+            cpu_name = platform.processor()
+            if cpu_name:
+                return cpu_name
+        except Exception as e:
+            logger.debug(f"Platform CPU name query failed: {e}")
+
         return "Intel(R) Core(TM) i7-4770K CPU @ 3.50GHz"
 
     def _get_motherboard_serial(self) -> str:
-        """Get motherboard serial"""
+        """Get motherboard serial from system or generate spoof value for hardware ID bypass."""
         try:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
                     return board.SerialNumber.strip()
-        except (AttributeError, WMIError):
-            pass
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve motherboard serial via WMI: {e}")
         return "MB-" + "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311
 
     def _get_motherboard_manufacturer(self) -> str:
-        """Get motherboard manufacturer"""
+        """Get motherboard manufacturer."""
         try:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
                     return board.Manufacturer.strip()
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve motherboard manufacturer via WMI: {e}")
         return "ASUSTeK COMPUTER INC."
 
     def _get_bios_serial(self) -> str:
-        """Get BIOS serial number"""
+        """Get BIOS serial number from system or generate spoof value for hardware ID bypass."""
         try:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
                     return bios.SerialNumber.strip()
-        except (AttributeError, WMIError):
-            pass
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve BIOS serial via WMI: {e}")
         return "BIOS-" + "".join(random.choices("0123456789", k=10))  # noqa: S311
 
     def _get_bios_version(self) -> str:
-        """Get BIOS version"""
+        """Get BIOS version."""
         try:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
                     return bios.SMBIOSBIOSVersion.strip()
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve BIOS version via WMI: {e}")
         return "2.17.1246"
 
     def _get_disk_serials(self) -> List[str]:
-        """Get disk serial numbers"""
+        """Get disk serial numbers."""
         serials = []
         try:
             if self.wmi_client:
                 for disk in self.wmi_client.Win32_PhysicalMedia():
                     if disk.SerialNumber:
                         serials.append(disk.SerialNumber.strip())
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve disk serials via WMI: {e}")
 
         if not serials:
             serials.append("WD-" + "".join(random.choices("0123456789ABCDEF", k=10)))  # noqa: S311
@@ -183,15 +192,15 @@ class HardwareFingerPrintSpoofer:
         return serials
 
     def _get_disk_models(self) -> List[str]:
-        """Get disk models"""
+        """Get disk models."""
         models = []
         try:
             if self.wmi_client:
                 for disk in self.wmi_client.Win32_DiskDrive():
                     if disk.Model:
                         models.append(disk.Model.strip())
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve disk models via WMI: {e}")
 
         if not models:
             models.append("Samsung SSD 970 EVO Plus 1TB")
@@ -199,7 +208,7 @@ class HardwareFingerPrintSpoofer:
         return models
 
     def _get_mac_addresses(self) -> List[str]:
-        """Get MAC addresses"""
+        """Get MAC addresses."""
         macs = []
         try:
             for interface in netifaces.interfaces():
@@ -208,61 +217,58 @@ class HardwareFingerPrintSpoofer:
                     for addr in addrs[netifaces.AF_LINK]:
                         if "addr" in addr and addr["addr"] != "00:00:00:00:00:00":
                             macs.append(addr["addr"].upper().replace(":", ""))
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve MAC addresses via netifaces: {e}")
 
         if not macs:
-            # Generate realistic MAC
             mac = "00:50:56:"  # VMware OUI
-            # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
             mac += ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])  # noqa: S311
             macs.append(mac.replace(":", ""))
 
         return macs
 
     def _get_system_uuid(self) -> str:
-        """Get system UUID"""
+        """Get system UUID."""
         try:
             if self.wmi_client:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
                     return system.UUID.strip()
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve system UUID via WMI: {e}")
         return str(uuid.uuid4()).upper()
 
     def _get_machine_guid(self) -> str:
-        """Get Windows machine GUID"""
+        """Get Windows machine GUID."""
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 return winreg.QueryValueEx(key, "MachineGuid")[0]
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve machine GUID from registry: {e}")
         return str(uuid.uuid4()).upper()
 
     def _get_volume_serial(self) -> str:
-        """Get volume serial number"""
+        """Get volume serial number."""
         try:
             if platform.system() == "Windows":
                 result = subprocess.run(["vol", "C:"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
                     if "Serial Number" in line:
                         return line.split()[-1]
-        except (AttributeError, WMIError):
-            pass
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve volume serial: {e}")
         return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
 
     def _get_product_id(self) -> str:
-        """Get Windows product ID"""
+        """Get Windows product ID."""
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
                 return winreg.QueryValueEx(key, "ProductId")[0]
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve Windows product ID from registry: {e}")
         return "00000-00000-00000-AAOEM"
 
     def _get_network_adapters(self) -> List[Dict[str, str]]:
-        """Get network adapter details"""
+        """Get network adapter details."""
         adapters = []
         try:
             if self.wmi_client:
@@ -276,20 +282,20 @@ class HardwareFingerPrintSpoofer:
                                 "pnp_id": nic.PNPDeviceID if hasattr(nic, "PNPDeviceID") else "",
                             }
                         )
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve network adapter info via WMI: {e}")
 
         return adapters
 
     def _get_gpu_ids(self) -> List[str]:
-        """Get GPU identifiers"""
+        """Get GPU identifiers."""
         gpu_ids = []
         try:
             if self.wmi_client:
                 for gpu in self.wmi_client.Win32_VideoController():
                     gpu_ids.append(gpu.PNPDeviceID)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve GPU IDs via WMI: {e}")
 
         if not gpu_ids:
             gpu_ids.append("PCI\\VEN_10DE&DEV_1B80&SUBSYS_85AA1043&REV_A1")  # GTX 1080
@@ -297,15 +303,15 @@ class HardwareFingerPrintSpoofer:
         return gpu_ids
 
     def _get_ram_serials(self) -> List[str]:
-        """Get RAM serial numbers"""
+        """Get RAM serial numbers."""
         serials = []
         try:
             if self.wmi_client:
                 for mem in self.wmi_client.Win32_PhysicalMemory():
                     if hasattr(mem, "SerialNumber") and mem.SerialNumber:
                         serials.append(mem.SerialNumber.strip())
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve RAM serials via WMI: {e}")
 
         if not serials:
             serials.append("".join(random.choices("0123456789", k=8)))  # noqa: S311
@@ -313,19 +319,19 @@ class HardwareFingerPrintSpoofer:
         return serials
 
     def _get_usb_devices(self) -> List[Dict[str, str]]:
-        """Get USB device identifiers"""
+        """Get USB device identifiers."""
         devices = []
         try:
             if self.wmi_client:
                 for usb in self.wmi_client.Win32_USBHub():
                     devices.append({"device_id": usb.DeviceID, "pnp_id": usb.PNPDeviceID})
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to retrieve USB device info via WMI: {e}")
 
         return devices
 
     def generate_spoofed_hardware(self, preserve: List[str] = None) -> HardwareIdentifiers:
-        """Generate spoofed hardware identifiers"""
+        """Generate spoofed hardware identifiers."""
         preserve = preserve or []
 
         spoofed = HardwareIdentifiers(
@@ -354,7 +360,7 @@ class HardwareFingerPrintSpoofer:
         return spoofed
 
     def _generate_cpu_id(self) -> str:
-        """Generate realistic CPU ID"""
+        """Generate realistic CPU ID."""
         # Intel CPU IDs
         intel_ids = [
             "BFEBFBFF000306C3",  # i7-4770K
@@ -363,11 +369,10 @@ class HardwareFingerPrintSpoofer:
             "BFEBFBFF000506E3",  # i7-6700K
             "BFEBFBFF000806EC",  # i7-10700K
         ]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return random.choice(intel_ids)  # noqa: S311
 
     def _generate_cpu_name(self) -> str:
-        """Generate realistic CPU name"""
+        """Generate realistic CPU name."""
         cpus = [
             "Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz",
             "Intel(R) Core(TM) i7-10700K CPU @ 3.80GHz",
@@ -375,39 +380,33 @@ class HardwareFingerPrintSpoofer:
             "AMD Ryzen 9 5900X 12-Core Processor",
             "AMD Ryzen 7 5800X 8-Core Processor",
         ]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return random.choice(cpus)  # noqa: S311
 
     def _generate_mb_serial(self) -> str:
-        """Generate motherboard serial"""
+        """Generate motherboard serial."""
         prefixes = ["MB", "SN", "BASE", "BOARD"]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return random.choice(prefixes) + "-" + "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311, S311
 
     def _generate_mb_manufacturer(self) -> str:
-        """Generate motherboard manufacturer"""
+        """Generate motherboard manufacturer."""
         manufacturers = ["ASUSTeK COMPUTER INC.", "Gigabyte Technology Co., Ltd.", "MSI", "ASRock", "EVGA", "Dell Inc.", "HP", "Lenovo"]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return random.choice(manufacturers)  # noqa: S311
 
     def _generate_bios_serial(self) -> str:
-        """Generate BIOS serial"""
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        """Generate BIOS serial."""
         return "".join(random.choices("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=10))  # noqa: S311
 
     def _generate_bios_version(self) -> str:
-        """Generate BIOS version"""
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        """Generate BIOS version."""
         major = random.randint(1, 5)  # noqa: S311
         minor = random.randint(0, 99)  # noqa: S311
         build = random.randint(1000, 9999)  # noqa: S311
         return f"{major}.{minor}.{build}"
 
     def _generate_disk_serials(self) -> List[str]:
-        """Generate disk serials"""
+        """Generate disk serials."""
         prefixes = ["WD", "ST", "SAMSUNG", "CRUCIAL", "KINGSTON"]
         serials = []
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         for _ in range(random.randint(1, 3)):  # noqa: S311
             prefix = random.choice(prefixes)  # noqa: S311
             serial = prefix + "-" + "".join(random.choices("0123456789ABCDEF", k=10))  # noqa: S311
@@ -415,7 +414,7 @@ class HardwareFingerPrintSpoofer:
         return serials
 
     def _generate_disk_models(self) -> List[str]:
-        """Generate disk models"""
+        """Generate disk models."""
         models = [
             "Samsung SSD 970 EVO Plus 1TB",
             "Samsung SSD 980 PRO 2TB",
@@ -424,12 +423,10 @@ class HardwareFingerPrintSpoofer:
             "Crucial MX500 500GB",
             "Kingston SA400S37240G",
         ]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return [random.choice(models) for _ in range(len(self.spoofed_hardware.disk_serial) if self.spoofed_hardware else 1)]  # noqa: S311
 
     def _generate_mac_addresses(self) -> List[str]:
-        """Generate MAC addresses"""
-        # Use real vendor OUIs
+        """Generate MAC addresses."""
         ouis = [
             "00:50:56",  # VMware
             "00:1B:21",  # Intel
@@ -441,7 +438,6 @@ class HardwareFingerPrintSpoofer:
         ]
 
         macs = []
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         for _ in range(random.randint(1, 3)):  # noqa: S311
             oui = random.choice(ouis)  # noqa: S311
             nic = ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])  # noqa: S311
@@ -451,13 +447,11 @@ class HardwareFingerPrintSpoofer:
         return macs
 
     def _generate_volume_serial(self) -> str:
-        """Generate volume serial"""
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        """Generate volume serial."""
         return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
 
     def _generate_product_id(self) -> str:
-        """Generate Windows product ID"""
-        # Realistic Windows product ID format
+        """Generate Windows product ID."""
         segments = [
             "".join(random.choices("0123456789", k=5)),  # noqa: S311
             "".join(random.choices("0123456789", k=5)),  # noqa: S311
@@ -467,7 +461,7 @@ class HardwareFingerPrintSpoofer:
         return "-".join(segments)
 
     def _generate_network_adapters(self) -> List[Dict[str, str]]:
-        """Generate network adapter info"""
+        """Generate network adapter info."""
         names = [
             "Intel(R) Ethernet Connection I217-V",
             "Realtek PCIe GbE Family Controller",
@@ -479,7 +473,6 @@ class HardwareFingerPrintSpoofer:
         for _i, mac in enumerate(self.spoofed_hardware.mac_addresses if self.spoofed_hardware else []):
             adapters.append(
                 {
-                    # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
                     "name": random.choice(names),  # noqa: S311
                     "mac": mac,
                     "guid": str(uuid.uuid4()).upper(),
@@ -490,7 +483,7 @@ class HardwareFingerPrintSpoofer:
         return adapters
 
     def _generate_gpu_ids(self) -> List[str]:
-        """Generate GPU PNP IDs"""
+        """Generate GPU PNP IDs."""
         gpu_ids = [
             "PCI\\VEN_10DE&DEV_2206&SUBSYS_38361458",  # RTX 3080
             "PCI\\VEN_10DE&DEV_2204&SUBSYS_40901458",  # RTX 3090
@@ -498,25 +491,21 @@ class HardwareFingerPrintSpoofer:
             "PCI\\VEN_1002&DEV_731F&SUBSYS_E4111DA2",  # RX 6900 XT
             "PCI\\VEN_1002&DEV_73BF&SUBSYS_23181462",  # RX 6800 XT
         ]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         return [random.choice(gpu_ids)]  # noqa: S311
 
     def _generate_ram_serials(self) -> List[str]:
-        """Generate RAM serials"""
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
+        """Generate RAM serials."""
         return ["".join(random.choices("0123456789ABCDEF", k=8)) for _ in range(random.randint(2, 4))]  # noqa: S311, S311
 
     def _generate_usb_devices(self) -> List[Dict[str, str]]:
-        """Generate USB device info"""
+        """Generate USB device info."""
         devices = []
-        # Common USB devices
         common_devices = [
             {"device_id": "USB\\VID_046D&PID_C52B", "pnp_id": "USB\\VID_046D&PID_C52B\\6&2A9E9F2D&0&1"},  # Logitech receiver
             {"device_id": "USB\\VID_1532&PID_0084", "pnp_id": "USB\\VID_1532&PID_0084\\6&3A7B9C1E&0&2"},  # Razer mouse
             {"device_id": "USB\\VID_0951&PID_1666", "pnp_id": "USB\\VID_0951&PID_1666\\001A92053B93F4A0A7C0EA09"},  # Kingston USB
         ]
 
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
         num_devices = random.randint(1, 3)  # noqa: S311
         for _ in range(num_devices):
             devices.append(random.choice(common_devices))  # noqa: S311
@@ -524,7 +513,7 @@ class HardwareFingerPrintSpoofer:
         return devices
 
     def apply_spoof(self, method: SpoofMethod = SpoofMethod.REGISTRY) -> bool:
-        """Apply hardware spoofing using specified method"""
+        """Apply hardware spoofing using specified method."""
         if not self.spoofed_hardware:
             self.generate_spoofed_hardware()
 
@@ -542,7 +531,7 @@ class HardwareFingerPrintSpoofer:
         return False
 
     def _apply_registry_spoof(self) -> bool:
-        """Apply spoofing via registry modification"""
+        """Apply spoofing via registry modification."""
         try:
             # Spoof machine GUID
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
@@ -567,7 +556,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
     def _spoof_network_registry(self):
-        """Spoof network adapter registry entries"""
+        """Spoof network adapter registry entries."""
         try:
             # Enumerate network adapters
             with winreg.OpenKey(
@@ -588,16 +577,16 @@ class HardwareFingerPrintSpoofer:
                                         if self.spoofed_hardware.mac_addresses:
                                             mac = self.spoofed_hardware.mac_addresses[i % len(self.spoofed_hardware.mac_addresses)]
                                             winreg.SetValueEx(subkey, "NetworkAddress", 0, winreg.REG_SZ, mac)
-                                except (OSError, PermissionError):
-                                    pass
+                                except (OSError, PermissionError) as e:
+                                    logger.debug(f"Failed to set NetworkAddress for adapter {subkey_name}: {e}")
                         i += 1
                     except WindowsError:
                         break
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof network registry settings: {e}")
 
     def _apply_hook_spoof(self) -> bool:
-        """Apply spoofing via API hooking"""
+        """Apply spoofing via API hooking."""
         try:
             # Load required DLLs
 
@@ -622,7 +611,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
     def _install_wmi_hooks(self):
-        """Install WMI query hooks"""
+        """Install WMI query hooks."""
         from ctypes import POINTER, byref, c_void_p, cast, sizeof
 
         # COM interface definitions
@@ -767,7 +756,7 @@ class HardwareFingerPrintSpoofer:
         return True
 
     def _install_registry_hooks(self):
-        """Install registry query hooks"""
+        """Install registry query hooks."""
         import ctypes.wintypes as wintypes
         from ctypes import POINTER, byref, c_ulong, c_void_p, cast, create_string_buffer
 
@@ -967,12 +956,12 @@ class HardwareFingerPrintSpoofer:
         return True
 
     def _install_deviceiocontrol_hooks(self):
-        """Install DeviceIoControl hooks"""
+        """Install DeviceIoControl hooks."""
         # Hook DeviceIoControl to intercept hardware queries
         pass
 
     def _hook_kernel32_dll(self):
-        """Hook kernel32.dll functions for hardware spoofing"""
+        """Install hooks for kernel32.dll hardware detection functions."""
         import ctypes.wintypes as wintypes
         from ctypes import POINTER, byref, c_ulong, c_void_p, cast
 
@@ -1129,7 +1118,7 @@ class HardwareFingerPrintSpoofer:
         return True
 
     def _hook_setupapi_dll(self):
-        """Hook SetupAPI functions for device enumeration spoofing"""
+        """Install hooks for SetupAPI device enumeration functions."""
         import ctypes.wintypes as wintypes
         from ctypes import POINTER, byref, c_ulong, c_void_p, cast
 
@@ -1262,7 +1251,7 @@ class HardwareFingerPrintSpoofer:
         return True
 
     def _hook_iphlpapi_dll(self):
-        """Hook IP Helper API for network adapter spoofing"""
+        """Install hooks for IP Helper API network adapter detection."""
         import ctypes.wintypes as wintypes
         from ctypes import POINTER, byref, c_ulong, c_void_p, cast
 
@@ -1279,7 +1268,7 @@ class HardwareFingerPrintSpoofer:
         self.original_GetIfTable = iphlpapi.GetIfTable
 
         # IP_ADAPTER_INFO structure
-        class IP_ADAPTER_INFO(ctypes.Structure):
+        class IP_ADAPTER_INFO(ctypes.Structure):  # noqa: N801
             pass
 
         IP_ADAPTER_INFO._fields_ = [
@@ -1410,7 +1399,7 @@ class HardwareFingerPrintSpoofer:
         return True
 
     def _apply_memory_spoof(self) -> bool:
-        """Apply spoofing via memory patching"""
+        """Apply spoofing via memory patching."""
         try:
             # Find and patch WMI data structures in memory
             self._patch_wmi_memory()
@@ -1424,10 +1413,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
     def _patch_wmi_memory(self):
-        """Patch WMI data structures in memory"""
-        import ctypes.wintypes as wintypes
-        from ctypes import byref, c_ulong, c_void_p, create_string_buffer, sizeof
-
+        """Patch WMI data structures in memory."""
         kernel32 = ctypes.windll.kernel32
 
         # Process access rights
@@ -1437,154 +1423,7 @@ class HardwareFingerPrintSpoofer:
         PROCESS_QUERY_INFORMATION = 0x0400
 
         # Find all WMI provider processes
-        def find_wmi_processes():
-            processes = []
-
-            # Create snapshot of all processes
-            hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
-            if hSnapshot == -1:
-                return processes
-
-            # Process entry structure
-            class PROCESSENTRY32(ctypes.Structure):
-                _fields_ = [
-                    ("dwSize", wintypes.DWORD),
-                    ("cntUsage", wintypes.DWORD),
-                    ("th32ProcessID", wintypes.DWORD),
-                    ("th32DefaultHeapID", ctypes.POINTER(c_ulong)),
-                    ("th32ModuleID", wintypes.DWORD),
-                    ("cntThreads", wintypes.DWORD),
-                    ("th32ParentProcessID", wintypes.DWORD),
-                    ("pcPriClassBase", ctypes.c_long),
-                    ("dwFlags", wintypes.DWORD),
-                    ("szExeFile", ctypes.c_char * 260),
-                ]
-
-            pe32 = PROCESSENTRY32()
-            pe32.dwSize = sizeof(PROCESSENTRY32)
-
-            # Get first process
-            if kernel32.Process32First(hSnapshot, byref(pe32)):
-                while True:
-                    # Check if process is wmiprvse.exe
-                    if b"wmiprvse.exe" in pe32.szExeFile.lower():
-                        processes.append(pe32.th32ProcessID)
-
-                    # Get next process
-                    if not kernel32.Process32Next(hSnapshot, byref(pe32)):
-                        break
-
-            kernel32.CloseHandle(hSnapshot)
-            return processes
-
-        # Pattern for finding CIM_Processor instances in memory
-        processor_patterns = [b"ProcessorId", b"Name\x00Intel", b"Manufacturer\x00GenuineIntel", b"Win32_Processor"]
-
-        baseboard_patterns = [b"SerialNumber", b"Manufacturer\x00ASUSTeK", b"Win32_BaseBoard", b"Product\x00"]
-
-        def scan_memory_for_pattern(hProcess, pattern):
-            """Scan process memory for pattern"""
-            matches = []
-
-            # Get system info for memory ranges
-            class SYSTEM_INFO(ctypes.Structure):
-                _fields_ = [
-                    ("wProcessorArchitecture", wintypes.WORD),
-                    ("wReserved", wintypes.WORD),
-                    ("dwPageSize", wintypes.DWORD),
-                    ("lpMinimumApplicationAddress", c_void_p),
-                    ("lpMaximumApplicationAddress", c_void_p),
-                    ("dwActiveProcessorMask", ctypes.POINTER(wintypes.DWORD)),
-                    ("dwNumberOfProcessors", wintypes.DWORD),
-                    ("dwProcessorType", wintypes.DWORD),
-                    ("dwAllocationGranularity", wintypes.DWORD),
-                    ("wProcessorLevel", wintypes.WORD),
-                    ("wProcessorRevision", wintypes.WORD),
-                ]
-
-            sysinfo = SYSTEM_INFO()
-            kernel32.GetSystemInfo(byref(sysinfo))
-
-            # Memory basic information structure
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
-                _fields_ = [
-                    ("BaseAddress", c_void_p),
-                    ("AllocationBase", c_void_p),
-                    ("AllocationProtect", wintypes.DWORD),
-                    ("RegionSize", ctypes.c_size_t),
-                    ("State", wintypes.DWORD),
-                    ("Protect", wintypes.DWORD),
-                    ("Type", wintypes.DWORD),
-                ]
-
-            # Scan memory regions
-            address = sysinfo.lpMinimumApplicationAddress
-            max_address = sysinfo.lpMaximumApplicationAddress
-
-            while address < max_address:
-                mbi = MEMORY_BASIC_INFORMATION()
-                result = kernel32.VirtualQueryEx(hProcess, address, byref(mbi), sizeof(mbi))
-
-                if result == 0:
-                    break
-
-                # Check if region is readable
-                MEM_COMMIT = 0x1000
-                PAGE_READWRITE = 0x04
-                PAGE_READONLY = 0x02
-                PAGE_EXECUTE_READWRITE = 0x40
-
-                if mbi.State == MEM_COMMIT and mbi.Protect in [PAGE_READWRITE, PAGE_READONLY, PAGE_EXECUTE_READWRITE]:
-                    # Read memory region
-                    buffer = create_string_buffer(mbi.RegionSize)
-                    bytes_read = ctypes.c_size_t()
-
-                    if kernel32.ReadProcessMemory(hProcess, mbi.BaseAddress, buffer, mbi.RegionSize, byref(bytes_read)):
-                        # Search for pattern
-                        data = buffer.raw[: bytes_read.value]
-                        offset = 0
-                        while True:
-                            pos = data.find(pattern, offset)
-                            if pos == -1:
-                                break
-                            matches.append(mbi.BaseAddress + pos)
-                            offset = pos + 1
-
-                # Move to next region
-                address = ctypes.c_void_p(address + mbi.RegionSize)
-
-            return matches
-
-        def patch_memory_value(hProcess, address, old_value, new_value):
-            """Patch a value at given address"""
-            # Read current value to verify
-            buffer = create_string_buffer(len(old_value))
-            bytes_read = ctypes.c_size_t()
-
-            if kernel32.ReadProcessMemory(hProcess, address, buffer, len(old_value), byref(bytes_read)):
-                if buffer.raw[: bytes_read.value] == old_value:
-                    # Change protection to writable
-                    old_protect = wintypes.DWORD()
-                    if kernel32.VirtualProtectEx(
-                        hProcess,
-                        address,
-                        len(new_value),
-                        0x40,  # PAGE_EXECUTE_READWRITE
-                        byref(old_protect),
-                    ):
-                        # Write new value
-                        bytes_written = ctypes.c_size_t()
-                        success = kernel32.WriteProcessMemory(hProcess, address, new_value, len(new_value), byref(bytes_written))
-
-                        # Restore protection
-                        kernel32.VirtualProtectEx(hProcess, address, len(new_value), old_protect, byref(old_protect))
-
-                        return success
-
-            return False
-
-        # Find WMI processes
-        wmi_pids = find_wmi_processes()
+        wmi_pids = self._find_wmi_processes()
 
         for pid in wmi_pids:
             # Open process with required permissions
@@ -1593,76 +1432,240 @@ class HardwareFingerPrintSpoofer:
             )
 
             if hProcess:
-                # Patch processor information
-                if self.spoofed_hardware and self.spoofed_hardware.cpu_id:
-                    # Find ProcessorId strings
-                    for pattern in processor_patterns:
-                        matches = scan_memory_for_pattern(hProcess, pattern)
-
-                        for match in matches:
-                            # Look for actual CPU ID near the pattern
-                            if self.original_hardware and self.original_hardware.cpu_id:
-                                old_id = self.original_hardware.cpu_id.encode("utf-16-le")
-                                new_id = self.spoofed_hardware.cpu_id.encode("utf-16-le")
-
-                                # Try to patch nearby memory
-                                for offset in range(-512, 512, 2):  # Unicode alignment
-                                    patch_addr = match + offset
-                                    patch_memory_value(hProcess, patch_addr, old_id, new_id)
-
-                # Patch motherboard information
-                if self.spoofed_hardware and self.spoofed_hardware.motherboard_serial:
-                    for pattern in baseboard_patterns:
-                        matches = scan_memory_for_pattern(hProcess, pattern)
-
-                        for match in matches:
-                            if self.original_hardware and self.original_hardware.motherboard_serial:
-                                old_serial = self.original_hardware.motherboard_serial.encode("utf-16-le")
-                                new_serial = self.spoofed_hardware.motherboard_serial.encode("utf-16-le")
-
-                                # Patch serial numbers near pattern
-                                for offset in range(-512, 512, 2):
-                                    patch_addr = match + offset
-                                    patch_memory_value(hProcess, patch_addr, old_serial, new_serial)
-
-                # Patch BIOS information
-                if self.spoofed_hardware and self.spoofed_hardware.bios_serial:
-                    bios_pattern = b"Win32_BIOS"
-                    matches = scan_memory_for_pattern(hProcess, bios_pattern)
-
-                    for match in matches:
-                        if self.original_hardware and self.original_hardware.bios_serial:
-                            old_bios = self.original_hardware.bios_serial.encode("utf-16-le")
-                            new_bios = self.spoofed_hardware.bios_serial.encode("utf-16-le")
-
-                            for offset in range(-1024, 1024, 2):
-                                patch_addr = match + offset
-                                patch_memory_value(hProcess, patch_addr, old_bios, new_bios)
+                # Patch different hardware information types
+                self._patch_processor_info(kernel32, hProcess)
+                self._patch_motherboard_info(kernel32, hProcess)
+                self._patch_bios_info(kernel32, hProcess)
 
                 kernel32.CloseHandle(hProcess)
 
         return True
 
+    def _find_wmi_processes(self):
+        """Find all WMI provider processes."""
+        import ctypes.wintypes as wintypes
+        from ctypes import byref, c_ulong, sizeof
+
+        kernel32 = ctypes.windll.kernel32
+
+        processes = []
+        # Create snapshot of all processes
+        hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
+        if hSnapshot == -1:
+            return processes
+
+        # Process entry structure
+        class PROCESSENTRY32(ctypes.Structure):
+            _fields_ = [
+                ("dwSize", wintypes.DWORD),
+                ("cntUsage", wintypes.DWORD),
+                ("th32ProcessID", wintypes.DWORD),
+                ("th32DefaultHeapID", ctypes.POINTER(c_ulong)),
+                ("th32ModuleID", wintypes.DWORD),
+                ("cntThreads", wintypes.DWORD),
+                ("th32ParentProcessID", wintypes.DWORD),
+                ("pcPriClassBase", ctypes.c_long),
+                ("dwFlags", wintypes.DWORD),
+                ("szExeFile", ctypes.c_char * 260),
+            ]
+
+        pe32 = PROCESSENTRY32()
+        pe32.dwSize = sizeof(PROCESSENTRY32)
+
+        # Get first process
+        if kernel32.Process32First(hSnapshot, byref(pe32)):
+            while True:
+                # Check if process is wmiprvse.exe
+                if b"wmiprvse.exe" in pe32.szExeFile.lower():
+                    processes.append(pe32.th32ProcessID)
+
+                # Get next process
+                if not kernel32.Process32Next(hSnapshot, byref(pe32)):
+                    break
+
+        kernel32.CloseHandle(hSnapshot)
+        return processes
+
+    def _patch_processor_info(self, kernel32, hProcess):
+        """Patch processor information in WMI process memory."""
+        # Pattern for finding CIM_Processor instances in memory
+        processor_patterns = [b"ProcessorId", b"Name\x00Intel", b"Manufacturer\x00GenuineIntel", b"Win32_Processor"]
+
+        if self.spoofed_hardware and self.spoofed_hardware.cpu_id:
+            # Find ProcessorId strings
+            for pattern in processor_patterns:
+                matches = self._scan_memory_for_pattern(kernel32, hProcess, pattern)
+
+                for match in matches:
+                    # Look for actual CPU ID near the pattern
+                    if self.original_hardware and self.original_hardware.cpu_id:
+                        old_id = self.original_hardware.cpu_id.encode("utf-16-le")
+                        new_id = self.spoofed_hardware.cpu_id.encode("utf-16-le")
+
+                        # Try to patch nearby memory
+                        for offset in range(-512, 512, 2):  # Unicode alignment
+                            patch_addr = match + offset
+                            self._patch_memory_value(kernel32, hProcess, patch_addr, old_id, new_id)
+
+    def _patch_motherboard_info(self, kernel32, hProcess):
+        """Patch motherboard information in WMI process memory."""
+        baseboard_patterns = [b"SerialNumber", b"Manufacturer\x00ASUSTeK", b"Win32_BaseBoard", b"Product\x00"]
+
+        if self.spoofed_hardware and self.spoofed_hardware.motherboard_serial:
+            for pattern in baseboard_patterns:
+                matches = self._scan_memory_for_pattern(kernel32, hProcess, pattern)
+
+                for match in matches:
+                    if self.original_hardware and self.original_hardware.motherboard_serial:
+                        old_serial = self.original_hardware.motherboard_serial.encode("utf-16-le")
+                        new_serial = self.spoofed_hardware.motherboard_serial.encode("utf-16-le")
+
+                        # Patch serial numbers near pattern
+                        for offset in range(-512, 512, 2):
+                            patch_addr = match + offset
+                            self._patch_memory_value(kernel32, hProcess, patch_addr, old_serial, new_serial)
+
+    def _patch_bios_info(self, kernel32, hProcess):
+        """Patch BIOS information in WMI process memory."""
+        if self.spoofed_hardware and self.spoofed_hardware.bios_serial:
+            bios_pattern = b"Win32_BIOS"
+            matches = self._scan_memory_for_pattern(kernel32, hProcess, bios_pattern)
+
+            for match in matches:
+                if self.original_hardware and self.original_hardware.bios_serial:
+                    old_bios = self.original_hardware.bios_serial.encode("utf-16-le")
+                    new_bios = self.spoofed_hardware.bios_serial.encode("utf-16-le")
+
+                    for offset in range(-1024, 1024, 2):
+                        patch_addr = match + offset
+                        self._patch_memory_value(kernel32, hProcess, patch_addr, old_bios, new_bios)
+
+    def _scan_memory_for_pattern(self, kernel32, hProcess, pattern):
+        """Scan process memory for pattern."""
+        matches = []
+        import ctypes.wintypes as wintypes
+        from ctypes import byref, c_void_p, create_string_buffer, sizeof
+
+        # Get system info for memory ranges
+        class SystemInfo(ctypes.Structure):
+            _fields_ = [
+                ("wProcessorArchitecture", wintypes.WORD),
+                ("wReserved", wintypes.WORD),
+                ("dwPageSize", wintypes.DWORD),
+                ("lpMinimumApplicationAddress", c_void_p),
+                ("lpMaximumApplicationAddress", c_void_p),
+                ("dwActiveProcessorMask", ctypes.POINTER(wintypes.DWORD)),
+                ("dwNumberOfProcessors", wintypes.DWORD),
+                ("dwProcessorType", wintypes.DWORD),
+                ("dwAllocationGranularity", wintypes.DWORD),
+                ("wProcessorLevel", wintypes.WORD),
+                ("wProcessorRevision", wintypes.WORD),
+            ]
+
+        sysinfo = SystemInfo()
+        kernel32.GetSystemInfo(byref(sysinfo))
+
+        # Memory basic information structure
+        class MemoryBasicInformation(ctypes.Structure):
+            _fields_ = [
+                ("BaseAddress", c_void_p),
+                ("AllocationBase", c_void_p),
+                ("AllocationProtect", wintypes.DWORD),
+                ("RegionSize", ctypes.c_size_t),
+                ("State", wintypes.DWORD),
+                ("Protect", wintypes.DWORD),
+                ("Type", wintypes.DWORD),
+            ]
+
+        # Scan memory regions
+        address = sysinfo.lpMinimumApplicationAddress
+        max_address = sysinfo.lpMaximumApplicationAddress
+
+        while address < max_address:
+            mbi = MemoryBasicInformation()
+            result = kernel32.VirtualQueryEx(hProcess, address, byref(mbi), sizeof(mbi))
+
+            if result == 0:
+                break
+
+            # Check if region is readable
+            MEM_COMMIT = 0x1000
+            PAGE_READWRITE = 0x04
+            PAGE_READONLY = 0x02
+            PAGE_EXECUTE_READWRITE = 0x40
+
+            if mbi.State == MEM_COMMIT and mbi.Protect in [PAGE_READWRITE, PAGE_READONLY, PAGE_EXECUTE_READWRITE]:
+                # Read memory region
+                buffer = create_string_buffer(mbi.RegionSize)
+                bytes_read = ctypes.c_size_t()
+
+                if kernel32.ReadProcessMemory(hProcess, mbi.BaseAddress, buffer, mbi.RegionSize, byref(bytes_read)):
+                    # Search for pattern
+                    data = buffer.raw[: bytes_read.value]
+                    offset = 0
+                    while True:
+                        pos = data.find(pattern, offset)
+                        if pos == -1:
+                            break
+                        matches.append(mbi.BaseAddress + pos)
+                        offset = pos + 1
+
+            # Move to next region
+            address = ctypes.c_void_p(address + mbi.RegionSize)
+
+        return matches
+
+    def _patch_memory_value(self, kernel32, hProcess, address, old_value, new_value):
+        """Patch a value at given address."""
+        import ctypes.wintypes as wintypes
+        from ctypes import byref, create_string_buffer
+
+        # Read current value to verify
+        buffer = create_string_buffer(len(old_value))
+        bytes_read = ctypes.c_size_t()
+
+        if kernel32.ReadProcessMemory(hProcess, address, buffer, len(old_value), byref(bytes_read)):
+            if buffer.raw[: bytes_read.value] == old_value:
+                # Change protection to writable
+                old_protect = wintypes.DWORD()
+                if kernel32.VirtualProtectEx(
+                    hProcess,
+                    address,
+                    len(new_value),
+                    0x40,  # PAGE_EXECUTE_READWRITE
+                    byref(old_protect),
+                ):
+                    # Write new value
+                    bytes_written = ctypes.c_size_t()
+                    success = kernel32.WriteProcessMemory(hProcess, address, new_value, len(new_value), byref(bytes_written))
+
+                    # Restore protection
+                    kernel32.VirtualProtectEx(hProcess, address, len(new_value), old_protect, byref(old_protect))
+
+                    return success
+
+        return False
+
     def _patch_smbios_tables(self):
-        """Patch SMBIOS tables in memory"""
+        """Patch SMBIOS tables in memory."""
         # Locate SMBIOS tables
         # Patch hardware information
         pass
 
     def _apply_driver_spoof(self) -> bool:
-        """Apply spoofing via kernel driver"""
+        """Apply spoofing via kernel driver."""
         # This requires a kernel driver to intercept hardware queries
         # Driver would need to be signed for modern Windows
         return False
 
     def _apply_virtual_spoof(self) -> bool:
-        """Apply spoofing via virtualization"""
+        """Apply spoofing via virtualization."""
         # Create virtual hardware layer
         # Requires hypervisor-level access
         return False
 
     def _spoof_cpu(self, cpu_id: str = None, cpu_name: str = None):
-        """Spoof CPU information"""
+        """Spoof CPU information."""
         if not cpu_id:
             cpu_id = self._generate_cpu_id()
         if not cpu_name:
@@ -1675,11 +1678,11 @@ class HardwareFingerPrintSpoofer:
             ) as key:  # pragma: allowlist secret
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof CPU information in registry: {e}")
 
     def _spoof_motherboard(self, serial: str = None, manufacturer: str = None):
-        """Spoof motherboard information"""
+        """Spoof motherboard information."""
         if not serial:
             serial = self._generate_mb_serial()
         if not manufacturer:
@@ -1692,11 +1695,11 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, "Custom Board")
                 winreg.SetValueEx(key, "BaseBoardManufacturer", 0, winreg.REG_SZ, manufacturer)
                 winreg.SetValueEx(key, "BaseBoardProduct", 0, winreg.REG_SZ, serial)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof motherboard information in registry: {e}")
 
     def _spoof_bios(self, serial: str = None, version: str = None):
-        """Spoof BIOS information"""
+        """Spoof BIOS information."""
         if not serial:
             serial = self._generate_bios_serial()
         if not version:
@@ -1708,11 +1711,11 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "BIOSVersion", 0, winreg.REG_MULTI_SZ, [version])
                 winreg.SetValueEx(key, "SystemManufacturer", 0, winreg.REG_SZ, "System Manufacturer")
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, serial)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof BIOS information in registry: {e}")
 
     def _spoof_disk(self, serials: List[str] = None):
-        """Spoof disk serial numbers"""
+        """Spoof disk serial numbers."""
         if not serials:
             serials = self._generate_disk_serials()
 
@@ -1722,11 +1725,11 @@ class HardwareFingerPrintSpoofer:
             for i, serial in enumerate(serials):
                 with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\IDE\\Disk{i}") as key:
                     winreg.SetValueEx(key, "SerialNumber", 0, winreg.REG_SZ, serial)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof disk serial numbers in registry: {e}")
 
     def _spoof_mac_address(self, mac_addresses: List[str] = None):
-        """Spoof MAC addresses"""
+        """Spoof MAC addresses."""
         if not mac_addresses:
             mac_addresses = self._generate_mac_addresses()
 
@@ -1734,18 +1737,18 @@ class HardwareFingerPrintSpoofer:
         self._spoof_network_registry()
 
     def _spoof_system_uuid(self, uuid_str: str = None):
-        """Spoof system UUID"""
+        """Spoof system UUID."""
         if not uuid_str:
             uuid_str = str(uuid.uuid4()).upper()
 
         try:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation") as key:
                 winreg.SetValueEx(key, "ComputerHardwareId", 0, winreg.REG_SZ, uuid_str)
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof system UUID in registry: {e}")
 
     def _spoof_gpu(self, gpu_ids: List[str] = None):
-        """Spoof GPU information"""
+        """Spoof GPU information."""
         if not gpu_ids:
             gpu_ids = self._generate_gpu_ids()
 
@@ -1754,11 +1757,11 @@ class HardwareFingerPrintSpoofer:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video"):
                 # Update GPU entries
                 pass
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof GPU information in registry: {e}")
 
     def _spoof_ram(self, serials: List[str] = None):
-        """Spoof RAM serial numbers"""
+        """Spoof RAM serial numbers."""
         if not serials:
             serials = self._generate_ram_serials()
 
@@ -1766,7 +1769,7 @@ class HardwareFingerPrintSpoofer:
         pass
 
     def _spoof_usb(self, devices: List[Dict[str, str]] = None):
-        """Spoof USB device information"""
+        """Spoof USB device information."""
         if not devices:
             devices = self._generate_usb_devices()
 
@@ -1775,11 +1778,11 @@ class HardwareFingerPrintSpoofer:
             for _device in devices:
                 # Create registry entries for spoofed USB devices
                 pass
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to spoof USB device information in registry: {e}")
 
     def restore_original(self) -> bool:
-        """Restore original hardware identifiers"""
+        """Restore original hardware identifiers."""
         if not self.original_hardware:
             return False
 
@@ -1804,7 +1807,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
     def _remove_network_spoofing(self):
-        """Remove network adapter spoofing"""
+        """Remove network adapter spoofing."""
         try:
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}"
@@ -1818,21 +1821,21 @@ class HardwareFingerPrintSpoofer:
                                 try:
                                     # Delete NetworkAddress to restore original MAC
                                     winreg.DeleteValue(subkey, "NetworkAddress")
-                                except (OSError, PermissionError):
-                                    pass
+                                except (OSError, PermissionError) as e:
+                                    logger.debug(f"Failed to delete NetworkAddress for adapter {subkey_name}: {e}")
                         i += 1
                     except WindowsError:
                         break
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to restore network registry settings: {e}")
 
     def _remove_hooks(self):
-        """Remove installed hooks"""
+        """Remove installed hooks."""
         # Restore original function pointers
         self.hooks_installed = False
 
     def export_configuration(self) -> Dict[str, Any]:
-        """Export current spoofing configuration"""
+        """Export current spoofing configuration."""
         return {
             "original": self._hardware_to_dict(self.original_hardware) if self.original_hardware else None,
             "spoofed": self._hardware_to_dict(self.spoofed_hardware) if self.spoofed_hardware else None,
@@ -1840,7 +1843,7 @@ class HardwareFingerPrintSpoofer:
         }
 
     def _hardware_to_dict(self, hardware: HardwareIdentifiers) -> Dict[str, Any]:
-        """Convert HardwareIdentifiers to dictionary"""
+        """Convert HardwareIdentifiers to dictionary."""
         return {
             "cpu_id": hardware.cpu_id,
             "cpu_name": hardware.cpu_name,
@@ -1862,12 +1865,12 @@ class HardwareFingerPrintSpoofer:
         }
 
     def import_configuration(self, config: Dict[str, Any]) -> bool:
-        """Import spoofing configuration"""
+        """Import spoofing configuration."""
         try:
             if "spoofed" in config and config["spoofed"]:
                 self.spoofed_hardware = HardwareIdentifiers(**config["spoofed"])
                 return True
-        except (AttributeError, WMIError):
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"Failed to import spoofing configuration: {e}")
 
         return False

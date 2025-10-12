@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Frida manager for Intellicrack core functionality.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -1082,6 +1084,7 @@ class DynamicScriptGenerator:
 
         Returns:
             Generated Frida script as string
+
         """
         script_parts = []
 
@@ -2950,6 +2953,7 @@ class FridaManager:
 
         Returns:
             True if script was successfully generated and loaded, False otherwise
+
         """
         try:
             start_time = time.time()
@@ -4296,6 +4300,7 @@ class FridaManager:
         Args:
             script_name: Name of the script
             output: Output data to save
+
         """
         if script_name not in self.script_outputs:
             self.script_outputs[script_name] = []
@@ -4334,6 +4339,7 @@ class FridaManager:
 
         Returns:
             List of previous results sorted by timestamp
+
         """
         project_dir = Path(self.logger.log_dir).parent
         frida_results_dir = project_dir / "frida_results"

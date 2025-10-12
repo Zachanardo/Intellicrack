@@ -1,3 +1,12 @@
+"""
+Functional tests for Intellicrack's binary analysis capabilities.
+
+This module contains comprehensive tests for binary analysis functionality in Intellicrack,
+including PE and ELF executable analysis, protection detection, entropy analysis,
+and radare2 integration. These tests use actual binary formats to ensure the analysis
+tools work correctly with real-world files.
+"""
+
 import pytest
 import tempfile
 import os

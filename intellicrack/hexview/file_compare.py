@@ -227,7 +227,7 @@ class BinaryComparer:
         self._trace_lcs(data1, data2, lcs)
 
     def _find_differences_simple(self, data1: bytes, data2: bytes):
-        """Simple byte-by-byte comparison for finding differences.
+        """Perform simple byte-by-byte comparison for finding differences.
 
         Args:
             data1: First data

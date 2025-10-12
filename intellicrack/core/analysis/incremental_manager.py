@@ -686,7 +686,7 @@ class IncrementalAnalysisManager:
             return None
 
     def _basic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Basic file analysis."""
+        """Perform basic file analysis."""
         stat_info = os.stat(binary_path)
         return {
             "file_size": stat_info.st_size,
@@ -728,7 +728,7 @@ class IncrementalAnalysisManager:
             return {"entropy": 0.0, "analysis_type": "entropy", "error": "Failed to read file"}
 
     def _strings_analysis(self, binary_path: str) -> dict[str, Any]:
-        """String extraction analysis."""
+        """Perform string extraction analysis."""
         try:
             import re
 
@@ -749,7 +749,7 @@ class IncrementalAnalysisManager:
             return {"strings_count": 0, "analysis_type": "strings", "error": "Failed to read file"}
 
     def _headers_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Basic headers analysis."""
+        """Perform basic headers analysis."""
         try:
             with open(binary_path, "rb") as f:
                 header = f.read(64)  # Read first 64 bytes

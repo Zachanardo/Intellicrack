@@ -10,7 +10,6 @@ Licensed under GNU GPL v3.0
 import json
 import subprocess
 import threading
-from pathlib import Path
 
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
 from intellicrack.core.terminal_manager import get_terminal_manager
@@ -28,6 +27,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.ui.tabs.base_tab import BaseTab
+from intellicrack.utils.path_resolver import get_project_root
 
 
 class AdobeInjectorTab(BaseTab):
@@ -268,7 +268,7 @@ class AdobeInjectorTab(BaseTab):
 
     def launch_subprocess(self, hidden: bool = False):
         """Launch Adobe Injector as subprocess with control."""
-        adobe_injector_path = Path("C:/Intellicrack/tools/AdobeInjector/AdobeInjector.exe")
+        adobe_injector_path = get_project_root() / "tools/AdobeInjector/AdobeInjector.exe"
 
         if not adobe_injector_path.exists():
             self.subprocess_output.append(f"ERROR: {adobe_injector_path} not found")
@@ -353,16 +353,27 @@ class AdobeInjectorTab(BaseTab):
         """Execute command in embedded terminal."""
         try:
             terminal_manager = get_terminal_manager()
-            session = terminal_manager.get_session("main") or terminal_manager.create_session("main")
 
-            # Change to Adobe Injector directory
-            adobe_injector_dir = "C:/Intellicrack/tools/AdobeInjector"
-            session.execute(f"cd {adobe_injector_dir}")
+            if not terminal_manager.is_terminal_available():
+                self.terminal_display.append("Terminal not available. Please open Terminal tab first.")
+                return
 
-            # Execute command
-            session.execute(command)
+            adobe_injector_dir = get_project_root() / "tools/AdobeInjector"
+
+            if isinstance(command, str):
+                command_parts = command.split()
+            else:
+                command_parts = command
+
+            session_id = terminal_manager.execute_command(
+                command_parts,
+                capture_output=False,
+                auto_switch=True,
+                cwd=str(adobe_injector_dir)
+            )
 
             self.terminal_display.append(f"Executed in terminal: {command}")
+            self.terminal_display.append(f"Session ID: {session_id}")
             self.injector_started.emit("Command sent to terminal")
 
         except Exception as e:
@@ -411,7 +422,7 @@ class AdobeInjectorTab(BaseTab):
             "OriginalFilename": "adobe_injector.exe",
         }
 
-        config_path = Path("C:/Intellicrack/tools/AdobeInjector/rebrand.json")
+        config_path = get_project_root() / "tools/AdobeInjector/rebrand.json"
         with open(config_path, "w") as f:
             json.dump(rebrand, f, indent=2)
 
@@ -434,7 +445,7 @@ class AdobeInjectorTab(BaseTab):
             "silent_mode": True,
         }
 
-        config_path = Path("C:/Intellicrack/tools/AdobeInjector/silent_config.json")
+        config_path = get_project_root() / "tools/AdobeInjector/silent_config.json"
         with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
 

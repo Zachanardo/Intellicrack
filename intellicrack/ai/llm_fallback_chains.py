@@ -308,7 +308,7 @@ class FallbackChain:
         return None
 
     def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
-        """Synchronous chat with fallback logic."""
+        """Chat with fallback logic synchronously."""
         try:
             # Run async version in event loop
             loop = asyncio.new_event_loop()

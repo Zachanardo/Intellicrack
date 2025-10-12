@@ -311,7 +311,7 @@ class TestScriptDialog(BaseDialog):
             # Parse the Python code
             tree = ast.parse(self.script_content)
             validation_results["syntax_valid"] = True
-            validation_results["tests"].append("✓ Python syntax is valid")
+            validation_results["tests"].append("OK Python syntax is valid")
 
             # Analyze AST for imports, functions, classes
             for node in ast.walk(tree):
@@ -326,14 +326,14 @@ class TestScriptDialog(BaseDialog):
                 elif isinstance(node, ast.ClassDef):
                     validation_results["classes"].append(node.name)
 
-            validation_results["tests"].append(f"✓ Found {len(validation_results['imports'])} imports")
-            validation_results["tests"].append(f"✓ Found {len(validation_results['functions'])} functions")
-            validation_results["tests"].append(f"✓ Found {len(validation_results['classes'])} classes")
+            validation_results["tests"].append(f"OK Found {len(validation_results['imports'])} imports")
+            validation_results["tests"].append(f"OK Found {len(validation_results['functions'])} functions")
+            validation_results["tests"].append(f"OK Found {len(validation_results['classes'])} classes")
 
         except SyntaxError as e:
             validation_results["syntax_valid"] = False
             validation_results["parse_errors"].append(f"Syntax Error: {e}")
-            validation_results["tests"].append("✗ Python syntax validation failed")
+            validation_results["tests"].append("FAIL Python syntax validation failed")
 
         return validation_results
 
@@ -352,7 +352,7 @@ class TestScriptDialog(BaseDialog):
 
         for pattern, description in frida_patterns:
             if pattern in self.script_content:
-                validation_results["frida_patterns"].append(f"✓ {description} ({pattern})")
+                validation_results["frida_patterns"].append(f"OK {description} ({pattern})")
 
         # Basic syntax validation (simplified)
         if "{" in self.script_content and "}" not in self.script_content:
@@ -363,7 +363,7 @@ class TestScriptDialog(BaseDialog):
             validation_results["warnings"].append("Unmatched parentheses detected")
             validation_results["syntax_valid"] = False
 
-        status = "✓" if validation_results["syntax_valid"] else "✗"
+        status = "OK" if validation_results["syntax_valid"] else "FAIL"
         validation_results["tests"] = [f"{status} JavaScript syntax validation"]
 
         return validation_results
@@ -388,8 +388,8 @@ class TestScriptDialog(BaseDialog):
                 validation_results["variables"].extend(vars_found)
 
         validation_results["tests"] = [
-            f"✓ Found {len(validation_results['cmdlets'])} PowerShell cmdlets",
-            f"✓ Found {len(set(validation_results['variables']))} unique variables",
+            f"OK Found {len(validation_results['cmdlets'])} PowerShell cmdlets",
+            f"OK Found {len(set(validation_results['variables']))} unique variables",
         ]
 
         return validation_results
@@ -666,11 +666,11 @@ class TestScriptDialog(BaseDialog):
 
         # Generate recommendations
         if summary["overall_score"] >= 80:
-            summary["recommendations"].append("✓ Script passes all major tests and is ready for use")
+            summary["recommendations"].append("OK Script passes all major tests and is ready for use")
         elif summary["overall_score"] >= 60:
-            summary["recommendations"].append("⚠ Script has minor issues that should be addressed")
+            summary["recommendations"].append("WARNING Script has minor issues that should be addressed")
         else:
-            summary["recommendations"].append("⚠ Script has significant issues requiring attention")
+            summary["recommendations"].append("WARNING Script has significant issues requiring attention")
 
         # Add specific recommendations based on test results
         security_results = self.test_results.get("security_analysis", {})
@@ -708,7 +708,7 @@ class TestScriptDialog(BaseDialog):
 
         # Basic info
         lines.append(f"Language: {results.get('language', 'Unknown')}")
-        lines.append(f"Status: {'✓ Valid' if results.get('syntax_valid', False) else '✗ Invalid'}")
+        lines.append(f"Status: {'OK Valid' if results.get('syntax_valid', False) else 'FAIL Invalid'}")
         lines.append("")
 
         # Tests performed
@@ -722,13 +722,13 @@ class TestScriptDialog(BaseDialog):
         errors = results.get("errors", []) + results.get("parse_errors", [])
         if errors:
             lines.append("Errors:")
-            lines.extend([f"  ✗ {error}" for error in errors])
+            lines.extend([f"  FAIL {error}" for error in errors])
             lines.append("")
 
         warnings = results.get("warnings", [])
         if warnings:
             lines.append("Warnings:")
-            lines.extend([f"  ⚠ {warning}" for warning in warnings])
+            lines.extend([f"  WARNING {warning}" for warning in warnings])
             lines.append("")
 
         # Language-specific results
@@ -769,14 +769,14 @@ class TestScriptDialog(BaseDialog):
         safe_patterns = results.get("safe_patterns", [])
         if safe_patterns:
             lines.append("Safe Patterns Detected:")
-            lines.extend([f"  ✓ {pattern}" for pattern in safe_patterns])
+            lines.extend([f"  OK {pattern}" for pattern in safe_patterns])
             lines.append("")
 
         # Warnings
         warnings = results.get("warnings", [])
         if warnings:
             lines.append("Security Warnings:")
-            lines.extend([f"  ⚠ {warning}" for warning in warnings])
+            lines.extend([f"  WARNING {warning}" for warning in warnings])
 
         self.security_results.setText("\n".join(lines))
 
@@ -795,7 +795,7 @@ class TestScriptDialog(BaseDialog):
         bottlenecks = results.get("bottlenecks", [])
         if bottlenecks:
             lines.append("Potential Bottlenecks:")
-            lines.extend([f"  ⚠ {bottleneck}" for bottleneck in bottlenecks])
+            lines.extend([f"  WARNING {bottleneck}" for bottleneck in bottlenecks])
             lines.append("")
 
         # Optimizations
@@ -839,14 +839,14 @@ class TestScriptDialog(BaseDialog):
         capabilities = results.get("capabilities", [])
         if capabilities:
             lines.append("Detected Capabilities:")
-            lines.extend([f"  ✓ {capability}" for capability in capabilities])
+            lines.extend([f"  OK {capability}" for capability in capabilities])
             lines.append("")
 
         # Missing features
         missing = results.get("missing_features", [])
         if missing:
             lines.append("Missing Features:")
-            lines.extend([f"  ✗ {feature}" for feature in missing])
+            lines.extend([f"  FAIL {feature}" for feature in missing])
             lines.append("")
 
         # Recommendations
@@ -885,7 +885,7 @@ class TestScriptDialog(BaseDialog):
                 test_display = test_name.replace("_", " ").title()
                 score = test_result.get("score", 0)
                 status = test_result.get("status", "unknown")
-                status_icon = "✓" if status == "completed" else "✗"
+                status_icon = "OK" if status == "completed" else "FAIL"
                 lines.append(f"  {status_icon} {test_display}: {score}/100")
             lines.append("")
 
@@ -1681,7 +1681,7 @@ class ScriptGeneratorDialog(BaseDialog):
         if security_issues:
             lines.append("SECURITY ISSUES:")
             for issue in security_issues:
-                lines.append(f"  ⚠️  {issue}")
+                lines.append(f"  WARNING️  {issue}")
             lines.append("")
 
         # Suggestions

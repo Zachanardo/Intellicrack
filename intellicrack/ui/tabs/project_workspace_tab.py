@@ -42,6 +42,7 @@ from .base_tab import BaseTab
 
 class DashboardTab(BaseTab):
     """Dashboard Tab - Manages project files, binary information, and workspace overview.
+
     Consolidates functionality from the previous Project & Dashboard tab.
     """
 

@@ -112,7 +112,7 @@ class CommercialLicenseAnalyzer:
         return results
 
     def analyze(self) -> dict[str, Any]:
-        """Wrapper method for API compatibility with tests."""
+        """Analyze with API compatibility for tests."""
         return self.analyze_binary(self.binary_path)
 
     def _detect_flexlm(self) -> bool:

@@ -341,6 +341,7 @@ class R2ScriptingEngine:
 
         Returns:
             Dictionary with execution results
+
         """
         result = {
             "script_path": script_path,

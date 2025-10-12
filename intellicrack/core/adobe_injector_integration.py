@@ -213,13 +213,19 @@ class AdobeInjectorWidget(QWidget):
     patch_completed = pyqtSignal(bool, str)
 
     def __init__(self, parent=None):
+        """Initialize the AdobeInjectorWidget.
+
+        Args:
+            parent: Parent widget for this widget. Defaults to None.
+
+        """
         super().__init__(parent)
         self.adobe_injector_process = None
         self.setup_ui()
         self.init_adobe_injector()
 
     def setup_ui(self):
-        """Setup the UI layout."""
+        """Set up the UI layout."""
         layout = QVBoxLayout(self)
 
         # Control panel
@@ -263,9 +269,10 @@ class AdobeInjectorWidget(QWidget):
 
     def init_adobe_injector(self):
         """Initialize Adobe Injector integration."""
-        # Find Adobe Injector executable
+        from intellicrack.utils.path_resolver import get_project_root
+
         adobe_injector_paths = [
-            Path("C:/Intellicrack/tools/AdobeInjector/AdobeInjector.exe"),
+            Path(get_project_root() / "tools/AdobeInjector/AdobeInjector.exe"),
             Path("./tools/AdobeInjector/AdobeInjector.exe"),
         ]
 
@@ -366,7 +373,7 @@ class AutoIt3COMInterface:
 
             self.autoit = win32com.client.Dispatch("AutoItX3.Control")
             self.available = True
-        except (AttributeError, OSError, comtypes.COMError):
+        except (AttributeError, OSError):
             self.available = False
 
     def control_adobe_injector(self, action: str, params: dict = None):
@@ -412,7 +419,7 @@ class IPCController:
                 None,
             )
             return True
-        except (AttributeError, OSError, comtypes.COMError):
+        except (AttributeError, OSError):
             return False
 
     def send_command(self, command: dict):

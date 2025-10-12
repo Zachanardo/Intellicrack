@@ -731,10 +731,10 @@ Server URL: {gguf_manager.get_server_url()}"""
         progress_widget.deleteLater()
 
         if success:
-            self.add_download_log(f"✓ {model_name} downloaded successfully!")
+            self.add_download_log(f"OK {model_name} downloaded successfully!")
             self.refresh_models()
         else:
-            self.add_download_log(f"✗ {model_name} download failed!")
+            self.add_download_log(f"FAIL {model_name} download failed!")
 
     def add_download_log(self, message: str):
         """Add a message to the download log."""
@@ -767,18 +767,18 @@ Server URL: {gguf_manager.get_server_url()}"""
     def update_server_status(self):
         """Update the server status display."""
         if gguf_manager.is_server_running():
-            status_text = f"✓ Server Running - {gguf_manager.get_server_url()}"
+            status_text = f"OK Server Running - {gguf_manager.get_server_url()}"
             if gguf_manager.current_model:
                 status_text += f" - Model: {gguf_manager.current_model}"
 
             self.status_label.setText(status_text)
-            self.server_status_label.setText("✓ Server is running")
+            self.server_status_label.setText("OK Server is running")
             self.start_server_btn.setEnabled(False)
             self.stop_server_btn.setEnabled(True)
 
         else:
-            self.status_label.setText("✗ Server Stopped")
-            self.server_status_label.setText("✗ Server is not running")
+            self.status_label.setText("FAIL Server Stopped")
+            self.server_status_label.setText("FAIL Server is not running")
             self.start_server_btn.setEnabled(True)
             self.stop_server_btn.setEnabled(False)
 
@@ -790,28 +790,28 @@ Server URL: {gguf_manager.get_server_url()}"""
             import flask
 
             flask_version = getattr(flask, "__version__", "unknown")
-            deps_status.append(f"✓ Flask available (v{flask_version})")
+            deps_status.append(f"OK Flask available (v{flask_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
-            deps_status.append("✗ Flask not available (pip install flask flask-cors)")
+            deps_status.append("FAIL Flask not available (pip install flask flask-cors)")
 
         try:
             import llama_cpp
 
             llama_version = getattr(llama_cpp, "__version__", "unknown")
-            deps_status.append(f"✓ llama-cpp-python available (v{llama_version})")
+            deps_status.append(f"OK llama-cpp-python available (v{llama_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
-            deps_status.append("✗ llama-cpp-python not available (pip install llama-cpp-python)")
+            deps_status.append("FAIL llama-cpp-python not available (pip install llama-cpp-python)")
 
         try:
             import requests
 
             requests_version = getattr(requests, "__version__", "unknown")
-            deps_status.append(f"✓ requests available (v{requests_version})")
+            deps_status.append(f"OK requests available (v{requests_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
-            deps_status.append("✗ requests not available (pip install requests)")
+            deps_status.append("FAIL requests not available (pip install requests)")
 
         self.deps_status_text.setPlainText("\n".join(deps_status))
 

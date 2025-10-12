@@ -201,7 +201,7 @@ class ProgressManager:
                             # Show error in description
                             self.progress.update(
                                 task_id,
-                                description=f"[red]✗ {task_name} - {error or 'Failed'}",
+                                description=f"[red]FAIL {task_name} - {error or 'Failed'}",
                             )
 
     def stop(self) -> None:
@@ -236,7 +236,7 @@ class ProgressManager:
                 duration = timedelta()
 
             status_style = "green" if task.status == "completed" else "red"
-            status_icon = "✓" if task.status == "completed" else "✗"
+            status_icon = "OK" if task.status == "completed" else "FAIL"
 
             summary_table.add_row(
                 task_name,
@@ -331,7 +331,7 @@ class MultiStageProgress:
                 stage["completed"] = True
                 progress.update(
                     stage_task,
-                    description=f"[bold green]✓ {stage['name']} - Complete[/bold green]",
+                    description=f"[bold green]OK {stage['name']} - Complete[/bold green]",
                 )
 
 
@@ -593,7 +593,7 @@ def demo_progress():
     multi_progress = _setup_multi_stage_demo(console)
     multi_progress.start()
 
-    console.print("\n[bold green]✓ All operations completed successfully![/bold green]")
+    console.print("\n[bold green]OK All operations completed successfully![/bold green]")
 
 
 if __name__ == "__main__":

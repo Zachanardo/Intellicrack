@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Terminal tab for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -60,17 +62,21 @@ class TerminalTab(BaseTab):
 
     def setup_content(self):
         """Setup the terminal tab content."""
+        from intellicrack.handlers.pyqt6_handler import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
 
         toolbar = self._create_toolbar()
-        layout.addLayout(toolbar)
+        layout.addLayout(toolbar, stretch=0)
 
         self.terminal_widget = TerminalSessionWidget(self)
-        layout.addWidget(self.terminal_widget)
+        self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        layout.addWidget(self.terminal_widget, stretch=1)
 
         status_bar = self._create_status_bar()
-        layout.addLayout(status_bar)
+        layout.addLayout(status_bar, stretch=0)
 
         get_terminal_manager().register_terminal_widget(self.terminal_widget)
 
@@ -234,5 +240,6 @@ class TerminalTab(BaseTab):
 
         Returns:
             TerminalSessionWidget
+
         """
         return self.terminal_widget

@@ -755,15 +755,15 @@ def get_path_discovery(config_manager=None) -> PathDiscovery:
 
 
 def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
-    """Convenience function to find a tool."""
+    """Find a tool."""
     return get_path_discovery().find_tool(tool_name, required_executables)
 
 
 def get_system_path(path_type: str) -> str | None:
-    """Convenience function to get system paths."""
+    """Get system paths."""
     return get_path_discovery().get_system_path(path_type)
 
 
 def ensure_tool_available(tool_name: str, parent_widget=None) -> str | None:
-    """Convenience function to ensure tool availability."""
+    """Ensure tool availability."""
     return get_path_discovery().ensure_tool_available(tool_name, parent_widget)

@@ -103,7 +103,7 @@ def check_dependencies() -> dict[str, bool]:
 
         if abs(actual_sum - expected_sum) < 1e-6:
             dependencies["TensorFlow"] = True
-            logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: ✓)")
+            logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: OK)")
         else:
             dependencies["TensorFlow"] = False
             logger.error(f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}")
@@ -175,6 +175,7 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
         ensure_data_directories,
         get_qemu_images_dir,
     )
+    from ..utils.qemu_image_discovery import get_qemu_discovery
 
     # Ensure directories exist
     ensure_data_directories()
@@ -189,25 +190,24 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
 
     # Protection model files removed - using LLM-only approach
 
-    # Check for QEMU images
-    qemu_images = [
-        "windows_base.qcow2",
-        "linux_base.qcow2",
-        "rootfs-x86_64.img",
-    ]
+    # Dynamically discover QEMU images instead of hardcoding
+    discovery = get_qemu_discovery()
+    discovered_images = discovery.discover_images()
 
-    for image in qemu_images:
-        image_path = qemu_dir / image
-        paths[image] = (str(image_path), image_path.exists())
-        if not image_path.exists():
-            logger.info(f"QEMU image not found: {image_path} (optional)")
+    for image_info in discovered_images:
+        paths[f"qemu_image_{image_info.filename}"] = (str(image_info.path), True)
+
+    if not discovered_images:
+        logger.info("No QEMU images found in search directories (optional)")
+    else:
+        logger.info(f"Found {len(discovered_images)} QEMU images")
 
     return paths
 
 
 def check_qemu_setup() -> bool:
     """Check QEMU setup without auto-downloading."""
-    from ..utils.path_resolver import get_qemu_images_dir
+    from ..utils.qemu_image_discovery import get_qemu_discovery
 
     # Check if QEMU is installed
     try:
@@ -219,12 +219,12 @@ def check_qemu_setup() -> bool:
         logger.info("Install QEMU from: https://www.qemu.org/download/")
         qemu_available = False
 
-    # Check for existing images
-    qemu_dir = get_qemu_images_dir()
-    existing_images = list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
+    # Use dynamic image discovery
+    discovery = get_qemu_discovery()
+    discovered_images = discovery.discover_images()
 
-    if existing_images:
-        logger.info(f"Found {len(existing_images)} QEMU images")
+    if discovered_images:
+        logger.info(f"Found {len(discovered_images)} QEMU images")
         return True
     if qemu_available:
         logger.info("QEMU installed but no images found")
@@ -367,16 +367,16 @@ def validate_tensorflow_models() -> dict[str, any]:
                 output_value = float(test_output.numpy()[0][0])
                 if 0.0 <= output_value <= 1.0:  # Valid sigmoid output
                     tf_info["model_building"] = True
-                    tf_info["model_prediction_test"] = f"✓ (output: {output_value:.3f})"
+                    tf_info["model_prediction_test"] = f"OK (output: {output_value:.3f})"
                 else:
                     tf_info["model_building"] = False
-                    tf_info["model_prediction_test"] = f"✗ Invalid output range: {output_value}"
+                    tf_info["model_prediction_test"] = f"FAIL Invalid output range: {output_value}"
             else:
                 tf_info["model_building"] = False
-                tf_info["model_prediction_test"] = f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
+                tf_info["model_prediction_test"] = f"FAIL Wrong output shape: {test_output.shape} vs {expected_shape}"
         else:
             tf_info["model_building"] = False
-            tf_info["model_prediction_test"] = "✗ No valid output"
+            tf_info["model_prediction_test"] = "FAIL No valid output"
 
         tf_info["status"] = tf_info["model_building"]
 

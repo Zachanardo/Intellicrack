@@ -1,4 +1,4 @@
-"""CFG Explorer Inner Module
+"""CFG Explorer Inner Module.
 
 This module provides internal functionality for Control Flow Graph (CFG) exploration within the Intellicrack application.
 It handles the integration of various analysis tools and libraries for binary analysis, graph visualization,

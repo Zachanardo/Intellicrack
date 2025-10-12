@@ -1,8 +1,8 @@
 [package]
 name = "intellicrack-launcher"
-version = "1.0.0"
-edition = "2021"
-authors = ["Intellicrack Team"]
+version = "0.1.0"
+edition = "2024"
+authors = ["Zach Flint"]
 description = "Sophisticated Rust launcher for Intellicrack binary analysis platform"
 license = "GPL-3.0"
 
@@ -70,6 +70,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # String utilities
 regex = "1.10"
+dotenv = "0.15.0"
 
 # System APIs
 [target.'cfg(windows)'.dependencies]

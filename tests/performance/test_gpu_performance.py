@@ -1,3 +1,20 @@
+"""
+Performance benchmarks for Intellicrack's GPU acceleration and AI operations.
+
+This module contains comprehensive performance tests for GPU acceleration and AI operations in Intellicrack,
+including GPU initialization speed benchmarks, GPU memory allocation speed benchmarks,
+GPU matrix multiplication speed benchmarks, AI model loading speed benchmarks,
+AI inference speed benchmarks, model quantization speed benchmarks,
+model sharding speed benchmarks, GPU memory efficiency tests,
+concurrent GPU operation performance tests, performance monitoring overhead benchmarks,
+GPU fallback to CPU performance tests, model cache operations benchmarks,
+GPU thermal throttling detection tests, batch processing performance benchmarks,
+GPU memory fragmentation handling tests, AI model switching performance tests,
+GPU bandwidth utilization benchmarks, GPU error recovery performance tests,
+and GPU multi-stream performance tests. These tests ensure the GPU-accelerated
+components maintain high performance under various conditions.
+"""
+
 import pytest
 import time
 import threading

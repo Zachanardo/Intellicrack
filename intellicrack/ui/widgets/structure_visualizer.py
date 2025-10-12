@@ -598,7 +598,7 @@ class StructureVisualizerWidget(QWidget):
                         suspicious.append(f"Suspicious import: {func.get('name', '')}")
 
         if suspicious:
-            details += "⚠️ Suspicious Indicators:\n"
+            details += "WARNING️ Suspicious Indicators:\n"
             for item in suspicious[:10]:  # Show first 10
                 details += f"  • {item}\n"
 

@@ -1,5 +1,5 @@
-"""
-Hardware token emulation and bypass module.
+"""Hardware token emulation and bypass module.
+
 Provides sophisticated emulation for YubiKey, RSA SecurID, and smart cards.
 """
 
@@ -97,6 +97,7 @@ class HardwareTokenBypass:
 
         Returns:
             Dictionary containing emulation details and OTP
+
         """
         if not serial_number:
             serial_number = self._generate_yubikey_serial()
@@ -155,6 +156,7 @@ class HardwareTokenBypass:
 
         Returns:
             ModHex encoded OTP string
+
         """
         # Build OTP data block (16 bytes)
         timestamp = int(time.time() * 8) & 0xFFFFFF  # 24-bit timestamp
@@ -243,6 +245,7 @@ class HardwareTokenBypass:
 
         Returns:
             Dictionary containing token code and metadata
+
         """
         if not serial_number:
             serial_number = self._generate_securid_serial()
@@ -288,6 +291,7 @@ class HardwareTokenBypass:
 
         Returns:
             6 or 8 digit token code
+
         """
         # SecurID 128-bit AES algorithm
         from cryptography.hazmat.backends import default_backend
@@ -330,6 +334,7 @@ class HardwareTokenBypass:
 
         Returns:
             Dictionary containing smart card emulation data
+
         """
         card_id = secrets.token_hex(8).upper()
 
@@ -554,6 +559,7 @@ class HardwareTokenBypass:
 
         Returns:
             Dictionary containing bypass status and details
+
         """
         bypass_result = {"success": False, "application": application, "token_type": token_type, "method": None, "details": {}}
 
@@ -579,7 +585,7 @@ class HardwareTokenBypass:
             return self._hook_yubikey_unix(application)
 
     def _hook_yubikey_windows(self, application: str) -> Dict[str, Any]:
-        """Hook YubiKey verification on Windows."""
+        """Install hook for YubiKey verification on Windows."""
         try:
             # Find target process
             import psutil
@@ -643,7 +649,7 @@ class HardwareTokenBypass:
             return {"success": False, "error": str(e)}
 
     def _hook_yubikey_unix(self, application: str) -> Dict[str, Any]:
-        """Hook YubiKey verification on Unix systems."""
+        """Install hook for YubiKey verification on Unix systems."""
         try:
             # Use LD_PRELOAD technique
             hook_lib = self._create_yubikey_hook_lib()
@@ -662,7 +668,6 @@ class HardwareTokenBypass:
 
     def _create_yubikey_hook_dll(self) -> str:
         """Create Windows DLL for YubiKey API hooking."""
-
         # In production, compile this to actual DLL
         # For now, return path to pre-compiled DLL
         dll_path = Path(__file__).parent / "hooks" / "yubikey_hook.dll"
@@ -677,7 +682,6 @@ class HardwareTokenBypass:
 
     def _create_yubikey_hook_lib(self) -> str:
         """Create Unix shared library for YubiKey API hooking."""
-
         # In production, compile this to actual .so file
         lib_path = Path(__file__).parent / "hooks" / "yubikey_hook.so"
         lib_path.parent.mkdir(exist_ok=True)
@@ -771,6 +775,7 @@ class HardwareTokenBypass:
 
         Returns:
             Extracted secrets and keys
+
         """
         extracted = {"success": False, "secrets": {}, "keys": {}, "certificates": []}
 
@@ -889,7 +894,7 @@ class HardwareTokenBypass:
 
 
 def bypass_hardware_token(application: str, token_type: str) -> Dict[str, Any]:
-    """Main entry point for hardware token bypass.
+    """Bypass hardware token.
 
     Args:
         application: Target application
@@ -897,6 +902,7 @@ def bypass_hardware_token(application: str, token_type: str) -> Dict[str, Any]:
 
     Returns:
         Bypass result dictionary
+
     """
     bypasser = HardwareTokenBypass()
 

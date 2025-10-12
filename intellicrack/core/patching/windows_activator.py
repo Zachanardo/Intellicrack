@@ -35,6 +35,7 @@ except ImportError:
 
 from ...utils.logger import get_logger
 from ...utils.system.system_utils import is_admin
+
 try:
     from ...utils.system.subprocess_utils import run_subprocess_check
 except ImportError:
@@ -86,6 +87,7 @@ class WindowsActivator:
 
         Returns:
             Dictionary with activation results
+
         """
         method_enum = ActivationMethod.HWID
         if method.lower() == "kms38":
@@ -99,6 +101,7 @@ class WindowsActivator:
 
         Returns:
             Dictionary with activation status information
+
         """
         status = self.get_activation_status()
         # Add 'activated' key for compatibility
@@ -111,6 +114,7 @@ class WindowsActivator:
 
         Returns:
             Hardware ID string for digital license activation
+
         """
         try:
             # Initialize WMI
@@ -170,7 +174,7 @@ class WindowsActivator:
             try:
                 mac = uuid.getnode()
                 machine_info += f"|{mac:012X}"
-            except:
+            except (OSError, IOError):
                 pass
 
             # Generate fallback HWID
@@ -769,7 +773,7 @@ class WindowsActivator:
 
 
 def create_windows_activator() -> WindowsActivator:
-    """Factory function to create Windows activator instance.
+    """Create Windows activator instance.
 
     Returns:
         Configured WindowsActivator instance

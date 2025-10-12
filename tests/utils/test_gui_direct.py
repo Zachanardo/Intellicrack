@@ -10,7 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
 # Add Intellicrack to path
-sys.path.insert(0, r"C:\Intellicrack")
+sys.path.insert(0, r"D:\Intellicrack")
 
 print("Test 1: Importing main_app module...")
 try:

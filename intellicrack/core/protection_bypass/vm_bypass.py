@@ -56,7 +56,7 @@ class VirtualizationDetectionBypass:
         self.patches: list[dict[str, Any]] = []
 
     def bypass_vm_detection(self) -> dict[str, Any]:
-        """Main method to bypass virtualization detection using multiple strategies.
+        """Bypass virtualization detection using multiple strategies.
 
         Returns:
             dict: Results of the bypass attempt with success status and applied methods
@@ -134,7 +134,7 @@ class VirtualizationDetectionBypass:
         return os.path.join("C:\\Windows", "System32", "drivers", driver_name)
 
     def _hook_vm_detection_apis(self) -> None:
-        """Hook Windows APIs commonly used for VM detection."""
+        """Install hooks for Windows APIs commonly used for VM detection."""
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping VM detection API hooking")
             return
@@ -597,7 +597,7 @@ class VirtualizationDetectionBypass:
             return False
 
     def _hook_timing_functions(self) -> None:
-        """Hook timing functions to prevent timing-based VM detection."""
+        """Install hooks for timing functions to prevent timing-based VM detection."""
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping timing function hooking")
             return
@@ -705,7 +705,7 @@ class VirtualizationDetectionBypass:
 
 
 def bypass_vm_detection(app: Any) -> dict[str, Any]:
-    """Convenience function to bypass VM detection on an application.
+    """Bypass VM detection on an application.
 
     Args:
         app: Application instance with binary_path

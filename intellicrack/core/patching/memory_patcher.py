@@ -278,12 +278,12 @@ PTRACE_POKEDATA = 5
 
 
 def log_message(msg: str) -> str:
-    """Helper function to format log messages consistently."""
+    """Format log messages consistently."""
     return f"[{msg}]"
 
 
 def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> str | None:
-    """Generates a launcher script that uses Frida to patch the target program in memory.
+    """Generate a launcher script that uses Frida to patch the target program in memory.
 
     This function creates a Python script that launches the target application
     and applies patches in memory using Frida's dynamic instrumentation. This
@@ -525,7 +525,7 @@ if __name__ == "__main__":
 
 
 def setup_memory_patching(app: Any) -> None:
-    """Sets up a memory patching environment for heavily protected binaries.
+    """Set up a memory patching environment for heavily protected binaries.
 
     This function detects various protection mechanisms and configures
     appropriate memory patching strategies. It's used when static patching

@@ -23,9 +23,13 @@ import csv
 import json
 import logging
 import os
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Any
+
+try:
+    import defusedxml.ElementTree as ET  # noqa: N817
+except ImportError:
+    import xml.etree.ElementTree as ET  # noqa: N817, S314
 
 # Create logger for this module
 logger = logging.getLogger(__name__)

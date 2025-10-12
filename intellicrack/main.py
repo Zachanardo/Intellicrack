@@ -95,7 +95,7 @@ if os.name == "nt":
 
 
 def main() -> int:
-    """Main entry point for the Intellicrack application.
+    """Run the main entry point for the Intellicrack application.
 
     This function performs the following operations:
 
@@ -123,13 +123,12 @@ def main() -> int:
     try:
         # Configure logging with file output FIRST
         from datetime import datetime
-        from pathlib import Path
 
+        from intellicrack.utils.core.plugin_paths import get_logs_dir
         from intellicrack.utils.logger import setup_logging
 
-        # Create logs directory if it doesn't exist
-        logs_dir = Path("data/logs")
-        logs_dir.mkdir(parents=True, exist_ok=True)
+        # Get logs directory using centralized path management
+        logs_dir = get_logs_dir()
 
         # Generate log filename with current date
         log_filename = f"intellicrack-launcher.{datetime.now().strftime('%Y-%m-%d')}"
@@ -139,7 +138,7 @@ def main() -> int:
         setup_logging(
             level="INFO",
             log_file=str(log_file_path),
-            enable_rotation=False,  # Daily files, no rotation needed
+            enable_rotation=False,
         )
 
         logger.info("=== Intellicrack Application Starting ===")

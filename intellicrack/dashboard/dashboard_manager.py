@@ -81,6 +81,7 @@ class DashboardManager:
 
         Args:
             config: Dashboard configuration
+
         """
         self.logger = logger
         self.config = config or {}
@@ -213,6 +214,7 @@ class DashboardManager:
 
         Args:
             widget: Widget to add
+
         """
         self.widgets[widget.config.widget_id] = widget
         self.logger.info(f"Added widget: {widget.config.widget_id}")
@@ -222,6 +224,7 @@ class DashboardManager:
 
         Args:
             source: Data source to add
+
         """
         self.data_sources[source.source_id] = source
         self.logger.info(f"Added data source: {source.source_id}")
@@ -231,6 +234,7 @@ class DashboardManager:
 
         Args:
             layout: Layout to add
+
         """
         self.layouts[layout.layout_id] = layout
         self.logger.info(f"Added layout: {layout.layout_id}")
@@ -240,6 +244,7 @@ class DashboardManager:
 
         Args:
             layout_id: Layout identifier
+
         """
         if layout_id in self.layouts:
             self.current_layout = self.layouts[layout_id]
@@ -253,6 +258,7 @@ class DashboardManager:
         Args:
             widget_id: Widget identifier
             source_id: Data source identifier
+
         """
         self.widget_subscriptions[source_id].append(widget_id)
         self.source_subscriptions[widget_id].append(source_id)
@@ -264,6 +270,7 @@ class DashboardManager:
         Args:
             tool_name: Tool name
             handler: Tool handler object
+
         """
         self.tool_handlers[tool_name] = handler
 
@@ -310,6 +317,7 @@ class DashboardManager:
             event_type: Type of event
             tool: Tool name
             data: Event data
+
         """
         # Map to dashboard event type
         event_map = {
@@ -346,6 +354,7 @@ class DashboardManager:
 
         Returns:
             Dashboard URL
+
         """
         http_port = self.config.get("dashboard_config", {}).get("http_port", 5000)
         return f"http://localhost:{http_port}"
@@ -355,6 +364,7 @@ class DashboardManager:
 
         Returns:
             WebSocket URL
+
         """
         ws_port = self.config.get("dashboard_config", {}).get("websocket_port", 8765)
         return f"ws://localhost:{ws_port}"
@@ -364,6 +374,7 @@ class DashboardManager:
 
         Args:
             filepath: Export file path
+
         """
         state = {
             "timestamp": datetime.now().isoformat(),
@@ -382,7 +393,7 @@ class DashboardManager:
         self.logger.info(f"Exported dashboard state to {filepath}")
 
     def _polling_loop(self):
-        """Data source polling loop."""
+        """Poll data source."""
         while not self.stop_polling.is_set():
             try:
                 current_time = datetime.now()
@@ -418,6 +429,7 @@ class DashboardManager:
         Args:
             source_id: Data source identifier
             data: Data to distribute
+
         """
         widget_ids = self.widget_subscriptions.get(source_id, [])
 
@@ -432,6 +444,7 @@ class DashboardManager:
 
         Returns:
             Performance metrics
+
         """
         metrics = self.dashboard.get_dashboard_state().get("metrics", {})
 
@@ -447,6 +460,7 @@ class DashboardManager:
 
         Returns:
             System metrics
+
         """
         try:
             import psutil
@@ -471,6 +485,7 @@ class DashboardManager:
 
         Returns:
             Tool data
+
         """
         handler = self.tool_handlers.get(tool_name)
         if not handler:
@@ -493,6 +508,7 @@ class DashboardManager:
 
         Args:
             event: Dashboard event
+
         """
         # Update timeline widget
         if "timeline" in self.widgets:
@@ -515,6 +531,7 @@ class DashboardManager:
 
         Args:
             event: Vulnerability event
+
         """
         widget = self.widgets["vulnerabilities_table"]
         current = widget.get_current_data()
@@ -540,6 +557,7 @@ class DashboardManager:
 
         Args:
             event: Protection event
+
         """
         widget = self.widgets["protections_table"]
         current = widget.get_current_data()
@@ -565,6 +583,7 @@ class DashboardManager:
 
         Args:
             event: Dashboard event
+
         """
         # Log significant events
         if event.severity in ["error", "critical"]:
@@ -574,12 +593,13 @@ class DashboardManager:
 
 
 def create_dashboard_manager(config: Optional[Dict[str, Any]] = None) -> DashboardManager:
-    """Factory function to create dashboard manager.
+    """Create dashboard manager.
 
     Args:
         config: Dashboard configuration
 
     Returns:
         New DashboardManager instance
+
     """
     return DashboardManager(config)

@@ -55,6 +55,7 @@ class ProtectionPattern:
 
 class AdvancedPatternLibrary:
     """Comprehensive library of protection patterns and bypass strategies.
+
     All patterns lead to functional bypass code generation.
     """
 

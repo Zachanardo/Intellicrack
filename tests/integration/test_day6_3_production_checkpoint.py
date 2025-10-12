@@ -119,7 +119,9 @@ class ProductionReadinessValidator:
         placeholders_found = False
 
         for file_path in files_to_check:
-            full_path = Path(f"C:/Intellicrack/{file_path}")
+            from intellicrack.utils.path_resolver import get_project_root
+
+full_path = get_project_root() / file_path
             if not full_path.exists():
                 print(f"  ⚠️  File not found: {file_path}")
                 continue
@@ -432,7 +434,7 @@ This checkpoint certifies that all modern protection bypass mechanisms have been
 **Checkpoint Status**: {'✅ PASSED' if all(self.test_results) and not self.critical_failures else '❌ FAILED'}
 """
 
-        doc_path = Path("C:/Intellicrack/CHECKPOINT_6_DOCUMENTATION.md")
+        doc_path = get_project_root() / "CHECKPOINT_6_DOCUMENTATION.md"
         with open(doc_path, 'w') as f:
             f.write(doc_content)
 

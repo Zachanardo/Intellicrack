@@ -903,7 +903,7 @@ class MemoryOptimizer:
 
 
 def create_memory_optimizer(app_instance: Any | None = None, **kwargs) -> MemoryOptimizer:
-    """Factory function to create and configure a MemoryOptimizer instance.
+    """Create and configure a MemoryOptimizer instance.
 
     Args:
         app_instance: Application instance to bind to

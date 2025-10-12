@@ -376,7 +376,7 @@ class AnalysisCLI:
 
 
 def main():
-    """Main entry point for CLI."""
+    """Run main entry point for CLI."""
     parser = argparse.ArgumentParser(
         description="Intellicrack Binary Analysis CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,

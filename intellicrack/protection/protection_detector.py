@@ -317,6 +317,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "virtualization_detected": False,
@@ -415,6 +416,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results with commercial protections found
+
         """
         if not os.path.exists(binary_path):
             return {"error": "File not found", "protections": []}
@@ -499,6 +501,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "has_checksum_verification": False,
@@ -552,6 +555,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "has_self_healing": False,
@@ -606,6 +610,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "is_obfuscated": False,
@@ -667,6 +672,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "has_anti_debug": False,
@@ -752,6 +758,7 @@ class ProtectionDetector:
 
         Returns:
             Detection results
+
         """
         results = {
             "has_tpm_protection": False,
@@ -797,6 +804,7 @@ class ProtectionDetector:
 
         Returns:
             Entropy value (0-8)
+
         """
         if not data:
             return 0.0
@@ -827,6 +835,7 @@ class ProtectionDetector:
 
         Returns:
             Combined detection results
+
         """
         results = {
             "file_path": binary_path,
@@ -987,6 +996,7 @@ def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
 
     Returns:
         Hex digest of checksum
+
     """
     # This function has been updated to only use secure hash algorithms
     # MD5 and SHA1 detection now uses SHA256 for internal processing

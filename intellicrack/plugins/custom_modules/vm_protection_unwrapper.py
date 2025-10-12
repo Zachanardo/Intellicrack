@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""VM protection unwrapper plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -31,6 +33,7 @@ from typing import Any
 import keystone
 
 from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.utils.logger import logger
 
 """
 VM Protection Unwrapper
@@ -1077,7 +1080,10 @@ class VMProtectionUnwrapper:
                 key = extractor(binary_data, entry_point, protection_type)
                 if key and self._validate_key(key, binary_data, entry_point):
                     return key
-            except Exception:
+            except Exception as e:
+                # Log the exception with details for debugging
+                import logging
+                logging.warning(f"Error extracting key with {extractor.__name__}: {e}")
                 continue
 
         # Advanced fallback using cryptographic analysis
@@ -1464,7 +1470,7 @@ class VMProtectionUnwrapper:
 
         return None
 
-    def _enhanced_vm_instruction_to_asm(self, instruction: VMInstruction, vm_analysis: dict[str, Any]) -> str | None:
+    def _enhanced_vm_instruction_to_asm(self, instruction: VMInstruction, vm_analysis: dict[str, Any]) -> str | None:  # noqa: C901
         """Enhanced VM to x86 assembly conversion."""
         mnemonic = instruction.mnemonic
         operands = instruction.operands
@@ -1859,7 +1865,7 @@ def main():
 
             # Show detailed results
             for result in results["results"]:
-                status = "✓" if result.get("success") else "✗"
+                status = "OK" if result.get("success") else "FAIL"
                 print(f"{status} {Path(result['input_file']).name}")
                 if not result.get("success"):
                     print(f"  Error: {result.get('error', 'Unknown error')}")
@@ -1869,13 +1875,13 @@ def main():
             result = unwrapper.unwrap_file(args.input, args.output)
 
             if result["success"]:
-                print("✓ Unwrapping successful!")
+                print("OK Unwrapping successful!")
                 print(f"  Protection: {result['protection_type']}")
                 print(f"  Original size: {result['original_size']:,} bytes")
                 print(f"  Unwrapped size: {result['unwrapped_size']:,} bytes")
                 print(f"  Processing time: {result['processing_time']:.2f} seconds")
             else:
-                print(f"✗ Unwrapping failed: {result.get('error', 'Unknown error')}")
+                print(f"FAIL Unwrapping failed: {result.get('error', 'Unknown error')}")
 
         if args.stats:
             stats = unwrapper.get_statistics()

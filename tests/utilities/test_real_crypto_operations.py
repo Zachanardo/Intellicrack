@@ -1,3 +1,13 @@
+"""
+Tests for real cryptographic operations in Intellicrack.
+
+This module contains comprehensive tests for real cryptographic operations
+including encryption, decryption, hashing, digital signatures, certificate
+operations, key derivation functions, and secure random number generation.
+The tests validate that the cryptographic components function properly
+for security research and binary analysis tasks.
+"""
+
 import pytest
 import tempfile
 import os

@@ -488,7 +488,7 @@ class PEFileModel(BinaryFileModel):
 
 
 def create_file_model(file_path: str) -> BinaryFileModel | None:
-    """Factory function to create appropriate file model."""
+    """Create appropriate file model."""
     try:
         # Check file format
         with open(file_path, "rb") as f:

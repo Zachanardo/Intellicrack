@@ -19,6 +19,11 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     """Get the project root directory."""
+    # First, try to get the root from the environment variable
+    intellicrack_root_env = os.environ.get("INTELLICRACK_ROOT")
+    if intellicrack_root_env:
+        return Path(intellicrack_root_env)
+
     # Go up from this file to the project root
     # This file is at: intellicrack/utils/path_resolver.py
     return Path(__file__).parent.parent.parent.resolve()
@@ -63,10 +68,9 @@ def resolve_qemu_image_path(image_name: str) -> Path:
     # Remove any hardcoded path prefixes
     if isinstance(image_name, str):
         # Strip common hardcoded prefixes - including legacy absolute paths
+        project_root = get_project_root()
         for prefix in [
-            "C:\\Intellicrack\\qemu\\images\\",  # Legacy Windows absolute
-            "C:/Intellicrack/qemu/images/",  # Legacy Windows absolute (forward slash)
-            "/Intellicrack/qemu/images/",  # Legacy Unix absolute
+            str(project_root / "qemu" / "images"),
             "qemu/images/",
             "qemu\\images\\",
             "intellicrack/",

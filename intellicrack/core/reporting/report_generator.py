@@ -164,7 +164,7 @@ class ReportGenerator:
             html_parts.append("<h2>Protection Analysis</h2>")
             html_parts.append("<ul>")
             for protection in data["protections"]:
-                status = "✓" if protection.get("bypassed") else "✗"
+                status = "OK" if protection.get("bypassed") else "FAIL"
                 html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
             html_parts.append("</ul>")
             html_parts.append("</section>")

@@ -31,8 +31,12 @@ import threading
 from pathlib import Path
 from typing import Any, Dict
 
+from dotenv import load_dotenv
+
 from intellicrack.core.exceptions import ConfigurationError
 from intellicrack.utils.resource_helper import get_resource_path
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +143,12 @@ class IntellicrackConfig:
             Path: The root directory where Intellicrack is installed
 
         """
+        # First, try to get the root from the environment variable
+        intellicrack_root_env = os.environ.get("INTELLICRACK_ROOT")
+        if intellicrack_root_env:
+            return Path(intellicrack_root_env)
+
+        # Fallback to the old method if the environment variable is not set
         import intellicrack
 
         # Get the parent directory of the intellicrack package
@@ -307,7 +317,7 @@ class IntellicrackConfig:
     def _create_default_config(self):
         r"""Create or load unified configuration.
 
-        Attempts to load the unified config.json from C:\\Intellicrack\\config.
+        Attempts to load the unified config.json from the Intellicrack config directory.
         If not found, creates a comprehensive default configuration.
 
         Side Effects:

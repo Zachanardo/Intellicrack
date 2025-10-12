@@ -333,7 +333,7 @@ class APIHookingFramework:
         self._setup_platform_hooks()
 
     def _setup_platform_hooks(self):
-        """Setup platform-specific hooking infrastructure."""
+        """Set up platform-specific hooking infrastructure."""
         system = platform.system()
 
         if system == "Windows":
@@ -344,7 +344,7 @@ class APIHookingFramework:
             logger.warning(f"Platform {system} not fully supported for API hooking")
 
     def _setup_windows_hooks(self):
-        """Setup Windows API hooks."""
+        """Set up Windows API hooks."""
         self.add_hook(HookPoint(module="kernel32.dll", function="CreateFileW", on_enter=self._hook_create_file, priority=100))
 
         self.add_hook(HookPoint(module="kernel32.dll", function="ReadFile", on_enter=self._hook_read_file, priority=90))
@@ -368,7 +368,7 @@ class APIHookingFramework:
         self.add_hook(HookPoint(module="ntdll.dll", function="NtOpenProcess", on_enter=self._hook_open_process, priority=110))
 
     def _setup_linux_hooks(self):
-        """Setup Linux syscall hooks."""
+        """Set up Linux syscall hooks."""
         self.add_hook(HookPoint(module="libc.so.6", function="open", on_enter=self._hook_open, priority=100))
 
         self.add_hook(HookPoint(module="libc.so.6", function="read", on_enter=self._hook_read, priority=90))
@@ -406,7 +406,7 @@ class APIHookingFramework:
             self.active_hooks.discard(key)
 
     def _hook_create_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook CreateFileW."""
+        """Monitor CreateFileW calls."""
         try:
             filename = self._read_wide_string(args[0])
             access = args[1]
@@ -430,7 +430,7 @@ class APIHookingFramework:
         return None
 
     def _hook_read_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook ReadFile."""
+        """Monitor ReadFile calls."""
         try:
             handle = args[0]
             args[1]
@@ -452,7 +452,7 @@ class APIHookingFramework:
         return None
 
     def _hook_write_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook WriteFile."""
+        """Monitor WriteFile calls to track file writes."""
         try:
             handle = args[0]
             buffer = args[1]
@@ -476,7 +476,7 @@ class APIHookingFramework:
         return None
 
     def _hook_reg_open_key(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook RegOpenKeyExW."""
+        """Monitor RegOpenKeyExW calls to track registry access."""
         try:
             hkey = args[0]
             subkey = self._read_wide_string(args[1])
@@ -499,7 +499,7 @@ class APIHookingFramework:
         return None
 
     def _hook_reg_query_value(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook RegQueryValueExW."""
+        """Monitor registry queries via RegQueryValueExW hook."""
         try:
             hkey = args[0]
             value_name = self._read_wide_string(args[1])
@@ -520,7 +520,7 @@ class APIHookingFramework:
         return None
 
     def _hook_reg_set_value(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook RegSetValueExW."""
+        """Monitor registry writes via RegSetValueExW hook."""
         try:
             hkey = args[0]
             value_name = self._read_wide_string(args[1])
@@ -543,7 +543,7 @@ class APIHookingFramework:
         return None
 
     def _hook_connect(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook connect (Windows)."""
+        """Monitor network connections via connect hook (Windows)."""
         try:
             socket_fd = args[0]
             sockaddr = args[1]
@@ -567,7 +567,7 @@ class APIHookingFramework:
         return None
 
     def _hook_send(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook send."""
+        """Monitor network data transmission via send hook."""
         try:
             socket_fd = args[0]
             buffer = args[1]
@@ -591,7 +591,7 @@ class APIHookingFramework:
         return None
 
     def _hook_recv(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook recv."""
+        """Monitor network data reception via recv hook."""
         try:
             socket_fd = args[0]
             args[1]
@@ -613,7 +613,7 @@ class APIHookingFramework:
         return None
 
     def _hook_create_process(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook NtCreateProcess."""
+        """Monitor process creation via NtCreateProcess hook."""
         try:
             process_handle = args[0]
             desired_access = args[1]
@@ -635,7 +635,7 @@ class APIHookingFramework:
         return None
 
     def _hook_open_process(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook NtOpenProcess."""
+        """Monitor process access via NtOpenProcess hook."""
         try:
             args[0]
             desired_access = args[1]
@@ -658,7 +658,7 @@ class APIHookingFramework:
         return None
 
     def _hook_open(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook open (Linux)."""
+        """Monitor file opening via open hook (Linux)."""
         try:
             pathname = self._read_string(args[0])
             flags = args[1]
@@ -679,7 +679,7 @@ class APIHookingFramework:
         return None
 
     def _hook_read(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook read (Linux)."""
+        """Monitor file reading via read hook (Linux)."""
         try:
             fd = args[0]
             args[1]
@@ -701,7 +701,7 @@ class APIHookingFramework:
         return None
 
     def _hook_write(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook write (Linux)."""
+        """Monitor file writing via write hook (Linux)."""
         try:
             fd = args[0]
             buffer = args[1]
@@ -725,7 +725,7 @@ class APIHookingFramework:
         return None
 
     def _hook_socket(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook socket (Linux)."""
+        """Monitor network socket creation via socket hook (Linux)."""
         try:
             domain = args[0]
             socket_type = args[1]
@@ -747,7 +747,7 @@ class APIHookingFramework:
         return None
 
     def _hook_connect_linux(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
-        """Hook connect (Linux)."""
+        """Monitor network connections via connect hook (Linux)."""
         try:
             sockfd = args[0]
             addr = args[1]
@@ -1012,12 +1012,12 @@ class AntiAnalysisDetector:
                 if tick2 - tick1 > 10:
                     timing_checks.append(f"GetTickCount anomaly: {tick2 - tick1}ms")
 
-                class LARGE_INTEGER(ctypes.Structure):
+                class LargeInteger(ctypes.Structure):
                     _fields_ = [("QuadPart", ctypes.c_longlong)]
 
-                freq = LARGE_INTEGER()
-                counter1 = LARGE_INTEGER()
-                counter2 = LARGE_INTEGER()
+                freq = LargeInteger()
+                counter1 = LargeInteger()
+                counter2 = LargeInteger()
 
                 kernel32.QueryPerformanceFrequency(ctypes.byref(freq))
                 kernel32.QueryPerformanceCounter(ctypes.byref(counter1))
@@ -1122,7 +1122,12 @@ class AntiAnalysisDetector:
         sandbox_indicators = []
 
         try:
-            sandbox_files = [r"C:\agent\agent.py", r"C:\sandbox\starter.exe", "/tmp/.X11-unix", "/tmp/.wine-"]
+            import tempfile
+            # Determine appropriate temp directory based on platform
+            temp_dir = tempfile.gettempdir()
+            sandbox_files = [r"C:\agent\agent.py", r"C:\sandbox\starter.exe",
+                            os.path.join(temp_dir, ".X11-unix"),
+                            os.path.join(temp_dir, ".wine-")]
 
             for file_path in sandbox_files:
                 if os.path.exists(file_path):
@@ -1555,7 +1560,7 @@ class BehavioralAnalyzer:
 
 
 def create_behavioral_analyzer(binary_path: Path) -> BehavioralAnalyzer:
-    """Factory function to create behavioral analyzer."""
+    """Create behavioral analyzer."""
     return BehavioralAnalyzer(binary_path)
 
 

@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Response parsing utilities for Intellicrack AI components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -88,7 +90,7 @@ def parse_simple_response(
     finding_keywords: list[str] | None = None,
     recommendation_keywords: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
-    """Simple response parser for findings and recommendations.
+    """Parse findings and recommendations from response.
 
     Args:
         response: The AI response text to parse

@@ -26,7 +26,7 @@ class FridaTemplates:
 
     @staticmethod
     def get_base_template() -> str:
-        """Base Frida script template with core functionality."""
+        """Get base Frida script template with core functionality."""
         return """
 // Auto-generated Frida script by Intellicrack AI
 // Target: {target_binary}
@@ -495,7 +495,7 @@ class GhidraTemplates:
 
     @staticmethod
     def get_base_template() -> str:
-        """Base Ghidra script template with core functionality."""
+        """Get base Ghidra script template with core functionality."""
         return '''
 # Auto-generated Ghidra script by Intellicrack AI
 # Target: {target_binary}

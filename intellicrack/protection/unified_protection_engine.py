@@ -714,7 +714,8 @@ class UnifiedProtectionEngine:
         return removed
 
     def invalidate_cache_for_file(self, file_path: str) -> None:
-        """Invalidate cache entries for a specific file
+        """Invalidate cache entries for a specific file.
+
         This is useful when a file has been modified.
         """
         self.remove_from_cache(file_path)

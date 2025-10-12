@@ -506,7 +506,7 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 
 
 def create_remote_executor(host: str | None = None, port: int | None = None) -> RemotePluginExecutor:
-    """Factory function to create a RemotePluginExecutor.
+    """Create a RemotePluginExecutor.
 
     Args:
         host: Remote host address (default: from config)

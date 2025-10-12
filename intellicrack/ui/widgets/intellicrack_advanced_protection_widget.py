@@ -729,9 +729,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         """
 
         if analysis.is_protected:
-            html += '<p class="danger">⚠️ File is PROTECTED</p>'
+            html += '<p class="danger">WARNING️ File is PROTECTED</p>'
         else:
-            html += '<p class="success">✓ No protection detected</p>'
+            html += '<p class="success">OK No protection detected</p>'
 
         if analysis.is_packed:
             html += '<p class="warning">📦 File is PACKED</p>'

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Frida Protection Bypass Automation Module
+"""Frida Protection Bypass Automation Module.
 
 Production-ready implementation for automated detection and bypass of:
 - Anti-debugging mechanisms
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProtectionType(Enum):
-    """Types of protections that can be detected and bypassed"""
+    """Types of protections that can be detected and bypassed."""
 
     ANTI_DEBUG = "anti_debug"
     CERT_PINNING = "cert_pinning"
@@ -39,7 +38,7 @@ class ProtectionType(Enum):
 
 @dataclass
 class ProtectionInfo:
-    """Information about detected protection"""
+    """Information about detected protection."""
 
     type: ProtectionType
     location: str
@@ -50,9 +49,16 @@ class ProtectionInfo:
 
 
 class FridaProtectionBypasser:
-    """Automated protection detection and bypass using Frida"""
+    """Automated protection detection and bypass using Frida."""
 
     def __init__(self, process_name: Optional[str] = None, pid: Optional[int] = None):
+        """Initialize the FridaProtectionBypasser to detect and bypass application protections.
+
+        Args:
+            process_name: Name of the process to attach to. Defaults to None.
+            pid: Process ID to attach to. Defaults to None.
+
+        """
         self.process_name = process_name
         self.pid = pid
         self.session: Optional[frida.core.Session] = None
@@ -60,7 +66,7 @@ class FridaProtectionBypasser:
         self.detected_protections: List[ProtectionInfo] = []
 
     def attach(self) -> bool:
-        """Attach to target process"""
+        """Attach to target process."""
         try:
             if self.pid:
                 self.session = frida.attach(self.pid)
@@ -77,7 +83,7 @@ class FridaProtectionBypasser:
             return False
 
     def detect_anti_debug(self) -> List[ProtectionInfo]:
-        """Detect anti-debugging mechanisms"""
+        """Detect anti-debugging mechanisms."""
         detections = []
 
         anti_debug_script = """
@@ -295,7 +301,7 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_cert_pinning(self) -> List[ProtectionInfo]:
-        """Detect certificate pinning implementations"""
+        """Detect certificate pinning implementations."""
         detections = []
 
         cert_pinning_script = """
@@ -458,7 +464,7 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_integrity_checks(self) -> List[ProtectionInfo]:
-        """Detect integrity check mechanisms"""
+        """Detect integrity check mechanisms."""
         detections = []
 
         integrity_script = """
@@ -643,7 +649,7 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_vm_detection(self) -> List[ProtectionInfo]:
-        """Detect VM/sandbox detection mechanisms"""
+        """Detect VM/sandbox detection mechanisms."""
         detections = []
 
         vm_detection_script = """
@@ -853,7 +859,7 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_packers(self) -> List[ProtectionInfo]:
-        """Detect known packers and protectors"""
+        """Detect known packers and protectors."""
         detections = []
 
         # Signature-based packer detection
@@ -1027,7 +1033,7 @@ class FridaProtectionBypasser:
         return detections
 
     def _generate_unpacking_script(self, packer_name: str) -> str:
-        """Generate packer-specific unpacking script"""
+        """Generate packer-specific unpacking script."""
         if packer_name == "UPX":
             return self._generate_upx_unpacking_script()
         elif packer_name == "VMProtect":
@@ -1038,7 +1044,7 @@ class FridaProtectionBypasser:
             return self._generate_generic_unpacking_script()
 
     def _generate_upx_unpacking_script(self) -> str:
-        """Generate UPX unpacking script"""
+        """Generate UPX unpacking script."""
         return """
         // UPX Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1104,7 +1110,7 @@ class FridaProtectionBypasser:
         """
 
     def _generate_vmprotect_unpacking_script(self) -> str:
-        """Generate VMProtect unpacking script"""
+        """Generate VMProtect unpacking script."""
         return """
         // VMProtect Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1171,7 +1177,7 @@ class FridaProtectionBypasser:
         """
 
     def _generate_themida_unpacking_script(self) -> str:
-        """Generate Themida unpacking script"""
+        """Generate Themida unpacking script."""
         return """
         // Themida Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1259,7 +1265,7 @@ class FridaProtectionBypasser:
         """
 
     def _generate_generic_unpacking_script(self) -> str:
-        """Generate generic unpacking script"""
+        """Generate generic unpacking script."""
         return """
         // Generic Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1399,7 +1405,7 @@ class FridaProtectionBypasser:
         """
 
     def apply_all_bypasses(self) -> bool:
-        """Apply all detected protection bypasses"""
+        """Apply all detected protection bypasses."""
         try:
             all_scripts = []
 
@@ -1433,7 +1439,7 @@ class FridaProtectionBypasser:
             return False
 
     def detect_all_protections(self) -> List[ProtectionInfo]:
-        """Run all protection detection routines"""
+        """Run all protection detection routines."""
         logger.info("Starting comprehensive protection detection...")
 
         all_detections = []
@@ -1462,7 +1468,7 @@ class FridaProtectionBypasser:
         return all_detections
 
     def generate_bypass_report(self) -> str:
-        """Generate detailed report of detected protections and bypasses"""
+        """Generate detailed report of detected protections and bypasses."""
         report = []
         report.append("=" * 60)
         report.append("PROTECTION BYPASS ANALYSIS REPORT")
@@ -1511,7 +1517,7 @@ class FridaProtectionBypasser:
 
 
 def main():
-    """Example usage of FridaProtectionBypasser"""
+    """Demonstrate usage of FridaProtectionBypasser."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Frida Protection Bypass Automation")

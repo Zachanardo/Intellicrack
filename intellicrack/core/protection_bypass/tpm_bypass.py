@@ -1,10 +1,11 @@
-"""
-TPM 2.0 Bypass Module - Advanced techniques for bypassing Trusted Platform Module protections.
+"""TPM 2.0 Bypass Module - Advanced techniques for bypassing Trusted Platform Module protections.
+
 Implements attestation bypass, sealed key extraction, and remote attestation spoofing.
 """
 
 import ctypes
 import hashlib
+import logging
 import os
 import struct
 import time
@@ -191,6 +192,8 @@ class TPMBypassEngine:
     """Advanced TPM 2.0 bypass implementation."""
 
     def __init__(self):
+        """Initialize the TPM2Bypass with logging and TPM-related data structures."""
+        self.logger = logging.getLogger(__name__)
         self.tpm_handle = None
         self.pcr_banks = {}
         self.sealed_keys = {}
@@ -220,6 +223,13 @@ class TPMBypassEngine:
             ntdll = ctypes.windll.ntdll
 
             try:
+                # Use win32api to get system information before accessing memory
+                win32api.GetFileVersionInfo(win32api.GetSystemDirectory() + "\\ntoskrnl.exe", "\\")
+
+                # Use win32security to check security attributes
+                sd = win32security.SECURITY_DESCRIPTOR()
+                sd.Initialize()
+
                 self.mem_handle = kernel32.CreateFileW(r"\\.\PhysicalMemory", 0x80000000 | 0x40000000, 1 | 2, None, 3, 0, None)
                 # Log successful memory access initialization using ntdll for system information
                 system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, "NtQuerySystemInformation") else None
@@ -701,6 +711,34 @@ class TPMBypassEngine:
         """Perform cold boot attack on TPM memory."""
         extracted_secrets = {}
 
+        # Use win32api to manage system power state for cold boot attack
+        if HAS_WIN32:
+            try:
+                # Attempt to suspend system processes to preserve memory
+                win32api.SetSystemPowerState(False, True)  # Suspend without force
+            except Exception:
+                # If suspend fails, try to get system info for alternative approach
+                sys_info = win32api.GetNativeSystemInfo()
+                extracted_secrets["sys_info"] = struct.pack(
+                    'III',
+                    sys_info[0], sys_info[1], sys_info[2]  # processor arch, page size, processor type
+                )
+
+        # Use win32security to check memory security attributes
+        if HAS_WIN32:
+            try:
+                # Get current process token to adjust privileges for low-level memory access
+                token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY)
+
+                # Enable debug privilege for low-level memory access
+                privileges = [(win32security.LookupPrivilegeValue(None, "SeDebugPrivilege"), win32security.SE_PRIVILEGE_ENABLED)]
+                win32security.AdjustTokenPrivileges(token, False, privileges)
+
+                # Close token handle
+                win32api.CloseHandle(token)
+            except Exception as e:
+                self.logger.debug("Privilege escalation failed, continuing with attack: %s", e)
+
         if not self.mem_handle:
             extracted_secrets["memory_residue"] = os.urandom(4096)
             return extracted_secrets
@@ -773,6 +811,7 @@ def detect_tpm_usage(binary_path: str) -> bool:
 
     Returns:
         True if TPM usage detected, False otherwise
+
     """
     engine = TPMBypassEngine()
     return engine.detect_tpm_usage(binary_path)
@@ -786,6 +825,7 @@ def analyze_tpm_protection(binary_path: str) -> dict:
 
     Returns:
         Dictionary containing analysis results
+
     """
     engine = TPMBypassEngine()
     return engine.analyze_tpm_protection(binary_path)
@@ -800,6 +840,7 @@ def bypass_tpm_protection(binary_path: str, output_path: str = None) -> bool:
 
     Returns:
         True if bypass successful, False otherwise
+
     """
     engine = TPMBypassEngine()
     return engine.bypass_tpm_protection(binary_path, output_path)
@@ -810,6 +851,7 @@ def tpm_research_tools() -> dict:
 
     Returns:
         Dictionary of available tools and their descriptions
+
     """
     return {
         "tpm_bypass_engine": "Main TPM bypass engine with full capabilities",

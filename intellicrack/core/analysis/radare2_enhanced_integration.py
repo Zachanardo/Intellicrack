@@ -52,7 +52,8 @@ error_handler = get_error_handler()
 
 
 class EnhancedR2Integration:
-    """Enhanced radare2 integration with comprehensive error handling, recovery,
+    """Enhanced radare2 integration with comprehensive error handling, recovery,.
+
     performance optimization, and real-time capabilities.
 
     This class provides:
@@ -539,6 +540,7 @@ class EnhancedR2Integration:
 
         Returns:
             True if successfully set, False otherwise
+
         """
         try:
             if self.components.get("diff"):
@@ -557,6 +559,7 @@ class EnhancedR2Integration:
 
         Returns:
             List of function diff results
+
         """
         try:
             if self.components.get("diff"):
@@ -593,6 +596,7 @@ class EnhancedR2Integration:
 
         Returns:
             List of basic block diff results
+
         """
         try:
             if self.components.get("diff"):
@@ -623,6 +627,7 @@ class EnhancedR2Integration:
 
         Returns:
             Dictionary containing performance metrics and statistics
+
         """
         # Get metrics from the performance monitor
         current_metrics = self.performance_monitor.get_current_metrics()
@@ -641,6 +646,7 @@ class EnhancedR2Integration:
 
         Args:
             filepath: Path to export file
+
         """
         self.performance_monitor.export_metrics(filepath)
         self.logger.info(f"Exported performance metrics to {filepath}")
@@ -653,6 +659,7 @@ class EnhancedR2Integration:
 
         Returns:
             Dictionary containing graph data
+
         """
         try:
             if self.components.get("graph"):
@@ -691,6 +698,7 @@ class EnhancedR2Integration:
 
         Returns:
             Dictionary containing graph data
+
         """
         try:
             if self.components.get("graph"):
@@ -729,6 +737,7 @@ class EnhancedR2Integration:
 
         Returns:
             Dictionary containing graph data
+
         """
         try:
             if self.components.get("graph"):
@@ -759,6 +768,7 @@ class EnhancedR2Integration:
 
         Returns:
             True if successful
+
         """
         try:
             if not self.components.get("graph"):

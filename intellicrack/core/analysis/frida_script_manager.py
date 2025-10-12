@@ -1,6 +1,5 @@
 """Frida Script Manager - Production Implementation.
 
-
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -82,6 +81,12 @@ class FridaScriptManager:
     """Manages Frida script execution and results."""
 
     def __init__(self, scripts_dir: Path):
+        """Initialize the FridaScriptManager with a directory containing scripts.
+
+        Args:
+            scripts_dir: Path to the directory containing Frida scripts.
+
+        """
         self.scripts_dir = scripts_dir
         self.scripts: Dict[str, FridaScriptConfig] = {}
         self.active_sessions: Dict[str, frida.core.Session] = {}
@@ -325,6 +330,7 @@ class FridaScriptManager:
 
         Returns:
             ScriptResult with execution details
+
         """
         if script_name not in self.scripts:
             raise ValueError(f"Unknown script: {script_name}")

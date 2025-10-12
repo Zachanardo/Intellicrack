@@ -196,7 +196,7 @@ class R2ErrorHandler:
             self._record_performance(operation_name, duration, success=True)
 
     def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] = None) -> bool:
-        """Main error handling entry point.
+        """Handle error as main entry point.
 
         Args:
             error: The exception that occurred
@@ -716,7 +716,7 @@ def get_error_handler() -> R2ErrorHandler:
 
 
 def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:
-    """Convenience function to handle radare2 errors.
+    """Handle radare2 errors.
 
     Args:
         error: The exception that occurred

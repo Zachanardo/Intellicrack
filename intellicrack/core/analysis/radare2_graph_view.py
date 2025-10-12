@@ -96,6 +96,7 @@ class R2GraphGenerator:
 
         Args:
             binary_path: Path to the binary file
+
         """
         self.binary_path = binary_path
         self.logger = logger
@@ -129,6 +130,7 @@ class R2GraphGenerator:
 
         Returns:
             GraphData containing CFG
+
         """
         if not self.r2:
             self.logger.error("R2 session not initialized")
@@ -213,6 +215,7 @@ class R2GraphGenerator:
 
         Returns:
             GraphData containing call graph
+
         """
         if not self.r2:
             self.logger.error("R2 session not initialized")
@@ -286,6 +289,7 @@ class R2GraphGenerator:
 
         Returns:
             GraphData containing xref graph
+
         """
         if not self.r2:
             self.logger.error("R2 session not initialized")
@@ -346,6 +350,7 @@ class R2GraphGenerator:
 
         Returns:
             GraphData containing import dependencies
+
         """
         if not self.r2:
             self.logger.error("R2 session not initialized")
@@ -420,6 +425,7 @@ class R2GraphGenerator:
         Args:
             graph_data: Graph data to export
             output_path: Path for output DOT file
+
         """
         try:
             with open(output_path, "w") as f:
@@ -457,6 +463,7 @@ class R2GraphGenerator:
 
         Returns:
             True if successful
+
         """
         if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE:
             self.logger.error("NetworkX or Matplotlib not available for visualization")
@@ -535,12 +542,13 @@ class R2GraphGenerator:
 
 
 def create_graph_generator(binary_path: str) -> R2GraphGenerator:
-    """Factory function to create graph generator.
+    """Create graph generator.
 
     Args:
         binary_path: Path to binary
 
     Returns:
         New R2GraphGenerator instance
+
     """
     return R2GraphGenerator(binary_path)

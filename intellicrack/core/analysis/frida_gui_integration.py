@@ -53,6 +53,13 @@ class FridaScriptParameterWidget(QDialog):
     """Advanced parameter configuration dialog for Frida scripts."""
 
     def __init__(self, script_config: FridaScriptConfig, parent=None):
+        """Initialize the FridaScriptParameterWidget with a script configuration.
+
+        Args:
+            script_config: Configuration for the Frida script to configure.
+            parent: Parent widget for this dialog. Defaults to None.
+
+        """
         super().__init__(parent)
         self.script_config = script_config
         self.parameter_widgets = {}
@@ -77,15 +84,15 @@ class FridaScriptParameterWidget(QDialog):
         # Add requirements indicators
         req_layout = QHBoxLayout()
         if self.script_config.requires_admin:
-            admin_label = QLabel("⚠️ Requires Admin")
+            admin_label = QLabel("WARNING️ Requires Admin")
             admin_label.setStyleSheet("color: orange;")
             req_layout.addWidget(admin_label)
         if self.script_config.supports_spawn:
-            spawn_label = QLabel("✓ Spawn Mode")
+            spawn_label = QLabel("OK Spawn Mode")
             spawn_label.setStyleSheet("color: green;")
             req_layout.addWidget(spawn_label)
         if self.script_config.supports_attach:
-            attach_label = QLabel("✓ Attach Mode")
+            attach_label = QLabel("OK Attach Mode")
             attach_label.setStyleSheet("color: green;")
             req_layout.addWidget(attach_label)
         if req_layout.count() > 0:
@@ -309,6 +316,7 @@ class FridaScriptOutputWidget(QWidget):
     """Real-time output viewer for Frida scripts."""
 
     def __init__(self):
+        """Initialize the FridaScriptOutputWidget for real-time script output."""
         super().__init__()
         self.script_outputs = {}
         self.init_ui()
@@ -353,6 +361,13 @@ class ScriptOutputTab(QWidget):
     """Individual output tab for a script."""
 
     def __init__(self, script_name: str, session_id: str):
+        """Initialize the ScriptOutputTab for a specific script.
+
+        Args:
+            script_name: Name of the script this tab represents.
+            session_id: Unique identifier for the script session.
+
+        """
         super().__init__()
         self.script_name = script_name
         self.session_id = session_id
@@ -533,6 +548,7 @@ class FridaScriptDebuggerWidget(QWidget):
     """Debugging interface for Frida scripts."""
 
     def __init__(self):
+        """Initialize the FridaScriptDebuggerWidget for debugging Frida scripts."""
         super().__init__()
         self.breakpoints = {}
         self.watch_expressions = []
@@ -641,6 +657,7 @@ class FridaScriptCreatorWidget(QDialog):
     """Wizard for creating custom Frida scripts."""
 
     def __init__(self, parent=None):
+        """Initialize the FridaScriptCreatorWidget with an optional parent."""
         super().__init__(parent)
         self.setWindowTitle("Create Custom Frida Script")
         self.setMinimumSize(900, 700)
@@ -1120,7 +1137,7 @@ send({ type: 'ready', payload: 'Memory scanner initialized' });
 
 
 def integrate_frida_gui(main_app):
-    """Main integration function for Frida GUI components."""
+    """Integrate Frida GUI components."""
     # Create Frida menu if not exists
     if not hasattr(main_app, "frida_menu"):
         main_app.frida_menu = main_app.menuBar().addMenu("Frida")

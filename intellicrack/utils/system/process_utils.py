@@ -210,6 +210,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str | None:
 
 def detect_hardware_dongles(app=None) -> list[str]:
     """Detects hardware dongle drivers and APIs.
+
     Supports detection of SafeNet, HASP, CodeMeter, and other common dongles.
 
     Args:

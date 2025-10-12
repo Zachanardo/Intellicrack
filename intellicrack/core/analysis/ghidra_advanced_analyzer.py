@@ -96,6 +96,12 @@ class GhidraAdvancedAnalyzer:
     """Advanced analysis features for Ghidra integration."""
 
     def __init__(self, binary_path: str):
+        """Initialize the GhidraAdvancedAnalyzer with a binary file path.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        """
         self.binary_path = Path(binary_path)
         self.pe = None
         self.lief_binary = None

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Pattern evolution tracker for Intellicrack ML components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -76,6 +78,13 @@ if not SKLEARN_AVAILABLE:
         """Fallback DBSCAN clustering implementation."""
 
         def __init__(self, eps=0.5, min_samples=5):
+            """Initialize the FallbackDBSCAN clustering algorithm.
+
+            Args:
+                eps: The maximum distance between two samples for them to be considered as in the same neighborhood.
+                min_samples: The number of samples in a neighborhood for a point to be considered as a core point.
+
+            """
             self.eps = eps
             self.min_samples = min_samples
             self.labels_ = None
@@ -115,6 +124,14 @@ if not SKLEARN_AVAILABLE:
         """Fallback K-Means clustering implementation."""
 
         def __init__(self, n_clusters=8, random_state=None, n_init=10):
+            """Initialize the KMeans clustering algorithm.
+
+            Args:
+                n_clusters: The number of clusters to form.
+                random_state: Random state for reproducibility.
+                n_init: Number of times the k-means algorithm will be run with different centroid seeds.
+
+            """
             self.n_clusters = n_clusters
             self.random_state = random_state
             self.n_init = n_init
@@ -130,6 +147,15 @@ if not SKLEARN_AVAILABLE:
         """Fallback agglomerative clustering implementation."""
 
         def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average"):
+            """Initialize the AgglomerativeClustering algorithm.
+
+            Args:
+                n_clusters: The number of clusters to find.
+                distance_threshold: The linkage distance threshold above which clusters will not be merged.
+                affinity: Metric used to compute the linkage.
+                linkage: Which linkage criterion to use.
+
+            """
             self.n_clusters = n_clusters
             self.distance_threshold = distance_threshold
             self.affinity = affinity
@@ -149,6 +175,7 @@ if not SKLEARN_AVAILABLE:
         """Fallback standard scaler implementation."""
 
         def __init__(self):
+            """Initialize the StandardScaler with empty mean and std arrays."""
             self.mean_ = None
             self.std_ = None
 
@@ -1119,6 +1146,33 @@ class PatternEvolutionTracker:
 
     def _calculate_pattern_similarity(self, pattern1: PatternGene, pattern2: PatternGene) -> float:
         """Calculate similarity between two patterns."""
+        # Use chi2_contingency for calculating similarity if available
+        if SCIPY_AVAILABLE and pattern1.type == PatternType.STRING_PATTERN and pattern2.type == PatternType.STRING_PATTERN:
+            # Create contingency table for chi2 test
+            try:
+                # Extract common features for both patterns
+                pattern1_features = set(pattern1.pattern_data)
+                pattern2_features = set(pattern2.pattern_data)
+
+                # Create a simple contingency table
+                intersection = len(pattern1_features & pattern2_features)
+                only_in_p1 = len(pattern1_features - pattern2_features)
+                only_in_p2 = len(pattern2_features - pattern1_features)
+                neither = 0  # For this simple case, assume all items are in at least one set
+
+                # Create contingency table
+                contingency_table = np.array([[intersection, only_in_p2],
+                                              [only_in_p1, neither+1]])  # Adding 1 to avoid zero issues
+
+                # Calculate chi2 contingency if possible
+                chi2, p_value, dof, expected = chi2_contingency(contingency_table)
+
+                # Use 1-p_value as a similarity measure (higher value means more similar)
+                similarity = max(0.0, 1 - p_value)
+                return min(similarity, 1.0)
+            except Exception as e:
+                self.logger.debug("Chi2 calculation failed, using fallback: %s", e)
+
         return self.similarity_calculator.calculate_similarity(pattern1, pattern2)
 
     def detect_pattern_mutations(self, pattern: PatternGene) -> list[dict[str, Any]]:
@@ -1594,13 +1648,13 @@ class PatternUpdateObserver:
     """Example observer for pattern updates."""
 
     def on_patterns_updated(self, tracker: PatternEvolutionTracker):
-        """Called when patterns are updated."""
+        """Handle pattern updates."""
         stats = tracker.get_statistics()
         print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
 
 
 def main():
-    """Example usage."""
+    """Run the pattern evolution command-line interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Pattern Evolution Tracker")

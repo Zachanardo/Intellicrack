@@ -1,6 +1,5 @@
 """YARA Rule Scanner - Production Implementation.
 
-
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -16,6 +15,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -150,6 +151,7 @@ class YaraScanner:
 
         Args:
             rules_dir: Directory containing YARA rule files
+
         """
         import threading
 
@@ -869,6 +871,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of YARA matches
+
         """
         matches = []
 
@@ -929,6 +932,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of YARA matches
+
         """
         matches = []
 
@@ -968,6 +972,7 @@ rule Delphi_Compiler {
 
         Returns:
             Dictionary of detected protections
+
         """
         protections = {"packers": [], "protectors": [], "crypto": [], "license": [], "anti_debug": [], "compiler": None}
 
@@ -1014,6 +1019,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of detected protections
+
         """
         detections = []
 
@@ -1060,6 +1066,7 @@ rule Delphi_Compiler {
 
         Returns:
             True if successful
+
         """
         try:
             # Compile rule to verify syntax
@@ -1292,7 +1299,7 @@ rule Delphi_Compiler {
                 logger.info(f"Enhanced scanning of process {pid} with handle")
 
                 # Enumerate memory regions
-                class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                     _fields_ = [
                         ("BaseAddress", ctypes.c_void_p),
                         ("AllocationBase", ctypes.c_void_p),
@@ -1449,7 +1456,6 @@ rule Delphi_Compiler {
 
     def get_matches(self) -> List[YaraMatch]:
         """Get all stored matches (thread-safe)."""
-
         with self._match_lock:
             return list(self._matches)  # Return copy to prevent external modification
 
@@ -1517,6 +1523,7 @@ rule Delphi_Compiler {
         Args:
             detections: Detection results
             output_path: Path to save results
+
         """
         import time
 
@@ -1558,6 +1565,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of YARA matches
+
         """
         if not license_analyzer.process_handle:
             logger.error("LicenseAnalyzer not attached to process")
@@ -1747,6 +1755,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of YARA matches
+
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -1832,7 +1841,7 @@ rule Delphi_Compiler {
         include_readonly: bool = False,
         min_size: int = 0,
         max_size: int = 0,
-    ) -> "MemoryFilter":
+    ) -> Any:
         """Create a memory region filter for YARA scanning.
 
         Args:
@@ -1844,6 +1853,7 @@ rule Delphi_Compiler {
 
         Returns:
             MemoryFilter instance
+
         """
 
         class MemoryFilter:
@@ -1897,6 +1907,7 @@ rule Delphi_Compiler {
 
         Returns:
             Dictionary with progress details
+
         """
         with self._scan_progress_lock:
             return dict(self._scan_progress)
@@ -1906,6 +1917,7 @@ rule Delphi_Compiler {
 
         Args:
             callback: Function(current, total, status_msg) to call
+
         """
         self._progress_callback = callback
 
@@ -1915,6 +1927,7 @@ rule Delphi_Compiler {
         Args:
             max_cache_size: Maximum number of cached results
             ttl_seconds: Time to live for cache entries
+
         """
         from collections import OrderedDict
 
@@ -1940,6 +1953,7 @@ rule Delphi_Compiler {
 
         Returns:
             True if optimization successful
+
         """
         try:
             # Adjust rule compilation based on memory size
@@ -1993,6 +2007,7 @@ rule Delphi_Compiler {
 
         Returns:
             YARA rule string
+
         """
         import re
 
@@ -2029,7 +2044,7 @@ rule Delphi_Compiler {
                     rule += f'\n        $ascii = "{ascii_str}"'
                     rule += f'\n        $wide = "{ascii_str}" wide'
             except (ValueError, OSError):
-                pass
+                pass  # noqa: S110 - String encoding failures are non-critical for YARA rule generation
 
         # Add condition
         rule += """
@@ -2060,6 +2075,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of extracted strings
+
         """
         import re
 
@@ -2123,7 +2139,7 @@ rule Delphi_Compiler {
                     if is_interesting(s):
                         extracted.add(s)
                 except (TypeError, ValueError):
-                    pass
+                    pass  # noqa: S110 - String decoding failures are expected with malformed data
 
         # Extract UTF-16BE strings
         if encoding in ["auto", "utf16be"]:
@@ -2134,7 +2150,7 @@ rule Delphi_Compiler {
                     if is_interesting(s):
                         extracted.add(s)
                 except (TypeError, ValueError):
-                    pass
+                    pass  # noqa: S110 - UTF-16BE decoding failures are expected with malformed data
 
         # Extract URLs
         if extract_urls:
@@ -2170,6 +2186,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of hex pattern strings
+
         """
         patterns = []
         seen = set() if unique_only else None
@@ -2206,6 +2223,7 @@ rule Delphi_Compiler {
 
         Returns:
             Condition string
+
         """
         conditions = []
 
@@ -2267,6 +2285,7 @@ rule Delphi_Compiler {
 
         Returns:
             Dictionary of metadata
+
         """
         import hashlib
 
@@ -2369,6 +2388,7 @@ rule Delphi_Compiler {
 
         Returns:
             Optimized rule content
+
         """
         import re
 
@@ -2413,6 +2433,7 @@ rule Delphi_Compiler {
 
         Returns:
             Tuple of (is_valid, error_message)
+
         """
         try:
             # Try to compile the rule
@@ -2440,6 +2461,7 @@ rule Delphi_Compiler {
 
         Returns:
             Generated YARA rule
+
         """
         import re
 
@@ -2688,6 +2710,7 @@ rule Delphi_Compiler {
 
         Returns:
             List of patch suggestions
+
         """
         if not hasattr(self, "patch_database"):
             self.initialize_patch_database()
@@ -2741,6 +2764,7 @@ rule Delphi_Compiler {
 
         Returns:
             Patch data dictionary
+
         """
         patch_data = {"type": patch["patch_type"], "offset": match.offset}
 
@@ -2785,6 +2809,7 @@ rule Delphi_Compiler {
 
         Returns:
             Hook shellcode
+
         """
         # x86 hook that returns specified value
         # MOV EAX, return_value
@@ -2803,6 +2828,7 @@ rule Delphi_Compiler {
 
         Returns:
             Proxy DLL source code
+
         """
         return f"""// Proxy DLL for {dll_name}
 #include <windows.h>
@@ -2828,6 +2854,7 @@ extern "C" {{
 
         Returns:
             Risk level (low, medium, high)
+
         """
         high_risk_types = ["dll_hijack", "process_patch", "section_decrypt"]
         medium_risk_types = ["api_hook", "iat_hook", "function_bypass"]
@@ -2850,6 +2877,7 @@ extern "C" {{
 
         Returns:
             Complexity level (simple, moderate, complex)
+
         """
         simple_types = ["string_replace", "nop_sequence", "conditional_jump"]
         moderate_types = ["api_hook", "instruction_patch"]
@@ -2873,6 +2901,7 @@ extern "C" {{
 
         Returns:
             Ordered list of patches to apply
+
         """
         # Group patches by category
         categorized = {}
@@ -2935,6 +2964,7 @@ extern "C" {{
 
         Returns:
             Tuple of (is_valid, error_message)
+
         """
         try:
             with open(target_file, "rb") as f:
@@ -2966,6 +2996,7 @@ extern "C" {{
 
         Returns:
             True if successful
+
         """
         import shutil
 
@@ -3008,6 +3039,7 @@ extern "C" {{
 
         Returns:
             True if successful
+
         """
         import shutil
 
@@ -3032,6 +3064,7 @@ extern "C" {{
             patch_id: Unique patch identifier
             success: Whether patch was successful
             notes: Additional notes
+
         """
         if not hasattr(self, "_patch_history"):
             self._patch_history = []
@@ -3051,6 +3084,7 @@ extern "C" {{
 
         Returns:
             Dictionary of metrics
+
         """
         if not hasattr(self, "_patch_history"):
             return {"success_rate": 0, "total_patches": 0}
@@ -3071,6 +3105,7 @@ extern "C" {{
 
         Args:
             debugger_instance: LicenseDebugger or compatible debugger instance
+
         """
         self.debugger = debugger_instance
         self.breakpoint_mapping = {}
@@ -3088,6 +3123,7 @@ extern "C" {{
 
         Returns:
             List of created breakpoints
+
         """
         if not hasattr(self, "debugger") or not self.debugger:
             logger.error("No debugger connected. Use connect_to_debugger() first")
@@ -3148,6 +3184,7 @@ extern "C" {{
 
         Returns:
             Breakpoint type (hardware, software, memory)
+
         """
         # Use hardware breakpoints for critical licensing checks
         hardware_categories = [RuleCategory.LICENSE, RuleCategory.CRYPTO]
@@ -3177,6 +3214,7 @@ extern "C" {{
 
         Returns:
             Condition expression string
+
         """
         conditions = []
 
@@ -3221,6 +3259,7 @@ extern "C" {{
 
         Returns:
             List of actions
+
         """
         actions = []
 
@@ -3256,6 +3295,7 @@ extern "C" {{
         Args:
             matches: List of YARA matches
             trace_depth: Number of instructions to trace
+
         """
         if not hasattr(self, "debugger") or not self.debugger:
             logger.error("No debugger connected")
@@ -3279,6 +3319,7 @@ extern "C" {{
         Args:
             match: YARA match that triggered
             context: Execution context (registers, stack, etc.)
+
         """
         import json
         import time
@@ -3314,6 +3355,7 @@ extern "C" {{
         Args:
             rule_name: Name of YARA rule
             action_callback: Function to call when match is hit
+
         """
         if not hasattr(self, "_match_actions"):
             self._match_actions = {}
@@ -3330,6 +3372,7 @@ extern "C" {{
 
         Returns:
             Action result
+
         """
         if not hasattr(self, "_match_actions"):
             return None
@@ -3355,8 +3398,8 @@ extern "C" {{
 
         Returns:
             List of correlated match groups
-        """
 
+        """
         # Group matches by time proximity
         correlations = []
         processed = set()
@@ -3396,6 +3439,7 @@ extern "C" {{
 
         Returns:
             Correlation type or None
+
         """
         # Check offset proximity
         offset_delta = abs(match1.offset - match2.offset)
@@ -3430,6 +3474,7 @@ extern "C" {{
 
         Returns:
             Pattern analysis results
+
         """
         patterns = {"licensing_scheme": None, "protection_layers": 0, "complexity": "low"}
 
@@ -3469,6 +3514,7 @@ extern "C" {{
 
         Returns:
             Script content
+
         """
         script = []
 
@@ -3532,6 +3578,7 @@ extern "C" {{
         Args:
             breakpoints: List of breakpoint data
             output_path: Path to save configuration
+
         """
         import json
 

@@ -780,10 +780,10 @@ class ValidationTestRunner:
     Coordinates all validation components with production-ready functionality.
     """
 
-    def __init__(self, config_path: Path = Path(r"C:\Intellicrack\tests\validation_system\config.json")):
+    def __init__(self, config_path: Path = Path(r"D:\Intellicrack\tests\validation_system\config.json")):
         self.config_path = config_path
         self.config = self.load_config()
-        self.base_dir = Path(r"C:\Intellicrack\tests\validation_system")
+        self.base_dir = Path(r"D:\Intellicrack\tests\validation_system")
 
         self.integrity_validator = None
         self.challenge_generator = ChallengeGenerator(self.base_dir / "challenge_seeds")

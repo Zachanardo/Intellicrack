@@ -42,7 +42,9 @@ class ProductionReadinessValidator:
         files_checked = 0
 
         for file_path in files_to_check:
-            full_path = Path(f"C:/Intellicrack/{file_path}")
+            from intellicrack.utils.path_resolver import get_project_root
+
+full_path = get_project_root() / file_path
             if not full_path.exists():
                 print(f"  ⚠️  File not found: {file_path}")
                 continue
@@ -104,9 +106,7 @@ class ProductionReadinessValidator:
     def test_radare2_integration_fields(self):
         """Test radare2_vulnerability_engine.py has all integration fields."""
         print("\n🔗 Testing Radare2 Integration Fields...")
-        print("=" * 40)
-
-        file_path = Path("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py")
+file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
 
         if not file_path.exists():
             print(f"  ❌ FAIL: File not found: {file_path}")
@@ -213,7 +213,7 @@ class ProductionReadinessValidator:
         all_modules_ok = True
 
         for module in modules_to_check:
-            file_path = Path(f"C:/Intellicrack/{module['path']}")
+            file_path = get_project_root() / module['path']
 
             if not file_path.exists():
                 print(f"  ❌ Module not found: {module['path']}")
@@ -255,7 +255,7 @@ class ProductionReadinessValidator:
         print("=" * 40)
 
         # Check radare2_vulnerability_engine.py for real implementations
-        file_path = Path("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py")
+        file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
 
         if not file_path.exists():
             print(f"  ❌ FAIL: File not found")
@@ -356,7 +356,7 @@ This checkpoint {'certifies' if all(self.test_results) else 'CANNOT certify'} th
 **Deployment Decision**: {'APPROVED ✅' if all(self.test_results) else 'BLOCKED ❌'}
 """
 
-        doc_path = Path("C:/Intellicrack/CHECKPOINT_6_REPORT.md")
+        doc_path = get_project_root() / "CHECKPOINT_6_REPORT.md"
         with open(doc_path, 'w', encoding='utf-8') as f:
             f.write(doc_content)
 

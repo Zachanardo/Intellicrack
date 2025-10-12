@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Debugger detection utilities for Intellicrack anti-analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -25,6 +27,8 @@ import time
 from typing import Any
 
 import psutil
+
+from intellicrack.utils.logger import logger
 
 from .base_detector import BaseDetector
 

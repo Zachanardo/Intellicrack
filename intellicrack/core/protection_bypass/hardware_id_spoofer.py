@@ -1,5 +1,6 @@
 """Hardware ID spoofing for bypassing hardware-locked license checks."""
 
+import base64
 import ctypes
 import ctypes.wintypes
 import hashlib

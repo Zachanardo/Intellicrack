@@ -1,6 +1,5 @@
 """Ghidra Script Runner - Production Implementation.
 
-
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -139,6 +138,7 @@ class GhidraScriptRunner:
     }
 
     def __init__(self, ghidra_path: Path):
+        """Initialize the GhidraScriptRunner with the Ghidra path."""
         self.ghidra_path = ghidra_path
         self.headless_path = self._get_headless_path()
         self.scripts_dir = ghidra_path / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
@@ -218,8 +218,8 @@ class GhidraScriptRunner:
 
         Returns:
             Dictionary with analysis results
-        """
 
+        """
         # Get script configuration
         script = self._get_script(script_name)
         if not script:
@@ -331,7 +331,6 @@ class GhidraScriptRunner:
 
     def run_script_chain(self, binary_path: Path, script_names: List[str], output_dir: Path, share_project: bool = True) -> Dict[str, Any]:
         """Run multiple scripts in sequence, optionally sharing project."""
-
         results = {}
         project_path = None
 
@@ -369,7 +368,6 @@ class GhidraScriptRunner:
         self, name: str, code: str, language: str = "python", parameters: Optional[Dict[str, Any]] = None
     ) -> GhidraScript:
         """Create a custom Ghidra script."""
-
         # Create custom scripts directory
         custom_dir = Path.home() / ".ghidra" / "scripts"
         custom_dir.mkdir(parents=True, exist_ok=True)
@@ -431,7 +429,6 @@ class GhidraScriptRunner:
 
     def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> Dict[str, Any]:
         """Parse script output based on format."""
-
         results = {"stdout": stdout, "stderr": stderr, "files": []}
 
         # List output files

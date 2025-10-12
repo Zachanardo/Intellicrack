@@ -1113,7 +1113,7 @@ def run_environment_validation():
     validator = HardwareValidator()
 
     # Create output directory
-    output_dir = Path(r"C:\Intellicrack\tests\validation_system\reports")
+    output_dir = Path(r"D:\Intellicrack\tests\validation_system\reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate timestamp for report

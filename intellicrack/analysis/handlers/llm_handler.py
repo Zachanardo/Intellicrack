@@ -249,7 +249,7 @@ class LLMHandler(QObject):
             logger.error(f"Failed to register LLM tool: {e}")
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes.
+        """Handle slot when protection analysis completes.
 
         This method runs in the main thread and kicks off background
         LLM operations.

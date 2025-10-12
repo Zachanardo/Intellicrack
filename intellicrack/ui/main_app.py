@@ -1,4 +1,4 @@
-"""Intellicrack Main Application Module
+"""Intellicrack Main Application Module.
 
 This module provides the main graphical user interface for the Intellicrack application,
 a comprehensive binary analysis and security research toolkit. The application integrates
@@ -494,19 +494,7 @@ class IntellicrackApp(QMainWindow):
 
         from . import exploitation_handlers
 
-        self.generate_advanced_payload = partial(exploitation_handlers.generate_advanced_payload, self)
-        self.test_generated_payload = partial(exploitation_handlers.test_generated_payload, self)
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
-        self.open_vulnerability_research = partial(exploitation_handlers.open_vulnerability_research, self)
-        self.run_quick_vulnerability_analysis = partial(exploitation_handlers.run_quick_vulnerability_analysis, self)
-        self.run_ai_guided_analysis = partial(exploitation_handlers.run_ai_guided_analysis, self)
-        self.test_aslr_bypass = partial(exploitation_handlers.test_aslr_bypass, self)
-        self.test_dep_bypass = partial(exploitation_handlers.test_dep_bypass, self)
-        self.test_cfi_bypass = partial(exploitation_handlers.test_cfi_bypass, self)
-        self.test_cet_bypass = partial(exploitation_handlers.test_cet_bypass, self)
-        self.test_stack_canary_bypass = partial(exploitation_handlers.test_stack_canary_bypass, self)
-        self.run_full_automated_exploitation = partial(exploitation_handlers.run_full_automated_exploitation, self)
-        self.run_ai_orchestrated_campaign = partial(exploitation_handlers.run_ai_orchestrated_campaign, self)
         self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
 
         print("[INIT] Exploitation handlers bound")
@@ -622,7 +610,7 @@ class IntellicrackApp(QMainWindow):
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
 
             self.network_license_server = NetworkLicenseServerEmulator()
-        except (OSError, ValueError, RuntimeError) as e:
+        except (OSError, ValueError, RuntimeError, ImportError, ModuleNotFoundError) as e:
             self.network_license_server = None
             logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
@@ -1619,18 +1607,17 @@ def launch():
         from intellicrack.handlers.pyqt6_handler import QApplication, QIcon, QPixmap, QSplashScreen, Qt
         from intellicrack.utils.resource_helper import get_resource_path
 
+        # Fix Windows taskbar icon grouping by setting explicit App User Model ID BEFORE creating QApplication
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
+        except Exception as e:
+            logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")
+
         # Create QApplication instance if it doesn't exist
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
-
-            # Fix Windows taskbar icon grouping by setting explicit App User Model ID
-            try:
-                import ctypes
-
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
-            except Exception as e:
-                logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")
 
             # Set application metadata for better OS integration
             app.setApplicationName("Intellicrack")

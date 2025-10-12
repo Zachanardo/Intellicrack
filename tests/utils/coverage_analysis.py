@@ -18,7 +18,9 @@ def analyze_coverage():
     print("=== PAYLOAD RESULT HANDLER COVERAGE ANALYSIS ===\n")
 
     # Get the source file path
-    source_file = "C:/Intellicrack/intellicrack/utils/exploitation/payload_result_handler.py"
+    from intellicrack.utils.path_resolver import get_project_root
+
+source_file = get_project_root() / "intellicrack/utils/exploitation/payload_result_handler.py"
 
     # Read source code
     with open(source_file, 'r', encoding='utf-8') as f:

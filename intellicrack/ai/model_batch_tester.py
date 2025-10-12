@@ -692,7 +692,7 @@ class ModelBatchTester:
         for result in report.results:
             status_class = "success" if result.success else "failed"
             status_text = "Success" if result.success else "Failed"
-            validation_text = "✓" if result.passed_validation else "✗" if result.passed_validation is False else "-"
+            validation_text = "OK" if result.passed_validation else "FAIL" if result.passed_validation is False else "-"
             output_preview = result.output[:100] + "..." if len(result.output) > 100 else result.output
             output_preview = output_preview.replace("\n", " ")
 

@@ -34,12 +34,12 @@ class APIKeyConfigDialog(QDialog):
     """Dialog for configuring API keys and model settings."""
 
     def __init__(self, model_name, parent=None):
-        """
-        Initialize the API key configuration dialog.
+        """Initialize the API key configuration dialog.
 
         Args:
             model_name: Name of the AI model to configure (e.g., "GPT-4", "Claude")
             parent: Parent widget for the dialog
+
         """
         super().__init__(parent)
         self.model_name = model_name

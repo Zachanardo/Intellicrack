@@ -79,7 +79,7 @@ class SymbolicExecutionEngine:
         self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
 
     def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
-        """Setup angr project and initial state for symbolic execution."""
+        """Set up angr project and initial state for symbolic execution."""
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Create symbolic arguments
@@ -895,7 +895,6 @@ int main() {{
 
     def _generate_type_confusion_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate type confusion exploit with object type manipulation."""
-
         confusion_info = vulnerability.get("confusion_info", {})
         source_type = confusion_info.get("source_type", "TypeA")
         target_type = confusion_info.get("target_type", "TypeB")
@@ -2003,7 +2002,7 @@ int main() {{
         return code_sections
 
     def _basic_pattern_analysis(self, binary_data: bytes) -> dict[str, Any]:
-        """Basic pattern analysis when disassembly is not available."""
+        """Perform basic pattern analysis when disassembly is not available."""
         patterns = {
             "instructions": [],
             "function_calls": [],
@@ -2568,7 +2567,7 @@ int main() {{
             pass
 
     def _malloc_hook(self, state):
-        """Hook for malloc to track allocations."""
+        """Track allocations by hooking malloc."""
         size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Perform the allocation
@@ -2586,7 +2585,7 @@ int main() {{
         state.regs.rax = addr
 
     def _free_hook(self, state):
-        """Hook for free to track deallocations and detect use-after-free."""
+        """Track deallocations and detect use-after-free by hooking free."""
         ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Check if already freed (double-free)
@@ -2672,7 +2671,7 @@ int main() {{
             return False
 
     def _setup_exploration_project(self, start_address: int) -> tuple[Any, Any]:
-        """Setup angr project and initial state for exploration."""
+        """Set up angr project and initial state for exploration."""
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Verify start address is valid

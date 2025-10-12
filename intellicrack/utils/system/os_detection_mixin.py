@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""OS detection mixin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -25,6 +27,7 @@ from .os_detection import detect_operating_system
 
 class OSDetectionMixin:
     """Mixin class providing OS detection functionality.
+
     Eliminates duplicate OS detection methods across multiple classes.
     """
 

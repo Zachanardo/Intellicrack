@@ -28,7 +28,7 @@ from tests.validation_system.environment_validator import HardwareValidator
 logger = logging.getLogger(__name__)
 
 # Import our environment validator
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 @dataclass
 class TestEnvironment:
@@ -861,7 +861,7 @@ def run_multi_environment_testing():
     print("=== Multi-Environment Testing Matrix ===")
     print("[*] Initializing multi-environment tester...")
 
-    tester = MultiEnvironmentTester(r"C:\Intellicrack\tests\validation_system")
+    tester = MultiEnvironmentTester(r"D:\Intellicrack\tests\validation_system")
 
     # Run compatibility check first
     print("\n[*] Running compatibility check...")

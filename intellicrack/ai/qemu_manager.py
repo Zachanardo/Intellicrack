@@ -125,6 +125,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
 
 class QEMUManager:
     """Manages QEMU virtual machines for testing generated scripts.
+
     Real implementation - integrates with existing QEMU infrastructure.
     """
 
@@ -1178,34 +1179,31 @@ class QEMUManager:
             logger.debug("Error during destructor cleanup: %s", e)
 
     def _get_windows_base_image(self) -> Path:
-        """Get path to Windows base image."""
-        # Use project-relative paths
-        # Go up to project root
-        project_root = Path(__file__).parent.parent.parent
+        """Get path to Windows base image using dynamic discovery."""
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
-        # Get paths from config with fallback to default locations
+        # Use dynamic image discovery
+        discovery = get_qemu_discovery()
+        windows_images = discovery.get_images_by_os("windows")
+
+        if windows_images:
+            # Return the first Windows image found
+            selected_image = windows_images[0]
+            self.logger.info("Found Windows base image: %s", selected_image.path)
+            return selected_image.path
+
+        # Check config paths for backward compatibility
         config_paths = self.config.get("vm_framework.base_images.windows", [])
-        fallback_paths = [
-            "/var/lib/libvirt/images/windows_base.qcow2",
-            "~/VMs/windows_base.qcow2",
-            str(project_root / "data" / "qemu_images" / "windows_base.qcow2"),
-            "C:/VMs/windows_base.qcow2",
-            "D:/VMs/windows_base.qcow2",
-            "~/Documents/Virtual Machines/windows_base.qcow2",
-        ]
-
-        # Combine config paths with fallback paths
-        all_paths = config_paths + fallback_paths
-        possible_paths = [Path(path) for path in all_paths]
-
-        for path in possible_paths:
-            expanded_path = path.expanduser()
-            if expanded_path.exists():
-                self.logger.info("Found Windows base image at: %s", expanded_path)
-                return expanded_path
+        for path_str in config_paths:
+            path = Path(path_str).expanduser()
+            if path.exists():
+                self.logger.info("Found Windows image from config: %s", path)
+                return path
 
         # If no base image found, create a minimal test image
-        test_image_path = project_root / "data" / "qemu_images" / "windows_test_minimal.qcow2"
+        qemu_dir = get_qemu_images_dir()
+        test_image_path = qemu_dir / "windows_test_minimal.qcow2"
         test_image_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not test_image_path.exists():
@@ -2854,14 +2852,43 @@ exit 0
     # === Migrated Essential Methods from qemu_emulator.py ===
 
     SUPPORTED_ARCHITECTURES = {
-        "x86_64": {"qemu": "qemu-system-x86_64", "rootfs": "rootfs-x86_64.img"},
-        "x86": {"qemu": "qemu-system-i386", "rootfs": "rootfs-i386.img"},
-        "arm64": {"qemu": "qemu-system-aarch64", "rootfs": "rootfs-arm64.img"},
-        "arm": {"qemu": "qemu-system-arm", "rootfs": "rootfs-arm.img"},
-        "mips": {"qemu": "qemu-system-mips", "rootfs": "rootfs-mips.img"},
-        "mips64": {"qemu": "qemu-system-mips64", "rootfs": "rootfs-mips64.img"},
-        "windows": {"qemu": "qemu-system-x86_64", "rootfs": "windows.qcow2"},
+        "x86_64": {"qemu": "qemu-system-x86_64"},
+        "x86": {"qemu": "qemu-system-i386"},
+        "arm64": {"qemu": "qemu-system-aarch64"},
+        "arm": {"qemu": "qemu-system-arm"},
+        "mips": {"qemu": "qemu-system-mips"},
+        "mips64": {"qemu": "qemu-system-mips64"},
+        "windows": {"qemu": "qemu-system-x86_64"},
     }
+
+    def _get_image_for_architecture(self, architecture: str) -> Path | None:
+        """Get image path for specific architecture using dynamic discovery."""
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
+
+        discovery = get_qemu_discovery()
+        discovered_images = discovery.discover_images()
+
+        # Filter images by architecture
+        matching_images = [img for img in discovered_images if img.architecture == architecture]
+
+        if matching_images:
+            return matching_images[0].path
+
+        # Fallback: search by filename pattern
+        arch_patterns = {
+            "x86_64": ["x86_64", "amd64", "x64"],
+            "x86": ["i386", "i686", "x86"],
+            "arm64": ["arm64", "aarch64"],
+            "arm": ["arm", "armv7"],
+        }
+
+        if architecture in arch_patterns:
+            for img in discovered_images:
+                if any(pattern in img.filename.lower() for pattern in arch_patterns[architecture]):
+                    return img.path
+
+        self.logger.warning("No image found for architecture: %s", architecture)
+        return None
 
     def _set_default_config(self) -> None:
         """Set default configuration parameters from vm_framework config section."""
@@ -2882,7 +2909,7 @@ exit 0
             self.config.set(key, value)
 
     def _get_default_rootfs(self, architecture: str) -> str:
-        """Get default rootfs path for architecture.
+        """Get default rootfs path for architecture using dynamic discovery.
 
         Args:
             architecture: Target architecture
@@ -2891,28 +2918,46 @@ exit 0
             Path to default rootfs image
 
         """
-        # Use project-relative paths instead of absolute paths
-        from pathlib import Path
+        # Use dynamic image discovery
+        image_path = self._get_image_for_architecture(architecture)
 
-        project_root = Path(__file__).parent.parent.parent  # Go up to project root
+        if image_path:
+            return str(image_path)
 
-        # Get rootfs directory from config or use default
+        # Fallback: check config for backward compatibility
         rootfs_dir = self.config.get("rootfs_directory", None)
-        if not rootfs_dir:
-            # Use a subdirectory in the project root
-            rootfs_dir = project_root / "data" / "qemu_images"
-        else:
-            # Make sure it's a Path object
-            rootfs_dir = Path(rootfs_dir)
-            # If it's not absolute, make it relative to project root
-            if not rootfs_dir.is_absolute():
-                rootfs_dir = project_root / rootfs_dir
+        if rootfs_dir:
+            from pathlib import Path
 
-        # Ensure directory exists
-        rootfs_dir.mkdir(parents=True, exist_ok=True)
+            project_root = Path(__file__).parent.parent.parent
+            rootfs_path = Path(rootfs_dir)
 
-        arch_info = self.SUPPORTED_ARCHITECTURES[architecture]
-        return str(rootfs_dir / arch_info["rootfs"])
+            if not rootfs_path.is_absolute():
+                rootfs_path = project_root / rootfs_path
+
+            if rootfs_path.exists():
+                return str(rootfs_path)
+
+        # No image found - create minimal test image
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+
+        qemu_dir = get_qemu_images_dir()
+        test_image = qemu_dir / f"{architecture}_test.qcow2"
+
+        if not test_image.exists():
+            self.logger.warning("Creating minimal test image for %s", architecture)
+            try:
+                import subprocess
+
+                subprocess.run(
+                    ["qemu-img", "create", "-f", "qcow2", str(test_image), "1G"],
+                    check=True,
+                    capture_output=True,
+                )
+            except Exception as e:
+                self.logger.error("Failed to create test image: %s", e)
+
+        return str(test_image)
 
     def _validate_qemu_setup(self) -> None:
         """Validate QEMU installation and requirements.

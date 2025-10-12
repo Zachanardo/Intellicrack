@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Base patcher for Intellicrack core patching functionality.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -30,6 +32,7 @@ Provides common functionality for Windows patching operations.
 
 class BaseWindowsPatcher(ABC):
     """Base class for Windows patching operations.
+
     Provides common Windows constants and library initialization.
     """
 
@@ -67,7 +70,7 @@ class BaseWindowsPatcher(ABC):
         self.THREAD_SUSPEND_RESUME = 0x0002
 
     def handle_suspended_process_result(self, result, logger_instance=None):
-        """Common pattern for handling suspended process creation result.
+        """Handle suspended process creation result with common pattern.
 
         Args:
             result: Result from create_suspended_process_with_context
@@ -91,6 +94,7 @@ class BaseWindowsPatcher(ABC):
 
     def create_and_handle_suspended_process(self, target_exe: str, logger_instance=None) -> tuple[bool, Any, Any]:
         """Create a suspended process and handle the result in one operation.
+
         Common pattern to eliminate duplication between early bird injection and process hollowing.
 
         Args:

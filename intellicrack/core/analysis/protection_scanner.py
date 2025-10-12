@@ -786,7 +786,10 @@ class DynamicSignatureExtractor:
                 elif insn.mnemonic == "call" and insn.op_str.startswith("e") or insn.op_str.startswith("r"):
                     depths.append(len(call_stack) + 1)
 
-            except Exception:
+            except Exception as e:
+                # Log the exception with details for debugging
+                import logging
+                logging.warning(f"Error processing instruction in call depth analysis: {e}")
                 continue
 
         # Return unique depth levels found
@@ -829,7 +832,10 @@ class DynamicSignatureExtractor:
                     # End of function
                     break
 
-            except Exception:
+            except Exception as e:
+                # Log the exception with details for debugging
+                import logging
+                logging.warning(f"Error processing instruction in call target analysis: {e}")
                 continue
 
         return depths
@@ -1056,6 +1062,7 @@ class MutationEngine:
     """Engine for generating pattern mutations."""
 
     def __init__(self):
+        """Initialize the PatternMutator with available mutation strategies."""
         self.mutation_strategies = [
             self._byte_substitution,
             self._instruction_replacement,
@@ -1137,6 +1144,7 @@ class EnhancedProtectionScanner:
     """Enhanced protection scanner with dynamic signature extraction."""
 
     def __init__(self):
+        """Initialize the EnhancedProtectionScanner with various analysis components."""
         self.signature_extractor = DynamicSignatureExtractor()
         self.binary_analyzer = BinaryAnalyzer()
         self.yara_engine = YaraPatternEngine()
@@ -1148,7 +1156,6 @@ class EnhancedProtectionScanner:
 
     def scan(self, binary_path: str, deep_scan: bool = True) -> Dict[str, Any]:
         """Perform comprehensive protection scan with dynamic signatures."""
-
         # Check cache
         cache_key = f"{binary_path}:{deep_scan}"
         with self.cache_lock:

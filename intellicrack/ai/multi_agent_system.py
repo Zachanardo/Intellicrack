@@ -965,7 +965,7 @@ if __name__ == "__main__":
         logger.info(f"Agent {self.agent_id} stopped")
 
     def _message_processing_loop(self):
-        """Main message processing loop."""
+        """Process messages in the main loop."""
         while self.active:
             try:
                 message = self.message_queue.get(timeout=1.0)
@@ -1764,7 +1764,7 @@ class StaticAnalysisAgent(BaseAgent):
         }
 
     def _analyze_generic_code(self, code: str) -> dict[str, Any]:
-        """Generic code analysis for unknown languages."""
+        """Analyze code for unknown languages."""
         lines = code.split("\n")
         return {
             "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),

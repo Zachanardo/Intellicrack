@@ -30,6 +30,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 class BaseTab(QWidget):
     """Base class for all main application tabs.
+
     Provides common functionality including loading states, shared context, and consistent styling.
     """
 
@@ -59,6 +60,7 @@ class BaseTab(QWidget):
 
     def lazy_load_content(self):
         """Override this method in subclasses to implement lazy loading.
+
         This method should create and setup the actual tab content.
         """
         if not self.is_loaded:

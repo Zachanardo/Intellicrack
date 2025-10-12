@@ -10,7 +10,7 @@ from pathlib import Path
 def fix_test_files():
     """Fix remaining mock references and syntax errors."""
 
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\Intellicrack\tests\unit\core\mitigation_bypass')
 
     print("=" * 60)
     print("FIXING REMAINING TEST ISSUES")
@@ -96,7 +96,7 @@ def fix_test_files():
 def validate_compliance():
     """Final validation of Testing.md compliance."""
 
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\Intellicrack\tests\unit\core\mitigation_bypass')
 
     print("\nFinal Compliance Check:")
     print("-" * 40)

@@ -39,14 +39,14 @@ impl PythonIntegration {
 
         // Locate Python interpreter
         let interpreter_path = Self::locate_python_interpreter()?;
-        let virtual_env_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        let virtual_env_path = PathBuf::from(project_root).join(".pixi/envs/default");
 
         info!("Python interpreter: {:?}", interpreter_path);
         info!("Virtual environment: {:?}", virtual_env_path);
         println!("DEBUG: About to call Python::with_gil()");
 
         // PyO3 auto-initialize feature will handle Python initialization
-        // No need to call prepare_freethreaded_python() - that's for GIL-free Python builds
         info!("PyO3 will auto-initialize with standard GIL-enabled Python");
 
         // Create initial integration struct
@@ -84,7 +84,8 @@ impl PythonIntegration {
     /// Locate the Python interpreter with multiple fallback strategies
     fn locate_python_interpreter() -> Result<PathBuf> {
         // Primary path: Intellicrack pixi environment
-        let pixi_python = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");
         if pixi_python.exists() {
             info!("Found Python in pixi environment: {:?}", pixi_python);
             return Ok(pixi_python);
@@ -92,7 +93,7 @@ impl PythonIntegration {
 
         // Secondary path: Scripts subdirectory
         let pixi_scripts_python =
-            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+            PathBuf::from(&project_root).join(".pixi/envs/default/Scripts/python.exe");
         if pixi_scripts_python.exists() {
             info!("Found Python in pixi Scripts: {:?}", pixi_scripts_python);
             return Ok(pixi_scripts_python);
@@ -269,7 +270,8 @@ impl PythonIntegration {
             ));
         }
 
-        let python_launcher_path = PathBuf::from(r"C:\Intellicrack\launch_intellicrack.py");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        let python_launcher_path = PathBuf::from(project_root).join("launch_intellicrack.py");
         info!(
             "Executing Python launcher: {:?}",
             python_launcher_path.display()
@@ -336,59 +338,49 @@ impl PythonIntegration {
         }
 
         // Set environment for subprocess with ABSOLUTE PATHS
-        cmd.env("PYTHONPATH", r"C:\Intellicrack");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        cmd.env("PYTHONPATH", project_root.clone());
         cmd.env("PYTHONIOENCODING", "utf-8");
         cmd.env("PYTHONDONTWRITEBYTECODE", "1");
         cmd.env("PYTHONUNBUFFERED", "1");
 
         // Set conda environment variables
-        cmd.env("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
-        cmd.env("PIXI_DEFAULT_ENV", "default");
+cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
         cmd.env(
             "PIXI_PYTHON_EXE",
-            r"C:\Intellicrack\.pixi\envs\default\python.exe",
+            format!("{}/.pixi/envs/default/python.exe", project_root),
         );
-        cmd.env("CONDA_SHLVL", "1");
-
-        cmd.env("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
+        cmd.env("PYTHONHOME", format!("{}/.pixi/envs/default", project_root));
 
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
         // This ensures _tkinter.pyd can find the runtime scripts in the same directory as the DLLs
-        let tcl_lib_path;
-        let tk_lib_path;
-
-        if let Ok(exe_path) = std::env::current_exe() {
-            info!(
-                "Subprocess: Current executable path: {}",
-                exe_path.display()
-            );
+        let tcl_lib_path = if let Ok(exe_path) = std::env::current_exe() {
             if let Some(exe_dir) = exe_path.parent() {
                 info!("Subprocess: Executable directory: {}", exe_dir.display());
-                tcl_lib_path = exe_dir.join("tcl8.6");
-                tk_lib_path = exe_dir.join("tk8.6");
-                info!(
-                    "Subprocess: Proposed TCL_LIBRARY path: {}",
-                    tcl_lib_path.display()
-                );
-                info!(
-                    "Subprocess: Proposed TK_LIBRARY path: {}",
-                    tk_lib_path.display()
-                );
+                let path = exe_dir.join("tcl8.6");
+                info!("Subprocess: Proposed TCL_LIBRARY path: {}", path.display());
+                path
             } else {
                 warn!("Subprocess: Could not get parent directory of executable");
-                // Fallback to pixi environment paths
-                tcl_lib_path =
-                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
-                tk_lib_path =
-                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
+                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tcl8.6")
             }
         } else {
             warn!("Subprocess: Could not get current executable path");
-            // Fallback to pixi environment paths
-            tcl_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
-            tk_lib_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
-        }
+            PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tcl8.6")
+        };
+
+        let tk_lib_path = if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let path = exe_dir.join("tk8.6");
+                info!("Subprocess: Proposed TK_LIBRARY path: {}", path.display());
+                path
+            } else {
+                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tk8.6")
+            }
+        } else {
+            PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tk8.6")
+        };
 
         if tcl_lib_path.exists() {
             cmd.env("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
@@ -468,10 +460,10 @@ impl PythonIntegration {
                 let system_path = std::env::var_os("PATH").unwrap_or_default();
                 let exe_dir_str = exe_dir.to_string_lossy();
 
-                let python_base_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default");
-                let python_dll_dir = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\DLLs");
+                let python_base_dir = PathBuf::from(&project_root).join(".pixi/envs/default");
+                let python_dll_dir = PathBuf::from(&project_root).join(".pixi/envs/default/DLLs");
                 let python_lib_bin_dir =
-                    PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\bin");
+                    PathBuf::from(&project_root).join(".pixi/envs/default/Library/bin");
 
                 // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
@@ -694,7 +686,8 @@ impl PythonIntegration {
 
     /// Configure environment variables for Python integration
     pub fn configure_environment_variables(&self) -> Result<()> {
-        let intellicrack_path = PathBuf::from(r"C:\Intellicrack");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        let intellicrack_path = PathBuf::from(project_root);
         env::set_var("PYTHONPATH", &intellicrack_path);
         debug!("Set PYTHONPATH to: {:?}", intellicrack_path);
 
@@ -782,8 +775,8 @@ mod tests {
 
     #[test]
     fn test_locate_python_interpreter_with_pixi() {
-        // This test checks the priority system (pixi over system)
-        let pixi_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_|"C:\\Intellicrack".to_string());
+        let pixi_path = PathBuf::from(project_root).join(".pixi/envs/default/python.exe");
 
         // If the actual pixi Python exists, it should be preferred
         if pixi_path.exists() {
@@ -791,9 +784,9 @@ mod tests {
             assert_eq!(result, pixi_path);
         }
 
-        // Test scripts subdirectory fallback
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
         let pixi_scripts_path =
-            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+            PathBuf::from(project_root).join(".pixi/envs/default/Scripts/python.exe");
         if pixi_scripts_path.exists() && !pixi_path.exists() {
             let result = PythonIntegration::locate_python_interpreter().unwrap();
             assert_eq!(result, pixi_scripts_path);
@@ -1181,9 +1174,9 @@ mod tests {
     #[test]
     fn test_python_path_precedence() {
         // Test the precedence logic for Python path detection
-        let pixi_path = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        let pixi_path = PathBuf::from(r"D:\Intellicrack\.pixi\envs\default\python.exe");
         let pixi_scripts_path =
-            PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
+            PathBuf::from(r"D:\Intellicrack\.pixi\envs\default\Scripts\python.exe");
 
         // Test path construction
         assert!(pixi_path.to_string_lossy().contains("pixi"));

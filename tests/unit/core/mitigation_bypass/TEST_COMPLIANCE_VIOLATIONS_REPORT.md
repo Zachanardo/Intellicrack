@@ -69,7 +69,7 @@ import re
 from pathlib import Path
 
 def remove_mocks_from_tests():
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\\Intellicrack\tests\unit\core\mitigation_bypass')
 
     for test_file in test_dir.glob('test_*.py'):
         with open(test_file, 'r') as f:

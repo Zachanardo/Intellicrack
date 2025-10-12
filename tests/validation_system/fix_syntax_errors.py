@@ -9,7 +9,7 @@ from pathlib import Path
 
 def fix_anti_detection_verifier():
     """Fix anti_detection_verifier.py syntax and import issues."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
 
     # Complete rewrite of the imports section
     new_imports = '''#!/usr/bin/env python3
@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 def fix_multi_environment_tester():
     """Fix multi_environment_tester.py syntax and import issues."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\multi_environment_tester.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\multi_environment_tester.py")
 
     # Complete rewrite of the imports section
     new_imports = '''#!/usr/bin/env python3
@@ -125,7 +125,7 @@ sys.path.insert(0, r'C:\\Intellicrack')
 
 def fix_runner_py():
     """Fix runner.py syntax and import issues."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\runner.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\runner.py")
 
     content = filepath.read_text()
     lines = content.split('\n')
@@ -152,7 +152,7 @@ def fix_runner_py():
 
 def fix_fingerprint_randomizer():
     """Fix fingerprint_randomizer.py import order."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
 
     content = filepath.read_text()
 
@@ -210,7 +210,7 @@ logger = logging.getLogger(__name__)
 
 def fix_indentation_error():
     """Fix the specific indentation error in runner.py line 664."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\runner.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\runner.py")
 
     content = filepath.read_text()
 

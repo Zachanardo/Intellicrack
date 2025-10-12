@@ -503,7 +503,7 @@ class CloudLicenseResponseGenerator:
 
 
 def run_cloud_license_hooker(app_instance=None):
-    """Initializes and runs the cloud license hooker.
+    """Initialize and run the cloud license hooker.
 
     Args:
         app_instance: The main application instance (optional, for logging/context).

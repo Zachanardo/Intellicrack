@@ -210,7 +210,7 @@ class ScriptDisplayDialog(QDialog):
 
         # Warnings section
         if self.script_data.get("warnings"):
-            warnings_label = QLabel("⚠️ Warnings:")
+            warnings_label = QLabel("WARNING️ Warnings:")
             warnings_label.setStyleSheet("color: orange; font-weight: bold;")
             layout.addWidget(warnings_label)
 
@@ -400,7 +400,7 @@ class ScriptGenerationHandler(QObject):
         self.parent_widget = parent
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes."""
+        """Handle slot when protection analysis completes."""
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 

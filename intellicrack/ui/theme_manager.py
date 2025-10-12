@@ -1,4 +1,5 @@
-"""Theme Manager for Intellicrack UI
+"""Theme Manager for Intellicrack UI.
+
 Handles dynamic theme switching and stylesheet application.
 
 Copyright (C) 2025 Zachary Flint
@@ -854,10 +855,10 @@ def get_theme_manager():
 
 
 def apply_theme(theme_name):
-    """Convenience function to apply a theme."""
+    """Apply a theme."""
     get_theme_manager().set_theme(theme_name)
 
 
 def get_current_theme():
-    """Convenience function to get current theme."""
+    """Get current theme."""
     return get_theme_manager().get_current_theme()

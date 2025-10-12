@@ -16,6 +16,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
+from intellicrack.utils.logger import logger
+
 
 class KeyType(Enum):
     """Enumeration of cryptographic key types found in license validation code."""
@@ -46,9 +48,10 @@ class ExtractedKey:
 
 
 class LicenseValidationBypass:
-    """Production-ready license validation bypass engine with real cryptographic operations"""
+    """Production-ready license validation bypass engine with real cryptographic operations."""
 
     def __init__(self):
+        """Initialize the LicenseValidationBypassEngine with cryptographic engines and patterns."""
         self.backend = default_backend()
         self.cs_x86 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.cs_x64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -60,7 +63,7 @@ class LicenseValidationBypass:
         self.cert_patterns = self._build_cert_patterns()
 
     def _build_rsa_patterns(self) -> List[re.Pattern]:
-        """Build patterns for RSA key detection in binary data"""
+        """Build patterns for RSA key detection in binary data."""
         patterns = []
 
         # ASN.1 DER encoded RSA public key
@@ -85,7 +88,7 @@ class LicenseValidationBypass:
         return patterns
 
     def _build_ecc_patterns(self) -> List[re.Pattern]:
-        """Build patterns for ECC key detection"""
+        """Build patterns for ECC key detection."""
         patterns = []
 
         # ASN.1 DER encoded EC public key
@@ -104,7 +107,7 @@ class LicenseValidationBypass:
         return patterns
 
     def _build_cert_patterns(self) -> List[re.Pattern]:
-        """Build patterns for certificate detection"""
+        """Build patterns for certificate detection."""
         patterns = []
 
         # X.509 certificate
@@ -117,7 +120,7 @@ class LicenseValidationBypass:
         return patterns
 
     def extract_rsa_keys_from_binary(self, binary_path: str) -> List[ExtractedKey]:
-        """Extract RSA keys from binary with advanced heuristics"""
+        """Extract RSA keys from binary with advanced heuristics."""
         keys = []
 
         with open(binary_path, "rb") as f:
@@ -149,7 +152,7 @@ class LicenseValidationBypass:
         return keys
 
     def _extract_asn1_key(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse ASN.1 encoded RSA key"""
+        """Parse ASN.1 encoded RSA key."""
         try:
             # Try to parse as public key
             if data[:9] == b"\x30\x82\x01\x22\x30\x0d\x06\x09\x2a":
@@ -181,8 +184,8 @@ class LicenseValidationBypass:
                             context="ASN.1 DER encoded private key",
                             key_object=key,
                         )
-                except (AttributeError, KeyError):
-                    pass
+                except (AttributeError, KeyError) as e:
+                    logger.debug(f"Failed to process PKCS#1 RSA private key: {e}")
 
         except Exception as e:
             logger.debug(f"Private key extraction failed: {e}")
@@ -190,7 +193,7 @@ class LicenseValidationBypass:
         return None
 
     def _scan_for_rsa_moduli(self, data: bytes) -> List[ExtractedKey]:
-        """Scan for potential RSA moduli using mathematical properties"""
+        """Scan for potential RSA moduli using mathematical properties."""
         keys = []
 
         # Look for 128, 256, 512-byte sequences with high entropy
@@ -229,7 +232,7 @@ class LicenseValidationBypass:
         return keys
 
     def _is_probable_rsa_modulus(self, n: int) -> bool:
-        """Check if a number has properties of an RSA modulus"""
+        """Check if a number has properties of an RSA modulus."""
         if n < 2**511 or n > 2**4097:  # Common RSA sizes
             return False
 
@@ -250,7 +253,7 @@ class LicenseValidationBypass:
         return True
 
     def _extract_from_pe_resources(self, binary_path: str) -> List[ExtractedKey]:
-        """Extract keys from PE resources and data sections"""
+        """Extract keys from PE resources and data sections."""
         keys = []
 
         try:
@@ -281,7 +284,7 @@ class LicenseValidationBypass:
         return keys
 
     def _extract_from_crypto_api_calls(self, binary_path: str) -> List[ExtractedKey]:
-        """Extract keys from CryptoAPI usage patterns"""
+        """Extract keys from CryptoAPI usage patterns."""
         keys = []
 
         try:
@@ -322,7 +325,7 @@ class LicenseValidationBypass:
         return keys
 
     def _analyze_memory_patterns(self, data: bytes) -> List[ExtractedKey]:
-        """Analyze memory patterns for in-memory key structures"""
+        """Analyze memory patterns for in-memory key structures."""
         keys = []
 
         # OpenSSL RSA structure
@@ -340,8 +343,8 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse OpenSSL RSA structure at offset {offset}: {e}")
 
             offset += 1
 
@@ -358,15 +361,15 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse BCRYPT key blob at offset {offset}: {e}")
 
             offset += 1
 
         return keys
 
     def _entropy_based_key_detection(self, data: bytes) -> List[ExtractedKey]:
-        """Detect keys based on entropy analysis"""
+        """Detect keys based on entropy analysis."""
         keys = []
         window_size = 256
 
@@ -389,7 +392,7 @@ class LicenseValidationBypass:
         return keys
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data"""
+        """Calculate Shannon entropy of data."""
         if not data:
             return 0.0
 
@@ -402,7 +405,7 @@ class LicenseValidationBypass:
         return entropy
 
     def _is_key_data(self, data: bytes) -> bool:
-        """Check if data likely contains cryptographic keys"""
+        """Check if data likely contains cryptographic keys."""
         if len(data) < 128:
             return False
 
@@ -420,7 +423,7 @@ class LicenseValidationBypass:
         return False
 
     def _parse_key_data(self, data: bytes) -> List[ExtractedKey]:
-        """Parse various key formats from data"""
+        """Parse various key formats from data."""
         keys = []
 
         # Try different parsers
@@ -444,7 +447,7 @@ class LicenseValidationBypass:
         return keys
 
     def _scan_section_for_keys(self, data: bytes, virtual_address: int) -> List[ExtractedKey]:
-        """Scan a PE section for embedded keys"""
+        """Scan a PE section for embedded keys."""
         keys = []
 
         # Look for DER encoded keys
@@ -485,7 +488,7 @@ class LicenseValidationBypass:
         return keys
 
     def _analyze_crypto_api_usage(self, code: bytes, imports: List[Tuple[int, bytes]], text_va: int) -> List[ExtractedKey]:
-        """Analyze code around CryptoAPI calls to extract keys"""
+        """Analyze code around CryptoAPI calls to extract keys."""
         keys = []
 
         # Disassemble code
@@ -516,13 +519,13 @@ class LicenseValidationBypass:
                                                 for key in extracted:
                                                     key.context = f"Found near {imp_name.decode('utf-8', errors='ignore')} call"
                                                 keys.extend(extracted)
-                                except (UnicodeDecodeError, AttributeError):
-                                    pass
+                                except (UnicodeDecodeError, AttributeError) as e:
+                                    logger.debug(f"Failed to process import function: {e}")
 
         return keys
 
     def _parse_openssl_rsa_struct(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse OpenSSL RSA structure from memory"""
+        """Parse OpenSSL RSA structure from memory."""
         # OpenSSL RSA structure detection with version-specific handling
         try:
             if data[:4] != b"RSA\x00":
@@ -547,7 +550,7 @@ class LicenseValidationBypass:
         return None
 
     def _detect_openssl_version(self, data: bytes) -> str:
-        """Detect OpenSSL version from RSA structure patterns"""
+        """Detect OpenSSL version from RSA structure patterns."""
         # OpenSSL 1.0.x has different structure alignment
         if len(data) > 32 and data[16:20] == b"\x00\x00\x00\x00":
             # Check for 1.0.x specific markers
@@ -565,7 +568,7 @@ class LicenseValidationBypass:
         return "unknown"
 
     def _parse_openssl_10x_rsa(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse OpenSSL 1.0.x RSA structure"""
+        """Parse OpenSSL 1.0.x RSA structure."""
         try:
             # OpenSSL 1.0.x RSA structure layout
             offset = 16  # Skip RSA magic and padding
@@ -623,7 +626,7 @@ class LicenseValidationBypass:
         return None
 
     def _parse_openssl_11x_rsa(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse OpenSSL 1.1.x RSA structure"""
+        """Parse OpenSSL 1.1.x RSA structure."""
         try:
             # OpenSSL 1.1.x uses opaque structures with different layout
             offset = 16
@@ -676,7 +679,7 @@ class LicenseValidationBypass:
         return None
 
     def _parse_openssl_3x_rsa(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse OpenSSL 3.x RSA structure"""
+        """Parse OpenSSL 3.x RSA structure."""
         try:
             # OpenSSL 3.x has provider-based architecture
             offset = 16
@@ -734,7 +737,7 @@ class LicenseValidationBypass:
         return None
 
     def _parse_generic_openssl_rsa(self, data: bytes) -> Optional[ExtractedKey]:
-        """Generic parser for unknown OpenSSL versions"""
+        """Parse unknown OpenSSL versions with generic parser."""
         try:
             # Try multiple offsets to find BIGNUM structures
             possible_offsets = [16, 24, 32, 40, 48]
@@ -770,7 +773,7 @@ class LicenseValidationBypass:
         return None
 
     def _read_openssl_bignum_10x(self, data: bytes) -> Optional[int]:
-        """Read OpenSSL 1.0.x BIGNUM format"""
+        """Read OpenSSL 1.0.x BIGNUM format."""
         try:
             if len(data) < 16:
                 return None
@@ -815,7 +818,7 @@ class LicenseValidationBypass:
         return None
 
     def _read_openssl_bignum_11x(self, data: bytes) -> Optional[int]:
-        """Read OpenSSL 1.1.x BIGNUM format (inline storage)"""
+        """Read OpenSSL 1.1.x BIGNUM format (inline storage)."""
         try:
             if len(data) < 12:
                 return None
@@ -853,7 +856,7 @@ class LicenseValidationBypass:
         return None
 
     def _read_openssl_bignum_3x(self, data: bytes) -> Optional[int]:
-        """Read OpenSSL 3.x BIGNUM format"""
+        """Read OpenSSL 3.x BIGNUM format."""
         try:
             if len(data) < 16:
                 return None
@@ -889,17 +892,17 @@ class LicenseValidationBypass:
         return None
 
     def _bignum_size_11x(self, n: int) -> int:
-        """Calculate BIGNUM size in OpenSSL 1.1.x format"""
+        """Calculate BIGNUM size in OpenSSL 1.1.x format."""
         width = (n.bit_length() + 63) // 64
         return 12 + (width * 8)
 
     def _bignum_size_3x(self, n: int) -> int:
-        """Calculate BIGNUM size in OpenSSL 3.x format"""
+        """Calculate BIGNUM size in OpenSSL 3.x format."""
         size = (n.bit_length() + 7) // 8
         return 16 + size
 
     def _read_openssl_bignum(self, data: bytes) -> Optional[int]:
-        """Read OpenSSL BIGNUM from memory"""
+        """Read OpenSSL BIGNUM from memory."""
         try:
             # Simplified BIGNUM reading
             if len(data) < 8:
@@ -917,11 +920,11 @@ class LicenseValidationBypass:
             return None
 
     def _bignum_size(self, n: int) -> int:
-        """Calculate size of BIGNUM in memory"""
+        """Calculate size of BIGNUM in memory."""
         return 8 + ((n.bit_length() + 7) // 8)
 
     def _parse_bcrypt_key_blob(self, data: bytes) -> Optional[ExtractedKey]:
-        """Parse Windows BCRYPT_RSAKEY_BLOB structure"""
+        """Parse Windows BCRYPT_RSAKEY_BLOB structure."""
         try:
             # BCRYPT_RSAKEY_BLOB structure
             magic = data[:4]
@@ -958,7 +961,7 @@ class LicenseValidationBypass:
             return None
 
     def _has_key_structure(self, data: bytes) -> bool:
-        """Check if data has structure consistent with a key"""
+        """Check if data has structure consistent with a key."""
         # Check for ASN.1 structure
         if data[0] == 0x30 and data[1] in [0x81, 0x82]:
             return True
@@ -971,11 +974,11 @@ class LicenseValidationBypass:
         return True
 
     def _try_parse_der(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse DER encoded key"""
+        """Try to parse DER encoded key."""
         return self._extract_asn1_key(data)
 
     def _try_parse_pem(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse PEM encoded key"""
+        """Try to parse PEM encoded key."""
         try:
             # Find PEM boundaries
             start = data.find(b"-----BEGIN")
@@ -1021,13 +1024,13 @@ class LicenseValidationBypass:
                         context="PEM encoded RSA public key",
                         key_object=key,
                     )
-        except (AttributeError, KeyError):
-            pass
+        except (AttributeError, KeyError) as e:
+            logger.debug(f"Failed to parse PEM RSA public key: {e}")
 
         return None
 
     def _try_parse_raw_modulus(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to interpret data as raw RSA modulus"""
+        """Try to interpret data as raw RSA modulus."""
         # Check if it could be a raw modulus (high entropy, right size)
         if len(data) not in [128, 256, 512]:
             return None
@@ -1050,7 +1053,7 @@ class LicenseValidationBypass:
         return None
 
     def _try_parse_pkcs8(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse PKCS#8 format key"""
+        """Try to parse PKCS#8 format key."""
         try:
             # PKCS#8 unencrypted private key
             if data[:4] == b"\x30\x82" and b"\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01" in data[:50]:
@@ -1066,19 +1069,19 @@ class LicenseValidationBypass:
                         context="PKCS#8 RSA private key",
                         key_object=key,
                     )
-        except (AttributeError, KeyError):
-            pass
+        except (AttributeError, KeyError) as e:
+            logger.debug(f"Failed to parse PKCS#8 RSA private key: {e}")
 
         return None
 
     def _try_parse_pkcs12(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse PKCS#12 format (PFX) - would need password"""
+        """Try to parse PKCS#12 format (PFX) - would need password."""
         # PKCS#12 is typically password protected
         # This would require password cracking or extraction
         return None
 
     def _try_parse_openssh(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse OpenSSH format key"""
+        """Try to parse OpenSSH format key."""
         try:
             import base64
 
@@ -1341,7 +1344,7 @@ class LicenseValidationBypass:
         return None
 
     def _try_parse_jwk(self, data: bytes) -> Optional[ExtractedKey]:
-        """Try to parse JSON Web Key format"""
+        """Try to parse JSON Web Key format."""
         try:
             import json
 
@@ -1355,13 +1358,13 @@ class LicenseValidationBypass:
                 return ExtractedKey(
                     key_type=KeyType.RSA_PUBLIC, key_data=data, modulus=n, exponent=e, confidence=0.95, context="JSON Web Key (JWK)"
                 )
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse JSON Web Key: {e}")
 
         return None
 
     def extract_ecc_keys_from_binary(self, binary_path: str) -> List[ExtractedKey]:
-        """Extract ECC keys from binary"""
+        """Extract ECC keys from binary."""
         keys = []
 
         with open(binary_path, "rb") as f:
@@ -1414,7 +1417,7 @@ class LicenseValidationBypass:
         return keys
 
     def _extract_ecc_key(self, data: bytes) -> Optional[ExtractedKey]:
-        """Extract ECC key from data"""
+        """Extract ECC key from data."""
         try:
             # Try to parse as ECC public key
             key = serialization.load_der_public_key(data, backend=self.backend)
@@ -1441,13 +1444,13 @@ class LicenseValidationBypass:
                     context="ASN.1 DER encoded ECC private key",
                     key_object=key,
                 )
-        except (AttributeError, KeyError):
-            pass
+        except (AttributeError, KeyError) as e:
+            logger.debug(f"Failed to parse ASN.1 ECC private key: {e}")
 
         return None
 
     def extract_certificates(self, binary_path: str) -> List[x509.Certificate]:
-        """Extract X.509 certificates from binary"""
+        """Extract X.509 certificates from binary."""
         certificates = []
 
         with open(binary_path, "rb") as f:
@@ -1470,13 +1473,13 @@ class LicenseValidationBypass:
                             cert_data = data[offset : end + 25]
                             cert = x509.load_pem_x509_certificate(cert_data, backend=self.backend)
                             certificates.append(cert)
-                    except (ValueError, TypeError):
-                        pass
+                    except (ValueError, TypeError) as e:
+                        logger.debug(f"Failed to parse X.509 certificate at offset {offset}: {e}")
 
         return certificates
 
     def extract_all_keys(self, binary_path: str) -> Dict[str, List[ExtractedKey]]:
-        """Extract all types of cryptographic keys from binary"""
+        """Extract all types of cryptographic keys from binary."""
         results = {"rsa": [], "ecc": [], "symmetric": [], "certificates": []}
 
         # Extract RSA keys
@@ -1518,7 +1521,7 @@ class LicenseValidationBypass:
         return results
 
     def _extract_symmetric_keys(self, binary_path: str) -> List[ExtractedKey]:
-        """Extract symmetric encryption keys (AES, DES, etc.)"""
+        """Extract symmetric encryption keys (AES, DES, etc.)."""
         keys = []
 
         with open(binary_path, "rb") as f:
@@ -1545,7 +1548,7 @@ class LicenseValidationBypass:
         return keys
 
     def _is_likely_symmetric_key(self, data: bytes) -> bool:
-        """Check if data is likely a symmetric key"""
+        """Check if data is likely a symmetric key."""
         # No obvious patterns
         if b"\x00" * 4 in data or b"\xff" * 4 in data:
             return False
@@ -1559,12 +1562,12 @@ class LicenseValidationBypass:
             data.decode("ascii")
             return False  # Keys shouldn't be ASCII text
         except UnicodeDecodeError:
-            pass
+            logger.debug("Data contains non-ASCII bytes, likely binary key material")
 
         return True
 
     def _determine_symmetric_type(self, data: bytes) -> KeyType:
-        """Determine type of symmetric key based on size"""
+        """Determine type of symmetric key based on size."""
         size = len(data)
         if size in [16, 24, 32]:
             return KeyType.AES

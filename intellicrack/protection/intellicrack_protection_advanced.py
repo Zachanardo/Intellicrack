@@ -644,7 +644,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Try manual fallback
             return self._calculate_import_hash_manual(file_path)
 
-    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
+    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:  # noqa: C901
         """Manual PE import hash calculation without pefile library."""
         try:
             with open(file_path, "rb") as f:

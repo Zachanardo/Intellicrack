@@ -61,7 +61,7 @@ class GPUAutoLoader:
         for method in methods:
             try:
                 if method():
-                    logger.info(f"✓ GPU configured: {self.gpu_type}")
+                    logger.info(f"OK GPU configured: {self.gpu_type}")
                     logger.info(f"  Device: {self._device_string}")
                     if self.gpu_info:
                         for key, value in self.gpu_info.items():

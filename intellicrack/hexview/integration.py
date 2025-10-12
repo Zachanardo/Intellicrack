@@ -45,36 +45,290 @@ try:
 except ImportError as e:
     logger.error("Import error in integration: %s", e)
 
-    # Provide dummy functions if AI bridge is not available
-    def wrapper_ai_binary_analyze(*args, **kwargs):
-        """Fallback function for AI binary analysis when AI bridge is not available.
+    import re
+    import struct
+    from collections import Counter
+
+    def wrapper_ai_binary_analyze(app_instance, parameters):
+        """Perform static binary analysis when AI bridge is not available.
+
+        Analyzes binary data using entropy calculation, string extraction,
+        pattern detection, and structural analysis techniques.
+
+        Args:
+            app_instance: Application instance
+            parameters: Dictionary with 'data' (bytes) and optional 'offset' (int)
 
         Returns:
-            dict: Error message indicating AI bridge is not available
+            dict: Analysis results including entropy, strings, patterns, and structure
 
         """
-        _args, _kwargs = args, kwargs  # Store for potential future use
-        return {"error": "AI bridge not available"}
+        try:
+            data = parameters.get("data", b"")
+            offset = parameters.get("offset", 0)
 
-    def wrapper_ai_binary_pattern_search(*args, **kwargs):
-        """Fallback function for AI pattern search when AI bridge is not available.
+            if not data:
+                return {"analysis": "No data provided for analysis"}
+
+            analysis_results = {
+                "entropy": _calculate_entropy(data),
+                "size": len(data),
+                "offset": offset,
+                "strings": _extract_strings(data, min_length=4),
+                "patterns": _detect_patterns(data),
+                "structure": _analyze_structure(data),
+                "byte_distribution": _analyze_byte_distribution(data),
+            }
+
+            return {"analysis": analysis_results}
+        except Exception as e:
+            logger.error("Error in fallback binary analyze: %s", e)
+            return {"error": f"Analysis failed: {e!s}"}
+
+    def wrapper_ai_binary_pattern_search(app_instance, parameters):
+        """Search for patterns in binary data when AI bridge is not available.
+
+        Performs pattern matching using regex, byte sequences, and common
+        binary signatures for license checks, validation routines, and protection schemes.
+
+        Args:
+            app_instance: Application instance
+            parameters: Dictionary with 'data' (bytes), 'pattern' (str), and 'pattern_type' (str)
 
         Returns:
-            dict: Error message indicating AI bridge is not available
+            dict: Search results with matches and their offsets
 
         """
-        _args, _kwargs = args, kwargs  # Store for potential future use
-        return {"error": "AI bridge not available"}
+        try:
+            data = parameters.get("data", b"")
+            pattern = parameters.get("pattern", "")
+            pattern_type = parameters.get("pattern_type", "hex")
 
-    def wrapper_ai_binary_edit_suggest(*args, **kwargs):
-        """Fallback function for AI edit suggestions when AI bridge is not available.
+            if not data or not pattern:
+                return {"matches": [], "count": 0}
+
+            matches = []
+
+            if pattern_type == "hex":
+                search_bytes = bytes.fromhex(pattern.replace(" ", ""))
+                idx = 0
+                while idx < len(data):
+                    pos = data.find(search_bytes, idx)
+                    if pos == -1:
+                        break
+                    matches.append({"offset": pos, "length": len(search_bytes)})
+                    idx = pos + 1
+
+            elif pattern_type == "regex":
+                for match in re.finditer(pattern.encode(), data):
+                    matches.append({"offset": match.start(), "length": len(match.group())})
+
+            elif pattern_type == "string":
+                search_bytes = pattern.encode("utf-8")
+                idx = 0
+                while idx < len(data):
+                    pos = data.find(search_bytes, idx)
+                    if pos == -1:
+                        break
+                    matches.append({"offset": pos, "length": len(search_bytes)})
+                    idx = pos + 1
+
+            elif pattern_type == "license_check":
+                license_patterns = [
+                    b"license", b"LICENSE", b"registration", b"REGISTRATION",
+                    b"serial", b"SERIAL", b"activation", b"ACTIVATION",
+                    b"trial", b"TRIAL", b"expired", b"EXPIRED",
+                ]
+                for lp in license_patterns:
+                    idx = 0
+                    while idx < len(data):
+                        pos = data.find(lp, idx)
+                        if pos == -1:
+                            break
+                        matches.append({"offset": pos, "length": len(lp), "type": lp.decode("utf-8", errors="ignore")})
+                        idx = pos + 1
+
+            return {"matches": matches, "count": len(matches), "pattern": pattern, "pattern_type": pattern_type}
+        except Exception as e:
+            logger.error("Error in fallback pattern search: %s", e)
+            return {"error": f"Pattern search failed: {e!s}"}
+
+    def wrapper_ai_binary_edit_suggest(app_instance, parameters):
+        """Suggest binary edits for license bypass when AI bridge is not available.
+
+        Analyzes binary code to suggest patches for common license validation
+        patterns, including jump instructions, comparison operations, and
+        return value modifications.
+
+        Args:
+            app_instance: Application instance
+            parameters: Dictionary with 'data' (bytes), 'offset' (int), and 'context' (str)
 
         Returns:
-            dict: Error message indicating AI bridge is not available
+            dict: Edit suggestions with offsets, original bytes, and patch bytes
 
         """
-        _args, _kwargs = args, kwargs  # Store for potential future use
-        return {"error": "AI bridge not available"}
+        try:
+            data = parameters.get("data", b"")
+            offset = parameters.get("offset", 0)
+            context = parameters.get("context", "general")
+
+            if not data:
+                return {"suggestions": []}
+
+            suggestions = []
+
+            if context == "license_check":
+                for i in range(len(data) - 6):
+                    if data[i:i+2] == b"\x74\x05":
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Replace JE (jump if equal) with NOP to bypass check",
+                            "original": data[i:i+2].hex(),
+                            "patched": "9090",
+                            "type": "conditional_jump_bypass"
+                        })
+                    elif data[i:i+2] == b"\x75\x05":
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Replace JNE (jump if not equal) with NOP to bypass check",
+                            "original": data[i:i+2].hex(),
+                            "patched": "9090",
+                            "type": "conditional_jump_bypass"
+                        })
+                    elif data[i:i+5] == b"\xe8" + data[i+1:i+5]:
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Replace CALL instruction with NOPs to skip validation function",
+                            "original": data[i:i+5].hex(),
+                            "patched": "9090909090",
+                            "type": "call_bypass"
+                        })
+
+            elif context == "return_value":
+                for i in range(len(data) - 5):
+                    if data[i:i+5] == b"\xb8\x00\x00\x00\x00":
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Change return value from 0 to 1 (success)",
+                            "original": data[i:i+5].hex(),
+                            "patched": "b801000000",
+                            "type": "return_value_modification"
+                        })
+                    elif data[i:i+2] == b"\x31\xc0":
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Replace XOR EAX,EAX with MOV EAX,1 for success return",
+                            "original": data[i:i+2].hex(),
+                            "patched": "b801000000",
+                            "type": "return_value_modification"
+                        })
+
+            elif context == "comparison":
+                for i in range(len(data) - 6):
+                    if data[i:i+2] in [b"\x3b", b"\x39"]:
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": "Replace comparison with operation that always succeeds",
+                            "original": data[i:i+2].hex(),
+                            "patched": "3939",
+                            "type": "comparison_bypass"
+                        })
+
+            else:
+                for i in range(min(len(data) - 2, 100)):
+                    if data[i] == 0x74 or data[i] == 0x75:
+                        suggestions.append({
+                            "offset": offset + i,
+                            "description": f"Conditional jump at offset {offset + i:#x}",
+                            "original": data[i:i+2].hex(),
+                            "patched": "9090",
+                            "type": "general_conditional_bypass"
+                        })
+
+            return {"suggestions": suggestions, "count": len(suggestions)}
+        except Exception as e:
+            logger.error("Error in fallback edit suggest: %s", e)
+            return {"error": f"Edit suggestion failed: {e!s}"}
+
+    def _calculate_entropy(data):
+        """Calculate Shannon entropy of binary data."""
+        if not data:
+            return 0.0
+        counter = Counter(data)
+        entropy = 0.0
+        length = len(data)
+        for count in counter.values():
+            probability = count / length
+            entropy -= probability * (probability and (probability * 0.434294482) or 0)
+        return entropy * 2.302585093
+
+    def _extract_strings(data, min_length=4):
+        """Extract printable ASCII strings from binary data."""
+        strings = []
+        current_string = []
+        for byte in data:
+            if 32 <= byte <= 126:
+                current_string.append(chr(byte))
+            else:
+                if len(current_string) >= min_length:
+                    strings.append("".join(current_string))
+                current_string = []
+        if len(current_string) >= min_length:
+            strings.append("".join(current_string))
+        return strings[:50]
+
+    def _detect_patterns(data):
+        """Detect common binary patterns and signatures."""
+        patterns = {}
+        if b"MZ" in data[:2]:
+            patterns["file_type"] = "PE executable"
+        elif b"\x7fELF" in data[:4]:
+            patterns["file_type"] = "ELF executable"
+        elif b"\xca\xfe\xba\xbe" in data[:4] or b"\xfe\xed\xfa\xce" in data[:4]:
+            patterns["file_type"] = "Mach-O executable"
+
+        if b"license" in data.lower() or b"registration" in data.lower():
+            patterns["license_strings"] = True
+        if b"trial" in data.lower() or b"expired" in data.lower():
+            patterns["trial_strings"] = True
+
+        return patterns
+
+    def _analyze_structure(data):
+        """Analyze structural characteristics of binary data."""
+        structure = {
+            "null_bytes": data.count(b"\x00"),
+            "high_entropy_sections": 0,
+            "code_like_patterns": 0,
+        }
+
+        chunk_size = 256
+        for i in range(0, len(data), chunk_size):
+            chunk = data[i:i+chunk_size]
+            if _calculate_entropy(chunk) > 7.0:
+                structure["high_entropy_sections"] += 1
+
+        for i in range(0, len(data) - 10, 16):
+            chunk = data[i:i+16]
+            if any(b in chunk for b in [b"\xe8", b"\xff", b"\x8b", b"\x89", b"\xc3"]):
+                structure["code_like_patterns"] += 1
+
+        return structure
+
+    def _analyze_byte_distribution(data):
+        """Analyze distribution of byte values."""
+        if not data:
+            return {}
+        counter = Counter(data)
+        total = len(data)
+        distribution = {
+            "most_common": [{"byte": f"{b:#04x}", "count": c, "percentage": (c/total)*100}
+                          for b, c in counter.most_common(5)],
+            "unique_bytes": len(counter),
+            "diversity_ratio": len(counter) / 256.0,
+        }
+        return distribution
 
 
 logger = logging.getLogger("Intellicrack.HexView")
@@ -356,7 +610,7 @@ def integrate_enhanced_hex_viewer(app_instance):
 
 # Decorator for hex viewer AI tool wrappers
 def hex_viewer_ai_tool(func):
-    """Decorator for hex viewer AI tool wrappers.
+    """Decorate hex viewer AI tool wrappers.
 
     This decorator adds common functionality to all hex viewer AI tool wrappers,
     such as error handling and logging.
@@ -370,7 +624,7 @@ def hex_viewer_ai_tool(func):
     """
 
     def wrapper(app_instance, parameters):
-        """Wrapper function that adds error handling and logging to hex viewer AI tools.
+        """Add error handling and logging to hex viewer AI tools.
 
         Args:
             app_instance: The application instance

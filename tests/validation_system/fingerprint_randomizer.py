@@ -966,7 +966,7 @@ def run_fingerprint_randomization():
         print(f"  Overall: {report['effectiveness']['overall']:.1f}%")
 
     # Save report
-    output_dir = Path(r"C:\Intellicrack\tests\validation_system\reports")
+    output_dir = Path(r"D:\Intellicrack\tests\validation_system\reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")

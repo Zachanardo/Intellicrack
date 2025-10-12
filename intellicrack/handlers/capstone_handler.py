@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Capstone handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -194,7 +196,7 @@ except ImportError as e:
             return group_id in self.groups
 
         def __repr__(self):
-            """String representation."""
+            """Represent as string."""
             return f"0x{self.address:x}:\t{self.mnemonic}\t{self.op_str}"
 
     class X86Disassembler:

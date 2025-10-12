@@ -69,6 +69,12 @@ class FridaStalkerEngine:
     """Advanced instruction-level tracing with Stalker."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaStalkerEngine with a Frida session.
+
+        Args:
+            session: Frida session to attach the stalker to.
+
+        """
         self.session = session
         self.traces: Dict[int, StalkerTrace] = {}
         self.script = None
@@ -301,6 +307,12 @@ class FridaHeapTracker:
     """Heap allocation tracking."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaHeapTracker with a Frida session.
+
+        Args:
+            session: Frida session to attach heap tracking to.
+
+        """
         self.session = session
         self.allocations: Dict[int, HeapAllocation] = {}
         self.script = None
@@ -525,6 +537,12 @@ class FridaThreadMonitor:
     """Thread creation and termination monitoring."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaThreadMonitor with a Frida session.
+
+        Args:
+            session: Frida session to monitor threads in.
+
+        """
         self.session = session
         self.threads: Dict[int, ThreadInfo] = {}
         self.script = None
@@ -712,6 +730,12 @@ class FridaExceptionHooker:
     """Exception handler hooking."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaExceptionHooker with a Frida session.
+
+        Args:
+            session: Frida session to hook exceptions in.
+
+        """
         self.session = session
         self.exceptions: List[ExceptionInfo] = []
         self.script = None
@@ -881,6 +905,12 @@ class FridaNativeReplacer:
     """Native function replacement system."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaNativeReplacer with a Frida session.
+
+        Args:
+            session: Frida session to replace native functions in.
+
+        """
         self.session = session
         self.replacements: Dict[int, Dict[str, Any]] = {}
         self.script = None
@@ -1055,6 +1085,12 @@ class FridaRPCInterface:
     """RPC interface for complex operations."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaRPCInterface with a Frida session.
+
+        Args:
+            session: Frida session to create RPC interface for.
+
+        """
         self.session = session
         self.script = None
         self._init_rpc()
@@ -1419,6 +1455,12 @@ class FridaAdvancedHooking:
     """Main class for advanced hooking features."""
 
     def __init__(self, session: frida.core.Session):
+        """Initialize the FridaAdvancedHooking with a Frida session.
+
+        Args:
+            session: Frida session to attach advanced hooking features to.
+
+        """
         self.session = session
         self.stalker = None
         self.heap_tracker = None

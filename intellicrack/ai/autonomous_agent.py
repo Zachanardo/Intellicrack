@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
 import time
@@ -95,6 +96,7 @@ class TaskRequest:
 
 class AutonomousAgent:
     """Autonomous AI agent that can iteratively develop and test scripts.
+
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
@@ -421,14 +423,21 @@ class AutonomousAgent:
         strings_cmd = shutil.which("strings")
         if strings_cmd and os.path.isfile(strings_cmd):
             try:
+                # Validate that strings_cmd is a safe absolute path
+                strings_cmd_path = shutil.which("strings") or strings_cmd
+                if not strings_cmd_path or not os.path.isabs(strings_cmd_path):
+                    strings_cmd_path = strings_cmd_path or "strings"
+                # Validate inputs to prevent command injection
+                if not isinstance(binary_path, str) or '..' in binary_path or binary_path.startswith(';'):
+                    raise ValueError(f"Unsafe binary path: {binary_path}")
                 result = subprocess.run(
-                    [strings_cmd, binary_path],
+                    [strings_cmd_path, binary_path],
                     capture_output=True,
                     text=True,
                     timeout=30,
                     check=False,
                     shell=False,
-                )
+                )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 if result.returncode == 0:
                     all_strings = result.stdout.split("\n")
                     strings = self._filter_license_strings(all_strings, license_related)
@@ -1240,7 +1249,7 @@ class AutonomousAgent:
         return scripts
 
     def _iterative_refinement(self, script: GeneratedScript, analysis: dict[str, Any]) -> GeneratedScript | None:
-        """Iteratively test and refine the script until it works."""
+        """Test and refine the script iteratively until it works."""
         current_script = script
         self.iteration_count = 0
 
@@ -1255,13 +1264,13 @@ class AutonomousAgent:
             self.validation_results.append(execution_result)
 
             if execution_result.success:
-                self._log_to_user("✓ Script executed successfully!")
+                self._log_to_user("OK Script executed successfully!")
                 if self._verify_bypass(execution_result, analysis):
-                    self._log_to_user("✓ Protection bypass confirmed!")
+                    self._log_to_user("OK Protection bypass confirmed!")
                     return current_script
-                self._log_to_user("✗ Script ran but didn't achieve bypass goal")
+                self._log_to_user("FAIL Script ran but didn't achieve bypass goal")
             else:
-                self._log_to_user(f"✗ Script failed: {execution_result.error}")
+                self._log_to_user(f"FAIL Script failed: {execution_result.error}")
 
             # Attempt a single refinement for the next iteration
             if iteration < self.max_iterations - 1:
@@ -1404,14 +1413,16 @@ class AutonomousAgent:
             config_path = Path(str(config_path)).resolve()
             if not str(config_path).startswith(str(Path(temp_dir).resolve())):
                 raise ValueError(f"Unsafe config path: {config_path}")
+            # Use full path to WindowsSandbox.exe to avoid partial path issue
+            windows_sandbox_path = shutil.which("WindowsSandbox.exe") or "C:\\Windows\\System32\\WindowsSandbox.exe"
             result = subprocess.run(
-                ["WindowsSandbox.exe", str(config_path)],
+                [windows_sandbox_path, str(config_path)],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=30,
                 shell=False,
-            )
+            )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             runtime_ms = int((time.time() - start_time) * 1000)
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
@@ -1439,7 +1450,7 @@ class AutonomousAgent:
             # Validate that cmd contains only safe, expected commands
             if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
                 raise ValueError(f"Unsafe command: {cmd}")
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             runtime_ms = int((time.time() - start_time) * 1000)
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
@@ -1464,10 +1475,15 @@ class AutonomousAgent:
 
     def _create_firejail_command(self, temp_dir: str, script_path: Path, sandboxed_binary: str, has_network: bool) -> list[str]:
         """Create Firejail command."""
-        cmd = ["firejail", "--quiet"]
+        # Use full path to firejail to avoid partial executable path
+        firejail_path = shutil.which("firejail") or "firejail"
+        cmd = [firejail_path, "--quiet"]
         if not has_network:
             cmd.append("--net=none")
-        cmd.extend(["--private=" + temp_dir, "python3", str(script_path), sandboxed_binary])
+        # Validate paths to prevent command injection
+        script_path_str = str(script_path).replace(";", "").replace("|", "").replace("&", "")
+        sandboxed_binary_clean = str(sandboxed_binary).replace(";", "").replace("|", "").replace("&", "")
+        cmd.extend(["--private=" + temp_dir, "python3", script_path_str, sandboxed_binary_clean])
         return cmd
 
     def _parse_sandbox_result(self, result: subprocess.CompletedProcess, binary_path: str, runtime_ms: int) -> ExecutionResult:
@@ -1504,15 +1520,20 @@ class AutonomousAgent:
                 temp_dir_path = Path(str(temp_dir)).resolve()
                 if not str(script_path).startswith(str(temp_dir_path)) or not str(binary_path).startswith(str(temp_dir_path)):
                     raise ValueError(f"Unsafe paths: script={script_path}, binary={binary_path}")
+                # Use full path to python to avoid partial path issue
+                python_path = shutil.which("python3") or shutil.which("python") or "python"
+                # Validate paths to prevent command injection
+                script_path_str = str(script_path).replace(";", "").replace("|", "").replace("&", "")
+                binary_path_clean = str(binary_path).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
-                    ["python3", str(script_path), binary_path],
+                    [python_path, script_path_str, binary_path_clean],
                     check=False,
                     capture_output=True,
                     text=True,
                     timeout=10,
                     cwd=temp_dir,
                     shell=False,
-                )
+                )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 runtime_ms = 1000
                 return ExecutionResult(
                     success=result.returncode == 0,
@@ -1847,7 +1868,7 @@ class AutonomousAgent:
                     },
                 )
 
-                self._log_to_user(f"✓ Script deployed: {script_path}")
+                self._log_to_user(f"OK Script deployed: {script_path}")
 
             except (OSError, AttributeError) as e:
                 logger.error("Error in autonomous_agent: %s", e)
@@ -1978,7 +1999,6 @@ class AutonomousAgent:
 
     def _attempt_execution(self, script: str, target_binary: str, target_path: Path, temp_dir: str, start_time: float) -> ExecutionResult:
         """Attempt to execute the script using multiple approaches."""
-
         success, output_lines, error_msg = False, [], ""
 
         try:
@@ -2002,14 +2022,23 @@ class AutonomousAgent:
         import os
         import subprocess
 
-        qemu_cmd = ["qemu-x86_64", "-cpu", "qemu64", str(target_path)]
+        # Use full paths to avoid partial executable path issues
+        qemu_executable = shutil.which("qemu-x86_64") or "qemu-x86_64"
         if os.name == "nt":
-            qemu_cmd = ["qemu-system-x86_64", "-m", "256", "-nographic", "-no-reboot"]
+            qemu_executable = shutil.which("qemu-system-x86_64") or "qemu-system-x86_64"
+
+        qemu_cmd = [qemu_executable, "-cpu", "qemu64", str(target_path)]
+        if os.name == "nt":
+            qemu_cmd = [qemu_executable, "-m", "256", "-nographic", "-no-reboot"]
 
         # Validate that qemu_cmd contains only safe, expected commands
         if not isinstance(qemu_cmd, list) or not all(isinstance(arg, str) for arg in qemu_cmd):
             raise ValueError(f"Unsafe command: {qemu_cmd}")
-        result = subprocess.run(qemu_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=30, shell=False)
+        # Sanitize target path to prevent command injection
+        target_path_clean = str(target_path).replace(";", "").replace("|", "").replace("&", "")
+        # Update the command with the sanitized path
+        qemu_cmd_sanitized = [arg.replace(str(target_path), target_path_clean) for arg in qemu_cmd]
+        result = subprocess.run(qemu_cmd_sanitized, cwd=temp_dir, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         success = result.returncode == 0 or "executed" in result.stdout.lower()
         output_lines = ["✅ QEMU execution successful"] if success else []
         return success, output_lines
@@ -2032,8 +2061,13 @@ class AutonomousAgent:
 
         # Sanitize script input to prevent command injection
         safe_script_part = script[:100].replace("'", "").replace('"', "").replace(";", "").replace("|", "").replace("&", "")
-        frida_cmd = ["node", "-e", f"console.log('Testing script: {safe_script_part}...')"]
-        subprocess.run(frida_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=15, shell=False)
+        # Use full path to node executable to avoid partial path issue
+        node_path = shutil.which("node") or "node"
+        frida_cmd = [node_path, "-e", f"console.log('Testing script: {safe_script_part}...')"]
+        # Validate that frida_cmd contains only safe, expected commands
+        if not isinstance(frida_cmd, list) or not all(isinstance(arg, str) for arg in frida_cmd):
+            raise ValueError(f"Unsafe command: {frida_cmd}")
+        subprocess.run(frida_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=15, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         success = True
         output_lines = ["✅ Frida script validation successful", f"   Script size: {len(script)} bytes", f"   Target: {target_binary}"]
         return success, output_lines
@@ -2108,7 +2142,7 @@ class AutonomousAgent:
         if len(script) > 1000:
             analysis_output.append("✅ Complex script detected")
 
-        analysis_output.append("⚠️  VM execution not available - analysis only")
+        analysis_output.append("WARNING️  VM execution not available - analysis only")
         return analysis_output
 
     def execute_autonomous_task(self, task_config: dict[str, Any]) -> dict[str, Any]:

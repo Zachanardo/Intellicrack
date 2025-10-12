@@ -563,19 +563,19 @@ class DebuggerDialog(QDialog):
 
         elif msg_type == "eval_result":
             if "error" in data:
-                self.console.append(f"❌ Error evaluating '{data['expression']}': {data['error']}")
+                self.console.append(f"ERROR Error evaluating '{data['expression']}': {data['error']}")
             else:
                 self.console.append(f"✅ {data['expression']} = {data['value']}")
 
         elif msg_type == "exception_break":
-            self.console.append(f"⚠️ Exception: {data['type']}: {data['message']}")
+            self.console.append(f"WARNING️ Exception: {data['type']}: {data['message']}")
             self.console.append(data["traceback"])
 
         elif msg_type == "result":
             self.console.append(f"\n📤 Plugin returned: {data}")
 
         elif msg_type == "error":
-            self.console.append(f"❌ Error: {data}")
+            self.console.append(f"ERROR Error: {data}")
 
     def update_stack_display(self, stack_frames: list[dict[str, Any]]):
         """Update call stack display."""

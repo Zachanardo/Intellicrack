@@ -1,3 +1,15 @@
+"""
+Functional tests for Intellicrack's network operations capabilities.
+
+This module contains comprehensive tests for network operations and license emulation
+in Intellicrack, including FlexLM license server emulation, HASP dongle emulation,
+Adobe license protocol handling, encrypted communication with license servers,
+network capture and protocol analysis, multi-protocol switching, session management,
+protocol fuzzing for license bypass, rate limiting, license protocol obfuscation,
+and anti-detection techniques for license server emulation. These tests ensure
+the network operations work correctly with real protocols and data.
+"""
+
 import pytest
 import tempfile
 import os

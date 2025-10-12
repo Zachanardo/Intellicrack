@@ -69,7 +69,7 @@ class FileApprovalDialog(QDialog if QDialog is not None else object):
         layout.addWidget(details_text)
 
         # Warning
-        warning = QLabel("⚠️ Only approve if you trust the AI's analysis purpose.")
+        warning = QLabel("WARNING️ Only approve if you trust the AI's analysis purpose.")
         warning.setStyleSheet("color: orange; font-weight: bold;")
         layout.addWidget(warning)
 
@@ -242,6 +242,7 @@ class FileReadTool:
         Args:
             app_instance: Optional Qt application instance for UI updates
             max_file_size: Maximum file size limit in bytes (default: 10MB)
+
         """
         self.app_instance = app_instance
         self.max_file_size = max_file_size  # File size limit in bytes
@@ -251,6 +252,7 @@ class FileReadTool:
 
         Args:
             max_file_size: Maximum file size in bytes
+
         """
         if max_file_size <= 0:
             raise ValueError("Max file size must be positive")
@@ -400,6 +402,7 @@ class AIFileTools:
         Args:
             app_instance: Optional Qt application instance for UI updates
             max_file_size: Maximum file size limit in bytes (default: 10MB)
+
         """
         self.app_instance = app_instance
         self.search_tool = FileSearchTool(app_instance)

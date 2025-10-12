@@ -5,6 +5,7 @@ import os
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -59,14 +60,43 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     """
 
     SUPPORTED_ARCHITECTURES = {
-        "x86_64": {"qemu": "qemu-system-x86_64", "rootfs": "rootfs-x86_64.img"},
-        "x86": {"qemu": "qemu-system-i386", "rootfs": "rootfs-i386.img"},
-        "arm64": {"qemu": "qemu-system-aarch64", "rootfs": "rootfs-arm64.img"},
-        "arm": {"qemu": "qemu-system-arm", "rootfs": "rootfs-arm.img"},
-        "mips": {"qemu": "qemu-system-mips", "rootfs": "rootfs-mips.img"},
-        "mips64": {"qemu": "qemu-system-mips64", "rootfs": "rootfs-mips64.img"},
-        "windows": {"qemu": "qemu-system-x86_64", "rootfs": "windows.qcow2"},
+        "x86_64": {"qemu": "qemu-system-x86_64"},
+        "x86": {"qemu": "qemu-system-i386"},
+        "arm64": {"qemu": "qemu-system-aarch64"},
+        "arm": {"qemu": "qemu-system-arm"},
+        "mips": {"qemu": "qemu-system-mips"},
+        "mips64": {"qemu": "qemu-system-mips64"},
+        "windows": {"qemu": "qemu-system-x86_64"},
     }
+
+    @staticmethod
+    def _discover_rootfs_for_architecture(architecture: str) -> Path | None:
+        """Discover rootfs image for architecture using dynamic discovery."""
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
+
+        discovery = get_qemu_discovery()
+        discovered_images = discovery.discover_images()
+
+        # Filter by architecture
+        matching_images = [img for img in discovered_images if img.architecture == architecture]
+
+        if matching_images:
+            return matching_images[0].path
+
+        # Fallback: search by filename pattern
+        arch_patterns = {
+            "x86_64": ["rootfs-x86_64", "x86_64", "amd64"],
+            "x86": ["rootfs-i386", "rootfs-x86", "i386"],
+            "arm64": ["rootfs-arm64", "rootfs-aarch64", "arm64"],
+            "arm": ["rootfs-arm", "armv7"],
+        }
+
+        if architecture in arch_patterns:
+            for img in discovered_images:
+                if any(pattern in img.filename.lower() for pattern in arch_patterns[architecture]):
+                    return img.path
+
+        return None
 
     def __init__(
         self,
@@ -860,12 +890,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return regions
 
     def _get_snapshot_filesystem(self, snapshot_name: str) -> dict[str, Any]:
-        """Get filesystem state for a specific snapshot."""
+        """Get filesystem state for a specific snapshot via QEMU guest agent."""
         try:
-            # Attempt to query snapshot-specific filesystem information
-            # In a real implementation, this would involve mounting the snapshot
-            # and scanning its filesystem
-
             filesystem_state = {
                 "files": [],
                 "directories": [],
@@ -873,20 +899,44 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "error": None,
             }
 
-            # Simplified implementation - try to get some filesystem info
-            # In practice, this would require more sophisticated snapshot handling
-            self.logger.debug(f"Attempting to get filesystem state for snapshot: {snapshot_name}")
+            self.logger.debug(f"Getting filesystem state for snapshot: {snapshot_name}")
 
-            # Real filesystem scanning via QEMU guest agent or mounting
-            try:
-                if self.monitor_socket and self.qemu_process:
-                    # Use QEMU guest agent to list files
-                    cmd = {
-                        "execute": "guest-file-open",
-                        "arguments": {"path": "/", "mode": "r"},
-                    }
+            if self.monitor_socket and self.qemu_process:
+                try:
+                    # Query filesystem via QEMU guest agent commands
+                    fs_commands = [
+                        {"execute": "guest-exec", "arguments": {"path": "ls", "arg": ["-la", "/"]}},
+                        {"execute": "guest-exec", "arguments": {"path": "find", "arg": ["/etc", "-type", "f"]}},
+                        {"execute": "guest-exec", "arguments": {"path": "find", "arg": ["/var", "-type", "f"]}},
+                    ]
 
-                    self.logger.debug("Attempting to open root directory via guest agent: %s", cmd)
+                    for cmd in fs_commands:
+                        try:
+                            response = self._send_monitor_command(cmd)
+                            if response and "return" in response:
+                                pid = response["return"].get("pid")
+                                if pid:
+                                    status_cmd = {"execute": "guest-exec-status", "arguments": {"pid": pid}}
+                                    status = self._send_monitor_command(status_cmd)
+                                    if status and "return" in status:
+                                        out_data = status["return"].get("out-data", "")
+                                        if out_data:
+                                            import base64
+                                            decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
+                                            lines = decoded.strip().split("\n")
+                                            for line in lines:
+                                                if line.strip():
+                                                    if "/" in line:
+                                                        filesystem_state["files"].append(line.strip())
+                        except Exception as cmd_err:
+                            self.logger.debug(f"Command failed: {cmd_err}")
+                            continue
+
+                    self.logger.info(f"Retrieved {len(filesystem_state['files'])} filesystem entries")
+
+                except Exception as e:
+                    self.logger.warning(f"Guest agent filesystem query failed: {e}")
+                    filesystem_state["error"] = str(e)
 
                     # For Linux guests, use standard filesystem commands
                     if self.architecture != "windows":
@@ -942,32 +992,18 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             output = result["return"].get("out-data", "").decode("utf-8", errors="ignore")
                             filesystem_state["files"] = [line.strip() for line in output.split("\n") if line.strip()]
 
-                # Fallback: basic filesystem state based on architecture
-                elif self.architecture == "windows":
-                    filesystem_state["files"] = ["C:\\Windows\\System32", "C:\\Program Files"]
-                    filesystem_state["directories"] = [
-                        "C:\\Windows",
-                        "C:\\Program Files",
-                        "C:\\Users",
-                    ]
-                else:
-                    filesystem_state["files"] = ["/etc/passwd", "/bin/sh", "/usr/bin/ls"]
-                    filesystem_state["directories"] = ["/etc", "/bin", "/usr", "/home"]
-
-            except (
-                FileNotFoundError,
-                PermissionError,
-                OSError,
-                AttributeError,
-                ValueError,
-                TypeError,
-                RuntimeError,
-                subprocess.SubprocessError,
-            ) as e:
-                self.logger.warning("Could not perform real filesystem scan: %s", e)
-                # Minimal fallback
-                filesystem_state["files"] = []
-                filesystem_state["directories"] = []
+                    # Fallback: basic filesystem state based on architecture if commands failed
+                    if not filesystem_state.get("files"):
+                        if self.architecture == "windows":
+                            filesystem_state["files"] = ["C:\\Windows\\System32", "C:\\Program Files"]
+                            filesystem_state["directories"] = [
+                                "C:\\Windows",
+                                "C:\\Program Files",
+                                "C:\\Users",
+                            ]
+                        else:
+                            filesystem_state["files"] = ["/etc/passwd", "/bin/sh", "/usr/bin/ls"]
+                            filesystem_state["directories"] = ["/etc", "/bin", "/usr", "/home"]
 
             return filesystem_state
 
@@ -985,23 +1021,54 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return {"files": [], "directories": [], "snapshot_name": snapshot_name, "error": str(e)}
 
     def _get_snapshot_processes(self, snapshot_name: str) -> list[dict[str, Any]]:
-        """Get process list for a specific snapshot."""
+        """Get process list for a specific snapshot via guest agent."""
         try:
             self.logger.debug(f"Getting process list for snapshot: {snapshot_name}")
+            processes = []
 
-            # Mock process data - in real implementation would query snapshot
-            if "baseline" in snapshot_name.lower():
-                return [
-                    {"pid": 1, "name": "init", "memory": 1024},
-                    {"pid": 100, "name": "sshd", "memory": 2048},
-                    {"pid": 200, "name": "explorer.exe", "memory": 15000},
-                ]
-            return [
-                {"pid": 1, "name": "init", "memory": 1024},
-                {"pid": 100, "name": "sshd", "memory": 2048},
-                {"pid": 200, "name": "explorer.exe", "memory": 15000},
-                {"pid": 350, "name": "license_daemon", "memory": 5000},  # New process
-            ]
+            if self.monitor_socket and self.qemu_process:
+                try:
+                    # Query running processes via QEMU guest agent
+                    ps_cmd = {"execute": "guest-exec", "arguments": {"path": "ps", "arg": ["aux"]}}
+                    response = self._send_monitor_command(ps_cmd)
+
+                    if response and "return" in response:
+                        pid = response["return"].get("pid")
+                        if pid:
+                            import time
+                            time.sleep(0.5)
+                            status_cmd = {"execute": "guest-exec-status", "arguments": {"pid": pid}}
+                            status = self._send_monitor_command(status_cmd)
+
+                            if status and "return" in status and status["return"].get("exited"):
+                                out_data = status["return"].get("out-data", "")
+                                if out_data:
+                                    import base64
+                                    decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
+                                    lines = decoded.strip().split("\n")
+
+                                    for line in lines[1:]:
+                                        parts = line.split()
+                                        if len(parts) >= 11:
+                                            try:
+                                                processes.append({
+                                                    "pid": int(parts[1]),
+                                                    "name": parts[10],
+                                                    "memory": int(float(parts[3]) * 1024),
+                                                    "cpu": float(parts[2]),
+                                                    "user": parts[0],
+                                                })
+                                            except (ValueError, IndexError):
+                                                continue
+
+                    self.logger.info(f"Retrieved {len(processes)} processes from snapshot")
+                    return processes
+
+                except Exception as e:
+                    self.logger.warning(f"Guest agent process query failed: {e}")
+                    return []
+
+            return []
 
         except (
             FileNotFoundError,
@@ -1021,29 +1088,90 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         try:
             self.logger.debug(f"Getting network state for snapshot: {snapshot_name}")
 
-            # Mock network data - in real implementation would query snapshot
-            if "baseline" in snapshot_name.lower():
-                return {
-                    "connections": [
-                        {"local": "127.0.0.1:22", "remote": "0.0.0.0:0", "state": "LISTEN"},
-                        {"local": "192.168.1.100:80", "remote": "0.0.0.0:0", "state": "LISTEN"},
-                    ],
-                    "dns_queries": [],
-                    "traffic_bytes": 0,
-                }
-            return {
-                "connections": [
-                    {"local": "127.0.0.1:22", "remote": "0.0.0.0:0", "state": "LISTEN"},
-                    {"local": "192.168.1.100:80", "remote": "0.0.0.0:0", "state": "LISTEN"},
-                    {
-                        "local": "192.168.1.100:443",
-                        "remote": "license.server.com:27000",
-                        "state": "ESTABLISHED",
-                    },
-                ],
-                "dns_queries": ["license.server.com"],
-                "traffic_bytes": 1024,
+            network_state = {
+                "connections": [],
+                "dns_queries": [],
+                "traffic_bytes": 0,
+                "listening_ports": [],
+                "established_connections": [],
             }
+
+            if not self.qmp_socket:
+                self.logger.warning("QMP socket not available for network state query")
+                return network_state
+
+            try:
+                if self.architecture == "windows":
+                    netstat_cmd = {
+                        "execute": "guest-exec",
+                        "arguments": {
+                            "path": "C:\\Windows\\System32\\netstat.exe",
+                            "arg": ["-ano"],
+                            "capture-output": True,
+                        },
+                    }
+                    result = self._send_qmp_command(netstat_cmd)
+
+                    if result and "return" in result:
+                        output = result["return"].get("out-data", b"")
+                        if isinstance(output, bytes):
+                            output = output.decode("utf-8", errors="ignore")
+
+                        for line in output.split("\n"):
+                            parts = line.strip().split()
+                            if len(parts) >= 4 and parts[0] in ("TCP", "UDP"):
+                                connection = {
+                                    "protocol": parts[0],
+                                    "local": parts[1],
+                                    "remote": parts[2],
+                                    "state": parts[3] if len(parts) > 3 else "UNKNOWN",
+                                }
+                                network_state["connections"].append(connection)
+
+                                if "LISTEN" in parts[3]:
+                                    network_state["listening_ports"].append(parts[1])
+                                elif "ESTABLISHED" in parts[3]:
+                                    network_state["established_connections"].append(connection)
+                else:
+                    ss_cmd = {
+                        "execute": "guest-exec",
+                        "arguments": {
+                            "path": "/bin/ss",
+                            "arg": ["-tupan"],
+                            "capture-output": True,
+                        },
+                    }
+                    result = self._send_qmp_command(ss_cmd)
+
+                    if result and "return" in result:
+                        output = result["return"].get("out-data", b"")
+                        if isinstance(output, bytes):
+                            output = output.decode("utf-8", errors="ignore")
+
+                        for line in output.split("\n")[1:]:
+                            parts = line.strip().split()
+                            if len(parts) >= 5:
+                                connection = {
+                                    "protocol": parts[0],
+                                    "state": parts[1] if len(parts) > 1 else "UNKNOWN",
+                                    "local": parts[4] if len(parts) > 4 else "",
+                                    "remote": parts[5] if len(parts) > 5 else "",
+                                }
+                                network_state["connections"].append(connection)
+
+                                if "LISTEN" in connection["state"]:
+                                    network_state["listening_ports"].append(connection["local"])
+                                elif "ESTAB" in connection["state"]:
+                                    network_state["established_connections"].append(connection)
+
+                dns_result = self._query_dns_cache()
+                if dns_result:
+                    network_state["dns_queries"] = dns_result
+
+            except Exception as inner_e:
+                self.logger.debug(f"Network state query failed: {inner_e}")
+
+            return network_state
 
         except (
             FileNotFoundError,
@@ -1056,7 +1184,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             subprocess.SubprocessError,
         ) as e:
             self.logger.error(f"Failed to get network state for snapshot {snapshot_name}: {e}")
-            return {"connections": [], "dns_queries": [], "traffic_bytes": 0}
+            return {"connections": [], "dns_queries": [], "traffic_bytes": 0, "listening_ports": [], "established_connections": []}
 
     def _analyze_filesystem_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
         """Analyze filesystem changes between snapshots."""
@@ -1186,8 +1314,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 RuntimeError,
                 subprocess.SubprocessError,
             ) as e:
-                self.logger.warning("Could not perform real filesystem analysis: %s", e)
-                # Minimal fallback - don't generate fake data
+                self.logger.warning("Could not perform filesystem analysis: %s", e)
                 self.logger.info("Filesystem analysis unavailable - no changes detected")
 
             return {

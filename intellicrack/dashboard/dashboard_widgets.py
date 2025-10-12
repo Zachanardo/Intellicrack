@@ -28,7 +28,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 try:
-    import matplotlib.pyplot as plt
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure
 
@@ -97,6 +96,7 @@ class DashboardWidget:
 
         Args:
             config: Widget configuration
+
         """
         self.config = config
         self.logger = logger
@@ -109,6 +109,7 @@ class DashboardWidget:
 
         Args:
             data: New widget data
+
         """
         self.data_history.append(data)
         self.last_update = datetime.now()
@@ -122,6 +123,7 @@ class DashboardWidget:
 
         Returns:
             Rendered widget data
+
         """
         # Default implementation returns basic JSON representation
         current = self.get_current_data()
@@ -151,6 +153,7 @@ class DashboardWidget:
 
         Returns:
             Most recent widget data
+
         """
         return self.data_history[-1] if self.data_history else None
 
@@ -166,6 +169,7 @@ class LineChartWidget(DashboardWidget):
 
         Returns:
             Rendered chart data
+
         """
         if not self.data_history:
             return None
@@ -224,7 +228,9 @@ class LineChartWidget(DashboardWidget):
 
     def _render_matplotlib(self) -> Figure:
         """Render using Matplotlib."""
-        fig, ax = plt.subplots(figsize=(self.config.width / 100, self.config.height / 100))
+        fig = Figure(figsize=(self.config.width / 100, self.config.height / 100))
+        FigureCanvasAgg(fig)  # Use FigureCanvasAgg that was imported
+        ax = fig.add_subplot(111)
 
         x_data = [data.timestamp for data in self.data_history]
 
@@ -253,6 +259,7 @@ class GaugeWidget(DashboardWidget):
 
         Returns:
             Rendered gauge data
+
         """
         current = self.get_current_data()
         if not current:
@@ -320,6 +327,7 @@ class TableWidget(DashboardWidget):
 
         Returns:
             Rendered table data
+
         """
         current = self.get_current_data()
         if not current:
@@ -381,6 +389,7 @@ class HeatmapWidget(DashboardWidget):
 
         Returns:
             Rendered heatmap data
+
         """
         current = self.get_current_data()
         if not current:
@@ -418,6 +427,7 @@ class NetworkGraphWidget(DashboardWidget):
 
         Returns:
             Rendered network graph
+
         """
         current = self.get_current_data()
         if not current:
@@ -486,20 +496,28 @@ class NetworkGraphWidget(DashboardWidget):
 
         node_trace.marker.color = node_adjacencies
 
-        # Create figure
-        fig = go.Figure(
-            data=[edge_trace, node_trace],
-            layout=go.Layout(
-                title=self.config.title,
-                showlegend=False,
-                hovermode="closest",
-                margin=dict(b=20, l=5, r=5, t=40),
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                width=self.config.width,
-                height=self.config.height,
-            ),
+        # Use make_subplots to create the network visualization
+        fig = make_subplots(
+            rows=1,
+            cols=1,
+            subplot_titles=[self.config.title],
         )
+
+        # Add traces to subplots
+        fig.add_trace(edge_trace, row=1, col=1)
+        fig.add_trace(node_trace, row=1, col=1)
+
+        # Update layout properties
+        fig.update_layout(
+            showlegend=False,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            width=self.config.width,
+            height=self.config.height,
+        )
+
         return fig
 
 
@@ -514,6 +532,7 @@ class TimelineWidget(DashboardWidget):
 
         Returns:
             Rendered timeline
+
         """
         if not self.data_history:
             return None
@@ -548,6 +567,7 @@ class ProgressWidget(DashboardWidget):
 
         Returns:
             Rendered progress data
+
         """
         current = self.get_current_data()
         if not current:
@@ -594,6 +614,7 @@ class WidgetFactory:
 
         Returns:
             Dashboard widget instance
+
         """
         widget_map = {
             WidgetType.LINE_CHART: LineChartWidget,
@@ -614,7 +635,7 @@ class WidgetFactory:
 
 
 def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs) -> DashboardWidget:
-    """Helper function to create a widget.
+    """Create a widget.
 
     Args:
         widget_id: Unique widget identifier
@@ -624,6 +645,7 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs)
 
     Returns:
         Dashboard widget instance
+
     """
     config = WidgetConfig(widget_id=widget_id, widget_type=widget_type, title=title, **kwargs)
     return WidgetFactory.create_widget(config)

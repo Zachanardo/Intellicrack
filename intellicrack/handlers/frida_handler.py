@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Frida handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -86,6 +88,7 @@ except ImportError as e:
 
             Returns:
                 List of FallbackProcess objects
+
             """
             processes = []
 
@@ -199,6 +202,7 @@ except ImportError as e:
 
             Returns:
                 Process ID of spawned process
+
             """
             if argv is None:
                 argv = []
@@ -319,6 +323,7 @@ except ImportError as e:
 
             Returns:
                 Process ID of the running process in the terminal session
+
             """
             try:
                 from intellicrack.core.terminal_manager import get_terminal_manager
@@ -371,7 +376,7 @@ except ImportError as e:
             return params
 
         def __repr__(self):
-            """String representation."""
+            """Represent as string."""
             return f"Process(pid={self.pid}, name='{self.name}')"
 
     class FallbackSession:

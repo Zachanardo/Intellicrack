@@ -592,7 +592,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                 if pattern_result.get("gpu_available"):
                     app_instance.update_output.emit(f"  ✅ GPU pattern matching successful - Backend: {backend}")
                 else:
-                    app_instance.update_output.emit("  ⚠️ Using CPU fallback for pattern matching")
+                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for pattern matching")
                 app_instance.update_output.emit(f"  📊 Result: {pattern_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
@@ -614,7 +614,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in runner_functions: %s", e)
                 if app_instance:
-                    app_instance.update_output.emit(f"  ⚠️ Entropy calculation failed: {e}")
+                    app_instance.update_output.emit(f"  WARNING️ Entropy calculation failed: {e}")
                     app_instance.update_output.emit("")
 
             # Test GPU-accelerated hashing
@@ -628,7 +628,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                 if crypto_result.get("gpu_available"):
                     app_instance.update_output.emit(f"  ✅ GPU crypto operations successful - Backend: {crypto_backend}")
                 else:
-                    app_instance.update_output.emit("  ⚠️ Using CPU fallback for crypto operations")
+                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for crypto operations")
                 app_instance.update_output.emit(f"  📊 Result: {crypto_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
@@ -640,7 +640,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                     app_instance.update_output.emit(f"  🎯 Active backend: {status.get('selected_backend')}")
                     app_instance.update_output.emit("  🚀 Pattern matching, entropy calculation, and hashing accelerated")
                 else:
-                    app_instance.update_output.emit("  ⚠️ GPU acceleration not available - using optimized CPU fallbacks")
+                    app_instance.update_output.emit("  WARNING️ GPU acceleration not available - using optimized CPU fallbacks")
                     app_instance.update_output.emit("  💡 Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
 
                 app_instance.update_output.emit("=" * 50)
@@ -661,13 +661,13 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
         except ImportError as e:
             logger.warning("GPUAccelerator not available")
             if app_instance:
-                app_instance.update_output.emit(f"❌ GPU accelerator not available: {e}")
+                app_instance.update_output.emit(f"ERROR GPU accelerator not available: {e}")
             return {"status": "error", "message": "GPU accelerator not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running GPU accelerated analysis: %s", e)
         if app_instance:
-            app_instance.update_output.emit(f"❌ Error in GPU analysis: {e}")
+            app_instance.update_output.emit(f"ERROR Error in GPU analysis: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -1846,7 +1846,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
 
 # Export all runner functions
 def run_ghidra_plugin_from_file(app, plugin_path):
-    """Runs a Ghidra script on the current binary.
+    """Run a Ghidra script on the current binary.
 
     Args:
         app: Application instance

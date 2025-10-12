@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Demo plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -241,7 +243,7 @@ class DemoPlugin(BasePlugin):
             results.append("🔍 Step 1: File Validation")
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ {validation_msg}")
+                results.append(f"ERROR {validation_msg}")
                 return results
             results.append(f"✅ {validation_msg}")
 
@@ -274,7 +276,7 @@ class DemoPlugin(BasePlugin):
             entropy = self._calculate_entropy(file_data)
             results.append(f"📈 Entropy: {entropy:.2f}")
             if entropy > 7.5:
-                results.append("   ⚠️  High entropy - possibly packed/encrypted")
+                results.append("   WARNING️  High entropy - possibly packed/encrypted")
             elif entropy < 1.0:
                 results.append("   INFO: Low entropy - likely text or structured data")
             else:
@@ -345,7 +347,7 @@ class DemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
-            results.append(f"❌ Analysis error: {e!s}")
+            results.append(f"ERROR Analysis error: {e!s}")
             results.append("💡 This error is being handled gracefully")
 
         return results
@@ -368,12 +370,12 @@ class DemoPlugin(BasePlugin):
                 results.append(f"💾 Backup created: {os.path.basename(backup_path)}")
             except Exception as e:
                 logger.error("Exception in demo_plugin: %s", e)
-                results.append(f"⚠️  Backup failed: {e}")
+                results.append(f"WARNING️  Backup failed: {e}")
                 if options.get("require_backup", True):
-                    results.append("❌ Aborting patch for safety")
+                    results.append("ERROR Aborting patch for safety")
                     success = False
         elif options.get("mode") == "apply" and not options.get("create_backup", True):
-            results.append("⚠️  Backup disabled by options - proceeding without safety net")
+            results.append("WARNING️  Backup disabled by options - proceeding without safety net")
 
         return success, backup_path, results
 
@@ -391,7 +393,7 @@ class DemoPlugin(BasePlugin):
             if success:
                 results.append("✅ Patch applied successfully at target offset")
             else:
-                results.append("❌ Failed to apply patch at target offset")
+                results.append("ERROR Failed to apply patch at target offset")
 
         elif patch_mode == "test":
             results.extend(self._test_patch_at_offset(binary_path, target_offset, patch_bytes))
@@ -433,15 +435,15 @@ class DemoPlugin(BasePlugin):
                     if file_size > 0:
                         results.append("✅ File integrity maintained")
                     else:
-                        results.append("⚠️ File integrity check failed")
+                        results.append("WARNING️ File integrity check failed")
                 else:
-                    results.append("❌ Test patch verification failed")
+                    results.append("ERROR Test patch verification failed")
 
                 # Clean up temp file
                 os.unlink(temp_file.name)
 
         except Exception as test_error:
-            results.append(f"❌ Test patch failed: {test_error}")
+            results.append(f"ERROR Test patch failed: {test_error}")
             results.append(f"   Patch size: {len(patch_bytes) if patch_bytes else 0} bytes")
 
         return results
@@ -515,7 +517,7 @@ class DemoPlugin(BasePlugin):
             else:
                 results.append("  • 📊 Analysis mode - review only")
         else:
-            results.append("⚠️  No safe patch locations identified")
+            results.append("WARNING️  No safe patch locations identified")
 
         return results
 
@@ -547,7 +549,7 @@ class DemoPlugin(BasePlugin):
             # Validation
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ Cannot patch: {validation_msg}")
+                results.append(f"ERROR Cannot patch: {validation_msg}")
                 return results
 
             results.append(f"✅ {validation_msg}")
@@ -623,7 +625,7 @@ class DemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in demo_plugin: %s", e)
-            results.append(f"❌ Patch demonstration error: {e!s}")
+            results.append(f"ERROR Patch demonstration error: {e!s}")
             results.append("💡 This error is being handled gracefully")
 
         return results

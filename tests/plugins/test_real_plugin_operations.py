@@ -1,3 +1,29 @@
+"""
+Functional tests for Intellicrack's plugin system operations.
+
+This module contains comprehensive tests for REAL plugin system operations in Intellicrack,
+including plugin loading and discovery operations, plugin execution with validation,
+plugin security validation and sandboxing, plugin manager operations,
+plugin lifecycle management, plugin error handling and recovery,
+plugin performance monitoring, plugin dependency management,
+plugin hot reload functionality, and plugin resource management and cleanup.
+These tests ensure the plugin system works correctly with real plugins
+and maintains proper security, performance, and resource management.
+"""
+
+"""
+Functional tests for Intellicrack's plugin system operations.
+
+This module contains comprehensive tests for plugin system operations in Intellicrack,
+including plugin loading and discovery operations, plugin execution with validation,
+plugin security validation and sandboxing, plugin manager operations,
+plugin lifecycle management, plugin error handling and recovery,
+plugin performance monitoring, plugin dependency management,
+plugin hot reload functionality, and plugin resource management and cleanup.
+These tests ensure the plugin system works correctly with real plugins
+and maintains proper security, performance, and resource management.
+"""
+
 import pytest
 import tempfile
 import os

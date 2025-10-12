@@ -20,11 +20,15 @@ import csv
 import datetime
 import json
 import os
-import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+try:
+    import defusedxml.ElementTree as ET  # noqa: N817
+except ImportError:
+    import xml.etree.ElementTree as ET  # noqa: N817, S314
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
@@ -680,7 +684,7 @@ class ComparisonReportGenerator:
 
 
 def generate_report(analysis_data: Dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
-    """Convenience function to generate a report."""
+    """Generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
@@ -696,6 +700,6 @@ def export_report(analysis_data: Dict[str, Any], format: str = "html", output_pa
 
 
 def generate_comparison_report(results: List[Dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
-    """Convenience function to generate a comparison report."""
+    """Generate a comparison report."""
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

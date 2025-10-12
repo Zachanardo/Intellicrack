@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Protection-aware script generation for Intellicrack AI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -4627,7 +4629,7 @@ console.log("[+] Cloud licensing bypass activated");
         }
 
     def _get_custom_obfuscation_scripts(self) -> dict[str, str]:
-        """Custom obfuscation and packing bypass scripts."""
+        """Get custom obfuscation and packing bypass scripts."""
         return {
             "frida": """// Custom Obfuscation/Packing Bypass
 // Generic unpacker and deobfuscator for custom protections
@@ -5057,7 +5059,7 @@ console.log("[+] SafeNet Sentinel bypass activated");
         }
 
     def _get_basic_analysis_script(self, script_type: str) -> str:
-        """Basic analysis script for unprotected binaries."""
+        """Get basic analysis script for unprotected binaries."""
         if script_type == "frida":
             return """// Basic Binary Analysis Script
 // No protection detected - standard analysis
@@ -5095,7 +5097,7 @@ console.log("[+] Basic analysis hooks installed");
         return "// Basic analysis script"
 
     def _get_generic_bypass_script(self, script_type: str) -> str:
-        """Generic bypass script for unknown protections."""
+        """Get generic bypass script for unknown protections."""
         if script_type == "frida":
             return """// Generic Protection Bypass Script
 // For unknown/custom protection schemes
@@ -5156,7 +5158,7 @@ console.log("[+] Generic bypass hooks installed");
         return "// Generic bypass script"
 
     def _get_generic_analysis_script(self, script_type: str) -> str:
-        """Generic analysis script when protection detection fails."""
+        """Get generic analysis script when protection detection fails."""
         script_type_upper = script_type.upper()
 
         if script_type.lower() == "frida":

@@ -594,7 +594,7 @@ class ASCIIChartGenerator:
             }
 
             for prot, enabled in prot_data.items():
-                status = "[green]✅ Enabled[/green]" if enabled else "[red]❌ Disabled[/red]"
+                status = "[green]✅ Enabled[/green]" if enabled else "[red]ERROR Disabled[/red]"
                 desc = prot_descriptions.get(prot, "Security feature")
                 prot_table.add_row(
                     prot.upper(),

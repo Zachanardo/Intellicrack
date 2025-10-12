@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Anthropic repository for Intellicrack model repositories.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify

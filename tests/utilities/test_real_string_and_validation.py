@@ -1,3 +1,13 @@
+"""
+Tests for real string operations and validation in Intellicrack.
+
+This module contains comprehensive tests for real string manipulation,
+encoding/decoding, hex utilities, type validation, pattern matching,
+security validation, and text analysis operations. The tests validate
+that string processing functions work correctly for security research
+and binary analysis tasks.
+"""
+
 import pytest
 import re
 import unicodedata

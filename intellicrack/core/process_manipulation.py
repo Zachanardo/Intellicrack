@@ -1,5 +1,5 @@
-"""
-Process manipulation module for license protection analysis.
+"""Process manipulation module for license protection analysis.
+
 Provides memory reading/writing and process control for identifying
 and bypassing licensing mechanisms in software.
 """
@@ -7,7 +7,9 @@ and bypassing licensing mechanisms in software.
 import ctypes
 import ctypes.wintypes
 import logging
+import random
 import struct
+import time
 from datetime import datetime
 from enum import IntEnum
 from typing import Any, Dict, List, Optional
@@ -43,7 +45,7 @@ class ProcessInformationClass(IntEnum):
     ProcessDebugFlags = 31
 
 
-class LIST_ENTRY(ctypes.Structure):
+class ListEntry(ctypes.Structure):
     """Windows LIST_ENTRY structure for doubly-linked lists."""
 
     _fields_ = [
@@ -52,7 +54,7 @@ class LIST_ENTRY(ctypes.Structure):
     ]
 
 
-class UNICODE_STRING(ctypes.Structure):
+class UnicodeString(ctypes.Structure):
     """Windows UNICODE_STRING structure for string handling."""
 
     _fields_ = [
@@ -62,7 +64,7 @@ class UNICODE_STRING(ctypes.Structure):
     ]
 
 
-class RTL_USER_PROCESS_PARAMETERS(ctypes.Structure):
+class RtlUserProcessParameters(ctypes.Structure):
     """Windows RTL_USER_PROCESS_PARAMETERS structure from PEB."""
 
     _fields_ = [
@@ -75,28 +77,28 @@ class RTL_USER_PROCESS_PARAMETERS(ctypes.Structure):
         ("StandardInput", ctypes.c_void_p),
         ("StandardOutput", ctypes.c_void_p),
         ("StandardError", ctypes.c_void_p),
-        ("CurrentDirectory", UNICODE_STRING),
-        ("DllPath", UNICODE_STRING),
-        ("ImagePathName", UNICODE_STRING),
-        ("CommandLine", UNICODE_STRING),
+        ("CurrentDirectory", UnicodeString),
+        ("DllPath", UnicodeString),
+        ("ImagePathName", UnicodeString),
+        ("CommandLine", UnicodeString),
         ("Environment", ctypes.c_void_p),
     ]
 
 
-class PEB_LDR_DATA(ctypes.Structure):
+class PebLdrData(ctypes.Structure):
     """Windows PEB_LDR_DATA structure containing loader information."""
 
     _fields_ = [
         ("Length", ctypes.c_ulong),
         ("Initialized", ctypes.c_ubyte),
         ("SsHandle", ctypes.c_void_p),
-        ("InLoadOrderModuleList", LIST_ENTRY),
-        ("InMemoryOrderModuleList", LIST_ENTRY),
-        ("InInitializationOrderModuleList", LIST_ENTRY),
+        ("InLoadOrderModuleList", ListEntry),
+        ("InMemoryOrderModuleList", ListEntry),
+        ("InInitializationOrderModuleList", ListEntry),
     ]
 
 
-class PEB(ctypes.Structure):
+class Peb(ctypes.Structure):
     """Windows Process Environment Block structure for process information."""
 
     _fields_ = [
@@ -106,8 +108,8 @@ class PEB(ctypes.Structure):
         ("BitField", ctypes.c_ubyte),
         ("Mutant", ctypes.c_void_p),
         ("ImageBaseAddress", ctypes.c_void_p),
-        ("Ldr", ctypes.POINTER(PEB_LDR_DATA)),
-        ("ProcessParameters", ctypes.POINTER(RTL_USER_PROCESS_PARAMETERS)),
+        ("Ldr", ctypes.POINTER(PebLdrData)),
+        ("ProcessParameters", ctypes.POINTER(RtlUserProcessParameters)),
         ("SubSystemData", ctypes.c_void_p),
         ("ProcessHeap", ctypes.c_void_p),
         ("FastPebLock", ctypes.c_void_p),
@@ -132,12 +134,12 @@ class PEB(ctypes.Structure):
     ]
 
 
-class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+class ProcessBasicInformation(ctypes.Structure):
     """Windows PROCESS_BASIC_INFORMATION structure from NtQueryInformationProcess."""
 
     _fields_ = [
         ("ExitStatus", ctypes.c_void_p),
-        ("PebBaseAddress", ctypes.POINTER(PEB)),
+        ("PebBaseAddress", ctypes.POINTER(Peb)),
         ("AffinityMask", ctypes.c_void_p),
         ("BasePriority", ctypes.c_void_p),
         ("UniqueProcessId", ctypes.c_void_p),
@@ -145,7 +147,7 @@ class PROCESS_BASIC_INFORMATION(ctypes.Structure):
     ]
 
 
-class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+class MemoryBasicInformation(ctypes.Structure):
     """Windows MEMORY_BASIC_INFORMATION structure for memory region information."""
 
     _fields_ = [
@@ -160,7 +162,7 @@ class MEMORY_BASIC_INFORMATION(ctypes.Structure):
     ]
 
 
-class MEMORY_INFORMATION_CLASS(IntEnum):
+class MemoryInformationClass(IntEnum):
     """Memory information classes for NtQueryVirtualMemory."""
 
     MemoryBasicInformation = 0
@@ -210,6 +212,7 @@ class LicenseAnalyzer:
     ]
 
     def __init__(self):
+        """Initialize the ProcessManipulator with empty handles and protection signatures."""
         self.process_handle = None
         self.pid = None
         self.license_check_locations = []
@@ -431,7 +434,7 @@ class LicenseAnalyzer:
         regions = []
         address = 0
 
-        class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+        class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
@@ -571,6 +574,7 @@ class LicenseAnalyzer:
 
         Returns:
             Dictionary mapping pattern names to lists of match addresses
+
         """
         import concurrent.futures
         import threading
@@ -656,7 +660,7 @@ class LicenseAnalyzer:
         logger.info(f"Concurrent scan complete: {sum(len(v) for v in results.values())} total matches")
         return results
 
-    def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> Dict[str, List[Dict[str, Any]]]:
+    def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> Dict[str, List[Dict[str, Any]]]:  # noqa: C901
         """Analyze cross-references to/from a given address.
 
         Args:
@@ -665,6 +669,7 @@ class LicenseAnalyzer:
 
         Returns:
             Dictionary with 'references_to' and 'references_from' lists
+
         """
         import struct
 
@@ -838,6 +843,7 @@ class LicenseAnalyzer:
 
         Returns:
             Dictionary containing generated signature with pattern, mask, and confidence
+
         """
         import collections
 
@@ -987,6 +993,7 @@ class LicenseAnalyzer:
 
         Returns:
             Dictionary mapping function names to generated signatures
+
         """
         signatures = {}
 
@@ -1168,7 +1175,6 @@ class LicenseAnalyzer:
 
     def batch_scan_with_cache(self, patterns: List[Dict[str, Any]]) -> Dict[str, List[int]]:
         """Batch scan multiple patterns with intelligent caching."""
-
         results = {}
         cached_patterns = []
         uncached_patterns = []
@@ -1223,7 +1229,7 @@ class LicenseAnalyzer:
             ]
             self.ntdll.NtQueryInformationProcess.restype = ctypes.c_long
 
-            pbi = PROCESS_BASIC_INFORMATION()
+            pbi = ProcessBasicInformation()
             return_length = ctypes.c_ulong()
 
             status = self.ntdll.NtQueryInformationProcess(
@@ -1244,7 +1250,7 @@ class LicenseAnalyzer:
             logger.error(f"Failed to get PEB address: {e}")
             return None
 
-    def read_peb(self) -> Optional[PEB]:
+    def read_peb(self) -> Optional[Peb]:
         """Read PEB structure from target process."""
         if not self.process_handle:
             return None
@@ -1254,11 +1260,11 @@ class LicenseAnalyzer:
             return None
 
         try:
-            peb = PEB()
+            peb = Peb()
             bytes_read = ctypes.c_size_t()
 
             success = self.kernel32.ReadProcessMemory(
-                self.process_handle, ctypes.c_void_p(peb_addr), ctypes.byref(peb), ctypes.sizeof(PEB), ctypes.byref(bytes_read)
+                self.process_handle, ctypes.c_void_p(peb_addr), ctypes.byref(peb), ctypes.sizeof(Peb), ctypes.byref(bytes_read)
             )
 
             if success:
@@ -1473,8 +1479,8 @@ class LicenseAnalyzer:
         # Check IsDebuggerPresent API
         try:
             indicators["DebuggerPresent"] = bool(kernel32.IsDebuggerPresent())
-        except (AttributeError, OSError):
-            pass
+        except (AttributeError, OSError) as e:
+            logger.debug(f"Failed to check IsDebuggerPresent: {e}")
 
         return indicators
 
@@ -1489,7 +1495,7 @@ class LicenseAnalyzer:
 
         try:
             # Read process parameters
-            params = RTL_USER_PROCESS_PARAMETERS()
+            params = RtlUserProcessParameters()
             bytes_read = ctypes.c_size_t()
 
             success = self.kernel32.ReadProcessMemory(
@@ -1562,13 +1568,13 @@ class LicenseAnalyzer:
         self.ntdll.NtQueryVirtualMemory.restype = ctypes.c_long
 
         while current_address < max_address:
-            mbi = MEMORY_BASIC_INFORMATION()
+            mbi = MemoryBasicInformation()
             return_length = ctypes.c_size_t()
 
             status = self.ntdll.NtQueryVirtualMemory(
                 self.process_handle,
                 ctypes.c_void_p(current_address),
-                MEMORY_INFORMATION_CLASS.MemoryBasicInformation,
+                MemoryInformationClass.MemoryBasicInformation,
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi),
                 ctypes.byref(return_length),
@@ -1717,8 +1723,8 @@ class LicenseAnalyzer:
                         if module_name:
                             region_info["module_name"] = module_name
                             region_info["confidence"] = 1.0
-                    except (KeyError, TypeError):
-                        pass
+                    except (KeyError, TypeError) as e:
+                        logger.debug(f"Failed to get module name for region at {entry['base_address']}: {e}")
 
                 # Check for JIT code characteristics
                 elif "EXECUTE_READWRITE" in entry["protection"]:
@@ -1746,8 +1752,8 @@ class LicenseAnalyzer:
                     import os
 
                     return os.path.basename(module["path"])
-        except (KeyError, TypeError, ImportError):
-            pass
+        except (KeyError, TypeError, ImportError) as e:
+            logger.debug(f"Failed to get module name at address {address:#x}: {e}")
 
         return None
 
@@ -1830,8 +1836,8 @@ class LicenseAnalyzer:
                                 {"address": region["base_address"], "pattern_matched": pattern.hex(), "type": "shellcode_signature"}
                             )
                             break
-            except (KeyError, TypeError):
-                pass
+            except (KeyError, TypeError) as e:
+                logger.debug(f"Failed to check shellcode patterns for region: {e}")
 
         # 3. Check for VAD unlink signs
         if len(vad_entries) < 10 and self.pid:
@@ -1859,7 +1865,7 @@ class LicenseAnalyzer:
         current_address = 0
         max_address = 0x7FFFFFFFFFFFFFFF if ctypes.sizeof(ctypes.c_voidp) == 8 else 0x7FFFFFFF
 
-        mbi = MEMORY_BASIC_INFORMATION()
+        mbi = MemoryBasicInformation()
         size = ctypes.sizeof(mbi)
 
         while current_address < max_address:
@@ -2183,7 +2189,7 @@ class LicenseAnalyzer:
                 validation["is_safe"] = True
 
             # Check protection
-            mbi = MEMORY_BASIC_INFORMATION()
+            mbi = MemoryBasicInformation()
             result = kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
 
             if result:
@@ -2474,7 +2480,8 @@ class LicenseAnalyzer:
 
             if remaining >= 4:
                 # Use anti-disassembly pattern
-                pattern, size = random.choice([p for p in anti_patterns if p[1] <= remaining])
+                # Not used for cryptographic purposes, just to add variety to anti-disasm patterns
+                pattern, size = random.choice([p for p in anti_patterns if p[1] <= remaining])  # noqa: S311
                 anti_sled.extend(pattern)
             else:
                 # Fill with simple NOPs
@@ -2669,7 +2676,7 @@ class LicenseAnalyzer:
         return False
 
     def hook_api(self, module_name: str, function_name: str, hook_address: int) -> bool:
-        """Hook Windows API function."""
+        """Install hook for Windows API function."""
         if not self.process_handle:
             return False
 
@@ -2782,6 +2789,7 @@ class LicenseAnalyzer:
 
         Returns:
             Compiled bytes pattern
+
         """
         # Remove spaces and convert to bytes
         pattern_hex = pattern_hex.replace(" ", "").replace("??", "00")
@@ -2800,6 +2808,7 @@ class LicenseAnalyzer:
 
         Returns:
             Address of allocated memory or 0 on failure
+
         """
         if not self.process_handle:
             return 0
@@ -2826,6 +2835,7 @@ class LicenseAnalyzer:
 
         Returns:
             True if successful
+
         """
         if not self.process_handle:
             return False
@@ -2848,11 +2858,12 @@ class LicenseAnalyzer:
 
         Returns:
             Dictionary with memory region information
+
         """
         if not self.process_handle:
             return {}
 
-        class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+        class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
@@ -2885,6 +2896,7 @@ class LicenseAnalyzer:
 
         Returns:
             List of memory region information dictionaries
+
         """
         if not self.process_handle:
             return []

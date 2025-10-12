@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Dependency feedback system for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -220,7 +222,7 @@ class DependencyFeedback:
             return f"✅ {info['name']} is available and ready to use."
 
         message_parts = []
-        message_parts.append(f"❌ {info['name']} is not available.")
+        message_parts.append(f"ERROR {info['name']} is not available.")
         message_parts.append(f"   Purpose: {info['description']}")
 
         # Installation instructions
@@ -238,7 +240,7 @@ class DependencyFeedback:
 
         # Criticality
         if info["critical"]:
-            message_parts.append("   ⚠️  This is a CRITICAL dependency for core functionality.")
+            message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
         else:
             message_parts.append("   ℹ️  This is an optional dependency - reduced functionality available.")
 
@@ -402,7 +404,7 @@ class DependencyFeedback:
         """Create user-friendly error message with helpful guidance."""
         status = self.get_dependency_status(dep_name)
 
-        error_lines = [f"❌ ERROR in {operation}:", f"   {str(error)}", "", status["message"], ""]
+        error_lines = [f"ERROR ERROR in {operation}:", f"   {str(error)}", "", status["message"], ""]
 
         # Add quick fix suggestion
         if not status["available"]:

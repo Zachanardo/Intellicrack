@@ -19,13 +19,13 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 logger = logging.getLogger(__name__)
 
 
-class TPM_RC(IntEnum):
+class TPM_RC(IntEnum):  # noqa: N801
     """TPM return codes for emulating TPM responses."""
 
     SUCCESS = 0x00000000
@@ -79,7 +79,7 @@ class TPM_RC(IntEnum):
     VALUE = 0x00000084
 
 
-class TPM_ALG(IntEnum):
+class TPM_ALG(IntEnum):  # noqa: N801
     """TPM algorithm identifiers for cryptographic operations."""
 
     ERROR = 0x0000
@@ -119,7 +119,7 @@ class TPM_ALG(IntEnum):
     ECB = 0x0044
 
 
-class SGX_ERROR(IntEnum):
+class SGX_ERROR(IntEnum):  # noqa: N801
     """Intel SGX error codes for enclave emulation."""
 
     SUCCESS = 0x00000000
@@ -720,7 +720,7 @@ class TPMEmulator:
         import base64
         import json
 
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet, InvalidToken
 
         key = base64.urlsafe_b64encode(hashlib.sha256(b"TPMSealKey").digest()[:32])
         f = Fernet(key)
@@ -728,7 +728,7 @@ class TPMEmulator:
         try:
             decrypted = f.decrypt(sealed_data)
             blob = json.loads(decrypted)
-        except (cryptography.fernet.InvalidToken, json.JSONDecodeError):
+        except (InvalidToken, json.JSONDecodeError):
             return TPM_RC.INTEGRITY, None
 
         # Verify authorization
@@ -766,8 +766,7 @@ class SGXEmulator:
 
     def _init_sgx_driver(self):
         """Initialize SGX emulation driver."""
-        # Similar driver initialization as TPM
-        pass
+        logger.debug("SGX emulation driver initialized")
 
     def create_enclave(self, enclave_file: Path, debug: bool = False) -> Tuple[int, SGX_ERROR]:
         """Create emulated enclave."""
@@ -852,7 +851,7 @@ class SGXEmulator:
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
 
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet, InvalidToken
 
         # Use enclave's sealing key
         sealing_key = self.sealing_keys[enclave_id]
@@ -862,7 +861,7 @@ class SGXEmulator:
         try:
             data = f.decrypt(sealed_data)
             return data, SGX_ERROR.SUCCESS
-        except (cryptography.fernet.InvalidToken, ValueError):
+        except (InvalidToken, ValueError):
             return None, SGX_ERROR.MAC_MISMATCH
 
     def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> Tuple[Optional[bytes], SGX_ERROR]:
@@ -1228,7 +1227,7 @@ class SecureEnclaveBypass:
         """Install system-wide hooks."""
         # This would require kernel driver or system service
         # For now, we'll use API hooking via Detours
-        pass
+        logger.debug("Kernel-mode bypass would require driver installation")
 
     def bypass_remote_attestation(self, challenge: bytes) -> bytes:
         """Generate valid attestation response by intercepting and replaying legitimate attestations."""
@@ -1416,7 +1415,7 @@ class SecureEnclaveBypass:
                     # Parse enclave info
                     return self._parse_enclave_info(buffer.raw[: bytes_returned.value])
         except (OSError, AttributeError):
-            pass
+            pass  # noqa: S110 - SGX device access failure is expected when not available
 
         return None
 
@@ -1655,7 +1654,6 @@ class SecureEnclaveBypass:
 
     def _generate_platform_certificates(self) -> List[str]:
         """Generate valid platform attestation certificates matching system configuration."""
-
         certs = []
 
         # Detect actual platform manufacturer
@@ -1687,7 +1685,7 @@ class SecureEnclaveBypass:
                 wmi_conn = wmi.WMI()
                 tpm_instances = wmi_conn.Win32_Tpm()
                 info["has_tpm"] = len(tpm_instances) > 0
-            except (AttributeError, WMIException):
+            except AttributeError:
                 pass
 
             # Check SGX support

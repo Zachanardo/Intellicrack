@@ -21,7 +21,7 @@ class GroundTruthEstablisher:
     CRITICAL: This class NEVER uses Intellicrack for ground truth generation.
     """
 
-    def __init__(self, base_dir: str = r"C:\Intellicrack\tests\validation_system"):
+    def __init__(self, base_dir: str = r"D:\Intellicrack\tests\validation_system"):
         self.base_dir = Path(base_dir)
         self.ground_truth_dir = self.base_dir / "certified_ground_truth"
         self.binaries_dir = self.base_dir / "commercial_binaries"

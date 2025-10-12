@@ -435,7 +435,7 @@ class TestGeneratorDialog(PluginDialogBase):
             self.summary_label.setText("✅ All tests passed!")
             self.summary_label.setObjectName("testSummarySuccess")
         else:
-            self.summary_label.setText("❌ Some tests failed")
+            self.summary_label.setText("ERROR Some tests failed")
             self.summary_label.setObjectName("testSummaryFailed")
 
         # Switch to results tab

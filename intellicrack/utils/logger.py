@@ -220,8 +220,26 @@ def setup_logger(
 
     formatter = logging.Formatter(format_string)
 
-    # Console handler
-    console_handler = logging.StreamHandler()
+    # Console handler with UTF-8 encoding for Windows compatibility
+    import codecs
+    import sys
+
+    # Force UTF-8 encoding on Windows to prevent encoding errors
+    if sys.platform == "win32":
+        try:
+            # Try to reconfigure streams if they support it (Python 3.7+)
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+            elif hasattr(sys.stdout, "buffer"):
+                # Fallback for streams with buffer attribute
+                sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, errors="replace")
+                sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, errors="replace")
+        except (AttributeError, OSError):
+            # If reconfiguration fails, just use the stream as-is
+            pass
+
+    console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
     console_handler.setFormatter(formatter)
     target_logger.addHandler(console_handler)
@@ -307,6 +325,20 @@ def setup_logging(
 
     # Set up handlers
     handlers = []
+
+    # Force UTF-8 encoding on Windows to prevent encoding errors
+    import codecs
+
+    if sys.platform == "win32":
+        try:
+            # Only reconfigure if not already UTF-8
+            if not hasattr(sys.stdout, "encoding") or sys.stdout.encoding.lower() not in ["utf-8", "utf8"]:
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except AttributeError:
+            # Fallback for older Python versions or non-standard streams
+            sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, errors="replace")
+            sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, errors="replace")
 
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)

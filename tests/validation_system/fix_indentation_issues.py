@@ -56,11 +56,11 @@ def fix_indentation_in_file(filepath: Path):
 def fix_all_files():
     """Fix all Phase 1 files."""
     files = [
-        Path(r"C:\Intellicrack\tests\validation_system\environment_validator.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\anti_detection_verifier.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\fingerprint_randomizer.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py")
+        Path(r"D:\Intellicrack\tests\validation_system\environment_validator.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\fingerprint_randomizer.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py")
     ]
 
     for filepath in files:

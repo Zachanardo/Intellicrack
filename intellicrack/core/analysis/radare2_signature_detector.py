@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Radare2 Signature-Based Detection System
+"""Radare2 Signature-Based Detection System.
 
 Production-ready implementation for:
 - YARA rule integration
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class SignatureType(Enum):
-    """Types of signatures that can be detected"""
+    """Types of signatures that can be detected."""
 
     YARA = "yara"
     CLAMAV = "clamav"
@@ -44,7 +43,7 @@ class SignatureType(Enum):
 
 @dataclass
 class SignatureMatch:
-    """Information about a signature match"""
+    """Information about a signature match."""
 
     signature_type: SignatureType
     name: str
@@ -57,7 +56,7 @@ class SignatureMatch:
 
 @dataclass
 class CompilerInfo:
-    """Compiler detection information"""
+    """Compiler detection information."""
 
     compiler: str
     version: str
@@ -68,7 +67,7 @@ class CompilerInfo:
 
 @dataclass
 class LibraryInfo:
-    """Library version information"""
+    """Library version information."""
 
     name: str
     version: str
@@ -78,9 +77,15 @@ class LibraryInfo:
 
 
 class Radare2SignatureDetector:
-    """Advanced signature-based detection using Radare2"""
+    """Advanced signature-based detection using Radare2."""
 
     def __init__(self, binary_path: str):
+        """Initialize the Radare2SignatureDetector with a binary file path.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        """
         self.binary_path = binary_path
         self.r2: Optional[r2pipe.open] = None
         self.matches: List[SignatureMatch] = []
@@ -89,7 +94,7 @@ class Radare2SignatureDetector:
         self.file_hash = self._calculate_file_hash()
 
     def _calculate_file_hash(self) -> Dict[str, str]:
-        """Calculate various hashes of the binary"""
+        """Calculate various hashes of the binary."""
         hashes = {}
         with open(self.binary_path, "rb") as f:
             data = f.read()
@@ -101,7 +106,7 @@ class Radare2SignatureDetector:
         return hashes
 
     def open(self) -> bool:
-        """Open binary in Radare2"""
+        """Open binary in Radare2."""
         try:
             self.r2 = r2pipe.open(self.binary_path)
             self.r2.cmd("aaa")  # Analyze
@@ -112,7 +117,7 @@ class Radare2SignatureDetector:
             return False
 
     def load_yara_rules(self, rules_path: str) -> bool:
-        """Load YARA rules from file or directory"""
+        """Load YARA rules from file or directory."""
         try:
             path = Path(rules_path)
 
@@ -139,7 +144,7 @@ class Radare2SignatureDetector:
             return False
 
     def create_default_yara_rules(self) -> str:
-        """Create comprehensive default YARA rules for common protections"""
+        """Create comprehensive default YARA rules for common protections."""
         rules = """
 rule VMProtect_Signature {
     meta:
@@ -490,7 +495,7 @@ rule CryptoAPI_Usage {
         return rules
 
     def scan_with_yara(self) -> List[SignatureMatch]:
-        """Scan binary with loaded YARA rules"""
+        """Scan binary with loaded YARA rules."""
         matches = []
 
         try:
@@ -530,7 +535,7 @@ rule CryptoAPI_Usage {
         return matches
 
     def scan_with_clamav(self) -> List[SignatureMatch]:
-        """Scan binary with ClamAV"""
+        """Scan binary with ClamAV."""
         matches = []
 
         try:
@@ -572,7 +577,7 @@ rule CryptoAPI_Usage {
         return matches
 
     def create_custom_signatures(self) -> None:
-        """Create custom binary signatures"""
+        """Create custom binary signatures."""
         # Common protection signatures
         self.custom_signatures = {
             # VMProtect signatures
@@ -611,7 +616,7 @@ rule CryptoAPI_Usage {
         }
 
     def scan_custom_signatures(self) -> List[SignatureMatch]:
-        """Scan with custom signatures"""
+        """Scan with custom signatures."""
         matches = []
 
         if not self.custom_signatures:
@@ -650,7 +655,7 @@ rule CryptoAPI_Usage {
         return matches
 
     def detect_protection_schemes(self) -> List[SignatureMatch]:
-        """Detect protection schemes using Radare2 analysis"""
+        """Detect protection schemes using Radare2 analysis."""
         matches = []
 
         try:
@@ -719,7 +724,7 @@ rule CryptoAPI_Usage {
         return matches
 
     def _calculate_entropy(self, section: Dict) -> float:
-        """Calculate entropy of a section"""
+        """Calculate entropy of a section."""
         try:
             data = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
             if not data:
@@ -743,7 +748,7 @@ rule CryptoAPI_Usage {
             return 0.0
 
     def detect_compiler(self) -> Optional[CompilerInfo]:
-        """Detect compiler and version"""
+        """Detect compiler and version."""
         try:
             # Get binary info
             info = self.r2.cmdj("ij")
@@ -831,7 +836,7 @@ rule CryptoAPI_Usage {
             return None
 
     def detect_libraries(self) -> List[LibraryInfo]:
-        """Detect library versions"""
+        """Detect library versions."""
         libraries = []
 
         try:
@@ -895,7 +900,7 @@ rule CryptoAPI_Usage {
         return libraries
 
     def generate_report(self) -> str:
-        """Generate comprehensive detection report"""
+        """Generate comprehensive detection report."""
         report = []
         report.append("=" * 60)
         report.append("SIGNATURE DETECTION REPORT")
@@ -978,7 +983,7 @@ rule CryptoAPI_Usage {
         return "\n".join(report)
 
     def export_signatures(self, output_file: str, format: str = "json") -> bool:
-        """Export detected signatures to file"""
+        """Export detected signatures to file."""
         try:
             if format == "json":
                 data = {"binary": self.binary_path, "hashes": self.file_hash, "matches": []}
@@ -1016,14 +1021,14 @@ rule CryptoAPI_Usage {
             return False
 
     def close(self):
-        """Close Radare2 session"""
+        """Close Radare2 session."""
         if self.r2:
             self.r2.quit()
             self.r2 = None
 
 
 def main():
-    """Example usage of signature detector"""
+    """Demonstrate usage of signature detector."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Radare2 Signature-Based Detection")

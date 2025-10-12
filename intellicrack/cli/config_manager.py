@@ -162,7 +162,7 @@ class ConfigManager:
 
 
 def main():
-    """Configuration management CLI."""
+    """Run configuration management CLI."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack Configuration Manager")

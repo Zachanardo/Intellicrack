@@ -222,9 +222,10 @@ impl EnvironmentManager {
 
         // Windows Error Reporting - disable for subprocess crashes
         env::set_var("WINDOWS_TRACING_FLAGS", "3");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
         env::set_var(
             "WINDOWS_TRACING_LOGFILE",
-            r"C:\Intellicrack\logs\launcher.etl",
+            format!("{}/logs/launcher.etl", project_root),
         );
 
         info!("Native Windows environment configured");
@@ -237,13 +238,14 @@ impl EnvironmentManager {
         debug!("Configuring Windows DLL search paths");
 
         // Critical DLL directories for Ray and other native modules
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
         let dll_directories = vec![
-            r"C:\Intellicrack\.pixi\envs\default",
-            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
-            r"C:\Intellicrack\.pixi\envs\default\DLLs",
-            r"C:\Intellicrack\.pixi\envs\default\Scripts",
-            r"C:\Intellicrack\.pixi\envs\default\Lib\site-packages\torchvision",
-            r"C:\Intellicrack\.pixi\envs\default\Lib\site-packages\h5py",
+            format!("{}/.pixi/envs/default", project_root),
+            format!("{}/.pixi/envs/default/Library/bin", project_root),
+            format!("{}/.pixi/envs/default/DLLs", project_root),
+            format!("{}/.pixi/envs/default/Scripts", project_root),
+            format!("{}/.pixi/envs/default/Lib/site-packages/torchvision", project_root),
+            format!("{}/.pixi/envs/default/Lib/site-packages/h5py", project_root),
         ];
 
         // First, ensure all directories are in the system PATH
@@ -297,22 +299,23 @@ impl EnvironmentManager {
         }
 
         // Pixi environment paths that need to be in PATH
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
         let pixi_paths = vec![
-            r"C:\Intellicrack\.pixi\envs\default",
-            r"C:\Intellicrack\.pixi\envs\default\Scripts",
-            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
-            r"C:\Intellicrack\.pixi\envs\default\Library\usr\bin",
-            r"C:\Intellicrack\.pixi\envs\default\Library\mingw64\bin",
-            r"C:\Intellicrack\.pixi\envs\default\Library\mingw-w64\bin",
-            r"C:\Intellicrack\.pixi\envs\default\DLLs",
+            format!("{}/.pixi/envs/default", project_root),
+            format!("{}/.pixi/envs/default/Scripts", project_root),
+            format!("{}/.pixi/envs/default/Library/bin", project_root),
+            format!("{}/.pixi/envs/default/Library/usr/bin", project_root),
+            format!("{}/.pixi/envs/default/Library/mingw64/bin", project_root),
+            format!("{}/.pixi/envs/default/Library/mingw-w64/bin", project_root),
+            format!("{}/.pixi/envs/default/DLLs", project_root),
         ];
 
         // Add pixi paths after launcher directory
         for pixi_path in pixi_paths {
-            let path_buf = std::path::PathBuf::from(pixi_path);
+            let path_buf = std::path::PathBuf::from(&pixi_path);
             if path_buf.exists() {
-                new_path_parts.push(pixi_path.to_string());
                 debug!("Added to PATH: {}", pixi_path);
+                new_path_parts.push(pixi_path);
             }
         }
 
@@ -337,11 +340,12 @@ impl EnvironmentManager {
         info!("Activating pixi environment");
 
         // Set PIXI environment variables for proper activation
-        env::set_var("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
+        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+        env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
         env::set_var("PIXI_DEFAULT_ENV", "default");
         env::set_var(
             "PIXI_PYTHON_EXE",
-            r"C:\Intellicrack\.pixi\envs\default\python.exe",
+            format!("{}/.pixi/envs/default/python.exe", project_root),
         );
         env::set_var("PIXI_SHLVL", "1");
         env::set_var("PIXI_PROMPT_MODIFIER", "(pixi)");
@@ -349,12 +353,11 @@ impl EnvironmentManager {
 
         // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
         // This tells PyO3 where to find the Python runtime and standard library
-        env::set_var("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
+        env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", project_root));
 
         // Set PYTHONPATH to include both pixi site-packages and Intellicrack source
         // This ensures all packages and local modules are importable
-        let pythonpath =
-            r"C:\Intellicrack;C:\Intellicrack\.pixi\envs\default\Lib\site-packages".to_string();
+        let pythonpath = format!("{};{}/.pixi/envs/default/Lib/site-packages", project_root, project_root);
         env::set_var("PYTHONPATH", &pythonpath);
 
         // Set TCL/TK library paths for _tkinter functionality
@@ -393,7 +396,7 @@ impl EnvironmentManager {
         // FALLBACK: Use pixi environment paths only if launcher paths don't exist
         if !tcl_set {
             let tcl_lib_path =
-                PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6");
+                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tcl8.6");
             if tcl_lib_path.exists() {
                 env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
                 info!(
@@ -405,7 +408,7 @@ impl EnvironmentManager {
 
         if !tk_set {
             let tk_lib_path =
-                PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6");
+                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tk8.6");
             if tk_lib_path.exists() {
                 env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
                 info!("Set TK_LIBRARY to pixi fallback: {}", tk_lib_path.display());

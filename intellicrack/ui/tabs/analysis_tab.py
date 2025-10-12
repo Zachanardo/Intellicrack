@@ -959,7 +959,7 @@ class AnalysisTab(BaseTab):
             # Analysis will complete through callbacks
             self.analysis_started.emit(profile.lower())
 
-    def start_static_analysis(self):
+    def start_static_analysis(self):  # noqa: C901
         """Start static analysis with selected options."""
         self.log_activity("Starting static analysis...")
         self.results_display.append("=== STATIC ANALYSIS ===\n")
@@ -1206,13 +1206,13 @@ class AnalysisTab(BaseTab):
                             # Display detection results
                             self.results_display.append("\nDetection Results:\n")
                             if bypass_data.get("registry_based"):
-                                self.results_display.append("  ✓ Registry-based subscription found\n")
+                                self.results_display.append("  OK Registry-based subscription found\n")
                             if bypass_data.get("local_server"):
-                                self.results_display.append("  ✓ Local server configuration detected\n")
+                                self.results_display.append("  OK Local server configuration detected\n")
                             if bypass_data.get("oauth_tokens"):
-                                self.results_display.append("  ✓ OAuth tokens present\n")
+                                self.results_display.append("  OK OAuth tokens present\n")
                             if bypass_data.get("floating_license"):
-                                self.results_display.append("  ✓ Floating license system detected\n")
+                                self.results_display.append("  OK Floating license system detected\n")
 
                             # Store bypass results for later use
                             self.analysis_results["subscription_bypass"] = bypass_data
@@ -1343,7 +1343,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             self.results_display.append(f"Dynamic analysis error: {str(e)}\n")
 
-    def detect_protections(self):
+    def detect_protections(self):  # noqa: C901
         """Detect binary protections."""
         self.log_activity("Detecting protections...")
         self.results_display.append("\n=== PROTECTION DETECTION ===\n")
@@ -1501,10 +1501,10 @@ class AnalysisTab(BaseTab):
         self.analysis_progress.setVisible(False)
 
         if success:
-            self.analysis_status.setText(f"✓ {message}")
+            self.analysis_status.setText(f"OK {message}")
             self.analysis_completed.emit(self.analysis_profile_combo.currentText().lower())
         else:
-            self.analysis_status.setText(f"✗ {message}")
+            self.analysis_status.setText(f"FAIL {message}")
 
     def open_hex_viewer(self):
         """Open hex viewer for current binary."""
@@ -2214,7 +2214,7 @@ class AnalysisTab(BaseTab):
 
             # License protection indicators
             if high_entropy_blocks > num_blocks * 0.3:
-                results += "⚠️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
+                results += "WARNING️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
                 results += "This may indicate license protection mechanisms:\n"
                 results += "• Encrypted license validation code\n"
                 results += "• Packed/compressed executable sections\n"
@@ -2475,7 +2475,7 @@ class AnalysisTab(BaseTab):
             if indicators_found:
                 protection_results += f"PROTECTION INDICATORS DETECTED ({len(indicators_found)}):\n"
                 for indicator in indicators_found:
-                    protection_results += f"  ✓ {indicator}\n"
+                    protection_results += f"  OK {indicator}\n"
 
                 protection_results += "\nLICENSE BYPASS STRATEGIES:\n"
                 protection_results += "1. Dynamic Analysis:\n"
@@ -2718,7 +2718,7 @@ class AnalysisTab(BaseTab):
                 self.protection_display.append("PROTECTION SCHEMES DETECTED")
                 self.protection_display.append("=" * 60)
                 for protection in protections_found:
-                    self.protection_display.append(f"✓ {protection}")
+                    self.protection_display.append(f"OK {protection}")
 
                 self.protection_status.setText(f"Protections found: {len(protections_found)}")
                 self.protection_status.setStyleSheet("padding: 5px; background-color: #8B0000;")
@@ -2868,7 +2868,7 @@ class AnalysisTab(BaseTab):
                 self.license_display.append("LICENSE CHECKS DETECTED")
                 self.license_display.append("=" * 60)
                 for check in license_checks_found:
-                    self.license_display.append(f"✓ {check}")
+                    self.license_display.append(f"OK {check}")
 
                 self.license_display.append(f"\nTotal checks found: {len(license_checks_found)}")
                 self.generate_bypass_btn.setEnabled(True)
@@ -3015,7 +3015,7 @@ class AnalysisTab(BaseTab):
             if bypass_success:
                 self.bypass_display.append("\n=== SUBSCRIPTION BYPASS EXECUTED ===\n")
                 self.bypass_display.append(f"Type: {detected_type}\n")
-                self.bypass_display.append("Status: ✓ Bypass Active\n")
+                self.bypass_display.append("Status: OK Bypass Active\n")
 
                 # Add specific details based on bypass type
                 if detected_type == "cloud_based":
@@ -3032,7 +3032,7 @@ class AnalysisTab(BaseTab):
                     self.bypass_display.append("• OAuth tokens injected\n")
                     self.bypass_display.append("• Refresh mechanism bypassed\n")
 
-                self.bypass_display.append("\n✓ Subscription validation bypass successful\n")
+                self.bypass_display.append("\nOK Subscription validation bypass successful\n")
                 self.log_activity("Subscription bypass executed successfully")
 
                 # Enable the button for deactivation
@@ -3041,11 +3041,11 @@ class AnalysisTab(BaseTab):
                 self.subscription_bypass_btn.clicked.connect(self.stop_subscription_bypass)
 
             else:
-                self.bypass_display.append("\n✗ Subscription bypass failed\n")
+                self.bypass_display.append("\nFAIL Subscription bypass failed\n")
                 self.log_activity("Subscription bypass execution failed")
 
         except Exception as e:
-            self.bypass_display.append(f"\n✗ Bypass error: {str(e)}\n")
+            self.bypass_display.append(f"\nFAIL Bypass error: {str(e)}\n")
             self.log_activity(f"Subscription bypass error: {str(e)}")
 
     def stop_subscription_bypass(self):

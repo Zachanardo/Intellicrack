@@ -51,6 +51,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.ui.tabs.adobe_injector_tab import AdobeInjectorTab
 from intellicrack.utils.core.dependency_feedback import dependency_feedback, get_user_friendly_error
+from intellicrack.utils.logger import logger
 
 from .base_tab import BaseTab
 

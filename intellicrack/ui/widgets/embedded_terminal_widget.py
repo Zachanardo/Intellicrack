@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Embedded terminal widget for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -81,6 +83,7 @@ class ANSIParser:
     }
 
     def __init__(self):
+        """Initialize the ANSIParser with default text format."""
         self.current_format = QTextCharFormat()
         self.reset_format()
 
@@ -183,8 +186,11 @@ class EmbeddedTerminalWidget(QWidget):
 
     def _setup_ui(self):
         """Setup terminal display and input widgets."""
+        from intellicrack.handlers.pyqt6_handler import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         self.terminal_display = QTextEdit(self)
         self.terminal_display.setReadOnly(False)
@@ -202,12 +208,15 @@ class EmbeddedTerminalWidget(QWidget):
             }
         """)
 
+        self.terminal_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.terminal_display.setMinimumSize(400, 300)
+
         self.terminal_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.terminal_display.customContextMenuRequested.connect(self._show_context_menu)
 
         self.terminal_display.keyPressEvent = self._handle_keyboard_input
 
-        layout.addWidget(self.terminal_display)
+        layout.addWidget(self.terminal_display, stretch=1)
 
     def _show_context_menu(self, position):
         """Show context menu for copy/paste operations."""
@@ -275,6 +284,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         Returns:
             Process PID
+
         """
         if self._process and self._running:
             logger.warning("Process already running, stopping it first")
@@ -467,6 +477,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         Args:
             text: Text to send to process stdin
+
         """
         if not self._process or not self._running:
             logger.warning("Cannot send input: no process running")

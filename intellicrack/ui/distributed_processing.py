@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Distributed processing module for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -62,6 +64,7 @@ except ImportError:
         """
 
         def __init__(self):
+            """Initialize the SignalTracker with empty signals and slots dictionaries."""
             self._signals = {}
             self._slots = {}
             self._parent = None
@@ -70,7 +73,6 @@ except ImportError:
 
         def setParent(self, parent):
             """Set parent object for hierarchy management."""
-
             if self._parent:
                 self._parent._children.remove(self)
             self._parent = parent
@@ -79,12 +81,10 @@ except ImportError:
 
         def parent(self):
             """Get parent object in hierarchy."""
-
             return self._parent
 
         def children(self):
             """Get list of child objects."""
-
             return self._children.copy()
 
         def setProperty(self, name, value):
@@ -93,7 +93,6 @@ except ImportError:
 
         def property(self, name):
             """Get property value by name."""
-
             return self._properties.get(name)
 
         def deleteLater(self):
@@ -110,6 +109,7 @@ except ImportError:
         """
 
         def __init__(self):
+            """Initialize the WorkerThread as a daemon thread with running state set to False."""
             super().__init__(daemon=True)
             self._running = False
             self._mutex = threading.Lock()
@@ -117,42 +117,35 @@ except ImportError:
 
         def start(self):
             """Start thread execution with tracking state."""
-
             self._running = True
             self._stop_event.clear()
             super().start()
 
         def wait(self, timeout_ms=None):
             """Wait for thread completion with optional timeout in milliseconds."""
-
             timeout = timeout_ms / 1000.0 if timeout_ms else None
             self.join(timeout)
             return not self.is_alive()
 
         def isRunning(self):
             """Check if thread is currently running."""
-
             return self._running and self.is_alive()
 
         def requestInterruption(self):
             """Request thread interruption via stop event."""
-
             self._stop_event.set()
 
         def isInterruptionRequested(self):
             """Check if thread interruption has been requested."""
-
             return self._stop_event.is_set()
 
         def quit(self):
             """Request thread to stop and set stop event."""
-
             self._running = False
             self._stop_event.set()
 
         def run(self):
             """Thread execution method to be overridden in subclass."""
-
             # Override in subclass
             pass
 
@@ -164,6 +157,7 @@ except ImportError:
         """
 
         def __init__(self, parent=None):
+            """Initialize the VisibilityController with an optional parent and set visibility to False."""
             self._parent = parent
             self._visible = False
             self._modal = False
@@ -174,19 +168,16 @@ except ImportError:
 
         def show(self):
             """Show dialog in console mode."""
-
             self._visible = True
             logger.info(f"Dialog '{self._title}' opened (console mode)")
 
         def hide(self):
             """Hide dialog and log action."""
-
             self._visible = False
             logger.info(f"Dialog '{self._title}' hidden")
 
         def exec(self):
             """Execute modal dialog and return result."""
-
             self._modal = True
             self._visible = True
             logger.info(f"Modal dialog '{self._title}' executing")
@@ -194,44 +185,36 @@ except ImportError:
 
         def accept(self):
             """Accept dialog with result code 1."""
-
             self._result = 1
             self.hide()
 
         def reject(self):
             """Reject dialog with result code 0."""
-
             self._result = 0
             self.hide()
 
         def setWindowTitle(self, title):
             """Set dialog window title."""
-
             self._title = title
 
         def resize(self, width, height):
             """Resize dialog to specified dimensions."""
-
             self._size = (width, height)
 
         def move(self, x, y):
             """Move dialog to specified position."""
-
             self._position = (x, y)
 
         def raise_(self):
             """Raise dialog to front in console mode."""
-
             logger.debug(f"Raising dialog '{self._title}'")
 
         def activateWindow(self):
             """Activate dialog window in console mode."""
-
             logger.debug(f"Activating dialog '{self._title}'")
 
         def closeEvent(self, event):
             """Handle close event to be overridden in subclass."""
-
             # Override in subclass
             pass
 
@@ -243,6 +226,7 @@ except ImportError:
         """
 
         def __init__(self, parent=None):
+            """Initialize the ChildManager with an optional parent and empty children list."""
             self._parent = parent
             self._children = []
             self._visible = True
@@ -257,7 +241,6 @@ except ImportError:
 
         def setParent(self, parent):
             """Set parent widget for hierarchy management."""
-
             if self._parent:
                 self._parent._children.remove(self)
             self._parent = parent
@@ -266,27 +249,22 @@ except ImportError:
 
         def parent(self):
             """Get parent widget in hierarchy."""
-
             return self._parent
 
         def children(self):
             """Get list of child widgets."""
-
             return self._children.copy()
 
         def setVisible(self, visible):
             """Set widget visibility state."""
-
             self._visible = visible
 
         def isVisible(self):
             """Check if widget is visible."""
-
             return self._visible
 
         def setEnabled(self, enabled):
             """Set widget enabled state and propagate to children."""
-
             self._enabled = enabled
             for child in self._children:
                 if hasattr(child, "setEnabled"):
@@ -294,55 +272,45 @@ except ImportError:
 
         def isEnabled(self):
             """Check if widget is enabled."""
-
             return self._enabled
 
         def setGeometry(self, x, y, width, height):
             """Set widget geometry with position and dimensions."""
-
             self._geometry = (x, y, width, height)
 
         def geometry(self):
             """Get widget geometry tuple."""
-
             return self._geometry
 
         def setLayout(self, layout):
             """Set widget layout manager."""
-
             self._layout = layout
 
         def layout(self):
             """Get widget layout manager."""
-
             return self._layout
 
         def setStyleSheet(self, style):
             """Set widget style sheet for appearance."""
-
             self._style_sheet = style
 
         def setObjectName(self, name):
             """Set widget object name for identification."""
-
             self._object_name = name
 
         def objectName(self):
             """Get widget object name."""
-
             return self._object_name
 
         def update(self):
             """Update widget display in console mode."""
-
             logger.debug(f"Widget {self._object_name} updated")
 
         def repaint(self):
             """Repaint widget display in console mode."""
-
             logger.debug(f"Widget {self._object_name} repainted")
 
-    class pyqtSignal:
+    class pyqtSignal:  # noqa: N801
         """Fully functional signal implementation for PyQt6 compatibility.
 
         Provides complete signal/slot mechanism using Python's native
@@ -354,6 +322,7 @@ except ImportError:
 
             Args:
                 *types: Type signatures for the signal parameters
+
             """
             self.types = types
             self.slots = []
@@ -365,6 +334,7 @@ except ImportError:
 
             Args:
                 slot: Callable to invoke when signal is emitted
+
             """
             with self._mutex:
                 if slot not in self.slots:
@@ -375,6 +345,7 @@ except ImportError:
 
             Args:
                 slot: Specific slot to disconnect, or None for all
+
             """
             with self._mutex:
                 if slot is None:
@@ -387,6 +358,7 @@ except ImportError:
 
             Args:
                 *args: Arguments to pass to connected slots
+
             """
             if self._blocked:
                 return
@@ -405,6 +377,7 @@ except ImportError:
 
             Args:
                 blocked: True to block signals, False to unblock
+
             """
             self._blocked = blocked
 
@@ -425,6 +398,7 @@ except ImportError:
         """Bound signal for specific object instance."""
 
         def __init__(self, signal, instance):
+            """Initialize the BoundSignal with a signal and instance."""
             self.signal = signal
             self.instance = instance
             self.slots = []
@@ -432,14 +406,12 @@ except ImportError:
 
         def connect(self, slot):
             """Connect slot to bound signal instance."""
-
             with self._mutex:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
         def disconnect(self, slot=None):
             """Disconnect slot from bound signal instance."""
-
             with self._mutex:
                 if slot is None:
                     self.slots.clear()
@@ -448,7 +420,6 @@ except ImportError:
 
         def emit(self, *args):
             """Emit bound signal with arguments to connected slots."""
-
             if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
 
@@ -827,9 +798,14 @@ class DistributedWorkerThread(QThread):
         max_attempts = task.parameters.get("max_attempts", 10000)
 
         if not hash_value:
-            # Generate test hash for demonstration
-            test_password = "demo_password_123"  # noqa: S105
+            # Generate test hash for demonstration using secure random data
+            import secrets
+            import string
+
+            test_chars = string.ascii_letters + string.digits
+            test_password = ''.join(secrets.choice(test_chars) for _ in range(16))
             hash_value = hashlib.sha256(test_password.encode()).hexdigest()
+            logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
 
         results = {
             "hash": hash_value,

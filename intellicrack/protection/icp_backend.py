@@ -2085,6 +2085,6 @@ def get_icp_backend() -> ICPBackend:
 
 # Integration helper for existing protection detector
 async def analyze_with_icp(file_path: str) -> ICPScanResult | None:
-    """Helper function for easy integration."""
+    """Analyze with ICP for integration."""
     backend = get_icp_backend()
     return await backend.analyze_file(file_path, ScanMode.DEEP)

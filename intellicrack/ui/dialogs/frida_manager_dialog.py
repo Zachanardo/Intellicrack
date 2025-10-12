@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Frida manager dialog for Intellicrack UI dialogs.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -1069,6 +1071,14 @@ class FridaManagerDialog(QDialog):
         # Load available scripts
         self.reload_script_list()
 
+        # Report to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message("Frida Manager Dialog: Monitoring started")
+            except Exception as e:
+                logger.warning(f"Could not log to terminal manager: {e}")
+
     def refresh_processes(self):
         """Refresh the process list."""
         self.process_worker = ProcessWorker()
@@ -1140,6 +1150,16 @@ class FridaManagerDialog(QDialog):
             self.log_console.append_output(
                 f"[SUCCESS] Attached to {self.selected_process['name']} (PID: {self.selected_process['pid']})",
             )
+
+            # Log to terminal manager if available
+            if HAS_TERMINAL_MANAGER:
+                try:
+                    terminal_manager = get_terminal_manager()
+                    terminal_manager.log_terminal_message(
+                        f"Attached to {self.selected_process['name']} (PID: {self.selected_process['pid']})"
+                    )
+                except Exception as e:
+                    logger.debug("Could not log to terminal manager: %s", e)
         else:
             self.status_label.setText("Failed to attach to process")
             self.attach_btn.setEnabled(True)
@@ -2030,13 +2050,13 @@ class FridaManagerDialog(QDialog):
 
             else:
                 error_msg = result.get("message", "Unknown error")
-                self.ai_status.setText(f"❌ Generation failed: {error_msg}")
+                self.ai_status.setText(f"ERROR Generation failed: {error_msg}")
                 self.log_console.append_output(f"[AI ERROR] {error_msg}")
                 QMessageBox.critical(self, "AI Generation Failed", error_msg)
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Error: {e!s}")
+            self.ai_status.setText(f"ERROR Error: {e!s}")
             self.log_console.append_output(f"[AI ERROR] {e!s}")
             QMessageBox.critical(self, "Error", f"AI script generation failed: {e!s}")
 
@@ -2079,7 +2099,7 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Analysis failed: {e!s}")
+            self.ai_status.setText(f"ERROR Analysis failed: {e!s}")
             self.log_console.append_output(f"[AI ERROR] Analysis failed: {e!s}")
 
     def preview_ai_script(self):
@@ -2233,7 +2253,7 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Deployment failed: {e!s}")
+            self.ai_status.setText(f"ERROR Deployment failed: {e!s}")
             QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {e!s}")
 
     def save_ai_script(self):
@@ -2278,7 +2298,7 @@ class FridaManagerDialog(QDialog):
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
-            self.ai_status.setText(f"❌ Save failed: {e!s}")
+            self.ai_status.setText(f"ERROR Save failed: {e!s}")
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
     def closeEvent(self, event):

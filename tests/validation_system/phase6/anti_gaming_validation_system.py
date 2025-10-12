@@ -733,8 +733,10 @@ class AntiGamingValidationSystem:
 def main():
     """Example usage of AntiGamingValidationSystem."""
     system = AntiGamingValidationSystem(
-        config_path=Path("C:/Intellicrack/tests/validation_system"),
-        whitelist_path=Path("C:/Intellicrack/tests/validation_system")
+        from intellicrack.utils.path_resolver import get_project_root
+
+config_path=get_project_root() / "tests/validation_system",
+        whitelist_path=get_project_root() / "tests/validation_system"
     )
 
     # Establish baseline

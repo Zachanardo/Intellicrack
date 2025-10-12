@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-All mitigation bypass modules in `C:\Intellicrack\intellicrack\core\mitigation_bypass` have been comprehensively tested using specification-driven, black-box testing methodology as required by the Testing Agent specifications.
+All mitigation bypass modules in `D:\\Intellicrack\intellicrack\core\mitigation_bypass` have been comprehensively tested using specification-driven, black-box testing methodology as required by the Testing Agent specifications.
 
 ## Test Coverage Achievement
 

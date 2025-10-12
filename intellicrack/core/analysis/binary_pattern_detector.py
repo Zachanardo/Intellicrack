@@ -19,8 +19,8 @@ from ...utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_GRP_RET, CS_MODE_32, CS_MODE_64, Cs
-    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_EIP, X86_REG_RIP
+    from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, CS_MODE_64, Cs
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM
 
     CAPSTONE_AVAILABLE = True
 except ImportError:
@@ -123,7 +123,6 @@ class BinaryPatternDetector:
 
     def _initialize_core_patterns(self):
         """Initialize sophisticated binary patterns for modern licensing protection detection."""
-
         # Advanced anti-debug patterns with mutation resistance
         self.add_pattern(
             BinaryPattern(
@@ -805,7 +804,10 @@ class BinaryPatternDetector:
                                     if op.imm == offset:
                                         xrefs.append(insn.address)
                         break  # Only check first instruction
-                except Exception:
+                except Exception as e:
+                    # Log the exception with details for debugging
+                    import logging
+                    logging.warning(f"Error processing instruction at offset {offset}: {e}")
                     continue
 
         return sorted(set(xrefs))

@@ -9,7 +9,7 @@ from pathlib import Path
 
 def fix_environment_validator():
     """Fix syntax errors in environment_validator.py."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\environment_validator.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\environment_validator.py")
 
     content = filepath.read_text()
 
@@ -29,7 +29,7 @@ def fix_environment_validator():
 
 def fix_fingerprint_randomizer():
     """Fix syntax errors in fingerprint_randomizer.py."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
 
     content = filepath.read_text()
 
@@ -58,7 +58,7 @@ def fix_fingerprint_randomizer():
 
 def fix_anti_detection_undefined_names():
     """Fix undefined PROCESS_BASIC_INFORMATION in anti_detection_verifier.py."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
 
     content = filepath.read_text()
 
@@ -91,7 +91,7 @@ class ProcessBasicInformation(ctypes.Structure):
 
 def fix_runner_undefined_names():
     """Fix undefined winreg and math imports in runner.py."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\runner.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\runner.py")
 
     content = filepath.read_text()
 
@@ -123,7 +123,7 @@ def fix_runner_undefined_names():
 
 def fix_commercial_binary_manager():
     """Fix security issues in commercial_binary_manager.py."""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\commercial_binary_manager.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\commercial_binary_manager.py")
 
     content = filepath.read_text()
 

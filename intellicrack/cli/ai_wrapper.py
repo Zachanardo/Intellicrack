@@ -458,7 +458,7 @@ Example workflow:
 
 
 def main():
-    """Example usage and testing."""
+    """Demonstrate usage and run tests."""
     # Initialize the AI interface
     manager = ConfirmationManager(auto_approve_low_risk=False)
     ai_interface = IntellicrackAIInterface(manager)

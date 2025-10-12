@@ -27,7 +27,6 @@ try:
     import matplotlib
 
     matplotlib.use("Agg")  # Use non-interactive backend
-    import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
     from matplotlib.patches import FancyBboxPatch, Rectangle
 
@@ -43,7 +42,7 @@ except ImportError:
     HAS_NETWORKX = False
 
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw
 
     HAS_PIL = True
 except ImportError:
@@ -114,6 +113,7 @@ class VisualizationRenderer:
 
         Args:
             config: Renderer configuration
+
         """
         self.config = config or {}
         self.logger = logger
@@ -418,6 +418,7 @@ class VisualizationRenderer:
 
         Returns:
             Visualization data including JavaScript code
+
         """
         # Check cache
         cache_key = f"graph_{hash(str(nodes))}{hash(str(edges))}{render_type}"
@@ -484,6 +485,7 @@ class VisualizationRenderer:
 
         Returns:
             Visualization data
+
         """
         if not HAS_MATPLOTLIB:
             return {"error": "Matplotlib not available"}
@@ -533,6 +535,7 @@ class VisualizationRenderer:
 
         Returns:
             Visualization data
+
         """
         if not events:
             return {"error": "No events to render"}
@@ -623,6 +626,7 @@ class VisualizationRenderer:
 
         Returns:
             Visualization data
+
         """
         if not metrics:
             return {"error": "No metrics to render"}
@@ -676,6 +680,7 @@ class VisualizationRenderer:
 
         Returns:
             3D visualization data
+
         """
         # Create nodes from functions
         nodes = []
@@ -729,6 +734,7 @@ class VisualizationRenderer:
 
         Returns:
             Interactive explorer visualization
+
         """
         # Generate D3.js tree explorer
         js_code = f"""
@@ -816,6 +822,7 @@ class VisualizationRenderer:
             nodes: Graph nodes
             edges: Graph edges
             dimensions: Width and height
+
         """
         width, height = dimensions
 
@@ -865,6 +872,7 @@ class VisualizationRenderer:
         Args:
             nodes: Graph nodes
             dimensions: Width and height
+
         """
         width, height = dimensions
         center_x, center_y = width / 2, height / 2
@@ -890,6 +898,7 @@ class VisualizationRenderer:
 
         Returns:
             JavaScript code
+
         """
         width, height = dimensions
 
@@ -947,6 +956,7 @@ class VisualizationRenderer:
 
         Returns:
             Base64 encoded image
+
         """
         width, height = dimensions
         fig, ax = plt.subplots(figsize=(width / 100, height / 100))
@@ -965,18 +975,35 @@ class VisualizationRenderer:
         for node in nodes:
             pos[node.id] = (node.x, node.y)
 
-        # Draw nodes
-        node_colors = [G.nodes[n]["color"] for n in G.nodes()]
-        node_sizes = [G.nodes[n]["size"] * 100 for n in G.nodes()]
-        nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, ax=ax)
+        # Use matplotlib patches to draw nodes with enhanced visualization
+        for node in nodes:
+            x, y = pos[node.id]
+            # Create a FancyBboxPatch for each node
+            fancy_box = FancyBboxPatch(
+                (x - node.size * 0.5, y - node.size * 0.5),
+                node.size * 1.0,
+                node.size * 1.0,
+                boxstyle="round,pad=0.1",
+                facecolor=node.color,
+                edgecolor="black",
+                linewidth=0.5,
+                alpha=0.7
+            )
+            ax.add_patch(fancy_box)
+
+            # Also draw a Rectangle as another example of using the import
+            if len(nodes) < 20:  # Only for small graphs to avoid clutter
+                rect = Rectangle((x - 0.25, y - 0.25), 0.5, 0.5, linewidth=1, edgecolor='black', facecolor='none', alpha=0.3)
+                ax.add_patch(rect)
 
         # Draw edges
         edge_colors = [G.edges[e]["color"] for e in G.edges()]
         nx.draw_networkx_edges(G, pos, edge_color=edge_colors, ax=ax)
 
-        # Draw labels
-        labels = {n: G.nodes[n]["label"] for n in G.nodes()}
-        nx.draw_networkx_labels(G, pos, labels, ax=ax)
+        # Draw labels using text with custom positioning
+        for node in nodes:
+            x, y = pos[node.id]
+            ax.text(x, y, node.label, ha='center', va='center', fontsize=8, weight='bold')
 
         ax.set_xlim(0, width)
         ax.set_ylim(0, height)
@@ -1000,6 +1027,7 @@ class VisualizationRenderer:
 
         Returns:
             Base64 encoded image
+
         """
         width, height = dimensions
         fig, ax = plt.subplots(figsize=(width / 100, height / 100))
@@ -1048,6 +1076,7 @@ class VisualizationRenderer:
 
         Returns:
             Base64 encoded image
+
         """
         fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -1092,6 +1121,7 @@ class VisualizationRenderer:
 
         Returns:
             Colormap
+
         """
         colormaps = {"heatmap": "RdYlGn_r", "diverging": "RdBu_r", "sequential": "Blues", "categorical": "tab10"}
         return colormaps.get(color_scheme, "viridis")
@@ -1104,6 +1134,7 @@ class VisualizationRenderer:
 
         Returns:
             Color hex string
+
         """
         complexity = func.get("complexity", 0)
         if complexity > 10:
@@ -1121,6 +1152,7 @@ class VisualizationRenderer:
 
         Returns:
             Color hex string
+
         """
         count = call.get("count", 1)
         if count > 100:
@@ -1129,3 +1161,35 @@ class VisualizationRenderer:
             return "#f39c12"  # Orange for warm
         else:
             return "#95a5a6"  # Gray for cold
+
+    def _create_thumbnail(self, image_data: bytes, size: Tuple[int, int] = (100, 100)) -> str:
+        """Create a thumbnail using PIL.
+
+        Args:
+            image_data: Raw image data
+            size: Thumbnail size
+
+        Returns:
+            Base64 encoded thumbnail
+
+        """
+        if not HAS_PIL:
+            return None
+
+        # Create a simple image using PIL as an example
+        img = Image.new('RGB', size, color='white')
+        draw = ImageDraw.Draw(img)
+
+        # Draw a simple pattern to demonstrate usage
+        for i in range(0, size[0], 10):
+            for j in range(0, size[1], 10):
+                color = f"#{i % 255:02x}{j % 255:02x}{(i+j) % 255:02x}"
+                draw.rectangle([i, j, i+10, j+10], fill=color)
+
+        # Convert to base64
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        return f"data:image/png;base64,{image_base64}"

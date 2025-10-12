@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Terminal Manager for Intellicrack core functionality.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -72,6 +74,7 @@ class TerminalManager:
 
         Raises:
             TypeError: If widget is not correct type
+
         """
         from intellicrack.ui.widgets import TerminalSessionWidget
 
@@ -89,6 +92,7 @@ class TerminalManager:
 
         Raises:
             ValueError: If app doesn't have required 'tabs' attribute
+
         """
         if not hasattr(app, "tabs"):
             raise ValueError("Main app must have 'tabs' attribute for tab switching")
@@ -134,6 +138,7 @@ class TerminalManager:
 
         Raises:
             FileNotFoundError: If script doesn't exist
+
         """
         path = Path(script_path)
 
@@ -166,6 +171,7 @@ class TerminalManager:
         Raises:
             RuntimeError: If terminal widget not registered
             FileNotFoundError: If script doesn't exist
+
         """
         if not self._terminal_widget:
             raise RuntimeError("Terminal widget not registered. Cannot execute script in terminal.")
@@ -233,6 +239,7 @@ class TerminalManager:
 
         Raises:
             RuntimeError: If terminal widget not registered (when not capturing)
+
         """
         if isinstance(command, str):
             command = command.split()
@@ -286,6 +293,7 @@ class TerminalManager:
 
         Returns:
             bool: True if terminal widget is registered
+
         """
         return self._terminal_widget is not None
 
@@ -294,8 +302,30 @@ class TerminalManager:
 
         Returns:
             TerminalSessionWidget or None
+
         """
         return self._terminal_widget
+
+    def log_terminal_message(self, message: str, level: str = "INFO"):
+        """Log a message to the terminal widget.
+
+        Args:
+            message: Message to log
+            level: Log level (INFO, WARNING, ERROR)
+
+        """
+        if self._terminal_widget:
+            try:
+                session_id, terminal = self._terminal_widget.get_active_session()
+                if terminal and hasattr(terminal, "write_output"):
+                    formatted_message = f"[{level}] {message}\n"
+                    terminal.write_output(formatted_message)
+                else:
+                    logger.debug(f"Terminal widget available but session not ready: {message}")
+            except Exception as e:
+                logger.warning(f"Failed to log to terminal widget: {e}")
+        else:
+            logger.debug(f"Terminal widget not available, logging to logger: {message}")
 
 
 def get_terminal_manager():
@@ -303,5 +333,6 @@ def get_terminal_manager():
 
     Returns:
         TerminalManager: The singleton instance
+
     """
     return TerminalManager()

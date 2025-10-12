@@ -3,7 +3,7 @@
 ## Phase 0: Commercial Software Acquisition & Ground Truth Establishment
 
 *   **0.1. Commercial Software Library:**
-    *   [x] **0.1.1.** Create secure storage directory: `C:\Intellicrack\tests\validation_system\commercial_binaries` ✓ **COMPLETE (2025-09-02)**
+    *   [x] **0.1.1.** Create secure storage directory: `D:\\Intellicrack\tests\validation_system\commercial_binaries` ✓ **COMPLETE (2025-09-02)**
     *   [x] **0.1.2.** Acquire legitimate copies of target software with known protections: ✓ **DOCUMENTED (2025-09-02)**
         *   [x] **0.1.2.1.** Adobe Creative Cloud 2024 (Adobe Licensing v7) ✓
         *   [x] **0.1.2.2.** AutoCAD 2024 (FlexLM v11.16.2) ✓
@@ -25,7 +25,7 @@
 
 *   **0.2. Independent Ground Truth Establishment:** ✓ **COMPLETE (2025-09-02)**
     *   [x] **CRITICAL NOTE:** Ground truth validation uses protection-specific tools, NOT malware scanners. Licensing protections are legitimate software components that require specialized detection tools designed for DRM/protection analysis. ✓
-    *   [x] **0.2.1.** Create `C:\Intellicrack\tests\validation_system\certified_ground_truth` directory ✓
+    *   [x] **0.2.1.** Create `D:\\Intellicrack\tests\validation_system\certified_ground_truth` directory ✓
     *   [x] **0.2.2.** For each commercial binary, create ground truth using MULTIPLE independent sources: ✓
         *   [x] **0.2.2.1.** Protection-specific scanners (PEiD, Detect It Easy, Protection ID) for software protection detection ✓
         *   [x] **0.2.2.2.** x64dbg/Ghidra signature matching results ✓
@@ -106,9 +106,9 @@
         *   [ ] **1.0.4.5. Verification:** Protection behavior MUST remain consistent despite fingerprint changes.
 
 *   **1.1. Directory Structure:**
-    *   [ ] **1.1.1.** Create the top-level directory: `C:\Intellicrack\tests\validation_system`
+    *   [ ] **1.1.1.** Create the top-level directory: `D:\\Intellicrack\tests\validation_system`
     *   [ ] **1.1.2.** Create subdirectories: `logs`, `reports`, `temp`.
-    *   [ ] **1.1.3.** Create a new subdirectory for storing ground truth data: `C:\Intellicrack\tests\validation_system\ground_truth_profiles`
+    *   [ ] **1.1.3.** Create a new subdirectory for storing ground truth data: `D:\\Intellicrack\tests\validation_system\ground_truth_profiles`
     *   [ ] **1.1.4.** Create forensic evidence directories:
         *   [ ] **1.1.4.1.** `forensic_evidence` - For memory dumps, network captures, API traces
         *   [ ] **1.1.4.2.** `video_recordings` - For screen recordings with timestamp overlay
@@ -121,7 +121,7 @@
     *   [ ] **1.1.6. Verification:** Manually confirm the existence of all directories. Ensure no placeholder or mock directory creation code. All must be functional.
 
 *   **1.2. Advanced Configuration File (`config.json`):**
-    *   [ ] **1.2.1.** Create the file: `C:\Intellicrack\tests\validation_system\config.json`
+    *   [ ] **1.2.1.** Create the file: `D:\\Intellicrack\tests\validation_system\config.json`
     *   [ ] **1.2.2.** Define the root JSON object with keys: `global_settings`, `security_settings`, `test_cases`.
     *   [ ] **1.2.3. Global Settings:**
         *   [ ] **1.2.3.1.** Implement a `qemu_snapshot_name` property to define the clean snapshot to revert to for dynamic tests.

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QFileDialog,

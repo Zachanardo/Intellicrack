@@ -179,7 +179,7 @@ security.ini
 
 # Runtime data directories
 data/
-data/logs/
+logs/
 data/plugin_cache/
 data/visualizations/
 data/reports/
@@ -400,6 +400,9 @@ tools/icp_engine/**
 *.ini
 Qt*.dll
 vcruntime*.dll
+
+# Exception: Allow shortcut in root
+!Intellicrack.lnk
 
 # Compiled Frida scripts
 frida_compiled/

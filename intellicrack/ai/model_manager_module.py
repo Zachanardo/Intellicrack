@@ -2764,7 +2764,7 @@ class ModelFineTuner:
                 """
 
                 def on_epoch_end(self, epoch, logs=None):
-                    """Called at the end of each training epoch.
+                    """Call at the end of each training epoch.
 
                     Args:
                         epoch: Current epoch number (0-indexed)

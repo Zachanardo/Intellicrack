@@ -1,6 +1,5 @@
 """Radare2 Advanced Patching Engine - Production Implementation.
 
-
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -120,6 +119,7 @@ class Radare2PatchEngine:
         Args:
             binary_path: Path to the binary to patch
             write_mode: If True, opens in write mode for applying patches
+
         """
         self.binary_path = binary_path
         self.write_mode = write_mode
@@ -160,6 +160,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the NOP sled
+
         """
         # Get architecture-specific NOP
         nop = self.NOP_INSTRUCTIONS.get(self.architecture, b"\x90")
@@ -218,6 +219,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the jump modification
+
         """
         patch_bytes = b""
 
@@ -386,6 +388,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the call redirection
+
         """
         return self.modify_jump(address, new_function, "call")
 
@@ -399,6 +402,7 @@ class Radare2PatchEngine:
 
         Returns:
             List of patches to apply
+
         """
         patches = []
 
@@ -626,6 +630,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the inverted jump
+
         """
         # Read the jump instruction
         original_bytes = self._read_bytes(address, 2)
@@ -663,6 +668,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the prologue replacement
+
         """
         # Read original prologue
         original_bytes = self._read_bytes(address, len(new_prologue))
@@ -684,6 +690,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the epilogue replacement
+
         """
         # Find function epilogue
         function_size = self._get_function_size(function_address)
@@ -709,6 +716,7 @@ class Radare2PatchEngine:
 
         Returns:
             List of patches for the jump table
+
         """
         patches = []
         entry_size = 8 if self.bits == 64 else 4
@@ -743,6 +751,7 @@ class Radare2PatchEngine:
 
         Returns:
             PatchInstruction for the inline patch
+
         """
         # Assemble the code using Radare2
         assembled = self.r2.cmd(f"pa {assembly_code}")
@@ -772,6 +781,7 @@ class Radare2PatchEngine:
 
         Returns:
             True if successful
+
         """
         if not self.write_mode:
             logger.error("Cannot apply patch: not in write mode")
@@ -797,6 +807,7 @@ class Radare2PatchEngine:
 
         Returns:
             True if all patches applied successfully
+
         """
         if patch_set_name not in self.patch_sets:
             logger.error(f"Unknown patch set: {patch_set_name}")
@@ -829,6 +840,7 @@ class Radare2PatchEngine:
 
         Returns:
             True if successful
+
         """
         if not self.write_mode:
             logger.error("Cannot revert patch: not in write mode")
@@ -855,6 +867,7 @@ class Radare2PatchEngine:
 
         Returns:
             Created PatchSet
+
         """
         patch_set = PatchSet(
             name=name,
@@ -873,6 +886,7 @@ class Radare2PatchEngine:
         Args:
             patch_set_name: Name of the patch set
             output_path: Path to save the patch set
+
         """
         if patch_set_name not in self.patch_sets:
             raise ValueError(f"Unknown patch set: {patch_set_name}")

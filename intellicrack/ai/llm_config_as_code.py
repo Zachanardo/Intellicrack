@@ -65,7 +65,7 @@ else:
 
             @staticmethod
             def validate(instance: Any, schema: dict[str, Any]) -> None:
-                """Basic schema validation implementation."""
+                """Validate schema."""
                 _BasicValidator._validate_recursive(instance, schema, [])
 
             @staticmethod
@@ -772,7 +772,7 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
 
 
 def load_config_file(file_path: str | Path, apply_to_system: bool = True, validate: bool = True) -> dict[str, Any]:
-    """Convenience function to load and optionally apply configuration.
+    """Load and optionally apply configuration.
 
     Args:
         file_path: Path to configuration file
@@ -793,7 +793,7 @@ def load_config_file(file_path: str | Path, apply_to_system: bool = True, valida
 
 
 def save_current_config(file_path: str | Path, format_type: str = "yaml") -> None:
-    """Convenience function to save current system configuration.
+    """Save current system configuration.
 
     Args:
         file_path: Output file path

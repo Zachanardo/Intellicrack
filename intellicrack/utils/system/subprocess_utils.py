@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Subprocess utilities for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -41,6 +43,7 @@ def run_in_terminal(
 
     Returns:
         Session ID of terminal session
+
     """
     try:
         from ...core.terminal_manager import get_terminal_manager

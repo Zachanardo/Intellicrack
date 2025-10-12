@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Base network analyzer for Intellicrack core network functionality.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -28,6 +30,7 @@ Provides common functionality for network analysis components.
 
 class BaseNetworkAnalyzer:
     """Base class for network analysis components.
+
     Provides common packet handling functionality.
     """
 

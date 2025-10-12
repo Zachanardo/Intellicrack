@@ -59,6 +59,7 @@ class GhidraProjectManager:
     """Manages persistent Ghidra projects with versioning and collaboration."""
 
     def __init__(self, projects_dir: str = None):
+        """Initialize the GhidraProjectManager with an optional projects directory."""
         self.projects_dir = Path(projects_dir) if projects_dir else Path.home() / ".intellicrack" / "ghidra_projects"
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.projects_dir / "projects.db"

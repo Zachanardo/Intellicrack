@@ -1,3 +1,13 @@
+"""
+Tests for the audit logging module in Intellicrack.
+
+This module contains comprehensive tests for the audit logging functionality,
+including event types, audit records, logging systems, performance monitoring,
+and integration with security research workflows. The tests validate that
+the audit logging system properly captures and records security research
+activities with appropriate detail and integrity.
+"""
+
 import pytest
 import json
 import os

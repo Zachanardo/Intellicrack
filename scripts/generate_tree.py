@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
-Intellicrack Directory Tree Generator - Fixed Version
-Generates an HTA application with clickable file links using data attributes to avoid escaping issues
+"""Intellicrack Directory Tree Generator - Fixed Version.
+
+Generates an HTA application with clickable file links using data attributes to avoid escaping issues.
 """
 
 import hashlib
@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def get_file_icon(file_path):
-    """Return appropriate icon based on file extension"""
+    """Return appropriate icon based on file extension."""
     ext = Path(file_path).suffix.lower()
     icons = {
         ".py": "🐍",
@@ -55,8 +55,7 @@ def get_file_icon(file_path):
 
 
 def scan_directory(root_path):
-    """Recursively scan directory and build HTML directly"""
-
+    """Recursively scan directory and build HTML directly."""
     file_count = 0
     folder_count = 0
 
@@ -130,7 +129,7 @@ def scan_directory(root_path):
 
 
 def format_size(bytes):
-    """Format file size in human readable format"""
+    """Format file size in human readable format."""
     if bytes == 0:
         return "0 B"
     k = 1024
@@ -143,8 +142,7 @@ def format_size(bytes):
 
 
 def generate_txt_tree(root_path, output_file):
-    """Generate plain text tree structure file"""
-
+    """Generate plain text tree structure file."""
     print(f"Generating text tree for: {root_path}")
 
     header_content = f"""INTELLICRACK PROJECT FILE TREE STRUCTURE
@@ -183,7 +181,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 
 
 def generate_fallback_tree(root_path, prefix="", is_last=True):
-    """Generate tree structure as fallback if tree command fails"""
+    """Generate tree structure as fallback if tree command fails."""
     tree_str = ""
 
     try:
@@ -212,7 +210,7 @@ def generate_fallback_tree(root_path, prefix="", is_last=True):
 
 
 def generate_hta(root_path, output_file):
-    """Generate HTA file with clickable directory tree"""
+    """Generate HTA file with clickable directory tree."""
     print(f"Scanning directory: {root_path}")
     html_tree, file_count, folder_count = scan_directory(root_path)
 
@@ -656,9 +654,9 @@ function hasHighlightedChildren(element) {{
 
 
 if __name__ == "__main__":
-    root_path = r"C:\Intellicrack\intellicrack"
-    hta_output_file = r"C:\Intellicrack\IntellicrackStructure.hta"
-    txt_output_file = r"C:\Intellicrack\IntellicrackStructure.txt"
+    root_path = r"D:\Intellicrack\intellicrack"
+    hta_output_file = r"D:\Intellicrack\IntellicrackStructure.hta"
+    txt_output_file = r"D:\Intellicrack\IntellicrackStructure.txt"
 
     generate_hta(root_path, hta_output_file)
     generate_txt_tree(root_path, txt_output_file)

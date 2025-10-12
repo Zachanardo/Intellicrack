@@ -215,9 +215,9 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
         results.append("\nPatch verification results:")
         for success, message in patch_results:
             if success:
-                results.append(f"✓ {message}")
+                results.append(f"OK {message}")
             else:
-                results.append(f"✗ {message}")
+                results.append(f"FAIL {message}")
 
         # Verify patched binary
         try:
@@ -283,14 +283,14 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                         actual_bytes = f.read(len(new_bytes))
 
                     if actual_bytes == new_bytes:
-                        results.append(f"✓ Patch {i + 1} verification: Bytes match at offset 0x{offset:X}")
+                        results.append(f"OK Patch {i + 1} verification: Bytes match at offset 0x{offset:X}")
                     else:
-                        results.append(f"✗ Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
+                        results.append(f"FAIL Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
                         results.append(f"  Expected: {new_bytes.hex().upper()}")
                         results.append(f"  Actual: {actual_bytes.hex().upper()}")
                 except (OSError, ValueError, RuntimeError) as verify_error:
                     logger.error("Error in patch_verification: %s", verify_error)
-                    results.append(f"✗ Patch {i + 1} verification failed: {verify_error}")
+                    results.append(f"FAIL Patch {i + 1} verification failed: {verify_error}")
 
         try:
             shutil.rmtree(temp_dir)
@@ -1008,6 +1008,7 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
 
 def rewrite_license_functions_with_parsing(app: Any) -> None:
     """Attempts to find and rewrite license checking functions using various methods.
+
     Includes enhanced logging and basic safety checks for code size.
 
     Args:

@@ -80,6 +80,7 @@ def dumps(obj: Any, **kwargs) -> str:
 
     Returns:
         JSON string representation
+
     """
     kwargs.setdefault("cls", DateTimeEncoder)
     kwargs.setdefault("indent", 2)
@@ -93,6 +94,7 @@ def dump(obj: Any, fp, **kwargs):
         obj: Object to serialize
         fp: File pointer
         **kwargs: Additional arguments passed to json.dump
+
     """
     kwargs.setdefault("cls", DateTimeEncoder)
     kwargs.setdefault("indent", 2)
@@ -108,6 +110,7 @@ def loads(s: str, **kwargs) -> Any:
 
     Returns:
         Deserialized Python object
+
     """
     kwargs.setdefault("object_hook", datetime_decoder)
     return json.loads(s, **kwargs)
@@ -122,6 +125,7 @@ def load(fp, **kwargs) -> Any:
 
     Returns:
         Deserialized Python object
+
     """
     kwargs.setdefault("object_hook", datetime_decoder)
     return json.load(fp, **kwargs)
@@ -134,6 +138,7 @@ def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False):
         obj: Object to serialize
         filepath: Path to save file
         use_pickle: If True, use pickle; otherwise use JSON with warning
+
     """
     if use_pickle:
         import pickle
@@ -162,13 +167,27 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
 
     Returns:
         Deserialized object
+
     """
     if use_pickle:
         import pickle
 
         logger.warning("Loading pickle file (security risk) from %s", filepath)
         with open(filepath, "rb") as f:
-            return pickle.load(f)
+            # Use a custom Unpickler to restrict what can be unpickled
+            class RestrictedUnpickler(pickle.Unpickler):
+                def find_class(self, module, name):
+                    # Only allow safe classes from specific modules
+                    if module in ('builtins', 'collections', 'datetime') and name in (
+                        'dict', 'list', 'tuple', 'set', 'str', 'int', 'float', 'bool', 'NoneType',
+                        'OrderedDict', 'defaultdict', 'deque', 'datetime', 'date', 'time', 'timedelta'
+                    ):
+                        return getattr(__import__(module, level=0), name)
+                    # For other cases, raise an exception
+                    raise pickle.UnpicklingError(f"Global '{module}.{name}' is forbidden")
+
+            unpickler = RestrictedUnpickler(f)
+            return unpickler.load()
     else:
         try:
             with open(filepath, "r") as f:
@@ -178,7 +197,20 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
             import pickle
 
             with open(filepath, "rb") as f:
-                return pickle.load(f)
+                # Use a custom Unpickler to restrict what can be unpickled
+                class RestrictedUnpickler(pickle.Unpickler):
+                    def find_class(self, module, name):
+                        # Only allow safe classes from specific modules
+                        if module in ('builtins', 'collections', 'datetime') and name in (
+                            'dict', 'list', 'tuple', 'set', 'str', 'int', 'float', 'bool', 'NoneType',
+                            'OrderedDict', 'defaultdict', 'deque', 'datetime', 'date', 'time', 'timedelta'
+                        ):
+                            return getattr(__import__(module, level=0), name)
+                        # For other cases, raise an exception
+                        raise pickle.UnpicklingError(f"Global '{module}.{name}' is forbidden")
+
+                unpickler = RestrictedUnpickler(f)
+                return unpickler.load()
 
 
 __all__ = [

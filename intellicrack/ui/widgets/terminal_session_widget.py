@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Terminal session widget for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -64,8 +66,11 @@ class TerminalSessionWidget(QWidget):
 
     def _setup_ui(self):
         """Setup the UI with tab widget and controls."""
+        from intellicrack.handlers.pyqt6_handler import QSizePolicy
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
 
         controls_layout = QHBoxLayout()
 
@@ -86,8 +91,12 @@ class TerminalSessionWidget(QWidget):
         self.tab_widget.setMovable(True)
         self.tab_widget.tabCloseRequested.connect(self._close_tab_at_index)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
+        self.tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.tab_widget.setMinimumSize(450, 350)
 
-        layout.addWidget(self.tab_widget)
+        layout.addWidget(self.tab_widget, stretch=1)
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.create_new_session()
 
@@ -99,6 +108,7 @@ class TerminalSessionWidget(QWidget):
 
         Returns:
             Session ID (string)
+
         """
         session_id = str(uuid.uuid4())
 
@@ -131,6 +141,7 @@ class TerminalSessionWidget(QWidget):
 
         Args:
             session_id: ID of session to close
+
         """
         if session_id not in self._sessions:
             logger.warning(f"Session {session_id} not found")
@@ -193,6 +204,7 @@ class TerminalSessionWidget(QWidget):
 
         Returns:
             Tuple of (session_id, EmbeddedTerminalWidget) or (None, None)
+
         """
         if self._active_session_id and self._active_session_id in self._sessions:
             session = self._sessions[self._active_session_id]
@@ -208,6 +220,7 @@ class TerminalSessionWidget(QWidget):
 
         Returns:
             EmbeddedTerminalWidget or None
+
         """
         if session_id in self._sessions:
             return self._sessions[session_id]["widget"]
@@ -219,6 +232,7 @@ class TerminalSessionWidget(QWidget):
 
         Args:
             session_id: ID of session to switch to
+
         """
         if session_id not in self._sessions:
             logger.warning(f"Session {session_id} not found")
@@ -239,6 +253,7 @@ class TerminalSessionWidget(QWidget):
         Args:
             session_id: ID of session to rename
             new_name: New name for the session
+
         """
         if session_id not in self._sessions:
             logger.warning(f"Session {session_id} not found")
@@ -261,6 +276,7 @@ class TerminalSessionWidget(QWidget):
 
         Returns:
             Dictionary of {session_id: session_data}
+
         """
         return self._sessions.copy()
 

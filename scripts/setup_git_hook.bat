@@ -9,7 +9,7 @@ if exist "../.git" (
     cd ..
 ) else if not exist ".git" (
     echo ERROR: Not in a git repository root directory!
-    echo Please run this from C:\Intellicrack or C:\Intellicrack\scripts
+    echo Please run this from %INTELLICRACK_ROOT% or %INTELLICRACK_ROOT%\scripts
     exit /b 1
 )
 
@@ -28,7 +28,7 @@ echo.
 echo echo "[PRE-PUSH] Regenerating Intellicrack directory structure files..."
 echo.
 echo # Change to repository root
-echo cd "C:/Intellicrack" ^|^| exit 1
+echo cd "%INTELLICRACK_ROOT%" ^|^| exit 1
 echo.
 echo # Run the Python script to generate both HTA and TXT files
 echo if python "scripts/generate_tree.py" 2^>/dev/null; then

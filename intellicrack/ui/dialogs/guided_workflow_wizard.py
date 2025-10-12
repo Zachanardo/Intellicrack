@@ -1083,7 +1083,7 @@ class GuidedWorkflowWizard(QWizard):
 
 
 def create_guided_workflow_wizard(parent=None) -> GuidedWorkflowWizard:
-    """Factory function to create a GuidedWorkflowWizard.
+    """Create a GuidedWorkflowWizard.
 
     Args:
         parent: Parent widget

@@ -413,7 +413,7 @@ class AIOrchestrator:
         logger.info("Task processing stopped")
 
     def _process_tasks(self):
-        """Main task processing loop."""
+        """Process tasks in the main loop."""
         while self.is_running:
             try:
                 # Get next task (blocking with timeout)

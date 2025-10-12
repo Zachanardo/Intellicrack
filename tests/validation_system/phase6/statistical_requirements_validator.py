@@ -644,7 +644,9 @@ def main():
 
     # Initialize validator
     validator = StatisticalRequirementsValidator(
-        output_path=Path("C:/Intellicrack/tests/validation_system/phase6/statistical_analysis")
+        from intellicrack.utils.path_resolver import get_project_root
+
+output_path=get_project_root() / "tests/validation_system/phase6/statistical_analysis"
     )
 
     # Run validation

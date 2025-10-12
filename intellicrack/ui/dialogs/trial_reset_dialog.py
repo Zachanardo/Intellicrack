@@ -1,4 +1,4 @@
-"""Trial Reset Engine Dialog - Production-ready implementation"""
+"""Trial Reset Engine Dialog - Production-ready implementation."""
 
 import json
 from datetime import datetime
@@ -35,7 +35,7 @@ from intellicrack.core.trial_reset_engine import TrialInfo, TrialResetEngine
 
 
 class TrialResetWorker(QThread):
-    """Worker thread for trial reset operations"""
+    """Worker thread for trial reset operations."""
 
     progress = pyqtSignal(str)
     result = pyqtSignal(dict)
@@ -43,6 +43,7 @@ class TrialResetWorker(QThread):
     update = pyqtSignal(int)  # For progress bar
 
     def __init__(self, engine: TrialResetEngine, operation: str, params: Dict[str, Any]):
+        """Initialize the TrialResetWorker with an engine, operation, and parameters."""
         super().__init__()
         self.engine = engine
         self.operation = operation
@@ -134,9 +135,10 @@ class TrialResetWorker(QThread):
 
 
 class TrialResetDialog(QDialog):
-    """Comprehensive trial reset engine interface"""
+    """Comprehensive trial reset engine interface."""
 
     def __init__(self, parent=None):
+        """Initialize the TrialResetDialog with an optional parent."""
         super().__init__(parent)
         self.engine = TrialResetEngine()
         self.current_trial_info = None
@@ -147,7 +149,7 @@ class TrialResetDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the user interface"""
+        """Initialize the user interface."""
         self.setWindowTitle("Trial Reset Engine")
         self.setMinimumSize(900, 650)
 
@@ -186,7 +188,7 @@ class TrialResetDialog(QDialog):
         self.setLayout(layout)
 
     def create_scan_tab(self):
-        """Create trial scan tab"""
+        """Create trial scan tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -253,7 +255,7 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_reset_tab(self):
-        """Create trial reset tab"""
+        """Create trial reset tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -344,7 +346,7 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_monitor_tab(self):
-        """Create trial monitoring tab"""
+        """Create trial monitoring tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -416,7 +418,7 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_advanced_tab(self):
-        """Create advanced options tab"""
+        """Create advanced options tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -506,7 +508,7 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_history_tab(self):
-        """Create scan history tab"""
+        """Create scan history tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -541,7 +543,7 @@ class TrialResetDialog(QDialog):
         return widget
 
     def scan_for_trial(self):
-        """Scan for trial information"""
+        """Scan for trial information."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             QMessageBox.warning(self, "Warning", "Please enter a product name")
@@ -563,12 +565,12 @@ class TrialResetDialog(QDialog):
         self.worker.start()
 
     def quick_scan(self, software: str):
-        """Quick scan for known software"""
+        """Quick scan for known software."""
         self.product_name_input.setText(software)
         self.scan_for_trial()
 
     def execute_reset(self):
-        """Execute trial reset"""
+        """Execute trial reset."""
         if not self.current_trial_info:
             QMessageBox.warning(self, "Warning", "No trial information available. Please scan first.")
             return
@@ -614,7 +616,7 @@ class TrialResetDialog(QDialog):
         self.worker.start()
 
     def backup_trial_data(self):
-        """Backup trial data before reset"""
+        """Backup trial data before reset."""
         if not self.current_trial_info:
             return
 
@@ -641,7 +643,7 @@ class TrialResetDialog(QDialog):
             self.worker.start()
 
     def restore_from_backup(self):
-        """Restore trial data from backup"""
+        """Restore trial data from backup."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Trial Backup",
@@ -664,7 +666,7 @@ class TrialResetDialog(QDialog):
                 self.handle_worker_error(f"Failed to load backup: {e}")
 
     def start_monitoring(self):
-        """Start trial monitoring"""
+        """Start trial monitoring."""
         product_name = self.monitor_product_input.text().strip()
         if not product_name:
             QMessageBox.warning(self, "Warning", "Please enter a product name to monitor")
@@ -685,7 +687,7 @@ class TrialResetDialog(QDialog):
         self.log(f"Started monitoring {product_name}")
 
     def stop_monitoring(self):
-        """Stop trial monitoring"""
+        """Stop trial monitoring."""
         if self.monitor_worker:
             self.monitor_worker.requestInterruption()
             self.monitor_worker.wait()
@@ -697,7 +699,7 @@ class TrialResetDialog(QDialog):
         self.log("Stopped monitoring")
 
     def update_monitor_display(self, result: dict):
-        """Update monitor display with trial status"""
+        """Update monitor display with trial status."""
         if result.get("operation") != "monitor":
             return
 
@@ -730,7 +732,7 @@ class TrialResetDialog(QDialog):
         )
 
     def deep_registry_scan(self):
-        """Perform deep registry scan"""
+        """Perform deep registry scan."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             QMessageBox.information(self, "Info", "Enter a product name in the Scan tab first")
@@ -756,7 +758,7 @@ class TrialResetDialog(QDialog):
             self.handle_worker_error(f"Registry scan error: {e}")
 
     def clean_trial_registry(self):
-        """Clean trial registry entries"""
+        """Clean trial registry entries."""
         if not self.current_trial_info:
             QMessageBox.warning(self, "Warning", "No trial information. Please scan first.")
             return
@@ -772,12 +774,12 @@ class TrialResetDialog(QDialog):
                 for key in self.current_trial_info.registry_keys:
                     self.engine._delete_registry_key(key)
                 self.log("Registry cleaned successfully")
-                self.registry_output.appendPlainText("\n✓ Registry entries deleted")
+                self.registry_output.appendPlainText("\nOK Registry entries deleted")
             except Exception as e:
                 self.handle_worker_error(f"Registry clean error: {e}")
 
     def export_registry(self):
-        """Export registry data"""
+        """Export registry data."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Registry Data",
@@ -789,7 +791,7 @@ class TrialResetDialog(QDialog):
             self.log(f"Registry exported to {file_path}")
 
     def scan_alternate_streams(self):
-        """Scan for alternate data streams"""
+        """Scan for alternate data streams."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             QMessageBox.information(self, "Info", "Enter a product name in the Scan tab first")
@@ -806,7 +808,7 @@ class TrialResetDialog(QDialog):
             self.handle_worker_error(f"ADS scan error: {e}")
 
     def clear_alternate_streams(self):
-        """Clear alternate data streams"""
+        """Clear alternate data streams."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             return
@@ -814,12 +816,12 @@ class TrialResetDialog(QDialog):
         try:
             self.engine._clear_alternate_data_streams(product_name)
             self.log("Alternate data streams cleared")
-            self.file_output.appendPlainText("\n✓ ADS cleared successfully")
+            self.file_output.appendPlainText("\nOK ADS cleared successfully")
         except Exception as e:
             self.handle_worker_error(f"ADS clear error: {e}")
 
     def scan_hidden_files(self):
-        """Scan for hidden trial files"""
+        """Scan for hidden trial files."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             QMessageBox.information(self, "Info", "Enter a product name in the Scan tab first")
@@ -836,7 +838,7 @@ class TrialResetDialog(QDialog):
             self.handle_worker_error(f"Hidden file scan error: {e}")
 
     def clear_prefetch(self):
-        """Clear prefetch data"""
+        """Clear prefetch data."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             return
@@ -848,7 +850,7 @@ class TrialResetDialog(QDialog):
             self.handle_worker_error(f"Prefetch clear error: {e}")
 
     def clear_event_logs(self):
-        """Clear event logs"""
+        """Clear event logs."""
         product_name = self.product_name_input.text().strip()
         if not product_name:
             return
@@ -860,7 +862,7 @@ class TrialResetDialog(QDialog):
             self.handle_worker_error(f"Event log clear error: {e}")
 
     def enable_time_travel(self):
-        """Enable time travel mode"""
+        """Enable time travel mode."""
         QMessageBox.information(
             self, "Time Travel Mode",
             "Time travel mode allows manipulating system time to reset trials.\n\n"
@@ -870,7 +872,7 @@ class TrialResetDialog(QDialog):
         self.log("Time travel mode information displayed")
 
     def export_scan_results(self):
-        """Export scan results to file"""
+        """Export scan results to file."""
         if not self.current_trial_info:
             return
 
@@ -919,7 +921,7 @@ class TrialResetDialog(QDialog):
                 self.handle_worker_error(f"Export failed: {e}")
 
     def load_from_history(self):
-        """Load trial info from history"""
+        """Load trial info from history."""
         current_row = self.history_table.currentRow()
         if current_row < 0:
             QMessageBox.information(self, "Info", "Please select an item from history")
@@ -932,7 +934,7 @@ class TrialResetDialog(QDialog):
         self.scan_for_trial()
 
     def clear_history(self):
-        """Clear scan history"""
+        """Clear scan history."""
         reply = QMessageBox.question(
             self, "Confirm",
             "Clear all scan history?",
@@ -945,7 +947,7 @@ class TrialResetDialog(QDialog):
             self.log("History cleared")
 
     def export_history(self):
-        """Export scan history"""
+        """Export scan history."""
         if not self.scan_history:
             QMessageBox.information(self, "Info", "No history to export")
             return
@@ -966,7 +968,7 @@ class TrialResetDialog(QDialog):
                 self.handle_worker_error(f"Export failed: {e}")
 
     def display_trial_info(self, trial_info: TrialInfo):
-        """Display trial information in tree widget"""
+        """Display trial information in tree widget."""
         self.trial_info_tree.clear()
 
         # Basic info
@@ -1007,7 +1009,7 @@ class TrialResetDialog(QDialog):
         self.trial_info_tree.expandAll()
 
     def handle_worker_result(self, result: dict):
-        """Handle worker thread results"""
+        """Handle worker thread results."""
         operation = result.get("operation")
 
         if operation == "scan":
@@ -1053,7 +1055,7 @@ class TrialResetDialog(QDialog):
 
             if success:
                 self.reset_log.append(f"\n{'=' * 60}")
-                self.reset_log.append(f"✓ Trial reset successful using {strategy} strategy")
+                self.reset_log.append(f"OK Trial reset successful using {strategy} strategy")
                 self.reset_log.append(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 self.reset_log.append(f"{'=' * 60}\n")
                 self.log("Trial reset completed successfully")
@@ -1062,7 +1064,7 @@ class TrialResetDialog(QDialog):
                     self.log("Verifying reset...")
                     self.scan_for_trial()
             else:
-                self.reset_log.append("\n✗ Trial reset failed")
+                self.reset_log.append("\nFAIL Trial reset failed")
                 self.log("Trial reset failed")
 
             self.progress_bar.setVisible(False)
@@ -1073,13 +1075,13 @@ class TrialResetDialog(QDialog):
             self.progress_bar.setVisible(False)
 
     def handle_worker_error(self, error: str):
-        """Handle worker thread errors"""
+        """Handle worker thread errors."""
         self.log(f"Error: {error}")
         self.progress_bar.setVisible(False)
         QMessageBox.critical(self, "Error", error)
 
     def log(self, message: str):
-        """Log message to console"""
+        """Log message to console."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
 
@@ -1088,7 +1090,7 @@ class TrialResetDialog(QDialog):
         scrollbar.setValue(scrollbar.maximum())
 
     def closeEvent(self, event):
-        """Handle dialog close"""
+        """Handle dialog close."""
         # Stop monitoring if active
         if self.monitor_worker:
             self.stop_monitoring()

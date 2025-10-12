@@ -595,7 +595,7 @@ class VisualPatchEditorDialog(QDialog):
 
 
 def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
-    """Factory function to create a VisualPatchEditorDialog.
+    """Create a VisualPatchEditorDialog.
 
     Args:
         binary_path: Path to binary file

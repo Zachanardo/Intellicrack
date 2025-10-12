@@ -37,7 +37,7 @@ class Plugin:
         self.analyzer = None
 
     def will_run_callback(self, *args, **kwargs):
-        """Called before analysis starts."""
+        """Prepare before analysis starts."""
         # Initialize analysis state
         self.analysis_start_time = time.time()
         self.total_states_analyzed = 0
@@ -50,7 +50,7 @@ class Plugin:
         logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
     def did_finish_run_callback(self, *args, **kwargs):
-        """Called after analysis finishes."""
+        """Finalize after analysis finishes."""
         # Calculate analysis statistics
         end_time = time.time()
         duration = end_time - getattr(self, "analysis_start_time", end_time)
@@ -68,7 +68,7 @@ class Plugin:
             self.analysis_metadata["completion_kwargs"] = kwargs
 
     def will_fork_state_callback(self, state, *args, **kwargs):
-        """Called before a state is forked."""
+        """Prepare before a state is forked."""
         # Track state forking for analysis
         if not hasattr(self, "fork_count"):
             self.fork_count = 0
@@ -90,7 +90,7 @@ class Plugin:
         )
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
-        """Called before a state is terminated."""
+        """Prepare before a state is terminated."""
         # Track termination reasons
         if not hasattr(self, "termination_pending"):
             self.termination_pending = {}
@@ -107,7 +107,7 @@ class Plugin:
         logger.debug(f"State at 0x{state.address:x} pending termination")
 
     def did_terminate_state_callback(self, state, *args, **kwargs):
-        """Called after a state is terminated."""
+        """Finalize after a state is terminated."""
         # Update termination statistics
         if not hasattr(self, "terminated_states"):
             self.terminated_states = []

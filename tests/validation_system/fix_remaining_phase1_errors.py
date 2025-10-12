@@ -293,13 +293,13 @@ def main():
     print("=== Fixing Remaining Phase 1 Errors ===\n")
 
     files = [
-        Path(r"C:\Intellicrack\tests\validation_system\environment_validator.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\anti_detection_verifier.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\fingerprint_randomizer.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\runner.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\commercial_binary_manager.py")
+        Path(r"D:\Intellicrack\tests\validation_system\environment_validator.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\fingerprint_randomizer.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\runner.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\commercial_binary_manager.py")
     ]
 
     for filepath in files:

@@ -1,4 +1,4 @@
-"""License Validation Debugging Engine for Intellicrack.
+﻿"""License Validation Debugging Engine for Intellicrack.
 
 This module provides comprehensive debugging capabilities specifically designed
 for analyzing and defeating software license validation mechanisms.
@@ -18,6 +18,20 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Windows debugging constants
+CONTEXT_FULL = 0x10007  # Full context including segments, registers, and control information
+CONTEXT_DEBUGGER = 0x10010  # Debugger-specific context
+DBG_CONTINUE = 0x00010002  # Continue execution
+DBG_EXCEPTION_NOT_HANDLED = 0x80010001  # Exception not handled
+EXCEPTION_DEBUG_EVENT = 1  # Exception debug event code
+EXCEPTION_SINGLE_STEP = 0x80000004  # Single step exception code
+MEM_COMMIT = 0x1000  # Commits physical storage
+MEM_RESERVE = 0x2000  # Reserves a range of virtual addresses
+MEM_RELEASE = 0x8000  # Releases reserved or committed pages
+PAGE_EXECUTE_READWRITE = 0x40  # Enables execute, read, and write access
+PAGE_GUARD = 0x100  # Pages in the region become guard pages
+PAGE_READWRITE = 0x04  # Enables read and write access
 
 
 class DebugEvent(IntEnum):
@@ -46,15 +60,16 @@ class ExceptionCode(IntEnum):
     EXCEPTION_GUARD_PAGE = 0x80000001
 
 
-class EXCEPTION_RECORD(ctypes.Structure):
+class ExceptionRecord(ctypes.Structure):
     """Windows EXCEPTION_RECORD structure."""
+
     pass
 
 
-EXCEPTION_RECORD._fields_ = [
+ExceptionRecord._fields_ = [
     ("ExceptionCode", wintypes.DWORD),
     ("ExceptionFlags", wintypes.DWORD),
-    ("ExceptionRecord", ctypes.POINTER(EXCEPTION_RECORD)),
+    ("ExceptionRecord", ctypes.POINTER(ExceptionRecord)),
     ("ExceptionAddress", ctypes.c_void_p),
     ("NumberParameters", wintypes.DWORD),
     ("ExceptionInformation", ctypes.c_void_p * 15)
@@ -63,6 +78,7 @@ EXCEPTION_RECORD._fields_ = [
 
 class M128A(ctypes.Structure):
     """128-bit SIMD register structure."""
+
     _fields_ = [
         ("Low", ctypes.c_ulonglong),
         ("High", ctypes.c_longlong)
@@ -71,6 +87,7 @@ class M128A(ctypes.Structure):
 
 class CONTEXT(ctypes.Structure):
     """x64 CONTEXT structure for thread state."""
+
     _fields_ = [
         ("P1Home", ctypes.c_ulonglong),
         ("P2Home", ctypes.c_ulonglong),
@@ -121,12 +138,16 @@ class CONTEXT(ctypes.Structure):
     ]
 
 
-class EXCEPTION_POINTERS(ctypes.Structure):
+class ExceptionPointers(ctypes.Structure):
     """Windows EXCEPTION_POINTERS structure."""
+
     _fields_ = [
-        ("ExceptionRecord", ctypes.POINTER(EXCEPTION_RECORD)),
+        ("ExceptionRecord", ctypes.POINTER(ExceptionRecord)),
         ("ContextRecord", ctypes.POINTER(CONTEXT))
     ]
+
+
+EXCEPTION_POINTERS = ExceptionPointers
 
 
 # VEH Handler function type
@@ -287,6 +308,7 @@ class LicenseDebugger:
 
         Returns:
             True if breakpoint was set successfully
+
         """
         if address in self.breakpoints:
             logger.warning(f"Breakpoint already exists at {hex(address)}")
@@ -342,6 +364,7 @@ class LicenseDebugger:
 
         Returns:
             True if conditional breakpoint was set successfully
+
         """
         return self.set_breakpoint(address, callback, description, condition)
 
@@ -361,6 +384,7 @@ class LicenseDebugger:
 
         Returns:
             True if hardware breakpoint was set successfully
+
         """
         # Auto-select available debug register if not specified
         if dr_index == -1:
@@ -493,6 +517,7 @@ class LicenseDebugger:
 
         Returns:
             Debug register index (0-3) or -1 if none available
+
         """
         used_registers = set()
         for info in self.hardware_breakpoints.values():
@@ -512,6 +537,7 @@ class LicenseDebugger:
 
         Returns:
             True if breakpoint was removed successfully
+
         """
         if address not in self.hardware_breakpoints:
             logger.warning(f"No hardware breakpoint at {hex(address)}")
@@ -573,6 +599,7 @@ class LicenseDebugger:
 
         Returns:
             List of hardware breakpoint information
+
         """
         breakpoints = []
         for address, info in self.hardware_breakpoints.items():
@@ -626,7 +653,7 @@ class LicenseDebugger:
             return []
 
     def hook_license_api(self, module_name: str, function_name: str, callback: Callable) -> bool:
-        """Hook Windows API functions commonly used in licensing."""
+        """Install hook for Windows API licensing functions."""
         try:
             # Get module handle
             module = ctypes.WinDLL(module_name)
@@ -651,7 +678,7 @@ class LicenseDebugger:
             return False
 
     def _debug_loop(self):
-        """Main debugging event loop."""
+        """Run main debugging event loop."""
         debug_event = DEBUG_EVENT()
 
         while self.debugging:
@@ -1256,7 +1283,7 @@ class LicenseDebugger:
             return regions
 
         # MEMORY_BASIC_INFORMATION structure
-        class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+        class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
@@ -1300,6 +1327,7 @@ class LicenseDebugger:
 
         Returns:
             True if syntax is valid
+
         """
         import re
 
@@ -1327,6 +1355,7 @@ class LicenseDebugger:
 
         Returns:
             True if condition is met
+
         """
         if not bp.condition:
             return True
@@ -1799,7 +1828,7 @@ class LicenseDebugger:
             return False
 
     def _anti_debug_callback(self, debugger, debug_event):
-        """Callback for anti-debug API hooks."""
+        """Handle anti-debug API hooks callback."""
         # Modify return value to indicate no debugger
         context = self.get_registers()
         if context:
@@ -1885,7 +1914,7 @@ class LicenseDebugger:
             return False
 
     def _output_debug_string_callback(self, debugger, debug_event):
-        """Callback for OutputDebugString API hooks.
+        """Handle OutputDebugString API hooks callback.
 
         Modifies behavior to prevent debugger detection.
         """
@@ -2006,7 +2035,7 @@ class LicenseDebugger:
             return False
 
     def _timing_api_callback(self, debugger, debug_event):
-        """Callback for timing API hooks to provide controlled time values."""
+        """Handle timing API hooks callback to provide controlled time values."""
         try:
             context = self.get_registers()
             if not context:
@@ -2041,7 +2070,7 @@ class LicenseDebugger:
             logger.error(f"Timing API callback error: {e}")
 
     def _sleep_callback(self, debugger, debug_event):
-        """Callback for Sleep API to compensate for debugging overhead."""
+        """Handle Sleep API callback to compensate for debugging overhead."""
         try:
             context = self.get_registers()
             if not context:
@@ -2093,7 +2122,7 @@ class LicenseDebugger:
             logger.error(f"Sleep callback error: {e}")
 
     def _delay_execution_callback(self, debugger, debug_event):
-        """Callback for NtDelayExecution to speed up delays."""
+        """Speed up delays with NtDelayExecution callback."""
         try:
             # Similar to Sleep callback but for NT-level delay
             context = self.get_registers()
@@ -2154,8 +2183,8 @@ class LicenseDebugger:
                         ctypes.byref(critical),
                         ctypes.sizeof(critical)
                     )
-                except Exception:
-                    pass  # Some threads may not allow modification
+                except Exception as e:
+                    self.logger.debug(f"Thread may not allow modification: {e}")  # Some threads may not allow modification
 
             # Strategy 3: Create a whitelist of legitimate threads
             self.legitimate_threads = set()
@@ -2166,7 +2195,7 @@ class LicenseDebugger:
                 process = psutil.Process(self.process_id)
                 for thread in process.threads():
                     self.legitimate_threads.add(thread.id)
-            except:
+            except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                 # Fallback to Windows API enumeration
                 snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
                 if snapshot != -1:
@@ -2196,7 +2225,7 @@ class LicenseDebugger:
             return False
 
     def _thread_enum_callback(self, debugger, debug_event):
-        """Callback for thread enumeration API hooks."""
+        """Handle thread enumeration API hooks."""
         try:
             context = self.get_registers()
             if not context:
@@ -2218,6 +2247,7 @@ class LicenseDebugger:
 
         Returns:
             Dictionary mapping thread IDs to suspension information
+
         """
         suspended_threads = {}
 
@@ -2249,8 +2279,8 @@ class LicenseDebugger:
                             "handle": thread_handle,
                             "detection_method": "suspend_count"
                         }
-                except:
-                    pass
+                except (OSError, ctypes.ArgumentError) as e:
+                    logger.debug(f"Failed to check thread {thread_id} suspension status: {e}")
 
             # Method 2: Check thread wait states
             for thread_id, thread_handle in self.thread_handles.items():
@@ -2299,8 +2329,8 @@ class LicenseDebugger:
 
                         # Resume thread to original state
                         self.kernel32.ResumeThread(thread_handle)
-                except:
-                    pass
+                except (OSError, ctypes.ArgumentError) as e:
+                    logger.debug(f"Failed to check thread {thread_id} wait state: {e}")
 
             # Method 3: Check for debugger-suspended threads
             snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
@@ -2361,6 +2391,7 @@ class LicenseDebugger:
 
         Returns:
             True if successful
+
         """
         if thread_id not in self.thread_handles:
             logger.error(f"Thread {thread_id} not found")
@@ -2372,7 +2403,7 @@ class LicenseDebugger:
             # Get Thread Information Block (TIB) address
             ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
 
-            class THREAD_BASIC_INFORMATION(ctypes.Structure):
+            class THREAD_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("ExitStatus", ctypes.c_long),
                     ("TebBaseAddress", ctypes.c_void_p),
@@ -2472,6 +2503,7 @@ class LicenseDebugger:
 
         Returns:
             List of traced instruction information
+
         """
         if thread_id not in self.thread_handles:
             logger.error(f"Thread {thread_id} not found")
@@ -2554,7 +2586,7 @@ class LicenseDebugger:
                                         # Disassemble instruction if Capstone is available
                                         inst_str = ""
                                         try:
-                                            from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+                                            from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, CsError
 
                                             if ctypes.sizeof(ctypes.c_void_p) == 8:
                                                 md = Cs(CS_ARCH_X86, CS_MODE_64)
@@ -2564,7 +2596,7 @@ class LicenseDebugger:
                                             for inst in md.disasm(inst_bytes, ip):
                                                 inst_str = f"{inst.mnemonic} {inst.op_str}"
                                                 break
-                                        except:
+                                        except (CsError, TypeError, ValueError):
                                             inst_str = inst_bytes.hex()
 
                                         # Log the traced instruction
@@ -2703,6 +2735,7 @@ class LicenseDebugger:
 
         Returns:
             Dictionary mapping callback addresses to disassembled instructions
+
         """
         disassembled = {}
 
@@ -2792,6 +2825,7 @@ class LicenseDebugger:
 
         Returns:
             True if callbacks were successfully bypassed
+
         """
         if not self.process_handle:
             return False
@@ -2880,13 +2914,14 @@ class LicenseDebugger:
             return False
 
     def hook_tls_callbacks(self, callback_handler: Callable) -> bool:
-        """Hook TLS callbacks to intercept and modify their behavior.
+        """Intercept and modify TLS callback behavior.
 
         Args:
             callback_handler: Function to handle intercepted TLS callbacks
 
         Returns:
             True if callbacks were successfully hooked
+
         """
         if not self.process_handle:
             return False
@@ -3047,6 +3082,7 @@ class LicenseDebugger:
 
         Returns:
             Dictionary containing detected protection information
+
         """
         protection_info = {
             "has_tls": False,
@@ -3311,6 +3347,7 @@ class LicenseDebugger:
 
         Returns:
             Dictionary mapping DLL names to tuples of (address, function_name, is_bound)
+
         """
         delayed_imports = {}
 
@@ -3325,174 +3362,24 @@ class LicenseDebugger:
 
             module_base = modules[0]
 
-            # Read PE header
+            # Read and validate PE header
             pe_header = self._read_memory(module_base, 0x1000)
-            if not pe_header or pe_header[:2] != b"MZ":
+            if not self._validate_pe_header(pe_header):
                 return delayed_imports
 
-            # Parse DOS header
-            e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
-
-            # Parse NT headers
-            nt_header_offset = e_lfanew
-            if pe_header[nt_header_offset:nt_header_offset + 4] != b"PE\x00\x00":
-                return delayed_imports
-
-            # Get architecture
-            machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
-            is_64bit = machine == 0x8664
-
-            # Get Delay Import Directory RVA and size (Data Directory[13])
-            opt_header_offset = nt_header_offset + 24
-            if is_64bit:
-                # 64-bit: Delay Import Directory is at offset 200 in optional header
-                delay_import_offset = opt_header_offset + 200
-            else:
-                # 32-bit: Delay Import Directory is at offset 184 in optional header
-                delay_import_offset = opt_header_offset + 184
-
-            delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset:delay_import_offset + 4])[0]
-            delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4:delay_import_offset + 8])[0]
+            # Parse PE headers to get architecture and delayed import directory
+            nt_header_offset, is_64bit = self._parse_nt_header(pe_header)
+            delay_import_rva, delay_import_size = self._get_delay_import_info(pe_header, nt_header_offset, is_64bit)
 
             if not delay_import_rva or not delay_import_size:
                 logger.debug("No delayed imports found")
                 return delayed_imports
 
-            # Read delay import descriptors
-            delay_desc_size = 32  # Size of ImgDelayDescr structure
-            num_descriptors = min(delay_import_size // delay_desc_size, 50)  # Limit to prevent excessive processing
+            # Parse delay import descriptors
+            delayed_imports = self._parse_delay_descriptors(module_base, delay_import_rva, delay_import_size, is_64bit)
 
-            for i in range(num_descriptors):
-                desc_offset = module_base + delay_import_rva + (i * delay_desc_size)
-                desc_data = self._read_memory(desc_offset, delay_desc_size)
-
-                if not desc_data:
-                    break
-
-                # Parse ImgDelayDescr structure
-                attributes = struct.unpack("<I", desc_data[0:4])[0]
-                dll_name_rva = struct.unpack("<I", desc_data[4:8])[0]
-                module_handle_rva = struct.unpack("<I", desc_data[8:12])[0]
-                iat_rva = struct.unpack("<I", desc_data[12:16])[0]
-                int_rva = struct.unpack("<I", desc_data[16:20])[0]  # Import Name Table
-                bound_iat_rva = struct.unpack("<I", desc_data[20:24])[0]
-                struct.unpack("<I", desc_data[24:28])[0]
-                timestamp = struct.unpack("<I", desc_data[28:32])[0]
-
-                # Check if this is the end of descriptors
-                if dll_name_rva == 0:
-                    break
-
-                # Determine if RVAs are relative to image base (new format) or virtual addresses (old format)
-                is_new_format = (attributes & 0x1) != 0
-
-                # Read DLL name
-                if is_new_format:
-                    dll_name_addr = module_base + dll_name_rva
-                else:
-                    dll_name_addr = dll_name_rva
-
-                dll_name = self._read_string(dll_name_addr, 256)
-                if not dll_name:
-                    continue
-
-                delayed_imports[dll_name] = []
-
-                # Check if DLL is already loaded
-                is_loaded = False
-                if module_handle_rva:
-                    module_handle_addr = module_base + module_handle_rva if is_new_format else module_handle_rva
-                    handle_data = self._read_memory(module_handle_addr, 8 if is_64bit else 4)
-                    if handle_data:
-                        handle_value = struct.unpack("<Q" if is_64bit else "<I", handle_data)[0]
-                        is_loaded = handle_value != 0
-
-                # Parse Import Name Table and IAT
-                if int_rva and iat_rva:
-                    int_addr = module_base + int_rva if is_new_format else int_rva
-                    iat_addr = module_base + iat_rva if is_new_format else iat_rva
-
-                    # Read INT and IAT entries
-                    entry_size = 8 if is_64bit else 4
-                    for j in range(1000):  # Maximum imports per DLL
-                        # Read INT entry
-                        int_entry_data = self._read_memory(int_addr + j * entry_size, entry_size)
-                        if not int_entry_data:
-                            break
-
-                        int_entry = struct.unpack("<Q" if is_64bit else "<I", int_entry_data)[0]
-                        if int_entry == 0:
-                            break
-
-                        # Read IAT entry
-                        iat_entry_data = self._read_memory(iat_addr + j * entry_size, entry_size)
-                        if iat_entry_data:
-                            iat_entry = struct.unpack("<Q" if is_64bit else "<I", iat_entry_data)[0]
-                        else:
-                            iat_entry = 0
-
-                        # Check if import is by ordinal or name
-                        if is_64bit:
-                            is_ordinal = (int_entry & 0x8000000000000000) != 0
-                            ordinal = int_entry & 0xFFFF
-                        else:
-                            is_ordinal = (int_entry & 0x80000000) != 0
-                            ordinal = int_entry & 0xFFFF
-
-                        if is_ordinal:
-                            func_name = f"Ordinal_{ordinal}"
-                        else:
-                            # Import by name - read hint/name table entry
-                            if is_new_format:
-                                hint_name_addr = module_base + int_entry
-                            else:
-                                hint_name_addr = int_entry
-
-                            # Skip hint (2 bytes) and read name
-                            func_name = self._read_string(hint_name_addr + 2, 256)
-                            if not func_name:
-                                func_name = f"Unknown_{j}"
-
-                        # Determine if function is bound (already resolved)
-                        is_bound = False
-                        if is_loaded and iat_entry != 0 and iat_entry != int_entry:
-                            # IAT entry has been updated with actual function address
-                            is_bound = True
-                            func_addr = iat_entry
-                        else:
-                            # Function not yet resolved
-                            func_addr = iat_addr + j * entry_size
-
-                        delayed_imports[dll_name].append((func_addr, func_name, is_bound))
-
-                        # Log interesting delayed imports
-                        if func_name.lower() in ["loadlibrarya", "loadlibraryw", "getprocaddress",
-                                                  "virtualprotect", "virtualalloc", "createthread"]:
-                            logger.info(f"Found delayed import: {dll_name}!{func_name} "
-                                      f"at 0x{func_addr:X} (bound={is_bound})")
-
-                # Check for bound imports in the bound IAT
-                if bound_iat_rva and timestamp != 0:
-                    # This DLL has bound imports (pre-resolved addresses)
-                    logger.debug(f"DLL {dll_name} has bound imports (timestamp={timestamp})")
-
-            # Summary
-            total_dlls = len(delayed_imports)
-            total_imports = sum(len(imports) for imports in delayed_imports.values())
-
-            if total_dlls > 0:
-                logger.info(f"Found {total_imports} delayed imports from {total_dlls} DLLs")
-
-                # Check for suspicious delayed imports often used by packers/protectors
-                suspicious_dlls = ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"]
-                suspicious_apis = ["virtualprotect", "virtualalloc", "loadlibrary", "getprocaddress",
-                                 "createremotethread", "writeprocessmemory", "readprocessmemory"]
-
-                for dll_name, imports in delayed_imports.items():
-                    if dll_name.lower() in suspicious_dlls:
-                        for _addr, func_name, _is_bound in imports:
-                            if any(api in func_name.lower() for api in suspicious_apis):
-                                logger.warning(f"Suspicious delayed import: {dll_name}!{func_name}")
+            # Log summary and check for suspicious imports
+            self._log_delayed_imports_summary(delayed_imports)
 
             return delayed_imports
 
@@ -3500,8 +3387,232 @@ class LicenseDebugger:
             logger.error(f"Failed to parse delayed imports: {e}")
             return delayed_imports
 
+    def _validate_pe_header(self, pe_header):
+        """Validate PE header."""
+        if not pe_header or pe_header[:2] != b"MZ":
+            return False
+        # Parse DOS header
+        e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
+        # Parse NT headers
+        nt_header_offset = e_lfanew
+        if pe_header[nt_header_offset:nt_header_offset + 4] != b"PE\x00\x00":
+            return False
+        return True
+
+    def _parse_nt_header(self, pe_header):
+        """Parse NT header to get architecture info."""
+        e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
+        nt_header_offset = e_lfanew
+        machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
+        is_64bit = machine == 0x8664
+        return nt_header_offset, is_64bit
+
+    def _get_delay_import_info(self, pe_header, nt_header_offset, is_64bit):
+        """Get delay import directory information."""
+        opt_header_offset = nt_header_offset + 24
+        if is_64bit:
+            # 64-bit: Delay Import Directory is at offset 200 in optional header
+            delay_import_offset = opt_header_offset + 200
+        else:
+            # 32-bit: Delay Import Directory is at offset 184 in optional header
+            delay_import_offset = opt_header_offset + 184
+
+        delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset:delay_import_offset + 4])[0]
+        delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4:delay_import_offset + 8])[0]
+        return delay_import_rva, delay_import_size
+
+    def _parse_delay_descriptors(self, module_base, delay_import_rva, delay_import_size, is_64bit):
+        """Parse delay import descriptors."""
+        delayed_imports = {}
+
+        # Read delay import descriptors
+        delay_desc_size = 32  # Size of ImgDelayDescr structure
+        num_descriptors = min(delay_import_size // delay_desc_size, 50)  # Limit to prevent excessive processing
+
+        for i in range(num_descriptors):
+            desc_offset = module_base + delay_import_rva + (i * delay_desc_size)
+            desc_data = self._read_memory(desc_offset, delay_desc_size)
+
+            if not desc_data:
+                break
+
+            # Parse ImgDelayDescr structure
+            attributes = struct.unpack("<I", desc_data[0:4])[0]
+            dll_name_rva = struct.unpack("<I", desc_data[4:8])[0]
+            module_handle_rva = struct.unpack("<I", desc_data[8:12])[0]
+            iat_rva = struct.unpack("<I", desc_data[12:16])[0]
+            int_rva = struct.unpack("<I", desc_data[16:20])[0]  # Import Name Table
+            bound_iat_rva = struct.unpack("<I", desc_data[20:24])[0]
+            struct.unpack("<I", desc_data[24:28])[0]
+            timestamp = struct.unpack("<I", desc_data[28:32])[0]
+
+            # Check if this is the end of descriptors
+            if dll_name_rva == 0:
+                break
+
+            # Parse individual descriptor
+            descriptor_imports = self._parse_delay_descriptor(
+                module_base, attributes, dll_name_rva, module_handle_rva,
+                iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit
+            )
+
+            if descriptor_imports:
+                dll_name, functions = descriptor_imports
+                delayed_imports[dll_name] = functions
+
+        return delayed_imports
+
+    def _parse_delay_descriptor(self, module_base, attributes, dll_name_rva, module_handle_rva,
+                               iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit):
+        """Parse a single delay import descriptor."""
+        # Determine if RVAs are relative to image base (new format) or virtual addresses (old format)
+        is_new_format = (attributes & 0x1) != 0
+
+        # Read DLL name
+        if is_new_format:
+            dll_name_addr = module_base + dll_name_rva
+        else:
+            dll_name_addr = dll_name_rva
+
+        dll_name = self._read_string(dll_name_addr, 256)
+        if not dll_name:
+            return None
+
+        functions = []
+
+        # Check if DLL is already loaded
+        is_loaded = self._check_dll_loaded(module_base, module_handle_rva, is_new_format, is_64bit)
+
+        # Parse Import Name Table and IAT
+        if int_rva and iat_rva:
+            functions = self._parse_import_table(
+                module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded
+            )
+
+        # Check for bound imports in the bound IAT
+        if bound_iat_rva and timestamp != 0:
+            # This DLL has bound imports (pre-resolved addresses)
+            logger.debug(f"DLL {dll_name} has bound imports (timestamp={timestamp})")
+
+        return dll_name, functions
+
+    def _check_dll_loaded(self, module_base, module_handle_rva, is_new_format, is_64bit):
+        """Check if DLL is already loaded."""
+        if not module_handle_rva:
+            return False
+
+        module_handle_addr = module_base + module_handle_rva if is_new_format else module_handle_rva
+        handle_data = self._read_memory(module_handle_addr, 8 if is_64bit else 4)
+        if handle_data:
+            handle_value = struct.unpack("<Q" if is_64bit else "<I", handle_data)[0]
+            return handle_value != 0
+        return False
+
+    def _parse_import_table(self, module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded):
+        """Parse the import table for a specific DLL."""
+        functions = []
+
+        # Set addresses
+        int_addr = module_base + int_rva if is_new_format else int_rva
+        iat_addr = module_base + iat_rva if is_new_format else iat_rva
+
+        # Read INT and IAT entries
+        entry_size = 8 if is_64bit else 4
+        for j in range(1000):  # Maximum imports per DLL
+            # Read INT entry
+            int_entry_data = self._read_memory(int_addr + j * entry_size, entry_size)
+            if not int_entry_data:
+                break
+
+            int_entry = struct.unpack("<Q" if is_64bit else "<I", int_entry_data)[0]
+            if int_entry == 0:
+                break
+
+            # Read IAT entry
+            iat_entry_data = self._read_memory(iat_addr + j * entry_size, entry_size)
+            if iat_entry_data:
+                iat_entry = struct.unpack("<Q" if is_64bit else "<I", iat_entry_data)[0]
+            else:
+                iat_entry = 0
+
+            # Get function information
+            func_info = self._get_function_info(
+                module_base, int_entry, is_new_format, is_64bit, j
+            )
+
+            if func_info:
+                func_name, func_addr = func_info
+
+                # Determine if function is bound (already resolved)
+                is_bound = self._determine_bound_status(
+                    is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size
+                )
+
+                functions.append((func_addr, func_name, is_bound))
+
+                # Log interesting delayed imports
+                if func_name.lower() in ["loadlibrarya", "loadlibraryw", "getprocaddress",
+                                         "virtualprotect", "virtualalloc", "createthread"]:
+                    logger.info(f"Found delayed import: {func_name} at 0x{func_addr:X} (bound={is_bound})")
+
+        return functions
+
+    def _get_function_info(self, module_base, int_entry, is_new_format, is_64bit, j):
+        """Get function information (name and address) based on import entry."""
+        # Check if import is by ordinal or name
+        if is_64bit:
+            is_ordinal = (int_entry & 0x8000000000000000) != 0
+            ordinal = int_entry & 0xFFFF
+        else:
+            is_ordinal = (int_entry & 0x80000000) != 0
+            ordinal = int_entry & 0xFFFF
+
+        if is_ordinal:
+            func_name = f"Ordinal_{ordinal}"
+            func_addr = ordinal
+        else:
+            # Import by name - read hint/name table entry
+            hint_name_addr = module_base + int_entry if is_new_format else int_entry
+
+            # Skip hint (2 bytes) and read name
+            func_name = self._read_string(hint_name_addr + 2, 256)
+            if not func_name:
+                func_name = f"Unknown_{j}"
+            func_addr = hint_name_addr
+
+        return func_name, func_addr
+
+    def _determine_bound_status(self, is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size):
+        """Determine if function is bound (already resolved)."""
+        if is_loaded and iat_entry != 0 and iat_entry != int_entry:
+            # IAT entry has been updated with actual function address
+            return True
+        else:
+            # Function not yet resolved
+            return False
+
+    def _log_delayed_imports_summary(self, delayed_imports):
+        """Log summary of delayed imports and check for suspicious imports."""
+        # Summary
+        total_dlls = len(delayed_imports)
+        total_imports = sum(len(imports) for imports in delayed_imports.values())
+
+        if total_dlls > 0:
+            logger.info(f"Found {total_imports} delayed imports from {total_dlls} DLLs")
+
+            # Check for suspicious delayed imports often used by packers/protectors
+            suspicious_dlls = ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"]
+            suspicious_apis = ["virtualprotect", "virtualalloc", "loadlibrary", "getprocaddress",
+                             "createremotethread", "writeprocessmemory", "readprocessmemory"]
+
+            for dll_name, imports in delayed_imports.items():
+                if dll_name.lower() in suspicious_dlls:
+                    for _addr, func_name, _is_bound in imports:
+                        if any(api in func_name.lower() for api in suspicious_apis):
+                            logger.warning(f"Suspicious delayed import: {dll_name}!{func_name}")
+
     def hook_delayed_import(self, dll_name: str, func_name: str, hook_handler: Callable) -> bool:
-        """Hook a delayed import function.
+        """Install hook for delayed import function.
 
         Args:
             dll_name: Name of the DLL containing the function
@@ -3510,6 +3621,7 @@ class LicenseDebugger:
 
         Returns:
             True if hook was successfully installed
+
         """
         if not self.process_handle:
             return False
@@ -3603,228 +3715,281 @@ class LicenseDebugger:
 
         Returns:
             Assembled machine code bytes
+
         """
         try:
             # Try to use Keystone assembler if available
-            try:
-                import keystone
-
-                if arch == "x64":
-                    ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
-                else:
-                    ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
-
-                asm_str = f"{mnemonic} {operands}" if operands else mnemonic
-                encoding, count = ks.asm(asm_str)
-
-                if encoding:
-                    return bytes(encoding)
-
-            except ImportError:
-                pass  # Keystone not available, use manual encoding
+            result = self._try_keystone_assemble(mnemonic, operands, arch)
+            if result:
+                return result
 
             # Manual encoding for common instructions
-            mnemonic = mnemonic.lower()
-            is_64bit = (arch == "x64")
-
-            # Basic instruction encoding table
-            if mnemonic == "nop":
-                return b"\x90"
-
-            elif mnemonic == "ret":
-                if operands:
-                    # RET with immediate
-                    imm = int(operands, 0)
-                    return b"\xC2" + struct.pack("<H", imm)
-                return b"\xC3"
-
-            elif mnemonic == "int3":
-                return b"\xCC"
-
-            elif mnemonic == "int":
-                imm = int(operands, 0)
-                if imm == 3:
-                    return b"\xCC"
-                return b"\xCD" + bytes([imm])
-
-            elif mnemonic == "push":
-                if operands in ["rax", "eax"]:
-                    return b"\x50"
-                elif operands in ["rcx", "ecx"]:
-                    return b"\x51"
-                elif operands in ["rdx", "edx"]:
-                    return b"\x52"
-                elif operands in ["rbx", "ebx"]:
-                    return b"\x53"
-                elif operands in ["rsp", "esp"]:
-                    return b"\x54"
-                elif operands in ["rbp", "ebp"]:
-                    return b"\x55"
-                elif operands in ["rsi", "esi"]:
-                    return b"\x56"
-                elif operands in ["rdi", "edi"]:
-                    return b"\x57"
-                elif is_64bit and operands.startswith("r"):
-                    # 64-bit extended registers
-                    reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
-                              "r12": 4, "r13": 5, "r14": 6, "r15": 7}
-                    if operands in reg_map:
-                        return bytes([0x41, 0x50 + reg_map[operands]])
-                else:
-                    # Push immediate
-                    try:
-                        imm = int(operands, 0)
-                        if -128 <= imm <= 127:
-                            return b"\x6A" + struct.pack("b", imm)
-                        else:
-                            return b"\x68" + struct.pack("<I", imm & 0xFFFFFFFF)
-                    except:
-                        pass
-
-            elif mnemonic == "pop":
-                if operands in ["rax", "eax"]:
-                    return b"\x58"
-                elif operands in ["rcx", "ecx"]:
-                    return b"\x59"
-                elif operands in ["rdx", "edx"]:
-                    return b"\x5A"
-                elif operands in ["rbx", "ebx"]:
-                    return b"\x5B"
-                elif operands in ["rsp", "esp"]:
-                    return b"\x5C"
-                elif operands in ["rbp", "ebp"]:
-                    return b"\x5D"
-                elif operands in ["rsi", "esi"]:
-                    return b"\x5E"
-                elif operands in ["rdi", "edi"]:
-                    return b"\x5F"
-                elif is_64bit and operands.startswith("r"):
-                    reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
-                              "r12": 4, "r13": 5, "r14": 6, "r15": 7}
-                    if operands in reg_map:
-                        return bytes([0x41, 0x58 + reg_map[operands]])
-
-            elif mnemonic == "jmp":
-                if operands.startswith("0x") or operands.isdigit():
-                    # JMP to absolute address - need relative offset
-                    target = int(operands, 0)
-                    # For now, use short jump if possible
-                    # Calculate relative offset for jump
-                    current_pos = 0  # Will be filled by patcher
-                    offset = target - (current_pos + 2)  # 2 bytes for short jump
-                    if -128 <= offset <= 127:
-                        return b"\xEB" + bytes([offset & 0xFF])  # Short jump with calculated offset
-                    else:
-                        # Near jump for longer distances
-                        offset = target - (current_pos + 5)  # 5 bytes for near jump
-                        return b"\xE9" + offset.to_bytes(4, 'little', signed=True)
-                elif operands in ["rax", "eax"]:
-                    return b"\xFF\xE0"  # JMP RAX/EAX
-                elif operands in ["rbx", "ebx"]:
-                    return b"\xFF\xE3"  # JMP RBX/EBX
-                else:
-                    # JMP rel8
-                    return b"\xEB\x00"
-
-            elif mnemonic == "call":
-                if operands in ["rax", "eax"]:
-                    return b"\xFF\xD0"  # CALL RAX/EAX
-                elif operands in ["rbx", "ebx"]:
-                    return b"\xFF\xD3"  # CALL RBX/EBX
-                else:
-                    # CALL rel32 - calculate relative offset
-                    if operands.startswith("0x") or operands.isdigit():
-                        target = int(operands, 0)
-                        # Calculate relative offset from current position
-                        current_pos = 0  # Will be filled by patcher during runtime
-                        offset = target - (current_pos + 5)  # 5 bytes for CALL rel32
-                        return b"\xE8" + offset.to_bytes(4, 'little', signed=True)
-                    else:
-                        # Default CALL with zero offset - will be patched at runtime
-                        return b"\xE8\x00\x00\x00\x00"
-
-            elif mnemonic == "mov":
-                parts = [p.strip() for p in operands.split(",")]
-                if len(parts) == 2:
-                    dst, src = parts
-
-                    # MOV reg, reg
-                    reg_map_32 = {"eax": 0, "ecx": 1, "edx": 2, "ebx": 3,
-                                  "esp": 4, "ebp": 5, "esi": 6, "edi": 7}
-                    reg_map_64 = {"rax": 0, "rcx": 1, "rdx": 2, "rbx": 3,
-                                  "rsp": 4, "rbp": 5, "rsi": 6, "rdi": 7}
-
-                    if is_64bit and dst in reg_map_64 and src in reg_map_64:
-                        # MOV r64, r64
-                        return bytes([0x48, 0x89, 0xC0 | (reg_map_64[src] << 3) | reg_map_64[dst]])
-                    elif not is_64bit and dst in reg_map_32 and src in reg_map_32:
-                        # MOV r32, r32
-                        return bytes([0x89, 0xC0 | (reg_map_32[src] << 3) | reg_map_32[dst]])
-                    elif dst == "rax" and src.startswith("0x"):
-                        # MOV RAX, imm64
-                        imm = int(src, 0)
-                        return b"\x48\xB8" + struct.pack("<Q", imm)
-                    elif dst == "eax" and src.startswith("0x"):
-                        # MOV EAX, imm32
-                        imm = int(src, 0)
-                        return b"\xB8" + struct.pack("<I", imm & 0xFFFFFFFF)
-
-            elif mnemonic == "xor":
-                parts = [p.strip() for p in operands.split(",")]
-                if len(parts) == 2 and parts[0] == parts[1]:
-                    # XOR reg, reg (same register - zero it)
-                    if parts[0] in ["rax", "eax"]:
-                        if is_64bit and parts[0] == "rax":
-                            return b"\x48\x31\xC0"  # XOR RAX, RAX
-                        return b"\x31\xC0"  # XOR EAX, EAX
-                    elif parts[0] in ["rcx", "ecx"]:
-                        if is_64bit and parts[0] == "rcx":
-                            return b"\x48\x31\xC9"  # XOR RCX, RCX
-                        return b"\x31\xC9"  # XOR ECX, ECX
-                    elif parts[0] in ["rdx", "edx"]:
-                        if is_64bit and parts[0] == "rdx":
-                            return b"\x48\x31\xD2"  # XOR RDX, RDX
-                        return b"\x31\xD2"  # XOR EDX, EDX
-
-            elif mnemonic == "add":
-                parts = [p.strip() for p in operands.split(",")]
-                if len(parts) == 2:
-                    dst, src = parts
-                    if dst in ["rsp", "esp"] and src.isdigit():
-                        # ADD RSP/ESP, imm
-                        imm = int(src, 0)
-                        if -128 <= imm <= 127:
-                            if is_64bit and dst == "rsp":
-                                return b"\x48\x83\xC4" + struct.pack("b", imm)
-                            return b"\x83\xC4" + struct.pack("b", imm)
-                        else:
-                            if is_64bit and dst == "rsp":
-                                return b"\x48\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
-                            return b"\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
-
-            elif mnemonic == "sub":
-                parts = [p.strip() for p in operands.split(",")]
-                if len(parts) == 2:
-                    dst, src = parts
-                    if dst in ["rsp", "esp"] and src.isdigit():
-                        # SUB RSP/ESP, imm
-                        imm = int(src, 0)
-                        if -128 <= imm <= 127:
-                            if is_64bit and dst == "rsp":
-                                return b"\x48\x83\xEC" + struct.pack("b", imm)
-                            return b"\x83\xEC" + struct.pack("b", imm)
-                        else:
-                            if is_64bit and dst == "rsp":
-                                return b"\x48\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
-                            return b"\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
-
-            # If we couldn't encode it, return empty bytes
-            logger.warning(f"Could not encode: {mnemonic} {operands}")
-            return b""
+            return self._manual_assemble(mnemonic, operands, arch)
 
         except Exception as e:
             logger.error(f"Failed to assemble instruction: {e}")
             return b""
+
+    def _try_keystone_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
+        """Try to use keystone assembler."""
+        try:
+            import keystone
+
+            if arch == "x64":
+                ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
+            else:
+                ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
+
+            asm_str = f"{mnemonic} {operands}" if operands else mnemonic
+            encoding, count = ks.asm(asm_str)
+
+            if encoding:
+                return bytes(encoding)
+
+        except ImportError:
+            logger.debug("Keystone assembler not available, falling back to manual encoding")
+        return b""
+
+    def _manual_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
+        """Manual encoding for common instructions."""
+        mnemonic = mnemonic.lower()
+        is_64bit = (arch == "x64")
+
+        # Basic instruction encoding table
+        if mnemonic == "nop":
+            return b"\x90"
+        elif mnemonic == "ret":
+            return self._encode_ret(operands)
+        elif mnemonic == "int3":
+            return b"\xCC"
+        elif mnemonic == "int":
+            return self._encode_int(operands)
+        elif mnemonic == "push":
+            return self._encode_push(operands, is_64bit)
+        elif mnemonic == "pop":
+            return self._encode_pop(operands, is_64bit)
+        elif mnemonic == "jmp":
+            return self._encode_jmp(operands, is_64bit)
+        elif mnemonic == "call":
+            return self._encode_call(operands, is_64bit)
+        elif mnemonic == "mov":
+            return self._encode_mov(operands, is_64bit)
+        elif mnemonic == "xor":
+            return self._encode_xor(operands, is_64bit)
+        elif mnemonic == "add":
+            return self._encode_add(operands, is_64bit)
+        elif mnemonic == "sub":
+            return self._encode_sub(operands, is_64bit)
+
+        # If we couldn't encode it, return empty bytes
+        logger.warning(f"Could not encode: {mnemonic} {operands}")
+        return b""
+
+    def _encode_ret(self, operands: str) -> bytes:
+        """Encode RET instruction."""
+        if operands:
+            # RET with immediate
+            imm = int(operands, 0)
+            return b"\xC2" + struct.pack("<H", imm)
+        return b"\xC3"
+
+    def _encode_int(self, operands: str) -> bytes:
+        """Encode INT instruction."""
+        imm = int(operands, 0)
+        if imm == 3:
+            return b"\xCC"
+        return b"\xCD" + bytes([imm])
+
+    def _encode_push(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode PUSH instruction."""
+        if operands in ["rax", "eax"]:
+            return b"\x50"
+        elif operands in ["rcx", "ecx"]:
+            return b"\x51"
+        elif operands in ["rdx", "edx"]:
+            return b"\x52"
+        elif operands in ["rbx", "ebx"]:
+            return b"\x53"
+        elif operands in ["rsp", "esp"]:
+            return b"\x54"
+        elif operands in ["rbp", "ebp"]:
+            return b"\x55"
+        elif operands in ["rsi", "esi"]:
+            return b"\x56"
+        elif operands in ["rdi", "edi"]:
+            return b"\x57"
+        elif is_64bit and operands.startswith("r"):
+            # 64-bit extended registers
+            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
+                      "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+            if operands in reg_map:
+                return bytes([0x41, 0x50 + reg_map[operands]])
+        else:
+            # Push immediate
+            try:
+                imm = int(operands, 0)
+                if -128 <= imm <= 127:
+                    return b"\x6A" + struct.pack("b", imm)
+                else:
+                    return b"\x68" + struct.pack("<I", imm & 0xFFFFFFFF)
+            except (struct.error, TypeError, OverflowError) as e:
+                logger.debug(f"Failed to encode push immediate '{operands}': {e}")
+
+        return b""
+
+    def _encode_pop(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode POP instruction."""
+        if operands in ["rax", "eax"]:
+            return b"\x58"
+        elif operands in ["rcx", "ecx"]:
+            return b"\x59"
+        elif operands in ["rdx", "edx"]:
+            return b"\x5A"
+        elif operands in ["rbx", "ebx"]:
+            return b"\x5B"
+        elif operands in ["rsp", "esp"]:
+            return b"\x5C"
+        elif operands in ["rbp", "ebp"]:
+            return b"\x5D"
+        elif operands in ["rsi", "esi"]:
+            return b"\x5E"
+        elif operands in ["rdi", "edi"]:
+            return b"\x5F"
+        elif is_64bit and operands.startswith("r"):
+            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
+                      "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+            if operands in reg_map:
+                return bytes([0x41, 0x58 + reg_map[operands]])
+
+        return b""
+
+    def _encode_jmp(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode JMP instruction."""
+        if operands.startswith("0x") or operands.isdigit():
+            # JMP to absolute address - need relative offset
+            target = int(operands, 0)
+            # For now, use short jump if possible
+            # Calculate relative offset for jump
+            current_pos = 0  # Will be filled by patcher
+            offset = target - (current_pos + 2)  # 2 bytes for short jump
+            if -128 <= offset <= 127:
+                return b"\xEB" + bytes([offset & 0xFF])  # Short jump with calculated offset
+            else:
+                # Near jump for longer distances
+                offset = target - (current_pos + 5)  # 5 bytes for near jump
+                return b"\xE9" + offset.to_bytes(4, 'little', signed=True)
+        elif operands in ["rax", "eax"]:
+            return b"\xFF\xE0"  # JMP RAX/EAX
+        elif operands in ["rbx", "ebx"]:
+            return b"\xFF\xE3"  # JMP RBX/EBX
+        else:
+            # JMP rel8
+            return b"\xEB\x00"
+
+    def _encode_call(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode CALL instruction."""
+        if operands in ["rax", "eax"]:
+            return b"\xFF\xD0"  # CALL RAX/EAX
+        elif operands in ["rbx", "ebx"]:
+            return b"\xFF\xD3"  # CALL RBX/EBX
+        else:
+            # CALL rel32 - calculate relative offset
+            if operands.startswith("0x") or operands.isdigit():
+                target = int(operands, 0)
+                # Calculate relative offset from current position
+                current_pos = 0  # Will be filled by patcher during runtime
+                offset = target - (current_pos + 5)  # 5 bytes for CALL rel32
+                return b"\xE8" + offset.to_bytes(4, 'little', signed=True)
+            else:
+                # Default CALL with zero offset - will be patched at runtime
+                return b"\xE8\x00\x00\x00\x00"
+
+    def _encode_mov(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode MOV instruction."""
+        parts = [p.strip() for p in operands.split(",")]
+        if len(parts) == 2:
+            dst, src = parts
+
+            # MOV reg, reg
+            reg_map_32 = {"eax": 0, "ecx": 1, "edx": 2, "ebx": 3,
+                          "esp": 4, "ebp": 5, "esi": 6, "edi": 7}
+            reg_map_64 = {"rax": 0, "rcx": 1, "rdx": 2, "rbx": 3,
+                          "rsp": 4, "rbp": 5, "rsi": 6, "rdi": 7}
+
+            if is_64bit and dst in reg_map_64 and src in reg_map_64:
+                # MOV r64, r64
+                return bytes([0x48, 0x89, 0xC0 | (reg_map_64[src] << 3) | reg_map_64[dst]])
+            elif not is_64bit and dst in reg_map_32 and src in reg_map_32:
+                # MOV r32, r32
+                return bytes([0x89, 0xC0 | (reg_map_32[src] << 3) | reg_map_32[dst]])
+            elif dst == "rax" and src.startswith("0x"):
+                # MOV RAX, imm64
+                imm = int(src, 0)
+                return b"\x48\xB8" + struct.pack("<Q", imm)
+            elif dst == "eax" and src.startswith("0x"):
+                # MOV EAX, imm32
+                imm = int(src, 0)
+                return b"\xB8" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+        return b""
+
+    def _encode_xor(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode XOR instruction."""
+        parts = [p.strip() for p in operands.split(",")]
+        if len(parts) == 2 and parts[0] == parts[1]:
+            # XOR reg, reg (same register - zero it)
+            if parts[0] in ["rax", "eax"]:
+                if is_64bit and parts[0] == "rax":
+                    return b"\x48\x31\xC0"  # XOR RAX, RAX
+                return b"\x31\xC0"  # XOR EAX, EAX
+            elif parts[0] in ["rcx", "ecx"]:
+                if is_64bit and parts[0] == "rcx":
+                    return b"\x48\x31\xC9"  # XOR RCX, RCX
+                return b"\x31\xC9"  # XOR ECX, ECX
+            elif parts[0] in ["rdx", "edx"]:
+                if is_64bit and parts[0] == "rdx":
+                    return b"\x48\x31\xD2"  # XOR RDX, RDX
+                return b"\x31\xD2"  # XOR EDX, EDX
+
+        return b""
+
+    def _encode_add(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode ADD instruction."""
+        parts = [p.strip() for p in operands.split(",")]
+        if len(parts) == 2:
+            dst, src = parts
+            if dst in ["rsp", "esp"] and src.isdigit():
+                # ADD RSP/ESP, imm
+                imm = int(src, 0)
+                if -128 <= imm <= 127:
+                    if is_64bit and dst == "rsp":
+                        return b"\x48\x83\xC4" + struct.pack("b", imm)
+                    return b"\x83\xC4" + struct.pack("b", imm)
+                else:
+                    if is_64bit and dst == "rsp":
+                        return b"\x48\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
+                    return b"\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+        return b""
+
+    def _encode_sub(self, operands: str, is_64bit: bool) -> bytes:
+        """Encode SUB instruction."""
+        parts = [p.strip() for p in operands.split(",")]
+        if len(parts) == 2:
+            dst, src = parts
+            if dst in ["rsp", "esp"] and src.isdigit():
+                # SUB RSP/ESP, imm
+                imm = int(src, 0)
+                if -128 <= imm <= 127:
+                    if is_64bit and dst == "rsp":
+                        return b"\x48\x83\xEC" + struct.pack("b", imm)
+                    return b"\x83\xEC" + struct.pack("b", imm)
+                else:
+                    if is_64bit and dst == "rsp":
+                        return b"\x48\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
+                    return b"\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
+
+        return b""
 
     def encode_instruction(self, opcode: bytes, modrm: Optional[int] = None,
                           sib: Optional[int] = None, displacement: Optional[bytes] = None,
@@ -3841,6 +4006,7 @@ class LicenseDebugger:
 
         Returns:
             Complete encoded instruction
+
         """
         instruction = bytearray()
 
@@ -3880,6 +4046,7 @@ class LicenseDebugger:
 
         Returns:
             Relative offset bytes
+
         """
         # Calculate relative offset
         # Offset is calculated from the end of the instruction
@@ -3911,6 +4078,7 @@ class LicenseDebugger:
 
         Returns:
             Generated patch bytes
+
         """
         try:
             arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
@@ -3923,7 +4091,7 @@ class LicenseDebugger:
                     try:
                         offset = self.calculate_relative_jump(target_addr, dest_addr, 2)
                         return b"\xEB" + offset
-                    except:
+                    except (ValueError, OverflowError, struct.error):
                         # Use near jump
                         offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
                         return b"\xE9" + offset
@@ -4031,6 +4199,7 @@ class LicenseDebugger:
 
         Returns:
             Relocated code bytes
+
         """
         try:
             relocated = bytearray(code)
@@ -4092,6 +4261,7 @@ class LicenseDebugger:
 
         Returns:
             Generated shellcode bytes
+
         """
         try:
             arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
@@ -4277,6 +4447,7 @@ class LicenseDebugger:
 
         Returns:
             Position-independent shellcode bytes
+
         """
         try:
             arch = "x64" if ctypes.sizeof(ctypes.c_void_p) == 8 else "x86"
@@ -4396,6 +4567,7 @@ class LicenseDebugger:
 
         Returns:
             NOP sled bytes
+
         """
         if length <= 0:
             return b""
@@ -4418,8 +4590,8 @@ class LicenseDebugger:
             suitable_nops = [n for n in nop_variations if len(n) <= remaining]
 
             if suitable_nops:
-                import random
-                nop = random.choice(suitable_nops)
+                import secrets
+                nop = secrets.choice(suitable_nops)
                 sled.extend(nop)
             else:
                 # Fill remainder with single NOPs
@@ -4473,7 +4645,7 @@ class LicenseDebugger:
             # Create VEH callback function
             @PVECTORED_EXCEPTION_HANDLER
             def veh_handler(exception_pointers):
-                """Main VEH callback handler."""
+                """Handle VEH callback."""
                 try:
                     if not exception_pointers:
                         return 0  # EXCEPTION_CONTINUE_SEARCH
@@ -4887,6 +5059,7 @@ class LicenseDebugger:
 
         Returns:
             List of traced instructions with context
+
         """
         if not self.process_handle:
             logger.error("No process attached for tracing")
@@ -4908,7 +5081,7 @@ class LicenseDebugger:
 
                 # Wait for single step exception
                 debug_event = DEBUG_EVENT()
-                if kernel32.WaitForDebugEvent(ctypes.byref(debug_event), 100):
+                if self.kernel32.WaitForDebugEvent(ctypes.byref(debug_event), 100):
                     if debug_event.dwDebugEventCode == 1:  # EXCEPTION_DEBUG_EVENT
                         # Get current context
                         context = self.get_registers()
@@ -4936,17 +5109,17 @@ class LicenseDebugger:
 
                                         # Disassemble if possible
                                         try:
-                                            from capstone import CS_ARCH_X86, CS_MODE_64, Cs
+                                            from capstone import CS_ARCH_X86, CS_MODE_64, Cs, CsError
                                             md = Cs(CS_ARCH_X86, CS_MODE_64)
                                             for i in md.disasm(inst_bytes, rip):
                                                 instruction_info["mnemonic"] = i.mnemonic
                                                 instruction_info["op_str"] = i.op_str
                                                 instruction_info["size"] = i.size
                                                 break
-                                        except:
-                                            pass  # Disassembly optional
-                                except:
-                                    pass
+                                        except (CsError, TypeError, ValueError) as e:
+                                            logger.debug(f"Failed to disassemble instruction at {hex(rip)}: {e}")
+                                except (OSError, TypeError) as e:
+                                    logger.debug(f"Failed to read instruction bytes at {hex(rip)}: {e}")
 
                             traced_instructions.append(instruction_info)
 
@@ -4958,7 +5131,7 @@ class LicenseDebugger:
                             instruction_count += 1
 
                     # Continue debug event handling
-                    kernel32.ContinueDebugEvent(
+                    self.kernel32.ContinueDebugEvent(
                         debug_event.dwProcessId,
                         debug_event.dwThreadId,
                         0x10002  # DBG_CONTINUE
@@ -4973,14 +5146,14 @@ class LicenseDebugger:
 
 
 # DEBUG_EVENT structure for Windows debugging
-class EXCEPTION_DEBUG_INFO(ctypes.Structure):
+class EXCEPTION_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("ExceptionRecord", ctypes.c_void_p),  # Simplified
         ("dwFirstChance", wintypes.DWORD),
     ]
 
 
-class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):
+class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("hThread", wintypes.HANDLE),
         ("lpThreadLocalBase", ctypes.c_void_p),
@@ -4988,7 +5161,7 @@ class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):
     ]
 
 
-class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):
+class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("hFile", wintypes.HANDLE),
         ("hProcess", wintypes.HANDLE),
@@ -5003,19 +5176,19 @@ class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):
     ]
 
 
-class EXIT_THREAD_DEBUG_INFO(ctypes.Structure):
+class EXIT_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("dwExitCode", wintypes.DWORD),
     ]
 
 
-class EXIT_PROCESS_DEBUG_INFO(ctypes.Structure):
+class EXIT_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("dwExitCode", wintypes.DWORD),
     ]
 
 
-class LOAD_DLL_DEBUG_INFO(ctypes.Structure):
+class LOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("hFile", wintypes.HANDLE),
         ("lpBaseOfDll", ctypes.c_void_p),
@@ -5026,13 +5199,13 @@ class LOAD_DLL_DEBUG_INFO(ctypes.Structure):
     ]
 
 
-class UNLOAD_DLL_DEBUG_INFO(ctypes.Structure):
+class UNLOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("lpBaseOfDll", ctypes.c_void_p),
     ]
 
 
-class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):
+class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("lpDebugStringData", ctypes.c_char_p),
         ("fUnicode", wintypes.WORD),
@@ -5040,14 +5213,14 @@ class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):
     ]
 
 
-class RIP_INFO(ctypes.Structure):
+class RIP_INFO(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("dwError", wintypes.DWORD),
         ("dwType", wintypes.DWORD),
     ]
 
 
-class DEBUG_EVENT_UNION(ctypes.Union):
+class DEBUG_EVENT_UNION(ctypes.Union):  # noqa: N801
     _fields_ = [
         ("Exception", EXCEPTION_DEBUG_INFO),
         ("CreateThread", CREATE_THREAD_DEBUG_INFO),
@@ -5061,7 +5234,7 @@ class DEBUG_EVENT_UNION(ctypes.Union):
     ]
 
 
-class DEBUG_EVENT(ctypes.Structure):
+class DEBUG_EVENT(ctypes.Structure):  # noqa: N801
     _fields_ = [
         ("dwDebugEventCode", wintypes.DWORD),
         ("dwProcessId", wintypes.DWORD),

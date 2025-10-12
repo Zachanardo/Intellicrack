@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Style utilities for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -58,6 +60,7 @@ def get_progress_bar_style(
 
 def get_default_progress_bar_style() -> str:
     """Get the default Intellicrack progress bar style.
+
     Uses the common theme colors.
 
     Returns:
@@ -69,6 +72,7 @@ def get_default_progress_bar_style() -> str:
 
 def get_splash_progress_bar_style() -> str:
     """Get the splash screen specific progress bar style.
+
     Uses green color scheme for splash screen.
 
     Returns:

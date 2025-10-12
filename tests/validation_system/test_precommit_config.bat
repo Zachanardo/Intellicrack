@@ -4,7 +4,7 @@ echo =====================================
 
 echo.
 echo 1. Testing Pixi Environment (Already Active)
-cd /d C:\Intellicrack
+cd /d %INTELLICRACK_ROOT%
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
     echo   ✅ Pixi environment access: SUCCESS

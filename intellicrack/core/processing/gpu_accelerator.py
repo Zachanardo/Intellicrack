@@ -378,6 +378,7 @@ class GPUAccelerationManager:
 
 class GPUAccelerator(GPUAccelerationManager):
     """Legacy GPUAccelerator class for backward compatibility.
+
     Now inherits from GPUAccelerationManager and uses the unified GPU system.
     """
 
@@ -451,7 +452,7 @@ class GPUAccelerator(GPUAccelerationManager):
 
 
 def create_gpu_acceleration_manager():
-    """Factory function to create a GPU acceleration manager.
+    """Create a GPU acceleration manager.
 
     Returns:
         GPUAccelerationManager: Configured GPU acceleration manager instance
@@ -465,7 +466,7 @@ def create_gpu_acceleration_manager():
 
 
 def create_gpu_accelerator():
-    """Factory function to create a GPU accelerator.
+    """Create a GPU accelerator.
 
     Returns:
         GPUAccelerator: Configured GPU accelerator instance

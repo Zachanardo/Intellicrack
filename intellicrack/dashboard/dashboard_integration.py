@@ -54,6 +54,7 @@ class DashboardIntegration:
 
         Args:
             config: Integration configuration
+
         """
         self.logger = logger
         self.config = config or {}
@@ -121,6 +122,7 @@ class DashboardIntegration:
 
         Args:
             ghidra_analyzer: Ghidra analyzer instance
+
         """
         integration = ToolIntegration(
             tool_name="ghidra",
@@ -144,6 +146,7 @@ class DashboardIntegration:
 
         Args:
             frida_analyzer: Frida analyzer instance
+
         """
         integration = ToolIntegration(
             tool_name="frida",
@@ -167,6 +170,7 @@ class DashboardIntegration:
 
         Args:
             r2_analyzer: Radare2 analyzer instance
+
         """
         integration = ToolIntegration(
             tool_name="radare2",
@@ -192,6 +196,7 @@ class DashboardIntegration:
 
         Args:
             orchestrator: Cross-tool orchestrator instance
+
         """
         integration = ToolIntegration(
             tool_name="cross_tool",
@@ -214,6 +219,7 @@ class DashboardIntegration:
             tool: Tool name
             target: Target binary path
             options: Analysis options
+
         """
         with self.analysis_lock:
             self.active_analyses[analysis_id] = {
@@ -240,6 +246,7 @@ class DashboardIntegration:
         Args:
             analysis_id: Analysis identifier
             results: Analysis results
+
         """
         with self.analysis_lock:
             if analysis_id in self.active_analyses:
@@ -266,6 +273,7 @@ class DashboardIntegration:
             finding_type: Type of finding (vulnerability, protection, bypass)
             tool: Tool that found it
             data: Finding data
+
         """
         if finding_type == "vulnerability":
             self.dashboard_manager.dashboard.report_vulnerability(tool, data)
@@ -285,6 +293,7 @@ class DashboardIntegration:
 
         Returns:
             Dashboard URL
+
         """
         return self.dashboard_manager.get_dashboard_url()
 
@@ -293,6 +302,7 @@ class DashboardIntegration:
 
         Returns:
             WebSocket URL
+
         """
         return self.dashboard_manager.get_websocket_url()
 
@@ -301,6 +311,7 @@ class DashboardIntegration:
 
         Args:
             filepath: Export file path
+
         """
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -354,6 +365,7 @@ class DashboardIntegration:
         Args:
             event_type: Event type
             data: Event data
+
         """
         self.dashboard_manager.process_analysis_event(event_type, "ghidra", data)
 
@@ -367,6 +379,7 @@ class DashboardIntegration:
         Args:
             event_type: Event type
             data: Event data
+
         """
         self.dashboard_manager.process_analysis_event(event_type, "frida", data)
 
@@ -380,6 +393,7 @@ class DashboardIntegration:
         Args:
             event_type: Event type
             data: Event data
+
         """
         self.dashboard_manager.process_analysis_event(event_type, "radare2", data)
 
@@ -392,6 +406,7 @@ class DashboardIntegration:
 
         Args:
             metrics: Performance metrics
+
         """
         self.dashboard_manager.dashboard.update_performance("radare2", metrics)
 
@@ -401,6 +416,7 @@ class DashboardIntegration:
         Args:
             event_type: Event type
             data: Event data
+
         """
         self.dashboard_manager.process_analysis_event(event_type, "cross_tool", data)
 
@@ -415,6 +431,7 @@ class DashboardIntegration:
 
         Returns:
             Ghidra metrics
+
         """
         integration = self.tool_integrations.get("ghidra")
         if not integration or not integration.analyzer_instance:
@@ -434,6 +451,7 @@ class DashboardIntegration:
 
         Returns:
             Frida metrics
+
         """
         integration = self.tool_integrations.get("frida")
         if not integration or not integration.analyzer_instance:
@@ -455,6 +473,7 @@ class DashboardIntegration:
 
         Returns:
             Radare2 metrics
+
         """
         integration = self.tool_integrations.get("radare2")
         if not integration or not integration.analyzer_instance:
@@ -475,6 +494,7 @@ class DashboardIntegration:
 
         Returns:
             Orchestrator metrics
+
         """
         integration = self.tool_integrations.get("cross_tool")
         if not integration or not integration.analyzer_instance:
@@ -495,6 +515,7 @@ class DashboardIntegration:
 
         Returns:
             Ghidra status
+
         """
         integration = self.tool_integrations.get("ghidra")
         if not integration:
@@ -507,6 +528,7 @@ class DashboardIntegration:
 
         Returns:
             Frida status
+
         """
         integration = self.tool_integrations.get("frida")
         if not integration:
@@ -525,6 +547,7 @@ class DashboardIntegration:
 
         Returns:
             Radare2 status
+
         """
         integration = self.tool_integrations.get("radare2")
         if not integration:
@@ -537,6 +560,7 @@ class DashboardIntegration:
 
         Returns:
             Orchestrator status
+
         """
         integration = self.tool_integrations.get("cross_tool")
         if not integration:
@@ -557,6 +581,7 @@ class DashboardIntegration:
 
         Args:
             target: Target binary path
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -579,6 +604,7 @@ class DashboardIntegration:
         Args:
             tool: Tool name
             status: Tool status
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -601,6 +627,7 @@ class DashboardIntegration:
         Args:
             tool: Tool name
             data: Function data
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -620,6 +647,7 @@ class DashboardIntegration:
 
         Args:
             data: Hook data
+
         """
         # Create event for timeline
         event = DashboardEvent(
@@ -638,6 +666,7 @@ class DashboardIntegration:
 
         Args:
             data: Graph data
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -650,6 +679,7 @@ class DashboardIntegration:
 
         Args:
             data: Correlation data
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -666,6 +696,7 @@ class DashboardIntegration:
         Args:
             finding_type: Type of finding
             data: Finding data
+
         """
         from ..dashboard_widgets import WidgetData
 
@@ -686,6 +717,7 @@ class DashboardIntegration:
 
         Args:
             results: Analysis results
+
         """
         # Update various widgets based on results
         if results.get("functions"):
@@ -707,6 +739,7 @@ class DashboardIntegration:
 
         Returns:
             Summary dictionary
+
         """
         return {
             "functions": len(results.get("functions", [])),
@@ -718,12 +751,13 @@ class DashboardIntegration:
 
 
 def create_dashboard_integration(config: Optional[Dict[str, Any]] = None) -> DashboardIntegration:
-    """Factory function to create dashboard integration.
+    """Create dashboard integration.
 
     Args:
         config: Integration configuration
 
     Returns:
         New DashboardIntegration instance
+
     """
     return DashboardIntegration(config)

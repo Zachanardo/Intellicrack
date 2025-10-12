@@ -29,13 +29,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-try:
-    from ...core.terminal_manager import get_terminal_manager
-
-    HAS_TERMINAL_MANAGER = True
-except ImportError:
-    HAS_TERMINAL_MANAGER = False
-    logger.warning("Terminal manager not available for additional runners")
+# Terminal manager import removed as it was not being used
+HAS_TERMINAL_MANAGER = False
 
 try:
     import joblib

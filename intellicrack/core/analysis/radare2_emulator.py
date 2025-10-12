@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Radare2 Emulation Capabilities
+"""Radare2 Emulation Capabilities.
 
 Production-ready implementation for:
 - ESIL emulation for code snippets
@@ -69,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmulationType(Enum):
-    """Types of emulation supported"""
+    """Types of emulation supported."""
 
     ESIL = "esil"
     UNICORN = "unicorn"
@@ -80,7 +79,7 @@ class EmulationType(Enum):
 
 
 class ExploitType(Enum):
-    """Types of exploits that can be generated"""
+    """Types of exploits that can be generated."""
 
     BUFFER_OVERFLOW = "buffer_overflow"
     FORMAT_STRING = "format_string"
@@ -95,7 +94,7 @@ class ExploitType(Enum):
 
 @dataclass
 class EmulationResult:
-    """Result of emulation"""
+    """Result of emulation."""
 
     type: EmulationType
     success: bool
@@ -108,7 +107,7 @@ class EmulationResult:
 
 @dataclass
 class TaintInfo:
-    """Taint tracking information"""
+    """Taint tracking information."""
 
     address: int
     size: int
@@ -120,7 +119,7 @@ class TaintInfo:
 
 @dataclass
 class ExploitPrimitive:
-    """Exploit primitive information"""
+    """Exploit primitive information."""
 
     type: ExploitType
     vulnerability_address: int
@@ -132,9 +131,15 @@ class ExploitPrimitive:
 
 
 class Radare2Emulator:
-    """Advanced emulation engine using Radare2"""
+    """Advanced emulation engine using Radare2."""
 
     def __init__(self, binary_path: str):
+        """Initialize the Radare2AdvancedEmulator with a binary file path.
+
+        Args:
+            binary_path: Path to the binary file to emulate.
+
+        """
         self.binary_path = binary_path
         self.r2: Optional[r2pipe.open] = None
         self.uc: Optional[unicorn.Uc] = None
@@ -145,7 +150,7 @@ class Radare2Emulator:
         self.memory_map: Dict[int, bytes] = {}
 
     def open(self) -> bool:
-        """Open binary in Radare2"""
+        """Open binary in Radare2."""
         try:
             self.r2 = r2pipe.open(self.binary_path)
             self.r2.cmd("aaa")  # Analyze
@@ -165,7 +170,7 @@ class Radare2Emulator:
             return False
 
     def emulate_esil(self, start_addr: int, num_instructions: int = 100, initial_state: Optional[Dict] = None) -> EmulationResult:
-        """Emulate using Radare2 ESIL"""
+        """Emulate using Radare2 ESIL."""
         try:
             # Initialize ESIL VM
             self.r2.cmd("aei")  # Initialize ESIL VM
@@ -232,7 +237,7 @@ class Radare2Emulator:
             )
 
     def _detect_memory_changes(self, before_state: Dict[int, bytes]) -> List[Tuple[int, bytes]]:
-        """Detect memory changes during emulation"""
+        """Detect memory changes during emulation."""
         changes = []
 
         # Get current memory state from ESIL
@@ -258,7 +263,7 @@ class Radare2Emulator:
         return changes
 
     def _extract_esil_constraints(self, execution_path: List[int]) -> List[Any]:
-        """Extract constraints from ESIL execution"""
+        """Extract constraints from ESIL execution."""
         constraints = []
 
         for addr in execution_path:
@@ -283,7 +288,7 @@ class Radare2Emulator:
         return constraints
 
     def setup_unicorn_engine(self) -> bool:
-        """Setup Unicorn engine for emulation"""
+        """Set up Unicorn engine for emulation."""
         try:
             # Map architecture to Unicorn constants
             arch_map = {
@@ -339,7 +344,7 @@ class Radare2Emulator:
             return False
 
     def _unicorn_code_hook(self, uc, address, size, user_data):
-        """Hook for code execution in Unicorn"""
+        """Monitor code execution in Unicorn emulator."""
         self.execution_trace.append(address)
 
         # Optional: Stop at certain addresses
@@ -347,7 +352,7 @@ class Radare2Emulator:
             uc.emu_stop()
 
     def _unicorn_mem_write_hook(self, uc, access, address, size, value, user_data):
-        """Hook for memory writes in Unicorn"""
+        """Monitor memory writes in Unicorn emulator."""
         self.memory_map[address] = struct.pack("<Q", value)[:size]
 
         # Check for taint propagation
@@ -355,13 +360,13 @@ class Radare2Emulator:
             self._propagate_taint(address, value)
 
     def _unicorn_mem_read_hook(self, uc, access, address, size, value, user_data):
-        """Hook for memory reads in Unicorn"""
+        """Monitor memory reads in Unicorn emulator."""
         # Track memory reads for taint analysis
         if address in self.taint_tracker:
             self.taint_tracker[address].propagation_path.append(uc.reg_read(UC_X86_REG_EIP))
 
     def emulate_unicorn(self, start_addr: int, end_addr: Optional[int] = None, timeout: int = 0, count: int = 0) -> EmulationResult:
-        """Emulate using Unicorn engine"""
+        """Emulate using Unicorn engine."""
         if not self.uc:
             if not self.setup_unicorn_engine():
                 return EmulationResult(
@@ -412,7 +417,7 @@ class Radare2Emulator:
             )
 
     def _get_unicorn_registers(self) -> Dict[str, int]:
-        """Get register values from Unicorn"""
+        """Get register values from Unicorn."""
         registers = {}
 
         if self.arch in ["x86", "x64"]:
@@ -471,7 +476,7 @@ class Radare2Emulator:
         return registers
 
     def symbolic_execution(self, start_addr: int, target_addr: int, max_paths: int = 100) -> List[EmulationResult]:
-        """Perform symbolic execution to find paths"""
+        """Perform symbolic execution to find paths."""
         results = []
         explored_paths = []
         work_queue = [(start_addr, [], self.solver)]
@@ -519,7 +524,7 @@ class Radare2Emulator:
         return results
 
     def _symbolic_execute_bb(self, addr: int, solver: z3.Solver) -> Dict[str, Any]:
-        """Symbolically execute a basic block"""
+        """Symbolically execute a basic block."""
         result = {"reached_target": False, "successors": [], "constraints": [], "path_condition": []}
 
         try:
@@ -593,7 +598,7 @@ class Radare2Emulator:
         return result
 
     def taint_analysis(self, taint_sources: List[Tuple[int, int, str]], start_addr: int, num_instructions: int = 1000) -> List[TaintInfo]:
-        """Perform taint analysis"""
+        """Perform taint analysis."""
         # Initialize taint sources
         for addr, size, label in taint_sources:
             self.taint_tracker[addr] = TaintInfo(
@@ -655,7 +660,7 @@ class Radare2Emulator:
         return list(self.taint_tracker.values())
 
     def _extract_memory_address(self, operand: str) -> Optional[int]:
-        """Extract memory address from operand like [rax+0x10]"""
+        """Extract memory address from operand like [rax+0x10]."""
         try:
             # Simple extraction - in production would be more sophisticated
             if "[" in operand and "]" in operand:
@@ -667,7 +672,7 @@ class Radare2Emulator:
         return None
 
     def _propagate_taint(self, address: int, value: int) -> None:
-        """Propagate taint to new locations"""
+        """Propagate taint to new locations."""
         if address in self.taint_tracker:
             taint = self.taint_tracker[address]
             # Create new taint entry for propagated value
@@ -682,7 +687,7 @@ class Radare2Emulator:
             )
 
     def constraint_solving(self, constraints: List[Any], variables: Dict[str, z3.BitVecRef]) -> Optional[Dict[str, int]]:
-        """Solve constraints to find concrete values"""
+        """Solve constraints to find concrete values."""
         solver = z3.Solver()
 
         # Add all constraints
@@ -712,7 +717,7 @@ class Radare2Emulator:
             return None
 
     def generate_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> Optional[ExploitPrimitive]:
-        """Generate exploit for identified vulnerability"""
+        """Generate exploit for identified vulnerability."""
         if vuln_type == ExploitType.BUFFER_OVERFLOW:
             return self._generate_buffer_overflow_exploit(vuln_addr)
         elif vuln_type == ExploitType.FORMAT_STRING:
@@ -725,7 +730,7 @@ class Radare2Emulator:
             return self._generate_generic_exploit(vuln_type, vuln_addr)
 
     def _generate_buffer_overflow_exploit(self, vuln_addr: int) -> ExploitPrimitive:
-        """Generate buffer overflow exploit"""
+        """Generate buffer overflow exploit."""
         # Analyze function to find buffer size and return address offset
         func_info = self.r2.cmdj(f"afij @ {vuln_addr}")
         if not func_info or len(func_info) == 0:
@@ -798,7 +803,7 @@ class Radare2Emulator:
         )
 
     def _generate_format_string_exploit(self, vuln_addr: int) -> ExploitPrimitive:
-        """Generate format string exploit"""
+        """Generate format string exploit."""
         # Format string to leak stack values
         leak_payload = b"%p." * 20 + b"%s"
 
@@ -834,7 +839,7 @@ class Radare2Emulator:
         )
 
     def _generate_integer_overflow_exploit(self, vuln_addr: int) -> ExploitPrimitive:
-        """Generate integer overflow exploit"""
+        """Generate integer overflow exploit."""
         # Trigger integer overflow with large values
         if self.bits == 64:
             overflow_values = [
@@ -868,7 +873,7 @@ class Radare2Emulator:
         )
 
     def _generate_uaf_exploit(self, vuln_addr: int) -> ExploitPrimitive:
-        """Generate use-after-free exploit"""
+        """Generate use-after-free exploit."""
         # UAF exploitation typically requires:
         # 1. Trigger free of object
         # 2. Allocate controlled data in freed memory
@@ -1032,7 +1037,7 @@ class Radare2Emulator:
         )
 
     def _detect_heap_implementation(self) -> str:
-        """Detect the heap implementation being used"""
+        """Detect the heap implementation being used."""
         try:
             # Check for heap implementation signatures
             imports = self.r2.cmdj("iij")
@@ -1088,7 +1093,7 @@ class Radare2Emulator:
             return "glibc"
 
     def _generate_generic_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> ExploitPrimitive:
-        """Generate generic exploit for other vulnerability types"""
+        """Generate generic exploit for other vulnerability types."""
         # Generic payload that might trigger various vulnerabilities
         patterns = [
             b"A" * 256,  # Buffer filling
@@ -1112,7 +1117,7 @@ class Radare2Emulator:
         )
 
     def find_vulnerabilities(self) -> List[Tuple[ExploitType, int]]:
-        """Automatically find potential vulnerabilities"""
+        """Automatically find potential vulnerabilities."""
         vulnerabilities = []
 
         # Search for dangerous functions
@@ -1151,7 +1156,7 @@ class Radare2Emulator:
         return vulnerabilities
 
     def generate_exploit_report(self, exploits: List[ExploitPrimitive]) -> str:
-        """Generate report of generated exploits"""
+        """Generate report of generated exploits."""
         report = []
         report.append("=" * 60)
         report.append("EXPLOIT GENERATION REPORT")
@@ -1187,7 +1192,7 @@ class Radare2Emulator:
         return "\n".join(report)
 
     def close(self):
-        """Close emulation engines"""
+        """Close emulation engines."""
         if self.r2:
             self.r2.quit()
         if self.uc:
@@ -1195,7 +1200,7 @@ class Radare2Emulator:
 
 
 def main():
-    """Example usage of Radare2 Emulator"""
+    """Demonstrate usage of Radare2 Emulator."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Radare2 Emulation Engine")

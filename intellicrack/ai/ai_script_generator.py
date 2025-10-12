@@ -150,6 +150,7 @@ class AIScriptGenerator:
 
         Returns:
             Enhanced script with AI optimizations
+
         """
         try:
             protection = context.get("protection", {})
@@ -201,8 +202,8 @@ class AIScriptGenerator:
         return analysis
 
     def _count_functions_robust(self, script: str) -> int:
-        """
-        Count JavaScript functions with improved accuracy.
+        """Count JavaScript functions with improved accuracy.
+
         Handles various function styles while avoiding false positives.
         """
         # Remove comments to avoid false positives

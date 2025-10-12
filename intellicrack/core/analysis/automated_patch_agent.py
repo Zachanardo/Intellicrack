@@ -1,4 +1,5 @@
 """Automated patch agent for real-time binary patching with exploitation capabilities.
+
 Production-ready implementation for security research.
 
 Copyright (C) 2025 Zachary Flint
@@ -30,8 +31,7 @@ class AutomatedPatchAgent:
     """Real-time automated binary patching agent for exploitation."""
 
     def __init__(self):
-        """
-        Initialize the Automated Patch Agent.
+        """Initialize the Automated Patch Agent.
 
         Sets up the agent's core attributes including patch history tracking,
         bypass pattern initialization, and exploitation technique loading.

@@ -595,7 +595,7 @@ class AIScriptEditor:
         max_iterations: int = 5,
         test_binary: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Iteratively improve a script through multiple edit cycles using QEMU feedback."""
+        """Improve a script iteratively through multiple edit cycles using QEMU feedback."""
         results = {
             "iterations": [],
             "final_success": False,
@@ -919,9 +919,9 @@ Generate the complete modified script:"""
     def _add_execution_status(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
         """Add execution status to the prompt."""
         if qemu_result.get("success"):
-            prompt_parts.append("✓ Script executed successfully")
+            prompt_parts.append("OK Script executed successfully")
         else:
-            prompt_parts.append("✗ Script execution failed")
+            prompt_parts.append("FAIL Script execution failed")
 
     def _add_output_information(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
         """Add output information to the prompt."""

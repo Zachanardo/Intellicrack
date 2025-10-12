@@ -44,7 +44,7 @@ This tool is developed for **defensive security research** to help software deve
 
 **Environment Usage:**
 
-- **Pixi environment location**: `C:\Intellicrack\.pixi\envs\default`
+- **Pixi environment location**: `D:\Intellicrack\.pixi\envs\default`
 - **Activation**: `pixi shell` or use `pixi run <command>`
 - **Claude Code runs natively on Windows**
 

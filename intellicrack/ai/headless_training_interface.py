@@ -206,7 +206,7 @@ class HeadlessTrainingInterface:
             logger.debug("Set training parameter %s = %s", key, value)
 
     def _training_worker(self, config: Dict[str, Any]) -> None:
-        """Internal worker function for training execution."""
+        """Execute training in a worker thread."""
         try:
             start_time = time.time()
             logger.info("Training worker started")

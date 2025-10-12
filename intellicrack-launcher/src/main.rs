@@ -12,15 +12,18 @@ use anyhow::Result;
 use intellicrack_launcher::{initialize_logging, IntellicrackLauncher};
 use tracing::{error, info};
 
+use dotenv::dotenv;
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv().ok();
     // CRITICAL: Configure pixi environment BEFORE any Python operations
-    std::env::set_var("PYO3_PYTHON", r"C:\Intellicrack\.pixi\envs\default\python.exe");
-    std::env::set_var("PYTHON_SYS_EXECUTABLE", r"C:\Intellicrack\.pixi\envs\default\python.exe");
-    std::env::set_var("PIXI_PREFIX", r"C:\Intellicrack\.pixi\envs\default");
-    std::env::set_var("PIXI_DEFAULT_ENV", "default");
-    std::env::set_var("PYTHONPATH", r"C:\Intellicrack");
-    std::env::set_var("PYTHONHOME", r"C:\Intellicrack\.pixi\envs\default");
+let project_root = std::env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+    std::env::set_var("PYO3_PYTHON", format!("{}/.pixi/envs/default/python.exe", project_root));
+    std::env::set_var("PYTHON_SYS_EXECUTABLE", format!("{}/.pixi/envs/default/python.exe", project_root));
+    std::env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
+    std::env::set_var("PYTHONPATH", project_root.clone());
+    std::env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", project_root));
 
     // Set launcher environment variables to suppress threading warnings
     std::env::set_var("RUST_LAUNCHER_MODE", "1");
@@ -29,30 +32,58 @@ async fn main() -> Result<()> {
     // Windows-specific optimizations
     #[cfg(target_os = "windows")]
     {
-        // CRITICAL: Add pixi env to PATH FIRST so python312.dll and vcruntime140.dll are found
+        // CRITICAL: Build PATH with launcher directory and pixi FIRST, system Intel oneAPI LAST
+        // This prevents conflicts with system-installed Intel oneAPI MKL libraries
         let current_path = std::env::var("PATH").unwrap_or_default();
+
+        // Get launcher directory
+        let exe_path = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let exe_dir = exe_path.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+
+        // Build new PATH with launcher and pixi directories FIRST
         let dll_path = format!(
-            "{};{};{};{};{}",
-            r"C:\Intellicrack\.pixi\envs\default",
-            r"C:\Intellicrack\.pixi\envs\default\Library\bin",
-            r"C:\Intellicrack\.pixi\envs\default\DLLs",
-            r"C:\Intellicrack\.pixi\envs\default\Scripts",
+            "{};{};{};{};{};{}",
+            exe_dir,  // Launcher directory FIRST (contains copied MKL DLLs)
+            format!("{}/.pixi/envs/default", project_root),
+            format!("{}/.pixi/envs/default/Library/bin", project_root),
+            format!("{}/.pixi/envs/default/DLLs", project_root),
+            format!("{}/.pixi/envs/default/Scripts", project_root),
             current_path
         );
         std::env::set_var("PATH", dll_path);
 
-        // Also explicitly add the DLL directory for Windows DLL loading
+        // Also explicitly add DLL directories using Windows API
         unsafe {
-            use std::ffi::CString;
+            use std::ffi::OsStr;
+            use std::os::windows::ffi::OsStrExt;
 
-            let dll_dir = CString::new(r"C:\Intellicrack\.pixi\envs\default").unwrap();
+            // Add launcher directory
+            let launcher_wide: Vec<u16> = OsStr::new(&exe_dir)
+                .encode_wide()
+                .chain(std::iter::once(0))
+                .collect();
 
-            // Try to load kernel32.dll and call SetDllDirectoryA
-            let kernel32 = libloading::Library::new("kernel32.dll");
-            if let Ok(lib) = kernel32 {
-                if let Ok(set_dll_dir) = lib.get::<unsafe extern "system" fn(*const i8) -> i32>(b"SetDllDirectoryA") {
-                    set_dll_dir(dll_dir.as_ptr());
-                }
+            // Add pixi Library/bin directory
+            let pixi_lib_bin = format!("{}/.pixi/envs/default/Library/bin", project_root);
+            let pixi_wide: Vec<u16> = OsStr::new(&pixi_lib_bin)
+                .encode_wide()
+                .chain(std::iter::once(0))
+                .collect();
+
+            #[link(name = "kernel32")]
+            extern "system" {
+                fn AddDllDirectory(NewDirectory: *const u16) -> *mut std::ffi::c_void;
+            }
+
+            // Add both directories to DLL search path (takes priority over PATH)
+            let result1 = AddDllDirectory(launcher_wide.as_ptr());
+            if !result1.is_null() {
+                eprintln!("Added launcher directory to DLL search path");
+            }
+
+            let result2 = AddDllDirectory(pixi_wide.as_ptr());
+            if !result2.is_null() {
+                eprintln!("Added pixi Library/bin to DLL search path");
             }
         }
 

@@ -28,6 +28,11 @@ import queue
 import struct
 import threading
 import time
+
+try:
+    import defusedxml.ElementTree as ET  # noqa: N817
+except ImportError:
+    import xml.etree.ElementTree as ET  # noqa: N817, S314
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -78,6 +83,7 @@ class SharedMemoryIPC:
         Args:
             name: Unique identifier for shared memory segment
             size: Size of shared memory in bytes
+
         """
         self.name = f"Global\\{name}_intellicrack"
         self.size = size
@@ -118,6 +124,7 @@ class SharedMemoryIPC:
 
         Returns:
             True if successful
+
         """
         with self.lock:
             try:
@@ -150,6 +157,7 @@ class SharedMemoryIPC:
 
         Returns:
             Tuple of (MessageType, data) or None
+
         """
         with self.lock:
             try:
@@ -214,6 +222,7 @@ class ResultSerializer:
 
         Returns:
             Serialized bytes
+
         """
         package = {
             "version": ResultSerializer.PROTOCOL_VERSION,
@@ -250,6 +259,7 @@ class ResultSerializer:
 
         Returns:
             Deserialized package
+
         """
         try:
             package = json.loads(data.decode("utf-8"))
@@ -282,6 +292,7 @@ class ToolMonitor:
         Args:
             tool_name: Name of the tool
             pid: Process ID
+
         """
         try:
             process = psutil.Process(pid)
@@ -298,6 +309,7 @@ class ToolMonitor:
 
         Args:
             interval: Monitoring interval in seconds
+
         """
 
         def monitor_loop():
@@ -349,6 +361,7 @@ class ToolMonitor:
 
         Returns:
             Current tool status
+
         """
         return self.status.get(tool_name, ToolStatus.IDLE)
 
@@ -360,6 +373,7 @@ class ToolMonitor:
 
         Returns:
             Tool metrics dictionary
+
         """
         metrics = self.metrics.get(tool_name, {})
         if metrics and metrics.get("cpu_percent"):
@@ -376,6 +390,7 @@ class FailureRecovery:
 
         Args:
             max_retries: Maximum retry attempts
+
         """
         self.max_retries = max_retries
         self.retry_counts: Dict[str, int] = {}
@@ -388,6 +403,7 @@ class FailureRecovery:
         Args:
             tool_name: Name of the tool
             strategy: Recovery function to call on failure
+
         """
         self.recovery_strategies[tool_name] = strategy
         logger.info(f"Registered recovery strategy for {tool_name}")
@@ -402,6 +418,7 @@ class FailureRecovery:
 
         Returns:
             True if recovery successful
+
         """
         # Record failure
         self.failure_history[tool_name].append({"timestamp": datetime.now().isoformat(), "error": str(error), "context": context or {}})
@@ -433,6 +450,7 @@ class FailureRecovery:
 
         Args:
             tool_name: Name of the tool
+
         """
         self.retry_counts[tool_name] = 0
 
@@ -444,6 +462,7 @@ class FailureRecovery:
 
         Returns:
             List of failure records
+
         """
         return self.failure_history.get(tool_name, [])
 
@@ -462,6 +481,7 @@ class ResultConflictResolver:
         Args:
             rule: Function that takes conflicting results and returns resolved result
             priority: Rule priority (higher = more important)
+
         """
         self.resolution_rules.append((priority, rule))
         self.resolution_rules.sort(key=lambda x: x[0], reverse=True)
@@ -474,6 +494,7 @@ class ResultConflictResolver:
 
         Returns:
             Resolved function list
+
         """
         resolved = []
         function_groups = defaultdict(list)
@@ -517,6 +538,7 @@ class ResultConflictResolver:
 
         Returns:
             True if names match
+
         """
         # Remove common prefixes/suffixes
         clean1 = name1.replace("sub_", "").replace("loc_", "").replace("_", "")
@@ -542,6 +564,7 @@ class ResultConflictResolver:
 
         Returns:
             Similarity ratio (0-1)
+
         """
         if not s1 or not s2:
             return 0.0
@@ -558,6 +581,7 @@ class ResultConflictResolver:
 
         Returns:
             Resolved function or None
+
         """
         for _priority, rule in self.resolution_rules:
             try:
@@ -576,6 +600,7 @@ class ResultConflictResolver:
 
         Returns:
             Merged function
+
         """
         # Start with highest confidence function
         group.sort(key=lambda f: f.get("confidence_score", 0), reverse=True)
@@ -614,6 +639,7 @@ class LoadBalancer:
         Args:
             cpu_threshold: CPU usage threshold percentage
             memory_threshold: Memory usage threshold percentage
+
         """
         self.cpu_threshold = cpu_threshold
         self.memory_threshold = memory_threshold
@@ -626,6 +652,7 @@ class LoadBalancer:
 
         Returns:
             Dictionary with CPU and memory usage
+
         """
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
@@ -642,6 +669,7 @@ class LoadBalancer:
 
         Returns:
             True if tool can be started
+
         """
         if not self.balancing_enabled:
             return True
@@ -667,6 +695,7 @@ class LoadBalancer:
             tool_name: Name of the tool
             priority: Execution priority (lower = higher priority)
             estimated_resources: Estimated resource requirements
+
         """
         self.tool_queue.put((priority, tool_name, estimated_resources or {}))
 
@@ -675,6 +704,7 @@ class LoadBalancer:
 
         Returns:
             Tuple of (tool_name, estimated_resources) or None
+
         """
         while not self.tool_queue.empty():
             priority, tool_name, resources = self.tool_queue.get()
@@ -696,6 +726,7 @@ class LoadBalancer:
 
         Returns:
             List of tool batches for parallel execution
+
         """
         # Estimate resources for each tool
         tool_resources = {
@@ -782,6 +813,7 @@ class CrossToolOrchestrator:
         Args:
             binary_path: Path to the binary to analyze
             main_app: Optional reference to main application for GUI updates
+
         """
         self.binary_path = binary_path
         self.main_app = main_app
@@ -823,7 +855,7 @@ class CrossToolOrchestrator:
         self._setup_recovery_strategies()
 
     def _setup_resolution_rules(self):
-        """Setup conflict resolution rules for tool results."""
+        """Set up conflict resolution rules for tool results."""
 
         # Rule 1: Prefer results with debug symbols
         def prefer_debug_symbols(functions: List[CorrelatedFunction]) -> Optional[CorrelatedFunction]:
@@ -853,7 +885,7 @@ class CrossToolOrchestrator:
         self.conflict_resolver.add_resolution_rule(prefer_more_xrefs, priority=5)
 
     def _setup_recovery_strategies(self):
-        """Setup recovery strategies for tool failures."""
+        """Set up recovery strategies for tool failures."""
 
         # Ghidra recovery strategy
         def ghidra_recovery(error: Exception, context: Dict):
@@ -867,7 +899,9 @@ class CrossToolOrchestrator:
                     except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                         proc.kill()
             # Clear temp files
-            temp_dir = Path(os.environ.get("TEMP", "/tmp")) / "ghidra_temp"
+            import tempfile
+            temp_base = Path(tempfile.gettempdir())
+            temp_dir = temp_base / "ghidra_temp"
             if temp_dir.exists():
                 import shutil
 
@@ -926,6 +960,7 @@ class CrossToolOrchestrator:
 
         Returns:
             UnifiedAnalysisResult containing correlated data
+
         """
         if tools is None:
             tools = ["ghidra", "radare2", "frida"]
@@ -995,6 +1030,7 @@ class CrossToolOrchestrator:
 
         Returns:
             UnifiedAnalysisResult
+
         """
         self.logger.info(f"Starting sequential analysis with {len(workflow)} steps")
 
@@ -1039,7 +1075,6 @@ class CrossToolOrchestrator:
                 # Run Ghidra headless and parse real output
                 import subprocess
                 import tempfile
-                import xml.etree.ElementTree as ET
 
                 ghidra_path = os.environ.get("GHIDRA_HOME", "C:\\ghidra")
                 script_path = os.path.join(ghidra_path, "support", "analyzeHeadless.bat")
@@ -1073,7 +1108,7 @@ class CrossToolOrchestrator:
                     imports = []
 
                     if os.path.exists(output_file):
-                        tree = ET.parse(output_file)
+                        tree = ET.parse(output_file)  # noqa: S314
                         root = tree.getroot()
 
                         # Parse functions
@@ -1717,6 +1752,7 @@ class CrossToolOrchestrator:
 
         Args:
             output_path: Path for output file
+
         """
         result = self._correlate_results()
 
@@ -1775,7 +1811,7 @@ class CrossToolOrchestrator:
 
 
 def create_orchestrator(binary_path: str, main_app=None) -> CrossToolOrchestrator:
-    """Factory function to create orchestrator.
+    """Create orchestrator.
 
     Args:
         binary_path: Path to binary
@@ -1783,5 +1819,6 @@ def create_orchestrator(binary_path: str, main_app=None) -> CrossToolOrchestrato
 
     Returns:
         New CrossToolOrchestrator instance
+
     """
     return CrossToolOrchestrator(binary_path, main_app)

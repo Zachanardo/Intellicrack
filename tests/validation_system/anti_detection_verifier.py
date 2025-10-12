@@ -844,7 +844,7 @@ def run_anti_detection_verification():
     verifier = AntiDetectionVerifier()
 
     # Create output directory
-    output_dir = Path(r"C:\Intellicrack\tests\validation_system\reports")
+    output_dir = Path(r"D:\Intellicrack\tests\validation_system\reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate report

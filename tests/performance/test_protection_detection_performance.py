@@ -1,3 +1,18 @@
+"""
+Performance benchmarks for Intellicrack's protection detection and analysis capabilities.
+
+This module contains comprehensive performance tests for protection detection and analysis in Intellicrack,
+including basic protection detection speed benchmarks, advanced protection analysis benchmarks,
+packer detection speed benchmarks, entropy analysis speed benchmarks,
+YARA pattern matching speed benchmarks, analysis cache operations benchmarks,
+concurrent protection detection performance tests, protection detection memory efficiency tests,
+protection signature database operations benchmarks, protection detection accuracy vs speed tradeoff tests,
+Intellicrack protection core operations benchmarks, protection analysis consistency tests,
+protection detection error handling performance tests, protection detection stress tests,
+protection bypass recommendation generation benchmarks, and protection analysis cache efficiency tests.
+These tests ensure the protection detection components maintain high performance under various conditions.
+"""
+
 import pytest
 import time
 import threading

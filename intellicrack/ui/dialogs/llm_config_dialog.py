@@ -133,7 +133,7 @@ class ModelTestThread(QThread):
                 response = llm_manager.chat(validation_messages, validation_id)
 
                 if response and response.content:
-                    self.validation_complete.emit(True, f"✓ Model test successful!\nResponse: {response.content[:100]}...")
+                    self.validation_complete.emit(True, f"OK Model test successful!\nResponse: {response.content[:100]}...")
                 else:
                     self.validation_complete.emit(False, "Model loaded but failed to generate response")
             else:
@@ -245,9 +245,9 @@ class LLMConfigDialog(BaseDialog):
         if self.config_manager and self.llm_manager:
             loaded, failed = self.config_manager.auto_load_models(self.llm_manager)
             if loaded > 0:
-                self.status_text.append(f"✓ Auto-loaded {loaded} saved models")
+                self.status_text.append(f"OK Auto-loaded {loaded} saved models")
             if failed > 0:
-                self.status_text.append(f"⚠ Failed to load {failed} models")
+                self.status_text.append(f"WARNING Failed to load {failed} models")
 
     def setup_content(self, layout):
         """Set up the user interface content."""
@@ -1378,12 +1378,12 @@ class LLMConfigDialog(BaseDialog):
                 self.config_manager.save_model_config(model_id, config, metadata)
 
             self.update_models_list()
-            self.status_text.append(f"✓ Added model: {model_id}")
+            self.status_text.append(f"OK Added model: {model_id}")
 
             # Set as active if it's the first model
             if len(self.current_configs) == 1:
                 self.llm_manager.set_active_llm(model_id)
-                self.status_text.append(f"✓ Set as active model: {model_id}")
+                self.status_text.append(f"OK Set as active model: {model_id}")
         else:
             QMessageBox.critical(self, "Error", f"Failed to register model: {model_id}")
 
@@ -1414,7 +1414,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = current_item.data(Qt.UserRole)
         if self.llm_manager and self.llm_manager.set_active_llm(model_id):
             self.update_models_list()
-            self.status_text.append(f"✓ Set active model: {model_id}")
+            self.status_text.append(f"OK Set active model: {model_id}")
 
     def remove_model(self):
         """Remove the selected model."""
@@ -1439,7 +1439,7 @@ class LLMConfigDialog(BaseDialog):
             # Note: LLM manager doesn't have remove method in current implementation
             # This would need to be added to the LLM manager
             self.update_models_list()
-            self.status_text.append(f"✓ Removed model: {model_id}")
+            self.status_text.append(f"OK Removed model: {model_id}")
 
     def test_selected_model(self):
         """Test the selected model."""
@@ -1605,7 +1605,7 @@ class LLMConfigDialog(BaseDialog):
         if success:
             self.status_text.append(f"✅ {message}")
         else:
-            self.status_text.append(f"❌ {message}")
+            self.status_text.append(f"ERROR {message}")
 
         # Clean up test thread
         if self.validation_thread:
@@ -1668,11 +1668,11 @@ class LLMConfigDialog(BaseDialog):
             # Save API keys to .env file
             if api_keys:
                 self.env_manager.update_keys(api_keys)
-                self.status_text.append(f"✓ Saved {len(api_keys)} API keys to .env file")
+                self.status_text.append(f"OK Saved {len(api_keys)} API keys to .env file")
 
             # Save model configurations
             if self.current_configs:
-                self.status_text.append(f"✓ Configuration saved ({len(self.current_configs)} models)")
+                self.status_text.append(f"OK Configuration saved ({len(self.current_configs)} models)")
                 QMessageBox.information(
                     self,
                     "Success",
@@ -1737,11 +1737,11 @@ class LLMConfigDialog(BaseDialog):
                 self.ollama_url.setText(api_keys["OLLAMA_API_BASE"])
 
             if api_keys:
-                self.status_text.append(f"✓ Loaded {len(api_keys)} API keys from .env file")
+                self.status_text.append(f"OK Loaded {len(api_keys)} API keys from .env file")
 
         except Exception as e:
             logger.error(f"Error loading API keys from .env: {e}")
-            self.status_text.append(f"⚠ Could not load API keys: {str(e)}")
+            self.status_text.append(f"WARNING Could not load API keys: {str(e)}")
 
     def test_api_key(self, service: str, api_key_widget: QLineEdit):
         """Test an API key for a specific service.
@@ -1761,10 +1761,10 @@ class LLMConfigDialog(BaseDialog):
 
         if success:
             QMessageBox.information(self, "API Key Valid", message)
-            self.status_text.append(f"✓ {service} API key is valid")
+            self.status_text.append(f"OK {service} API key is valid")
         else:
             QMessageBox.warning(self, "API Key Invalid", message)
-            self.status_text.append(f"✗ {service} API key is invalid: {message}")
+            self.status_text.append(f"FAIL {service} API key is invalid: {message}")
 
     def validate_all_api_keys(self):
         """Validate all API keys before saving."""
@@ -1863,8 +1863,8 @@ class LLMConfigDialog(BaseDialog):
                         # Create new model ID for the adapted model
                         new_model_id = f"{base_model_id}_lora_{adapter_name}"
 
-                        self.status_text.append(f"✓ Loaded LoRA adapter '{adapter_name}' onto {base_model_id}")
-                        self.status_text.append(f"✓ Model available as: {new_model_id}")
+                        self.status_text.append(f"OK Loaded LoRA adapter '{adapter_name}' onto {base_model_id}")
+                        self.status_text.append(f"OK Model available as: {new_model_id}")
 
                         # Update UI
                         self.update_models_list()
@@ -1975,7 +1975,7 @@ class LLMConfigDialog(BaseDialog):
 
                                 if success:
                                     self.status_text.append(
-                                        f"✓ Created new LoRA adapter '{adapter_name}' with rank={self.lora_rank.value()}",
+                                        f"OK Created new LoRA adapter '{adapter_name}' with rank={self.lora_rank.value()}",
                                     )
                                     QMessageBox.information(
                                         self,

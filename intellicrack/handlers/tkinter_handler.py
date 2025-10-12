@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Tkinter handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -32,12 +34,12 @@ implementations for GUI operations used in Intellicrack dialogs and interfaces.
 
 
 def _setup_tkinter_environment():
-    """
-    Set up environment variables required for tkinter/TCL/TK on Windows.
+    """Set up environment variables required for tkinter/TCL/TK on Windows.
+
     This ensures DLLs can be found even when Python is not launched through the launcher.
     """
     try:
-        pixi_env = Path(r"C:\Intellicrack\.pixi\envs\default")
+        pixi_env = Path(r"D:\Intellicrack\.pixi\envs\default")
 
         if "TCL_LIBRARY" not in os.environ:
             launcher_tcl = None

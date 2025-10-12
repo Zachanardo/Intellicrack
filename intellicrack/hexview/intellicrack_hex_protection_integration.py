@@ -510,7 +510,7 @@ class ProtectionIntegrationWidget(QWidget):
 
 
 def create_intellicrack_hex_integration(hex_widget=None) -> IntellicrackHexProtectionIntegration:
-    """Factory function to create Intellicrack hex viewer integration.
+    """Create Intellicrack hex viewer integration.
 
     Args:
         hex_widget: Optional hex viewer widget to integrate with

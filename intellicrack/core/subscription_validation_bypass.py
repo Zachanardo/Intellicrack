@@ -5,6 +5,7 @@ import ctypes
 import hashlib
 import http.server
 import json
+import logging
 import os
 import socket
 import socketserver
@@ -23,11 +24,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+logger = logging.getLogger(__name__)
+
 JSON_CONTENT_TYPE = "application/json"
 HOSTS_FILE_PATH = r"C:\Windows\System32\drivers\etc\hosts"
-
-
-# Hook functions for Windows API interception
 @ctypes.WINFUNCTYPE(
     ctypes.c_long,
     ctypes.c_void_p,
@@ -41,7 +41,7 @@ HOSTS_FILE_PATH = r"C:\Windows\System32\drivers\etc\hosts"
 def hooked_bcrypt_verify(
     h_key: c_void_p, p_padding_info: c_void_p, pb_hash: c_void_p, cb_hash: int, pb_signature: c_void_p, cb_signature: int, dw_flags: int
 ) -> int:
-    """Hook for BCryptVerifySignature to always return success"""
+    """Override BCryptVerifySignature to always return success."""
     return 0  # STATUS_SUCCESS
 
 
@@ -91,9 +91,10 @@ class LicenseServerConfig:
 
 
 class SubscriptionValidationBypass:
-    """Production-ready subscription validation bypass system"""
+    """Production-ready subscription validation bypass system."""
 
     def __init__(self) -> None:
+        """Initialize the SubscriptionValidationBypass with cryptographic backend and server components."""
         self.backend = default_backend()
         self.local_server = None
         self.server_thread = None
@@ -102,7 +103,7 @@ class SubscriptionValidationBypass:
         self.known_services = self._load_known_services()
 
     def _initialize_bypass_methods(self) -> Dict[str, Any]:
-        """Initialize bypass methods for different subscription types"""
+        """Initialize bypass methods for different subscription types."""
         return {
             "cloud_based": self._bypass_cloud_subscription,
             "server_license": self._bypass_server_license,
@@ -115,7 +116,7 @@ class SubscriptionValidationBypass:
         }
 
     def _load_known_services(self) -> Dict[str, LicenseServerConfig]:
-        """Load known subscription service configurations"""
+        """Load known subscription service configurations."""
         return {
             "adobe_cc": LicenseServerConfig(
                 server_address="lm.licenses.adobe.com",
@@ -165,7 +166,7 @@ class SubscriptionValidationBypass:
         }
 
     def detect_subscription_type(self, product_name: str) -> SubscriptionType:
-        """Detect the subscription validation type used by product"""
+        """Detect the subscription validation type used by product."""
         # Check registry for subscription data
         subscription_type = self._check_registry_subscription(product_name)
         if subscription_type:
@@ -187,7 +188,7 @@ class SubscriptionValidationBypass:
         return SubscriptionType.CLOUD_BASED
 
     def _check_registry_subscription(self, product_name: str) -> Optional[SubscriptionType]:
-        """Check registry for subscription information"""
+        """Check registry for subscription information."""
         try:
             key_paths = [
                 f"SOFTWARE\\{product_name}\\Subscription",
@@ -207,17 +208,17 @@ class SubscriptionValidationBypass:
                                 return SubscriptionType.SERVER_LICENSE
                             elif "floating" in sub_type.lower():
                                 return SubscriptionType.FLOATING_LICENSE
-                        except OSError:
-                            pass
-                except OSError:
-                    pass
-        except OSError:
-            pass
+                        except OSError as e:
+                            logger.debug(f"Failed to read registry value: {e}")
+                except OSError as e:
+                    logger.debug(f"Failed to open registry key: {e}")
+        except OSError as e:
+            logger.debug(f"Failed to detect subscription type: {e}")
 
         return None
 
     def _check_local_server_config(self, product_name: str) -> bool:
-        """Check for local license server configuration"""
+        """Check for local license server configuration."""
         config_paths = [
             os.path.join(os.environ.get("PROGRAMDATA", ""), product_name, "license.conf"),
             os.path.join(os.environ.get("APPDATA", ""), product_name, "server.conf"),
@@ -231,7 +232,7 @@ class SubscriptionValidationBypass:
         return False
 
     def _check_oauth_tokens(self, product_name: str) -> bool:
-        """Check for OAuth token storage"""
+        """Check for OAuth token storage."""
         token_locations = [
             os.path.join(os.environ.get("APPDATA", ""), product_name, "tokens.json"),
             os.path.join(os.environ.get("LOCALAPPDATA", ""), product_name, "oauth.dat"),
@@ -255,7 +256,7 @@ class SubscriptionValidationBypass:
         return False
 
     def _check_floating_license(self, product_name: str) -> bool:
-        """Check for floating license configuration"""
+        """Check for floating license configuration."""
         # Check for FlexLM/FlexNet configuration
         flexlm_paths = [
             os.path.join(os.environ.get("PROGRAMDATA", ""), "FLEXlm", f"{product_name}.lic"),
@@ -275,7 +276,7 @@ class SubscriptionValidationBypass:
         return False
 
     def bypass_subscription(self, product_name: str, subscription_type: SubscriptionType = None) -> bool:
-        """Bypass subscription validation for product"""
+        """Bypass subscription validation for product."""
         if not subscription_type:
             subscription_type = self.detect_subscription_type(product_name)
 
@@ -285,7 +286,7 @@ class SubscriptionValidationBypass:
         return False
 
     def _bypass_cloud_subscription(self, product_name: str) -> bool:
-        """Bypass cloud-based subscription validation"""
+        """Bypass cloud-based subscription validation."""
         # Method 1: Local server emulation
         self._start_local_license_server(product_name)
 
@@ -304,7 +305,7 @@ class SubscriptionValidationBypass:
         return True
 
     def _start_local_license_server(self, product_name: str) -> None:
-        """Start local license server to emulate cloud service"""
+        """Start local license server to emulate cloud service."""
         config = self.known_services.get(product_name.lower(), None)
 
         if config:
@@ -341,7 +342,7 @@ class SubscriptionValidationBypass:
                     self.wfile.write(response.encode())
 
                 def generate_validation_response(self) -> str:
-                    """Generate subscription validation response"""
+                    """Generate subscription validation response."""
                     return json.dumps(
                         {
                             "status": "valid",
@@ -355,7 +356,7 @@ class SubscriptionValidationBypass:
                     )
 
                 def generate_activation_response(self) -> str:
-                    """Generate activation response"""
+                    """Generate activation response."""
                     return json.dumps(
                         {
                             "status": "success",
@@ -365,7 +366,7 @@ class SubscriptionValidationBypass:
                     )
 
                 def generate_refresh_response(self) -> str:
-                    """Generate token refresh response"""
+                    """Generate token refresh response."""
                     return json.dumps(
                         {
                             "access_token": base64.b64encode(os.urandom(64)).decode(),
@@ -375,13 +376,13 @@ class SubscriptionValidationBypass:
                     )
 
                 def generate_entitlements_response(self) -> str:
-                    """Generate entitlements response"""
+                    """Generate entitlements response."""
                     return json.dumps(
                         {"entitlements": [{"id": str(uuid.uuid4()), "name": "Premium Suite", "features": ["all"], "valid": True}]}
                     )
 
                 def generate_default_response(self) -> str:
-                    """Generate default successful response"""
+                    """Generate default successful response."""
                     return json.dumps({"status": "ok"})
 
                 def log_message(self, format: str, *args: Any) -> None:
@@ -405,7 +406,7 @@ class SubscriptionValidationBypass:
                 print(f"Failed to start local server: {e}")
 
     def stop_local_server(self) -> None:
-        """Stop the local license server if running"""
+        """Stop the local license server if running."""
         try:
             if self.local_server:
                 self.local_server.shutdown()
@@ -421,7 +422,7 @@ class SubscriptionValidationBypass:
             print(f"Error stopping local server: {e}")
 
     def _add_hosts_redirect(self, product_name: str) -> bool:
-        """Add hosts file entries to redirect license servers"""
+        """Add hosts file entries to redirect license servers."""
         hosts_path = HOSTS_FILE_PATH
 
         redirects = []
@@ -473,7 +474,7 @@ class SubscriptionValidationBypass:
             return False
 
     def _install_response_hooks(self) -> bool:
-        """Install hooks to intercept and modify license validation responses"""
+        """Install hooks to intercept and modify license validation responses."""
         # This would involve API hooking or DLL injection
         # For now, implementing via proxy approach
 
@@ -496,13 +497,13 @@ class SubscriptionValidationBypass:
             return False
 
     def _start_interception_proxy(self) -> None:
-        """Start HTTP/HTTPS interception proxy"""
+        """Start HTTP/HTTPS interception proxy."""
         # This would implement a full MITM proxy
         # Using mitmproxy or similar library
         pass
 
     def _generate_valid_tokens(self, product_name: str) -> Dict[str, str]:
-        """Generate valid authentication tokens"""
+        """Generate valid authentication tokens."""
         # Generate JWT tokens
         tokens = {
             "access_token": self._generate_jwt_token(product_name),
@@ -516,8 +517,7 @@ class SubscriptionValidationBypass:
         return tokens
 
     def _generate_jwt_token(self, product_name: str) -> str:
-        """Generate JWT access token"""
-
+        """Generate JWT access token."""
         import jwt
 
         # JWT payload
@@ -542,7 +542,7 @@ class SubscriptionValidationBypass:
         return token
 
     def _generate_id_token(self, product_name: str) -> str:
-        """Generate OpenID Connect ID token"""
+        """Generate OpenID Connect ID token."""
         import jwt
 
         payload = {
@@ -561,7 +561,7 @@ class SubscriptionValidationBypass:
         return token
 
     def _store_tokens(self, product_name: str, tokens: Dict[str, str]) -> None:
-        """Store generated tokens in appropriate locations"""
+        """Store generated tokens in appropriate locations."""
         # Store in registry
         try:
             key_path = f"SOFTWARE\\{product_name}\\Auth"
@@ -599,7 +599,7 @@ class SubscriptionValidationBypass:
             logger.debug(f"Windows credential storage failed: {e}")
 
     def _bypass_certificate_pinning(self, product_name: str) -> bool:
-        """Bypass SSL certificate pinning"""
+        """Bypass SSL certificate pinning."""
         # Method 1: Patch certificate validation in binary
         binary_paths = [
             f"C:\\Program Files\\{product_name}\\{product_name}.exe",
@@ -620,7 +620,7 @@ class SubscriptionValidationBypass:
         return total_patches > 0
 
     def _patch_certificate_validation(self, binary_path: str) -> int:
-        """Patch SSL certificate validation in binary"""
+        """Patch SSL certificate validation in binary."""
         with open(binary_path, "rb") as f:
             binary = f.read()
 
@@ -644,7 +644,7 @@ class SubscriptionValidationBypass:
         return patches_applied
 
     def _apply_standard_patches(self, modified: bytearray, binary: bytes) -> int:
-        """Apply standard certificate validation patches"""
+        """Apply standard certificate validation patches."""
         patterns = [
             (
                 b"\x48\x8b\xcb\xba\x01\x00\x00\x00\xe8",
@@ -689,7 +689,6 @@ class SubscriptionValidationBypass:
 
     def apply_standard_patterns(self, data: bytearray, patterns: list[tuple[bytes, bytes]]) -> int:
         """Apply standard binary patterns to bypass subscription validation checks."""
-
         patches_applied = 0
         offset = 0
         for pattern, patch in patterns:
@@ -705,7 +704,6 @@ class SubscriptionValidationBypass:
 
     def patch_signature_direct(self, data: bytearray, pos: int, patch_data: bytes) -> int:
         """Patch binary data at specific position with direct byte replacement."""
-
         for i in range(len(patch_data)):
             if pos + i < len(data):
                 data[pos + i] = patch_data[i]
@@ -713,7 +711,6 @@ class SubscriptionValidationBypass:
 
     def find_and_patch_nearby(self, data: bytearray, pos: int, nearby: dict) -> int:
         """Find and patch nearby patterns relative to discovered signature location."""
-
         search_pos = pos + nearby.get("offset", 0)
         if search_pos < 0:
             return 0
@@ -727,7 +724,6 @@ class SubscriptionValidationBypass:
 
     def apply_advanced_patterns(self, data: bytearray) -> int:
         """Apply advanced binary patterns with signature-based patching for subscription checks."""
-
         advanced_patterns = [
             {"signature": b"\x48\x83\xec\x28\x48\x8b\xf9\x48\x8b\xda", "patch": b"\x48\x83\xec\x28\x48\x8b\xf9\xb0\x01\x90"},
             {"signature": b"\x85\xc0\x74\x05", "nearby_patch": {"offset": 10, "pattern": b"\x74", "patch": b"\xeb"}},
@@ -745,7 +741,6 @@ class SubscriptionValidationBypass:
 
     def find_function_prologue(self, data: bytearray, pos: int) -> int:
         """Locate function prologue pattern in binary data for validation patching."""
-
         for i in range(pos, min(pos + 0x1000, len(data))):
             if data[i : i + 4] == b"\x48\x89\x5c\x24":  # Example prologue pattern for x64
                 return i
@@ -753,7 +748,6 @@ class SubscriptionValidationBypass:
 
     def patch_return_value(self, data: bytearray, start: int) -> int:
         """Patch function return value to bypass validation checks."""
-
         for j in range(start, min(start + 0x200, len(data))):
             if data[j : j + 2] == b"\x31\xc0":  # xor eax, eax
                 data[j : j + 5] = b"\xb8\x01\x00\x00\x00"  # mov eax, 1
@@ -762,7 +756,6 @@ class SubscriptionValidationBypass:
 
     def patch_validation_functions(self, data: bytearray) -> int:
         """Patch certificate and signature validation functions in binary."""
-
         validation_functions = [
             b"CertVerifyCertificateChainPolicy",
             b"CertGetCertificateChain",
@@ -780,7 +773,6 @@ class SubscriptionValidationBypass:
 
     def read_process_memory_safe(self, h_process: wintypes.HANDLE, address: int, size: int) -> bytes:
         """Read process memory safely with Windows API for runtime patching."""
-
         buffer = create_string_buffer(size)
         bytes_read = c_ulong()
         kernel32 = ctypes.windll.kernel32
@@ -790,7 +782,6 @@ class SubscriptionValidationBypass:
 
     def write_patch_to_memory(self, h_process: wintypes.HANDLE, address: int, patch: bytes) -> bool:
         """Write patch bytes to process memory with protection handling."""
-
         old_protect = c_ulong()
         kernel32 = ctypes.windll.kernel32
         if kernel32.VirtualProtectEx(h_process, address, len(patch), 0x40, byref(old_protect)):
@@ -802,7 +793,6 @@ class SubscriptionValidationBypass:
 
     def patch_process_memory_region(self, h_process: wintypes.HANDLE, base_address: int, patterns: list[dict]) -> int:
         """Patch process memory region with multiple patterns for runtime bypass."""
-
         patches_applied = 0
         data = self.read_process_memory_safe(h_process, base_address, 0x100000)
         if not data:
@@ -835,7 +825,6 @@ class SubscriptionValidationBypass:
 
     def install_lc_checkout_hook(self, lib: ctypes.CDLL) -> bool:
         """Install hook for FlexLM lc_checkout function to bypass license checkout."""
-
         if not hasattr(lib, "lc_checkout"):
             return False
 
@@ -876,7 +865,6 @@ class SubscriptionValidationBypass:
 
     def install_lc_checkin_hook(self, lib: ctypes.CDLL) -> bool:
         """Install hook for FlexLM lc_checkin function to bypass license checkin."""
-
         if not hasattr(lib, "lc_checkin"):
             return False
 
@@ -899,8 +887,7 @@ class SubscriptionValidationBypass:
         return True
 
     def hook_flexlm_apis(self) -> None:
-        """Hook FlexLM API functions to bypass floating license validation."""
-
+        """Install hooks for FlexLM API functions to bypass floating license validation."""
         flexlm_libs = ["lmgr.dll", "lmgr11.dll", "lmgr12.dll", "flexnet.dll", "fnp_act_installer.dll"]
 
         for lib_name in flexlm_libs:
@@ -912,7 +899,6 @@ class SubscriptionValidationBypass:
 
     def load_and_hook_hasp_lib(self, lib_name: str) -> bool:
         """Load and hook HASP dongle library to bypass hardware key validation."""
-
         try:
             lib = ctypes.CDLL(lib_name)
             # Hook hasp_login
@@ -942,8 +928,7 @@ class SubscriptionValidationBypass:
             return False
 
     def hook_hasp_apis(self) -> bool:
-        """Hook HASP API functions across common HASP library variants."""
-
+        """Install hooks for HASP API functions across common HASP library variants."""
         hasp_libs = ["hasp_windows.dll", "hasp_rt.dll", "haspapi.dll"]
         hooked = 0
         for lib_name in hasp_libs:
@@ -953,7 +938,6 @@ class SubscriptionValidationBypass:
 
     def _process_request(self, request: bytes) -> bytes:
         """Process dongle emulation request and return appropriate response."""
-
         if len(request) < 1:
             return b"\x00"
 
@@ -972,7 +956,6 @@ class SubscriptionValidationBypass:
 
     def handle_read_memory(self, request: bytes) -> bytes:
         """Handle dongle memory read request for license data emulation."""
-
         if len(request) >= 5:
             offset = struct.unpack("<H", request[1:3])[0]
             length = struct.unpack("<H", request[3:5])[0]
@@ -982,7 +965,6 @@ class SubscriptionValidationBypass:
 
     def handle_write_memory(self, request: bytes) -> bytes:
         """Handle dongle memory write request for license state emulation."""
-
         if len(request) >= 5:
             offset = struct.unpack("<H", request[1:3])[0]
             length = struct.unpack("<H", request[3:5])[0]
@@ -993,7 +975,6 @@ class SubscriptionValidationBypass:
 
     def handle_get_dongle_id(self) -> bytes:
         """Handle dongle ID request for hardware key emulation."""
-
         # Implementation as before
         hw_data = b""  # ...
         dongle_id = hashlib.sha256(hw_data).digest()[:8]
@@ -1001,7 +982,6 @@ class SubscriptionValidationBypass:
 
     def handle_check_feature(self, request: bytes) -> bytes:
         """Handle feature check request for license feature validation emulation."""
-
         if len(request) >= 3:
             feature_id = struct.unpack("<H", request[1:3])[0]
             if feature_id in self.features:
@@ -1011,7 +991,6 @@ class SubscriptionValidationBypass:
 
 def generate_flexlm_license(product_name: str, features: list) -> str:
     """Generate FlexLM license file for bypassing floating license validation."""
-
     # Original implementation
     license_content = []
 

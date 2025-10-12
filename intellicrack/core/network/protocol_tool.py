@@ -1,4 +1,4 @@
-"""Protocol Tool Module
+"""Protocol Tool Module.
 
 This module provides a graphical user interface for protocol analysis and manipulation
 within the Intellicrack application. It includes classes for managing protocol tool windows,
@@ -88,13 +88,13 @@ class ProtocolToolWindow(QWidget):
     signals = ProtocolToolSignals()
 
     def __new__(cls, *args, **kwargs):
-        """Ensures a singleton instance of the ProtocolToolWindow."""
+        """Ensure a singleton instance of the ProtocolToolWindow."""
         if not cls._instance:
             cls._instance = super(ProtocolToolWindow, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
     def __init__(self, app_instance=None):
-        """Initializes the Protocol Tool window with a sophisticated UI."""
+        """Initialize the Protocol Tool window with a sophisticated UI."""
         # Only initialize UI components once for the singleton instance
         if not hasattr(self, "_initialized"):
             super().__init__()
@@ -109,7 +109,7 @@ class ProtocolToolWindow(QWidget):
             ProtocolToolWindow.signals.tool_launched.emit("Protocol Tool UI ready.")
 
     def _setup_ui(self):
-        """Sets up the layout and widgets for the Protocol Tool."""
+        """Set up the layout and widgets for the Protocol Tool."""
         main_layout = QVBoxLayout(self)
 
         # Title/Status Label
@@ -159,12 +159,12 @@ class ProtocolToolWindow(QWidget):
         main_layout.addLayout(button_layout)
 
     def _connect_signals(self):
-        """Connects internal UI signals to their slots."""
+        """Connect internal UI signals to their slots."""
         # Example: Connect a custom signal to update description
         ProtocolToolWindow.signals.description_updated.connect(self.update_description)
 
     def _on_input_submitted(self):
-        """Handles user input from the QLineEdit with real protocol processing."""
+        """Handle user input from the QLineEdit with real protocol processing."""
         command = self.input_line_edit.text().strip()
         if command:
             self.output_text_edit.append(f"> {command}")
@@ -211,7 +211,7 @@ class ProtocolToolWindow(QWidget):
             self.output_text_edit.append("[WARNING] Input cannot be empty.")
 
     def _on_start_analysis(self):
-        """Handles the 'Start Analysis' button click with real protocol analysis."""
+        """Handle the 'Start Analysis' button click with real protocol analysis."""
         self.output_text_edit.append("[INFO] Starting comprehensive protocol analysis...")
         self.description_label.setText("Performing deep analysis...")
         logger.info("Comprehensive protocol analysis initiated.")
@@ -246,13 +246,13 @@ class ProtocolToolWindow(QWidget):
             self.description_label.setText("Analysis failed")
 
     def _on_clear_log(self):
-        """Clears the output log area."""
+        """Clear the output log area."""
         self.output_text_edit.clear()
         self.output_text_edit.append("Protocol analysis output cleared.")
         logger.info("Protocol tool log cleared.")
 
     def update_description(self, description: str):
-        """Updates the description label in the Protocol Tool window."""
+        """Update the description label in the Protocol Tool window."""
         self.description_label.setText(description)
         logger.info(f"Protocol tool description updated to: {description}")
         ProtocolToolWindow.signals.description_updated.emit(description)
@@ -424,7 +424,7 @@ class ProtocolToolWindow(QWidget):
         self.output_text_edit.append(f"[TOTAL] {len(available_parsers)} parsers available")
 
     def closeEvent(self, event):
-        """Handles the close event for the window."""
+        """Handle the close event for the window."""
         logger.info("Protocol Tool window closing.")
         ProtocolToolWindow.signals.tool_closed.emit("Protocol Tool closed.")
         # Clean up resources if necessary
@@ -433,7 +433,8 @@ class ProtocolToolWindow(QWidget):
 
 
 def launch_protocol_tool(app_instance=None):
-    """Launches the Protocol Tool window.
+    """Launch the Protocol Tool window.
+
     Returns the instance of the ProtocolToolWindow.
     """
     app = QApplication.instance()
@@ -447,7 +448,7 @@ def launch_protocol_tool(app_instance=None):
 
 
 def update_protocol_tool_description(app_instance=None, description=""):
-    """Updates the description in the Protocol Tool window."""
+    """Update the description in the Protocol Tool window."""
     # Ensure the window is instantiated before trying to update it
     window = ProtocolToolWindow()
     window.update_description(description)

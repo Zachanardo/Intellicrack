@@ -78,7 +78,7 @@ class AdvancedDynamicAnalyzer:
         return analysis_results
 
     def _subprocess_analysis(self) -> dict[str, Any]:
-        """Standard subprocess execution analysis.
+        """Perform standard subprocess execution analysis.
 
         Executes the target binary in a controlled subprocess environment and
         captures its standard output, standard error, and return code. Provides
@@ -849,7 +849,7 @@ class AdvancedDynamicAnalyzer:
 
         try:
             # Define MEMORY_BASIC_INFORMATION structure
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            class MemoryBasicInformation(ctypes.Structure):
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),
@@ -860,7 +860,7 @@ class AdvancedDynamicAnalyzer:
                     ("Type", wintypes.DWORD),
                 ]
 
-            mbi = MEMORY_BASIC_INFORMATION()
+            mbi = MemoryBasicInformation()
             address = 0
 
             # Scan all memory regions
@@ -1117,7 +1117,7 @@ print(matches)
             return matches
 
     def _generic_memory_scan(self, process: psutil.Process, keywords: list[str]) -> list[dict]:
-        """Generic memory scanning using process information."""
+        """Scan memory using process information."""
         matches = []
 
         try:
@@ -1455,7 +1455,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
 
         # Set up message handler
         def on_message(message, _data):  # pylint: disable=unused-argument
-            """Callback for handling messages from a Frida script.
+            """Handle messages from a Frida script.
 
             Appends payloads from 'send' messages to the logs list.
             """
@@ -1487,7 +1487,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
 
 # Additional convenience functions
 def create_dynamic_analyzer(binary_path: str | Path) -> AdvancedDynamicAnalyzer:
-    """Factory function to create a dynamic analyzer instance.
+    """Create a dynamic analyzer instance.
 
     Args:
         binary_path: Path to the target binary

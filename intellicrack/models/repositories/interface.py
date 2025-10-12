@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Repository interface for Intellicrack model repositories.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -187,7 +189,7 @@ class DownloadProgressCallback:
     """Interface for download progress callbacks."""
 
     def on_progress(self, bytes_downloaded: int, total_bytes: int):
-        """Called when download progress is made.
+        """Handle download progress updates.
 
         Args:
             bytes_downloaded: Number of bytes downloaded so far
@@ -196,7 +198,7 @@ class DownloadProgressCallback:
         """
 
     def on_complete(self, success: bool, message: str):
-        """Called when the download is complete.
+        """Handle download completion.
 
         Args:
             success: Whether the download was successful

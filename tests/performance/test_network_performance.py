@@ -1,3 +1,20 @@
+"""
+Performance benchmarks for Intellicrack's network operations and license emulation functionality.
+
+This module contains comprehensive performance tests for network operations and license emulation in Intellicrack,
+including license packet parsing speed benchmarks, HASP protocol handling speed benchmarks,
+Adobe activation processing speed benchmarks, license server startup speed benchmarks,
+license client connection speed benchmarks, encryption/decryption operations benchmarks,
+network capture parsing speed benchmarks, session management operations benchmarks,
+concurrent license connection performance tests, license protocol memory efficiency tests,
+communication protocol switching speed benchmarks, network operations stress tests,
+license message throughput performance tests, license server emulation performance benchmarks,
+network error handling performance tests, license session persistence performance tests,
+network protocol detection speed benchmarks, license key generation performance tests,
+and real-time network capture performance tests. These tests ensure the network
+components maintain high performance under various conditions.
+"""
+
 import pytest
 import time
 import threading

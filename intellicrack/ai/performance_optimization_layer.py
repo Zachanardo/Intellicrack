@@ -941,7 +941,7 @@ class PerformanceOptimizationLayer:
         logger.info("Started background optimization worker")
 
     def optimize(self, operation_id: str, operation_func: Callable, *args, **kwargs) -> Any:
-        """Main optimization entry point."""
+        """Optimize as the main entry point."""
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
     def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None) -> list[Any]:

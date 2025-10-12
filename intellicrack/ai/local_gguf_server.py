@@ -379,7 +379,7 @@ class LocalGGUFServer:
             logger.info("Server stop requested (thread will continue until process ends)")
 
     def _setup_routes(self):
-        """Setup Flask routes for the server."""
+        """Set up Flask routes for the server."""
 
         @self.app.route("/health", methods=["GET"])
         def health():

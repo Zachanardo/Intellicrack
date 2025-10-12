@@ -11,7 +11,7 @@ import subprocess
 
 def test_radare2_direct():
     """Test radare2 binary directly."""
-    radare2_path = r"C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
+    radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
 
     try:
@@ -37,7 +37,7 @@ def test_radare2_direct():
 
 def test_r2pipe_simple():
     """Test r2pipe with minimal configuration."""
-    radare2_path = r"C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
+    radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
 
     # Add radare2 bin directory to PATH

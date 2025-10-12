@@ -655,32 +655,32 @@ class SettingsTab(BaseTab):
                     status_label.setText("🟢")
                     status_label.setToolTip("Tool found and healthy")
                     version = health_info.get("version", "Unknown version")
-                    status_details.setText(f"✓ Found: {version}")
+                    status_details.setText(f"OK Found: {version}")
                     status_details.setStyleSheet("color: #28a745; font-size: 10px; margin-left: 85px;")
 
                 elif health_info.get("available"):
                     status_label.setText("🟡")
                     status_label.setToolTip("Tool found but has issues")
                     issues = ", ".join(health_info.get("issues", ["Unknown issues"]))
-                    status_details.setText(f"⚠ Issues: {issues}")
+                    status_details.setText(f"WARNING Issues: {issues}")
                     status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
 
                 else:
                     status_label.setText("🔴")
                     status_label.setToolTip("Tool path exists but not functional")
-                    status_details.setText("✗ Not functional")
+                    status_details.setText("FAIL Not functional")
                     status_details.setStyleSheet("color: #dc3545; font-size: 10px; margin-left: 85px;")
 
             except Exception as e:
                 status_label.setText("🟡")
                 status_label.setToolTip(f"Health check failed: {e}")
-                status_details.setText("⚠ Status check failed")
+                status_details.setText("WARNING Status check failed")
                 status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
         else:
             status_label.setText("⚫")
             status_label.setToolTip("Tool not found")
             error_msg = tool_info.get("error", "Not found in common locations")
-            status_details.setText(f"✗ Not found: {error_msg}")
+            status_details.setText(f"FAIL Not found: {error_msg}")
             status_details.setStyleSheet("color: #6c757d; font-size: 10px; margin-left: 85px;")
 
         # Show status details

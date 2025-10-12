@@ -929,6 +929,7 @@ class CommercialProtectorsDatabase:
 
         Returns:
             List of (name, signature, confidence) tuples
+
         """
         detections = []
 
@@ -1014,6 +1015,7 @@ class CommercialProtectorsDatabase:
 
         Returns:
             Bypass strategy information
+
         """
         if protector_name in self.protectors:
             sig = self.protectors[protector_name]
@@ -1034,6 +1036,7 @@ class CommercialProtectorsDatabase:
 
         Returns:
             OEP offset or -1 if not found
+
         """
         if protector_name not in self.protectors:
             return -1
@@ -1096,6 +1099,7 @@ class CommercialProtectorsDatabase:
 
         Returns:
             List of detected anti-analysis techniques
+
         """
         techniques = []
 
@@ -1177,6 +1181,7 @@ class CommercialProtectorsDatabase:
 
         Returns:
             List of detected encryption/compression layers
+
         """
         layers = []
 

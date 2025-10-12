@@ -71,6 +71,7 @@ class LiveDataPipeline:
 
         Args:
             config: Pipeline configuration
+
         """
         self.config = config or {}
         self.logger = logger
@@ -236,6 +237,7 @@ class LiveDataPipeline:
             data: Event data
             priority: Event priority
             correlation_id: Optional correlation ID
+
         """
         # Generate sequence ID
         with self.sequence_lock:
@@ -283,6 +285,7 @@ class LiveDataPipeline:
 
         Returns:
             True if event should be throttled
+
         """
         if event.priority == DataPriority.CRITICAL:
             return False  # Never throttle critical events
@@ -323,6 +326,7 @@ class LiveDataPipeline:
 
         Args:
             event: Event to process
+
         """
         time.time()
 
@@ -417,6 +421,7 @@ class LiveDataPipeline:
 
         Returns:
             Aggregated data
+
         """
         # Extract numeric values from events
         numeric_values = []
@@ -453,6 +458,7 @@ class LiveDataPipeline:
 
         Args:
             aggregated: Aggregated data
+
         """
         message = {"type": "aggregated_data", "timestamp": time.time(), "data": aggregated}
 
@@ -484,6 +490,7 @@ class LiveDataPipeline:
         Args:
             event: Processed event
             latency: Event latency
+
         """
         alerts = []
 
@@ -519,6 +526,7 @@ class LiveDataPipeline:
 
         Args:
             alert: Alert data
+
         """
         message = {"type": "alert", "timestamp": time.time(), "alert": alert}
 
@@ -543,6 +551,7 @@ class LiveDataPipeline:
 
         Args:
             message: Message to broadcast
+
         """
         with self.websocket_lock:
             if not self.websocket_connections:
@@ -566,6 +575,7 @@ class LiveDataPipeline:
 
         Args:
             event: Event to store
+
         """
         try:
             conn = sqlite3.connect(str(self.db_path))
@@ -622,6 +632,7 @@ class LiveDataPipeline:
 
         Args:
             connection: WebSocket connection
+
         """
         with self.websocket_lock:
             self.websocket_connections.add(connection)
@@ -631,6 +642,7 @@ class LiveDataPipeline:
 
         Args:
             connection: WebSocket connection
+
         """
         with self.websocket_lock:
             self.websocket_connections.discard(connection)
@@ -640,6 +652,7 @@ class LiveDataPipeline:
 
         Args:
             callback: Callback function
+
         """
         self.event_callbacks.append(callback)
 
@@ -648,6 +661,7 @@ class LiveDataPipeline:
 
         Args:
             callback: Callback function
+
         """
         self.alert_callbacks.append(callback)
 
@@ -664,6 +678,7 @@ class LiveDataPipeline:
 
         Returns:
             List of events
+
         """
         try:
             conn = sqlite3.connect(str(self.db_path))
@@ -720,6 +735,7 @@ class LiveDataPipeline:
 
         Returns:
             List of metrics
+
         """
         try:
             conn = sqlite3.connect(str(self.db_path))

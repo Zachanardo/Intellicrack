@@ -502,7 +502,7 @@ def run_memory_optimized_analysis(
 
 
 def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
-    """Factory function to create a MemoryOptimizedBinaryLoader.
+    """Create a MemoryOptimizedBinaryLoader.
 
     Args:
         chunk_size: Size of data chunks in bytes (default: 1MB)

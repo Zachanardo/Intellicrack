@@ -185,7 +185,7 @@ pub fn initialize_logging() -> Result<()> {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
     let file_appender = tracing_appender::rolling::daily("logs", "intellicrack-launcher");
-    let (non_blocking_appender, _guard) = tracing_appender::non_blocking(file_appender);
+    let (non_blocking_appender, guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::registry()
         .with(
@@ -204,6 +204,8 @@ pub fn initialize_logging() -> Result<()> {
                 .json(),
         )
         .init();
+
+    std::mem::forget(guard);
 
     Ok(())
 }

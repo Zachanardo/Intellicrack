@@ -101,9 +101,9 @@ class AnalysisResultOrchestrator(QObject):
             logger.info(f"Unregistered handler: {handler.__class__.__name__}")
 
     def on_protection_analyzed(self, result: UnifiedProtectionResult):
-        """Main slot connected to UnifiedProtectionWidget.protection_analyzed signal.
+        """Connect slot to UnifiedProtectionWidget.protection_analyzed signal.
 
-        Distributes the result to all registered handlers.
+        Distribute the result to all registered handlers.
         """
         self._current_result = result
         logger.info(f"Orchestrator received analysis result for: {result.file_path}")

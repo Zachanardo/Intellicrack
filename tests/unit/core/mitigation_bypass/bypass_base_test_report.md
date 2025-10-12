@@ -3,7 +3,7 @@
 ## Test Coverage Summary
 
 ### Test File
-`C:\Intellicrack\tests\unit\core\mitigation_bypass\test_bypass_base.py`
+`D:\\Intellicrack\tests\unit\core\mitigation_bypass\test_bypass_base.py`
 
 ### Coverage Analysis
 Based on the comprehensive black-box tests created, the estimated coverage for `bypass_base.py` module is **85%+**.

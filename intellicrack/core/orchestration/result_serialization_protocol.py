@@ -318,7 +318,7 @@ class ResultSerializer:
         return result_class(**result_dict)
 
     def _binary_serialize(self, data: Dict[str, Any]) -> bytes:
-        """Custom binary serialization for maximum efficiency."""
+        """Serialize data with custom binary format for maximum efficiency."""
         # Binary format: [header][type][data_length][data]
         header = b"ICRK"  # Intellicrack magic bytes
         version = struct.pack("H", 1)

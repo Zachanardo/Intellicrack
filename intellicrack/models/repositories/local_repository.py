@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Local repository for Intellicrack model repositories.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -20,6 +22,8 @@ import hashlib
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
@@ -45,6 +49,8 @@ class LocalFileRepository(ModelRepositoryInterface):
         self.models_directory = models_directory
         self.models_metadata_file = os.path.join(models_directory, "models_metadata.json")
         self.models_cache = {}
+        self._cache_lock = Lock()
+        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="checksum_worker")
 
         # Create models directory if it doesn't exist
         os.makedirs(models_directory, exist_ok=True)
@@ -69,7 +75,8 @@ class LocalFileRepository(ModelRepositoryInterface):
 
     def _save_metadata(self):
         """Save metadata for local models."""
-        metadata = {model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()}
+        with self._cache_lock:
+            metadata = {model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()}
 
         try:
             with open(self.models_metadata_file, "w") as f:
@@ -105,12 +112,10 @@ class LocalFileRepository(ModelRepositoryInterface):
                     local_path=file_path,
                 )
 
-                # Compute checksum asynchronously (not blocking the UI)
-                # In a real implementation, this could be done in a background thread
-                self._compute_checksum(model_info)
+                with self._cache_lock:
+                    self.models_cache[model_id] = model_info
 
-                # Add to cache
-                self.models_cache[model_id] = model_info
+                self._executor.submit(self._compute_checksum_async, model_info)
 
         # Save metadata after scan
         self._save_metadata()
@@ -128,13 +133,22 @@ class LocalFileRepository(ModelRepositoryInterface):
         try:
             sha256_hash = hashlib.sha256()
             with open(model_info.local_path, "rb") as f:
-                # Read and update hash in chunks
                 for byte_block in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(byte_block)
 
             model_info.checksum = sha256_hash.hexdigest()
         except OSError as e:
             logger.warning(f"Failed to compute checksum for {model_info.name}: {e}")
+
+    def _compute_checksum_async(self, model_info: ModelInfo):
+        """Compute checksum in background thread and save metadata.
+
+        Args:
+            model_info: ModelInfo object to update with the checksum
+
+        """
+        self._compute_checksum(model_info)
+        self._save_metadata()
 
     def get_available_models(self) -> list[ModelInfo]:
         """Get a list of available models from the local repository.
@@ -143,11 +157,10 @@ class LocalFileRepository(ModelRepositoryInterface):
             A list of ModelInfo objects representing the available models.
 
         """
-        # Scan for new models first
         self._scan_for_models()
 
-        # Return all models
-        return list(self.models_cache.values())
+        with self._cache_lock:
+            return list(self.models_cache.values())
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
         """Get detailed information about a specific model.
@@ -159,13 +172,14 @@ class LocalFileRepository(ModelRepositoryInterface):
             A ModelInfo object containing the model details, or None if the model is not found.
 
         """
-        # Check if the model is in our cache
-        if model_id in self.models_cache:
-            return self.models_cache[model_id]
+        with self._cache_lock:
+            if model_id in self.models_cache:
+                return self.models_cache[model_id]
 
-        # If not, scan for models and check again
         self._scan_for_models()
-        return self.models_cache.get(model_id)
+
+        with self._cache_lock:
+            return self.models_cache.get(model_id)
 
     # pylint: disable=too-many-locals
     def download_model(
@@ -174,7 +188,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         destination_path: str,
         progress_callback: DownloadProgressCallback | None = None,
     ) -> tuple[bool, str]:
-        """ "Download" a model from the local repository (copy the file).
+        """Download a model from the local repository (copy the file).
 
         Args:
             model_id: ID of the model to download
@@ -268,7 +282,6 @@ class LocalFileRepository(ModelRepositoryInterface):
         rel_path = os.path.relpath(file_path, self.models_directory)
         model_id = rel_path.replace("\\", "/")  # Normalize path separators
 
-        # Create a ModelInfo object
         model_info = ModelInfo(
             model_id=model_id,
             name=file_name,
@@ -279,14 +292,10 @@ class LocalFileRepository(ModelRepositoryInterface):
             local_path=file_path,
         )
 
-        # Compute checksum asynchronously
-        self._compute_checksum(model_info)
+        with self._cache_lock:
+            self.models_cache[model_id] = model_info
 
-        # Add to cache
-        self.models_cache[model_id] = model_info
-
-        # Save metadata
-        self._save_metadata()
+        self._executor.submit(self._compute_checksum_async, model_info)
 
         return model_info
 
@@ -309,12 +318,11 @@ class LocalFileRepository(ModelRepositoryInterface):
             True if the model was removed, False otherwise
 
         """
-        if model_id not in self.models_cache:
-            return False
+        with self._cache_lock:
+            if model_id not in self.models_cache:
+                return False
+            model_info = self.models_cache[model_id]
 
-        model_info = self.models_cache[model_id]
-
-        # Remove the file if it exists
         if model_info.local_path and os.path.exists(model_info.local_path):
             try:
                 os.remove(model_info.local_path)
@@ -322,10 +330,20 @@ class LocalFileRepository(ModelRepositoryInterface):
                 logger.warning(f"Failed to remove model file: {e}")
                 return False
 
-        # Remove from cache
-        del self.models_cache[model_id]
+        with self._cache_lock:
+            del self.models_cache[model_id]
 
-        # Save metadata
         self._save_metadata()
 
         return True
+
+    def shutdown(self):
+        """Shutdown the repository and cleanup resources."""
+        self._executor.shutdown(wait=True)
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        try:
+            self._executor.shutdown(wait=False)
+        except Exception:  # noqa: S110
+            pass

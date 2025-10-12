@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Performance optimizer plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -1289,7 +1291,7 @@ def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptim
 
 
 def performance_monitor(component_name: str = "default"):
-    """Decorator for automatic performance monitoring."""
+    """Create decorator for automatic performance monitoring."""
 
     def decorator(func):
         @functools.wraps(func)

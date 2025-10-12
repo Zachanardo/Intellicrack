@@ -161,7 +161,7 @@ def get_logs_dir() -> Path:
 
     """
     project_root = get_project_root()
-    logs_dir = project_root / "data" / "logs"
+    logs_dir = project_root / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     return logs_dir
 
@@ -414,7 +414,7 @@ if __name__ == "__main__":
     print("Intellicrack Path Configuration:")
     print("=" * 40)
     for name, path in info.items():
-        exists = "✓" if Path(path).exists() else "✗"
+        exists = "OK" if Path(path).exists() else "FAIL"
         print(f"{exists} {name}: {path}")
 
     print("\nScript Counts:")

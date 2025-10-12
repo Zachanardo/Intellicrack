@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Ghidra analysis script template for Intellicrack AI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -43,7 +45,7 @@ SCRIPT_INFO = {
 
 
 def log(message):
-    """Simple logging function."""
+    """Log a message."""
     print("[Intellicrack] " + str(message))
 
 
@@ -252,7 +254,7 @@ def generate_bypass_recommendations(analysis_results):
 
 
 def main():
-    """Main analysis function."""
+    """Perform main analysis."""
     log("Starting Intellicrack Ghidra analysis...")
     log("Script: {} v{}".format(SCRIPT_INFO["name"], SCRIPT_INFO["version"]))
     log("Target: {}".format(SCRIPT_INFO["target"]))

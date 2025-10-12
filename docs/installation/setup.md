@@ -205,7 +205,7 @@ rm -rf /path/to/intellicrack  # Remove source directory
 
 If you encounter issues during installation:
 - Check the [FAQ](../faq.md) for common solutions
-- Review the logs in `data/logs/` directory
+- Review the logs in `logs/` directory
 - Ensure your system meets minimum requirements
 - Try installing in a clean virtual environment
 

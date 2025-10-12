@@ -1879,6 +1879,17 @@ class HuggingFaceLocalBackend(LLMBackend):
 class LLMManager:
     """Manager for LLM backends and configurations with lazy loading support."""
 
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
+        """Singleton pattern implementation."""
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialized = False
+            return cls._instance
+
     def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
         """Initialize LLM Manager with lazy and background loading options.
 
@@ -1887,6 +1898,9 @@ class LLMManager:
             enable_background_loading: Whether to enable background loading
 
         """
+        if self._initialized:
+            return
+
         self.backends = {}
         self.configs = {}
         self.active_backend = None
@@ -1922,6 +1936,7 @@ class LLMManager:
             self.progress_callbacks = []
             self.loading_tasks = {}
 
+        self._initialized = True
         logger.info("LLM Manager initialized")
 
     def register_llm(self, llm_id: str, config: LLMConfig, use_lazy_loading: bool | None = None) -> bool:

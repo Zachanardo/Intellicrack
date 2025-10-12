@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Base detector for Intellicrack anti-analysis components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -30,6 +32,7 @@ Shared functionality for detection implementations to eliminate code duplication
 
 class BaseDetector(ABC):
     """Abstract base class for anti-analysis detectors.
+
     Provides common detection loop functionality.
     """
 

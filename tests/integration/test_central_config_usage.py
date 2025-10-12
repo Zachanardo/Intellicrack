@@ -90,7 +90,9 @@ class TestCentralConfigUsage(IntellicrackTestBase):
     def setup(self, temp_workspace):
         """Set up test environment."""
         self.temp_dir = temp_workspace
-        self.project_root = Path("C:/Intellicrack")
+        from intellicrack.utils.path_resolver import get_project_root
+
+        self.project_root = get_project_root()
         self.intellicrack_dir = self.project_root / "intellicrack"
 
     def analyze_file(self, file_path):

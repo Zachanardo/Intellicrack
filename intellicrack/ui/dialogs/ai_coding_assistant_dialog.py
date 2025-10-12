@@ -1559,15 +1559,15 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", f"✅ Python bypass executed:\n{output}")
             else:
                 error_msg = result.stderr if result.stderr else f"Exit code: {result.returncode}"
-                self.chat_widget.add_message("System", f"❌ Python bypass failed:\n{error_msg}")
+                self.chat_widget.add_message("System", f"ERROR Python bypass failed:\n{error_msg}")
 
             # Cleanup
             os.unlink(tmp_script_path)
 
         except subprocess.TimeoutExpired:
-            self.chat_widget.add_message("System", "⚠️ Script execution timeout (30s limit)")
+            self.chat_widget.add_message("System", "WARNING️ Script execution timeout (30s limit)")
         except Exception as e:
-            self.chat_widget.add_message("System", f"❌ Execution error: {e}")
+            self.chat_widget.add_message("System", f"ERROR Execution error: {e}")
 
     def _execute_frida_bypass_script(self, script_content: str, script_path: str):
         """Execute Frida-based bypass script."""
@@ -1594,7 +1594,7 @@ def validate_license_key(key: str) -> bool:
                     frida.resume(pid)
                     self.chat_widget.add_message("System", f"🚀 Spawned and attached to: {process_name}")
                 except Exception as e:
-                    self.chat_widget.add_message("System", f"❌ Failed to spawn process: {e}")
+                    self.chat_widget.add_message("System", f"ERROR Failed to spawn process: {e}")
                     return
 
             # Create and load script
@@ -1610,9 +1610,9 @@ def validate_license_key(key: str) -> bool:
             self._active_frida_session = session
 
         except ImportError:
-            self.chat_widget.add_message("System", "❌ Frida not available. Install with: pip install frida-tools")
+            self.chat_widget.add_message("System", "ERROR Frida not available. Install with: pip install frida-tools")
         except Exception as e:
-            self.chat_widget.add_message("System", f"❌ Frida script execution failed: {e}")
+            self.chat_widget.add_message("System", f"ERROR Frida script execution failed: {e}")
 
     def _execute_keygen_script(self, script_content: str):
         """Execute keygen template script."""
@@ -1654,7 +1654,7 @@ def validate_license_key(key: str) -> bool:
             self.chat_widget.add_message("System", f"Validation: {valid_count}/{len(generated_keys)} keys valid")
 
         except Exception as e:
-            self.chat_widget.add_message("System", f"❌ Keygen execution failed: {e}")
+            self.chat_widget.add_message("System", f"ERROR Keygen execution failed: {e}")
 
     def _generate_key_from_template(self, config: dict, user_info: str) -> str:
         """Generate key using template configuration."""
@@ -1825,7 +1825,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             logger.error(f"Error analyzing license protection: {e}")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("System", f"❌ Analysis failed: {e}")
+                self.chat_widget.add_message("System", f"ERROR Analysis failed: {e}")
 
     def generate_keygen_template(self):
         """Generate a keygen template for the current target."""
@@ -2082,7 +2082,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Error generating keygen template: {e}")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("AI", f"❌ Template generation failed: {e}")
+                self.chat_widget.add_message("AI", f"ERROR Template generation failed: {e}")
 
     def generate_hwid_spoof(self):
         """Generate hardware ID spoofing code."""
@@ -2533,7 +2533,7 @@ console.log("[+] All HWID hooks installed");
         except Exception as e:
             logger.error(f"Error generating HWID spoof: {e}")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("AI", f"❌ HWID spoofing generation failed: {e}")
+                self.chat_widget.add_message("AI", f"ERROR HWID spoofing generation failed: {e}")
 
     def open_patch_assistant(self):
         """Open the binary patch assistant."""
@@ -2969,7 +2969,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Error opening patch assistant: {e}")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("System", f"❌ Patch assistant failed: {e}")
+                self.chat_widget.add_message("System", f"ERROR Patch assistant failed: {e}")
 
     def handle_license_ai_message(self, message: str):
         """Handle AI messages specifically for license research."""
@@ -3035,7 +3035,7 @@ This research is for strengthening software protection mechanisms."""
 
         except Exception as e:
             logger.error(f"Error handling license AI message: {e}")
-            error_response = f"❌ License research query failed: {e}\nPlease try again or check your AI configuration."
+            error_response = f"ERROR License research query failed: {e}\nPlease try again or check your AI configuration."
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
 
@@ -3045,7 +3045,7 @@ This research is for strengthening software protection mechanisms."""
             # Add license research formatting and context
             formatted = f"🔬 License Protection Research Analysis:\n\n{response}\n\n"
             formatted += "📋 Research Context: This analysis is provided for defensive security research to strengthen software protection mechanisms.\n"
-            formatted += "⚠️  Note: Use this information responsibly in controlled research environments only."
+            formatted += "WARNING️  Note: Use this information responsibly in controlled research environments only."
             return formatted
         except Exception as e:
             logger.error(f"Failed to format license research response: {e}")
@@ -3078,7 +3078,7 @@ For strengthening defenses:
 - Add additional entropy sources
 - Obfuscate validation logic
 
-⚠️  This analysis is for defensive security research only."""
+WARNING️  This analysis is for defensive security research only."""
 
             elif any(keyword in message_lower for keyword in ["bypass", "crack", "protection"]):
                 return """🔬 Protection Bypass Research (Offline Analysis):
@@ -3099,7 +3099,7 @@ Defensive strengthening strategies:
 
 📋 Research Purpose: Understanding these techniques helps developers build more robust protection mechanisms.
 
-⚠️  Use only in controlled research environments for your own software."""
+WARNING️  Use only in controlled research environments for your own software."""
 
             else:
                 return f"""🔬 License Protection Research (Offline Mode):
@@ -3119,7 +3119,7 @@ For specific technical guidance, please:
 - Load a target binary for analysis
 - Use the analysis tools in this interface
 
-⚠️  All research should be conducted on your own software in controlled environments."""
+WARNING️  All research should be conducted on your own software in controlled environments."""
 
         except Exception as e:
             logger.error(f"Failed to generate license research fallback: {e}")
@@ -3209,7 +3209,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         success_msg += "• Time-based protection bypass\n"
                         success_msg += "• Comprehensive error handling\n"
                         success_msg += "• Educational comments and documentation\n\n"
-                        success_msg += "⚠️  Use responsibly for defensive security research only."
+                        success_msg += "WARNING️  Use responsibly for defensive security research only."
 
                         self.chat_widget.add_message("AI", success_msg)
 
@@ -3233,7 +3233,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                 logger.error(f"AI bypass generation failed: {ai_error}")
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
-                        "AI", f"❌ AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation..."
+                        "AI", f"ERROR AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation..."
                     )
 
                 # Fall back to standard bypass generation
@@ -3246,13 +3246,13 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                     logger.error(f"Fallback bypass generation also failed: {fallback_error}")
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
-                            "AI", "❌ Both AI and fallback bypass generation failed. Please check your configuration."
+                            "AI", "ERROR Both AI and fallback bypass generation failed. Please check your configuration."
                         )
 
         except Exception as e:
             logger.error(f"Error generating AI license bypass: {e}")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("AI", f"❌ License bypass generation failed: {e}")
+                self.chat_widget.add_message("AI", f"ERROR License bypass generation failed: {e}")
 
     def _enhance_ai_bypass_response(self, ai_response: str, bypass_type: str) -> str:
         """Enhance AI-generated bypass response with additional context and safety warnings."""
@@ -3263,7 +3263,7 @@ AI-Generated {bypass_type} Bypass Script
 Generated by Intellicrack AI Assistant
 Purpose: License Protection Research for Strengthening Security
 
-⚠️  SECURITY RESEARCH USE ONLY ⚠️
+WARNING️  SECURITY RESEARCH USE ONLY WARNING️
 This script is intended for authorized security research on proprietary software
 by its own developers to identify and strengthen licensing protection vulnerabilities.
 
@@ -3317,7 +3317,7 @@ if __name__ == "__main__":
             # Return original response with minimal enhancement
             return f'''"""
 AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
-⚠️  Use for authorized security research only ⚠️
+WARNING️  Use for authorized security research only WARNING️
 """
 
 {ai_response}
@@ -3353,7 +3353,7 @@ AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
                 self.chat_widget.add_message("User", message)
 
             if not message or not message.strip():
-                error_response = "❌ Empty message. Please provide a license research query."
+                error_response = "ERROR Empty message. Please provide a license research query."
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", error_response)
                 return
@@ -3422,11 +3422,11 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 logger.error(f"AI quick processing failed: {ai_error}")
                 fallback_response = self._generate_quick_license_fallback(message)
                 if hasattr(self, "chat_widget"):
-                    self.chat_widget.add_message("AI", f"⚠️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}")
+                    self.chat_widget.add_message("AI", f"WARNING️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}")
 
         except Exception as e:
             logger.error(f"Error sending quick license message: {e}")
-            error_response = f"❌ Quick license query failed: {e}"
+            error_response = f"ERROR Quick license query failed: {e}"
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
 
@@ -3463,7 +3463,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             formatted += f"{response}\n\n"
             formatted += f"📝 **Query:** {original_query}\n"
             formatted += "🔬 **Research Context:** License protection mechanism analysis for defensive security\n"
-            formatted += "⚠️  **Note:** Use responsibly in authorized research environments only"
+            formatted += "WARNING️  **Note:** Use responsibly in authorized research environments only"
 
             return formatted
 
@@ -3562,7 +3562,7 @@ For specific guidance:
 
 🔬 Research Purpose: Understanding protection mechanisms to strengthen software security."""
 
-            response += "\n\n⚠️  **Note:** AI unavailable - providing offline guidance for authorized security research only."
+            response += "\n\nWARNING️  **Note:** AI unavailable - providing offline guidance for authorized security research only."
             return response
 
         except Exception as e:
@@ -4288,7 +4288,7 @@ def example_function():
         if security_issues:
             lines.append("**🔒 Security Issues:**")
             for issue in security_issues:
-                lines.append(f"  ⚠️ {issue}")
+                lines.append(f"  WARNING️ {issue}")
             lines.append("")
 
         # Suggestions

@@ -73,12 +73,15 @@ select = [
     "N",   # pep8-naming
     "B",   # flake8-bugbear
     "S",   # flake8-bandit security
+    "D",   # pydocstyle
 ]
 
 ignore = [
     "E501",  # Line too long (handled by formatter)
     "B008",  # Do not perform function calls in argument defaults
     "S101",  # Use of assert detected (needed for tests)
+    "S603",  # Allow subprocess calls for security research (essential for Intellicrack)
+    "S607",  # Allow subprocess calls with partial paths for security research (essential for Intellicrack)
     "S608",  # Possible SQL injection (false positives)
     "S104",  # Possible binding to all interfaces
     "N802",  # Function name should be lowercase

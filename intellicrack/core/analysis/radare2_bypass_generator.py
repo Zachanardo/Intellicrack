@@ -116,7 +116,7 @@ class R2BypassGenerator:
         return result
 
     def generate_bypass(self, license_info: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Wrapper method for API compatibility - delegates to generate_comprehensive_bypass."""
+        """Provide API compatibility by delegating to generate_comprehensive_bypass."""
         result = self.generate_comprehensive_bypass()
 
         # Ensure result has expected structure for tests

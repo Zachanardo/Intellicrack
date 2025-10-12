@@ -28,10 +28,12 @@ from cryptography.x509.oid import NameOID
 from mitmproxy import options
 from mitmproxy.tools.dump import DumpMaster
 
-# Token type constants
-TOKEN_TYPE_COOKIE = "cookie"
-TOKEN_TYPE_JWT = "jwt"
-TOKEN_TYPE_BEARER = "bearer"
+# Token type constants (not passwords)
+TOKEN_TYPE_COOKIE = "cookie"  # noqa: S105
+TOKEN_TYPE_JWT = "jwt"  # noqa: S105
+TOKEN_TYPE_BEARER = "bearer"  # noqa: S105
+TOKEN_TYPE_API_KEY = "api_key"  # noqa: S105
+TOKEN_TYPE_LICENSE_KEY = "license_key"  # noqa: S105
 
 try:
     import xmltodict
@@ -71,6 +73,7 @@ class CloudLicenseAnalyzer:
     """MITM proxy-based analyzer for intercepting and manipulating cloud license traffic."""
 
     def __init__(self):
+        """Initialize the MITMProxyAnalyzer with interception data structures and proxy settings."""
         self.intercepted_requests = []
         self.discovered_endpoints = {}
         self.license_tokens = {}
@@ -624,11 +627,11 @@ class CloudLicenseAnalyzer:
 
     def generate_token(self, token_type: str, **kwargs) -> str:
         """Generate valid license token of specified type for bypassing cloud checks."""
-        if token_type == "jwt":
+        if token_type == TOKEN_TYPE_JWT:
             return self._generate_jwt_token(**kwargs)
-        elif token_type == "api_key":
+        elif token_type == TOKEN_TYPE_API_KEY:
             return self._generate_api_key(**kwargs)
-        elif token_type == "license_key":
+        elif token_type == TOKEN_TYPE_LICENSE_KEY:
             return self._generate_license_key(**kwargs)
         else:
             return self._generate_generic_token(**kwargs)
@@ -729,12 +732,12 @@ class CloudLicenseAnalyzer:
             data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
 
             if "application/json" in headers.get("content-type", ""):
-                return requests.post(url, json=data, headers=headers)
+                return requests.post(url, json=data, headers=headers, timeout=30)
             else:
-                return requests.post(url, data=data, headers=headers)
+                return requests.post(url, data=data, headers=headers, timeout=30)
         else:
             params = {"refresh_token": refresh_token}
-            return requests.get(url, params=params, headers=headers)
+            return requests.get(url, params=params, headers=headers, timeout=30)
 
     def emulate_license_server(self, port: int = 9090):
         """Start local emulated license server to respond to intercepted requests."""
@@ -923,11 +926,16 @@ class CloudLicenseBypasser:
     """Cloud license bypass system for defeating cloud-based activation."""
 
     def __init__(self, analyzer: CloudLicenseAnalyzer):
+        """Initialize the CloudLicenseBypassSystem with an analyzer instance.
+
+        Args:
+            analyzer: CloudLicenseAnalyzer instance to use for analysis data.
+
+        """
         self.analyzer = analyzer
 
     def bypass_license_check(self, target_url: str) -> bool:
         """Bypass cloud license check by replaying valid tokens to target URL."""
-
         parsed = urlparse(target_url)
 
         for _endpoint_key, endpoint in self.analyzer.discovered_endpoints.items():
@@ -953,18 +961,18 @@ class CloudLicenseBypasser:
     def _send_bypass_request(self, endpoint: CloudEndpoint, token: LicenseToken) -> bool:
         headers = endpoint.headers.copy()
 
-        if token.token_type == "jwt" or token.token_type == "bearer":
+        if token.token_type == TOKEN_TYPE_JWT or token.token_type == TOKEN_TYPE_BEARER:
             headers["Authorization"] = f"Bearer {token.value}"
-        elif token.token_type == "api_key":
+        elif token.token_type == TOKEN_TYPE_API_KEY:
             headers["X-API-Key"] = token.value
 
         try:
             if endpoint.method == "GET":
-                response = requests.get(endpoint.url, headers=headers)
+                response = requests.get(endpoint.url, headers=headers, timeout=30)
             elif endpoint.method == "POST":
-                response = requests.post(endpoint.url, headers=headers, json=endpoint.parameters.get("body", {}))
+                response = requests.post(endpoint.url, headers=headers, json=endpoint.parameters.get("body", {}), timeout=30)
             else:
-                response = requests.request(endpoint.method, endpoint.url, headers=headers)
+                response = requests.request(endpoint.method, endpoint.url, headers=headers, timeout=30)
 
             return response.status_code in [200, 201, 204]
 

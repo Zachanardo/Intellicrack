@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""CLI module for running Intellicrack analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -227,7 +229,7 @@ Examples:
 
 
 def main() -> int:
-    """Main CLI entry point.
+    """Run main CLI entry point.
 
     Returns:
         Exit code (0 for success, 1 for error)

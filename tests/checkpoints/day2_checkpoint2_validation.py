@@ -28,7 +28,10 @@ def validate_production_readiness_checkpoint2():
 
     # Import the actual vulnerability engine for testing
     try:
-        sys.path.append("C:/Intellicrack")
+        import os
+from intellicrack.utils.path_resolver import get_project_root
+
+sys.path.append(str(get_project_root()))
         from intellicrack.core.analysis.radare2_vulnerability_engine import Radare2VulnerabilityEngine
         ACTUAL_ENGINE_AVAILABLE = True
         print("✓ Successfully imported actual Radare2VulnerabilityEngine")
@@ -128,7 +131,7 @@ def validate_production_readiness_checkpoint2():
 
         # Direct validation by reading the source code
         try:
-            with open("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
                 source_code = f.read()
 
             # Check for placeholder patterns in BOF method
@@ -262,7 +265,7 @@ def validate_production_readiness_checkpoint2():
     else:
         # Direct source validation for format string method
         try:
-            with open("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
                 source_code = f.read()
 
             # Check format string method
@@ -312,7 +315,7 @@ def validate_production_readiness_checkpoint2():
 
     try:
         # Read the entire vulnerability engine file
-        with open("C:/Intellicrack/intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+        with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
             full_source = f.read()
 
         # Define comprehensive forbidden patterns
@@ -370,7 +373,7 @@ def validate_production_readiness_checkpoint2():
         result = subprocess.run([
             "C:\\Intellicrack\\.pixi\\envs\\default\\python.exe",
             "test_payload_engine_integration.py"
-        ], capture_output=True, text=True, cwd="C:/Intellicrack")
+        ], capture_output=True, text=True, cwd=str(get_project_root()))
 
         if result.returncode == 0 and "DAY 2.2 INTEGRATION TEST SUCCESS" in result.stdout:
             print("✓ Integration test passed successfully")
@@ -411,7 +414,7 @@ def validate_production_readiness_checkpoint2():
         return False
 
     # Save validation results
-    with open("C:/Intellicrack/day2_checkpoint2_results.json", "w") as f:
+    with open(get_project_root() / "day2_checkpoint2_results.json", "w") as f:
         json.dump(validation_results, f, indent=2)
 
     print("✅ CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")

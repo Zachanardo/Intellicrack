@@ -2296,7 +2296,7 @@ class EnhancedTrainingInterface(QDialog):
 
 
 def create_enhanced_training_interface(parent=None) -> "EnhancedTrainingInterface":
-    """Factory function to create the enhanced training interface."""
+    """Create the enhanced training interface."""
     if not PYQT6_AVAILABLE:
         raise ImportError("PyQt6 is required for the enhanced training interface")
 

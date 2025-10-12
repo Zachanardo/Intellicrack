@@ -399,7 +399,7 @@ Uptime: {self._format_duration(self.system_metrics.uptime)}
 System: {"🟢" if self.system_metrics.cpu_percent < 80 else "🟡" if self.system_metrics.cpu_percent < 95 else "🔴"}
 Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.system_metrics.memory_percent < 95 else "🔴"}"""
 
-        return Panel(content, title="⚡ Quick Stats", border_style="magenta")
+        return Panel(content, title="[FAST] Quick Stats", border_style="magenta")
 
     def _create_progress_bar(self, value: float, max_value: float, label: str, width: int = 20) -> str:
         """Create ASCII progress bar.
@@ -737,11 +737,11 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         table.add_column("Trend", style="blue")
 
         # Add system metrics to table
-        cpu_status = "✅ Normal" if self.system_metrics.cpu_percent < 80 else "⚠️ High"
+        cpu_status = "✅ Normal" if self.system_metrics.cpu_percent < 80 else "WARNING️ High"
         cpu_trend = self._get_trend(self.cpu_history)
         table.add_row("CPU Usage", f"{self.system_metrics.cpu_percent:.1f}%", cpu_status, cpu_trend)
 
-        memory_status = "✅ Normal" if self.system_metrics.memory_percent < 80 else "⚠️ High"
+        memory_status = "✅ Normal" if self.system_metrics.memory_percent < 80 else "WARNING️ High"
         memory_trend = self._get_trend(self.memory_history)
         table.add_row(
             "Memory Usage",
@@ -750,7 +750,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             memory_trend,
         )
 
-        disk_status = "✅ Normal" if self.system_metrics.disk_usage < 90 else "⚠️ Full"
+        disk_status = "✅ Normal" if self.system_metrics.disk_usage < 90 else "WARNING️ Full"
         table.add_row("Disk Usage", f"{self.system_metrics.disk_usage:.1f}%", disk_status, "📊")
 
         uptime_str = self._format_duration(self.system_metrics.uptime)
@@ -785,7 +785,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         cache_total = self.analysis_stats.cache_hits + self.analysis_stats.cache_misses
         cache_hit_rate = (self.analysis_stats.cache_hits / cache_total * 100) if cache_total > 0 else 0
         cache_node.add(f"✅ Cache Hits: {self.analysis_stats.cache_hits}")
-        cache_node.add(f"❌ Cache Misses: {self.analysis_stats.cache_misses}")
+        cache_node.add(f"ERROR Cache Misses: {self.analysis_stats.cache_misses}")
         cache_node.add(f"📈 Hit Rate: {cache_hit_rate:.1f}%")
 
         # Add recent activity

@@ -87,12 +87,13 @@ except ImportError as e:
 
 
 def log_message(msg: str) -> str:
-    """Helper function to format log messages consistently."""
+    """Format log messages consistently."""
     return f"[{msg}]"
 
 
 def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
-    """Loads and initializes plugins from the plugin directory.
+    """Load and initialize plugins from the plugin directory.
+
     Returns a dictionary of loaded plugins by category.
 
     Args:
@@ -167,7 +168,7 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
 
 
 def run_plugin(app, plugin_name: str) -> None:
-    """Runs a built-in plugin.
+    """Run a built-in plugin.
 
     Args:
         app: Application instance
@@ -219,7 +220,7 @@ def run_plugin(app, plugin_name: str) -> None:
 
 
 def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
-    """Runs a custom plugin with the current binary.
+    """Run a custom plugin with the current binary.
 
     Args:
         app: Application instance
@@ -286,7 +287,8 @@ def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
 
 
 def run_frida_plugin_from_file(app, plugin_path: str) -> None:
-    """Runs a Frida plugin script from a file.
+    """Run a Frida plugin script from a file.
+
     Enhanced with robust PID finding and error handling.
 
     Args:
@@ -337,7 +339,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         script = session.create_script(script_content)
 
         def on_message(message, data):
-            """Callback for handling messages from a Frida script.
+            """Handle messages from a Frida script.
 
             Adds the plugin name as a prefix to log messages and processes payloads.
             """
@@ -416,7 +418,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
-    """Runs a Ghidra script on the current binary.
+    """Run a Ghidra script on the current binary.
 
     Args:
         app: Application instance
@@ -503,7 +505,8 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def create_sample_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> None:
-    """Creates comprehensive sample plugin files for users to reference.
+    """Create comprehensive sample plugin files for users to reference.
+
     Now includes multiple templates for different use cases.
 
     Args:
@@ -781,7 +784,7 @@ class AdvancedDemoPlugin(BasePlugin):
             update_progress("Validating binary file...")
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ Validation failed: {validation_msg}")
+                results.append(f"ERROR Validation failed: {validation_msg}")
                 return results
             results.append(f"✅ {validation_msg}")
 
@@ -807,7 +810,7 @@ class AdvancedDemoPlugin(BasePlugin):
             entropy = self._calculate_entropy(sample_data)
             results.append(f"📊 Entropy: {entropy:.2f}")
             if entropy > 7.5:
-                results.append("  ⚠️  High entropy - possibly packed/encrypted")
+                results.append("  WARNING️  High entropy - possibly packed/encrypted")
             elif entropy < 1.0:
                 results.append("  ℹ️  Low entropy - likely unprocessed data")
 
@@ -856,7 +859,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in plugin_system: %s", e)
-            results.append(f"❌ Analysis error: {str(e)}")
+            results.append(f"ERROR Analysis error: {str(e)}")
             results.append("📋 This is a template - implement your custom analysis logic here")
 
         return results
@@ -888,7 +891,7 @@ class AdvancedDemoPlugin(BasePlugin):
             # Validation
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ Cannot patch: {validation_msg}")
+                results.append(f"ERROR Cannot patch: {validation_msg}")
                 return results
 
             # Create backup if requested
@@ -969,7 +972,7 @@ class AdvancedDemoPlugin(BasePlugin):
                         results.append(f"✅ Successfully applied {patches_applied} patches")
                         results.append("🔧 Binary patching completed")
                     else:
-                        results.append("⚠️ No standard patterns found - trying advanced analysis")
+                        results.append("WARNING️ No standard patterns found - trying advanced analysis")
 
                         # Advanced pattern search using regex
                         import capstone
@@ -988,9 +991,9 @@ class AdvancedDemoPlugin(BasePlugin):
                             results.append(f"✅ Applied {patches_applied} advanced patches")
 
             except ImportError:
-                results.append("⚠️ Capstone not available - using basic patching only")
+                results.append("WARNING️ Capstone not available - using basic patching only")
             except Exception as e:
-                results.append(f"❌ Patching failed: {str(e)}")
+                results.append(f"ERROR Patching failed: {str(e)}")
 
             # Verification
             if patch_options.get('verify_patch', True):
@@ -1001,7 +1004,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in plugin_system: %s", e)
-            results.append(f"❌ Patch error: {str(e)}")
+            results.append(f"ERROR Patch error: {str(e)}")
 
         return results
 
@@ -1590,7 +1593,7 @@ class {class_name}:
         # Validation
         is_valid, msg = self.validate_binary(binary_path)
         if not is_valid:
-            results.append(f"❌ {{msg}}")
+            results.append(f"ERROR {{msg}}")
             return results
 
         results.append(f"✅ {{msg}}")
@@ -1652,7 +1655,7 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
 
 
 def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
-    """Runs a plugin in a sandboxed process with resource limits.
+    """Run a plugin in a sandboxed process with resource limits.
 
     Args:
         plugin_path: Path to the plugin file
@@ -1700,7 +1703,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[s
 
 
 def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
-    """Runs a plugin on a remote system.
+    """Run a plugin on a remote system.
 
     Args:
         app: Application instance
@@ -1769,6 +1772,7 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 
 class PluginSystem:
     """Main plugin system class that encapsulates all plugin functionality.
+
     This class provides a unified interface for plugin management in Intellicrack.
     """
 

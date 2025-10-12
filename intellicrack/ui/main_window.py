@@ -645,12 +645,12 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Show status bar message if any components are disabled
         if disabled_components:
-            status_msg = f"⚠️ {len(disabled_components)} component(s) unavailable: {', '.join(disabled_components)}"
+            status_msg = f"WARNING️ {len(disabled_components)} component(s) unavailable: {', '.join(disabled_components)}"
             self.status_bar.showMessage(status_msg, 10000)  # Show for 10 seconds
 
             # Add permanent status indicator
             if hasattr(self, "status_label"):
-                self.status_label.setText(f"⚠️ {len(disabled_components)} components disabled")
+                self.status_label.setText(f"WARNING️ {len(disabled_components)} components disabled")
                 self.status_label.setToolTip(
                     "The following components are disabled:\n" +
                     "\n".join([f"• {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}"
@@ -660,7 +660,7 @@ class IntellicrackMainWindow(QMainWindow):
                 self.status_bar.addPermanentWidget(self.status_label)
         else:
             # All components initialized successfully
-            self.status_bar.showMessage("✓ All components initialized successfully", 5000)
+            self.status_bar.showMessage("OK All components initialized successfully", 5000)
 
     # Slot methods for signal handling
     def _on_update_output(self, message: str):

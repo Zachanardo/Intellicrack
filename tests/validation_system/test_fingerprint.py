@@ -2,7 +2,7 @@
 """Test fingerprint randomizer."""
 
 import sys
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 from tests.validation_system.fingerprint_randomizer import SystemFingerprinter, FingerprintRandomizer
 

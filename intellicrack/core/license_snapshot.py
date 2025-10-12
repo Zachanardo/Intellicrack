@@ -13,6 +13,8 @@ import psutil
 import win32api
 import win32service
 
+from intellicrack.utils.logger import logger
+
 
 class LicenseSnapshot:
     """Captures comprehensive system state for license analysis and differential comparison."""
@@ -69,6 +71,7 @@ class LicenseSnapshot:
     ]
 
     def __init__(self):
+        """Initialize the LicenseStateSnapshotter with empty snapshots dictionary."""
         self.snapshots: Dict[str, Dict[str, Any]] = {}
         self.current_snapshot: Optional[Dict[str, Any]] = None
 
@@ -114,8 +117,8 @@ class LicenseSnapshot:
                 try:
                     volume_info = win32api.GetVolumeInformation(drive)
                     volumes.append({"drive": drive, "name": volume_info[0], "serial": volume_info[1], "filesystem": volume_info[4]})
-                except (win32api.error, OSError):
-                    pass
+                except (win32api.error, OSError) as e:
+                    logger.debug(f"Failed to get volume info for drive {drive}: {e}")
             info["volumes"] = volumes
 
             # Get MAC addresses (HWID component)
@@ -134,8 +137,8 @@ class LicenseSnapshot:
                     info["bios_version"] = bios.Version
                     info["bios_manufacturer"] = bios.Manufacturer
                     break
-            except (AttributeError, IndexError):
-                pass
+            except (AttributeError, IndexError) as e:
+                logger.debug(f"Failed to extract MAC address from node: {e}")
 
         except Exception as e:
             info["error"] = str(e)
@@ -170,8 +173,8 @@ class LicenseSnapshot:
                                 if "license_modules" not in process_data:
                                     process_data["license_modules"] = []
                                 process_data["license_modules"].append(module.path)
-                    except (AttributeError, KeyError):
-                        pass
+                    except (AttributeError, KeyError) as e:
+                        logger.debug(f"Failed to access process module path: {e}")
 
                 processes.append(process_data)
 
@@ -196,7 +199,10 @@ class LicenseSnapshot:
                     key_data = self._read_registry_key_recursive(hive, key_path, max_depth=3)
                     if key_data:
                         registry_data[hive_name][key_path] = key_data
-                except Exception:
+                except Exception as e:
+                    # Log the exception with details for debugging
+                    import logging
+                    logging.warning(f"Error capturing registry data for {hive_name}\\{key_path}: {e}")
                     continue
 
         # Capture specific license-related registry values
@@ -279,13 +285,13 @@ class LicenseSnapshot:
                                         j += 1
                                     except WindowsError:
                                         break
-                        except (psutil.NoSuchProcess, psutil.AccessDenied):
-                            pass
+                        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                            logger.debug(f"Failed to query registry value: {e}")
                         i += 1
                     except WindowsError:
                         break
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            logger.debug(f"Failed to scan process registry: {e}")
 
         return license_keys
 
@@ -320,11 +326,20 @@ class LicenseSnapshot:
                                     elif any(ext in str(file_path).lower() for ext in [".db", ".dat"]):
                                         file_data["database_files"].append(file_info)
 
-                                except Exception:
+                                except Exception as e:
+                                    # Log the exception with details for debugging
+                                    import logging
+                                    logging.warning(f"Error processing database file info: {e}")
                                     continue
-                    except Exception:
+                    except Exception as e:
+                        # Log the exception with details for debugging
+                        import logging
+                        logging.warning(f"Error accessing file path: {e}")
                         continue
-            except Exception:
+            except Exception as e:
+                # Log the exception with details for debugging
+                import logging
+                logging.warning(f"Error accessing parent directory: {e}")
                 continue
 
         return file_data
@@ -360,8 +375,8 @@ class LicenseSnapshot:
                         service_info["binary_path"] = service_config[3]
                         service_info["start_type"] = service_config[1]
                         win32service.CloseServiceHandle(hs)
-                    except (win32service.error, OSError):
-                        pass
+                    except (win32service.error, OSError) as e:
+                        logger.debug(f"Failed to query service {service_name}: {e}")
 
                     services.append(service_info)
 
@@ -426,10 +441,10 @@ class LicenseSnapshot:
                         for cert_info in certs_in_store:
                             if not any(std in cert_info["issuer"] for std in ["Microsoft", "Windows", "Verisign", "DigiCert"]):
                                 certificates.append(cert_info)
-                except (KeyError, TypeError):
-                    pass
-        except (OSError, PermissionError):
-            pass
+                except (KeyError, TypeError) as e:
+                    logger.debug(f"Failed to process certificate: {e}")
+        except (OSError, PermissionError) as e:
+            logger.debug(f"Failed to capture certificate state: {e}")
 
         return certificates
 
@@ -490,8 +505,8 @@ class LicenseSnapshot:
                             # Check for license-related mutex names
                             if any(lic in mutex_name.lower() for lic in ["license", "trial", "demo", "eval", "single", "instance"]):
                                 mutexes.append(mutex_name)
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            logger.debug(f"Failed to capture mutexes: {e}")
 
         return mutexes
 
@@ -526,8 +541,8 @@ class LicenseSnapshot:
                                 "state": row.get("State", ""),
                             }
                         )
-        except (OSError, PermissionError):
-            pass
+        except (OSError, PermissionError) as e:
+            logger.debug(f"Failed to capture drivers: {e}")
 
         return drivers
 
@@ -559,8 +574,8 @@ class LicenseSnapshot:
                                 "command": row.get("Task To Run", ""),
                             }
                         )
-        except (OSError, PermissionError):
-            pass
+        except (OSError, PermissionError) as e:
+            logger.debug(f"Failed to capture scheduled tasks: {e}")
 
         return tasks
 

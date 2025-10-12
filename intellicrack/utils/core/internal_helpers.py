@@ -20,11 +20,14 @@ import hashlib
 import json
 import math
 import os
+import platform
 import struct
 import subprocess
 import threading
 import time
 from collections.abc import Callable
+from ctypes import c_int, c_ulong
+from pathlib import Path
 from typing import Any
 
 # Import availability flags from correct handlers
@@ -1117,7 +1120,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             try:
                 from ctypes import CDLL, POINTER, Structure, c_size_t, c_ssize_t, c_void_p
 
-                class iovec(Structure):
+                class iovec(Structure):  # noqa: N801
                     _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
 
                 libc = CDLL("libc.so.6")
@@ -1237,7 +1240,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
                 import os
                 from ctypes import CDLL, POINTER, Structure, c_int, c_size_t, c_ssize_t, c_ulong, c_void_p
 
-                class iovec(Structure):
+                class iovec(Structure):  # noqa: N801
                     _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
 
                 libc = CDLL("libc.so.6")
@@ -1945,7 +1948,6 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None
     try:
         # Use CUDA for GPU-accelerated hash calculation
         import numpy as np
-        import pycuda.autoinit
         import pycuda.driver as cuda
         from pycuda.compiler import SourceModule
 
@@ -2088,10 +2090,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
 
     try:
         # Use CUDA for GPU-accelerated entropy calculation
-        import math
-
         import numpy as np
-        import pycuda.autoinit
         import pycuda.driver as cuda
         from pycuda.compiler import SourceModule
 

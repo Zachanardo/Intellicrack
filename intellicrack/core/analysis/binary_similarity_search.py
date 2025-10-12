@@ -1146,7 +1146,7 @@ class BinarySimilaritySearch:
 
 
 def create_similarity_search(database_path: str = "binary_database.json") -> BinarySimilaritySearch:
-    """Factory function to create a BinarySimilaritySearch instance.
+    """Create a BinarySimilaritySearch instance.
 
     Args:
         database_path: Path to the database file

@@ -261,7 +261,7 @@ class ReportGenerationHandler(QObject):
         self.current_result: UnifiedProtectionResult | None = None
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes."""
+        """Handle slot when protection analysis completes."""
         self.current_result = result
         logger.info(f"Report generation handler received analysis for: {result.file_path}")
 

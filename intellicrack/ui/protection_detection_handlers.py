@@ -177,7 +177,7 @@ class ProtectionDetectionHandlers:
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
             elif results["checksum_verification_detected"]:
-                output += "✓ Checksum/Integrity verification detected!\n\n"
+                output += "OK Checksum/Integrity verification detected!\n\n"
 
                 if results.get("algorithms_found"):
                     output += "Hash Algorithms Found:\n"
@@ -223,7 +223,7 @@ class ProtectionDetectionHandlers:
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
             elif results["self_healing_detected"]:
-                output += "✓ Self-healing/self-modifying code detected!\n\n"
+                output += "OK Self-healing/self-modifying code detected!\n\n"
 
                 if results.get("techniques"):
                     output += "Techniques Found:\n"
@@ -270,9 +270,9 @@ class ProtectionDetectionHandlers:
             output = "=== TPM Bypass Results ===\n\n"
 
             if results["success"]:
-                output += "✓ TPM bypass successful!\n\n"
+                output += "OK TPM bypass successful!\n\n"
             else:
-                output += "⚠ TPM bypass partially successful.\n\n"
+                output += "WARNING TPM bypass partially successful.\n\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
@@ -317,9 +317,9 @@ class ProtectionDetectionHandlers:
             output = "=== VM Detection Bypass Results ===\n\n"
 
             if results["success"]:
-                output += "✓ VM detection bypass successful!\n\n"
+                output += "OK VM detection bypass successful!\n\n"
             else:
-                output += "⚠ VM detection bypass partially successful.\n\n"
+                output += "WARNING VM detection bypass partially successful.\n\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
@@ -360,9 +360,9 @@ class ProtectionDetectionHandlers:
             output = "=== Hardware Dongle Emulation Results ===\n\n"
 
             if results["success"]:
-                output += "✓ Hardware dongle emulation activated!\n\n"
+                output += "OK Hardware dongle emulation activated!\n\n"
             else:
-                output += "⚠ Hardware dongle emulation partially successful.\n\n"
+                output += "WARNING Hardware dongle emulation partially successful.\n\n"
 
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"

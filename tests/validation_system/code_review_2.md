@@ -290,7 +290,7 @@ Phase 2 has **SUCCESSFULLY PASSED** the mandatory code review with:
 ## Final Verification Results
 
 ```bash
-$ for file in detection_evidence_collector.py cross_validation.py detection_validator.py evidence_verifier.py validation_orchestrator.py detection_depth_validator.py; do "C:\Intellicrack\mamba_env\python.exe" -m ruff check "tests/validation_system/phase2/$file"; done
+$ for file in detection_evidence_collector.py cross_validation.py detection_validator.py evidence_verifier.py validation_orchestrator.py detection_depth_validator.py; do "D:\\Intellicrack\mamba_env\python.exe" -m ruff check "tests/validation_system/phase2/$file"; done
 
 All checks passed!
 All checks passed!

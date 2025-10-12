@@ -64,14 +64,14 @@ REM Download release
 curl -O https://github.com/yourusername/intellicrack/releases/latest/download/intellicrack-windows-x64.zip
 
 REM Extract
-Expand-Archive -Path intellicrack-windows-x64.zip -DestinationPath C:\Intellicrack
+Expand-Archive -Path intellicrack-windows-x64.zip -DestinationPath D:\\Intellicrack
 
 REM Install dependencies
-cd C:\Intellicrack
+cd D:\\Intellicrack
 pip install -r requirements\base.txt
 
 REM Install as Windows Service
-sc create Intellicrack binPath= "C:\Intellicrack\intellicrack-service.exe"
+sc create Intellicrack binPath= "D:\\Intellicrack\intellicrack-service.exe"
 sc config Intellicrack start= auto
 sc start Intellicrack
 ```

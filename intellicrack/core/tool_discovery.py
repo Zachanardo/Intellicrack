@@ -480,6 +480,14 @@ class AdvancedToolDiscovery:
         """Discover all supported tools."""
         logger.info("Starting comprehensive tool discovery")
 
+        # Report to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message("Starting comprehensive tool discovery")
+            except Exception as e:
+                logger.warning(f"Could not log to terminal manager: {e}")
+
         tool_configs = {
             "ghidra": {
                 "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
@@ -540,13 +548,31 @@ class AdvancedToolDiscovery:
                 results[tool_name] = tool_info
 
                 if tool_info["available"]:
-                    logger.info(f"✓ {tool_name} found: {tool_info['path']}")
+                    logger.info(f"OK {tool_name} found: {tool_info['path']}")
+                    # Report successful discovery to terminal manager
+                    if HAS_TERMINAL_MANAGER:
+                        try:
+                            terminal_manager.log_terminal_message(f"OK {tool_name} found: {tool_info['path']}")
+                        except Exception as e:
+                            logger.debug("Could not log to terminal manager: %s", e)
                 else:
                     level = logging.WARNING if config["required"] else logging.INFO
-                    logger.log(level, f"✗ {tool_name} not found")
+                    logger.log(level, f"FAIL {tool_name} not found")
+                    # Report failed discovery to terminal manager
+                    if HAS_TERMINAL_MANAGER:
+                        try:
+                            terminal_manager.log_terminal_message(f"FAIL {tool_name} not found", level="warning")
+                        except Exception as e:
+                            logger.debug("Could not log to terminal manager: %s", e)
 
             except Exception as e:
                 logger.error(f"Error discovering {tool_name}: {e}")
+                # Report error to terminal manager
+                if HAS_TERMINAL_MANAGER:
+                    try:
+                        terminal_manager.log_terminal_message(f"Error discovering {tool_name}: {e}", level="error")
+                    except Exception as e2:
+                        logger.debug("Could not log to terminal manager: %s", e2)
                 results[tool_name] = {
                     "available": False,
                     "error": str(e),
@@ -561,6 +587,13 @@ class AdvancedToolDiscovery:
         self.config.set("tools.last_discovery", time.time())
 
         # Configuration is auto-saved by the config manager
+
+        # Report completion to terminal manager
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager.log_terminal_message(f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}")
+            except Exception as e:
+                logger.debug("Could not log to terminal manager: %s", e)
 
         return results
 
@@ -1088,6 +1121,23 @@ class AdvancedToolDiscovery:
         for tool_name in self.manual_overrides:
             if tool_name not in results:
                 results[tool_name] = self.health_check_tool(tool_name)
+
+        # Report health check summary to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                healthy_count = len([tool_name for tool_name, status in results.items() if status.get("healthy", False)])
+                total_count = len(results)
+                terminal_manager.log_terminal_message(f"Health check completed: {healthy_count}/{total_count} tools healthy")
+
+                # Report unhealthy tools
+                for tool_name, status in results.items():
+                    if not status.get("healthy", False):
+                        issues = status.get("issues", [])
+                        if issues:
+                            terminal_manager.log_terminal_message(f"Unhealthy tool: {tool_name} - {', '.join(issues)}", level="warning")
+            except Exception as e:
+                logger.warning(f"Could not log health check to terminal manager: {e}")
 
         # Save health check results to config
         self.config.set("tools.last_health_check", results)

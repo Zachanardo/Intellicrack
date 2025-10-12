@@ -1,3 +1,3 @@
 @echo off
-cd C:\Intellicrack
-rm C:\Intellicrack\nul
+cd /d D:\Intellicrack
+del "\\?\D:\Intellicrack\nul"

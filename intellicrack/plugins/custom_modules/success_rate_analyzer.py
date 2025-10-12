@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Success rate analyzer plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -38,6 +40,7 @@ from sklearn.preprocessing import StandardScaler
 from intellicrack.handlers.matplotlib_handler import PdfPages, plt
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
+from intellicrack.utils.logger import logger
 
 warnings.filterwarnings("ignore")
 
@@ -1400,7 +1403,7 @@ def get_success_rate_analyzer(db_path: str = None) -> SuccessRateAnalyzer:
 
 # Decorator for automatic success tracking
 def track_success(event_type: EventType, protection_category: ProtectionCategory, component: str = None):
-    """Decorator for automatic success/failure tracking."""
+    """Create decorator for automatic success/failure tracking."""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -1521,6 +1524,7 @@ if __name__ == "__main__":
 
     # Overall success rates
     overall_stats = analyzer.get_component_statistics()
+    components = list(overall_stats.keys())
     print("Component Statistics:")
     for component, stats in overall_stats.items():
         print(

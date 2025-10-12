@@ -588,6 +588,14 @@ class ResourceManager:
             if "cleanup_interval" in limits:
                 self.cleanup_interval = limits["cleanup_interval"]
 
+        # If terminal manager is available, log the limit changes there too
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message(f"Resource limits updated: {limits}")
+            except Exception as e:
+                logger.warning(f"Could not log to terminal manager: {e}")
+
         logger.info(f"Updated resource limits: {limits}")
 
     def get_resources_by_owner(self, owner: str) -> list[ManagedResource]:
@@ -652,7 +660,7 @@ class ResourceManager:
             current_time = time.time()
             stuck_resources = []
             for resource in self._resources.values():
-                if resource.status == ResourceState.CLEANING and (current_time - resource.created_at) > 300:  # 5 minutes
+                if resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300:  # 5 minutes
                     stuck_resources.append(resource.resource_id)
 
             if stuck_resources:
@@ -673,6 +681,20 @@ class ResourceManager:
             health["status"] = "unhealthy"
         elif health["warnings"]:
             health["status"] = "degraded"
+
+        # Report health status to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message(f"Resource manager health: {health['status']}")
+                if health["issues"]:
+                    for issue in health["issues"]:
+                        terminal_manager.log_terminal_message(f"Health issue: {issue}", level="error")
+                if health["warnings"]:
+                    for warning in health["warnings"]:
+                        terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
+            except Exception as e:
+                logger.warning(f"Could not report to terminal manager: {e}")
 
         return health
 
@@ -755,7 +777,7 @@ class AutoCleanupResource:
         self.resource_type = resource_type
 
     def __call__(self, func):
-        """Decorator that automatically manages resource cleanup."""
+        """Manage resource cleanup."""
 
         def wrapper(*args, **kwargs):
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
@@ -785,7 +807,7 @@ def create_resource_context(owner: str = None) -> ResourceContext:
 
 
 def auto_cleanup(resource_type: ResourceType):
-    """Decorator for automatic resource cleanup."""
+    """Clean up resources."""
     return AutoCleanupResource(resource_manager, resource_type)
 
     def get_usage_stats(self) -> dict[str, Any]:
@@ -817,7 +839,7 @@ def auto_cleanup(resource_type: ResourceType):
 
             return stats
 
-    def list_resources(self, resource_type: ResourceType | None = None) -> list[dict[str, Any]]:
+    def list_resources(self, resource_type: ResourceType | None = None) -> list[dict[str, Any]]:  # noqa: D417
         """List managed resources.
 
         Args:
@@ -865,7 +887,7 @@ class FallbackHandler:
         self._setup_builtin_fallbacks()
 
     def _setup_builtin_fallbacks(self):
-        """Setup built-in fallback mechanisms."""
+        """Set up built-in fallback mechanisms."""
         # Binary analysis fallbacks
         self.fallback_registry["strings"] = self._strings_fallback
         self.fallback_registry["file"] = self._file_type_fallback
@@ -1290,7 +1312,7 @@ def validate_external_dependencies() -> dict[str, Any]:
 
 
 def setup_resource_monitoring():
-    """Setup comprehensive resource monitoring."""
+    """Set up comprehensive resource monitoring."""
 
     def log_resource_stats():
         """Periodic resource statistics logging."""

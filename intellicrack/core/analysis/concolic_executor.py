@@ -721,7 +721,6 @@ if not MANTICORE_AVAILABLE:
 
             def _get_operand_value(self, state: NativeConcolicState, operand: str) -> int:
                 """Get value from operand (register, memory, or immediate)."""
-
                 # Immediate value
                 if operand.startswith("0x"):
                     return int(operand, 16)
@@ -1282,26 +1281,27 @@ if not MANTICORE_AVAILABLE:
                 self.logger.debug("Native plugin implementation initialized")
 
             def will_run_callback(self, executor, *args, **kwargs):
-                """Callback before execution starts."""
+                """Call before execution starts."""
                 self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def did_finish_run_callback(self, executor, *args, **kwargs):
-                """Callback after execution completes."""
+                """Call after execution completes."""
                 self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
-                """Callback before state fork.
+                """Call before state fork.
 
                 Args:
                     state: Current execution state before forking
                     new_state: New execution state being created
                     *args: Additional positional arguments from the execution engine
                     **kwargs: Additional keyword arguments from the execution engine
+
                 """
                 self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
 
             def will_execute_instruction_callback(self, state, pc, insn):
-                """Callback before instruction execution."""
+                """Call before instruction execution."""
                 self.logger.debug(f"Executing instruction at 0x{pc:x}, state={state}, insn={insn}")
 
         import platform
@@ -1406,7 +1406,7 @@ class ConcolicExecutionEngine:
                     self.logger = logging.getLogger(__name__)
 
                 def will_run_callback(self, *args, **kwargs):
-                    """Called when path exploration is about to start."""
+                    """Call when path exploration is about to start."""
                     self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
@@ -1414,7 +1414,7 @@ class ConcolicExecutionEngine:
                         self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
                 def did_finish_run_callback(self, *args, **kwargs):
-                    """Called when path exploration has finished execution."""
+                    """Call when path exploration has finished execution."""
                     self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
@@ -1422,7 +1422,7 @@ class ConcolicExecutionEngine:
                         self.logger.debug(f"Finish kwargs: {list(kwargs.keys())}")
 
                 def will_fork_state_callback(self, state, *args, **kwargs):
-                    """Called before a state is about to be forked during exploration.
+                    """Call before a state is about to be forked during exploration.
 
                     Args:
                         state: The state that will be forked
@@ -1477,7 +1477,7 @@ class ConcolicExecutionEngine:
             return {"error": f"Concolic execution failed: {e!s}"}
 
     def _target_hook(self, state):
-        """Hook for target address.
+        """Execute hook when target address is reached.
 
         Args:
             state: Current execution state
@@ -1487,7 +1487,7 @@ class ConcolicExecutionEngine:
         self.logger.info("Reached target address at PC: %s", state.cpu.PC)
 
     def _avoid_hook(self, state):
-        """Hook for addresses to avoid.
+        """Execute hook to avoid specified addresses.
 
         Args:
             state: Current execution state
@@ -1554,7 +1554,7 @@ class ConcolicExecutionEngine:
                     self.logger = logging.getLogger(__name__)
 
                 def will_execute_instruction_callback(self, state, pc, insn):
-                    """Called before executing each instruction during emulation.
+                    """Execute before each instruction during emulation.
 
                     Monitors for license check functions and attempts to force successful path
                     when conditional branches are encountered during trace recording.
@@ -1953,6 +1953,7 @@ class ConcolicExecutionEngine:
                     solutions: Possible solutions for the branch condition
                     *args: Additional positional arguments from the execution engine
                     **kwargs: Additional keyword arguments from the execution engine
+
                 """
                 try:
                     constraint_str = str(expression) if expression else "unknown"
@@ -2070,7 +2071,7 @@ class ConcolicExecutionEngine:
             return results
 
     def _target_reached(self, state, analysis_data):
-        """Callback when target address is reached."""
+        """Handle when target address is reached."""
         analysis_data["successful_states"].append(state)
         analysis_data["interesting_addresses"].add(state.cpu.PC)
         self.logger.info(f"Target reached at PC: {hex(state.cpu.PC)}")

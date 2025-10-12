@@ -1015,7 +1015,7 @@ class DetectionPassCriteriaValidator:
 def main():
     """Example usage of DetectionPassCriteriaValidator."""
     # Configuration
-    ground_truth_path = r"C:\Intellicrack\tests\validation_system\certified_ground_truth\ground_truth.json"
+    ground_truth_path = r"D:\Intellicrack\tests\validation_system\certified_ground_truth\ground_truth.json"
     tools_config = {
         'peid_path': r'C:\Tools\PEiD\PEiD.exe',
         'die_path': r'C:\Tools\DIE\die.exe',

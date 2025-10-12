@@ -8,9 +8,13 @@ Licensed under GNU General Public License v3.0
 """
 
 import json
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Any
+
+try:
+    from xml.etree.ElementTree import Element, ElementTree, SubElement
+except ImportError:
+    from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -108,20 +112,20 @@ class ExportWorker(QThread):
         """Export to XML format."""
         self.progress_update.emit(30, "Building XML structure...")
 
-        root = ET.Element("intellicrack_analysis")
+        root = Element("intellicrack_analysis")
         root.set("timestamp", datetime.now().isoformat())
         root.set("version", "1.0")
 
         # Add file info
         if "file_info" in results:
-            file_info = ET.SubElement(root, "file_info")
+            file_info = SubElement(root, "file_info")
             for key, value in results["file_info"].items():
-                elem = ET.SubElement(file_info, key)
+                elem = SubElement(file_info, key)
                 elem.text = str(value)
 
         # Add ICP analysis
         if "icp_analysis" in results:
-            icp_elem = ET.SubElement(root, "icp_analysis")
+            icp_elem = SubElement(root, "icp_analysis")
             icp_data = results["icp_analysis"]
 
             if hasattr(icp_data, "__dict__"):
@@ -147,23 +151,23 @@ class ExportWorker(QThread):
 
         self.progress_update.emit(70, "Writing XML file...")
 
-        tree = ET.ElementTree(root)
+        tree = ElementTree(root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def _dict_to_xml(self, parent: ET.Element, data: dict[str, Any]):
+    def _dict_to_xml(self, parent: Element, data: dict[str, Any]):
         """Convert dictionary to XML elements."""
         for key, value in data.items():
-            elem = ET.SubElement(parent, str(key))
+            elem = SubElement(parent, str(key))
 
             if isinstance(value, dict):
                 self._dict_to_xml(elem, value)
             elif isinstance(value, list):
                 for item in value:
                     if isinstance(item, dict):
-                        item_elem = ET.SubElement(elem, "item")
+                        item_elem = SubElement(elem, "item")
                         self._dict_to_xml(item_elem, item)
                     else:
-                        item_elem = ET.SubElement(elem, "item")
+                        item_elem = SubElement(elem, "item")
                         item_elem.text = str(item)
             else:
                 elem.text = str(value)
@@ -568,9 +572,11 @@ class ExportDialog(BaseDialog):
 
         file_layout = QHBoxLayout()
         self.output_path_edit = QLineEdit()
-        self.output_path_edit.setPlaceholderText("Select output file path...")
+        self.output_path_edit.setToolTip("Enter or browse to select the output file path for the export")
+        self.output_path_edit.setStyleSheet("QLineEdit { color: #666; }")
 
         self.browse_output_btn = QPushButton("Browse...")
+        self.browse_output_btn.setToolTip("Open file browser to select export destination")
         self.browse_output_btn.clicked.connect(self.browse_output_file)
 
         file_layout.addWidget(self.output_path_edit)
@@ -628,7 +634,7 @@ class ExportDialog(BaseDialog):
         self.page_format_combo.addItems(["A4", "Letter"])
         self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
         self.page_format_combo.setToolTip(
-            "Choose page size for PDF export:\nA4: International standard (210×297mm)\nLetter: US standard (8.5×11 inches)"
+            "Choose page size for PDF export:<br>A4: International standard (210×297mm)<br>Letter: US standard (8.5×11 inches)"
         )
         page_format_layout.addWidget(self.page_format_combo)
 

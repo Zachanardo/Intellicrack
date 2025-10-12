@@ -416,7 +416,7 @@ Script Analysis:
                         if "function" in script or "var " in script or "let " in script:
                             validation_results.append("✅ JavaScript syntax patterns detected")
                         else:
-                            validation_results.append("⚠️  No clear JavaScript patterns found")
+                            validation_results.append("WARNING️  No clear JavaScript patterns found")
 
                     # Security pattern detection
                     security_patterns = ["hook", "patch", "memory", "bypass", "inject"]
@@ -427,7 +427,7 @@ Script Analysis:
                     validation_results.append("✅ Script validation completed successfully")
 
                 except Exception as validation_error:
-                    validation_results.append(f"⚠️  Validation warning: {validation_error}")
+                    validation_results.append(f"WARNING️  Validation warning: {validation_error}")
 
                 return {"success": True, "output": "\n".join(validation_results), "error": "", "exit_code": 0, "method": "validation"}
 
@@ -555,7 +555,7 @@ class IntegrationManager:
         logger.info("Integration manager stopped")
 
     def _worker_loop(self):
-        """Main worker loop for processing tasks."""
+        """Process tasks in the main worker loop."""
         while self.running:
             try:
                 # Get task from queue (with timeout)

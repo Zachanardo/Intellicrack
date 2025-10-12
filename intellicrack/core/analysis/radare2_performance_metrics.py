@@ -83,6 +83,7 @@ class R2PerformanceMonitor:
 
         Args:
             enable_real_time: Enable real-time monitoring
+
         """
         self.logger = logger
         self.enable_real_time = enable_real_time
@@ -115,6 +116,7 @@ class R2PerformanceMonitor:
 
         Returns:
             New SessionMetrics object
+
         """
         with self.metrics_lock:
             if self.current_session:
@@ -133,6 +135,7 @@ class R2PerformanceMonitor:
 
         Returns:
             Final session metrics
+
         """
         with self.metrics_lock:
             if not self.current_session:
@@ -168,6 +171,7 @@ class R2PerformanceMonitor:
 
         Returns:
             New OperationMetrics object
+
         """
         metrics = OperationMetrics(operation_name=operation_name, start_time=time.time())
 
@@ -200,6 +204,7 @@ class R2PerformanceMonitor:
 
         Returns:
             Finalized OperationMetrics
+
         """
         operation_metrics.end_time = time.time()
         operation_metrics.duration_ms = (operation_metrics.end_time - operation_metrics.start_time) * 1000
@@ -265,6 +270,7 @@ class R2PerformanceMonitor:
 
         Returns:
             Dictionary containing current metrics
+
         """
         with self.metrics_lock:
             if not self.current_session:
@@ -290,6 +296,7 @@ class R2PerformanceMonitor:
 
         Returns:
             Dictionary containing operation statistics
+
         """
         with self.metrics_lock:
             if not self.current_session or not self.current_session.operations:
@@ -324,6 +331,7 @@ class R2PerformanceMonitor:
 
         Returns:
             Dictionary containing full performance report
+
         """
         current = self.get_current_metrics()
         operations = self.get_operation_statistics()
@@ -408,6 +416,7 @@ class R2PerformanceMonitor:
 
         Args:
             metrics: Operation metrics to check
+
         """
         if metrics.duration_ms:
             if metrics.duration_ms > self.thresholds["operation_duration_critical_ms"]:
@@ -427,6 +436,7 @@ class R2PerformanceMonitor:
 
         Args:
             filepath: Path to export file
+
         """
         report = self.get_performance_report()
 
@@ -443,12 +453,13 @@ class R2PerformanceMonitor:
 
 
 def create_performance_monitor(enable_real_time: bool = True) -> R2PerformanceMonitor:
-    """Factory function to create performance monitor.
+    """Create performance monitor.
 
     Args:
         enable_real_time: Enable real-time monitoring
 
     Returns:
         New R2PerformanceMonitor instance
+
     """
     return R2PerformanceMonitor(enable_real_time=enable_real_time)

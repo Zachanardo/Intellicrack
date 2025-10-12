@@ -328,7 +328,8 @@ class AnalysisPage(QWizardPage):
 
 
 class ProgramSelectorDialog(QWizard):
-    """Program Selector Dialog with intelligent shortcut resolution
+    """Program Selector Dialog with intelligent shortcut resolution.
+
     and installation folder discovery.
     """
 

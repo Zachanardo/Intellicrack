@@ -1,3 +1,15 @@
+"""
+Integration tests for Intellicrack's network and license emulation capabilities.
+
+This module contains comprehensive integration tests for network and license emulation workflows in Intellicrack,
+including complete license server emulation workflows, license server-client integration,
+network capture to license analysis workflows, encrypted license communication,
+multi-protocol license server operations, license protocol switching, concurrent
+license emulation, network forensics integration, license server failover,
+and network performance monitoring. These tests ensure the network and license
+components work effectively together in real-world scenarios.
+"""
+
 import pytest
 import tempfile
 import os

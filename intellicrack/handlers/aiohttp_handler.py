@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""AIOHTTP handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -357,7 +359,7 @@ except ImportError as e:
             return decorator
 
         def route(self, method, path):
-            """Generic route decorator."""
+            """Decorate route."""
 
             def decorator(handler):
                 self.routes.append((method, path, handler))

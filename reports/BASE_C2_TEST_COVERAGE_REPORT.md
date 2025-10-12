@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Comprehensive test suite created for `C:\Intellicrack\intellicrack\core\c2\base_c2.py` following specification-driven, black-box testing methodology. Tests validate production-ready C2 infrastructure foundation capabilities that all C2 components depend on.
+Comprehensive test suite created for `D:\\Intellicrack\intellicrack\core\c2\base_c2.py` following specification-driven, black-box testing methodology. Tests validate production-ready C2 infrastructure foundation capabilities that all C2 components depend on.
 
 ## Test Suite Overview
 

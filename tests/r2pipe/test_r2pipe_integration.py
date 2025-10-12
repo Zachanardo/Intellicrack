@@ -11,7 +11,7 @@ import os
 def test_r2pipe_integration():
     """Test r2pipe functionality with real binary analysis."""
     test_binary = r"C:\Windows\System32\notepad.exe"
-    radare2_path = r"C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
+    radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
 
     if not os.path.exists(test_binary):
         print("ERROR: Test binary not found")

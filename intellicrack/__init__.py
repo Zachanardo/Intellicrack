@@ -62,7 +62,7 @@ def _initialize_gil_safety():
 
             initialize_gil_safety()
         except ImportError:
-            pass  # Environment variables already set above
+            logger.debug("torch_gil_safety module not available, using environment variables")
         _gil_safety_initialized = True
 
 

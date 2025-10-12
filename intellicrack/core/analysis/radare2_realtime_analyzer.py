@@ -1149,7 +1149,7 @@ class R2RealtimeAnalyzer:
             return str(time.time())  # Fallback to timestamp
 
     def _update_loop(self):
-        """Main update loop for interval-based updates."""
+        """Update at intervals in main loop."""
         while self.running:
             try:
                 # Schedule updates for all watched binaries

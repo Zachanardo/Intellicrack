@@ -292,7 +292,7 @@ class IntegrationManager:
         logger.info("Integration manager stopped")
 
     def _worker_loop(self):
-        """Main worker loop for processing tasks."""
+        """Process tasks in the main worker loop."""
         while self.running:
             try:
                 # Get task from queue (with timeout)

@@ -282,7 +282,7 @@ class DistributedAnalysisManager:
 
 
 def create_distributed_manager(binary_path: str | None = None) -> DistributedAnalysisManager:
-    """Factory function to create a DistributedAnalysisManager.
+    """Create a DistributedAnalysisManager.
 
     Args:
         binary_path: Path to binary for analysis

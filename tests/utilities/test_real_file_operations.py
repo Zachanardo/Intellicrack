@@ -1,3 +1,13 @@
+"""
+Tests for real file operations in Intellicrack.
+
+This module contains comprehensive tests for real file handling operations
+including binary file I/O, file resolution, path discovery, binary utilities,
+file monitoring, secure file operations, compression, and metadata handling.
+The tests validate that the file operations work correctly for security
+research and binary analysis tasks.
+"""
+
 import pytest
 import tempfile
 import os

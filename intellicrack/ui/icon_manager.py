@@ -24,7 +24,7 @@ class IconManager:
         "file_save": "💾",
         "file_save_as": "💾",
         "file_new": "📄",
-        "file_close": "❌",
+        "file_close": "ERROR",
         "file_export": "📤",
         "file_import": "📥",
         # Edit operations
@@ -48,7 +48,7 @@ class IconManager:
         "action_stop": "⏹️",
         "action_pause": "⏸️",
         "action_restart": "🔄",
-        "action_generate": "⚡",
+        "action_generate": "[FAST]",
         "action_analyze": "🔬",
         "action_debug": "🐛",
         "action_test": "🧪",
@@ -56,12 +56,12 @@ class IconManager:
         "action_deploy": "🚀",
         # Status
         "status_success": "✅",
-        "status_error": "❌",
-        "status_warning": "⚠️",
+        "status_error": "ERROR",
+        "status_warning": "WARNING️",
         "status_info": "ℹ️",
         "status_question": "❓",
         "status_loading": "⏳",
-        "status_ready": "✓",
+        "status_ready": "OK",
         "status_idle": "⏸️",
         # Tools
         "tool_settings": "⚙️",
@@ -77,12 +77,12 @@ class IconManager:
         "security_unlock": "🔓",
         "security_key": "🔑",
         "security_shield": "🛡️",
-        "security_warning": "⚠️",
+        "security_warning": "WARNING️",
         "security_scan": "🔍",
         # AI/ML
         "ai_brain": "🧠",
         "ai_robot": "🤖",
-        "ai_generate": "✨",
+        "ai_generate": "[NEW]",
         "ai_analyze": "📊",
         "ai_model": "🧮",
         # Binary Analysis
@@ -222,7 +222,7 @@ def get_icon_manager() -> IconManager:
 
 
 def get_icon(icon_name: str) -> QIcon:
-    """Convenience function to get an icon.
+    """Get an icon.
 
     Args:
         icon_name: Name of the icon
@@ -235,7 +235,7 @@ def get_icon(icon_name: str) -> QIcon:
 
 
 def get_icon_text(icon_name: str) -> str:
-    """Convenience function to get icon text/emoji.
+    """Get icon text/emoji.
 
     Args:
         icon_name: Name of the icon

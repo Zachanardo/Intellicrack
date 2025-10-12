@@ -1,6 +1,5 @@
 """Ghidra Output Parser - Production Implementation.
 
-
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,11 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import re
-import xml.etree.ElementTree as ET
+
+try:
+    import defusedxml.ElementTree as ET  # noqa: N817
+except ImportError:
+    import xml.etree.ElementTree as ET  # noqa: N817, S314
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -85,6 +88,7 @@ class GhidraOutputParser:
     """Parses Ghidra analysis output in various formats."""
 
     def __init__(self):
+        """Initialize the GhidraOutputParser with empty data structures."""
         self.functions: Dict[int, FunctionSignature] = {}
         self.structures: Dict[str, DataStructure] = {}
         self.xrefs: List[CrossReference] = []
@@ -97,7 +101,7 @@ class GhidraOutputParser:
     def parse_xml_output(self, xml_path: Path) -> Dict[str, Any]:
         """Parse Ghidra XML export format."""
         try:
-            tree = ET.parse(xml_path)
+            tree = ET.parse(xml_path)  # noqa: S314
             root = tree.getroot()
 
             # Parse program information

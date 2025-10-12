@@ -86,6 +86,7 @@ class R2BinaryDiff:
         Args:
             primary_path: Path to the primary (original) binary
             secondary_path: Path to the secondary (modified) binary
+
         """
         self.primary_path = primary_path
         self.secondary_path = secondary_path
@@ -126,6 +127,7 @@ class R2BinaryDiff:
 
         Args:
             secondary_path: Path to the secondary binary
+
         """
         self.secondary_path = secondary_path
 
@@ -149,6 +151,7 @@ class R2BinaryDiff:
 
         Returns:
             List of FunctionDiff objects describing differences
+
         """
         if not self.r2_primary or not self.r2_secondary:
             self.logger.error("Both binaries must be loaded for diff")
@@ -238,6 +241,7 @@ class R2BinaryDiff:
 
         Returns:
             List of BasicBlockDiff objects
+
         """
         if not self.r2_primary or not self.r2_secondary:
             self.logger.error("Both binaries must be loaded for diff")
@@ -311,6 +315,7 @@ class R2BinaryDiff:
 
         Returns:
             List of StringDiff objects
+
         """
         if not self.r2_primary or not self.r2_secondary:
             self.logger.error("Both binaries must be loaded for diff")
@@ -384,6 +389,7 @@ class R2BinaryDiff:
 
         Returns:
             List of import differences
+
         """
         if not self.r2_primary or not self.r2_secondary:
             return []
@@ -420,6 +426,7 @@ class R2BinaryDiff:
 
         Returns:
             Dictionary containing all diff results
+
         """
         return {
             "functions": self.get_function_diffs(),
@@ -445,6 +452,7 @@ class R2BinaryDiff:
 
         Returns:
             Similarity score between 0 and 1
+
         """
         try:
             # Get disassembly for both functions
@@ -643,7 +651,7 @@ class R2BinaryDiff:
 
 
 def compare_binaries(primary_path: str, secondary_path: str) -> dict:
-    """Utility function to compare two binaries.
+    """Compare two binaries.
 
     Args:
         primary_path: Path to the primary binary
@@ -651,6 +659,7 @@ def compare_binaries(primary_path: str, secondary_path: str) -> dict:
 
     Returns:
         Dict containing comparison results
+
     """
     diff_engine = R2BinaryDiff(primary_path, secondary_path)
     try:

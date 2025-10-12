@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Real Tool Communication System
+"""Real Tool Communication System.
 
 Production-ready implementation for cross-tool integration:
 - Shared memory IPC for tool communication
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class ToolType(Enum):
-    """Supported analysis tools"""
+    """Supported analysis tools."""
 
     GHIDRA = "ghidra"
     FRIDA = "frida"
@@ -46,7 +45,7 @@ class ToolType(Enum):
 
 
 class MessageType(Enum):
-    """IPC message types"""
+    """IPC message types."""
 
     REQUEST = "request"
     RESPONSE = "response"
@@ -59,7 +58,7 @@ class MessageType(Enum):
 
 
 class SerializationFormat(Enum):
-    """Serialization formats for data exchange"""
+    """Serialization formats for data exchange."""
 
     JSON = "json"
     MSGPACK = "msgpack"
@@ -69,7 +68,7 @@ class SerializationFormat(Enum):
 
 @dataclass
 class ToolMessage:
-    """Message structure for tool communication"""
+    """Message structure for tool communication."""
 
     source: ToolType
     destination: ToolType
@@ -82,7 +81,7 @@ class ToolMessage:
 
 @dataclass
 class ToolStatus:
-    """Tool status information"""
+    """Tool status information."""
 
     tool: ToolType
     pid: int
@@ -96,9 +95,16 @@ class ToolStatus:
 
 
 class SharedMemoryManager:
-    """Manages shared memory for inter-process communication"""
+    """Manages shared memory for inter-process communication."""
 
     def __init__(self, name: str, size: int = 1024 * 1024 * 10):  # 10MB default
+        """Initialize the SharedMemoryManager with name and size.
+
+        Args:
+            name: Name for the shared memory segment.
+            size: Size of the shared memory in bytes. Defaults to 10MB.
+
+        """
         self.name = name
         self.size = size
         self.memory: Optional[mmap.mmap] = None
@@ -106,7 +112,7 @@ class SharedMemoryManager:
         self._init_shared_memory()
 
     def _init_shared_memory(self):
-        """Initialize shared memory segment"""
+        """Initialize shared memory segment."""
         if sys.platform == "win32":
             # Windows shared memory
             try:
@@ -118,8 +124,10 @@ class SharedMemoryManager:
                 # Initialize with header
                 self._write_header()
         else:
-            # Unix shared memory
-            shm_path = f"/dev/shm/{self.name}"
+            # Unix shared memory - use secure temp directory instead of /dev/shm
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            shm_path = os.path.join(temp_dir, f"{self.name}")
             if not os.path.exists(shm_path):
                 # Create shared memory file
                 with open(shm_path, "wb") as f:
@@ -131,7 +139,7 @@ class SharedMemoryManager:
                     self._write_header()
 
     def _write_header(self):
-        """Write header to shared memory"""
+        """Write header to shared memory."""
         with self.lock:
             self.memory.seek(0)
             # Magic bytes
@@ -146,7 +154,7 @@ class SharedMemoryManager:
             self.memory.write(struct.pack("<I", 0))
 
     def write_message(self, message: bytes) -> bool:
-        """Write message to shared memory"""
+        """Write message to shared memory."""
         with self.lock:
             try:
                 # Get write pointer
@@ -186,7 +194,7 @@ class SharedMemoryManager:
                 return False
 
     def read_message(self) -> Optional[bytes]:
-        """Read message from shared memory"""
+        """Read message from shared memory."""
         with self.lock:
             try:
                 # Get read pointer
@@ -230,7 +238,7 @@ class SharedMemoryManager:
                 return None
 
     def _reset_pointers(self):
-        """Reset read/write pointers"""
+        """Reset read/write pointers."""
         with self.lock:
             self.memory.seek(8)
             self.memory.write(struct.pack("<I", 64))  # Write pointer
@@ -238,17 +246,17 @@ class SharedMemoryManager:
             self.memory.write(struct.pack("<I", 0))  # Message count
 
     def close(self):
-        """Close shared memory"""
+        """Close shared memory."""
         if self.memory:
             self.memory.close()
 
 
 class SerializationProtocol:
-    """Handles serialization/deserialization of tool messages"""
+    """Handles serialization/deserialization of tool messages."""
 
     @staticmethod
     def serialize(message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK) -> bytes:
-        """Serialize message to bytes"""
+        """Serialize message to bytes."""
         data = {
             "source": message.source.value,
             "destination": message.destination.value,
@@ -271,7 +279,7 @@ class SerializationProtocol:
 
     @staticmethod
     def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> Optional[ToolMessage]:
-        """Deserialize bytes to message"""
+        """Deserialize bytes to message."""
         try:
             if format == SerializationFormat.JSON:
                 msg_dict = json.loads(data.decode("utf-8"))
@@ -301,16 +309,17 @@ class SerializationProtocol:
 
 
 class ToolMonitor:
-    """Monitors tool status and health"""
+    """Monitors tool status and health."""
 
     def __init__(self):
+        """Initialize the ToolMonitor with empty tools dictionary and lock."""
         self.tools: Dict[ToolType, ToolStatus] = {}
         self.lock = threading.Lock()
         self.monitoring = False
         self.monitor_thread: Optional[threading.Thread] = None
 
     def register_tool(self, tool: ToolType, pid: int):
-        """Register a tool for monitoring"""
+        """Register a tool for monitoring."""
         with self.lock:
             self.tools[tool] = ToolStatus(
                 tool=tool,
@@ -325,7 +334,7 @@ class ToolMonitor:
             )
 
     def update_status(self, tool: ToolType, **kwargs):
-        """Update tool status"""
+        """Update tool status."""
         with self.lock:
             if tool in self.tools:
                 for key, value in kwargs.items():
@@ -333,14 +342,14 @@ class ToolMonitor:
                         setattr(self.tools[tool], key, value)
 
     def start_monitoring(self):
-        """Start monitoring tools"""
+        """Start monitoring tools."""
         self.monitoring = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop)
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
 
     def _monitor_loop(self):
-        """Main monitoring loop"""
+        """Run main monitoring loop."""
         while self.monitoring:
             with self.lock:
                 for tool, status in list(self.tools.items()):
@@ -368,36 +377,37 @@ class ToolMonitor:
             time.sleep(1)
 
     def stop_monitoring(self):
-        """Stop monitoring tools"""
+        """Stop monitoring tools."""
         self.monitoring = False
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
 
     def get_status(self, tool: ToolType) -> Optional[ToolStatus]:
-        """Get tool status"""
+        """Get tool status."""
         with self.lock:
             return self.tools.get(tool)
 
     def get_all_status(self) -> Dict[ToolType, ToolStatus]:
-        """Get all tool statuses"""
+        """Get all tool statuses."""
         with self.lock:
             return self.tools.copy()
 
 
 class FailureRecovery:
-    """Handles failure recovery for tool communication"""
+    """Handles failure recovery for tool communication."""
 
     def __init__(self):
+        """Initialize the FailureRecovery with retry configuration."""
         self.retry_config = {"max_retries": 3, "base_delay": 1.0, "max_delay": 30.0, "exponential_base": 2}
         self.failed_messages: Dict[str, List[ToolMessage]] = {}
         self.recovery_handlers: Dict[ToolType, Callable] = {}
 
     def add_recovery_handler(self, tool: ToolType, handler: Callable):
-        """Add recovery handler for a tool"""
+        """Add recovery handler for a tool."""
         self.recovery_handlers[tool] = handler
 
     def handle_failure(self, message: ToolMessage, error: Exception) -> bool:
-        """Handle message failure"""
+        """Handle message failure."""
         correlation_id = message.correlation_id
 
         # Track failed message
@@ -424,7 +434,7 @@ class FailureRecovery:
         return True
 
     def _retry_message(self, message: ToolMessage):
-        """Retry sending a message"""
+        """Retry sending a message."""
         if message.destination in self.recovery_handlers:
             try:
                 self.recovery_handlers[message.destination](message)
@@ -435,7 +445,7 @@ class FailureRecovery:
                 self.handle_failure(message, e)
 
     def _handle_permanent_failure(self, message: ToolMessage, error: Exception):
-        """Handle permanent failure"""
+        """Handle permanent failure."""
         logger.error(f"Permanent failure for message {message.correlation_id}: {error}")
 
         # Clean up
@@ -447,9 +457,10 @@ class FailureRecovery:
 
 
 class ConflictResolver:
-    """Resolves conflicts between tool results"""
+    """Resolves conflicts between tool results."""
 
     def __init__(self):
+        """Initialize the ConflictResolver with resolution strategies and tool weights."""
         self.resolution_strategies = {
             "majority_vote": self._majority_vote,
             "weighted_average": self._weighted_average,
@@ -460,7 +471,7 @@ class ConflictResolver:
         self.tool_weights = {ToolType.GHIDRA: 1.0, ToolType.IDA: 1.2, ToolType.RADARE2: 0.9, ToolType.FRIDA: 0.8}
 
     def resolve(self, conflicts: List[ToolMessage], strategy: str = "confidence_based") -> Optional[Any]:
-        """Resolve conflicts between tool results"""
+        """Resolve conflicts between tool results."""
         if strategy not in self.resolution_strategies:
             strategy = "confidence_based"
 
@@ -468,7 +479,7 @@ class ConflictResolver:
         return resolver(conflicts)
 
     def _majority_vote(self, messages: List[ToolMessage]) -> Optional[Any]:
-        """Resolve by majority vote"""
+        """Resolve by majority vote."""
         if not messages:
             return None
 
@@ -489,7 +500,7 @@ class ConflictResolver:
         return None
 
     def _weighted_average(self, messages: List[ToolMessage]) -> Optional[Any]:
-        """Resolve by weighted average"""
+        """Resolve by weighted average."""
         if not messages:
             return None
 
@@ -519,7 +530,7 @@ class ConflictResolver:
         return self._majority_vote(messages)
 
     def _confidence_based(self, messages: List[ToolMessage]) -> Optional[Any]:
-        """Resolve based on confidence scores"""
+        """Resolve based on confidence scores."""
         if not messages:
             return None
 
@@ -536,7 +547,7 @@ class ConflictResolver:
         return scored_messages[0][1].data if scored_messages else None
 
     def _timestamp_based(self, messages: List[ToolMessage]) -> Optional[Any]:
-        """Resolve based on most recent timestamp"""
+        """Resolve based on most recent timestamp."""
         if not messages:
             return None
 
@@ -547,7 +558,7 @@ class ConflictResolver:
         return messages[0].data
 
     def _authority_based(self, messages: List[ToolMessage]) -> Optional[Any]:
-        """Resolve based on tool authority"""
+        """Resolve based on tool authority."""
         if not messages:
             return None
 
@@ -559,16 +570,17 @@ class ConflictResolver:
 
 
 class LoadBalancer:
-    """Balances load across multiple tool instances"""
+    """Balances load across multiple tool instances."""
 
     def __init__(self):
+        """Initialize the LoadBalancer with empty tool instances and task queues."""
         self.tool_instances: Dict[ToolType, List[int]] = {}  # Tool -> PIDs
         self.task_queues: Dict[ToolType, queue.Queue] = {}
         self.load_metrics: Dict[int, Dict[str, float]] = {}  # PID -> metrics
         self.lock = threading.Lock()
 
     def register_instance(self, tool: ToolType, pid: int):
-        """Register a tool instance"""
+        """Register a tool instance."""
         with self.lock:
             if tool not in self.tool_instances:
                 self.tool_instances[tool] = []
@@ -578,7 +590,7 @@ class LoadBalancer:
             self.load_metrics[pid] = {"cpu": 0.0, "memory": 0.0, "queue_size": 0, "response_time": 0.0}
 
     def get_best_instance(self, tool: ToolType) -> Optional[int]:
-        """Get best instance for load balancing"""
+        """Get best instance for load balancing."""
         with self.lock:
             if tool not in self.tool_instances:
                 return None
@@ -613,13 +625,13 @@ class LoadBalancer:
             return scores[0][1]
 
     def update_metrics(self, pid: int, **metrics):
-        """Update instance metrics"""
+        """Update instance metrics."""
         with self.lock:
             if pid in self.load_metrics:
                 self.load_metrics[pid].update(metrics)
 
     def distribute_task(self, tool: ToolType, task: Any) -> bool:
-        """Distribute task to best instance"""
+        """Distribute task to best instance."""
         pid = self.get_best_instance(tool)
         if not pid:
             return False
@@ -634,9 +646,15 @@ class LoadBalancer:
 
 
 class RealToolCommunicator:
-    """Main communicator for real tool integration"""
+    """Main communicator for real tool integration."""
 
     def __init__(self, name: str = "intellicrack"):
+        """Initialize the RealToolCommunicator with all required components.
+
+        Args:
+            name: Name for the communicator instance. Defaults to "intellicrack".
+
+        """
         self.name = name
         self.shared_memory = SharedMemoryManager(f"{name}_shm")
         self.monitor = ToolMonitor()
@@ -648,7 +666,7 @@ class RealToolCommunicator:
         self.worker_thread: Optional[threading.Thread] = None
 
     def register_tool(self, tool: ToolType, pid: int, handler: Optional[Callable] = None):
-        """Register a tool with the communicator"""
+        """Register a tool with the communicator."""
         self.monitor.register_tool(tool, pid)
         self.balancer.register_instance(tool, pid)
 
@@ -659,7 +677,7 @@ class RealToolCommunicator:
         logger.info(f"Registered tool {tool.value} with PID {pid}")
 
     def start(self):
-        """Start the communicator"""
+        """Start the communicator."""
         self.running = True
         self.monitor.start_monitoring()
         self.worker_thread = threading.Thread(target=self._message_loop)
@@ -668,7 +686,7 @@ class RealToolCommunicator:
         logger.info("Tool communicator started")
 
     def _message_loop(self):
-        """Main message processing loop"""
+        """Run main message processing loop."""
         while self.running:
             try:
                 # Read message from shared memory
@@ -689,7 +707,7 @@ class RealToolCommunicator:
                 logger.error(f"Error in message loop: {e}")
 
     def _process_message(self, message: ToolMessage):
-        """Process incoming message"""
+        """Process incoming message."""
         # Update heartbeat
         if message.message_type == MessageType.HEARTBEAT:
             self.monitor.update_status(message.source, last_heartbeat=time.time())
@@ -714,7 +732,7 @@ class RealToolCommunicator:
                 self.recovery.handle_failure(message, e)
 
     def send_message(self, message: ToolMessage) -> bool:
-        """Send a message to a tool"""
+        """Send a message to a tool."""
         try:
             # Serialize message
             serialized = SerializationProtocol.serialize(message)
@@ -733,7 +751,7 @@ class RealToolCommunicator:
             return False
 
     def broadcast_message(self, source: ToolType, data: Any, message_type: MessageType = MessageType.DATA):
-        """Broadcast message to all tools"""
+        """Broadcast message to all tools."""
         for tool in ToolType:
             if tool != source:
                 message = ToolMessage(
@@ -748,19 +766,19 @@ class RealToolCommunicator:
                 self.send_message(message)
 
     def resolve_conflicts(self, messages: List[ToolMessage], strategy: str = "confidence_based") -> Optional[Any]:
-        """Resolve conflicts between tool results"""
+        """Resolve conflicts between tool results."""
         return self.resolver.resolve(messages, strategy)
 
     def get_tool_status(self, tool: ToolType) -> Optional[ToolStatus]:
-        """Get status of a specific tool"""
+        """Get status of a specific tool."""
         return self.monitor.get_status(tool)
 
     def get_all_status(self) -> Dict[ToolType, ToolStatus]:
-        """Get status of all tools"""
+        """Get status of all tools."""
         return self.monitor.get_all_status()
 
     def stop(self):
-        """Stop the communicator"""
+        """Stop the communicator."""
         self.running = False
         self.monitor.stop_monitoring()
 
@@ -772,7 +790,7 @@ class RealToolCommunicator:
 
 
 def main():
-    """Example usage of real tool communication"""
+    """Demonstrate example usage of real tool communication."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Real Tool Communication System")

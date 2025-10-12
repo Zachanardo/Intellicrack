@@ -116,7 +116,7 @@ class AIModelManager:
             logger.info(f"Set active model: {default_model}")
 
     def _setup_model(self, name: str, config: Dict[str, Any]):
-        """Setup individual model.
+        """Set up individual model.
 
         Args:
             name: Model name
@@ -143,7 +143,7 @@ class AIModelManager:
         }
 
     def _setup_openai_model(self, name: str, config: Dict[str, Any]):
-        """Setup OpenAI model."""
+        """Set up OpenAI model."""
         api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for OpenAI model {name}")
@@ -159,7 +159,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
 
     def _setup_anthropic_model(self, name: str, config: Dict[str, Any]):
-        """Setup Anthropic model."""
+        """Set up Anthropic model."""
         api_key = config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Anthropic model {name}")
@@ -175,7 +175,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
 
     def _setup_google_model(self, name: str, config: Dict[str, Any]):
-        """Setup Google model."""
+        """Set up Google model."""
         api_key = config.get("api_key") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Google model {name}")
@@ -191,7 +191,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)
 
     def _setup_local_model(self, name: str, config: Dict[str, Any]):
-        """Setup local model."""
+        """Set up local model."""
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
             logger.warning(f"Model path not found for {name}: {model_path}")

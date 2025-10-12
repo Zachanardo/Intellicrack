@@ -1,4 +1,5 @@
-"""Centralized Style Manager for Intellicrack UI
+"""Centralized Style Manager for Intellicrack UI.
+
 Manages style application without inline setStyleSheet calls.
 
 Copyright (C) 2025 Zachary Flint

@@ -58,6 +58,7 @@ class PatternMatcher:
     """Advanced pattern matching engine for modern license checks."""
 
     def __init__(self):
+        """Initialize the ModernLicenseCheckRemover with pattern databases."""
         self.patterns = self._initialize_patterns()
         self.obfuscation_patterns = self._initialize_obfuscation_patterns()
         self.vm_patterns = self._initialize_vm_patterns()
@@ -425,7 +426,7 @@ class LicenseCheckRemover:
                             target = int(ops.split("0x")[1].split()[0], 16)
                             cfg[block_start]["successors"].append(target)
                     except (ValueError, IndexError, KeyError):
-                        pass
+                        pass  # noqa: S110 - CFG parsing errors are expected with complex control flow
 
                 # Start new block
                 if i + 1 < len(instructions):
@@ -692,171 +693,193 @@ class LicenseCheckRemover:
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
 
         if check_type == CheckType.SERIAL_VALIDATION:
-            # Advanced patching for serial validation
-            if self.is_dotnet:
-                # .NET specific - patch IL bytecode pattern
-                # Replace comparison with true constant
-                return b"\x17\x2a" + b"\x00" * (size - 2)  # ldc.i4.1, ret
-            elif any("cmov" in insn[1] for insn in instructions):
-                # Modern conditional move - always select success path
-                if is_x64:
-                    return b"\x48\x89\xf0" + b"\x90" * (size - 3)  # mov rax, rsi (success value)
-                else:
-                    return b"\x89\xf0" + b"\x90" * (size - 2)  # mov eax, esi
-            elif any("jz" in insn[1] or "je" in insn[1] for insn in instructions):
-                # Smart jump patching - check context
-                # Use short jump if possible, long jump if needed
-                if size <= 127:
-                    return b"\xeb" + bytes([size - 2]) + b"\x90" * (size - 2)
-                else:
-                    return b"\xe9" + struct.pack("<I", size - 5) + b"\x90" * (size - 5)
-            elif any("jnz" in insn[1] or "jne" in insn[1] for insn in instructions):
-                # NOP the jump for fail path
-                return b"\x90" * size
-            else:
-                # Set success with stack preservation
-                if is_x64:
-                    # Preserve flags with LAHF/SAHF
-                    return b"\x9f\x48\xc7\xc0\x01\x00\x00\x00\x9e" + b"\x90" * (size - 9)
-                else:
-                    return b"\x9c\xb8\x01\x00\x00\x00\x9d" + b"\x90" * (size - 7)
-
+            return self._generate_serial_validation_patch(is_x64, instructions, size)
         elif check_type == CheckType.TRIAL_CHECK:
-            # Advanced trial bypass
-            if self.is_dotnet:
-                # .NET DateTime manipulation
-                return b"\x20\xff\xff\xff\x7f" + b"\x00" * (size - 5)  # ldc.i4 MaxValue
-            else:
-                # Set infinite days with proper register preservation
-                if is_x64:
-                    # Use LEA for efficiency
-                    return b"\x48\x8d\x05\xff\xff\xff\x7f" + b"\x90" * (size - 7)
-                else:
-                    return b"\xb8\xff\xff\xff\x7f" + b"\x90" * (size - 5)
-
+            return self._generate_trial_patch(is_x64, size)
         elif check_type == CheckType.REGISTRATION_CHECK:
-            # Modern registration bypass
-            if self.virtualization_detected:
-                # For virtualized code, inject real deobfuscation sequence
-                # This sequence bypasses VM detection and sets registration flag
-                if is_x64:
-                    # Advanced VM bypass sequence for x64
-                    # Clear VM detection flag, set registration status, restore context
-                    deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
-                    deobfuscation_code += b"\x48\x31\xdb"  # xor rbx, rbx (clear VM flag)
-                    deobfuscation_code += b"\x48\xc7\xc0\x01\x00\x00\x00"  # mov rax, 1
-                    deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
-                    if len(deobfuscation_code) <= size:
-                        return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
-                    else:
-                        return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
-                else:
-                    # Advanced VM bypass sequence for x86
-                    deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
-                    deobfuscation_code += b"\x31\xdb"  # xor ebx, ebx (clear VM flag)
-                    deobfuscation_code += b"\xb8\x01\x00\x00\x00"  # mov eax, 1
-                    deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
-                    if len(deobfuscation_code) <= size:
-                        return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
-                    else:
-                        return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
-            else:
-                # Standard registration bypass
-                if is_x64:
-                    return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)  # xor rax,rax; inc rax
-                else:
-                    return b"\x31\xc0\x40" + b"\x90" * (size - 3)  # xor eax,eax; inc eax
-
+            return self._generate_registration_patch(is_x64, size)
         elif check_type == CheckType.HARDWARE_CHECK:
-            # Sophisticated hardware check bypass
-            if self.has_antidebug:
-                # Anti-anti-debug pattern
-                # Return valid hardware ID pattern
-                if is_x64:
-                    # Return pointer to valid data
-                    return b"\x48\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 7)
-                else:
-                    return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
-            else:
-                # Simple hardware bypass
-                return b"\x90" * size
-
+            return self._generate_hardware_check_patch(is_x64, size)
         elif check_type == CheckType.ONLINE_VALIDATION:
-            # Modern cloud/online validation bypass
-            if any("async" in str(insn[2]).lower() for insn in instructions):
-                # Async pattern - inject successful network response handler
-                if is_x64:
-                    # Build real HTTP response status code and validation result
-                    # This sequence emulates successful license server response with proper status codes
-                    response_code = b"\x50\x51\x52"  # Save context
-                    response_code += b"\x48\xc7\xc0\xc8\x00\x00\x00"  # mov rax, 200 (HTTP OK status)
-                    response_code += b"\x48\xc7\xc1\x01\x00\x00\x00"  # mov rcx, 1 (License valid flag)
-                    response_code += b"\x48\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], rcx
-                    response_code += b"\x5a\x59\x58"  # Restore context
-                    if len(response_code) <= size:
-                        return response_code + b"\x90" * (size - len(response_code))
-                    else:
-                        # Compact version - set success status directly
-                        return b"\x48\xc7\xc0\xc8\x00\x00\x00" + b"\x90" * (size - 7)
-                else:
-                    # Build real HTTP response status code and validation result for x86
-                    response_code = b"\x50\x51\x52"  # Save context
-                    response_code += b"\xb8\xc8\x00\x00\x00"  # mov eax, 200 (HTTP OK status)
-                    response_code += b"\xb9\x01\x00\x00\x00"  # mov ecx, 1 (License valid flag)
-                    response_code += b"\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], ecx
-                    response_code += b"\x5a\x59\x58"  # Restore context
-                    if len(response_code) <= size:
-                        return response_code + b"\x90" * (size - len(response_code))
-                    else:
-                        # Compact version - set success status directly
-                        return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
-            else:
-                # Synchronous online check
-                if is_x64:
-                    return b"\x48\x31\xc0\x48\xff\xc0\xc3" + b"\x90" * (size - 6)
-                else:
-                    return b"\xb8\x01\x00\x00\x00\xc3" + b"\x90" * (size - 6)
-
+            return self._generate_online_validation_patch(is_x64, instructions, size)
         elif check_type == CheckType.SIGNATURE_CHECK:
-            # Modern cryptographic signature bypass
-            if any("ecdsa" in str(insn[2]).lower() for insn in instructions):
-                # ECDSA verification - return valid
-                if is_x64:
-                    # Set verify result and clear error
-                    return b"\x48\x31\xc0\x48\xff\xc0\x48\x31\xdb" + b"\x90" * (size - 8)
-                else:
-                    return b"\x31\xc0\x40\x31\xdb" + b"\x90" * (size - 5)
-            else:
-                # RSA or generic signature
-                if is_x64:
-                    return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
-                else:
-                    return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
-
+            return self._generate_signature_check_patch(is_x64, instructions, size)
         elif check_type == CheckType.INTEGRITY_CHECK:
-            # Anti-tamper bypass
-            if self.is_packed:
-                # For packed binaries, use stealth patching
-                # Minimal modification to avoid detection
-                if size >= 2:
-                    return b"\x74\x00" + b"\x90" * (size - 2)  # je +0 (always jump)
-                else:
-                    return b"\x90" * size
-            else:
-                # Standard integrity bypass
-                return b"\x90" * size
-
+            return self._generate_integrity_check_patch(is_x64, size)
         else:
-            # Advanced default patch based on context
-            if self.virtualization_detected:
-                # For VM protected code
-                if is_x64:
-                    return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
-                else:
-                    return b"\x31\xc0\x40" + b"\x90" * (size - 3)
+            return self._generate_default_patch(is_x64, size)
+
+    def _generate_serial_validation_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+        """Generate patch for serial validation checks."""
+        if self.is_dotnet:
+            # .NET specific - patch IL bytecode pattern
+            # Replace comparison with true constant
+            return b"\x17\x2a" + b"\x00" * (size - 2)  # ldc.i4.1, ret
+        elif any("cmov" in insn[1] for insn in instructions):
+            # Modern conditional move - always select success path
+            if is_x64:
+                return b"\x48\x89\xf0" + b"\x90" * (size - 3)  # mov rax, rsi (success value)
             else:
-                # Standard NOP slide
+                return b"\x89\xf0" + b"\x90" * (size - 2)  # mov eax, esi
+        elif any("jz" in insn[1] or "je" in insn[1] for insn in instructions):
+            # Smart jump patching - check context
+            # Use short jump if possible, long jump if needed
+            if size <= 127:
+                return b"\xeb" + bytes([size - 2]) + b"\x90" * (size - 2)
+            else:
+                return b"\xe9" + struct.pack("<I", size - 5) + b"\x90" * (size - 5)
+        elif any("jnz" in insn[1] or "jne" in insn[1] for insn in instructions):
+            # NOP the jump for fail path
+            return b"\x90" * size
+        else:
+            # Set success with stack preservation
+            if is_x64:
+                # Preserve flags with LAHF/SAHF
+                return b"\x9f\x48\xc7\xc0\x01\x00\x00\x00\x9e" + b"\x90" * (size - 9)
+            else:
+                return b"\x9c\xb8\x01\x00\x00\x00\x9d" + b"\x90" * (size - 7)
+
+    def _generate_trial_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for trial checks."""
+        if self.is_dotnet:
+            # .NET DateTime manipulation
+            return b"\x20\xff\xff\xff\x7f" + b"\x00" * (size - 5)  # ldc.i4 MaxValue
+        else:
+            # Set infinite days with proper register preservation
+            if is_x64:
+                # Use LEA for efficiency
+                return b"\x48\x8d\x05\xff\xff\xff\x7f" + b"\x90" * (size - 7)
+            else:
+                return b"\xb8\xff\xff\xff\x7f" + b"\x90" * (size - 5)
+
+    def _generate_registration_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for registration checks."""
+        if self.virtualization_detected:
+            return self._generate_virt_registration_patch(is_x64, size)
+        else:
+            # Standard registration bypass
+            if is_x64:
+                return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)  # xor rax,rax; inc rax
+            else:
+                return b"\x31\xc0\x40" + b"\x90" * (size - 3)  # xor eax,eax; inc eax
+
+    def _generate_virt_registration_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for virtualized registration checks."""
+        if is_x64:
+            # Advanced VM bypass sequence for x64
+            # Clear VM detection flag, set registration status, restore context
+            deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
+            deobfuscation_code += b"\x48\x31\xdb"  # xor rbx, rbx (clear VM flag)
+            deobfuscation_code += b"\x48\xc7\xc0\x01\x00\x00\x00"  # mov rax, 1
+            deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
+            if len(deobfuscation_code) <= size:
+                return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
+            else:
+                return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
+        else:
+            # Advanced VM bypass sequence for x86
+            deobfuscation_code = b"\x50\x53\x51\x52"  # Save registers
+            deobfuscation_code += b"\x31\xdb"  # xor ebx, ebx (clear VM flag)
+            deobfuscation_code += b"\xb8\x01\x00\x00\x00"  # mov eax, 1
+            deobfuscation_code += b"\x5a\x59\x5b\x58"  # Restore registers
+            if len(deobfuscation_code) <= size:
+                return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
+            else:
+                return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
+
+    def _generate_hardware_check_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for hardware checks."""
+        if self.has_antidebug:
+            # Anti-anti-debug pattern
+            # Return valid hardware ID pattern
+            if is_x64:
+                # Return pointer to valid data
+                return b"\x48\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 7)
+            else:
+                return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
+        else:
+            # Simple hardware bypass
+            return b"\x90" * size
+
+    def _generate_online_validation_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+        """Generate patch for online validation checks."""
+        if any("async" in str(insn[2]).lower() for insn in instructions):
+            return self._generate_async_online_patch(is_x64, size)
+        else:
+            # Synchronous online check
+            if is_x64:
+                return b"\x48\x31\xc0\x48\xff\xc0\xc3" + b"\x90" * (size - 6)
+            else:
+                return b"\xb8\x01\x00\x00\x00\xc3" + b"\x90" * (size - 6)
+
+    def _generate_async_online_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for async online validation."""
+        if is_x64:
+            # Build real HTTP response status code and validation result
+            # This sequence emulates successful license server response with proper status codes
+            response_code = b"\x50\x51\x52"  # Save context
+            response_code += b"\x48\xc7\xc0\xc8\x00\x00\x00"  # mov rax, 200 (HTTP OK status)
+            response_code += b"\x48\xc7\xc1\x01\x00\x00\x00"  # mov rcx, 1 (License valid flag)
+            response_code += b"\x48\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], rcx
+            response_code += b"\x5a\x59\x58"  # Restore context
+            if len(response_code) <= size:
+                return response_code + b"\x90" * (size - len(response_code))
+            else:
+                # Compact version - set success status directly
+                return b"\x48\xc7\xc0\xc8\x00\x00\x00" + b"\x90" * (size - 7)
+        else:
+            # Build real HTTP response status code and validation result for x86
+            response_code = b"\x50\x51\x52"  # Save context
+            response_code += b"\xb8\xc8\x00\x00\x00"  # mov eax, 200 (HTTP OK status)
+            response_code += b"\xb9\x01\x00\x00\x00"  # mov ecx, 1 (License valid flag)
+            response_code += b"\x89\x0d\x00\x00\x00\x00"  # mov [validation_result], ecx
+            response_code += b"\x5a\x59\x58"  # Restore context
+            if len(response_code) <= size:
+                return response_code + b"\x90" * (size - len(response_code))
+            else:
+                # Compact version - set success status directly
+                return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
+
+    def _generate_signature_check_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+        """Generate patch for signature checks."""
+        if any("ecdsa" in str(insn[2]).lower() for insn in instructions):
+            # ECDSA verification - return valid
+            if is_x64:
+                # Set verify result and clear error
+                return b"\x48\x31\xc0\x48\xff\xc0\x48\x31\xdb" + b"\x90" * (size - 8)
+            else:
+                return b"\x31\xc0\x40\x31\xdb" + b"\x90" * (size - 5)
+        else:
+            # RSA or generic signature
+            if is_x64:
+                return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
+            else:
+                return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
+
+    def _generate_integrity_check_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate patch for integrity checks."""
+        if self.is_packed:
+            # For packed binaries, use stealth patching
+            # Minimal modification to avoid detection
+            if size >= 2:
+                return b"\x74\x00" + b"\x90" * (size - 2)  # je +0 (always jump)
+            else:
                 return b"\x90" * size
+        else:
+            # Standard integrity bypass
+            return b"\x90" * size
+
+    def _generate_default_patch(self, is_x64: bool, size: int) -> bytes:
+        """Generate default patch based on context."""
+        if self.virtualization_detected:
+            # For VM protected code
+            if is_x64:
+                return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
+            else:
+                return b"\x31\xc0\x40" + b"\x90" * (size - 3)
+        else:
+            # Standard NOP slide
+            return b"\x90" * size
 
     def _get_patch_strategy(self, check_type: CheckType) -> str:
         """Get patching strategy for check type."""
@@ -1064,14 +1087,14 @@ def main():
     if args.patch and not args.analyze:
         print("\nApplying patches...")
         if remover.patch(checks):
-            print("✓ Patches applied successfully")
+            print("OK Patches applied successfully")
 
             if remover.verify_patches():
-                print("✓ Patches verified")
+                print("OK Patches verified")
             else:
-                print("✗ Patch verification failed")
+                print("FAIL Patch verification failed")
         else:
-            print("✗ Patching failed")
+            print("FAIL Patching failed")
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ def mitigate_future_vulnerability() -> None:
         original_import = builtins.__import__
 
         def secure_import(name, *args, **kwargs):
-            """Wrapper to prevent automatic import of test.py by future package."""
+            """Prevent automatic import of test.py by future package."""
             if name == "test" and len(args) > 0 and args[0] is not None:
                 args[2] if len(args) > 2 else kwargs.get("fromlist", ())
                 args[3] if len(args) > 3 else kwargs.get("level", 0)
@@ -68,6 +68,7 @@ def scan_for_malicious_test_files() -> list[Path]:
 
     Returns:
         List of suspicious test.py file paths found
+
     """
     suspicious_files = []
 
@@ -114,6 +115,7 @@ def remove_malicious_test_files(files: list[Path], force: bool = False) -> int:
 
     Returns:
         Number of files successfully removed
+
     """
     removed = 0
 
@@ -139,6 +141,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
 
     Returns:
         True if file appears to be malicious/unwanted
+
     """
     try:
         if not file_path.name == "test.py":
@@ -173,6 +176,7 @@ def apply_all_mitigations() -> dict[str, bool]:
 
     Returns:
         Dictionary mapping mitigation names to success status
+
     """
     results = {}
 

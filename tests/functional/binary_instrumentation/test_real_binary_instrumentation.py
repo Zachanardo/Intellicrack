@@ -1,3 +1,13 @@
+"""
+Functional tests for Intellicrack's binary instrumentation capabilities.
+
+This module contains comprehensive tests for binary instrumentation functionality in Intellicrack,
+including Frida-based process instrumentation, anti-debugging bypasses, API hooking,
+memory patching, function replacement, code tracing, heap manipulation, string decryption,
+Qiling emulation, and preset-based instrumentation. These tests use actual binary files
+with protection mechanisms to ensure instrumentation works effectively in real scenarios.
+"""
+
 import pytest
 import tempfile
 import os

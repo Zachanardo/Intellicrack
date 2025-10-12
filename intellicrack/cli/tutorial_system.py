@@ -888,7 +888,7 @@ class TutorialSystem:
             elif completed_steps < total_steps:
                 status = "[yellow]In Progress[/yellow]"
             else:
-                status = "[green]Completed ✓[/green]"
+                status = "[green]Completed OK[/green]"
 
             progress_table.add_row(tutorial.title, progress_bar, status)
 
@@ -905,7 +905,7 @@ class TutorialSystem:
 
             status = "Not Started"
             if completed_steps > 0:
-                status = "In Progress" if completed_steps < total_steps else "Completed ✓"
+                status = "In Progress" if completed_steps < total_steps else "Completed OK"
 
             print(f"\n{tutorial.title}")
             print(f"  Progress: {completed_steps}/{total_steps}")

@@ -577,7 +577,7 @@ class CertificateExtractor:
 
 
 def extract_pe_certificates(file_path: str) -> CodeSigningInfo:
-    """Convenience function to extract certificates from PE file."""
+    """Extract certificates from PE file."""
     extractor = CertificateExtractor()
     return extractor.extract_certificates(file_path)
 

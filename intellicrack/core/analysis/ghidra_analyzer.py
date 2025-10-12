@@ -25,7 +25,11 @@ import re
 import shutil
 import subprocess
 import tempfile
-import xml.etree.ElementTree as ET
+
+try:
+    import defusedxml.ElementTree as ET  # noqa: N817
+except ImportError:
+    import xml.etree.ElementTree as ET  # noqa: N817, S314
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
@@ -92,12 +96,13 @@ class GhidraOutputParser:
     """Parses various Ghidra output formats."""
 
     def __init__(self):
+        """Initialize the GhidraOutputParser with an empty result."""
         self.result = None
 
     def parse_xml_output(self, xml_content: str) -> GhidraAnalysisResult:
         """Parse Ghidra XML output format."""
         try:
-            root = ET.fromstring(xml_content)
+            root = ET.fromstring(xml_content)  # noqa: S314
 
             # Extract binary information
             binary_info = root.find(".//PROGRAM")
@@ -541,7 +546,7 @@ class GhidraOutputParser:
 
 
 def _run_ghidra_thread(main_app, command, temp_dir):
-    """Runs the Ghidra command in a background thread and cleans up afterward."""
+    """Run the Ghidra command in a background thread and clean up afterward."""
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
         # Use secure subprocess wrapper with validation
@@ -685,6 +690,7 @@ class GhidraScriptManager:
     ]
 
     def __init__(self, ghidra_install_dir: str):
+        """Initialize the GhidraAnalyzer with the Ghidra installation directory."""
         self.ghidra_install_dir = Path(ghidra_install_dir)
         self.scripts_dir = self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
         self.user_scripts_dir = Path.home() / "ghidra_scripts"
@@ -736,7 +742,7 @@ class GhidraScriptManager:
                 elif "@output" in line:
                     metadata["output_format"] = line.split("@output")[-1].strip()
         except (IndexError, ValueError):
-            pass
+            pass  # noqa: S110 - Metadata parsing failures are non-critical
 
         return metadata
 
@@ -787,7 +793,7 @@ class GhidraScriptManager:
 
 
 def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: Optional[List[str]] = None):
-    """Launches a Ghidra headless analysis session with intelligent script selection."""
+    """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
         return

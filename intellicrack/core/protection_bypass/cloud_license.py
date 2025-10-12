@@ -35,11 +35,14 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.x509.oid import NameOID
 
+from intellicrack.utils.logger import logger
+
 
 class CloudLicenseBypass:
     """Sophisticated cloud license verification bypass for modern software."""
 
     def __init__(self):
+        """Initialize the CloudLicenseBypass with cryptographic backend and bypass mechanisms."""
         self.backend = default_backend()
         self.proxy_server = None
         self.intercept_rules = {}
@@ -589,7 +592,7 @@ class CloudLicenseBypass:
         }
 
     def _bypass_oauth(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Generic OAuth bypass."""
+        """Bypass OAuth."""
         provider = config.get("provider", "generic")
 
         if provider == "azure":
@@ -922,5 +925,5 @@ class CloudLicenseBypass:
 
 
 def create_cloud_license_bypass():
-    """Factory function to create cloud license bypass instance."""
+    """Create cloud license bypass instance."""
     return CloudLicenseBypass()

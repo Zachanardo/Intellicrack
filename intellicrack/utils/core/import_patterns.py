@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Import patterns for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -87,13 +89,16 @@ except ImportError:
     logger.debug("zipfile not available")
 
 try:
-    import xml.etree.ElementTree as ET
-
+    import defusedxml.ElementTree as ET  # noqa: N817
     XML_AVAILABLE = True
 except ImportError:
-    ET = None
-    XML_AVAILABLE = False
-    logger.debug("xml.etree.ElementTree not available")
+    try:
+        import xml.etree.ElementTree as ET  # noqa: N817, S314
+        XML_AVAILABLE = True
+    except ImportError:
+        ET = None
+        XML_AVAILABLE = False
+        logger.debug("xml.etree.ElementTree not available")
 
 # System tools
 try:

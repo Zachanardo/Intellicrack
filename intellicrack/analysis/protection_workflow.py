@@ -342,7 +342,7 @@ class ProtectionAnalysisWorkflow:
 
         if analysis.has_anti_debug:
             recommendations.append(
-                "⚠️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
+                "WARNING️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
             )
 
         if analysis.has_licensing:
@@ -367,7 +367,7 @@ class ProtectionAnalysisWorkflow:
         # Difficulty assessment
         if len(analysis.protections) > 3:
             recommendations.append(
-                "⚡ Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
+                "[FAST] Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
             )
 
         # Supplemental analysis recommendations
@@ -445,7 +445,7 @@ class ProtectionAnalysisWorkflow:
 
             if security_findings > 0:
                 recommendations.append(
-                    f"⚠️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys.",
+                    f"WARNING️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys.",
                 )
 
             # Look for specific firmware findings

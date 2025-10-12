@@ -166,11 +166,11 @@ class ScriptInfoWidget(QWidget):
 
         # Validation status
         if script.is_valid:
-            self.validation_label.setText("✓ Valid script")
+            self.validation_label.setText("OK Valid script")
             self.validation_label.setStyleSheet("color: green;")
             self.validation_errors.hide()
         else:
-            self.validation_label.setText("✗ Invalid script")
+            self.validation_label.setText("FAIL Invalid script")
             self.validation_label.setStyleSheet("color: red;")
             self.validation_errors.setText("\n".join(script.validation_errors))
             self.validation_errors.show()
@@ -391,7 +391,7 @@ class GhidraScriptSelector(QDialog):
 
     def _create_script_item(self, script: GhidraScript):
         """Create a tree item for a script."""
-        status = "✓ Valid" if script.is_valid else "✗ Invalid"
+        status = "OK Valid" if script.is_valid else "FAIL Invalid"
         item = QTreeWidgetItem([script.name, script.type.upper(), status])
 
         # Store script path in item data

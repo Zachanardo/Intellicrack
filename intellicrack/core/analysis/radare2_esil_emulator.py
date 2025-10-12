@@ -54,6 +54,7 @@ class ESILRegister:
     constraints: List[str] = None
 
     def __post_init__(self):
+        """Initialize constraints list if not provided."""
         if self.constraints is None:
             self.constraints = []
 
@@ -127,7 +128,7 @@ class RadareESILEmulator:
             raise
 
     def _setup_esil_vm(self):
-        """Setup ESIL virtual machine with initial state."""
+        """Set up ESIL virtual machine with initial state."""
         # Initialize ESIL VM
         self.r2.cmd("aei")  # Initialize ESIL VM
         self.r2.cmd("aeim")  # Initialize ESIL VM memory
@@ -156,7 +157,7 @@ class RadareESILEmulator:
             self.registers[name] = ESILRegister(name=name, value=value, size=size)
 
     def _setup_memory_regions(self):
-        """Setup memory regions for emulation."""
+        """Set up memory regions for emulation."""
         # Map binary sections
         sections = json.loads(self.r2.cmd("iSj"))
         for section in sections:
@@ -342,7 +343,7 @@ class RadareESILEmulator:
                                 )
                             )
                     except (ValueError, TypeError, AttributeError):
-                        pass
+                        pass  # noqa: S110 - ESIL evaluation errors are expected with complex expressions
 
         if "=[" in esil:
             # Memory write operation
@@ -368,7 +369,7 @@ class RadareESILEmulator:
                                     )
                                 )
                         except (ValueError, TypeError, AttributeError):
-                            pass
+                            pass  # noqa: S110 - Memory access parsing errors are expected with malformed ESIL
 
         return accesses
 
@@ -386,7 +387,7 @@ class RadareESILEmulator:
         try:
             return int(expr)
         except (ValueError, TypeError, AttributeError):
-            pass
+            pass  # noqa: S110 - Non-integer expressions need further evaluation
 
         # Complex expression - use r2 to evaluate
         try:
@@ -407,99 +408,127 @@ class RadareESILEmulator:
             import ast
 
             node = ast.parse(condition, mode="eval")
-            for subnode in ast.walk(node):
-                if not isinstance(
-                    subnode,
-                    (
-                        ast.Expression,
-                        ast.Compare,
-                        ast.BinOp,
-                        ast.UnaryOp,
-                        ast.Name,
-                        ast.Constant,
-                        ast.Load,
-                        ast.Eq,
-                        ast.NotEq,
-                        ast.Lt,
-                        ast.LtE,
-                        ast.Gt,
-                        ast.GtE,
-                    ),
-                ):
-                    return False
+            if not self._validate_ast_node(node):
+                return False
 
-            # Evaluate the parsed AST manually instead of using eval
-            def eval_node(node):
-                if isinstance(node, ast.Expression):
-                    return eval_node(node.body)
-                elif isinstance(node, ast.Constant):
-                    return node.value
-                elif isinstance(node, ast.Num):  # For Python < 3.8 compatibility
-                    return node.n
-                elif isinstance(node, ast.Str):  # For Python < 3.8 compatibility
-                    return node.s
-                elif isinstance(node, ast.NameConstant):  # For Python < 3.8 compatibility
-                    return node.value
-                elif isinstance(node, ast.Name):
-                    # Handle variable names (should not occur if register replacement worked properly)
-                    raise ValueError(f"Unexpected variable name: {node.id}")
-                elif isinstance(node, ast.BinOp):
-                    left = eval_node(node.left)
-                    right = eval_node(node.right)
-                    if isinstance(node.op, ast.Add):
-                        return left + right
-                    elif isinstance(node.op, ast.Sub):
-                        return left - right
-                    elif isinstance(node.op, ast.Mult):
-                        return left * right
-                    elif isinstance(node.op, ast.Div):
-                        return left / right if right != 0 else 0  # Prevent division by zero
-                    elif isinstance(node.op, ast.Mod):
-                        return left % right
-                    elif isinstance(node.op, ast.Pow):
-                        return left**right
-                    elif isinstance(node.op, ast.BitAnd):
-                        return left & right
-                    elif isinstance(node.op, ast.BitOr):
-                        return left | right
-                    elif isinstance(node.op, ast.BitXor):
-                        return left ^ right
-                    elif isinstance(node.op, ast.LShift):
-                        return left << right
-                    elif isinstance(node.op, ast.RShift):
-                        return left >> right
-                elif isinstance(node, ast.UnaryOp):
-                    operand = eval_node(node.operand)
-                    if isinstance(node.op, ast.UAdd):
-                        return +operand
-                    elif isinstance(node.op, ast.USub):
-                        return -operand
-                    elif isinstance(node.op, ast.Invert):
-                        return ~operand
-                elif isinstance(node, ast.Compare):
-                    left = eval_node(node.left)
-                    result = True
-                    for op, comparator in zip(node.ops, node.comparators, strict=False):
-                        right = eval_node(comparator)
-                        if isinstance(op, ast.Eq):
-                            result = result and (left == right)
-                        elif isinstance(op, ast.NotEq):
-                            result = result and (left != right)
-                        elif isinstance(op, ast.Lt):
-                            result = result and (left < right)
-                        elif isinstance(op, ast.LtE):
-                            result = result and (left <= right)
-                        elif isinstance(op, ast.Gt):
-                            result = result and (left > right)
-                        elif isinstance(op, ast.GtE):
-                            result = result and (left >= right)
-                        left = right  # For chaining comparisons like a < b < c
-                    return result
-                raise ValueError(f"Unsupported AST node type: {type(node)}")
-
-            return eval_node(node.body)
+            return self._eval_node(node.body)
         except (SyntaxError, NameError, TypeError, ValueError):
             return False
+
+    def _validate_ast_node(self, node) -> bool:
+        """Validate that the AST node contains only safe operations."""
+        import ast
+
+        for subnode in ast.walk(node):
+            if not isinstance(
+                subnode,
+                (
+                    ast.Expression,
+                    ast.Compare,
+                    ast.BinOp,
+                    ast.UnaryOp,
+                    ast.Name,
+                    ast.Constant,
+                    ast.Load,
+                    ast.Eq,
+                    ast.NotEq,
+                    ast.Lt,
+                    ast.LtE,
+                    ast.Gt,
+                    ast.GtE,
+                ),
+            ):
+                return False
+        return True
+
+    def _eval_node(self, node):
+        """Evaluate the parsed AST manually instead of using eval."""
+        import ast
+
+        if isinstance(node, ast.Expression):
+            return self._eval_node(node.body)
+        elif isinstance(node, ast.Constant):
+            return node.value
+        elif isinstance(node, ast.Num):  # For Python < 3.8 compatibility
+            return node.n
+        elif isinstance(node, ast.Str):  # For Python < 3.8 compatibility
+            return node.s
+        elif isinstance(node, ast.NameConstant):  # For Python < 3.8 compatibility
+            return node.value
+        elif isinstance(node, ast.Name):
+            # Handle variable names (should not occur if register replacement worked properly)
+            raise ValueError(f"Unexpected variable name: {node.id}")
+        elif isinstance(node, ast.BinOp):
+            return self._eval_binop(node)
+        elif isinstance(node, ast.UnaryOp):
+            return self._eval_unaryop(node)
+        elif isinstance(node, ast.Compare):
+            return self._eval_compare(node)
+        raise ValueError(f"Unsupported AST node type: {type(node)}")
+
+    def _eval_binop(self, node):
+        """Evaluate binary operations."""
+        import ast
+
+        left = self._eval_node(node.left)
+        right = self._eval_node(node.right)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        elif isinstance(node.op, ast.Sub):
+            return left - right
+        elif isinstance(node.op, ast.Mult):
+            return left * right
+        elif isinstance(node.op, ast.Div):
+            return left / right if right != 0 else 0  # Prevent division by zero
+        elif isinstance(node.op, ast.Mod):
+            return left % right
+        elif isinstance(node.op, ast.Pow):
+            return left**right
+        elif isinstance(node.op, ast.BitAnd):
+            return left & right
+        elif isinstance(node.op, ast.BitOr):
+            return left | right
+        elif isinstance(node.op, ast.BitXor):
+            return left ^ right
+        elif isinstance(node.op, ast.LShift):
+            return left << right
+        elif isinstance(node.op, ast.RShift):
+            return left >> right
+
+    def _eval_unaryop(self, node):
+        """Evaluate unary operations."""
+        import ast
+
+        operand = self._eval_node(node.operand)
+        if isinstance(node.op, ast.UAdd):
+            return +operand
+        elif isinstance(node.op, ast.USub):
+            return -operand
+        elif isinstance(node.op, ast.Invert):
+            return ~operand
+
+    def _eval_compare(self, node):
+        """Evaluate comparison operations."""
+        import ast
+
+        left = self._eval_node(node.left)
+        result = True
+        for op, comparator in zip(node.ops, node.comparators, strict=False):
+            right = self._eval_node(comparator)
+            if isinstance(op, ast.Eq):
+                result = result and (left == right)
+            elif isinstance(op, ast.NotEq):
+                result = result and (left != right)
+            elif isinstance(op, ast.Lt):
+                result = result and (left < right)
+            elif isinstance(op, ast.LtE):
+                result = result and (left <= right)
+            elif isinstance(op, ast.Gt):
+                result = result and (left > right)
+            elif isinstance(op, ast.GtE):
+                result = result and (left >= right)
+            left = right  # For chaining comparisons like a < b < c
+        return result
 
     def run_until(self, target: Union[int, str], max_steps: int = 10000) -> List[Dict[str, Any]]:
         """Run emulation until target address or condition."""

@@ -1,5 +1,5 @@
-"""
-Advanced Integrity Check Defeat System for Intellicrack
+"""Advanced Integrity Check Defeat System for Intellicrack.
+
 Detects and bypasses various integrity checking mechanisms including
 CRC checks, hash validations, signature verifications, and anti-tampering.
 """
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class IntegrityCheckType(IntEnum):
-    """Types of integrity checks"""
+    """Types of integrity checks."""
 
     UNKNOWN = 0
     CRC32 = 1
@@ -38,7 +38,7 @@ class IntegrityCheckType(IntEnum):
 
 @dataclass
 class IntegrityCheck:
-    """Represents detected integrity check"""
+    """Represents detected integrity check."""
 
     check_type: IntegrityCheckType
     address: int
@@ -52,7 +52,7 @@ class IntegrityCheck:
 
 @dataclass
 class BypassStrategy:
-    """Strategy for bypassing integrity check"""
+    """Strategy for bypassing integrity check."""
 
     name: str
     check_types: List[IntegrityCheckType]
@@ -62,16 +62,17 @@ class BypassStrategy:
 
 
 class IntegrityCheckDetector:
-    """Detects integrity checking mechanisms in binaries"""
+    """Detects integrity checking mechanisms in binaries."""
 
     def __init__(self):
+        """Initialize the IntegrityCheckDetector with disassembler and pattern databases."""
         self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.md.detail = True
         self.check_patterns = self._load_check_patterns()
         self.api_signatures = self._load_api_signatures()
 
     def _load_check_patterns(self) -> Dict[str, Dict]:
-        """Load patterns for detecting integrity checks"""
+        """Load patterns for detecting integrity checks."""
         return {
             "crc32": {
                 "pattern": b"\xc1\xe8\x08\x33",  # SHR EAX, 8; XOR
@@ -101,7 +102,7 @@ class IntegrityCheckDetector:
         }
 
     def _load_api_signatures(self) -> Dict[str, IntegrityCheckType]:
-        """Load Windows API signatures for integrity checks"""
+        """Load Windows API signatures for integrity checks."""
         return {
             "GetFileSize": IntegrityCheckType.SIZE_CHECK,
             "GetFileTime": IntegrityCheckType.TIMESTAMP,
@@ -116,7 +117,7 @@ class IntegrityCheckDetector:
         }
 
     def detect_checks(self, binary_path: str) -> List[IntegrityCheck]:
-        """Detect integrity checks in binary"""
+        """Detect integrity checks in binary."""
         checks = []
 
         try:
@@ -142,7 +143,7 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_api_imports(self, pe: pefile.PE) -> List[IntegrityCheck]:
-        """Scan for integrity check API imports"""
+        """Scan for integrity check API imports."""
         checks = []
 
         if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -169,7 +170,7 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_inline_checks(self, pe: pefile.PE) -> List[IntegrityCheck]:
-        """Scan for inline integrity checks"""
+        """Scan for inline integrity checks."""
         checks = []
 
         # Scan code sections
@@ -202,7 +203,7 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_antitamper(self, pe: pefile.PE) -> List[IntegrityCheck]:
-        """Scan for anti-tamper mechanisms"""
+        """Scan for anti-tamper mechanisms."""
         checks = []
 
         # Check for packed sections
@@ -250,7 +251,7 @@ class IntegrityCheckDetector:
         return checks
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy"""
+        """Calculate Shannon entropy."""
         if not data:
             return 0
 
@@ -271,9 +272,10 @@ class IntegrityCheckDetector:
 
 
 class IntegrityBypassEngine:
-    """Bypasses detected integrity checks using Frida"""
+    """Bypasses detected integrity checks using Frida."""
 
     def __init__(self):
+        """Initialize the IntegrityBypassEngine with bypass strategies and Frida session."""
         self.bypass_strategies = self._load_bypass_strategies()
         self.session = None
         self.script = None
@@ -282,7 +284,7 @@ class IntegrityBypassEngine:
         self.original_bytes_cache = {}
 
     def _load_bypass_strategies(self) -> List[BypassStrategy]:
-        """Load bypass strategies for different check types"""
+        """Load bypass strategies for different check types."""
         strategies = []
 
         # CRC32 bypass
@@ -642,7 +644,7 @@ class IntegrityBypassEngine:
         return strategies
 
     def bypass_checks(self, process_name: str, checks: List[IntegrityCheck]) -> bool:
-        """Bypass detected integrity checks"""
+        """Bypass detected integrity checks."""
         try:
             # Attach to process
             self.session = frida.attach(process_name)
@@ -663,7 +665,7 @@ class IntegrityBypassEngine:
             return False
 
     def _build_bypass_script(self, checks: List[IntegrityCheck]) -> str:
-        """Build combined Frida script for all checks"""
+        """Build combined Frida script for all checks."""
         script_parts = []
 
         # Group checks by type
@@ -685,7 +687,7 @@ class IntegrityBypassEngine:
         return "\n".join(script_parts)
 
     def _get_best_strategy(self, check_type: IntegrityCheckType) -> Optional[BypassStrategy]:
-        """Get best bypass strategy for check type"""
+        """Get best bypass strategy for check type."""
         best_strategy = None
         best_priority = 999
 
@@ -698,7 +700,7 @@ class IntegrityBypassEngine:
         return best_strategy
 
     def _customize_script(self, script_template: str, checks: List[IntegrityCheck]) -> str:
-        """Customize script template with actual values"""
+        """Customize script template with actual values."""
         script = script_template
 
         # Substitute template variables with detected values
@@ -759,7 +761,7 @@ class IntegrityBypassEngine:
         return script
 
     def _generate_crc32_table(self) -> List[int]:
-        """Generate CRC32 lookup table"""
+        """Generate CRC32 lookup table."""
         crc_table = []
         for i in range(256):
             crc = i
@@ -772,14 +774,14 @@ class IntegrityBypassEngine:
         return crc_table
 
     def _calculate_crc32(self, data: bytes) -> int:
-        """Calculate CRC32 checksum"""
+        """Calculate CRC32 checksum."""
         crc = 0xFFFFFFFF
         for byte in data:
             crc = self.crc_table[(crc & 0xFF) ^ byte] ^ (crc >> 8)
         return crc ^ 0xFFFFFFFF
 
     def _calculate_pe_checksum(self, pe: pefile.PE) -> int:
-        """Calculate PE checksum"""
+        """Calculate PE checksum."""
         checksum = 0
         word_count = (len(pe.__data__) + 1) // 2
 
@@ -804,14 +806,14 @@ class IntegrityBypassEngine:
         return checksum & 0xFFFFFFFF
 
     def _on_message(self, message, data):
-        """Handle Frida script messages"""
+        """Handle Frida script messages."""
         if message["type"] == "send":
             logger.info(f"[Frida] {message['payload']}")
         elif message["type"] == "error":
             logger.error(f"[Frida Error] {message['stack']}")
 
     def cleanup(self):
-        """Clean up Frida session"""
+        """Clean up Frida session."""
         if self.script:
             self.script.unload()
         if self.session:
@@ -819,16 +821,17 @@ class IntegrityBypassEngine:
 
 
 class IntegrityCheckDefeatSystem:
-    """Main integrity check defeat system"""
+    """Main integrity check defeat system."""
 
     def __init__(self):
+        """Initialize the IntegrityCheckDefeatSystem with detector and bypasser components."""
         self.detector = IntegrityCheckDetector()
         self.bypasser = IntegrityBypassEngine()
         self.patch_history = []
         self.binary_backups = {}
 
     def defeat_integrity_checks(self, binary_path: str, process_name: str = None) -> Dict[str, Any]:
-        """Complete integrity check defeat workflow"""
+        """Complete integrity check defeat workflow."""
         result = {"success": False, "checks_detected": 0, "checks_bypassed": 0, "details": []}
 
         # Detect integrity checks
@@ -871,7 +874,7 @@ class IntegrityCheckDefeatSystem:
         return result
 
     def generate_bypass_script(self, binary_path: str) -> str:
-        """Generate Frida script for bypassing integrity checks"""
+        """Generate Frida script for bypassing integrity checks."""
         checks = self.detector.detect_checks(binary_path)
 
         if not checks:
@@ -884,7 +887,7 @@ class IntegrityCheckDefeatSystem:
         return self.bypasser._build_bypass_script(checks)
 
     def patch_binary_integrity(self, binary_path: str, output_path: str = None) -> bool:
-        """Patch binary to remove integrity checks"""
+        """Patch binary to remove integrity checks."""
         if output_path is None:
             output_path = binary_path + ".patched"
 
@@ -964,14 +967,14 @@ class IntegrityCheckDefeatSystem:
             return False
 
     def _rva_to_offset(self, pe: pefile.PE, rva: int) -> Optional[int]:
-        """Convert RVA to file offset"""
+        """Convert RVA to file offset."""
         for section in pe.sections:
             if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
                 return section.PointerToRawData + (rva - section.VirtualAddress)
         return None
 
     def restore_binary(self, binary_path: str) -> bool:
-        """Restore original binary from backup"""
+        """Restore original binary from backup."""
         if binary_path in self.binary_backups:
             try:
                 with open(binary_path, "wb") as f:
@@ -984,7 +987,7 @@ class IntegrityCheckDefeatSystem:
 
 
 def main():
-    """Testing entry point"""
+    """Test entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Integrity Check Defeat System")

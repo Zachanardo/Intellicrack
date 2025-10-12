@@ -1281,7 +1281,7 @@ class DistributedProcessingManager:
 def create_distributed_manager(
     config: dict[str, Any] | None = None,
 ) -> DistributedProcessingManager:
-    """Factory function to create a DistributedProcessingManager instance.
+    """Create a DistributedProcessingManager instance.
 
     Args:
         config: Configuration dictionary

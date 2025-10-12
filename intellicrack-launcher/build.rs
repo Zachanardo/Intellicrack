@@ -8,38 +8,65 @@ fn main() {
         println!("cargo:rerun-if-changed=intellicrack.rc");
         println!("cargo:rerun-if-changed=Intellicrack.exe.manifest");
 
-        std::env::set_var("RC_NOLOGO", "1");
-        std::env::set_var("VSLANG", "1033");
+        unsafe {
+            std::env::set_var("RC_NOLOGO", "1");
+            std::env::set_var("VSLANG", "1033");
+        }
 
         let output_dir = std::env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
-        std::env::set_var("TMP", &output_dir);
-        std::env::set_var("TEMP", &output_dir);
+        unsafe {
+            std::env::set_var("TMP", &output_dir);
+            std::env::set_var("TEMP", &output_dir);
+        }
 
-        // Try to compile resources using available tools
-        let rc_compiled = if Command::new("llvm-rc").arg("/?").output().is_ok() {
-            // Use llvm-rc directly to compile the resource file
-            let output_dir = std::env::var("OUT_DIR").unwrap();
-            let res_file = PathBuf::from(&output_dir).join("intellicrack.res");
+        // Detect target toolchain (MSVC vs GNU)
+        let target = std::env::var("TARGET").unwrap_or_else(|_| "unknown".to_string());
+        let is_gnu = target.contains("gnu");
 
-            let llvm_rc_result = Command::new("llvm-rc")
-                .args(["/FO", res_file.to_str().unwrap(), "intellicrack.rc"])
-                .output();
+        if is_gnu {
+            // Use windres for GNU toolchain
+            if Command::new("windres").arg("--version").output().is_ok() {
+                let output_dir = std::env::var("OUT_DIR").unwrap();
+                let o_file = PathBuf::from(&output_dir).join("intellicrack.o");
 
-            if llvm_rc_result.is_ok() {
-                // Link the compiled resource
-                println!("cargo:rustc-link-arg={}", res_file.to_str().unwrap());
-                true
+                let windres_result = Command::new("windres")
+                    .args(["intellicrack.rc", "-O", "coff", "-o", o_file.to_str().unwrap()])
+                    .output();
+
+                if windres_result.is_ok() {
+                    println!("cargo:rustc-link-arg={}", o_file.to_str().unwrap());
+                    println!("cargo:warning=Windows manifest embedded (windres)");
+                } else {
+                    println!("cargo:warning=windres failed, skipping resource compilation");
+                }
             } else {
-                false
+                println!("cargo:warning=windres not found, skipping resource compilation for GNU target");
             }
         } else {
-            false
-        };
+            // MSVC toolchain - use llvm-rc or embed-resource
+            let rc_compiled = if Command::new("llvm-rc").arg("/?").output().is_ok() {
+                let output_dir = std::env::var("OUT_DIR").unwrap();
+                let res_file = PathBuf::from(&output_dir).join("intellicrack.res");
 
-        if !rc_compiled {
-            // Fall back to embed-resource if llvm-rc failed
-            let empty_macros: &[&str] = &[];
-            embed_resource::compile("intellicrack.rc", empty_macros);
+                let llvm_rc_result = Command::new("llvm-rc")
+                    .args(["/FO", res_file.to_str().unwrap(), "intellicrack.rc"])
+                    .output();
+
+                if llvm_rc_result.is_ok() {
+                    println!("cargo:rustc-link-arg={}", res_file.to_str().unwrap());
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if !rc_compiled {
+                let empty_macros: &[&str] = &[];
+                embed_resource::compile("intellicrack.rc", empty_macros);
+            }
+            println!("cargo:warning=Windows manifest embedded");
         }
         println!("cargo:warning=Windows manifest embedded");
 
@@ -49,6 +76,9 @@ fn main() {
             println!("cargo:warning=Cleaned up NUL file created by rc.exe");
         }
     }
+
+    // Determine project root for all scenarios
+    let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
 
     // Detect CI environment or use PYO3_PYTHON if set
     let python_exe = if let Ok(pyo3_python) = env::var("PYO3_PYTHON") {
@@ -82,7 +112,7 @@ fn main() {
         }
     } else {
         // Local development with Pixi
-        let pixi_python = PathBuf::from(r"C:\Intellicrack\.pixi\envs\default\python.exe");
+        let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");
         if !pixi_python.exists() {
             panic!("Local development: Pixi Python not found at: {}. For CI, set PYO3_PYTHON.", pixi_python.display());
         }
@@ -105,11 +135,13 @@ fn main() {
     }
 
     // Only set environment variables if not already set (allows CI to override)
-    if env::var("PYO3_PYTHON").is_err() {
-        env::set_var("PYO3_PYTHON", python_exe.to_str().unwrap());
-    }
-    if env::var("PYTHON_SYS_EXECUTABLE").is_err() {
-        env::set_var("PYTHON_SYS_EXECUTABLE", python_exe.to_str().unwrap());
+    unsafe {
+        if env::var("PYO3_PYTHON").is_err() {
+            env::set_var("PYO3_PYTHON", python_exe.to_str().unwrap());
+        }
+        if env::var("PYTHON_SYS_EXECUTABLE").is_err() {
+            env::set_var("PYTHON_SYS_EXECUTABLE", python_exe.to_str().unwrap());
+        }
     }
 
     // Print diagnostics
@@ -123,9 +155,9 @@ fn main() {
     // Only add pixi-specific paths in local development
     if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
         // Local development paths
-        println!("cargo:rustc-link-search=native=C:/Intellicrack/.pixi/envs/default/libs");
-        println!("cargo:rustc-link-search=native=C:/Intellicrack/.pixi/envs/default/DLLs");
-        println!("cargo:rustc-link-search=native=C:/Intellicrack/.pixi/envs/default");
+        println!("cargo:rustc-link-search=native={}/.pixi/envs/default/libs", &project_root);
+        println!("cargo:rustc-link-search=native={}/.pixi/envs/default/DLLs", &project_root);
+        println!("cargo:rustc-link-search=native={}/.pixi/envs/default", &project_root);
     }
 
     // Link against Python 3.12 DLL
@@ -141,96 +173,112 @@ fn main() {
     if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
         let target_dir = env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
         let target_dir = PathBuf::from(target_dir).parent().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
+        let project_root_path = PathBuf::from(&project_root);
 
         // Copy critical Python and runtime DLLs to target directory
         let dlls_to_copy = [
             // Core Python DLLs
-            ("python312.dll", r"C:\Intellicrack\.pixi\envs\default\python312.dll"),
-            ("python3.dll", r"C:\Intellicrack\.pixi\envs\default\python3.dll"),
+            ("python312.dll", project_root_path.join(".pixi/envs/default/python312.dll")),
+            ("python3.dll", project_root_path.join(".pixi/envs/default/python3.dll")),
 
             // Runtime DLLs
-            ("vcruntime140.dll", r"C:\Intellicrack\.pixi\envs\default\vcruntime140.dll"),
-            ("vcruntime140_1.dll", r"C:\Intellicrack\.pixi\envs\default\vcruntime140_1.dll"),
-            ("msvcp140.dll", r"C:\Intellicrack\.pixi\envs\default\msvcp140.dll"),
-            ("ucrtbase.dll", r"C:\Intellicrack\.pixi\envs\default\ucrtbase.dll"),
-            ("zlib.dll", r"C:\Intellicrack\.pixi\envs\default\zlib.dll"),
+            ("vcruntime140.dll", project_root_path.join(".pixi/envs/default/vcruntime140.dll")),
+            ("vcruntime140_1.dll", project_root_path.join(".pixi/envs/default/vcruntime140_1.dll")),
+            ("msvcp140.dll", project_root_path.join(".pixi/envs/default/msvcp140.dll")),
+            ("ucrtbase.dll", project_root_path.join(".pixi/envs/default/ucrtbase.dll")),
+            ("zlib.dll", project_root_path.join(".pixi/envs/default/zlib.dll")),
 
             // Critical supporting libraries
-            ("sqlite3.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\sqlite3.dll"),
-            ("libssl-3-x64.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libssl-3-x64.dll"),
-            ("libcrypto-3-x64.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libcrypto-3-x64.dll"),
-            ("libbz2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libbz2.dll"),
-            ("ffi-8.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\ffi-8.dll"),
-            ("tcl86t.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tcl86t.dll"),
-            ("tk86t.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tk86t.dll"),
+            ("sqlite3.dll", project_root_path.join(".pixi/envs/default/Library/bin/sqlite3.dll")),
+            ("libssl-3-x64.dll", project_root_path.join(".pixi/envs/default/Library/bin/libssl-3-x64.dll")),
+            ("libcrypto-3-x64.dll", project_root_path.join(".pixi/envs/default/Library/bin/libcrypto-3-x64.dll")),
+            ("libbz2.dll", project_root_path.join(".pixi/envs/default/Library/bin/libbz2.dll")),
+            ("ffi-8.dll", project_root_path.join(".pixi/envs/default/Library/bin/ffi-8.dll")),
+            ("tcl86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tcl86t.dll")),
+            ("tk86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tk86t.dll")),
 
             // XML parsing libraries (critical for pyexpat functionality)
-            ("libexpat.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libexpat.dll"),
+            ("libexpat.dll", project_root_path.join(".pixi/envs/default/Library/bin/libexpat.dll")),
 
             // Font and graphics libraries for matplotlib
-            ("freetype.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\freetype.dll"),
-            ("fontconfig-1.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\fontconfig-1.dll"),
-            ("libpng16.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libpng16.dll"),
+            ("freetype.dll", project_root_path.join(".pixi/envs/default/Library/bin/freetype.dll")),
+            ("fontconfig-1.dll", project_root_path.join(".pixi/envs/default/Library/bin/fontconfig-1.dll")),
+            ("libpng16.dll", project_root_path.join(".pixi/envs/default/Library/bin/libpng16.dll")),
 
             // Math libraries for scipy and numpy
-            ("libblas.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libblas.dll"),
-            ("libcblas.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libcblas.dll"),
-            ("liblapack.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\liblapack.dll"),
-            ("liblapacke.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\liblapacke.dll"),
+            ("libblas.dll", project_root_path.join(".pixi/envs/default/Library/bin/libblas.dll")),
+            ("libcblas.dll", project_root_path.join(".pixi/envs/default/Library/bin/libcblas.dll")),
+            ("liblapack.dll", project_root_path.join(".pixi/envs/default/Library/bin/liblapack.dll")),
+            ("liblapacke.dll", project_root_path.join(".pixi/envs/default/Library/bin/liblapacke.dll")),
 
             // Intel MKL libraries for high-performance math
-            ("mkl_core.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_core.2.dll"),
-            ("mkl_rt.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_rt.2.dll"),
-            ("mkl_avx2.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_avx2.2.dll"),
-            ("mkl_avx512.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_avx512.2.dll"),
-            ("mkl_sequential.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_sequential.2.dll"),
-            ("mkl_intel_thread.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_intel_thread.2.dll"),
-            ("mkl_tbb_thread.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_tbb_thread.2.dll"),
-            ("mkl_def.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_def.2.dll"),
-            ("mkl_vml_avx2.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_vml_avx2.2.dll"),
-            ("mkl_vml_avx512.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_vml_avx512.2.dll"),
-            ("mkl_vml_def.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_vml_def.2.dll"),
-            ("mkl_vml_cmpt.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_vml_cmpt.2.dll"),
-            ("mkl_mc3.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_mc3.2.dll"),
-            ("mkl_vml_mc3.2.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\mkl_vml_mc3.2.dll"),
+            ("mkl_core.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_core.2.dll")),
+            ("mkl_rt.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_rt.2.dll")),
+            ("mkl_avx2.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_avx2.2.dll")),
+            ("mkl_avx512.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_avx512.2.dll")),
+            ("mkl_sequential.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sequential.2.dll")),
+            ("mkl_intel_thread.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_intel_thread.2.dll")),
+            ("mkl_tbb_thread.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_tbb_thread.2.dll")),
+            ("mkl_def.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_def.2.dll")),
+            ("mkl_vml_avx2.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_avx2.2.dll")),
+            ("mkl_vml_avx512.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_avx512.2.dll")),
+            ("mkl_vml_def.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_def.2.dll")),
+            ("mkl_vml_cmpt.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_cmpt.2.dll")),
+            ("mkl_mc3.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_mc3.2.dll")),
+            ("mkl_vml_mc3.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_mc3.2.dll")),
+
+            // Intel MKL SYCL libraries for OneAPI support
+            ("mkl_sycl_blas.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_blas.5.dll")),
+            ("mkl_sycl_lapack.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_lapack.5.dll")),
+            ("mkl_sycl_dft.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_dft.5.dll")),
+            ("mkl_sycl_sparse.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_sparse.5.dll")),
+            ("mkl_sycl_rng.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_rng.5.dll")),
+            ("mkl_sycl_vm.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_vm.5.dll")),
+            ("mkl_sycl_stats.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_stats.5.dll")),
+            ("mkl_sycl_data_fitting.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_data_fitting.5.dll")),
+
+            // Intel MKL BLACS and ScaLAPACK libraries
+            ("mkl_blacs_lp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_blacs_lp64.2.dll")),
+            ("mkl_blacs_ilp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_blacs_ilp64.2.dll")),
+            ("mkl_scalapack_lp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_scalapack_lp64.2.dll")),
+            ("mkl_scalapack_ilp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_scalapack_ilp64.2.dll")),
+            ("mkl_cdft_core.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_cdft_core.2.dll")),
 
             // Intel threading libraries
-            ("libiomp5md.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\libiomp5md.dll"),
-            ("tbb12.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tbb12.dll"),
-            ("tbbmalloc.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tbbmalloc.dll"),
-            ("tbbmalloc_proxy.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tbbmalloc_proxy.dll"),
+            ("libiomp5md.dll", project_root_path.join(".pixi/envs/default/Library/bin/libiomp5md.dll")),
+            ("tbb12.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbb12.dll")),
+            ("tbbmalloc.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbbmalloc.dll")),
+            ("tbbmalloc_proxy.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbbmalloc_proxy.dll")),
 
             // Tcl/Tk DLLs for _tkinter module
-            ("tcl86t.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tcl86t.dll"),
-            ("tk86t.dll", r"C:\Intellicrack\.pixi\envs\default\Library\bin\tk86t.dll"),
+            ("tcl86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tcl86t.dll")),
+            ("tk86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tk86t.dll")),
         ];
 
         // Copy Python extension modules (.pyd files)
         let pyds_to_copy = [
-            ("_ctypes.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_ctypes.pyd"),
-            ("_sqlite3.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_sqlite3.pyd"),
-            ("_bz2.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_bz2.pyd"),
-            ("_ssl.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_ssl.pyd"),
-            ("_tkinter.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_tkinter.pyd"),
-            ("_hashlib.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_hashlib.pyd"),
-            ("select.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\select.pyd"),
-            ("_socket.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_socket.pyd"),
-            ("unicodedata.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\unicodedata.pyd"),
-            ("_lzma.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_lzma.pyd"),
+            ("_ctypes.pyd", project_root_path.join(".pixi/envs/default/DLLs/_ctypes.pyd")),
+            ("_sqlite3.pyd", project_root_path.join(".pixi/envs/default/DLLs/_sqlite3.pyd")),
+            ("_bz2.pyd", project_root_path.join(".pixi/envs/default/DLLs/_bz2.pyd")),
+            ("_ssl.pyd", project_root_path.join(".pixi/envs/default/DLLs/_ssl.pyd")),
+            ("_tkinter.pyd", project_root_path.join(".pixi/envs/default/DLLs/_tkinter.pyd")),
+            ("_hashlib.pyd", project_root_path.join(".pixi/envs/default/DLLs/_hashlib.pyd")),
+            ("select.pyd", project_root_path.join(".pixi/envs/default/DLLs/select.pyd")),
+            ("_socket.pyd", project_root_path.join(".pixi/envs/default/DLLs/_socket.pyd")),
+            ("unicodedata.pyd", project_root_path.join(".pixi/envs/default/DLLs/unicodedata.pyd")),
+            ("_lzma.pyd", project_root_path.join(".pixi/envs/default/DLLs/_lzma.pyd")),
 
-            // Critical XML parsing modules
-            ("pyexpat.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\pyexpat.pyd"),
-            ("_elementtree.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_elementtree.pyd"),
+            ("pyexpat.pyd", project_root_path.join(".pixi/envs/default/DLLs/pyexpat.pyd")),
+            ("_elementtree.pyd", project_root_path.join(".pixi/envs/default/DLLs/_elementtree.pyd")),
 
-            // Additional critical modules for full functionality
-            ("_asyncio.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_asyncio.pyd"),
-            ("_decimal.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_decimal.pyd"),
-            ("_multiprocessing.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_multiprocessing.pyd"),
-            ("_overlapped.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_overlapped.pyd"),
-            ("_queue.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_queue.pyd"),
-            ("_uuid.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_uuid.pyd"),
-            ("_zoneinfo.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\_zoneinfo.pyd"),
-            ("winsound.pyd", r"C:\Intellicrack\.pixi\envs\default\DLLs\winsound.pyd"),
+            ("_asyncio.pyd", project_root_path.join(".pixi/envs/default/DLLs/_asyncio.pyd")),
+            ("_decimal.pyd", project_root_path.join(".pixi/envs/default/DLLs/_decimal.pyd")),
+            ("_multiprocessing.pyd", project_root_path.join(".pixi/envs/default/DLLs/_multiprocessing.pyd")),
+            ("_overlapped.pyd", project_root_path.join(".pixi/envs/default/DLLs/_overlapped.pyd")),
+            ("_queue.pyd", project_root_path.join(".pixi/envs/default/DLLs/_queue.pyd")),
+            ("_uuid.pyd", project_root_path.join(".pixi/envs/default/DLLs/_uuid.pyd")),
+            ("_zoneinfo.pyd", project_root_path.join(".pixi/envs/default/DLLs/_zoneinfo.pyd")),
+            ("winsound.pyd", project_root_path.join(".pixi/envs/default/DLLs/winsound.pyd")),
         ];
 
         // Copy DLL files
@@ -251,40 +299,39 @@ fn main() {
 
         // Copy Python extension modules (.pyd files)
         for (pyd_name, src_path) in &pyds_to_copy {
-            let src = PathBuf::from(src_path);
             let dst = target_dir.join(pyd_name);
 
-            if src.exists() {
-                if let Err(e) = std::fs::copy(&src, &dst) {
+            if src_path.exists() {
+                if let Err(e) = std::fs::copy(&src_path, &dst) {
                     println!("cargo:warning=Failed to copy {}: {}", pyd_name, e);
                 } else {
                     println!("cargo:warning=Copied {} to target directory", pyd_name);
                 }
             } else {
-                println!("cargo:warning={} not found at {}", pyd_name, src.display());
+                println!("cargo:warning={} not found at {}", pyd_name, src_path.display());
             }
         }
 
         // Copy Tcl/Tk library directories for _tkinter functionality
         let tcl_tk_dirs = [
-            ("tcl8.6", r"C:\Intellicrack\.pixi\envs\default\Library\lib\tcl8.6"),
-            ("tk8.6", r"C:\Intellicrack\.pixi\envs\default\Library\lib\tk8.6"),
+            ("tcl8.6", project_root_path.join(".pixi/envs/default/Library/lib/tcl8.6")),
+            ("tk8.6", project_root_path.join(".pixi/envs/default/Library/lib/tk8.6")),
         ];
 
         for (dir_name, src_path) in &tcl_tk_dirs {
-            let src = PathBuf::from(src_path);
             let dst = target_dir.join(dir_name);
 
-            if src.exists() && src.is_dir() {
-                if let Err(e) = copy_dir_all(&src, &dst) {
+            if src_path.exists() && src_path.is_dir() {
+                if let Err(e) = copy_dir_all(&src_path, &dst) {
                     println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
                 } else {
                     println!("cargo:warning=Copied {} directory to target", dir_name);
                 }
             } else {
-                println!("cargo:warning=Directory {} not found at {}", dir_name, src.display());
+                println!("cargo:warning=Directory {} not found at {}", dir_name, src_path.display());
             }
         }
+
     }
 }
 
