@@ -484,7 +484,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_object(self) -> bool:
-        """Hook NtQueryObject to prevent debug object detection."""
+        """Install hook for NtQueryObject to prevent debug object detection."""
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryObject")
 
@@ -524,7 +524,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_system_information(self) -> bool:
-        """Hook NtQuerySystemInformation to hide debugger processes."""
+        """Install hook for NtQuerySystemInformation to hide debugger processes."""
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQuerySystemInformation")
 
@@ -564,7 +564,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_find_window(self) -> bool:
-        """Hook FindWindow to hide debugger windows."""
+        """Install hook for FindWindow to hide debugger windows."""
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"FindWindowA")
 
@@ -604,7 +604,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_enum_windows(self) -> bool:
-        """Hook EnumWindows to skip debugger windows."""
+        """Install hook for EnumWindows to skip debugger windows."""
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"EnumWindows")
 
@@ -644,7 +644,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_get_foreground_window(self) -> bool:
-        """Hook GetForegroundWindow to hide debugger focus."""
+        """Install hook for GetForegroundWindow to hide debugger focus."""
         try:
             func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"GetForegroundWindow")
 
@@ -685,7 +685,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_yield_execution(self) -> bool:
-        """Hook NtYieldExecution to prevent thread timing detection."""
+        """Install hook for NtYieldExecution to prevent thread timing detection."""
         try:
             func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtYieldExecution")
 
@@ -725,7 +725,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_switch_to_thread(self) -> bool:
-        """Hook SwitchToThread to prevent thread timing detection."""
+        """Install hook for SwitchToThread to prevent thread timing detection."""
         try:
             func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SwitchToThread")
 
@@ -1042,7 +1042,7 @@ class ThreadContextHooker:
     """Hooks GetThreadContext to prevent detection of hardware breakpoints."""
 
     def hook_get_thread_context(self) -> bool:
-        """Hook GetThreadContext to hide hardware breakpoints."""
+        """Install hook for GetThreadContext to hide hardware breakpoints."""
         try:
             kernel32 = ctypes.windll.kernel32
             func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
@@ -1099,7 +1099,7 @@ class ThreadContextHooker:
             return False
 
     def hook_set_thread_context(self) -> bool:
-        """Hook SetThreadContext to prevent hardware breakpoint setting."""
+        """Install hook for SetThreadContext to prevent hardware breakpoint setting."""
         try:
             kernel32 = ctypes.windll.kernel32
             func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
@@ -1692,7 +1692,7 @@ class ExceptionHandler:
         self.exception_count = 0
 
     def custom_exception_handler(self, exception_info):
-        """Custom exception handler to mask debugging based on exception info."""
+        """Handle custom exceptions to mask debugging based on exception info."""
         self.exception_count += 1
 
         try:
@@ -2465,7 +2465,7 @@ class AntiAntiDebugSuite:
 
 
 def main():
-    """Example usage and CLI interface."""
+    """Provide example usage and CLI interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Anti-Anti-Debug Suite")

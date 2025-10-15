@@ -85,6 +85,36 @@ except ImportError as e:
     create_gguf_config = create_ollama_config = None
 
 try:
+    from .api_provider_clients import (
+        AnthropicProviderClient,
+        BaseProviderClient,
+        LMStudioProviderClient,
+        LocalProviderClient,
+        ModelInfo,
+        OllamaProviderClient,
+        OpenAIProviderClient,
+        ProviderManager,
+        get_provider_manager,
+    )
+except ImportError as e:
+    logger.warning("Failed to import api_provider_clients: %s", e)
+    BaseProviderClient = OpenAIProviderClient = AnthropicProviderClient = None
+    OllamaProviderClient = LMStudioProviderClient = LocalProviderClient = None
+    ModelInfo = ProviderManager = get_provider_manager = None
+
+try:
+    from .model_discovery_service import ModelDiscoveryService, get_model_discovery_service
+except ImportError as e:
+    logger.warning("Failed to import model_discovery_service: %s", e)
+    ModelDiscoveryService = get_model_discovery_service = None
+
+try:
+    from .llm_config_manager import LLMConfigManager, get_llm_config_manager
+except ImportError as e:
+    logger.warning("Failed to import llm_config_manager: %s", e)
+    LLMConfigManager = get_llm_config_manager = None
+
+try:
     from .orchestrator import (
         AIEventBus,
         AIOrchestrator,
@@ -185,26 +215,6 @@ except ImportError as e:
     SemanticCodeAnalyzer = SemanticIntent = BusinessLogicPattern = None
     SemanticNode = SemanticRelationship = None
 
-try:
-    from .exploit_chain_builder import (
-        AutomatedExploitChainBuilder,
-        ChainComplexity,
-        ExploitChain,
-        ExploitChainFramework,
-        ExploitPrimitive,
-        ExploitPrimitiveLibrary,
-        ExploitStep,
-        ExploitType,
-        SafetyVerificationSystem,
-        Vulnerability,
-        exploit_chain_builder,
-    )
-except ImportError as e:
-    logger.warning("Failed to import exploit_chain_builder: %s", e)
-    AutomatedExploitChainBuilder = ExploitChainFramework = None
-    ExploitPrimitiveLibrary = SafetyVerificationSystem = None
-    Vulnerability = ExploitType = ExploitPrimitive = None
-    ExploitStep = ExploitChain = ChainComplexity = exploit_chain_builder = None
 
 try:
     from .performance_optimization_layer import (
@@ -408,17 +418,6 @@ __all__ = [
     "BusinessLogicPattern",
     "SemanticNode",
     "SemanticRelationship",
-    "AutomatedExploitChainBuilder",
-    "ExploitChainFramework",
-    "ExploitPrimitiveLibrary",
-    "SafetyVerificationSystem",
-    "Vulnerability",
-    "ExploitType",
-    "ExploitPrimitive",
-    "ExploitStep",
-    "ExploitChain",
-    "ChainComplexity",
-    "exploit_chain_builder",
     # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
@@ -458,6 +457,22 @@ __all__ = [
     "create_anthropic_config",
     "create_gguf_config",
     "create_ollama_config",
+    # From api_provider_clients (Dynamic Model Discovery)
+    "BaseProviderClient",
+    "OpenAIProviderClient",
+    "AnthropicProviderClient",
+    "OllamaProviderClient",
+    "LMStudioProviderClient",
+    "LocalProviderClient",
+    "ModelInfo",
+    "ProviderManager",
+    "get_provider_manager",
+    # From model_discovery_service
+    "ModelDiscoveryService",
+    "get_model_discovery_service",
+    # From llm_config_manager
+    "LLMConfigManager",
+    "get_llm_config_manager",
     # From parsing_utils
     "ResponseLineParser",
 ]

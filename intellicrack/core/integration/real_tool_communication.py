@@ -126,6 +126,7 @@ class SharedMemoryManager:
         else:
             # Unix shared memory - use secure temp directory instead of /dev/shm
             import tempfile
+
             temp_dir = tempfile.gettempdir()
             shm_path = os.path.join(temp_dir, f"{self.name}")
             if not os.path.exists(shm_path):

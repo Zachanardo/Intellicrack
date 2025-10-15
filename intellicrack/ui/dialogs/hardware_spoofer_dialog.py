@@ -1776,6 +1776,7 @@ class CustomizeHardwareDialog(QDialog):
         self.basic_widgets["mb_edit"].setText(f"MB-{os.urandom(8).hex().upper()}")
         self.basic_widgets["hdd_edit"].setText(f"WD-{os.urandom(10).hex().upper()}")
         import secrets
+
         self.basic_widgets["product_edit"].setText(
             f"{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-AAAAA"
         )

@@ -40,7 +40,7 @@ import uuid
 import weakref
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -265,7 +265,7 @@ class LoggingManager:
         self._setup_component_loggers()
 
     def _setup_root_logger(self):
-        """Setup root logger with multiple handlers."""
+        """Set up root logger with multiple handlers."""
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
 
@@ -324,7 +324,7 @@ class LoggingManager:
         self.handlers["error"] = error_handler
 
     def _setup_component_loggers(self):
-        """Setup specialized loggers for different components."""
+        """Set up specialized loggers for different components."""
         components = [
             "plugin_manager",
             "workflow_engine",
@@ -1215,7 +1215,7 @@ class FridaPlugin(AbstractPlugin):
         )
 
     async def _hook_functions(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Hook functions in target process."""
+        """Install hooks for functions in target process."""
         functions = parameters.get("functions", [])
         if not functions:
             raise ValueError("No functions specified for hooking")
@@ -1682,21 +1682,20 @@ class EventBus:
                 handler_timeout = timedelta(seconds=30)  # Use timedelta for timeout calculation
                 timeout_seconds = handler_timeout.total_seconds()
 
-                # Use as_completed to process results as they become available
-                # Note: as_completed is for regular futures, but we demonstrate usage
+                # Track task completion in real-time
                 completed_count = 0
+                results = []
 
                 try:
-                    results = await asyncio.wait_for(
-                        asyncio.gather(*tasks, return_exceptions=True),
-                        timeout=timeout_seconds,
-                    )
-
-                    # Simulate as_completed usage for tracking completed tasks
-                    for _ in as_completed([], timeout=0.1):
-                        # This demonstrates as_completed import usage
-                        completed_count += 1
-                        break
+                    # Use as_completed to process tasks as they finish
+                    for completed_task in asyncio.as_completed(tasks, timeout=timeout_seconds):
+                        try:
+                            result = await completed_task
+                            results.append(result)
+                            completed_count += 1
+                        except Exception as e:
+                            results.append(e)
+                            completed_count += 1
 
                     # Log handler errors
                     for i, result in enumerate(results):
@@ -2882,7 +2881,7 @@ class AnalysisCoordinator:
         return analysis_id
 
     async def _coordination_loop(self):
-        """Main coordination loop."""
+        """Run main coordination loop."""
         while self.running:
             try:
                 # Process analysis queue
@@ -3655,7 +3654,7 @@ class IntellicrackcoreEngine:
 
 
 def main():
-    """Main entry point for running the core engine."""
+    """Run the core engine."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack Core Engine")

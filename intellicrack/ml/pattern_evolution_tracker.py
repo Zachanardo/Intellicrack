@@ -1161,8 +1161,7 @@ class PatternEvolutionTracker:
                 neither = 0  # For this simple case, assume all items are in at least one set
 
                 # Create contingency table
-                contingency_table = np.array([[intersection, only_in_p2],
-                                              [only_in_p1, neither+1]])  # Adding 1 to avoid zero issues
+                contingency_table = np.array([[intersection, only_in_p2], [only_in_p1, neither + 1]])  # Adding 1 to avoid zero issues
 
                 # Calculate chi2 contingency if possible
                 chi2, p_value, dof, expected = chi2_contingency(contingency_table)

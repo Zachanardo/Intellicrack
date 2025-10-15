@@ -21,11 +21,42 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Configure TensorFlow environment ONCE at module level before any imports
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["MKL_THREADING_LAYER"] = "GNU"
+
+# Import TensorFlow handler ONCE at module level to avoid duplicate imports
+_tf_import_attempted = False
+_tf_module = None
+_tf_available = False
+
+
+def _get_tensorflow():
+    """Get TensorFlow module, importing only once."""
+    global _tf_import_attempted, _tf_module, _tf_available
+
+    if not _tf_import_attempted:
+        _tf_import_attempted = True
+        try:
+            from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+
+            _tf_module = tf
+            _tf_available = True
+            _tf_module.config.set_visible_devices([], "GPU")
+        except Exception as e:
+            logger.warning(f"TensorFlow import failed: {e}")
+            _tf_available = False
+            _tf_module = None
+
+    return _tf_module, _tf_available
 
 
 def check_dependencies() -> dict[str, bool]:
@@ -75,19 +106,10 @@ def check_dependencies() -> dict[str, bool]:
 
     # Check ML dependencies and test TensorFlow functionality
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Test TensorFlow by checking version and GPU availability
         tf_version = tf.__version__
@@ -320,22 +342,14 @@ def validate_flask_server() -> dict[str, any]:
 def validate_tensorflow_models() -> dict[str, any]:
     """Validate TensorFlow and check model compatibility."""
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Silence TF warnings during validation
-        tf.get_logger().setLevel("ERROR")
+        if hasattr(tf, "get_logger"):
+            tf.get_logger().setLevel("ERROR")
 
         # Get TF info
         tf_info = {
@@ -544,19 +558,10 @@ def get_system_health_report() -> dict[str, any]:
 
     # Check ML service health
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Get memory usage if available
         memory_info = {}

@@ -500,10 +500,9 @@ class WindowsActivator:
 
             # Also check registry for C2R installations
             try:
-
                 registry_paths = [
-                    r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
-                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",
+                    r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",  # pragma: allowlist secret
+                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",  # pragma: allowlist secret
                 ]
 
                 for reg_path in registry_paths:

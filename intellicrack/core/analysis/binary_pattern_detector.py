@@ -807,6 +807,7 @@ class BinaryPatternDetector:
                 except Exception as e:
                     # Log the exception with details for debugging
                     import logging
+
                     logging.warning(f"Error processing instruction at offset {offset}: {e}")
                     continue
 

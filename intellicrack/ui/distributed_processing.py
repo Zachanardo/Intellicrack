@@ -803,7 +803,7 @@ class DistributedWorkerThread(QThread):
             import string
 
             test_chars = string.ascii_letters + string.digits
-            test_password = ''.join(secrets.choice(test_chars) for _ in range(16))
+            test_password = "".join(secrets.choice(test_chars) for _ in range(16))
             hash_value = hashlib.sha256(test_password.encode()).hexdigest()
             logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
 

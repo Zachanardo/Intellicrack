@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 JSON_CONTENT_TYPE = "application/json"
 HOSTS_FILE_PATH = r"C:\Windows\System32\drivers\etc\hosts"
+
+
 @ctypes.WINFUNCTYPE(
     ctypes.c_long,
     ctypes.c_void_p,

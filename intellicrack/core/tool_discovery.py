@@ -591,7 +591,9 @@ class AdvancedToolDiscovery:
         # Report completion to terminal manager
         if HAS_TERMINAL_MANAGER:
             try:
-                terminal_manager.log_terminal_message(f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}")
+                terminal_manager.log_terminal_message(
+                    f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}"
+                )
             except Exception as e:
                 logger.debug("Could not log to terminal manager: %s", e)
 
@@ -747,8 +749,8 @@ class AdvancedToolDiscovery:
             import winreg
 
             registry_paths = [
-                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
+                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
             ]
 
             for registry_path in registry_paths:

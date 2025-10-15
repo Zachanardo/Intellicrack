@@ -1,4 +1,4 @@
-﻿"""License Validation Debugging Engine for Intellicrack.
+"""License Validation Debugging Engine for Intellicrack.
 
 This module provides comprehensive debugging capabilities specifically designed
 for analyzing and defeating software license validation mechanisms.
@@ -72,17 +72,14 @@ ExceptionRecord._fields_ = [
     ("ExceptionRecord", ctypes.POINTER(ExceptionRecord)),
     ("ExceptionAddress", ctypes.c_void_p),
     ("NumberParameters", wintypes.DWORD),
-    ("ExceptionInformation", ctypes.c_void_p * 15)
+    ("ExceptionInformation", ctypes.c_void_p * 15),
 ]
 
 
 class M128A(ctypes.Structure):
     """128-bit SIMD register structure."""
 
-    _fields_ = [
-        ("Low", ctypes.c_ulonglong),
-        ("High", ctypes.c_longlong)
-    ]
+    _fields_ = [("Low", ctypes.c_ulonglong), ("High", ctypes.c_longlong)]
 
 
 class CONTEXT(ctypes.Structure):
@@ -134,27 +131,21 @@ class CONTEXT(ctypes.Structure):
         ("LastBranchToRip", ctypes.c_ulonglong),
         ("LastBranchFromRip", ctypes.c_ulonglong),
         ("LastExceptionToRip", ctypes.c_ulonglong),
-        ("LastExceptionFromRip", ctypes.c_ulonglong)
+        ("LastExceptionFromRip", ctypes.c_ulonglong),
     ]
 
 
 class ExceptionPointers(ctypes.Structure):
     """Windows EXCEPTION_POINTERS structure."""
 
-    _fields_ = [
-        ("ExceptionRecord", ctypes.POINTER(ExceptionRecord)),
-        ("ContextRecord", ctypes.POINTER(CONTEXT))
-    ]
+    _fields_ = [("ExceptionRecord", ctypes.POINTER(ExceptionRecord)), ("ContextRecord", ctypes.POINTER(CONTEXT))]
 
 
 EXCEPTION_POINTERS = ExceptionPointers
 
 
 # VEH Handler function type
-PVECTORED_EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(
-    wintypes.LONG,
-    ctypes.POINTER(EXCEPTION_POINTERS)
-)
+PVECTORED_EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(wintypes.LONG, ctypes.POINTER(EXCEPTION_POINTERS))
 
 
 @dataclass
@@ -296,8 +287,9 @@ class LicenseDebugger:
             logger.error(f"Failed to enable debug privilege: {e}")
             return False
 
-    def set_breakpoint(self, address: int, callback: Optional[Callable] = None,
-                      description: str = "", condition: Optional[str] = None) -> bool:
+    def set_breakpoint(
+        self, address: int, callback: Optional[Callable] = None, description: str = "", condition: Optional[str] = None
+    ) -> bool:
         """Set a software breakpoint at specified address with optional condition.
 
         Args:
@@ -351,9 +343,7 @@ class LicenseDebugger:
             logger.error(f"Error setting breakpoint: {e}")
             return False
 
-    def set_conditional_breakpoint(self, address: int, condition: str,
-                                  callback: Optional[Callable] = None,
-                                  description: str = "") -> bool:
+    def set_conditional_breakpoint(self, address: int, condition: str, callback: Optional[Callable] = None, description: str = "") -> bool:
         """Set a conditional breakpoint that only triggers when condition is met.
 
         Args:
@@ -368,10 +358,15 @@ class LicenseDebugger:
         """
         return self.set_breakpoint(address, callback, description, condition)
 
-    def set_hardware_breakpoint(self, address: int, dr_index: int = -1,
-                              access_type: str = "execute", size: int = 1,
-                              callback: Optional[Callable] = None,
-                              apply_to_all_threads: bool = True) -> bool:
+    def set_hardware_breakpoint(
+        self,
+        address: int,
+        dr_index: int = -1,
+        access_type: str = "execute",
+        size: int = 1,
+        callback: Optional[Callable] = None,
+        apply_to_all_threads: bool = True,
+    ) -> bool:
         """Set hardware breakpoint using debug registers.
 
         Args:
@@ -417,8 +412,7 @@ class LicenseDebugger:
 
             success_count = 0
             for thread_id in threads_to_update:
-                if self._set_hardware_breakpoint_on_thread(thread_id, address, dr_index,
-                                                          access_type, size):
+                if self._set_hardware_breakpoint_on_thread(thread_id, address, dr_index, access_type, size):
                     success_count += 1
 
             if success_count == 0:
@@ -432,7 +426,7 @@ class LicenseDebugger:
                 "size": size,
                 "callback": callback,
                 "threads": threads_to_update,
-                "hit_count": 0
+                "hit_count": 0,
             }
 
             logger.info(f"Set hardware breakpoint at {hex(address)} on {success_count} threads")
@@ -443,9 +437,7 @@ class LicenseDebugger:
             logger.error(f"Error setting hardware breakpoint: {e}")
             return False
 
-    def _set_hardware_breakpoint_on_thread(self, thread_id: int, address: int,
-                                          dr_index: int, access_type: str,
-                                          size: int) -> bool:
+    def _set_hardware_breakpoint_on_thread(self, thread_id: int, address: int, dr_index: int, access_type: str, size: int) -> bool:
         """Set hardware breakpoint on specific thread."""
         try:
             # Get thread context
@@ -468,17 +460,17 @@ class LicenseDebugger:
 
             # Clear existing settings for this register
             dr7_value &= ~(0xF << (16 + dr_index * 4))  # Clear RW and LEN fields
-            dr7_value &= ~(3 << (dr_index * 2))         # Clear L and G fields
+            dr7_value &= ~(3 << (dr_index * 2))  # Clear L and G fields
 
             # Enable local and global breakpoint
-            dr7_value |= (3 << (dr_index * 2))  # Set both L and G bits
+            dr7_value |= 3 << (dr_index * 2)  # Set both L and G bits
 
             # Set access type (RW field)
             access_bits = {
-                "execute": 0b00,      # Break on instruction execution
-                "write": 0b01,        # Break on data write
-                "io": 0b10,          # Break on I/O read/write
-                "read_write": 0b11    # Break on data read or write
+                "execute": 0b00,  # Break on instruction execution
+                "write": 0b01,  # Break on data write
+                "io": 0b10,  # Break on I/O read/write
+                "read_write": 0b11,  # Break on data read or write
             }
             if access_type in access_bits:
                 dr7_value |= access_bits[access_type] << (16 + dr_index * 4)
@@ -488,14 +480,14 @@ class LicenseDebugger:
                 1: 0b00,  # 1 byte
                 2: 0b01,  # 2 bytes
                 4: 0b11,  # 4 bytes
-                8: 0b10   # 8 bytes (only valid on x64)
+                8: 0b10,  # 8 bytes (only valid on x64)
             }
             if size in size_bits:
                 dr7_value |= size_bits[size] << (18 + dr_index * 4)
 
             # Enable exact breakpoint (optional, for compatibility)
-            dr7_value |= (1 << 8)  # LE bit (Local Exact breakpoint enable)
-            dr7_value |= (1 << 9)  # GE bit (Global Exact breakpoint enable)
+            dr7_value |= 1 << 8  # LE bit (Local Exact breakpoint enable)
+            dr7_value |= 1 << 9  # GE bit (Global Exact breakpoint enable)
 
             context.Dr7 = dr7_value
 
@@ -582,7 +574,7 @@ class LicenseDebugger:
             # Clear DR7 settings for this register
             dr7_value = context.Dr7
             dr7_value &= ~(0xF << (16 + dr_index * 4))  # Clear RW and LEN fields
-            dr7_value &= ~(3 << (dr_index * 2))         # Clear L and G fields
+            dr7_value &= ~(3 << (dr_index * 2))  # Clear L and G fields
             context.Dr7 = dr7_value
 
             # Clear corresponding bit in DR6 status register
@@ -603,14 +595,16 @@ class LicenseDebugger:
         """
         breakpoints = []
         for address, info in self.hardware_breakpoints.items():
-            breakpoints.append({
-                "address": hex(address),
-                "dr_index": info["dr_index"],
-                "type": info["access_type"],
-                "size": info["size"],
-                "hit_count": info.get("hit_count", 0),
-                "threads": len(info.get("threads", []))
-            })
+            breakpoints.append(
+                {
+                    "address": hex(address),
+                    "dr_index": info["dr_index"],
+                    "type": info["access_type"],
+                    "size": info["size"],
+                    "hit_count": info.get("hit_count", 0),
+                    "threads": len(info.get("threads", [])),
+                }
+            )
         return breakpoints
 
     def find_license_checks(self) -> List[int]:
@@ -1333,10 +1327,10 @@ class LicenseDebugger:
 
         # Allowed patterns for conditions
         valid_patterns = [
-            r'^[a-z0-9]+\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # reg op value
-            r'^mem\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # mem[addr] op value
-            r'^\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # [addr] op value
-            r'^[a-z0-9]+\s*&\s*(?:0x[0-9a-f]+|\d+)\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$',  # reg & mask op value
+            r"^[a-z0-9]+\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$",  # reg op value
+            r"^mem\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$",  # mem[addr] op value
+            r"^\[[a-z0-9\+\-\*]+\]\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$",  # [addr] op value
+            r"^[a-z0-9]+\s*&\s*(?:0x[0-9a-f]+|\d+)\s*[><=!]+\s*(?:0x[0-9a-f]+|\d+)$",  # reg & mask op value
         ]
 
         condition_lower = condition.lower().strip()
@@ -1371,15 +1365,18 @@ class LicenseDebugger:
             condition = bp.condition.lower().strip()
 
             # Register comparison (e.g., "rax == 0x1337")
-            if any(reg in condition for reg in ['rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi', 'r8', 'r9', 'r10', 'r11', 'r12', 'r13', 'r14', 'r15']):
+            if any(
+                reg in condition
+                for reg in ["rax", "rbx", "rcx", "rdx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
+            ):
                 return self._evaluate_register_condition(condition, context)
 
             # Memory comparison (e.g., "mem[rsp] != 0")
-            if 'mem[' in condition or '[' in condition:
+            if "mem[" in condition or "[" in condition:
                 return self._evaluate_memory_condition(condition, context)
 
             # Flag comparison (e.g., "zf == 1")
-            if any(flag in condition for flag in ['cf', 'pf', 'af', 'zf', 'sf', 'tf', 'if', 'df', 'of']):
+            if any(flag in condition for flag in ["cf", "pf", "af", "zf", "sf", "tf", "if", "df", "of"]):
                 return self._evaluate_flag_condition(condition, context)
 
             logger.warning(f"Unknown condition type: {bp.condition}")
@@ -1394,7 +1391,7 @@ class LicenseDebugger:
         import re
 
         # Extract register, operator, and value
-        match = re.match(r'([a-z0-9]+)\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+        match = re.match(r"([a-z0-9]+)\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)", condition)
         if not match:
             return False
 
@@ -1403,7 +1400,7 @@ class LicenseDebugger:
         value_str = match.group(3)
 
         # Parse value
-        if value_str.startswith('0x'):
+        if value_str.startswith("0x"):
             value = int(value_str, 16)
         else:
             value = int(value_str)
@@ -1421,10 +1418,10 @@ class LicenseDebugger:
         import re
 
         # Extract memory address expression and comparison
-        if 'mem[' in condition:
-            match = re.match(r'mem\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+        if "mem[" in condition:
+            match = re.match(r"mem\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)", condition)
         else:
-            match = re.match(r'\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)', condition)
+            match = re.match(r"\[([a-z0-9\+\-\*]+)\]\s*([><=!]+)\s*(0x[0-9a-f]+|\d+)", condition)
 
         if not match:
             return False
@@ -1434,7 +1431,7 @@ class LicenseDebugger:
         value_str = match.group(3)
 
         # Parse value
-        if value_str.startswith('0x'):
+        if value_str.startswith("0x"):
             value = int(value_str, 16)
         else:
             value = int(value_str)
@@ -1449,7 +1446,7 @@ class LicenseDebugger:
         if not mem_data:
             return False
 
-        mem_value = int.from_bytes(mem_data[:8], byteorder='little')
+        mem_value = int.from_bytes(mem_data[:8], byteorder="little")
 
         # Evaluate condition
         return self._compare_values(mem_value, operator, value)
@@ -1459,7 +1456,7 @@ class LicenseDebugger:
         import re
 
         # Extract flag name and comparison
-        match = re.match(r'([czspao][f])\s*([><=!]+)\s*(\d+)', condition)
+        match = re.match(r"([czspao][f])\s*([><=!]+)\s*(\d+)", condition)
         if not match:
             return False
 
@@ -1472,15 +1469,15 @@ class LicenseDebugger:
 
         # Extract specific flag
         flag_bits = {
-            'cf': 0,   # Carry flag
-            'pf': 2,   # Parity flag
-            'af': 4,   # Auxiliary flag
-            'zf': 6,   # Zero flag
-            'sf': 7,   # Sign flag
-            'tf': 8,   # Trap flag
-            'if': 9,   # Interrupt flag
-            'df': 10,  # Direction flag
-            'of': 11,  # Overflow flag
+            "cf": 0,  # Carry flag
+            "pf": 2,  # Parity flag
+            "af": 4,  # Auxiliary flag
+            "zf": 6,  # Zero flag
+            "sf": 7,  # Sign flag
+            "tf": 8,  # Trap flag
+            "if": 9,  # Interrupt flag
+            "df": 10,  # Direction flag
+            "of": 11,  # Overflow flag
         }
 
         if flag_name not in flag_bits:
@@ -1494,11 +1491,23 @@ class LicenseDebugger:
     def _get_register_value(self, reg_name: str, context) -> Optional[int]:
         """Get register value from context."""
         reg_map = {
-            'rax': context.Rax, 'rbx': context.Rbx, 'rcx': context.Rcx, 'rdx': context.Rdx,
-            'rsp': context.Rsp, 'rbp': context.Rbp, 'rsi': context.Rsi, 'rdi': context.Rdi,
-            'r8': context.R8, 'r9': context.R9, 'r10': context.R10, 'r11': context.R11,
-            'r12': context.R12, 'r13': context.R13, 'r14': context.R14, 'r15': context.R15,
-            'rip': context.Rip
+            "rax": context.Rax,
+            "rbx": context.Rbx,
+            "rcx": context.Rcx,
+            "rdx": context.Rdx,
+            "rsp": context.Rsp,
+            "rbp": context.Rbp,
+            "rsi": context.Rsi,
+            "rdi": context.Rdi,
+            "r8": context.R8,
+            "r9": context.R9,
+            "r10": context.R10,
+            "r11": context.R11,
+            "r12": context.R12,
+            "r13": context.R13,
+            "r14": context.R14,
+            "r15": context.R15,
+            "rip": context.Rip,
         }
 
         return reg_map.get(reg_name)
@@ -1508,11 +1517,11 @@ class LicenseDebugger:
         import re
 
         # Simple register
-        if expr in ['rax', 'rbx', 'rcx', 'rdx', 'rsp', 'rbp', 'rsi', 'rdi']:
+        if expr in ["rax", "rbx", "rcx", "rdx", "rsp", "rbp", "rsi", "rdi"]:
             return self._get_register_value(expr, context)
 
         # Register with offset
-        match = re.match(r'([a-z0-9]+)\s*([+\-])\s*(0x[0-9a-f]+|\d+)', expr)
+        match = re.match(r"([a-z0-9]+)\s*([+\-])\s*(0x[0-9a-f]+|\d+)", expr)
         if match:
             reg = match.group(1)
             op = match.group(2)
@@ -1522,18 +1531,18 @@ class LicenseDebugger:
             if reg_value is None:
                 return None
 
-            if offset_str.startswith('0x'):
+            if offset_str.startswith("0x"):
                 offset = int(offset_str, 16)
             else:
                 offset = int(offset_str)
 
-            if op == '+':
+            if op == "+":
                 return reg_value + offset
             else:
                 return reg_value - offset
 
         # Hex address
-        if expr.startswith('0x'):
+        if expr.startswith("0x"):
             return int(expr, 16)
 
         # Decimal address
@@ -1545,12 +1554,12 @@ class LicenseDebugger:
     def _compare_values(self, left: int, operator: str, right: int) -> bool:
         """Compare two values with given operator."""
         comparisons = {
-            '==': lambda a, b: a == b,
-            '!=': lambda a, b: a != b,
-            '<': lambda a, b: a < b,
-            '<=': lambda a, b: a <= b,
-            '>': lambda a, b: a > b,
-            '>=': lambda a, b: a >= b,
+            "==": lambda a, b: a == b,
+            "!=": lambda a, b: a != b,
+            "<": lambda a, b: a < b,
+            "<=": lambda a, b: a <= b,
+            ">": lambda a, b: a > b,
+            ">=": lambda a, b: a >= b,
         }
 
         if operator in comparisons:
@@ -1870,7 +1879,7 @@ class LicenseDebugger:
 
             # Method 3: Hook the RaiseException that OutputDebugString internally uses
             # for the DBG_PRINTEXCEPTION_C (0x40010006) and DBG_PRINTEXCEPTION_W (0x4001000A)
-            if hasattr(self, 'veh_handler') and self.veh_handler:
+            if hasattr(self, "veh_handler") and self.veh_handler:
                 # Add filter for OutputDebugString exceptions
                 def output_debug_filter(exception_record):
                     """Filter OutputDebugString exceptions to prevent detection."""
@@ -1886,25 +1895,18 @@ class LicenseDebugger:
             # Method 4: Patch the OutputDebugString implementation directly
             # Replace first bytes with RET to make it return immediately
             for api_name in ["OutputDebugStringA", "OutputDebugStringW"]:
-                api_addr = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleA(b"kernel32.dll"),
-                    api_name.encode()
-                )
+                api_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleA(b"kernel32.dll"), api_name.encode())
                 if api_addr:
                     # Save original bytes for restoration
                     original = ctypes.create_string_buffer(3)
                     bytes_read = ctypes.c_size_t()
                     if self.kernel32.ReadProcessMemory(
-                        self.process_handle,
-                        ctypes.c_void_p(api_addr),
-                        original,
-                        3,
-                        ctypes.byref(bytes_read)
+                        self.process_handle, ctypes.c_void_p(api_addr), original, 3, ctypes.byref(bytes_read)
                     ):
                         # Store for potential restoration
                         self.patched_apis[api_name] = (api_addr, original.raw)
                         # Patch with RET (0xC3) + NOPs
-                        self._write_memory(api_addr, b"\xC3\x90\x90")
+                        self._write_memory(api_addr, b"\xc3\x90\x90")
 
             logger.info("OutputDebugString anti-debug bypass applied")
             return True
@@ -1947,8 +1949,8 @@ class LicenseDebugger:
         try:
             # Strategy 1: RDTSC/RDTSCP instruction patching
             # Find and patch RDTSC (0F 31) and RDTSCP (0F 01 F9) instructions
-            rdtsc_pattern = b"\x0F\x31"  # RDTSC opcode
-            rdtscp_pattern = b"\x0F\x01\xF9"  # RDTSCP opcode
+            rdtsc_pattern = b"\x0f\x31"  # RDTSC opcode
+            rdtscp_pattern = b"\x0f\x01\xf9"  # RDTSCP opcode
 
             # Scan for timing instructions in executable regions
             for region in self.enumerate_memory_regions():
@@ -1959,27 +1961,21 @@ class LicenseDebugger:
                     # Read memory region
                     buffer = ctypes.create_string_buffer(size)
                     bytes_read = ctypes.c_size_t()
-                    if self.kernel32.ReadProcessMemory(
-                        self.process_handle,
-                        ctypes.c_void_p(base),
-                        buffer,
-                        size,
-                        ctypes.byref(bytes_read)
-                    ):
-                        data = buffer.raw[:bytes_read.value]
+                    if self.kernel32.ReadProcessMemory(self.process_handle, ctypes.c_void_p(base), buffer, size, ctypes.byref(bytes_read)):
+                        data = buffer.raw[: bytes_read.value]
 
                         # Find RDTSC instructions
                         for i in range(len(data) - len(rdtsc_pattern) + 1):
-                            if data[i:i+len(rdtsc_pattern)] == rdtsc_pattern:
+                            if data[i : i + len(rdtsc_pattern)] == rdtsc_pattern:
                                 # Patch with XOR EAX,EAX; XOR EDX,EDX (return 0)
-                                patch = b"\x31\xC0\x31\xD2\x90\x90"  # 6 bytes
+                                patch = b"\x31\xc0\x31\xd2\x90\x90"  # 6 bytes
                                 self._write_memory(base + i, patch[:2])
 
                         # Find RDTSCP instructions
                         for i in range(len(data) - len(rdtscp_pattern) + 1):
-                            if data[i:i+len(rdtscp_pattern)] == rdtscp_pattern:
+                            if data[i : i + len(rdtscp_pattern)] == rdtscp_pattern:
                                 # Patch with XOR EAX,EAX; XOR EDX,EDX; XOR ECX,ECX
-                                patch = b"\x31\xC0\x31\xD2\x31\xC9"
+                                patch = b"\x31\xc0\x31\xd2\x31\xc9"
                                 self._write_memory(base + i, patch)
 
             # Strategy 2: Hook timing APIs
@@ -2022,7 +2018,7 @@ class LicenseDebugger:
 
             # Strategy 7: Apply RDTSC emulation via debug registers
             # Use DR7 to trap RDTSC execution if CPU supports it
-            if hasattr(self, 'set_hardware_breakpoint'):
+            if hasattr(self, "set_hardware_breakpoint"):
                 # Set a general detect for privilege instructions
                 # Note: This requires ring-0 access, so we'll rely on hooks instead
                 pass
@@ -2090,7 +2086,7 @@ class LicenseDebugger:
                         ctypes.c_void_p(esp + 4),  # First parameter after return address
                         ctypes.byref(sleep_ms_buf),
                         4,
-                        None
+                        None,
                     ):
                         sleep_ms = sleep_ms_buf.value
                     else:
@@ -2109,11 +2105,7 @@ class LicenseDebugger:
                     if esp:
                         new_sleep_buf = ctypes.c_uint32(new_sleep)
                         self.kernel32.WriteProcessMemory(
-                            self.process_handle,
-                            ctypes.c_void_p(esp + 4),
-                            ctypes.byref(new_sleep_buf),
-                            4,
-                            None
+                            self.process_handle, ctypes.c_void_p(esp + 4), ctypes.byref(new_sleep_buf), 4, None
                         )
 
             self.set_registers(context)
@@ -2168,21 +2160,11 @@ class LicenseDebugger:
                     ThreadBreakOnTermination = 0x1D
 
                     # Hide from debugger enumeration
-                    ntdll.NtSetInformationThread(
-                        thread_handle,
-                        ThreadHideFromDebugger,
-                        None,
-                        0
-                    )
+                    ntdll.NtSetInformationThread(thread_handle, ThreadHideFromDebugger, None, 0)
 
                     # Mark as critical system thread (appears as system process thread)
                     critical = ctypes.c_ulong(1)
-                    ntdll.NtSetInformationThread(
-                        thread_handle,
-                        ThreadBreakOnTermination,
-                        ctypes.byref(critical),
-                        ctypes.sizeof(critical)
-                    )
+                    ntdll.NtSetInformationThread(thread_handle, ThreadBreakOnTermination, ctypes.byref(critical), ctypes.sizeof(critical))
                 except Exception as e:
                     self.logger.debug(f"Thread may not allow modification: {e}")  # Some threads may not allow modification
 
@@ -2191,6 +2173,7 @@ class LicenseDebugger:
 
             # Enumerate current threads and mark them as legitimate
             import psutil
+
             try:
                 process = psutil.Process(self.process_id)
                 for thread in process.threads():
@@ -2266,18 +2249,14 @@ class LicenseDebugger:
                     ThreadSuspendCount = 0x23
 
                     status = ntdll.NtQueryInformationThread(
-                        thread_handle,
-                        ThreadSuspendCount,
-                        ctypes.byref(suspend_count),
-                        ctypes.sizeof(suspend_count),
-                        None
+                        thread_handle, ThreadSuspendCount, ctypes.byref(suspend_count), ctypes.sizeof(suspend_count), None
                     )
 
                     if status == 0 and suspend_count.value > 0:
                         suspended_threads[thread_id] = {
                             "suspend_count": suspend_count.value,
                             "handle": thread_handle,
-                            "detection_method": "suspend_count"
+                            "detection_method": "suspend_count",
                         }
                 except (OSError, ctypes.ArgumentError) as e:
                     logger.debug(f"Failed to check thread {thread_id} suspension status: {e}")
@@ -2303,11 +2282,7 @@ class LicenseDebugger:
                             inst_buf = ctypes.create_string_buffer(16)
                             bytes_read = ctypes.c_size_t()
                             if self.kernel32.ReadProcessMemory(
-                                self.process_handle,
-                                ctypes.c_void_p(rip),
-                                inst_buf,
-                                16,
-                                ctypes.byref(bytes_read)
+                                self.process_handle, ctypes.c_void_p(rip), inst_buf, 16, ctypes.byref(bytes_read)
                             ):
                                 # Check for common suspension indicators
                                 # INT 3 (0xCC), INT 2D (0xCD 0x2D), or infinite loop
@@ -2316,7 +2291,7 @@ class LicenseDebugger:
                                         "suspend_count": prev_suspend,
                                         "handle": thread_handle,
                                         "detection_method": "breakpoint_suspension",
-                                        "instruction_pointer": hex(rip)
+                                        "instruction_pointer": hex(rip),
                                     }
                                 # Check for JMP $ (EB FE) - infinite loop
                                 elif inst_buf[0] == 0xEB and inst_buf[1] == 0xFE:
@@ -2324,7 +2299,7 @@ class LicenseDebugger:
                                         "suspend_count": prev_suspend,
                                         "handle": thread_handle,
                                         "detection_method": "infinite_loop",
-                                        "instruction_pointer": hex(rip)
+                                        "instruction_pointer": hex(rip),
                                     }
 
                         # Resume thread to original state
@@ -2335,6 +2310,7 @@ class LicenseDebugger:
             # Method 3: Check for debugger-suspended threads
             snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
             if snapshot != -1:
+
                 class THREADENTRY32(ctypes.Structure):
                     _fields_ = [
                         ("dwSize", ctypes.c_ulong),
@@ -2359,7 +2335,7 @@ class LicenseDebugger:
                                     "suspend_count": -1,  # Unknown
                                     "handle": None,
                                     "detection_method": "untracked_thread",
-                                    "flags": thread_entry.dwFlags
+                                    "flags": thread_entry.dwFlags,
                                 }
 
                         if not self.kernel32.Thread32Next(snapshot, ctypes.byref(thread_entry)):
@@ -2371,8 +2347,7 @@ class LicenseDebugger:
             if suspended_threads:
                 logger.info(f"Detected {len(suspended_threads)} suspended threads")
                 for tid, info in suspended_threads.items():
-                    logger.debug(f"Thread {tid}: {info['detection_method']}, "
-                               f"suspend_count={info['suspend_count']}")
+                    logger.debug(f"Thread {tid}: {info['detection_method']}, suspend_count={info['suspend_count']}")
 
             return suspended_threads
 
@@ -2380,8 +2355,7 @@ class LicenseDebugger:
             logger.error(f"Failed to detect suspended threads: {e}")
             return suspended_threads
 
-    def manipulate_thread_local_storage(self, thread_id: int, tls_index: int,
-                                       value: bytes) -> bool:
+    def manipulate_thread_local_storage(self, thread_id: int, tls_index: int, value: bytes) -> bool:
         """Manipulate Thread Local Storage (TLS) for anti-debugging and hiding.
 
         Args:
@@ -2419,7 +2393,7 @@ class LicenseDebugger:
                 0,  # ThreadBasicInformation
                 ctypes.byref(tbi),
                 ctypes.sizeof(tbi),
-                None
+                None,
             )
 
             if status != 0:
@@ -2454,7 +2428,7 @@ class LicenseDebugger:
                     ctypes.c_void_p(teb_address + tls_expansion_offset),
                     ctypes.byref(expansion_ptr),
                     ctypes.sizeof(expansion_ptr),
-                    None
+                    None,
                 ):
                     logger.error("Failed to read TLS expansion pointer")
                     return False
@@ -2466,13 +2440,9 @@ class LicenseDebugger:
                 tls_address = expansion_ptr.value + (expansion_index * ctypes.sizeof(ctypes.c_void_p))
 
             # Write the TLS value
-            value_ptr = ctypes.c_void_p(int.from_bytes(value, 'little'))
+            value_ptr = ctypes.c_void_p(int.from_bytes(value, "little"))
             if not self.kernel32.WriteProcessMemory(
-                self.process_handle,
-                ctypes.c_void_p(tls_address),
-                ctypes.byref(value_ptr),
-                ctypes.sizeof(value_ptr),
-                None
+                self.process_handle, ctypes.c_void_p(tls_address), ctypes.byref(value_ptr), ctypes.sizeof(value_ptr), None
             ):
                 logger.error("Failed to write TLS value")
                 return False
@@ -2484,7 +2454,7 @@ class LicenseDebugger:
                 for callback_addr in pe_info["tls_callbacks"]:
                     # Hook or patch TLS callbacks to prevent anti-debugging
                     # Replace with RET instruction
-                    self._write_memory(callback_addr, b"\xC3")
+                    self._write_memory(callback_addr, b"\xc3")
                     logger.debug(f"Neutralized TLS callback at {hex(callback_addr)}")
 
             logger.info(f"Successfully manipulated TLS index {tls_index} for thread {thread_id}")
@@ -2555,19 +2525,27 @@ class LicenseDebugger:
                                     if ctypes.sizeof(ctypes.c_void_p) == 8:
                                         ip = context.Rip
                                         regs = {
-                                            "rax": context.Rax, "rbx": context.Rbx,
-                                            "rcx": context.Rcx, "rdx": context.Rdx,
-                                            "rsi": context.Rsi, "rdi": context.Rdi,
-                                            "rbp": context.Rbp, "rsp": context.Rsp,
+                                            "rax": context.Rax,
+                                            "rbx": context.Rbx,
+                                            "rcx": context.Rcx,
+                                            "rdx": context.Rdx,
+                                            "rsi": context.Rsi,
+                                            "rdi": context.Rdi,
+                                            "rbp": context.Rbp,
+                                            "rsp": context.Rsp,
                                             "rip": context.Rip,
                                         }
                                     else:
                                         ip = context.Eip
                                         regs = {
-                                            "eax": context.Eax, "ebx": context.Ebx,
-                                            "ecx": context.Ecx, "edx": context.Edx,
-                                            "esi": context.Esi, "edi": context.Edi,
-                                            "ebp": context.Ebp, "esp": context.Esp,
+                                            "eax": context.Eax,
+                                            "ebx": context.Ebx,
+                                            "ecx": context.Ecx,
+                                            "edx": context.Edx,
+                                            "esi": context.Esi,
+                                            "edi": context.Edi,
+                                            "ebp": context.Ebp,
+                                            "esp": context.Esp,
                                             "eip": context.Eip,
                                         }
 
@@ -2575,13 +2553,9 @@ class LicenseDebugger:
                                     inst_buf = ctypes.create_string_buffer(16)
                                     bytes_read = ctypes.c_size_t()
                                     if self.kernel32.ReadProcessMemory(
-                                        self.process_handle,
-                                        ctypes.c_void_p(ip),
-                                        inst_buf,
-                                        16,
-                                        ctypes.byref(bytes_read)
+                                        self.process_handle, ctypes.c_void_p(ip), inst_buf, 16, ctypes.byref(bytes_read)
                                     ):
-                                        inst_bytes = inst_buf.raw[:bytes_read.value]
+                                        inst_bytes = inst_buf.raw[: bytes_read.value]
 
                                         # Disassemble instruction if Capstone is available
                                         inst_str = ""
@@ -2606,7 +2580,7 @@ class LicenseDebugger:
                                             "bytes": inst_bytes.hex(),
                                             "registers": regs,
                                             "thread_id": thread_id,
-                                            "step": single_step_count
+                                            "step": single_step_count,
                                         }
                                         trace_log.append(trace_entry)
 
@@ -2625,11 +2599,7 @@ class LicenseDebugger:
                                 single_step_count += 1
 
                         # Continue debugging
-                        self.kernel32.ContinueDebugEvent(
-                            debug_event.dwProcessId,
-                            debug_event.dwThreadId,
-                            DBG_CONTINUE
-                        )
+                        self.kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId, DBG_CONTINUE)
                     else:
                         # No debug event, check if thread is still alive
                         exit_code = ctypes.c_ulong()
@@ -2753,6 +2723,7 @@ class LicenseDebugger:
             # Try to import Capstone disassembler
             try:
                 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
                 has_capstone = True
             except ImportError:
                 has_capstone = False
@@ -2798,17 +2769,17 @@ class LicenseDebugger:
                 else:
                     # Raw byte display
                     for i in range(0, min(100, len(code_bytes)), 16):
-                        hex_str = code_bytes[i:i+16].hex()
-                        hex_pairs = ' '.join(hex_str[j:j+2] for j in range(0, len(hex_str), 2))
-                        instructions.append(f"0x{callback_addr+i:X}: {hex_pairs}")
+                        hex_str = code_bytes[i : i + 16].hex()
+                        hex_pairs = " ".join(hex_str[j : j + 2] for j in range(0, len(hex_str), 2))
+                        instructions.append(f"0x{callback_addr + i:X}: {hex_pairs}")
 
                         # Basic pattern detection
-                        chunk = code_bytes[i:i+16]
-                        if b'\xCC' in chunk:
+                        chunk = code_bytes[i : i + 16]
+                        if b"\xcc" in chunk:
                             instructions.append("  [!] INT3 breakpoint detected")
-                        if b'\x0F\x31' in chunk:
+                        if b"\x0f\x31" in chunk:
                             instructions.append("  [!] RDTSC timing check detected")
-                        if b'\x0F\xA2' in chunk:
+                        if b"\x0f\xa2" in chunk:
                             instructions.append("  [!] CPUID instruction detected")
 
                 disassembled[callback_addr] = instructions
@@ -2843,7 +2814,7 @@ class LicenseDebugger:
                 try:
                     # Method 1: Replace with RET instruction
                     # This is the simplest and most effective method
-                    ret_patch = b"\xC3"  # RET
+                    ret_patch = b"\xc3"  # RET
                     if self._write_memory(callback_addr, ret_patch):
                         logger.info(f"Bypassed TLS callback at 0x{callback_addr:X} with RET")
                         bypassed_count += 1
@@ -2855,7 +2826,7 @@ class LicenseDebugger:
                     if original_bytes:
                         # Create a JMP to skip the callback (JMP +0)
                         # This effectively makes it a NOP sled
-                        jmp_patch = b"\xE9\x00\x00\x00\x00"  # JMP rel32 (to next instruction)
+                        jmp_patch = b"\xe9\x00\x00\x00\x00"  # JMP rel32 (to next instruction)
                         if self._write_memory(callback_addr, jmp_patch):
                             logger.info(f"Bypassed TLS callback at 0x{callback_addr:X} with JMP")
                             bypassed_count += 1
@@ -2877,8 +2848,8 @@ class LicenseDebugger:
                     e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
                     nt_header_offset = e_lfanew
 
-                    if pe_header[nt_header_offset:nt_header_offset + 4] == b"PE\x00\x00":
-                        machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
+                    if pe_header[nt_header_offset : nt_header_offset + 4] == b"PE\x00\x00":
+                        machine = struct.unpack("<H", pe_header[nt_header_offset + 4 : nt_header_offset + 6])[0]
                         is_64bit = machine == 0x8664
                         opt_header_offset = nt_header_offset + 24
 
@@ -2887,7 +2858,7 @@ class LicenseDebugger:
                         else:
                             tls_dir_offset = opt_header_offset + 128
 
-                        tls_rva = struct.unpack("<I", pe_header[tls_dir_offset:tls_dir_offset + 4])[0]
+                        tls_rva = struct.unpack("<I", pe_header[tls_dir_offset : tls_dir_offset + 4])[0]
 
                         if tls_rva:
                             # Read TLS directory
@@ -2936,7 +2907,7 @@ class LicenseDebugger:
             hooked_count = 0
 
             # Store original bytes and handlers
-            if not hasattr(self, 'tls_hooks'):
+            if not hasattr(self, "tls_hooks"):
                 self.tls_hooks = {}
 
             for callback_addr in callbacks:
@@ -2949,11 +2920,7 @@ class LicenseDebugger:
                     # Allocate memory for the hook trampoline
                     trampoline_size = 256
                     trampoline_addr = self.kernel32.VirtualAllocEx(
-                        self.process_handle,
-                        None,
-                        trampoline_size,
-                        MEM_COMMIT | MEM_RESERVE,
-                        PAGE_EXECUTE_READWRITE
+                        self.process_handle, None, trampoline_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
                     )
 
                     if not trampoline_addr:
@@ -2972,70 +2939,93 @@ class LicenseDebugger:
 
                     if is_64bit:
                         # x64 trampoline
-                        trampoline = bytearray([
-                            # Save all registers
-                            0x50,                    # push rax
-                            0x51,                    # push rcx
-                            0x52,                    # push rdx
-                            0x53,                    # push rbx
-                            0x54,                    # push rsp
-                            0x55,                    # push rbp
-                            0x56,                    # push rsi
-                            0x57,                    # push rdi
-                            0x41, 0x50,              # push r8
-                            0x41, 0x51,              # push r9
-                            0x41, 0x52,              # push r10
-                            0x41, 0x53,              # push r11
-                            0x41, 0x54,              # push r12
-                            0x41, 0x55,              # push r13
-                            0x41, 0x56,              # push r14
-                            0x41, 0x57,              # push r15
-
-                            # Call our handler (store address later)
-                            0x48, 0xB8,              # mov rax, imm64
-                        ])
+                        trampoline = bytearray(
+                            [
+                                # Save all registers
+                                0x50,  # push rax
+                                0x51,  # push rcx
+                                0x52,  # push rdx
+                                0x53,  # push rbx
+                                0x54,  # push rsp
+                                0x55,  # push rbp
+                                0x56,  # push rsi
+                                0x57,  # push rdi
+                                0x41,
+                                0x50,  # push r8
+                                0x41,
+                                0x51,  # push r9
+                                0x41,
+                                0x52,  # push r10
+                                0x41,
+                                0x53,  # push r11
+                                0x41,
+                                0x54,  # push r12
+                                0x41,
+                                0x55,  # push r13
+                                0x41,
+                                0x56,  # push r14
+                                0x41,
+                                0x57,  # push r15
+                                # Call our handler (store address later)
+                                0x48,
+                                0xB8,  # mov rax, imm64
+                            ]
+                        )
                         # Add handler address (8 bytes)
                         handler_addr_bytes = struct.pack("<Q", id(callback_handler))
                         trampoline.extend(handler_addr_bytes)
-                        trampoline.extend([
-                            0xFF, 0xD0,              # call rax
-
-                            # Restore registers
-                            0x41, 0x5F,              # pop r15
-                            0x41, 0x5E,              # pop r14
-                            0x41, 0x5D,              # pop r13
-                            0x41, 0x5C,              # pop r12
-                            0x41, 0x5B,              # pop r11
-                            0x41, 0x5A,              # pop r10
-                            0x41, 0x59,              # pop r9
-                            0x41, 0x58,              # pop r8
-                            0x5F,                    # pop rdi
-                            0x5E,                    # pop rsi
-                            0x5D,                    # pop rbp
-                            0x5C,                    # pop rsp
-                            0x5B,                    # pop rbx
-                            0x5A,                    # pop rdx
-                            0x59,                    # pop rcx
-                            0x58,                    # pop rax
-                        ])
+                        trampoline.extend(
+                            [
+                                0xFF,
+                                0xD0,  # call rax
+                                # Restore registers
+                                0x41,
+                                0x5F,  # pop r15
+                                0x41,
+                                0x5E,  # pop r14
+                                0x41,
+                                0x5D,  # pop r13
+                                0x41,
+                                0x5C,  # pop r12
+                                0x41,
+                                0x5B,  # pop r11
+                                0x41,
+                                0x5A,  # pop r10
+                                0x41,
+                                0x59,  # pop r9
+                                0x41,
+                                0x58,  # pop r8
+                                0x5F,  # pop rdi
+                                0x5E,  # pop rsi
+                                0x5D,  # pop rbp
+                                0x5C,  # pop rsp
+                                0x5B,  # pop rbx
+                                0x5A,  # pop rdx
+                                0x59,  # pop rcx
+                                0x58,  # pop rax
+                            ]
+                        )
                     else:
                         # x86 trampoline
-                        trampoline = bytearray([
-                            # Save all registers
-                            0x60,                    # pushad
-
-                            # Call our handler
-                            0xB8,                    # mov eax, imm32
-                        ])
+                        trampoline = bytearray(
+                            [
+                                # Save all registers
+                                0x60,  # pushad
+                                # Call our handler
+                                0xB8,  # mov eax, imm32
+                            ]
+                        )
                         # Add handler address (4 bytes)
                         handler_addr_bytes = struct.pack("<I", id(callback_handler))
                         trampoline.extend(handler_addr_bytes)
-                        trampoline.extend([
-                            0xFF, 0xD0,              # call eax
-
-                            # Restore registers
-                            0x61,                    # popad
-                        ])
+                        trampoline.extend(
+                            [
+                                0xFF,
+                                0xD0,  # call eax
+                                # Restore registers
+                                0x61,  # popad
+                            ]
+                        )
 
                     # Add original instructions (first 5 bytes minimum)
                     trampoline.extend(original_bytes[:5])
@@ -3060,7 +3050,7 @@ class LicenseDebugger:
                         self.tls_hooks[callback_addr] = {
                             "original": original_bytes,
                             "trampoline": trampoline_addr,
-                            "handler": callback_handler
+                            "handler": callback_handler,
                         }
                         hooked_count += 1
                         logger.info(f"Hooked TLS callback at 0x{callback_addr:X}")
@@ -3089,7 +3079,7 @@ class LicenseDebugger:
             "callback_count": 0,
             "suspicious_patterns": [],
             "protection_likelihood": "None",
-            "detected_techniques": []
+            "detected_techniques": [],
         }
 
         if not self.process_handle:
@@ -3165,7 +3155,9 @@ class LicenseDebugger:
 
                 # Check callback size - large callbacks are suspicious
                 if len(instructions) > 30:
-                    protection_info["suspicious_patterns"].append(f"Large callback at 0x{callback_addr:X} ({len(instructions)} instructions)")
+                    protection_info["suspicious_patterns"].append(
+                        f"Large callback at 0x{callback_addr:X} ({len(instructions)} instructions)"
+                    )
                     suspicion_score += 1
 
             # Remove duplicate techniques
@@ -3395,7 +3387,7 @@ class LicenseDebugger:
         e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
         # Parse NT headers
         nt_header_offset = e_lfanew
-        if pe_header[nt_header_offset:nt_header_offset + 4] != b"PE\x00\x00":
+        if pe_header[nt_header_offset : nt_header_offset + 4] != b"PE\x00\x00":
             return False
         return True
 
@@ -3403,7 +3395,7 @@ class LicenseDebugger:
         """Parse NT header to get architecture info."""
         e_lfanew = struct.unpack("<I", pe_header[0x3C:0x40])[0]
         nt_header_offset = e_lfanew
-        machine = struct.unpack("<H", pe_header[nt_header_offset + 4:nt_header_offset + 6])[0]
+        machine = struct.unpack("<H", pe_header[nt_header_offset + 4 : nt_header_offset + 6])[0]
         is_64bit = machine == 0x8664
         return nt_header_offset, is_64bit
 
@@ -3417,8 +3409,8 @@ class LicenseDebugger:
             # 32-bit: Delay Import Directory is at offset 184 in optional header
             delay_import_offset = opt_header_offset + 184
 
-        delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset:delay_import_offset + 4])[0]
-        delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4:delay_import_offset + 8])[0]
+        delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset : delay_import_offset + 4])[0]
+        delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4 : delay_import_offset + 8])[0]
         return delay_import_rva, delay_import_size
 
     def _parse_delay_descriptors(self, module_base, delay_import_rva, delay_import_size, is_64bit):
@@ -3452,8 +3444,7 @@ class LicenseDebugger:
 
             # Parse individual descriptor
             descriptor_imports = self._parse_delay_descriptor(
-                module_base, attributes, dll_name_rva, module_handle_rva,
-                iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit
+                module_base, attributes, dll_name_rva, module_handle_rva, iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit
             )
 
             if descriptor_imports:
@@ -3462,8 +3453,9 @@ class LicenseDebugger:
 
         return delayed_imports
 
-    def _parse_delay_descriptor(self, module_base, attributes, dll_name_rva, module_handle_rva,
-                               iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit):
+    def _parse_delay_descriptor(
+        self, module_base, attributes, dll_name_rva, module_handle_rva, iat_rva, int_rva, bound_iat_rva, timestamp, is_64bit
+    ):
         """Parse a single delay import descriptor."""
         # Determine if RVAs are relative to image base (new format) or virtual addresses (old format)
         is_new_format = (attributes & 0x1) != 0
@@ -3485,9 +3477,7 @@ class LicenseDebugger:
 
         # Parse Import Name Table and IAT
         if int_rva and iat_rva:
-            functions = self._parse_import_table(
-                module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded
-            )
+            functions = self._parse_import_table(module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded)
 
         # Check for bound imports in the bound IAT
         if bound_iat_rva and timestamp != 0:
@@ -3536,23 +3526,25 @@ class LicenseDebugger:
                 iat_entry = 0
 
             # Get function information
-            func_info = self._get_function_info(
-                module_base, int_entry, is_new_format, is_64bit, j
-            )
+            func_info = self._get_function_info(module_base, int_entry, is_new_format, is_64bit, j)
 
             if func_info:
                 func_name, func_addr = func_info
 
                 # Determine if function is bound (already resolved)
-                is_bound = self._determine_bound_status(
-                    is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size
-                )
+                is_bound = self._determine_bound_status(is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size)
 
                 functions.append((func_addr, func_name, is_bound))
 
                 # Log interesting delayed imports
-                if func_name.lower() in ["loadlibrarya", "loadlibraryw", "getprocaddress",
-                                         "virtualprotect", "virtualalloc", "createthread"]:
+                if func_name.lower() in [
+                    "loadlibrarya",
+                    "loadlibraryw",
+                    "getprocaddress",
+                    "virtualprotect",
+                    "virtualalloc",
+                    "createthread",
+                ]:
                     logger.info(f"Found delayed import: {func_name} at 0x{func_addr:X} (bound={is_bound})")
 
         return functions
@@ -3602,8 +3594,15 @@ class LicenseDebugger:
 
             # Check for suspicious delayed imports often used by packers/protectors
             suspicious_dlls = ["kernel32.dll", "ntdll.dll", "user32.dll", "advapi32.dll"]
-            suspicious_apis = ["virtualprotect", "virtualalloc", "loadlibrary", "getprocaddress",
-                             "createremotethread", "writeprocessmemory", "readprocessmemory"]
+            suspicious_apis = [
+                "virtualprotect",
+                "virtualalloc",
+                "loadlibrary",
+                "getprocaddress",
+                "createremotethread",
+                "writeprocessmemory",
+                "readprocessmemory",
+            ]
 
             for dll_name, imports in delayed_imports.items():
                 if dll_name.lower() in suspicious_dlls:
@@ -3659,11 +3658,7 @@ class LicenseDebugger:
                 # Allocate trampoline for the hook
                 trampoline_size = 256
                 trampoline = self.kernel32.VirtualAllocEx(
-                    self.process_handle,
-                    None,
-                    trampoline_size,
-                    MEM_COMMIT | MEM_RESERVE,
-                    PAGE_EXECUTE_READWRITE
+                    self.process_handle, None, trampoline_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
                 )
 
                 if not trampoline:
@@ -3671,15 +3666,10 @@ class LicenseDebugger:
                     return False
 
                 # Store the hook info
-                if not hasattr(self, 'delayed_import_hooks'):
+                if not hasattr(self, "delayed_import_hooks"):
                     self.delayed_import_hooks = {}
 
-                self.delayed_import_hooks[addr] = {
-                    'dll': dll_name,
-                    'function': name,
-                    'handler': hook_handler,
-                    'trampoline': trampoline
-                }
+                self.delayed_import_hooks[addr] = {"dll": dll_name, "function": name, "handler": hook_handler, "trampoline": trampoline}
 
                 # Monitor the IAT entry for changes
                 # This would typically be done with a memory breakpoint or polling
@@ -3688,11 +3678,7 @@ class LicenseDebugger:
                 old_protect = ctypes.c_ulong()
 
                 if self.kernel32.VirtualProtectEx(
-                    self.process_handle,
-                    ctypes.c_void_p(iat_page),
-                    0x1000,
-                    PAGE_GUARD | PAGE_READWRITE,
-                    ctypes.byref(old_protect)
+                    self.process_handle, ctypes.c_void_p(iat_page), 0x1000, PAGE_GUARD | PAGE_READWRITE, ctypes.byref(old_protect)
                 ):
                     logger.info(f"Set guard page on delayed import IAT at 0x{iat_page:X}")
                     return True
@@ -3753,7 +3739,7 @@ class LicenseDebugger:
     def _manual_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
         """Manual encoding for common instructions."""
         mnemonic = mnemonic.lower()
-        is_64bit = (arch == "x64")
+        is_64bit = arch == "x64"
 
         # Basic instruction encoding table
         if mnemonic == "nop":
@@ -3761,7 +3747,7 @@ class LicenseDebugger:
         elif mnemonic == "ret":
             return self._encode_ret(operands)
         elif mnemonic == "int3":
-            return b"\xCC"
+            return b"\xcc"
         elif mnemonic == "int":
             return self._encode_int(operands)
         elif mnemonic == "push":
@@ -3790,15 +3776,15 @@ class LicenseDebugger:
         if operands:
             # RET with immediate
             imm = int(operands, 0)
-            return b"\xC2" + struct.pack("<H", imm)
-        return b"\xC3"
+            return b"\xc2" + struct.pack("<H", imm)
+        return b"\xc3"
 
     def _encode_int(self, operands: str) -> bytes:
         """Encode INT instruction."""
         imm = int(operands, 0)
         if imm == 3:
-            return b"\xCC"
-        return b"\xCD" + bytes([imm])
+            return b"\xcc"
+        return b"\xcd" + bytes([imm])
 
     def _encode_push(self, operands: str, is_64bit: bool) -> bytes:
         """Encode PUSH instruction."""
@@ -3820,8 +3806,7 @@ class LicenseDebugger:
             return b"\x57"
         elif is_64bit and operands.startswith("r"):
             # 64-bit extended registers
-            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
-                      "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3, "r12": 4, "r13": 5, "r14": 6, "r15": 7}
             if operands in reg_map:
                 return bytes([0x41, 0x50 + reg_map[operands]])
         else:
@@ -3829,7 +3814,7 @@ class LicenseDebugger:
             try:
                 imm = int(operands, 0)
                 if -128 <= imm <= 127:
-                    return b"\x6A" + struct.pack("b", imm)
+                    return b"\x6a" + struct.pack("b", imm)
                 else:
                     return b"\x68" + struct.pack("<I", imm & 0xFFFFFFFF)
             except (struct.error, TypeError, OverflowError) as e:
@@ -3844,20 +3829,19 @@ class LicenseDebugger:
         elif operands in ["rcx", "ecx"]:
             return b"\x59"
         elif operands in ["rdx", "edx"]:
-            return b"\x5A"
+            return b"\x5a"
         elif operands in ["rbx", "ebx"]:
-            return b"\x5B"
+            return b"\x5b"
         elif operands in ["rsp", "esp"]:
-            return b"\x5C"
+            return b"\x5c"
         elif operands in ["rbp", "ebp"]:
-            return b"\x5D"
+            return b"\x5d"
         elif operands in ["rsi", "esi"]:
-            return b"\x5E"
+            return b"\x5e"
         elif operands in ["rdi", "edi"]:
-            return b"\x5F"
+            return b"\x5f"
         elif is_64bit and operands.startswith("r"):
-            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3,
-                      "r12": 4, "r13": 5, "r14": 6, "r15": 7}
+            reg_map = {"r8": 0, "r9": 1, "r10": 2, "r11": 3, "r12": 4, "r13": 5, "r14": 6, "r15": 7}
             if operands in reg_map:
                 return bytes([0x41, 0x58 + reg_map[operands]])
 
@@ -3873,25 +3857,25 @@ class LicenseDebugger:
             current_pos = 0  # Will be filled by patcher
             offset = target - (current_pos + 2)  # 2 bytes for short jump
             if -128 <= offset <= 127:
-                return b"\xEB" + bytes([offset & 0xFF])  # Short jump with calculated offset
+                return b"\xeb" + bytes([offset & 0xFF])  # Short jump with calculated offset
             else:
                 # Near jump for longer distances
                 offset = target - (current_pos + 5)  # 5 bytes for near jump
-                return b"\xE9" + offset.to_bytes(4, 'little', signed=True)
+                return b"\xe9" + offset.to_bytes(4, "little", signed=True)
         elif operands in ["rax", "eax"]:
-            return b"\xFF\xE0"  # JMP RAX/EAX
+            return b"\xff\xe0"  # JMP RAX/EAX
         elif operands in ["rbx", "ebx"]:
-            return b"\xFF\xE3"  # JMP RBX/EBX
+            return b"\xff\xe3"  # JMP RBX/EBX
         else:
             # JMP rel8
-            return b"\xEB\x00"
+            return b"\xeb\x00"
 
     def _encode_call(self, operands: str, is_64bit: bool) -> bytes:
         """Encode CALL instruction."""
         if operands in ["rax", "eax"]:
-            return b"\xFF\xD0"  # CALL RAX/EAX
+            return b"\xff\xd0"  # CALL RAX/EAX
         elif operands in ["rbx", "ebx"]:
-            return b"\xFF\xD3"  # CALL RBX/EBX
+            return b"\xff\xd3"  # CALL RBX/EBX
         else:
             # CALL rel32 - calculate relative offset
             if operands.startswith("0x") or operands.isdigit():
@@ -3899,10 +3883,10 @@ class LicenseDebugger:
                 # Calculate relative offset from current position
                 current_pos = 0  # Will be filled by patcher during runtime
                 offset = target - (current_pos + 5)  # 5 bytes for CALL rel32
-                return b"\xE8" + offset.to_bytes(4, 'little', signed=True)
+                return b"\xe8" + offset.to_bytes(4, "little", signed=True)
             else:
                 # Default CALL with zero offset - will be patched at runtime
-                return b"\xE8\x00\x00\x00\x00"
+                return b"\xe8\x00\x00\x00\x00"
 
     def _encode_mov(self, operands: str, is_64bit: bool) -> bytes:
         """Encode MOV instruction."""
@@ -3911,10 +3895,8 @@ class LicenseDebugger:
             dst, src = parts
 
             # MOV reg, reg
-            reg_map_32 = {"eax": 0, "ecx": 1, "edx": 2, "ebx": 3,
-                          "esp": 4, "ebp": 5, "esi": 6, "edi": 7}
-            reg_map_64 = {"rax": 0, "rcx": 1, "rdx": 2, "rbx": 3,
-                          "rsp": 4, "rbp": 5, "rsi": 6, "rdi": 7}
+            reg_map_32 = {"eax": 0, "ecx": 1, "edx": 2, "ebx": 3, "esp": 4, "ebp": 5, "esi": 6, "edi": 7}
+            reg_map_64 = {"rax": 0, "rcx": 1, "rdx": 2, "rbx": 3, "rsp": 4, "rbp": 5, "rsi": 6, "rdi": 7}
 
             if is_64bit and dst in reg_map_64 and src in reg_map_64:
                 # MOV r64, r64
@@ -3925,11 +3907,11 @@ class LicenseDebugger:
             elif dst == "rax" and src.startswith("0x"):
                 # MOV RAX, imm64
                 imm = int(src, 0)
-                return b"\x48\xB8" + struct.pack("<Q", imm)
+                return b"\x48\xb8" + struct.pack("<Q", imm)
             elif dst == "eax" and src.startswith("0x"):
                 # MOV EAX, imm32
                 imm = int(src, 0)
-                return b"\xB8" + struct.pack("<I", imm & 0xFFFFFFFF)
+                return b"\xb8" + struct.pack("<I", imm & 0xFFFFFFFF)
 
         return b""
 
@@ -3940,16 +3922,16 @@ class LicenseDebugger:
             # XOR reg, reg (same register - zero it)
             if parts[0] in ["rax", "eax"]:
                 if is_64bit and parts[0] == "rax":
-                    return b"\x48\x31\xC0"  # XOR RAX, RAX
-                return b"\x31\xC0"  # XOR EAX, EAX
+                    return b"\x48\x31\xc0"  # XOR RAX, RAX
+                return b"\x31\xc0"  # XOR EAX, EAX
             elif parts[0] in ["rcx", "ecx"]:
                 if is_64bit and parts[0] == "rcx":
-                    return b"\x48\x31\xC9"  # XOR RCX, RCX
-                return b"\x31\xC9"  # XOR ECX, ECX
+                    return b"\x48\x31\xc9"  # XOR RCX, RCX
+                return b"\x31\xc9"  # XOR ECX, ECX
             elif parts[0] in ["rdx", "edx"]:
                 if is_64bit and parts[0] == "rdx":
-                    return b"\x48\x31\xD2"  # XOR RDX, RDX
-                return b"\x31\xD2"  # XOR EDX, EDX
+                    return b"\x48\x31\xd2"  # XOR RDX, RDX
+                return b"\x31\xd2"  # XOR EDX, EDX
 
         return b""
 
@@ -3963,12 +3945,12 @@ class LicenseDebugger:
                 imm = int(src, 0)
                 if -128 <= imm <= 127:
                     if is_64bit and dst == "rsp":
-                        return b"\x48\x83\xC4" + struct.pack("b", imm)
-                    return b"\x83\xC4" + struct.pack("b", imm)
+                        return b"\x48\x83\xc4" + struct.pack("b", imm)
+                    return b"\x83\xc4" + struct.pack("b", imm)
                 else:
                     if is_64bit and dst == "rsp":
-                        return b"\x48\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
-                    return b"\x81\xC4" + struct.pack("<I", imm & 0xFFFFFFFF)
+                        return b"\x48\x81\xc4" + struct.pack("<I", imm & 0xFFFFFFFF)
+                    return b"\x81\xc4" + struct.pack("<I", imm & 0xFFFFFFFF)
 
         return b""
 
@@ -3982,18 +3964,24 @@ class LicenseDebugger:
                 imm = int(src, 0)
                 if -128 <= imm <= 127:
                     if is_64bit and dst == "rsp":
-                        return b"\x48\x83\xEC" + struct.pack("b", imm)
-                    return b"\x83\xEC" + struct.pack("b", imm)
+                        return b"\x48\x83\xec" + struct.pack("b", imm)
+                    return b"\x83\xec" + struct.pack("b", imm)
                 else:
                     if is_64bit and dst == "rsp":
-                        return b"\x48\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
-                    return b"\x81\xEC" + struct.pack("<I", imm & 0xFFFFFFFF)
+                        return b"\x48\x81\xec" + struct.pack("<I", imm & 0xFFFFFFFF)
+                    return b"\x81\xec" + struct.pack("<I", imm & 0xFFFFFFFF)
 
         return b""
 
-    def encode_instruction(self, opcode: bytes, modrm: Optional[int] = None,
-                          sib: Optional[int] = None, displacement: Optional[bytes] = None,
-                          immediate: Optional[bytes] = None, prefixes: Optional[bytes] = None) -> bytes:
+    def encode_instruction(
+        self,
+        opcode: bytes,
+        modrm: Optional[int] = None,
+        sib: Optional[int] = None,
+        displacement: Optional[bytes] = None,
+        immediate: Optional[bytes] = None,
+        prefixes: Optional[bytes] = None,
+    ) -> bytes:
         """Encode x86/x64 instruction with all components.
 
         Args:
@@ -4035,8 +4023,7 @@ class LicenseDebugger:
 
         return bytes(instruction)
 
-    def calculate_relative_jump(self, from_addr: int, to_addr: int,
-                               instruction_size: int) -> bytes:
+    def calculate_relative_jump(self, from_addr: int, to_addr: int, instruction_size: int) -> bytes:
         """Calculate relative jump offset for JMP/CALL instructions.
 
         Args:
@@ -4067,8 +4054,7 @@ class LicenseDebugger:
         else:
             raise ValueError(f"Invalid instruction size: {instruction_size}")
 
-    def generate_dynamic_patch(self, target_addr: int, patch_type: str,
-                              **kwargs) -> bytes:
+    def generate_dynamic_patch(self, target_addr: int, patch_type: str, **kwargs) -> bytes:
         """Generate dynamic patches for various scenarios.
 
         Args:
@@ -4090,18 +4076,18 @@ class LicenseDebugger:
                     # Try short jump first
                     try:
                         offset = self.calculate_relative_jump(target_addr, dest_addr, 2)
-                        return b"\xEB" + offset
+                        return b"\xeb" + offset
                     except (ValueError, OverflowError, struct.error):
                         # Use near jump
                         offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
-                        return b"\xE9" + offset
+                        return b"\xe9" + offset
 
             elif patch_type == "call":
                 # Generate CALL to destination
                 dest_addr = kwargs.get("destination", 0)
                 if dest_addr:
                     offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
-                    return b"\xE8" + offset
+                    return b"\xe8" + offset
 
             elif patch_type == "nop":
                 # Generate NOP sled of specified length
@@ -4112,8 +4098,8 @@ class LicenseDebugger:
                 # Generate RET with optional stack cleanup
                 stack_cleanup = kwargs.get("stack_cleanup", 0)
                 if stack_cleanup:
-                    return b"\xC2" + struct.pack("<H", stack_cleanup)
-                return b"\xC3"
+                    return b"\xc2" + struct.pack("<H", stack_cleanup)
+                return b"\xc3"
 
             elif patch_type == "bypass":
                 # Generate conditional jump bypass
@@ -4121,7 +4107,7 @@ class LicenseDebugger:
 
                 if condition == "always":
                     # Convert conditional jump to unconditional
-                    return b"\xEB"  # Short JMP
+                    return b"\xeb"  # Short JMP
                 elif condition == "never":
                     # Convert to NOP
                     return b"\x90\x90"  # Two NOPs for JCC
@@ -4146,18 +4132,18 @@ class LicenseDebugger:
                     # Call hook
                     if arch == "x64":
                         # MOV RAX, hook_addr
-                        patch.extend(b"\x48\xB8")
+                        patch.extend(b"\x48\xb8")
                         patch.extend(struct.pack("<Q", hook_addr))
                         # CALL RAX
-                        patch.extend(b"\xFF\xD0")
+                        patch.extend(b"\xff\xd0")
                     else:
                         # PUSH hook_addr
                         patch.append(0x68)
                         patch.extend(struct.pack("<I", hook_addr))
                         # CALL [ESP]
-                        patch.extend(b"\xFF\x14\x24")
+                        patch.extend(b"\xff\x14\x24")
                         # ADD ESP, 4
-                        patch.extend(b"\x83\xC4\x04")
+                        patch.extend(b"\x83\xc4\x04")
 
                     # Restore registers
                     patch.append(0x61)  # POPAD
@@ -4167,9 +4153,8 @@ class LicenseDebugger:
 
                     # Jump back
                     return_addr = target_addr + len(original_bytes)
-                    offset = self.calculate_relative_jump(
-                        target_addr + len(patch), return_addr, 5)
-                    patch.extend(b"\xE9" + offset)
+                    offset = self.calculate_relative_jump(target_addr + len(patch), return_addr, 5)
+                    patch.extend(b"\xe9" + offset)
 
                     return bytes(patch)
 
@@ -4179,7 +4164,7 @@ class LicenseDebugger:
                 if new_function:
                     # JMP to new function
                     offset = self.calculate_relative_jump(target_addr, new_function, 5)
-                    return b"\xE9" + offset
+                    return b"\xe9" + offset
 
             return b""
 
@@ -4187,8 +4172,7 @@ class LicenseDebugger:
             logger.error(f"Failed to generate dynamic patch: {e}")
             return b""
 
-    def relocate_code(self, code: bytes, old_base: int, new_base: int,
-                     reloc_offsets: List[int]) -> bytes:
+    def relocate_code(self, code: bytes, old_base: int, new_base: int, reloc_offsets: List[int]) -> bytes:
         """Relocate code to a new base address.
 
         Args:
@@ -4209,11 +4193,11 @@ class LicenseDebugger:
             for offset in reloc_offsets:
                 if offset + 4 <= len(relocated):
                     # Read current value
-                    current = struct.unpack("<I", relocated[offset:offset+4])[0]
+                    current = struct.unpack("<I", relocated[offset : offset + 4])[0]
                     # Apply relocation
                     new_value = (current + delta) & 0xFFFFFFFF
                     # Write back
-                    relocated[offset:offset+4] = struct.pack("<I", new_value)
+                    relocated[offset : offset + 4] = struct.pack("<I", new_value)
 
             # Fix relative jumps and calls
             i = 0
@@ -4221,26 +4205,25 @@ class LicenseDebugger:
                 # Check for JMP rel32 (E9)
                 if i + 5 <= len(relocated) and relocated[i] == 0xE9:
                     # Read relative offset
-                    rel_offset = struct.unpack("<i", relocated[i+1:i+5])[0]
+                    rel_offset = struct.unpack("<i", relocated[i + 1 : i + 5])[0]
                     # Calculate absolute target
                     old_target = old_base + i + 5 + rel_offset
                     # Calculate new relative offset
                     new_rel_offset = old_target - (new_base + i + 5)
                     # Write back
-                    relocated[i+1:i+5] = struct.pack("<i", new_rel_offset)
+                    relocated[i + 1 : i + 5] = struct.pack("<i", new_rel_offset)
                     i += 5
 
                 # Check for CALL rel32 (E8)
                 elif i + 5 <= len(relocated) and relocated[i] == 0xE8:
-                    rel_offset = struct.unpack("<i", relocated[i+1:i+5])[0]
+                    rel_offset = struct.unpack("<i", relocated[i + 1 : i + 5])[0]
                     old_target = old_base + i + 5 + rel_offset
                     new_rel_offset = old_target - (new_base + i + 5)
-                    relocated[i+1:i+5] = struct.pack("<i", new_rel_offset)
+                    relocated[i + 1 : i + 5] = struct.pack("<i", new_rel_offset)
                     i += 5
 
                 # Check for short JMP (EB) and conditional jumps (70-7F)
-                elif i + 2 <= len(relocated) and (relocated[i] == 0xEB or
-                                                  (0x70 <= relocated[i] <= 0x7F)):
+                elif i + 2 <= len(relocated) and (relocated[i] == 0xEB or (0x70 <= relocated[i] <= 0x7F)):
                     # Short jumps are position-independent within the relocated block
                     i += 2
                 else:
@@ -4272,42 +4255,83 @@ class LicenseDebugger:
                 message = params.get("message", "Injected").encode() + b"\x00"
 
                 if arch == "x86":
-                    shellcode = bytearray([
-                        # Push strings onto stack
-                        0x68,  # PUSH title
-                    ])
+                    shellcode = bytearray(
+                        [
+                            # Push strings onto stack
+                            0x68,  # PUSH title
+                        ]
+                    )
                     # Add title address (needs runtime calculation)
                     shellcode.extend(b"\x00\x00\x00\x00")
-                    shellcode.extend([
-                        0x68,  # PUSH message
-                    ])
+                    shellcode.extend(
+                        [
+                            0x68,  # PUSH message
+                        ]
+                    )
                     shellcode.extend(b"\x00\x00\x00\x00")
-                    shellcode.extend([
-                        0x6A, 0x00,  # PUSH 0 (MB_OK)
-                        0x6A, 0x00,  # PUSH 0 (hWnd)
-                        # CALL MessageBoxA
-                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
-                        # Exit
-                        0xC3,  # RET
-                    ])
+                    shellcode.extend(
+                        [
+                            0x6A,
+                            0x00,  # PUSH 0 (MB_OK)
+                            0x6A,
+                            0x00,  # PUSH 0 (hWnd)
+                            # CALL MessageBoxA
+                            0xE8,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # Needs relocation
+                            # Exit
+                            0xC3,  # RET
+                        ]
+                    )
                     # Append strings
                     shellcode.extend(title)
                     shellcode.extend(message)
                 else:
                     # x64 shellcode
-                    shellcode = bytearray([
-                        # Set up parameters for MessageBoxA
-                        0x48, 0x31, 0xC9,  # XOR RCX, RCX (hWnd = NULL)
-                        0x48, 0x8D, 0x15, 0x20, 0x00, 0x00, 0x00,  # LEA RDX, [RIP+0x20] (message)
-                        0x4C, 0x8D, 0x05, 0x30, 0x00, 0x00, 0x00,  # LEA R8, [RIP+0x30] (title)
-                        0x45, 0x31, 0xC9,  # XOR R9D, R9D (MB_OK)
-                        # Call MessageBoxA (needs runtime resolution)
-                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # CALL [RIP+0] - needs relocation
-                        # Return
-                        0xC3,
-                        # Padding
-                        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-                    ])
+                    shellcode = bytearray(
+                        [
+                            # Set up parameters for MessageBoxA
+                            0x48,
+                            0x31,
+                            0xC9,  # XOR RCX, RCX (hWnd = NULL)
+                            0x48,
+                            0x8D,
+                            0x15,
+                            0x20,
+                            0x00,
+                            0x00,
+                            0x00,  # LEA RDX, [RIP+0x20] (message)
+                            0x4C,
+                            0x8D,
+                            0x05,
+                            0x30,
+                            0x00,
+                            0x00,
+                            0x00,  # LEA R8, [RIP+0x30] (title)
+                            0x45,
+                            0x31,
+                            0xC9,  # XOR R9D, R9D (MB_OK)
+                            # Call MessageBoxA (needs runtime resolution)
+                            0xFF,
+                            0x15,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # CALL [RIP+0] - needs relocation
+                            # Return
+                            0xC3,
+                            # Padding
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                        ]
+                    )
                     # Append strings
                     shellcode.extend(message)
                     shellcode.extend(title)
@@ -4322,32 +4346,60 @@ class LicenseDebugger:
 
                 if arch == "x86":
                     # WinExec shellcode
-                    shellcode.extend([
-                        # Push command string address
-                        0x68,
-                    ])
+                    shellcode.extend(
+                        [
+                            # Push command string address
+                            0x68,
+                        ]
+                    )
                     shellcode.extend(b"\x00\x00\x00\x00")  # Needs relocation
-                    shellcode.extend([
-                        0x6A, 0x05,  # PUSH 5 (SW_SHOW)
-                        # CALL WinExec
-                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
-                        # Exit
-                        0xC3,
-                    ])
+                    shellcode.extend(
+                        [
+                            0x6A,
+                            0x05,  # PUSH 5 (SW_SHOW)
+                            # CALL WinExec
+                            0xE8,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # Needs relocation
+                            # Exit
+                            0xC3,
+                        ]
+                    )
                 else:
                     # x64 WinExec
-                    shellcode.extend([
-                        # MOV RCX, command_addr
-                        0x48, 0x8D, 0x0D, 0x10, 0x00, 0x00, 0x00,  # LEA RCX, [RIP+0x10]
-                        # MOV EDX, 5 (SW_SHOW)
-                        0xBA, 0x05, 0x00, 0x00, 0x00,
-                        # CALL WinExec
-                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
-                        # RET
-                        0xC3,
-                        # Padding
-                        0x90, 0x90, 0x90,
-                    ])
+                    shellcode.extend(
+                        [
+                            # MOV RCX, command_addr
+                            0x48,
+                            0x8D,
+                            0x0D,
+                            0x10,
+                            0x00,
+                            0x00,
+                            0x00,  # LEA RCX, [RIP+0x10]
+                            # MOV EDX, 5 (SW_SHOW)
+                            0xBA,
+                            0x05,
+                            0x00,
+                            0x00,
+                            0x00,
+                            # CALL WinExec
+                            0xFF,
+                            0x15,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # Needs relocation
+                            # RET
+                            0xC3,
+                            # Padding
+                            0x90,
+                            0x90,
+                            0x90,
+                        ]
+                    )
 
                 # Append command
                 shellcode.extend(command)
@@ -4363,28 +4415,57 @@ class LicenseDebugger:
                 shellcode = bytearray()
 
                 if arch == "x86":
-                    shellcode.extend([
-                        # Push DLL path
-                        0x68,
-                    ])
+                    shellcode.extend(
+                        [
+                            # Push DLL path
+                            0x68,
+                        ]
+                    )
                     shellcode.extend(b"\x00\x00\x00\x00")  # DLL path address
-                    shellcode.extend([
-                        # CALL LoadLibraryA
-                        0xE8, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
-                        # RET
-                        0xC3,
-                    ])
+                    shellcode.extend(
+                        [
+                            # CALL LoadLibraryA
+                            0xE8,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # Needs relocation
+                            # RET
+                            0xC3,
+                        ]
+                    )
                 else:
-                    shellcode.extend([
-                        # MOV RCX, dll_path
-                        0x48, 0x8D, 0x0D, 0x10, 0x00, 0x00, 0x00,  # LEA RCX, [RIP+0x10]
-                        # CALL LoadLibraryA
-                        0xFF, 0x15, 0x00, 0x00, 0x00, 0x00,  # Needs relocation
-                        # RET
-                        0xC3,
-                        # Padding
-                        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-                    ])
+                    shellcode.extend(
+                        [
+                            # MOV RCX, dll_path
+                            0x48,
+                            0x8D,
+                            0x0D,
+                            0x10,
+                            0x00,
+                            0x00,
+                            0x00,  # LEA RCX, [RIP+0x10]
+                            # CALL LoadLibraryA
+                            0xFF,
+                            0x15,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x00,  # Needs relocation
+                            # RET
+                            0xC3,
+                            # Padding
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                            0x90,
+                        ]
+                    )
 
                 shellcode.extend(dll_path)
                 return bytes(shellcode)
@@ -4455,10 +4536,16 @@ class LicenseDebugger:
 
             if arch == "x86":
                 # Get EIP using CALL/POP technique
-                pic.extend([
-                    0xE8, 0x00, 0x00, 0x00, 0x00,  # CALL $+5
-                    0x5D,  # POP EBP (EBP now contains EIP)
-                ])
+                pic.extend(
+                    [
+                        0xE8,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,  # CALL $+5
+                        0x5D,  # POP EBP (EBP now contains EIP)
+                    ]
+                )
 
                 for op in operations:
                     op_type = op.get("type")
@@ -4467,14 +4554,20 @@ class LicenseDebugger:
                     if op_type == "call":
                         # Call function by offset from current position
                         offset = params.get("offset", 0)
-                        pic.extend([
-                            # LEA EAX, [EBP + offset]
-                            0x8D, 0x85,
-                        ])
+                        pic.extend(
+                            [
+                                # LEA EAX, [EBP + offset]
+                                0x8D,
+                                0x85,
+                            ]
+                        )
                         pic.extend(struct.pack("<I", offset))
-                        pic.extend([
-                            0xFF, 0xD0,  # CALL EAX
-                        ])
+                        pic.extend(
+                            [
+                                0xFF,
+                                0xD0,  # CALL EAX
+                            ]
+                        )
 
                     elif op_type == "load":
                         # Load data from relative offset
@@ -4483,20 +4576,26 @@ class LicenseDebugger:
 
                         reg_codes = {"eax": 0x85, "ebx": 0x9D, "ecx": 0x8D, "edx": 0x95}
                         if reg in reg_codes:
-                            pic.extend([
-                                # MOV reg, [EBP + offset]
-                                0x8B, reg_codes[reg],
-                            ])
+                            pic.extend(
+                                [
+                                    # MOV reg, [EBP + offset]
+                                    0x8B,
+                                    reg_codes[reg],
+                                ]
+                            )
                             pic.extend(struct.pack("<I", offset))
 
                     elif op_type == "store":
                         # Store data at relative offset
                         offset = params.get("offset", 0)
                         value = params.get("value", 0)
-                        pic.extend([
-                            # MOV DWORD PTR [EBP + offset], value
-                            0xC7, 0x85,
-                        ])
+                        pic.extend(
+                            [
+                                # MOV DWORD PTR [EBP + offset], value
+                                0xC7,
+                                0x85,
+                            ]
+                        )
                         pic.extend(struct.pack("<I", offset))
                         pic.extend(struct.pack("<I", value))
 
@@ -4509,14 +4608,21 @@ class LicenseDebugger:
                     if op_type == "call":
                         # Call function using RIP-relative addressing
                         offset = params.get("offset", 0)
-                        pic.extend([
-                            # LEA RAX, [RIP + offset]
-                            0x48, 0x8D, 0x05,
-                        ])
+                        pic.extend(
+                            [
+                                # LEA RAX, [RIP + offset]
+                                0x48,
+                                0x8D,
+                                0x05,
+                            ]
+                        )
                         pic.extend(struct.pack("<i", offset))
-                        pic.extend([
-                            0xFF, 0xD0,  # CALL RAX
-                        ])
+                        pic.extend(
+                            [
+                                0xFF,
+                                0xD0,  # CALL RAX
+                            ]
+                        )
 
                     elif op_type == "load":
                         # Load using RIP-relative addressing
@@ -4525,10 +4631,14 @@ class LicenseDebugger:
 
                         reg_codes = {"rax": 0x05, "rbx": 0x1D, "rcx": 0x0D, "rdx": 0x15}
                         if reg in reg_codes:
-                            pic.extend([
-                                # MOV reg, [RIP + offset]
-                                0x48, 0x8B, reg_codes[reg],
-                            ])
+                            pic.extend(
+                                [
+                                    # MOV reg, [RIP + offset]
+                                    0x48,
+                                    0x8B,
+                                    reg_codes[reg],
+                                ]
+                            )
                             pic.extend(struct.pack("<i", offset))
 
                     elif op_type == "store":
@@ -4545,10 +4655,18 @@ class LicenseDebugger:
 
                     elif op_type == "get_base":
                         # Get current RIP
-                        pic.extend([
-                            # LEA RAX, [RIP]
-                            0x48, 0x8D, 0x05, 0x00, 0x00, 0x00, 0x00,
-                        ])
+                        pic.extend(
+                            [
+                                # LEA RAX, [RIP]
+                                0x48,
+                                0x8D,
+                                0x05,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                            ]
+                        )
 
             # Add terminator
             pic.append(0xC3)  # RET
@@ -4574,13 +4692,13 @@ class LicenseDebugger:
 
         # Use varied NOPs to avoid pattern detection
         nop_variations = [
-            b"\x90",                    # NOP
-            b"\x66\x90",                # 66 NOP
-            b"\x0F\x1F\x00",           # NOP DWORD ptr [EAX]
-            b"\x0F\x1F\x40\x00",       # NOP DWORD ptr [EAX+00]
-            b"\x0F\x1F\x44\x00\x00",   # NOP DWORD ptr [EAX+EAX+00]
-            b"\x66\x0F\x1F\x44\x00\x00", # 66 NOP DWORD ptr [AX+AX+00]
-            b"\x0F\x1F\x80\x00\x00\x00\x00", # NOP DWORD ptr [EAX+00000000]
+            b"\x90",  # NOP
+            b"\x66\x90",  # 66 NOP
+            b"\x0f\x1f\x00",  # NOP DWORD ptr [EAX]
+            b"\x0f\x1f\x40\x00",  # NOP DWORD ptr [EAX+00]
+            b"\x0f\x1f\x44\x00\x00",  # NOP DWORD ptr [EAX+EAX+00]
+            b"\x66\x0f\x1f\x44\x00\x00",  # 66 NOP DWORD ptr [AX+AX+00]
+            b"\x0f\x1f\x80\x00\x00\x00\x00",  # NOP DWORD ptr [EAX+00000000]
         ]
 
         sled = bytearray()
@@ -4591,6 +4709,7 @@ class LicenseDebugger:
 
             if suitable_nops:
                 import secrets
+
                 nop = secrets.choice(suitable_nops)
                 sled.extend(nop)
             else:
@@ -4636,10 +4755,7 @@ class LicenseDebugger:
         """Install Vectored Exception Handler for advanced exception handling."""
         try:
             # Setup AddVectoredExceptionHandler
-            self.kernel32.AddVectoredExceptionHandler.argtypes = [
-                wintypes.ULONG,
-                PVECTORED_EXCEPTION_HANDLER
-            ]
+            self.kernel32.AddVectoredExceptionHandler.argtypes = [wintypes.ULONG, PVECTORED_EXCEPTION_HANDLER]
             self.kernel32.AddVectoredExceptionHandler.restype = wintypes.LPVOID
 
             # Create VEH callback function
@@ -4658,7 +4774,7 @@ class LicenseDebugger:
                         "code": exception_record.ExceptionCode,
                         "address": exception_record.ExceptionAddress,
                         "flags": exception_record.ExceptionFlags,
-                        "context": context_record
+                        "context": context_record,
                     }
 
                     # Handle different exception types
@@ -4666,9 +4782,7 @@ class LicenseDebugger:
 
                     # Check for registered filters
                     if exception_code in self.exception_filters:
-                        filter_result = self.exception_filters[exception_code](
-                            exception_record, context_record
-                        )
+                        filter_result = self.exception_filters[exception_code](exception_record, context_record)
                         if filter_result is not None:
                             return filter_result
 
@@ -4690,9 +4804,7 @@ class LicenseDebugger:
 
                     # Call custom exception callbacks
                     if exception_code in self.exception_callbacks:
-                        return self.exception_callbacks[exception_code](
-                            exception_record, context_record
-                        )
+                        return self.exception_callbacks[exception_code](exception_record, context_record)
 
                     # Continue searching for other handlers
                     return 0  # EXCEPTION_CONTINUE_SEARCH
@@ -4705,10 +4817,7 @@ class LicenseDebugger:
             self.veh_handlers.append(veh_handler)
 
             # Install VEH handler
-            self.veh_handle = self.kernel32.AddVectoredExceptionHandler(
-                1 if first_handler else 0,
-                veh_handler
-            )
+            self.veh_handle = self.kernel32.AddVectoredExceptionHandler(1 if first_handler else 0, veh_handler)
 
             if not self.veh_handle:
                 logger.error("Failed to install VEH handler")
@@ -4857,17 +4966,16 @@ class LicenseDebugger:
                 is_write = exception_record.ExceptionInformation[0] == 1
                 target_address = exception_record.ExceptionInformation[1]
 
-                logger.info(f"VEH: Access violation at 0x{address:X} - "
-                          f"{'Write' if is_write else 'Read'} to 0x{target_address:X}")
+                logger.info(f"VEH: Access violation at 0x{address:X} - {'Write' if is_write else 'Read'} to 0x{target_address:X}")
 
                 # Check for memory breakpoints
                 if target_address in self.memory_breakpoints:
                     mem_bp = self.memory_breakpoints[target_address]
 
                     # Check if correct access type
-                    if (is_write and mem_bp.get("type") in ["write", "read_write"]) or \
-                       (not is_write and mem_bp.get("type") in ["read", "read_write"]):
-
+                    if (is_write and mem_bp.get("type") in ["write", "read_write"]) or (
+                        not is_write and mem_bp.get("type") in ["read", "read_write"]
+                    ):
                         # Call callback if exists
                         if mem_bp.get("callback"):
                             mem_bp["callback"](target_address, is_write, context)
@@ -4940,7 +5048,7 @@ class LicenseDebugger:
                 return False
 
             # Re-install at new position
-            first_handler = (new_position == 1)
+            first_handler = new_position == 1
             if not self.install_veh_handler(first_handler):
                 return False
 
@@ -5004,9 +5112,9 @@ class LicenseDebugger:
             logger.error(f"Error disabling single-stepping: {e}")
             return False
 
-    def set_memory_breakpoint(self, address: int, size: int = 1,
-                            access_type: str = "write", callback: Optional[Callable] = None,
-                            use_guard_page: bool = False) -> bool:
+    def set_memory_breakpoint(
+        self, address: int, size: int = 1, access_type: str = "write", callback: Optional[Callable] = None, use_guard_page: bool = False
+    ) -> bool:
         """Set memory access breakpoint using VEH and guard pages."""
         try:
             if use_guard_page:
@@ -5020,7 +5128,7 @@ class LicenseDebugger:
                     ctypes.c_void_p(address & ~0xFFF),  # Align to page boundary
                     0x1000,  # Page size
                     PAGE_GUARD | 0x04,  # PAGE_GUARD | PAGE_READWRITE
-                    ctypes.byref(old_protect)
+                    ctypes.byref(old_protect),
                 ):
                     logger.error("Failed to set guard page protection")
                     return False
@@ -5030,17 +5138,12 @@ class LicenseDebugger:
                     "type": access_type,
                     "callback": callback,
                     "use_guard_page": True,
-                    "old_protection": old_protect.value
+                    "old_protection": old_protect.value,
                 }
 
             else:
                 # Store memory breakpoint info for VEH handling
-                self.memory_breakpoints[address] = {
-                    "size": size,
-                    "type": access_type,
-                    "callback": callback,
-                    "use_guard_page": False
-                }
+                self.memory_breakpoints[address] = {"size": size, "type": access_type, "callback": callback, "use_guard_page": False}
 
             logger.info(f"Set memory breakpoint at 0x{address:X} for {access_type} access")
             return True
@@ -5049,8 +5152,7 @@ class LicenseDebugger:
             logger.error(f"Error setting memory breakpoint: {e}")
             return False
 
-    def trace_execution(self, max_instructions: int = 1000,
-                       trace_callback: Optional[Callable] = None) -> List[Dict[str, Any]]:
+    def trace_execution(self, max_instructions: int = 1000, trace_callback: Optional[Callable] = None) -> List[Dict[str, Any]]:
         """Trace execution flow by single-stepping through instructions.
 
         Args:
@@ -5095,7 +5197,7 @@ class LicenseDebugger:
                                 "rdx": context.get("Rdx", 0),
                                 "rsp": context.get("Rsp", 0),
                                 "rbp": context.get("Rbp", 0),
-                                "rflags": context.get("EFlags", 0)
+                                "rflags": context.get("EFlags", 0),
                             }
 
                             # Read instruction bytes at RIP
@@ -5110,6 +5212,7 @@ class LicenseDebugger:
                                         # Disassemble if possible
                                         try:
                                             from capstone import CS_ARCH_X86, CS_MODE_64, Cs, CsError
+
                                             md = Cs(CS_ARCH_X86, CS_MODE_64)
                                             for i in md.disasm(inst_bytes, rip):
                                                 instruction_info["mnemonic"] = i.mnemonic
@@ -5134,7 +5237,7 @@ class LicenseDebugger:
                     self.kernel32.ContinueDebugEvent(
                         debug_event.dwProcessId,
                         debug_event.dwThreadId,
-                        0x10002  # DBG_CONTINUE
+                        0x10002,  # DBG_CONTINUE
                     )
 
         finally:

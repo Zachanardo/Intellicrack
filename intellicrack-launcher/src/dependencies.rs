@@ -222,9 +222,11 @@ impl DependencyValidator {
 
         let tf_status = Python::attach(|py| -> Result<DependencyStatus> {
             // Configure TensorFlow environment
-            env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
-            env::set_var("CUDA_VISIBLE_DEVICES", "-1");
-            env::set_var("MKL_THREADING_LAYER", "GNU");
+            unsafe {
+                env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
+                env::set_var("CUDA_VISIBLE_DEVICES", "-1");
+                env::set_var("MKL_THREADING_LAYER", "GNU");
+            }
 
             match py.import("intellicrack.handlers.tensorflow_handler") {
                 Ok(tf_handler) => {
@@ -313,9 +315,9 @@ impl DependencyValidator {
 
                     // Test parameter modification
                     let mut params_functional = false;
-                    if model_params.hasattr("n_gpu_layers")? && context_params.hasattr("n_ctx")? {
-                        if let Ok(original_gpu_layers) = model_params.getattr("n_gpu_layers") {
-                            if let Ok(original_ctx_size) = context_params.getattr("n_ctx") {
+                    if model_params.hasattr("n_gpu_layers")? && context_params.hasattr("n_ctx")?
+                        && let Ok(original_gpu_layers) = model_params.getattr("n_gpu_layers")
+                            && let Ok(original_ctx_size) = context_params.getattr("n_ctx") {
                                 // Test parameter modification
                                 model_params.setattr("n_gpu_layers", 0)?;
                                 context_params.setattr("n_ctx", 512)?;
@@ -326,8 +328,6 @@ impl DependencyValidator {
 
                                 params_functional = true;
                             }
-                        }
-                    }
 
                     details.insert(
                         "version".to_string(),
@@ -484,9 +484,11 @@ impl DependencyValidator {
 
         let result = Python::attach(|py| -> Result<TensorFlowValidationResult> {
             // Configure TensorFlow environment
-            env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
-            env::set_var("CUDA_VISIBLE_DEVICES", "-1");
-            env::set_var("MKL_THREADING_LAYER", "GNU");
+            unsafe {
+                env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
+                env::set_var("CUDA_VISIBLE_DEVICES", "-1");
+                env::set_var("MKL_THREADING_LAYER", "GNU");
+            }
 
             // Import tensorflow handler and get tensorflow module
             let tf_handler = py.import("intellicrack.handlers.tensorflow_handler")?;
@@ -565,8 +567,8 @@ impl DependencyValidator {
             if model_building_success {
                 let numpy_output = test_output.call_method0("numpy")?;
                 let output_array: Vec<Vec<f64>> = numpy_output.extract()?;
-                if let Some(first_row) = output_array.first() {
-                    if let Some(output_value) = first_row.first() {
+                if let Some(first_row) = output_array.first()
+                    && let Some(output_value) = first_row.first() {
                         if *output_value >= 0.0 && *output_value <= 1.0 {
                             model_prediction_test = format!("✓ (output: {:.3})", output_value);
                         } else {
@@ -574,7 +576,6 @@ impl DependencyValidator {
                                 format!("✗ Invalid output range: {}", output_value);
                         }
                     }
-                }
             }
 
             Ok(TensorFlowValidationResult {
@@ -617,19 +618,17 @@ impl DependencyValidator {
             let mut default_params_available = false;
             let mut params_modifiable = false;
 
-            if let Ok(params) = llama_cpp.call_method0("llama_model_default_params") {
-                if params.hasattr("n_ctx")? && params.hasattr("n_batch")? {
+            if let Ok(params) = llama_cpp.call_method0("llama_model_default_params")
+                && params.hasattr("n_ctx")? && params.hasattr("n_batch")? {
                     default_params_available = true;
 
                     // Test parameter modification
-                    if let Ok(original_ctx) = params.getattr("n_ctx") {
-                        if params.setattr("n_ctx", 1024).is_ok()
+                    if let Ok(original_ctx) = params.getattr("n_ctx")
+                        && params.setattr("n_ctx", 1024).is_ok()
                             && params.setattr("n_ctx", original_ctx).is_ok() {
                                 params_modifiable = true;
                             }
-                    }
                 }
-            }
 
             Ok(LlamaValidationResult {
                 status: default_params_available,
@@ -743,10 +742,10 @@ impl DependencyValidator {
 
             // Disk space information
             let mut disk_space = HashMap::new();
-            if let Ok(shutil) = py.import("shutil") {
-                if let Ok(path_resolver) = py.import("intellicrack.utils.path_resolver") {
-                    if let Ok(data_dir_func) = path_resolver.getattr("get_data_dir") {
-                        if let Ok(data_dir) = data_dir_func.call0() {
+            if let Ok(shutil) = py.import("shutil")
+                && let Ok(path_resolver) = py.import("intellicrack.utils.path_resolver")
+                    && let Ok(data_dir_func) = path_resolver.getattr("get_data_dir")
+                        && let Ok(data_dir) = data_dir_func.call0() {
                             let data_dir_str = data_dir.str()?.extract::<String>()?;
                             if let Ok(disk_usage) = shutil.call_method1("disk_usage", (data_dir,)) {
                                 let total: u64 = disk_usage.getattr("total")?.extract()?;
@@ -800,9 +799,6 @@ impl DependencyValidator {
                                 );
                             }
                         }
-                    }
-                }
-            }
 
             if disk_space.is_empty() {
                 disk_space.insert("available".to_string(), serde_json::Value::Bool(false));

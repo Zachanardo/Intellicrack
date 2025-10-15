@@ -61,6 +61,7 @@ class WorkspaceTab(QWidget):
         """Initialize workspace tab with project management and activity logging."""
         super().__init__(parent)
         self.shared_context = shared_context
+        self.app_context = shared_context.get("app_context") if shared_context else None
         self.config_manager = get_ui_config_manager()
         self.current_project_path = None
         self.loaded_binary_path = None
@@ -482,13 +483,58 @@ class WorkspaceTab(QWidget):
             size_mb = file_size / (1024 * 1024)
             self.binary_size_label.setText(f"Size: {size_mb:.2f} MB")
 
-            # Detect binary type (simplified)
+            # Detect binary type
             _, ext = os.path.splitext(binary_file)
             self.binary_type_label.setText(f"Type: {ext.upper()}")
+
+            # Detect architecture
+            try:
+                import struct
+
+                with open(binary_file, "rb") as f:
+                    dos_header = f.read(64)
+                    if dos_header[:2] == b"MZ":
+                        pe_offset = struct.unpack("<L", dos_header[60:64])[0]
+                        f.seek(pe_offset)
+                        pe_signature = f.read(4)
+                        if pe_signature == b"PE\x00\x00":
+                            machine_type = struct.unpack("<H", f.read(2))[0]
+                            if machine_type == 0x014C:
+                                self.binary_arch_label.setText("Arch: x86")
+                            elif machine_type == 0x8664:
+                                self.binary_arch_label.setText("Arch: x64")
+                            elif machine_type == 0x01C4:
+                                self.binary_arch_label.setText("Arch: ARM")
+                            else:
+                                self.binary_arch_label.setText(f"Arch: 0x{machine_type:04x}")
+                    elif dos_header[:4] == b"\x7fELF":
+                        ei_class = dos_header[4]
+                        if ei_class == 1:
+                            self.binary_arch_label.setText("Arch: ELF32")
+                        elif ei_class == 2:
+                            self.binary_arch_label.setText("Arch: ELF64")
+            except Exception:
+                self.binary_arch_label.setText("Arch: Unknown")
 
             # Enable analysis actions
             self.analyze_binary_btn.setEnabled(True)
             self.export_analysis_btn.setEnabled(True)
+
+            # Load binary into app context for system-wide availability
+            if self.app_context:
+                try:
+                    metadata = {
+                        "name": binary_name,
+                        "size": file_size,
+                        "type": ext.upper(),
+                        "source": "workspace_tab",
+                    }
+                    if self.app_context.load_binary(binary_file, metadata):
+                        self.log_activity("Binary loaded into analysis system", "SUCCESS")
+                    else:
+                        self.log_activity("Binary loaded locally only (app context unavailable)", "WARNING")
+                except Exception as e:
+                    self.log_activity(f"Failed to load binary into app context: {e}", "ERROR")
 
             # Emit signal
             self.binary_loaded.emit(binary_file)
@@ -503,6 +549,7 @@ class WorkspaceTab(QWidget):
                 import shutil
 
                 dest = os.path.join(self.current_project_path, "binaries", binary_name)
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
                 shutil.copy2(binary_file, dest)
                 self.refresh_project_files()
 

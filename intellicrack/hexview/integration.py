@@ -46,7 +46,6 @@ except ImportError as e:
     logger.error("Import error in integration: %s", e)
 
     import re
-    import struct
     from collections import Counter
 
     def wrapper_ai_binary_analyze(app_instance, parameters):
@@ -135,9 +134,18 @@ except ImportError as e:
 
             elif pattern_type == "license_check":
                 license_patterns = [
-                    b"license", b"LICENSE", b"registration", b"REGISTRATION",
-                    b"serial", b"SERIAL", b"activation", b"ACTIVATION",
-                    b"trial", b"TRIAL", b"expired", b"EXPIRED",
+                    b"license",
+                    b"LICENSE",
+                    b"registration",
+                    b"REGISTRATION",
+                    b"serial",
+                    b"SERIAL",
+                    b"activation",
+                    b"ACTIVATION",
+                    b"trial",
+                    b"TRIAL",
+                    b"expired",
+                    b"EXPIRED",
                 ]
                 for lp in license_patterns:
                     idx = 0
@@ -180,71 +188,85 @@ except ImportError as e:
 
             if context == "license_check":
                 for i in range(len(data) - 6):
-                    if data[i:i+2] == b"\x74\x05":
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Replace JE (jump if equal) with NOP to bypass check",
-                            "original": data[i:i+2].hex(),
-                            "patched": "9090",
-                            "type": "conditional_jump_bypass"
-                        })
-                    elif data[i:i+2] == b"\x75\x05":
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Replace JNE (jump if not equal) with NOP to bypass check",
-                            "original": data[i:i+2].hex(),
-                            "patched": "9090",
-                            "type": "conditional_jump_bypass"
-                        })
-                    elif data[i:i+5] == b"\xe8" + data[i+1:i+5]:
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Replace CALL instruction with NOPs to skip validation function",
-                            "original": data[i:i+5].hex(),
-                            "patched": "9090909090",
-                            "type": "call_bypass"
-                        })
+                    if data[i : i + 2] == b"\x74\x05":
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Replace JE (jump if equal) with NOP to bypass check",
+                                "original": data[i : i + 2].hex(),
+                                "patched": "9090",
+                                "type": "conditional_jump_bypass",
+                            }
+                        )
+                    elif data[i : i + 2] == b"\x75\x05":
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Replace JNE (jump if not equal) with NOP to bypass check",
+                                "original": data[i : i + 2].hex(),
+                                "patched": "9090",
+                                "type": "conditional_jump_bypass",
+                            }
+                        )
+                    elif data[i : i + 5] == b"\xe8" + data[i + 1 : i + 5]:
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Replace CALL instruction with NOPs to skip validation function",
+                                "original": data[i : i + 5].hex(),
+                                "patched": "9090909090",
+                                "type": "call_bypass",
+                            }
+                        )
 
             elif context == "return_value":
                 for i in range(len(data) - 5):
-                    if data[i:i+5] == b"\xb8\x00\x00\x00\x00":
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Change return value from 0 to 1 (success)",
-                            "original": data[i:i+5].hex(),
-                            "patched": "b801000000",
-                            "type": "return_value_modification"
-                        })
-                    elif data[i:i+2] == b"\x31\xc0":
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Replace XOR EAX,EAX with MOV EAX,1 for success return",
-                            "original": data[i:i+2].hex(),
-                            "patched": "b801000000",
-                            "type": "return_value_modification"
-                        })
+                    if data[i : i + 5] == b"\xb8\x00\x00\x00\x00":
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Change return value from 0 to 1 (success)",
+                                "original": data[i : i + 5].hex(),
+                                "patched": "b801000000",
+                                "type": "return_value_modification",
+                            }
+                        )
+                    elif data[i : i + 2] == b"\x31\xc0":
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Replace XOR EAX,EAX with MOV EAX,1 for success return",
+                                "original": data[i : i + 2].hex(),
+                                "patched": "b801000000",
+                                "type": "return_value_modification",
+                            }
+                        )
 
             elif context == "comparison":
                 for i in range(len(data) - 6):
-                    if data[i:i+2] in [b"\x3b", b"\x39"]:
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": "Replace comparison with operation that always succeeds",
-                            "original": data[i:i+2].hex(),
-                            "patched": "3939",
-                            "type": "comparison_bypass"
-                        })
+                    if data[i : i + 2] in [b"\x3b", b"\x39"]:
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": "Replace comparison with operation that always succeeds",
+                                "original": data[i : i + 2].hex(),
+                                "patched": "3939",
+                                "type": "comparison_bypass",
+                            }
+                        )
 
             else:
                 for i in range(min(len(data) - 2, 100)):
                     if data[i] == 0x74 or data[i] == 0x75:
-                        suggestions.append({
-                            "offset": offset + i,
-                            "description": f"Conditional jump at offset {offset + i:#x}",
-                            "original": data[i:i+2].hex(),
-                            "patched": "9090",
-                            "type": "general_conditional_bypass"
-                        })
+                        suggestions.append(
+                            {
+                                "offset": offset + i,
+                                "description": f"Conditional jump at offset {offset + i:#x}",
+                                "original": data[i : i + 2].hex(),
+                                "patched": "9090",
+                                "type": "general_conditional_bypass",
+                            }
+                        )
 
             return {"suggestions": suggestions, "count": len(suggestions)}
         except Exception as e:
@@ -305,12 +327,12 @@ except ImportError as e:
 
         chunk_size = 256
         for i in range(0, len(data), chunk_size):
-            chunk = data[i:i+chunk_size]
+            chunk = data[i : i + chunk_size]
             if _calculate_entropy(chunk) > 7.0:
                 structure["high_entropy_sections"] += 1
 
         for i in range(0, len(data) - 10, 16):
-            chunk = data[i:i+16]
+            chunk = data[i : i + 16]
             if any(b in chunk for b in [b"\xe8", b"\xff", b"\x8b", b"\x89", b"\xc3"]):
                 structure["code_like_patterns"] += 1
 
@@ -323,8 +345,7 @@ except ImportError as e:
         counter = Counter(data)
         total = len(data)
         distribution = {
-            "most_common": [{"byte": f"{b:#04x}", "count": c, "percentage": (c/total)*100}
-                          for b, c in counter.most_common(5)],
+            "most_common": [{"byte": f"{b:#04x}", "count": c, "percentage": (c / total) * 100} for b, c in counter.most_common(5)],
             "unique_bytes": len(counter),
             "diversity_ratio": len(counter) / 256.0,
         }

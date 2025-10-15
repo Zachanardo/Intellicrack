@@ -1083,6 +1083,7 @@ class VMProtectionUnwrapper:
             except Exception as e:
                 # Log the exception with details for debugging
                 import logging
+
                 logging.warning(f"Error extracting key with {extractor.__name__}: {e}")
                 continue
 

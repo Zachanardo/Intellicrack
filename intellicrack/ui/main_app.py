@@ -1610,6 +1610,7 @@ def launch():
         # Fix Windows taskbar icon grouping by setting explicit App User Model ID BEFORE creating QApplication
         try:
             import ctypes
+
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
         except Exception as e:
             logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")

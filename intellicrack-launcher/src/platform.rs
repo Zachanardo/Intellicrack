@@ -277,11 +277,9 @@ impl PlatformInfo {
             if let Ok(output) = std::process::Command::new("sw_vers")
                 .arg("-productVersion")
                 .output()
-            {
-                if let Ok(version) = String::from_utf8(output.stdout) {
+                && let Ok(version) = String::from_utf8(output.stdout) {
                     return format!("macOS {}", version.trim());
                 }
-            }
             "macOS".to_string()
         } else {
             "Unknown".to_string()
@@ -290,34 +288,36 @@ impl PlatformInfo {
 
     /// Configure Qt platform based on detected environment
     pub fn configure_qt_platform(&self) -> Result<()> {
-        match (&self.os_type, self.is_wsl, self.display_available) {
-            (OsType::Windows, false, _) => {
-                // Native Windows - use windows platform
-                env::set_var("QT_QPA_PLATFORM", "windows");
-                info!("Configured Qt for native Windows");
-            }
-            (OsType::Unix, true, false) => {
-                // WSL without display - use offscreen
-                env::set_var("QT_QPA_PLATFORM", "offscreen");
-                info!("Configured Qt for WSL offscreen mode");
-            }
-            (OsType::Unix, false, true) => {
-                // Native Linux with display - use xcb or wayland
-                if env::var("WAYLAND_DISPLAY").is_ok() {
-                    env::set_var("QT_QPA_PLATFORM", "wayland");
-                    info!("Configured Qt for Wayland");
-                } else {
-                    env::set_var("QT_QPA_PLATFORM", "xcb");
-                    info!("Configured Qt for X11");
+        unsafe {
+            match (&self.os_type, self.is_wsl, self.display_available) {
+                (OsType::Windows, false, _) => {
+                    // Native Windows - use windows platform
+                    env::set_var("QT_QPA_PLATFORM", "windows");
+                    info!("Configured Qt for native Windows");
                 }
-            }
-            (OsType::Unix, false, false) => {
-                // Native Linux without display - use offscreen
-                env::set_var("QT_QPA_PLATFORM", "offscreen");
-                info!("Configured Qt for Linux offscreen mode");
-            }
-            _ => {
-                debug!("Using default Qt platform configuration");
+                (OsType::Unix, true, false) => {
+                    // WSL without display - use offscreen
+                    env::set_var("QT_QPA_PLATFORM", "offscreen");
+                    info!("Configured Qt for WSL offscreen mode");
+                }
+                (OsType::Unix, false, true) => {
+                    // Native Linux with display - use xcb or wayland
+                    if env::var("WAYLAND_DISPLAY").is_ok() {
+                        env::set_var("QT_QPA_PLATFORM", "wayland");
+                        info!("Configured Qt for Wayland");
+                    } else {
+                        env::set_var("QT_QPA_PLATFORM", "xcb");
+                        info!("Configured Qt for X11");
+                    }
+                }
+                (OsType::Unix, false, false) => {
+                    // Native Linux without display - use offscreen
+                    env::set_var("QT_QPA_PLATFORM", "offscreen");
+                    info!("Configured Qt for Linux offscreen mode");
+                }
+                _ => {
+                    debug!("Using default Qt platform configuration");
+                }
             }
         }
 

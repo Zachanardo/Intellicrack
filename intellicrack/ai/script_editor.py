@@ -115,9 +115,7 @@ class ScriptTester:
         """Initialize script tester with LLM interface for validation."""
         self.llm_interface = LLMScriptInterface()
 
-    def validate_script(
-        self, script_content: str, script_type: str
-    ) -> Tuple[ValidationResult, Dict[str, Any]]:
+    def validate_script(self, script_content: str, script_type: str) -> Tuple[ValidationResult, Dict[str, Any]]:
         """Validate script using LLM for comprehensive analysis."""
         results = {
             "syntax_check": True,

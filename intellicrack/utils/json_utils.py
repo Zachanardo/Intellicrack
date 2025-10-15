@@ -178,9 +178,23 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
             class RestrictedUnpickler(pickle.Unpickler):
                 def find_class(self, module, name):
                     # Only allow safe classes from specific modules
-                    if module in ('builtins', 'collections', 'datetime') and name in (
-                        'dict', 'list', 'tuple', 'set', 'str', 'int', 'float', 'bool', 'NoneType',
-                        'OrderedDict', 'defaultdict', 'deque', 'datetime', 'date', 'time', 'timedelta'
+                    if module in ("builtins", "collections", "datetime") and name in (
+                        "dict",
+                        "list",
+                        "tuple",
+                        "set",
+                        "str",
+                        "int",
+                        "float",
+                        "bool",
+                        "NoneType",
+                        "OrderedDict",
+                        "defaultdict",
+                        "deque",
+                        "datetime",
+                        "date",
+                        "time",
+                        "timedelta",
                     ):
                         return getattr(__import__(module, level=0), name)
                     # For other cases, raise an exception
@@ -201,9 +215,23 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
                 class RestrictedUnpickler(pickle.Unpickler):
                     def find_class(self, module, name):
                         # Only allow safe classes from specific modules
-                        if module in ('builtins', 'collections', 'datetime') and name in (
-                            'dict', 'list', 'tuple', 'set', 'str', 'int', 'float', 'bool', 'NoneType',
-                            'OrderedDict', 'defaultdict', 'deque', 'datetime', 'date', 'time', 'timedelta'
+                        if module in ("builtins", "collections", "datetime") and name in (
+                            "dict",
+                            "list",
+                            "tuple",
+                            "set",
+                            "str",
+                            "int",
+                            "float",
+                            "bool",
+                            "NoneType",
+                            "OrderedDict",
+                            "defaultdict",
+                            "deque",
+                            "datetime",
+                            "date",
+                            "time",
+                            "timedelta",
                         ):
                             return getattr(__import__(module, level=0), name)
                         # For other cases, raise an exception

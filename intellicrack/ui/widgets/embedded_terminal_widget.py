@@ -182,7 +182,41 @@ class EmbeddedTerminalWidget(QWidget):
         self._output_timer.timeout.connect(self._process_output_queue)
         self._output_timer.start(50)
 
+        self._show_welcome_message()
+
         logger.info("EmbeddedTerminalWidget initialized")
+
+    def _show_welcome_message(self):
+        """Display welcome message and instructions in terminal."""
+        welcome_text = (
+            "\033[1;36m╔═══════════════════════════════════════════════════════════════╗\033[0m\r\n"
+            "\033[1;36m║\033[0m            \033[1;37mIntелlicrack Terminal Session\033[0m                 \033[1;36m║\033[0m\r\n"
+            "\033[1;36m╚═══════════════════════════════════════════════════════════════╝\033[0m\r\n"
+            "\r\n"
+            "\033[1;32mWelcome to the Intellicrack Terminal!\033[0m\r\n"
+            "\r\n"
+            "\033[1;33mQuick Start:\033[0m\r\n"
+            "  • Type a command and press Enter to execute\r\n"
+            "  • Right-click for copy/paste and export options\r\n"
+            "  • Ctrl+C to interrupt running processes\r\n"
+            "  • Ctrl+V to paste from clipboard\r\n"
+            "\r\n"
+            "\033[1;33mExample Commands:\033[0m\r\n"
+            "  \033[0;36mpython --version\033[0m       - Check Python version\r\n"
+            "  \033[0;36mdir\033[0m / \033[0;36mls\033[0m            - List directory contents\r\n"
+            "  \033[0;36mcd <path>\033[0m             - Change directory\r\n"
+            "  \033[0;36mfrida-ps\033[0m              - List running processes (if Frida installed)\r\n"
+            "\r\n"
+            "\033[1;33mTo start a shell session:\033[0m\r\n"
+            "  • Windows: Type \033[0;36mpowershell\033[0m or \033[0;36mcmd\033[0m\r\n"
+            "  • Linux/Mac: Type \033[0;36mbash\033[0m or \033[0;36mzsh\033[0m\r\n"
+            "\r\n"
+            "\033[0;90m────────────────────────────────────────────────────────────────\033[0m\r\n"
+            "\033[1;37mReady for command execution.\033[0m Type a command to begin.\r\n"
+            "\r\n"
+        )
+
+        self._handle_output(welcome_text, is_error=False)
 
     def _setup_ui(self):
         """Setup terminal display and input widgets."""

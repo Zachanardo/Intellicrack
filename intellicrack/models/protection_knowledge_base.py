@@ -109,10 +109,21 @@ class ProtectionKnowledgeBase:
             versions=["HL Pro", "SL", "SRM", "LDK 7.x", "LDK 8.x"],
             common_applications=["AutoCAD", "SolidWorks", "MATLAB", "MasterCAM", "CATIA", "Siemens NX", "ANSYS"],
             detection_signatures=[
-                "hasp_login", "hasp_login_scope", "hasp_encrypt", "hasp_decrypt",
-                "hasplms.exe", "aksusbd.sys", "aksfridge.sys", "hardlock.sys",
-                "HASP HL", "Sentinel", "vendorcode", "haspdinst.exe",
-                "hasp_get_sessioninfo", "hasp_update", "hasp_get_rtc"
+                "hasp_login",
+                "hasp_login_scope",
+                "hasp_encrypt",
+                "hasp_decrypt",
+                "hasplms.exe",
+                "aksusbd.sys",
+                "aksfridge.sys",
+                "hardlock.sys",
+                "HASP HL",
+                "Sentinel",
+                "vendorcode",
+                "haspdinst.exe",
+                "hasp_get_sessioninfo",
+                "hasp_update",
+                "hasp_get_rtc",
             ],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
@@ -188,11 +199,25 @@ class ProtectionKnowledgeBase:
             versions=["11.16.x", "2019.x", "2020.x", "2021.x", "2022.x"],
             common_applications=["ANSYS", "Cadence", "Synopsys", "MATLAB", "Mentor Graphics", "Autodesk", "PTC Creo"],
             detection_signatures=[
-                "lmgrd", "lmutil", "lmstat", "lmreread", "lmdown",
-                "FEATURE", "INCREMENT", "UPGRADE", "PACKAGE",
-                "license.dat", "license.lic", ".flexlmrc",
-                "lc_checkout", "lc_init", "l_sg", "l_key",
-                "vendor daemon", "LM_LICENSE_FILE", "FLEXLM_DIAGNOSTICS"
+                "lmgrd",
+                "lmutil",
+                "lmstat",
+                "lmreread",
+                "lmdown",
+                "FEATURE",
+                "INCREMENT",
+                "UPGRADE",
+                "PACKAGE",
+                "license.dat",
+                "license.lic",
+                ".flexlmrc",
+                "lc_checkout",
+                "lc_init",
+                "l_sg",
+                "l_key",
+                "vendor daemon",
+                "LM_LICENSE_FILE",
+                "FLEXLM_DIAGNOSTICS",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -268,10 +293,18 @@ class ProtectionKnowledgeBase:
             versions=["3.0.x", "3.1.x", "3.2.x"],
             common_applications=["Commercial software", "Games", "Security tools", "Industrial software"],
             detection_signatures=[
-                "WinLicense", "Themida", "SecureEngine", "Oreans",
-                ".themida", ".winlicense", ".wlsection",
-                "SE_InitializeEngine", "SE_ActivateLicense",
-                "WLRegGetStatus", "VM macros", "XBundler"
+                "WinLicense",
+                "Themida",
+                "SecureEngine",
+                "Oreans",
+                ".themida",
+                ".winlicense",
+                ".wlsection",
+                "SE_InitializeEngine",
+                "SE_ActivateLicense",
+                "WLRegGetStatus",
+                "VM macros",
+                "XBundler",
             ],
             bypass_difficulty=BypassDifficulty.VERY_HIGH,
             bypass_techniques=[
@@ -347,10 +380,17 @@ class ProtectionKnowledgeBase:
             versions=["3.5.x", "3.6.x", "3.7.x", "3.8.x"],
             common_applications=["High-value software", "DRM systems", "Anti-cheat engines", "Cryptographic tools"],
             detection_signatures=[
-                "VMProtect", ".vmp0", ".vmp1", ".vmp2",
-                "VMProtectBegin", "VMProtectEnd", "VMProtectIsDebuggerPresent",
-                "VMProtectIsVirtualMachinePresent", "Virtualized sections",
-                "Heavy obfuscation", "Mutated code patterns"
+                "VMProtect",
+                ".vmp0",
+                ".vmp1",
+                ".vmp2",
+                "VMProtectBegin",
+                "VMProtectEnd",
+                "VMProtectIsDebuggerPresent",
+                "VMProtectIsVirtualMachinePresent",
+                "Virtualized sections",
+                "Heavy obfuscation",
+                "Mutated code patterns",
             ],
             bypass_difficulty=BypassDifficulty.EXTREME,
             bypass_techniques=[
@@ -426,10 +466,17 @@ class ProtectionKnowledgeBase:
             versions=["CEG v3", "CEG v4", "Steam DRM Wrapper 3.x"],
             common_applications=["AAA games", "Indie games", "VR titles", "Software on Steam"],
             detection_signatures=[
-                "steam_api.dll", "steam_api64.dll", "steamclient.dll",
-                "SteamAPI_Init", "SteamAPI_RestartAppIfNecessary",
-                "tier0_s.dll", "vstdlib_s.dll", ".bind section",
-                "Steam DRM", "drm_wrapper", "steam_appid.txt"
+                "steam_api.dll",
+                "steam_api64.dll",
+                "steamclient.dll",
+                "SteamAPI_Init",
+                "SteamAPI_RestartAppIfNecessary",
+                "tier0_s.dll",
+                "vstdlib_s.dll",
+                ".bind section",
+                "Steam DRM",
+                "drm_wrapper",
+                "steam_appid.txt",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -505,10 +552,14 @@ class ProtectionKnowledgeBase:
             versions=["v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12+"],
             common_applications=["AAA games", "Major publishers", "Sports titles", "Racing games"],
             detection_signatures=[
-                "Massive code bloat", "VM-protected sections",
-                "Trigger-based checks", "CPUID checks",
-                "Hardware fingerprinting", "Online activation",
-                "Performance degradation", "SSD write amplification"
+                "Massive code bloat",
+                "VM-protected sections",
+                "Trigger-based checks",
+                "CPUID checks",
+                "Hardware fingerprinting",
+                "Online activation",
+                "Performance degradation",
+                "SSD write amplification",
             ],
             bypass_difficulty=BypassDifficulty.EXTREME,
             bypass_techniques=[
@@ -574,9 +625,17 @@ class ProtectionKnowledgeBase:
             versions=["Windows 10/11", "Server 2016-2022", "Office 2016-2021/365"],
             common_applications=["Windows OS", "Microsoft Office", "Visual Studio", "SQL Server", "Exchange"],
             detection_signatures=[
-                "SLMgr.vbs", "OSPP.vbs", "sppsvc.exe", "osppsvc.exe",
-                "Software Protection Platform", "KMS", "MAK", "GVLK",
-                "tokens.dat", "Digital License", "Product Key"
+                "SLMgr.vbs",
+                "OSPP.vbs",
+                "sppsvc.exe",
+                "osppsvc.exe",
+                "Software Protection Platform",
+                "KMS",
+                "MAK",
+                "GVLK",
+                "tokens.dat",
+                "Digital License",
+                "Product Key",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -652,9 +711,14 @@ class ProtectionKnowledgeBase:
             versions=["iLok 2", "iLok 3", "PACE Eden", "iLok Cloud"],
             common_applications=["Pro Tools", "Cubase", "Logic Pro", "Adobe CC", "Waves plugins", "Native Instruments"],
             detection_signatures=[
-                "iLok License Manager", "PACE License Support",
-                "iLok.com", "eden.sys", "PACESupport.dll",
-                "iLokHelper", "com.paceap", "iLok Cloud Session"
+                "iLok License Manager",
+                "PACE License Support",
+                "iLok.com",
+                "eden.sys",
+                "PACESupport.dll",
+                "iLokHelper",
+                "com.paceap",
+                "iLok Cloud Session",
             ],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
@@ -705,9 +769,14 @@ class ProtectionKnowledgeBase:
             versions=["CodeMeter 7.x", "CodeMeter 8.x"],
             common_applications=["Siemens software", "Rockwell Automation", "CAD/CAM tools", "Industrial software"],
             detection_signatures=[
-                "CodeMeter.exe", "CodeMeter Runtime Server",
-                "WibuKey", "CmDongle", "codemeter.service",
-                "WibuCm32.dll", "WibuCm64.dll", "CmActLicense"
+                "CodeMeter.exe",
+                "CodeMeter Runtime Server",
+                "WibuKey",
+                "CmDongle",
+                "codemeter.service",
+                "WibuCm32.dll",
+                "WibuCm64.dll",
+                "CmActLicense",
             ],
             bypass_difficulty=BypassDifficulty.VERY_HIGH,
             bypass_techniques=[
@@ -758,9 +827,16 @@ class ProtectionKnowledgeBase:
             versions=["SecuROM 7.x", "SecuROM 8.x", "SecuROM PA"],
             common_applications=["Games (2005-2010 era)", "BioShock", "Mass Effect", "GTA IV", "Spore"],
             detection_signatures=[
-                "SecuROM", "paul.dll", "drm.data", "securom_marker",
-                ".securom", "CmdLineExt.dll", "SecuROM_UserAccessService",
-                "securom32.dll", "securom64.dll", "SECDRV.SYS"
+                "SecuROM",
+                "paul.dll",
+                "drm.data",
+                "securom_marker",
+                ".securom",
+                "CmdLineExt.dll",
+                "SecuROM_UserAccessService",
+                "securom32.dll",
+                "securom64.dll",
+                "SECDRV.SYS",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -825,9 +901,16 @@ class ProtectionKnowledgeBase:
             versions=["StarForce 3", "StarForce 4", "StarForce 5", "StarForce ProActive"],
             common_applications=["Splinter Cell: Chaos Theory", "King Kong", "Trackmania", "X3: Reunion"],
             detection_signatures=[
-                "StarForce", "protect.dll", "protect.sys", "sfdrv01.sys",
-                "sfdrvup.exe", "StarForce Helper", "prodrv06.sys",
-                "StarForceA", "sfhlp02.sys", "Protection ID"
+                "StarForce",
+                "protect.dll",
+                "protect.sys",
+                "sfdrv01.sys",
+                "sfdrvup.exe",
+                "StarForce Helper",
+                "prodrv06.sys",
+                "StarForceA",
+                "sfhlp02.sys",
+                "Protection ID",
             ],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
@@ -892,9 +975,15 @@ class ProtectionKnowledgeBase:
             versions=["TransformIT 5.x", "GuardIT 4.x", "EnsureIT"],
             common_applications=["Financial apps", "Healthcare software", "Gaming", "Enterprise applications"],
             detection_signatures=[
-                "Arxan", "TransformIT", "GuardIT", "White-box crypto",
-                "Control flow flattening", "Instruction substitution",
-                "Anti-tamper checks", "Integrity guards", "Code mobility"
+                "Arxan",
+                "TransformIT",
+                "GuardIT",
+                "White-box crypto",
+                "Control flow flattening",
+                "Instruction substitution",
+                "Anti-tamper checks",
+                "Integrity guards",
+                "Code mobility",
             ],
             bypass_difficulty=BypassDifficulty.VERY_HIGH,
             bypass_techniques=[
@@ -959,9 +1048,15 @@ class ProtectionKnowledgeBase:
             versions=["6.x", "7.x"],
             common_applications=["Shareware", "Commercial tools", "Game trainers", "Utilities"],
             detection_signatures=[
-                "Enigma", "enigma1", "enigma2", "enigma_ide.dll",
-                ".enigma1", ".enigma2", "EP_RegHardwareID",
-                "EP_RegistrationLoadKeyA", "EP_RegistrationSaveKeyA"
+                "Enigma",
+                "enigma1",
+                "enigma2",
+                "enigma_ide.dll",
+                ".enigma1",
+                ".enigma2",
+                "EP_RegHardwareID",
+                "EP_RegistrationLoadKeyA",
+                "EP_RegistrationSaveKeyA",
             ],
             bypass_difficulty=BypassDifficulty.MEDIUM,
             bypass_techniques=[
@@ -1012,10 +1107,7 @@ class ProtectionKnowledgeBase:
             description="Compression and protection with anti-debugging and CRC checking",
             versions=["ASProtect 2.x", "ASPack 2.x"],
             common_applications=["Shareware", "Cracking tools", "Small utilities"],
-            detection_signatures=[
-                "ASProtect", "ASPack", ".aspack", ".adata", ".aspr",
-                "aspr_ide.dll", "ASProtect SKE", "CRC Check"
-            ],
+            detection_signatures=["ASProtect", "ASPack", ".aspack", ".adata", ".aspr", "aspr_ide.dll", "ASProtect SKE", "CRC Check"],
             bypass_difficulty=BypassDifficulty.LOW,
             bypass_techniques=[
                 BypassTechnique(
@@ -1064,10 +1156,7 @@ class ProtectionKnowledgeBase:
             description="Software protection with strong encryption, anti-debugging, and licensing",
             versions=["1.6.x", "1.7.x"],
             common_applications=["Commercial software", "Games", "Professional tools"],
-            detection_signatures=[
-                "Obsidium", "obsidium.dll", ".obsidium",
-                "Obsidium©", "OBSIDIUM_SECTION", "obsidium_vm"
-            ],
+            detection_signatures=["Obsidium", "obsidium.dll", ".obsidium", "Obsidium©", "OBSIDIUM_SECTION", "obsidium_vm"],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
                 BypassTechnique(
@@ -1118,8 +1207,14 @@ class ProtectionKnowledgeBase:
             versions=["8.x", "9.x"],
             common_applications=["Professional software", "Engineering tools", "Security applications"],
             detection_signatures=[
-                "Armadillo", "SoftwarePassport", ".arm", ".data",
-                "ArmAccess.dll", "nanomites", "CopyMem2", "Strategic Code Splicing"
+                "Armadillo",
+                "SoftwarePassport",
+                ".arm",
+                ".data",
+                "ArmAccess.dll",
+                "nanomites",
+                "CopyMem2",
+                "Strategic Code Splicing",
             ],
             bypass_difficulty=BypassDifficulty.VERY_HIGH,
             bypass_techniques=[

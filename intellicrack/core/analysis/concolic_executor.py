@@ -1714,7 +1714,6 @@ class ConcolicExecutionEngine:
             "error": None,
         }
 
-
     def _setup_symbolic_input(self, m, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: Any) -> None:
         """Set up symbolic input for test case generation."""
         if generate_test_cases:

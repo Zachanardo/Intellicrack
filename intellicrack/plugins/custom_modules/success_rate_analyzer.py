@@ -1501,7 +1501,7 @@ if __name__ == "__main__":
         return {
             "detect_serial_protection": detect_serial_protection,
             "bypass_vm_protection": bypass_vm_protection,
-            "emulate_hardware_dongle": emulate_hardware_dongle
+            "emulate_hardware_dongle": emulate_hardware_dongle,
         }
 
     # Load historical events from existing database if available

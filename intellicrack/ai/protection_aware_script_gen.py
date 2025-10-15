@@ -1588,7 +1588,7 @@ INCREMENT * * 999.9 permanent uncounted HOSTID=ANY \\
 # Run the bypass
 bypass = FlexLMBypass()
 bypass.run()
-"""
+""",
         }
 
     def _get_winlicense_scripts(self) -> dict[str, str]:
@@ -2604,7 +2604,7 @@ class SteamBypass:
 # Run the bypass
 bypass = SteamBypass()
 bypass.run()
-"""
+""",
         }
 
     def _get_vmprotect_scripts(self) -> dict[str, str]:
@@ -3154,7 +3154,7 @@ for i in range(5):
 # Run the bypass
 bypass = VMProtectBypass()
 bypass.run()
-"""
+""",
         }
 
     def _get_denuvo_scripts(self) -> dict[str, str]:
@@ -5239,11 +5239,6 @@ def enhance_ai_script_generation(ai_generator, binary_path: str) -> dict[str, An
     # Add AI enhancement metadata
     result["ai_enhanced"] = True
     result["enhancement_level"] = "advanced"
-    result["optimization_applied"] = [
-        "memory_caching",
-        "error_recovery",
-        "anti_detection",
-        "dynamic_adaptation"
-    ]
+    result["optimization_applied"] = ["memory_caching", "error_recovery", "anti_detection", "dynamic_adaptation"]
 
     return result

@@ -987,13 +987,13 @@ class VisualizationRenderer:
                 facecolor=node.color,
                 edgecolor="black",
                 linewidth=0.5,
-                alpha=0.7
+                alpha=0.7,
             )
             ax.add_patch(fancy_box)
 
             # Also draw a Rectangle as another example of using the import
             if len(nodes) < 20:  # Only for small graphs to avoid clutter
-                rect = Rectangle((x - 0.25, y - 0.25), 0.5, 0.5, linewidth=1, edgecolor='black', facecolor='none', alpha=0.3)
+                rect = Rectangle((x - 0.25, y - 0.25), 0.5, 0.5, linewidth=1, edgecolor="black", facecolor="none", alpha=0.3)
                 ax.add_patch(rect)
 
         # Draw edges
@@ -1003,7 +1003,7 @@ class VisualizationRenderer:
         # Draw labels using text with custom positioning
         for node in nodes:
             x, y = pos[node.id]
-            ax.text(x, y, node.label, ha='center', va='center', fontsize=8, weight='bold')
+            ax.text(x, y, node.label, ha="center", va="center", fontsize=8, weight="bold")
 
         ax.set_xlim(0, width)
         ax.set_ylim(0, height)
@@ -1177,18 +1177,18 @@ class VisualizationRenderer:
             return None
 
         # Create a simple image using PIL as an example
-        img = Image.new('RGB', size, color='white')
+        img = Image.new("RGB", size, color="white")
         draw = ImageDraw.Draw(img)
 
         # Draw a simple pattern to demonstrate usage
         for i in range(0, size[0], 10):
             for j in range(0, size[1], 10):
-                color = f"#{i % 255:02x}{j % 255:02x}{(i+j) % 255:02x}"
-                draw.rectangle([i, j, i+10, j+10], fill=color)
+                color = f"#{i % 255:02x}{j % 255:02x}{(i + j) % 255:02x}"
+                draw.rectangle([i, j, i + 10, j + 10], fill=color)
 
         # Convert to base64
         buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
+        img.save(buffer, format="PNG")
         buffer.seek(0)
         image_base64 = base64.b64encode(buffer.getvalue()).decode()
 

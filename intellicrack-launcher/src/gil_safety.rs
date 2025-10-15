@@ -42,10 +42,12 @@ impl GilSafetyManager {
         debug!("Configuring PyBind11 GIL safety");
 
         // Disable all pybind11 GIL assertions at the environment level
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
 
-        // Additional PyBind11 safety flags
-        env::set_var("PYBIND11_PYTHON_VERSION", "3.12");
+            // Additional PyBind11 safety flags
+            env::set_var("PYBIND11_PYTHON_VERSION", "3.12");
+        }
 
         info!("PyBind11 GIL safety configured");
         Ok(())
@@ -84,9 +86,11 @@ impl GilSafetyManager {
             ("BLIS_NUM_THREADS", "1"),
         ];
 
-        for (var, value) in &thread_vars {
-            env::set_var(var, value);
-            debug!("Set {} = {}", var, value);
+        unsafe {
+            for (var, value) in &thread_vars {
+                env::set_var(var, value);
+                debug!("Set {} = {}", var, value);
+            }
         }
 
         info!("Manual GIL safety configured");

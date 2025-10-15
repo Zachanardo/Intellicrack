@@ -133,6 +133,7 @@ class ScriptGenerationWorker(QRunnable):
                 except Exception as ai_error:
                     # Log AI enhancement error but continue with base script
                     import logging
+
                     logging.warning(f"AI enhancement failed: {ai_error}")
                     self.signals.progress.emit("AI enhancement failed, using base script")
 

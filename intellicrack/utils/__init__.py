@@ -254,9 +254,6 @@ try:
     from .exploitation.exploitation import (
         generate_bypass_script,
         generate_ca_certificate,
-        generate_chains,
-        generate_exploit,
-        generate_exploit_strategy,
         generate_key,
         generate_license_bypass_payload,
         generate_response,
@@ -662,12 +659,9 @@ __all__ = [
     "run_vm_bypass",
     # From exploitation
     "generate_bypass_script",
-    "generate_exploit",
-    "generate_exploit_strategy",
     "generate_license_bypass_payload",
     "generate_ca_certificate",
     "generate_key",
-    "generate_chains",
     "generate_response",
     "patch_selected",
     "run_automated_patch_agent",
@@ -776,10 +770,6 @@ __all__ = [
     "ensure_tool_available",
     "PathDiscovery",
     "get_path_discovery",
-    # From exploit_common
-    "handle_exploit_strategy_generation",
-    "handle_exploit_payload_generation",
-    "create_analysis_button",
     # From ui_button_common
     "add_extra_buttons",
     "get_button_style",

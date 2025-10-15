@@ -922,6 +922,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                         out_data = status["return"].get("out-data", "")
                                         if out_data:
                                             import base64
+
                                             decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
                                             lines = decoded.strip().split("\n")
                                             for line in lines:
@@ -1036,6 +1037,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         pid = response["return"].get("pid")
                         if pid:
                             import time
+
                             time.sleep(0.5)
                             status_cmd = {"execute": "guest-exec-status", "arguments": {"pid": pid}}
                             status = self._send_monitor_command(status_cmd)
@@ -1044,6 +1046,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 out_data = status["return"].get("out-data", "")
                                 if out_data:
                                     import base64
+
                                     decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
                                     lines = decoded.strip().split("\n")
 
@@ -1051,13 +1054,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                         parts = line.split()
                                         if len(parts) >= 11:
                                             try:
-                                                processes.append({
-                                                    "pid": int(parts[1]),
-                                                    "name": parts[10],
-                                                    "memory": int(float(parts[3]) * 1024),
-                                                    "cpu": float(parts[2]),
-                                                    "user": parts[0],
-                                                })
+                                                processes.append(
+                                                    {
+                                                        "pid": int(parts[1]),
+                                                        "name": parts[10],
+                                                        "memory": int(float(parts[3]) * 1024),
+                                                        "cpu": float(parts[2]),
+                                                        "user": parts[0],
+                                                    }
+                                                )
                                             except (ValueError, IndexError):
                                                 continue
 

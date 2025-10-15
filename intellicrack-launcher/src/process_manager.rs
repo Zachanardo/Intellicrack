@@ -356,8 +356,8 @@ impl ProcessManager {
                     if let Some(managed_process) = processes.get_mut(&process_id) {
                         if let Some(child) = &mut managed_process.child {
                             // Read stdout
-                            if config.enable_stdout_capture {
-                                if let Some(stdout) = child.stdout.as_mut() {
+                            if config.enable_stdout_capture
+                                && let Some(stdout) = child.stdout.as_mut() {
                                     let reader = BufReader::new(stdout);
                                     for line in reader.lines().map_while(Result::ok) {
                                         if config.log_process_output {
@@ -366,11 +366,10 @@ impl ProcessManager {
                                         managed_process.info.stdout_lines.push(line);
                                     }
                                 }
-                            }
 
                             // Read stderr
-                            if config.enable_stderr_capture {
-                                if let Some(stderr) = child.stderr.as_mut() {
+                            if config.enable_stderr_capture
+                                && let Some(stderr) = child.stderr.as_mut() {
                                     let reader = BufReader::new(stderr);
                                     for line in reader.lines().map_while(Result::ok) {
                                         if config.log_process_output {
@@ -379,7 +378,6 @@ impl ProcessManager {
                                         managed_process.info.stderr_lines.push(line);
                                     }
                                 }
-                            }
 
                             // Check if process is still running
                             match child.try_wait() {
@@ -432,8 +430,8 @@ impl ProcessManager {
 
             // Helper function to update worker status
             let update_worker_status = |status: WorkerStatus, current_task: Option<u32>| {
-                if let Ok(mut workers) = workers_arc.lock() {
-                    if let Some(worker) = workers.get_mut(worker_id) {
+                if let Ok(mut workers) = workers_arc.lock()
+                    && let Some(worker) = workers.get_mut(worker_id) {
                         worker.status = status;
                         worker.current_task = current_task;
                         worker.last_activity = Instant::now();
@@ -442,7 +440,6 @@ impl ProcessManager {
                             worker.processes_completed += 1;
                         }
                     }
-                }
             };
 
             loop {
@@ -508,8 +505,8 @@ impl ProcessManager {
                     // Kill the process due to timeout
                     {
                         let mut processes = processes_arc.lock().unwrap();
-                        if let Some(managed_process) = processes.get_mut(&process_id) {
-                            if let Some(child) = &mut managed_process.child {
+                        if let Some(managed_process) = processes.get_mut(&process_id)
+                            && let Some(child) = &mut managed_process.child {
                                 if let Err(e) = child.kill() {
                                     error!(
                                         "Failed to kill timed out process {}: {}",
@@ -520,7 +517,6 @@ impl ProcessManager {
                                     info!("Process {} killed due to timeout", process_id);
                                 }
                             }
-                        }
                     }
 
                     // Update statistics

@@ -601,23 +601,23 @@ class IntellicrackMainWindow(QMainWindow):
             if hasattr(self, "analyze_button"):
                 self.analyze_button.setEnabled(False)
                 self.analyze_button.setToolTip(
-                    "Binary analyzer is not available.\nReason: " +
-                    (self.component_status["binary_analyzer"]["error"] or "Component initialization failed")
+                    "Binary analyzer is not available.\nReason: "
+                    + (self.component_status["binary_analyzer"]["error"] or "Component initialization failed")
                 )
 
         if not self.component_status["vulnerability_engine"]["enabled"]:
             if hasattr(self, "scan_vulnerabilities_button"):
                 self.scan_vulnerabilities_button.setEnabled(False)
                 self.scan_vulnerabilities_button.setToolTip(
-                    "Vulnerability scanner is not available.\nReason: " +
-                    (self.component_status["vulnerability_engine"]["error"] or "Component initialization failed")
+                    "Vulnerability scanner is not available.\nReason: "
+                    + (self.component_status["vulnerability_engine"]["error"] or "Component initialization failed")
                 )
 
         if not self.component_status["report_handler"]["enabled"]:
             if hasattr(self, "generate_report_button"):
                 self.generate_report_button.setToolTip(
-                    "Report generation may be limited.\nReason: " +
-                    (self.component_status["report_handler"]["error"] or "Report handler unavailable")
+                    "Report generation may be limited.\nReason: "
+                    + (self.component_status["report_handler"]["error"] or "Report handler unavailable")
                 )
 
         if not self.component_status["ai_assistant"]["enabled"]:
@@ -625,9 +625,10 @@ class IntellicrackMainWindow(QMainWindow):
             for i in range(self.tab_widget.count()):
                 if self.tab_widget.tabText(i) == "AI Assistant":
                     self.tab_widget.setTabEnabled(i, False)
-                    self.tab_widget.setTabToolTip(i,
-                        "AI Assistant is not available.\nReason: " +
-                        (self.component_status["ai_assistant"]["error"] or "AI initialization failed")
+                    self.tab_widget.setTabToolTip(
+                        i,
+                        "AI Assistant is not available.\nReason: "
+                        + (self.component_status["ai_assistant"]["error"] or "AI initialization failed"),
                     )
                     # Set tab text color to indicate disabled state
                     tab_bar = self.tab_widget.tabBar()
@@ -639,8 +640,8 @@ class IntellicrackMainWindow(QMainWindow):
                 if "Bypass Script" in action.text():
                     action.setEnabled(False)
                     action.setToolTip(
-                        "Script generation is not available.\nReason: " +
-                        (self.component_status["script_handler"]["error"] or "Script handler initialization failed")
+                        "Script generation is not available.\nReason: "
+                        + (self.component_status["script_handler"]["error"] or "Script handler initialization failed")
                     )
 
         # Show status bar message if any components are disabled
@@ -652,9 +653,10 @@ class IntellicrackMainWindow(QMainWindow):
             if hasattr(self, "status_label"):
                 self.status_label.setText(f"WARNING️ {len(disabled_components)} components disabled")
                 self.status_label.setToolTip(
-                    "The following components are disabled:\n" +
-                    "\n".join([f"• {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}"
-                              for comp in disabled_components])
+                    "The following components are disabled:\n"
+                    + "\n".join(
+                        [f"• {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}" for comp in disabled_components]
+                    )
                 )
                 self.status_label.setStyleSheet("color: orange; font-weight: bold;")
                 self.status_bar.addPermanentWidget(self.status_label)
@@ -848,7 +850,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(
                 self,
                 "Component Unavailable",
-                "Binary analyzer is not available.\nPlease check the application logs for initialization errors."
+                "Binary analyzer is not available.\nPlease check the application logs for initialization errors.",
             )
             return
 
@@ -943,7 +945,7 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(
                 self,
                 "Component Unavailable",
-                "Vulnerability scanner is not available.\nPlease check the application logs for initialization errors."
+                "Vulnerability scanner is not available.\nPlease check the application logs for initialization errors.",
             )
             return
 
@@ -978,7 +980,6 @@ Licensing Files Found: {len(licensing_files)}"""
             self.update_output.emit(f"Vulnerability scan error: {e!s}")
             self.update_status.emit("Vulnerability scan failed")
             self.logger.error(f"Vulnerability scan error: {e!s}")
-
 
     def _display_analysis_results(self, results: dict[str, Any]):
         """Display analysis results in the results tab."""
@@ -1558,9 +1559,7 @@ Licensing Files Found: {len(licensing_files)}"""
             wizard_dialog.exec()
         except ImportError:
             QMessageBox.warning(
-                self,
-                "Frida Not Available",
-                "Frida framework is not installed. Please install frida-tools to use this feature."
+                self, "Frida Not Available", "Frida framework is not installed. Please install frida-tools to use this feature."
             )
             self.logger.warning("Frida not available - module not installed")
         except Exception as e:
@@ -1594,11 +1593,7 @@ Licensing Files Found: {len(licensing_files)}"""
             activation_dialog = OfflineActivationDialog(self)
             activation_dialog.exec()
         except ImportError:
-            QMessageBox.information(
-                self,
-                "Coming Soon",
-                "Offline Activation Emulator will be available in the next update."
-            )
+            QMessageBox.information(self, "Coming Soon", "Offline Activation Emulator will be available in the next update.")
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -1615,11 +1610,7 @@ Licensing Files Found: {len(licensing_files)}"""
             generator_dialog = SerialGeneratorDialog(self)
             generator_dialog.exec()
         except ImportError:
-            QMessageBox.information(
-                self,
-                "Coming Soon",
-                "Serial Number Generator will be available in the next update."
-            )
+            QMessageBox.information(self, "Coming Soon", "Serial Number Generator will be available in the next update.")
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -1636,11 +1627,7 @@ Licensing Files Found: {len(licensing_files)}"""
             reset_dialog = TrialResetDialog(self)
             reset_dialog.exec()
         except ImportError:
-            QMessageBox.information(
-                self,
-                "Coming Soon",
-                "Trial Reset Engine will be available in the next update."
-            )
+            QMessageBox.information(self, "Coming Soon", "Trial Reset Engine will be available in the next update.")
         except Exception as e:
             QMessageBox.critical(
                 self,

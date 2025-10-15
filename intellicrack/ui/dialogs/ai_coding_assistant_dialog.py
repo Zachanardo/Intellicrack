@@ -324,8 +324,10 @@ class ChatWidget(QWidget):
     def __init__(self, parent=None):
         """Initialize the ChatWidget with default values."""
         super().__init__(parent)
-        self.setup_ui()
         self.conversation_history = []
+        self.available_models = []
+        self.setup_ui()
+        self.load_available_models()
 
     def setup_ui(self):
         """Set up the chat interface."""
@@ -374,8 +376,13 @@ class ChatWidget(QWidget):
 
         settings_layout.addWidget(QLabel("Model:"))
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["Claude", "GPT-4", "Local GGUF", "Ollama"])
         settings_layout.addWidget(self.model_combo)
+
+        self.refresh_models_btn = QPushButton("🔄")
+        self.refresh_models_btn.setToolTip("Refresh models from API providers")
+        self.refresh_models_btn.setMaximumWidth(40)
+        self.refresh_models_btn.clicked.connect(self.refresh_models)
+        settings_layout.addWidget(self.refresh_models_btn)
 
         self.context_checkbox = QCheckBox("Include file context")
         self.context_checkbox.setChecked(True)
@@ -416,6 +423,135 @@ class ChatWidget(QWidget):
         """Clear the chat history."""
         self.chat_history.clear()
         self.conversation_history.clear()
+
+    def load_available_models(self, force_refresh: bool = False):
+        """Load available AI models using dynamic API-based discovery.
+
+        Args:
+            force_refresh: Force refresh from provider APIs even if cache is valid
+
+        """
+        try:
+            from ...ai.llm_config_manager import get_llm_config_manager
+            from ...ai.model_discovery_service import get_model_discovery_service
+
+            config_manager = get_llm_config_manager()
+            discovery_service = get_model_discovery_service()
+
+            configured_models = config_manager.list_model_configs()
+            discovered_models = discovery_service.discover_all_models(force_refresh=force_refresh)
+
+            self.available_models = []
+            self.model_combo.clear()
+
+            if configured_models:
+                for model_id in configured_models.keys():
+                    self.available_models.append(model_id)
+                    self.model_combo.addItem(f"📦 {model_id}")
+
+            if discovered_models:
+                total_discovered = sum(len(models) for models in discovered_models.values())
+                logger.info(f"ChatWidget API discovery: Found {total_discovered} models from {len(discovered_models)} providers")
+
+                for provider_name, models in sorted(discovered_models.items()):
+                    if models:
+                        self.model_combo.insertSeparator(self.model_combo.count())
+                        self.model_combo.addItem(f"── {provider_name} API Models ──")
+                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
+
+                        for model in models:
+                            display_name = f"🌐 {provider_name}: {model.name}"
+                            self.available_models.append(model.id)
+                            self.model_combo.addItem(display_name)
+
+            if not self.available_models:
+                self.model_combo.addItem("No models available")
+                self.model_combo.setEnabled(False)
+                self._show_no_models_message()
+                logger.warning("No AI models available in ChatWidget (neither configured nor discovered)")
+                return
+
+            self.model_combo.setEnabled(True)
+
+            default_model = self.available_models[0] if self.available_models else "Unknown"
+            total_models = len(self.available_models)
+            self._show_ready_message(default_model, total_models)
+
+            configured_count = len(configured_models) if configured_models else 0
+            discovered_count = len(self.available_models) - configured_count
+            logger.info(f"ChatWidget loaded {configured_count} configured + {discovered_count} discovered = {total_models} total models")
+
+        except ImportError as e:
+            logger.error(f"ChatWidget failed to import model discovery modules: {e}")
+            self.available_models = []
+            self.model_combo.clear()
+            self.model_combo.addItem("Discovery module unavailable")
+            self.model_combo.setEnabled(False)
+            self._show_error_message("Model discovery module not available")
+        except Exception as e:
+            logger.error(f"ChatWidget failed to discover AI models: {e}")
+            self.available_models = []
+            self.model_combo.clear()
+            self.model_combo.addItem("Error discovering models")
+            self.model_combo.setEnabled(False)
+            self._show_error_message(f"Discovery error: {str(e)}")
+
+    def refresh_models(self):
+        """Refresh available models from API providers with force refresh."""
+        try:
+            self.refresh_models_btn.setEnabled(False)
+            self.refresh_models_btn.setText("⏳")
+            logger.info("ChatWidget: User initiated model refresh from API providers")
+
+            self.load_available_models(force_refresh=True)
+
+            logger.info("ChatWidget: Model refresh completed successfully")
+        except Exception as e:
+            logger.error(f"ChatWidget: Failed to refresh models: {e}")
+        finally:
+            self.refresh_models_btn.setEnabled(True)
+            self.refresh_models_btn.setText("🔄")
+
+    def _show_no_models_message(self):
+        """Display message when no models are configured."""
+        self.chat_history.setHtml(
+            "<div style='padding: 10px;'>"
+            "<h4 style='color: #ff6b6b;'>⚠️ No AI Models Configured</h4>"
+            "<p>Configure AI models to use the assistant:</p>"
+            "<ul>"
+            "<li>Add API keys (OpenAI, Anthropic, etc.)</li>"
+            "<li>Configure local models (GGUF, Ollama)</li>"
+            "</ul>"
+            "<p><b>Go to AI Assistant → Configure to set up models.</b></p>"
+            "</div>"
+        )
+
+    def _show_ready_message(self, model_name: str, total_models: int = 1):
+        """Display ready message with active model.
+
+        Args:
+            model_name: Name of the default/selected model
+            total_models: Total number of available models
+
+        """
+        self.chat_history.setHtml(
+            "<div style='padding: 10px;'>"
+            f"<h4 style='color: #28a745;'>✅ AI Assistant Ready</h4>"
+            f"<p><b>Active Model:</b> {model_name}</p>"
+            f"<p><b>Available Models:</b> {total_models} model{'s' if total_models != 1 else ''} discovered</p>"
+            "<p>Use the buttons above for quick actions or type your question below.</p>"
+            "</div>"
+        )
+
+    def _show_error_message(self, error: str):
+        """Display error message."""
+        self.chat_history.setHtml(
+            "<div style='padding: 10px;'>"
+            "<h4 style='color: #dc3545;'>❌ Configuration Error</h4>"
+            f"<p>{error}</p>"
+            "<p>Check logs for details or reconfigure AI models.</p>"
+            "</div>"
+        )
 
 
 class AICodingAssistantWidget(QWidget):
@@ -3422,7 +3558,9 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 logger.error(f"AI quick processing failed: {ai_error}")
                 fallback_response = self._generate_quick_license_fallback(message)
                 if hasattr(self, "chat_widget"):
-                    self.chat_widget.add_message("AI", f"WARNING️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}")
+                    self.chat_widget.add_message(
+                        "AI", f"WARNING️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}"
+                    )
 
         except Exception as e:
             logger.error(f"Error sending quick license message: {e}")

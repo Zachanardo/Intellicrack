@@ -174,155 +174,94 @@ fn main() {
         let target_dir = env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
         let target_dir = PathBuf::from(target_dir).parent().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
         let project_root_path = PathBuf::from(&project_root);
+        let pixi_env_path = project_root_path.join(".pixi/envs/default");
 
-        // Copy critical Python and runtime DLLs to target directory
-        let dlls_to_copy = [
-            // Core Python DLLs
-            ("python312.dll", project_root_path.join(".pixi/envs/default/python312.dll")),
-            ("python3.dll", project_root_path.join(".pixi/envs/default/python3.dll")),
-
-            // Runtime DLLs
-            ("vcruntime140.dll", project_root_path.join(".pixi/envs/default/vcruntime140.dll")),
-            ("vcruntime140_1.dll", project_root_path.join(".pixi/envs/default/vcruntime140_1.dll")),
-            ("msvcp140.dll", project_root_path.join(".pixi/envs/default/msvcp140.dll")),
-            ("ucrtbase.dll", project_root_path.join(".pixi/envs/default/ucrtbase.dll")),
-            ("zlib.dll", project_root_path.join(".pixi/envs/default/zlib.dll")),
-
-            // Critical supporting libraries
-            ("sqlite3.dll", project_root_path.join(".pixi/envs/default/Library/bin/sqlite3.dll")),
-            ("libssl-3-x64.dll", project_root_path.join(".pixi/envs/default/Library/bin/libssl-3-x64.dll")),
-            ("libcrypto-3-x64.dll", project_root_path.join(".pixi/envs/default/Library/bin/libcrypto-3-x64.dll")),
-            ("libbz2.dll", project_root_path.join(".pixi/envs/default/Library/bin/libbz2.dll")),
-            ("ffi-8.dll", project_root_path.join(".pixi/envs/default/Library/bin/ffi-8.dll")),
-            ("tcl86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tcl86t.dll")),
-            ("tk86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tk86t.dll")),
-
-            // XML parsing libraries (critical for pyexpat functionality)
-            ("libexpat.dll", project_root_path.join(".pixi/envs/default/Library/bin/libexpat.dll")),
-
-            // Font and graphics libraries for matplotlib
-            ("freetype.dll", project_root_path.join(".pixi/envs/default/Library/bin/freetype.dll")),
-            ("fontconfig-1.dll", project_root_path.join(".pixi/envs/default/Library/bin/fontconfig-1.dll")),
-            ("libpng16.dll", project_root_path.join(".pixi/envs/default/Library/bin/libpng16.dll")),
-
-            // Math libraries for scipy and numpy
-            ("libblas.dll", project_root_path.join(".pixi/envs/default/Library/bin/libblas.dll")),
-            ("libcblas.dll", project_root_path.join(".pixi/envs/default/Library/bin/libcblas.dll")),
-            ("liblapack.dll", project_root_path.join(".pixi/envs/default/Library/bin/liblapack.dll")),
-            ("liblapacke.dll", project_root_path.join(".pixi/envs/default/Library/bin/liblapacke.dll")),
-
-            // Intel MKL libraries for high-performance math
-            ("mkl_core.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_core.2.dll")),
-            ("mkl_rt.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_rt.2.dll")),
-            ("mkl_avx2.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_avx2.2.dll")),
-            ("mkl_avx512.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_avx512.2.dll")),
-            ("mkl_sequential.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sequential.2.dll")),
-            ("mkl_intel_thread.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_intel_thread.2.dll")),
-            ("mkl_tbb_thread.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_tbb_thread.2.dll")),
-            ("mkl_def.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_def.2.dll")),
-            ("mkl_vml_avx2.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_avx2.2.dll")),
-            ("mkl_vml_avx512.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_avx512.2.dll")),
-            ("mkl_vml_def.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_def.2.dll")),
-            ("mkl_vml_cmpt.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_cmpt.2.dll")),
-            ("mkl_mc3.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_mc3.2.dll")),
-            ("mkl_vml_mc3.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_vml_mc3.2.dll")),
-
-            // Intel MKL SYCL libraries for OneAPI support
-            ("mkl_sycl_blas.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_blas.5.dll")),
-            ("mkl_sycl_lapack.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_lapack.5.dll")),
-            ("mkl_sycl_dft.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_dft.5.dll")),
-            ("mkl_sycl_sparse.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_sparse.5.dll")),
-            ("mkl_sycl_rng.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_rng.5.dll")),
-            ("mkl_sycl_vm.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_vm.5.dll")),
-            ("mkl_sycl_stats.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_stats.5.dll")),
-            ("mkl_sycl_data_fitting.5.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_sycl_data_fitting.5.dll")),
-
-            // Intel MKL BLACS and ScaLAPACK libraries
-            ("mkl_blacs_lp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_blacs_lp64.2.dll")),
-            ("mkl_blacs_ilp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_blacs_ilp64.2.dll")),
-            ("mkl_scalapack_lp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_scalapack_lp64.2.dll")),
-            ("mkl_scalapack_ilp64.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_scalapack_ilp64.2.dll")),
-            ("mkl_cdft_core.2.dll", project_root_path.join(".pixi/envs/default/Library/bin/mkl_cdft_core.2.dll")),
-
-            // Intel threading libraries
-            ("libiomp5md.dll", project_root_path.join(".pixi/envs/default/Library/bin/libiomp5md.dll")),
-            ("tbb12.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbb12.dll")),
-            ("tbbmalloc.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbbmalloc.dll")),
-            ("tbbmalloc_proxy.dll", project_root_path.join(".pixi/envs/default/Library/bin/tbbmalloc_proxy.dll")),
-
-            // Tcl/Tk DLLs for _tkinter module
-            ("tcl86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tcl86t.dll")),
-            ("tk86t.dll", project_root_path.join(".pixi/envs/default/Library/bin/tk86t.dll")),
+        // Define search paths within the pixi environment
+        let search_paths = vec![
+            pixi_env_path.clone(),
+            pixi_env_path.join("Library/bin"),
+            pixi_env_path.join("DLLs"),
         ];
 
-        // Copy Python extension modules (.pyd files)
-        let pyds_to_copy = [
-            ("_ctypes.pyd", project_root_path.join(".pixi/envs/default/DLLs/_ctypes.pyd")),
-            ("_sqlite3.pyd", project_root_path.join(".pixi/envs/default/DLLs/_sqlite3.pyd")),
-            ("_bz2.pyd", project_root_path.join(".pixi/envs/default/DLLs/_bz2.pyd")),
-            ("_ssl.pyd", project_root_path.join(".pixi/envs/default/DLLs/_ssl.pyd")),
-            ("_tkinter.pyd", project_root_path.join(".pixi/envs/default/DLLs/_tkinter.pyd")),
-            ("_hashlib.pyd", project_root_path.join(".pixi/envs/default/DLLs/_hashlib.pyd")),
-            ("select.pyd", project_root_path.join(".pixi/envs/default/DLLs/select.pyd")),
-            ("_socket.pyd", project_root_path.join(".pixi/envs/default/DLLs/_socket.pyd")),
-            ("unicodedata.pyd", project_root_path.join(".pixi/envs/default/DLLs/unicodedata.pyd")),
-            ("_lzma.pyd", project_root_path.join(".pixi/envs/default/DLLs/_lzma.pyd")),
-
-            ("pyexpat.pyd", project_root_path.join(".pixi/envs/default/DLLs/pyexpat.pyd")),
-            ("_elementtree.pyd", project_root_path.join(".pixi/envs/default/DLLs/_elementtree.pyd")),
-
-            ("_asyncio.pyd", project_root_path.join(".pixi/envs/default/DLLs/_asyncio.pyd")),
-            ("_decimal.pyd", project_root_path.join(".pixi/envs/default/DLLs/_decimal.pyd")),
-            ("_multiprocessing.pyd", project_root_path.join(".pixi/envs/default/DLLs/_multiprocessing.pyd")),
-            ("_overlapped.pyd", project_root_path.join(".pixi/envs/default/DLLs/_overlapped.pyd")),
-            ("_queue.pyd", project_root_path.join(".pixi/envs/default/DLLs/_queue.pyd")),
-            ("_uuid.pyd", project_root_path.join(".pixi/envs/default/DLLs/_uuid.pyd")),
-            ("_zoneinfo.pyd", project_root_path.join(".pixi/envs/default/DLLs/_zoneinfo.pyd")),
-            ("winsound.pyd", project_root_path.join(".pixi/envs/default/DLLs/winsound.pyd")),
+        // --- Critical DLLs that MUST exist, otherwise the build fails ---
+        let critical_dlls = [
+            // Core Python
+            "python312.dll", "python3.dll",
+            // Core VC Runtimes
+            "vcruntime140.dll", "vcruntime140_1.dll",
+            // Intel MKL - CRITICAL for performance and functionality
+            "mkl_rt.2.dll", "mkl_core.2.dll", "mkl_intel_thread.2.dll", "libiomp5md.dll",
+            "mkl_sycl_blas.5.dll", // The DLL from the crash report
         ];
 
-        // Copy DLL files
-        for (dll_name, src_path) in &dlls_to_copy {
-            let src = PathBuf::from(src_path);
-            let dst = target_dir.join(dll_name);
+        // --- Standard DLLs, warn if not found ---
+        let standard_dlls = [
+            "msvcp140.dll", "ucrtbase.dll", "zlib.dll", "sqlite3.dll", "libssl-3-x64.dll",
+            "libcrypto-3-x64.dll", "libbz2.dll", "ffi-8.dll", "libexpat.dll", "freetype.dll",
+            "libpng16.dll", "libblas.dll", "libcblas.dll", "liblapack.dll", "liblapacke.dll",
+            "tbb12.dll", "tbbmalloc.dll",
+        ];
 
-            if src.exists() {
+        // --- Standard PYDs, warn if not found ---
+        let standard_pyds = [
+            "_ctypes.pyd", "_sqlite3.pyd", "_bz2.pyd", "_ssl.pyd", "_hashlib.pyd", "select.pyd",
+            "_socket.pyd", "unicodedata.pyd", "_lzma.pyd", "pyexpat.pyd", "_elementtree.pyd",
+            "_asyncio.pyd", "_decimal.pyd", "_multiprocessing.pyd", "_overlapped.pyd",
+            "_queue.pyd", "_uuid.pyd", "_zoneinfo.pyd", "winsound.pyd", "_tkinter.pyd",
+        ];
+
+        // --- Tcl/Tk libraries ---
+        let tcl_tk_libs = [ "tcl86t.dll", "tk86t.dll" ];
+
+        // --- Copy functions ---
+        let copy_file = |file_name: &str, is_critical: bool| {
+            let mut source_path: Option<PathBuf> = None;
+            for path in &search_paths {
+                let potential_path = path.join(file_name);
+                if potential_path.exists() {
+                    source_path = Some(potential_path);
+                    break;
+                }
+            }
+
+            if let Some(src) = source_path {
+                let dst = target_dir.join(file_name);
                 if let Err(e) = std::fs::copy(&src, &dst) {
-                    println!("cargo:warning=Failed to copy {}: {}", dll_name, e);
+                    let msg = format!("Failed to copy {}: {}", file_name, e);
+                    if is_critical {
+                        panic!("{}", msg);
+                    } else {
+                        println!("cargo:warning={}", msg);
+                    }
                 } else {
-                    println!("cargo:warning=Copied {} to target directory", dll_name);
+                    println!("cargo:warning=Copied {} to target directory", src.display());
                 }
             } else {
-                println!("cargo:warning={} not found at {}", dll_name, src.display());
-            }
-        }
-
-        // Copy Python extension modules (.pyd files)
-        for (pyd_name, src_path) in &pyds_to_copy {
-            let dst = target_dir.join(pyd_name);
-
-            if src_path.exists() {
-                if let Err(e) = std::fs::copy(&src_path, &dst) {
-                    println!("cargo:warning=Failed to copy {}: {}", pyd_name, e);
+                let msg = format!("Could not find required DLL '{}' in any of the search paths: {:?}", file_name, search_paths);
+                if is_critical {
+                    panic!("{}", msg);
                 } else {
-                    println!("cargo:warning=Copied {} to target directory", pyd_name);
+                    println!("cargo:warning={}", msg);
                 }
-            } else {
-                println!("cargo:warning={} not found at {}", pyd_name, src_path.display());
             }
-        }
+        };
+
+        // Process all DLLs and PYDs
+        for dll in critical_dlls.iter() { copy_file(dll, true); }
+        for dll in standard_dlls.iter() { copy_file(dll, false); }
+        for pyd in standard_pyds.iter() { copy_file(pyd, false); }
+        for lib in tcl_tk_libs.iter() { copy_file(lib, false); }
 
         // Copy Tcl/Tk library directories for _tkinter functionality
         let tcl_tk_dirs = [
-            ("tcl8.6", project_root_path.join(".pixi/envs/default/Library/lib/tcl8.6")),
-            ("tk8.6", project_root_path.join(".pixi/envs/default/Library/lib/tk8.6")),
+            ("tcl8.6", pixi_env_path.join("Library/lib/tcl8.6")),
+            ("tk8.6", pixi_env_path.join("Library/lib/tk8.6")),
         ];
 
         for (dir_name, src_path) in &tcl_tk_dirs {
             let dst = target_dir.join(dir_name);
-
             if src_path.exists() && src_path.is_dir() {
-                if let Err(e) = copy_dir_all(&src_path, &dst) {
+                if let Err(e) = copy_dir_all(src_path, &dst) {
                     println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
                 } else {
                     println!("cargo:warning=Copied {} directory to target", dir_name);
@@ -331,7 +270,6 @@ fn main() {
                 println!("cargo:warning=Directory {} not found at {}", dir_name, src_path.display());
             }
         }
-
     }
 }
 

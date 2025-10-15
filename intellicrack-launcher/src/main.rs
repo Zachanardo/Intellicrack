@@ -9,25 +9,39 @@ Licensed under GNU General Public License v3.0
 */
 
 use anyhow::Result;
-use intellicrack_launcher::{initialize_logging, IntellicrackLauncher};
+use intellicrack_launcher::{initialize_logging, IntellicrackLauncher, environment::PROJECT_ROOT};
 use tracing::{error, info};
 
 use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // CRITICAL: Prevent system-level error dialogs on DLL load failures.
+    // This is the primary defense against the system crash described in the issue.
+    // By handling the error in-process, we avoid a state that leads to system instability.
+    #[cfg(target_os = "windows")]
+    unsafe {
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn SetErrorMode(uMode: u32) -> u32;
+        }
+        // SEM_FAILCRITICALERRORS (0x0001)
+        SetErrorMode(0x0001);
+    }
+
     dotenv().ok();
     // CRITICAL: Configure pixi environment BEFORE any Python operations
-let project_root = std::env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-    std::env::set_var("PYO3_PYTHON", format!("{}/.pixi/envs/default/python.exe", project_root));
-    std::env::set_var("PYTHON_SYS_EXECUTABLE", format!("{}/.pixi/envs/default/python.exe", project_root));
-    std::env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
-    std::env::set_var("PYTHONPATH", project_root.clone());
-    std::env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", project_root));
-
-    // Set launcher environment variables to suppress threading warnings
-    std::env::set_var("RUST_LAUNCHER_MODE", "1");
-    std::env::set_var("PYTHON_SUBPROCESS_MODE", "1");
+    unsafe {
+        rayon::scope(|s| {
+            s.spawn(|_| std::env::set_var("PYO3_PYTHON", format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT)));
+            s.spawn(|_| std::env::set_var("PYTHON_SYS_EXECUTABLE", format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT)));
+            s.spawn(|_| std::env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT)));
+            s.spawn(|_| std::env::set_var("PYTHONPATH", PROJECT_ROOT.clone()));
+            s.spawn(|_| std::env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT)));
+            s.spawn(|_| std::env::set_var("RUST_LAUNCHER_MODE", "1"));
+            s.spawn(|_| std::env::set_var("PYTHON_SUBPROCESS_MODE", "1"));
+        });
+    }
 
     // Windows-specific optimizations
     #[cfg(target_os = "windows")]
@@ -42,15 +56,17 @@ let project_root = std::env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\In
 
         // Build new PATH with launcher and pixi directories FIRST
         let dll_path = format!(
-            "{};{};{};{};{};{}",
+            "{};{}/.pixi/envs/default;{}/.pixi/envs/default/Library/bin;{}/.pixi/envs/default/DLLs;{}/.pixi/envs/default/Scripts;{}",
             exe_dir,  // Launcher directory FIRST (contains copied MKL DLLs)
-            format!("{}/.pixi/envs/default", project_root),
-            format!("{}/.pixi/envs/default/Library/bin", project_root),
-            format!("{}/.pixi/envs/default/DLLs", project_root),
-            format!("{}/.pixi/envs/default/Scripts", project_root),
+            &*PROJECT_ROOT,
+            &*PROJECT_ROOT,
+            &*PROJECT_ROOT,
+            &*PROJECT_ROOT,
             current_path
         );
-        std::env::set_var("PATH", dll_path);
+        unsafe {
+            std::env::set_var("PATH", dll_path);
+        }
 
         // Also explicitly add DLL directories using Windows API
         unsafe {
@@ -64,14 +80,14 @@ let project_root = std::env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\In
                 .collect();
 
             // Add pixi Library/bin directory
-            let pixi_lib_bin = format!("{}/.pixi/envs/default/Library/bin", project_root);
+            let pixi_lib_bin = format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT);
             let pixi_wide: Vec<u16> = OsStr::new(&pixi_lib_bin)
                 .encode_wide()
                 .chain(std::iter::once(0))
                 .collect();
 
             #[link(name = "kernel32")]
-            extern "system" {
+            unsafe extern "system" {
                 fn AddDllDirectory(NewDirectory: *const u16) -> *mut std::ffi::c_void;
             }
 
@@ -88,12 +104,14 @@ let project_root = std::env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\In
         }
 
         // Windows console UTF-8 support
-        std::env::set_var("PYTHONIOENCODING", "utf-8");
-        std::env::set_var("PYTHONUTF8", "1");
+        unsafe {
+            std::env::set_var("PYTHONIOENCODING", "utf-8");
+            std::env::set_var("PYTHONUTF8", "1");
+        }
     }
 
     // Initialize logging system
-    if let Err(e) = initialize_logging() {
+    if let Err(e) = initialize_logging().await {
         eprintln!("Failed to initialize logging: {}", e);
         std::process::exit(1);
     }

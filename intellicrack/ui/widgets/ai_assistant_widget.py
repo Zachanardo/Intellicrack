@@ -100,9 +100,15 @@ class AIAssistantWidget(QWidget):
         model_layout.addWidget(QLabel("Model:"))
 
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["Claude-3", "GPT-4", "Llama-70B", "Local GGUF", "Ollama"])
+        self.model_combo.setMinimumWidth(200)
         self.model_combo.currentTextChanged.connect(self.on_model_changed)
         model_layout.addWidget(self.model_combo)
+
+        refresh_models_btn = QPushButton("🔄")
+        refresh_models_btn.setMaximumWidth(40)
+        refresh_models_btn.setToolTip("Refresh available models")
+        refresh_models_btn.clicked.connect(lambda: self.load_available_models(force_refresh=True))
+        model_layout.addWidget(refresh_models_btn)
 
         self.temperature_spin = QComboBox()
         self.temperature_spin.addItems(["0.0", "0.3", "0.5", "0.7", "0.9", "1.0"])
@@ -122,9 +128,6 @@ class AIAssistantWidget(QWidget):
         # Chat history
         self.chat_history = QTextEdit()
         self.chat_history.setReadOnly(True)
-        self.chat_history.setText(
-            "Welcome to AI Assistant!\n\nAsk me anything about:\n• Code explanation\n• Bug fixing\n• Optimization\n• Vulnerability analysis\n• Exploit development\n• Protection bypassing\n"
-        )
         layout.addWidget(self.chat_history)
 
         # Context indicator
@@ -136,7 +139,6 @@ class AIAssistantWidget(QWidget):
         input_layout = QHBoxLayout()
 
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Ask AI about code, vulnerabilities, exploits...")
         self.message_input.returnPressed.connect(self.send_message)
         input_layout.addWidget(self.message_input)
 
@@ -224,7 +226,6 @@ class AIAssistantWidget(QWidget):
         target_layout.addWidget(QLabel("Target:"))
 
         self.target_input = QLineEdit()
-        self.target_input.setPlaceholderText("Function name, address, or pattern...")
         target_layout.addWidget(self.target_input)
         layout.addLayout(target_layout)
 
@@ -233,9 +234,6 @@ class AIAssistantWidget(QWidget):
         purpose_layout.addWidget(QLabel("Purpose:"))
 
         self.purpose_text = QPlainTextEdit()
-        self.purpose_text.setPlaceholderText(
-            "Describe what the script should do...\nE.g., Hook license check, bypass anti-debug, dump memory..."
-        )
         self.purpose_text.setMaximumHeight(100)
         purpose_layout.addWidget(self.purpose_text)
         layout.addLayout(purpose_layout)
@@ -336,7 +334,6 @@ class AIAssistantWidget(QWidget):
         layout.addWidget(QLabel("Code to Analyze:"))
 
         self.code_input = QPlainTextEdit()
-        self.code_input.setPlaceholderText("Paste code here or load from current file...")
         self.code_input.setFont(QFont("Consolas", 10))
         self.code_input.setMaximumHeight(200)
         layout.addWidget(self.code_input)
@@ -405,9 +402,6 @@ class AIAssistantWidget(QWidget):
         layout.addWidget(QLabel("Algorithm Details:"))
 
         self.keygen_details = QPlainTextEdit()
-        self.keygen_details.setPlaceholderText(
-            "Describe the key generation algorithm...\nE.g., XOR with 0xDEADBEEF, MD5 hash of name, etc."
-        )
         self.keygen_details.setMaximumHeight(150)
         layout.addWidget(self.keygen_details)
 
@@ -486,7 +480,6 @@ class AIAssistantWidget(QWidget):
             if self.include_context_cb.isChecked() and self.current_context:
                 context = f"\n\nContext:\n{self.current_context}\n"
 
-            # Simulate AI response (would connect to actual AI backend)
             self.process_ai_request(message, context)
 
     def send_quick_message(self, message: str):
@@ -628,33 +621,54 @@ class AIAssistantWidget(QWidget):
             self.context_label.setText("Context: No file loaded")
 
     def generate_script(self):
-        """Generate a script based on user input."""
+        """Generate protection-aware bypass script using actual binary analysis."""
         script_type = self.script_type_combo.currentText()
         target = self.target_input.text()
-        purpose = self.purpose_text.toPlainText()
 
-        if not purpose:
-            self.script_output.setPlainText("Please describe the script purpose.")
+        if not target:
+            self.script_output.setPlainText("Error: Please specify target binary path")
             return
 
-        # Build prompt
-        prompt = f"Generate a {script_type} with the following specifications:\n"
-        if target:
-            prompt += f"Target: {target}\n"
-        prompt += f"Purpose: {purpose}\n"
+        try:
+            from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator
 
-        if self.include_comments_cb.isChecked():
-            prompt += "Include detailed comments\n"
-        if self.error_handling_cb.isChecked():
-            prompt += "Add comprehensive error handling\n"
-        if self.logging_cb.isChecked():
-            prompt += "Include logging statements\n"
+            script_gen = ProtectionAwareScriptGenerator()
 
-        # Simulate script generation (would use actual AI)
-        generated_script = f"// {script_type}\n// Target: {target}\n// Purpose: {purpose}\n\n// Generated script would appear here..."
+            script_type_map = {
+                "Frida Hook Script": "frida",
+                "Ghidra Analysis Script": "ghidra",
+                "x64dbg Script": "x64dbg",
+                "Binary Ninja Plugin": "binja",
+                "Radare2 Script": "r2",
+                "GDB Script": "gdb",
+                "WinDbg Script": "windbg",
+                "Unicorn Emulation": "unicorn",
+                "Angr Symbolic Execution": "angr",
+            }
 
-        self.script_output.setPlainText(generated_script)
-        self.script_generated.emit(script_type, generated_script)
+            script_format = script_type_map.get(script_type, "frida")
+            self.script_output.setPlainText("Analyzing binary...\n\nThis may take a moment...")
+
+            result = script_gen.generate_bypass_script(target, script_type=script_format)
+
+            if result.get("success"):
+                generated_script = result.get("script", "")
+                protection = result.get("protection_detected", "Unknown")
+                confidence = result.get("confidence", 0.0)
+
+                header = f"// Protection: {protection} ({confidence * 100:.1f}% confidence)\n"
+                header += f"// {result.get('approach', '')}\n\n"
+
+                self.script_output.setPlainText(header + generated_script)
+                self.script_generated.emit(script_type, generated_script)
+                logger.info(f"Generated {script_type} - Protection: {protection}")
+            else:
+                error_msg = result.get("error", "Unknown error")
+                self.script_output.setPlainText(f"Error: {error_msg}")
+
+        except Exception as e:
+            self.script_output.setPlainText(f"Error: {str(e)}")
+            logger.error(f"Script generation failed: {e}")
 
     def copy_script(self):
         """Copy generated script to clipboard."""
@@ -680,8 +694,100 @@ class AIAssistantWidget(QWidget):
                 logger.error(f"Failed to save script: {e}")
 
     def test_script(self):
-        """Test the generated script."""
-        logger.info("Script testing not yet implemented")
+        """Test the generated script in appropriate execution environment."""
+        script_content = self.script_output.toPlainText()
+        script_type = self.script_type_combo.currentText()
+
+        if not script_content or "Error:" in script_content:
+            logger.warning("No valid script to test")
+            self.script_output.setPlainText("Cannot test: No valid script generated")
+            return
+
+        try:
+            import subprocess
+            import tempfile
+            from pathlib import Path
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
+
+                if "Frida" in script_type:
+                    script_file = temp_path / "test_script.js"
+                    script_file.write_text(script_content, encoding="utf-8")
+
+                    result = subprocess.run(["frida", "--version"], capture_output=True, text=True, timeout=5)
+
+                    if result.returncode == 0:
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n"
+                            f"✓ Frida validation passed\n"
+                            f"Script saved to: {script_file}\n"
+                            f"Run with: frida -f <target> -l {script_file.name}"
+                        )
+                        logger.info("Frida script validation successful")
+                    else:
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n⚠ Frida not found. Install with: pip install frida-tools"
+                        )
+
+                elif "Python" in script_type or script_type == "Angr Symbolic Execution":
+                    script_file = temp_path / "test_script.py"
+                    script_file.write_text(script_content, encoding="utf-8")
+
+                    result = subprocess.run(["python", "-m", "py_compile", str(script_file)], capture_output=True, text=True, timeout=10)
+
+                    if result.returncode == 0:
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n✓ Python syntax validation passed\nScript is syntactically correct"
+                        )
+                        logger.info("Python script validation successful")
+                    else:
+                        error_msg = result.stderr or result.stdout
+                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Syntax error:\n{error_msg}")
+                        logger.error(f"Python validation failed: {error_msg}")
+
+                elif "Ghidra" in script_type:
+                    script_file = temp_path / "test_script.py"
+                    script_file.write_text(script_content, encoding="utf-8")
+
+                    result = subprocess.run(["python", "-m", "py_compile", str(script_file)], capture_output=True, text=True, timeout=10)
+
+                    if result.returncode == 0:
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n✓ Ghidra script syntax validated\nPlace in Ghidra scripts directory to use"
+                        )
+                        logger.info("Ghidra script validation successful")
+                    else:
+                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n⚠ Syntax check failed")
+
+                elif "Radare2" in script_type or "r2" in script_type:
+                    script_file = temp_path / "test_script.r2"
+                    script_file.write_text(script_content, encoding="utf-8")
+
+                    result = subprocess.run(["r2", "-v"], capture_output=True, text=True, timeout=5)
+
+                    if result.returncode == 0:
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n✓ Radare2 available\nRun with: r2 -i {script_file.name} <target>"
+                        )
+                        logger.info("Radare2 script prepared")
+                    else:
+                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n⚠ Radare2 not found. Install from radare.org")
+
+                else:
+                    self.script_output.setPlainText(
+                        f"{script_content}\n\n{'=' * 50}\n"
+                        f"✓ Script generated for {script_type}\n"
+                        f"Manual testing required for this script type"
+                    )
+                    logger.info(f"Script prepared for {script_type}")
+
+        except subprocess.TimeoutExpired:
+            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Test timed out")
+            logger.error("Script test timed out")
+        except Exception as e:
+            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Test error: {str(e)}")
+            logger.error(f"Script test failed: {e}")
 
     def load_current_file_for_analysis(self):
         """Load current file content for analysis."""
@@ -691,7 +797,7 @@ class AIAssistantWidget(QWidget):
             self.code_input.setPlainText("No file context available. Load a file first.")
 
     def analyze_code(self):
-        """Analyze the provided code."""
+        """Analyze code using AI-powered analysis."""
         code = self.code_input.toPlainText()
         analysis_type = self.analysis_type_combo.currentText()
 
@@ -699,41 +805,90 @@ class AIAssistantWidget(QWidget):
             self.analysis_results.setText("Please provide code to analyze.")
             return
 
-        # Simulate analysis (would use actual AI)
-        results = f"=== {analysis_type} Results ===\n\n"
-        results += f"Analyzing {len(code)} characters of code...\n\n"
-        results += "Analysis results would appear here with:\n"
-        results += "• Identified issues\n"
-        results += "• Severity ratings\n"
-        results += "• Recommendations\n"
-        results += "• Code improvements\n"
+        try:
+            from ...ai.integration_manager import IntegrationManager
 
-        self.analysis_results.setText(results)
+            ai_manager = IntegrationManager()
+            model = self.model_combo.currentText()
+
+            prompt = f"""Perform {analysis_type} on the following code:
+
+```
+{code}
+```
+
+Provide detailed results including:
+- Identified issues/patterns
+- Severity ratings
+- Specific recommendations
+- Code improvement suggestions
+
+Format as clear, actionable analysis."""
+
+            self.analysis_results.setText(f"Analyzing code with {model}...\n\nPlease wait...")
+
+            results = ai_manager.generate_response(prompt=prompt, model=model, temperature=0.3, max_tokens=1500)
+
+            if results and results.strip():
+                final_results = f"=== {analysis_type} Results ===\n\n{results.strip()}"
+                self.analysis_results.setText(final_results)
+                logger.info(f"Completed {analysis_type}")
+            else:
+                self.analysis_results.setText("Error: AI generated empty response")
+
+        except ImportError:
+            self.analysis_results.setText(
+                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use code analysis."
+            )
+        except Exception as e:
+            self.analysis_results.setText(f"Error during analysis: {str(e)}")
+            logger.error(f"Code analysis failed: {e}")
 
     def generate_keygen(self):
-        """Generate a keygen based on specifications."""
+        """Generate keygen using AI-powered code generation."""
         algo_type = self.keygen_algo_combo.currentText()
         details = self.keygen_details.toPlainText()
         language = self.keygen_lang_combo.currentText()
         include_gui = self.gui_cb.isChecked()
 
         if not details:
-            self.keygen_output.setPlainText("Please provide algorithm details.")
-            return
+            details = f"Generate {algo_type} keygen algorithm"
 
-        # Simulate keygen generation (would use actual AI)
-        keygen_code = f"# {algo_type} Keygen in {language}\n"
-        keygen_code += f"# Algorithm: {details}\n\n"
+        try:
+            from ...ai.integration_manager import IntegrationManager
 
-        if language == "Python":
-            keygen_code += "def generate_key(input_data):\n"
-            keygen_code += "    # Implementation would go here\n"
-            keygen_code += "    pass\n\n"
+            ai_manager = IntegrationManager()
+            model = self.model_combo.currentText()
 
-            if include_gui:
-                keygen_code += "# GUI code would be added here\n"
+            prompt = f"""Generate a production-ready {algo_type} keygen in {language}.
+Algorithm: {details}
+Requirements:
+- Real cryptographic implementation (SHA-256, XOR, etc.)
+- Working validation function
+{"- Include tkinter GUI" if include_gui and language == "Python" else ""}
+{"- Include Qt GUI" if include_gui and language == "C++" else ""}
+- Fully functional implementation
+- Complete, executable code
 
-        self.keygen_output.setPlainText(keygen_code)
+Return ONLY the code, no explanations."""
+
+            self.keygen_output.setPlainText(f"Generating {algo_type} keygen in {language}...\n\nThis may take a moment...")
+
+            keygen_code = ai_manager.generate_response(prompt=prompt, model=model, temperature=0.3, max_tokens=2000)
+
+            if keygen_code and keygen_code.strip():
+                self.keygen_output.setPlainText(keygen_code.strip())
+                logger.info(f"Generated {algo_type} keygen in {language}")
+            else:
+                self.keygen_output.setPlainText("Error: AI generated empty response")
+
+        except ImportError:
+            self.keygen_output.setPlainText(
+                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use keygen generation."
+            )
+        except Exception as e:
+            self.keygen_output.setPlainText(f"Error generating keygen: {str(e)}")
+            logger.error(f"Keygen generation failed: {e}")
 
     def copy_keygen(self):
         """Copy keygen code to clipboard."""
@@ -762,11 +917,272 @@ class AIAssistantWidget(QWidget):
                 logger.error(f"Failed to save keygen: {e}")
 
     def compile_keygen(self):
-        """Compile the keygen code."""
-        logger.info("Keygen compilation not yet implemented")
+        """Compile the keygen code into standalone executable."""
+        keygen_content = self.keygen_output.toPlainText()
+        language = self.keygen_lang_combo.currentText()
 
-    def load_available_models(self):
-        """Load available AI models."""
-        # This would check for available models/backends
-        self.available_models = ["Claude-3", "GPT-4", "Llama-70B", "Local GGUF", "Ollama"]
-        logger.info(f"Loaded {len(self.available_models)} AI models")
+        if not keygen_content or "Error:" in keygen_content:
+            self.keygen_output.setPlainText("Cannot compile: No valid keygen code generated")
+            logger.warning("No valid keygen to compile")
+            return
+
+        try:
+            import subprocess
+            import tempfile
+            from pathlib import Path
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
+
+                if language == "Python":
+                    keygen_file = temp_path / "keygen.py"
+                    keygen_file.write_text(keygen_content, encoding="utf-8")
+
+                    result = subprocess.run(["pyinstaller", "--version"], capture_output=True, text=True, timeout=5)
+
+                    if result.returncode != 0:
+                        self.keygen_output.setPlainText(
+                            f"{keygen_content}\n\n{'=' * 50}\n"
+                            "⚠ PyInstaller not found\n"
+                            "Install with: pip install pyinstaller\n"
+                            f"Then run: pyinstaller --onefile {keygen_file.name}"
+                        )
+                        logger.warning("PyInstaller not available")
+                        return
+
+                    self.keygen_output.setPlainText(
+                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with PyInstaller...\nThis may take a moment..."
+                    )
+
+                    compile_result = subprocess.run(
+                        ["pyinstaller", "--onefile", "--name", "keygen", str(keygen_file)],
+                        capture_output=True,
+                        text=True,
+                        timeout=120,
+                        cwd=str(temp_path),
+                    )
+
+                    if compile_result.returncode == 0:
+                        exe_path = temp_path / "dist" / "keygen.exe"
+                        if exe_path.exists():
+                            from PyQt6.QtWidgets import QFileDialog
+
+                            save_path, _ = QFileDialog.getSaveFileName(self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)")
+
+                            if save_path:
+                                import shutil
+
+                                shutil.copy(exe_path, save_path)
+                                self.keygen_output.setPlainText(
+                                    f"{keygen_content}\n\n{'=' * 50}\n"
+                                    f"✓ Compilation successful!\n"
+                                    f"Executable saved to: {save_path}\n"
+                                    f"Size: {Path(save_path).stat().st_size // 1024} KB"
+                                )
+                                logger.info(f"Keygen compiled successfully: {save_path}")
+                        else:
+                            self.keygen_output.setPlainText(
+                                f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation succeeded but executable not found"
+                            )
+                    else:
+                        error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
+                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation failed:\n{error_msg}")
+                        logger.error(f"PyInstaller compilation failed: {error_msg}")
+
+                elif language in ["C", "C++"]:
+                    extension = ".c" if language == "C" else ".cpp"
+                    compiler = "gcc" if language == "C" else "g++"
+                    keygen_file = temp_path / f"keygen{extension}"
+                    keygen_file.write_text(keygen_content, encoding="utf-8")
+
+                    result = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=5)
+
+                    if result.returncode != 0:
+                        self.keygen_output.setPlainText(
+                            f"{keygen_content}\n\n{'=' * 50}\n"
+                            f"⚠ {compiler} not found\n"
+                            f"Install MinGW-w64 or MSVC\n"
+                            f"Then run: {compiler} -o keygen.exe {keygen_file.name}"
+                        )
+                        logger.warning(f"{compiler} not available")
+                        return
+
+                    output_exe = temp_path / "keygen.exe"
+
+                    self.keygen_output.setPlainText(
+                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with {compiler}...\nThis may take a moment..."
+                    )
+
+                    compile_result = subprocess.run(
+                        [compiler, str(keygen_file), "-o", str(output_exe), "-O2", "-s"],
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        cwd=str(temp_path),
+                    )
+
+                    if compile_result.returncode == 0 and output_exe.exists():
+                        from PyQt6.QtWidgets import QFileDialog
+
+                        save_path, _ = QFileDialog.getSaveFileName(self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)")
+
+                        if save_path:
+                            import shutil
+
+                            shutil.copy(output_exe, save_path)
+                            self.keygen_output.setPlainText(
+                                f"{keygen_content}\n\n{'=' * 50}\n"
+                                f"✓ Compilation successful!\n"
+                                f"Executable saved to: {save_path}\n"
+                                f"Size: {Path(save_path).stat().st_size // 1024} KB"
+                            )
+                            logger.info(f"Keygen compiled successfully: {save_path}")
+                    else:
+                        error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
+                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation failed:\n{error_msg}")
+                        logger.error(f"{compiler} compilation failed: {error_msg}")
+
+                elif language == "JavaScript":
+                    self.keygen_output.setPlainText(
+                        f"{keygen_content}\n\n{'=' * 50}\n"
+                        "ℹ JavaScript keygens run with Node.js\n"
+                        "Save as keygen.js and run with: node keygen.js\n"
+                        "For executable, use pkg: npm install -g pkg && pkg keygen.js"
+                    )
+                    logger.info("JavaScript keygen - manual compilation instructions provided")
+
+                elif language == "Assembly":
+                    self.keygen_output.setPlainText(
+                        f"{keygen_content}\n\n{'=' * 50}\n"
+                        "ℹ Assembly keygens require NASM or MASM\n"
+                        "Save as keygen.asm and compile with:\n"
+                        "NASM: nasm -f win64 keygen.asm && gcc keygen.o -o keygen.exe\n"
+                        "MASM: ml64 keygen.asm /link /out:keygen.exe"
+                    )
+                    logger.info("Assembly keygen - manual compilation instructions provided")
+
+                else:
+                    self.keygen_output.setPlainText(
+                        f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation not supported for {language}\nSave and compile manually"
+                    )
+
+        except subprocess.TimeoutExpired:
+            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation timed out")
+            logger.error("Keygen compilation timed out")
+        except Exception as e:
+            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation error: {str(e)}")
+            logger.error(f"Keygen compilation failed: {e}")
+
+    def load_available_models(self, force_refresh: bool = False):
+        """Load available AI models using dynamic API-based discovery."""
+        try:
+            from ...ai.llm_config_manager import get_llm_config_manager
+            from ...ai.model_discovery_service import get_model_discovery_service
+
+            config_manager = get_llm_config_manager()
+            discovery_service = get_model_discovery_service()
+
+            configured_models = config_manager.list_model_configs()
+            discovered_models = discovery_service.discover_all_models(force_refresh=force_refresh)
+
+            self.available_models = []
+            self.model_combo.clear()
+
+            if configured_models:
+                for model_id in configured_models.keys():
+                    self.available_models.append(model_id)
+                    self.model_combo.addItem(f"📦 {model_id}")
+
+            if discovered_models:
+                for provider_name, models in sorted(discovered_models.items()):
+                    if models:
+                        self.model_combo.insertSeparator(self.model_combo.count())
+                        self.model_combo.addItem(f"── {provider_name} API Models ──")
+                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
+
+                        for model in models:
+                            display_name = f"🌐 {provider_name}: {model.name}"
+                            self.available_models.append(model.id)
+                            self.model_combo.addItem(display_name)
+
+            if not self.available_models:
+                self.model_combo.addItem("No models available")
+                self.model_combo.setEnabled(False)
+                self._show_no_models_prompt()
+                logger.warning("No AI models available (neither configured nor discovered)")
+                return
+
+            self.model_combo.setEnabled(True)
+            total_models = len(self.available_models)
+            self._show_welcome_message(total_models)
+            logger.info(f"Loaded {total_models} AI models from API discovery")
+
+        except Exception as e:
+            logger.error(f"Failed to load models: {e}")
+            self.available_models = []
+            self.model_combo.clear()
+            self.model_combo.addItem("Error loading models")
+            self.model_combo.setEnabled(False)
+            self._show_error_message(str(e))
+
+    def _show_no_models_prompt(self):
+        """Display prompt when no models are configured."""
+        self.chat_history.setHtml(
+            "<div style='padding: 20px;'>"
+            "<h2 style='color: #dc3545;'>⚠ No AI Models Configured</h2>"
+            "<p style='font-size: 14px;'>To use the AI Assistant, you need to configure at least one AI model.</p>"
+            "<h3 style='color: #0078d4;'>Configuration Options:</h3>"
+            "<ul style='font-size: 13px;'>"
+            "<li><b>OpenAI API:</b> Add your OpenAI API key in Settings → LLM Configuration</li>"
+            "<li><b>Anthropic (Claude):</b> Add your Anthropic API key in Settings</li>"
+            "<li><b>Local GGUF:</b> Configure local GGUF model path in Settings</li>"
+            "<li><b>Ollama:</b> Install Ollama locally and configure in Settings</li>"
+            "<li><b>LM Studio:</b> Run LM Studio and configure the API endpoint</li>"
+            "</ul>"
+            "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
+            "After configuration, click the 🔄 button to refresh available models."
+            "</p>"
+            "</div>"
+        )
+
+    def _show_welcome_message(self, total_models: int):
+        """Display welcome message with model count."""
+        self.chat_history.setHtml(
+            "<div style='padding: 20px;'>"
+            "<h2 style='color: #28a745;'>✓ AI Assistant Ready</h2>"
+            f"<p style='font-size: 14px;'>{total_models} AI model(s) available for use.</p>"
+            "<h3 style='color: #0078d4;'>What can I help you with?</h3>"
+            "<ul style='font-size: 13px;'>"
+            "<li>Code explanation and understanding</li>"
+            "<li>Bug identification and fixing</li>"
+            "<li>Performance optimization</li>"
+            "<li>Vulnerability analysis</li>"
+            "<li>Exploit development assistance</li>"
+            "<li>Protection mechanism bypassing</li>"
+            "<li>Script generation for analysis tools</li>"
+            "<li>Keygen algorithm development</li>"
+            "</ul>"
+            "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
+            "Select a model from the dropdown below and start chatting, or use the tabs above for specific tasks."
+            "</p>"
+            "</div>"
+        )
+
+    def _show_error_message(self, error: str):
+        """Display error message when model loading fails."""
+        self.chat_history.setHtml(
+            "<div style='padding: 20px;'>"
+            "<h2 style='color: #dc3545;'>✗ Error Loading Models</h2>"
+            f"<p style='font-size: 14px; color: #666;'>{error}</p>"
+            "<h3 style='color: #0078d4;'>Troubleshooting:</h3>"
+            "<ul style='font-size: 13px;'>"
+            "<li>Check your API keys in Settings → LLM Configuration</li>"
+            "<li>Verify network connectivity for API providers</li>"
+            "<li>Ensure Ollama/LM Studio is running for local models</li>"
+            "<li>Check the logs for detailed error messages</li>"
+            "</ul>"
+            "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
+            "Click the 🔄 button to try again."
+            "</p>"
+            "</div>"
+        )

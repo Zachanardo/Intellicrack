@@ -522,7 +522,7 @@ class TPMBypassEngine:
 
         sig_algo = bytes.fromhex("300d06092a864886f70d01010b0500")
 
-        issuer = bytes.fromhex(
+        issuer = bytes.fromhex(  # pragma: allowlist secret
             "3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
         )
 
@@ -531,7 +531,7 @@ class TPMBypassEngine:
         validity = b"\x30" + bytes([len(not_before) + len(not_after)]) + not_before + not_after
 
         subject = bytes.fromhex("30818a3112301006035504030c0941494b5f") + f"{aik_handle:08x}".encode("ascii")
-        subject += bytes.fromhex(
+        subject += bytes.fromhex(  # pragma: allowlist secret
             "3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
         )
 
@@ -720,15 +720,19 @@ class TPMBypassEngine:
                 # If suspend fails, try to get system info for alternative approach
                 sys_info = win32api.GetNativeSystemInfo()
                 extracted_secrets["sys_info"] = struct.pack(
-                    'III',
-                    sys_info[0], sys_info[1], sys_info[2]  # processor arch, page size, processor type
+                    "III",
+                    sys_info[0],
+                    sys_info[1],
+                    sys_info[2],  # processor arch, page size, processor type
                 )
 
         # Use win32security to check memory security attributes
         if HAS_WIN32:
             try:
                 # Get current process token to adjust privileges for low-level memory access
-                token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY)
+                token = win32security.OpenProcessToken(
+                    win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY
+                )
 
                 # Enable debug privilege for low-level memory access
                 privileges = [(win32security.LookupPrivilegeValue(None, "SeDebugPrivilege"), win32security.SE_PRIVILEGE_ENABLED)]

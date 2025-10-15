@@ -202,6 +202,7 @@ class LicenseSnapshot:
                 except Exception as e:
                     # Log the exception with details for debugging
                     import logging
+
                     logging.warning(f"Error capturing registry data for {hive_name}\\{key_path}: {e}")
                     continue
 
@@ -329,16 +330,19 @@ class LicenseSnapshot:
                                 except Exception as e:
                                     # Log the exception with details for debugging
                                     import logging
+
                                     logging.warning(f"Error processing database file info: {e}")
                                     continue
                     except Exception as e:
                         # Log the exception with details for debugging
                         import logging
+
                         logging.warning(f"Error accessing file path: {e}")
                         continue
             except Exception as e:
                 # Log the exception with details for debugging
                 import logging
+
                 logging.warning(f"Error accessing parent directory: {e}")
                 continue
 

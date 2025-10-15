@@ -571,11 +571,7 @@ class RealTimeDashboard:
             """Render dashboard view using render_template."""
             # Use render_template that was imported
             dashboard_state = self.get_dashboard_state()
-            return render_template(
-                "dashboard.html",
-                title="Intellicrack Dashboard",
-                dashboard_state=dashboard_state
-            )
+            return render_template("dashboard.html", title="Intellicrack Dashboard", dashboard_state=dashboard_state)
 
         @self.flask_app.route("/api/events")
         def get_events():

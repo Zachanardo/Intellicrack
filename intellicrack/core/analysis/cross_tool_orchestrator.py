@@ -900,6 +900,7 @@ class CrossToolOrchestrator:
                         proc.kill()
             # Clear temp files
             import tempfile
+
             temp_base = Path(tempfile.gettempdir())
             temp_dir = temp_base / "ghidra_temp"
             if temp_dir.exists():

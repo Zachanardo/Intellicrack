@@ -1123,11 +1123,15 @@ class AntiAnalysisDetector:
 
         try:
             import tempfile
+
             # Determine appropriate temp directory based on platform
             temp_dir = tempfile.gettempdir()
-            sandbox_files = [r"C:\agent\agent.py", r"C:\sandbox\starter.exe",
-                            os.path.join(temp_dir, ".X11-unix"),
-                            os.path.join(temp_dir, ".wine-")]
+            sandbox_files = [
+                r"C:\agent\agent.py",
+                r"C:\sandbox\starter.exe",
+                os.path.join(temp_dir, ".X11-unix"),
+                os.path.join(temp_dir, ".wine-"),
+            ]
 
             for file_path in sandbox_files:
                 if os.path.exists(file_path):

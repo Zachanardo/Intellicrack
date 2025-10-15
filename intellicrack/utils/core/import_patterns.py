@@ -90,10 +90,12 @@ except ImportError:
 
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
+
     XML_AVAILABLE = True
 except ImportError:
     try:
         import xml.etree.ElementTree as ET  # noqa: N817, S314
+
         XML_AVAILABLE = True
     except ImportError:
         ET = None

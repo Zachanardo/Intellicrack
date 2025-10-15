@@ -60,10 +60,7 @@ class TrialResetWorker(QThread):
                 trial_info = self.engine.scan_for_trial(self.params["product_name"])
 
                 self.update.emit(100)
-                self.result.emit({
-                    "operation": "scan",
-                    "data": trial_info
-                })
+                self.result.emit({"operation": "scan", "data": trial_info})
 
             elif self.operation == "reset":
                 trial_info = self.params["trial_info"]
@@ -82,21 +79,14 @@ class TrialResetWorker(QThread):
                 success = self.engine.reset_trial(trial_info, strategy)
 
                 self.update.emit(100)
-                self.result.emit({
-                    "operation": "reset",
-                    "success": success,
-                    "strategy": strategy
-                })
+                self.result.emit({"operation": "reset", "success": success, "strategy": strategy})
 
             elif self.operation == "monitor":
                 # Monitor trial status continuously
                 product_name = self.params["product_name"]
                 while not self.isInterruptionRequested():
                     trial_info = self.engine.scan_for_trial(product_name)
-                    self.result.emit({
-                        "operation": "monitor",
-                        "data": trial_info
-                    })
+                    self.result.emit({"operation": "monitor", "data": trial_info})
                     self.msleep(5000)  # Check every 5 seconds
 
             elif self.operation == "backup":
@@ -118,17 +108,14 @@ class TrialResetWorker(QThread):
                     "trial_expired": trial_info.trial_expired,
                     "registry_keys": trial_info.registry_keys,
                     "files": trial_info.files,
-                    "processes": trial_info.processes
+                    "processes": trial_info.processes,
                 }
 
-                with open(backup_path, 'w') as f:
+                with open(backup_path, "w") as f:
                     json.dump(backup_data, f, indent=2)
 
                 self.update.emit(100)
-                self.result.emit({
-                    "operation": "backup",
-                    "path": backup_path
-                })
+                self.result.emit({"operation": "backup", "path": backup_path})
 
         except Exception as e:
             self.error.emit(str(e))
@@ -514,9 +501,7 @@ class TrialResetDialog(QDialog):
 
         # History table
         self.history_table = QTableWidget(0, 5)
-        self.history_table.setHorizontalHeaderLabels([
-            "Product", "Type", "Status", "Days Left", "Scanned"
-        ])
+        self.history_table.setHorizontalHeaderLabels(["Product", "Type", "Status", "Days Left", "Scanned"])
         self.history_table.horizontalHeader().setStretchLastSection(True)
         self.history_table.setAlternatingRowColors(True)
         self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -553,11 +538,7 @@ class TrialResetDialog(QDialog):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        self.worker = TrialResetWorker(
-            self.engine,
-            "scan",
-            {"product_name": product_name}
-        )
+        self.worker = TrialResetWorker(self.engine, "scan", {"product_name": product_name})
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -585,9 +566,10 @@ class TrialResetDialog(QDialog):
 
         # Confirm reset
         reply = QMessageBox.question(
-            self, "Confirm Reset",
+            self,
+            "Confirm Reset",
             f"Reset trial for {self.current_trial_info.product_name} using {strategy} strategy?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply != QMessageBox.StandardButton.Yes:
@@ -601,14 +583,7 @@ class TrialResetDialog(QDialog):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        self.worker = TrialResetWorker(
-            self.engine,
-            "reset",
-            {
-                "trial_info": self.current_trial_info,
-                "strategy": strategy
-            }
-        )
+        self.worker = TrialResetWorker(self.engine, "reset", {"trial_info": self.current_trial_info, "strategy": strategy})
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -624,18 +599,11 @@ class TrialResetDialog(QDialog):
             self,
             "Save Trial Backup",
             f"{self.current_trial_info.product_name}_trial_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            "JSON Files (*.json);;All Files (*.*)"
+            "JSON Files (*.json);;All Files (*.*)",
         )
 
         if file_path:
-            self.worker = TrialResetWorker(
-                self.engine,
-                "backup",
-                {
-                    "trial_info": self.current_trial_info,
-                    "backup_path": file_path
-                }
-            )
+            self.worker = TrialResetWorker(self.engine, "backup", {"trial_info": self.current_trial_info, "backup_path": file_path})
             self.worker.progress.connect(self.log)
             self.worker.result.connect(self.handle_worker_result)
             self.worker.error.connect(self.handle_worker_error)
@@ -644,23 +612,17 @@ class TrialResetDialog(QDialog):
 
     def restore_from_backup(self):
         """Restore trial data from backup."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Trial Backup",
-            "",
-            "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select Trial Backup", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     backup_data = json.load(f)
 
                 self.product_name_input.setText(backup_data.get("product_name", ""))
                 self.log(f"Loaded backup for {backup_data.get('product_name', 'Unknown')}")
                 QMessageBox.information(
-                    self, "Success",
-                    "Backup loaded. Note: This loads the trial information only, not the actual trial state."
+                    self, "Success", "Backup loaded. Note: This loads the trial information only, not the actual trial state."
                 )
             except Exception as e:
                 self.handle_worker_error(f"Failed to load backup: {e}")
@@ -672,11 +634,7 @@ class TrialResetDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please enter a product name to monitor")
             return
 
-        self.monitor_worker = TrialResetWorker(
-            self.engine,
-            "monitor",
-            {"product_name": product_name}
-        )
+        self.monitor_worker = TrialResetWorker(self.engine, "monitor", {"product_name": product_name})
         self.monitor_worker.result.connect(self.update_monitor_display)
         self.monitor_worker.error.connect(self.handle_worker_error)
         self.monitor_worker.start()
@@ -726,9 +684,7 @@ class TrialResetDialog(QDialog):
         # Log changes
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.monitor_log.append(
-            f"[{timestamp}] Days: {trial_info.trial_days}, "
-            f"Usage: {trial_info.usage_count}, "
-            f"Expired: {trial_info.trial_expired}"
+            f"[{timestamp}] Days: {trial_info.trial_days}, Usage: {trial_info.usage_count}, Expired: {trial_info.trial_expired}"
         )
 
     def deep_registry_scan(self):
@@ -764,9 +720,7 @@ class TrialResetDialog(QDialog):
             return
 
         reply = QMessageBox.question(
-            self, "Confirm",
-            "Delete all trial registry entries?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self, "Confirm", "Delete all trial registry entries?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -784,7 +738,7 @@ class TrialResetDialog(QDialog):
             self,
             "Export Registry Data",
             f"registry_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.reg",
-            "Registry Files (*.reg);;All Files (*.*)"
+            "Registry Files (*.reg);;All Files (*.*)",
         )
 
         if file_path:
@@ -864,10 +818,11 @@ class TrialResetDialog(QDialog):
     def enable_time_travel(self):
         """Enable time travel mode."""
         QMessageBox.information(
-            self, "Time Travel Mode",
+            self,
+            "Time Travel Mode",
             "Time travel mode allows manipulating system time to reset trials.\n\n"
             "WARNING: This may affect other time-sensitive applications.\n"
-            "Use with caution and restore time after reset."
+            "Use with caution and restore time after reset.",
         )
         self.log("Time travel mode information displayed")
 
@@ -880,12 +835,12 @@ class TrialResetDialog(QDialog):
             self,
             "Export Scan Results",
             f"{self.current_trial_info.product_name}_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)"
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)",
         )
 
         if file_path:
             try:
-                if file_path.endswith('.json'):
+                if file_path.endswith(".json"):
                     # Export as JSON
                     data = {
                         "product_name": self.current_trial_info.product_name,
@@ -895,13 +850,13 @@ class TrialResetDialog(QDialog):
                         "trial_expired": self.current_trial_info.trial_expired,
                         "registry_keys": self.current_trial_info.registry_keys,
                         "files": self.current_trial_info.files,
-                        "processes": self.current_trial_info.processes
+                        "processes": self.current_trial_info.processes,
                     }
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         json.dump(data, f, indent=2)
                 else:
                     # Export as text
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         f.write("Trial Scan Results\n")
                         f.write("=" * 50 + "\n")
                         f.write(f"Product: {self.current_trial_info.product_name}\n")
@@ -936,9 +891,7 @@ class TrialResetDialog(QDialog):
     def clear_history(self):
         """Clear scan history."""
         reply = QMessageBox.question(
-            self, "Confirm",
-            "Clear all scan history?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self, "Confirm", "Clear all scan history?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -953,15 +906,12 @@ class TrialResetDialog(QDialog):
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export History",
-            f"trial_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            "JSON Files (*.json);;All Files (*.*)"
+            self, "Export History", f"trial_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", "JSON Files (*.json);;All Files (*.*)"
         )
 
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     json.dump(self.scan_history, f, indent=2, default=str)
                 self.log(f"History exported to {file_path}")
             except Exception as e:
@@ -1025,26 +975,24 @@ class TrialResetDialog(QDialog):
             self.btn_reset.setEnabled(True)
 
             # Add to history
-            self.scan_history.append({
-                "product": trial_info.product_name,
-                "type": trial_info.trial_type.value,
-                "expired": trial_info.trial_expired,
-                "days_left": trial_info.trial_days,
-                "timestamp": datetime.now().isoformat()
-            })
+            self.scan_history.append(
+                {
+                    "product": trial_info.product_name,
+                    "type": trial_info.trial_type.value,
+                    "expired": trial_info.trial_expired,
+                    "days_left": trial_info.trial_days,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             # Update history table
             row = self.history_table.rowCount()
             self.history_table.insertRow(row)
             self.history_table.setItem(row, 0, QTableWidgetItem(trial_info.product_name))
             self.history_table.setItem(row, 1, QTableWidgetItem(trial_info.trial_type.value))
-            self.history_table.setItem(row, 2, QTableWidgetItem(
-                "Expired" if trial_info.trial_expired else "Active"
-            ))
+            self.history_table.setItem(row, 2, QTableWidgetItem("Expired" if trial_info.trial_expired else "Active"))
             self.history_table.setItem(row, 3, QTableWidgetItem(str(trial_info.trial_days)))
-            self.history_table.setItem(row, 4, QTableWidgetItem(
-                datetime.now().strftime("%Y-%m-%d %H:%M")
-            ))
+            self.history_table.setItem(row, 4, QTableWidgetItem(datetime.now().strftime("%Y-%m-%d %H:%M")))
 
             self.log(f"Scan complete: {trial_info.product_name}")
             self.progress_bar.setVisible(False)

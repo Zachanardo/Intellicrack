@@ -9,12 +9,15 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 */
 
+use crate::environment::PROJECT_ROOT;
 use anyhow::{Context, Result};
 use libloading::Library;
 use pyo3::prelude::*;
 use std::env;
 use std::ffi::CStr;
 use std::path::PathBuf;
+use std::os::windows::process::CommandExt;
+use winapi::um::winbase::CREATE_NEW_PROCESS_GROUP;
 use tracing::{debug, error, info, warn};
 
 pub struct PythonIntegration {
@@ -39,8 +42,7 @@ impl PythonIntegration {
 
         // Locate Python interpreter
         let interpreter_path = Self::locate_python_interpreter()?;
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-        let virtual_env_path = PathBuf::from(project_root).join(".pixi/envs/default");
+        let virtual_env_path = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default");
 
         info!("Python interpreter: {:?}", interpreter_path);
         info!("Virtual environment: {:?}", virtual_env_path);
@@ -84,8 +86,7 @@ impl PythonIntegration {
     /// Locate the Python interpreter with multiple fallback strategies
     fn locate_python_interpreter() -> Result<PathBuf> {
         // Primary path: Intellicrack pixi environment
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-        let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");
+        let pixi_python = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/python.exe");
         if pixi_python.exists() {
             info!("Found Python in pixi environment: {:?}", pixi_python);
             return Ok(pixi_python);
@@ -93,7 +94,7 @@ impl PythonIntegration {
 
         // Secondary path: Scripts subdirectory
         let pixi_scripts_python =
-            PathBuf::from(&project_root).join(".pixi/envs/default/Scripts/python.exe");
+            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Scripts/python.exe");
         if pixi_scripts_python.exists() {
             info!("Found Python in pixi Scripts: {:?}", pixi_scripts_python);
             return Ok(pixi_scripts_python);
@@ -125,7 +126,9 @@ impl PythonIntegration {
         info!("Configuring PyBind11 compatibility (subprocess-only mode)");
 
         // Set PyBind11 environment variable only
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
         info!("PyBind11 environment variable configured");
 
         Ok(())
@@ -244,7 +247,6 @@ impl PythonIntegration {
 
     /// Execute Intellicrack main module using PyO3 embedding
     pub fn run_intellicrack_main(&self) -> Result<i32> {
-        info!("Running Intellicrack main module via subprocess");
         self.run_via_subprocess()
     }
 
@@ -270,88 +272,45 @@ impl PythonIntegration {
             ));
         }
 
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-        let python_launcher_path = PathBuf::from(project_root).join("launch_intellicrack.py");
+        let python_launcher_path = PathBuf::from(&*PROJECT_ROOT).join("launch_intellicrack.py");
         info!(
             "Executing Python launcher: {:?}",
             python_launcher_path.display()
         );
 
-        // On Windows, add launcher directory to DLL search path BEFORE launching Python
-        #[cfg(target_os = "windows")]
-        {
-            if let Ok(exe_path) = std::env::current_exe() {
-                if let Some(exe_dir) = exe_path.parent() {
-                    use std::ffi::OsStr;
-                    use std::os::windows::ffi::OsStrExt;
-
-                    let exe_dir_str = exe_dir.to_string_lossy();
-                    info!("Setting DLL directory for Windows: {}", exe_dir_str);
-
-                    // Convert path to wide string for Windows API
-                    let wide_path: Vec<u16> = OsStr::new(exe_dir.as_os_str())
-                        .encode_wide()
-                        .chain(std::iter::once(0))
-                        .collect();
-
-                    // Use Windows SetDllDirectory to add our directory to DLL search path
-                    unsafe {
-                        #[link(name = "kernel32")]
-                        extern "system" {
-                            fn SetDllDirectoryW(lpPathName: *const u16) -> i32;
-                            fn AddDllDirectory(NewDirectory: *const u16) -> *mut std::ffi::c_void;
-                        }
-
-                        // Try AddDllDirectory first (Windows 7+)
-                        let result = AddDllDirectory(wide_path.as_ptr());
-                        if !result.is_null() {
-                            info!("Successfully called AddDllDirectory for: {}", exe_dir_str);
-                        } else {
-                            // Fallback to SetDllDirectory
-                            let set_result = SetDllDirectoryW(wide_path.as_ptr());
-                            if set_result != 0 {
-                                info!("Successfully called SetDllDirectory for: {}", exe_dir_str);
-                            } else {
-                                warn!("Failed to set DLL directory for: {}", exe_dir_str);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // On Windows, DLL search paths are configured via PATH environment variable below
+        // CREATE_NEW_PROCESS_GROUP is imported from winapi crate
 
         // Use absolute path explicitly
         let mut cmd = Command::new(&self.interpreter_path);
         cmd.arg(&python_launcher_path);
+        cmd.creation_flags(CREATE_NEW_PROCESS_GROUP);
 
         // Set working directory to launcher directory for DLL loading
         // This ensures _tkinter can find tcl86t.dll and tk86t.dll in the target/release directory
         // CRITICAL: The subprocess must run from the launcher's directory where the bundled DLLs are located
-        if let Ok(exe_path) = std::env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
+        if let Ok(exe_path) = std::env::current_exe()
+            && let Some(exe_dir) = exe_path.parent() {
                 cmd.current_dir(exe_dir);
                 info!(
                     "Set subprocess working directory to launcher directory: {}",
                     exe_dir.display()
                 );
             }
-        }
 
-        // Set environment for subprocess with ABSOLUTE PATHS
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-        cmd.env("PYTHONPATH", project_root.clone());
-        cmd.env("PYTHONIOENCODING", "utf-8");
-        cmd.env("PYTHONDONTWRITEBYTECODE", "1");
-        cmd.env("PYTHONUNBUFFERED", "1");
+                // Set environment for subprocess with ABSOLUTE PATHS
+                cmd.env("PYTHONPATH", PROJECT_ROOT.clone());
+                cmd.env("PYTHONIOENCODING", "utf-8");
+                cmd.env("PYTHONDONTWRITEBYTECODE", "1");
+                cmd.env("PYTHONUNBUFFERED", "1");
 
-        // Set conda environment variables
-cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
-        cmd.env(
-            "PIXI_PYTHON_EXE",
-            format!("{}/.pixi/envs/default/python.exe", project_root),
-        );
-        cmd.env("PYTHONHOME", format!("{}/.pixi/envs/default", project_root));
-
+                // Set conda environment variables
+                cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
+                cmd.env(
+                    "PIXI_PYTHON_EXE",
+                    format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
+                );
+                cmd.env("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
         // This ensures _tkinter.pyd can find the runtime scripts in the same directory as the DLLs
@@ -363,11 +322,11 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
                 path
             } else {
                 warn!("Subprocess: Could not get parent directory of executable");
-                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tcl8.6")
+                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tcl8.6")
             }
         } else {
             warn!("Subprocess: Could not get current executable path");
-            PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tcl8.6")
+            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tcl8.6")
         };
 
         let tk_lib_path = if let Ok(exe_path) = std::env::current_exe() {
@@ -376,10 +335,10 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
                 info!("Subprocess: Proposed TK_LIBRARY path: {}", path.display());
                 path
             } else {
-                PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tk8.6")
+                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tk8.6")
             }
         } else {
-            PathBuf::from(&project_root).join(".pixi/envs/default/Library/lib/tk8.6")
+            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tk8.6")
         };
 
         if tcl_lib_path.exists() {
@@ -431,8 +390,8 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
         }
 
         // Also check for launcher's directories as fallback
-        if let Ok(exe_path) = std::env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
+        if let Ok(exe_path) = std::env::current_exe()
+            && let Some(exe_dir) = exe_path.parent() {
                 if !tcl_lib_path.exists() {
                     let launcher_tcl = exe_dir.join("tcl8.6");
                     if launcher_tcl.exists() {
@@ -460,10 +419,10 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
                 let system_path = std::env::var_os("PATH").unwrap_or_default();
                 let exe_dir_str = exe_dir.to_string_lossy();
 
-                let python_base_dir = PathBuf::from(&project_root).join(".pixi/envs/default");
-                let python_dll_dir = PathBuf::from(&project_root).join(".pixi/envs/default/DLLs");
+                let python_base_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default");
+                let python_dll_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/DLLs");
                 let python_lib_bin_dir =
-                    PathBuf::from(&project_root).join(".pixi/envs/default/Library/bin");
+                    PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/bin");
 
                 // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
                 // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
@@ -515,7 +474,6 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
                 cmd.env("INTEL_LAUNCHER_DLL_DIR", exe_dir_str.as_ref());
                 info!("Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading", exe_dir_str);
             }
-        }
         cmd.env_remove("PYTHONSTARTUP");
         cmd.env_remove("PYTHONUSERBASE");
         cmd.env_remove("PYTHONEXECUTABLE");
@@ -629,7 +587,7 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
                 .context("Failed to read test script")?;
 
             match py.run(
-                CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or_else(|_| c"pass"),
+                CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or(c"pass"),
                 None,
                 None,
             ) {
@@ -686,17 +644,18 @@ cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", project_root));
 
     /// Configure environment variables for Python integration
     pub fn configure_environment_variables(&self) -> Result<()> {
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
-        let intellicrack_path = PathBuf::from(project_root);
-        env::set_var("PYTHONPATH", &intellicrack_path);
-        debug!("Set PYTHONPATH to: {:?}", intellicrack_path);
+        let intellicrack_path = PathBuf::from(&*PROJECT_ROOT);
+        unsafe {
+            env::set_var("PYTHONPATH", &intellicrack_path);
+            debug!("Set PYTHONPATH to: {:?}", intellicrack_path);
 
-        // Set other Python environment variables
-        env::set_var("PYTHONIOENCODING", "utf-8");
-        env::set_var("PYTHONUNBUFFERED", "1");
+            // Set other Python environment variables
+            env::set_var("PYTHONIOENCODING", "utf-8");
+            env::set_var("PYTHONUNBUFFERED", "1");
 
-        // Prevent .pyc file generation in development
-        env::set_var("PYTHONDONTWRITEBYTECODE", "1");
+            // Prevent .pyc file generation in development
+            env::set_var("PYTHONDONTWRITEBYTECODE", "1");
+        }
 
         info!("Python environment variables configured");
         Ok(())
@@ -775,8 +734,7 @@ mod tests {
 
     #[test]
     fn test_locate_python_interpreter_with_pixi() {
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_|"C:\\Intellicrack".to_string());
-        let pixi_path = PathBuf::from(project_root).join(".pixi/envs/default/python.exe");
+        let pixi_path = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/python.exe");
 
         // If the actual pixi Python exists, it should be preferred
         if pixi_path.exists() {
@@ -784,9 +742,8 @@ mod tests {
             assert_eq!(result, pixi_path);
         }
 
-        let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
         let pixi_scripts_path =
-            PathBuf::from(project_root).join(".pixi/envs/default/Scripts/python.exe");
+            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Scripts/python.exe");
         if pixi_scripts_path.exists() && !pixi_path.exists() {
             let result = PythonIntegration::locate_python_interpreter().unwrap();
             assert_eq!(result, pixi_scripts_path);

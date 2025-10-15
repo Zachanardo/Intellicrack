@@ -428,7 +428,7 @@ class AutonomousAgent:
                 if not strings_cmd_path or not os.path.isabs(strings_cmd_path):
                     strings_cmd_path = strings_cmd_path or "strings"
                 # Validate inputs to prevent command injection
-                if not isinstance(binary_path, str) or '..' in binary_path or binary_path.startswith(';'):
+                if not isinstance(binary_path, str) or ".." in binary_path or binary_path.startswith(";"):
                     raise ValueError(f"Unsafe binary path: {binary_path}")
                 result = subprocess.run(
                     [strings_cmd_path, binary_path],

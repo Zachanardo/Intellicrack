@@ -26,8 +26,10 @@ from datetime import datetime
 
 from intellicrack.core.license_snapshot import LicenseSnapshot
 from intellicrack.core.license_validation_bypass import LicenseValidationBypass
+from intellicrack.core.monitoring.monitoring_session import MonitoringConfig, MonitoringSession
 from intellicrack.core.process_manipulation import LicenseAnalyzer
 from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QFileDialog,
@@ -99,10 +101,11 @@ class AnalysisTab(BaseTab):
         self.embedded_hex_viewer = None
         self.snapshots = {}
         self.comparison_results = []
-        self.license_analyzer = LicenseAnalyzer()  # Initialize license analyzer
-        self.attached_pid = None  # Track attached process
-        self.license_snapshot = LicenseSnapshot()  # Initialize snapshot system
-        self.license_validation_bypass = LicenseValidationBypass()  # Initialize validation bypass for key extraction
+        self.license_analyzer = LicenseAnalyzer()
+        self.attached_pid = None
+        self.license_snapshot = LicenseSnapshot()
+        self.license_validation_bypass = LicenseValidationBypass()
+        self.monitoring_session = None
 
         # Connect to app_context signals for binary loading
         if self.app_context:
@@ -993,13 +996,7 @@ class AnalysisTab(BaseTab):
                             extracted_keys = self.license_validation_bypass.extract_all_keys(self.current_binary)
 
                             # Process extracted keys
-                            key_results = {
-                                "total_keys_found": 0,
-                                "rsa_keys": [],
-                                "ecc_keys": [],
-                                "symmetric_keys": [],
-                                "certificates": []
-                            }
+                            key_results = {"total_keys_found": 0, "rsa_keys": [], "ecc_keys": [], "symmetric_keys": [], "certificates": []}
 
                             for key_type, keys in extracted_keys.items():
                                 if key_type == "rsa" and keys:
@@ -1009,7 +1006,7 @@ class AnalysisTab(BaseTab):
                                             "modulus_bits": key.modulus.bit_length() if key.modulus else 0,
                                             "exponent": key.exponent,
                                             "confidence": key.confidence,
-                                            "context": key.context
+                                            "context": key.context,
                                         }
                                         for key in keys
                                     ]
@@ -1021,7 +1018,7 @@ class AnalysisTab(BaseTab):
                                             "address": hex(key.address),
                                             "curve": key.curve,
                                             "confidence": key.confidence,
-                                            "context": key.context
+                                            "context": key.context,
                                         }
                                         for key in keys
                                     ]
@@ -1033,7 +1030,7 @@ class AnalysisTab(BaseTab):
                                             "address": hex(key.address),
                                             "type": key.key_type.value,
                                             "key_size": len(key.key_data) * 8,
-                                            "confidence": key.confidence
+                                            "confidence": key.confidence,
                                         }
                                         for key in keys
                                     ]
@@ -1048,7 +1045,7 @@ class AnalysisTab(BaseTab):
                                             "subject": cert.subject.rfc4514_string(),
                                             "issuer": cert.issuer.rfc4514_string(),
                                             "serial_number": str(cert.serial_number),
-                                            "not_valid_after": cert.not_valid_after_utc.isoformat()
+                                            "not_valid_after": cert.not_valid_after_utc.isoformat(),
                                         }
                                         for cert in certs
                                     ]
@@ -1069,54 +1066,60 @@ class AnalysisTab(BaseTab):
                         try:
                             # Initialize the bypass system
                             from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
                             sub_bypass = SubscriptionValidationBypass()
 
                             # Detect subscription type
                             product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
                             sub_type = sub_bypass.detect_subscription_type(product_name)
 
-                            bypass_results = {
-                                "detected_type": sub_type.value if sub_type else "unknown",
-                                "bypass_methods": []
-                            }
+                            bypass_results = {"detected_type": sub_type.value if sub_type else "unknown", "bypass_methods": []}
 
                             # Analyze available bypass methods
                             if sub_type:
                                 if sub_type.value == "cloud_based":
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Local Server Emulation",
-                                        "description": "Start local license server to intercept cloud requests",
-                                        "confidence": 0.85
-                                    })
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Host Redirection",
-                                        "description": "Redirect license server domains to localhost",
-                                        "confidence": 0.90
-                                    })
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Local Server Emulation",
+                                            "description": "Start local license server to intercept cloud requests",
+                                            "confidence": 0.85,
+                                        }
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Host Redirection",
+                                            "description": "Redirect license server domains to localhost",
+                                            "confidence": 0.90,
+                                        }
+                                    )
 
                                 elif sub_type.value == "server_license":
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Server Response Emulation",
-                                        "description": "Emulate license server responses",
-                                        "confidence": 0.80
-                                    })
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Certificate Replacement",
-                                        "description": "Replace server certificates for validation",
-                                        "confidence": 0.75
-                                    })
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Server Response Emulation",
+                                            "description": "Emulate license server responses",
+                                            "confidence": 0.80,
+                                        }
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Certificate Replacement",
+                                            "description": "Replace server certificates for validation",
+                                            "confidence": 0.75,
+                                        }
+                                    )
 
                                 elif sub_type.value == "token_based":
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Token Generation",
-                                        "description": "Generate valid JWT/OAuth tokens",
-                                        "confidence": 0.70
-                                    })
-                                    bypass_results["bypass_methods"].append({
-                                        "method": "Token Injection",
-                                        "description": "Inject pre-generated tokens into memory",
-                                        "confidence": 0.85
-                                    })
+                                    bypass_results["bypass_methods"].append(
+                                        {"method": "Token Generation", "description": "Generate valid JWT/OAuth tokens", "confidence": 0.70}
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Token Injection",
+                                            "description": "Inject pre-generated tokens into memory",
+                                            "confidence": 0.85,
+                                        }
+                                    )
 
                                 # Check for specific bypass opportunities
                                 bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name)
@@ -1222,12 +1225,12 @@ class AnalysisTab(BaseTab):
                     # Display other static analysis results
                     if "strings" in results:
                         self.results_display.append(f"\nStrings: {results['strings'].get('total', 0)} found\n")
-                        if results['strings'].get('suspicious'):
+                        if results["strings"].get("suspicious"):
                             self.results_display.append(f"  Suspicious: {', '.join(results['strings']['suspicious'])}\n")
 
                     if "entropy" in results:
                         self.results_display.append(f"\nEntropy: {results['entropy'].get('overall', 0):.2f}\n")
-                        if results['entropy'].get('high_entropy_sections'):
+                        if results["entropy"].get("high_entropy_sections"):
                             self.results_display.append(f"  High entropy sections: {results['entropy']['high_entropy_sections']}\n")
 
                     self.log_activity("Static analysis completed successfully")
@@ -1236,7 +1239,7 @@ class AnalysisTab(BaseTab):
             task_id = self.task_manager.submit_callable(
                 run_static_analysis,
                 description=f"Static analysis of {os.path.basename(self.current_binary)}",
-                callback=on_static_analysis_complete
+                callback=on_static_analysis_complete,
             )
             self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
         else:
@@ -2987,10 +2990,7 @@ class AnalysisTab(BaseTab):
 
         # Check if we have subscription bypass results
         if not self.analysis_results.get("subscription_bypass"):
-            QMessageBox.information(
-                self, "Info",
-                "Please run static analysis with 'Subscription Validation Bypass' enabled first"
-            )
+            QMessageBox.information(self, "Info", "Please run static analysis with 'Subscription Validation Bypass' enabled first")
             return
 
         bypass_data = self.analysis_results["subscription_bypass"]
@@ -3005,6 +3005,7 @@ class AnalysisTab(BaseTab):
         # Use the SubscriptionValidationBypass instance
         try:
             from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
             sub_bypass = SubscriptionValidationBypass()
 
             product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
@@ -3052,6 +3053,7 @@ class AnalysisTab(BaseTab):
         """Stop active subscription bypass."""
         try:
             from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
             sub_bypass = SubscriptionValidationBypass()
 
             # Stop any active local servers
@@ -3076,59 +3078,191 @@ class AnalysisTab(BaseTab):
         self.monitor_log.append("LICENSE MONITORING STARTED")
         self.monitor_log.append("=" * 60)
 
-        # Enable/disable buttons
-        self.start_monitor_btn.setEnabled(False)
-        self.stop_monitor_btn.setEnabled(True)
+        if not self.attached_pid or not self.current_file_path:
+            self.monitor_log.append("\n[ERROR] No process attached!")
+            self.monitor_log.append("Please attach to a process first in the Exploitation tab.")
+            QMessageBox.warning(self, "No Process", "Please attach to a target process before starting monitoring.")
+            return
 
-        # Initialize monitoring based on selected options
+        config = MonitoringConfig()
+        config.enable_api = self.monitor_api_check.isChecked()
+        config.enable_registry = self.monitor_registry_check.isChecked()
+        config.enable_file = self.monitor_file_check.isChecked()
+        config.enable_network = self.monitor_network_check.isChecked()
+        config.enable_memory = self.monitor_memory_check.isChecked()
+
         monitoring_targets = []
-
-        if self.monitor_api_check.isChecked():
+        if config.enable_api:
             monitoring_targets.append("Windows API calls")
             self.monitor_log.append("[+] Monitoring Windows API calls...")
 
-        if self.monitor_registry_check.isChecked():
+        if config.enable_registry:
             monitoring_targets.append("Registry operations")
             self.monitor_log.append("[+] Monitoring registry access...")
 
-        if self.monitor_file_check.isChecked():
+        if config.enable_file:
             monitoring_targets.append("File operations")
             self.monitor_log.append("[+] Monitoring file operations...")
 
-        if self.monitor_network_check.isChecked():
+        if config.enable_network:
             monitoring_targets.append("Network traffic")
             self.monitor_log.append("[+] Monitoring network connections...")
 
-        if self.monitor_memory_check.isChecked():
+        if config.enable_memory:
             monitoring_targets.append("Memory patterns")
             self.monitor_log.append("[+] Scanning memory for license strings...")
 
         self.monitor_log.append(f"\nMonitoring {len(monitoring_targets)} categories")
-        self.monitor_log.append("Waiting for license activity...\n")
+        self.monitor_log.append("Initializing monitors...\n")
 
-        # Here you would start actual monitoring threads
-        # For now, we'll log that monitoring is active
-        self.log_activity(f"License monitoring active: {', '.join(monitoring_targets)}")
+        try:
+            self.monitor_log.append("[*] Starting frida-server (this may take a moment)...")
+            QApplication.processEvents()
+
+            self.monitoring_session = MonitoringSession(pid=self.attached_pid, process_path=self.current_file_path, config=config)
+
+            self.monitoring_session.on_event(self._on_monitoring_event)
+            self.monitoring_session.on_stats_update(self._on_monitoring_stats)
+            self.monitoring_session.on_error(self._on_monitoring_error)
+
+            if self.monitoring_session.start():
+                frida_status = self.monitoring_session.frida_server.get_status()
+
+                self.monitor_log.append(f"[✓] frida-server running (version {frida_status['version']})")
+
+                if not frida_status["is_admin"]:
+                    self.monitor_log.append("<font color='orange'>[!] Not running as administrator - some features may be limited</font>")
+
+                self.monitor_log.append("[✓] All monitors initialized successfully")
+                self.monitor_log.append("[✓] Monitoring active - waiting for license activity...\n")
+
+                self.start_monitor_btn.setEnabled(False)
+                self.stop_monitor_btn.setEnabled(True)
+                self.log_activity(f"License monitoring active: {', '.join(monitoring_targets)}")
+            else:
+                self.monitor_log.append("\n[ERROR] Failed to start monitoring!")
+                self.monitor_log.append("Possible causes:")
+                self.monitor_log.append("  • frida-server failed to start")
+                self.monitor_log.append("  • Target process may have anti-debugging protection")
+                self.monitor_log.append("  • Insufficient permissions")
+                self.monitoring_session = None
+
+        except Exception as e:
+            self.monitor_log.append(f"\n[ERROR] Failed to initialize monitoring: {str(e)}")
+            self.log_activity(f"Monitoring error: {str(e)}")
+            self.monitoring_session = None
 
     def stop_license_monitoring(self):
         """Stop license monitoring."""
         self.log_activity("Stopping license monitoring...")
 
-        self.monitor_log.append("\n" + "=" * 60)
-        self.monitor_log.append("LICENSE MONITORING STOPPED")
-        self.monitor_log.append("=" * 60)
+        if self.monitoring_session:
+            try:
+                stats = self.monitoring_session.get_stats()
+                self.monitoring_session.stop()
 
-        # Enable/disable buttons
+                self.monitor_log.append("\n" + "=" * 60)
+                self.monitor_log.append("LICENSE MONITORING STOPPED")
+                self.monitor_log.append("=" * 60)
+
+                frida_status = stats.get("frida_server", {})
+                agg_stats = stats.get("aggregator", {})
+                events_by_source = agg_stats.get("events_by_source", {})
+
+                self.monitor_log.append("\nSession Information:")
+                self.monitor_log.append(f"• frida-server version: {frida_status.get('version', 'unknown')}")
+                self.monitor_log.append(f"• Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
+
+                self.monitor_log.append("\nMonitoring Summary:")
+                self.monitor_log.append(f"• Total events captured: {agg_stats.get('total_events', 0)}")
+                self.monitor_log.append(f"• API calls intercepted: {events_by_source.get('api', 0)}")
+                self.monitor_log.append(f"• Registry operations: {events_by_source.get('registry', 0)}")
+                self.monitor_log.append(f"• File operations: {events_by_source.get('file', 0)}")
+                self.monitor_log.append(f"• Network events: {events_by_source.get('network', 0)}")
+                self.monitor_log.append(f"• Memory patterns found: {events_by_source.get('memory', 0)}")
+
+                self.monitoring_session = None
+
+            except Exception as e:
+                self.monitor_log.append(f"\n[ERROR] Error stopping monitoring: {str(e)}")
+                self.log_activity(f"Stop monitoring error: {str(e)}")
+        else:
+            self.monitor_log.append("\n[WARNING] No active monitoring session to stop.")
+
         self.start_monitor_btn.setEnabled(True)
         self.stop_monitor_btn.setEnabled(False)
 
-        # Log monitoring summary
-        self.monitor_log.append("\nMonitoring Summary:")
-        self.monitor_log.append("• API calls intercepted: 0")
-        self.monitor_log.append("• Registry operations: 0")
-        self.monitor_log.append("• License files accessed: 0")
-        self.monitor_log.append("• Network requests: 0")
-        self.monitor_log.append("• License patterns found: 0")
+    def _on_monitoring_event(self, event):
+        """Handle monitoring event from session.
+
+        Args:
+            event: MonitorEvent instance.
+
+        """
+        event_dict = event.to_dict()
+
+        timestamp = datetime.fromtimestamp(event_dict["timestamp"]).strftime("%H:%M:%S.%f")[:-3]
+        source = event_dict["source"].upper()
+        event_type = event_dict["event_type"]
+        details = event_dict["details"]
+
+        color_map = {"api": "blue", "registry": "green", "file": "orange", "network": "red", "memory": "purple"}
+        color = color_map.get(event_dict["source"], "black")
+
+        if event_dict["severity"] == "critical":
+            prefix = "[CRITICAL]"
+            color = "darkred"
+        elif event_dict["severity"] == "warning":
+            prefix = "[WARNING]"
+        else:
+            prefix = "[INFO]"
+
+        if source == "API":
+            api_name = details.get("api", "Unknown")
+            args = details.get("args", [])
+            result = details.get("result", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {api_name}({', '.join(map(str, args))}) -> {result}"
+        elif source == "REGISTRY":
+            hive = details.get("hive", "")
+            key_path = details.get("key_path", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {hive}\\{key_path}"
+        elif source == "FILE":
+            file_path = details.get("file_path", "")
+            operation = details.get("operation", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {operation}: {file_path}"
+        elif source == "NETWORK":
+            protocol = details.get("protocol", "")
+            src = details.get("src", "")
+            dst = details.get("dst", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {protocol} {src} -> {dst}"
+        elif source == "MEMORY":
+            pattern_type = details.get("pattern_type", "")
+            value = details.get("value", "")
+            address = details.get("address", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {pattern_type} found: {value} @ {address}"
+        else:
+            log_line = f"[{timestamp}] [{source}] {prefix} {str(details)}"
+
+        self.monitor_log.append(log_line)
+
+    def _on_monitoring_stats(self, stats):
+        """Handle statistics update from monitoring session.
+
+        Args:
+            stats: Statistics dictionary.
+
+        """
+        pass
+
+    def _on_monitoring_error(self, error):
+        """Handle error from monitoring session.
+
+        Args:
+            error: Error message string.
+
+        """
+        self.monitor_log.append(f"\n<font color='red'>[ERROR]</font> {error}")
+        self.log_activity(f"Monitoring error: {error}")
 
     def _find_conditional_jumps(self):
         """Find conditional jump addresses in binary."""
@@ -3255,18 +3389,22 @@ class AnalysisTab(BaseTab):
                             self.log_activity(f"  • {change['type']}: {change['name']}")
 
                     # Store comparison results
-                    self.comparison_results.append({
-                        "snapshot1": snapshot1_name,
-                        "snapshot2": snapshot2_name,
-                        "timestamp": datetime.now().isoformat(),
-                        "results": comparison
-                    })
+                    self.comparison_results.append(
+                        {
+                            "snapshot1": snapshot1_name,
+                            "snapshot2": snapshot2_name,
+                            "timestamp": datetime.now().isoformat(),
+                            "results": comparison,
+                        }
+                    )
 
                     # Summary
                     total_changes = sum(
-                        len(comparison.get(k, [])) if isinstance(comparison.get(k), list) else
-                        sum(len(v) if isinstance(v, list) else 0 for v in comparison.get(k, {}).values())
-                        if isinstance(comparison.get(k), dict) else 0
+                        len(comparison.get(k, []))
+                        if isinstance(comparison.get(k), list)
+                        else sum(len(v) if isinstance(v, list) else 0 for v in comparison.get(k, {}).values())
+                        if isinstance(comparison.get(k), dict)
+                        else 0
                         for k in comparison.keys()
                     )
 
@@ -3277,7 +3415,7 @@ class AnalysisTab(BaseTab):
                     QMessageBox.information(
                         self,
                         "Comparison Complete",
-                        f"Found {total_changes} changes between snapshots.\nCheck the console for detailed results."
+                        f"Found {total_changes} changes between snapshots.\nCheck the console for detailed results.",
                     )
 
                 except Exception as e:
@@ -3319,21 +3457,14 @@ class AnalysisTab(BaseTab):
 
             # Get export file path
             file_path, _ = QFileDialog.getSaveFileName(
-                self,
-                "Export Snapshot",
-                f"{snapshot_name}.json",
-                "JSON Files (*.json);;All Files (*.*)"
+                self, "Export Snapshot", f"{snapshot_name}.json", "JSON Files (*.json);;All Files (*.*)"
             )
 
             if file_path:
                 try:
                     if self.license_snapshot.export_snapshot(snapshot_name, file_path):
                         self.log_activity(f"Exported snapshot '{snapshot_name}' to {file_path}")
-                        QMessageBox.information(
-                            self,
-                            "Export Successful",
-                            f"Snapshot exported successfully to:\n{file_path}"
-                        )
+                        QMessageBox.information(self, "Export Successful", f"Snapshot exported successfully to:\n{file_path}")
                     else:
                         QMessageBox.warning(self, "Export Failed", "Failed to export snapshot.")
                 except Exception as e:
@@ -3342,12 +3473,7 @@ class AnalysisTab(BaseTab):
 
     def import_snapshot(self):
         """Import a license snapshot from file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Import Snapshot",
-            "",
-            "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import Snapshot", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -3355,8 +3481,9 @@ class AnalysisTab(BaseTab):
 
                 if snapshot_name:
                     # Reload the imported snapshot data
-                    with open(file_path, 'r') as f:
+                    with open(file_path, "r") as f:
                         import json
+
                         snapshot_data = json.load(f)
 
                     # Store in our local snapshots dictionary

@@ -54,11 +54,11 @@ def _preload_critical_dlls(dll_dirs):
                         ctypes.CDLL(str(dll_path))
                         logger.debug("Pre-loaded %s", dll_name)
                         break
-                    except Exception as e:
+                    except (OSError, Exception) as e:
                         logger.debug("Could not pre-load %s: %s", dll_name, e)
 
         return True
-    except Exception as e:
+    except (OSError, Exception) as e:
         logger.debug("Could not pre-load critical DLLs: %s", e)
         return False
 
@@ -179,7 +179,11 @@ def _setup_ipex_dll_paths():
         return False
 
 
-dll_paths_configured = _setup_ipex_dll_paths()
+if os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("CI"):
+    logger.debug("Skipping IPEX initialization in test/CI environment")
+    dll_paths_configured = False
+else:
+    dll_paths_configured = _setup_ipex_dll_paths()
 
 skip_cache_file = Path(sys.prefix) / ".ipex_skip_cache"
 if skip_cache_file.exists():

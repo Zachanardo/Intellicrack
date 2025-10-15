@@ -340,9 +340,7 @@ class QEMUManager:
         except Exception as e:
             self.logger.debug("Error closing SSH client: %s", e)
 
-    def _create_new_connection(
-        self, snapshot: QEMUSnapshot, pool_key: tuple, retries: int
-    ) -> SSHClient | None:
+    def _create_new_connection(self, snapshot: QEMUSnapshot, pool_key: tuple, retries: int) -> SSHClient | None:
         """Attempt to create a new SSH connection with retries."""
         for attempt in range(retries):
             try:
@@ -380,20 +378,14 @@ class QEMUManager:
         )
         return client
 
-    def _handle_connection_exception(
-        self, vm_name: str, exception: Exception, attempt: int, retries: int
-    ):
+    def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int):
         """Handle exceptions during SSH connection attempts."""
         if isinstance(exception, TimeoutError):
-            logger.warning(
-                "SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception
-            )
+            logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception)
         elif isinstance(exception, paramiko.AuthenticationException):
             logger.error("SSH authentication failed for %s: %s", vm_name, exception)
         elif isinstance(exception, paramiko.SSHException):
-            logger.warning(
-                "SSH connection error (attempt %s/%s): %s", attempt + 1, retries, exception
-            )
+            logger.warning("SSH connection error (attempt %s/%s): %s", attempt + 1, retries, exception)
         else:
             logger.exception("Unexpected SSH connection error: %s", exception)
         self._record_connection_failure(vm_name)

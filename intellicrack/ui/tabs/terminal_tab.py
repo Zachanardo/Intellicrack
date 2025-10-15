@@ -61,32 +61,48 @@ class TerminalTab(BaseTab):
         logger.info("TerminalTab initialized")
 
     def setup_content(self):
-        """Setup the terminal tab content."""
+        """Set up the terminal tab content."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(5)
+        try:
+            old_layout = self.layout()
+            if old_layout:
+                while old_layout.count():
+                    item = old_layout.takeAt(0)
+                    if item.widget():
+                        item.widget().deleteLater()
+                old_layout.deleteLater()
 
-        toolbar = self._create_toolbar()
-        layout.addLayout(toolbar, stretch=0)
+            layout = QVBoxLayout(self)
+            layout.setContentsMargins(5, 5, 5, 5)
+            layout.setSpacing(5)
 
-        self.terminal_widget = TerminalSessionWidget(self)
-        self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        layout.addWidget(self.terminal_widget, stretch=1)
+            toolbar = self._create_toolbar()
+            layout.addLayout(toolbar, stretch=0)
 
-        status_bar = self._create_status_bar()
-        layout.addLayout(status_bar, stretch=0)
+            self.terminal_widget = TerminalSessionWidget(self)
+            self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.terminal_widget.setMinimumSize(600, 400)
+            layout.addWidget(self.terminal_widget, stretch=1)
 
-        get_terminal_manager().register_terminal_widget(self.terminal_widget)
+            status_bar = self._create_status_bar()
+            layout.addLayout(status_bar, stretch=0)
 
-        self.terminal_widget.session_created.connect(self._on_session_created)
-        self.terminal_widget.session_closed.connect(self._on_session_closed)
-        self.terminal_widget.active_session_changed.connect(self._on_active_session_changed)
+            get_terminal_manager().register_terminal_widget(self.terminal_widget)
 
-        self._update_status()
+            self.terminal_widget.session_created.connect(self._on_session_created)
+            self.terminal_widget.session_closed.connect(self._on_session_closed)
+            self.terminal_widget.active_session_changed.connect(self._on_active_session_changed)
 
-        logger.info("Terminal tab content setup complete")
+            self._update_status()
+
+            logger.info("Terminal tab content setup complete")
+
+        except Exception as e:
+            logger.error(f"Terminal tab layout setup failed: {e}")
+            fallback_layout = QVBoxLayout(self)
+            error_label = QLabel(f"Terminal initialization failed: {e}")
+            fallback_layout.addWidget(error_label)
 
     def _create_toolbar(self):
         """Create toolbar with terminal actions."""

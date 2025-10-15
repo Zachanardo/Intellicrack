@@ -45,6 +45,7 @@ except ImportError as e:
 # Apply security mitigations for known vulnerabilities
 try:
     from intellicrack.utils.security_mitigations import apply_all_mitigations
+
     apply_all_mitigations()
 except ImportError as e:
     logger.warning(f"Security mitigations not available: {e}")

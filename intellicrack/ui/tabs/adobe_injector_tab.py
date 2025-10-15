@@ -366,10 +366,7 @@ class AdobeInjectorTab(BaseTab):
                 command_parts = command
 
             session_id = terminal_manager.execute_command(
-                command_parts,
-                capture_output=False,
-                auto_switch=True,
-                cwd=str(adobe_injector_dir)
+                command_parts, capture_output=False, auto_switch=True, cwd=str(adobe_injector_dir)
             )
 
             self.terminal_display.append(f"Executed in terminal: {command}")

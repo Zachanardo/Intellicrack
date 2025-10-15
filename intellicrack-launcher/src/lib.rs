@@ -59,14 +59,20 @@ pub struct IntellicrackLauncher {
 impl IntellicrackLauncher {
     /// Initialize a new Intellicrack launcher instance
     pub async fn new() -> Result<Self> {
-        // Detect platform and initialize components
-        let platform = PlatformInfo::detect()?;
-        let environment = EnvironmentManager::new(&platform);
-        // CRITICAL: Don't initialize Python yet - must be done AFTER environment setup
-        let security = Arc::new(Mutex::new(SecurityManager::new()?));
-        let dependencies = DependencyValidator::new();
+        // Detect platform and initialize components in parallel
+        let (platform_result, security_result, diagnostics_result) = tokio::join!(
+            tokio::spawn(async { PlatformInfo::detect() }),
+            tokio::spawn(async { SecurityManager::new() }),
+            tokio::spawn(async { DiagnosticsManager::new() })
+        );
+
+        let platform = platform_result??;
+        let security = Arc::new(Mutex::new(security_result??));
+        let diagnostics = diagnostics_result??;
+
         let process_manager = ProcessManager::new(&platform, Arc::clone(&security))?;
-        let diagnostics = DiagnosticsManager::new()?;
+        let environment = EnvironmentManager::new(&platform);
+        let dependencies = DependencyValidator::new();
 
         Ok(IntellicrackLauncher {
             platform,
@@ -181,29 +187,32 @@ impl IntellicrackLauncher {
 }
 
 /// Initialize the launcher's logging system
-pub fn initialize_logging() -> Result<()> {
-    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+pub async fn initialize_logging() -> Result<()> {
+    let guard = tokio::task::spawn_blocking(|| {
+        use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-    let file_appender = tracing_appender::rolling::daily("logs", "intellicrack-launcher");
-    let (non_blocking_appender, guard) = tracing_appender::non_blocking(file_appender);
+        let file_appender = tracing_appender::rolling::daily("logs", "intellicrack-launcher");
+        let (non_blocking_appender, guard) = tracing_appender::non_blocking(file_appender);
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "intellicrack_launcher=info".into()),
-        )
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_writer(std::io::stderr)
-                .with_target(false),
-        )
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_writer(non_blocking_appender)
-                .with_ansi(false)
-                .json(),
-        )
-        .init();
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "intellicrack_launcher=info".into()),
+            )
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_writer(std::io::stderr)
+                    .with_target(false),
+            )
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_writer(non_blocking_appender)
+                    .with_ansi(false)
+                    .json(),
+            )
+            .init();
+        guard
+    }).await?;
 
     std::mem::forget(guard);
 

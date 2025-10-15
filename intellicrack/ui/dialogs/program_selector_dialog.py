@@ -185,10 +185,10 @@ class AnalysisPage(QWizardPage):
         self.licensing_tree.setHeaderLabels(["File", "Type", "Size", "Priority"])
         if HAS_PYQT:
             self.licensing_tree.header().setStretchLastSection(False)
-            self.licensing_tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
-            self.licensing_tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            self.licensing_tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         self.licensing_tree.itemDoubleClicked.connect(self.open_licensing_file)
         licensing_layout.addWidget(self.licensing_tree)

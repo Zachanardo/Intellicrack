@@ -789,6 +789,7 @@ class DynamicSignatureExtractor:
             except Exception as e:
                 # Log the exception with details for debugging
                 import logging
+
                 logging.warning(f"Error processing instruction in call depth analysis: {e}")
                 continue
 
@@ -835,6 +836,7 @@ class DynamicSignatureExtractor:
             except Exception as e:
                 # Log the exception with details for debugging
                 import logging
+
                 logging.warning(f"Error processing instruction in call target analysis: {e}")
                 continue
 

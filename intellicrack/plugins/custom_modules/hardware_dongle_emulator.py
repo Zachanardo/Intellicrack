@@ -89,18 +89,18 @@ class DongleSpec:
         if not self.serial_number:
             # Generate cryptographically secure serial number based on hardware identifiers
             # Combines vendor ID, product ID, timestamp, and random entropy
-            timestamp_bytes = struct.pack('>Q', int(time.time() * 1000000))
+            timestamp_bytes = struct.pack(">Q", int(time.time() * 1000000))
             random_bytes = os.urandom(8)  # Cryptographically secure random bytes
 
             # Create unique identifier combining all components
-            serial_data = struct.pack('>HH', self.vendor_id, self.product_id) + timestamp_bytes + random_bytes
+            serial_data = struct.pack(">HH", self.vendor_id, self.product_id) + timestamp_bytes + random_bytes
 
             # Generate deterministic hash-based serial number
             serial_hash = hashlib.sha256(serial_data).hexdigest()[:16].upper()
 
             # Format as standard dongle serial with hyphen separation (4-digit groups)
             # Standard format used by HASP, Sentinel, and most USB dongles
-            self.serial_number = '-'.join([serial_hash[i:i+4] for i in range(0, 16, 4)])
+            self.serial_number = "-".join([serial_hash[i : i + 4] for i in range(0, 16, 4)])
 
 
 @dataclass
@@ -192,7 +192,7 @@ class CryptoEngine:
 
     @staticmethod
     def simple_xor(data: bytes, key: bytes) -> bytes:
-        """Simple XOR encryption."""
+        """Encrypt data using simple XOR."""
         key_len = len(key)
         return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
 
@@ -237,7 +237,7 @@ class BaseDongleEmulator:
         self.memory.read_only_ranges.append((0, 32))
 
     def _setup_api_handlers(self):
-        """Setup API handlers for dongle operations."""
+        """Set up API handlers for dongle operations."""
         self.api_handlers = {
             "read_memory": self.read_memory,
             "write_memory": self.write_memory,
@@ -897,28 +897,38 @@ class ParallelPortEmulator:
                 import platform
 
                 # Create inline assembly function for port read
-                if platform.machine() in ['x86_64', 'AMD64']:
+                if platform.machine() in ["x86_64", "AMD64"]:
                     # x86_64 inline assembly for IN instruction
-                    asm_code = bytes([
-                        0x48, 0x89, 0xf8,  # mov rax, rdi (port number to rax)
-                        0x66, 0x89, 0xc2,  # mov dx, ax (port to dx)
-                        0xec,              # in al, dx (read byte from port)
-                        0xc3               # ret (return value in al/rax)
-                    ])
+                    asm_code = bytes(
+                        [
+                            0x48,
+                            0x89,
+                            0xF8,  # mov rax, rdi (port number to rax)
+                            0x66,
+                            0x89,
+                            0xC2,  # mov dx, ax (port to dx)
+                            0xEC,  # in al, dx (read byte from port)
+                            0xC3,  # ret (return value in al/rax)
+                        ]
+                    )
                 else:
                     # x86 inline assembly for IN instruction
-                    asm_code = bytes([
-                        0x8b, 0x54, 0x24, 0x04,  # mov edx, [esp+4] (get port parameter)
-                        0xec,                     # in al, dx (read byte from port)
-                        0xc3                      # ret (return value in al)
-                    ])
+                    asm_code = bytes(
+                        [
+                            0x8B,
+                            0x54,
+                            0x24,
+                            0x04,  # mov edx, [esp+4] (get port parameter)
+                            0xEC,  # in al, dx (read byte from port)
+                            0xC3,  # ret (return value in al)
+                        ]
+                    )
 
                 # Allocate executable memory and copy assembly code
                 libc = ctypes.CDLL(None)
                 mmap_func = libc.mmap
                 mmap_func.restype = ctypes.c_void_p
-                mmap_func.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
-                                     ctypes.c_int, ctypes.c_int, ctypes.c_off_t]
+                mmap_func.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_off_t]
 
                 # Allocate executable memory page
                 PROT_READ = 0x1
@@ -927,8 +937,7 @@ class ParallelPortEmulator:
                 MAP_PRIVATE = 0x02
                 MAP_ANONYMOUS = 0x20
 
-                exec_mem = mmap_func(0, len(asm_code), PROT_READ | PROT_WRITE | PROT_EXEC,
-                                    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+                exec_mem = mmap_func(0, len(asm_code), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 
                 if exec_mem == -1:
                     return 0xFF  # Return default value on allocation failure
@@ -1190,7 +1199,7 @@ class DongleAPIHooker:
         self._hook_lpt_apis()
 
     def _hook_hasp_apis(self):
-        """Hook HASP API functions."""
+        """Install hooks for HASP API functions."""
         hasp_functions = [
             "hasp_login",
             "hasp_logout",
@@ -1207,7 +1216,7 @@ class DongleAPIHooker:
             self._install_function_hook("hasp_rt.dll", func_name, self._hasp_api_handler)
 
     def _hook_sentinel_apis(self):
-        """Hook Sentinel API functions."""
+        """Install hooks for Sentinel API functions."""
         sentinel_functions = [
             "RNBOsproQuery",
             "RNBOsproInitialize",
@@ -1633,7 +1642,7 @@ class HardwareDongleEmulator:
 
 
 def main():
-    """Example usage and testing."""
+    """Demonstrate hardware dongle emulator usage."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Hardware Dongle Emulator")

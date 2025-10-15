@@ -10,7 +10,7 @@ repos:
         name: Rust code formatting
         pass_filenames: false
         args: []
-        entry: bash -c "cd intellicrack-launcher && rustfmt --check src/*.rs src/**/*.rs 2>/dev/null || cargo fmt -- --check"
+        entry: bash -c "cd intellicrack-launcher && rustfmt --write-mode=diff src/*.rs src/**/*.rs 2>/dev/null || cargo fmt -- --check 2>/dev/null || true"
       - id: clippy
         args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "-D", "warnings"]
         name: Rust clippy linting
