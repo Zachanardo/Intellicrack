@@ -102,7 +102,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to initialize UI components: {e}")
 
     def _setup_signal_connections(self):
-        """Setup signal connections between components."""
+        """Set up signal connections between components."""
         try:
             # Connect main UI manager signals to UI components
             self.binary_loaded.connect(self._on_binary_loaded)
@@ -256,7 +256,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Menu integration failed: {e}")
 
     def _setup_binary_path_sync(self, main_app):
-        """Setup binary path synchronization."""
+        """Set up binary path synchronization."""
         try:
             # Connect to main app's binary path changes
             if hasattr(main_app, "binary_path"):

@@ -858,7 +858,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_custom_fuzzy_hash(self, file_path: str) -> str:
-        """Custom fuzzy hash implementation using rolling hash and context triggering."""
+        """Calculate custom fuzzy hash using rolling hash and context triggering."""
         try:
             with open(file_path, "rb") as f:
                 data = f.read()

@@ -1,5 +1,4 @@
-"""
-Intellicrack Tools Package.
+"""Intellicrack Tools Package.
 
 Copyright (C) 2025 Zachary Flint
 

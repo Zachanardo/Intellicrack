@@ -390,6 +390,7 @@ class AIAssistant:
         binary_path = getattr(self, "_current_binary", None)
         if binary_path:
             from ..utils.analysis.binary_analysis import analyze_binary
+
             analysis_results = analyze_binary(binary_path)
             return f"Binary analysis context: {analysis_results.get('summary', 'No analysis available')}\n"
         return ""
@@ -397,17 +398,25 @@ class AIAssistant:
     def _analyze_question_with_vulnerability_engine(self, question: str, context: str, vuln_engine) -> str:
         question_lower = question.lower()
         if "license" in question_lower or "activation" in question_lower:
-            return vuln_engine.analyze_license_patterns(question, context) or \
-                   "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
+            return (
+                vuln_engine.analyze_license_patterns(question, context)
+                or "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
+            )
         if "protection" in question_lower or "security" in question_lower:
-            return vuln_engine.analyze_protection_mechanisms(question, context) or \
-                   "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
+            return (
+                vuln_engine.analyze_protection_mechanisms(question, context)
+                or "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
+            )
         if "vulnerability" in question_lower or "exploit" in question_lower:
-            return vuln_engine.find_vulnerabilities(question, context) or \
-                   "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
+            return (
+                vuln_engine.find_vulnerabilities(question, context)
+                or "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
+            )
         if "network" in question_lower or "communication" in question_lower:
-            return vuln_engine.analyze_network_behavior(question, context) or \
-                   "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
+            return (
+                vuln_engine.analyze_network_behavior(question, context)
+                or "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
+            )
         return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
 
 
@@ -1164,7 +1173,9 @@ def _build_detailed_analysis(language: str, static_insights: dict[str, Any], cod
         explanation += "\n".join(f"- {func}" for func in static_insights["functions"][:8]) + "\n\n"
 
     ai_explanation = _get_ai_code_explanation(code, language)
-    explanation += "AI Analysis:\n" + (ai_explanation + "\n" if ai_explanation else "Note: Configure LLM backend for advanced AI-powered code analysis\n")
+    explanation += "AI Analysis:\n" + (
+        ai_explanation + "\n" if ai_explanation else "Note: Configure LLM backend for advanced AI-powered code analysis\n"
+    )
     return explanation
 
 
@@ -1327,9 +1338,7 @@ def _analyze_python_code(lines: list[str], result: dict[str, Any]) -> None:
 def _analyze_c_cpp_code(lines: list[str], result: dict[str, Any]) -> None:
     """Analyze C/C++ code structure."""
     result["functions"] = [
-        line.strip()
-        for line in lines
-        if "(" in line and ")" in line and any(ret in line for ret in ["int ", "void ", "char ", "float "])
+        line.strip() for line in lines if "(" in line and ")" in line and any(ret in line for ret in ["int ", "void ", "char ", "float "])
     ]
     result["function_count"] = len(result["functions"])
     result["imports"] = [line.strip() for line in lines if line.strip().startswith(INCLUDE_KEYWORD)]

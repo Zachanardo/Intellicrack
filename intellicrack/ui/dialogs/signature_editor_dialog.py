@@ -205,7 +205,7 @@ class SignatureTestWorker(QThread):
 
 
 class SignatureEditorDialog(QDialog):
-    """Main signature editor dialog."""
+    """Run signature editor dialog."""
 
     def __init__(self, parent=None):
         """Initialize the signature editor dialog with UI components and data structures."""

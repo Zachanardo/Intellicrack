@@ -1286,7 +1286,7 @@ class AntiAnalysisDetector:
 
 
 class BehavioralAnalyzer:
-    """Main behavioral analysis orchestrator."""
+    """Run behavioral analysis orchestrator."""
 
     def __init__(self, binary_path: Path):
         """Initialize behavioral analyzer."""

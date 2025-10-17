@@ -1,4 +1,4 @@
-"""Common Windows structures and utilities for process injection techniques.
+"""Provide Windows structures and utilities for process injection techniques.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -196,7 +196,7 @@ class WindowsContext:
 
 
 class WindowsProcessStructures:
-    """Common Windows process creation structures."""
+    """Provide Windows process creation structures."""
 
     @staticmethod
     def create_startup_info():

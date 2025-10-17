@@ -40,7 +40,7 @@ logger.setLevel(logging.INFO)
 
 
 class DateTimeEncoder(json.JSONEncoder):
-    """Custom JSON encoder for datetime and date objects."""
+    """Customize JSON encoder for datetime and date objects."""
 
     def default(self, obj):
         if isinstance(obj, (datetime, date)):

@@ -264,7 +264,7 @@ def run_detect_packing(binary_path: str) -> dict[str, Any]:
 
 
 def run_analysis(binary_path: str, analysis_type: str = "basic") -> dict[str, Any]:
-    """Generic analysis runner.
+    """Provide analysis runner.
 
     Args:
         binary_path: Path to the binary file

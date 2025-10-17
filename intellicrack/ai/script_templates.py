@@ -535,7 +535,7 @@ class {script_class_name}(GhidraScript):
         }}
 
     def run(self):
-        """Main execution method."""
+        """Run execution method."""
         try:
             self.println("[AI-Generated] Starting analysis of {{}}...".format(getCurrentProgram().getName()))
 

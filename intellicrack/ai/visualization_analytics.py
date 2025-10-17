@@ -508,150 +508,6 @@ class DataCollector:
             # Return conservative estimates if calculation fails
             return 1, 10
 
-    def _get_real_exploit_frequency(self, exploit_type: "ExploitType", severity: str) -> int:
-        """Get real exploit frequency data from system tracking."""
-        try:
-            current_time = datetime.now()
-            lookback_time = current_time - timedelta(days=30)  # Look back 30 days
-
-            frequency = 0
-
-            # Search learning records for exploit usage
-            for _record_id, record in self.learning_records.items():
-                try:
-                    record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
-
-                    if record_time >= lookback_time:
-                        # Check if record matches exploit type and severity
-                        if self._record_matches_exploit(record, exploit_type, severity):
-                            frequency += 1
-
-                except Exception as e:
-                    logger.warning(f"Error parsing learning record for exploit frequency: {e}")
-                    continue
-
-            # Also check error history for exploit-related activities
-            for error_record in self.error_history:
-                try:
-                    error_time = datetime.fromisoformat(error_record.get("timestamp", current_time.isoformat()))
-
-                    if error_time >= lookback_time:
-                        if self._error_matches_exploit(error_record, exploit_type, severity):
-                            frequency += 1
-
-                except Exception as e:
-                    logger.warning(f"Error parsing error record for exploit frequency: {e}")
-                    continue
-
-            # Scale frequency for visualization (0-100 range)
-            if frequency == 0:
-                # Check for potential patterns based on exploit type characteristics
-                base_frequency = self._get_base_frequency_for_exploit_type(exploit_type, severity)
-                return base_frequency
-
-            # Scale to reasonable range for heatmap visualization
-            scaled_frequency = min(100, frequency * 2)  # Scale up for visibility
-            return max(1, scaled_frequency)  # Ensure minimum visibility
-
-        except Exception as e:
-            logger.error(f"Error getting real exploit frequency: {e}")
-            # Return baseline frequency based on exploit characteristics
-            return self._get_base_frequency_for_exploit_type(exploit_type, severity)
-
-    def _record_matches_exploit(self, record: dict, exploit_type: "ExploitType", severity: str) -> bool:
-        """Check if a learning record matches specific exploit type and severity."""
-        try:
-            # Check for exploit type keywords in record
-            exploit_keywords = {
-                # Map exploit types to searchable keywords
-                "ExploitType.BUFFER_OVERFLOW": ["buffer", "overflow", "stack", "heap"],
-                "ExploitType.CODE_INJECTION": ["injection", "code", "execute", "payload"],
-                "ExploitType.PRIVILEGE_ESCALATION": ["privilege", "escalation", "admin", "root"],
-                "ExploitType.MEMORY_CORRUPTION": ["memory", "corruption", "segfault", "access"],
-                "ExploitType.BYPASS_PROTECTION": ["bypass", "protection", "aslr", "dep"],
-            }
-
-            record_text = (
-                record.get("description", "")
-                + " "
-                + record.get("status", "")
-                + " "
-                + record.get("result", "")
-                + " "
-                + record.get("method", "")
-            ).lower()
-
-            # Check for exploit type match
-            exploit_key = str(exploit_type)
-            keywords = exploit_keywords.get(exploit_key, [exploit_type.name.lower().split("_")])
-
-            exploit_match = any(keyword in record_text for keyword in keywords)
-
-            if exploit_match:
-                # Check for severity indicators
-                severity_indicators = {
-                    "Critical": ["critical", "severe", "dangerous", "high_risk"],
-                    "High": ["high", "important", "significant", "major"],
-                    "Medium": ["medium", "moderate", "normal", "standard"],
-                    "Low": ["low", "minor", "trivial", "info"],
-                }
-
-                severity_keywords = severity_indicators.get(severity, [severity.lower()])
-                severity_match = any(keyword in record_text for keyword in severity_keywords)
-
-                return severity_match
-
-            return False
-
-        except Exception as e:
-            logger.warning(f"Error checking record exploit match: {e}")
-            return False
-
-    def _error_matches_exploit(self, error_record: dict, exploit_type: "ExploitType", severity: str) -> bool:
-        """Check if an error record relates to specific exploit type and severity."""
-        try:
-            error_text = (
-                error_record.get("error_message", "") + " " + error_record.get("error_type", "") + " " + error_record.get("context", "")
-            ).lower()
-
-            # Exploit-related error patterns
-            exploit_patterns = {
-                "ExploitType.BUFFER_OVERFLOW": ["segmentation", "buffer", "stack", "smash"],
-                "ExploitType.CODE_INJECTION": ["injection", "execute", "eval", "script"],
-                "ExploitType.PRIVILEGE_ESCALATION": ["permission", "access", "denied", "unauthorized"],
-                "ExploitType.MEMORY_CORRUPTION": ["memory", "corrupt", "invalid", "fault"],
-                "ExploitType.BYPASS_PROTECTION": ["bypass", "disable", "override", "circumvent"],
-            }
-
-            exploit_key = str(exploit_type)
-            patterns = exploit_patterns.get(exploit_key, [])
-
-            return any(pattern in error_text for pattern in patterns)
-
-        except Exception as e:
-            logger.warning(f"Error checking error exploit match: {e}")
-            return False
-
-    def _get_base_frequency_for_exploit_type(self, exploit_type: "ExploitType", severity: str) -> int:
-        """Get baseline frequency based on exploit type characteristics and industry data."""
-        try:
-            # Base frequencies based on common exploit patterns in security research
-            base_frequencies = {
-                "ExploitType.BUFFER_OVERFLOW": {"Critical": 25, "High": 35, "Medium": 20, "Low": 10},
-                "ExploitType.CODE_INJECTION": {"Critical": 30, "High": 25, "Medium": 15, "Low": 8},
-                "ExploitType.PRIVILEGE_ESCALATION": {"Critical": 20, "High": 30, "Medium": 25, "Low": 12},
-                "ExploitType.MEMORY_CORRUPTION": {"Critical": 15, "High": 20, "Medium": 18, "Low": 7},
-                "ExploitType.BYPASS_PROTECTION": {"Critical": 18, "High": 22, "Medium": 16, "Low": 9},
-            }
-
-            exploit_key = str(exploit_type)
-            frequencies = base_frequencies.get(exploit_key, {"Critical": 15, "High": 20, "Medium": 15, "Low": 5})
-
-            return frequencies.get(severity, 10)
-
-        except Exception as e:
-            logger.warning(f"Error getting base frequency: {e}")
-            return 10
 
     def _collect_learning_metrics(self) -> list[DataPoint]:
         """Collect learning progress metrics."""
@@ -866,38 +722,12 @@ class ChartGenerator:
 
     def generate_vulnerability_heatmap(self) -> ChartData:
         """Generate heatmap of vulnerability patterns."""
-        # Create heatmap showing vulnerability frequency by type and severity
-
-        heatmap_data = []
-        severities = ["low", "medium", "high", "critical"]
-
-        # Limit to first 10
-        for i, exploit_type in enumerate(list(ExploitType)[:10]):
-            for j, severity in enumerate(severities):
-                # Real frequency data from exploit tracking
-                frequency = self.data_collector._get_real_exploit_frequency(exploit_type, severity)
-
-                heatmap_data.append(
-                    DataPoint(
-                        timestamp=datetime.now(),
-                        value=frequency,
-                        label=f"{exploit_type.value}-{severity}",
-                        category="heatmap_cell",
-                        metadata={
-                            "x": i,
-                            "y": j,
-                            "exploit_type": exploit_type.value,
-                            "severity": severity,
-                        },
-                    )
-                )
-
         chart_data = ChartData(
             chart_id=str(uuid.uuid4()),
-            title="Vulnerability Pattern Heatmap",
+            title="Vulnerability Pattern Heatmap (Disabled)",
             chart_type=ChartType.HEATMAP,
-            data_points=heatmap_data,
-            x_axis_label="Exploit Type",
+            data_points=[],
+            x_axis_label="Protection Type",
             y_axis_label="Severity",
             options={
                 "color_scale": "viridis",
@@ -905,7 +735,6 @@ class ChartGenerator:
                 "grid_lines": True,
             },
         )
-
         return chart_data
 
 
@@ -1335,7 +1164,7 @@ class AnalyticsEngine:
 
 
 class VisualizationAnalytics:
-    """Main visualization and analytics system."""
+    """Run visualization and analytics system."""
 
     def __init__(self):
         """Initialize the visualization and analytics system.

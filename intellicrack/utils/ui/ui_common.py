@@ -1,4 +1,4 @@
-"""Common UI utility functions and patterns for Intellicrack.
+"""Provide UI utility functions and patterns for Intellicrack.
 
 This module consolidates repeated UI patterns to avoid code duplication.
 

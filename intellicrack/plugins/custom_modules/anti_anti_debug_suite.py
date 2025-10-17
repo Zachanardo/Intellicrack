@@ -2124,7 +2124,7 @@ class TargetAnalyzer:
 
 
 class AntiAntiDebugSuite:
-    """Main anti-anti-debug suite orchestrator."""
+    """Run anti-anti-debug suite orchestrator."""
 
     def __init__(self):
         """Initialize the anti-anti-debug suite.

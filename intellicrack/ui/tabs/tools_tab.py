@@ -83,7 +83,7 @@ class ToolsTab(BaseTab):
                 self.on_binary_loaded(current_binary)
 
     def setup_content(self):
-        """Setup the tools tab content."""
+        """Set up the tools tab content."""
         layout = self.layout()  # Use existing layout from BaseTab
 
         # Convert to QHBoxLayout behavior by using a horizontal container

@@ -773,7 +773,7 @@ class ModelManager:
 
         # Fallback implementation
         class SimpleProtectionClassifier:
-            """Simple rule-based protection classifier."""
+            """Perform rule-based protection classifier."""
 
             def __init__(self):
                 self.protection_patterns = {
@@ -1974,7 +1974,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
                     # Define simple neural network
                     class SimpleNN(nn.Module):
-                        """Simple neural network for basic classification tasks."""
+                        """Perform neural network for basic classification tasks."""
 
                         def __init__(self, input_size, num_classes):
                             """Initialize simple neural network with specified input size and number of classes.

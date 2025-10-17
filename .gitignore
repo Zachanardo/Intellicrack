@@ -460,6 +460,10 @@ temp_venv/
 cache/
 .cache/
 
+# Local dependency clones
+python-fx-local/
+mitmproxy-local/
+
 # Backup files
 backups/
 backup/

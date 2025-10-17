@@ -226,7 +226,7 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup configuration dialog UI."""
+        """Set up configuration dialog UI."""
         layout = QVBoxLayout(self)
 
         # Analysis options
@@ -336,7 +336,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup results viewer UI."""
+        """Set up results viewer UI."""
         layout = QVBoxLayout(self)
 
         # Results navigation
@@ -668,7 +668,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
 
 
 class R2IntegrationWidget(QWidget if QWidget is not None else object):
-    """Main widget for radare2 integration UI."""
+    """Run widget for radare2 integration UI."""
 
     def __init__(self, parent=None):
         """Initialize the radare2 integration widget with UI components and analysis functionality."""
@@ -680,7 +680,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup main UI."""
+        """Set up main UI."""
         layout = QVBoxLayout(self)
 
         # Header section

@@ -1,4 +1,4 @@
-"""Common UI button utilities and shared button functionality.
+"""Provide UI button utilities and shared button functionality.
 
 Common UI button utilities to avoid code duplication.
 

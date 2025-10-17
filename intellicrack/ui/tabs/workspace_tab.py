@@ -72,7 +72,7 @@ class WorkspaceTab(QWidget):
         self.config_manager.register_callback("font", self.update_fonts)
 
     def setup_content(self):
-        """Setup the workspace tab content with three-panel splitter layout."""
+        """Set up the workspace tab content with three-panel splitter layout."""
         main_layout = QHBoxLayout(self)
 
         # Create main three-panel splitter

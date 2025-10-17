@@ -137,7 +137,7 @@ class ModelLoadingItemWidget(QWidget):
 
 
 class ModelLoadingProgressWidget(QWidget):
-    """Main widget for monitoring model loading progress."""
+    """Run widget for monitoring model loading progress."""
 
     #: model_id (type: str)
     model_loaded = pyqtSignal(str)
@@ -211,7 +211,7 @@ class ModelLoadingProgressWidget(QWidget):
         self.setLayout(layout)
 
     def setup_callbacks(self):
-        """Setup progress callbacks and update timer."""
+        """Set up progress callbacks and update timer."""
         # Register callback with LLM manager
         self.llm_manager.add_progress_callback(self.progress_callback)
 

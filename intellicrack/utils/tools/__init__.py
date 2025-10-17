@@ -1,5 +1,4 @@
-"""
-External tool integration utilities for Intellicrack
+"""External tool integration utilities for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 

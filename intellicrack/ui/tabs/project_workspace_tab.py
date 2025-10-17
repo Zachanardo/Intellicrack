@@ -56,7 +56,7 @@ class DashboardTab(BaseTab):
         self.recent_files = []
 
     def setup_content(self):
-        """Setup the complete Project Workspace tab content."""
+        """Set up the complete Project Workspace tab content."""
         main_layout = QVBoxLayout(self)
 
         # Create horizontal splitter for left and right panels

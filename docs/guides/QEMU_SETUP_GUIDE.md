@@ -111,7 +111,7 @@ When using Intellicrack, VMs are launched automatically for testing license patc
 
 ## Directory Structure
 ```
-data/qemu_images/
+intellicrack/assets/qemu_images/
 ├── reactos-0.4.14.iso          # ReactOS live ISO
 ├── windows-test.qcow2           # Windows test environment
 ├── custom-test.qcow2            # Custom test disk

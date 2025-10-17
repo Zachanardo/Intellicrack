@@ -308,7 +308,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
 
 
 def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list[dict[str, Any]]) -> bool:
-    """Applies parsed patch instructions to a copy of the binary.
+    """Apply parsed patch instructions to a copy of the binary.
 
     Takes a list of patch instructions (typically parsed from AI output)
     and applies them to a copy of the target binary. Includes comprehensive
@@ -613,7 +613,7 @@ def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: l
 
 
 def _setup_disassembly_tools(is_64bit: bool) -> dict:
-    """Setup capstone and keystone tools.
+    """Set up capstone and keystone tools.
 
     Returns:
         Dictionary with 'ks' and 'md' tools
@@ -1007,7 +1007,7 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
 
 
 def rewrite_license_functions_with_parsing(app: Any) -> None:
-    """Attempts to find and rewrite license checking functions using various methods.
+    """Attempt to find and rewrite license checking functions using various methods.
 
     Includes enhanced logging and basic safety checks for code size.
 

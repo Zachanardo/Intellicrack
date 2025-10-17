@@ -366,7 +366,7 @@ class ConfigMigrationHandler:
 
 
 class SafeMigrationWrapper:
-    """Wrapper to safely execute migration functions with timeout and resource limits."""
+    """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
     def migrate_with_timeout(migration_func: callable, config_data: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:

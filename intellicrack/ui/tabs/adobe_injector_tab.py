@@ -43,7 +43,7 @@ class AdobeInjectorTab(BaseTab):
         super().__init__(shared_context, parent)
 
     def setup_content(self):
-        """Setup the Adobe Injector tab content."""
+        """Set up the Adobe Injector tab content."""
         layout = self.layout()
 
         # Integration method selector

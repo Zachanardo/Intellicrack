@@ -221,7 +221,7 @@ class SystemUtilitiesDialog(QDialog):
         self.connect_signals()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         layout = QVBoxLayout(self)
 
         # Tabs for different utilities
@@ -248,7 +248,7 @@ class SystemUtilitiesDialog(QDialog):
         self.setup_footer(layout)
 
     def setup_icon_tab(self):
-        """Setup icon extraction tab."""
+        """Set up icon extraction tab."""
         icon_widget = QWidget()
         layout = QVBoxLayout(icon_widget)
 
@@ -319,7 +319,7 @@ class SystemUtilitiesDialog(QDialog):
         self.tabs.addTab(icon_widget, "Icon Extraction")
 
     def setup_sysinfo_tab(self):
-        """Setup system information tab."""
+        """Set up system information tab."""
         sysinfo_widget = QWidget()
         layout = QVBoxLayout(sysinfo_widget)
 
@@ -351,7 +351,7 @@ class SystemUtilitiesDialog(QDialog):
         self.tabs.addTab(sysinfo_widget, "System Info")
 
     def setup_dependencies_tab(self):
-        """Setup dependency checker tab."""
+        """Set up dependency checker tab."""
         deps_widget = QWidget()
         layout = QVBoxLayout(deps_widget)
 
@@ -391,7 +391,7 @@ class SystemUtilitiesDialog(QDialog):
         self.tabs.addTab(deps_widget, "Dependencies")
 
     def setup_process_tab(self):
-        """Setup process manager tab."""
+        """Set up process manager tab."""
         process_widget = QWidget()
         layout = QVBoxLayout(process_widget)
 
@@ -440,7 +440,7 @@ class SystemUtilitiesDialog(QDialog):
         self.tabs.addTab(process_widget, "Process Manager")
 
     def setup_memory_tab(self):
-        """Setup memory optimizer tab."""
+        """Set up memory optimizer tab."""
         memory_widget = QWidget()
         layout = QVBoxLayout(memory_widget)
 
@@ -499,7 +499,7 @@ class SystemUtilitiesDialog(QDialog):
         self.tabs.addTab(memory_widget, "Memory Optimizer")
 
     def setup_footer(self, layout):
-        """Setup footer with status and progress."""
+        """Set up footer with status and progress."""
         footer_layout = QVBoxLayout()
 
         # Progress bar

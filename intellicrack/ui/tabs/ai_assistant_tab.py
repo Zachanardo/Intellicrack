@@ -587,7 +587,7 @@ class AIAssistantTab(BaseTab):
 
                 all_models = provider_manager.fetch_all_models()
 
-                for provider_name, models in all_models.items():
+                for _provider_name, models in all_models.items():
                     for model_info in models:
                         display_name = f"{model_info.provider}: {model_info.name}"
                         available_models.append(display_name)

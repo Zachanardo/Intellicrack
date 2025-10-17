@@ -79,7 +79,7 @@ def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
 
 
 def create_suspended_process_with_context(create_func, get_context_func, target_exe: str, logger_instance=None) -> dict[str, Any]:
-    """Common pattern for creating suspended process and getting thread context.
+    """Provide pattern for creating suspended process and getting thread context.
 
     Args:
         create_func: Function to create suspended process

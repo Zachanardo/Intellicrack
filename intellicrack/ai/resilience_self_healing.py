@@ -1229,7 +1229,7 @@ class StateManager:
 
 
 class ResilienceSelfHealingSystem:
-    """Main resilience and self-healing system."""
+    """Run resilience and self-healing system."""
 
     def __init__(self):
         """Initialize the resilience and self-healing system.

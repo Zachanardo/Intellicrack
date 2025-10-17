@@ -40,22 +40,13 @@ def get_data_dir() -> Path:
 def get_qemu_images_dir() -> Path:
     """Get the QEMU images directory.
 
-    First checks in intellicrack/assets/qemu_images/ for images,
-    falling back to data/qemu_images/ for compatibility.
+    Returns the path to intellicrack/assets/qemu_images/
     """
-    # Check the primary location: intellicrack/assets/qemu_images/
     project_root = get_project_root()
     assets_dir = project_root / "intellicrack" / "assets"
     qemu_dir = assets_dir / "qemu_images"
 
-    # Create the directory if it doesn't exist
     qemu_dir.mkdir(parents=True, exist_ok=True)
-
-    # If the primary location doesn't exist, try the fallback location
-    if not qemu_dir.exists():
-        data_dir = get_data_dir()
-        qemu_dir = data_dir / "qemu_images"
-        qemu_dir.mkdir(parents=True, exist_ok=True)
 
     return qemu_dir
 

@@ -128,7 +128,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
 
 
 class LazyModelWrapper:
-    """Wrapper that provides lazy loading for LLM backends.
+    """Wrap that provides lazy loading for LLM backends.
 
     The actual backend is only initialized when first accessed.
     """

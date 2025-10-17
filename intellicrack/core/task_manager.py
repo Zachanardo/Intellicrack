@@ -337,7 +337,7 @@ class TaskManager(QObject):
 
 
 class LongRunningTask(BaseTask):
-    """Example of a long-running task with progress updates."""
+    """Demonstrate of a long-running task with progress updates."""
 
     def __init__(self, duration: int = 10, task_id: str | None = None):
         """Initialize the long running task with specified duration.

@@ -50,6 +50,7 @@ def read_file_with_ai_tools(
         - used_ai_tools: True if AIFileTools was used, False if direct read was used
 
     """
+
     def _process_ai_content(raw_content):
         """Normalize AI-provided content according to mode and max_bytes."""
         if mode == "binary":

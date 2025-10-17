@@ -340,7 +340,7 @@ except ImportError as e:
             logger.debug("Widget %s: Grab released", self.widget_id)
 
     class FallbackTk(FallbackWidget):
-        """Main application window."""
+        """Run application window."""
 
         def __init__(self):
             """Initialize Tk window."""

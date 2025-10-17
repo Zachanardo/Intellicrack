@@ -83,7 +83,7 @@ class AnalysisTask:
 
 
 class SpeedColumn(ProgressColumn):
-    """Custom column showing processing speed."""
+    """Customize column showing processing speed."""
 
     def render(self, task):
         """Render the speed column."""

@@ -1,5 +1,4 @@
-"""
-Memory Forensics Tool for LLM Integration
+"""Memory Forensics Tool for LLM Integration
 
 Provides AI models with the ability to run Volatility3 memory forensics analysis
 on memory dumps to extract runtime information and security artifacts.
@@ -21,9 +20,7 @@ logger = get_logger(__name__)
 
 
 class MemoryForensicsTool:
-    """
-    LLM tool for running memory forensics analysis using Volatility3
-    """
+    """LLM tool for running memory forensics analysis using Volatility3"""
 
     def __init__(self):
         """Initialize memory forensics tool"""
@@ -31,11 +28,11 @@ class MemoryForensicsTool:
         self.analysis_cache: Dict[str, Dict[str, Any]] = {}
 
     def get_tool_definition(self) -> Dict[str, Any]:
-        """
-        Get tool definition for LLM registration
+        """Get tool definition for LLM registration
 
         Returns:
             Tool definition dictionary
+
         """
         return {
             "name": "memory_forensics",
@@ -100,14 +97,14 @@ class MemoryForensicsTool:
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
-        """
-        Execute memory forensics analysis
+        """Execute memory forensics analysis
 
         Args:
             **kwargs: Tool parameters
 
         Returns:
             Analysis results dictionary
+
         """
         dump_path = kwargs.get("dump_path")
         if not dump_path or not os.path.exists(dump_path):
@@ -398,8 +395,7 @@ class MemoryForensicsTool:
         return assessment
 
     def analyze_specific_process(self, dump_path: str, process_id: int) -> Dict[str, Any]:
-        """
-        Analyze a specific process from memory dump
+        """Analyze a specific process from memory dump
 
         Args:
             dump_path: Path to memory dump
@@ -407,6 +403,7 @@ class MemoryForensicsTool:
 
         Returns:
             Process-specific analysis results
+
         """
         try:
             if not is_volatility3_available() or not self.engine:

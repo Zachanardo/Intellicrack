@@ -159,7 +159,7 @@ class APIClient:
 
 
 async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Convenience function for making API calls.
+    """Provide for making API calls.
 
     Args:
         endpoint: API endpoint
@@ -176,7 +176,7 @@ async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any]
 
 # Synchronous wrapper for compatibility
 def sync_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Synchronous wrapper for API calls.
+    """Wrap for API calls.
 
     Args:
         endpoint: API endpoint

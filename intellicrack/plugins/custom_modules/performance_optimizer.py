@@ -1009,7 +1009,7 @@ class AdaptiveOptimizer:
 
 
 class PerformanceOptimizer:
-    """Main performance optimization engine."""
+    """Run performance optimization engine."""
 
     def __init__(self, config: dict[str, Any] = None):
         """Initialize performance optimizer with all optimization components."""

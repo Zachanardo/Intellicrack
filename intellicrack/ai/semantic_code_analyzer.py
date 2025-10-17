@@ -59,7 +59,7 @@ class SemanticIntent(Enum):
 
 
 class BusinessLogicPattern(Enum):
-    """Common business logic patterns."""
+    """Provide business logic patterns."""
 
     LICENSE_VALIDATION = "license_validation"
     USER_MANAGEMENT = "user_management"

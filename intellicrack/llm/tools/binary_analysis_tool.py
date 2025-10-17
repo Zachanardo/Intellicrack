@@ -1,5 +1,4 @@
-"""
-Binary Analysis Tool for LLM Integration
+"""Binary Analysis Tool for LLM Integration
 
 Provides AI models with binary analysis capabilities.
 

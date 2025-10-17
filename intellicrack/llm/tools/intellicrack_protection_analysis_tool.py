@@ -1,5 +1,4 @@
-"""
-Protection Analysis Tool for LLM Integration
+"""Protection Analysis Tool for LLM Integration
 
 Provides AI models with the ability to run comprehensive protection analysis
 and interpret detection results from multiple engines.
@@ -28,9 +27,7 @@ logger = get_logger(__name__)
 
 
 class DIEAnalysisTool:
-    """
-    LLM tool for running protection analysis and interpreting results
-    """
+    """LLM tool for running protection analysis and interpreting results"""
 
     def __init__(self):
         """Initialize protection analysis tool"""
@@ -40,11 +37,11 @@ class DIEAnalysisTool:
         self.ai_assistant = IntellicrackAIAssistant()
 
     def get_tool_definition(self) -> Dict[str, Any]:
-        """
-        Get tool definition for LLM registration
+        """Get tool definition for LLM registration
 
         Returns:
             Tool definition dictionary
+
         """
         return {
             "name": "die_analysis",
@@ -89,14 +86,14 @@ class DIEAnalysisTool:
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
-        """
-        Execute DIE analysis
+        """Execute DIE analysis
 
         Args:
             **kwargs: Tool parameters
 
         Returns:
             Analysis results dictionary
+
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):
@@ -478,8 +475,7 @@ class DIEAnalysisTool:
         return "\n".join(lines)
 
     def analyze_batch(self, file_paths: List[str], scan_mode: str = "normal") -> Dict[str, Any]:
-        """
-        Analyze multiple files in batch
+        """Analyze multiple files in batch
 
         Args:
             file_paths: List of file paths
@@ -487,6 +483,7 @@ class DIEAnalysisTool:
 
         Returns:
             Batch analysis results
+
         """
         results = {
             "success": True,
@@ -520,8 +517,7 @@ class DIEAnalysisTool:
         return results
 
     def compare_files(self, file1: str, file2: str) -> Dict[str, Any]:
-        """
-        Compare two files for protection similarities
+        """Compare two files for protection similarities
 
         Args:
             file1: First file path
@@ -529,6 +525,7 @@ class DIEAnalysisTool:
 
         Returns:
             Comparison results
+
         """
         # Analyze both files
         analysis1 = self.detector.detect_protections_advanced(file1)

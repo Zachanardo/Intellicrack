@@ -201,7 +201,7 @@ class SystemMonitorWidget(QWidget):
         self.start_monitoring()
 
     def setup_ui(self):
-        """Setup the UI components."""
+        """Set up the UI components."""
         layout = QVBoxLayout(self)
 
         # Controls

@@ -1,4 +1,4 @@
-"""Common imports for Intellicrack UI dialogs.
+"""Provide imports for Intellicrack UI dialogs.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.

@@ -449,7 +449,7 @@ class DiffGenerator:
 
 
 class IntelligentCodeModifier:
-    """Main class for intelligent code modification."""
+    """Run class for intelligent code modification."""
 
     def __init__(self, llm_manager: LLMManager | None = None):
         """Initialize the intelligent code modifier.

@@ -402,7 +402,7 @@ class AdaptiveAnalyzer:
 
 
 class PerformanceOptimizer:
-    """Main performance optimization controller."""
+    """Run performance optimization controller."""
 
     def __init__(self, max_memory_mb: int = 2048, cache_dir: str = "cache"):
         """Initialize the performance optimizer.
@@ -588,7 +588,7 @@ def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "ca
 
 # Example analysis functions for testing
 def example_string_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Example string analysis function."""
+    """Demonstrate string analysis function."""
     # Include chunk information in results for comprehensive analysis
     result_metadata = {}
     if chunk_info:
@@ -630,7 +630,7 @@ def example_string_analysis(data, chunk_info=None) -> dict[str, Any]:
 
 
 def example_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Example entropy analysis function."""
+    """Demonstrate entropy analysis function."""
     # Include chunk information in entropy analysis for position-aware results
     result_metadata = {}
     if chunk_info:

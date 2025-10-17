@@ -895,7 +895,7 @@ class CacheManager:
 
 
 class PerformanceOptimizationLayer:
-    """Main performance optimization layer."""
+    """Run performance optimization layer."""
 
     def __init__(self):
         """Initialize the performance optimization layer.

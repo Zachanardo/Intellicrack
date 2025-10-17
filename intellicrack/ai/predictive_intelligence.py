@@ -419,7 +419,7 @@ class PredictiveModel:
 
 
 class LinearRegressionModel(PredictiveModel):
-    """Simple linear regression model for predictions."""
+    """Perform linear regression model for predictions."""
 
     def __init__(self, model_name: str):
         """Initialize the linear regression model.
@@ -1492,7 +1492,7 @@ class VulnerabilityPredictor:
 
 
 class PredictiveIntelligenceEngine:
-    """Main predictive intelligence engine."""
+    """Run predictive intelligence engine."""
 
     def __init__(self):
         """Initialize the predictive intelligence engine with specialized predictors."""

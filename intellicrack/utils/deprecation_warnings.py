@@ -27,7 +27,7 @@ from typing import Any, Callable
 
 
 def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable:
-    """Decorator to mark configuration methods as deprecated.
+    """Mark configuration methods as deprecated.
 
     Args:
         replacement: The new method or approach to use instead
@@ -54,7 +54,7 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
 
 
 def deprecated_qsettings(func: Callable) -> Callable:
-    """Decorator specifically for QSettings-based methods.
+    """Mark QSettings-based methods as deprecated.
 
     Args:
         func: Function using QSettings
@@ -79,7 +79,7 @@ def deprecated_qsettings(func: Callable) -> Callable:
 
 
 def deprecated_llm_file_storage(func: Callable) -> Callable:
-    """Decorator for LLM configuration file storage methods.
+    """Decorate LLM configuration file storage methods.
 
     Args:
         func: Function using file-based LLM config storage
@@ -104,7 +104,7 @@ def deprecated_llm_file_storage(func: Callable) -> Callable:
 
 
 def deprecated_cli_config_file(func: Callable) -> Callable:
-    """Decorator for CLI configuration file methods.
+    """Decorate CLI configuration file methods.
 
     Args:
         func: Function using separate CLI config file

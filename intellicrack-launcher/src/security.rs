@@ -566,10 +566,12 @@ mod tests {
         let manager = get_test_security_manager();
 
         // Clean environment first
-        env::remove_var("INTELLICRACK_SANDBOX");
-        env::remove_var("INTELLICRACK_NO_NETWORK");
-        env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
-        env::remove_var("INTELLICRACK_DEFAULT_HASH");
+        unsafe {
+            env::remove_var("INTELLICRACK_SANDBOX");
+            env::remove_var("INTELLICRACK_NO_NETWORK");
+            env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
+            env::remove_var("INTELLICRACK_DEFAULT_HASH");
+        }
 
         manager.configure_security_environment().unwrap();
 
@@ -580,10 +582,12 @@ mod tests {
         assert_eq!(env::var("INTELLICRACK_DEFAULT_HASH").unwrap(), "sha256");
 
         // Clean up
-        env::remove_var("INTELLICRACK_SANDBOX");
-        env::remove_var("INTELLICRACK_NO_NETWORK");
-        env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
-        env::remove_var("INTELLICRACK_DEFAULT_HASH");
+        unsafe {
+            env::remove_var("INTELLICRACK_SANDBOX");
+            env::remove_var("INTELLICRACK_NO_NETWORK");
+            env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
+            env::remove_var("INTELLICRACK_DEFAULT_HASH");
+        }
     }
 
     #[test]
@@ -960,13 +964,15 @@ mod tests {
         assert!(env::var("INTELLICRACK_DEFAULT_HASH").is_ok());
 
         // Clean up manually (in a real scenario, this would happen on drop or explicit cleanup)
-        env::remove_var("INTELLICRACK_SANDBOX");
-        env::remove_var("INTELLICRACK_NO_NETWORK");
-        env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
-        env::remove_var("INTELLICRACK_DEFAULT_HASH");
-        env::remove_var("INTELLICRACK_NO_SHELL_TRUE");
-        env::remove_var("INTELLICRACK_RESTRICT_PICKLE");
-        env::remove_var("INTELLICRACK_STRICT_VALIDATION");
+        unsafe {
+            env::remove_var("INTELLICRACK_SANDBOX");
+            env::remove_var("INTELLICRACK_NO_NETWORK");
+            env::remove_var("INTELLICRACK_NO_SENSITIVE_LOGS");
+            env::remove_var("INTELLICRACK_DEFAULT_HASH");
+            env::remove_var("INTELLICRACK_NO_SHELL_TRUE");
+            env::remove_var("INTELLICRACK_RESTRICT_PICKLE");
+            env::remove_var("INTELLICRACK_STRICT_VALIDATION");
+        }
 
         // Verify cleanup
         assert!(env::var("INTELLICRACK_SANDBOX").is_err());

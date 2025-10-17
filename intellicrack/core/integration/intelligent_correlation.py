@@ -550,7 +550,7 @@ class ConfidenceScorer:
 
 
 class AnomalyDetector:
-    """Detects anomalies in correlation data."""
+    """Detect anomalies in correlation data."""
 
     def __init__(self):
         """Initialize the AnomalyDetector with isolation forest and threshold settings."""
@@ -904,7 +904,7 @@ class MachineLearningCorrelator:
 
 
 class IntelligentCorrelator:
-    """Main intelligent correlation system."""
+    """Run intelligent correlation system."""
 
     def __init__(self):
         """Initialize the IntelligentCorrelator with all required components."""

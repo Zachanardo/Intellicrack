@@ -1103,7 +1103,7 @@ class SimpleAnalysisPlugin:
         self.description = "Template for simple binary analysis tasks"
 
     def analyze(self, binary_path):
-        """Simple analysis implementation."""
+        """Perform analysis implementation."""
         results = []
         results.append(f"Analyzing: {binary_path}")
 
@@ -1771,7 +1771,7 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 
 
 class PluginSystem:
-    """Main plugin system class that encapsulates all plugin functionality.
+    """Run plugin system class that encapsulates all plugin functionality.
 
     This class provides a unified interface for plugin management in Intellicrack.
     """

@@ -192,7 +192,7 @@ class SecretsManager:
         keyring_backend = self.central_config.get("secrets.keyring_backend", "auto")
         try:
             if HAS_KEYRING and keyring_backend != "disabled":
-                if (key_str := keyring.get_password(self.SERVICE_NAME, "encryption_key")):
+                if key_str := keyring.get_password(self.SERVICE_NAME, "encryption_key"):
                     self._cipher = Fernet(key_str.encode())
                     self._set_encryption_status(True, True)
                     return
@@ -315,10 +315,10 @@ class SecretsManager:
         3. Encrypted file cache
         4. Default value
         """
-        if (value := os.getenv(key)):
+        if value := os.getenv(key):
             return value
 
-        if (value := self._get_from_keyring(key)):
+        if value := self._get_from_keyring(key):
             return value
 
         return self._cache.get(key) or default
@@ -430,7 +430,7 @@ class SecretsManager:
 
     def rotate_key(self, old_key: str, new_key: str):
         """Rotate a secret key."""
-        if (value := self.get(old_key)):
+        if value := self.get(old_key):
             self.set(new_key, value)
             self.delete(old_key)
             logger.info(f"Rotated secret from {old_key} to {new_key}")
@@ -480,7 +480,7 @@ class SecretsManager:
 
         try:
             # Use find_dotenv to locate the .env file
-            if (env_path := find_dotenv()):
+            if env_path := find_dotenv():
                 logger.info(f"Found .env file at: {env_path}")
                 return env_path
             logger.info("No .env file found in search path")

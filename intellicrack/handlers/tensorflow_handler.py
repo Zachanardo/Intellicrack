@@ -43,6 +43,7 @@ keras = None
 layers = None
 models = None
 optimizers = None
+_tf_initialized = False  # Lazy loading tracker
 
 # Load environment variables from .env file
 # Users can customize GPU settings in the .env file
@@ -95,41 +96,55 @@ def _safe_tensorflow_import(
     return import_success, tf_modules, import_error
 
 
-# Attempt safe TensorFlow import
-try:
-    success, modules, error = _safe_tensorflow_import()
+def ensure_tensorflow_loaded():
+    """Ensure TensorFlow is loaded (lazy loading)."""
+    global _tf_initialized, HAS_TENSORFLOW, TENSORFLOW_VERSION, tf, keras, layers, models, optimizers, tensorflow
 
-    if success and modules:
-        # Use the successfully imported modules WITHOUT re-importing
-        tf = modules["tf"]
-        keras = modules["keras"]
-        layers = modules["layers"]
-        models = modules["models"]
-        optimizers = modules["optimizers"]
+    if _tf_initialized:
+        return
 
-        # Configure GPU memory growth
-        try:
-            gpus = tf.config.experimental.list_physical_devices("GPU")
-            if gpus:
-                for gpu in gpus:
-                    tf.config.experimental.set_memory_growth(gpu, True)
-        except Exception as gpu_config_error:
-            logger.info(f"GPU configuration warning: {gpu_config_error}")
+    _tf_initialized = True
 
-        HAS_TENSORFLOW = True
-        TENSORFLOW_VERSION = tf.__version__
-        logger.info(f"TensorFlow {TENSORFLOW_VERSION} imported successfully with universal GPU compatibility")
-    else:
-        raise error or ImportError("TensorFlow import failed")
+    try:
+        success, modules, error = _safe_tensorflow_import()
 
-except Exception as e:
-    logger.info(f"Using TensorFlow fallbacks due to import issue: {e}")
-    HAS_TENSORFLOW = False
-    TENSORFLOW_VERSION = None
+        if success and modules:
+            tf = modules["tf"]
+            keras = modules["keras"]
+            layers = modules["layers"]
+            models = modules["models"]
+            optimizers = modules["optimizers"]
+            tensorflow = tf
 
-    # Set up fallback implementations when TensorFlow is not available
+            try:
+                gpus = tf.config.experimental.list_physical_devices("GPU")
+                if gpus:
+                    for gpu in gpus:
+                        tf.config.experimental.set_memory_growth(gpu, True)
+            except Exception as gpu_config_error:
+                logger.info(f"GPU configuration warning: {gpu_config_error}")
 
-    # Production-ready fallback implementations for binary analysis ML needs
+            HAS_TENSORFLOW = True
+            TENSORFLOW_VERSION = tf.__version__
+            logger.info(f"TensorFlow {TENSORFLOW_VERSION} imported successfully with universal GPU compatibility")
+        else:
+            raise error or ImportError("TensorFlow import failed")
+
+    except Exception as e:
+        logger.info(f"Using TensorFlow fallbacks due to import issue: {e}")
+        HAS_TENSORFLOW = False
+        TENSORFLOW_VERSION = None
+        # Explicitly assign fallback objects to ensure availability
+        tf = FallbackTensorFlow()
+        keras = FallbackKeras
+        layers = FallbackKerasLayers()
+        models = FallbackKerasModels()
+        optimizers = FallbackKerasOptimizers()
+        tensorflow = tf
+
+
+# Lazy loading - TensorFlow is only imported when ensure_tensorflow_loaded() is called
+# Initialize fallback objects at module level for immediate availability
 
 
 class FallbackTensor:
@@ -934,19 +949,13 @@ class FallbackTensorFlow:
     Tensor = FallbackTensor
 
 
+# Initialize module-level fallback objects for immediate availability
 tf = FallbackTensorFlow()
 tensorflow = tf
 keras = FallbackKeras
 layers = FallbackKerasLayers()
 models = FallbackKerasModels()
 optimizers = FallbackKerasOptimizers()
-
-
-# Create main tensorflow reference
-if HAS_TENSORFLOW:
-    tensorflow = tf
-else:
-    tensorflow = tf  # Points to FallbackTensorFlow
 
 # Export all TensorFlow objects and availability flag
 __all__ = [
@@ -961,4 +970,6 @@ __all__ = [
     "layers",
     "models",
     "optimizers",
+    # Lazy loading function
+    "ensure_tensorflow_loaded",
 ]

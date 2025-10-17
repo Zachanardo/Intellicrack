@@ -3887,7 +3887,7 @@ int main() {{
 
 
 class TaintTracker:
-    """Simple taint tracking plugin for symbolic execution."""
+    """Perform taint tracking plugin for symbolic execution."""
 
     def __init__(self):
         """Initialize the taint tracker with data tracking and propagation monitoring."""

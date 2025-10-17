@@ -50,7 +50,7 @@ class DropZoneWidget(QWidget):
         self._setup_ui()
 
     def setup_ui(self):
-        """Setup the UI."""
+        """Set up the UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -100,7 +100,7 @@ class DropZoneWidget(QWidget):
             self.label.setText("Drop files here for analysis")
 
     def paintEvent(self, event):
-        """Custom paint event."""
+        """Customize paint event."""
         super().paintEvent(event)
 
         # Draw additional visual elements if needed

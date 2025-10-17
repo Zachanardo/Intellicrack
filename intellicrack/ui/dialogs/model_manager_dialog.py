@@ -175,7 +175,7 @@ class ModelManagerDialog(BaseDialog):
         self.status_timer.start(5000)  # Update every 5 seconds
 
     def setup_content(self, layout):
-        """Setup the user interface content."""
+        """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -214,7 +214,7 @@ class ModelManagerDialog(BaseDialog):
         layout.addLayout(status_layout)
 
     def setup_local_models_tab(self, tab_widget):
-        """Setup the local models management tab."""
+        """Set up the local models management tab."""
         layout = QVBoxLayout(tab_widget)
 
         # Controls
@@ -287,7 +287,7 @@ class ModelManagerDialog(BaseDialog):
         layout.addWidget(info_group)
 
     def setup_download_tab(self, tab_widget):
-        """Setup the model download tab."""
+        """Set up the model download tab."""
         layout = QVBoxLayout(tab_widget)
 
         # Recommended models
@@ -357,7 +357,7 @@ class ModelManagerDialog(BaseDialog):
         layout.addWidget(progress_group)
 
     def setup_server_tab(self, tab_widget):
-        """Setup the server control tab."""
+        """Set up the server control tab."""
         layout = QVBoxLayout(tab_widget)
 
         # Server status

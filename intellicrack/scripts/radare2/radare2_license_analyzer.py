@@ -804,35 +804,119 @@ class R2LicenseAnalyzer:
             )
 
     def _find_patch_location(self, lic_func: LicenseFunction) -> tuple[int | None, bytes | None]:
-        """Find optimal patch location."""
+        """Find optimal patch location using capstone disassembly."""
         # Get function bytes
         func_bytes = self.r2.cmdj(f"p8j {lic_func.size} @ {lic_func.address}")
 
         if not func_bytes:
             return None, None
 
-        # Look for common patterns to patch
-        # This is simplified - real implementation would use capstone
+        # Use capstone for proper disassembly and instruction analysis
+        try:
+            import capstone
 
-        # Look for conditional jumps (x86)
+            # Determine architecture mode
+            if self.arch == "x86":
+                if self.bits == 64:
+                    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+                else:
+                    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+            elif self.arch == "arm":
+                if self.bits == 64:
+                    md = capstone.Cs(capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM)
+                else:
+                    md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM)
+            elif self.arch == "mips":
+                md = capstone.Cs(capstone.CS_ARCH_MIPS, capstone.CS_MODE_MIPS32)
+            else:
+                # Fallback to raw byte scanning for unsupported architectures
+                return self._find_patch_location_fallback(lic_func, func_bytes)
+
+            md.detail = True
+
+            # Disassemble function and find first conditional jump
+            for insn in md.disasm(bytes(func_bytes), lic_func.address):
+                # Check for conditional jump instructions
+                if insn.group(capstone.CS_GRP_JUMP):
+                    # Verify it's a conditional jump (not unconditional)
+                    if self.arch == "x86":
+                        # x86 conditional jumps
+                        if insn.mnemonic in ["je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle", "ja", "jb", "jae", "jbe", "jp", "jnp", "jo", "jno", "js", "jns"]:
+                            # Return the instruction address and bytes
+                            return insn.address, insn.bytes
+                    elif self.arch == "arm":
+                        # ARM conditional branches (check condition codes)
+                        if insn.mnemonic.startswith("b") and insn.mnemonic not in ["b", "bl", "blx"]:
+                            return insn.address, insn.bytes
+                    elif self.arch == "mips":
+                        # MIPS conditional branches
+                        if insn.mnemonic in ["beq", "bne", "bgtz", "blez", "bltz", "bgez"]:
+                            return insn.address, insn.bytes
+
+        except ImportError:
+            self.logger.debug("Capstone not available, using fallback instruction detection")
+            return self._find_patch_location_fallback(lic_func, func_bytes)
+        except Exception as e:
+            self.logger.error(f"Error in capstone disassembly: {e}")
+            return self._find_patch_location_fallback(lic_func, func_bytes)
+
+        return None, None
+
+    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list) -> tuple[int | None, bytes | None]:
+        """Fallback instruction detection without capstone using opcode patterns."""
         if self.arch == "x86":
+            # x86/x64 conditional jump opcodes
             jump_opcodes = {
-                0x74: 2,  # JE
-                0x75: 2,  # JNE
-                0x84: 6,  # JE (long)
-                0x85: 6,  # JNE (long)
+                0x74: 2,  # JE/JZ (short)
+                0x75: 2,  # JNE/JNZ (short)
+                0x76: 2,  # JBE/JNA (short)
+                0x77: 2,  # JA/JNBE (short)
+                0x78: 2,  # JS (short)
+                0x79: 2,  # JNS (short)
+                0x7A: 2,  # JP/JPE (short)
+                0x7B: 2,  # JNP/JPO (short)
+                0x7C: 2,  # JL/JNGE (short)
+                0x7D: 2,  # JGE/JNL (short)
+                0x7E: 2,  # JLE/JNG (short)
+                0x7F: 2,  # JG/JNLE (short)
+                0xE0: 2,  # LOOPNE (short)
+                0xE1: 2,  # LOOPE (short)
+                0xE2: 2,  # LOOP (short)
+                0xE3: 2,  # JCXZ/JECXZ (short)
             }
 
+            # Check for 0F prefix (long conditional jumps)
+            for i in range(len(func_bytes) - 1):
+                if func_bytes[i] == 0x0F:
+                    next_byte = func_bytes[i + 1]
+                    # Long conditional jumps (0F 8x)
+                    if 0x80 <= next_byte <= 0x8F:
+                        return lic_func.address + i, bytes(func_bytes[i : i + 6])
+
+            # Check for short conditional jumps
             for i, byte in enumerate(func_bytes):
                 if byte in jump_opcodes:
                     size = jump_opcodes[byte]
-                    return lic_func.address + i, bytes(func_bytes[i : i + size])
+                    if i + size <= len(func_bytes):
+                        return lic_func.address + i, bytes(func_bytes[i : i + size])
+
+        elif self.arch == "arm":
+            # ARM conditional branch detection (simplified)
+            # ARM instructions are 4 bytes, conditions in top 4 bits
+            for i in range(0, len(func_bytes) - 3, 4):
+                word = int.from_bytes(bytes(func_bytes[i : i + 4]), "little")
+                # Check for branch instruction (bits 27-25 = 101)
+                if (word >> 25) & 0x7 == 0x5:
+                    # Check condition field (bits 31-28) - not always (0xE)
+                    condition = (word >> 28) & 0xF
+                    if condition != 0xE:  # Not unconditional
+                        return lic_func.address + i, bytes(func_bytes[i : i + 4])
 
         return None, None
 
 
 def main():
-    """Main entry point."""
+    """Run the Radare2 license analyzer."""
     if len(sys.argv) < 2:
         print("Usage: radare2_license_analyzer.py <binary>")
         sys.exit(1)

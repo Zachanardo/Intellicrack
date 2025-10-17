@@ -182,7 +182,7 @@ class ProtectionCard(QFrame):
 
 
 class UnifiedProtectionWidget(QWidget):
-    """Main widget for unified protection analysis."""
+    """Run widget for unified protection analysis."""
 
     # Signals
     #: UnifiedProtectionResult (type: object)

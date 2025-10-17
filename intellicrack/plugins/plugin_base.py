@@ -146,7 +146,7 @@ class BasePlugin(ABC):
         return base_metadata
 
     def validate_binary(self, binary_path: str) -> tuple[bool, str]:
-        """Standard binary validation.
+        """Validate binary file path and accessibility.
 
         Args:
             binary_path: Path to binary file
@@ -202,7 +202,7 @@ class BasePlugin(ABC):
 
     @abstractmethod
     def run(self, *args, **kwargs) -> dict[str, Any]:
-        """Main plugin execution method.
+        """Execute the plugin's main functionality.
 
         Must be implemented by subclasses.
 

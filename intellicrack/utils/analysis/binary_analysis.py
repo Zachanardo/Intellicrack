@@ -167,7 +167,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
 
 
 def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> Dict[str, Any]:
-    """Main binary analysis orchestrator.
+    """Run binary analysis orchestrator.
 
     Identifies the binary format and performs appropriate analysis.
 
@@ -1747,7 +1747,7 @@ def _get_elf_entry_point(binary_path: str) -> int:
 def disassemble_with_objdump(
     binary_path: str, extra_args: Optional[List[str]] = None, timeout: int = 30, parse_func=None
 ) -> Optional[List[Any]]:
-    """Common objdump disassembly fallback function.
+    """Provide objdump disassembly fallback function.
 
     Args:
         binary_path: Path to binary file

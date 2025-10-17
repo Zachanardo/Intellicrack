@@ -1,4 +1,4 @@
-"""Main entry point for the Intellicrack binary analysis platform.
+"""Run entry point for the Intellicrack binary analysis platform.
 
 Copyright (C) 2025 Zachary Flint
 

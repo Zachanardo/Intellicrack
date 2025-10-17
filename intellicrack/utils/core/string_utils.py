@@ -1,4 +1,4 @@
-"""Common string and formatting utilities.
+"""Provide string and formatting utilities.
 
 Copyright (C) 2025 Zachary Flint
 

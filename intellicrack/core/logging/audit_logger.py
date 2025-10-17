@@ -167,7 +167,7 @@ class AuditEvent:
 
 
 class AuditLogger:
-    """Main audit logging class with tamper-resistant features."""
+    """Run audit logging class with tamper-resistant features."""
 
     def __init__(
         self,

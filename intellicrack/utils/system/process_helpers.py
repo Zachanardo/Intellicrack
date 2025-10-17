@@ -1,4 +1,4 @@
-"""Common process execution helper functions.
+"""Provide process execution helper functions.
 
 Copyright (C) 2025 Zachary Flint
 

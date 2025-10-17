@@ -309,7 +309,7 @@ class VMProtectHandler:
         return bytes(result)
 
     def _simple_decrypt(self, data: bytes, key: bytes) -> bytes:
-        """Simple XOR decryption for unknown versions."""
+        """Perform simple XOR decryption for unknown versions."""
         key_len = len(key)
         return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
 
@@ -535,7 +535,7 @@ class VMEmulator:
             self.logger.warning("Unicorn not available, using fallback emulation")
 
     def _setup_unicorn(self):
-        """Setup Unicorn engine."""
+        """Configure Unicorn emulation engine."""
         if not self.uc:
             return
         try:
@@ -950,7 +950,7 @@ class VMAnalyzer:
 
 
 class VMProtectionUnwrapper:
-    """Main VM protection unwrapper."""
+    """Run VM protection unwrapper."""
 
     def __init__(self):
         """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
@@ -1840,7 +1840,7 @@ class VMProtectionUnwrapper:
 
 
 def main():
-    """Example usage."""
+    """Demonstrate VM protection unwrapping functionality."""
     import argparse
 
     parser = argparse.ArgumentParser(description="VM Protection Unwrapper")

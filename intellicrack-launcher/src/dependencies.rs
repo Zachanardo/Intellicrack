@@ -1300,13 +1300,17 @@ mod tests {
     #[test]
     fn test_dependency_validation_with_environment_variables() {
         // Test that dependency validation respects environment variables
-        env::set_var("INTELLICRACK_TEST_VAR", "test_value");
+        unsafe {
+            env::set_var("INTELLICRACK_TEST_VAR", "test_value");
+        }
 
         // Verify the environment variable is set
         assert_eq!(env::var("INTELLICRACK_TEST_VAR").unwrap(), "test_value");
 
         // Clean up
-        env::remove_var("INTELLICRACK_TEST_VAR");
+        unsafe {
+            env::remove_var("INTELLICRACK_TEST_VAR");
+        }
         assert!(env::var("INTELLICRACK_TEST_VAR").is_err());
     }
 

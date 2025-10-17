@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -42,8 +41,7 @@ logger = get_logger(__name__)
 
 
 class ProtectionAnalyzerTool:
-    """
-    Analyzes binaries for protection schemes and provides comprehensive findings.
+    """Analyzes binaries for protection schemes and provides comprehensive findings.
 
     This tool can be:
     1. Called directly by users through the UI
@@ -57,8 +55,7 @@ class ProtectionAnalyzerTool:
         self.ai_file_tools = get_ai_file_tools()
 
     def analyze(self, binary_path: str, detailed: bool = True) -> Dict[str, Any]:
-        """
-        Perform comprehensive protection analysis on a binary.
+        """Perform comprehensive protection analysis on a binary.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -66,6 +63,7 @@ class ProtectionAnalyzerTool:
 
         Returns:
             Comprehensive analysis results formatted for both human and LLM consumption
+
         """
         # Verify file exists
         if not os.path.exists(binary_path):
@@ -207,7 +205,6 @@ class ProtectionAnalyzerTool:
 
     def _build_protection_analysis(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
         """Build the main protection analysis section"""
-
         # Group detections by type
         detections_by_type = {}
         for detection in die_result.detections:

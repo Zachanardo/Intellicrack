@@ -1,4 +1,4 @@
-"""Common protection bypass helper functions.
+"""Provide protection bypass helper functions.
 
 Copyright (C) 2025 Zachary Flint
 

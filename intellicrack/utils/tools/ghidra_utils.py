@@ -1,5 +1,4 @@
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -38,8 +37,7 @@ def build_ghidra_command(
     script_name: str,
     overwrite: bool = True,
 ) -> List[str]:
-    """
-    Build a standard Ghidra headless command.
+    """Build a standard Ghidra headless command.
 
     Args:
         ghidra_headless_path: Path to analyzeHeadless script
@@ -52,6 +50,7 @@ def build_ghidra_command(
 
     Returns:
         List of command arguments
+
     """
     cmd = [
         ghidra_headless_path,
@@ -72,11 +71,11 @@ def build_ghidra_command(
 
 
 def get_ghidra_headless_path() -> Optional[str]:
-    """
-    Find the Ghidra headless analyzer path.
+    """Find the Ghidra headless analyzer path.
 
     Returns:
         Path to analyzeHeadless or None if not found
+
     """
     # First, try to get from config
     try:

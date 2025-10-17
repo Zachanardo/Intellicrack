@@ -962,12 +962,12 @@ mod tests {
 
         // Temporarily modify PATH to simulate missing Python
         let original_path = env::var("PATH").unwrap_or_default();
-        env::set_var("PATH", "");
+        unsafe { env::set_var("PATH", ""); }
 
         let result = TensorFlowValidator::check_python_availability().await;
 
         // Restore original PATH
-        env::set_var("PATH", &original_path);
+        unsafe { env::set_var("PATH", &original_path); }
 
         // Should fail when Python is not available
         assert!(result.is_err());

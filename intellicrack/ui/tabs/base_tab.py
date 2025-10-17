@@ -47,7 +47,7 @@ class BaseTab(QWidget):
         self.lazy_load_content()
 
     def setup_loading_ui(self):
-        """Setup initial loading state UI."""
+        """Set up initial loading state UI."""
         layout = QVBoxLayout(self)
 
         loading_label = QLabel("Loading...")

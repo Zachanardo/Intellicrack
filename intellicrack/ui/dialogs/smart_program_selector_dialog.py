@@ -125,7 +125,7 @@ class SmartProgramSelectorDialog(QDialog):
             self.connect_signals()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         layout = QVBoxLayout(self)
 
         # Title

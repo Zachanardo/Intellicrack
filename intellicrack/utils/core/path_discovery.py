@@ -357,7 +357,7 @@ class PathDiscovery:
         return None
 
     def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
-        """Generic search for tools not in specification."""
+        """Provide search for tools not in specification."""
         if not executables:
             executables = [tool_name]
             if self.is_windows:

@@ -509,7 +509,7 @@ class DistributedWorkerThread(QThread):
         self.queue_lock = threading.Lock()
 
     def run(self):
-        """Main worker thread execution loop."""
+        """Run worker thread execution loop."""
         self.running = True
         logger.info(f"Distributed worker {self.worker_id} started")
 
@@ -1454,7 +1454,7 @@ class DistributedProcessingDialog(QDialog):
         self.setup_timers()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         layout = QVBoxLayout(self)
 
         # Control panel
@@ -1520,7 +1520,7 @@ class DistributedProcessingDialog(QDialog):
         layout.addWidget(progress_group)
 
     def setup_timers(self):
-        """Setup update timers."""
+        """Set up update timers."""
         if HAS_PYQT6:
             self.update_timer = QTimer()
             self.update_timer.timeout.connect(self.update_status)
@@ -1640,7 +1640,7 @@ class DistributedProcessingDialog(QDialog):
 
 
 class DistributedProcessing:
-    """Main distributed processing manager class."""
+    """Run distributed processing manager class."""
 
     def __init__(self):
         """Initialize distributed processing manager."""

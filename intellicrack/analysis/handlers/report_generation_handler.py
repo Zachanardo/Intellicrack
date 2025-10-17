@@ -239,7 +239,7 @@ class ReportOptionsDialog(QDialog):
 
 
 class ReportGenerationHandler(QObject):
-    """Handler for comprehensive report generation based on protection analysis.
+    """Handle comprehensive report generation based on protection analysis.
 
     Supports multiple output formats and customizable content.
     """

@@ -1,5 +1,4 @@
-"""
-LLM Tools Package
+"""LLM Tools Package
 
 Collection of tools that AI models can use for various analysis tasks.
 
@@ -45,11 +44,11 @@ def get_all_tools():
 
 
 def register_tools_with_llm(llm_backend):
-    """
-    Register all tools with an LLM backend
+    """Register all tools with an LLM backend
 
     Args:
         llm_backend: The LLM backend to register tools with
+
     """
     tools = get_all_tools()
 

@@ -183,7 +183,7 @@ class ModelDiscoveryService:
         """
         api_keys = {}
 
-        for model_id, config in configured_models.items():
+        for _model_id, config in configured_models.items():
             provider = config.get("provider", "").lower()
             api_key = config.get("api_key")
             api_base = config.get("api_base")

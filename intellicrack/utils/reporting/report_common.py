@@ -25,7 +25,7 @@ from intellicrack.utils.logger import logger
 
 
 def generate_analysis_report(app, report_type, results_data, generator_func=None):
-    """Common function to generate analysis reports.
+    """Generate analysis reports.
 
     Args:
         app: Application instance for UI dialogs

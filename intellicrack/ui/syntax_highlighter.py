@@ -50,7 +50,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self._setup_rules()
 
     def _setup_rules(self) -> None:
-        """Setup highlighting rules based on the selected language."""
+        """Set up highlighting rules based on the selected language."""
         if self.language == "python":
             self._setup_python_rules()
         elif self.language == "javascript" or self.language == "js":
@@ -92,7 +92,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         return text_format
 
     def _setup_python_rules(self) -> None:
-        """Setup syntax highlighting rules for Python."""
+        """Set up syntax highlighting rules for Python."""
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
@@ -242,7 +242,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"\bself\b"), self_format))
 
     def _setup_javascript_rules(self) -> None:
-        """Setup syntax highlighting rules for JavaScript."""
+        """Set up syntax highlighting rules for JavaScript."""
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
@@ -343,7 +343,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"/\*.*?\*/", re.DOTALL), comment_format))
 
     def _setup_json_rules(self) -> None:
-        """Setup syntax highlighting rules for JSON."""
+        """Set up syntax highlighting rules for JSON."""
         # Keys
         key_format = self._create_format("#ff79c6")
         self.rules.append((re.compile(r"\"[^\"]*\"\s*:"), key_format))
@@ -365,7 +365,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"[\[\]{}]"), bracket_format))
 
     def _setup_assembly_rules(self) -> None:
-        """Setup syntax highlighting rules for Assembly."""
+        """Set up syntax highlighting rules for Assembly."""
         # Instructions
         instruction_format = self._create_format("#ff79c6", bold=True)
         instructions = [
@@ -460,7 +460,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r";[^\n]*"), comment_format))
 
     def _setup_c_rules(self) -> None:
-        """Setup syntax highlighting rules for C/C++."""
+        """Set up syntax highlighting rules for C/C++."""
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
@@ -540,7 +540,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"/\*.*?\*/", re.DOTALL), comment_format))
 
     def _setup_xml_rules(self) -> None:
-        """Setup syntax highlighting rules for XML/HTML."""
+        """Set up syntax highlighting rules for XML/HTML."""
         # Tags
         tag_format = self._create_format("#ff79c6", bold=True)
         self.rules.append((re.compile(r"</?\\b[A-Za-z]+(?:\\s|>|/>)"), tag_format))
@@ -562,7 +562,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"<!\[CDATA\[.*?\]\]>", re.DOTALL), cdata_format))
 
     def _setup_shell_rules(self) -> None:
-        """Setup syntax highlighting rules for Shell/Bash."""
+        """Set up syntax highlighting rules for Shell/Bash."""
         # Keywords
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [
@@ -640,7 +640,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"#[^\n]*"), comment_format))
 
     def _setup_default_rules(self) -> None:
-        """Setup default syntax highlighting rules."""
+        """Set up default syntax highlighting rules."""
         # Keywords (generic)
         keyword_format = self._create_format("#ff79c6", bold=True)
         keywords = [

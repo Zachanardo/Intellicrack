@@ -1,9 +1,12 @@
+"""Script to clean Windows reserved 'nul' files from the project directory."""
+
 import os
 import sys
 
 
 def clean_nul_files():
-    """Recursively finds and deletes files named 'nul' in the current working directory.
+    """Recursively find and delete files named 'nul' in the current working directory.
+
     This is necessary because some Windows build tools can erroneously create these files,
     and standard command-line tools fail to delete them due to 'nul' being a reserved name.
     """

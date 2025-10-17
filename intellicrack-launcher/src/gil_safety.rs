@@ -234,14 +234,16 @@ mod tests {
 
     fn clean_environment() {
         // Clean up environment variables that could affect tests
-        env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
-        env::remove_var("PYBIND11_PYTHON_VERSION");
-        env::remove_var("OMP_NUM_THREADS");
-        env::remove_var("MKL_NUM_THREADS");
-        env::remove_var("NUMEXPR_NUM_THREADS");
-        env::remove_var("OPENBLAS_NUM_THREADS");
-        env::remove_var("VECLIB_MAXIMUM_THREADS");
-        env::remove_var("BLIS_NUM_THREADS");
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+            env::remove_var("PYBIND11_PYTHON_VERSION");
+            env::remove_var("OMP_NUM_THREADS");
+            env::remove_var("MKL_NUM_THREADS");
+            env::remove_var("NUMEXPR_NUM_THREADS");
+            env::remove_var("OPENBLAS_NUM_THREADS");
+            env::remove_var("VECLIB_MAXIMUM_THREADS");
+            env::remove_var("BLIS_NUM_THREADS");
+        }
     }
 
     #[test]
@@ -462,8 +464,10 @@ mod tests {
         clean_environment();
 
         // Set some existing environment variables
-        env::set_var("OMP_NUM_THREADS", "4");
-        env::set_var("MKL_NUM_THREADS", "2");
+        unsafe {
+            env::set_var("OMP_NUM_THREADS", "4");
+            env::set_var("MKL_NUM_THREADS", "2");
+        }
 
         let result = GilSafetyManager::initialize_gil_safety();
         assert!(result.is_ok());

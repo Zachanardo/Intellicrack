@@ -205,7 +205,7 @@ class PluginDebugger:
             self.state = DebuggerState.TERMINATED
 
     def _trace_dispatch(self, frame, event, arg):
-        """Main trace dispatch function"""
+        """Run trace dispatch function"""
         if self.state == DebuggerState.TERMINATED:
             return None
 

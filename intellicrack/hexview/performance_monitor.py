@@ -459,7 +459,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
 
 class PerformanceMonitor:
-    """Main performance monitoring controller."""
+    """Run performance monitoring controller."""
 
     def __init__(self):
         """Initialize the performance monitor with widget and file handler references."""

@@ -884,7 +884,7 @@ class LiveDebuggingSystem:
 
 
 class RealTimeAdaptationEngine:
-    """Main real-time adaptation engine."""
+    """Run real-time adaptation engine."""
 
     def __init__(self):
         """Initialize the real-time adaptation engine.

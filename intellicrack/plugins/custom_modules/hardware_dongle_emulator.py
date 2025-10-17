@@ -1282,7 +1282,7 @@ class DongleAPIHooker:
 
 
 class HardwareDongleEmulator:
-    """Main hardware dongle emulation manager."""
+    """Run hardware dongle emulation manager."""
 
     def __init__(self):
         """Initialize hardware dongle emulator with all dongle types and drivers."""

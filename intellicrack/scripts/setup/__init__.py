@@ -1,4 +1,4 @@
-"""Setup scripts module initialization for Intellicrack.
+"""Set up scripts module initialization for Intellicrack.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.

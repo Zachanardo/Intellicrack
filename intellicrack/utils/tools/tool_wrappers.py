@@ -1,5 +1,4 @@
-"""
-Tool wrapper functions for Intellicrack.
+"""Tool wrapper functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,9 +22,7 @@ import json
 import logging
 import os
 import platform
-import psutil
 import subprocess
-import struct
 import time
 import traceback
 from typing import Any, Dict, List
@@ -54,15 +51,17 @@ def log_message(message: str) -> str:
 
 
 def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_find_file.
+    """Wrap for tool_find_file.
     Searches for files based on filename.
 
-    Parameters:
+    Parameters
+    ----------
         filename (str, optional): The filename to search for
 
-    Returns:
+    Returns
+    -------
         dict: Result with status and path if found
+
     """
     logger.debug("Entered wrapper_find_file with parameters: %s", parameters)
     filename = parameters.get("filename")
@@ -94,15 +93,17 @@ def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any
 
 
 def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_load_binary.
+    """Wrap for tool_load_binary.
     Loads a binary file for analysis.
 
-    Parameters:
+    Parameters
+    ----------
         path (str): Path to the binary file
 
-    Returns:
+    Returns
+    -------
         dict: Binary information from app_instance.binary_info
+
     """
     logger.debug("Entered wrapper_load_binary with parameters: %s", parameters)
     path = parameters.get("path")
@@ -136,12 +137,12 @@ def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, A
 
 
 def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_list_relevant_files.
+    """Wrap for tool_list_relevant_files.
     Lists files relevant to the current binary.
 
     Returns:
         dict: List of relevant files
+
     """
     try:
         logger.debug(f"Listing relevant files with parameters: {parameters}")
@@ -181,17 +182,19 @@ def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dic
 
 
 def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_read_file_chunk.
+    """Wrap for tool_read_file_chunk.
     Reads a chunk of data from a file.
 
-    Parameters:
+    Parameters
+    ----------
         path (str): Path to the file
         offset (int, optional): Starting offset (default: 0)
         size (int, optional): Number of bytes to read (default: 1024)
 
-    Returns:
+    Returns
+    -------
         dict: File chunk data
+
     """
     logger.debug("Entered wrapper_read_file_chunk with parameters: %s", parameters)
     path = parameters.get("path")
@@ -226,15 +229,17 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
 
 
 def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_get_file_metadata.
+    """Wrap for tool_get_file_metadata.
     Gets metadata information about a file.
 
-    Parameters:
+    Parameters
+    ----------
         path (str): Path to the file
 
-    Returns:
+    Returns
+    -------
         dict: File metadata
+
     """
     logger.debug("Entered wrapper_get_file_metadata with parameters: %s", parameters)
     path = parameters.get("path")
@@ -274,12 +279,12 @@ def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[
 
 
 def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_run_static_analysis.
+    """Wrap for tool_run_static_analysis.
     Runs static analysis on the loaded binary.
 
     Returns:
         dict: Static analysis results
+
     """
     logger.debug(f"Running static analysis with parameters: {parameters}")
     try:
@@ -304,12 +309,12 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
 
 
 def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_deep_license_analysis.
+    """Wrap for tool_deep_license_analysis.
     Runs deep license analysis on the loaded binary.
 
     Returns:
         dict: License analysis results
+
     """
     logger.debug(f"Running deep license analysis with parameters: {parameters}")
     try:
@@ -330,12 +335,12 @@ def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> D
 
 
 def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_detect_protections.
+    """Wrap for tool_detect_protections.
     Detects protections in the loaded binary.
 
     Returns:
         dict: Protection detection results
+
     """
     logger.debug(f"Detecting protections with parameters: {parameters}")
     try:
@@ -363,16 +368,18 @@ def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict
 
 
 def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_disassemble_address.
+    """Wrap for tool_disassemble_address.
     Disassembles instructions at a given address.
 
-    Parameters:
+    Parameters
+    ----------
         address (int): Address to disassemble
         num_instructions (int, optional): Number of instructions to disassemble
 
-    Returns:
+    Returns
+    -------
         dict: Disassembly listing
+
     """
     logger.debug("Entering wrapper_disassemble_address with parameters: %s", parameters)
     address = parameters.get("address")
@@ -401,40 +408,52 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
             try:
                 binary_path = app_instance.binary_path
                 if platform.system() == "Windows":
-                    cmd = ["objdump", "-d", "--start-address", f"0x{address:x}",
-                           "--stop-address", f"0x{address + num_instructions * 16:x}", binary_path]
+                    cmd = [
+                        "objdump",
+                        "-d",
+                        "--start-address",
+                        f"0x{address:x}",
+                        "--stop-address",
+                        f"0x{address + num_instructions * 16:x}",
+                        binary_path,
+                    ]
                 else:
-                    cmd = ["objdump", "-d", f"--start-address=0x{address:x}",
-                           f"--stop-address=0x{address + num_instructions * 16:x}", binary_path]
+                    cmd = [
+                        "objdump",
+                        "-d",
+                        f"--start-address=0x{address:x}",
+                        f"--stop-address=0x{address + num_instructions * 16:x}",
+                        binary_path,
+                    ]
 
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
-                    lines = result.stdout.split('\n')
+                    lines = result.stdout.split("\n")
                     disassembly = []
                     for line in lines:
-                        if ':' in line and '\t' in line:
-                            parts = line.split('\t')
+                        if ":" in line and "\t" in line:
+                            parts = line.split("\t")
                             if len(parts) >= 2:
                                 addr_part = parts[0].strip()
-                                instr_part = ' '.join(parts[1:]).strip()
+                                instr_part = " ".join(parts[1:]).strip()
                                 disassembly.append(f"{addr_part}: {instr_part}")
                     return {
                         "status": "success",
                         "address": f"0x{address:x}",
                         "num_instructions": len(disassembly),
-                        "disassembly": disassembly[:num_instructions]
+                        "disassembly": disassembly[:num_instructions],
                     }
             except Exception as e:
                 logger.error(f"Objdump disassembly failed: {e}")
 
         # Use Capstone for disassembly
         try:
-            with open(app_instance.binary_path, 'rb') as f:
+            with open(app_instance.binary_path, "rb") as f:
                 f.seek(address)
                 code = f.read(num_instructions * 16)  # Read enough bytes for instructions
 
             # Determine architecture
-            if pefile and app_instance.binary_path.lower().endswith(('.exe', '.dll')):
+            if pefile and app_instance.binary_path.lower().endswith((".exe", ".dll")):
                 pe = pefile.PE(app_instance.binary_path)
                 if pe.FILE_HEADER.Machine == 0x8664:  # AMD64
                     cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -452,18 +471,10 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
                 if count >= num_instructions:
                     break
 
-            return {
-                "status": "success",
-                "address": f"0x{address:x}",
-                "num_instructions": len(disassembly),
-                "disassembly": disassembly
-            }
+            return {"status": "success", "address": f"0x{address:x}", "num_instructions": len(disassembly), "disassembly": disassembly}
         except Exception as e:
             logger.error(f"Capstone disassembly failed: {e}")
-            return {
-                "status": "error",
-                "message": f"Disassembly failed: {str(e)}"
-            }
+            return {"status": "error", "message": f"Disassembly failed: {str(e)}"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error disassembling address: 0x{address:x}")
@@ -471,15 +482,17 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
 
 
 def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_get_cfg.
+    """Wrap for tool_get_cfg.
     Gets control flow graph for a function.
 
-    Parameters:
+    Parameters
+    ----------
         function_address (int, optional): Address of function to analyze
 
-    Returns:
+    Returns
+    -------
         dict: Control flow graph data
+
     """
     logger.debug("Entered wrapper_get_cfg with parameters: %s", parameters)
     _ = parameters.get("function_address")  # Parameter not used in current implementation
@@ -516,12 +529,12 @@ def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_launch_target.
+    """Wrap for tool_launch_target.
     Launches the target process for dynamic analysis.
 
     Returns:
         dict: Launch status and process information
+
     """
     logger.debug(f"Launching target with parameters: {parameters}")
     try:
@@ -586,7 +599,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 kernel32 = ctypes.windll.kernel32
                 cmd_line = f'"{binary_path}"'
                 if args:
-                    cmd_line += ' ' + ' '.join(f'"{arg}"' for arg in args)
+                    cmd_line += " " + " ".join(f'"{arg}"' for arg in args)
 
                 result = kernel32.CreateProcessW(
                     None,
@@ -598,45 +611,36 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                     None,
                     None,
                     ctypes.byref(startup_info),
-                    ctypes.byref(process_info)
+                    ctypes.byref(process_info),
                 )
 
                 if result:
                     pid = process_info.dwProcessId
                     # Store handles for later use
                     if hasattr(app_instance, "process_handles"):
-                        app_instance.process_handles[pid] = {
-                            "process": process_info.hProcess,
-                            "thread": process_info.hThread
-                        }
+                        app_instance.process_handles[pid] = {"process": process_info.hProcess, "thread": process_info.hThread}
                     return {
                         "status": "success",
                         "process_id": pid,
                         "suspended": True,
-                        "message": f"Process launched in suspended state: {binary_path}"
+                        "message": f"Process launched in suspended state: {binary_path}",
                     }
                 else:
                     error = kernel32.GetLastError()
-                    return {
-                        "status": "error",
-                        "message": f"Failed to launch process: Windows error {error}"
-                    }
+                    return {"status": "error", "message": f"Failed to launch process: Windows error {error}"}
             else:
                 # Normal launch
-                process = subprocess.Popen([binary_path] + args,
-                                         creationflags=subprocess.CREATE_NEW_CONSOLE if platform.system() == "Windows" else 0)
-                return {
-                    "status": "success",
-                    "process_id": process.pid,
-                    "message": f"Target process launched: {binary_path}"
-                }
+                process = subprocess.Popen(
+                    [binary_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE if platform.system() == "Windows" else 0
+                )
+                return {"status": "success", "process_id": process.pid, "message": f"Target process launched: {binary_path}"}
         else:
             # Unix/Linux process launching
             if suspended:
                 # Use ptrace to suspend on Unix
                 import signal
-                process = subprocess.Popen([binary_path] + args,
-                                         preexec_fn=lambda: os.kill(os.getpid(), signal.SIGSTOP))
+
+                process = subprocess.Popen([binary_path] + args, preexec_fn=lambda: os.kill(os.getpid(), signal.SIGSTOP))
             else:
                 process = subprocess.Popen([binary_path] + args)
 
@@ -644,7 +648,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 "status": "success",
                 "process_id": process.pid,
                 "suspended": suspended,
-                "message": f"Target process launched: {binary_path}"
+                "message": f"Target process launched: {binary_path}",
             }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -653,15 +657,17 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 
 
 def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_attach_target.
+    """Wrap for tool_attach_target.
     Attaches to a running target process.
 
-    Parameters:
+    Parameters
+    ----------
         process_id (int): PID of process to attach to
 
-    Returns:
+    Returns
+    -------
         dict: Attach status
+
     """
     logger.debug("Entered wrapper_attach_target with parameters: %s", parameters)
     process_id = parameters.get("process_id")
@@ -678,6 +684,7 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         if platform.system() == "Windows":
             # Windows debugger attachment using Windows Debug APIs
             import ctypes
+
             kernel32 = ctypes.windll.kernel32
 
             # Try to attach as debugger
@@ -691,23 +698,20 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                     "status": "success",
                     "process_id": process_id,
                     "message": f"Successfully attached to process {process_id}",
-                    "method": "windows_debug_api"
+                    "method": "windows_debug_api",
                 }
             else:
                 error = kernel32.GetLastError()
-                return {
-                    "status": "error",
-                    "message": f"Failed to attach: Windows error {error}"
-                }
+                return {"status": "error", "message": f"Failed to attach: Windows error {error}"}
         else:
             # Unix/Linux ptrace attachment
-            import signal
             try:
                 # Check if process exists
                 os.kill(process_id, 0)
 
                 # Try ptrace attachment (requires privileges)
                 import ctypes
+
                 libc = ctypes.CDLL("libc.so.6")
                 PTRACE_ATTACH = 16
 
@@ -724,18 +728,12 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                         "status": "success",
                         "process_id": process_id,
                         "message": f"Successfully attached to process {process_id}",
-                        "method": "ptrace"
+                        "method": "ptrace",
                     }
                 else:
-                    return {
-                        "status": "error",
-                        "message": "Failed to attach: ptrace failed (may need root privileges)"
-                    }
+                    return {"status": "error", "message": "Failed to attach: ptrace failed (may need root privileges)"}
             except ProcessLookupError:
-                return {
-                    "status": "error",
-                    "message": f"Process {process_id} not found"
-                }
+                return {"status": "error", "message": f"Process {process_id} not found"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error attaching to process: {process_id}")
@@ -743,16 +741,18 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 
 
 def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_run_frida_script.
+    """Wrap for tool_run_frida_script.
     Runs a Frida script on the target process.
 
-    Parameters:
+    Parameters
+    ----------
         script_path (str): Path to Frida script file
         process_id (int, optional): Target process ID
 
-    Returns:
+    Returns
+    -------
         dict: Script execution results
+
     """
     logger.debug("Entered wrapper_run_frida_script with parameters: %s", parameters)
     script_path = parameters.get("script_path")
@@ -786,28 +786,19 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
                         "script_path": script_path,
                         "process_id": process_id,
                         "output": output_lines,
-                        "message": f"Frida script executed via CLI: {script_path}"
+                        "message": f"Frida script executed via CLI: {script_path}",
                     }
                 else:
-                    return {
-                        "status": "error",
-                        "message": f"Frida execution failed: {result.stderr}"
-                    }
+                    return {"status": "error", "message": f"Frida execution failed: {result.stderr}"}
             except subprocess.TimeoutExpired:
-                return {
-                    "status": "error",
-                    "message": "Frida script execution timed out"
-                }
+                return {"status": "error", "message": "Frida script execution timed out"}
             except FileNotFoundError:
-                return {
-                    "status": "error",
-                    "message": "Frida CLI not found. Please install Frida."
-                }
+                return {"status": "error", "message": "Frida CLI not found. Please install Frida."}
 
         # Use Frida Python API
         try:
             # Read script content
-            with open(script_path, 'r') as f:
+            with open(script_path, "r") as f:
                 script_content = f.read()
 
             # Attach to process or spawn new one
@@ -828,10 +819,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
                     frida.resume(pid)
                     process_id = pid
                 else:
-                    return {
-                        "status": "error",
-                        "message": "No process specified for Frida script"
-                    }
+                    return {"status": "error", "message": "No process specified for Frida script"}
 
             # Create and load script
             script = session.create_script(script_content)
@@ -840,16 +828,17 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
             output_messages = []
 
             def on_message(message, data):
-                if message['type'] == 'send':
-                    output_messages.append(str(message.get('payload', '')))
-                elif message['type'] == 'error':
+                if message["type"] == "send":
+                    output_messages.append(str(message.get("payload", "")))
+                elif message["type"] == "error":
                     output_messages.append(f"Error: {message.get('description', '')}")
 
-            script.on('message', on_message)
+            script.on("message", on_message)
             script.load()
 
             # Let script run for a bit to collect output
             import time
+
             time.sleep(2)
 
             # Store session for later use
@@ -858,26 +847,20 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
             if process_id:
                 app_instance.frida_sessions[process_id] = session
 
-            output_str = '\n'.join(output_messages) if output_messages else "Script loaded and running"
+            output_str = "\n".join(output_messages) if output_messages else "Script loaded and running"
             return {
                 "status": "success",
                 "script_path": script_path,
                 "process_id": process_id,
                 "output": output_str,
-                "message": f"Frida script executed: {script_path}"
+                "message": f"Frida script executed: {script_path}",
             }
 
         except Exception as e:
             if frida and isinstance(e, frida.ProcessNotFoundError):
-                return {
-                    "status": "error",
-                    "message": f"Process {process_id} not found"
-                }
+                return {"status": "error", "message": f"Process {process_id} not found"}
             else:
-                return {
-                    "status": "error",
-                    "message": f"Frida execution error: {str(e)}"
-                }
+                return {"status": "error", "message": f"Frida execution error: {str(e)}"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error running Frida script: {script_path}")
@@ -885,12 +868,12 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
 
 
 def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_detach.
+    """Wrap for tool_detach.
     Detaches from the target process.
 
     Returns:
         dict: Detach status
+
     """
     logger.debug(f"Detaching with parameters: {parameters}")
     try:
@@ -915,6 +898,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         if hasattr(app_instance, "attached_processes"):
             if platform.system() == "Windows":
                 import ctypes
+
                 kernel32 = ctypes.windll.kernel32
 
                 for pid in list(app_instance.attached_processes.keys()):
@@ -930,6 +914,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
             else:
                 # Unix/Linux ptrace detach
                 import ctypes
+
                 libc = ctypes.CDLL("libc.so.6")
                 PTRACE_DETACH = 17
 
@@ -948,6 +933,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         if hasattr(app_instance, "process_handles"):
             if platform.system() == "Windows":
                 import ctypes
+
                 kernel32 = ctypes.windll.kernel32
 
                 for pid in list(app_instance.process_handles.keys()):
@@ -970,15 +956,17 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_propose_patch.
+    """Wrap for tool_propose_patch.
     Proposes patches based on analysis results.
 
-    Parameters:
+    Parameters
+    ----------
         analysis_results (dict, optional): Analysis results to base patches on
 
-    Returns:
+    Returns
+    -------
         dict: Proposed patches
+
     """
     logger.debug(f"Proposing patches with parameters: {parameters}")
     try:
@@ -1461,16 +1449,18 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
 
 
 def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_get_proposed_patches.
+    """Wrap for tool_get_proposed_patches.
     Gets the list of currently proposed patches.
 
-    Parameters:
+    Parameters
+    ----------
         filter_type (str, optional): Filter patches by type ('license', 'bypass', 'all')
         include_metadata (bool, optional): Include detailed metadata in results
 
-    Returns:
+    Returns
+    -------
         dict: List of proposed patches
+
     """
     try:
         # Parse parameters for filtering and options
@@ -1511,15 +1501,17 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
 
 
 def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_apply_confirmed_patch.
+    """Wrap for tool_apply_confirmed_patch.
     Applies a confirmed patch to the binary.
 
-    Parameters:
+    Parameters
+    ----------
         patch_id (int): ID of patch to apply
 
-    Returns:
+    Returns
+    -------
         dict: Patch application results
+
     """
     logger.debug("Entered wrapper_apply_confirmed_patch with parameters: %s", parameters)
     patch_id = parameters.get("patch_id")
@@ -1546,25 +1538,20 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
                 break
 
         if not patch:
-            return {
-                "status": "error",
-                "message": f"Patch {patch_id} not found"
-            }
+            return {"status": "error", "message": f"Patch {patch_id} not found"}
 
         # Create backup of original file
         import shutil
+
         backup_path = f"{binary_path}.bak_{int(time.time())}"
         try:
             shutil.copy2(binary_path, backup_path)
         except IOError as e:
-            return {
-                "status": "error",
-                "message": f"Failed to create backup: {str(e)}"
-            }
+            return {"status": "error", "message": f"Failed to create backup: {str(e)}"}
 
         # Apply the patch
         try:
-            with open(binary_path, 'r+b') as f:
+            with open(binary_path, "r+b") as f:
                 # Apply each modification in the patch
                 modifications = patch.get("modifications", [])
                 for mod in modifications:
@@ -1577,9 +1564,9 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
 
                     # Convert hex strings to bytes if needed
                     if isinstance(new_bytes, str):
-                        new_bytes = bytes.fromhex(new_bytes.replace(' ', '').replace('0x', ''))
+                        new_bytes = bytes.fromhex(new_bytes.replace(" ", "").replace("0x", ""))
                     if isinstance(original_bytes, str):
-                        original_bytes = bytes.fromhex(original_bytes.replace(' ', '').replace('0x', ''))
+                        original_bytes = bytes.fromhex(original_bytes.replace(" ", "").replace("0x", ""))
 
                     # Verify original bytes match (if provided)
                     if original_bytes:
@@ -1588,17 +1575,14 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
                         if current_bytes != original_bytes:
                             # Restore backup and fail
                             shutil.copy2(backup_path, binary_path)
-                            return {
-                                "status": "error",
-                                "message": f"Original bytes mismatch at offset 0x{offset:x}"
-                            }
+                            return {"status": "error", "message": f"Original bytes mismatch at offset 0x{offset:x}"}
 
                     # Write new bytes
                     f.seek(offset)
                     f.write(new_bytes)
 
             # Update PE checksum if it's a Windows PE file
-            if pefile and binary_path.lower().endswith(('.exe', '.dll')):
+            if pefile and binary_path.lower().endswith((".exe", ".dll")):
                 try:
                     pe = pefile.PE(binary_path)
                     pe.OPTIONAL_HEADER.CheckSum = pe.generate_checksum()
@@ -1610,19 +1594,14 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
             # Store patch info for rollback
             if not hasattr(app_instance, "applied_patches"):
                 app_instance.applied_patches = []
-            app_instance.applied_patches.append({
-                "id": patch_id,
-                "backup_path": backup_path,
-                "timestamp": time.time(),
-                "patch": patch
-            })
+            app_instance.applied_patches.append({"id": patch_id, "backup_path": backup_path, "timestamp": time.time(), "patch": patch})
 
             return {
                 "status": "success",
                 "patch_id": patch_id,
                 "applied": True,
                 "backup_path": backup_path,
-                "message": f"Successfully applied patch {patch_id}"
+                "message": f"Successfully applied patch {patch_id}",
             }
 
         except Exception as e:
@@ -1631,10 +1610,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
                 shutil.copy2(backup_path, binary_path)
             except:
                 pass
-            return {
-                "status": "error",
-                "message": f"Failed to apply patch: {str(e)}"
-            }
+            return {"status": "error", "message": f"Failed to apply patch: {str(e)}"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error applying patch: {patch_id}")
@@ -1642,15 +1618,17 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
 
 
 def wrapper_generate_launcher_script(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for tool_generate_launcher_script.
+    """Wrap for tool_generate_launcher_script.
     Generates a launcher script for the patched binary.
 
-    Parameters:
+    Parameters
+    ----------
         output_path (str, optional): Path for launcher script
 
-    Returns:
+    Returns
+    -------
         dict: Launcher script generation results
+
     """
     logger.debug("Entered wrapper_generate_launcher_script with parameters: %s", parameters)
     output_path = parameters.get("output_path", "launcher.bat")
@@ -1684,8 +1662,7 @@ pause
 
 
 def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Central dispatcher for tool wrapper functions.
+    """Central dispatcher for tool wrapper functions.
 
     Args:
         app_instance: The main application instance
@@ -1694,6 +1671,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
 
     Returns:
         dict: Tool execution results
+
     """
     logger.info("Dispatching tool: %s with parameters: %s", tool_name, parameters)
 
@@ -1767,8 +1745,7 @@ def run_external_tool(args):
 
 
 def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper for deep runtime monitoring functionality.
+    """Wrap for deep runtime monitoring functionality.
 
     Args:
         app_instance: Application instance
@@ -1776,6 +1753,7 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
 
     Returns:
         Dict with monitoring results
+
     """
     try:
         # Get parameters
@@ -1846,8 +1824,7 @@ def run_ghidra_headless(
     project_name: str = None,
     options: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
-    """
-    Run comprehensive Ghidra headless analysis on a binary.
+    """Run comprehensive Ghidra headless analysis on a binary.
 
     Args:
         binary_path: Path to the binary to analyze
@@ -1869,6 +1846,7 @@ def run_ghidra_headless(
 
     Returns:
         Comprehensive analysis results including symbols, functions, strings, etc.
+
     """
     import shutil
     import subprocess

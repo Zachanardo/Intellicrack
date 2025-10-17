@@ -175,6 +175,8 @@ class EmbeddedTerminalWidget(QWidget):
         self._running = False
         self._max_lines = 10000
         self._ansi_parser = ANSIParser()
+        self._command_buffer = ""
+        self._input_start_position = 0
 
         self._setup_ui()
 
@@ -183,6 +185,7 @@ class EmbeddedTerminalWidget(QWidget):
         self._output_timer.start(50)
 
         self._show_welcome_message()
+        self._show_prompt()
 
         logger.info("EmbeddedTerminalWidget initialized")
 
@@ -218,8 +221,27 @@ class EmbeddedTerminalWidget(QWidget):
 
         self._handle_output(welcome_text, is_error=False)
 
+    def _show_prompt(self):
+        """Display command prompt when no process is running."""
+        prompt_format = QTextCharFormat()
+        prompt_format.setForeground(QColor(0, 255, 0))
+        font = QFont("Consolas", 10)
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        prompt_format.setFont(font)
+
+        cursor = self.terminal_display.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        cursor.setCharFormat(prompt_format)
+        cursor.insertText("intellicrack> ")
+
+        self._input_start_position = cursor.position()
+        self._command_buffer = ""
+
+        self.terminal_display.setTextCursor(cursor)
+        self.terminal_display.ensureCursorVisible()
+
     def _setup_ui(self):
-        """Setup terminal display and input widgets."""
+        """Set up terminal display and input widgets."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
         layout = QVBoxLayout(self)
@@ -401,9 +423,11 @@ class EmbeddedTerminalWidget(QWidget):
                 logger.info(f"Process finished with code: {returncode}")
 
                 if returncode != 0:
-                    self._output_queue.put(f"\r\n[Process exited with code {returncode}]\r\n")
+                    self._output_queue.put(f"\r\n[Process exited with code {returncode}]\r\n\r\n")
                 else:
-                    self._output_queue.put("\r\n[Process completed successfully]\r\n")
+                    self._output_queue.put("\r\n[Process completed successfully]\r\n\r\n")
+
+                QTimer.singleShot(100, self._show_prompt)
 
         except Exception as e:
             logger.error(f"Error in output reader thread: {e}")
@@ -461,10 +485,7 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor.deleteChar()
 
     def _handle_keyboard_input(self, event):
-        """Handle keyboard input and forward to process."""
-        if not self._process or not self._running:
-            return
-
+        """Handle keyboard input and forward to process or buffer locally."""
         key = event.key()
         modifiers = event.modifiers()
         text = event.text()
@@ -474,37 +495,125 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor = self.terminal_display.textCursor()
                 if cursor.hasSelection():
                     self._copy_selection()
-                else:
+                elif self._process and self._running:
                     self.send_input("\x03")
                 return
             elif key == Qt.Key.Key_V:
-                self._paste_from_clipboard()
+                if self._process and self._running:
+                    self._paste_from_clipboard()
+                else:
+                    text = QApplication.clipboard().text()
+                    if text:
+                        self._append_to_command_buffer(text)
                 return
             elif key == Qt.Key.Key_D:
-                self.send_input("\x04")
+                if self._process and self._running:
+                    self.send_input("\x04")
                 return
             elif key == Qt.Key.Key_Z:
-                self.send_input("\x1a")
+                if self._process and self._running:
+                    self.send_input("\x1a")
                 return
 
-        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
-            self.send_input("\r\n")
-        elif key == Qt.Key.Key_Backspace:
-            self.send_input("\b")
-        elif key == Qt.Key.Key_Tab:
-            self.send_input("\t")
-        elif key == Qt.Key.Key_Escape:
-            self.send_input("\x1b")
-        elif key == Qt.Key.Key_Up:
-            self.send_input("\x1b[A")
-        elif key == Qt.Key.Key_Down:
-            self.send_input("\x1b[B")
-        elif key == Qt.Key.Key_Right:
-            self.send_input("\x1b[C")
-        elif key == Qt.Key.Key_Left:
-            self.send_input("\x1b[D")
-        elif text:
-            self.send_input(text)
+        if self._process and self._running:
+            if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+                self.send_input("\r\n")
+            elif key == Qt.Key.Key_Backspace:
+                self.send_input("\b")
+            elif key == Qt.Key.Key_Tab:
+                self.send_input("\t")
+            elif key == Qt.Key.Key_Escape:
+                self.send_input("\x1b")
+            elif key == Qt.Key.Key_Up:
+                self.send_input("\x1b[A")
+            elif key == Qt.Key.Key_Down:
+                self.send_input("\x1b[B")
+            elif key == Qt.Key.Key_Right:
+                self.send_input("\x1b[C")
+            elif key == Qt.Key.Key_Left:
+                self.send_input("\x1b[D")
+            elif text:
+                self.send_input(text)
+        else:
+            if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+                self._execute_command()
+            elif key == Qt.Key.Key_Backspace:
+                self._handle_backspace()
+            elif key == Qt.Key.Key_Delete:
+                self._handle_delete()
+            elif text and text.isprintable():
+                self._append_to_command_buffer(text)
+
+    def _append_to_command_buffer(self, text):
+        """Append text to command buffer and display it."""
+        self._command_buffer += text
+
+        cursor = self.terminal_display.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+
+        text_format = QTextCharFormat()
+        text_format.setForeground(QColor(204, 204, 204))
+        cursor.setCharFormat(text_format)
+        cursor.insertText(text)
+
+        self.terminal_display.setTextCursor(cursor)
+        self.terminal_display.ensureCursorVisible()
+
+    def _handle_backspace(self):
+        """Handle backspace key when editing command."""
+        if not self._command_buffer:
+            return
+
+        cursor = self.terminal_display.textCursor()
+        current_pos = cursor.position()
+
+        if current_pos <= self._input_start_position:
+            return
+
+        self._command_buffer = self._command_buffer[:-1]
+
+        cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 1)
+        cursor.removeSelectedText()
+
+        self.terminal_display.setTextCursor(cursor)
+
+    def _handle_delete(self):
+        """Handle delete key when editing command."""
+        cursor = self.terminal_display.textCursor()
+        current_pos = cursor.position()
+
+        if current_pos < self._input_start_position or current_pos >= self.terminal_display.textCursor().position():
+            return
+
+        cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)
+        cursor.removeSelectedText()
+
+    def _execute_command(self):
+        """Execute the buffered command."""
+        if not self._command_buffer.strip():
+            cursor = self.terminal_display.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            cursor.insertText("\r\n")
+            self.terminal_display.setTextCursor(cursor)
+            self._show_prompt()
+            return
+
+        command = self._command_buffer.strip()
+
+        cursor = self.terminal_display.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        cursor.insertText("\r\n")
+        self.terminal_display.setTextCursor(cursor)
+
+        shell_commands = ["cmd", "powershell", "pwsh", "bash", "zsh", "sh"]
+
+        if command.lower() in shell_commands:
+            self.start_process([command], cwd=os.getcwd())
+        else:
+            if sys.platform == "win32":
+                self.start_process(["cmd", "/c", command], cwd=os.getcwd())
+            else:
+                self.start_process(["sh", "-c", command], cwd=os.getcwd())
 
     def send_input(self, text):
         """Send text input to the running process.
@@ -556,10 +665,14 @@ class EmbeddedTerminalWidget(QWidget):
         self._process = None
         self._pid = None
 
+        QTimer.singleShot(100, self._show_prompt)
+
     def clear(self):
         """Clear terminal display."""
         self.terminal_display.clear()
         self._ansi_parser.reset_format()
+        if not self._running:
+            self._show_prompt()
 
     def is_running(self):
         """Check if a process is currently running."""

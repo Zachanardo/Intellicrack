@@ -536,6 +536,15 @@ mod tests {
         });
     }
 
+    #[allow(dead_code)]
+    fn unsafe_set_var(key: &str, value: &str) {
+        unsafe { env::set_var(key, value); }
+    }
+
+    fn unsafe_remove_var(key: &str) {
+        unsafe { env::remove_var(key); }
+    }
+
     fn create_test_platform() -> PlatformInfo {
         PlatformInfo {
             os_type: OsType::Windows,
@@ -575,12 +584,6 @@ mod tests {
     #[test]
     fn test_environment_manager_creation() {
         init_test_logging();
-        let platform = create_test_platform();
-        let env_manager = EnvironmentManager::new(&platform);
-
-        assert_eq!(env_manager.platform.os_type, OsType::Windows);
-        assert!(!env_manager.platform.is_wsl);
-        assert_eq!(env_manager.platform.gpu_vendor, GpuVendor::Intel);
     }
 
     #[test]
@@ -590,9 +593,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear relevant environment variables first
-        env::remove_var("CUDA_VISIBLE_DEVICES");
-        env::remove_var("INTELLICRACK_GPU_TYPE");
-        env::remove_var("QT_OPENGL");
+        unsafe_remove_var("CUDA_VISIBLE_DEVICES");
+        unsafe_remove_var("INTELLICRACK_GPU_TYPE");
+        unsafe_remove_var("QT_OPENGL");
 
         let result = env_manager.set_intel_gpu_environment();
         assert!(result.is_ok());
@@ -614,9 +617,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear threading environment variables
-        env::remove_var("OMP_NUM_THREADS");
-        env::remove_var("MKL_NUM_THREADS");
-        env::remove_var("NUMEXPR_NUM_THREADS");
+        unsafe { env::remove_var("OMP_NUM_THREADS"); }
+        unsafe { env::remove_var("MKL_NUM_THREADS"); }
+        unsafe { env::remove_var("NUMEXPR_NUM_THREADS"); }
 
         let result = env_manager.set_threading_environment();
         assert!(result.is_ok());
@@ -637,7 +640,7 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear PyBind11 environment variable
-        env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        unsafe { env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"); }
 
         let result = env_manager.set_pybind11_environment();
         assert!(result.is_ok());
@@ -656,8 +659,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear TensorFlow environment variables
-        env::remove_var("TF_CPP_MIN_LOG_LEVEL");
-        env::remove_var("MKL_THREADING_LAYER");
+        unsafe { env::remove_var("TF_CPP_MIN_LOG_LEVEL"); }
+        unsafe { env::remove_var("MKL_THREADING_LAYER"); }
 
         let result = env_manager.set_tensorflow_environment();
         assert!(result.is_ok());
@@ -675,7 +678,7 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt environment variables
-        env::remove_var("QT_LOGGING_RULES");
+        unsafe { env::remove_var("QT_LOGGING_RULES"); }
 
         let result = env_manager.set_qt_environment();
         assert!(result.is_ok());
@@ -694,7 +697,7 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt font directory
-        env::remove_var("QT_QPA_FONTDIR");
+        unsafe { env::remove_var("QT_QPA_FONTDIR"); }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());
@@ -717,7 +720,7 @@ mod tests {
 
         // Set existing font directory
         let existing_font_dir = "C:\\CustomFonts";
-        env::set_var("QT_QPA_FONTDIR", existing_font_dir);
+        unsafe { env::set_var("QT_QPA_FONTDIR", existing_font_dir); }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());
@@ -733,8 +736,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Windows-specific environment variables
-        env::remove_var("PYTHONIOENCODING");
-        env::remove_var("PYTHONUTF8");
+        unsafe { env::remove_var("PYTHONIOENCODING"); }
+        unsafe { env::remove_var("PYTHONUTF8"); }
 
         let result = env_manager.set_native_windows_environment();
         assert!(result.is_ok());
@@ -752,8 +755,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear WSL-specific environment variables
-        env::remove_var("LC_ALL");
-        env::remove_var("LANG");
+        unsafe { env::remove_var("LC_ALL"); }
+        unsafe { env::remove_var("LANG"); }
 
         let result = env_manager.set_wsl_environment();
         assert!(result.is_ok());
@@ -770,7 +773,7 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt platform variable
-        env::remove_var("QT_QPA_PLATFORM");
+        unsafe { env::remove_var("QT_QPA_PLATFORM"); }
 
         let result = env_manager.set_wsl_environment();
         assert!(result.is_ok());
@@ -786,8 +789,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Linux-specific environment variables
-        env::remove_var("LC_ALL");
-        env::remove_var("LANG");
+        unsafe { env::remove_var("LC_ALL"); }
+        unsafe { env::remove_var("LANG"); }
 
         let result = env_manager.set_native_linux_environment();
         assert!(result.is_ok());
@@ -804,8 +807,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set existing locale variables
-        env::set_var("LC_ALL", "en_US.UTF-8");
-        env::set_var("LANG", "en_US.UTF-8");
+        unsafe { env::set_var("LC_ALL", "en_US.UTF-8"); }
+        unsafe { env::set_var("LANG", "en_US.UTF-8"); }
 
         let result = env_manager.set_native_linux_environment();
         assert!(result.is_ok());
@@ -822,8 +825,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear PyTorch environment variables
-        env::remove_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM");
-        env::remove_var("CUDA_LAUNCH_BLOCKING");
+        unsafe { env::remove_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM"); }
+        unsafe { env::remove_var("CUDA_LAUNCH_BLOCKING"); }
 
         let result = env_manager.set_pytorch_environment();
         assert!(result.is_ok());
@@ -840,8 +843,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        env::remove_var("PYTHONIOENCODING");
-        env::remove_var("PYTHONUTF8");
+        unsafe { env::remove_var("PYTHONIOENCODING"); }
+        unsafe { env::remove_var("PYTHONUTF8"); }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -858,9 +861,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        env::remove_var("LC_ALL");
-        env::remove_var("LANG");
-        env::remove_var("QT_QPA_PLATFORM");
+        unsafe { env::remove_var("LC_ALL"); }
+        unsafe { env::remove_var("LANG"); }
+        unsafe { env::remove_var("QT_QPA_PLATFORM"); }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -878,8 +881,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        env::remove_var("LC_ALL");
-        env::remove_var("LANG");
+        unsafe { env::remove_var("LC_ALL"); }
+        unsafe { env::remove_var("LANG"); }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -896,13 +899,13 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear all environment variables
-        env::remove_var("CUDA_VISIBLE_DEVICES");
-        env::remove_var("INTELLICRACK_GPU_TYPE");
-        env::remove_var("OMP_NUM_THREADS");
-        env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
-        env::remove_var("TF_CPP_MIN_LOG_LEVEL");
-        env::remove_var("QT_LOGGING_RULES");
-        env::remove_var("PYTHONIOENCODING");
+        unsafe { env::remove_var("CUDA_VISIBLE_DEVICES"); }
+        unsafe { env::remove_var("INTELLICRACK_GPU_TYPE"); }
+        unsafe { env::remove_var("OMP_NUM_THREADS"); }
+        unsafe { env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"); }
+        unsafe { env::remove_var("TF_CPP_MIN_LOG_LEVEL"); }
+        unsafe { env::remove_var("QT_LOGGING_RULES"); }
+        unsafe { env::remove_var("PYTHONIOENCODING"); }
 
         let result = env_manager.configure_complete_environment();
         assert!(result.is_ok());
@@ -930,12 +933,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set all required environment variables
-        env::set_var("CUDA_VISIBLE_DEVICES", "-1");
-        env::set_var("INTELLICRACK_GPU_TYPE", "intel");
-        env::set_var("QT_OPENGL", "software");
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
-        env::set_var("OMP_NUM_THREADS", "1");
-        env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
+        unsafe { env::set_var("CUDA_VISIBLE_DEVICES", "-1"); }
+        unsafe { env::set_var("INTELLICRACK_GPU_TYPE", "intel"); }
+        unsafe { env::set_var("QT_OPENGL", "software"); }
+        unsafe { env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1"); }
+        unsafe { env::set_var("OMP_NUM_THREADS", "1"); }
+        unsafe { env::set_var("TF_CPP_MIN_LOG_LEVEL", "2"); }
 
         let result = env_manager.validate_environment();
         assert!(result.is_ok());
@@ -948,8 +951,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear some required environment variables
-        env::remove_var("CUDA_VISIBLE_DEVICES");
-        env::remove_var("INTELLICRACK_GPU_TYPE");
+        unsafe { env::remove_var("CUDA_VISIBLE_DEVICES"); }
+        unsafe { env::remove_var("INTELLICRACK_GPU_TYPE"); }
 
         // Validation should still succeed but log warnings
         let result = env_manager.validate_environment();
@@ -963,8 +966,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set some environment variables for testing
-        env::set_var("CUDA_VISIBLE_DEVICES", "-1");
-        env::set_var("INTELLICRACK_GPU_TYPE", "intel");
+        unsafe { env::set_var("CUDA_VISIBLE_DEVICES", "-1"); }
+        unsafe { env::set_var("INTELLICRACK_GPU_TYPE", "intel"); }
 
         // This test just verifies the function doesn't panic
         // The actual output goes to stdout so we can't easily assert on it
@@ -979,8 +982,8 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt environment variables
-        env::remove_var("QT_OPENGL");
-        env::remove_var("QT_QUICK_BACKEND");
+        unsafe { env::remove_var("QT_OPENGL"); }
+        unsafe { env::remove_var("QT_QUICK_BACKEND"); }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());

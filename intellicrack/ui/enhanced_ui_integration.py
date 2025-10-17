@@ -68,7 +68,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup enhanced dashboard UI."""
+        """Set up enhanced dashboard UI."""
         layout = QVBoxLayout(self)
 
         # Header with logo and title
@@ -129,7 +129,7 @@ class EnhancedAnalysisDashboard(QWidget):
         layout.addWidget(self.content_tabs)
 
     def _setup_overview_tab(self):
-        """Setup enhanced overview tab."""
+        """Set up enhanced overview tab."""
         overview_widget = QWidget()
         layout = QVBoxLayout(overview_widget)
 
@@ -204,12 +204,12 @@ class EnhancedAnalysisDashboard(QWidget):
         self.content_tabs.addTab(overview_widget, "Overview")
 
     def _setup_radare2_tab(self):
-        """Setup enhanced radare2 analysis tab."""
+        """Set up enhanced radare2 analysis tab."""
         self.r2_widget = R2IntegrationWidget(self)
         self.content_tabs.addTab(self.r2_widget, "Radare2 Analysis")
 
     def _setup_visualization_tab(self):
-        """Setup visualization tab."""
+        """Set up visualization tab."""
         viz_widget = QWidget()
         layout = QVBoxLayout(viz_widget)
 
@@ -254,7 +254,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.content_tabs.addTab(viz_widget, "Visualization")
 
     def _setup_reports_tab(self):
-        """Setup reports management tab."""
+        """Set up reports management tab."""
         reports_widget = QWidget()
         layout = QVBoxLayout(reports_widget)
 
@@ -422,7 +422,7 @@ class EnhancedMainWindow(QMainWindow):
         self._setup_status_bar()
 
     def _setup_ui(self):
-        """Setup enhanced main UI."""
+        """Set up enhanced main UI."""
         self.setWindowTitle("Intellicrack - Advanced Binary Analysis Framework")
         self.setGeometry(100, 100, 1600, 1000)
 
@@ -437,7 +437,7 @@ class EnhancedMainWindow(QMainWindow):
         self._apply_dark_theme()
 
     def _setup_menu_bar(self):
-        """Setup enhanced menu bar."""
+        """Set up enhanced menu bar."""
         menubar = self.menuBar()
 
         # File menu
@@ -501,7 +501,7 @@ class EnhancedMainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def _setup_tool_bar(self):
-        """Setup enhanced tool bar."""
+        """Set up enhanced tool bar."""
         toolbar = self.addToolBar("Main")
         toolbar.setMovable(False)
 
@@ -533,7 +533,7 @@ class EnhancedMainWindow(QMainWindow):
         toolbar.addAction(export_action)
 
     def _setup_status_bar(self):
-        """Setup enhanced status bar."""
+        """Set up enhanced status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 

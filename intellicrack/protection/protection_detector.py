@@ -1,4 +1,4 @@
-"""Main Protection Detection Module.
+"""Run Protection Detection Module.
 
 This module serves as the primary interface for protection detection in Intellicrack.
 It uses the unified protection engine which provides comprehensive protection detection
@@ -43,7 +43,7 @@ logger = get_logger(__name__)
 
 
 class ProtectionDetector:
-    """Main protection detection interface for Intellicrack.
+    """Run protection detection interface for Intellicrack.
 
     This class provides a seamless interface to the unified protection engine,
     making it appear as if all detection capabilities are native to Intellicrack.

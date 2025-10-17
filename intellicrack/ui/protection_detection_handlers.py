@@ -50,7 +50,7 @@ class ProtectionDetectionHandlers:
         logger.info(message)
 
     def run_commercial_protection_scan(self):
-        """Handler for detecting commercial software protections."""
+        """Handle detecting commercial software protections."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return
@@ -93,7 +93,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_hardware_dongle_detection(self):
-        """Handler for detecting hardware dongles."""
+        """Handle detecting hardware dongles."""
         try:
             self.update_status("Detecting hardware dongles...")
             logger.info("Starting hardware dongle detection")
@@ -120,7 +120,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_tpm_detection(self):
-        """Handler for detecting TPM protection."""
+        """Handle detecting TPM protection."""
         try:
             self.update_status("Detecting TPM protection...")
             logger.info("Starting TPM detection")
@@ -159,7 +159,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_checksum_detection(self):
-        """Handler for detecting checksum/integrity verification."""
+        """Handle detecting checksum/integrity verification."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return
@@ -205,7 +205,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_self_healing_detection(self):
-        """Handler for detecting self-healing/self-modifying code."""
+        """Handle detecting self-healing/self-modifying code."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return
@@ -251,7 +251,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_tpm_bypass(self):
-        """Handler for TPM bypass functionality."""
+        """Handle TPM bypass functionality."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return
@@ -298,7 +298,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_vm_bypass(self):
-        """Handler for VM detection bypass functionality."""
+        """Handle VM detection bypass functionality."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return
@@ -345,7 +345,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_dongle_emulation(self):
-        """Handler for hardware dongle emulation functionality."""
+        """Handle hardware dongle emulation functionality."""
         try:
             self.update_status("Activating hardware dongle emulation...")
             logger.info("Starting hardware dongle emulation")
@@ -395,7 +395,7 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self, "Error", error_msg)
 
     def run_embedded_script_detection(self):
-        """Handler for embedded/encrypted script detection."""
+        """Handle embedded/encrypted script detection."""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please load a binary file first!")
             return

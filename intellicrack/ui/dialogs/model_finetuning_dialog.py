@@ -1496,7 +1496,7 @@ class LicenseAnalysisNeuralNetwork:
 
     def _setup_training(self, dataset):
         _ = dataset
-        """Setup training configuration and prepare for training."""
+        """Set up training configuration and prepare for training."""
         try:
             if TRANSFORMERS_AVAILABLE and self.tokenizer:
                 # Setup LoRA if available
@@ -2158,7 +2158,7 @@ class ModelFinetuningDialog(QDialog):
             return "Training Device: CPU (Error getting device info)\n"
 
     def _setup_ui(self):
-        """Setup the dialog user interface."""
+        """Set up the dialog user interface."""
         main_layout = QVBoxLayout(self)
 
         # Create tab widget
@@ -2205,7 +2205,7 @@ class ModelFinetuningDialog(QDialog):
         main_layout.addLayout(button_layout)
 
     def _setup_training_tab(self):
-        """Setup the model training tab."""
+        """Set up the model training tab."""
         layout = QVBoxLayout(self.training_tab)
 
         # Create scroll area for large content
@@ -2333,7 +2333,7 @@ class ModelFinetuningDialog(QDialog):
         layout.addWidget(scroll_area)
 
     def _setup_dataset_tab(self):
-        """Setup the dataset management tab."""
+        """Set up the dataset management tab."""
         layout = QVBoxLayout(self.dataset_tab)
 
         # Dataset selection
@@ -2406,7 +2406,7 @@ class ModelFinetuningDialog(QDialog):
         layout.addWidget(management_group)
 
     def _setup_augmentation_tab(self):
-        """Setup the data augmentation tab."""
+        """Set up the data augmentation tab."""
         layout = QVBoxLayout(self.augmentation_tab)
 
         # Augmentation techniques
@@ -2494,7 +2494,7 @@ class ModelFinetuningDialog(QDialog):
         layout.addStretch()
 
     def _setup_metrics_tab(self):
-        """Setup the training metrics and visualization tab."""
+        """Set up the training metrics and visualization tab."""
         layout = QVBoxLayout(self.metrics_tab)
 
         # Metrics display

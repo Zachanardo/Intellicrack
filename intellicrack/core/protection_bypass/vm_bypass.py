@@ -719,7 +719,7 @@ def bypass_vm_detection(app: Any) -> dict[str, Any]:
 
 
 class VMDetector:
-    """Detects if running inside a virtual machine or container."""
+    """Detect if running inside a virtual machine or container."""
 
     def __init__(self):
         """Initialize VM detector."""

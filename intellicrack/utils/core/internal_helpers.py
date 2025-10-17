@@ -2425,7 +2425,7 @@ def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarr
 
 
 def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
-    """Simple sliding window pattern search.
+    """Perform sliding window pattern search.
 
     Args:
         data_array: NumPy array of data to search
@@ -2453,7 +2453,7 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
 
 def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
-    """Simple byte-level pattern matching fallback."""
+    """Perform byte-level pattern matching fallback."""
     matches = []
     pattern_len = len(pattern)
 

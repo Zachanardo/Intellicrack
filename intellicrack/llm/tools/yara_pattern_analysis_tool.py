@@ -1,5 +1,4 @@
-"""
-YARA Pattern Analysis Tool for LLM Integration
+"""YARA Pattern Analysis Tool for LLM Integration
 
 Provides AI models with the ability to run YARA pattern matching and analysis
 on binary files to detect protection patterns and security indicators.
@@ -18,9 +17,7 @@ logger = get_logger(__name__)
 
 
 class YARAPatternAnalysisTool:
-    """
-    LLM tool for running YARA pattern analysis on binary files
-    """
+    """LLM tool for running YARA pattern analysis on binary files"""
 
     def __init__(self):
         """Initialize YARA pattern analysis tool"""
@@ -28,11 +25,11 @@ class YARAPatternAnalysisTool:
         self.analysis_cache = {}
 
     def get_tool_definition(self) -> Dict[str, Any]:
-        """
-        Get tool definition for LLM registration
+        """Get tool definition for LLM registration
 
         Returns:
             Tool definition dictionary
+
         """
         return {
             "name": "yara_pattern_analysis",
@@ -88,14 +85,14 @@ class YARAPatternAnalysisTool:
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
-        """
-        Execute YARA pattern analysis
+        """Execute YARA pattern analysis
 
         Args:
             **kwargs: Tool parameters
 
         Returns:
             Analysis results dictionary
+
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):
@@ -472,8 +469,7 @@ class YARAPatternAnalysisTool:
         return layers
 
     def analyze_custom_patterns(self, file_path: str, custom_rules_text: str) -> Dict[str, Any]:
-        """
-        Analyze file with custom YARA rules provided as text
+        """Analyze file with custom YARA rules provided as text
 
         Args:
             file_path: Path to file to analyze
@@ -481,6 +477,7 @@ class YARAPatternAnalysisTool:
 
         Returns:
             Analysis results
+
         """
         try:
             if not is_yara_available():

@@ -46,8 +46,14 @@ def _get_tensorflow():
     if not _tf_import_attempted:
         _tf_import_attempted = True
         try:
-            from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+            from intellicrack.handlers.tensorflow_handler import (
+                ensure_tensorflow_loaded,
+            )
+            from intellicrack.handlers.tensorflow_handler import (
+                tensorflow as tf,
+            )
 
+            ensure_tensorflow_loaded()
             _tf_module = tf
             _tf_available = True
             _tf_module.config.set_visible_devices([], "GPU")
@@ -299,46 +305,6 @@ def check_protection_models() -> bool:
     return True
 
 
-def validate_flask_server() -> dict[str, any]:
-    """Validate Flask server can be initialized for web UI."""
-    try:
-        import secrets
-
-        import flask
-        import flask_cors
-
-        # Create test Flask app with CORS
-        app = flask.Flask(__name__, static_folder=None)
-        flask_cors.CORS(app, resources={r"/*": {"origins": "*"}})
-
-        # Test configuration with securely generated key
-        # This is only for validation testing, not used in production
-        app.config.update(
-            SECRET_KEY=secrets.token_hex(32),  # Generate secure random key for validation
-            JSON_SORT_KEYS=False,
-            MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max upload
-        )
-
-        # Verify request context works
-        with app.test_request_context("/test", method="POST"):
-            assert flask.request.path == "/test"
-            assert flask.request.method == "POST"
-
-        return {
-            "status": True,
-            "message": "Flask server validated",
-            "cors_enabled": True,
-            "max_upload_mb": 16,
-        }
-    except Exception as e:
-        return {
-            "status": False,
-            "message": f"Flask validation failed: {e!s}",
-            "cors_enabled": False,
-            "max_upload_mb": 0,
-        }
-
-
 def validate_tensorflow_models() -> dict[str, any]:
     """Validate TensorFlow and check model compatibility."""
     try:
@@ -404,61 +370,6 @@ def validate_tensorflow_models() -> dict[str, any]:
         }
 
 
-def validate_llama_cpp() -> dict[str, any]:
-    """Validate llama-cpp-python installation and capabilities."""
-    try:
-        import llama_cpp
-
-        # Get llama-cpp info
-        llama_info = {
-            "status": True,
-            "version": getattr(llama_cpp, "__version__", "Unknown"),
-            "supports_gpu": hasattr(llama_cpp, "llama_backend_init"),
-        }
-
-        # Check available model formats
-        if hasattr(llama_cpp, "GGML_TYPE_Q4_0"):
-            llama_info["quantization_support"] = True
-            llama_info["supported_formats"] = ["GGUF", "GGML"]
-        else:
-            llama_info["quantization_support"] = False
-            llama_info["supported_formats"] = []
-
-        # Test parameter creation
-        try:
-            params = llama_cpp.llama_model_default_params()
-
-            # Validate parameter structure
-            if hasattr(params, "n_ctx") and hasattr(params, "n_batch"):
-                llama_info["default_params_available"] = True
-                llama_info["default_context_size"] = getattr(params, "n_ctx", "unknown")
-                llama_info["default_batch_size"] = getattr(params, "n_batch", "unknown")
-
-                # Test parameter modification
-                try:
-                    original_ctx = params.n_ctx
-                    params.n_ctx = 1024  # Test modification
-                    params.n_ctx = original_ctx  # Restore
-                    llama_info["params_modifiable"] = True
-                except Exception as e:
-                    logger.debug(f"Cannot modify llama params: {e}")
-                    llama_info["params_modifiable"] = False
-            else:
-                llama_info["default_params_available"] = False
-                llama_info["error"] = "Default parameters missing required attributes"
-        except Exception as e:
-            llama_info["default_params_available"] = False
-            llama_info["error"] = f"Parameter creation failed: {e}"
-
-        return llama_info
-    except Exception as e:
-        return {
-            "status": False,
-            "version": "N/A",
-            "error": str(e),
-        }
-
-
 def perform_startup_checks() -> dict[str, any]:
     """Perform all startup checks."""
     print("[STARTUP] Performing startup checks...")
@@ -489,14 +400,8 @@ def perform_startup_checks() -> dict[str, any]:
     }
 
     # Perform enhanced validation for critical components
-    if results["dependencies"].get("Flask", False):
-        results["flask_validation"] = validate_flask_server()
-
     if results["dependencies"].get("TensorFlow", False):
         results["tensorflow_validation"] = validate_tensorflow_models()
-
-    if results["dependencies"].get("llama-cpp-python", False):
-        results["llama_validation"] = validate_llama_cpp()
 
     # Auto-setup missing components
     logger.info("Auto-configuring missing components...")
@@ -514,16 +419,9 @@ def perform_startup_checks() -> dict[str, any]:
         logger.info("Run 'pip install -r requirements.txt' to install missing packages")
 
     # Log validation results
-    if "flask_validation" in results and results["flask_validation"]["status"]:
-        logger.info("Flask server validation successful")
-
     if "tensorflow_validation" in results and results["tensorflow_validation"]["status"]:
         tf_val = results["tensorflow_validation"]
         logger.info(f"TensorFlow {tf_val['version']} ready (GPU: {tf_val['gpu_available']})")
-
-    if "llama_validation" in results and results["llama_validation"]["status"]:
-        llama_val = results["llama_validation"]
-        logger.info(f"llama-cpp {llama_val['version']} ready")
 
     return results
 

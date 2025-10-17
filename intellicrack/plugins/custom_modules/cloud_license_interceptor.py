@@ -189,7 +189,7 @@ class BypassOperation:
 
 
 class UpstreamResponseWrapper:
-    """Wrapper for upstream response data compatible with aiohttp.ClientResponse interface."""
+    """Wrap for upstream response data compatible with aiohttp.ClientResponse interface."""
 
     def __init__(self, status: int, headers: dict[str, str]):
         """Initialize response wrapper with status and headers.
@@ -1543,7 +1543,7 @@ class LocalLicenseServer:
 
 
 class CloudLicenseInterceptor:
-    """Main cloud license interceptor service."""
+    """Run cloud license interceptor service."""
 
     def __init__(self, config: InterceptorConfig = None):
         """Initialize the cloud license interceptor.

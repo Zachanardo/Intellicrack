@@ -1,4 +1,4 @@
-"""Simple analysis plugin for Intellicrack.
+"""Perform analysis plugin for Intellicrack.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -24,7 +24,7 @@ Basic template for straightforward binary analysis tasks
 
 
 class SimpleAnalysisPlugin:
-    """Simple analysis plugin for basic binary examination."""
+    """Perform analysis plugin for basic binary examination."""
 
     def __init__(self):
         """Initialize the simple analysis plugin."""
@@ -32,7 +32,7 @@ class SimpleAnalysisPlugin:
         self.results = {}
 
     def analyze(self, binary_path):
-        """Simple analysis implementation."""
+        """Perform simple binary analysis."""
         results = []
         results.append(f"Analyzing: {binary_path}")
 

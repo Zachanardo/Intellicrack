@@ -35,7 +35,7 @@ def compute_file_hash(
     algorithm: str = "sha256",
     progress_signal: Callable[[int], None] | None = None,
 ) -> str:
-    """Computes the hash of a file using the specified algorithm with optional progress updates.
+    """Compute the hash of a file using the specified algorithm with optional progress updates.
 
     Calculates the cryptographic hash of the specified file using the given algorithm, reading it
     in chunks to handle large files efficiently. Can provide progress updates
@@ -96,7 +96,7 @@ def compute_file_hash(
 
 
 def get_file_hash(file_path: str | Path, algorithm: str = "sha256") -> str:
-    """Simple wrapper for compute_file_hash without progress callback.
+    """Perform wrapper for compute_file_hash without progress callback.
 
     Args:
         file_path: Path to the file to hash

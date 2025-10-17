@@ -118,7 +118,7 @@ class AnalysisTab(BaseTab):
                 self.on_binary_loaded(current_binary)
 
     def setup_content(self):
-        """Setup the Analysis tab content with clean, organized interface."""
+        """Set up the Analysis tab content with clean, organized interface."""
         main_layout = self.layout()  # Use existing layout from BaseTab
 
         # Create horizontal splitter for analysis controls and results
@@ -1497,7 +1497,7 @@ class AnalysisTab(BaseTab):
         self.log_activity("Analysis results cleared")
 
     def _analysis_completed(self, success, message):
-        """Helper method to re-enable UI elements after analysis completion."""
+        """Re-enable re-enable UI elements after analysis completion."""
         self.run_analysis_btn.setEnabled(True)
         self.stop_analysis_btn.setEnabled(False)
         self.run_analysis_btn.setText("Run Analysis")
@@ -3203,7 +3203,7 @@ class AnalysisTab(BaseTab):
 
         timestamp = datetime.fromtimestamp(event_dict["timestamp"]).strftime("%H:%M:%S.%f")[:-3]
         source = event_dict["source"].upper()
-        event_type = event_dict["event_type"]
+        event_dict["event_type"]
         details = event_dict["details"]
 
         color_map = {"api": "blue", "registry": "green", "file": "orange", "network": "red", "memory": "purple"}

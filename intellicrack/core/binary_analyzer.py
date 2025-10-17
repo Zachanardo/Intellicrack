@@ -87,7 +87,7 @@ logger = logging.getLogger(__name__)
 
 
 class BinaryAnalyzer:
-    """Main binary analyzer coordinating multiple analysis techniques."""
+    """Run binary analyzer coordinating multiple analysis techniques."""
 
     def __init__(self):
         """Initialize the binary analyzer."""

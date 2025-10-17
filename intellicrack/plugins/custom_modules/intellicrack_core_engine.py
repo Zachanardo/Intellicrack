@@ -3353,7 +3353,7 @@ class ResourceManager:
 
 
 class IntellicrackcoreEngine:
-    """Main Intellicrack core engine - orchestrates all components."""
+    """Run Intellicrack core engine - orchestrates all components."""
 
     def __init__(self, config_path: str | None = None):
         """Initialize Intellicrack core engine with optional configuration path."""

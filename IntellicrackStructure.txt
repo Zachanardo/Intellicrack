@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Oct 05, 2025 09:54:15 PM
+Generated: Fri, Oct 17, 2025 03:19:07 AM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -20,11 +20,11 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
 │   ├── ai_tools.py
+│   ├── api_provider_clients.py
 │   ├── autonomous_agent.py
 │   ├── background_loader.py
 │   ├── coordination_layer.py
 │   ├── enhanced_training_interface.py
-│   ├── exploit_chain_builder.py
 │   ├── file_reading_helper.py
 │   ├── gpu_integration.py
 │   ├── headless_training_interface.py
@@ -44,6 +44,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── model_batch_tester.py
 │   ├── model_cache_manager.py
 │   ├── model_comparison.py
+│   ├── model_discovery_service.py
 │   ├── model_download_manager.py
 │   ├── model_format_converter.py
 │   ├── model_manager_module.py
@@ -331,6 +332,17 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── logging/
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
+│   ├── monitoring/
+│   │   ├── __init__.py
+│   │   ├── api_monitor.py
+│   │   ├── base_monitor.py
+│   │   ├── event_aggregator.py
+│   │   ├── file_monitor.py
+│   │   ├── frida_server_manager.py
+│   │   ├── memory_monitor.py
+│   │   ├── monitoring_session.py
+│   │   ├── network_monitor.py
+│   │   └── registry_monitor.py
 │   ├── network/
 │   │   ├── certs/
 │   │   │   ├── README.md
@@ -373,7 +385,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── gpu_accelerator.py
 │   │   ├── memory_loader.py
 │   │   ├── memory_optimizer.py
-│   │   ├── qemu_emulator_backup.py
+│   │   ├── qemu_emulator.py
 │   │   ├── qiling_emulator.py
 │   │   └── vm_workflow_manager.py
 │   ├── protection/
@@ -421,7 +433,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── app_context.py
 │   ├── binary_analyzer.py
 │   ├── config_manager.py
-│   ├── config_manager_clean.py
 │   ├── config_migration_handler.py
 │   ├── debugging_engine.py
 │   ├── exceptions.py
@@ -522,6 +533,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── print_dialog.py
 │   ├── statistics.py
 │   └── statistics_dialog.py
+├── intellicrack/
+│   └── plugins/
+│       └── custom_modules/
+│           ├── binary_patcher_plugin.py
+│           ├── demo_plugin.py
+│           ├── network_analysis_plugin.py
+│           └── simple_analysis_plugin.py
 ├── llm/
 │   ├── models/
 │   │   └── downloads/
@@ -571,6 +589,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── success_rate_analyzer.py
 │   │   ├── ui_enhancement_module.py
 │   │   └── vm_protection_unwrapper.py
+│   ├── frida_scripts/
+│   ├── ghidra_scripts/
 │   ├── __init__.py
 │   ├── plugin_base.py
 │   ├── plugin_config.py
@@ -736,6 +756,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tools_tab.py
 │   │   └── workspace_tab.py
 │   ├── widgets/
+│   │   ├── __pycache__/
+│   │   │   └── ai_assistant_widget.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_assistant_widget.py
 │   │   ├── batch_analysis_widget.py
@@ -814,7 +836,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── pe_common.py
 │   ├── core/
 │   │   ├── __pycache__/
-│   │   │   └── internal_helpers.cpython-313.pyc
 │   │   ├── __init__.py
 │   │   ├── core_utilities.py
 │   │   ├── dependency_feedback.py
@@ -901,7 +922,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── dependency_fallbacks.py
 │   ├── deprecation_warnings.py
 │   ├── env_file_manager.py
-│   ├── exploit_common.py
 │   ├── font_manager.py
 │   ├── ghidra_common.py
 │   ├── gpu_autoloader.py
@@ -912,6 +932,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── logger.py
 │   ├── path_resolver.py
 │   ├── protection_utils.py
+│   ├── qemu_image_discovery.py
 │   ├── report_generator.py
 │   ├── resource_helper.py
 │   ├── secrets_manager.py

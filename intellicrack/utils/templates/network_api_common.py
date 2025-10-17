@@ -26,7 +26,7 @@ from intellicrack.utils.logger import logger
 
 
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):
-    """Common function to analyze network APIs in a PE binary.
+    """Provide function to analyze network APIs in a PE binary.
 
     Args:
         pe_binary: Parsed PE binary object

@@ -207,7 +207,7 @@ class HexViewerWidget(QWidget):
 
 
 class HexDisplay(QWidget):
-    """Custom widget for rendering hex data."""
+    """Customize widget for rendering hex data."""
 
     cursor_moved = pyqtSignal(int)
 

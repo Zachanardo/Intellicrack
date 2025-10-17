@@ -1,5 +1,4 @@
-"""
-Firmware Analysis Tool for LLM Integration
+"""Firmware Analysis Tool for LLM Integration
 
 Provides AI models with the ability to run comprehensive firmware analysis
 using Binwalk to detect embedded files, security issues, and firmware patterns.
@@ -18,9 +17,7 @@ logger = get_logger(__name__)
 
 
 class FirmwareAnalysisTool:
-    """
-    LLM tool for running firmware analysis using Binwalk
-    """
+    """LLM tool for running firmware analysis using Binwalk"""
 
     def __init__(self):
         """Initialize firmware analysis tool"""
@@ -28,11 +25,11 @@ class FirmwareAnalysisTool:
         self.analysis_cache = {}
 
     def get_tool_definition(self) -> Dict[str, Any]:
-        """
-        Get tool definition for LLM registration
+        """Get tool definition for LLM registration
 
         Returns:
             Tool definition dictionary
+
         """
         return {
             "name": "firmware_analysis",
@@ -77,14 +74,14 @@ class FirmwareAnalysisTool:
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
-        """
-        Execute firmware analysis
+        """Execute firmware analysis
 
         Args:
             **kwargs: Tool parameters
 
         Returns:
             Analysis results dictionary
+
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):

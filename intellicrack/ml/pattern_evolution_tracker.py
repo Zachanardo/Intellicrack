@@ -978,7 +978,7 @@ class PatternMatcher:
 
 
 class PatternEvolutionTracker:
-    """Main pattern evolution and tracking system."""
+    """Run pattern evolution and tracking system."""
 
     def __init__(
         self,
@@ -1644,7 +1644,7 @@ class PatternEvolutionTracker:
 
 # Example observer implementation
 class PatternUpdateObserver:
-    """Example observer for pattern updates."""
+    """Demonstrate observer for pattern updates."""
 
     def on_patterns_updated(self, tracker: PatternEvolutionTracker):
         """Handle pattern updates."""

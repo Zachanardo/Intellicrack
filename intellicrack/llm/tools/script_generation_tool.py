@@ -1,5 +1,4 @@
-"""
-Script Generation Tool for LLM Integration
+"""Script Generation Tool for LLM Integration
 
 Provides AI models with the ability to generate Frida and Ghidra scripts.
 

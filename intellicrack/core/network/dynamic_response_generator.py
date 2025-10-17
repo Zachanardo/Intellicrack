@@ -62,7 +62,7 @@ class GeneratedResponse:
 
 
 class FlexLMProtocolHandler:
-    """Handler for FlexLM license protocol."""
+    """Handle FlexLM license protocol."""
 
     def __init__(self):
         """Initialize FlexLM handler with logging for license request processing."""
@@ -152,7 +152,7 @@ class FlexLMProtocolHandler:
 
 
 class HASPProtocolHandler:
-    """Handler for HASP/Sentinel license protocol."""
+    """Handle HASP/Sentinel license protocol."""
 
     def __init__(self):
         """Initialize HASP handler with logging for license request processing."""
@@ -219,7 +219,7 @@ class HASPProtocolHandler:
 
 
 class AdobeProtocolHandler:
-    """Handler for Adobe license protocol."""
+    """Handle Adobe license protocol."""
 
     def __init__(self):
         """Initialize Adobe handler with logging for license request processing."""
@@ -313,7 +313,7 @@ class AdobeProtocolHandler:
 
 
 class MicrosoftKMSHandler:
-    """Handler for Microsoft KMS protocol."""
+    """Handle Microsoft KMS protocol."""
 
     def __init__(self):
         """Initialize Microsoft KMS handler with logging for activation request processing."""
@@ -366,7 +366,7 @@ class MicrosoftKMSHandler:
 
 
 class AutodeskProtocolHandler:
-    """Handler for Autodesk license protocol."""
+    """Handle Autodesk license protocol."""
 
     def __init__(self):
         """Initialize Autodesk handler with logging for license request processing."""

@@ -1175,17 +1175,14 @@ class QEMUManager:
         from intellicrack.utils.path_resolver import get_qemu_images_dir
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
-        # Use dynamic image discovery
         discovery = get_qemu_discovery()
         windows_images = discovery.get_images_by_os("windows")
 
         if windows_images:
-            # Return the first Windows image found
             selected_image = windows_images[0]
             self.logger.info("Found Windows base image: %s", selected_image.path)
             return selected_image.path
 
-        # Check config paths for backward compatibility
         config_paths = self.config.get("vm_framework.base_images.windows", [])
         for path_str in config_paths:
             path = Path(path_str).expanduser()
@@ -1193,105 +1190,67 @@ class QEMUManager:
                 self.logger.info("Found Windows image from config: %s", path)
                 return path
 
-        # If no base image found, create a minimal test image
+        all_images = discovery.discover_images()
+        if all_images:
+            selected_image = all_images[0]
+            self.logger.warning(
+                "No Windows-specific images found. Using first available image: %s (format: %s)",
+                selected_image.filename,
+                selected_image.format
+            )
+            return selected_image.path
+
         qemu_dir = get_qemu_images_dir()
-        test_image_path = qemu_dir / "windows_test_minimal.qcow2"
-        test_image_path.parent.mkdir(parents=True, exist_ok=True)
-
-        if not test_image_path.exists():
-            self.logger.warning("No Windows base image found. Creating minimal test image.")
-            try:
-                # Create a minimal qcow2 image (1GB)
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [  # noqa: S607
-                        "qemu-img",
-                        "create",
-                        "-f",
-                        "qcow2",
-                        str(test_image_path),
-                        "1G",
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
-                self.logger.info("Created minimal test image at: %s", test_image_path)
-            except subprocess.CalledProcessError as e:
-                self.logger.error("Failed to create test image: %s", e)
-                raise RuntimeError(
-                    "No Windows base image found and failed to create test image. "
-                    "Please provide a Windows base image at one of the expected locations.",
-                ) from e
-            except FileNotFoundError as e:
-                self.logger.error("qemu-img not found. Please install QEMU.")
-                raise RuntimeError(
-                    "QEMU tools not installed. Cannot create test image.",
-                ) from e
-
-        return test_image_path
+        self.logger.error(
+            "No VM images found. Please add images to: %s",
+            qemu_dir
+        )
+        raise RuntimeError(
+            f"No VM images found in QEMU images directory. "
+            f"Please place a VM image file (supported formats: .qcow2, .qcow, .img, .vmdk, .vdi, .vhd, .vhdx, "
+            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}"
+        )
 
     def _get_linux_base_image(self) -> str:
-        """Get Linux base image for testing."""
-        # Get paths from config with fallback to default locations
+        """Get Linux base image using dynamic discovery."""
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
+
+        discovery = get_qemu_discovery()
+        linux_images = discovery.get_images_by_os("linux")
+
+        if linux_images:
+            selected_image = linux_images[0]
+            self.logger.info("Found Linux base image: %s", selected_image.path)
+            return str(selected_image.path)
+
         config_paths = self.config.get("vm_framework.base_images.linux", [])
-        fallback_paths = [
-            "/var/lib/libvirt/images/ubuntu-22.04.qcow2",
-            "/var/lib/libvirt/images/debian-11.qcow2",
-            "/var/lib/libvirt/images/centos-8.qcow2",
-            "~/vms/ubuntu.qcow2",
-            "~/vms/debian.qcow2",
-        ]
+        for path_str in config_paths:
+            path = Path(path_str).expanduser()
+            if path.exists():
+                self.logger.info("Found Linux image from config: %s", path)
+                return str(path)
 
-        # Combine config paths with fallback paths and expand user paths
-        all_paths = config_paths + fallback_paths
-        image_locations = [os.path.expanduser(path) for path in all_paths]
+        all_images = discovery.discover_images()
+        if all_images:
+            selected_image = all_images[0]
+            self.logger.warning(
+                "No Linux-specific images found. Using first available image: %s (format: %s)",
+                selected_image.filename,
+                selected_image.format
+            )
+            return str(selected_image.path)
 
-        for image_path in image_locations:
-            if os.path.exists(image_path):
-                return image_path
-
-        # Create minimal test image if none found
-        test_image_path = self.working_dir / "linux_test.qcow2"
-        if not test_image_path.exists():
-            logger.info("Creating minimal Linux test image")
-            try:
-                # Create 1GB qcow2 image
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [  # noqa: S607
-                        "qemu-img",
-                        "create",
-                        "-f",
-                        "qcow2",
-                        str(test_image_path),
-                        "1G",
-                    ],
-                    check=True,
-                )
-
-                # Create minimal bootable image with busybox
-                # This creates a basic Linux environment for testing
-                initrd_path = self.working_dir / "initrd.img"
-                kernel_path = self.working_dir / "vmlinuz"
-
-                # Download minimal kernel and initrd if not present
-                if not kernel_path.exists():
-                    # Use Alpine Linux kernel for minimal footprint
-                    kernel_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/vmlinuz-lts"
-                    subprocess.run(["curl", "-L", "-o", str(kernel_path), kernel_url], check=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
-
-                if not initrd_path.exists():
-                    initrd_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/initramfs-lts"
-                    subprocess.run(["curl", "-L", "-o", str(initrd_path), initrd_url], check=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
-
-                # Store kernel/initrd paths for boot configuration
-                self._linux_kernel = str(kernel_path)
-                self._linux_initrd = str(initrd_path)
-
-            except subprocess.CalledProcessError as e:
-                logger.error("Failed to create test image: %s", e)
-                # Create empty image as last resort
-                test_image_path.touch()
-
-        return str(test_image_path)
+        qemu_dir = get_qemu_images_dir()
+        self.logger.error(
+            "No VM images found. Please add images to: %s",
+            qemu_dir
+        )
+        raise RuntimeError(
+            f"No VM images found in QEMU images directory. "
+            f"Please place a VM image file (supported formats: .qcow2, .qcow, .img, .vmdk, .vdi, .vhd, .vhdx, "
+            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}"
+        )
 
     def _detect_os_type(self, binary_path: str) -> str:
         """Detect operating system type from binary."""
@@ -2910,13 +2869,14 @@ exit 0
             Path to default rootfs image
 
         """
-        # Use dynamic image discovery
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
+
         image_path = self._get_image_for_architecture(architecture)
 
         if image_path:
             return str(image_path)
 
-        # Fallback: check config for backward compatibility
         rootfs_dir = self.config.get("rootfs_directory", None)
         if rootfs_dir:
             from pathlib import Path
@@ -2930,26 +2890,27 @@ exit 0
             if rootfs_path.exists():
                 return str(rootfs_path)
 
-        # No image found - create minimal test image
-        from intellicrack.utils.path_resolver import get_qemu_images_dir
+        discovery = get_qemu_discovery()
+        all_images = discovery.discover_images()
+
+        if all_images:
+            selected_image = all_images[0]
+            self.logger.warning(
+                "No architecture-specific image found for %s. Using first available: %s",
+                architecture,
+                selected_image.filename
+            )
+            return str(selected_image.path)
 
         qemu_dir = get_qemu_images_dir()
-        test_image = qemu_dir / f"{architecture}_test.qcow2"
-
-        if not test_image.exists():
-            self.logger.warning("Creating minimal test image for %s", architecture)
-            try:
-                import subprocess
-
-                subprocess.run(
-                    ["qemu-img", "create", "-f", "qcow2", str(test_image), "1G"],
-                    check=True,
-                    capture_output=True,
-                )
-            except Exception as e:
-                self.logger.error("Failed to create test image: %s", e)
-
-        return str(test_image)
+        self.logger.error(
+            "No VM images found. Please add images to: %s",
+            qemu_dir
+        )
+        raise RuntimeError(
+            f"No VM images found in QEMU images directory. "
+            f"Please place a VM image file in the directory: {qemu_dir}"
+        )
 
     def _validate_qemu_setup(self) -> None:
         """Validate QEMU installation and requirements.

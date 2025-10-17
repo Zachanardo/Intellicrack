@@ -33,6 +33,7 @@ try:
         detect_tpm_usage,
         tpm_research_tools,
     )
+
     TPMAnalyzer = TPMBypassEngine  # Alias for backward compatibility
 except ImportError as e:
     logger.warning("Failed to import tpm_bypass: %s", e)
@@ -63,6 +64,7 @@ except ImportError as e:
 
 try:
     from .integrity_check_defeat import IntegrityCheckDefeatSystem
+
     IntegrityCheckDefeat = IntegrityCheckDefeatSystem  # Alias for backward compatibility
 except ImportError as e:
     logger.warning("Failed to import integrity_check_defeat: %s", e)

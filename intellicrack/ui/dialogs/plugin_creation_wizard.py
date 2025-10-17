@@ -159,7 +159,7 @@ class {info["name"].replace(" ", "")}Plugin:
         }}
 
     def run(self, binary_path: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Main plugin execution method"""
+        """Run plugin execution method"""
         results = {{
             'status': 'success',
             'binary': binary_path,
@@ -240,7 +240,7 @@ from ghidra.program.model.listing import Function
 class {info["name"].replace(" ", "")}(GhidraScript):
 
     def run(self):
-        """Main script execution"""
+        """Run script execution"""
         print("Running {info["name"]} v{info["version"]}")
 
         # Get current program

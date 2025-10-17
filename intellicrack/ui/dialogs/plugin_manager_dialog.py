@@ -521,7 +521,7 @@ else:
                 logger.debug(f"Failed to load plugin settings: {e}")
 
         def setup_installed_tab(self, tab):
-            """Setup the installed plugins tab."""
+            """Set up the installed plugins tab."""
             layout = QVBoxLayout(tab)
 
             # Header
@@ -570,7 +570,7 @@ else:
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
 
         def setup_install_tab(self, tab):
-            """Setup the install from file tab."""
+            """Set up the install from file tab."""
             layout = QVBoxLayout(tab)
 
             # File selection
@@ -620,7 +620,7 @@ else:
             layout.addStretch()
 
         def setup_development_tab(self, tab):
-            """Setup the plugin development tab."""
+            """Set up the plugin development tab."""
             layout = QVBoxLayout(tab)
 
             # Template selection
@@ -1654,7 +1654,7 @@ from typing import Dict, List, Any
 logger = logging.getLogger(__name__)
 
 class {class_name}Plugin:
-    """Generic utility plugin."""
+    """Provide utility plugin."""
 
     def __init__(self):
         self.name = "{name}"
@@ -1722,7 +1722,7 @@ class Plugin:
         # Detection logic...
 
     def execute(self, binary_path):
-        """Main analysis function"""
+        """Run analysis function"""
         with open(binary_path, 'rb') as f:
             data = f.read()
 
@@ -1832,7 +1832,7 @@ class Plugin:
         }}
 
     def execute(self, binary_path, *args, **kwargs):
-        """Main plugin execution"""
+        """Run plugin execution"""
         file_info = self.get_file_info(binary_path)
 
         return {{

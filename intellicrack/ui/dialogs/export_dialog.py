@@ -473,7 +473,7 @@ class ExportDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
     def setup_content(self, layout):
-        """Setup the user interface content."""
+        """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 

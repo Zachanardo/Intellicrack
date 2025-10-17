@@ -1,4 +1,4 @@
-"""Simple Integration Script for Adding Radare2 UI to Existing Application.
+"""Perform Integration Script for Adding Radare2 UI to Existing Application.
 
 This script provides a simple way to integrate all radare2 functionality
 into the existing Intellicrack application without modifying core files.

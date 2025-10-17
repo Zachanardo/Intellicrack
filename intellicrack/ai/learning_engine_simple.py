@@ -1,4 +1,4 @@
-"""Simple learning engine to replace the complex one temporarily.
+"""Perform learning engine to replace the complex one temporarily.
 
 Copyright (C) 2025 Zachary Flint
 

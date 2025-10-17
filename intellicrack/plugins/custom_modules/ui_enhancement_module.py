@@ -1618,7 +1618,7 @@ class ScriptGeneratorPanel:
         ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(side=tk.LEFT, padx=5)
 
     def setup_js_syntax_highlighting(self, text_widget):
-        """Setup JavaScript syntax highlighting."""
+        """Configure JavaScript syntax highlighting."""
         # Define color schemes for different elements
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
@@ -1658,7 +1658,7 @@ class ScriptGeneratorPanel:
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, js_keywords))
 
     def setup_java_syntax_highlighting(self, text_widget):
-        """Setup Java syntax highlighting."""
+        """Configure Java syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
         text_widget.tag_configure("comment", foreground="#6a9955")
@@ -1704,7 +1704,7 @@ class ScriptGeneratorPanel:
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
 
     def setup_python_syntax_highlighting(self, text_widget):
-        """Setup Python syntax highlighting."""
+        """Configure Python syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
         text_widget.tag_configure("comment", foreground="#6a9955")
@@ -1742,7 +1742,7 @@ class ScriptGeneratorPanel:
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
 
     def highlight_syntax(self, text_widget, keywords):
-        """Basic syntax highlighting."""
+        """Apply basic syntax highlighting to text widget."""
         content = text_widget.get(1.0, tk.END)
 
         # Clear existing tags
@@ -2022,7 +2022,7 @@ class ScriptGeneratorPanel:
 
 
 class UIEnhancementModule:
-    """Main UI enhancement module controller."""
+    """Run UI enhancement module controller."""
 
     def __init__(self, root: tk.Tk = None):
         """Initialize main UI enhancement module controller."""
@@ -2058,7 +2058,7 @@ class UIEnhancementModule:
             self.start_auto_refresh()
 
     def setup_logging(self):
-        """Setup logging configuration."""
+        """Configure logging for UI enhancement module."""
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -2557,13 +2557,65 @@ public class LicenseAnalysis extends GhidraScript {{
     }}
 
     private void findAndAnalyzeString(String searchString) {{
-        // Implementation would search for strings and analyze references
         println("Searching for: " + searchString);
+        Program program = getCurrentProgram();
+        Memory memory = program.getMemory();
+        AddressSetView searchSet = memory.getLoadedAndInitializedAddressSet();
+
+        for (MemoryBlock block : memory.getBlocks()) {{
+            if (block.isInitialized()) {{
+                Address addr = block.getStart();
+                while (addr != null && addr.compareTo(block.getEnd()) <= 0) {{
+                    Data data = getDataAt(addr);
+                    if (data != null && data.hasStringValue()) {{
+                        String value = (String) data.getValue();
+                        if (value != null && value.contains(searchString)) {{
+                            println("Found at " + addr.toString() + ": " + value);
+
+                            Reference[] refs = getReferencesTo(addr);
+                            for (Reference ref : refs) {{
+                                Address refAddr = ref.getFromAddress();
+                                Function func = getFunctionContaining(refAddr);
+                                if (func != null) {{
+                                    println("  Referenced by: " + func.getName() + " at " + refAddr.toString());
+                                }}
+                            }}
+                        }}
+                    }}
+                    addr = addr.next();
+                }}
+            }}
+        }}
     }}
 
     private void analyzeLicenseFunctions() {{
-        // Implementation would identify potential license validation functions
         println("Analyzing license validation functions");
+        Program program = getCurrentProgram();
+        FunctionManager funcManager = program.getFunctionManager();
+
+        String[] licenseKeywords = {{"license", "serial", "activation", "registration", "validate", "verify", "check"}};
+
+        for (Function func : funcManager.getFunctions(true)) {{
+            String funcName = func.getName().toLowerCase();
+            for (String keyword : licenseKeywords) {{
+                if (funcName.contains(keyword)) {{
+                    println("Potential license function: " + func.getName() + " at " + func.getEntryPoint().toString());
+
+                    AddressSetView body = func.getBody();
+                    InstructionIterator instructions = program.getListing().getInstructions(body, true);
+                    int callCount = 0;
+                    while (instructions.hasNext()) {{
+                        Instruction instr = instructions.next();
+                        if (instr.getFlowType().isCall()) {{
+                            callCount++;
+                        }}
+                    }}
+                    println("  Calls: " + callCount);
+                    println("  Size: " + body.getNumAddresses() + " bytes");
+                    break;
+                }}
+            }}
+        }}
     }}
 }}""",
         }
@@ -2623,42 +2675,150 @@ if __name__ == "__main__":
         """Execute Frida script."""
         self.log_viewer.add_log("INFO", f"Executing Frida script on {target}", "ScriptExec")
 
-        # In a real implementation, this would execute the Frida script
-        # For now, just simulate execution
-        self.root.after(
-            2000,
-            lambda: self.log_viewer.add_log("INFO", "Frida script execution complete", "ScriptExec"),
-        )
+        def run_frida():
+            try:
+
+                import frida
+
+                try:
+                    pid = int(target)
+                    session = frida.attach(pid)
+                except ValueError:
+                    session = frida.attach(target)
+
+                script_obj = session.create_script(script)
+
+                def on_message(message, data):
+                    if message['type'] == 'send':
+                        payload = message.get('payload', '')
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", str(payload), "Frida"))
+                    elif message['type'] == 'error':
+                        stack = message.get('stack', '')
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", stack, "Frida"))
+
+                script_obj.on('message', on_message)
+                script_obj.load()
+
+                self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Frida script loaded successfully", "ScriptExec"))
+
+            except Exception as e:
+                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Frida execution failed: {err}", "ScriptExec"))
+
+        import threading
+        threading.Thread(target=run_frida, daemon=True).start()
 
     def execute_ghidra_script(self, script: str, target: str):
         """Execute Ghidra script."""
         self.log_viewer.add_log("INFO", f"Executing Ghidra script on {target}", "ScriptExec")
 
-        # In a real implementation, this would execute the Ghidra script
-        self.root.after(
-            2000,
-            lambda: self.log_viewer.add_log("INFO", "Ghidra script execution complete", "ScriptExec"),
-        )
+        def run_ghidra():
+            try:
+                import os
+                import tempfile
+
+                from intellicrack.utils.tools.ghidra_utils import execute_ghidra_script as run_ghidra_script
+
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.java', delete=False) as f:
+                    f.write(script)
+                    script_path = f.name
+
+                try:
+                    result = run_ghidra_script(target, script_path)
+
+                    if result.get('success'):
+                        output = result.get('output', '')
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Ghidra output:\n{output}", "Ghidra"))
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Ghidra script execution complete", "ScriptExec"))
+                    else:
+                        error = result.get('error', 'Unknown error')
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {error}", "ScriptExec"))
+                finally:
+                    if os.path.exists(script_path):
+                        os.unlink(script_path)
+
+            except Exception as e:
+                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {err}", "ScriptExec"))
+
+        import threading
+        threading.Thread(target=run_ghidra, daemon=True).start()
 
     def execute_r2_script(self, script: str, target: str):
         """Execute Radare2 script."""
         self.log_viewer.add_log("INFO", f"Executing Radare2 script on {target}", "ScriptExec")
 
-        # In a real implementation, this would execute the R2 script
-        self.root.after(
-            2000,
-            lambda: self.log_viewer.add_log("INFO", "Radare2 script execution complete", "ScriptExec"),
-        )
+        def run_r2():
+            try:
+                import os
+                import tempfile
+
+                from intellicrack.utils.tools.radare2_utils import execute_r2_script as run_r2_script
+
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.r2', delete=False) as f:
+                    f.write(script)
+                    script_path = f.name
+
+                try:
+                    result = run_r2_script(target, script_path)
+
+                    if result.get('success'):
+                        output = result.get('output', '')
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Radare2 output:\n{output}", "R2"))
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Radare2 script execution complete", "ScriptExec"))
+                    else:
+                        error = result.get('error', 'Unknown error')
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {error}", "ScriptExec"))
+                finally:
+                    if os.path.exists(script_path):
+                        os.unlink(script_path)
+
+            except Exception as e:
+                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {err}", "ScriptExec"))
+
+        import threading
+        threading.Thread(target=run_r2, daemon=True).start()
 
     def execute_custom_script(self, script: str, language: str):
         """Execute custom script."""
         self.log_viewer.add_log("INFO", f"Executing {language} script", "ScriptExec")
 
-        # In a real implementation, this would execute based on language
-        self.root.after(
-            2000,
-            lambda: self.log_viewer.add_log("INFO", f"{language} script execution complete", "ScriptExec"),
-        )
+        def run_custom():
+            try:
+                import os
+                import subprocess
+                import tempfile
+
+                with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{language}', delete=False) as f:
+                    f.write(script)
+                    script_path = f.name
+
+                try:
+                    if language.lower() == 'python':
+                        result = subprocess.run(['python', script_path], capture_output=True, text=True, timeout=30)
+                    elif language.lower() == 'javascript':
+                        result = subprocess.run(['node', script_path], capture_output=True, text=True, timeout=30)
+                    elif language.lower() == 'ruby':
+                        result = subprocess.run(['ruby', script_path], capture_output=True, text=True, timeout=30)
+                    else:
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Unsupported language: {language}", "ScriptExec"))
+                        return
+
+                    output = result.stdout + result.stderr
+                    if result.returncode == 0:
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Output:\n{output}", language))
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"{language} script execution complete", "ScriptExec"))
+                    else:
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Script failed:\n{output}", "ScriptExec"))
+                finally:
+                    if os.path.exists(script_path):
+                        os.unlink(script_path)
+
+            except subprocess.TimeoutExpired:
+                self.root.after(0, lambda: self.log_viewer.add_log("ERROR", "Script execution timed out", "ScriptExec"))
+            except Exception as e:
+                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Script execution failed: {err}", "ScriptExec"))
+
+        import threading
+        threading.Thread(target=run_custom, daemon=True).start()
 
     # File operations
     def open_file(self):
@@ -2692,8 +2852,52 @@ if __name__ == "__main__":
 
     def show_recent_files(self):
         """Show recent files dialog."""
-        # Implementation would show a dialog with recent files
-        messagebox.showinfo("Recent Files", "Recent files feature not yet implemented")
+        recent_dialog = tk.Toplevel(self.root)
+        recent_dialog.title("Recent Files")
+        recent_dialog.geometry("600x400")
+
+        frame = ttk.Frame(recent_dialog, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text="Recent Files", font=("Arial", 12, "bold")).pack(pady=5)
+
+        listbox_frame = ttk.Frame(frame)
+        listbox_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+
+        scrollbar = ttk.Scrollbar(listbox_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        recent_listbox = tk.Listbox(listbox_frame, yscrollcommand=scrollbar.set)
+        recent_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=recent_listbox.yview)
+
+        recent_files = self.config.get('recent_files', [])
+        for file_path in recent_files:
+            recent_listbox.insert(tk.END, file_path)
+
+        button_frame = ttk.Frame(frame)
+        button_frame.pack(fill=tk.X, pady=5)
+
+        def open_selected():
+            selection = recent_listbox.curselection()
+            if selection:
+                file_path = recent_listbox.get(selection[0])
+                if Path(file_path).exists():
+                    self.file_explorer.current_path = Path(file_path).parent
+                    self.file_explorer.refresh_tree()
+                    recent_dialog.destroy()
+                else:
+                    messagebox.showerror("Error", f"File not found: {file_path}")
+
+        def clear_recent():
+            if messagebox.askyesno("Clear Recent Files", "Clear all recent files?"):
+                self.config['recent_files'] = []
+                self.save_config()
+                recent_listbox.delete(0, tk.END)
+
+        ttk.Button(button_frame, text="Open", command=open_selected).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Clear All", command=clear_recent).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=recent_dialog.destroy).pack(side=tk.RIGHT, padx=5)
 
     def exit_application(self):
         """Exit application."""
@@ -2706,7 +2910,27 @@ if __name__ == "__main__":
         """Perform quick scan."""
         if self.current_target:
             self.log_viewer.add_log("INFO", "Starting quick scan", "Analysis")
-            # Implementation would perform quick scan
+
+            def run_scan():
+                try:
+                    from intellicrack.protection.icp_backend import IntellicrackProtectionBackend
+
+                    backend = IntellicrackProtectionBackend()
+                    results = backend.analyze_file(str(self.current_target), quick_mode=True)
+
+                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Quick scan complete", "Analysis"))
+
+                    if results.get('protections_found'):
+                        for protection in results['protections_found']:
+                            self.root.after(0, lambda p=protection: self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection"))
+                    else:
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "No protections detected", "Analysis"))
+
+                except Exception as e:
+                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Quick scan failed: {err}", "Analysis"))
+
+            import threading
+            threading.Thread(target=run_scan, daemon=True).start()
         else:
             messagebox.showwarning("No Target", "Please select a file to analyze")
 
@@ -2714,7 +2938,38 @@ if __name__ == "__main__":
         """Perform deep analysis."""
         if self.current_target:
             self.log_viewer.add_log("INFO", "Starting deep analysis", "Analysis")
-            # Implementation would perform deep analysis
+
+            def run_deep_analysis():
+                try:
+                    from intellicrack.protection.icp_backend import IntellicrackProtectionBackend
+                    from intellicrack.protection.intellicrack_protection_advanced import AdvancedProtectionAnalyzer
+
+                    backend = IntellicrackProtectionBackend()
+                    results = backend.analyze_file(str(self.current_target), quick_mode=False)
+
+                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Running advanced analysis...", "Analysis"))
+
+                    advanced = AdvancedProtectionAnalyzer()
+                    advanced_results = advanced.analyze_binary(str(self.current_target))
+
+                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Deep analysis complete", "Analysis"))
+
+                    if results.get('protections_found'):
+                        for protection in results['protections_found']:
+                            self.root.after(0, lambda p=protection: self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection"))
+
+                    if advanced_results.get('entropy_sections'):
+                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Entropy analysis completed", "Analysis"))
+
+                    if advanced_results.get('suspicious_patterns'):
+                        for pattern in advanced_results['suspicious_patterns']:
+                            self.root.after(0, lambda p=pattern: self.log_viewer.add_log("WARN", f"Suspicious pattern: {p}", "Detection"))
+
+                except Exception as e:
+                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Deep analysis failed: {err}", "Analysis"))
+
+            import threading
+            threading.Thread(target=run_deep_analysis, daemon=True).start()
         else:
             messagebox.showwarning("No Target", "Please select a file to analyze")
 
@@ -2724,7 +2979,48 @@ if __name__ == "__main__":
 
         if folder:
             self.log_viewer.add_log("INFO", f"Starting batch analysis of {folder}", "Analysis")
-            # Implementation would perform batch analysis
+
+            def run_batch():
+                try:
+                    import os
+
+                    from intellicrack.protection.icp_backend import IntellicrackProtectionBackend
+
+                    backend = IntellicrackProtectionBackend()
+                    target_extensions = ['.exe', '.dll', '.so', '.dylib', '.bin']
+
+                    files_to_analyze = []
+                    for root, _dirs, files in os.walk(folder):
+                        for file in files:
+                            if any(file.lower().endswith(ext) for ext in target_extensions):
+                                files_to_analyze.append(os.path.join(root, file))
+
+                    total_files = len(files_to_analyze)
+                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Found {total_files} files to analyze", "Analysis"))
+
+                    for idx, file_path in enumerate(files_to_analyze, 1):
+                        try:
+                            self.root.after(0, lambda i=idx, t=total_files, f=file_path:
+                                self.log_viewer.add_log("INFO", f"Analyzing {i}/{t}: {os.path.basename(f)}", "Analysis"))
+
+                            results = backend.analyze_file(file_path, quick_mode=True)
+
+                            if results.get('protections_found'):
+                                for protection in results['protections_found']:
+                                    self.root.after(0, lambda f=file_path, p=protection:
+                                        self.log_viewer.add_log("INFO", f"{os.path.basename(f)}: {p}", "Detection"))
+
+                        except Exception as e:
+                            self.root.after(0, lambda f=file_path, err=e:
+                                self.log_viewer.add_log("ERROR", f"Failed to analyze {os.path.basename(f)}: {err}", "Analysis"))
+
+                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Batch analysis complete", "Analysis"))
+
+                except Exception as e:
+                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Batch analysis failed: {err}", "Analysis"))
+
+            import threading
+            threading.Thread(target=run_batch, daemon=True).start()
 
     def export_results(self):
         """Export analysis results."""
@@ -2736,14 +3032,94 @@ if __name__ == "__main__":
 
         if filename:
             self.log_viewer.add_log("INFO", f"Exporting results to {filename}", "Export")
-            # Implementation would export results
+
+            try:
+                import json
+                from datetime import datetime
+
+                results_data = {
+                    "timestamp": datetime.now().isoformat(),
+                    "target": str(self.current_target) if self.current_target else None,
+                    "logs": []
+                }
+
+                log_text = self.log_viewer.log_display.get("1.0", tk.END)
+                results_data["logs"] = log_text.strip().split('\n')
+
+                if filename.endswith('.json'):
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        json.dump(results_data, f, indent=2)
+                elif filename.endswith('.pdf'):
+                    from intellicrack.handlers.matplotlib_handler import PdfPages, plt
+
+                    with PdfPages(filename) as pdf:
+                        fig, ax = plt.subplots(figsize=(8.5, 11))
+                        ax.axis('off')
+
+                        text_content = "Intellicrack Analysis Report\n\n"
+                        text_content += f"Timestamp: {results_data['timestamp']}\n"
+                        text_content += f"Target: {results_data['target']}\n\n"
+                        text_content += "Logs:\n" + "\n".join(results_data['logs'][:100])
+
+                        ax.text(0.1, 0.9, text_content, transform=ax.transAxes,
+                               fontsize=8, verticalalignment='top', family='monospace')
+
+                        pdf.savefig(fig, bbox_inches='tight')
+                        plt.close()
+                else:
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write("Intellicrack Analysis Report\n")
+                        f.write(f"Timestamp: {results_data['timestamp']}\n")
+                        f.write(f"Target: {results_data['target']}\n\n")
+                        f.write("Logs:\n")
+                        f.write("\n".join(results_data['logs']))
+
+                self.log_viewer.add_log("INFO", "Results exported successfully", "Export")
+                messagebox.showinfo("Export Complete", f"Results exported to {filename}")
+
+            except Exception as e:
+                self.log_viewer.add_log("ERROR", f"Export failed: {e}", "Export")
+                messagebox.showerror("Export Error", f"Failed to export results: {e}")
 
     # Tool operations
     def open_hex_editor(self):
         """Open hex editor."""
         if self.current_target:
             self.log_viewer.add_log("INFO", f"Opening hex editor for {self.current_target}", "Tools")
-            # Implementation would open hex editor
+
+            hex_window = tk.Toplevel(self.root)
+            hex_window.title(f"Hex Editor - {self.current_target.name}")
+            hex_window.geometry("900x600")
+
+            frame = ttk.Frame(hex_window, padding=10)
+            frame.pack(fill=tk.BOTH, expand=True)
+
+            text_frame = ttk.Frame(frame)
+            text_frame.pack(fill=tk.BOTH, expand=True)
+
+            scrollbar = ttk.Scrollbar(text_frame)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            hex_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            hex_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.config(command=hex_text.yview)
+
+            try:
+                with open(self.current_target, 'rb') as f:
+                    data = f.read(1024 * 1024)
+
+                for offset in range(0, len(data), 16):
+                    chunk = data[offset:offset + 16]
+                    hex_part = ' '.join(f'{b:02X}' for b in chunk)
+                    ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in chunk)
+                    line = f"{offset:08X}  {hex_part:<48}  {ascii_part}\n"
+                    hex_text.insert(tk.END, line)
+
+                hex_text.config(state=tk.DISABLED)
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to open hex editor: {e}")
+                hex_window.destroy()
         else:
             messagebox.showwarning("No Target", "Please select a file first")
 
@@ -2751,7 +3127,77 @@ if __name__ == "__main__":
         """Open disassembler."""
         if self.current_target:
             self.log_viewer.add_log("INFO", f"Opening disassembler for {self.current_target}", "Tools")
-            # Implementation would open disassembler
+
+            disasm_window = tk.Toplevel(self.root)
+            disasm_window.title(f"Disassembler - {self.current_target.name}")
+            disasm_window.geometry("1000x700")
+
+            frame = ttk.Frame(disasm_window, padding=10)
+            frame.pack(fill=tk.BOTH, expand=True)
+
+            text_frame = ttk.Frame(frame)
+            text_frame.pack(fill=tk.BOTH, expand=True)
+
+            scrollbar = ttk.Scrollbar(text_frame)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            disasm_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            disasm_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.config(command=disasm_text.yview)
+
+            try:
+                import pefile
+                from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
+                with open(self.current_target, 'rb') as f:
+                    data = f.read()
+
+                try:
+                    pe = pefile.PE(data=data)
+                    is_64bit = pe.FILE_HEADER.Machine == 0x8664
+                    mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+                    for section in pe.sections:
+                        if section.Characteristics & 0x20000000:
+                            md = Cs(CS_ARCH_X86, mode)
+                            section_data = section.get_data()
+                            base_addr = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
+
+                            disasm_text.insert(tk.END, f"Section: {section.Name.decode('utf-8', errors='ignore').strip()}\n")
+                            disasm_text.insert(tk.END, f"Address: 0x{base_addr:08X}\n\n")
+
+                            count = 0
+                            for insn in md.disasm(section_data[:min(len(section_data), 4096)], base_addr):
+                                line = f"0x{insn.address:08X}:  {insn.mnemonic:8s} {insn.op_str}\n"
+                                disasm_text.insert(tk.END, line)
+                                count += 1
+                                if count >= 500:
+                                    disasm_text.insert(tk.END, "\n... (truncated, showing first 500 instructions)\n")
+                                    break
+
+                            disasm_text.insert(tk.END, "\n" + "="*80 + "\n\n")
+
+                except Exception:
+                    md = Cs(CS_ARCH_X86, CS_MODE_32)
+                    disasm_text.insert(tk.END, "Binary format not recognized, attempting raw disassembly...\n\n")
+
+                    count = 0
+                    for insn in md.disasm(data[:min(len(data), 4096)], 0x1000):
+                        line = f"0x{insn.address:08X}:  {insn.mnemonic:8s} {insn.op_str}\n"
+                        disasm_text.insert(tk.END, line)
+                        count += 1
+                        if count >= 500:
+                            disasm_text.insert(tk.END, "\n... (truncated)\n")
+                            break
+
+                disasm_text.config(state=tk.DISABLED)
+
+            except ImportError:
+                messagebox.showerror("Error", "Capstone library not available")
+                disasm_window.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to disassemble: {e}")
+                disasm_window.destroy()
         else:
             messagebox.showwarning("No Target", "Please select a file first")
 
@@ -2759,21 +3205,95 @@ if __name__ == "__main__":
         """Open string extractor."""
         if self.current_target:
             self.log_viewer.add_log("INFO", f"Extracting strings from {self.current_target}", "Tools")
-            # Implementation would extract strings
+
+            strings_window = tk.Toplevel(self.root)
+            strings_window.title(f"Strings - {self.current_target.name}")
+            strings_window.geometry("800x600")
+
+            frame = ttk.Frame(strings_window, padding=10)
+            frame.pack(fill=tk.BOTH, expand=True)
+
+            text_frame = ttk.Frame(frame)
+            text_frame.pack(fill=tk.BOTH, expand=True)
+
+            scrollbar = ttk.Scrollbar(text_frame)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+            strings_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            strings_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.config(command=strings_text.yview)
+
+            try:
+                import re
+
+                with open(self.current_target, 'rb') as f:
+                    data = f.read()
+
+                ascii_strings = re.findall(b'[ -~]{4,}', data)
+                unicode_strings = re.findall(b'(?:[ -~]\x00){4,}', data)
+
+                strings_text.insert(tk.END, f"ASCII Strings ({len(ascii_strings)}):\n")
+                strings_text.insert(tk.END, "=" * 80 + "\n\n")
+
+                for s in ascii_strings[:1000]:
+                    try:
+                        decoded = s.decode('ascii')
+                        strings_text.insert(tk.END, f"{decoded}\n")
+                    except (UnicodeDecodeError, AttributeError):
+                        pass
+
+                if len(ascii_strings) > 1000:
+                    strings_text.insert(tk.END, f"\n... ({len(ascii_strings) - 1000} more strings not shown)\n")
+
+                strings_text.insert(tk.END, "\n\n" + "=" * 80 + "\n")
+                strings_text.insert(tk.END, f"Unicode Strings ({len(unicode_strings)}):\n")
+                strings_text.insert(tk.END, "=" * 80 + "\n\n")
+
+                for s in unicode_strings[:1000]:
+                    try:
+                        decoded = s.decode('utf-16-le')
+                        strings_text.insert(tk.END, f"{decoded}\n")
+                    except (UnicodeDecodeError, AttributeError):
+                        pass
+
+                if len(unicode_strings) > 1000:
+                    strings_text.insert(tk.END, f"\n... ({len(unicode_strings) - 1000} more strings not shown)\n")
+
+                strings_text.config(state=tk.DISABLED)
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to extract strings: {e}")
+                strings_window.destroy()
         else:
             messagebox.showwarning("No Target", "Please select a file first")
 
     def open_plugin_manager(self):
         """Open plugin manager."""
         self.log_viewer.add_log("INFO", "Opening plugin manager", "Tools")
-        # Implementation would open plugin manager dialog
-        messagebox.showinfo("Plugin Manager", "Plugin manager feature not yet implemented")
+
+        from intellicrack.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
+
+        try:
+            dialog = PluginManagerDialog(self.root)
+            dialog.exec()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open plugin manager: {e}")
 
     # View operations
     def toggle_panels(self):
         """Toggle panel visibility."""
-        # Implementation would toggle panel visibility
         self.log_viewer.add_log("INFO", "Toggling panel visibility", "View")
+
+        if hasattr(self, 'file_explorer_visible'):
+            self.file_explorer_visible = not self.file_explorer_visible
+        else:
+            self.file_explorer_visible = False
+
+        if hasattr(self, 'file_explorer') and self.file_explorer:
+            if self.file_explorer_visible:
+                self.file_explorer.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            else:
+                self.file_explorer.pack_forget()
 
     def reset_layout(self):
         """Reset layout to default."""
@@ -2960,7 +3480,7 @@ Licensed under GPL v3
 
 
 def main():
-    """Main entry point."""
+    """Run the UI enhancement module application."""
     app = UIEnhancementModule()
     app.run()
 

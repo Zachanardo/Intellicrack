@@ -175,7 +175,7 @@ class EmulatorRequiredDecorator:
 
     @staticmethod
     def requires_qemu(func):
-        """Decorator for functions requiring QEMU."""
+        """Decorate functions requiring QEMU."""
 
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager
@@ -200,7 +200,7 @@ class EmulatorRequiredDecorator:
 
     @staticmethod
     def requires_qiling(func):
-        """Decorator for functions requiring Qiling."""
+        """Decorate functions requiring Qiling."""
 
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager

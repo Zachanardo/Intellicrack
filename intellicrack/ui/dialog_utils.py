@@ -1,4 +1,4 @@
-"""Common dialog utilities and methods.
+"""Provide dialog utilities and methods.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,7 +29,7 @@ from .handlers.pyqt6_handler import (
 
 
 def setup_footer(dialog, layout):
-    """Setup standard dialog footer with status and close button."""
+    """Set up standard dialog footer with status and close button."""
     footer_layout = QHBoxLayout()
 
     dialog.status_label = QLabel("Ready")
@@ -46,15 +46,28 @@ def setup_footer(dialog, layout):
 
 
 def setup_binary_header(dialog, layout):
-    """Setup header with binary selection."""
+    """Set up header with binary selection."""
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
 
-    dialog.binary_path_edit = QLineEdit(getattr(dialog, "binary_path", ""))
-    dialog.binary_path_edit.setPlaceholderText("Select target binary file...")
+    # Set up binary path input field with initial value
+    current_path = getattr(dialog, "binary_path", "")
+    dialog.binary_path_edit = QLineEdit(current_path if current_path else "")
+
+    # Set tooltip to guide users on expected file types
+    dialog.binary_path_edit.setToolTip(
+        "Enter or browse for executable binary path\n"
+        "Supported formats: PE (*.exe, *.dll), ELF (*.so), Mach-O (*.dylib)"
+    )
+
+    # Configure text field appearance and behavior
+    dialog.binary_path_edit.setMinimumWidth(300)
+    if not current_path:
+        dialog.binary_path_edit.setStyleSheet("QLineEdit { color: #888; }")
 
     dialog.browse_btn = QPushButton("Browse")
     dialog.browse_btn.clicked.connect(dialog.browse_binary)
+    dialog.browse_btn.setToolTip("Open file browser to select target binary")
 
     header_layout.addWidget(dialog.binary_path_edit)
     header_layout.addWidget(dialog.browse_btn)
@@ -68,7 +81,7 @@ def connect_binary_signals(dialog):
 
 
 def browse_binary_file(dialog):
-    """Standard binary file browser."""
+    """Browse for binary file using standard file dialog."""
     file_path, _ = QFileDialog.getOpenFileName(
         dialog,
         "Select Target Binary",

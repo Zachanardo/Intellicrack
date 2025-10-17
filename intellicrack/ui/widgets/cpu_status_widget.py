@@ -66,7 +66,7 @@ class CPUMonitorWorker(QObject):
         self.running = False
 
     def _monitor_loop(self):
-        """Main monitoring loop."""
+        """Run monitoring loop."""
         while self.running:
             try:
                 cpu_data = self._collect_cpu_data()
@@ -165,7 +165,7 @@ class CPUStatusWidget(QWidget):
         self.start_monitoring()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -263,7 +263,7 @@ class CPUStatusWidget(QWidget):
         main_layout.addWidget(scroll_area)
 
     def setup_monitoring(self):
-        """Setup CPU monitoring thread."""
+        """Set up CPU monitoring thread."""
         self.monitor_thread = QThread()
         self.monitor_worker = CPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)

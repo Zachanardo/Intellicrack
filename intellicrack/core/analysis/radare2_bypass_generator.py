@@ -1239,7 +1239,7 @@ if __name__ == "__main__":
     def _generate_custom_keygen_code(self, custom_logic: dict, crypto_details: dict) -> str:
         """Generate custom algorithm keygen."""
         return '''#!/usr/bin/env python3
-"""Custom Algorithm Keygen"""
+"""Customize Algorithm Keygen"""
 
 def custom_transform(data, key):
     result = []
@@ -1262,7 +1262,7 @@ if __name__ == "__main__":
     def _generate_generic_keygen_code(self, crypto_op: dict, crypto_details: dict) -> str:
         """Generate generic pattern-based keygen."""
         return '''#!/usr/bin/env python3
-"""Generic Pattern-based Keygen"""
+"""Provide Pattern-based Keygen"""
 import random
 import string
 

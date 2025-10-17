@@ -958,7 +958,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
 
 class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
-    """Custom loss function for license protection detection."""
+    """Customize loss function for license protection detection."""
 
     def __init__(self, num_classes: int = 20, class_weights: Optional[torch.Tensor] = None):
         """Initialize multi-objective loss function."""

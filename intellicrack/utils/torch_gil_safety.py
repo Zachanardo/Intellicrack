@@ -28,7 +28,7 @@ os.environ.setdefault("BLIS_NUM_THREADS", "1")
 
 
 def torch_thread_safe(func: Callable) -> Callable:
-    """Decorator to ensure PyTorch operations are thread-safe.
+    """Ensure PyTorch operations are thread-safe.
 
     This decorator wraps PyTorch operations with proper locking
     to prevent GIL-related errors with pybind11 extensions.

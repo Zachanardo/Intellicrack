@@ -1452,7 +1452,7 @@ send({ type: 'rpc_ready' });
 
 
 class FridaAdvancedHooking:
-    """Main class for advanced hooking features."""
+    """Run class for advanced hooking features."""
 
     def __init__(self, session: frida.core.Session):
         """Initialize the FridaAdvancedHooking with a Frida session.

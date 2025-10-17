@@ -6891,7 +6891,7 @@ class RuntimeKeyExtractor:
         return bytes(handler_code)
 
     def _hook_unix_apis(self, pid: int) -> dict:
-        """Hook Unix system calls for license interception."""
+        """Intercept Unix system calls for license monitoring."""
         hooked_data = {"system_calls": [], "file_operations": [], "network_calls": []}
 
         # Use strace or ptrace to monitor system calls
@@ -10572,7 +10572,7 @@ class ProxyInterceptor:
 
 
 class LicenseServerEmulator:
-    """Main license server emulator class."""
+    """Run license server emulator class."""
 
     def __init__(self, config: dict[str, Any] = None):
         """Initialize comprehensive license server emulator with all protection systems."""
@@ -10632,7 +10632,7 @@ class LicenseServerEmulator:
         self.logger.info("License server emulator initialized")
 
     def _setup_middleware(self):
-        """Setup FastAPI middleware."""
+        """Configure FastAPI middleware."""
         if self.config["enable_cors"]:
             self.app.add_middleware(
                 CORSMiddleware,
@@ -10643,7 +10643,7 @@ class LicenseServerEmulator:
             )
 
     def _setup_routes(self):
-        """Setup FastAPI routes."""
+        """Configure FastAPI routes."""
 
         @self.app.get("/")
         async def root():
@@ -11036,7 +11036,7 @@ class LicenseServerEmulator:
             self.logger.error(f"Failed to start DNS server: {e}")
 
     def _dns_server_loop(self) -> None:
-        """Main DNS server loop."""
+        """Run DNS server loop."""
         while self.dns_running:
             try:
                 data, addr = self.dns_socket.recvfrom(512)
@@ -11492,7 +11492,7 @@ def run_network_license_emulator(config: dict = None) -> None:
 
 
 def main():
-    """Main entry point."""
+    """Run license server emulator main program."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack License Server Emulator")

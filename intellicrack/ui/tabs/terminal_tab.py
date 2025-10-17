@@ -110,7 +110,7 @@ class TerminalTab(BaseTab):
 
         self.new_session_btn = QPushButton("📟 New Session")
         self.new_session_btn.setToolTip("Create a new terminal session")
-        self.new_session_btn.clicked.connect(self.create_new_session)
+        self.new_session_btn.clicked.connect(lambda: self.create_new_session())
         toolbar.addWidget(self.new_session_btn)
 
         self.clear_btn = QPushButton("🗑 Clear")

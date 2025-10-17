@@ -647,7 +647,7 @@ class LoadBalancer:
 
 
 class RealToolCommunicator:
-    """Main communicator for real tool integration."""
+    """Run communicator for real tool integration."""
 
     def __init__(self, name: str = "intellicrack"):
         """Initialize the RealToolCommunicator with all required components.

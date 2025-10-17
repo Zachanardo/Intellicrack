@@ -71,7 +71,7 @@ def get_windows_ntdll():
 
 # Common Windows constants
 class WindowsConstants:
-    """Common Windows constants used across modules."""
+    """Provide Windows constants used across modules."""
 
     CREATE_SUSPENDED = 0x00000004
     CREATE_NO_WINDOW = 0x08000000

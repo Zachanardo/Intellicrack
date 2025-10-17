@@ -56,7 +56,7 @@ class StructureVisualizerWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup the UI components."""
+        """Set up the UI components."""
         layout = QVBoxLayout(self)
 
         # Controls

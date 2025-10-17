@@ -51,7 +51,7 @@ except ImportError as e:
 
 
 def get_targetprocess_pid(binary_path: str) -> int | None:
-    """Gets PID of target process, handling multiple instances and partial matches.
+    """Get PID of target process, handling multiple instances and partial matches.
 
     Searches for processes matching the given binary name and handles cases where
     multiple instances are found. In GUI mode, prompts the user to select the

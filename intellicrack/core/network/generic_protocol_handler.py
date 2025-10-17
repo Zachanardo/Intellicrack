@@ -1,4 +1,4 @@
-"""Generic protocol handler for network communication and data processing."""
+"""Provide protocol handler for network communication and data processing."""
 
 import socket
 import threading
@@ -32,7 +32,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 
 class GenericProtocolHandler(LicenseProtocolHandler):
-    """Generic implementation of the LicenseProtocolHandler abstract class.
+    """Provide implementation of the LicenseProtocolHandler abstract class.
 
     This provides a working implementation that can handle basic TCP/UDP
     protocol interactions for license verification systems.

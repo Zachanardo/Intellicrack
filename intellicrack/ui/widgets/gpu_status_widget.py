@@ -66,7 +66,7 @@ class GPUMonitorWorker(QObject):
         self.running = False
 
     def _monitor_loop(self):
-        """Main monitoring loop using thread sleep."""
+        """Run monitoring loop using thread sleep."""
         while self.running:
             try:
                 gpu_data = self._collect_gpu_data()
@@ -255,7 +255,7 @@ class GPUStatusWidget(QWidget):
         self.start_monitoring()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -370,7 +370,7 @@ class GPUStatusWidget(QWidget):
         main_layout.addWidget(scroll_area)
 
     def setup_monitoring(self):
-        """Setup GPU monitoring thread."""
+        """Set up GPU monitoring thread."""
         self.monitor_thread = QThread()
         self.monitor_worker = GPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)

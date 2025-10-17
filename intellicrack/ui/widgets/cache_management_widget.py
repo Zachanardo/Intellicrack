@@ -269,7 +269,7 @@ class CacheManagementWidget(QWidget):
         self.refresh_stats()
 
     def setup_timer(self):
-        """Setup auto-refresh timer."""
+        """Set up auto-refresh timer."""
         self.timer = QTimer()
         self.timer.timeout.connect(self.refresh_stats)
         self.timer.start(5000)  # Refresh every 5 seconds

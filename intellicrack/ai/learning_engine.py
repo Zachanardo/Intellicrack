@@ -1101,7 +1101,7 @@ class FailureAnalysisEngine:
 
 
 class AILearningEngine:
-    """Main AI learning and evolution engine."""
+    """Run AI learning and evolution engine."""
 
     def __init__(self, db_path: Path | None = None):
         """Initialize the AI learning engine.

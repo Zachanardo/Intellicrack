@@ -418,7 +418,7 @@ class ResultSerializer:
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder for complex types."""
+    """Customize JSON encoder for complex types."""
 
     def default(self, obj):
         """Encode complex objects to JSON-serializable format."""

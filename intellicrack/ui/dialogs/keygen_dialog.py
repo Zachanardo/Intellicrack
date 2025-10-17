@@ -199,7 +199,7 @@ class KeygenDialog(BaseDialog):
             self.auto_analyze_binary()
 
     def setup_ui(self):
-        """Setup the user interface."""
+        """Set up the user interface."""
         layout = QVBoxLayout(self)
 
         # Title and binary selection
@@ -212,12 +212,12 @@ class KeygenDialog(BaseDialog):
         self.setup_footer(layout)
 
     def setup_header(self, layout):
-        """Setup header with binary selection."""
+        """Set up header with binary selection."""
         # Use the base class method with analyze button
         super().setup_header(layout, show_label=True, extra_buttons=[("Analyze Binary", self.analyze_binary)])
 
     def setup_tabs(self, layout):
-        """Setup main tab widget."""
+        """Set up main tab widget."""
         self.tabs = QTabWidget()
 
         # Single Key Generation Tab
@@ -235,7 +235,7 @@ class KeygenDialog(BaseDialog):
         layout.addWidget(self.tabs)
 
     def setup_single_tab(self):
-        """Setup single key generation tab."""
+        """Set up single key generation tab."""
         single_widget = QWidget()
         layout = QVBoxLayout(single_widget)
 
@@ -336,7 +336,7 @@ class KeygenDialog(BaseDialog):
         self.tabs.addTab(single_widget, "Single Key")
 
     def setup_batch_tab(self):
-        """Setup batch generation tab."""
+        """Set up batch generation tab."""
         batch_widget = QWidget()
         layout = QVBoxLayout(batch_widget)
 
@@ -435,7 +435,7 @@ class KeygenDialog(BaseDialog):
         self.tabs.addTab(batch_widget, "Batch Generation")
 
     def setup_analysis_tab(self):
-        """Setup binary analysis tab."""
+        """Set up binary analysis tab."""
         analysis_widget = QWidget()
         layout = QVBoxLayout(analysis_widget)
 
@@ -449,7 +449,7 @@ class KeygenDialog(BaseDialog):
         self.tabs.addTab(analysis_widget, "Binary Analysis")
 
     def setup_management_tab(self):
-        """Setup key management tab."""
+        """Set up key management tab."""
         management_widget = QWidget()
         layout = QVBoxLayout(management_widget)
 
@@ -478,7 +478,7 @@ class KeygenDialog(BaseDialog):
         self.tabs.addTab(management_widget, "Key Management")
 
     def setup_footer(self, layout):
-        """Setup footer with status and close button."""
+        """Set up footer with status and close button."""
         from ..dialog_utils import setup_footer
 
         setup_footer(self, layout)

@@ -62,7 +62,7 @@ class BypassStrategy:
 
 
 class IntegrityCheckDetector:
-    """Detects integrity checking mechanisms in binaries."""
+    """Detect integrity checking mechanisms in binaries."""
 
     def __init__(self):
         """Initialize the IntegrityCheckDetector with disassembler and pattern databases."""
@@ -821,7 +821,7 @@ class IntegrityBypassEngine:
 
 
 class IntegrityCheckDefeatSystem:
-    """Main integrity check defeat system."""
+    """Run integrity check defeat system."""
 
     def __init__(self):
         """Initialize the IntegrityCheckDefeatSystem with detector and bypasser components."""

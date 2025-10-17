@@ -32,7 +32,7 @@ TOOL_REGISTRY = {}
 
 
 def main(args: list[str] | None = None):
-    """Main entry point for Intellicrack.
+    """Run entry point for Intellicrack.
 
     Args:
         args: Command line arguments

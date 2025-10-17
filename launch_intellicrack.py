@@ -147,11 +147,12 @@ if __name__ == "__main__":
         print(f"TCL_LIBRARY exists: {tcl_exists}", file=sys.stderr)
         print(f"init.tcl exists: {init_exists}", file=sys.stderr)
 
-    # Test _tkinter import BEFORE running main application
-    try:
-        import _tkinter
+    # Test _tkinter availability BEFORE running main application
+    import importlib.util
 
-        print("✅ SUCCESS: _tkinter imported successfully", file=sys.stderr)
+    _tkinter_spec = importlib.util.find_spec("_tkinter")
+    if _tkinter_spec is not None:
+        print("✅ SUCCESS: _tkinter module available", file=sys.stderr)
 
         # Test tkinter GUI creation
         try:
@@ -163,11 +164,8 @@ if __name__ == "__main__":
             print("✅ SUCCESS: tkinter GUI test passed - FULLY FUNCTIONAL!", file=sys.stderr)
         except Exception as e:
             print(f"❌ FAIL: tkinter GUI test failed: {e}", file=sys.stderr)
-
-    except ImportError as e:
-        print(f"❌ FAIL: _tkinter import failed in subprocess: {e}", file=sys.stderr)
-    except Exception as e:
-        print(f"❌ FAIL: Unexpected _tkinter error: {e}", file=sys.stderr)
+    else:
+        print("❌ FAIL: _tkinter module not available", file=sys.stderr)
 
     print("=== END DEBUG ===", file=sys.stderr)
     sys.exit(run_intellicrack())

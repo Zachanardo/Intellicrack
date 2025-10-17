@@ -49,7 +49,7 @@ class ComprehensiveR2Integration:
         }
 
     def integrate_with_application(self, main_app) -> bool:
-        """Main integration method that handles all types of applications.
+        """Integrate radare2 functionality with application.
 
         Args:
             main_app: The main application instance (any type)
@@ -261,7 +261,7 @@ class ComprehensiveR2Integration:
             self.logger.error(f"IntellicrackApp specific integration failed: {e}")
 
     def _setup_intellicrack_binary_sync(self, main_app):
-        """Setup binary path synchronization for IntellicrackApp."""
+        """Set up binary path synchronization for IntellicrackApp."""
         try:
             # Create a method to update binary path
             def update_binary_path():
@@ -281,7 +281,7 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Binary path sync setup failed: {e}")
 
     def _setup_intellicrack_signals(self, main_app):
-        """Setup signal connections for IntellicrackApp."""
+        """Set up signal connections for IntellicrackApp."""
         try:
             # Connect analysis completion to main app
             if hasattr(main_app, "update_analysis_results"):
@@ -300,7 +300,7 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Signal setup failed: {e}")
 
     def _setup_main_window_features(self, main_app):
-        """Setup features specific to QMainWindow."""
+        """Set up features specific to QMainWindow."""
         try:
             # Add toolbar items if toolbar exists
             if hasattr(main_app, "addToolBar"):
@@ -466,7 +466,7 @@ def get_comprehensive_integration() -> ComprehensiveR2Integration:
 
 
 def integrate_radare2_comprehensive(main_app) -> bool:
-    """Main entry point for comprehensive radare2 integration.
+    """Integrate radare2 comprehensively into application.
 
     This function provides the simplest way to integrate all radare2
     functionality into any Intellicrack application.

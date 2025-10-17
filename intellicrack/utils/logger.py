@@ -56,7 +56,7 @@ def log_message(message: str, level: str = "INFO") -> None:
 
 
 def log_function_call(func: F) -> F:
-    """Decorator to log function entry, exit, arguments, return value, and exceptions.
+    """Log function entry, exit, arguments, return value, and exceptions.
 
     Args:
         func: The function to decorate
@@ -72,7 +72,7 @@ def log_function_call(func: F) -> F:
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        """Wrapper function for debug logging."""
+        """Wrap function for debug logging."""
         # Check if we're already in a logging call to prevent recursion
         if hasattr(_local, "in_logger") and _local.in_logger:
             # Just call the function without logging to avoid recursion

@@ -1,4 +1,4 @@
-"""Common HTML templates to eliminate code duplication.
+"""Provide HTML templates to eliminate code duplication.
 
 Copyright (C) 2025 Zachary Flint
 

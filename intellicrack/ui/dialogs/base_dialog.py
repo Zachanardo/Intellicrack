@@ -119,7 +119,7 @@ class BaseDialog(QDialog):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def _setup_buttons(self, show_help: bool) -> None:
-        """Setup standardized button box with OK/Cancel and optional Help."""
+        """Set up standardized button box with OK/Cancel and optional Help."""
         buttons = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 
         if show_help:
@@ -145,7 +145,7 @@ class BaseDialog(QDialog):
         self.main_layout.addLayout(button_layout)
 
     def _setup_shortcuts(self) -> None:
-        """Setup keyboard shortcuts for the dialog."""
+        """Set up keyboard shortcuts for the dialog."""
         # Escape to cancel
         escape_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape_shortcut.activated.connect(self._on_reject)

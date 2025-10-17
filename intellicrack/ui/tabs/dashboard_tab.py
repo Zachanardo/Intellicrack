@@ -69,7 +69,7 @@ class DashboardTab(BaseTab):
         self.config_manager.register_callback("font", self.update_fonts)
 
     def setup_content(self):
-        """Setup the simplified dashboard content."""
+        """Set up the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
         layout = self.layout()  # Use existing layout from BaseTab
         layout.setSpacing(layout_config.panel_spacing)
@@ -403,7 +403,7 @@ class DashboardTab(BaseTab):
         return self.cpu_status
 
     def open_project(self):
-        """Simple project opening for Quick Start."""
+        """Perform project opening for Quick Start."""
         project_file, _ = QFileDialog.getOpenFileName(
             self,
             "Open Project",

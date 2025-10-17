@@ -1247,7 +1247,7 @@ def copy_to_clipboard(text: str) -> bool:
 
 
 def async_wrapper(func: Callable) -> Callable:
-    """Wrapper to run a function asynchronously in a thread.
+    """Wrap to run a function asynchronously in a thread.
 
     Args:
         func: Function to wrap for async execution
@@ -1272,7 +1272,7 @@ def async_wrapper(func: Callable) -> Callable:
 
 
 def hash_func(data: Any, algorithm: str = "sha256") -> str:
-    """Generic hash function for any data type.
+    """Provide hash function for any data type.
 
     Args:
         data: Data to hash (bytes, string, or any JSON-serializable object)
@@ -2307,7 +2307,7 @@ def stop_training(training_id: str) -> bool:
 
 
 def on_training_finished(results: dict[str, Any]) -> None:
-    """Callback when training finishes.
+    """Handle callback for training finishes.
 
     Args:
         results: Dictionary containing training results and metrics

@@ -1,5 +1,4 @@
-"""
-Comprehensive radare2 Integration Utilities
+"""Comprehensive radare2 Integration Utilities
 
 Copyright (C) 2025 Zachary Flint
 
@@ -40,14 +39,13 @@ error_handler = get_error_handler()
 
 
 class R2Exception(Exception):
-    """Custom exception for radare2 operations."""
+    """Customize exception for radare2 operations."""
 
     pass
 
 
 class R2Session:
-    """
-    Advanced radare2 session manager with comprehensive analysis capabilities.
+    """Advanced radare2 session manager with comprehensive analysis capabilities.
 
     This class provides a production-grade interface to radare2, featuring:
     - Decompilation and pseudocode generation
@@ -59,12 +57,12 @@ class R2Session:
     """
 
     def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
-        """
-        Initialize radare2 session.
+        """Initialize radare2 session.
 
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
+
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -129,8 +127,7 @@ class R2Session:
             self.logger.info("Disconnected from radare2")
 
     def _execute_command(self, cmd: str, expect_json: bool = False) -> Union[str, Dict, List]:
-        """
-        Execute radare2 command with error handling.
+        """Execute radare2 command with error handling.
 
         Args:
             cmd: radare2 command
@@ -138,6 +135,7 @@ class R2Session:
 
         Returns:
             Command result
+
         """
         if not self.is_connected:
             raise R2Exception("Not connected to radare2")
@@ -165,11 +163,11 @@ class R2Session:
 
     # Analysis Commands
     def analyze_all(self, level: str = "aaa") -> bool:
-        """
-        Perform comprehensive analysis.
+        """Perform comprehensive analysis.
 
         Args:
             level: Analysis level (a, aa, aaa, aaaa)
+
         """
         try:
             self._execute_command(level)
@@ -193,27 +191,27 @@ class R2Session:
 
     # Decompilation Features
     def decompile_function(self, address: Union[str, int]) -> str:
-        """
-        Decompile function to pseudocode.
+        """Decompile function to pseudocode.
 
         Args:
             address: Function address
 
         Returns:
             Decompiled pseudocode
+
         """
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdc @ {addr}")
 
     def get_function_graph(self, address: Union[str, int]) -> Dict[str, Any]:
-        """
-        Get function control flow graph with decompilation.
+        """Get function control flow graph with decompilation.
 
         Args:
             address: Function address
 
         Returns:
             Graph data with decompilation info
+
         """
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdgj @ {addr}", expect_json=True)
@@ -225,14 +223,14 @@ class R2Session:
 
     # String Analysis
     def get_strings(self, min_length: int = 4) -> List[Dict[str, Any]]:
-        """
-        Get all strings from binary.
+        """Get all strings from binary.
 
         Args:
             min_length: Minimum string length
 
         Returns:
             List of string entries with metadata
+
         """
         return self._execute_command(f"izzj~{{length}}gte:{min_length}", expect_json=True)
 
@@ -241,14 +239,14 @@ class R2Session:
         return self._execute_command("izzj", expect_json=True)
 
     def search_strings(self, pattern: str) -> List[Dict[str, Any]]:
-        """
-        Search for strings matching pattern.
+        """Search for strings matching pattern.
 
         Args:
             pattern: Search pattern
 
         Returns:
             Matching strings with locations
+
         """
         return self._execute_command(f"/j {pattern}", expect_json=True)
 
@@ -303,11 +301,11 @@ class R2Session:
         return self._execute_command("irj", expect_json=True)
 
     def analyze_api_calls(self) -> Dict[str, List[str]]:
-        """
-        Analyze API calls and categorize them.
+        """Analyze API calls and categorize them.
 
         Returns:
             Dictionary of API categories and their functions
+
         """
         imports = self.get_imports()
 
@@ -360,8 +358,7 @@ class R2Session:
             return False
 
     def step_esil(self, address: Union[str, int], steps: int = 1) -> str:
-        """
-        Step through ESIL instructions.
+        """Step through ESIL instructions.
 
         Args:
             address: Starting address
@@ -369,6 +366,7 @@ class R2Session:
 
         Returns:
             ESIL execution result
+
         """
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"{steps}aes @ {addr}")
@@ -378,14 +376,14 @@ class R2Session:
         return self._execute_command("drj", expect_json=True)
 
     def emulate_function(self, address: Union[str, int]) -> Dict[str, Any]:
-        """
-        Emulate function execution using ESIL.
+        """Emulate function execution using ESIL.
 
         Args:
             address: Function address
 
         Returns:
             Emulation results
+
         """
         addr = hex(address) if isinstance(address, int) else address
 
@@ -440,11 +438,11 @@ class R2Session:
 
     # Vulnerability Detection
     def detect_vulnerabilities(self) -> Dict[str, List[Dict[str, Any]]]:
-        """
-        Detect potential vulnerabilities using radare2 analysis.
+        """Detect potential vulnerabilities using radare2 analysis.
 
         Returns:
             Dictionary of vulnerability types and findings
+
         """
         vulnerabilities = {
             "buffer_overflow": [],
@@ -557,14 +555,14 @@ class R2Session:
         return vulns
 
     def analyze_function_deeper(self, address: Union[str, int]) -> bool:
-        """
-        Perform deeper analysis on a specific function.
+        """Perform deeper analysis on a specific function.
 
         Args:
             address: Function address
 
         Returns:
             True if analysis succeeded, False otherwise
+
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
@@ -579,14 +577,14 @@ class R2Session:
             return False
 
     def run_optimization_passes(self, address: Union[str, int]) -> bool:
-        """
-        Run optimization passes on a function for better decompilation.
+        """Run optimization passes on a function for better decompilation.
 
         Args:
             address: Function address
 
         Returns:
             True if optimization succeeded, False otherwise
+
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
@@ -602,8 +600,7 @@ class R2Session:
 
 @contextmanager
 def r2_session(binary_path: str, radare2_path: Optional[str] = None):
-    """
-    Context manager for radare2 sessions.
+    """Context manager for radare2 sessions.
 
     Args:
         binary_path: Path to binary file
@@ -611,6 +608,7 @@ def r2_session(binary_path: str, radare2_path: Optional[str] = None):
 
     Yields:
         R2Session instance
+
     """
     session = R2Session(binary_path, radare2_path)
     try:
@@ -624,23 +622,23 @@ class R2BinaryDiff:
     """Binary comparison and diffing using radare2."""
 
     def __init__(self, binary1: str, binary2: str):
-        """
-        Initialize binary diff.
+        """Initialize binary diff.
 
         Args:
             binary1: Path to first binary
             binary2: Path to second binary
+
         """
         self.binary1 = binary1
         self.binary2 = binary2
         self.logger = logging.getLogger(__name__)
 
     def compare_functions(self) -> Dict[str, Any]:
-        """
-        Compare functions between two binaries.
+        """Compare functions between two binaries.
 
         Returns:
             Comparison results
+
         """
         results = {
             "binary1": self.binary1,
@@ -719,8 +717,7 @@ class R2BinaryDiff:
 
 
 def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Perform comprehensive radare2 analysis on a binary.
+    """Perform comprehensive radare2 analysis on a binary.
 
     Args:
         binary_path: Path to binary file
@@ -728,6 +725,7 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
 
     Returns:
         Complete analysis results
+
     """
     results = {
         "binary_path": binary_path,

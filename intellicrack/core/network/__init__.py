@@ -50,6 +50,7 @@ try:
     from intellicrack.plugins.custom_modules.license_server_emulator import (
         LicenseServerEmulator as NetworkLicenseServerEmulator,
     )
+
     LicenseServerEmulator = NetworkLicenseServerEmulator
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)

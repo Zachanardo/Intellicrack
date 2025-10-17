@@ -2595,7 +2595,7 @@ setInterval(() => {
 
 
 class FridaManager:
-    """Main Frida management class with all advanced features.
+    """Run Frida management class with all advanced features.
 
     Comprehensive Frida management system that integrates logging,
     protection detection, performance optimization, and hook batching.

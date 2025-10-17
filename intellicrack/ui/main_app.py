@@ -114,7 +114,7 @@ logger = logging.getLogger(__name__)
 
 
 class IntellicrackApp(QMainWindow):
-    """Main application window for Intellicrack, a comprehensive binary analysis and security research toolkit.
+    """Run application window for Intellicrack, a comprehensive binary analysis and security research toolkit.
 
     This class serves as the central orchestrator for the entire Intellicrack application, managing
     multiple analysis engines, UI components, tabs, plugins, and external tool integrations.

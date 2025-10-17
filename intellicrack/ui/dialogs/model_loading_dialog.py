@@ -52,7 +52,7 @@ class ModelLoadingDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
     def setup_content(self, layout):
-        """Setup the UI content."""
+        """Set up the UI content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 

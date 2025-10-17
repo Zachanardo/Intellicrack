@@ -92,7 +92,7 @@ class TestScriptDialog(BaseDialog):
         self.start_comprehensive_test()
 
     def setup_content(self, layout):
-        """Setup the testing dialog UI content."""
+        """Set up the testing dialog UI content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -172,7 +172,7 @@ class TestScriptDialog(BaseDialog):
         layout.addLayout(button_layout)
 
     def setup_test_environment(self):
-        """Setup secure testing environment for script validation."""
+        """Set up secure testing environment for script validation."""
         self.test_environment = {
             "sandbox_enabled": True,
             "network_isolated": True,
@@ -954,7 +954,7 @@ class TestScriptDialog(BaseDialog):
 
 
 class PythonHighlighter(QSyntaxHighlighter):
-    """Simple Python syntax highlighter."""
+    """Perform Python syntax highlighter."""
 
     def __init__(self, parent=None):
         """Initialize the PythonHighlighter with default values."""
@@ -1147,7 +1147,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.connect_signals()
 
     def setup_content(self, layout):
-        """Setup the user interface content."""
+        """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -1161,12 +1161,12 @@ class ScriptGeneratorDialog(BaseDialog):
         self.setup_footer(layout)
 
     def setup_header(self, layout):
-        """Setup header with binary selection."""
+        """Set up header with binary selection."""
         # Use the base class method
         super().setup_header(layout, show_label=True)
 
     def setup_main_content(self, layout):
-        """Setup main content area."""
+        """Set up main content area."""
         splitter = QSplitter(Qt.Horizontal)
 
         # Left panel - Script types and configuration
@@ -1181,7 +1181,7 @@ class ScriptGeneratorDialog(BaseDialog):
         layout.addWidget(splitter)
 
     def setup_left_panel(self, splitter):
-        """Setup left configuration panel."""
+        """Set up left configuration panel."""
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
 
@@ -1223,7 +1223,7 @@ class ScriptGeneratorDialog(BaseDialog):
         splitter.addWidget(left_widget)
 
     def setup_bypass_config(self):
-        """Setup bypass script configuration."""
+        """Set up bypass script configuration."""
         self.bypass_config = QGroupBox("Bypass Script Configuration")
         layout = QGridLayout(self.bypass_config)
 
@@ -1262,7 +1262,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.config_layout.addWidget(self.bypass_config)
 
     def setup_exploit_config(self):
-        """Setup exploit script configuration."""
+        """Set up exploit script configuration."""
         self.exploit_config = QGroupBox("Exploit Script Configuration")
         layout = QGridLayout(self.exploit_config)
 
@@ -1300,7 +1300,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.exploit_config.hide()
 
     def setup_strategy_config(self):
-        """Setup strategy configuration."""
+        """Set up strategy configuration."""
         self.strategy_config = QGroupBox("Exploit Strategy Configuration")
         layout = QGridLayout(self.strategy_config)
 
@@ -1348,7 +1348,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.strategy_config.hide()
 
     def setup_right_panel(self, splitter):
-        """Setup right script display panel."""
+        """Set up right script display panel."""
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
 
@@ -1403,7 +1403,7 @@ class ScriptGeneratorDialog(BaseDialog):
         splitter.addWidget(right_widget)
 
     def setup_footer(self, layout):
-        """Setup footer with status and close button."""
+        """Set up footer with status and close button."""
         footer_layout = QHBoxLayout()
 
         self.status_label = QLabel("Ready")

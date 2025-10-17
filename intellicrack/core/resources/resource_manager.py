@@ -246,7 +246,7 @@ class VMResource(ManagedResource):
 
 
 class ResourceManager:
-    """Main resource management class."""
+    """Run resource management class."""
 
     def __init__(
         self,

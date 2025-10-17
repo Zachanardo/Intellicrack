@@ -208,7 +208,7 @@ Please provide:
 
 
 class LLMHandler(QObject):
-    """Handler for LLM integration with protection analysis results.
+    """Handle LLM integration with protection analysis results.
 
     This handler manages the interaction between protection analysis
     and LLM tools, enabling AI-powered insights and suggestions.

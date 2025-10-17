@@ -114,7 +114,7 @@ class ProtectionAnalysisThread(QThread):
 
 
 class IntellicrackProtectionWidget(QWidget):
-    """Main widget for displaying Intellicrack protection detection results."""
+    """Run widget for displaying Intellicrack protection detection results."""
 
     # Signals
     #: protection_name, bypass_recommendations (type: str, list)

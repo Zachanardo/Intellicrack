@@ -1,4 +1,4 @@
-"""Custom modules plugin initialization for Intellicrack.
+"""Customize modules plugin initialization for Intellicrack.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.

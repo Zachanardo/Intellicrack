@@ -379,7 +379,7 @@ import struct
 import time
 
 def custom_keygen(seed):
-    """Custom license generation algorithm."""
+    """Customize license generation algorithm."""
     # Custom algorithm (reverse-engineered)
     magic = 0xDEADBEEF
 

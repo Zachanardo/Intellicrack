@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class SplashScreen(QSplashScreen):
-    """Custom splash screen with progress bar for Intellicrack.
+    """Customize splash screen with progress bar for Intellicrack.
 
     Shows loading progress during application initialization.
     """

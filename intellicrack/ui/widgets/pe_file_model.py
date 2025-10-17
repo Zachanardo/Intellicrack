@@ -28,7 +28,7 @@ except ImportError as e:
 
 @dataclass
 class FileStructure:
-    """Generic file structure information."""
+    """Provide file structure information."""
 
     name: str
     offset: int

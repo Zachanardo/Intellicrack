@@ -157,7 +157,7 @@ class FridaServerManager:
             compressed_path.unlink()
 
             if self._platform != "windows":
-                os.chmod(self._get_server_path(), 0o755)
+                os.chmod(self._get_server_path(), 0o700)
 
             print("[FridaServerManager] Download complete!")
             return True

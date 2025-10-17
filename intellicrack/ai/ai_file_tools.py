@@ -394,7 +394,7 @@ Files:
 
 
 class AIFileTools:
-    """Main class providing file system tools for AI analysis."""
+    """Run class providing file system tools for AI analysis."""
 
     def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024):
         """Initialize AI file tools with app instance and optional max file size.

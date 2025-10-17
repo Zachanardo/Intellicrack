@@ -377,7 +377,7 @@ class ScriptDisplayDialog(QDialog):
 
 
 class ScriptGenerationHandler(QObject):
-    """Handler for bypass script generation based on protection analysis.
+    """Handle bypass script generation based on protection analysis.
 
     Integrates with ProtectionAwareScriptGenerator to create
     Frida and Ghidra scripts for bypassing detected protections.

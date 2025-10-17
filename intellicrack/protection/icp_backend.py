@@ -374,7 +374,7 @@ class NativeICPLibrary:
             logger.info("Using Python ICP module as native interface")
 
     def _setup_functions(self):
-        """Setup function prototypes for native library."""
+        """Configure function prototypes for native library."""
         if not self.lib or isinstance(self.lib, type(_die_module)):
             return
 
@@ -2054,7 +2054,7 @@ class ICPBackend:
         file_path: str,
         scan_mode: ScanMode = ScanMode.DEEP,
     ) -> ICPScanResult:
-        """Convenience method to analyze file with all available engines.
+        """Analyze file using all available analysis engines.
 
         Args:
             file_path: Path to file to analyze

@@ -87,6 +87,8 @@ ignore = [
     "N802",  # Function name should be lowercase
     "N803",  # Argument name should be lowercase
     "N806",  # Variable in function should be lowercase
+    "D203",  # 1 blank line required before class docstring (conflicts with D211)
+    "D213",  # Multi-line docstring summary should start at second line (conflicts with D212)
 ]
 
 # Per-file ignores

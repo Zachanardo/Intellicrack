@@ -499,7 +499,7 @@ except ImportError as e:
 
     # ReportLab-style template functionality
     class SimpleDocTemplate:
-        """Simple document template for report generation."""
+        """Perform document template for report generation."""
 
         def __init__(self, filename, pagesize=(612, 792), **kwargs):
             """Initialize template."""

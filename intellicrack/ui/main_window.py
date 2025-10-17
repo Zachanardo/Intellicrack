@@ -1,4 +1,4 @@
-"""Main Application Window.
+"""Run Application Window.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -68,7 +68,7 @@ logger = get_logger(__name__)
 
 
 class IntellicrackMainWindow(QMainWindow):
-    """Main application window for Intellicrack.
+    """Run application window for Intellicrack.
 
     A comprehensive reverse engineering and security analysis framework.
 

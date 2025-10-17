@@ -17,7 +17,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from .path_resolver import get_data_dir, get_project_root
+from .path_resolver import get_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,22 @@ class QEMUImageInfo:
 class QEMUImageDiscovery:
     """Discovers and catalogs QEMU images from configured directories."""
 
-    SUPPORTED_FORMATS = [".qcow2", ".img", ".vmdk", ".vdi", ".iso", ".raw"]
+    SUPPORTED_FORMATS = [
+        ".qcow2",
+        ".qcow",
+        ".img",
+        ".vmdk",
+        ".vdi",
+        ".vhd",
+        ".vhdx",
+        ".iso",
+        ".raw",
+        ".qed",
+        ".cloop",
+        ".dmg",
+        ".parallels",
+        ".bochs",
+    ]
 
     def __init__(self):
         """Initialize QEMU image discovery."""
@@ -47,11 +62,9 @@ class QEMUImageDiscovery:
     def get_search_directories(self) -> list[Path]:
         """Get list of directories to search for QEMU images."""
         project_root = get_project_root()
-        data_dir = get_data_dir()
 
         directories = [
             project_root / "intellicrack" / "assets" / "qemu_images",
-            data_dir / "qemu_images",
             Path.home() / ".intellicrack" / "qemu_images",
         ]
 
@@ -59,7 +72,7 @@ class QEMUImageDiscovery:
 
         if not existing_dirs:
             logger.warning("No QEMU image directories found, creating default location")
-            default_dir = data_dir / "qemu_images"
+            default_dir = project_root / "intellicrack" / "assets" / "qemu_images"
             default_dir.mkdir(parents=True, exist_ok=True)
             existing_dirs.append(default_dir)
 

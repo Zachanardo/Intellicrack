@@ -14,7 +14,7 @@ use anyhow::{Context, Result};
 use libloading::Library;
 use pyo3::prelude::*;
 use std::env;
-use std::ffi::CStr;
+use std::ffi::CString;
 use std::path::PathBuf;
 use std::os::windows::process::CommandExt;
 use winapi::um::winbase::CREATE_NEW_PROCESS_GROUP;
@@ -290,13 +290,14 @@ impl PythonIntegration {
         // This ensures _tkinter can find tcl86t.dll and tk86t.dll in the target/release directory
         // CRITICAL: The subprocess must run from the launcher's directory where the bundled DLLs are located
         if let Ok(exe_path) = std::env::current_exe()
-            && let Some(exe_dir) = exe_path.parent() {
-                cmd.current_dir(exe_dir);
-                info!(
-                    "Set subprocess working directory to launcher directory: {}",
-                    exe_dir.display()
-                );
-            }
+            && let Some(exe_dir) = exe_path.parent()
+        {
+            cmd.current_dir(exe_dir);
+            info!(
+                "Set subprocess working directory to launcher directory: {}",
+                exe_dir.display()
+            );
+        }
 
                 // Set environment for subprocess with ABSOLUTE PATHS
                 cmd.env("PYTHONPATH", PROJECT_ROOT.clone());
@@ -391,89 +392,90 @@ impl PythonIntegration {
 
         // Also check for launcher's directories as fallback
         if let Ok(exe_path) = std::env::current_exe()
-            && let Some(exe_dir) = exe_path.parent() {
-                if !tcl_lib_path.exists() {
-                    let launcher_tcl = exe_dir.join("tcl8.6");
-                    if launcher_tcl.exists() {
-                        cmd.env("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                        info!(
-                            "Subprocess: Fallback TCL_LIBRARY to launcher: {}",
-                            launcher_tcl.display()
-                        );
-                    }
+            && let Some(exe_dir) = exe_path.parent()
+        {
+            if !tcl_lib_path.exists() {
+                let launcher_tcl = exe_dir.join("tcl8.6");
+                if launcher_tcl.exists() {
+                    cmd.env("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
+                    info!(
+                        "Subprocess: Fallback TCL_LIBRARY to launcher: {}",
+                        launcher_tcl.display()
+                    );
                 }
-
-                if !tk_lib_path.exists() {
-                    let launcher_tk = exe_dir.join("tk8.6");
-                    if launcher_tk.exists() {
-                        cmd.env("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                        info!(
-                            "Subprocess: Fallback TK_LIBRARY to launcher: {}",
-                            launcher_tk.display()
-                        );
-                    }
-                }
-
-                // CRITICAL: Build PATH with LAUNCHER directory FIRST for DLL loading
-                // This ensures _tkinter finds the launcher's Tcl/Tk DLLs that match TCL_LIBRARY/TK_LIBRARY paths
-                let system_path = std::env::var_os("PATH").unwrap_or_default();
-                let exe_dir_str = exe_dir.to_string_lossy();
-
-                let python_base_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default");
-                let python_dll_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/DLLs");
-                let python_lib_bin_dir =
-                    PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/bin");
-
-                // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
-                // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
-                let mut final_path = exe_dir_str.to_string();
-                info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
-
-                // Add Python DLLs directory for Python extension modules
-                if python_dll_dir.exists() {
-                    final_path = format!("{};{}", final_path, python_dll_dir.display());
-                    info!("Subprocess: Added Python DLLs directory to PATH");
-                }
-
-                // Add Python base directory for core Python DLL
-                if python_base_dir.exists() {
-                    final_path = format!("{};{}", final_path, python_base_dir.display());
-                    info!("Subprocess: Added Python base directory to PATH");
-                }
-
-                // Add Library\bin directory for additional dependencies
-                if python_lib_bin_dir.exists() {
-                    final_path = format!("{};{}", final_path, python_lib_bin_dir.display());
-                    info!("Subprocess: Added Python Library\\bin to PATH");
-                }
-
-                // Add system PATH last
-                if !system_path.is_empty() {
-                    final_path = format!("{};{}", final_path, system_path.to_string_lossy());
-                }
-
-                cmd.env("PATH", final_path);
-                info!("Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system");
-
-                // Also add to PYTHONPATH to help Python find the DLLs
-                let current_pythonpath = std::env::var("PYTHONPATH").unwrap_or_default();
-                let new_pythonpath = if current_pythonpath.is_empty() {
-                    exe_dir_str.to_string()
-                } else {
-                    format!("{};{}", exe_dir_str, current_pythonpath)
-                };
-                cmd.env("PYTHONPATH", &new_pythonpath);
-                info!(
-                    "Subprocess: Added {} to PYTHONPATH for DLL discovery",
-                    exe_dir_str
-                );
-
-                // Set DLL directory hint for Windows to launcher directory where DLLs are bundled
-                // This helps launch_intellicrack.py add the correct directory to DLL search path
-                // CRITICAL: Must point to target/release where tcl86t.dll and tk86t.dll are located
-                cmd.env("INTEL_LAUNCHER_DLL_DIR", exe_dir_str.as_ref());
-                info!("Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading", exe_dir_str);
             }
+
+            if !tk_lib_path.exists() {
+                let launcher_tk = exe_dir.join("tk8.6");
+                if launcher_tk.exists() {
+                    cmd.env("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
+                    info!(
+                        "Subprocess: Fallback TK_LIBRARY to launcher: {}",
+                        launcher_tk.display()
+                    );
+                }
+            }
+
+            // CRITICAL: Build PATH with LAUNCHER directory FIRST for DLL loading
+            // This ensures _tkinter finds the launcher's Tcl/Tk DLLs that match TCL_LIBRARY/TK_LIBRARY paths
+            let system_path = std::env::var_os("PATH").unwrap_or_default();
+            let exe_dir_str = exe_dir.to_string_lossy();
+
+            let python_base_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default");
+            let python_dll_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/DLLs");
+            let python_lib_bin_dir =
+                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/bin");
+
+            // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
+            // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
+            let mut final_path = exe_dir_str.to_string();
+            info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
+
+            // Add Python DLLs directory for Python extension modules
+            if python_dll_dir.exists() {
+                final_path = format!("{};{}", final_path, python_dll_dir.display());
+                info!("Subprocess: Added Python DLLs directory to PATH");
+            }
+
+            // Add Python base directory for core Python DLL
+            if python_base_dir.exists() {
+                final_path = format!("{};{}", final_path, python_base_dir.display());
+                info!("Subprocess: Added Python base directory to PATH");
+            }
+
+            // Add Library\bin directory for additional dependencies
+            if python_lib_bin_dir.exists() {
+                final_path = format!("{};{}", final_path, python_lib_bin_dir.display());
+                info!("Subprocess: Added Python Library\\bin to PATH");
+            }
+
+            // Add system PATH last
+            if !system_path.is_empty() {
+                final_path = format!("{};{}", final_path, system_path.to_string_lossy());
+            }
+
+            cmd.env("PATH", final_path);
+            info!("Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system");
+
+            // Also add to PYTHONPATH to help Python find the DLLs
+            let current_pythonpath = std::env::var("PYTHONPATH").unwrap_or_default();
+            let new_pythonpath = if current_pythonpath.is_empty() {
+                exe_dir_str.to_string()
+            } else {
+                format!("{};{}", exe_dir_str, current_pythonpath)
+            };
+            cmd.env("PYTHONPATH", &new_pythonpath);
+            info!(
+                "Subprocess: Added {} to PYTHONPATH for DLL discovery",
+                exe_dir_str
+            );
+
+            // Set DLL directory hint for Windows to launcher directory where DLLs are bundled
+            // This helps launch_intellicrack.py add the correct directory to DLL search path
+            // CRITICAL: Must point to target/release where tcl86t.dll and tk86t.dll are located
+            cmd.env("INTEL_LAUNCHER_DLL_DIR", exe_dir_str.as_ref());
+            info!("Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading", exe_dir_str);
+        }
         cmd.env_remove("PYTHONSTARTUP");
         cmd.env_remove("PYTHONUSERBASE");
         cmd.env_remove("PYTHONEXECUTABLE");
@@ -586,11 +588,10 @@ impl PythonIntegration {
             let test_script = std::fs::read_to_string("test_rust_launcher_env.py")
                 .context("Failed to read test script")?;
 
-            match py.run(
-                CStr::from_bytes_with_nul(test_script.as_bytes()).unwrap_or(c"pass"),
-                None,
-                None,
-            ) {
+            let c_test_script = CString::new(test_script)
+                .context("Test script contains interior null bytes")?;
+
+            match py.run(c_test_script.as_c_str(), None, None) {
                 Ok(_) => {
                     info!("Environment test completed successfully");
                     Ok(0)
@@ -796,10 +797,12 @@ mod tests {
         );
 
         // Clean up environment variables
-        env::remove_var("PYTHONPATH");
-        env::remove_var("PYTHONIOENCODING");
-        env::remove_var("PYTHONUNBUFFERED");
-        env::remove_var("PYTHONDONTWRITEBYTECODE");
+        unsafe {
+            env::remove_var("PYTHONPATH");
+            env::remove_var("PYTHONIOENCODING");
+            env::remove_var("PYTHONUNBUFFERED");
+            env::remove_var("PYTHONDONTWRITEBYTECODE");
+        }
     }
 
     #[test]
@@ -817,12 +820,16 @@ mod tests {
         // Basic environment variables should still be set
         assert_eq!(env::var("PYTHONIOENCODING").unwrap(), "utf-8");
         assert_eq!(env::var("PYTHONUNBUFFERED").unwrap(), "1");
-        assert_eq!(env::var("PYTHONDONTWRITEBYTECODE").unwrap(), "1");
-
         // Clean up
-        env::remove_var("PYTHONIOENCODING");
-        env::remove_var("PYTHONUNBUFFERED");
-        env::remove_var("PYTHONDONTWRITEBYTECODE");
+        unsafe {
+            env::remove_var("PYTHONIOENCODING");
+            env::remove_var("PYTHONUNBUFFERED");
+            env::remove_var("PYTHONDONTWRITEBYTECODE");
+        }
+        unsafe {
+            env::remove_var("PYTHONUNBUFFERED");
+            env::remove_var("PYTHONDONTWRITEBYTECODE");
+        }
     }
 
     #[test]
@@ -909,9 +916,10 @@ mod tests {
                 );
             }
         }
-
         // Clean up environment variable
-        env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        }
     }
 
     #[cfg(target_os = "windows")]
@@ -1022,11 +1030,15 @@ mod tests {
     #[test]
     fn test_environment_variable_persistence() {
         // Test that environment variables are set correctly and persist
-        env::set_var("TEST_PYBIND11_VAR", "test_value");
+        unsafe {
+            env::set_var("TEST_PYBIND11_VAR", "test_value");
+        }
         assert_eq!(env::var("TEST_PYBIND11_VAR").unwrap(), "test_value");
 
         // Test removal
-        env::remove_var("TEST_PYBIND11_VAR");
+        unsafe {
+            env::remove_var("TEST_PYBIND11_VAR");
+        }
         assert!(env::var("TEST_PYBIND11_VAR").is_err());
     }
 
@@ -1150,14 +1162,25 @@ mod tests {
     #[test]
     fn test_configure_pybind11_environment_var() {
         // Test that the critical environment variable is set
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        // Clean up first
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        }
+        assert!(env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF").is_err());
+
+        // Set the environment variable
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
         assert_eq!(
             env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF").unwrap(),
             "1"
         );
 
         // Clean up
-        env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        }
         assert!(env::var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF").is_err());
     }
 

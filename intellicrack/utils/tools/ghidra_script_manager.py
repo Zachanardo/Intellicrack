@@ -1,5 +1,4 @@
-"""
-Ghidra Script Manager for Intellicrack
+"""Ghidra Script Manager for Intellicrack
 
 This module provides automatic discovery, management, and execution of Ghidra scripts.
 Supports both Java and Python scripts with metadata extraction.
@@ -43,6 +42,7 @@ class GhidraScript:
 
         Args:
             path: Path to the Ghidra script file
+
         """
         self.path = os.path.abspath(path)
         self.filename = os.path.basename(path)
@@ -184,11 +184,11 @@ class GhidraScriptManager:
     CACHE_FILE = "ghidra_scripts_cache.json"
 
     def __init__(self, additional_dirs: Optional[List[str]] = None):
-        """
-        Initialize the script manager.
+        """Initialize the script manager.
 
         Args:
             additional_dirs: Extra directories to search for scripts
+
         """
         self.script_dirs = self.DEFAULT_SCRIPT_DIRS.copy()
         if additional_dirs:
@@ -229,14 +229,14 @@ class GhidraScriptManager:
                     logger.warning(f"Failed to create directory {dir_path}: {e}")
 
     def scan_scripts(self, force_rescan: bool = False) -> Dict[str, GhidraScript]:
-        """
-        Scan all directories for Ghidra scripts.
+        """Scan all directories for Ghidra scripts.
 
         Args:
             force_rescan: Force rescan even if cache is recent
 
         Returns:
             Dictionary of script path -> GhidraScript objects
+
         """
         # Check if we need to rescan
         if not force_rescan and self.scripts and self.last_scan:
@@ -298,14 +298,14 @@ class GhidraScriptManager:
         return result
 
     def get_script(self, identifier: str) -> Optional[GhidraScript]:
-        """
-        Get a script by path, filename, or name.
+        """Get a script by path, filename, or name.
 
         Args:
             identifier: Script path, filename, or name
 
         Returns:
             GhidraScript object or None
+
         """
         if not self.scripts:
             self.scan_scripts()
@@ -322,14 +322,14 @@ class GhidraScriptManager:
         return None
 
     def validate_script(self, script_path: str) -> Tuple[bool, List[str]]:
-        """
-        Validate a specific script.
+        """Validate a specific script.
 
         Args:
             script_path: Path to the script
 
         Returns:
             Tuple of (is_valid, error_messages)
+
         """
         try:
             script = GhidraScript(script_path)
@@ -339,8 +339,7 @@ class GhidraScriptManager:
             return False, [str(e)]
 
     def copy_script_for_execution(self, script: GhidraScript, destination_dir: str) -> str:
-        """
-        Copy script to destination directory for execution.
+        """Copy script to destination directory for execution.
 
         Args:
             script: GhidraScript object
@@ -348,6 +347,7 @@ class GhidraScriptManager:
 
         Returns:
             Path to the copied script
+
         """
         os.makedirs(destination_dir, exist_ok=True)
         dest_path = os.path.join(destination_dir, script.filename)
@@ -365,14 +365,14 @@ class GhidraScriptManager:
         return dest_path
 
     def search_scripts(self, query: str) -> List[GhidraScript]:
-        """
-        Search scripts by name, description, or tags.
+        """Search scripts by name, description, or tags.
 
         Args:
             query: Search query
 
         Returns:
             List of matching scripts
+
         """
         if not self.scripts:
             self.scan_scripts()
@@ -397,8 +397,7 @@ class GhidraScriptManager:
         return results
 
     def add_user_script(self, source_path: str, category: str = "User Scripts") -> Optional[GhidraScript]:
-        """
-        Add a user script to the user scripts directory.
+        """Add a user script to the user scripts directory.
 
         Args:
             source_path: Path to the script to add
@@ -406,6 +405,7 @@ class GhidraScriptManager:
 
         Returns:
             GhidraScript object if successful
+
         """
         base_dir = get_resource_path("scripts/ghidra")
         user_dir = os.path.join(base_dir, "user")

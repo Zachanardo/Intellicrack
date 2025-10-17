@@ -162,7 +162,7 @@ class UILayoutHelpers:
 
     @staticmethod
     def finalize_widget_layout(widget: QWidget, layout) -> QWidget:
-        """Common widget finalization pattern - adds stretch and sets layout.
+        """Provide widget finalization pattern - adds stretch and sets layout.
 
         Args:
             widget: Widget to finalize

@@ -35,19 +35,17 @@ except ImportError as e:
 
 
 class ScapyPacketReader:
-    """
-    Scapy-based packet capture reader that provides pcapy-compatible interface.
-    """
+    """Scapy-based packet capture reader that provides pcapy-compatible interface."""
 
     def __init__(self, interface="any", promisc=True, immediate=True, timeout_ms=100):
-        """
-        Initialize Scapy packet reader.
+        """Initialize Scapy packet reader.
 
         Args:
             interface (str): Network interface to capture from
             promisc (bool): Enable promiscuous mode
             immediate (bool): Enable immediate mode (ignored, for compatibility)
             timeout_ms (int): Timeout in milliseconds
+
         """
         self.interface = None if interface == "any" else interface
         self.promisc = promisc
@@ -56,21 +54,21 @@ class ScapyPacketReader:
         self._running = False
 
     def setfilter(self, filter_str):
-        """
-        Set BPF filter for packet capture.
+        """Set BPF filter for packet capture.
 
         Args:
             filter_str (str): BPF filter expression
+
         """
         self.filter = filter_str
 
     def loop(self, count, callback):
-        """
-        Start packet capture loop.
+        """Start packet capture loop.
 
         Args:
             count (int): Number of packets to capture (0 = infinite)
             callback (callable): Function to call for each packet
+
         """
         if not SCAPY_AVAILABLE:
             raise RuntimeError("Scapy not available for packet capture")
@@ -99,9 +97,7 @@ class ScapyPacketReader:
             raise RuntimeError(f"Packet capture failed: {e}")
 
     def __iter__(self):
-        """
-        Iterator interface for packet capture.
-        """
+        """Iterator interface for packet capture."""
         if not SCAPY_AVAILABLE:
             raise RuntimeError("Scapy not available for packet capture")
 
@@ -124,18 +120,16 @@ class ScapyPacketReader:
             raise RuntimeError(f"Packet capture failed: {e}")
 
     def stop(self):
-        """
-        Stop packet capture.
-        """
+        """Stop packet capture."""
         self._running = False
 
 
 def get_packet_capture_interface():
-    """
-    Get a packet capture interface using Scapy.
+    """Get a packet capture interface using Scapy.
 
     Returns:
         module: Scapy module or None if unavailable
+
     """
     if SCAPY_AVAILABLE:
         return scapy
@@ -143,14 +137,14 @@ def get_packet_capture_interface():
 
 
 def create_pcap_reader(interface="any"):
-    """
-    Create a packet capture reader using Scapy with pcapy-compatible interface.
+    """Create a packet capture reader using Scapy with pcapy-compatible interface.
 
     Args:
         interface (str): Network interface to capture from
 
     Returns:
         ScapyPacketReader: Packet capture reader or None if unavailable
+
     """
     if not SCAPY_AVAILABLE:
         return None

@@ -355,7 +355,7 @@ class TimeSeriesAnalyzer:
         }
 
     def forecast_arima(self, component: str, periods: int = 10) -> tuple[list[float], list[tuple[float, float]]]:
-        """Simple ARIMA-like forecasting."""
+        """Perform ARIMA-like forecasting."""
         if component not in self.history or len(self.history[component]) < 10:
             return ([], [])
 
@@ -1019,7 +1019,7 @@ class ReportGenerator:
 
 
 class SuccessRateAnalyzer:
-    """Main success rate analysis engine."""
+    """Run success rate analysis engine."""
 
     def __init__(self, db_path: str = "intellicrack_success_rates.db"):
         """Initialize comprehensive success rate analyzer with all statistical components."""
