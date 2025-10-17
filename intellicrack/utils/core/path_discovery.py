@@ -179,29 +179,6 @@ class PathDiscovery:
                 "env_vars": ["PYTHON_HOME", "PYTHON_PATH"],
                 "validation": self._validate_python,
             },
-            "docker": {
-                "executables": {
-                    "win32": ["docker.exe", "Docker Desktop.exe"],
-                    "linux": ["docker"],
-                    "darwin": ["docker"],
-                },
-                "search_paths": {
-                    "win32": [
-                        r"C:\Program Files\Docker\Docker\resources\bin",
-                        r"C:\Program Files\Docker\Docker",
-                    ],
-                    "linux": [
-                        "/usr/bin",
-                        "/usr/local/bin",
-                    ],
-                    "darwin": [
-                        "/usr/local/bin",
-                        "/opt/homebrew/bin",
-                    ],
-                },
-                "env_vars": ["DOCKER_PATH"],
-                "validation": self._validate_docker,
-            },
             "wireshark": {
                 "executables": {
                     "win32": ["Wireshark.exe", "tshark.exe"],
@@ -658,17 +635,6 @@ class PathDiscovery:
             logger.error("Exception in path_discovery: %s", e)
             return False
 
-    def _validate_docker(self, path: str) -> bool:
-        """Validate Docker installation."""
-        try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
-            )
-            return "docker" in result.stdout.lower()
-        except Exception as e:
-            logger.error("Exception in path_discovery: %s", e)
-            return False
-
     def _validate_wireshark(self, path: str) -> bool:
         """Validate Wireshark installation."""
         # For GUI executables, just check if file exists
@@ -789,15 +755,15 @@ def get_path_discovery(config_manager=None) -> PathDiscovery:
 
 
 def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
-    """Convenience function to find a tool."""
+    """Find a tool."""
     return get_path_discovery().find_tool(tool_name, required_executables)
 
 
 def get_system_path(path_type: str) -> str | None:
-    """Convenience function to get system paths."""
+    """Get system paths."""
     return get_path_discovery().get_system_path(path_type)
 
 
 def ensure_tool_available(tool_name: str, parent_widget=None) -> str | None:
-    """Convenience function to ensure tool availability."""
+    """Ensure tool availability."""
     return get_path_discovery().ensure_tool_available(tool_name, parent_widget)

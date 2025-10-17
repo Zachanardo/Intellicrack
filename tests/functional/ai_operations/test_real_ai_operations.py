@@ -1,3 +1,13 @@
+"""
+Functional tests for Intellicrack's AI operations.
+
+This module contains comprehensive tests for the AI functionality in Intellicrack,
+including LLM backends, semantic code analysis, pattern recognition, multi-agent
+collaboration, learning engines, and predictive intelligence. These tests verify
+real AI operations with actual model operations and ensure the AI components work
+as expected in production scenarios.
+"""
+
 import pytest
 import tempfile
 import os

@@ -19,7 +19,9 @@ def validate_implementation():
     print("=" * 60)
 
     # Check file existence
-    script_dir = Path("C:/Intellicrack/intellicrack/scripts/frida")
+    from intellicrack.utils.path_resolver import get_project_root
+
+script_dir = get_project_root() / "intellicrack/scripts/frida"
     required_files = [
         "binary_patcher.js",
         "binary_patcher_advanced.js",
@@ -133,7 +135,7 @@ def validate_implementation():
 
     # Check specification completion
     print("\n[5] Checking Specification Completion...")
-    spec_file = Path("C:/Intellicrack/BINARY_PATCHER_SPEC.md")
+    spec_file = get_project_root() / "BINARY_PATCHER_SPEC.md"
     if spec_file.exists():
         spec_content = spec_file.read_text()
         completed_count = spec_content.count("[x]")

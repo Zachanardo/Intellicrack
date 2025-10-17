@@ -2518,7 +2518,7 @@ def standardize_r2_result(
     binary_path: str,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Convenience function to standardize any radare2 analysis result.
+    """Standardize any radare2 analysis result.
 
     Args:
         analysis_type: Type of analysis

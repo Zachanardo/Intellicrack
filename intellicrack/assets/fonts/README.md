@@ -5,12 +5,14 @@ This directory is reserved for custom fonts that may be bundled with Intellicrac
 ## Current Font Usage
 
 The application uses the following fonts:
+
 - **UI Fonts**: Segoe UI, Arial, Roboto, System Default
 - **Code/Monospace Fonts**: JetBrains Mono, Consolas, Courier New, Source Code Pro, Monospace
 
 ## Bundled Fonts
 
 This directory includes:
+
 - **JetBrainsMono-Regular.ttf**: Regular weight JetBrains Mono font
 - **JetBrainsMono-Bold.ttf**: Bold weight JetBrains Mono font
 
@@ -28,6 +30,7 @@ The application will use system fonts by default. If you experience font-related
 ## Adding Custom Fonts
 
 To add custom fonts:
+
 1. Place .ttf or .otf files in this directory
 2. Update the application to load them using QFontDatabase.addApplicationFont()
 

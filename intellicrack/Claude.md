@@ -17,14 +17,15 @@
 ```
 
 **ENFORCEMENT RULES:**
+
 1. **BEFORE ANY OTHER TEXT**: The principles block MUST appear first
 2. **EXACT FORMAT**: Copy the text block character-for-character
 3. **NO VARIATIONS**: Do not summarize, paraphrase, or modify
 4. **EVERY RESPONSE**: This applies to ALL responses, including:
-   - Code explanations
-   - Questions
-   - Error messages
-   - Single-word answers
-   - Everything
+    - Code explanations
+    - Questions
+    - Error messages
+    - Single-word answers
+    - Everything
 
 **VERIFICATION**: If principles are missing or incorrect, the response is INVALID and must be restarted.

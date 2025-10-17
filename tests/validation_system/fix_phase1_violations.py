@@ -33,7 +33,7 @@ def fix_file(filepath: Path, fixes: List[Tuple[str, str]]) -> int:
 
 def fix_fingerprint_randomizer():
     """Fix violations in fingerprint_randomizer.py"""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\fingerprint_randomizer.py")
 
     fixes = [
         # Fix fake_domains violation
@@ -111,7 +111,7 @@ def fix_fingerprint_randomizer():
 
 def fix_certified_ground_truth_profile():
     """Fix violations in certified_ground_truth_profile.py"""
-    filepath = Path(r"C:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py")
+    filepath = Path(r"D:\Intellicrack\tests\validation_system\certified_ground_truth_profile.py")
 
     content = filepath.read_text()
 
@@ -214,9 +214,9 @@ def fix_certified_ground_truth_profile():
 def fix_other_files():
     """Fix common issues in other Phase 1 files."""
     files = [
-        Path(r"C:\Intellicrack\tests\validation_system\environment_validator.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
-        Path(r"C:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
+        Path(r"D:\Intellicrack\tests\validation_system\environment_validator.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\multi_environment_tester.py"),
+        Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
     ]
 
     total_fixes = 0

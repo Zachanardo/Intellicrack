@@ -266,7 +266,7 @@ class ServiceHealthChecker:
             Dictionary mapping service names to health check results
 
         """
-        critical_services = ["ollama_api", "local_llm_server", "c2_server", "proxy_server"]
+        critical_services = ["ollama_api", "local_llm_server", "proxy_server"]
 
         results = {}
         for service_name in critical_services:

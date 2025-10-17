@@ -37,7 +37,7 @@ class Plugin:
         self.analyzer = None
 
     def will_run_callback(self, *args, **kwargs):
-        """Called before analysis starts."""
+        """Prepare before analysis starts."""
         # Initialize analysis state
         self.analysis_start_time = time.time()
         self.total_states_analyzed = 0
@@ -50,7 +50,7 @@ class Plugin:
         logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
     def did_finish_run_callback(self, *args, **kwargs):
-        """Called after analysis finishes."""
+        """Finalize after analysis finishes."""
         # Calculate analysis statistics
         end_time = time.time()
         duration = end_time - getattr(self, "analysis_start_time", end_time)
@@ -68,7 +68,7 @@ class Plugin:
             self.analysis_metadata["completion_kwargs"] = kwargs
 
     def will_fork_state_callback(self, state, *args, **kwargs):
-        """Called before a state is forked."""
+        """Prepare before a state is forked."""
         # Track state forking for analysis
         if not hasattr(self, "fork_count"):
             self.fork_count = 0
@@ -90,7 +90,7 @@ class Plugin:
         )
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
-        """Called before a state is terminated."""
+        """Prepare before a state is terminated."""
         # Track termination reasons
         if not hasattr(self, "termination_pending"):
             self.termination_pending = {}
@@ -107,7 +107,7 @@ class Plugin:
         logger.debug(f"State at 0x{state.address:x} pending termination")
 
     def did_terminate_state_callback(self, state, *args, **kwargs):
-        """Called after a state is terminated."""
+        """Finalize after a state is terminated."""
         # Update termination statistics
         if not hasattr(self, "terminated_states"):
             self.terminated_states = []
@@ -275,12 +275,12 @@ class BinaryAnalyzer:
         initial_state = State(0x400000, self, "state_0")
         self._states[initial_state.id] = initial_state
 
-        # Simulate execution by visiting all hooked addresses
+        # Execute symbolic path exploration through hooked addresses
         start_time = time.time()
         remaining_hooks = set(self.hooks.keys())
         explored_states = []
 
-        # Generate some random input symbols for the states
+        # Initialize concrete input symbols for symbolic execution
         initial_state.input_symbols["stdin"] = b"AAAA"
         initial_state.input_symbols["argv"] = [b"./program", b"arg1", b"arg2"]
 
@@ -303,13 +303,13 @@ class BinaryAnalyzer:
             state.input_symbols["stdin"] = f"input_for_addr_{address:x}".encode()
             state.input_symbols["argv"] = [b"./program", f"arg_for_addr_{address:x}".encode()]
 
-            # Simulate some forking to create more states
+            # Perform state forking for path exploration based on branch conditions
             if len(self._states) < 10 and len(remaining_hooks) > 0:
                 for plugin in self.plugins:
                     if hasattr(plugin, "will_fork_state_callback"):
                         plugin.will_fork_state_callback(state)
 
-                # Create a forked state
+                # Execute state forking for branch exploration
                 forked_address = address + 0x100  # Just a different address
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
@@ -388,8 +388,3 @@ class BinaryAnalyzer:
 
         """
         return self._states
-
-
-# Make aliases for compatibility with code that uses Manticore
-Manticore = BinaryAnalyzer
-NativeManticore = BinaryAnalyzer

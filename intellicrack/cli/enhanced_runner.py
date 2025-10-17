@@ -530,7 +530,7 @@ class EnhancedCLIRunner:
 
 
 def main():
-    """Main entry point for enhanced CLI."""
+    """Run main entry point for enhanced CLI."""
     console = Console()
 
     # Show banner

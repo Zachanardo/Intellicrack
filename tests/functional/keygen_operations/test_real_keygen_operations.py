@@ -1,3 +1,14 @@
+"""
+Functional tests for Intellicrack's keygen operations.
+
+This module contains comprehensive tests for keygen generation and validation functionality
+in Intellicrack, including serial algorithm analysis, keygen template generation,
+multi-algorithm keygen support, hardware-locked keygens, RSA-style implementations,
+brute force resistance, pattern obfuscation, online activation systems, validation bypasses,
+elliptic curve cryptography, anti-debugging integration, and ML-based pattern detection.
+These tests ensure that keygen generation works effectively for various protection schemes.
+"""
+
 import os
 import tempfile
 

@@ -34,7 +34,7 @@ import r2pipe    # ✅ Success
 
 **Direct Radare2 Test Results:**
 ```bash
-C:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe -v
+D:\\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe -v
 # Output: radare2 5.9.4 1 @ windows-x86-64
 # birth: git.5.9.4 Thu 08/08/2024__14:26:34.58
 ```

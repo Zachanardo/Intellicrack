@@ -27,7 +27,71 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
+
+# Optional import for file monitoring capabilities
+try:
+    from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
+
+    WATCHDOG_AVAILABLE = True
+except ImportError:
+    WATCHDOG_AVAILABLE = False
+
+    # Create a production-ready fallback implementation
+    class FileSystemEventHandler:
+        """Fallback FileSystemEventHandler when watchdog is not available."""
+
+        def __init__(self):
+            self.event_queue = []
+            self.last_modified = {}
+            self.debounce_time = 0.5  # 500ms debounce
+
+        def on_modified(self, event):
+            """Handle file modification events."""
+            import time
+
+            current_time = time.time()
+
+            # Debounce rapid modifications
+            if hasattr(event, "src_path"):
+                last_time = self.last_modified.get(event.src_path, 0)
+                if current_time - last_time < self.debounce_time:
+                    return
+                self.last_modified[event.src_path] = current_time
+
+            # Queue event for processing
+            self.event_queue.append(
+                {
+                    "type": "modified",
+                    "path": getattr(event, "src_path", ""),
+                    "timestamp": current_time,
+                    "is_directory": getattr(event, "is_directory", False),
+                }
+            )
+
+        def on_created(self, event):
+            """Handle file creation events."""
+            import time
+
+            # Queue creation event
+            self.event_queue.append(
+                {
+                    "type": "created",
+                    "path": getattr(event, "src_path", ""),
+                    "timestamp": time.time(),
+                    "is_directory": getattr(event, "is_directory", False),
+                }
+            )
+
+        def on_deleted(self, event):
+            """Handle file deletion events."""
+            pass
+
+        def on_moved(self, event):
+            """Handle file move events."""
+            pass
+
 
 from ...utils.logger import get_logger
 from .radare2_error_handler import get_error_handler, r2_error_context
@@ -1091,7 +1155,7 @@ class R2RealtimeAnalyzer:
             return str(time.time())  # Fallback to timestamp
 
     def _update_loop(self):
-        """Main update loop for interval-based updates."""
+        """Update at intervals in main loop."""
         while self.running:
             try:
                 # Schedule updates for all watched binaries

@@ -32,7 +32,6 @@ from pathlib import Path
 from typing import Any
 
 from ..utils.logger import get_logger
-from .exploit_chain_builder import ChainComplexity, ExploitType
 from .learning_engine_simple import get_learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
@@ -691,38 +690,8 @@ class DataCollector:
 
     def _collect_exploit_chain_metrics(self) -> list[DataPoint]:
         """Collect exploit chain metrics."""
-        try:
-            # Would integrate with exploit chain builder
-            from .exploit_chain_builder import exploit_chain_builder
-
-            stats = exploit_chain_builder.get_chain_statistics()
-            data_points = []
-
-            if "total_chains" in stats:
-                data_points.append(
-                    DataPoint(
-                        timestamp=datetime.now(),
-                        value=stats["total_chains"],
-                        label="Total Exploit Chains",
-                        category="exploit_chains",
-                    )
-                )
-
-            if "avg_success_probability" in stats:
-                data_points.append(
-                    DataPoint(
-                        timestamp=datetime.now(),
-                        value=stats["avg_success_probability"] * 100,
-                        label="Avg Chain Success Rate",
-                        category="chain_success",
-                    )
-                )
-
-            return data_points
-
-        except Exception as e:
-            logger.error(f"Error collecting exploit chain metrics: {e}")
-            return []
+        # exploit_chain_builder module removed - returning empty data
+        return []
 
     def _collect_agent_activity_metrics(self) -> list[DataPoint]:
         """Collect multi-agent activity metrics."""
@@ -885,60 +854,14 @@ class ChartGenerator:
 
     def generate_exploit_chain_network_graph(self) -> ChartData:
         """Generate network graph of exploit chains."""
-        # Create network graph showing relationships between vulnerabilities and exploit chains
-        from .exploit_chain_builder import exploit_chain_builder
-
-        # Get exploit chain data
-        stats = exploit_chain_builder.get_chain_statistics()
-
-        # Create network data using actual chain statistics
-        network_data = []
-
-        # Add nodes for each exploit type with stats-based sizing
-        for exploit_type in ExploitType:
-            # Use stats to determine node size based on usage frequency
-            usage_count = stats.get("exploit_types", {}).get(exploit_type.value, 0)
-            node_size = min(1.0 + (usage_count * 0.1), 3.0)  # Scale based on usage
-
-            network_data.append(
-                DataPoint(
-                    timestamp=datetime.now(),
-                    value=node_size,  # Node size based on stats
-                    label=exploit_type.value,
-                    category="exploit_type",
-                    metadata={
-                        "node_type": "exploit",
-                        "color": "#ff6b6b",
-                        "usage_count": usage_count,
-                    },
-                )
-            )
-
-        # Add nodes for complexity levels
-        for complexity in ChainComplexity:
-            network_data.append(
-                DataPoint(
-                    timestamp=datetime.now(),
-                    value=0.8,
-                    label=complexity.value,
-                    category="complexity",
-                    metadata={"node_type": "complexity", "color": "#4ecdc4"},
-                )
-            )
-
+        # exploit_chain_builder module removed - returning empty chart
         chart_data = ChartData(
             chart_id=str(uuid.uuid4()),
-            title="Exploit Chain Network",
+            title="Exploit Chain Network (Disabled)",
             chart_type=ChartType.NETWORK_GRAPH,
-            data_points=network_data,
-            options={
-                "layout": "force_directed",
-                "show_labels": True,
-                "node_size_field": "value",
-                "color_field": "metadata.color",
-            },
+            data_points=[],
+            options={"layout": "force_directed", "show_labels": True},
         )
-
         return chart_data
 
     def generate_vulnerability_heatmap(self) -> ChartData:

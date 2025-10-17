@@ -40,7 +40,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 class GPUMonitorWorker(QObject):
@@ -173,7 +173,7 @@ class GPUMonitorWorker(QObject):
                         engine_count = 0
 
                         for engine in gpu_engines:
-                            if hasattr(engine, 'UtilizationPercentage'):
+                            if hasattr(engine, "UtilizationPercentage"):
                                 total_util += float(engine.UtilizationPercentage)
                                 engine_count += 1
 
@@ -196,6 +196,7 @@ class GPUMonitorWorker(QObject):
                     # Add some variation based on CPU temp
                     try:
                         import wmi
+
                         c2 = wmi.WMI(namespace="root\\wmi")
                         temps = c2.MSAcpi_ThermalZoneTemperature()
                         if temps:

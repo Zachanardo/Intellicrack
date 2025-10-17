@@ -582,7 +582,7 @@ class PerformanceOptimizer:
 
 
 def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "cache") -> PerformanceOptimizer:
-    """Factory function to create a performance optimizer."""
+    """Create a performance optimizer."""
     return PerformanceOptimizer(max_memory_mb, cache_dir)
 
 

@@ -4,7 +4,21 @@ Provides seamless, integrated workflows for protection analysis that hide
 the complexity of multiple engines and present a unified experience.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
@@ -328,7 +342,7 @@ class ProtectionAnalysisWorkflow:
 
         if analysis.has_anti_debug:
             recommendations.append(
-                "⚠️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
+                "WARNING️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
             )
 
         if analysis.has_licensing:
@@ -353,7 +367,7 @@ class ProtectionAnalysisWorkflow:
         # Difficulty assessment
         if len(analysis.protections) > 3:
             recommendations.append(
-                "⚡ Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
+                "[FAST] Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
             )
 
         # Supplemental analysis recommendations
@@ -431,7 +445,7 @@ class ProtectionAnalysisWorkflow:
 
             if security_findings > 0:
                 recommendations.append(
-                    f"⚠️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys.",
+                    f"WARNING️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys.",
                 )
 
             # Look for specific firmware findings

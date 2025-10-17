@@ -1,3 +1,14 @@
+"""
+Functional tests for Intellicrack's protection bypass capabilities.
+
+This module contains comprehensive tests for protection bypass techniques in Intellicrack,
+including VMProtect bypass techniques, Themida bypass techniques, Frida dynamic bypass
+generation, memory patching techniques, TPM bypass methods, code integrity bypass,
+advanced unpacking techniques, multi-layer protection bypass, license emulation bypass,
+and real-world protection combinations. These tests verify the effectiveness of bypass
+techniques on real protection schemes like VMProtect and Themida.
+"""
+
 import pytest
 import tempfile
 import os

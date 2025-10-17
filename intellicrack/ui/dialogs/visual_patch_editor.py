@@ -37,7 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     QWidget,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Visual Patch Editor Dialog
@@ -595,7 +595,7 @@ class VisualPatchEditorDialog(QDialog):
 
 
 def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
-    """Factory function to create a VisualPatchEditorDialog.
+    """Create a VisualPatchEditorDialog.
 
     Args:
         binary_path: Path to binary file

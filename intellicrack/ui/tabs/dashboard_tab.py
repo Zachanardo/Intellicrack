@@ -48,6 +48,7 @@ from .base_tab import BaseTab
 
 class DashboardTab(BaseTab):
     """Dashboard Tab - Manages project files, binary information, and workspace overview.
+
     Consolidates functionality from the previous Project & Dashboard tab.
     """
 
@@ -157,7 +158,9 @@ class DashboardTab(BaseTab):
         # Open File button
         open_file_btn = QPushButton("📄 Open File")
         open_file_btn.setMinimumHeight(60)
-        open_file_btn.setToolTip("Load a binary file (EXE, DLL, SO, ELF) for analysis. Supports Windows PE, Linux ELF, and other executable formats")
+        open_file_btn.setToolTip(
+            "Load a binary file (EXE, DLL, SO, ELF) for analysis. Supports Windows PE, Linux ELF, and other executable formats"
+        )
         self._style_quick_start_button(open_file_btn, theme.accent_color)
         open_file_btn.clicked.connect(self.open_file_action)
         buttons_layout.addWidget(open_file_btn)
@@ -173,7 +176,9 @@ class DashboardTab(BaseTab):
         # Select Running Process button
         select_target_btn = QPushButton("Attach to Running Process")
         select_target_btn.setMinimumHeight(60)
-        select_target_btn.setToolTip("Attach to a currently running process for live analysis and debugging. Select from active processes on your system")
+        select_target_btn.setToolTip(
+            "Attach to a currently running process for live analysis and debugging. Select from active processes on your system"
+        )
         self._style_quick_start_button(select_target_btn, theme.error_color)
         select_target_btn.clicked.connect(self.select_program_from_target)
         buttons_layout.addWidget(select_target_btn)
@@ -326,8 +331,7 @@ class DashboardTab(BaseTab):
             QMessageBox.information(
                 self,
                 "Feature Unavailable",
-                "Program selector dialog not available. Using file browser instead.\n\n"
-                f"Technical details: {str(e)}"
+                f"Program selector dialog not available. Using file browser instead.\n\nTechnical details: {str(e)}",
             )
             self.open_file_action()
         except Exception as e:
@@ -335,8 +339,7 @@ class DashboardTab(BaseTab):
             QMessageBox.critical(
                 self,
                 "Program Selection Error",
-                f"An error occurred while selecting a program:\n\n{str(e)}\n\n"
-                "Please try using the Open File option instead."
+                f"An error occurred while selecting a program:\n\n{str(e)}\n\nPlease try using the Open File option instead.",
             )
             self.log_activity(f"Error in program selection: {str(e)}")
 

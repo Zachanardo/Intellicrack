@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections.abc import Callable
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -126,7 +127,7 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: 
                 "type": msg_type.value,
                 "title": title,
                 "message": message,
-                "timestamp": str(type(logger).__module__),  # Simple timestamp placeholder
+                "timestamp": datetime.now().isoformat(),
             }
         )
 

@@ -21,7 +21,9 @@ try:
     print("\n2. Testing import from main_app.py...")
     # Import the specific section that imports QMainWindow
     import importlib.util
-    spec = importlib.util.spec_from_file_location("main_app", "C:/Intellicrack/intellicrack/ui/main_app.py")
+    from intellicrack.utils.path_resolver import get_project_root
+
+spec = importlib.util.spec_from_file_location("main_app", get_project_root() / "intellicrack/ui/main_app.py")
     main_app_module = importlib.util.module_from_spec(spec)
 
     # Execute just the imports

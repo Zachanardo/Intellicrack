@@ -12,10 +12,34 @@ intellicrack.core.analysis.analysis\_orchestrator module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.automated\_patch\_agent module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.automated_patch_agent
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.behavioral\_analysis module
+------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.behavioral_analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.binary\_analyzer module
 --------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.binary_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.binary\_pattern\_detector module
+-----------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.binary_pattern_detector
    :members:
    :show-inheritance:
    :undoc-members:
@@ -32,6 +56,14 @@ intellicrack.core.analysis.cfg\_explorer module
 -----------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.cfg_explorer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.commercial\_license\_analyzer module
+---------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.commercial_license_analyzer
    :members:
    :show-inheritance:
    :undoc-members:
@@ -60,10 +92,34 @@ intellicrack.core.analysis.core\_analysis module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.cross\_tool\_orchestrator module
+-----------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.cross_tool_orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.cryptographic\_routine\_detector module
+------------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.cryptographic_routine_detector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.dynamic\_analyzer module
 ---------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.dynamic_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.dynamic\_instrumentation module
+----------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.dynamic_instrumentation
    :members:
    :show-inheritance:
    :undoc-members:
@@ -80,6 +136,94 @@ intellicrack.core.analysis.firmware\_analyzer module
 ----------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.firmware_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.frida\_advanced\_hooks module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.frida_advanced_hooks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.frida\_analyzer module
+-------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.frida_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.frida\_gui\_integration module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.frida_gui_integration
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.frida\_protection\_bypass module
+-----------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.frida_protection_bypass
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.frida\_script\_manager module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.frida_script_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.ghidra\_advanced\_analyzer module
+------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.ghidra_advanced_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.ghidra\_analyzer module
+--------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.ghidra_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.ghidra\_output\_parser module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.ghidra_output_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.ghidra\_project\_manager module
+----------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.ghidra_project_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.ghidra\_script\_runner module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.ghidra_script_runner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.incremental\_analyzer module
+-------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.incremental_analyzer
    :members:
    :show-inheritance:
    :undoc-members:
@@ -116,6 +260,22 @@ intellicrack.core.analysis.network\_forensics\_engine module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.protection\_scanner module
+-----------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.protection_scanner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.radare2\_advanced\_patcher module
+------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_advanced_patcher
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.radare2\_ai\_integration module
 ----------------------------------------------------------
 
@@ -148,6 +308,14 @@ intellicrack.core.analysis.radare2\_decompiler module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.radare2\_emulator module
+---------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.radare2\_enhanced\_integration module
 ----------------------------------------------------------------
 
@@ -172,6 +340,22 @@ intellicrack.core.analysis.radare2\_esil module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.radare2\_esil\_emulator module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_esil_emulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.radare2\_graph\_view module
+------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_graph_view
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.radare2\_imports module
 --------------------------------------------------
 
@@ -184,6 +368,22 @@ intellicrack.core.analysis.radare2\_json\_standardizer module
 -------------------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.radare2_json_standardizer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.radare2\_patch\_engine module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_patch_engine
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.radare2\_performance\_metrics module
+---------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_performance_metrics
    :members:
    :show-inheritance:
    :undoc-members:
@@ -208,6 +408,14 @@ intellicrack.core.analysis.radare2\_scripting module
 ----------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.radare2_scripting
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.radare2\_signature\_detector module
+--------------------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.radare2_signature_detector
    :members:
    :show-inheritance:
    :undoc-members:
@@ -244,6 +452,14 @@ intellicrack.core.analysis.rop\_generator module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.simconcolic module
+---------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.simconcolic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.similarity\_searcher module
 ------------------------------------------------------
 
@@ -256,14 +472,6 @@ intellicrack.core.analysis.symbolic\_executor module
 ----------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.symbolic_executor
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.analysis.simconcolic module
-----------------------------------------------------
-
-.. automodule:: intellicrack.core.analysis.simconcolic
    :members:
    :show-inheritance:
    :undoc-members:
@@ -288,6 +496,14 @@ intellicrack.core.analysis.yara\_pattern\_engine module
 -------------------------------------------------------
 
 .. automodule:: intellicrack.core.analysis.yara_pattern_engine
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.analysis.yara\_scanner module
+-----------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.yara_scanner
    :members:
    :show-inheritance:
    :undoc-members:

@@ -7,7 +7,7 @@ import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..exploitation.exploitation import run_automated_patch_agent
 from ..logger import log_message
@@ -212,12 +212,12 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                 patch_results.append((False, f"Patch {i + 1}: Failed - {patch_error}"))
 
         # Report patch results
-        results.append("\nPatch simulation results:")
+        results.append("\nPatch verification results:")
         for success, message in patch_results:
             if success:
-                results.append(f"✓ {message}")
+                results.append(f"OK {message}")
             else:
-                results.append(f"✗ {message}")
+                results.append(f"FAIL {message}")
 
         # Verify patched binary
         try:
@@ -283,14 +283,14 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                         actual_bytes = f.read(len(new_bytes))
 
                     if actual_bytes == new_bytes:
-                        results.append(f"✓ Patch {i + 1} verification: Bytes match at offset 0x{offset:X}")
+                        results.append(f"OK Patch {i + 1} verification: Bytes match at offset 0x{offset:X}")
                     else:
-                        results.append(f"✗ Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
+                        results.append(f"FAIL Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
                         results.append(f"  Expected: {new_bytes.hex().upper()}")
                         results.append(f"  Actual: {actual_bytes.hex().upper()}")
                 except (OSError, ValueError, RuntimeError) as verify_error:
                     logger.error("Error in patch_verification: %s", verify_error)
-                    results.append(f"✗ Patch {i + 1} verification failed: {verify_error}")
+                    results.append(f"FAIL Patch {i + 1} verification failed: {verify_error}")
 
         try:
             shutil.rmtree(temp_dir)
@@ -301,7 +301,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in patch_verification: %s", e)
-        results.append(f"Error during patch simulation: {e}")
+        results.append(f"Error during patch verification: {e}")
         results.append(traceback.format_exc())
 
     return results
@@ -1008,6 +1008,7 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
 
 def rewrite_license_functions_with_parsing(app: Any) -> None:
     """Attempts to find and rewrite license checking functions using various methods.
+
     Includes enhanced logging and basic safety checks for code size.
 
     Args:

@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Analysis exporter utilities for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -30,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class AnalysisExporter:
     """Shared exporter for analysis results across different analysis engines.
+
     Provides consistent export formats and error handling.
     """
 

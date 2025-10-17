@@ -2,6 +2,23 @@
 
 This package contains parsers for different licensing and protection protocols,
 enabling analysis and understanding of communication patterns.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
@@ -11,7 +28,6 @@ logger = logging.getLogger(__name__)
 # Import protocol parsers
 _parsers = {}
 _parser_modules = [
-    ("adobe_parser", "Adobe licensing protocol parser"),
     ("autodesk_parser", "Autodesk licensing protocol parser"),
     ("codemeter_parser", "CodeMeter protocol parser"),
     ("flexlm_parser", "FlexLM licensing protocol parser"),
@@ -65,7 +81,6 @@ def get_supported_protocols():
     """Get list of protocols supported by available parsers."""
     protocols = []
     parser_protocol_map = {
-        "adobe_parser": "adobe",
         "autodesk_parser": "autodesk",
         "codemeter_parser": "codemeter",
         "flexlm_parser": "flexlm",

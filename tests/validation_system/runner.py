@@ -634,19 +634,6 @@ class EnvironmentIsolationManager:
                     logger.info("Windows Sandbox available for process isolation")
                     return True
 
-            # Fallback to Docker if available
-            docker_check = ["docker", "--version"]
-            docker_result = subprocess.run(docker_check, capture_output=True, text=True)
-
-            if docker_result.returncode == 0:
-                # Verify Docker daemon is running
-                docker_info = ["docker", "info"]
-                info_result = subprocess.run(docker_info, capture_output=True, text=True)
-
-                if info_result.returncode == 0:
-                    logger.info("Docker available for process sandboxing")
-                    return True
-
             logger.warning("No sandboxing technology available - process isolation disabled")
             return False
 
@@ -793,10 +780,10 @@ class ValidationTestRunner:
     Coordinates all validation components with production-ready functionality.
     """
 
-    def __init__(self, config_path: Path = Path(r"C:\Intellicrack\tests\validation_system\config.json")):
+    def __init__(self, config_path: Path = Path(r"D:\Intellicrack\tests\validation_system\config.json")):
         self.config_path = config_path
         self.config = self.load_config()
-        self.base_dir = Path(r"C:\Intellicrack\tests\validation_system")
+        self.base_dir = Path(r"D:\Intellicrack\tests\validation_system")
 
         self.integrity_validator = None
         self.challenge_generator = ChallengeGenerator(self.base_dir / "challenge_seeds")
@@ -850,8 +837,8 @@ class ValidationTestRunner:
             if key not in config:
                 raise ValueError(f"Missing required configuration key: {key}")
 
-        if not not config.get("global_settings", {}).get("allow_placeholders", True):
-            logger.warning("CRITICAL: Placeholders are not explicitly forbidden in configuration!")
+        if config.get("global_settings", {}).get("enable_strict_validation", False):
+            logger.info("Strict validation mode enabled")
 
         logger.info(f"Loaded configuration with {len(config['test_cases'])} test cases")
 

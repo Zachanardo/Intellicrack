@@ -109,7 +109,7 @@ class TerminalHexViewer:
                 raise OSError(f"Cannot open file: {e}") from e
 
     def _setup_colors(self):
-        """Setup color pairs for the interface."""
+        """Set up color pairs for the interface."""
         if not curses.has_colors():
             return
 
@@ -126,7 +126,7 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     def run(self, stdscr):
-        """Main application loop."""
+        """Run main application loop."""
         self.stdscr = stdscr
         self._setup_colors()
 

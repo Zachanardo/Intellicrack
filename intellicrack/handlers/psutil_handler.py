@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""PSUtil handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +23,7 @@ import subprocess
 import sys
 import time
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Psutil Import Handler with Production-Ready Fallbacks

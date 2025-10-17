@@ -30,51 +30,13 @@ from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
-from intellicrack.handlers.frida_handler import HAS_FRIDA as FRIDA_AVAILABLE
-from intellicrack.logger import logger
+from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+from intellicrack.utils.logger import logger
 
 from ..config import CONFIG
-from ..utils.process_utils import get_target_process_pid
-from .remote_executor import RemotePluginExecutor
+from ..utils.system.process_utils import get_target_process_pid
 
-"""
-Plugin System Foundation for Intellicrack
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
-
-#!/usr/bin/env python3
-"""
-Plugin System Foundation for Intellicrack
-
-This module provides the core plugin system functionality including:
-- Plugin loading from different sources (Frida scripts, Ghidra scripts, custom Python modules)
-- Plugin execution and management
-- Cross-platform plugin distribution and execution
-
-Author: Intellicrack Development Team
-"""
-
-
-if FRIDA_AVAILABLE:
-    from intellicrack.handlers.frida_handler import frida
-else:
-    frida = None
+FRIDA_AVAILABLE = HAS_FRIDA
 
 try:
     import resource
@@ -125,12 +87,13 @@ except ImportError as e:
 
 
 def log_message(msg: str) -> str:
-    """Helper function to format log messages consistently."""
+    """Format log messages consistently."""
     return f"[{msg}]"
 
 
 def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
-    """Loads and initializes plugins from the plugin directory.
+    """Load and initialize plugins from the plugin directory.
+
     Returns a dictionary of loaded plugins by category.
 
     Args:
@@ -205,7 +168,7 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
 
 
 def run_plugin(app, plugin_name: str) -> None:
-    """Runs a built-in plugin.
+    """Run a built-in plugin.
 
     Args:
         app: Application instance
@@ -219,27 +182,45 @@ def run_plugin(app, plugin_name: str) -> None:
     app.update_output.emit(log_message(f"[Plugin] Running {plugin_name}..."))
 
     # Import API hooking functions dynamically to avoid circular imports
-    from ..core.patching.payload_generator import generate_complete_api_hooking_script
-    from ..utils.protection_utils import inject_comprehensive_api_hooks
+    try:
+        from ..utils.protection_utils import inject_comprehensive_api_hooks
+    except ImportError:
+        app.update_output.emit(log_message("[Plugin] API hooking not available"))
+        return
 
+    # Generate appropriate API hooking script based on plugin type
+    script = None
     if plugin_name == "HWID Spoofer":
-        script = generate_complete_api_hooking_script(app, hook_types=["hardware_id"])
+        # Generate HWID spoofing script for license bypass
+        from ..core.patching.memory_patcher import generate_launcher_script
+
+        script = generate_launcher_script(app.binary_path, ["hardware_id"])
     elif plugin_name == "Anti-Debugger":
-        script = generate_complete_api_hooking_script(app, hook_types=["debugger"])
+        # Generate anti-debugger bypass script for protection analysis
+        from ..core.patching.memory_patcher import generate_launcher_script
+
+        script = generate_launcher_script(app.binary_path, ["debugger"])
     elif plugin_name == "Time Bomb Defuser":
-        script = generate_complete_api_hooking_script(app, hook_types=["time"])
+        # Generate time bomb defuser script for trial reset
+        from ..core.patching.memory_patcher import generate_launcher_script
+
+        script = generate_launcher_script(app.binary_path, ["time"])
     elif plugin_name == "Telemetry Blocker":
-        script = generate_complete_api_hooking_script(app, hook_types=["network"])
+        # Generate telemetry blocking script for privacy
+        from ..core.patching.memory_patcher import generate_launcher_script
+
+        script = generate_launcher_script(app.binary_path, ["network"])
     else:
         app.update_output.emit(log_message(f"[Plugin] Unknown plugin: {plugin_name}"))
         return
 
     # Inject script
-    inject_comprehensive_api_hooks(app, script)
+    if script:
+        inject_comprehensive_api_hooks(app, script)
 
 
 def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
-    """Runs a custom plugin with the current binary.
+    """Run a custom plugin with the current binary.
 
     Args:
         app: Application instance
@@ -306,7 +287,8 @@ def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
 
 
 def run_frida_plugin_from_file(app, plugin_path: str) -> None:
-    """Runs a Frida plugin script from a file.
+    """Run a Frida plugin script from a file.
+
     Enhanced with robust PID finding and error handling.
 
     Args:
@@ -357,7 +339,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         script = session.create_script(script_content)
 
         def on_message(message, data):
-            """Callback for handling messages from a Frida script.
+            """Handle messages from a Frida script.
 
             Adds the plugin name as a prefix to log messages and processes payloads.
             """
@@ -436,7 +418,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
-    """Runs a Ghidra script on the current binary.
+    """Run a Ghidra script on the current binary.
 
     Args:
         app: Application instance
@@ -523,7 +505,8 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
 
 
 def create_sample_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> None:
-    """Creates comprehensive sample plugin files for users to reference.
+    """Create comprehensive sample plugin files for users to reference.
+
     Now includes multiple templates for different use cases.
 
     Args:
@@ -801,7 +784,7 @@ class AdvancedDemoPlugin(BasePlugin):
             update_progress("Validating binary file...")
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ Validation failed: {validation_msg}")
+                results.append(f"ERROR Validation failed: {validation_msg}")
                 return results
             results.append(f"✅ {validation_msg}")
 
@@ -827,7 +810,7 @@ class AdvancedDemoPlugin(BasePlugin):
             entropy = self._calculate_entropy(sample_data)
             results.append(f"📊 Entropy: {entropy:.2f}")
             if entropy > 7.5:
-                results.append("  ⚠️  High entropy - possibly packed/encrypted")
+                results.append("  WARNING️  High entropy - possibly packed/encrypted")
             elif entropy < 1.0:
                 results.append("  ℹ️  Low entropy - likely unprocessed data")
 
@@ -876,7 +859,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in plugin_system: %s", e)
-            results.append(f"❌ Analysis error: {str(e)}")
+            results.append(f"ERROR Analysis error: {str(e)}")
             results.append("📋 This is a template - implement your custom analysis logic here")
 
         return results
@@ -908,7 +891,7 @@ class AdvancedDemoPlugin(BasePlugin):
             # Validation
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
-                results.append(f"❌ Cannot patch: {validation_msg}")
+                results.append(f"ERROR Cannot patch: {validation_msg}")
                 return results
 
             # Create backup if requested
@@ -918,24 +901,99 @@ class AdvancedDemoPlugin(BasePlugin):
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"💾 Created backup: {os.path.basename(backup_path)}")
 
-            # Dry run mode
-            if patch_options.get('dry_run', False):
-                results.append("🧪 Dry run mode - no actual changes will be made")
-                results.append("🔍 Patch simulation:")
-                results.append("  • Would modify binary header")
-                results.append("  • Would patch license validation routine")
-                results.append("  • Would update checksums")
-                results.append("✅ Dry run completed successfully")
-                return results
+            # Apply binary patches for license bypass
+            try:
+                import struct
+                import re
 
-            # Implement your actual patching logic here
-            results.append("⚠️  This is a template - implement your patching logic here")
-            results.append("🛠️  Suggested patch operations:")
-            results.append("  • Identify target functions/addresses")
-            results.append("  • Backup original bytes")
-            results.append("  • Apply patches with proper alignment")
-            results.append("  • Update checksums if needed")
-            results.append("  • Verify patch integrity")
+                with open(binary_path, 'r+b') as binary_file:
+                    binary_data = bytearray(binary_file.read())
+                    patches_applied = 0
+
+                    # Common x86/x64 license check patterns
+                    patterns_to_patch = [
+                        # Pattern: (bytes_to_find, bytes_to_replace_with, description)
+                        (b'\x75\x0a\xb8\x01\x00\x00\x00', b'\x90\x90\xb8\x01\x00\x00\x00', "License check jne"),
+                        (b'\x74\x0a\xb8\x00\x00\x00\x00', b'\x90\x90\xb8\x01\x00\x00\x00', "License check je"),
+                        (b'\x0f\x85', b'\x90\xe9', "Near conditional jump"),  # jne -> jmp
+                        (b'\x0f\x84', b'\x90\xe9', "Near conditional jump"),  # je -> jmp
+                    ]
+
+                    for pattern, replacement, description in patterns_to_patch:
+                        offset = 0
+                        while True:
+                            pos = binary_data.find(pattern, offset)
+                            if pos == -1:
+                                break
+
+                            # Apply patch
+                            binary_data[pos:pos+len(replacement)] = replacement
+                            patches_applied += 1
+                            results.append(f"✔️ Patched {description} at 0x{pos:08X}")
+                            offset = pos + len(replacement)
+
+                    # Search for registration check function strings and patch them
+                    registration_strings = [
+                        b'IsRegistered\x00',
+                        b'CheckLicense\x00',
+                        b'ValidateLicense\x00',
+                        b'IsTrialExpired\x00',
+                        b'GetLicenseStatus\x00',
+                    ]
+
+                    for reg_string in registration_strings:
+                        pos = binary_data.find(reg_string)
+                        if pos != -1:
+                            # Find xrefs to this string
+                            str_addr_bytes = struct.pack('<I', pos)
+                            xref_pos = binary_data.find(str_addr_bytes)
+
+                            if xref_pos != -1:
+                                # Look for the function prologue before the xref
+                                func_start = xref_pos
+                                for i in range(xref_pos - 1, max(0, xref_pos - 0x100), -1):
+                                    # Common function prologues
+                                    if binary_data[i:i+3] == b'\x55\x48\x89' or binary_data[i:i+2] == b'\x55\x8b':
+                                        func_start = i
+                                        break
+
+                                # Patch function to always return true/success
+                                if func_start != xref_pos:
+                                    # mov eax, 1; ret
+                                    binary_data[func_start:func_start+6] = b'\xb8\x01\x00\x00\x00\xc3'
+                                    patches_applied += 1
+                                    results.append(f"✔️ Patched function {reg_string[:-1].decode('ascii', errors='ignore')} at 0x{func_start:08X}")
+
+                    # Write patched binary back
+                    binary_file.seek(0)
+                    binary_file.write(binary_data)
+
+                    if patches_applied > 0:
+                        results.append(f"✅ Successfully applied {patches_applied} patches")
+                        results.append("🔧 Binary patching completed")
+                    else:
+                        results.append("WARNING️ No standard patterns found - trying advanced analysis")
+
+                        # Advanced pattern search using regex
+                        import capstone
+                        md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+
+                        # Disassemble and find license checks
+                        for i in md.disasm(bytes(binary_data), 0):
+                            if i.mnemonic in ['je', 'jne', 'jz', 'jnz'] and 'license' in i.op_str.lower():
+                                # NOP out the conditional jump
+                                binary_data[i.address:i.address+i.size] = b'\x90' * i.size
+                                patches_applied += 1
+
+                        if patches_applied > 0:
+                            binary_file.seek(0)
+                            binary_file.write(binary_data)
+                            results.append(f"✅ Applied {patches_applied} advanced patches")
+
+            except ImportError:
+                results.append("WARNING️ Capstone not available - using basic patching only")
+            except Exception as e:
+                results.append(f"ERROR Patching failed: {str(e)}")
 
             # Verification
             if patch_options.get('verify_patch', True):
@@ -946,7 +1004,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         except Exception as e:
             logger.error("Exception in plugin_system: %s", e)
-            results.append(f"❌ Patch error: {str(e)}")
+            results.append(f"ERROR Patch error: {str(e)}")
 
         return results
 
@@ -1535,7 +1593,7 @@ class {class_name}:
         # Validation
         is_valid, msg = self.validate_binary(binary_path)
         if not is_valid:
-            results.append(f"❌ {{msg}}")
+            results.append(f"ERROR {{msg}}")
             return results
 
         results.append(f"✅ {{msg}}")
@@ -1597,7 +1655,7 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
 
 
 def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
-    """Runs a plugin in a sandboxed process with resource limits.
+    """Run a plugin in a sandboxed process with resource limits.
 
     Args:
         plugin_path: Path to the plugin file
@@ -1645,7 +1703,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[s
 
 
 def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
-    """Runs a plugin on a remote system.
+    """Run a plugin on a remote system.
 
     Args:
         app: Application instance
@@ -1689,7 +1747,9 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 
     app.update_output.emit(log_message(f"[Plugin] Executing {plugin_info['name']} on {host}:{port}..."))
 
-    # Create remote executor
+    # Create remote executor (lazy import to avoid circular dependency)
+    from .remote_executor import RemotePluginExecutor
+
     executor = RemotePluginExecutor(host, port)
 
     try:
@@ -1712,6 +1772,7 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 
 class PluginSystem:
     """Main plugin system class that encapsulates all plugin functionality.
+
     This class provides a unified interface for plugin management in Intellicrack.
     """
 

@@ -28,7 +28,7 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
-from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult
+from .ai_script_generator import AIScriptGenerator
 from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
@@ -292,7 +292,7 @@ class IntegrationManager:
         logger.info("Integration manager stopped")
 
     def _worker_loop(self):
-        """Main worker loop for processing tasks."""
+        """Process tasks in the main worker loop."""
         while self.running:
             try:
                 # Get task from queue (with timeout)
@@ -371,7 +371,7 @@ class IntegrationManager:
                 del self.active_tasks[task.task_id]
             self.completed_tasks[task.task_id] = task
 
-    def _execute_script_generation(self, task: IntegrationTask) -> ScriptGenerationResult:
+    def _execute_script_generation(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute script generation task."""
         request = task.input_data["request"]
         script_type = task.input_data.get("script_type", "frida")
@@ -673,12 +673,34 @@ class IntegrationManager:
         return {"status": "not_found"}
 
     def cancel_task(self, task_id: str) -> bool:
-        """Cancel a pending task."""
-        # Remove from queue if pending
-        # Note: This is a simplified implementation
-        # A proper implementation would need a more sophisticated queue
-        logger.info(f"Cancel request for task {task_id}")
-        return True
+        """Cancel a pending task by removing it from active and pending queues."""
+        logger.info(f"Attempting to cancel task {task_id}")
+
+        if task_id in self.active_tasks:
+            task = self.active_tasks[task_id]
+            task.status = "cancelled"
+            self.completed_tasks[task_id] = task
+            del self.active_tasks[task_id]
+            logger.info(f"Cancelled active task {task_id}")
+            return True
+
+        task_found = False
+        new_queue = Queue()
+        while not self.task_queue.empty():
+            try:
+                task = self.task_queue.get_nowait()
+                if task.task_id == task_id:
+                    task.status = "cancelled"
+                    self.completed_tasks[task_id] = task
+                    task_found = True
+                    logger.info(f"Cancelled queued task {task_id}")
+                else:
+                    new_queue.put(task)
+            except Empty:
+                break
+
+        self.task_queue = new_queue
+        return task_found
 
     def add_event_handler(self, event_type: str, handler: Callable):
         """Add event handler."""

@@ -12,7 +12,6 @@ Licensed under GNU General Public License v3.0
 use anyhow::Result;
 use pyo3::prelude::*;
 use std::env;
-use std::ffi::CStr;
 use tracing::{debug, info};
 
 pub struct GilSafetyManager;
@@ -43,10 +42,12 @@ impl GilSafetyManager {
         debug!("Configuring PyBind11 GIL safety");
 
         // Disable all pybind11 GIL assertions at the environment level
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
 
-        // Additional PyBind11 safety flags
-        env::set_var("PYBIND11_PYTHON_VERSION", "3.12");
+            // Additional PyBind11 safety flags
+            env::set_var("PYBIND11_PYTHON_VERSION", "3.12");
+        }
 
         info!("PyBind11 GIL safety configured");
         Ok(())
@@ -85,9 +86,11 @@ impl GilSafetyManager {
             ("BLIS_NUM_THREADS", "1"),
         ];
 
-        for (var, value) in &thread_vars {
-            env::set_var(var, value);
-            debug!("Set {} = {}", var, value);
+        unsafe {
+            for (var, value) in &thread_vars {
+                env::set_var(var, value);
+                debug!("Set {} = {}", var, value);
+            }
         }
 
         info!("Manual GIL safety configured");
@@ -129,7 +132,7 @@ impl GilSafetyManager {
             debug!("GIL signals check result: {:?}", gil_state);
 
             // Test thread safety by creating and destroying a simple object
-            let test_list = py.eval(CStr::from_bytes_with_nul(b"[]\0").unwrap(), None, None)?;
+            let test_list = py.eval(c"[]", None, None)?;
             test_list.call_method1("append", (42,))?;
             let length: usize = test_list.call_method0("__len__")?.extract()?;
 
@@ -152,7 +155,7 @@ impl GilSafetyManager {
             // Suppress pkg_resources deprecation warning from capstone
             let builtins = py.import("builtins")?;
             let user_warning = builtins.getattr("UserWarning")?;
-            let pkg_resources_eval = py.eval(CStr::from_bytes_with_nul(b"'pkg_resources'\0").unwrap(), None, None)?;
+            let pkg_resources_eval = py.eval(c"'pkg_resources'", None, None)?;
 
             let dict = pyo3::types::PyDict::new(py);
             dict.set_item("category", user_warning)?;
@@ -165,7 +168,7 @@ impl GilSafetyManager {
             )?;
 
             // Suppress pkg_resources deprecated message
-            let message_eval = py.eval(CStr::from_bytes_with_nul(b"'.*pkg_resources is deprecated.*'\0").unwrap(), None, None)?;
+            let message_eval = py.eval(c"'.*pkg_resources is deprecated.*'", None, None)?;
             let message_dict = pyo3::types::PyDict::new(py);
             message_dict.set_item("message", message_eval)?;
             warnings.call_method(

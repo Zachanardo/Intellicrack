@@ -112,18 +112,18 @@ The DEP bypass module MUST provide:
 
 ### Method 1: Batch Script
 ```batch
-C:\Intellicrack\run_dep_bypass_tests.bat
+D:\\Intellicrack\run_dep_bypass_tests.bat
 ```
 
 ### Method 2: Python Script
 ```python
-python C:\Intellicrack\test_dep_bypass_coverage.py
+python D:\\Intellicrack\test_dep_bypass_coverage.py
 ```
 
 ### Method 3: Direct pytest
 ```bash
-cd C:\Intellicrack
-mamba activate C:\Intellicrack\mamba_env
+cd D:\\Intellicrack
+pixi shell
 python -m pytest tests\unit\core\mitigation_bypass\test_dep_bypass.py -v --cov=intellicrack.core.mitigation_bypass.dep_bypass --cov-report=html
 ```
 
@@ -211,7 +211,7 @@ The 44 test methods across 7 test classes validate:
 These tests serve as both validation and documentation of the DEP bypass module's required functionality, ensuring it meets the standards expected of a professional security research tool.
 
 ## Test File Location
-`C:\Intellicrack\tests\unit\core\mitigation_bypass\test_dep_bypass.py`
+`D:\\Intellicrack\tests\unit\core\mitigation_bypass\test_dep_bypass.py`
 
 ## Coverage Reports
 - Terminal: Run tests to see inline coverage

@@ -5,6 +5,7 @@ The UI module provides a modern, professional graphical interface built with PyQ
 ## Architecture Overview
 
 The UI follows a modular design with clear separation between:
+
 - **Main Application** - Core window and application management
 - **Widgets** - Reusable UI components
 - **Dialogs** - Modal windows for specific tasks
@@ -13,6 +14,7 @@ The UI follows a modular design with clear separation between:
 ## Module Structure
 
 ### Core Application (`main_*.py`)
+
 - **main_app.py** - Main application class and startup logic
 - **main_window.py** - Primary application window with three-panel layout
 - **menu_utils.py** - Menu bar and context menu management
@@ -21,6 +23,7 @@ The UI follows a modular design with clear separation between:
 - **tooltip_helper.py** - Enhanced tooltip functionality
 
 ### Widget Components (`widgets/`)
+
 Reusable UI components for different analysis functions:
 
 - **batch_analysis_widget.py** - Batch processing interface
@@ -36,9 +39,11 @@ Reusable UI components for different analysis functions:
 - **widget_factory.py** - Widget creation and management
 
 ### Dialog Windows (`dialogs/`)
+
 Specialized modal dialogs for specific tasks:
 
 #### Analysis & Configuration
+
 - **frida_manager_dialog.py** - Frida script management
 - **llm_config_dialog.py** - LLM backend configuration
 - **model_manager_dialog.py** - AI model management
@@ -46,6 +51,7 @@ Specialized modal dialogs for specific tasks:
 - **script_generator_dialog.py** - Script generation interface
 
 #### Development & Testing
+
 - **ci_cd_dialog.py** - CI/CD pipeline integration
 - **model_finetuning_dialog.py** - AI model fine-tuning
 - **plugin_creation_wizard.py** - Plugin development wizard
@@ -55,6 +61,7 @@ Specialized modal dialogs for specific tasks:
 - **qemu_test_results_dialog.py** - QEMU test results
 
 #### Advanced Tools
+
 - **c2_management_dialog.py** - C2 infrastructure management
 - **guided_workflow_wizard.py** - Step-by-step analysis workflows
 - **keygen_dialog.py** - Key generation utilities
@@ -67,27 +74,33 @@ Specialized modal dialogs for specific tasks:
 - **vulnerability_research_dialog.py** - Vulnerability research tools
 
 #### Common Components
+
 - **common_imports.py** - Shared imports and dependencies
 - **event_handler_utils.py** - Event handling utilities
 
 ### Specialized Components
+
 - **adobe_injector_src/** - Adobe-specific injection interfaces
 - **Windows_Patch/** - Windows-specific patching utilities
 - **models/** - UI data models and structures
 
 ### Integration Modules
+
 - **emulator_ui_enhancements.py** - Emulator interface improvements
 - **exploitation_handlers.py** - Exploitation workflow handlers
 
 ## Key Features
 
 ### Three-Panel Layout
+
 The main interface uses a professional three-panel design:
+
 1. **Left Panel** - File browser and project navigation
 2. **Center Panel** - Primary analysis view (hex editor, disassembly, etc.)
 3. **Right Panel** - Analysis results, properties, and tools
 
 ### Modern UI Elements
+
 - **Dark/Light Theme Support** - Automatic theme detection
 - **Responsive Layout** - Adapts to different screen sizes
 - **Professional Styling** - Consistent look and feel
@@ -95,6 +108,7 @@ The main interface uses a professional three-panel design:
 - **Keyboard Shortcuts** - Efficient workflow navigation
 
 ### Advanced Widgets
+
 - **Enhanced Hex Viewer** - Multi-format display with syntax highlighting
 - **Integrated Console** - Embedded terminal for command execution
 - **Real-time Logging** - Live log display with filtering
@@ -161,6 +175,7 @@ class CustomDialog(QDialog):
 ## Styling and Theming
 
 ### Style Management
+
 The UI uses a centralized styling system:
 
 ```python
@@ -175,6 +190,7 @@ accent_color = get_theme_color("accent")
 ```
 
 ### Theme Support
+
 - **Automatic Detection** - Follows system theme preferences
 - **Manual Override** - User can select preferred theme
 - **Consistent Colors** - Theme-aware color palette
@@ -183,6 +199,7 @@ accent_color = get_theme_color("accent")
 ## Event Handling
 
 ### Centralized Event Management
+
 ```python
 from intellicrack.ui.dialogs.event_handler_utils import EventHandler
 
@@ -200,6 +217,7 @@ class MyWidget(QWidget):
 ```
 
 ### Custom Events
+
 ```python
 from PyQt6.QtCore import pyqtSignal
 
@@ -213,6 +231,7 @@ class AnalysisWidget(QWidget):
 ## Plugin UI Integration
 
 ### Plugin Widget Creation
+
 ```python
 from intellicrack.ui.widgets.plugin_editor import PluginEditor
 
@@ -226,6 +245,7 @@ class PluginWidget(QWidget):
 ```
 
 ### UI Plugin Registration
+
 ```python
 from intellicrack.plugins import PluginBase
 
@@ -245,6 +265,7 @@ class UIPlugin(PluginBase):
 ## Configuration and Settings
 
 ### Settings Management
+
 ```python
 from intellicrack.ui.dialogs.preferences_dialog import PreferencesDialog
 
@@ -256,6 +277,7 @@ if prefs.exec_() == QDialog.Accepted:
 ```
 
 ### Persistent UI State
+
 ```python
 from PyQt6.QtCore import QSettings
 
@@ -274,16 +296,19 @@ class MainWindow(QMainWindow):
 ## Performance Optimization
 
 ### Lazy Loading
+
 - **Widget Creation** - Create widgets only when needed
 - **Data Loading** - Load data progressively
 - **Image Resources** - Load images on demand
 
 ### Memory Management
+
 - **Widget Cleanup** - Proper widget destruction
 - **Event Disconnection** - Clean up signal connections
 - **Resource Release** - Release graphics resources
 
 ### Threading
+
 ```python
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -303,11 +328,13 @@ class AnalysisThread(QThread):
 ## Accessibility
 
 ### Keyboard Navigation
+
 - **Tab Order** - Logical tab sequence
 - **Shortcuts** - Comprehensive keyboard shortcuts
 - **Focus Indicators** - Clear focus visualization
 
 ### Screen Reader Support
+
 - **Labels** - Descriptive labels for all controls
 - **Alt Text** - Alternative text for images
 - **ARIA** - Appropriate ARIA attributes
@@ -315,6 +342,7 @@ class AnalysisThread(QThread):
 ## Testing UI Components
 
 ### Unit Testing
+
 ```python
 import unittest
 from PyQt6.QtTest import QTest
@@ -331,6 +359,7 @@ class TestAnalysisWidget(unittest.TestCase):
 ```
 
 ### Integration Testing
+
 ```python
 def test_full_analysis_workflow(self):
     # Test complete analysis workflow
@@ -343,12 +372,14 @@ def test_full_analysis_workflow(self):
 ## Deployment Considerations
 
 ### Cross-Platform Compatibility
+
 - **Qt Version** - Use compatible Qt version across platforms
 - **Font Handling** - Platform-appropriate fonts
 - **File Paths** - Cross-platform path handling
 - **Permissions** - Handle different permission models
 
 ### Packaging
+
 - **PyInstaller** - Bundle application with dependencies
 - **Resource Files** - Include UI resources (icons, styles)
 - **Plugin Discovery** - Ensure plugins are found in packaged app
@@ -358,21 +389,22 @@ def test_full_analysis_workflow(self):
 ### Common Issues
 
 1. **Widget Not Displaying**
-   - Check parent-child relationships
-   - Verify layout management
-   - Ensure show() is called
+    - Check parent-child relationships
+    - Verify layout management
+    - Ensure show() is called
 
 2. **Styling Issues**
-   - Check CSS syntax
-   - Verify resource paths
-   - Test theme compatibility
+    - Check CSS syntax
+    - Verify resource paths
+    - Test theme compatibility
 
 3. **Event Handling Problems**
-   - Verify signal-slot connections
-   - Check event propagation
-   - Debug with print statements
+    - Verify signal-slot connections
+    - Check event propagation
+    - Debug with print statements
 
 ### Debug Tools
+
 ```python
 # Enable Qt debug output
 import os
@@ -389,18 +421,21 @@ def print_widget_tree(widget, indent=0):
 ## Development Guidelines
 
 ### Code Style
+
 - Follow PyQt6 naming conventions
 - Use meaningful widget names
 - Group related functionality
 - Document complex UI logic
 
 ### Performance
+
 - Minimize widget creation in constructors
 - Use layouts efficiently
 - Avoid unnecessary repaints
 - Cache expensive operations
 
 ### Maintainability
+
 - Keep UI logic separate from business logic
 - Use signals and slots for communication
 - Create reusable components
@@ -409,6 +444,7 @@ def print_widget_tree(widget, indent=0):
 ## Contributing
 
 When contributing to the UI:
+
 1. Follow existing design patterns
 2. Ensure cross-platform compatibility
 3. Add appropriate tests

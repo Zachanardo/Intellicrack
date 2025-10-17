@@ -142,7 +142,7 @@ _async_monitor = AsyncPerformanceMonitor()
 
 
 def profile_ai_operation(operation_name: str = None):
-    """Decorator for profiling AI operations with real performance tracking."""
+    """Profile AI operations with real performance tracking using a decorator."""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)

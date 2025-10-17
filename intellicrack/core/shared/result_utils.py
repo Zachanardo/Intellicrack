@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Result utilities for Intellicrack core shared functionality.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -46,6 +48,7 @@ class ResultMixin:
 
     def create_analysis_result(self, **kwargs) -> dict[str, Any]:
         """Create a standardized analysis result dictionary.
+
         Alias for init_result to maintain compatibility.
 
         Args:

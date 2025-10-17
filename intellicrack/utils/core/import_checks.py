@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Import checks for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +24,7 @@ to avoid code duplication across modules.
 
 import platform
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Binary analysis libraries
 try:
@@ -76,9 +78,10 @@ except ImportError as e:
 
 # Instrumentation
 try:
-    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+    import frida
 
-    FRIDA_AVAILABLE = HAS_FRIDA
+    HAS_FRIDA = True
+    FRIDA_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False

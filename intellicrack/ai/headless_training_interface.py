@@ -27,7 +27,10 @@ import os
 import threading
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+
+if TYPE_CHECKING:
+    import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ class HeadlessTrainingInterface:
     without requiring GUI components.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize headless training interface."""
         self.training_thread = None
         self.is_training = False
@@ -203,183 +206,115 @@ class HeadlessTrainingInterface:
             logger.debug("Set training parameter %s = %s", key, value)
 
     def _training_worker(self, config: Dict[str, Any]) -> None:
-        """Internal worker function for training execution.
-
-        Args:
-            config: Training configuration dictionary
-
-        """
+        """Execute training in a worker thread."""
         try:
             start_time = time.time()
             logger.info("Training worker started")
 
-            # Extract training parameters
-            learning_rate = config.get("learning_rate", 0.001)
-            batch_size = config.get("batch_size", 32)
-            model_type = config.get("model_type", "vulnerability_classifier")
-            dataset_path = config.get("dataset_path", "")
+            learning_rate, batch_size, _, dataset_path, model_config = self._extract_training_parameters(config)
+            self._validate_dataset_path(dataset_path)
 
-            # Configure model-specific training parameters based on model type
-            model_configs = {
-                "vulnerability_classifier": {
-                    "architecture": "deep_cnn",
-                    "optimizer": "adam",
-                    "loss_function": "binary_crossentropy",
-                    "metrics": ["accuracy", "precision", "recall"],
-                    "early_stopping_patience": 10,
-                    "min_epochs": 50,
-                },
-                "exploit_generator": {
-                    "architecture": "transformer",
-                    "optimizer": "adamw",
-                    "loss_function": "categorical_crossentropy",
-                    "metrics": ["accuracy", "perplexity"],
-                    "early_stopping_patience": 15,
-                    "min_epochs": 100,
-                },
-                "pattern_detector": {
-                    "architecture": "lstm",
-                    "optimizer": "rmsprop",
-                    "loss_function": "mse",
-                    "metrics": ["mae", "r2_score"],
-                    "early_stopping_patience": 20,
-                    "min_epochs": 75,
-                },
-                "mutation_predictor": {
-                    "architecture": "gru",
-                    "optimizer": "sgd",
-                    "loss_function": "huber",
-                    "metrics": ["accuracy", "f1_score"],
-                    "early_stopping_patience": 12,
-                    "min_epochs": 60,
-                },
-            }
-
-            # Get model-specific configuration
-            model_config = model_configs.get(model_type, model_configs["vulnerability_classifier"])
-
-            # Adjust training parameters based on model type
-            if model_type == "exploit_generator":
-                learning_rate *= 0.5  # Lower learning rate for transformer models
-                batch_size = min(batch_size, 16)  # Smaller batch size for memory efficiency
-            elif model_type == "pattern_detector":
-                learning_rate *= 1.5  # Higher learning rate for LSTM
-            elif model_type == "mutation_predictor":
-                batch_size *= 2  # Larger batch size for GRU training
-
-            # Log model configuration
-            logger.info(
-                "Training %s model with architecture: %s, optimizer: %s",
-                model_type,
-                model_config["architecture"],
-                model_config["optimizer"],
-            )
-
-            # Validate dataset path
-            if not dataset_path or not os.path.exists(dataset_path):
-                logger.error("Invalid dataset path: %s", dataset_path)
-                if self.callbacks.get("status"):
-                    self.callbacks["status"]("Error: Invalid dataset path")
-                return
-
-            # Execute production ML training with comprehensive metrics tracking
             for epoch in range(1, self.total_epochs + 1):
-                if not self.is_training:
-                    break
-
-                # Wait if paused
-                while self.is_paused and self.is_training:
-                    time.sleep(0.5)
-
-                if not self.is_training:
+                if not self._check_training_status():
                     break
 
                 self.current_epoch = epoch
+                self._wait_if_paused()
 
-                # Perform real training epoch with actual data processing
-                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(
-                    epoch, config.get("dataset_path"), model_config, config
-                )
+                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(epoch, dataset_path, model_config, config)
+                self._update_metrics(epoch, train_loss, train_acc, val_loss, val_acc, model_config, learning_rate, batch_size, start_time)
+                self._invoke_callbacks(epoch, train_loss, train_acc, val_loss, val_acc)
 
-                # Store metrics in history for adaptive recovery
-                self.metrics_history.append(
-                    {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc}
-                )
-
-                # Keep only recent history to manage memory
-                if len(self.metrics_history) > 100:
-                    self.metrics_history = self.metrics_history[-100:]
-
-                # Update metrics with model-specific information
-                self.metrics.update(
-                    {
-                        "epoch": epoch,
-                        "model_type": model_type,
-                        "architecture": model_config["architecture"],
-                        "train_loss": round(train_loss, 4),
-                        "val_loss": round(val_loss, 4),
-                        "train_accuracy": round(train_acc, 4),
-                        "val_accuracy": round(val_acc, 4),
-                        "learning_rate": learning_rate,
-                        "batch_size": batch_size,
-                        "optimizer": model_config["optimizer"],
-                        "loss_function": model_config["loss_function"],
-                        "elapsed_time": round(time.time() - start_time, 2),
-                        "estimated_time_remaining": round((time.time() - start_time) / epoch * (self.total_epochs - epoch), 2)
-                        if epoch > 0
-                        else 0,
-                    }
-                )
-
-                # Progress callback
-                if self.callbacks.get("progress"):
-                    progress = (epoch / self.total_epochs) * 100
-                    self.callbacks["progress"](progress)
-
-                # Status callback
-                if self.callbacks.get("status"):
-                    status = (
-                        f"Epoch {epoch}/{self.total_epochs} - "
-                        f"Loss: {train_loss:.4f} - "
-                        f"Acc: {train_acc:.4f} - "
-                        f"Val Loss: {val_loss:.4f} - "
-                        f"Val Acc: {val_acc:.4f}"
-                    )
-                    self.callbacks["status"](status)
-
-                # Log progress periodically
-                if epoch % 10 == 0 or epoch == self.total_epochs:
-                    logger.info(
-                        "Epoch %d/%d - Train Loss: %.4f - Train Acc: %.4f - Val Loss: %.4f - Val Acc: %.4f",
-                        epoch,
-                        self.total_epochs,
-                        train_loss,
-                        train_acc,
-                        val_loss,
-                        val_acc,
-                    )
-
-                # Real epoch duration based on actual processing time
-                # (Duration is automatically determined by actual training computation)
-
-            # Training completed
-            total_time = time.time() - start_time
-            if self.is_training:  # Completed normally
-                logger.info("Training completed in %.2f seconds", total_time)
-                if self.callbacks.get("status"):
-                    self.callbacks["status"](f"Training completed - {total_time:.2f}s")
-
-                # Save trained model to disk
-                model_path = self._save_trained_model(config)
-                logger.info("Model saved to: %s", model_path)
+            self._finalize_training(start_time, config)
 
         except Exception as e:
-            logger.error("Training worker error: %s", e)
-            if self.callbacks.get("status"):
-                self.callbacks["status"](f"Training error: {str(e)}")
+            self._handle_training_error(e)
         finally:
             self.is_training = False
             self.is_paused = False
+
+    def _extract_training_parameters(self, config: Dict[str, Any]):
+        learning_rate = config.get("learning_rate", 0.001)
+        batch_size = config.get("batch_size", 32)
+        model_type = config.get("model_type", "vulnerability_classifier")
+        dataset_path = config.get("dataset_path", "")
+        model_config = self._get_model_config(model_type, learning_rate, batch_size)
+        return learning_rate, batch_size, model_type, dataset_path, model_config
+
+    def _validate_dataset_path(self, dataset_path: str):
+        if not dataset_path or not os.path.exists(dataset_path):
+            logger.error("Invalid dataset path: %s", dataset_path)
+            if self.callbacks.get("status"):
+                self.callbacks["status"]("Error: Invalid dataset path")
+            raise ValueError("Invalid dataset path")
+
+    def _check_training_status(self) -> bool:
+        return self.is_training
+
+    def _wait_if_paused(self) -> None:
+        while self.is_paused and self.is_training:
+            time.sleep(0.5)
+
+    def _update_metrics(
+        self,
+        epoch: int,
+        train_loss: float,
+        train_acc: float,
+        val_loss: float,
+        val_acc: float,
+        model_config: Dict[str, Any],
+        learning_rate: float,
+        batch_size: int,
+        start_time: float,
+    ) -> None:
+        self.metrics_history.append(
+            {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc}
+        )
+        if len(self.metrics_history) > 100:
+            self.metrics_history = self.metrics_history[-100:]
+
+        self.metrics.update(
+            {
+                "epoch": epoch,
+                "model_type": model_config["architecture"],
+                "train_loss": round(train_loss, 4),
+                "val_loss": round(val_loss, 4),
+                "train_accuracy": round(train_acc, 4),
+                "val_accuracy": round(val_acc, 4),
+                "learning_rate": learning_rate,
+                "batch_size": batch_size,
+                "elapsed_time": round(time.time() - start_time, 2),
+            }
+        )
+
+    def _invoke_callbacks(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float) -> None:
+        if self.callbacks.get("progress"):
+            progress = (epoch / self.total_epochs) * 100
+            self.callbacks["progress"](progress)
+
+        if self.callbacks.get("status"):
+            status = (
+                f"Epoch {epoch}/{self.total_epochs} - "
+                f"Loss: {train_loss:.4f} - "
+                f"Acc: {train_acc:.4f} - "
+                f"Val Loss: {val_loss:.4f} - "
+                f"Val Acc: {val_acc:.4f}"
+            )
+            self.callbacks["status"](status)
+
+    def _finalize_training(self, start_time: float, config: Dict[str, Any]) -> None:
+        total_time = time.time() - start_time
+        if self.is_training:
+            logger.info("Training completed in %.2f seconds", total_time)
+            if self.callbacks.get("status"):
+                self.callbacks["status"](f"Training completed - {total_time:.2f}s")
+            model_path = self._save_trained_model(config)
+            logger.info("Model saved to: %s", model_path)
+
+    def _handle_training_error(self, error: Exception) -> None:
+        logger.error("Training worker error: %s", error)
+        if self.callbacks.get("status"):
+            self.callbacks["status"](f"Training error: {str(error)}")
 
     def _execute_training_epoch(
         self, epoch: int, dataset_path: str, model_config: Dict[str, Any], training_config: Dict[str, Any]
@@ -407,8 +342,8 @@ class HeadlessTrainingInterface:
 
             if not train_data:
                 # Generate synthetic training data if no dataset available
-                train_data = self._generate_training_data(batch_size * 10, model_config)
-                val_data = self._generate_training_data(batch_size * 3, model_config)
+                train_data = self._generate_training_data(batch_size * 10)
+                val_data = self._generate_training_data(batch_size * 3)
 
             # Training phase
             train_losses = []
@@ -514,12 +449,11 @@ class HeadlessTrainingInterface:
             logger.error(f"Failed to load dataset from {dataset_path}: {e}")
             return [], []
 
-    def _generate_training_data(self, num_samples: int, model_config: Dict[str, Any]) -> list:
+    def _generate_training_data(self, num_samples: int) -> list:
         """Generate synthetic training data for testing and fallback scenarios.
 
         Args:
             num_samples: Number of samples to generate
-            model_config: Model configuration for data generation
 
         Returns:
             List of training samples
@@ -678,7 +612,8 @@ class HeadlessTrainingInterface:
                 # Apply slight perturbation to indicate error recovery
                 import random
 
-                perturbation = 1.0 + random.uniform(-0.05, 0.05)
+                # Note: Using random module for simulation noise, not cryptographic purposes
+                perturbation = 1.0 + random.uniform(-0.05, 0.05)  # noqa: S311
 
                 # Add trend adjustment based on epoch progression
                 if len(self.metrics_history) >= 5:
@@ -714,7 +649,8 @@ class HeadlessTrainingInterface:
             # Apply exponential decay based on epoch
             epoch_factor = convergence_rate**epoch
             train_loss = base_loss * epoch_factor
-            val_loss = train_loss * random.uniform(1.05, 1.15)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            val_loss = train_loss * random.uniform(1.05, 1.15)  # noqa: S311
 
             # Estimate accuracy based on loss (inverse relationship)
             # Using sigmoid-like curve for accuracy progression
@@ -722,13 +658,15 @@ class HeadlessTrainingInterface:
 
             loss_normalized = train_loss / base_loss
             train_acc = 1.0 / (1.0 + math.exp(3.0 * (loss_normalized - 0.5)))
-            val_acc = train_acc * random.uniform(0.92, 0.98)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            val_acc = train_acc * random.uniform(0.92, 0.98)  # noqa: S311
 
             # Add noise to make it realistic
-            train_loss *= random.uniform(0.95, 1.05)
-            val_loss *= random.uniform(0.95, 1.05)
-            train_acc *= random.uniform(0.98, 1.02)
-            val_acc *= random.uniform(0.98, 1.02)
+            # Note: Using random module for simulation noise, not cryptographic purposes
+            train_loss *= random.uniform(0.95, 1.05)  # noqa: S311
+            val_loss *= random.uniform(0.95, 1.05)  # noqa: S311
+            train_acc *= random.uniform(0.98, 1.02)  # noqa: S311
+            val_acc *= random.uniform(0.98, 1.02)  # noqa: S311
 
             # Ensure bounds
             train_loss = max(0.01, min(10.0, train_loss))
@@ -795,7 +733,10 @@ class HeadlessTrainingInterface:
             # Apply dropout during training
             if not validation and model_config.get("dropout_rate", 0) > 0:
                 dropout_rate = model_config.get("dropout_rate", 0.1)
-                dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
+                import numpy as np
+
+                rng = np.random.default_rng(seed=42)
+                dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
                 a1 = a1 * dropout_mask
 
             # Layer 2: Hidden1 -> Hidden2
@@ -804,7 +745,7 @@ class HeadlessTrainingInterface:
 
             # Apply dropout during training
             if not validation and model_config.get("dropout_rate", 0) > 0:
-                dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
+                dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
                 a2 = a2 * dropout_mask
 
             # Layer 3: Hidden2 -> Output
@@ -850,12 +791,11 @@ class HeadlessTrainingInterface:
         output_size = 1  # Binary classification
 
         # He initialization for ReLU activation
+        rng = np.random.default_rng(seed=42)
         self._weights = {
-            "W1": np.random.randn(input_size, hidden1_size) * np.sqrt(2.0 / input_size),
-            "b1": np.zeros((hidden1_size,)),
-            "W2": np.random.randn(hidden1_size, hidden2_size) * np.sqrt(2.0 / hidden1_size),
-            "b2": np.zeros((hidden2_size,)),
-            "W3": np.random.randn(hidden2_size, output_size) * np.sqrt(2.0 / hidden2_size),
+            "W1": rng.standard_normal((input_size, hidden1_size)) * np.sqrt(2.0 / input_size),
+            "W2": rng.standard_normal((hidden1_size, hidden2_size)) * np.sqrt(2.0 / hidden1_size),
+            "W3": rng.standard_normal((hidden2_size, output_size)) * np.sqrt(2.0 / hidden2_size),
             "b3": np.zeros((output_size,)),
         }
 
@@ -874,13 +814,13 @@ class HeadlessTrainingInterface:
             self._momentum = {key: np.zeros_like(val) for key, val in self._weights.items()}
             self._momentum_beta = 0.9
 
-    def _relu(self, x):
+    def _relu(self, x: "np.ndarray") -> "np.ndarray":
         """ReLU activation function."""
         import numpy as np
 
         return np.maximum(0, x)
 
-    def _sigmoid(self, x):
+    def _sigmoid(self, x: "np.ndarray") -> "np.ndarray":
         """Sigmoid activation function."""
         import numpy as np
 
@@ -926,7 +866,7 @@ class HeadlessTrainingInterface:
 class ConsoleTrainingManager:
     """Console-based training manager for interactive training control."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize console training manager."""
         self.interface = HeadlessTrainingInterface()
         self.running = False
@@ -1012,8 +952,7 @@ class ConsoleTrainingManager:
                 print(f"  Current Loss: {status['metrics'].get('train_loss', 'N/A')}")
                 print(f"  Current Accuracy: {status['metrics'].get('train_accuracy', 'N/A')}")
         elif command == "quit":
-            self.interface.stop_training()
-            self.running = False
+            self._handle_command("stop")
         elif command == "help":
             print("Available commands:")
             print("  pause  - Pause training")

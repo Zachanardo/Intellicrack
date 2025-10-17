@@ -1,9 +1,27 @@
+"""
+Manual analysis runner for Intellicrack test coverage evaluation.
+
+This module performs a comprehensive analysis of Intellicrack's test coverage for the BaseDetector
+component, evaluating target module elements, test suite quality, coverage metrics,
+production readiness indicators, and overall assessment. The analysis examines:
+- Target module classes, methods, and functions
+- Test suite classes and methods with categorization
+- Coverage calculation and quality scoring
+- Production readiness indicators including real-world scenarios,
+  error handling, edge cases, integration tests, platform compatibility,
+  security validation, and mocking usage
+- Final assessment of test suite approval status
+
+This tool helps ensure the anti-analysis detection components have sufficient
+test coverage and meet production quality standards.
+"""
+
 import os
 import ast
 import re
 
 # Manual execution of the analysis
-project_root = r"C:\Intellicrack"
+project_root = r"D:\Intellicrack"
 target_module = os.path.join(project_root, "intellicrack", "core", "anti_analysis", "base_detector.py")
 test_file = os.path.join(project_root, "tests", "unit", "core", "anti_analysis", "test_base_detector.py")
 

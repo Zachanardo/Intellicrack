@@ -29,7 +29,6 @@ import traceback
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
-from intellicrack.utils.service_utils import get_service_url
 
 from ..core.misc_utils import log_message
 
@@ -68,6 +67,8 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
         # Configure server based on kwargs
         port = kwargs.get("port", 27000)
         # Get license server URL from configuration
+        from intellicrack.utils.service_utils import get_service_url
+
         license_url = get_service_url("license_server")
         default_host = license_url.replace("http://", "").replace("https://", "").split(":")[0]
         host = kwargs.get("host", default_host)
@@ -84,8 +85,8 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
 
         # Try to use existing network license server
         try:
-            from intellicrack.core.network.license_server_emulator import (
-                NetworkLicenseServerEmulator,
+            from intellicrack.plugins.custom_modules.license_server_emulator import (
+                LicenseServerEmulator as NetworkLicenseServerEmulator,
             )
 
             config = {
@@ -591,7 +592,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                 if pattern_result.get("gpu_available"):
                     app_instance.update_output.emit(f"  ✅ GPU pattern matching successful - Backend: {backend}")
                 else:
-                    app_instance.update_output.emit("  ⚠️ Using CPU fallback for pattern matching")
+                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for pattern matching")
                 app_instance.update_output.emit(f"  📊 Result: {pattern_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
@@ -613,7 +614,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in runner_functions: %s", e)
                 if app_instance:
-                    app_instance.update_output.emit(f"  ⚠️ Entropy calculation failed: {e}")
+                    app_instance.update_output.emit(f"  WARNING️ Entropy calculation failed: {e}")
                     app_instance.update_output.emit("")
 
             # Test GPU-accelerated hashing
@@ -627,7 +628,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                 if crypto_result.get("gpu_available"):
                     app_instance.update_output.emit(f"  ✅ GPU crypto operations successful - Backend: {crypto_backend}")
                 else:
-                    app_instance.update_output.emit("  ⚠️ Using CPU fallback for crypto operations")
+                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for crypto operations")
                 app_instance.update_output.emit(f"  📊 Result: {crypto_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
@@ -639,7 +640,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
                     app_instance.update_output.emit(f"  🎯 Active backend: {status.get('selected_backend')}")
                     app_instance.update_output.emit("  🚀 Pattern matching, entropy calculation, and hashing accelerated")
                 else:
-                    app_instance.update_output.emit("  ⚠️ GPU acceleration not available - using optimized CPU fallbacks")
+                    app_instance.update_output.emit("  WARNING️ GPU acceleration not available - using optimized CPU fallbacks")
                     app_instance.update_output.emit("  💡 Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
 
                 app_instance.update_output.emit("=" * 50)
@@ -660,13 +661,13 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
         except ImportError as e:
             logger.warning("GPUAccelerator not available")
             if app_instance:
-                app_instance.update_output.emit(f"❌ GPU accelerator not available: {e}")
+                app_instance.update_output.emit(f"ERROR GPU accelerator not available: {e}")
             return {"status": "error", "message": "GPU accelerator not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running GPU accelerated analysis: %s", e)
         if app_instance:
-            app_instance.update_output.emit(f"❌ Error in GPU analysis: {e}")
+            app_instance.update_output.emit(f"ERROR Error in GPU analysis: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -1202,7 +1203,7 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: str | None = N
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in runner_functions: %s", e)
             loader.close()
-            raise e
+            raise
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running memory-optimized analysis: %s", e)
@@ -1845,7 +1846,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
 
 # Export all runner functions
 def run_ghidra_plugin_from_file(app, plugin_path):
-    """Runs a Ghidra script on the current binary.
+    """Run a Ghidra script on the current binary.
 
     Args:
         app: Application instance
@@ -2922,7 +2923,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
     result = {"success": False, "message": ""}
 
     try:
-        # Simulate patch application based on patch type
+        # Apply real patch operations to the binary file
         patch_type = patch.get("type", "")
         operations = patch.get("operations", [])
 
@@ -2930,10 +2931,79 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
             result["message"] = "No patch operations defined"
             return result
 
-        # For now, simulate successful application
-        # In real implementation, this would modify the binary file
-        result["success"] = True
-        result["message"] = f"Applied {len(operations)} operations for {patch_type} patch"
+        # Read the binary file
+        with open(target_binary, "rb") as f:
+            binary_data = bytearray(f.read())
+
+        # Track applied operations
+        applied_ops = 0
+
+        # Apply each operation to the binary
+        for op in operations:
+            op_type = op.get("type", "")
+            offset = op.get("offset", 0)
+            data = op.get("data", b"")
+
+            if op_type == "replace":
+                # Replace bytes at specified offset
+                if isinstance(data, str):
+                    data = bytes.fromhex(data.replace(" ", ""))
+                elif isinstance(data, list):
+                    data = bytes(data)
+
+                if offset + len(data) <= len(binary_data):
+                    binary_data[offset : offset + len(data)] = data
+                    applied_ops += 1
+                else:
+                    logger.warning(f"Patch offset {offset} exceeds binary size")
+
+            elif op_type == "nop":
+                # NOP out instructions at offset
+                length = op.get("length", 1)
+                if offset + length <= len(binary_data):
+                    binary_data[offset : offset + length] = b"\x90" * length  # x86 NOP
+                    applied_ops += 1
+
+            elif op_type == "jump":
+                # Patch jump instruction
+                target = op.get("target", 0)
+                if offset + 5 <= len(binary_data):  # JMP rel32 is 5 bytes
+                    # Calculate relative jump offset
+                    rel_offset = target - (offset + 5)
+                    # E9 is x86 JMP rel32 opcode
+                    binary_data[offset] = 0xE9
+                    # Write 32-bit relative offset in little-endian
+                    binary_data[offset + 1 : offset + 5] = rel_offset.to_bytes(4, "little", signed=True)
+                    applied_ops += 1
+
+            elif op_type == "call":
+                # Patch call instruction
+                target = op.get("target", 0)
+                if offset + 5 <= len(binary_data):  # CALL rel32 is 5 bytes
+                    # Calculate relative call offset
+                    rel_offset = target - (offset + 5)
+                    # E8 is x86 CALL rel32 opcode
+                    binary_data[offset] = 0xE8
+                    # Write 32-bit relative offset in little-endian
+                    binary_data[offset + 1 : offset + 5] = rel_offset.to_bytes(4, "little", signed=True)
+                    applied_ops += 1
+
+        if applied_ops > 0:
+            # Create backup of original file
+            backup_path = target_binary + ".bak"
+            import shutil
+
+            shutil.copy2(target_binary, backup_path)
+
+            # Write patched binary
+            with open(target_binary, "wb") as f:
+                f.write(binary_data)
+
+            result["success"] = True
+            result["message"] = f"Applied {applied_ops}/{len(operations)} operations for {patch_type} patch"
+            result["backup"] = backup_path
+        else:
+            result["message"] = "No operations could be applied"
 
     except Exception as e:
         logger.error("Exception in runner_functions: %s", e)

@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Dependency fallbacks for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -534,7 +536,7 @@ def get_dependency_status():
 
     logger.info(f"Dependency status: {working_deps}/{total_deps} working")
     for dep, available in status.items():
-        status_icon = "✅" if available else "⚠️"
+        status_icon = "✅" if available else "WARNING️"
         logger.info(f"  {status_icon} {dep}")
 
     return status

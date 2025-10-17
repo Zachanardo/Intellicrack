@@ -96,21 +96,83 @@ class IntellicrackMainWindow(QMainWindow):
         self.analyze_results: list[str] = []
         self.binary_info: dict[str, Any] | None = None
 
-        # Initialize analyzers
-        self.vulnerability_engine = AdvancedVulnerabilityEngine()
-        self.binary_analyzer = MultiFormatBinaryAnalyzer()
-        self.ai_assistant = IntellicrackAIAssistant()
+        # Component status tracking
+        self.component_status = {
+            "vulnerability_engine": {"enabled": False, "error": None},
+            "binary_analyzer": {"enabled": False, "error": None},
+            "ai_assistant": {"enabled": False, "error": None},
+            "analysis_orchestrator": {"enabled": False, "error": None},
+            "llm_handler": {"enabled": False, "error": None},
+            "script_handler": {"enabled": False, "error": None},
+            "report_handler": {"enabled": False, "error": None},
+        }
 
-        # Initialize analysis orchestrator and handlers
-        self.analysis_orchestrator = AnalysisResultOrchestrator()
-        self.llm_handler = LLMHandler()
-        self.script_handler = ScriptGenerationHandler()
-        self.report_handler = ReportGenerationHandler()
+        # Initialize analyzers with error handling
+        try:
+            self.vulnerability_engine = AdvancedVulnerabilityEngine()
+            self.component_status["vulnerability_engine"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"Vulnerability engine initialization failed: {e}")
+            self.component_status["vulnerability_engine"]["error"] = str(e)
+            self.vulnerability_engine = None
 
-        # Register handlers with orchestrator
-        self.analysis_orchestrator.register_handler(self.llm_handler)
-        self.analysis_orchestrator.register_handler(self.script_handler)
-        self.analysis_orchestrator.register_handler(self.report_handler)
+        try:
+            self.binary_analyzer = MultiFormatBinaryAnalyzer()
+            self.component_status["binary_analyzer"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"Binary analyzer initialization failed: {e}")
+            self.component_status["binary_analyzer"]["error"] = str(e)
+            self.binary_analyzer = None
+
+        try:
+            self.ai_assistant = IntellicrackAIAssistant()
+            self.component_status["ai_assistant"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"AI assistant initialization failed: {e}")
+            self.component_status["ai_assistant"]["error"] = str(e)
+            self.ai_assistant = None
+
+        # Initialize analysis orchestrator and handlers with error handling
+        try:
+            self.analysis_orchestrator = AnalysisResultOrchestrator()
+            self.component_status["analysis_orchestrator"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"Analysis orchestrator initialization failed: {e}")
+            self.component_status["analysis_orchestrator"]["error"] = str(e)
+            self.analysis_orchestrator = None
+
+        try:
+            self.llm_handler = LLMHandler()
+            self.component_status["llm_handler"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"LLM handler initialization failed: {e}")
+            self.component_status["llm_handler"]["error"] = str(e)
+            self.llm_handler = None
+
+        try:
+            self.script_handler = ScriptGenerationHandler()
+            self.component_status["script_handler"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"Script handler initialization failed: {e}")
+            self.component_status["script_handler"]["error"] = str(e)
+            self.script_handler = None
+
+        try:
+            self.report_handler = ReportGenerationHandler()
+            self.component_status["report_handler"]["enabled"] = True
+        except Exception as e:
+            self.logger.warning(f"Report handler initialization failed: {e}")
+            self.component_status["report_handler"]["error"] = str(e)
+            self.report_handler = None
+
+        # Register handlers with orchestrator if available
+        if self.analysis_orchestrator:
+            if self.llm_handler:
+                self.analysis_orchestrator.register_handler(self.llm_handler)
+            if self.script_handler:
+                self.analysis_orchestrator.register_handler(self.script_handler)
+            if self.report_handler:
+                self.analysis_orchestrator.register_handler(self.report_handler)
 
         # Setup UI
         self._setup_ui()
@@ -120,6 +182,9 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Apply initial settings
         self._apply_initial_settings()
+
+        # Update UI based on component status
+        self._update_ui_for_disabled_components()
 
         self.logger.info("Main window initialization completed")
 
@@ -318,19 +383,23 @@ class IntellicrackMainWindow(QMainWindow):
 
         container_layout.addWidget(splitter)
 
-        # Connect signals
+        # Connect signals with error handling
         self.protection_widget.protection_analyzed.connect(self._on_unified_protection_analyzed)
-        self.protection_widget.protection_analyzed.connect(self.analysis_orchestrator.on_protection_analyzed)
+        if self.analysis_orchestrator:
+            self.protection_widget.protection_analyzed.connect(self.analysis_orchestrator.on_protection_analyzed)
         self.protection_widget.bypass_requested.connect(self._on_bypass_requested)
 
         # Connect ICP widget signals
         self.icp_widget.analysis_complete.connect(self._on_icp_analysis_complete)
-        self.icp_widget.analysis_complete.connect(self.analysis_orchestrator.on_icp_analysis_complete)
+        if self.analysis_orchestrator:
+            self.icp_widget.analysis_complete.connect(self.analysis_orchestrator.on_icp_analysis_complete)
         self.icp_widget.protection_selected.connect(self._on_icp_protection_selected)
 
-        # Connect handler signals
-        self.script_handler.script_ready.connect(self._on_script_ready)
-        self.report_handler.report_ready.connect(self._on_report_ready)
+        # Connect handler signals if available
+        if self.script_handler:
+            self.script_handler.script_ready.connect(self._on_script_ready)
+        if self.report_handler:
+            self.report_handler.report_ready.connect(self._on_report_ready)
 
         self.tab_widget.addTab(protection_container, "Protection Analysis")
 
@@ -437,7 +506,9 @@ class IntellicrackMainWindow(QMainWindow):
 
         vulnerability_action = QAction("Scan Vulnerabilities", self)
         vulnerability_action.setShortcut("F6")
-        vulnerability_action.setToolTip("Scan for security vulnerabilities including buffer overflows, format strings, and common weaknesses")
+        vulnerability_action.setToolTip(
+            "Scan for security vulnerabilities including buffer overflows, format strings, and common weaknesses"
+        )
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
 
@@ -478,12 +549,120 @@ class IntellicrackMainWindow(QMainWindow):
         export_results_action.triggered.connect(self._export_analysis_results)
         tools_menu.addAction(export_results_action)
 
+        tools_menu.addSeparator()
+
+        # Advanced bypass tools
+        frida_wizard_action = QAction("Frida Bypass Wizard...", self)
+        frida_wizard_action.setShortcut("Ctrl+Shift+F")
+        frida_wizard_action.setToolTip("Advanced automated protection bypass using Frida framework")
+        frida_wizard_action.triggered.connect(self._open_frida_wizard)
+        tools_menu.addAction(frida_wizard_action)
+
+        hardware_spoofer_action = QAction("Hardware Fingerprint Spoofer...", self)
+        hardware_spoofer_action.setShortcut("Ctrl+Shift+H")
+        hardware_spoofer_action.setToolTip("Spoof hardware identifiers to bypass hardware-locked licensing")
+        hardware_spoofer_action.triggered.connect(self._open_hardware_spoofer)
+        tools_menu.addAction(hardware_spoofer_action)
+
+        offline_activation_action = QAction("Offline Activation Emulator...", self)
+        offline_activation_action.setToolTip("Emulate offline activation servers for license validation")
+        offline_activation_action.triggered.connect(self._open_offline_activation)
+        tools_menu.addAction(offline_activation_action)
+
+        serial_generator_action = QAction("Serial Number Generator...", self)
+        serial_generator_action.setToolTip("Generate valid serial numbers based on analyzed patterns")
+        serial_generator_action.triggered.connect(self._open_serial_generator)
+        tools_menu.addAction(serial_generator_action)
+
+        trial_reset_action = QAction("Trial Reset Engine...", self)
+        trial_reset_action.setToolTip("Reset trial periods and remove expiration checks")
+        trial_reset_action.triggered.connect(self._open_trial_reset)
+        tools_menu.addAction(trial_reset_action)
+
     def _apply_initial_settings(self):
         """Apply initial application settings."""
         # Set window icon if available
         icon_path = get_resource_path("assets/icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
+
+    def _update_ui_for_disabled_components(self):
+        """Update UI elements based on component availability."""
+        disabled_components = []
+
+        # Check each component and collect disabled ones
+        for component_name, status in self.component_status.items():
+            if not status["enabled"]:
+                disabled_components.append(component_name)
+                self.logger.warning(f"Component disabled: {component_name}")
+
+        # Update button states and tooltips based on component availability
+        if not self.component_status["binary_analyzer"]["enabled"]:
+            if hasattr(self, "analyze_button"):
+                self.analyze_button.setEnabled(False)
+                self.analyze_button.setToolTip(
+                    "Binary analyzer is not available.\nReason: "
+                    + (self.component_status["binary_analyzer"]["error"] or "Component initialization failed")
+                )
+
+        if not self.component_status["vulnerability_engine"]["enabled"]:
+            if hasattr(self, "scan_vulnerabilities_button"):
+                self.scan_vulnerabilities_button.setEnabled(False)
+                self.scan_vulnerabilities_button.setToolTip(
+                    "Vulnerability scanner is not available.\nReason: "
+                    + (self.component_status["vulnerability_engine"]["error"] or "Component initialization failed")
+                )
+
+        if not self.component_status["report_handler"]["enabled"]:
+            if hasattr(self, "generate_report_button"):
+                self.generate_report_button.setToolTip(
+                    "Report generation may be limited.\nReason: "
+                    + (self.component_status["report_handler"]["error"] or "Report handler unavailable")
+                )
+
+        if not self.component_status["ai_assistant"]["enabled"]:
+            # Disable AI assistant tab if AI is not available
+            for i in range(self.tab_widget.count()):
+                if self.tab_widget.tabText(i) == "AI Assistant":
+                    self.tab_widget.setTabEnabled(i, False)
+                    self.tab_widget.setTabToolTip(
+                        i,
+                        "AI Assistant is not available.\nReason: "
+                        + (self.component_status["ai_assistant"]["error"] or "AI initialization failed"),
+                    )
+                    # Set tab text color to indicate disabled state
+                    tab_bar = self.tab_widget.tabBar()
+                    tab_bar.setTabTextColor(i, Qt.gray)
+
+        if not self.component_status["script_handler"]["enabled"]:
+            # Update script generation menu item if available
+            for action in self.menuBar().findChildren(QAction):
+                if "Bypass Script" in action.text():
+                    action.setEnabled(False)
+                    action.setToolTip(
+                        "Script generation is not available.\nReason: "
+                        + (self.component_status["script_handler"]["error"] or "Script handler initialization failed")
+                    )
+
+        # Show status bar message if any components are disabled
+        if disabled_components:
+            status_msg = f"WARNING️ {len(disabled_components)} component(s) unavailable: {', '.join(disabled_components)}"
+            self.status_bar.showMessage(status_msg, 10000)  # Show for 10 seconds
+
+            # Add permanent status indicator
+            if hasattr(self, "status_label"):
+                self.status_label.setText(f"WARNING️ {len(disabled_components)} components disabled")
+                self.status_label.setToolTip(
+                    "The following components are disabled:\n"
+                    + "\n".join(
+                        [f"• {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}" for comp in disabled_components]
+                    )
+                )
+                self.status_label.setStyleSheet("color: orange; font-weight: bold;")
+                self.status_bar.addPermanentWidget(self.status_label)
+        else:
+            # All components initialized successfully
+            self.status_bar.showMessage("OK All components initialized successfully", 5000)
 
     # Slot methods for signal handling
     def _on_update_output(self, message: str):
@@ -525,6 +704,7 @@ class IntellicrackMainWindow(QMainWindow):
             # Load binary into app context for proper state management
             try:
                 from ..core.app_context import get_app_context
+
                 app_context = get_app_context()
                 if app_context.load_binary(file_path):
                     self.logger.info("Binary loaded into app context: %s", file_path)
@@ -589,12 +769,13 @@ class IntellicrackMainWindow(QMainWindow):
                     # Load binary into app context for proper state management
                     try:
                         from ..core.app_context import get_app_context
+
                         app_context = get_app_context()
                         metadata = {
-                            "program_name": program_info['display_name'],
+                            "program_name": program_info["display_name"],
                             "installation_folder": installation_folder,
-                            "discovery_method": program_info.get('discovery_method', 'program_selector'),
-                            "licensing_files_count": len(licensing_files)
+                            "discovery_method": program_info.get("discovery_method", "program_selector"),
+                            "licensing_files_count": len(licensing_files),
                         }
                         if app_context.load_binary(selected_executable, metadata):
                             self.logger.info("Program binary loaded into app context: %s", selected_executable)
@@ -665,6 +846,14 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(self, "Warning", "Please select a binary file first.")
             return
 
+        if not self.binary_analyzer:
+            QMessageBox.warning(
+                self,
+                "Component Unavailable",
+                "Binary analyzer is not available.\nPlease check the application logs for initialization errors.",
+            )
+            return
+
         self.update_status.emit("Running binary analysis...")
         self.update_progress.emit(10)
 
@@ -693,6 +882,11 @@ Licensing Files Found: {len(licensing_files)}"""
                 self.update_status.emit("Running AI-enhanced analysis...")
 
                 try:
+                    # Check if AI assistant is available
+                    if not self.ai_assistant:
+                        self.update_output.emit("AI Assistant not available - skipping AI analysis")
+                        raise Exception("AI Assistant component not initialized")
+
                     # Prepare ML results if available
                     ml_results = {
                         "confidence": 0.85,
@@ -747,6 +941,14 @@ Licensing Files Found: {len(licensing_files)}"""
             QMessageBox.warning(self, "Warning", "Please select a binary file first.")
             return
 
+        if not self.vulnerability_engine:
+            QMessageBox.warning(
+                self,
+                "Component Unavailable",
+                "Vulnerability scanner is not available.\nPlease check the application logs for initialization errors.",
+            )
+            return
+
         self.update_status.emit("Scanning for vulnerabilities...")
         self.update_progress.emit(10)
 
@@ -758,6 +960,9 @@ Licensing Files Found: {len(licensing_files)}"""
 
             # Run vulnerability scan
             vulnerabilities = self.vulnerability_engine.scan_binary(self.binary_path)
+
+            # Store results for report generation
+            self.vulnerability_results = vulnerabilities
 
             self.update_progress.emit(80)
 
@@ -775,13 +980,6 @@ Licensing Files Found: {len(licensing_files)}"""
             self.update_output.emit(f"Vulnerability scan error: {e!s}")
             self.update_status.emit("Vulnerability scan failed")
             self.logger.error(f"Vulnerability scan error: {e!s}")
-
-    def _generate_report(self):
-        """Generate analysis report."""
-        self.update_status.emit("Generating report...")
-        self.update_output.emit("=== REPORT GENERATION ===")
-        self.update_output.emit("Report generation not yet implemented in this refactored version.")
-        self.update_status.emit("Ready")
 
     def _display_analysis_results(self, results: dict[str, Any]):
         """Display analysis results in the results tab."""
@@ -974,17 +1172,326 @@ Licensing Files Found: {len(licensing_files)}"""
         # For now, just log the selection
 
     def _generate_report(self):
-        """Generate a comprehensive analysis report."""
-        if not self.report_handler.current_result:
-            QMessageBox.warning(
-                self,
-                "No Analysis Available",
-                "Please perform a protection analysis first before generating a report.",
-            )
-            return
+        """Generate comprehensive analysis report."""
+        import datetime
+        import json
+        from pathlib import Path
 
-        # Use the report handler to generate report
-        self.report_handler.generate_report(self)
+        self.update_status.emit("Generating report...")
+        self.update_output.emit("=== REPORT GENERATION ===")
+
+        try:
+            # Collect all analysis data
+            report_data = {
+                "timestamp": datetime.datetime.now().isoformat(),
+                "binary_path": self.binary_path or "No file loaded",
+                "binary_info": {},
+                "analysis_results": {},
+                "vulnerabilities": [],
+                "protections": [],
+                "bypass_techniques": [],
+                "recommendations": [],
+            }
+
+            # Add binary info if available
+            if self.binary_info:
+                report_data["binary_info"] = {
+                    "name": self.binary_info.get("name", "Unknown"),
+                    "size": self.binary_info.get("size", 0),
+                    "type": self.binary_info.get("type", "Unknown"),
+                    "architecture": self.binary_info.get("arch", "Unknown"),
+                    "platform": self.binary_info.get("platform", "Unknown"),
+                    "entry_point": hex(self.binary_info.get("entry_point", 0)),
+                    "sections": self.binary_info.get("sections", []),
+                    "imports": self.binary_info.get("imports", [])[:10],  # Top 10 imports
+                    "exports": self.binary_info.get("exports", [])[:10],  # Top 10 exports
+                }
+
+            # Add analysis results
+            if self.analyze_results:
+                report_data["analysis_results"] = {
+                    "protections_found": self.analyze_results.get("protections", []),
+                    "packers_detected": self.analyze_results.get("packers", []),
+                    "anti_debug_techniques": self.analyze_results.get("anti_debug", []),
+                    "obfuscation_methods": self.analyze_results.get("obfuscation", []),
+                    "cryptographic_usage": self.analyze_results.get("crypto", []),
+                    "license_checks": self.analyze_results.get("license_checks", []),
+                    "network_activity": self.analyze_results.get("network", []),
+                    "file_operations": self.analyze_results.get("file_ops", []),
+                    "registry_operations": self.analyze_results.get("registry_ops", []),
+                }
+
+            # Add vulnerability scan results if available
+            if hasattr(self, "vulnerability_results") and self.vulnerability_results:
+                for vuln in self.vulnerability_results:
+                    report_data["vulnerabilities"].append(
+                        {
+                            "type": vuln.get("type", "Unknown"),
+                            "severity": vuln.get("severity", "Unknown"),
+                            "description": vuln.get("description", ""),
+                            "location": vuln.get("location", ""),
+                            "exploit_difficulty": vuln.get("exploit_difficulty", "Unknown"),
+                            "mitigation": vuln.get("mitigation", ""),
+                        }
+                    )
+
+            # Add protection analysis results
+            if hasattr(self.protection_widget, "analysis_result") and self.protection_widget.analysis_result:
+                prot_result = self.protection_widget.analysis_result
+                for protection in prot_result.get("protections", []):
+                    report_data["protections"].append(
+                        {
+                            "name": protection.get("name", "Unknown"),
+                            "type": protection.get("type", "Unknown"),
+                            "strength": protection.get("strength", "Unknown"),
+                            "details": protection.get("details", {}),
+                            "bypass_feasibility": protection.get("bypass_feasibility", "Unknown"),
+                        }
+                    )
+
+                # Add bypass techniques
+                for bypass in prot_result.get("bypasses", []):
+                    report_data["bypass_techniques"].append(
+                        {
+                            "target_protection": bypass.get("target", "Unknown"),
+                            "technique": bypass.get("technique", "Unknown"),
+                            "success_rate": bypass.get("success_rate", "Unknown"),
+                            "implementation": bypass.get("implementation", ""),
+                            "requirements": bypass.get("requirements", []),
+                        }
+                    )
+
+            # Generate recommendations based on findings
+            if report_data["vulnerabilities"]:
+                critical_vulns = [v for v in report_data["vulnerabilities"] if v["severity"] == "Critical"]
+                high_vulns = [v for v in report_data["vulnerabilities"] if v["severity"] == "High"]
+
+                if critical_vulns:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "Critical",
+                            "category": "Security",
+                            "recommendation": f"Address {len(critical_vulns)} critical vulnerabilities immediately",
+                            "details": "Critical vulnerabilities pose immediate risk and should be patched urgently",
+                        }
+                    )
+
+                if high_vulns:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "High",
+                            "category": "Security",
+                            "recommendation": f"Fix {len(high_vulns)} high-severity vulnerabilities",
+                            "details": "High severity issues should be addressed in the next update cycle",
+                        }
+                    )
+
+            if report_data["protections"]:
+                weak_protections = [p for p in report_data["protections"] if p["strength"] in ["Weak", "Very Weak"]]
+                if weak_protections:
+                    report_data["recommendations"].append(
+                        {
+                            "priority": "Medium",
+                            "category": "Protection",
+                            "recommendation": f"Strengthen {len(weak_protections)} weak protection mechanisms",
+                            "details": "Consider implementing stronger protection techniques or layered defenses",
+                        }
+                    )
+
+            # Generate report formats
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_filename = f"intellicrack_report_{timestamp}"
+
+            # Generate JSON report
+            json_report_path = (
+                Path(self.binary_path).parent / f"{base_filename}.json" if self.binary_path else Path(f"{base_filename}.json")
+            )
+            with open(json_report_path, "w", encoding="utf-8") as f:
+                json.dump(report_data, f, indent=2, default=str)
+
+            # Generate HTML report
+            html_report_path = (
+                Path(self.binary_path).parent / f"{base_filename}.html" if self.binary_path else Path(f"{base_filename}.html")
+            )
+            html_content = self._generate_html_report(report_data)
+            with open(html_report_path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+
+            # Generate markdown report
+            md_report_path = Path(self.binary_path).parent / f"{base_filename}.md" if self.binary_path else Path(f"{base_filename}.md")
+            md_content = self._generate_markdown_report(report_data)
+            with open(md_report_path, "w", encoding="utf-8") as f:
+                f.write(md_content)
+
+            # Display summary in UI
+            self.update_output.emit("Report generated successfully!")
+            self.update_output.emit(f"  - JSON: {json_report_path}")
+            self.update_output.emit(f"  - HTML: {html_report_path}")
+            self.update_output.emit(f"  - Markdown: {md_report_path}")
+            self.update_output.emit("")
+            self.update_output.emit("=== REPORT SUMMARY ===")
+            self.update_output.emit(f"Binary: {report_data['binary_path']}")
+            self.update_output.emit(f"Timestamp: {report_data['timestamp']}")
+            self.update_output.emit(f"Vulnerabilities Found: {len(report_data['vulnerabilities'])}")
+            self.update_output.emit(f"Protections Detected: {len(report_data['protections'])}")
+            self.update_output.emit(f"Bypass Techniques: {len(report_data['bypass_techniques'])}")
+            self.update_output.emit(f"Recommendations: {len(report_data['recommendations'])}")
+
+            self.update_status.emit("Report generation complete")
+
+        except Exception as e:
+            self.update_output.emit(f"Report generation error: {e!s}")
+            self.update_status.emit("Report generation failed")
+            self.logger.error(f"Report generation error: {e!s}")
+
+    def _generate_html_report(self, report_data: dict) -> str:
+        """Generate HTML formatted report."""
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intellicrack Analysis Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        h1 {{ color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }}
+        h2 {{ color: #34495e; margin-top: 30px; border-bottom: 1px solid #ecf0f1; padding-bottom: 5px; }}
+        h3 {{ color: #7f8c8d; }}
+        .info-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }}
+        .info-card {{ background: #ecf0f1; padding: 15px; border-radius: 5px; }}
+        .info-card h4 {{ margin: 0 0 10px 0; color: #2c3e50; }}
+        .severity-critical {{ color: #e74c3c; font-weight: bold; }}
+        .severity-high {{ color: #e67e22; font-weight: bold; }}
+        .severity-medium {{ color: #f39c12; }}
+        .severity-low {{ color: #95a5a6; }}
+        .protection-strong {{ color: #27ae60; font-weight: bold; }}
+        .protection-medium {{ color: #f39c12; }}
+        .protection-weak {{ color: #e74c3c; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th {{ background: #3498db; color: white; padding: 10px; text-align: left; }}
+        td {{ padding: 10px; border-bottom: 1px solid #ecf0f1; }}
+        tr:hover {{ background: #f8f9fa; }}
+        .recommendation {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0; }}
+        .timestamp {{ color: #95a5a6; font-size: 0.9em; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Intellicrack Analysis Report</h1>
+        <p class="timestamp">Generated: {report_data["timestamp"]}</p>
+
+        <h2>Binary Information</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>File Path</h4>
+                <p>{report_data["binary_path"]}</p>
+            </div>
+            <div class="info-card">
+                <h4>Architecture</h4>
+                <p>{report_data["binary_info"].get("architecture", "Unknown")}</p>
+            </div>
+            <div class="info-card">
+                <h4>Platform</h4>
+                <p>{report_data["binary_info"].get("platform", "Unknown")}</p>
+            </div>
+            <div class="info-card">
+                <h4>Entry Point</h4>
+                <p>{report_data["binary_info"].get("entry_point", "Unknown")}</p>
+            </div>
+        </div>
+
+        <h2>Vulnerabilities ({len(report_data["vulnerabilities"])})</h2>
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Description</th>
+                <th>Location</th>
+            </tr>
+            {"".join([f'<tr><td>{v["type"]}</td><td class="severity-{v["severity"].lower()}">{v["severity"]}</td><td>{v["description"]}</td><td>{v["location"]}</td></tr>' for v in report_data["vulnerabilities"]])}
+        </table>
+
+        <h2>Protection Mechanisms ({len(report_data["protections"])})</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Strength</th>
+                <th>Bypass Feasibility</th>
+            </tr>
+            {"".join([f'<tr><td>{p["name"]}</td><td>{p["type"]}</td><td class="protection-{p["strength"].lower()}">{p["strength"]}</td><td>{p["bypass_feasibility"]}</td></tr>' for p in report_data["protections"]])}
+        </table>
+
+        <h2>Recommendations</h2>
+        {"".join([f'<div class="recommendation"><strong>[{r["priority"]}]</strong> {r["recommendation"]}<br><small>{r["details"]}</small></div>' for r in report_data["recommendations"]])}
+    </div>
+</body>
+</html>"""
+        return html
+
+    def _generate_markdown_report(self, report_data: dict) -> str:
+        """Generate Markdown formatted report."""
+        # Generate bypass techniques section
+        bypass_section = ""
+        for b in report_data["bypass_techniques"]:
+            bypass_section += f"### {b['technique']}\n"
+            bypass_section += f"- **Target:** {b['target_protection']}\n"
+            bypass_section += f"- **Success Rate:** {b['success_rate']}\n"
+            bypass_section += "- **Requirements:** " + ", ".join(b["requirements"]) + "\n\n"
+
+        # Generate recommendations section
+        recommendations_section = ""
+        for r in report_data["recommendations"]:
+            recommendations_section += f"### [{r['priority']}] {r['recommendation']}\n"
+            recommendations_section += f"{r['details']}\n\n"
+
+        md = f"""# Intellicrack Analysis Report
+
+**Generated:** {report_data["timestamp"]}
+
+## Binary Information
+
+- **File Path:** {report_data["binary_path"]}
+- **Architecture:** {report_data["binary_info"].get("architecture", "Unknown")}
+- **Platform:** {report_data["binary_info"].get("platform", "Unknown")}
+- **Entry Point:** {report_data["binary_info"].get("entry_point", "Unknown")}
+
+## Analysis Results
+
+### Protections Found
+{chr(10).join(["- " + p for p in report_data["analysis_results"].get("protections_found", [])])}
+
+### Packers Detected
+{chr(10).join(["- " + p for p in report_data["analysis_results"].get("packers_detected", [])])}
+
+### Anti-Debug Techniques
+{chr(10).join(["- " + t for t in report_data["analysis_results"].get("anti_debug_techniques", [])])}
+
+## Vulnerabilities ({len(report_data["vulnerabilities"])})
+
+| Type | Severity | Description | Location |
+|------|----------|-------------|----------|
+{chr(10).join([f"| {v['type']} | **{v['severity']}** | {v['description']} | {v['location']} |" for v in report_data["vulnerabilities"]])}
+
+## Protection Mechanisms ({len(report_data["protections"])})
+
+| Name | Type | Strength | Bypass Feasibility |
+|------|------|----------|-------------------|
+{chr(10).join([f"| {p['name']} | {p['type']} | **{p['strength']}** | {p['bypass_feasibility']} |" for p in report_data["protections"]])}
+
+## Bypass Techniques ({len(report_data["bypass_techniques"])})
+
+{bypass_section}
+
+## Recommendations
+
+{recommendations_section}
+
+---
+*Report generated by Intellicrack - Advanced Binary Analysis Platform*
+"""
+        return md
 
     def _generate_bypass_script_menu(self):
         """Generate bypass script from menu."""
@@ -1042,6 +1549,92 @@ Licensing Files Found: {len(licensing_files)}"""
                 f"Failed to open export dialog: {e!s}",
             )
             self.logger.error(f"Failed to open export dialog: {e}")
+
+    def _open_frida_wizard(self):
+        """Open the Frida Bypass Wizard dialog."""
+        try:
+            from intellicrack.ui.dialogs.frida_bypass_wizard_dialog import FridaBypassWizardDialog
+
+            wizard_dialog = FridaBypassWizardDialog(self)
+            wizard_dialog.exec()
+        except ImportError:
+            QMessageBox.warning(
+                self, "Frida Not Available", "Frida framework is not installed. Please install frida-tools to use this feature."
+            )
+            self.logger.warning("Frida not available - module not installed")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Frida Wizard Error",
+                f"Failed to open Frida Bypass Wizard: {e!s}",
+            )
+            self.logger.error(f"Failed to open Frida Wizard: {e}")
+
+    def _open_hardware_spoofer(self):
+        """Open the Hardware Fingerprint Spoofer dialog."""
+        try:
+            from intellicrack.ui.dialogs.hardware_spoofer_dialog import HardwareSpoofDialog
+
+            spoofer_dialog = HardwareSpoofDialog(self)
+            spoofer_dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Hardware Spoofer Error",
+                f"Failed to open Hardware Spoofer: {e!s}",
+            )
+            self.logger.error(f"Failed to open Hardware Spoofer: {e}")
+
+    def _open_offline_activation(self):
+        """Open the Offline Activation Emulator dialog."""
+        try:
+            from intellicrack.ui.dialogs.offline_activation_dialog import OfflineActivationDialog
+
+            activation_dialog = OfflineActivationDialog(self)
+            activation_dialog.exec()
+        except ImportError:
+            QMessageBox.information(self, "Coming Soon", "Offline Activation Emulator will be available in the next update.")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Offline Activation Error",
+                f"Failed to open Offline Activation Emulator: {e!s}",
+            )
+            self.logger.error(f"Failed to open Offline Activation: {e}")
+
+    def _open_serial_generator(self):
+        """Open the Serial Number Generator dialog."""
+        try:
+            from intellicrack.ui.dialogs.serial_generator_dialog import SerialGeneratorDialog
+
+            generator_dialog = SerialGeneratorDialog(self)
+            generator_dialog.exec()
+        except ImportError:
+            QMessageBox.information(self, "Coming Soon", "Serial Number Generator will be available in the next update.")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Serial Generator Error",
+                f"Failed to open Serial Generator: {e!s}",
+            )
+            self.logger.error(f"Failed to open Serial Generator: {e}")
+
+    def _open_trial_reset(self):
+        """Open the Trial Reset Engine dialog."""
+        try:
+            from intellicrack.ui.dialogs.trial_reset_dialog import TrialResetDialog
+
+            reset_dialog = TrialResetDialog(self)
+            reset_dialog.exec()
+        except ImportError:
+            QMessageBox.information(self, "Coming Soon", "Trial Reset Engine will be available in the next update.")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Trial Reset Error",
+                f"Failed to open Trial Reset Engine: {e!s}",
+            )
+            self.logger.error(f"Failed to open Trial Reset: {e}")
 
 
 # Export the main window class

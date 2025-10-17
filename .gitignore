@@ -34,6 +34,8 @@ MANIFEST
 
 # PyInstaller
 *.manifest
+# Exception for Windows application manifest required for build
+!intellicrack-launcher/intellicrack.exe.manifest
 *.spec
 
 # Installer logs
@@ -177,7 +179,7 @@ security.ini
 
 # Runtime data directories
 data/
-data/logs/
+logs/
 data/plugin_cache/
 data/visualizations/
 data/reports/
@@ -262,6 +264,7 @@ dev/
 dev/**
 tools/
 tools/**
+CLI Coding/
 
 # ==============================================================================
 # SECURITY AND SECRETS
@@ -307,6 +310,9 @@ Codex*.ps1
 GeminiCLI.ps1
 Codex.ps1
 QWEN.ps1
+
+# GitHub Copilot config
+.github/copilot-instructions.md
 
 # AI cache and configs
 .llm_cache/
@@ -395,6 +401,9 @@ tools/icp_engine/**
 Qt*.dll
 vcruntime*.dll
 
+# Exception: Allow shortcut in root
+!Intellicrack.lnk
+
 # Compiled Frida scripts
 frida_compiled/
 
@@ -429,9 +438,6 @@ yarn.lock
 
 # Python package files
 Pipfile
-requirements-dev.txt
-setup.cfg
-pyproject.toml
 
 # UV package manager
 uv.lock
@@ -592,15 +598,6 @@ activate.ps1
 uv-cache/
 
 # ==============================================================================
-# CONDA/MAMBA ENVIRONMENTS
-# ==============================================================================
-# Local environment copies (some users might create these)
-envs/
-conda-meta/
-mamba_env/
-mamba_env/**
-
-# ==============================================================================
 # ROOT DIRECTORY FILES AND TEMPORARY FILES
 # ==============================================================================
 # Temporary analysis files from mock/stub scanning
@@ -609,6 +606,15 @@ placeholder_todos.txt
 simulated_data.txt
 tests_mock_usage.txt
 
+# Project analysis and TODO files
+*_TODO.md
+*TODO.md
+ORPHANED_FILES.md
+
+# Roo directories (project analysis tool)
+.roo/
+.roo/**
+
 # Exclude PowerShell scripts in root
 /*.ps1
 
@@ -616,6 +622,11 @@ tests_mock_usage.txt
 /*.bat
 !RUN_INTELLICRACK.bat
 !LAUNCH_TESTING_SOFTWARE.bat
+!REMOVE_NUL.bat
+
+# Temporary test files
+run_production_tests.bat
+launch_fast.bat
 
 # Additional root files to ignore
 launch_intellicrack.py
@@ -635,3 +646,25 @@ build_log.txt
 build_output.txt
 sphinx_output.txt
 rollout-*.json
+.aider*
+
+# Test reports in various formats
+tests/reports/*.xml
+tests/reports/*.json
+tests/reports/*.html
+tests/reports/Violations_*.xml
+
+# ==============================================================================
+# LARGE QEMU IMAGES
+# ==============================================================================
+# Ignore large VM/emulation images
+intellicrack/assets/qemu_images/*.iso
+intellicrack/assets/qemu_images/*.img
+intellicrack/assets/qemu_images/*.qcow2
+intellicrack/assets/qemu_images/*.vmdk
+intellicrack/assets/qemu_images/*.vdi
+intellicrack/assets/qemu_images/*.vhd
+intellicrack/assets/qemu_images/*.vhdx
+# pixi environments
+.pixi/*
+!.pixi/config.toml

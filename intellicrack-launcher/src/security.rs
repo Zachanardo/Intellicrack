@@ -169,43 +169,45 @@ impl SecurityManager {
     fn configure_security_environment(&self) -> Result<()> {
         info!("Configuring security environment variables");
 
-        // Set sandbox mode
-        if self.config.sandbox_analysis {
-            env::set_var("INTELLICRACK_SANDBOX", "1");
-            debug!("Sandbox analysis mode enabled");
-        }
+        unsafe {
+            // Set sandbox mode
+            if self.config.sandbox_analysis {
+                env::set_var("INTELLICRACK_SANDBOX", "1");
+                debug!("Sandbox analysis mode enabled");
+            }
 
-        // Set network access restrictions
-        if !self.config.allow_network_access {
-            env::set_var("INTELLICRACK_NO_NETWORK", "1");
-            debug!("Network access disabled");
-        }
+            // Set network access restrictions
+            if !self.config.allow_network_access {
+                env::set_var("INTELLICRACK_NO_NETWORK", "1");
+                debug!("Network access disabled");
+            }
 
-        // Set sensitive data logging policy
-        if !self.config.log_sensitive_data {
-            env::set_var("INTELLICRACK_NO_SENSITIVE_LOGS", "1");
-            debug!("Sensitive data logging disabled");
-        }
+            // Set sensitive data logging policy
+            if !self.config.log_sensitive_data {
+                env::set_var("INTELLICRACK_NO_SENSITIVE_LOGS", "1");
+                debug!("Sensitive data logging disabled");
+            }
 
-        // Set default hashing algorithm
-        env::set_var(
-            "INTELLICRACK_DEFAULT_HASH",
-            &self.config.hashing.default_algorithm,
-        );
+            // Set default hashing algorithm
+            env::set_var(
+                "INTELLICRACK_DEFAULT_HASH",
+                &self.config.hashing.default_algorithm,
+            );
 
-        // Set subprocess security policies
-        if !self.config.subprocess.allow_shell_true {
-            env::set_var("INTELLICRACK_NO_SHELL_TRUE", "1");
-        }
+            // Set subprocess security policies
+            if !self.config.subprocess.allow_shell_true {
+                env::set_var("INTELLICRACK_NO_SHELL_TRUE", "1");
+            }
 
-        // Set serialization policies
-        if self.config.serialization.restrict_pickle {
-            env::set_var("INTELLICRACK_RESTRICT_PICKLE", "1");
-        }
+            // Set serialization policies
+            if self.config.serialization.restrict_pickle {
+                env::set_var("INTELLICRACK_RESTRICT_PICKLE", "1");
+            }
 
-        // Set input validation mode
-        if self.config.input_validation.strict_mode {
-            env::set_var("INTELLICRACK_STRICT_VALIDATION", "1");
+            // Set input validation mode
+            if self.config.input_validation.strict_mode {
+                env::set_var("INTELLICRACK_STRICT_VALIDATION", "1");
+            }
         }
 
         info!("Security environment configuration complete");
@@ -259,16 +261,16 @@ impl SecurityManager {
         self.bypass_enabled = true;
 
         // Set bypass environment variable for Python integration
-        env::set_var("INTELLICRACK_SECURITY_BYPASS", "1");
+        unsafe {
+            env::set_var("INTELLICRACK_SECURITY_BYPASS", "1");
+        }
 
         Python::attach(|py| {
-            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
-                if let Ok(security_obj) = security_module.getattr("_security") {
-                    if let Ok(enable_bypass) = security_obj.getattr("enable_bypass") {
+            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
+                && let Ok(security_obj) = security_module.getattr("_security")
+                    && let Ok(enable_bypass) = security_obj.getattr("enable_bypass") {
                         let _ = enable_bypass.call0();
                     }
-                }
-            }
         });
     }
 
@@ -277,16 +279,16 @@ impl SecurityManager {
         self.bypass_enabled = false;
 
         // Remove bypass environment variable
-        env::remove_var("INTELLICRACK_SECURITY_BYPASS");
+        unsafe {
+            env::remove_var("INTELLICRACK_SECURITY_BYPASS");
+        }
 
         Python::attach(|py| {
-            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
-                if let Ok(security_obj) = security_module.getattr("_security") {
-                    if let Ok(disable_bypass) = security_obj.getattr("disable_bypass") {
+            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
+                && let Ok(security_obj) = security_module.getattr("_security")
+                    && let Ok(disable_bypass) = security_obj.getattr("disable_bypass") {
                         let _ = disable_bypass.call0();
                     }
-                }
-            }
         });
     }
 
@@ -302,9 +304,9 @@ impl SecurityManager {
         }
 
         // Check file size if configured
-        if let Some(max_size) = validation_config.max_file_size {
-            if file_path.exists() {
-                if let Ok(metadata) = file_path.metadata() {
+        if let Some(max_size) = validation_config.max_file_size
+            && file_path.exists()
+                && let Ok(metadata) = file_path.metadata() {
                     let file_size = metadata.len();
                     if file_size > max_size {
                         warn!(
@@ -320,12 +322,10 @@ impl SecurityManager {
                         );
                     }
                 }
-            }
-        }
 
         // Check allowed extensions if configured
-        if let Some(allowed_extensions) = &validation_config.allowed_extensions {
-            if let Some(extension) = file_path.extension() {
+        if let Some(allowed_extensions) = &validation_config.allowed_extensions
+            && let Some(extension) = file_path.extension() {
                 let ext_str = extension.to_string_lossy().to_lowercase();
                 if !allowed_extensions
                     .iter()
@@ -338,7 +338,6 @@ impl SecurityManager {
                     anyhow::bail!("File extension {} not allowed", ext_str);
                 }
             }
-        }
 
         // Check for path traversal
         let path_str = file_path.to_string_lossy();
@@ -415,22 +414,16 @@ impl SecurityManager {
 
         // Check if Python security patches are applied
         Python::attach(|py| {
-            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement") {
-                if let Ok(status_func) = security_module.getattr("get_security_status") {
-                    if let Ok(status) = status_func.call0() {
-                        if let Ok(status_dict) = status.extract::<HashMap<String, Py<PyAny>>>()
-                        {
-                            if let Some(patches) = status_dict.get("patches_applied") {
-                                if let Ok(patches_dict) =
+            if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
+                && let Ok(status_func) = security_module.getattr("get_security_status")
+                    && let Ok(status) = status_func.call0()
+                        && let Ok(status_dict) = status.extract::<HashMap<String, Py<PyAny>>>()
+                            && let Some(patches) = status_dict.get("patches_applied")
+                                && let Ok(patches_dict) =
                                     patches.extract::<HashMap<String, bool>>(py)
                                 {
                                     patches_applied.extend(patches_dict);
                                 }
-                            }
-                        }
-                    }
-                }
-            }
         });
 
         SecurityStatus {

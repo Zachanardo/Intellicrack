@@ -4,7 +4,7 @@
 
 ### Minimum Requirements
 
-- **Operating System**: Windows 10+, Linux (Ubuntu 18.04+, CentOS 7+), macOS 10.14+
+- **Operating System**: Windows 11 Pro/Enterprise
 - **Python**: Version 3.8 or higher
 - **RAM**: 4GB minimum, 8GB recommended
 - **Storage**: 500MB free space for installation and analysis files
@@ -56,7 +56,7 @@ pip install psutil requests pefile capstone keystone unicorn lief yara cryptogra
 pip install PyQt6
 
 # Optional analysis tools
-pip install numpy scikit-learn matplotlib networkx frida angr manticore
+pip install numpy scikit-learn matplotlib networkx frida angr
 ```
 
 ## Platform-Specific Setup
@@ -71,40 +71,6 @@ pip install numpy scikit-learn matplotlib networkx frida angr manticore
    pip install frida-tools
    ```
 
-### Linux (Ubuntu/Debian)
-
-1. **Install system dependencies:**
-   ```bash
-   sudo apt update
-   sudo apt install python3 python3-pip python3-dev build-essential libgtk-3-dev
-   ```
-
-2. **Install Python dependencies:**
-   ```bash
-   pip3 install --user psutil requests pefile capstone keystone unicorn lief yara cryptography
-   ```
-
-3. **For Qt6 GUI:**
-   ```bash
-   pip3 install --user PyQt6
-   ```
-
-### macOS
-
-1. **Install Xcode Command Line Tools:**
-   ```bash
-   xcode-select --install
-   ```
-
-2. **Install Python 3.8+** via Homebrew:
-   ```bash
-   brew install python@3.9
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip3 install psutil requests pefile capstone keystone unicorn lief yara cryptography PyQt6
-   ```
 
 ## Optional Components Setup
 
@@ -126,11 +92,6 @@ pip install frida frida-tools
 pip install angr
 ```
 
-### Concolic Execution (Manticore)
-
-```bash
-pip install manticore
-```
 
 ### Development Tools
 
@@ -188,16 +149,15 @@ After installation, verify the setup:
    pip install --user <package>  # Install to user directory
    ```
 
-2. **Compilation Errors (Linux/macOS):**
-   ```bash
-   sudo apt install build-essential python3-dev  # Linux
-   xcode-select --install  # macOS
+2. **Compilation Errors:**
+   ```batch
+   REM Install Visual C++ Build Tools
+   winget install Microsoft.VisualStudio.2022.BuildTools
    ```
 
 3. **Qt Platform Issues:**
-   - On Linux: Install `libxcb-xinerama0` and related packages
-   - On Windows: Ensure graphics drivers are up to date
-   - In WSL: Set `QT_QPA_PLATFORM=offscreen` if no display
+   - Ensure graphics drivers are up to date
+   - Install latest Visual C++ Redistributables
 
 4. **GPU Issues:**
    - For Intel Arc: Force software rendering with `QT_OPENGL=software`
@@ -245,7 +205,7 @@ rm -rf /path/to/intellicrack  # Remove source directory
 
 If you encounter issues during installation:
 - Check the [FAQ](../faq.md) for common solutions
-- Review the logs in `data/logs/` directory
+- Review the logs in `logs/` directory
 - Ensure your system meets minimum requirements
 - Try installing in a clean virtual environment
 

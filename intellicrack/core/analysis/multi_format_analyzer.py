@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Import common patterns from centralized module
 from ...utils.core.import_patterns import (
@@ -44,7 +44,7 @@ from ...utils.core.import_patterns import (
     pefile,
     zipfile,
 )
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 
 class BinaryInfo:

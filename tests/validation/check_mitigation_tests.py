@@ -11,7 +11,7 @@ def check_tests():
     print("MITIGATION BYPASS TEST SUMMARY")
     print("=" * 60)
 
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\Intellicrack\tests\unit\core\mitigation_bypass')
 
     # Expected test files
     expected_tests = [

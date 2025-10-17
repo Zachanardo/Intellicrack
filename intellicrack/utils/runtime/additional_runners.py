@@ -29,6 +29,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Terminal manager import removed as it was not being used
+HAS_TERMINAL_MANAGER = False
+
 try:
     import joblib
 
@@ -328,12 +331,12 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
         if patches.get("suggested_patches"):
             from ..exploitation.exploitation import verify_patches_without_applying
 
-            simulation = verify_patches_without_applying(binary_path, patches["suggested_patches"])
-            results["patching_phase"]["simulation"] = simulation
+            verification = verify_patches_without_applying(binary_path, patches["suggested_patches"])
+            results["patching_phase"]["verification"] = verification
 
-            if simulation.get("summary", {}).get("valid_patches", 0) > 0:
+            if verification.get("summary", {}).get("valid_patches", 0) > 0:
                 results["success"] = True
-                results["message"] = f"Found {simulation['summary']['valid_patches']} valid patches"
+                results["message"] = f"Found {verification['summary']['valid_patches']} valid patches"
             else:
                 results["message"] = "No valid patches found"
         else:
@@ -656,85 +659,6 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> dict
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in Windows activation: %s", e)
-        return {"error": str(e)}
-
-
-def check_adobe_licensex_status() -> dict[str, Any]:
-    """Check Adobe license status.
-
-    Returns:
-        Dict containing Adobe license status
-
-    """
-    results = {
-        "adobe_installed": False,
-        "license_status": "unknown",
-        "products": [],
-    }
-
-    try:
-        # Check for Adobe installation
-        adobe_paths = [
-            r"C:\Program Files\Adobe",
-            r"C:\Program Files (x86)\Adobe",
-            r"C:\Program Files\Common Files\Adobe",
-        ]
-
-        for path in adobe_paths:
-            if os.path.exists(path):
-                results["adobe_installed"] = True
-                # List Adobe products
-                products = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-                results["products"].extend(products)
-
-        # Check license files
-        license_paths = [
-            os.path.expanduser(r"~\AppData\Roaming\Adobe"),
-            r"C:\ProgramData\Adobe",
-        ]
-
-        for path in license_paths:
-            if os.path.exists(path):
-                # Look for license files
-                for _root, _dirs, files in os.walk(path):
-                    for file in files:
-                        if "license" in file.lower() or ".lic" in file.lower():
-                            results["license_files_found"] = True
-                            break
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking Adobe license: %s", e)
-        results["error"] = str(e)
-
-    return results
-
-
-def run_adobe_licensex_manually(action: str = "bypass") -> dict[str, Any]:
-    """Run manual Adobe license operations.
-
-    Args:
-        action: Action to perform (bypass, reset, check)
-
-    Returns:
-        Dict containing operation results
-
-    """
-    try:
-        from ...core.patching.adobe_injector import AdobeLicenseInjector
-
-        injector = AdobeLicenseInjector()
-
-        if action == "bypass":
-            return injector.inject_license_bypass()
-        if action == "reset":
-            return injector.reset_trial()
-        if action == "check":
-            return check_adobe_licensex_status()
-
-        return {"error": f"Unknown action: {action}"}
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in Adobe license operation: %s", e)
         return {"error": str(e)}
 
 
@@ -1461,8 +1385,8 @@ def detect_hardware_dongles() -> dict[str, Any]:
     }
 
     try:
-        # This would require platform-specific USB enumeration
-        # Detect hardware dongles using multiple methods
+        # Perform platform-specific USB enumeration to detect hardware dongles
+        # Use multiple detection methods for comprehensive coverage
 
         # Method 1: USB device enumeration
         usb_dongles = _detect_usb_dongles()
@@ -2806,37 +2730,87 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
 
     """
     try:
-        from ...core.patching.payload_generator import PayloadGenerator
-        from ..exploitation.exploitation import analyze_for_patches
+        import os
+        import struct
 
-        # Analyze binary for patchable locations
-        analysis = analyze_for_patches(binary_path)
+        if not os.path.exists(binary_path):
+            return {"status": "error", "message": "Binary file not found"}
 
-        generator = PayloadGenerator()
         suggestions = []
 
-        # Generate suggestions based on analysis
-        if analysis.get("license_checks"):
-            for check in analysis["license_checks"]:
+        # Read binary and analyze for common protection patterns
+        with open(binary_path, "rb") as f:
+            binary_data = f.read()
+
+        # Common license check patterns
+        license_patterns = [
+            (b"\x75\x0a\xb8\x01\x00\x00\x00", "jne + mov eax,1 pattern"),
+            (b"\x74\x0a\xb8\x00\x00\x00\x00", "je + mov eax,0 pattern"),
+            (b"\x0f\x85", "jne near jump"),
+            (b"\x0f\x84", "je near jump"),
+        ]
+
+        # Search for patterns
+        for pattern, description in license_patterns:
+            offset = 0
+            while True:
+                pos = binary_data.find(pattern, offset)
+                if pos == -1:
+                    break
+
+                # Generate NOP patch for this location
+                patch_size = len(pattern)
+                nop_patch = b"\x90" * patch_size
+
                 suggestions.append(
                     {
                         "type": "license_bypass",
-                        "address": check["address"],
-                        "description": f"Bypass license check at {check['address']}",
-                        "patch": generator.generate_nop_sled(check.get("size", 4)),
+                        "address": f"0x{pos:08X}",
+                        "description": f"Bypass {description} at 0x{pos:08X}",
+                        "patch": nop_patch.hex(),
                         "confidence": 0.8,
+                        "size": patch_size,
                     }
                 )
 
-        if analysis.get("trial_checks"):
-            for check in analysis["trial_checks"]:
+                offset = pos + 1
+
+        # Search for common registration strings
+        registration_strings = [
+            b"IsRegistered",
+            b"CheckLicense",
+            b"ValidateLicense",
+            b"IsTrialExpired",
+            b"GetLicenseStatus",
+        ]
+
+        for reg_string in registration_strings:
+            pos = binary_data.find(reg_string)
+            if pos != -1:
+                # Suggest patching the function that uses this string
                 suggestions.append(
                     {
                         "type": "trial_bypass",
-                        "address": check["address"],
-                        "description": f"Bypass trial check at {check['address']}",
-                        "patch": generator.generate_simple_payload("license_bypass"),
+                        "address": f"0x{pos:08X}",
+                        "description": f"Found '{reg_string.decode('ascii', errors='ignore')}' - patch related function",
+                        "patch": "B801000000C3",  # mov eax, 1; ret
                         "confidence": 0.7,
+                        "size": 6,
+                    }
+                )
+
+        # Analyze PE header for additional insights
+        if binary_data[:2] == b"MZ":
+            pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+            if binary_data[pe_offset : pe_offset + 4] == b"PE\x00\x00":
+                suggestions.append(
+                    {
+                        "type": "metadata",
+                        "address": f"0x{pe_offset:08X}",
+                        "description": "Valid PE executable detected",
+                        "patch": None,
+                        "confidence": 1.0,
+                        "size": 0,
                     }
                 )
 
@@ -2844,7 +2818,11 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
             "status": "success",
             "suggestions": suggestions,
             "total": len(suggestions),
-            "analysis": analysis,
+            "analysis": {
+                "file_size": len(binary_data),
+                "patterns_found": len(suggestions),
+                "executable_type": "PE" if binary_data[:2] == b"MZ" else "Unknown",
+            },
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2914,13 +2892,11 @@ def run_ml_similarity_search(binary_path: str, database: str | None = None) -> d
 
 # Export all functions
 __all__ = [
-    "check_adobe_licensex_status",
     "compute_file_hash",
     "create_sample_plugins",
     "detect_hardware_dongles",
     "get_target_process_pid",
     "load_ai_model",
-    "run_adobe_licensex_manually",
     "run_analysis",
     "run_autonomous_crack",
     "run_cfg_analysis",

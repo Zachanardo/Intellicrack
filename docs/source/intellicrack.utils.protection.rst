@@ -20,14 +20,6 @@ intellicrack.utils.protection.certificate\_utils module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.protection.protection\_detection module
-----------------------------------------------------------
-
-.. automodule:: intellicrack.utils.protection.protection_detection
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.utils.protection.protection\_helpers module
 --------------------------------------------------------
 

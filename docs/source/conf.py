@@ -170,7 +170,7 @@ exclude_patterns = [
     '.git', '.github', '.gitignore',
     # Virtual environments
     'venv', 'env', '.venv', '.env',
-    'mamba_env', '.venv_windows',
+    '.pixi', '.venv_windows',
     # Python cache
     '__pycache__', '*.pyc', '*.pyo',
     '.pytest_cache', '.ruff_cache',
@@ -179,7 +179,7 @@ exclude_patterns = [
     # IDE files
     '.vscode', '.idea', '*.swp', '*.swo',
     # Project specific
-    '../../mamba_env/**',
+    '../../.pixi/**',
     '../../.venv/**',
     '../../.venv_windows/**',
     '../../__pycache__/**',

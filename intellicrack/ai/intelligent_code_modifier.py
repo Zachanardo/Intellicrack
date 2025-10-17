@@ -252,7 +252,7 @@ class CodeAnalyzer:
         )
 
     def _analyze_generic_file(self, file_path: str, content: str, language: str) -> CodeContext:
-        """Generic analysis for unsupported file types."""
+        """Analyze unsupported file types."""
         # Basic function detection
         function_patterns = {
             "c": r"(?:\w+\s+)*(\w+)\s*\([^)]*\)\s*\{",

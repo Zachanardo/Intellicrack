@@ -43,7 +43,9 @@ def validate_production_readiness_checkpoint3():
 
     try:
         # Read the AI integration file
-        with open("C:/Intellicrack/intellicrack/core/analysis/radare2_ai_integration.py", "r", encoding="utf-8") as f:
+        from intellicrack.utils.path_resolver import get_project_root
+
+with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integration.py", "r", encoding="utf-8") as f:
             ai_source = f.read()
 
         # Extract both training data methods
@@ -152,7 +154,7 @@ def validate_production_readiness_checkpoint3():
 
     try:
         # Test the AI integration with actual data generation
-        sys.path.append("C:/Intellicrack")
+        sys.path.append(str(get_project_root()))
 
         # Import mock classes to avoid full Intellicrack dependencies
         class MockRadare2AI:
@@ -547,7 +549,7 @@ def validate_production_readiness_checkpoint3():
         return False
 
     # Save validation results
-    with open("C:/Intellicrack/day3_checkpoint3_results.json", "w") as f:
+    with open(get_project_root() / "day3_checkpoint3_results.json", "w") as f:
         json.dump(validation_results, f, indent=2)
 
     # Final validation summary

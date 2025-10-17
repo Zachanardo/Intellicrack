@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""LIEF handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import struct
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 LIEF Import Handler with Production-Ready Fallbacks
@@ -104,7 +106,7 @@ except ImportError as e:
             self.entropy = 0.0
 
         def __str__(self):
-            """String representation."""
+            """Represent as string."""
             return f"Section({self.name}, VA=0x{self.virtual_address:08x}, Size={self.size})"
 
         def __repr__(self):
@@ -124,7 +126,7 @@ except ImportError as e:
             self.section = None
 
         def __str__(self):
-            """String representation."""
+            """Represent as string."""
             return f"Symbol({self.name}, 0x{self.value:08x})"
 
         def __repr__(self):
@@ -141,7 +143,7 @@ except ImportError as e:
             self.size = size
 
         def __str__(self):
-            """String representation."""
+            """Represent as string."""
             return f"Function({self.name}, 0x{self.address:08x})"
 
         def __repr__(self):
@@ -489,7 +491,7 @@ except ImportError as e:
                 logger.error("Failed to parse Mach-O binary: %s", e)
 
         def __str__(self):
-            """String representation."""
+            """Represent as string."""
             return f"{self.format}({self.name})"
 
         def __repr__(self):

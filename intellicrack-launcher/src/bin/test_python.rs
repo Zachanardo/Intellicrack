@@ -5,9 +5,14 @@ fn main() {
     println!("Test Python embedding");
 
     // Set environment variables
-    env::set_var("PYO3_PYTHON", r"C:\Intellicrack\mamba_env\python.exe");
-    env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
-    env::set_var("PYTHONPATH", r"C:\Intellicrack");
+    unsafe {
+        env::set_var(
+            "PYO3_PYTHON",
+            r"D:\\Intellicrack\.pixi\envs\default\python.exe",
+        );
+        env::set_var("PYTHONHOME", r"D:\\Intellicrack\.pixi\envs\default");
+        env::set_var("PYTHONPATH", r"D:\\Intellicrack");
+    }
 
     println!("Environment variables set");
     println!("PYO3_PYTHON = {:?}", env::var("PYO3_PYTHON"));

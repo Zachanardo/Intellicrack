@@ -28,7 +28,7 @@ import tempfile
 import threading
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.service_utils import get_service_url
 
 from ..utils.secrets_manager import get_secret
@@ -506,7 +506,7 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 
 
 def create_remote_executor(host: str | None = None, port: int | None = None) -> RemotePluginExecutor:
-    """Factory function to create a RemotePluginExecutor.
+    """Create a RemotePluginExecutor.
 
     Args:
         host: Remote host address (default: from config)

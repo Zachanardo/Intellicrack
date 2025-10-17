@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.opencl_handler import OPENCL_AVAILABLE, cl
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.core.import_checks import TENSORFLOW_AVAILABLE
 from ...utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
@@ -378,6 +378,7 @@ class GPUAccelerationManager:
 
 class GPUAccelerator(GPUAccelerationManager):
     """Legacy GPUAccelerator class for backward compatibility.
+
     Now inherits from GPUAccelerationManager and uses the unified GPU system.
     """
 
@@ -451,7 +452,7 @@ class GPUAccelerator(GPUAccelerationManager):
 
 
 def create_gpu_acceleration_manager():
-    """Factory function to create a GPU acceleration manager.
+    """Create a GPU acceleration manager.
 
     Returns:
         GPUAccelerationManager: Configured GPU acceleration manager instance
@@ -465,7 +466,7 @@ def create_gpu_acceleration_manager():
 
 
 def create_gpu_accelerator():
-    """Factory function to create a GPU accelerator.
+    """Create a GPU accelerator.
 
     Returns:
         GPUAccelerator: Configured GPU accelerator instance

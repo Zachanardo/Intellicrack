@@ -92,14 +92,6 @@ intellicrack.plugins.custom\_modules.success\_rate\_analyzer module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.plugins.custom\_modules.test\_suite\_comprehensive module
-----------------------------------------------------------------------
-
-.. automodule:: intellicrack.plugins.custom_modules.test_suite_comprehensive
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.plugins.custom\_modules.ui\_enhancement\_module module
 -------------------------------------------------------------------
 

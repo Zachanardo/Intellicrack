@@ -10,7 +10,7 @@ from pathlib import Path
 def fix_syntax_errors():
     """Fix indentation and syntax errors in test files."""
 
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\Intellicrack\tests\unit\core\mitigation_bypass')
 
     print("=" * 60)
     print("FIXING SYNTAX ERRORS IN TEST FILES")
@@ -98,7 +98,7 @@ def run_syntax_check():
     import py_compile
     import traceback
 
-    test_dir = Path(r'C:\Intellicrack\tests\unit\core\mitigation_bypass')
+    test_dir = Path(r'D:\Intellicrack\tests\unit\core\mitigation_bypass')
 
     print("\nRunning syntax validation...")
     print("-" * 40)

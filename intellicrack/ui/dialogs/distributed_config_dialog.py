@@ -312,7 +312,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
 
 
 def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
-    """Factory function to create a DistributedProcessingConfigDialog.
+    """Create a DistributedProcessingConfigDialog.
 
     Args:
         binary_path: Path to binary for processing

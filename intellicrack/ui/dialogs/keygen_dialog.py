@@ -31,10 +31,10 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..icon_manager import set_button_icon
-from .base_dialog import BinarySelectionDialog
+from .base_dialog import BaseDialog
 
 """
 Professional Keygen Dialog for Intellicrack.
@@ -155,7 +155,7 @@ class KeygenWorker(QThread):
         self.should_stop = True
 
 
-class KeygenDialog(BinarySelectionDialog):
+class KeygenDialog(BaseDialog):
     """Professional Keygen Dialog with advanced features."""
 
     def __init__(self, parent=None, binary_path: str = ""):

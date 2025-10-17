@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""API obfuscation utilities for Intellicrack anti-analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -143,7 +145,7 @@ class APIObfuscator:
             return None
 
     def _normal_resolve(self, dll_name: str, api_name: str) -> int | None:
-        """Normal API resolution using GetProcAddress."""
+        """Resolve API normally using GetProcAddress."""
         try:
             import platform
 
@@ -441,7 +443,7 @@ class APIObfuscator:
         return zlib.crc32(string.encode("ascii")) & 0xFFFFFFFF
 
     def _custom_hash(self, string: str) -> int:
-        """Custom hash algorithm for advanced evasion."""
+        """Apply custom hash algorithm for advanced evasion."""
         hash_value = 0
         for i, char in enumerate(string):
             hash_value = ((hash_value << 3) ^ (hash_value >> 5)) + ord(char)

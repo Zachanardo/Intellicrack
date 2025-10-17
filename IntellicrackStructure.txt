@@ -1,0 +1,929 @@
+INTELLICRACK PROJECT FILE TREE STRUCTURE
+========================================
+
+Generated: Sun, Oct 05, 2025 09:54:15 PM
+Directory: D:\Intellicrack\intellicrack
+
+This document provides a simple text-based tree structure of the Intellicrack project.
+For an interactive HTML version with clickable links, see IntellicrackStructure.hta
+
+----------------------------------------
+
+├── ai/
+│   ├── templates/
+│   │   ├── __init__.py
+│   │   ├── frida_license_bypass.js
+│   │   ├── ghidra_analysis.py
+│   │   └── README.md
+│   ├── __init__.py
+│   ├── ai_assistant_enhanced.py
+│   ├── ai_file_tools.py
+│   ├── ai_script_generator.py
+│   ├── ai_tools.py
+│   ├── autonomous_agent.py
+│   ├── background_loader.py
+│   ├── coordination_layer.py
+│   ├── enhanced_training_interface.py
+│   ├── exploit_chain_builder.py
+│   ├── file_reading_helper.py
+│   ├── gpu_integration.py
+│   ├── headless_training_interface.py
+│   ├── integration_manager.py
+│   ├── integration_manager_temp.py
+│   ├── intelligent_code_modifier.py
+│   ├── lazy_model_loader.py
+│   ├── learning_engine.py
+│   ├── learning_engine_simple.py
+│   ├── llm_backends.py
+│   ├── llm_config_as_code.py
+│   ├── llm_config_manager.py
+│   ├── llm_fallback_chains.py
+│   ├── llm_types.py
+│   ├── local_gguf_server.py
+│   ├── lora_adapter_manager.py
+│   ├── model_batch_tester.py
+│   ├── model_cache_manager.py
+│   ├── model_comparison.py
+│   ├── model_download_manager.py
+│   ├── model_format_converter.py
+│   ├── model_manager_module.py
+│   ├── model_performance_monitor.py
+│   ├── model_sharding.py
+│   ├── multi_agent_system.py
+│   ├── optimization_config.py
+│   ├── orchestrator.py
+│   ├── parsing_utils.py
+│   ├── pattern_library.py
+│   ├── performance_monitor.py
+│   ├── performance_monitor_simple.py
+│   ├── performance_optimization_layer.py
+│   ├── predictive_intelligence.py
+│   ├── protection_aware_script_gen.py
+│   ├── qemu_manager.py
+│   ├── qemu_test_manager_enhanced.py
+│   ├── quantization_manager.py
+│   ├── README.md
+│   ├── realtime_adaptation_engine.py
+│   ├── resilience_self_healing.py
+│   ├── response_parser.py
+│   ├── script_editor.py
+│   ├── script_generation_prompts.py
+│   ├── script_templates.py
+│   ├── semantic_code_analyzer.py
+│   ├── visualization_analytics.py
+│   ├── vulnerability_research_integration.py
+│   └── vulnerability_research_integration_helper.py
+├── analysis/
+│   ├── handlers/
+│   │   ├── __init__.py
+│   │   ├── llm_handler.py
+│   │   ├── report_generation_handler.py
+│   │   └── script_generation_handler.py
+│   ├── __init__.py
+│   ├── analysis_result_orchestrator.py
+│   └── protection_workflow.py
+├── assets/
+│   ├── example_configs/
+│   │   ├── anthropic_claude3.json
+│   │   ├── frida_specialized.json
+│   │   ├── gptq_fast_inference.json
+│   │   ├── local_gguf_high_performance.json
+│   │   ├── ollama_codellama.json
+│   │   ├── onnx_production.json
+│   │   ├── openai_gpt4.json
+│   │   ├── pytorch_research.json
+│   │   ├── README.md
+│   │   └── vulnerability_assessment.json
+│   ├── fonts/
+│   │   ├── FALLBACK_FONTS.txt
+│   │   ├── font_config.json
+│   │   ├── JetBrainsMono-Bold.ttf
+│   │   ├── JetBrainsMono-Regular.ttf
+│   │   ├── LICENSE.txt
+│   │   └── README.md
+│   ├── icons/
+│   │   ├── action_build.svg
+│   │   ├── action_debug.svg
+│   │   ├── action_deploy.svg
+│   │   ├── action_generate.svg
+│   │   ├── action_pause.svg
+│   │   ├── action_restart.svg
+│   │   ├── action_run.svg
+│   │   ├── action_stop.svg
+│   │   ├── action_test.svg
+│   │   ├── ai_brain.svg
+│   │   ├── ai_inference.svg
+│   │   ├── ai_model.svg
+│   │   ├── ai_neural.svg
+│   │   ├── ai_training.svg
+│   │   ├── analyze.png
+│   │   ├── binary_disasm.svg
+│   │   ├── binary_dll.svg
+│   │   ├── binary_entropy.svg
+│   │   ├── binary_exe.svg
+│   │   ├── binary_hex.svg
+│   │   ├── binary_so.svg
+│   │   ├── db_connect.svg
+│   │   ├── db_export.svg
+│   │   ├── db_query.svg
+│   │   ├── db_table.svg
+│   │   ├── edit_copy.svg
+│   │   ├── edit_cut.svg
+│   │   ├── edit_delete.svg
+│   │   ├── edit_paste.svg
+│   │   ├── edit_redo.svg
+│   │   ├── edit_replace.svg
+│   │   ├── edit_search.svg
+│   │   ├── edit_undo.svg
+│   │   ├── export.png
+│   │   ├── file_close.svg
+│   │   ├── file_import.svg
+│   │   ├── file_new.svg
+│   │   ├── file_open.svg
+│   │   ├── file_save.svg
+│   │   ├── file_save_as.svg
+│   │   ├── help_about.svg
+│   │   ├── help_docs.svg
+│   │   ├── help_documentation.svg
+│   │   ├── help_support.svg
+│   │   ├── help_tutorial.svg
+│   │   ├── nav_back.svg
+│   │   ├── nav_down.svg
+│   │   ├── nav_forward.svg
+│   │   ├── nav_home.svg
+│   │   ├── nav_refresh.svg
+│   │   ├── nav_up.svg
+│   │   ├── open.png
+│   │   ├── security_firewall.svg
+│   │   ├── security_key.svg
+│   │   ├── security_lock.svg
+│   │   ├── security_scan.svg
+│   │   ├── security_shield.svg
+│   │   ├── security_warning.svg
+│   │   ├── status_error.svg
+│   │   ├── status_idle.svg
+│   │   ├── status_info.svg
+│   │   ├── status_loading.svg
+│   │   ├── status_question.svg
+│   │   ├── status_ready.svg
+│   │   ├── status_success.svg
+│   │   ├── status_warning.svg
+│   │   ├── tool_cheat_engine.svg
+│   │   ├── tool_frida.svg
+│   │   ├── tool_gdb.svg
+│   │   ├── tool_ghidra.svg
+│   │   ├── tool_ollydbg.svg
+│   │   ├── tool_radare2.svg
+│   │   ├── tool_x64dbg.svg
+│   │   └── vulnerability.png
+│   ├── qemu_images/
+│   │   └── win-analysis.qcow2
+│   ├── accessories-text-editor.png
+│   ├── ai-assistant.png
+│   ├── application-certificate.png
+│   ├── binary-file-icon.png
+│   ├── cancel-button.png
+│   ├── computer-icon.png
+│   ├── desktop-icon.png
+│   ├── detailed-view.png
+│   ├── dialog-password.png
+│   ├── document-edit.png
+│   ├── document-open.png
+│   ├── document-save-as.png
+│   ├── document-save.png
+│   ├── edit-delete.png
+│   ├── export.png
+│   ├── file-icon.png
+│   ├── folder-icon.png
+│   ├── frida-tool.png
+│   ├── ghidra-tool.png
+│   ├── icon.ico
+│   ├── icon_preview.png
+│   ├── import.png
+│   ├── list-add.png
+│   ├── mail-send.png
+│   ├── media-play.png
+│   ├── media-playback-start.png
+│   ├── network-server.png
+│   ├── network-workgroup.png
+│   ├── package-x-generic.png
+│   ├── preferences-system.png
+│   ├── progress-spinner.png
+│   ├── python-file-icon.png
+│   ├── refresh.png
+│   ├── security-medium.png
+│   ├── settings.png
+│   ├── splash.png
+│   ├── status-error.png
+│   ├── status-success.png
+│   ├── status-warning.png
+│   ├── stop.png
+│   └── system-search.png
+├── cli/
+│   ├── __init__.py
+│   ├── advanced_export.py
+│   ├── ai_chat_interface.py
+│   ├── ai_integration.py
+│   ├── ai_wrapper.py
+│   ├── analysis_cli.py
+│   ├── ascii_charts.py
+│   ├── cli.py
+│   ├── cli.py.backup
+│   ├── config_manager.py
+│   ├── config_profiles.py
+│   ├── enhanced_runner.py
+│   ├── examples.md
+│   ├── hex_viewer_cli.py
+│   ├── interactive_mode.py
+│   ├── pipeline.py
+│   ├── progress_manager.py
+│   ├── project_manager.py
+│   ├── README.md
+│   ├── run_analysis_cli.py
+│   ├── terminal_dashboard.py
+│   └── tutorial_system.py
+├── core/
+│   ├── analysis/
+│   │   ├── __init__.py
+│   │   ├── analysis_orchestrator.py
+│   │   ├── automated_patch_agent.py
+│   │   ├── behavioral_analysis.py
+│   │   ├── binary_analyzer.py
+│   │   ├── binary_pattern_detector.py
+│   │   ├── binary_similarity_search.py
+│   │   ├── cfg_explorer.py
+│   │   ├── commercial_license_analyzer.py
+│   │   ├── concolic_executor.py
+│   │   ├── concolic_executor_fixed.py
+│   │   ├── core_analysis.py
+│   │   ├── cross_tool_orchestrator.py
+│   │   ├── cryptographic_routine_detector.py
+│   │   ├── dynamic_analyzer.py
+│   │   ├── dynamic_instrumentation.py
+│   │   ├── entropy_analyzer.py
+│   │   ├── firmware_analyzer.py
+│   │   ├── frida_advanced_hooks.py
+│   │   ├── frida_analyzer.py
+│   │   ├── frida_gui_integration.py
+│   │   ├── frida_protection_bypass.py
+│   │   ├── frida_script_manager.py
+│   │   ├── ghidra_advanced_analyzer.py
+│   │   ├── ghidra_analyzer.py
+│   │   ├── ghidra_output_parser.py
+│   │   ├── ghidra_project_manager.py
+│   │   ├── ghidra_script_runner.py
+│   │   ├── incremental_analyzer.py
+│   │   ├── incremental_manager.py
+│   │   ├── memory_forensics_engine.py
+│   │   ├── multi_format_analyzer.py
+│   │   ├── network_forensics_engine.py
+│   │   ├── protection_scanner.py
+│   │   ├── radare2_advanced_patcher.py
+│   │   ├── radare2_ai_integration.py
+│   │   ├── radare2_binary_diff.py
+│   │   ├── radare2_bypass_generator.py
+│   │   ├── radare2_decompiler.py
+│   │   ├── radare2_emulator.py
+│   │   ├── radare2_enhanced_integration.py
+│   │   ├── radare2_error_handler.py
+│   │   ├── radare2_esil.py
+│   │   ├── radare2_esil_emulator.py
+│   │   ├── radare2_graph_view.py
+│   │   ├── radare2_imports.py
+│   │   ├── radare2_json_standardizer.py
+│   │   ├── radare2_patch_engine.py
+│   │   ├── radare2_performance_metrics.py
+│   │   ├── radare2_performance_optimizer.py
+│   │   ├── radare2_realtime_analyzer.py
+│   │   ├── radare2_scripting.py
+│   │   ├── radare2_signature_detector.py
+│   │   ├── radare2_signatures.py
+│   │   ├── radare2_strings.py
+│   │   ├── radare2_vulnerability_engine.py
+│   │   ├── rop_generator.py
+│   │   ├── simconcolic.py
+│   │   ├── similarity_searcher.py
+│   │   ├── symbolic_executor.py
+│   │   ├── taint_analyzer.py
+│   │   ├── vulnerability_engine.py
+│   │   ├── yara_pattern_engine.py
+│   │   └── yara_scanner.py
+│   ├── anti_analysis/
+│   │   ├── __init__.py
+│   │   ├── api_obfuscation.py
+│   │   ├── base_detector.py
+│   │   ├── debugger_detector.py
+│   │   ├── sandbox_detector.py
+│   │   ├── timing_attacks.py
+│   │   └── vm_detector.py
+│   ├── execution/
+│   │   ├── __init__.py
+│   │   └── script_execution_manager.py
+│   ├── exploitation/
+│   │   ├── __init__.py
+│   │   ├── automated_unpacker.py
+│   │   ├── bypass_engine.py
+│   │   ├── crypto_key_extractor.py
+│   │   └── keygen_generator.py
+│   ├── integration/
+│   │   ├── intelligent_correlation.py
+│   │   └── real_tool_communication.py
+│   ├── logging/
+│   │   ├── __init__.py
+│   │   └── audit_logger.py
+│   ├── network/
+│   │   ├── certs/
+│   │   │   ├── README.md
+│   │   │   ├── server.crt
+│   │   │   └── server.key
+│   │   ├── protocols/
+│   │   │   ├── __init__.py
+│   │   │   ├── autodesk_parser.py
+│   │   │   ├── codemeter_parser.py
+│   │   │   ├── flexlm_parser.py
+│   │   │   └── hasp_parser.py
+│   │   ├── __init__.py
+│   │   ├── base_network_analyzer.py
+│   │   ├── cloud_license_hooker.py
+│   │   ├── dynamic_response_generator.py
+│   │   ├── generic_protocol_handler.py
+│   │   ├── license_protocol_handler.py
+│   │   ├── protocol_fingerprinter.py
+│   │   ├── protocol_tool.py
+│   │   ├── ssl_interceptor.py
+│   │   ├── traffic_analyzer.py
+│   │   └── traffic_interception_engine.py
+│   ├── orchestration/
+│   │   ├── intelligent_correlation_engine.py
+│   │   ├── result_serialization_protocol.py
+│   │   └── tool_communication_bridge.py
+│   ├── patching/
+│   │   ├── __init__.py
+│   │   ├── base_patcher.py
+│   │   ├── license_check_remover.py
+│   │   ├── memory_patcher.py
+│   │   ├── radare2_patch_integration.py
+│   │   └── windows_activator.py
+│   ├── processing/
+│   │   ├── __init__.py
+│   │   ├── base_snapshot_handler.py
+│   │   ├── distributed_analysis_manager.py
+│   │   ├── distributed_manager.py
+│   │   ├── emulator_manager.py
+│   │   ├── gpu_accelerator.py
+│   │   ├── memory_loader.py
+│   │   ├── memory_optimizer.py
+│   │   ├── qemu_emulator_backup.py
+│   │   ├── qiling_emulator.py
+│   │   └── vm_workflow_manager.py
+│   ├── protection/
+│   ├── protection_bypass/
+│   │   ├── hooks/
+│   │   │   └── yubikey_hook.dll
+│   │   ├── __init__.py
+│   │   ├── cloud_license.py
+│   │   ├── cloud_license_analyzer.py
+│   │   ├── dongle_emulator.py
+│   │   ├── hardware_id_spoofer.py
+│   │   ├── hardware_token.py
+│   │   ├── integrity_check_defeat.py
+│   │   ├── tpm_bypass.py
+│   │   ├── tpm_secure_enclave_bypass.py
+│   │   └── vm_bypass.py
+│   ├── reporting/
+│   │   ├── __init__.py
+│   │   ├── pdf_generator.py
+│   │   └── report_generator.py
+│   ├── resources/
+│   │   ├── __init__.py
+│   │   └── resource_manager.py
+│   ├── security/
+│   │   └── __init__.py
+│   ├── shared/
+│   │   ├── __init__.py
+│   │   ├── bypass_config.py
+│   │   ├── result_types.py
+│   │   └── result_utils.py
+│   ├── vulnerability_research/
+│   │   ├── exploit_developer/
+│   │   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── base_analyzer.py
+│   │   ├── binary_differ.py
+│   │   ├── common_enums.py
+│   │   ├── fuzzing_engine.py
+│   │   ├── patch_analyzer.py
+│   │   ├── research_manager.py
+│   │   └── vulnerability_analyzer.py
+│   ├── __init__.py
+│   ├── adobe_injector_integration.py
+│   ├── ai_model_manager.py
+│   ├── app_context.py
+│   ├── binary_analyzer.py
+│   ├── config_manager.py
+│   ├── config_manager_clean.py
+│   ├── config_migration_handler.py
+│   ├── debugging_engine.py
+│   ├── exceptions.py
+│   ├── frida_bypass_wizard.py
+│   ├── frida_constants.py
+│   ├── frida_manager.py
+│   ├── frida_presets.py
+│   ├── gpu_acceleration.py
+│   ├── hardware_spoofer.py
+│   ├── license_snapshot.py
+│   ├── license_validation_bypass.py
+│   ├── network_capture.py
+│   ├── offline_activation_emulator.py
+│   ├── process_manipulation.py
+│   ├── protection_analyzer.py
+│   ├── README.md
+│   ├── security_enforcement.py
+│   ├── security_utils.py
+│   ├── serial_generator.py
+│   ├── startup_checks.py
+│   ├── subscription_validation_bypass.py
+│   ├── task_manager.py
+│   ├── terminal_manager.py
+│   ├── tool_discovery.py
+│   └── trial_reset_engine.py
+├── dashboard/
+│   ├── static/
+│   │   └── js/
+│   │       └── graph_visualization.js
+│   ├── __init__.py
+│   ├── dashboard_integration.py
+│   ├── dashboard_manager.py
+│   ├── dashboard_widgets.py
+│   ├── live_data_pipeline.py
+│   ├── real_time_dashboard.py
+│   ├── visualization_renderer.py
+│   └── websocket_stream.py
+├── data/
+│   ├── signatures/
+│   │   ├── README.md
+│   │   └── sample_signatures.sg
+│   ├── templates/
+│   │   └── README.md
+│   ├── yara_rules/
+│   │   ├── antidebug.yar
+│   │   ├── compilers.yar
+│   │   ├── licensing.yar
+│   │   ├── packers.yar
+│   │   └── protections.yar
+│   ├── __init__.py
+│   ├── protocol_signatures.json
+│   ├── README.md
+│   └── signature_templates.py
+├── handlers/
+│   ├── __init__.py
+│   ├── aiohttp_handler.py
+│   ├── capstone_handler.py
+│   ├── cryptography_handler.py
+│   ├── frida_handler.py
+│   ├── ipex_handler.py
+│   ├── lief_handler.py
+│   ├── matplotlib_handler.py
+│   ├── numpy_handler.py
+│   ├── opencl_handler.py
+│   ├── pdfkit_handler.py
+│   ├── pefile_handler.py
+│   ├── psutil_handler.py
+│   ├── pyelftools_handler.py
+│   ├── pyqt6_handler.py
+│   ├── requests_handler.py
+│   ├── sqlite3_handler.py
+│   ├── tensorflow_handler.py
+│   ├── tkinter_handler.py
+│   ├── torch_handler.py
+│   └── wmi_handler.py
+├── hexview/
+│   ├── __init__.py
+│   ├── advanced_search.py
+│   ├── ai_bridge.py
+│   ├── api.py
+│   ├── checksum_dialog.py
+│   ├── checksums.py
+│   ├── compare_dialog.py
+│   ├── config_defaults.py
+│   ├── data_inspector.py
+│   ├── export_dialog.py
+│   ├── file_compare.py
+│   ├── file_handler.py
+│   ├── hex_commands.py
+│   ├── hex_dialog.py
+│   ├── hex_highlighter.py
+│   ├── hex_renderer.py
+│   ├── hex_widget.py
+│   ├── integration.py
+│   ├── intellicrack_hex_protection_integration.py
+│   ├── large_file_handler.py
+│   ├── performance_monitor.py
+│   ├── print_dialog.py
+│   ├── statistics.py
+│   └── statistics_dialog.py
+├── llm/
+│   ├── models/
+│   │   └── downloads/
+│   │       └── .gitkeep
+│   └── tools/
+│       ├── __init__.py
+│       ├── binary_analysis_tool.py
+│       ├── firmware_analysis_tool.py
+│       ├── intellicrack_protection_analysis_tool.py
+│       ├── memory_forensics_tool.py
+│       ├── script_generation_tool.py
+│       └── yara_pattern_analysis_tool.py
+├── ml/
+│   ├── __init__.py
+│   ├── binary_feature_extractor.py
+│   ├── license_protection_neural_network.py
+│   └── pattern_evolution_tracker.py
+├── models/
+│   ├── repositories/
+│   │   ├── __init__.py
+│   │   ├── anthropic_repository.py
+│   │   ├── base.py
+│   │   ├── factory.py
+│   │   ├── google_repository.py
+│   │   ├── interface.py
+│   │   ├── lmstudio_repository.py
+│   │   ├── local_repository.py
+│   │   ├── openai_repository.py
+│   │   └── openrouter_repository.py
+│   ├── __init__.py
+│   ├── ml_model_info.txt
+│   ├── model_manager.py
+│   └── protection_knowledge_base.py
+├── plugins/
+│   ├── custom_modules/
+│   │   ├── __init__.py
+│   │   ├── anti_anti_debug_suite.py
+│   │   ├── binary_patcher_plugin.py
+│   │   ├── cloud_license_interceptor.py
+│   │   ├── demo_plugin.py
+│   │   ├── hardware_dongle_emulator.py
+│   │   ├── intellicrack_core_engine.py
+│   │   ├── license_server_emulator.py
+│   │   ├── network_analysis_plugin.py
+│   │   ├── performance_optimizer.py
+│   │   ├── simple_analysis_plugin.py
+│   │   ├── success_rate_analyzer.py
+│   │   ├── ui_enhancement_module.py
+│   │   └── vm_protection_unwrapper.py
+│   ├── __init__.py
+│   ├── plugin_base.py
+│   ├── plugin_config.py
+│   ├── plugin_system.py
+│   └── remote_executor.py
+├── protection/
+│   ├── __init__.py
+│   ├── analysis_cache.py
+│   ├── commercial_protectors_database.py
+│   ├── icp_backend.py
+│   ├── icp_report_generator.py
+│   ├── intellicrack_protection_advanced.py
+│   ├── intellicrack_protection_core.py
+│   ├── protection_detector.py
+│   └── unified_protection_engine.py
+├── scripts/
+│   ├── ai_scripts/
+│   ├── frida/
+│   │   ├── ai_scripts/
+│   │   │   └── ai_3d72c547_20250817_041722.js
+│   │   ├── anti_debugger.js
+│   │   ├── behavioral_pattern_analyzer.js
+│   │   ├── binary_patcher.js
+│   │   ├── binary_patcher_advanced.js
+│   │   ├── blockchain_license_bypass.js
+│   │   ├── bypass_success_tracker.js
+│   │   ├── central_orchestrator.js
+│   │   ├── certificate_pinner_bypass.js
+│   │   ├── certificate_pinning_bypass.js
+│   │   ├── cloud_licensing_bypass.js
+│   │   ├── code_integrity_bypass.js
+│   │   ├── dotnet_bypass_suite.js
+│   │   ├── drm_bypass.js
+│   │   ├── dynamic_script_generator.js
+│   │   ├── hook_effectiveness_monitor.js
+│   │   ├── http3_quic_interceptor.js
+│   │   ├── hwid_spoofer.js
+│   │   ├── kernel_bridge.js
+│   │   ├── kernel_mode_bypass.js
+│   │   ├── keygen_generator.js
+│   │   ├── memory_dumper.js
+│   │   ├── memory_integrity_bypass.js
+│   │   ├── ml_license_detector.js
+│   │   ├── modular_hook_library.js
+│   │   ├── ntp_blocker.js
+│   │   ├── obfuscation_detector.js
+│   │   ├── quantum_crypto_handler.js
+│   │   ├── README.md
+│   │   ├── realtime_protection_detector.js
+│   │   ├── registry_monitor.js
+│   │   ├── telemetry_blocker.js
+│   │   ├── test_binary_patcher.js
+│   │   ├── test_structured_messaging.js
+│   │   ├── time_bomb_defuser.js
+│   │   ├── tpm_emulator.js
+│   │   ├── universal_unpacker.js
+│   │   ├── virtualization_bypass.js
+│   │   ├── wasm_protection_bypass.js
+│   │   └── websocket_interceptor.js
+│   ├── ghidra/
+│   │   ├── __init__.py
+│   │   ├── AdvancedAnalysis.java
+│   │   ├── AntiAnalysisDetector.py
+│   │   ├── AutomatedUnpacker.java
+│   │   ├── ControlFlowDeobfuscator.java
+│   │   ├── CryptoRoutineIdentifier.java
+│   │   ├── EnhancedLicensingAnalysisScript.java
+│   │   ├── FindCryptoSignatures.java
+│   │   ├── FunctionLister.java
+│   │   ├── KeygenTemplateGenerator.java
+│   │   ├── LicenseValidationAnalyzer.java
+│   │   ├── LicensingAnalysisScript.java
+│   │   ├── ModernPackerDetector.java
+│   │   ├── NetworkAnalysis.java
+│   │   ├── QuickStringDump.java
+│   │   ├── README.md
+│   │   ├── SimpleStringExtractor.java
+│   │   └── StringDecryptionAutomator.java
+│   ├── radare2/
+│   │   ├── radare2_keygen_assistant.py
+│   │   └── radare2_license_analyzer.py
+│   ├── setup/
+│   │   └── __init__.py
+│   ├── versions/
+│   ├── Windows_Patch/
+│   │   └── WindowsActivator.cmd
+│   ├── __init__.py
+│   └── README.md
+├── ssl_certificates/
+│   ├── ca.crt
+│   ├── ca.key
+│   └── README.md
+├── tools/
+│   ├── __init__.py
+│   ├── plugin_ci_cd.py
+│   ├── plugin_debugger.py
+│   ├── plugin_test_generator.py
+│   └── protection_analyzer_tool.py
+├── ui/
+│   ├── dialogs/
+│   │   ├── __init__.py
+│   │   ├── ai_coding_assistant_dialog.py
+│   │   ├── base_dialog.py
+│   │   ├── ci_cd_dialog.py
+│   │   ├── code_modification_dialog.py
+│   │   ├── common_imports.py
+│   │   ├── debugger_dialog.py
+│   │   ├── dialog_base_utils.py
+│   │   ├── distributed_config_dialog.py
+│   │   ├── event_handler_utils.py
+│   │   ├── export_dialog.py
+│   │   ├── first_run_setup.py
+│   │   ├── frida_bypass_wizard_dialog.py
+│   │   ├── frida_manager_dialog.py
+│   │   ├── ghidra_script_selector.py
+│   │   ├── guided_workflow_wizard.py
+│   │   ├── hardware_spoofer_dialog.py
+│   │   ├── help_documentation_widget.py
+│   │   ├── keygen_dialog.py
+│   │   ├── llm_config_dialog.py
+│   │   ├── llm_config_dialog.py.backup
+│   │   ├── model_finetuning_dialog.py
+│   │   ├── model_loading_dialog.py
+│   │   ├── model_manager_dialog.py
+│   │   ├── nodejs_setup_dialog.py
+│   │   ├── offline_activation_dialog.py
+│   │   ├── plugin_browser_utils.py
+│   │   ├── plugin_creation_wizard.py
+│   │   ├── plugin_dialog_base.py
+│   │   ├── plugin_editor_dialog.py
+│   │   ├── plugin_manager_dialog.py
+│   │   ├── preferences_dialog.py
+│   │   ├── program_selector_dialog.py
+│   │   ├── qemu_test_dialog.py
+│   │   ├── qemu_test_results_dialog.py
+│   │   ├── report_manager_dialog.py
+│   │   ├── script_generator_dialog.py
+│   │   ├── serial_generator_dialog.py
+│   │   ├── signature_editor_dialog.py
+│   │   ├── similarity_search_dialog.py
+│   │   ├── smart_program_selector_dialog.py
+│   │   ├── splash_screen.py
+│   │   ├── system_utilities_dialog.py
+│   │   ├── test_generator_dialog.py
+│   │   ├── text_editor_dialog.py
+│   │   ├── trial_reset_dialog.py
+│   │   ├── visual_patch_editor.py
+│   │   └── vm_manager_dialog.py
+│   ├── styles/
+│   │   ├── dark_theme.qss
+│   │   └── light_theme.qss
+│   ├── tabs/
+│   │   ├── __init__.py
+│   │   ├── adobe_injector_tab.py
+│   │   ├── ai_assistant_tab.py
+│   │   ├── analysis_tab.py
+│   │   ├── base_tab.py
+│   │   ├── dashboard_tab.py
+│   │   ├── exploitation_tab.py
+│   │   ├── project_workspace_tab.py
+│   │   ├── settings_tab.py
+│   │   ├── terminal_tab.py
+│   │   ├── tools_tab.py
+│   │   └── workspace_tab.py
+│   ├── widgets/
+│   │   ├── __init__.py
+│   │   ├── ai_assistant_widget.py
+│   │   ├── batch_analysis_widget.py
+│   │   ├── cache_management_widget.py
+│   │   ├── console_widget.py
+│   │   ├── cpu_status_widget.py
+│   │   ├── drop_zone_widget.py
+│   │   ├── embedded_terminal_widget.py
+│   │   ├── entropy_graph_widget.py
+│   │   ├── entropy_visualizer.py
+│   │   ├── file_metadata_widget.py
+│   │   ├── gpu_status_widget.py
+│   │   ├── hex_viewer.py
+│   │   ├── hex_viewer_widget.py
+│   │   ├── icp_analysis_widget.py
+│   │   ├── intellicrack_advanced_protection_widget.py
+│   │   ├── intellicrack_protection_widget.py
+│   │   ├── memory_dumper.py
+│   │   ├── model_loading_progress_widget.py
+│   │   ├── pe_file_model.py
+│   │   ├── pe_structure_model.py
+│   │   ├── plugin_editor.py
+│   │   ├── string_extraction_widget.py
+│   │   ├── structure_visualizer.py
+│   │   ├── syntax_highlighters.py
+│   │   ├── system_monitor_widget.py
+│   │   ├── terminal_session_widget.py
+│   │   ├── unified_protection_widget.py
+│   │   └── widget_factory.py
+│   ├── __init__.py
+│   ├── cfg_explorer_inner.py
+│   ├── comprehensive_integration.py
+│   ├── config_manager.py
+│   ├── dashboard_manager.py
+│   ├── dialog_utils.py
+│   ├── distributed_processing.py
+│   ├── emulator_ui_enhancements.py
+│   ├── enhanced_ui_integration.py
+│   ├── exploitation_handlers.py
+│   ├── gpu_analysis.py
+│   ├── icon_manager.py
+│   ├── integrate_radare2.py
+│   ├── main_app.py
+│   ├── main_window.py
+│   ├── menu_utils.py
+│   ├── protection_detection_handlers.py
+│   ├── radare2_integration_ui.py
+│   ├── radare2_ui_manager.py
+│   ├── README.md
+│   ├── shared_ui_layouts.py
+│   ├── style_manager.py
+│   ├── style_utils.py
+│   ├── symbolic_execution.py
+│   ├── syntax_highlighter.py
+│   ├── theme_manager.py
+│   ├── tooltip_helper.py
+│   ├── traffic_analyzer.py
+│   └── window_sizing.py
+├── utils/
+│   ├── analysis/
+│   │   ├── __init__.py
+│   │   ├── analysis_exporter.py
+│   │   ├── analysis_stats.py
+│   │   ├── binary_analysis.py
+│   │   ├── entropy_utils.py
+│   │   ├── pattern_search.py
+│   │   └── security_analysis.py
+│   ├── binary/
+│   │   ├── __init__.py
+│   │   ├── binary_io.py
+│   │   ├── binary_utils.py
+│   │   ├── certificate_extractor.py
+│   │   ├── elf_analyzer.py
+│   │   ├── hex_utils.py
+│   │   ├── pe_analysis_common.py
+│   │   └── pe_common.py
+│   ├── core/
+│   │   ├── __pycache__/
+│   │   │   └── internal_helpers.cpython-313.pyc
+│   │   ├── __init__.py
+│   │   ├── core_utilities.py
+│   │   ├── dependency_feedback.py
+│   │   ├── exception_utils.py
+│   │   ├── final_utilities.py
+│   │   ├── import_checks.py
+│   │   ├── import_patterns.py
+│   │   ├── internal_helpers.py
+│   │   ├── misc_utils.py
+│   │   ├── path_discovery.py
+│   │   ├── plugin_paths.py
+│   │   ├── siphash24_replacement.py
+│   │   ├── string_utils.py
+│   │   └── type_validation.py
+│   ├── exploitation/
+│   │   ├── __init__.py
+│   │   ├── exploitation.py
+│   │   ├── logger.py
+│   │   ├── patch_engine.py
+│   │   └── payload_result_handler.py
+│   ├── patching/
+│   │   ├── __init__.py
+│   │   ├── patch_generator.py
+│   │   ├── patch_utils.py
+│   │   └── patch_verification.py
+│   ├── protection/
+│   │   ├── __init__.py
+│   │   ├── certificate_common.py
+│   │   ├── certificate_utils.py
+│   │   └── protection_helpers.py
+│   ├── reporting/
+│   │   ├── __init__.py
+│   │   ├── html_templates.py
+│   │   └── report_common.py
+│   ├── runtime/
+│   │   ├── __init__.py
+│   │   ├── additional_runners.py
+│   │   ├── distributed_processing.py
+│   │   ├── performance_optimizer.py
+│   │   └── runner_functions.py
+│   ├── system/
+│   │   ├── __init__.py
+│   │   ├── driver_utils.py
+│   │   ├── file_resolution.py
+│   │   ├── os_detection.py
+│   │   ├── os_detection_mixin.py
+│   │   ├── process_common.py
+│   │   ├── process_helpers.py
+│   │   ├── process_utils.py
+│   │   ├── program_discovery.py
+│   │   ├── snapshot_common.py
+│   │   ├── snapshot_utils.py
+│   │   ├── subprocess_utils.py
+│   │   ├── system_utils.py
+│   │   ├── windows_common.py
+│   │   └── windows_structures.py
+│   ├── templates/
+│   │   ├── __init__.py
+│   │   ├── license_response_templates.py
+│   │   └── network_api_common.py
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── ghidra_script_manager.py
+│   │   ├── ghidra_utils.py
+│   │   ├── pcapy_compat.py
+│   │   ├── radare2_utils.py
+│   │   └── tool_wrappers.py
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── ui_button_common.py
+│   │   ├── ui_common.py
+│   │   ├── ui_helpers.py
+│   │   ├── ui_setup_functions.py
+│   │   └── ui_utils.py
+│   ├── validation/
+│   │   ├── __init__.py
+│   │   └── import_validator.py
+│   ├── __init__.py
+│   ├── api_client.py
+│   ├── config.py
+│   ├── config_cleanup.py
+│   ├── constants.py
+│   ├── dependencies.py
+│   ├── dependency_fallbacks.py
+│   ├── deprecation_warnings.py
+│   ├── env_file_manager.py
+│   ├── exploit_common.py
+│   ├── font_manager.py
+│   ├── ghidra_common.py
+│   ├── gpu_autoloader.py
+│   ├── gpu_benchmark.py
+│   ├── http_utils.py
+│   ├── json_utils.py
+│   ├── log_message.py
+│   ├── logger.py
+│   ├── path_resolver.py
+│   ├── protection_utils.py
+│   ├── report_generator.py
+│   ├── resource_helper.py
+│   ├── secrets_manager.py
+│   ├── security_mitigations.py
+│   ├── service_health_checker.py
+│   ├── service_utils.py
+│   ├── severity_levels.py
+│   ├── subprocess_security.py
+│   └── torch_gil_safety.py
+├── __init__.py
+├── __main__.py
+├── Claude.md
+├── config.py
+├── main.py
+└── README.md

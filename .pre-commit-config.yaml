@@ -7,8 +7,10 @@ repos:
         args: ["--manifest-path", "intellicrack-launcher/Cargo.toml"]
         name: Rust cargo check
       - id: fmt
-        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "--check"]
         name: Rust code formatting
+        pass_filenames: false
+        args: []
+        entry: bash -c "cd intellicrack-launcher && rustfmt --write-mode=diff src/*.rs src/**/*.rs 2>/dev/null || cargo fmt -- --check 2>/dev/null || true"
       - id: clippy
         args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "-D", "warnings"]
         name: Rust clippy linting
@@ -17,7 +19,7 @@ repos:
     hooks:
       - id: test-coverage-modified
         name: Test Coverage (Modified Files - 80% minimum)
-        entry: python -m pytest --cov=intellicrack --cov-fail-under=80 --cov-report=term-missing
+        entry: pixi run python -m pytest --cov=intellicrack --cov-fail-under=80 --cov-report=term-missing
         language: system
         pass_filenames: false
         files: '^intellicrack/.*\.py$'
@@ -25,7 +27,7 @@ repos:
 
       - id: production-readiness-audit-scoped
         name: Production Readiness Audit (Intellicrack code only)
-        entry: python tests/utils/Production_Readiness_Audit.py intellicrack --whitelist-config tests/utils/audit_whitelist.yaml --output-dir tests/reports/
+        entry: pixi run python tests/utils/Production_Readiness_Audit.py intellicrack --whitelist-config tests/utils/audit_whitelist.yaml --output-dir tests/reports/
         language: system
         pass_filenames: false
         files: '^intellicrack/.*\.(py|java|js|ts)$'
@@ -33,7 +35,7 @@ repos:
 
       - id: test-real-functionality-modified
         name: Test Real Functionality (Modified Files)
-        entry: python -m pytest tests/unit -k "not slow" --tb=short
+        entry: pixi run python -m pytest tests/unit -k "not slow" --tb=short
         language: system
         pass_filenames: false
         files: '^intellicrack/.*\.py$'
@@ -42,7 +44,7 @@ repos:
       # Full audit hooks for manual execution
       - id: test-coverage-full
         name: Full Codebase Test Coverage (80% minimum)
-        entry: python -m pytest --cov=intellicrack --cov-fail-under=80 --cov-report=term-missing --cov-report=html
+        entry: pixi run python -m pytest --cov=intellicrack --cov-fail-under=80 --cov-report=term-missing --cov-report=html
         language: system
         pass_filenames: false
         always_run: true

@@ -4,8 +4,8 @@ import sys
 import os
 
 # Set up environment
-os.chdir(r"C:\Intellicrack")
-sys.path.insert(0, r"C:\Intellicrack")
+os.chdir(r"D:\Intellicrack")
+sys.path.insert(0, r"D:\Intellicrack")
 
 # Import and run tests
 import pytest

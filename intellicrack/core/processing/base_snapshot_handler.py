@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Base snapshot handler for Intellicrack core processing.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -29,6 +31,7 @@ Eliminates duplicate code between Docker and QEMU snapshot handling.
 
 class BaseSnapshotHandler(ABC):
     """Abstract base class for snapshot handling functionality.
+
     Provides common snapshot comparison logic.
     """
 

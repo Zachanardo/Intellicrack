@@ -1,3 +1,15 @@
+"""
+Functional tests for Intellicrack's license emulation capabilities.
+
+This module contains comprehensive tests for license emulation and server operations
+in Intellicrack, including FlexLM license server emulation, HASP hardware dongle
+emulation, Adobe Creative Cloud activation, network license traffic interception,
+multi-protocol license emulation, license persistence and caching, feature control,
+heartbeat mechanisms, license migration and transfer, offline activation workflows,
+and audit trails with compliance logging. These tests ensure the license emulation
+systems work correctly for various protection schemes.
+"""
+
 import pytest
 import tempfile
 import os

@@ -8,11 +8,18 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 */
 
-use crate::platform::{GpuVendor, OsType, PlatformInfo};
 use anyhow::Result;
+use once_cell::sync::Lazy;
+
 use std::env;
 use std::path::PathBuf;
 use tracing::{debug, info, warn};
+
+use crate::platform::{GpuVendor, OsType, PlatformInfo};
+
+pub static PROJECT_ROOT: Lazy<String> = Lazy::new(|| {
+    env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string())
+});
 
 
 pub struct EnvironmentManager {
@@ -34,28 +41,26 @@ impl EnvironmentManager {
             self.platform.os_type
         );
 
-        // CRITICAL: Activate mamba environment FIRST
-        self.activate_mamba_environment()?;
+        // CRITICAL: Activate pixi environment FIRST
+        self.activate_pixi_environment()?;
 
-        // Intel GPU settings (from RUN_INTELLICRACK.bat)
-        self.set_intel_gpu_environment()?;
+        // Parallelize environment variable settings
+        let _ = rayon::join(
+            || self.set_intel_gpu_environment(),
+            || rayon::join(
+                || self.set_threading_environment(),
+                || rayon::join(
+                    || self.set_pybind11_environment(),
+                    || rayon::join(
+                        || self.set_tensorflow_environment(),
+                        || self.set_pytorch_environment(),
+                    )
+                )
+            )
+        );
 
-        // Threading configuration (from launch_intellicrack.py)
-        self.set_threading_environment()?;
-
-        // PyBind11 GIL safety (from launch_intellicrack.py)
-        self.set_pybind11_environment()?;
-
-        // TensorFlow configuration (from main.py)
-        self.set_tensorflow_environment()?;
-
-        // Qt configuration (from main.py)
+        // Qt and platform-specific settings are sequential
         self.set_qt_environment()?;
-
-        // PyTorch configuration (from launch_intellicrack.py)
-        self.set_pytorch_environment()?;
-
-        // Platform-specific settings
         self.set_platform_specific_environment()?;
 
         info!("Environment configuration completed successfully");
@@ -66,26 +71,22 @@ impl EnvironmentManager {
     fn set_intel_gpu_environment(&self) -> Result<()> {
         debug!("Setting Intel GPU environment variables");
 
-        // Disable CUDA (force CPU for Intel Arc compatibility)
-        env::set_var("CUDA_VISIBLE_DEVICES", "-1");
+        unsafe {
+            rayon::scope(|s| {
+                s.spawn(|_| env::set_var("CUDA_VISIBLE_DEVICES", "-1"));
+                s.spawn(|_| env::set_var("INTELLICRACK_GPU_TYPE", "intel"));
+                s.spawn(|_| env::set_var("QT_OPENGL", "software"));
+                s.spawn(|_| env::set_var("QT_ANGLE_PLATFORM", "warp"));
+                s.spawn(|_| env::set_var("QT_D3D_ADAPTER_INDEX", "1"));
+                s.spawn(|_| env::set_var("QT_QUICK_BACKEND", "software"));
+                s.spawn(|_| env::set_var("IPEX_ENABLE", "1"));
+                s.spawn(|_| env::set_var("INTEL_DISABLE_GPU", "0"));
+                s.spawn(|_| env::set_var("ZE_ENABLE_PCI_ID_DEVICE_ORDER", "1"));
 
-        // Set GPU type for Intellicrack
-        env::set_var("INTELLICRACK_GPU_TYPE", "intel");
-
-        // Qt OpenGL settings for Intel Arc B580 compatibility
-        env::set_var("QT_OPENGL", "software");
-        env::set_var("QT_ANGLE_PLATFORM", "warp");
-        env::set_var("QT_D3D_ADAPTER_INDEX", "1");
-        env::set_var("QT_QUICK_BACKEND", "software");
-
-        // Intel Extension for PyTorch settings
-        env::set_var("IPEX_ENABLE", "1");
-        env::set_var("INTEL_DISABLE_GPU", "0");
-        env::set_var("ZE_ENABLE_PCI_ID_DEVICE_ORDER", "1");
-
-        // Set Qt platform (will be overridden by platform-specific config if needed)
-        if self.platform.os_type == OsType::Windows && !self.platform.is_wsl {
-            env::set_var("QT_QPA_PLATFORM", "windows");
+                if self.platform.os_type == OsType::Windows && !self.platform.is_wsl {
+                    s.spawn(|_| env::set_var("QT_QPA_PLATFORM", "windows"));
+                }
+            });
         }
 
         info!("Intel GPU environment configured");
@@ -96,14 +97,16 @@ impl EnvironmentManager {
     fn set_threading_environment(&self) -> Result<()> {
         debug!("Setting threading environment variables");
 
-        // Set all threading libraries to single-threaded mode
-        // This prevents conflicts between different mathematical libraries
-        env::set_var("OMP_NUM_THREADS", "1"); // OpenMP
-        env::set_var("MKL_NUM_THREADS", "1"); // Intel MKL
-        env::set_var("NUMEXPR_NUM_THREADS", "1"); // NumExpr
-        env::set_var("OPENBLAS_NUM_THREADS", "1"); // OpenBLAS
-        env::set_var("VECLIB_MAXIMUM_THREADS", "1"); // vecLib (macOS)
-        env::set_var("BLIS_NUM_THREADS", "1"); // BLIS
+        unsafe {
+            rayon::scope(|s| {
+                s.spawn(|_| env::set_var("OMP_NUM_THREADS", "1"));
+                s.spawn(|_| env::set_var("MKL_NUM_THREADS", "1"));
+                s.spawn(|_| env::set_var("NUMEXPR_NUM_THREADS", "1"));
+                s.spawn(|_| env::set_var("OPENBLAS_NUM_THREADS", "1"));
+                s.spawn(|_| env::set_var("VECLIB_MAXIMUM_THREADS", "1"));
+                s.spawn(|_| env::set_var("BLIS_NUM_THREADS", "1"));
+            });
+        }
 
         info!("Threading environment configured for single-threaded operation");
         Ok(())
@@ -114,7 +117,9 @@ impl EnvironmentManager {
         debug!("Setting PyBind11 GIL safety environment");
 
         // Disable PyBind11 GIL assertions to prevent crashes
-        env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
 
         info!("PyBind11 GIL safety configured");
         Ok(())
@@ -124,14 +129,13 @@ impl EnvironmentManager {
     fn set_tensorflow_environment(&self) -> Result<()> {
         debug!("Setting TensorFlow environment variables");
 
-        // Suppress TensorFlow warnings and info messages
-        env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
-
-        // Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        env::set_var("CUDA_VISIBLE_DEVICES", "-1");
-
-        // Fix PyTorch + TensorFlow import conflict
-        env::set_var("MKL_THREADING_LAYER", "GNU");
+        unsafe {
+            rayon::scope(|s| {
+                s.spawn(|_| env::set_var("TF_CPP_MIN_LOG_LEVEL", "2"));
+                s.spawn(|_| env::set_var("CUDA_VISIBLE_DEVICES", "-1"));
+                s.spawn(|_| env::set_var("MKL_THREADING_LAYER", "GNU"));
+            });
+        }
 
         info!("TensorFlow environment configured");
         Ok(())
@@ -150,7 +154,9 @@ impl EnvironmentManager {
         }
 
         // Suppress Qt font warnings to reduce console noise
-        env::set_var("QT_LOGGING_RULES", "*.debug=false;qt.qpa.fonts=false");
+        unsafe {
+            env::set_var("QT_LOGGING_RULES", "*.debug=false;qt.qpa.fonts=false");
+        }
 
         info!("Qt environment configured");
         Ok(())
@@ -161,18 +167,20 @@ impl EnvironmentManager {
         debug!("Setting Windows-specific Qt environment");
 
         // Set Windows font directory for Qt to find system fonts
-        if env::var("QT_QPA_FONTDIR").is_err() {
-            let font_dir = self.platform.font_directory.to_string_lossy();
-            env::set_var("QT_QPA_FONTDIR", font_dir.as_ref());
-            debug!("Set QT_QPA_FONTDIR to: {}", font_dir);
-        }
+        unsafe {
+            if env::var("QT_QPA_FONTDIR").is_err() {
+                let font_dir = self.platform.font_directory.to_string_lossy();
+                env::set_var("QT_QPA_FONTDIR", font_dir.as_ref());
+                debug!("Set QT_QPA_FONTDIR to: {}", font_dir);
+            }
 
-        // Force software rendering for Intel Arc compatibility
-        if self.platform.gpu_vendor == GpuVendor::Intel {
-            env::set_var("QT_OPENGL", "software");
-            env::set_var("QT_QUICK_BACKEND", "software");
-            env::set_var("QT_ANGLE_PLATFORM", "warp");
-            info!("Intel Arc compatibility mode enabled for Qt");
+            // Force software rendering for Intel Arc compatibility
+            if self.platform.gpu_vendor == GpuVendor::Intel {
+                env::set_var("QT_OPENGL", "software");
+                env::set_var("QT_QUICK_BACKEND", "software");
+                env::set_var("QT_ANGLE_PLATFORM", "warp");
+                info!("Intel Arc compatibility mode enabled for Qt");
+            }
         }
 
         Ok(())
@@ -209,21 +217,26 @@ impl EnvironmentManager {
         // CRITICAL: Configure DLL search paths FIRST for Ray and other native modules
         self.configure_windows_dll_search_paths()?;
 
-        // Configure PATH for mamba environment (must be done early)
-        self.configure_mamba_path()?;
+        // Configure PATH for pixi environment (must be done early)
+        self.configure_pixi_path()?;
 
         // Windows-specific settings
-        env::set_var("PYTHONIOENCODING", "utf-8");
+        unsafe {
+            env::set_var("PYTHONIOENCODING", "utf-8");
 
-        // Ensure Windows Unicode support
-        env::set_var("PYTHONUTF8", "1");
+            // Ensure Windows Unicode support
+            env::set_var("PYTHONUTF8", "1");
 
-        // Visual C++ runtime configuration
-        env::set_var("VCRUNTIME_REDIST_INSTALLED", "1");
+            // Visual C++ runtime configuration
+            env::set_var("VCRUNTIME_REDIST_INSTALLED", "1");
 
-        // Windows Error Reporting - disable for subprocess crashes
-        env::set_var("WINDOWS_TRACING_FLAGS", "3");
-        env::set_var("WINDOWS_TRACING_LOGFILE", r"C:\Intellicrack\logs\launcher.etl");
+            // Windows Error Reporting - disable for subprocess crashes
+            env::set_var("WINDOWS_TRACING_FLAGS", "3");
+            env::set_var(
+                "WINDOWS_TRACING_LOGFILE",
+                format!("{}/logs/launcher.etl", &*PROJECT_ROOT),
+            );
+        }
 
         info!("Native Windows environment configured");
         Ok(())
@@ -235,37 +248,23 @@ impl EnvironmentManager {
         debug!("Configuring Windows DLL search paths");
 
         // Critical DLL directories for Ray and other native modules
-        let dll_directories = vec![
-            r"C:\Intellicrack\mamba_env",
-            r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\DLLs",
-            r"C:\Intellicrack\mamba_env\Scripts",
-            r"C:\Intellicrack\mamba_env\Lib\site-packages\torchvision",
-            r"C:\Intellicrack\mamba_env\Lib\site-packages\h5py",
-        ];
+        let dll_directories = [format!("{}/.pixi/envs/default/Lib/site-packages/h5py", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Lib/site-packages/torchvision", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Scripts", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/DLLs", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default", &*PROJECT_ROOT)];
 
-        // First, ensure all directories are in the system PATH
-        let current_path = env::var("PATH").unwrap_or_default();
-        let mut path_parts: Vec<String> = Vec::new();
-
-        for dir in &dll_directories {
-            let path_buf = std::path::PathBuf::from(dir);
-            if path_buf.exists() {
-                path_parts.push(dir.to_string());
-                debug!("Added to DLL search path: {}", dir);
-            }
+        let new_path = dll_directories.join(";");
+        let old_path = env::var("PATH").unwrap_or_default();
+        unsafe {
+            env::set_var("PATH", format!("{};{}", new_path, old_path));
         }
 
-        // Add existing PATH at the end
-        if !current_path.is_empty() {
-            path_parts.push(current_path);
-        }
-
-        // Set the new PATH with DLL directories FIRST
-        let new_path = path_parts.join(";");
-        env::set_var("PATH", &new_path);
-
-        info!("Configured Windows DLL search paths for {} directories", dll_directories.len());
+        info!(
+            "Configured Windows DLL search paths for {} directories",
+            dll_directories.len()
+        );
         Ok(())
     }
 
@@ -275,76 +274,72 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Configure PATH environment variable for mamba environment
-    fn configure_mamba_path(&self) -> Result<()> {
+    /// Configure PATH environment variable for pixi environment
+    fn configure_pixi_path(&self) -> Result<()> {
         let current_path = env::var("PATH").unwrap_or_default();
 
         // Build new PATH with launcher directory FIRST for DLL compatibility
         let mut new_path_parts = Vec::new();
 
         // CRITICAL: Add launcher directory FIRST for _tkinter DLL loading
-        if let Ok(exe_path) = env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
+        if let Ok(exe_path) = env::current_exe()
+            && let Some(exe_dir) = exe_path.parent() {
                 let launcher_dir = exe_dir.to_string_lossy().to_string();
                 new_path_parts.push(launcher_dir.clone());
                 info!("Added launcher directory to PATH first: {}", launcher_dir);
             }
-        }
 
-        // Mamba environment paths that need to be in PATH
-        let mamba_paths = vec![
-            r"C:\Intellicrack\mamba_env",
-            r"C:\Intellicrack\mamba_env\Scripts",
-            r"C:\Intellicrack\mamba_env\Library\bin",
-            r"C:\Intellicrack\mamba_env\Library\usr\bin",
-            r"C:\Intellicrack\mamba_env\Library\mingw64\bin",
-            r"C:\Intellicrack\mamba_env\Library\mingw-w64\bin",
-            r"C:\Intellicrack\mamba_env\DLLs",
+        // Pixi environment paths that need to be in PATH
+        let pixi_paths = vec![
+            format!("{}/.pixi/envs/default/DLLs", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Library/mingw-w64/bin", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Library/mingw64/bin", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Library/usr/bin", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default/Scripts", &*PROJECT_ROOT),
+            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
         ];
 
-        // Add mamba paths after launcher directory
-        for mamba_path in mamba_paths {
-            let path_buf = std::path::PathBuf::from(mamba_path);
-            if path_buf.exists() {
-                new_path_parts.push(mamba_path.to_string());
-                debug!("Added to PATH: {}", mamba_path);
-            }
-        }
-
-        // Add existing PATH last
-        if !current_path.is_empty() {
-            new_path_parts.push(current_path);
-        }
+        new_path_parts.extend(pixi_paths);
 
         let new_path = new_path_parts.join(";");
-        env::set_var("PATH", &new_path);
+        unsafe {
+            env::set_var("PATH", format!("{};{}", new_path, current_path));
+        }
 
-        info!("Configured PATH with launcher directory first + {} additional paths",
-              new_path_parts.len() - 1); // -1 because existing PATH counts as 1
+        info!(
+            "Configured PATH with launcher directory first + {} additional paths",
+            new_path_parts.len() - 1
+        ); // -1 because existing PATH counts as 1
 
         Ok(())
     }
 
-    /// Properly activate mamba environment by setting all required environment variables
-    fn activate_mamba_environment(&self) -> Result<()> {
-        info!("Activating mamba environment");
+    /// Properly activate pixi environment by setting all required environment variables
+    fn activate_pixi_environment(&self) -> Result<()> {
+        info!("Activating pixi environment");
 
-        // Set CONDA environment variables for proper activation
-        env::set_var("CONDA_PREFIX", r"C:\Intellicrack\mamba_env");
-        env::set_var("CONDA_DEFAULT_ENV", "mamba_env");
-        env::set_var("CONDA_PYTHON_EXE", r"C:\Intellicrack\mamba_env\python.exe");
-        env::set_var("CONDA_SHLVL", "1");
-        env::set_var("CONDA_PROMPT_MODIFIER", "(mamba_env)");
-        env::set_var("CONDA_EXE", r"C:\Users\zachf\mambaforge\Scripts\conda.exe");
+        unsafe {
+            // Set PIXI environment variables for proper activation
+            env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
+            env::set_var("PIXI_DEFAULT_ENV", "default");
+            env::set_var(
+                "PIXI_PYTHON_EXE",
+                format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
+            );
+            env::set_var("PIXI_SHLVL", "1");
+            env::set_var("PIXI_PROMPT_MODIFIER", "(pixi)");
+            env::set_var("PIXI_EXE", r"pixi.exe");
 
-        // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
-        // This tells PyO3 where to find the Python runtime and standard library
-        env::set_var("PYTHONHOME", r"C:\Intellicrack\mamba_env");
+            // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
+            // This tells PyO3 where to find the Python runtime and standard library
+            env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
 
-        // Set PYTHONPATH to include both mamba site-packages and Intellicrack source
-        // This ensures all packages and local modules are importable
-        let pythonpath = r"C:\Intellicrack;C:\Intellicrack\mamba_env\Lib\site-packages".to_string();
-        env::set_var("PYTHONPATH", &pythonpath);
+            // Set PYTHONPATH to include both pixi site-packages and Intellicrack source
+            // This ensures all packages and local modules are importable
+            let pythonpath = format!("{};{}/.pixi/envs/default/Lib/site-packages", &*PROJECT_ROOT, &*PROJECT_ROOT);
+            env::set_var("PYTHONPATH", &pythonpath);
+        }
 
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Use launcher's bundled Tcl/Tk directories first for DLL compatibility
@@ -354,43 +349,61 @@ impl EnvironmentManager {
         let mut tk_set = false;
 
         // FIRST: Try launcher directory (prioritized for DLL compatibility)
-        if let Ok(exe_path) = env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
+        if let Ok(exe_path) = env::current_exe()
+            && let Some(exe_dir) = exe_path.parent() {
                 let launcher_tcl = exe_dir.join("tcl8.6");
                 let launcher_tk = exe_dir.join("tk8.6");
 
                 if launcher_tcl.exists() {
-                    env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                    info!("Set TCL_LIBRARY to launcher directory: {}", launcher_tcl.display());
+                    unsafe {
+                        env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
+                    }
+                    info!(
+                        "Set TCL_LIBRARY to launcher directory: {}",
+                        launcher_tcl.display()
+                    );
                     tcl_set = true;
                 }
 
                 if launcher_tk.exists() {
-                    env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                    info!("Set TK_LIBRARY to launcher directory: {}", launcher_tk.display());
+                    unsafe {
+                        env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
+                    }
+                    info!(
+                        "Set TK_LIBRARY to launcher directory: {}",
+                        launcher_tk.display()
+                    );
                     tk_set = true;
                 }
             }
-        }
 
-        // FALLBACK: Use mamba environment paths only if launcher paths don't exist
+        // FALLBACK: Use pixi environment paths only if launcher paths don't exist
         if !tcl_set {
-            let tcl_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tcl8.6");
+            let tcl_lib_path =
+                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tcl8.6");
             if tcl_lib_path.exists() {
-                env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
-                info!("Set TCL_LIBRARY to mamba fallback: {}", tcl_lib_path.display());
+                unsafe {
+                    env::set_var("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
+                }
+                info!(
+                    "Set TCL_LIBRARY to pixi fallback: {}",
+                    tcl_lib_path.display()
+                );
             }
         }
 
         if !tk_set {
-            let tk_lib_path = PathBuf::from(r"C:\Intellicrack\mamba_env\Library\lib\tk8.6");
+            let tk_lib_path =
+                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tk8.6");
             if tk_lib_path.exists() {
-                env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
-                info!("Set TK_LIBRARY to mamba fallback: {}", tk_lib_path.display());
+                unsafe {
+                    env::set_var("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
+                }
+                info!("Set TK_LIBRARY to pixi fallback: {}", tk_lib_path.display());
             }
         }
 
-        info!("Mamba environment activated successfully");
+        info!("Pixi environment activated successfully");
         Ok(())
     }
 
@@ -398,15 +411,17 @@ impl EnvironmentManager {
     fn set_wsl_environment(&self) -> Result<()> {
         debug!("Setting WSL environment variables");
 
-        // WSL-specific Qt settings
-        if !self.platform.display_available {
-            env::set_var("QT_QPA_PLATFORM", "offscreen");
-            info!("WSL offscreen mode enabled");
-        }
+        unsafe {
+            // WSL-specific Qt settings
+            if !self.platform.display_available {
+                env::set_var("QT_QPA_PLATFORM", "offscreen");
+                info!("WSL offscreen mode enabled");
+            }
 
-        // WSL Unicode support
-        env::set_var("LC_ALL", "C.UTF-8");
-        env::set_var("LANG", "C.UTF-8");
+            // WSL Unicode support
+            env::set_var("LC_ALL", "C.UTF-8");
+            env::set_var("LANG", "C.UTF-8");
+        }
 
         info!("WSL environment configured");
         Ok(())
@@ -416,13 +431,15 @@ impl EnvironmentManager {
     fn set_native_linux_environment(&self) -> Result<()> {
         debug!("Setting native Linux environment variables");
 
-        // Ensure proper locale settings
-        if env::var("LC_ALL").is_err() {
-            env::set_var("LC_ALL", "C.UTF-8");
-        }
+        unsafe {
+            // Ensure proper locale settings
+            if env::var("LC_ALL").is_err() {
+                env::set_var("LC_ALL", "C.UTF-8");
+            }
 
-        if env::var("LANG").is_err() {
-            env::set_var("LANG", "C.UTF-8");
+            if env::var("LANG").is_err() {
+                env::set_var("LANG", "C.UTF-8");
+            }
         }
 
         info!("Native Linux environment configured");
@@ -433,9 +450,12 @@ impl EnvironmentManager {
     pub fn set_pytorch_environment(&self) -> Result<()> {
         debug!("Setting PyTorch environment variables");
 
-        // PyTorch specific settings for stability
-        env::set_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1");
-        env::set_var("CUDA_LAUNCH_BLOCKING", "1");
+        unsafe {
+            rayon::scope(|s| {
+                s.spawn(|_| env::set_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1"));
+                s.spawn(|_| env::set_var("CUDA_LAUNCH_BLOCKING", "1"));
+            });
+        }
 
         info!("PyTorch environment configured");
         Ok(())

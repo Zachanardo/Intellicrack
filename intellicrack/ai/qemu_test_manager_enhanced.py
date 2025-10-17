@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Enhanced QEMU test manager for Intellicrack AI components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify

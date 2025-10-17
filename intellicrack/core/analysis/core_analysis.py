@@ -22,7 +22,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -285,7 +285,7 @@ def _generate_analysis_summary(results: List[str], suspicious_sections: List[str
 
 
 def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
-    """Performs deep license analysis on a binary file.
+    """Perform deep license analysis on a binary file.
 
     This function analyzes the binary for license-related patterns, validation routines,
     and protection mechanisms commonly used in commercial software.
@@ -406,7 +406,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
 
 def detect_packing(binary_path: str) -> Dict[str, Any]:
-    """Detects if a binary is packed or obfuscated.
+    """Detect if a binary is packed or obfuscated.
 
     Analyzes various indicators that suggest the binary has been packed,
     compressed, or obfuscated to hide its true functionality.

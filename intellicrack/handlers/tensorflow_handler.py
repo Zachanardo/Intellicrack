@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""TensorFlow handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +23,7 @@ import random
 import threading
 from typing import Optional
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 TensorFlow Import Handler with Production-Ready Fallbacks
@@ -226,7 +228,7 @@ class FallbackTensor:
         return FallbackTensor(result, self.shape, self.dtype)
 
     def __repr__(self):
-        """String representation."""
+        """Return string representation."""
         return f"<Tensor shape={self.shape} dtype={self.dtype}>"
 
 
@@ -913,7 +915,7 @@ class FallbackTensorFlow:
 
     @staticmethod
     def reduce_sum(tensor, axis=None, keepdims=False):
-        """Calculates sum of tensor elements in a production-ready way."""
+        """Calculate sum of tensor elements in a production-ready way."""
         if not isinstance(tensor, FallbackTensor):
             # Ensure input is a valid tensor
             if hasattr(tensor, "numpy"):

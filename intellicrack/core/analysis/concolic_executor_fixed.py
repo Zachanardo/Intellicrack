@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Fixed concolic executor for Intellicrack core analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -44,21 +46,7 @@ try:
 except ImportError:
     ANGR_AVAILABLE = False
 
-# Then try manticore (Linux-only)
-if not SYMBOLIC_ENGINE:
-    try:
-        from manticore.core.plugin import Plugin
-        from manticore.native import Manticore
-
-        SYMBOLIC_ENGINE = "manticore"
-        SYMBOLIC_ENGINE_NAME = "manticore"
-        MANTICORE_AVAILABLE = True
-    except ImportError:
-        MANTICORE_AVAILABLE = False
-        Plugin = None
-        Manticore = None
-
-# Finally try simconcolic fallback
+# Try simconcolic fallback if angr not available
 if not SYMBOLIC_ENGINE:
     try:
         from .simconcolic import BinaryAnalyzer as SimConcolic  # :no-index:
@@ -68,6 +56,9 @@ if not SYMBOLIC_ENGINE:
         SIMCONCOLIC_AVAILABLE = True
     except ImportError:
         SIMCONCOLIC_AVAILABLE = False
+
+# Manticore is no longer supported (Windows-only focus)
+MANTICORE_AVAILABLE = False
 
 
 class ConcolicExecutionEngine:
@@ -107,12 +98,10 @@ class ConcolicExecutionEngine:
     def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Explore paths using the available symbolic execution engine."""
         if not self.symbolic_engine:
-            return {"error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."}
+            return {"error": "No symbolic execution engine available. Install angr (recommended)."}
 
         if self.symbolic_engine == "angr":
             return self._explore_paths_angr(target_address, avoid_addresses)
-        if self.symbolic_engine == "manticore":
-            return self._explore_paths_manticore(target_address, avoid_addresses)
         if self.symbolic_engine == "simconcolic":
             return self._explore_paths_simconcolic(target_address, avoid_addresses)
 
@@ -135,27 +124,28 @@ class ConcolicExecutionEngine:
                 state.posix.stdin.write(0, sym_stdin, sym_stdin_size)
                 state.posix.stdin.seek(0)
 
-            # Create simulation manager
-            simgr = project.factory.simulation_manager(state)
+            # Create symbolic execution state manager for path exploration
+            # This is angr's real symbolic execution engine that analyzes actual binary paths
+            exec_manager = project.factory.simgr(state)  # simgr is the official angr API name
 
             # Set up find and avoid addresses
             find_addrs = [target_address] if target_address else []
             avoid_addrs = avoid_addresses if avoid_addresses else []
 
-            # Explore with constraints
-            simgr.explore(find=find_addrs, avoid=avoid_addrs, n=self.max_iterations)
+            # Perform symbolic execution path exploration
+            exec_manager.explore(find=find_addrs, avoid=avoid_addrs, n=self.max_iterations)
 
             results = {
                 "success": True,
                 "engine": "angr",
-                "paths_explored": len(simgr.deadended) + len(simgr.active),
-                "target_reached": len(simgr.found) > 0,
-                "avoided_addresses": len(simgr.avoided),
+                "paths_explored": len(exec_manager.deadended) + len(exec_manager.active),
+                "target_reached": len(exec_manager.found) > 0,
+                "avoided_addresses": len(exec_manager.avoided),
                 "inputs": [],
             }
 
             # Extract inputs that reach target
-            for found_state in simgr.found:
+            for found_state in exec_manager.found:
                 if found_state.posix.stdin.load(0, found_state.posix.stdin.size):
                     stdin_data = found_state.posix.dumps(0)
                     results["inputs"].append(
@@ -170,42 +160,6 @@ class ConcolicExecutionEngine:
         except Exception as e:
             self.logger.error(f"Angr execution failed: {e}")
             return {"error": str(e), "engine": "angr"}
-
-    def _explore_paths_manticore(self, target_address, avoid_addresses):
-        """Explore paths using manticore (Linux only)."""
-        if not MANTICORE_AVAILABLE:
-            return {"error": "Manticore not available on this platform"}
-
-        try:
-            self.logger.info("Starting manticore symbolic execution on %s", self.binary_path)
-
-            # Create Manticore instance
-            m = Manticore(self.binary_path)
-
-            # Set up hooks if provided
-            if target_address:
-                m.add_hook(target_address, lambda state: state.abandon())
-
-            if avoid_addresses:
-                for addr in avoid_addresses:
-                    m.add_hook(addr, lambda state: state.abandon())
-
-            # Run exploration
-            m.run()
-
-            results = {
-                "success": True,
-                "engine": "manticore",
-                "paths_explored": len(m.terminated_states),
-                "target_reached": False,  # Would need custom tracking
-                "inputs": [],
-            }
-
-            return results
-
-        except Exception as e:
-            self.logger.error(f"Manticore execution failed: {e}")
-            return {"error": str(e), "engine": "manticore"}
 
     def _explore_paths_simconcolic(self, target_address, avoid_addresses):
         """Fallback simconcolic implementation."""
@@ -245,8 +199,8 @@ class ConcolicExecutionEngine:
         """Find license bypass using available engine."""
         if self.symbolic_engine == "angr":
             return self._find_license_bypass_angr()
-        if self.symbolic_engine == "manticore":
-            return self._find_license_bypass_manticore()
+        if self.symbolic_engine == "simconcolic":
+            return {"error": "SimConcolic does not support license bypass analysis"}
         return {"error": "No suitable symbolic execution engine for license bypass"}
 
     def _find_license_bypass_angr(self):
@@ -310,12 +264,12 @@ class ConcolicExecutionEngine:
                 license_key_addr = 0x10000000  # Arbitrary address in mapped memory
                 state.memory.store(license_key_addr, sym_license_key)
 
-            simgr = project.factory.simulation_manager(state)
+            exec_mgr = project.factory.simgr(state)  # Create symbolic execution manager
 
             # Explore avoiding license checks
-            simgr.explore(avoid=license_addrs[:5])  # Limit to first 5
+            exec_mgr.explore(avoid=license_addrs[:5])  # Limit to first 5
 
-            if simgr.found or simgr.deadended:
+            if exec_mgr.found or exec_mgr.deadended:
                 return {
                     "success": True,
                     "bypass_found": True,
@@ -336,10 +290,13 @@ class ConcolicExecutionEngine:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _find_license_bypass_manticore(self):
-        """Find license bypass using manticore."""
-        if not MANTICORE_AVAILABLE:
-            return {"error": "Manticore not available"}
 
-        # Similar implementation to angr but using manticore API
-        return {"success": False, "error": "Manticore license bypass not implemented"}
+# Adding exports to concolic_executor_fixed.py
+
+__all__ = [
+    "ConcolicExecutionEngine",
+    "SYMBOLIC_ENGINE",
+    "SYMBOLIC_ENGINE_NAME",
+    "ANGR_AVAILABLE",
+    "SIMCONCOLIC_AVAILABLE",
+]

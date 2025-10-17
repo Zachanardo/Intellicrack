@@ -3,7 +3,21 @@
 Enhanced features for comprehensive protection analysis capabilities.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import concurrent.futures
@@ -630,7 +644,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Try manual fallback
             return self._calculate_import_hash_manual(file_path)
 
-    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
+    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:  # noqa: C901
         """Manual PE import hash calculation without pefile library."""
         try:
             with open(file_path, "rb") as f:
@@ -646,7 +660,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return None
 
             # Parse PE header to find import directory
-            int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
+            pe_header_offset = pe_offset
+            size_of_optional_header = int.from_bytes(data[pe_offset + 20 : pe_offset + 22], "little")
             optional_header_offset = pe_offset + 24
 
             # Determine if PE32 or PE32+
@@ -668,12 +683,107 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Build import string for hashing
             import_strings = []
             if import_rva > 0 and import_size > 0:
-                # This is a simplified version - real implementation would need RVA to file offset conversion
-                # and proper import descriptor parsing
+                # Parse PE sections to find correct file offset for import RVA
+                section_header_offset = pe_header_offset + 24 + size_of_optional_header
+                num_sections = int.from_bytes(data[pe_header_offset + 6 : pe_header_offset + 8], "little")
 
-                # Extract strings from import section area
-                import_area_start = min(import_rva, len(data) - 1000)
-                import_area = data[import_area_start : import_area_start + 10000]
+                import_file_offset = 0
+                for i in range(num_sections):
+                    section_offset = section_header_offset + (i * 40)
+                    if section_offset + 40 > len(data):
+                        break
+
+                    virtual_size = int.from_bytes(data[section_offset + 8 : section_offset + 12], "little")
+                    virtual_addr = int.from_bytes(data[section_offset + 12 : section_offset + 16], "little")
+                    raw_size = int.from_bytes(data[section_offset + 16 : section_offset + 20], "little")
+                    raw_addr = int.from_bytes(data[section_offset + 20 : section_offset + 24], "little")
+
+                    # Check if import RVA falls within this section
+                    if virtual_addr <= import_rva < virtual_addr + virtual_size:
+                        # Validate raw size for section integrity
+                        offset_in_section = import_rva - virtual_addr
+                        if offset_in_section >= raw_size:
+                            # Import table extends beyond raw section - possible corruption or packing
+                            import_strings.append(f"[SECTION_OVERFLOW:{import_rva:08X}]")
+                        # Convert RVA to file offset
+                        import_file_offset = raw_addr + offset_in_section
+                        break
+
+                # Parse import descriptors if offset found
+                if import_file_offset > 0 and import_file_offset < len(data) - 20:
+                    descriptor_offset = import_file_offset
+
+                    # Process each import descriptor (20 bytes each)
+                    while descriptor_offset + 20 <= len(data):
+                        # Import descriptor structure
+                        original_first_thunk = int.from_bytes(data[descriptor_offset : descriptor_offset + 4], "little")
+                        time_date_stamp = int.from_bytes(data[descriptor_offset + 4 : descriptor_offset + 8], "little")
+                        forwarder_chain = int.from_bytes(data[descriptor_offset + 8 : descriptor_offset + 12], "little")
+                        name_rva = int.from_bytes(data[descriptor_offset + 12 : descriptor_offset + 16], "little")
+                        first_thunk = int.from_bytes(data[descriptor_offset + 16 : descriptor_offset + 20], "little")
+
+                        # Check for end of import descriptors
+                        if name_rva == 0:
+                            break
+
+                        # Analyze import descriptor characteristics
+                        if time_date_stamp != 0 and time_date_stamp != 0xFFFFFFFF:
+                            # Bound import - timestamp indicates pre-bound DLL
+                            import_strings.append(f"[BOUND:{time_date_stamp:08X}]")
+
+                        if forwarder_chain != 0xFFFFFFFF and forwarder_chain != 0:
+                            # Forwarded imports detected
+                            import_strings.append(f"[FORWARD:{forwarder_chain:08X}]")
+
+                        # Validate thunks for IAT hooking detection
+                        if first_thunk != 0 and original_first_thunk != 0:
+                            # Both thunks present - normal import
+                            if abs(first_thunk - original_first_thunk) > 0x10000:
+                                # Suspicious thunk separation - possible IAT manipulation
+                                import_strings.append(f"[IAT_ANOMALY:{first_thunk:08X}]")
+                        elif first_thunk != 0 and original_first_thunk == 0:
+                            # Only IAT present - could indicate runtime binding
+                            import_strings.append(f"[DYNAMIC_IMPORT:{first_thunk:08X}]")
+
+                        # Convert name RVA to file offset
+                        name_file_offset = 0
+                        for i in range(num_sections):
+                            section_offset = section_header_offset + (i * 40)
+                            if section_offset + 40 > len(data):
+                                break
+
+                            virtual_addr = int.from_bytes(data[section_offset + 12 : section_offset + 16], "little")
+                            virtual_size = int.from_bytes(data[section_offset + 8 : section_offset + 12], "little")
+                            raw_addr = int.from_bytes(data[section_offset + 20 : section_offset + 24], "little")
+
+                            if virtual_addr <= name_rva < virtual_addr + virtual_size:
+                                name_file_offset = raw_addr + (name_rva - virtual_addr)
+                                break
+
+                        # Extract DLL name
+                        if name_file_offset > 0 and name_file_offset < len(data) - 100:
+                            dll_name = b""
+                            for j in range(100):
+                                if name_file_offset + j >= len(data):
+                                    break
+                                byte = data[name_file_offset + j]
+                                if byte == 0:
+                                    break
+                                dll_name += bytes([byte])
+
+                            if dll_name:
+                                import_strings.append(dll_name.decode("ascii", errors="ignore").lower())
+
+                        descriptor_offset += 20
+
+                        # Limit parsing to prevent excessive processing
+                        if len(import_strings) > 100:
+                            break
+
+                # Fallback: Extract strings from import area if descriptor parsing fails
+                if not import_strings and import_file_offset > 0:
+                    import_area_end = min(import_file_offset + import_size, len(data))
+                    import_area = data[import_file_offset:import_area_end]
 
                 # Look for common DLL names and function names
                 common_dlls = [

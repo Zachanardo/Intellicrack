@@ -24,9 +24,9 @@ import logging
 import os
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
-from ...utils.protection.protection_utils import calculate_entropy
+from ...utils.protection_utils import calculate_entropy
 
 try:
     from intellicrack.handlers.pefile_handler import pefile
@@ -1146,7 +1146,7 @@ class BinarySimilaritySearch:
 
 
 def create_similarity_search(database_path: str = "binary_database.json") -> BinarySimilaritySearch:
-    """Factory function to create a BinarySimilaritySearch instance.
+    """Create a BinarySimilaritySearch instance.
 
     Args:
         database_path: Path to the database file

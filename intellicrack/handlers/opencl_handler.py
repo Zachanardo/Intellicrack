@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""OpenCL handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -15,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 OpenCL Import Handler with Production-Ready Fallbacks

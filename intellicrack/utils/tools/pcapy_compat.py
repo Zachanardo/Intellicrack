@@ -1,6 +1,6 @@
 """Pcapy compatibility layer for packet capture functionality."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Compatibility module for pcapy functionality.

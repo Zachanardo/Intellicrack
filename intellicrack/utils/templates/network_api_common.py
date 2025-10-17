@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Network API common utilities for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +22,7 @@ Common network API analysis utilities to avoid code duplication.
 from collections import defaultdict
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):

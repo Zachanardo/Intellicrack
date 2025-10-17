@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""SQLite3 handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +21,7 @@ import json
 import os
 import re
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 SQLite3 Import Handler with Production-Ready Fallbacks

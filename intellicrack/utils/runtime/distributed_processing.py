@@ -28,7 +28,6 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from typing import Any
 
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
-from intellicrack.utils.service_utils import get_service_url
 
 from ..analysis.entropy_utils import calculate_byte_entropy
 
@@ -1514,6 +1513,8 @@ def run_celery_distributed_analysis(
 
     try:
         # Initialize Celery app
+        from intellicrack.utils.service_utils import get_service_url
+
         redis_url = get_service_url("redis_server")
         app = Celery("intellicrack", broker=f"{redis_url}/0")
 

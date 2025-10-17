@@ -68,10 +68,18 @@ class SettingsTab(BaseTab):
         self.config = IntellicrackConfig()
         self.load_settings()
 
+        # Store original tooltips for toggle functionality using weak references
+        from weakref import WeakKeyDictionary
+
+        self._original_tooltips = WeakKeyDictionary()
+
+        # Track current accent color for proper replacement
+        self._current_accent_color = self.settings.get("accent_color", "#0078d4")
+
         super().__init__(shared_context, parent)
 
     def setup_content(self):
-        """Setup the settings tab content."""
+        """Set up the settings tab content."""
         layout = self.layout()  # Use existing layout from BaseTab
 
         # Convert to QHBoxLayout behavior by using a horizontal container
@@ -194,11 +202,13 @@ class SettingsTab(BaseTab):
         ui_font_layout.addWidget(QLabel("UI Font:"))
         self.ui_font_combo = QFontComboBox()
         self.ui_font_combo.setCurrentFont(QFont(self.settings.get("ui_font", "Segoe UI")))
+        self.ui_font_combo.currentFontChanged.connect(self.on_ui_font_changed)
         ui_font_layout.addWidget(self.ui_font_combo)
 
         self.ui_font_size = QSpinBox()
         self.ui_font_size.setRange(8, 24)
         self.ui_font_size.setValue(self.settings.get("ui_font_size", 10))
+        self.ui_font_size.valueChanged.connect(self.on_ui_font_size_changed)
         ui_font_layout.addWidget(self.ui_font_size)
 
         # Console Font
@@ -206,11 +216,13 @@ class SettingsTab(BaseTab):
         console_font_layout.addWidget(QLabel("Console Font:"))
         self.console_font_combo = QFontComboBox()
         self.console_font_combo.setCurrentFont(QFont(self.settings.get("console_font", "Consolas")))
+        self.console_font_combo.currentFontChanged.connect(self.on_console_font_changed)
         console_font_layout.addWidget(self.console_font_combo)
 
         self.console_font_size = QSpinBox()
         self.console_font_size.setRange(8, 24)
         self.console_font_size.setValue(self.settings.get("console_font_size", 10))
+        self.console_font_size.valueChanged.connect(self.on_console_font_size_changed)
         console_font_layout.addWidget(self.console_font_size)
 
         font_layout.addLayout(ui_font_layout)
@@ -237,10 +249,12 @@ class SettingsTab(BaseTab):
         # Show tooltips
         self.show_tooltips_cb = QCheckBox("Show Tooltips")
         self.show_tooltips_cb.setChecked(self.settings.get("show_tooltips", True))
+        self.show_tooltips_cb.stateChanged.connect(self.on_tooltips_toggled)
 
         # Animations
         self.enable_animations_cb = QCheckBox("Enable Animations")
         self.enable_animations_cb.setChecked(self.settings.get("enable_animations", True))
+        self.enable_animations_cb.stateChanged.connect(self.on_animations_toggled)
 
         icon_layout.addLayout(icon_size_layout)
         icon_layout.addWidget(self.show_tooltips_cb)
@@ -296,9 +310,15 @@ class SettingsTab(BaseTab):
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("Default AI Provider:"))
         self.ai_provider_combo = QComboBox()
-        self.ai_provider_combo.addItems(["OpenAI", "Anthropic", "Local Ollama", "Google Gemini"])
-        self.ai_provider_combo.setCurrentText(self.settings.get("ai_provider", "OpenAI"))
+        self.populate_ai_providers()
         provider_layout.addWidget(self.ai_provider_combo)
+
+        refresh_providers_btn = QPushButton("🔄")
+        refresh_providers_btn.setMaximumWidth(40)
+        refresh_providers_btn.setToolTip("Refresh available AI providers")
+        refresh_providers_btn.clicked.connect(self.populate_ai_providers)
+        provider_layout.addWidget(refresh_providers_btn)
+
         provider_layout.addStretch()
 
         # AI temperature
@@ -467,6 +487,7 @@ class SettingsTab(BaseTab):
 
         # Initialize tool discovery
         from intellicrack.core.tool_discovery import AdvancedToolDiscovery
+
         self.tool_discovery = AdvancedToolDiscovery()
 
         # Tool path widgets storage
@@ -479,7 +500,7 @@ class SettingsTab(BaseTab):
             ("x64dbg", "x64dbg", "Select x64dbg Executable"),
             ("nasm", "NASM", "Select NASM Executable"),
             ("masm", "MASM", "Select MASM Executable"),
-            ("accesschk", "AccessChk", "Select AccessChk Executable")
+            ("accesschk", "AccessChk", "Select AccessChk Executable"),
         ]
 
         for tool_key, tool_label, browse_title in tools_config:
@@ -491,21 +512,15 @@ class SettingsTab(BaseTab):
         output_layout = QVBoxLayout(output_group)
 
         # Output directory
-        output_dir_widget = self.create_directory_entry(
-            "output_directory", "Output Directory", "Select Output Directory"
-        )
+        output_dir_widget = self.create_directory_entry("output_directory", "Output Directory", "Select Output Directory")
         output_layout.addWidget(output_dir_widget)
 
         # Reports directory
-        reports_dir_widget = self.create_directory_entry(
-            "reports_directory", "Reports Directory", "Select Reports Directory"
-        )
+        reports_dir_widget = self.create_directory_entry("reports_directory", "Reports Directory", "Select Reports Directory")
         output_layout.addWidget(reports_dir_widget)
 
         # Scripts directory
-        scripts_dir_widget = self.create_directory_entry(
-            "scripts_directory", "Scripts Directory", "Select Scripts Directory"
-        )
+        scripts_dir_widget = self.create_directory_entry("scripts_directory", "Scripts Directory", "Select Scripts Directory")
         output_layout.addWidget(scripts_dir_widget)
 
         layout.addWidget(tools_group)
@@ -533,8 +548,9 @@ class SettingsTab(BaseTab):
 
         # Path input
         path_edit = QLineEdit()
-        path_edit.setText(self.settings.get(f"{tool_key}_path", ""))
-        path_edit.setPlaceholderText("Auto-discovered path will appear here...")
+        current_path = self.settings.get(f"{tool_key}_path", "")
+        if current_path:
+            path_edit.setText(current_path)
         path_edit.textChanged.connect(lambda text, key=tool_key: self.on_tool_path_changed(key, text))
 
         # Status indicator
@@ -546,9 +562,7 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("📁")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title)
-        )
+        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title))
 
         # Clear/Reset button
         reset_btn = QPushButton("↻")
@@ -571,10 +585,10 @@ class SettingsTab(BaseTab):
 
         # Store widget references
         self.tool_widgets[tool_key] = {
-            'path_edit': path_edit,
-            'status_label': status_label,
-            'status_details': status_details,
-            'container': container
+            "path_edit": path_edit,
+            "status_label": status_label,
+            "status_details": status_details,
+            "container": container,
         }
 
         return container
@@ -592,16 +606,15 @@ class SettingsTab(BaseTab):
 
         # Path input
         path_edit = QLineEdit()
-        path_edit.setText(self.settings.get(dir_key, ""))
-        path_edit.setPlaceholderText("Select directory path...")
+        current_dir_path = self.settings.get(dir_key, "")
+        if current_dir_path:
+            path_edit.setText(current_dir_path)
 
         # Browse button
         browse_btn = QPushButton("📁")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title)
-        )
+        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title))
 
         layout.addWidget(path_edit)
         layout.addWidget(browse_btn)
@@ -613,7 +626,7 @@ class SettingsTab(BaseTab):
 
     def discover_tools(self):
         """Discover all tools and update the UI with results."""
-        if not hasattr(self, 'tool_discovery'):
+        if not hasattr(self, "tool_discovery"):
             return
 
         self.auto_discovery_btn.setEnabled(False)
@@ -630,9 +643,9 @@ class SettingsTab(BaseTab):
                     self.update_tool_status(tool_key, tool_info)
 
                     # Auto-populate if path is empty and tool was found
-                    current_path = widgets['path_edit'].text().strip()
-                    if not current_path and tool_info.get('available') and tool_info.get('path'):
-                        widgets['path_edit'].setText(tool_info['path'])
+                    current_path = widgets["path_edit"].text().strip()
+                    if not current_path and tool_info.get("available") and tool_info.get("path"):
+                        widgets["path_edit"].setText(tool_info["path"])
 
         except Exception as e:
             self.log_message(f"Tool discovery failed: {e}", "error")
@@ -642,7 +655,7 @@ class SettingsTab(BaseTab):
 
     def refresh_tool_discovery(self):
         """Refresh tool discovery."""
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             self.tool_discovery.refresh_discovery()
             self.discover_tools()
 
@@ -652,44 +665,44 @@ class SettingsTab(BaseTab):
             return
 
         widgets = self.tool_widgets[tool_key]
-        status_label = widgets['status_label']
-        status_details = widgets['status_details']
+        status_label = widgets["status_label"]
+        status_details = widgets["status_details"]
 
-        if tool_info.get('available'):
+        if tool_info.get("available"):
             # Run health check for more detailed status
             try:
                 health_info = self.tool_discovery.health_check_tool(tool_key)
 
-                if health_info.get('healthy'):
+                if health_info.get("healthy"):
                     status_label.setText("🟢")
                     status_label.setToolTip("Tool found and healthy")
-                    version = health_info.get('version', 'Unknown version')
-                    status_details.setText(f"✓ Found: {version}")
+                    version = health_info.get("version", "Unknown version")
+                    status_details.setText(f"OK Found: {version}")
                     status_details.setStyleSheet("color: #28a745; font-size: 10px; margin-left: 85px;")
 
-                elif health_info.get('available'):
+                elif health_info.get("available"):
                     status_label.setText("🟡")
                     status_label.setToolTip("Tool found but has issues")
-                    issues = ", ".join(health_info.get('issues', ['Unknown issues']))
-                    status_details.setText(f"⚠ Issues: {issues}")
+                    issues = ", ".join(health_info.get("issues", ["Unknown issues"]))
+                    status_details.setText(f"WARNING Issues: {issues}")
                     status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
 
                 else:
                     status_label.setText("🔴")
                     status_label.setToolTip("Tool path exists but not functional")
-                    status_details.setText("✗ Not functional")
+                    status_details.setText("FAIL Not functional")
                     status_details.setStyleSheet("color: #dc3545; font-size: 10px; margin-left: 85px;")
 
             except Exception as e:
                 status_label.setText("🟡")
                 status_label.setToolTip(f"Health check failed: {e}")
-                status_details.setText("⚠ Status check failed")
+                status_details.setText("WARNING Status check failed")
                 status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
         else:
             status_label.setText("⚫")
             status_label.setToolTip("Tool not found")
-            error_msg = tool_info.get('error', 'Not found in common locations')
-            status_details.setText(f"✗ Not found: {error_msg}")
+            error_msg = tool_info.get("error", "Not found in common locations")
+            status_details.setText(f"FAIL Not found: {error_msg}")
             status_details.setStyleSheet("color: #6c757d; font-size: 10px; margin-left: 85px;")
 
         # Show status details
@@ -701,18 +714,15 @@ class SettingsTab(BaseTab):
             return
 
         # Validate the manually entered path
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             try:
                 self.tool_discovery.health_check_tool(tool_key)
 
                 # Update manual override in tool discovery
                 self.tool_discovery.set_manual_override(tool_key, path)
 
-                # Create mock tool info for status update
-                tool_info = {
-                    'available': os.path.exists(path),
-                    'path': path
-                }
+                # Build tool info from validated path
+                tool_info = {"available": os.path.exists(path), "path": path}
                 self.update_tool_status(tool_key, tool_info)
 
             except Exception as e:
@@ -726,22 +736,20 @@ class SettingsTab(BaseTab):
         widgets = self.tool_widgets[tool_key]
 
         # Clear manual override
-        if hasattr(self, 'tool_discovery'):
+        if hasattr(self, "tool_discovery"):
             self.tool_discovery.clear_manual_override(tool_key)
 
         # Re-discover the tool
         try:
-            tool_info = self.tool_discovery.discover_tool(tool_key, {
-                "executables": self.get_tool_executables(tool_key),
-                "search_strategy": "installation_based",
-                "required": False
-            })
+            tool_info = self.tool_discovery.discover_tool(
+                tool_key, {"executables": self.get_tool_executables(tool_key), "search_strategy": "installation_based", "required": False}
+            )
 
-            if tool_info.get('available') and tool_info.get('path'):
-                widgets['path_edit'].setText(tool_info['path'])
+            if tool_info.get("available") and tool_info.get("path"):
+                widgets["path_edit"].setText(tool_info["path"])
                 self.update_tool_status(tool_key, tool_info)
             else:
-                widgets['path_edit'].clear()
+                widgets["path_edit"].clear()
                 self.update_tool_status(tool_key, tool_info)
 
         except Exception as e:
@@ -755,7 +763,7 @@ class SettingsTab(BaseTab):
             "x64dbg": ["x64dbg", "x32dbg", "x96dbg"],
             "nasm": ["nasm", "nasm.exe"],
             "masm": ["ml", "ml.exe", "ml64", "ml64.exe"],
-            "accesschk": ["accesschk", "accesschk.exe", "accesschk64.exe"]
+            "accesschk": ["accesschk", "accesschk.exe", "accesschk64.exe"],
         }
         return executables_map.get(tool_key, [tool_key])
 
@@ -829,8 +837,9 @@ class SettingsTab(BaseTab):
         proxy_layout = QHBoxLayout()
         proxy_layout.addWidget(QLabel("Proxy:"))
         self.proxy_edit = QLineEdit()
-        self.proxy_edit.setText(self.settings.get("proxy", ""))
-        self.proxy_edit.setPlaceholderText("http://proxy.internal:8080")
+        current_proxy = self.settings.get("proxy", "")
+        if current_proxy:
+            self.proxy_edit.setText(current_proxy)
         proxy_layout.addWidget(self.proxy_edit)
 
         # Timeout
@@ -1060,7 +1069,7 @@ class SettingsTab(BaseTab):
         # Tool path settings
         if hasattr(self, "tool_widgets"):
             for tool_key, widgets in self.tool_widgets.items():
-                path_value = widgets['path_edit'].text().strip()
+                path_value = widgets["path_edit"].text().strip()
                 self.settings[f"{tool_key}_path"] = path_value
 
         # Directory path settings
@@ -1115,7 +1124,7 @@ class SettingsTab(BaseTab):
         if hasattr(self, "tool_widgets"):
             for tool_key, widgets in self.tool_widgets.items():
                 path_value = self.settings.get(f"{tool_key}_path", "")
-                widgets['path_edit'].setText(path_value)
+                widgets["path_edit"].setText(path_value)
 
         # Update directory path widgets
         for dir_key in ["output_directory", "reports_directory", "scripts_directory"]:
@@ -1193,6 +1202,12 @@ class SettingsTab(BaseTab):
     def on_theme_changed(self, theme):
         """Handle theme change."""
         self.settings["theme"] = theme
+
+        from intellicrack.ui.theme_manager import get_theme_manager
+
+        theme_manager = get_theme_manager()
+        theme_manager.set_theme(theme.lower())
+
         self.theme_changed.emit(theme)
         self.update_preview()
 
@@ -1204,13 +1219,201 @@ class SettingsTab(BaseTab):
             self.shared_context.main_window.setWindowOpacity(value / 100.0)
 
     def select_accent_color(self):
-        """Select accent color."""
+        """Select accent color and apply it dynamically to the application stylesheet."""
         color = QColorDialog.getColor(QColor(self.settings.get("accent_color", "#0078d4")), self)
         if color.isValid():
             color_hex = color.name()
             self.settings["accent_color"] = color_hex
             self.accent_color_btn.setStyleSheet(f"background-color: {color_hex};")
+            self.apply_accent_color(color_hex)
             self.update_preview()
+
+    def apply_accent_color(self, color_hex):
+        """Apply accent color dynamically to the application stylesheet by replacing the previous accent color."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        app = QApplication.instance()
+        if not app:
+            return
+
+        current_stylesheet = app.styleSheet()
+
+        old_color_upper = self._current_accent_color.upper()
+        old_color_lower = self._current_accent_color.lower()
+        new_color_upper = color_hex.upper()
+        new_color_lower = color_hex.lower()
+
+        updated_stylesheet = current_stylesheet.replace(old_color_upper, new_color_upper).replace(old_color_lower, new_color_lower)
+
+        app.setStyleSheet(updated_stylesheet)
+
+        self._current_accent_color = color_hex
+
+    def on_ui_font_changed(self, font):
+        """Handle UI font change."""
+        self.settings["ui_font"] = font.family()
+        self.apply_ui_font()
+        self.update_preview()
+
+    def on_ui_font_size_changed(self, size):
+        """Handle UI font size change."""
+        self.settings["ui_font_size"] = size
+        self.apply_ui_font()
+        self.update_preview()
+
+    def apply_ui_font(self):
+        """Apply UI font to the application."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        app = QApplication.instance()
+        if not app:
+            return
+
+        font = QFont(self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10))
+        app.setFont(font)
+
+    def on_console_font_changed(self, font):
+        """Handle console font change."""
+        self.settings["console_font"] = font.family()
+        self.apply_console_font()
+        self.update_preview()
+
+    def on_console_font_size_changed(self, size):
+        """Handle console font size change."""
+        self.settings["console_font_size"] = size
+        self.apply_console_font()
+        self.update_preview()
+
+    def apply_console_font(self):
+        """Apply console font to all console/terminal widgets in the application."""
+        from intellicrack.handlers.pyqt6_handler import QApplication, QPlainTextEdit, QTextEdit
+
+        app = QApplication.instance()
+        if not app:
+            return
+
+        console_font = QFont(self.settings.get("console_font", "Consolas"), self.settings.get("console_font_size", 10))
+        console_font.setFixedPitch(True)
+
+        widgets_updated = 0
+        for widget in app.allWidgets():
+            if isinstance(widget, (QTextEdit, QPlainTextEdit)):
+                widget_name = widget.objectName().lower()
+                widget_class = widget.__class__.__name__.lower()
+
+                is_console = any(
+                    keyword in widget_name or keyword in widget_class
+                    for keyword in ["console", "terminal", "output", "log", "command", "shell", "script"]
+                )
+
+                if is_console or widget.font().fixedPitch():
+                    widget.setFont(console_font)
+                    widgets_updated += 1
+
+        if widgets_updated > 0:
+            self.logger.info(f"Applied console font to {widgets_updated} widgets")
+
+    def on_tooltips_toggled(self, state):
+        """Handle tooltips toggle."""
+        enabled = state == 2
+        self.settings["show_tooltips"] = enabled
+        self.apply_tooltip_settings(enabled)
+        self.update_preview()
+
+    def apply_tooltip_settings(self, enabled):
+        """Apply tooltip settings to all widgets in the application using WeakKeyDictionary."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        app = QApplication.instance()
+        if not app:
+            return
+
+        if not enabled:
+            for widget in app.allWidgets():
+                tooltip = widget.toolTip()
+                if tooltip:
+                    try:
+                        self._original_tooltips[widget] = tooltip
+                    except TypeError:
+                        pass
+                widget.setToolTip("")
+                widget.setToolTipDuration(0)
+        else:
+            for widget in app.allWidgets():
+                if widget in self._original_tooltips:
+                    widget.setToolTip(self._original_tooltips[widget])
+                widget.setToolTipDuration(-1)
+
+    def on_animations_toggled(self, state):
+        """Handle animations toggle."""
+        enabled = state == 2
+        self.settings["enable_animations"] = enabled
+        self.apply_animation_settings(enabled)
+        self.update_preview()
+
+    def apply_animation_settings(self, enabled):
+        """Apply animation settings by adding instant-transition style override to stylesheet."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        app = QApplication.instance()
+        if not app:
+            return
+
+        current_stylesheet = app.styleSheet()
+
+        animations_override = """
+/* Disable all animations - instant transitions */
+* {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+}
+"""
+
+        if not enabled:
+            if "/* Disable all animations - instant transitions */" not in current_stylesheet:
+                app.setStyleSheet(current_stylesheet + animations_override)
+        else:
+            if "/* Disable all animations - instant transitions */" in current_stylesheet:
+                start_marker = "/* Disable all animations - instant transitions */"
+                start_idx = current_stylesheet.find(start_marker)
+                if start_idx != -1:
+                    end_idx = current_stylesheet.find("}", start_idx) + 1
+                    updated_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+                    app.setStyleSheet(updated_stylesheet)
+
+    def populate_ai_providers(self):
+        """Populate AI provider dropdown with dynamically detected providers."""
+        current_selection = (
+            self.ai_provider_combo.currentText() if self.ai_provider_combo.count() > 0 else self.settings.get("ai_provider", "")
+        )
+
+        self.ai_provider_combo.clear()
+
+        available_providers = []
+
+        try:
+            from intellicrack.ai.model_discovery_service import get_model_discovery_service
+
+            discovery_service = get_model_discovery_service()
+
+            discovered_models = discovery_service.discover_all_models(force_refresh=True)
+
+            for provider_name, models in discovered_models.items():
+                if models:
+                    available_providers.append(provider_name)
+
+        except Exception as e:
+            self.logger.warning(f"Failed to discover AI providers dynamically: {e}")
+
+        if not available_providers:
+            available_providers = ["OpenAI", "Anthropic", "Ollama", "LM Studio", "Local GGUF"]
+
+        self.ai_provider_combo.addItems(available_providers)
+
+        if current_selection and current_selection in available_providers:
+            self.ai_provider_combo.setCurrentText(current_selection)
+        elif available_providers:
+            self.ai_provider_combo.setCurrentIndex(0)
 
     def log_message(self, message, level="info"):
         """Log message to console or status."""

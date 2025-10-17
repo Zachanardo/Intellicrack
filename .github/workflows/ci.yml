@@ -6,48 +6,132 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        os: [windows-latest]
+        python-version: ['3.12']
 
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        fetch-depth: 0
+
+    - uses: prefix-dev/setup-pixi@v0.8.0
+      with:
+        pixi-version: latest
+
+    - name: Set up Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: intellicrack-launcher
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements/base.txt
-        pip install -r requirements/test.txt
+        pixi install
 
-    - name: Lint with flake8
+    - name: Set Python Path for PyO3
       run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        echo "Python location: $(which python)"
+        echo "Python version: $(python --version)"
+      shell: bash
+
+    - name: Rust - Check compilation
+      run: |
+        cd intellicrack-launcher
+        pixi run cargo check --all-features --all-targets
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+
+    - name: Rust - Format check
+      run: |
+        cd intellicrack-launcher
+        pixi run cargo fmt -- --check
+
+    - name: Rust - Clippy linting
+      run: |
+        cd intellicrack-launcher
+        pixi run cargo clippy --all-features --all-targets -- -D warnings
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+
+    - name: Rust - Run tests
+      run: |
+        cd intellicrack-launcher
+        pixi run cargo test --all-features --verbose
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+
+    - name: Rust - Build release
+      run: |
+        cd intellicrack-launcher
+        pixi run cargo build --release --all-features
+      env:
+        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+
+    - name: Lint with ruff
+      run: |
+        pixi run ruff check intellicrack/ tests/ --output-format=github
+        pixi run ruff format --check intellicrack/ tests/
+
+    - name: Security scan with bandit
+      run: |
+        pixi run bandit -r intellicrack/ -f json -o bandit-report.json || true
+        python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
+      continue-on-error: true
+
+    - name: Type check with mypy
+      run: |
+        pixi run mypy intellicrack/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true
 
     - name: Verify No Mock Usage (Production-Ready Enforcement)
       run: |
-        python tests/utils/verify_no_mocks.py --ci
+        pixi run python tests/utils/verify_no_mocks.py --ci
       continue-on-error: false
 
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=intellicrack --cov-report=xml
+        pixi run pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+      env:
+        PYTHONDONTWRITEBYTECODE: 1
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+          coverage.xml
+          bandit-report.json
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
-        name: codecov-umbrella
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        fail_ci_if_error: false
+        verbose: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

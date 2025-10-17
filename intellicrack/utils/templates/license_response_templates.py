@@ -1,6 +1,6 @@
 """License response templates for generating valid license responses."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Common license response templates for _network interception.
@@ -64,74 +64,6 @@ def get_common_license_response(user_id=None, days_valid=365, features=None):
     }
 
 
-def get_adobe_response_templates():
-    """Get Adobe Creative Cloud response templates with real validation logic."""
-    import datetime
-    import hashlib
-    import random
-
-    # Real license validation logic for Adobe
-    current_time = datetime.datetime.now()
-
-    # Generate realistic serial based on machine characteristics
-    machine_id = hashlib.sha256(str(random.getrandbits(64)).encode()).hexdigest()[:20]
-    adobe_serial = f"{machine_id[:4]}-{machine_id[4:8]}-{machine_id[8:12]}-{machine_id[12:16]}-{machine_id[16:20]}"
-
-    # Calculate expiry based on realistic Adobe license terms
-    expiry_date = current_time + datetime.timedelta(days=365)
-    expiry_str = expiry_date.strftime("%Y-%m-%d")
-
-    # Real product validation - check for actual Adobe installations
-    detected_products = []
-    import os
-
-    adobe_paths = [
-        (r"C:\Program Files\Adobe\Adobe Photoshop", "PHSP", "Photoshop"),
-        (r"C:\Program Files\Adobe\Adobe Illustrator", "ILST", "Illustrator"),
-        (r"C:\Program Files\Adobe\Adobe After Effects", "AEFT", "After Effects"),
-        (r"C:\Program Files\Adobe\Adobe Premiere Pro", "PPRO", "Premiere Pro"),
-        (r"C:\Program Files\Adobe\Adobe InDesign", "IDSN", "InDesign"),
-    ]
-
-    for path, product_id, name in adobe_paths:
-        if os.path.exists(path):
-            detected_products.append({"id": product_id, "name": name, "status": "ACTIVATED"})
-
-    # If no products detected, simulate common installation
-    if not detected_products:
-        detected_products = [
-            {"id": "PHSP", "name": "Photoshop", "status": "TRIAL"},
-            {"id": "ILST", "name": "Illustrator", "status": "TRIAL"},
-        ]
-
-    return {
-        "json": {
-            "status": "SUCCESS",
-            "message": "License validation completed",
-            "expiry": expiry_str,
-            "serial": adobe_serial,
-            "valid": len(detected_products) > 0,
-            "activated": any(p["status"] == "ACTIVATED" for p in detected_products),
-            "expired": False,
-            "products": detected_products,
-            "validation_method": "real_adobe_check",
-            "timestamp": current_time.isoformat(),
-        },
-        "xml": f"""
-            <response>
-                <status>SUCCESS</status>
-                <license>
-                    <valid>{str(len(detected_products) > 0).lower()}</valid>
-                    <expired>false</expired>
-                    <expiry>{expiry_str}</expiry>
-                    <serial>{adobe_serial}</serial>
-                    <validation_method>real_adobe_check</validation_method>
-                </license>
-            </response>
-        """,
-    }
-
-
 def get_autodesk_response_templates():
     """Get Autodesk response templates with real validation logic."""
     import datetime
@@ -169,12 +101,6 @@ def get_autodesk_response_templates():
                 detected_products.append({"id": product_id, "name": name, "status": "ACTIVATED"})
             else:
                 detected_products.append({"id": product_id, "name": name, "status": "TRIAL"})
-
-    # Default products if none detected
-    if not detected_products:
-        detected_products = [
-            {"id": "AUTOCAD", "name": "AutoCAD", "status": "TRIAL"},
-        ]
 
     # Calculate expiry based on license type
     if license_type == "NETWORK":
@@ -261,12 +187,6 @@ def get_jetbrains_response_templates():
                     detected_products.append({"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"})
         except (OSError, PermissionError) as e:
             logger.error("Error in license_response_templates: %s", e)
-
-    # Default if no products detected
-    if not detected_products:
-        detected_products = [
-            {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"},
-        ]
 
     # Calculate expiry based on license type
     if license_type == "commercial":
@@ -434,12 +354,6 @@ def get_microsoft_response_templates():
         error_code = 2
         error_message = f"Microsoft license validation error: {e!s}"
 
-    # Default if no products detected
-    if not detected_products:
-        detected_products = [
-            {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"},
-        ]
-
     return {
         "json": {
             "status": license_status,
@@ -532,7 +446,6 @@ def get_generic_response_templates():
 def get_all_response_templates():
     """Get all response templates organized by service."""
     return {
-        "adobe": get_adobe_response_templates(),
         "autodesk": get_autodesk_response_templates(),
         "jetbrains": get_jetbrains_response_templates(),
         "microsoft": get_microsoft_response_templates(),

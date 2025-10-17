@@ -24,6 +24,7 @@ python cli/cli.py analyze binary.exe --deep
 ## Available Commands
 
 ### Core Commands
+
 - `scan`: Perform vulnerability scanning on binaries
 - `strings`: Extract strings from binary files
 - `analyze`: Comprehensive binary analysis
@@ -31,20 +32,24 @@ python cli/cli.py analyze binary.exe --deep
 - `patch`: Apply patches to binary files
 
 ### Payload Generation
+
 - `payload generate`: Generate various types of payloads
 - `payload list-templates`: List available payload templates
 - `payload from-template`: Generate payload from template
 
 ### Command and Control
+
 - `c2 server`: Start C2 server
 - `c2 client`: Start C2 client/agent
 - `c2 exec`: Execute commands on remote sessions
 - `c2 status`: Show C2 server status
 
 ### Exploitation
+
 - `exploit`: Exploit target binaries or services
 
 ### Advanced Features
+
 - `advanced payload`: Advanced payload generation with evasion
 - `advanced c2`: Advanced C2 server configuration
 - `advanced research`: Vulnerability research campaigns
@@ -52,6 +57,7 @@ python cli/cli.py analyze binary.exe --deep
 - `advanced auto-exploit`: Automated exploitation workflow
 
 ### AI Commands
+
 - `ai generate`: Generate AI scripts for binary analysis
 - `ai test`: Test generated scripts in safe environments
 - `ai analyze`: AI-powered binary analysis
@@ -90,24 +96,28 @@ cli/
 ## Key Features
 
 ### Binary Analysis
+
 - Static and dynamic analysis
 - Vulnerability detection
 - Protection mechanism identification
 - String extraction and analysis
 
 ### Payload Generation
+
 - Multiple payload types (reverse shell, bind shell, etc.)
 - Cross-platform support (x86, x64, ARM, ARM64)
 - Encoding options (XOR, polymorphic, etc.)
 - Template-based generation
 
 ### Command & Control
+
 - Multi-protocol C2 server (HTTPS, DNS, TCP)
 - Session management
 - Remote command execution
 - Encrypted communications
 
 ### AI Integration
+
 - Automated script generation (Frida, Ghidra)
 - Intelligent binary analysis
 - Autonomous workflows
@@ -126,6 +136,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ## Command Categories
 
 ### Analysis Commands
+
 ```bash
 --comprehensive              # Full analysis suite
 --cfg-analysis               # Control flow graph
@@ -140,6 +151,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Vulnerability Detection
+
 ```bash
 --vulnerability-scan        # Static vulnerability scan
 --weak-crypto              # Weak cryptography detection
@@ -148,6 +160,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Protection Analysis
+
 ```bash
 --detect-packing           # Packing/obfuscation detection
 --detect-protections       # All known protections
@@ -157,6 +170,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Network Analysis
+
 ```bash
 --network-capture          # Network traffic capture
 --protocol-fingerprint     # Protocol fingerprinting
@@ -170,6 +184,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Patching and Exploitation
+
 ```bash
 --suggest-patches          # Generate patch suggestions
 --apply-patch             # Apply patches from file
@@ -182,6 +197,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Protection Bypass
+
 ```bash
 --bypass-tpm              # TPM bypass generation
 --tpm-method {api,virtual,patch}  # TPM bypass method
@@ -197,6 +213,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Machine Learning
+
 ```bash
 --ml-similarity           # ML-based similarity
 --ml-database PATH        # ML feature database
@@ -209,6 +226,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### External Tools
+
 ```bash
 --ghidra-analysis         # Ghidra analysis
 --ghidra-script SCRIPT    # Ghidra script
@@ -222,6 +240,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Processing Options
+
 ```bash
 --gpu-accelerate         # GPU acceleration
 --distributed            # Distributed processing
@@ -232,6 +251,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Plugin System
+
 ```bash
 --plugin-list            # List available plugins
 --plugin-run PLUGIN      # Run specific plugin
@@ -244,6 +264,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Utility Features
+
 ```bash
 --extract-icon           # Extract executable icon
 --icon-output FILE       # Icon output path
@@ -257,6 +278,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Batch Processing
+
 ```bash
 --batch FILE             # Batch process file list
 --batch-output-dir DIR   # Batch output directory
@@ -264,6 +286,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Output Options
+
 ```bash
 --output FILE            # Output file path
 --format {text,json,pdf,html}  # Output format
@@ -273,6 +296,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Advanced Options
+
 ```bash
 --config FILE           # Custom configuration file
 --timeout SECS          # Analysis timeout
@@ -281,6 +305,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ```
 
 ### Special Modes
+
 ```bash
 --server                # REST API server mode
 --server-port PORT      # API server port
@@ -291,6 +316,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 ## Usage Examples
 
 ### Complete Security Assessment
+
 ```bash
 python intellicrack/cli/main.py protected.exe \
   --comprehensive \
@@ -304,6 +330,7 @@ python intellicrack/cli/main.py protected.exe \
 ```
 
 ### License Analysis and Bypass
+
 ```bash
 python intellicrack/cli/main.py software.exe \
   --license-analysis \
@@ -320,6 +347,7 @@ python intellicrack/cli/main.py software.exe \
 ```
 
 ### Network Protocol Analysis
+
 ```bash
 python intellicrack/cli/main.py client.exe \
   --network-capture --capture-duration 120 \
@@ -330,6 +358,7 @@ python intellicrack/cli/main.py client.exe \
 ```
 
 ### Advanced Binary Analysis
+
 ```bash
 python intellicrack/cli/main.py binary.exe \
   --cfg-analysis --cfg-output cfg.dot \
@@ -344,6 +373,7 @@ python intellicrack/cli/main.py binary.exe \
 ```
 
 ### Batch Protected Binary Analysis
+
 ```bash
 python intellicrack/cli/main.py \
   --batch protected_samples.txt \
@@ -357,6 +387,7 @@ python intellicrack/cli/main.py \
 ```
 
 ### Plugin Development and Testing
+
 ```bash
 # List available plugins
 python intellicrack/cli/main.py --plugin-list
@@ -380,6 +411,7 @@ python intellicrack/cli/main.py binary.exe \
 ```
 
 ### Machine Learning Workflows
+
 ```bash
 # Train custom model
 python intellicrack/cli/main.py \
@@ -398,6 +430,7 @@ python intellicrack/cli/main.py binary.exe \
 ```
 
 ### Server and Monitoring Modes
+
 ```bash
 # Run as REST API server
 python intellicrack/cli/main.py --server --server-port 8080
@@ -412,6 +445,7 @@ python intellicrack/cli/main.py binary.exe \
 ## Integration with Other Tools
 
 ### CI/CD Pipeline Integration
+
 ```bash
 # Security scan in CI/CD
 python intellicrack/cli/main.py build/app.exe \
@@ -431,6 +465,7 @@ fi
 ```
 
 ### Shell Pipeline Integration
+
 ```bash
 # Use with other tools
 python intellicrack/cli/main.py binary.exe --format json | \
@@ -455,14 +490,15 @@ python intellicrack/cli/main.py binary.exe --comprehensive \
 ## Configuration
 
 ### Custom Configuration Files
+
 ```json
 {
-  "gpu_acceleration": true,
-  "max_threads": 16,
-  "analysis_timeout": 3600,
-  "distributed_backend": "ray",
-  "output_format": "json",
-  "enable_verbose_logging": false
+    "gpu_acceleration": true,
+    "max_threads": 16,
+    "analysis_timeout": 3600,
+    "distributed_backend": "ray",
+    "output_format": "json",
+    "enable_verbose_logging": false
 }
 ```
 
@@ -471,17 +507,21 @@ Use with: `--config custom_config.json`
 ## Error Handling
 
 ### Graceful Degradation
+
 The CLI handles missing dependencies gracefully:
+
 - GPU features fall back to CPU
 - Missing tools are skipped with warnings
 - Partial analysis continues if some modules fail
 
 ### Debug Mode
+
 ```bash
 python intellicrack/cli/main.py binary.exe --debug --verbose
 ```
 
 ### Ignore Errors
+
 ```bash
 python intellicrack/cli/main.py binary.exe --ignore-errors --batch files.txt
 ```
@@ -489,6 +529,7 @@ python intellicrack/cli/main.py binary.exe --ignore-errors --batch files.txt
 ## Next Steps
 
 See the following files for more details:
+
 - `commands.md` - Complete command reference with all parameters
 - `examples.md` - Detailed usage examples and workflows
 - `../cli_usage.md` - Complete usage documentation

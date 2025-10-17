@@ -44,7 +44,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
 from ..icon_manager import set_button_icon
@@ -544,7 +544,7 @@ class CICDDialog(PluginDialogBase):
                     report = json.load(f)
 
                 status = report.get("overall_status", "unknown")
-                icon = "✅" if status == "success" else "❌"
+                icon = "✅" if status == "success" else "ERROR"
 
                 item = QListWidgetItem(f"{icon} {timestamp}")
                 item.setData(Qt.UserRole, os.path.join(report_dir, file))
@@ -682,7 +682,7 @@ class CICDDialog(PluginDialogBase):
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
-            widget.status_label.setText("✅" if success else "❌")
+            widget.status_label.setText("✅" if success else "ERROR")
             widget.progress.setVisible(False)
 
             # Update result label
@@ -702,12 +702,12 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "❌"])
+        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "ERROR"])
         self.progress_bar.setValue(completed)
 
         # Log errors
         if not success and result.get("errors"):
-            self.console_output.append(f"  ❌ Errors in {stage}:")
+            self.console_output.append(f"  ERROR Errors in {stage}:")
             for error in result["errors"]:
                 self.console_output.append(f"    - {error}")
 
@@ -727,7 +727,7 @@ class CICDDialog(PluginDialogBase):
         if status == "success":
             self.console_output.append("\n✅ Pipeline completed successfully!")
         else:
-            self.console_output.append(f"\n❌ Pipeline failed with status: {status}")
+            self.console_output.append(f"\nERROR Pipeline failed with status: {status}")
 
         # Reload reports
         self.load_reports()
@@ -737,5 +737,5 @@ class CICDDialog(PluginDialogBase):
 
     def on_pipeline_error(self, error: str):
         """Handle pipeline error."""
-        self.console_output.append(f"\n❌ Pipeline error: {error}")
+        self.console_output.append(f"\nERROR Pipeline error: {error}")
         self.on_pipeline_finished({"overall_status": "error"})

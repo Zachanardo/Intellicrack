@@ -2,11 +2,11 @@
 
 A comprehensive binary analysis and security research platform designed to help software developers identify and strengthen vulnerabilities in their own licensing and protection systems.
 
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Windows%2011-lightgrey)
 
-## 🚀 Features
+## Features
 
 ### Core Capabilities
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
@@ -24,18 +24,19 @@ A comprehensive binary analysis and security research platform designed to help 
 - **C2 Infrastructure**: Command and control capabilities for security testing
 
 ### User Interface
-- **Modern GUI**: Built with PyQt6 for cross-platform compatibility
+- **Modern GUI**: Built with PyQt6 for Windows 11 compatibility
 - **Three-Panel Layout**: Professional IDE-like interface with tabs and output panel
 - **Hex Editor**: Built-in viewer/editor with pattern highlighting and data inspection
 - **AI Assistant Tab**: Integrated AI-powered analysis and script generation
+- **Embedded Terminal**: Full-featured terminal emulator with multi-session support and PTY integration
 - **Plugin System**: Extensible architecture for custom tools
 - **Real-time Logging**: Comprehensive logging with adjustable verbosity
 
-## 📋 Requirements
+## Requirements
 
 ### System Requirements
-- **OS**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
-- **Python**: 3.11 or 3.12 (required for full functionality)
+- **OS**: Windows 11
+- **Python**: 3.12+ (required for full functionality)
 - **RAM**: 8GB minimum (16GB recommended)
 - **Disk**: 5GB free space (for all tools and dependencies)
 - **CPU**: 4 cores minimum
@@ -45,15 +46,15 @@ A comprehensive binary analysis and security research platform designed to help 
 - **Ghidra**: For advanced decompilation
 - **radare2**: For additional analysis capabilities
 
-## 🔧 Installation
+## Installation
 
 ### Manual Installation
 
-1. **Install Python 3.11 or 3.12**
+1. **Install Python 3.12+**
 
    ```bash
    # Verify Python version
-   python --version  # Should be 3.11.x or 3.12.x
+   python --version  # Should be 3.12.x or higher
    ```
 
 2. **Clone the repository**
@@ -66,14 +67,8 @@ A comprehensive binary analysis and security research platform designed to help 
 3. **Create and activate virtual environment**
 
    ```bash
-   # Windows
-   python -m venv mamba_env
-   mamba_env\Scripts\activate
-
-   # Linux/macOS
-   python -m venv mamba_env
-   source mamba_env/bin/activate
-   ```
+   pixi init
+   pixi shell   ```
 
 4. **Install dependencies**
 
@@ -82,23 +77,17 @@ A comprehensive binary analysis and security research platform designed to help 
    pip install -r requirements/requirements.lock
    ```
 
-### Platform-Specific Dependencies
+### Dependencies
 
-Intellicrack automatically manages platform-specific dependencies:
+Intellicrack automatically manages dependencies for Windows 11:
 
-#### Windows
-- **Primary Engine**: angr (full Windows support)
+#### Windows 11 Features
+- **Primary Engine**: angr (full Windows 11 support)
 - **GPU Support**: Intel Arc B580 detection with GIL crash prevention
-- All Windows users get a fully functional system
-
-#### Linux/Unix
-- **Primary Engine**: angr (recommended)
-- **Secondary Engine**: manticore (automatically installed)
-- **Full QEMU support**: For emulation and dynamic analysis
+- All Windows 11 users get a fully functional system
 
 #### Symbolic Execution Support
-- **angr**: Cross-platform, installed by default, recommended for all users
-- **manticore**: Linux-only, optional fallback
+- **angr**: Windows 11 optimized, installed by default, recommended for all users
 - **Built-in fallback**: For minimal functionality
 
 ## 🎯 Usage
@@ -143,19 +132,70 @@ print(f"File type: {result.file_format}")
 print(f"Protections: {result.protections}")
 ```
 
-## 📚 Documentation
+## Terminal Tab & Activation Tools
+
+Intellicrack features an embedded terminal emulator for interactive process execution and activation workflows.
+
+### Features
+- **Full PTY Support**: Windows ConPTY integration for native terminal experience
+- **Multi-Session Management**: Create and manage multiple terminal sessions simultaneously
+- **ANSI Color Support**: Full color and formatting support for terminal output
+- **Smart Auto-Navigation**: Interactive processes automatically switch to Terminal tab
+- **Process Control**: Start, stop, and monitor processes with real-time feedback
+- **Copy/Paste**: Full clipboard integration with right-click context menu
+- **Scrollback Buffer**: Configurable buffer (10,000 lines default) with export functionality
+
+### Windows & Adobe Activation
+
+The integrated Activation Tools provide streamlined access to licensing analysis capabilities:
+
+**Windows Activation**:
+- Interactive menu-driven activation via embedded terminal
+- Real-time activation status checking
+- Multiple activation method support (HWID, KMS38, Online KMS)
+- No external console windows - all operations within Intellicrack GUI
+
+**Adobe Product Activation**:
+- Frida-based injection for Adobe licensing analysis
+- Interactive terminal-based workflow
+- Live process monitoring and feedback
+
+### Usage
+
+1. **Access Activation Tools**:
+   - Navigate to **Tools** tab → **Activation Tools** sub-tab
+   - Click "Check Windows Activation Status" for current status
+   - Click "Activate Windows (Interactive)" to launch activation workflow
+
+2. **Interactive Terminal**:
+   - Automatically switches to **Terminal** tab when activation starts
+   - Full menu interaction with keyboard input
+   - Real-time process output with color formatting
+   - Use Ctrl+C to interrupt, right-click for copy/paste
+
+3. **Manual Terminal Usage**:
+   - Navigate to **Terminal** tab (7th tab, between Tools and Settings)
+   - Click "+" to create new terminal session
+   - Execute custom commands and scripts interactively
+
+For detailed terminal usage instructions, see the [Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md).
+
+## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
 - [Architecture Overview](docs/architecture/COMPREHENSIVE_ARCHITECTURE.md)
 - [User Guide](docs/guides/COMPREHENSIVE_USER_GUIDE.md)
+- [Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md)
+- [Terminal Widget API Documentation](docs/TERMINAL_WIDGET_API.md)
+- [Terminal Migration Guide](docs/TERMINAL_MIGRATION_GUIDE.md)
 - [AI Assistant Guide](docs/usage/ai_assistant.md)
 - [AI Models Quick Reference](docs/reference/AI_MODELS_QUICK_REFERENCE.md)
 - [Plugin Development](docs/development/plugins.md)
 - [GPU Acceleration Guide](docs/guides/GPU_ACCELERATION_GUIDE.md)
 - [Security and Ethics](docs/security/SECURITY_AND_ETHICS_GUIDE.md)
 
-## 🛠️ Configuration
+## Configuration
 
 Intellicrack uses JSON configuration files. Key settings include:
 
@@ -175,7 +215,7 @@ Intellicrack uses JSON configuration files. Key settings include:
 
 See the [Configuration Reference](docs/reference/CONFIGURATION_REFERENCE.md) for details.
 
-## 🧩 Plugins
+## Plugins
 
 Extend functionality with custom plugins:
 
@@ -194,7 +234,7 @@ class MyPlugin(PluginBase):
 
 See the [Plugin Development Guide](docs/development/plugins.md) for more information.
 
-## 🔍 Examples
+## Examples
 
 ### Basic Binary Analysis
 
@@ -231,7 +271,7 @@ analyzer.start_capture()
 packets = analyzer.stop_capture()
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -279,7 +319,7 @@ Enable detailed logging for troubleshooting:
 }
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
 - Code style guidelines
@@ -287,11 +327,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - Pull request process
 - Bug reporting
 
-## 📄 License
+## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 **Intellicrack** is developed for **defensive security research** to help software developers:
 

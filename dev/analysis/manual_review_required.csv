@@ -1,4 +1,0 @@
-Finding ID,File Path,Line,Pattern Type,Code Snippet,Current Classification,Confidence,Review Notes
-24b8ffb1,core/mitigation_bypass/__init__.py,72,pass,pass,Missing,0.30,No strong classification match; Low confidence score: 0.30; Empty implementation in critical security module
-4f6b7738,tools/test_generator.py,100,mock,class MockDataGenerator:,Missing,0.30,Matches manual review pattern: mock.*test; No strong classification match; Low confidence score: 0.30
-09b5ebf6,core/analysis/memory_forensics.py,500,pass,pass,Missing,0.30,No strong classification match; Low confidence score: 0.30

@@ -28,6 +28,14 @@ from ...utils.tools.radare2_utils import R2Exception, r2_session
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ...core.terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for radare2 scripting")
+
 
 class R2ScriptingEngine:
     """Advanced radare2 scripting integration engine.
@@ -324,8 +332,17 @@ class R2ScriptingEngine:
             self.logger.error(f"Failed to create script: {e}")
             raise
 
-    def execute_r2_script_file(self, script_path: str) -> dict[str, Any]:
-        """Execute r2 script file."""
+    def execute_r2_script_file(self, script_path: str, use_terminal: bool = False) -> dict[str, Any]:
+        """Execute r2 script file.
+
+        Args:
+            script_path: Path to r2 script file
+            use_terminal: If True, display output in terminal (default: False)
+
+        Returns:
+            Dictionary with execution results
+
+        """
         result = {
             "script_path": script_path,
             "output": "",
@@ -345,18 +362,31 @@ class R2ScriptingEngine:
             ]
 
             # Execute command
-            process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                cmd,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=300,  # 5 minute timeout
-            )
+            if use_terminal and HAS_TERMINAL_MANAGER:
+                logger.info(f"Running r2 script in terminal: {script_path}")
+                terminal_mgr = get_terminal_manager()
 
-            result["output"] = process.stdout
-            result["errors"] = process.stderr
-            result["return_code"] = process.returncode
-            result["execution_successful"] = process.returncode == 0
+                # Show r2 execution in terminal
+                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True)
+
+                # For terminal execution, return session info
+                result["terminal_session"] = session_id
+                result["execution_successful"] = True
+                result["output"] = "Script running in terminal"
+            else:
+                # Standard execution with captured output
+                process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    cmd,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,  # 5 minute timeout
+                )
+
+                result["output"] = process.stdout
+                result["errors"] = process.stderr
+                result["return_code"] = process.returncode
+                result["execution_successful"] = process.returncode == 0
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in radare2_scripting: %s", e)

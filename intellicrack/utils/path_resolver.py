@@ -19,6 +19,11 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     """Get the project root directory."""
+    # First, try to get the root from the environment variable
+    intellicrack_root_env = os.environ.get("INTELLICRACK_ROOT")
+    if intellicrack_root_env:
+        return Path(intellicrack_root_env)
+
     # Go up from this file to the project root
     # This file is at: intellicrack/utils/path_resolver.py
     return Path(__file__).parent.parent.parent.resolve()
@@ -33,10 +38,25 @@ def get_data_dir() -> Path:
 
 
 def get_qemu_images_dir() -> Path:
-    """Get the QEMU images directory."""
-    data_dir = get_data_dir()
-    qemu_dir = data_dir / "qemu_images"
+    """Get the QEMU images directory.
+
+    First checks in intellicrack/assets/qemu_images/ for images,
+    falling back to data/qemu_images/ for compatibility.
+    """
+    # Check the primary location: intellicrack/assets/qemu_images/
+    project_root = get_project_root()
+    assets_dir = project_root / "intellicrack" / "assets"
+    qemu_dir = assets_dir / "qemu_images"
+
+    # Create the directory if it doesn't exist
     qemu_dir.mkdir(parents=True, exist_ok=True)
+
+    # If the primary location doesn't exist, try the fallback location
+    if not qemu_dir.exists():
+        data_dir = get_data_dir()
+        qemu_dir = data_dir / "qemu_images"
+        qemu_dir.mkdir(parents=True, exist_ok=True)
+
     return qemu_dir
 
 
@@ -48,10 +68,9 @@ def resolve_qemu_image_path(image_name: str) -> Path:
     # Remove any hardcoded path prefixes
     if isinstance(image_name, str):
         # Strip common hardcoded prefixes - including legacy absolute paths
+        project_root = get_project_root()
         for prefix in [
-            "C:\\Intellicrack\\qemu\\images\\",  # Legacy Windows absolute
-            "C:/Intellicrack/qemu/images/",     # Legacy Windows absolute (forward slash)
-            "/Intellicrack/qemu/images/",        # Legacy Unix absolute
+            str(project_root / "qemu" / "images"),
             "qemu/images/",
             "qemu\\images\\",
             "intellicrack/",

@@ -2,7 +2,7 @@
 """Debug test for multi-environment tester initialization."""
 
 import sys
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 print("Starting test...")
 
@@ -14,7 +14,7 @@ try:
     print("  Path: C:\\Intellicrack\\tests\\validation_system")
 
     # Try creating the tester
-    tester = MultiEnvironmentTester(r"C:\Intellicrack\tests\validation_system")
+    tester = MultiEnvironmentTester(r"D:\Intellicrack\tests\validation_system")
     print("MultiEnvironmentTester created successfully!")
 
     print(f"\nEnvironments loaded: {len(tester.environments)}")

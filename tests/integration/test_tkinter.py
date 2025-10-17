@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Integration test for Intellicrack's tkinter GUI environment.
+
+This module tests the tkinter environment for Intellicrack's GUI components,
+including checking for proper tkinter imports, verifying TCL/TK library paths,
+and testing basic GUI window creation and destruction. This ensures the
+GUI components will work correctly across different deployment environments.
+"""
 
 import os
 import sys

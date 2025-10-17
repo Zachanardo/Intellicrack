@@ -516,7 +516,7 @@ You have access to all 78 Intellicrack features through these tools. Use them wi
 
 
 def main():
-    """Example usage of AI integration."""
+    """Demonstrate AI integration usage."""
     # Initialize server
     server = IntellicrackAIServer(auto_approve_low_risk=False)
 

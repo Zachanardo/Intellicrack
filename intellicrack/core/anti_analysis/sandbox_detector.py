@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Sandbox detection utilities for Intellicrack anti-analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -22,8 +24,12 @@ import platform
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
+import uuid
 from typing import Any
+
+import psutil
 
 from .base_detector import BaseDetector
 
@@ -327,8 +333,6 @@ class SandboxDetector(BaseDetector):
 
     def _get_common_directories(self) -> list:
         """Get common directories where sandbox artifacts might be found."""
-        import tempfile
-
         dirs = []
 
         # Windows paths
@@ -354,8 +358,8 @@ class SandboxDetector(BaseDetector):
             dirs.extend(
                 [
                     "/",
-                    "/tmp",
-                    "/var/tmp",
+                    tempfile.gettempdir(),
+                    tempfile.gettempdir(),  # Using temp dir instead of hardcoded /var/tmp
                     "/opt",
                     "/usr/local",
                     "/usr/share",
@@ -530,7 +534,6 @@ class SandboxDetector(BaseDetector):
     def _profile_system(self):
         """Profile the current system to establish baseline."""
         import hashlib
-        import uuid
 
         profile = {
             "timestamp": psutil.time.time(),
@@ -613,8 +616,12 @@ class SandboxDetector(BaseDetector):
 
             if platform.system() == "Windows":
                 try:
-                    result = subprocess.run(["wmic", "cpu", "get", "name"], capture_output=True, text=True, timeout=5)
-                    cpu_name = result.stdout.lower()
+                    wmic_path = shutil.which("wmic")
+                    if wmic_path:
+                        result = subprocess.run([wmic_path, "cpu", "get", "name"], capture_output=True, text=True, timeout=5)
+                        cpu_name = result.stdout.lower()
+                    else:
+                        cpu_name = ""
 
                     # Check for VM CPU signatures
                     vm_cpu_patterns = ["qemu", "virtual", "vmware", "vbox", "hypervisor"]
@@ -624,8 +631,8 @@ class SandboxDetector(BaseDetector):
                             indicators["confidence"] += 30
                             indicators["details"].append(f"VM CPU pattern: {pattern}")
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error checking CPU info for VM patterns: {e}")
             else:
                 try:
                     with open("/proc/cpuinfo", "r") as f:
@@ -635,8 +642,8 @@ class SandboxDetector(BaseDetector):
                             indicators["detected"] = True
                             indicators["confidence"] += 30
                             indicators["details"].append("Hypervisor detected in cpuinfo")
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error reading /proc/cpuinfo for hypervisor detection: {e}")
 
             # Check MAC address patterns
             import uuid
@@ -714,8 +721,8 @@ class SandboxDetector(BaseDetector):
                     indicators["confidence"] += 40
                     indicators["details"].append(f"VM manufacturer: {value}")
 
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error checking VM manufacturer in registry: {e}")
 
         except Exception as e:
             self.logger.debug(f"Registry check error: {e}")
@@ -731,8 +738,12 @@ class SandboxDetector(BaseDetector):
             try:
                 import subprocess
 
-                result = subprocess.run(["driverquery", "/v"], capture_output=True, text=True, timeout=5)
-                drivers = result.stdout.lower()
+                driverquery_path = shutil.which("driverquery")
+                if driverquery_path:
+                    result = subprocess.run([driverquery_path, "/v"], capture_output=True, text=True, timeout=5)
+                    drivers = result.stdout.lower()
+                else:
+                    drivers = ""
 
                 vm_drivers = ["vboxdrv", "vboxguest", "vmci", "vmhgfs", "vmmouse", "vmrawdsk", "vmusbmouse", "vmx86", "vmware"]
 
@@ -742,8 +753,8 @@ class SandboxDetector(BaseDetector):
                         artifacts["confidence"] += 30
                         artifacts["details"].append(f"VM driver: {driver}")
 
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error checking for VM drivers: {e}")
         else:
             # Check loaded kernel modules on Linux
             try:
@@ -758,17 +769,23 @@ class SandboxDetector(BaseDetector):
                             artifacts["confidence"] += 30
                             artifacts["details"].append(f"VM module: {module}")
 
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error checking for VM modules: {e}")
 
         # Check DMI/SMBIOS information
         try:
             if platform.system() == "Linux":
                 import subprocess
 
-                result = subprocess.run(["dmidecode", "-t", "system"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    dmi_info = result.stdout.lower()
+                dmidecode_path = shutil.which("dmidecode")
+                if dmidecode_path:
+                    result = subprocess.run([dmidecode_path, "-t", "system"], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        dmi_info = result.stdout.lower()
+                    else:
+                        dmi_info = ""
+                else:
+                    dmi_info = ""
                     vm_indicators = ["vmware", "virtualbox", "qemu", "kvm", "xen", "parallels"]
 
                     for indicator in vm_indicators:
@@ -777,8 +794,8 @@ class SandboxDetector(BaseDetector):
                             artifacts["confidence"] += 50
                             artifacts["details"].append(f"DMI indicator: {indicator}")
                             break
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error checking DMI/SMBIOS information: {e}")
 
         return artifacts
 

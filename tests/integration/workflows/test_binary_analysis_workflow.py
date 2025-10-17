@@ -1,3 +1,16 @@
+"""
+Integration tests for Intellicrack's binary analysis workflows.
+
+This module contains comprehensive integration tests for binary analysis end-to-end workflows in Intellicrack,
+including complete binary analysis workflows, binary to radare2 analysis workflows,
+protection detection to bypass generation workflows, analysis results to AI script
+generation workflows, end-to-end analysis with error handling, concurrent analysis
+workflow performance, analysis result persistence and retrieval, plugin integration
+with analysis workflows, analysis workflows under memory constraints, and workflow
+configuration validation. These tests ensure the binary analysis components work
+effectively together in real-world scenarios.
+"""
+
 import pytest
 import tempfile
 import os

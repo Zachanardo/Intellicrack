@@ -18,14 +18,28 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import hashlib
 import os
+import platform
 import subprocess
 import tempfile
+import uuid
+import winreg
 from enum import Enum
 from pathlib import Path
 
+try:
+    import wmi
+except ImportError:
+    wmi = None
+
 from ...utils.logger import get_logger
 from ...utils.system.system_utils import is_admin
+
+try:
+    from ...utils.system.subprocess_utils import run_subprocess_check
+except ImportError:
+    run_subprocess_check = None
 
 logger = get_logger(__name__)
 
@@ -64,6 +78,117 @@ class WindowsActivator:
         self.last_validation_time = None
         self.last_validation_result = None
         self.validation_cache_duration = 300  # 5 minutes
+
+    def activate(self, method: str = "hwid") -> dict[str, any]:
+        """Activate Windows using specified method - alias for activate_windows.
+
+        Args:
+            method: Activation method ('hwid', 'kms38', 'ohook')
+
+        Returns:
+            Dictionary with activation results
+
+        """
+        method_enum = ActivationMethod.HWID
+        if method.lower() == "kms38":
+            method_enum = ActivationMethod.KMS38
+        elif method.lower() == "ohook":
+            method_enum = ActivationMethod.ONLINE_KMS
+        return self.activate_windows(method_enum)
+
+    def check_activation_status(self) -> dict[str, str]:
+        """Check current Windows activation status - alias for get_activation_status.
+
+        Returns:
+            Dictionary with activation status information
+
+        """
+        status = self.get_activation_status()
+        # Add 'activated' key for compatibility
+        if "status" in status:
+            status["activated"] = status["status"] == "activated"
+        return status
+
+    def generate_hwid(self) -> str:
+        """Generate Hardware ID for Windows activation.
+
+        Returns:
+            Hardware ID string for digital license activation
+
+        """
+        try:
+            # Initialize WMI
+            if wmi is None:
+                raise ImportError("WMI module is not available")
+            c = wmi.WMI()
+
+            # Collect hardware information
+            hardware_info = []
+
+            # CPU info
+            for processor in c.Win32_Processor():
+                hardware_info.append(processor.ProcessorId.strip() if processor.ProcessorId else "")
+                hardware_info.append(str(processor.NumberOfCores))
+                hardware_info.append(processor.Name.strip() if processor.Name else "")
+
+            # Motherboard info
+            for board in c.Win32_BaseBoard():
+                hardware_info.append(board.SerialNumber.strip() if board.SerialNumber else "")
+                hardware_info.append(board.Manufacturer.strip() if board.Manufacturer else "")
+                hardware_info.append(board.Product.strip() if board.Product else "")
+
+            # BIOS info
+            for bios in c.Win32_BIOS():
+                hardware_info.append(bios.SerialNumber.strip() if bios.SerialNumber else "")
+                hardware_info.append(bios.Manufacturer.strip() if bios.Manufacturer else "")
+
+            # Network adapter MAC addresses (physical adapters only)
+            for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
+                if nic.MACAddress:
+                    hardware_info.append(nic.MACAddress.replace(":", ""))
+
+            # System UUID
+            for system in c.Win32_ComputerSystemProduct():
+                hardware_info.append(system.UUID.strip() if system.UUID else "")
+
+            # Combine all hardware info
+            combined_info = "|".join(filter(None, hardware_info))
+
+            # Generate HWID hash
+            hwid_hash = hashlib.sha256(combined_info.encode()).hexdigest()
+
+            # Format as Windows-style HWID
+            hwid = f"{hwid_hash[:8]}-{hwid_hash[8:12]}-{hwid_hash[12:16]}-{hwid_hash[16:20]}-{hwid_hash[20:32]}"
+
+            self.logger.info(f"Generated HWID: {hwid[:20]}...")  # Log partial HWID for privacy
+            return hwid.upper()
+
+        except ImportError:
+            # Fallback if WMI not available
+            self.logger.warning("WMI not available, using fallback HWID generation")
+
+            # Use platform info and MAC address as fallback
+            machine_info = f"{platform.machine()}|{platform.processor()}|{platform.node()}"
+
+            # Try to get MAC address
+            try:
+                mac = uuid.getnode()
+                machine_info += f"|{mac:012X}"
+            except (OSError, IOError):
+                pass
+
+            # Generate fallback HWID
+            fallback_hash = hashlib.sha256(machine_info.encode()).hexdigest()
+            hwid = f"{fallback_hash[:8]}-{fallback_hash[8:12]}-{fallback_hash[12:16]}-{fallback_hash[16:20]}-{fallback_hash[20:32]}"
+
+            return hwid.upper()
+
+        except Exception as e:
+            self.logger.error(f"Error generating HWID: {e}")
+            # Return a deterministic but unique HWID based on available info
+            basic_info = f"{os.environ.get('COMPUTERNAME', 'UNKNOWN')}|{platform.platform()}"
+            basic_hash = hashlib.sha256(basic_info.encode()).hexdigest()
+            return f"{basic_hash[:8]}-{basic_hash[8:12]}-{basic_hash[12:16]}-{basic_hash[16:20]}-{basic_hash[20:32]}".upper()
 
     def check_prerequisites(self) -> tuple[bool, list[str]]:
         """Check if prerequisites for Windows activation are met.
@@ -375,11 +500,9 @@ class WindowsActivator:
 
             # Also check registry for C2R installations
             try:
-                import winreg
-
                 registry_paths = [
-                    r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
-                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",
+                    r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",  # pragma: allowlist secret
+                    r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",  # pragma: allowlist secret
                 ]
 
                 for reg_path in registry_paths:
@@ -529,9 +652,11 @@ class WindowsActivator:
 
             logger.info("Installing Office product key for version %s", office_version)
 
-            from ...utils.system.subprocess_utils import run_subprocess_check
-
-            result = run_subprocess_check(install_cmd, timeout=60)
+            if run_subprocess_check is None:
+                # Fallback to subprocess.run if run_subprocess_check is not available
+                result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=60)
+            else:
+                result = run_subprocess_check(install_cmd, timeout=60)
 
             if result.returncode != 0:
                 return {
@@ -647,7 +772,7 @@ class WindowsActivator:
 
 
 def create_windows_activator() -> WindowsActivator:
-    """Factory function to create Windows activator instance.
+    """Create Windows activator instance.
 
     Returns:
         Configured WindowsActivator instance

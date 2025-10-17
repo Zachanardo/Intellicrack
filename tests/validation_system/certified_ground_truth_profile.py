@@ -72,7 +72,7 @@ class CertifiedGroundTruthProfile:
     Provides secure access to established ground truth data.
     """
 
-    def __init__(self, base_dir: str = r"C:\Intellicrack\tests\validation_system"):
+    def __init__(self, base_dir: str = r"D:\Intellicrack\tests\validation_system"):
         self.base_dir = Path(base_dir)
         self.ground_truth_dir = self.base_dir / "certified_ground_truth"
         self.profiles_dir = self.ground_truth_dir / "profiles"
@@ -934,7 +934,7 @@ def main():
     manager = CertifiedGroundTruthProfile()
 
     # Load ground truth from external sources (not from Intellicrack)
-    ground_truth_path = Path(r"C:\Intellicrack\tests\validation_system\certified_ground_truth")
+    ground_truth_path = Path(r"D:\Intellicrack\tests\validation_system\certified_ground_truth")
 
     # Process all available ground truth profiles
     for gt_file in ground_truth_path.glob("*.json"):
@@ -953,7 +953,7 @@ def main():
                 logger.warning(f"Skipping {gt_file.name} - no binary name specified")
                 continue
 
-            binary_path = Path(r"C:\Intellicrack\tests\validation_system\commercial_binaries") / binary_name
+            binary_path = Path(r"D:\Intellicrack\tests\validation_system\commercial_binaries") / binary_name
 
             if not binary_path.exists():
                 logger.warning(f"Binary not found: {binary_path}")

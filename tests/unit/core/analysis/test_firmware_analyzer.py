@@ -2,8 +2,8 @@
 Comprehensive unit tests for firmware_analyzer.py module.
 
 This test suite validates production-ready firmware analysis capabilities using
-specification-driven, black-box testing methodology. Tests are designed to verify
-genuine binary analysis functionality and will fail for placeholder implementations.
+specification-driven, black-box testing methodology. Tests verify actual binary
+analysis operations on real firmware structures, encryption, and security mechanisms.
 """
 
 import os
@@ -158,22 +158,22 @@ class TestFirmwareFixtures:
         """Create UEFI firmware binary with EFI signatures."""
         # UEFI firmware volume header
         uefi_header = (
-            b'_FVH'              # UEFI Firmware Volume signature
-            b'\x00' * 12         # Reserved bytes
-            b'\x48\x00\x00\x00'  # Header length
-            b'\x5a\xfe'          # Checksum
-            b'\x00\x00'          # Extended header offset
-            b'\x00' * 4          # Reserved
+            b'_FVH' +            # UEFI Firmware Volume signature
+            b'\x00' * 12 +       # Reserved bytes
+            b'\x48\x00\x00\x00' +  # Header length
+            b'\x5a\xfe' +          # Checksum
+            b'\x00\x00' +          # Extended header offset
+            b'\x00' * 4 +          # Reserved
             b'\x01'              # Revision
         )
 
         # UEFI modules and certificates
         uefi_data = (
-            b'DxeCore.efi\x00'
-            b'PlatformDxe.efi\x00'
-            b'-----BEGIN CERTIFICATE-----\x00'
-            b'MIIBIjANBgkqhkiG9w0BAQEF\x00'  # RSA public key start
-            b'SetupMode=0\x00'
+            b'DxeCore.efi\x00' +
+            b'PlatformDxe.efi\x00' +
+            b'-----BEGIN CERTIFICATE-----\x00' +
+            b'MIIBIjANBgkqhkiG9w0BAQEF\x00' +  # RSA public key start
+            b'SetupMode=0\x00' +
             b'SecureBoot=1\x00'
         )
 
@@ -182,23 +182,68 @@ class TestFirmwareFixtures:
 
     @staticmethod
     def create_encrypted_firmware() -> bytes:
-        """Create firmware sample with high entropy (encrypted/compressed)."""
-        # Create pseudo-random high entropy data simulating encryption
-        import random
-        random.seed(42)  # Deterministic for testing
+        """Create firmware sample with AES-256-CBC encrypted content."""
+        # Use real AES-256-CBC encryption with deterministic key/IV for testing
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.backends import default_backend
+        import os
 
-        # Header indicating encrypted content
-        header = (
-            b'ENCR'              # Encryption marker
-            b'\x01\x00\x00\x00'  # Version
-            b'\x00\x10\x00\x00'  # Block size
-            b'\x00\x08\x00\x00'  # Encrypted data length
+        # Deterministic key and IV for reproducible tests
+        key = b'\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c' * 2  # 256-bit key
+        iv = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
+
+        # Real firmware data to encrypt
+        firmware_data = (
+            b'FIRM' +              # Firmware signature
+            b'\x01\x00\x00\x00' +  # Version
+            # Real x86 boot loader code sequence
+            b'\xEA\x00\x7C\x00\x00' +  # Far jump to boot sector
+            b'\x31\xC0' +              # XOR AX, AX - Clear AX
+            b'\x8E\xD8' +              # MOV DS, AX - Set data segment
+            b'\x8E\xC0' +              # MOV ES, AX - Set extra segment
+            b'\x8E\xD0' +              # MOV SS, AX - Set stack segment
+            b'\xBC\x00\x7C' +          # MOV SP, 0x7C00 - Set stack pointer
+            b'\xFB' +                  # STI - Enable interrupts
+            b'\xB8\x13\x00' +          # MOV AX, 0x13 - Video mode
+            b'\xCD\x10' +              # INT 0x10 - BIOS video interrupt
+            b'\xB8\x01\x13' +          # MOV AX, 0x1301 - Write string
+            b'\xB9\x0C\x00' +          # MOV CX, 12 - String length
+            b'\xB2\x00' +              # MOV DL, 0 - Column
+            b'\xB6\x00' +              # MOV DH, 0 - Row
+            b'\x90' * 64 +         # NOP sled for alignment
+            b'\xEB\xFE' * 16 +     # Jump loops for control flow
+            b'\x55\x48\x89\xE5' +  # Function prologue (x64)
+            b'\x48\x83\xEC\x20' +  # Stack frame setup
+            b'\x48\x8B\x45\xF8' +  # MOV RAX, [RBP-8]
+            b'\xC9\xC3' +          # LEAVE; RET
+            b'\x00' * (2048 - 150)  # Padding to 2048 bytes
         )
 
-        # Generate high-entropy data (simulating encryption)
-        encrypted_data = bytes([random.randint(0, 255) for _ in range(2048)])
+        # Apply real AES-256-CBC encryption
+        cipher = Cipher(
+            algorithms.AES(key),
+            modes.CBC(iv),
+            backend=default_backend()
+        )
+        encryptor = cipher.encryptor()
 
-        return header + encrypted_data
+        # Ensure data is padded to AES block size (16 bytes)
+        from cryptography.hazmat.primitives import padding
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(firmware_data) + padder.finalize()
+
+        # Perform actual encryption
+        encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+
+        # Build encrypted firmware with header
+        header = (
+            b'ENCR'              # Encryption marker
+            b'\x01\x00\x00\x00'  # Version (AES-256-CBC)
+            b'\x00\x10\x00\x00'  # Block size (16 bytes)
+        )
+        header += len(encrypted_data).to_bytes(4, 'little')  # Actual encrypted data length
+
+        return header + iv + encrypted_data  # Include IV for proper encrypted format
 
 
 class TestFirmwareAnalyzer(unittest.TestCase):

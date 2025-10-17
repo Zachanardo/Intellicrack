@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Cloud license interceptor plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -87,7 +89,7 @@ class AuthenticationType(Enum):
     JWT = "jwt"
     API_KEY = "api_key"
     SAML = "saml"
-    BEARER_TOKEN = "bearer_token"  # noqa: S105
+    BEARER_TOKEN = "bearer_token"  # noqa: S105  # pragma: allowlist secret
     BASIC_AUTH = "basic_auth"
     CUSTOM = "custom"
 
@@ -184,6 +186,21 @@ class BypassOperation:
     timestamp: float
     processing_time: float
     error_message: str | None = None
+
+
+class UpstreamResponseWrapper:
+    """Wrapper for upstream response data compatible with aiohttp.ClientResponse interface."""
+
+    def __init__(self, status: int, headers: dict[str, str]):
+        """Initialize response wrapper with status and headers.
+
+        Args:
+            status: HTTP status code
+            headers: Response headers dictionary
+
+        """
+        self.status = status
+        self.headers = headers
 
 
 class CertificateManager:
@@ -1802,17 +1819,14 @@ class CloudLicenseInterceptor:
 
     def _modify_upstream_response(self, request: RequestInfo, upstream_response: ResponseInfo) -> ResponseInfo:
         """Modify upstream response for bypass."""
-        # Use response modifier
+        response_wrapper = UpstreamResponseWrapper(
+            status=upstream_response.status,
+            headers=upstream_response.headers,
+        )
+
         status, headers, body = self.response_modifier.modify_response(
             request,
-            type(
-                "MockResponse",
-                (),
-                {
-                    "status": upstream_response.status,
-                    "headers": upstream_response.headers,
-                },
-            )(),
+            response_wrapper,
             upstream_response.body,
         )
 
@@ -1891,7 +1905,7 @@ class CloudLicenseInterceptor:
 
 
 async def main():
-    """Main function for CLI usage."""
+    """Run main CLI interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Cloud License Interceptor")

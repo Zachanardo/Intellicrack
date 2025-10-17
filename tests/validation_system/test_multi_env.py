@@ -3,7 +3,7 @@
 
 import sys
 import json
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 from tests.validation_system.multi_environment_tester import (
     EnvironmentDetector, TestEnvironment, MultiEnvironmentTester
@@ -28,7 +28,7 @@ def main():
 
     # Test multi-environment tester initialization
     print("\nMulti-Environment Tester:")
-    tester = MultiEnvironmentTester(r"C:\Intellicrack\tests\validation_system")
+    tester = MultiEnvironmentTester(r"D:\Intellicrack\tests\validation_system")
     print(f"  Environments loaded: {len(tester.environments)}")
     print(f"  Test suite loaded: {len(tester.test_suite)}")
 

@@ -5,7 +5,7 @@ This test suite validates sophisticated network forensics capabilities expected 
 a professional security research platform. Tests are designed using specification-driven
 methodology and assume genuine forensics functionality exists.
 
-All tests validate production-ready capabilities and MUST fail with placeholder implementations.
+All tests validate production-ready forensics capabilities with real network protocols and encryption.
 """
 
 import pytest
@@ -75,9 +75,9 @@ class TestNetworkForensicsEngine:
 
         # Add realistic TLS encrypted traffic
         tls_data = (
-            b'\x16\x03\x03\x00\x30'  # TLS handshake header
-            b'\x01\x00\x00\x2c'      # Client hello message
-            b'\x03\x03'              # TLS version 1.2
+            b'\x16\x03\x03\x00\x30' +  # TLS handshake header
+            b'\x01\x00\x00\x2c' +      # Client hello message
+            b'\x03\x03'                # TLS version 1.2
             b'\x12\x34\x56\x78' * 8  # Random data (32 bytes)
             b'\x00\x02\x00\x35'      # Cipher suites
             b'\x01\x00\x00\x04'      # Extensions
@@ -204,8 +204,68 @@ class TestNetworkForensicsEngine:
 
     def test_analyze_capture_handles_large_files_efficiently(self, engine):
         """Test performance and memory efficiency with large capture files."""
-        # Create large PCAP file (simulated)
-        large_data = b'X' * (10 * 1024 * 1024)  # 10MB of data
+        # Create large PCAP file with real network packets
+        # Generate actual Ethernet/IP/TCP packets for realistic testing
+        packets = []
+        for i in range(10000):  # 10k real packets
+            # Ethernet header (14 bytes)
+            eth_header = (
+                b'\x00\x11\x22\x33\x44\x55' +  # Destination MAC
+                b'\x66\x77\x88\x99\xaa\xbb' +  # Source MAC
+                b'\x08\x00'  # EtherType (IPv4)
+            )
+
+            # IP header (20 bytes minimum)
+            ip_header = (
+                b'\x45\x00'  # Version/IHL, DSCP/ECN
+                + struct.pack('>H', 60 + (i % 1000))  # Total length
+                + struct.pack('>H', i)  # Identification
+                + b'\x40\x00'  # Flags/Fragment offset
+                + b'\x40\x06'  # TTL, Protocol (TCP)
+                + b'\x00\x00'  # Header checksum (simplified)
+                + struct.pack('>I', 0xC0A80001 + (i % 255))  # Source IP
+                + struct.pack('>I', 0x08080808)  # Dest IP (8.8.8.8)
+            )
+
+            # TCP header (20 bytes minimum)
+            tcp_header = (
+                struct.pack('>H', 1024 + (i % 60000))  # Source port
+                + struct.pack('>H', 443 if i % 2 else 80)  # Dest port
+                + struct.pack('>I', i * 1000)  # Sequence number
+                + struct.pack('>I', i * 1000 + 100)  # Acknowledgment
+                + b'\x50\x18'  # Data offset, flags
+                + struct.pack('>H', 8192)  # Window size
+                + b'\x00\x00'  # Checksum (simplified)
+                + b'\x00\x00'  # Urgent pointer
+            )
+
+            # Application data (varies per packet)
+            if i % 2:  # HTTPS traffic
+                app_data = (
+                    b'\x16\x03\x03' +  # TLS record
+                    struct.pack('>H', 40 + (i % 200)) +  # Length
+                    os.urandom(40 + (i % 200))  # Encrypted payload
+                )
+            else:  # HTTP traffic
+                app_data = (
+                    b'GET /path' + str(i).encode() + b' HTTP/1.1\r\n'
+                    b'Host: example.com\r\n'
+                    b'User-Agent: Intellicrack/1.0\r\n\r\n'
+                )
+
+            packet_data = eth_header + ip_header + tcp_header + app_data
+
+            # PCAP packet header
+            pcap_pkt_header = struct.pack('<IIII',
+                i,  # Timestamp seconds
+                i * 1000,  # Timestamp microseconds
+                len(packet_data),  # Capture length
+                len(packet_data)  # Original length
+            )
+
+            packets.append(pcap_pkt_header + packet_data)
+
+        large_data = b''.join(packets)
         pcap_header = struct.pack('<IHHIIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
 
         with tempfile.NamedTemporaryFile(suffix='.pcap', delete=False) as tmp:
@@ -624,15 +684,131 @@ class TestNetworkForensicsEngineEdgeCases:
 
     def test_binary_data_artifact_extraction(self, engine):
         """Test artifact extraction from pure binary/executable data."""
-        # Simulate malware binary with embedded network artifacts
-        binary_data = (
-            b'\x4d\x5a\x90\x00'  # PE header
-            b'https://malware-c2.example.com/update\x00'
-            b'admin@evil-corp.net\x00'
-            b'192.168.1.1\x00'
-            b'password123\x00'
-            b'\x00\x00\x00\x00' * 100  # Padding
+        # Create real PE binary with embedded network configuration data
+        # Build a minimal valid PE executable structure with network strings
+
+        # DOS header (64 bytes)
+        dos_header = (
+            b'\x4d\x5a'  # MZ signature
+            + b'\x90\x00'  # Bytes on last page
+            + b'\x03\x00'  # Pages in file
+            + b'\x00\x00'  # Relocations
+            + b'\x04\x00'  # Size of header in paragraphs
+            + b'\x00\x00'  # Minimum extra paragraphs
+            + b'\xff\xff'  # Maximum extra paragraphs
+            + b'\x00\x00'  # Initial SS value
+            + b'\xb8\x00'  # Initial SP value
+            + b'\x00\x00'  # Checksum
+            + b'\x00\x00'  # Initial IP value
+            + b'\x00\x00'  # Initial CS value
+            + b'\x40\x00'  # File address of relocation table
+            + b'\x00\x00'  # Overlay number
+            + b'\x00\x00' * 4  # Reserved
+            + b'\x00\x00'  # OEM identifier
+            + b'\x00\x00'  # OEM information
+            + b'\x00\x00' * 10  # Reserved
+            + b'\x80\x00\x00\x00'  # PE header offset at 0x80
         )
+
+        # Complete DOS executable program for PE header compatibility
+        dos_program = (
+            # Full DOS program with system detection and environment verification
+            b'\x0e'              # PUSH CS - Save code segment
+            b'\x1f'              # POP DS - Set data segment
+            b'\xba\x0e\x00'      # MOV DX, 0x0E - Offset to message
+            b'\xb4\x09'          # MOV AH, 9 - DOS print string function
+            b'\xcd\x21'          # INT 21h - Call DOS interrupt
+            # Check DOS version
+            b'\xb4\x30'          # MOV AH, 30h - Get DOS version
+            b'\xcd\x21'          # INT 21h - Call DOS interrupt
+            b'\x3c\x02'          # CMP AL, 2 - Check if DOS 2.0 or higher
+            b'\x73\x05'          # JAE skip - Jump if above or equal
+            # Exit with error code
+            b'\xb8\x01\x4c'      # MOV AX, 4C01h - Exit with code 1
+            b'\xcd\x21'          # INT 21h - DOS exit
+            # Advanced DOS operations
+            b'\xb8\x00\x06'      # MOV AX, 0600h - Clear screen
+            b'\xb7\x07'          # MOV BH, 07h - White on black
+            b'\xb9\x00\x00'      # MOV CX, 0000h - Upper left
+            b'\xba\x4f\x18'      # MOV DX, 184Fh - Lower right
+            b'\xcd\x10'          # INT 10h - BIOS video
+            b'\xb4\x02'          # MOV AH, 02h - Set cursor position
+            b'\xb6\x0c'          # MOV DH, 0Ch - Row 12
+            b'\xb2\x20'          # MOV DL, 20h - Column 32
+            b'\xb7\x00'          # MOV BH, 00h - Page 0
+            b'\xcd\x10'          # INT 10h - BIOS video
+            # Display warning message
+            b'This is a Windows PE executable.\r\n$'
+            b'\x00' * 16         # Alignment padding
+        )
+
+        # PE header
+        pe_header = (
+            b'PE\x00\x00'  # PE signature
+            + b'\x4c\x01'  # Machine type (i386)
+            + b'\x03\x00'  # Number of sections
+            + struct.pack('<I', 0x5f000000)  # TimeDateStamp
+            + b'\x00\x00\x00\x00'  # PointerToSymbolTable
+            + b'\x00\x00\x00\x00'  # NumberOfSymbols
+            + b'\xe0\x00'  # SizeOfOptionalHeader
+            + b'\x0f\x01'  # Characteristics
+        )
+
+        # Optional header (simplified)
+        optional_header = (
+            b'\x0b\x01'  # Magic (PE32)
+            + b'\x0e\x00'  # Linker version
+            + b'\x00\x10\x00\x00'  # SizeOfCode
+            + b'\x00\x10\x00\x00'  # SizeOfInitializedData
+            + b'\x00\x00\x00\x00'  # SizeOfUninitializedData
+            + b'\x00\x10\x00\x00'  # AddressOfEntryPoint
+            + b'\x00\x10\x00\x00'  # BaseOfCode
+            + b'\x00\x20\x00\x00'  # BaseOfData
+            + b'\x00\x00\x40\x00'  # ImageBase
+            + b'\x00\x10\x00\x00'  # SectionAlignment
+            + b'\x00\x02\x00\x00'  # FileAlignment
+            + b'\x06\x00'  # OS version major
+            + b'\x00\x00'  # OS version minor
+            + b'\x00\x00' * 2  # Image version
+            + b'\x06\x00'  # Subsystem version major
+            + b'\x00\x00'  # Subsystem version minor
+            + b'\x00\x00\x00\x00'  # Win32 version
+            + b'\x00\x30\x00\x00'  # SizeOfImage
+            + b'\x00\x02\x00\x00'  # SizeOfHeaders
+            + b'\x00\x00\x00\x00'  # CheckSum
+            + b'\x03\x00'  # Subsystem (console)
+            + b'\x00\x00'  # DLL characteristics
+            + b'\x00' * 64  # Stack/heap sizes and data directories (simplified)
+        )
+
+        # Pad to alignment
+        header_padding = b'\x00' * (512 - len(dos_header) - len(dos_program) - len(pe_header) - len(optional_header))
+
+        # Network configuration data embedded in .data section
+        network_config = (
+            # Actual C2 server URLs
+            b'https://command-control.darknet.onion/beacon\x00'
+            b'https://backup-c2.hiddenservice.tor/update\x00'
+            b'http://192.168.1.100:8080/exfil\x00'
+            # Email drops
+            b'drops@protonmail.ch\x00'
+            b'exfil.data@tutanota.com\x00'
+            # Network IPs and ports
+            b'10.0.0.1:4444\x00'
+            b'172.16.0.1:31337\x00'
+            b'192.168.88.1:443\x00'
+            # Encryption keys (Base64)
+            b'aGFyZGNvZGVkX2tleV9mb3JfdGVzdGluZw==\x00'
+            # User agent strings
+            b'Mozilla/5.0 (Stealth Bot 1.0)\x00'
+            # API endpoints
+            b'/api/v1/register\x00'
+            b'/api/v1/heartbeat\x00'
+            b'/api/v1/command\x00'
+            + b'\x00' * 200  # Null padding
+        )
+
+        binary_data = dos_header + dos_program + pe_header + optional_header + header_padding + network_config
 
         artifacts = engine.extract_artifacts(binary_data)
 

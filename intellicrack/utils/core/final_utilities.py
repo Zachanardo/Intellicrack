@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import importlib
 import json
 import os
 import platform
@@ -31,10 +32,9 @@ from typing import Any
 
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
-from intellicrack.logger import logger
-from intellicrack.utils.service_utils import get_service_url
+from intellicrack.utils.logger import logger
 
-from ..utils.logger import setup_logger
+from ..logger import setup_logger
 
 """
 Final utility functions to complete the Intellicrack refactoring.
@@ -164,22 +164,22 @@ def browse_model(parent: Any = None) -> str | None:
     return file_path if file_path else None
 
 
-def show_simulation_results(results: dict[str, Any], parent: Any = None) -> None:
-    """Display simulation results in a dialog.
+def show_analysis_results(results: dict[str, Any], parent: Any = None) -> None:
+    """Display analysis results in a dialog.
 
     Args:
-        results: Dictionary containing simulation results
+        results: Dictionary containing analysis results
         parent: Parent widget for the dialog
 
     """
     if not HAS_PYQT:
-        logger.info(f"Simulation Results: {json.dumps(results, indent=2)}")
+        logger.info(f"Analysis Results: {json.dumps(results, indent=2)}")
         return
 
     from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
     dialog = QDialog(parent)
-    dialog.setWindowTitle("Simulation Results")
+    dialog.setWindowTitle("Analysis Results")
     dialog.resize(600, 400)
 
     layout = QVBoxLayout()
@@ -537,55 +537,82 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
 
         for module_name in protocol_modules:
             try:
-                # Try to get captured requests from protocol handlers
-                # In a real implementation, these would be singleton instances
-                # that maintain request histories
+                # Get captured requests from singleton protocol handlers
+                # These handlers maintain request histories in memory
+                module_path = f"intellicrack.plugins.custom_modules.{module_name}"
 
-                # Simulate getting requests from active handlers
+                try:
+                    module = importlib.import_module(module_path)
+                    # Get the singleton handler instance
+                    if hasattr(module, "get_instance"):
+                        handler = module.get_instance()
+                        if hasattr(handler, "get_captured_requests"):
+                            # Retrieve actual captured requests from handler
+                            captured = handler.get_captured_requests(limit=limit // len(protocol_modules))
+                            request_list.extend(captured)
+                    elif hasattr(module, "GLOBAL_REQUEST_HISTORY"):
+                        # Some handlers use global history
+                        request_list.extend(module.GLOBAL_REQUEST_HISTORY[: limit // len(protocol_modules)])
+                except ImportError:
+                    # Handler not installed, skip
+                    pass
+
+                # For handlers that store requests in files/databases
                 if module_name == "license_protocol_handler":
-                    # FlexLM requests
-                    request_list.extend(
-                        [
-                            {
-                                "timestamp": time.time() - (i * 30),
-                                "source": "FlexLM_Handler",
-                                "type": "license_checkout",
-                                "protocol": "FlexLM",
-                                "src_ip": "192.168.1.100",
-                                "dst_ip": os.environ.get("LICENSE_SERVER_HOST", "license.internal"),
-                                "dst_port": 27000 + i,
-                                "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
-                                "response_data": f"GRANT feature_{i} 1.0 permanent",
-                                "status": "success",
-                                "license_feature": f"feature_{i}",
-                                "bytes_sent": 45 + i,
-                                "bytes_received": 38 + i,
-                            }
-                            for i in range(min(3, limit // 4))
-                        ]
-                    )
+                    # Check for FlexLM request log file
+                    flexlm_log = Path("logs/flexlm_requests.json")
+                    if flexlm_log.exists():
+                        with open(flexlm_log, "r") as f:
+                            try:
+                                flexlm_requests = json.load(f)
+                                request_list.extend(flexlm_requests[: limit // 4])
+                            except json.JSONDecodeError:
+                                pass
                 elif module_name == "cloud_license_hooker":
-                    # Cloud license API requests
-                    request_list.extend(
-                        [
-                            {
-                                "timestamp": time.time() - (i * 45),
-                                "source": "Cloud_License_Hooker",
-                                "type": "api_call",
-                                "protocol": "HTTPS",
-                                "src_ip": "192.168.1.100",
-                                "dst_ip": "api.adobe.com",
-                                "dst_port": 443,
-                                "request_data": f'POST /auth/validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{"token": "abc{i}"}}',
-                                "response_data": f'{{"valid": true, "expires": "{int(time.time()) + 3600}"}}',
-                                "status": "intercepted",
-                                "api_endpoint": "/auth/validate",
-                                "bytes_sent": 156 + i,
-                                "bytes_received": 89 + i,
-                            }
-                            for i in range(min(2, limit // 4))
-                        ]
-                    )
+                    # Check for cloud license API request log
+                    cloud_log = Path("logs/cloud_api_requests.json")
+                    if cloud_log.exists():
+                        with open(cloud_log, "r") as f:
+                            try:
+                                cloud_requests = json.load(f)
+                                request_list.extend(cloud_requests[: limit // 4])
+                            except json.JSONDecodeError:
+                                pass
+
+                    # Also check SQLite database for persistent storage
+                    db_path = Path("data/intercepted_requests.db")
+                    if db_path.exists():
+                        import sqlite3
+
+                        conn = sqlite3.connect(str(db_path))
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            """
+                            SELECT timestamp, source, type, protocol, src_ip, dst_ip,
+                                   dst_port, request_data, response_data, status
+                            FROM cloud_api_requests
+                            ORDER BY timestamp DESC
+                            LIMIT ?
+                        """,
+                            (limit // 4,),
+                        )
+                        rows = cursor.fetchall()
+                        for row in rows:
+                            request_list.append(
+                                {
+                                    "timestamp": row[0],
+                                    "source": row[1],
+                                    "type": row[2],
+                                    "protocol": row[3],
+                                    "src_ip": row[4],
+                                    "dst_ip": row[5],
+                                    "dst_port": row[6],
+                                    "request_data": row[7],
+                                    "response_data": row[8],
+                                    "status": row[9],
+                                }
+                            )
+                        conn.close()
 
             except ImportError as e:
                 logger.error("Import error in final_utilities: %s", e)
@@ -1544,6 +1571,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
     try:
         # Create reports directory if it doesn't exist
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent.parent
         reports_dir = project_root / "data" / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -1906,6 +1934,8 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                 import psycopg2
 
                 # Get database server from configuration
+                from intellicrack.utils.service_utils import get_service_url
+
                 db_url = get_service_url("database_server")
                 db_host = db_url.replace("postgresql://", "").split(":")[0]
                 db_port = int(db_url.split(":")[-1].split("/")[0]) if ":" in db_url else 5432
@@ -1979,6 +2009,8 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                 import pymongo
 
                 # Get MongoDB server from configuration
+                from intellicrack.utils.service_utils import get_service_url
+
                 mongo_url = get_service_url("mongodb_server")
 
                 client = pymongo.MongoClient(config.get("connection_string", mongo_url))
@@ -2540,6 +2572,125 @@ def do_GET(request_handler: Any) -> None:
     request_handler.send_header("Content-type", "text/html")
     request_handler.end_headers()
     request_handler.wfile.write(b"Intellicrack Server Running")
+
+
+def show_simulation_results(results: dict[str, Any], display_mode: str = "console") -> None:
+    """Display patch testing and validation results in various formats.
+
+    Args:
+        results: Dictionary containing patch testing results with validation data
+        display_mode: Output format - 'console', 'gui', or 'json'
+
+    """
+    try:
+        if not results:
+            logger.warning("No results to display")
+            return
+
+        if display_mode == "json":
+            import json
+
+            print(json.dumps(results, indent=2))
+            return
+
+        # Extract key information
+        success = results.get("success", False)
+        patches_total = results.get("patches_total", 0)
+        patches_validated = results.get("patches_validated", 0)
+        patches_failed = results.get("patches_failed", 0)
+        validation_results = results.get("validation_results", [])
+
+        if display_mode == "gui" and HAS_PYQT:
+            from PyQt6.QtWidgets import QDialog, QTextEdit, QVBoxLayout
+
+            dialog = QDialog()
+            dialog.setWindowTitle("Patch Testing Results")
+            dialog.resize(800, 600)
+
+            layout = QVBoxLayout()
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+
+            output = []
+            output.append("=== PATCH TESTING RESULTS ===\n")
+            output.append(f"Status: {'SUCCESS' if success else 'FAILED'}\n")
+            output.append(f"Total Patches: {patches_total}\n")
+            output.append(f"Validated: {patches_validated}\n")
+            output.append(f"Failed: {patches_failed}\n\n")
+
+            if validation_results:
+                output.append("=== PATCH DETAILS ===\n")
+                for i, patch_result in enumerate(validation_results):
+                    output.append(f"\nPatch {i + 1}:")
+                    output.append(f"  Offset: {hex(patch_result.get('offset', 0))}\n")
+                    output.append(f"  Description: {patch_result.get('description', 'N/A')}\n")
+                    output.append(f"  Success: {patch_result.get('success', False)}\n")
+
+                    if "error" in patch_result:
+                        output.append(f"  Error: {patch_result['error']}\n")
+                    if "warning" in patch_result:
+                        output.append(f"  Warning: {patch_result['warning']}\n")
+
+                    validation = patch_result.get("validation", {})
+                    if validation:
+                        output.append("  Validation:\n")
+                        for key, value in validation.items():
+                            output.append(f"    {key}: {value}\n")
+
+            text_edit.setPlainText("".join(output))
+            layout.addWidget(text_edit)
+            dialog.setLayout(layout)
+            dialog.exec()
+
+        else:
+            # Console output
+            print("=" * 60)
+            print("PATCH TESTING RESULTS")
+            print("=" * 60)
+            print(f"Status: {'SUCCESS' if success else 'FAILED'}")
+            print(f"Total Patches: {patches_total}")
+            print(f"Validated: {patches_validated}")
+            print(f"Failed: {patches_failed}")
+
+            if results.get("binary_path"):
+                print(f"Binary: {results['binary_path']}")
+            if results.get("test_mode") is not None:
+                print(f"Test Mode: {results['test_mode']}")
+            if results.get("temp_output"):
+                print(f"Output File: {results['temp_output']}")
+
+            if validation_results:
+                print("\n" + "=" * 60)
+                print("PATCH DETAILS")
+                print("=" * 60)
+
+                for i, patch_result in enumerate(validation_results):
+                    print(f"\nPatch {i + 1}:")
+                    print(f"  Offset: {hex(patch_result.get('offset', 0))}")
+                    print(f"  Description: {patch_result.get('description', 'N/A')}")
+                    print(f"  Success: {patch_result.get('success', False)}")
+
+                    if "error" in patch_result:
+                        print(f"  Error: {patch_result['error']}")
+                    if "warning" in patch_result:
+                        print(f"  Warning: {patch_result['warning']}")
+
+                    validation = patch_result.get("validation", {})
+                    if validation:
+                        print("  Validation:")
+                        for key, value in validation.items():
+                            print(f"    {key}: {value}")
+
+            print("\n" + "=" * 60)
+
+            if results.get("summary"):
+                print(f"\nSummary: {results['summary']}")
+
+        logger.info(f"Displayed patch testing results: {patches_validated}/{patches_total} validated")
+
+    except Exception as e:
+        logger.error(f"Error displaying results: {e}")
+        print(f"Error displaying results: {e}")
 
 
 # Note: Exports are handled by the package-level __init__.py to avoid duplication

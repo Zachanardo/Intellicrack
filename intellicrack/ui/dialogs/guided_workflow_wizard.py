@@ -42,7 +42,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWizard,
     QWizardPage,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
 
 """
@@ -1083,7 +1083,7 @@ class GuidedWorkflowWizard(QWizard):
 
 
 def create_guided_workflow_wizard(parent=None) -> GuidedWorkflowWizard:
-    """Factory function to create a GuidedWorkflowWizard.
+    """Create a GuidedWorkflowWizard.
 
     Args:
         parent: Parent widget

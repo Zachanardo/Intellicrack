@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Base plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -19,7 +21,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..utils.analysis.entropy_utils import calculate_byte_entropy
 

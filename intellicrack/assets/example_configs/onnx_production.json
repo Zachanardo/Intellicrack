@@ -9,10 +9,7 @@
   "max_tokens": 1024,
   "tools_enabled": true,
   "custom_params": {
-    "providers": [
-      "CUDAExecutionProvider",
-      "CPUExecutionProvider"
-    ],
+    "providers": ["CUDAExecutionProvider", "CPUExecutionProvider"],
     "provider_options": {
       "CUDAExecutionProvider": {
         "device_id": 0,

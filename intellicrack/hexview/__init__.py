@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 # Core components
 from .ai_bridge import AIBinaryBridge, BinaryContextBuilder

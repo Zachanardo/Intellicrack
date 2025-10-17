@@ -1,4 +1,5 @@
-"""Security utilities for Intellicrack
+"""Security utilities for Intellicrack.
+
 Provides secure alternatives to common operations.
 
 Copyright (C) 2025 Zachary Flint

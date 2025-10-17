@@ -2,18 +2,20 @@
 
 Copyright (C) 2025 Zachary Flint
 
-This program is free software: you can redistribute it and/or modify
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+Intellicrack is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see https://www.gnu.org/licenses/.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 This package provides comprehensive tools for binary analysis, vulnerability detection,
 automated patching, and advanced security research capabilities.
@@ -36,131 +38,176 @@ Usage:
     app.run()
 """
 
-# Initialize GIL safety measures FIRST - must be done before any imports
-try:
-    from .utils.torch_gil_safety import initialize_gil_safety
+# Set basic threading safety environment variables immediately
+import os
 
-    initialize_gil_safety()
-except ImportError:
-    # If torch_gil_safety isn't available, set basic environment variables
-    import os
-
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    os.environ.setdefault("MKL_NUM_THREADS", "1")
-    os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-    os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
 
 # Standard library imports
 import logging
 
-# Local imports
-from .config import CONFIG, get_config
+# GIL safety will be initialized lazily if needed
+_gil_safety_initialized = False
+
+
+def _initialize_gil_safety():
+    """Initialize GIL safety measures lazily."""
+    global _gil_safety_initialized
+    if not _gil_safety_initialized:
+        try:
+            from .utils.torch_gil_safety import initialize_gil_safety
+
+            initialize_gil_safety()
+        except ImportError:
+            logger.debug("torch_gil_safety module not available, using environment variables")
+        _gil_safety_initialized = True
+
 
 __version__ = "1.0.0"
 __author__ = "Intellicrack Team"
 __license__ = "GPL-3.0"
 
-# Initialize GPU acceleration automatically
-try:
-    # Additional environment variables for PyTorch threading safety
-    import os
+# GPU will be initialized lazily on first use to prevent blocking during import
+_default_device = "cpu"  # Default fallback
+_gpu_initialized = False
 
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    os.environ.setdefault("MKL_NUM_THREADS", "1")
-    os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-    from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
+def _initialize_gpu():
+    """Initialize GPU lazily on first use."""
+    global _default_device, _gpu_initialized
+    if not _gpu_initialized:
+        try:
+            import os
 
-    # Setup GPU on import (silent initialization for optimal performance)
-    gpu_autoloader.setup()
+            os.environ.setdefault("OMP_NUM_THREADS", "1")
+            os.environ.setdefault("MKL_NUM_THREADS", "1")
+            os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-    # Log GPU status only if logger is configured
-    gpu_info = get_gpu_info()
-    if gpu_info.get("available", False):
-        import sys
+            from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 
-        # Get the actual device for logging
-        device = get_device()
-        # Check if we're in interactive mode (REPL) vs script mode
-        if not hasattr(sys, "ps1"):  # Not in interactive mode
-            # Store device info for later use
-            _default_device = device
-        else:
-            # In interactive mode, we might print device info
-            _default_device = device
-except Exception:
-    # Silently continue without GPU - application will fall back to CPU
-    _default_device = "cpu"
+            gpu_autoloader.setup()
+
+            gpu_info = get_gpu_info()
+            if gpu_info.get("available", False):
+                _default_device = get_device()
+        except Exception:
+            _default_device = "cpu"
+        _gpu_initialized = True
+    return _default_device
+
 
 # Setup logging after imports
 logger = logging.getLogger(__name__)
 
-# Initialize and validate configuration
-_config = get_config()
-if _config:
-    # Validate configuration on module load to ensure all required settings are present
-    if not _config.validate_config():
-        logger.warning("Configuration validation failed - using defaults")
+# Configuration will be initialized lazily when first accessed
+# This prevents blocking during module import
+_config = None
 
-    # Check if repositories are enabled for model management
-    if _config.is_repository_enabled("model_repository"):
-        logger.info("Model repository is enabled")
 
-    # Get and validate Ghidra path for reverse engineering integration
-    ghidra_path = _config.get_ghidra_path()
-    if ghidra_path and ghidra_path != "ghidra":
-        logger.info(f"Ghidra path configured: {ghidra_path}")
+def _initialize_config():
+    """Initialize and validate configuration lazily."""
+    global _config
+    if _config is None:
+        _config = get_config()
+        if _config:
+            # Validate configuration on module load to ensure all required settings are present
+            if not _config.validate_config():
+                logger.warning("Configuration validation failed - using defaults")
 
-    # Update configuration with runtime defaults if needed
-    runtime_config = {
-        "initialized": True,  # Mark configuration as initialized
-        "version": __version__,  # Store current version for compatibility checks
-    }
-    _config.update(runtime_config)
+            # Check if repositories are enabled for model management
+            if _config.is_repository_enabled("model_repository"):
+                logger.info("Model repository is enabled")
 
-# Main application entry point
-try:
-    from .main import main
-except ImportError as e:
-    logger.error("Failed to import main function: %s", e)
-    # This is critical - main must be available
-    main = None
+            # Get and validate Ghidra path for reverse engineering integration
+            ghidra_path = _config.get_ghidra_path()
+            if ghidra_path and ghidra_path != "ghidra":
+                logger.info(f"Ghidra path configured: {ghidra_path}")
 
-# UI application (optional - requires PyQt6)
-try:
-    from .ui.main_app import IntellicrackApp
-except ImportError as e:
-    logger.warning("UI application not available: %s", e)
-    # UI is optional - can run in CLI mode without it
-    IntellicrackApp = None
+            # Update configuration with runtime defaults if needed
+            runtime_config = {
+                "initialized": True,  # Mark configuration as initialized
+                "version": __version__,  # Store current version for compatibility checks
+            }
+            _config.update(runtime_config)
+    return _config
 
-# Core analysis modules
-try:
-    from . import ai, core, utils
-except ImportError as e:
-    logger.warning("Core modules not available: %s", e)
-    ai = core = utils = None
 
-# UI modules (optional - requires PyQt6)
-try:
-    from . import ui
-except ImportError as e:
-    logger.warning("UI module not available: %s", e)
-    ui = None
+# Lazy imports to prevent blocking during module load
+# These will be imported on first access
+_main = None
+_IntellicrackApp = None
+_ai = None
+_core = None
+_utils = None
+_ui = None
+_plugins = None
+_hexview = None
+_CONFIG = None
+_get_config_func = None
 
-# Plugin system
-try:
-    from . import plugins
-except ImportError as e:
-    logger.warning("Plugins module not available: %s", e)
-    plugins = None
 
-# Hex viewer integration (optional - requires PyQt6)
-try:
-    from . import hexview
-except ImportError as e:
-    logger.warning("Hexview module not available: %s", e)
-    hexview = None
+def _lazy_import_config():
+    """Lazy import of CONFIG."""
+    global _CONFIG
+    if _CONFIG is None:
+        from .config import CONFIG
+
+        _CONFIG = CONFIG
+    return _CONFIG
+
+
+def _lazy_import_get_config():
+    """Lazy import of get_config function."""
+    global _get_config_func
+    if _get_config_func is None:
+        from .config import get_config as _imported_get_config
+
+        _get_config_func = _imported_get_config
+    return _get_config_func
+
+
+# Export lazy references for backwards compatibility
+CONFIG = None  # Will be replaced by _lazy_import_config() when accessed
+get_config = None  # Will be replaced by _lazy_import_get_config() when accessed
+
+
+def _lazy_import_main():
+    """Lazy import of main function."""
+    global _main
+    if _main is None:
+        try:
+            from .main import main as _imported_main
+
+            _main = _imported_main
+        except ImportError as e:
+            logger.error("Failed to import main function: %s", e)
+            _main = False  # Mark as attempted
+    return _main if _main is not False else None
+
+
+def _lazy_import_app():
+    """Lazy import of UI application."""
+    global _IntellicrackApp
+    if _IntellicrackApp is None:
+        try:
+            from .ui.main_app import IntellicrackApp
+
+            _IntellicrackApp = IntellicrackApp
+        except ImportError as e:
+            logger.warning("UI application not available: %s", e)
+            _IntellicrackApp = False
+    return _IntellicrackApp if _IntellicrackApp is not False else None
+
+
+# Export lazy-loaded references
+main = property(lambda self: _lazy_import_main())
+IntellicrackApp = property(lambda self: _lazy_import_app())
+
+# Core modules will be imported when accessed
+ai = core = utils = ui = plugins = hexview = None
 
 # Version info
 
@@ -272,7 +319,7 @@ def get_default_device():
             # Output: Using device: cuda:0
 
     """
-    return _default_device
+    return _initialize_gpu()
 
 
 __all__ = [

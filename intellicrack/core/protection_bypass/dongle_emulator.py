@@ -46,7 +46,7 @@ class HardwareDongleEmulator:
         self.virtual_dongles: dict[str, dict[str, Any]] = {}
 
     def activate_dongle_emulation(self, dongle_types: list[str] = None) -> dict[str, Any]:
-        """Main method to activate hardware dongle emulation.
+        """Activate hardware dongle emulation.
 
         Args:
             dongle_types: List of dongle types to emulate (None for all supported types)
@@ -112,7 +112,7 @@ class HardwareDongleEmulator:
         return results
 
     def _hook_dongle_apis(self, dongle_types: list[str]) -> None:
-        """Hook Windows dongle APIs to return success values."""
+        """Install hooks for Windows dongle APIs to return success values."""
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping dongle API hooking")
             return
@@ -354,7 +354,7 @@ class HardwareDongleEmulator:
             self.logger.error(f"Error patching dongle checks: {e!s}")
 
     def _spoof_dongle_registry(self) -> None:
-        """Manipulate Windows registry to simulate dongle presence."""
+        """Manipulate Windows registry to establish dongle presence."""
         try:
             if platform.system() != "Windows":
                 self.logger.info("Not on Windows - skipping registry spoofing")
@@ -592,7 +592,7 @@ class HardwareDongleEmulator:
 
 
 def activate_hardware_dongle_emulation(app: Any, dongle_types: list[str] = None) -> dict[str, Any]:
-    """Convenience function to activate hardware dongle emulation.
+    """Activate hardware dongle emulation.
 
     Args:
         app: Application instance with binary_path

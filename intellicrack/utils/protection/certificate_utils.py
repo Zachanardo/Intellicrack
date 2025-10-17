@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import datetime
 import logging
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 try:
     from cryptography import x509

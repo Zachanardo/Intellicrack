@@ -8,7 +8,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...config import get_config
 
@@ -339,7 +339,7 @@ class QilingEmulator:
             self.add_api_hook(api, self._license_api_hook)
 
     def _license_api_hook(self, ql: Qiling, address: int, params: dict):
-        """Generic hook for license-related API calls."""
+        """Monitor license-related API calls."""
         api_name = ql.os.user_defined_api_name or "Unknown"
 
         # Log the API call
@@ -367,7 +367,7 @@ class QilingEmulator:
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
     def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):
-        """Hook for memory access monitoring with detailed memory analysis."""
+        """Monitor memory access with detailed analysis."""
         access_type = "READ" if access == 1 else "WRITE"
 
         # Extract current CPU state from Qiling object
@@ -422,7 +422,7 @@ class QilingEmulator:
         )
 
     def hook_code_execution(self, ql: Qiling, address: int, size: int):
-        """Hook for code execution monitoring."""
+        """Monitor code execution."""
         # Could add disassembly here if needed
 
     def run(self, timeout: int | None = 60, until_address: int | None = None) -> dict[str, Any]:

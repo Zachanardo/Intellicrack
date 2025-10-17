@@ -566,7 +566,7 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
 """
 
             if result.is_packed:
-                summary += '<p style="color: #FF9800;">⚠ File is packed</p>'
+                summary += '<p style="color: #FF9800;">WARNING File is packed</p>'
             if result.has_anti_debug:
                 summary += '<p style="color: #F44336;">🛡 Anti-debugging detected</p>'
             if result.has_licensing:

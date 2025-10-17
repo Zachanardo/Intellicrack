@@ -30,6 +30,14 @@ from ..logging.audit_logger import get_audit_logger
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
 
+try:
+    from ..terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for resource manager")
+
 
 class ResourceType(Enum):
     """Types of managed resources."""
@@ -237,64 +245,6 @@ class VMResource(ManagedResource):
         audit_logger.log_vm_operation("stop", self.vm_name, success=True)
 
 
-class ContainerResource(ManagedResource):
-    """Managed Docker container resource."""
-
-    def __init__(self, container_id: str, container_name: str | None = None):
-        """Initialize container resource.
-
-        Args:
-            container_id: Docker container ID
-            container_name: Optional container name
-
-        """
-        self.container_id = container_id
-        self.container_name = container_name or container_id[:12]
-
-        super().__init__(
-            resource_id=container_id,
-            resource_type=ResourceType.CONTAINER,
-            cleanup_func=self._cleanup_container,
-            metadata={"container_name": self.container_name},
-        )
-
-    def _cleanup_container(self):
-        """Clean up the Docker container."""
-        try:
-            # Stop container
-            docker_path = shutil.which("docker")
-            if docker_path:
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [docker_path, "stop", self.container_id],
-                    check=False,
-                    capture_output=True,
-                    timeout=30,
-                )
-            else:
-                logger.warning("docker not found in PATH")
-
-            # Remove container
-            if docker_path:
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [docker_path, "rm", self.container_id],
-                    check=False,
-                    capture_output=True,
-                    timeout=10,  # noqa: S607
-                )
-
-            logger.info(f"Cleaned up container {self.container_name}")
-        except subprocess.TimeoutExpired:
-            # Force remove
-            if docker_path:
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [docker_path, "rm", "-f", self.container_id],
-                    check=False,
-                    capture_output=True,
-                )
-        except Exception as e:
-            logger.error(f"Failed to cleanup container {self.container_id}: {e}")
-
-
 class ResourceManager:
     """Main resource management class."""
 
@@ -495,26 +445,6 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def managed_container(self, container_id: str, container_name: str | None = None):
-        """Context manager for managed containers.
-
-        Args:
-            container_id: Docker container ID
-            container_name: Optional container name
-
-        Yields:
-            ContainerResource instance
-
-        """
-        resource = ContainerResource(container_id, container_name)
-
-        try:
-            self.register_resource(resource)
-            yield resource
-        finally:
-            self.release_resource(resource.resource_id)
-
-    @contextlib.contextmanager
     def temp_directory(self, prefix: str = "intellicrack_"):
         """Context manager for temporary directories.
 
@@ -525,7 +455,6 @@ class ResourceManager:
             Path to temporary directory
 
         """
-        import shutil
         import tempfile
 
         temp_dir = tempfile.mkdtemp(prefix=prefix)
@@ -659,6 +588,14 @@ class ResourceManager:
             if "cleanup_interval" in limits:
                 self.cleanup_interval = limits["cleanup_interval"]
 
+        # If terminal manager is available, log the limit changes there too
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message(f"Resource limits updated: {limits}")
+            except Exception as e:
+                logger.warning(f"Could not log to terminal manager: {e}")
+
         logger.info(f"Updated resource limits: {limits}")
 
     def get_resources_by_owner(self, owner: str) -> list[ManagedResource]:
@@ -723,7 +660,7 @@ class ResourceManager:
             current_time = time.time()
             stuck_resources = []
             for resource in self._resources.values():
-                if resource.status == ResourceState.CLEANING and (current_time - resource.created_at) > 300:  # 5 minutes
+                if resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300:  # 5 minutes
                     stuck_resources.append(resource.resource_id)
 
             if stuck_resources:
@@ -744,6 +681,20 @@ class ResourceManager:
             health["status"] = "unhealthy"
         elif health["warnings"]:
             health["status"] = "degraded"
+
+        # Report health status to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message(f"Resource manager health: {health['status']}")
+                if health["issues"]:
+                    for issue in health["issues"]:
+                        terminal_manager.log_terminal_message(f"Health issue: {issue}", level="error")
+                if health["warnings"]:
+                    for warning in health["warnings"]:
+                        terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
+            except Exception as e:
+                logger.warning(f"Could not report to terminal manager: {e}")
 
         return health
 
@@ -826,7 +777,7 @@ class AutoCleanupResource:
         self.resource_type = resource_type
 
     def __call__(self, func):
-        """Decorator that automatically manages resource cleanup."""
+        """Manage resource cleanup."""
 
         def wrapper(*args, **kwargs):
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
@@ -856,7 +807,7 @@ def create_resource_context(owner: str = None) -> ResourceContext:
 
 
 def auto_cleanup(resource_type: ResourceType):
-    """Decorator for automatic resource cleanup."""
+    """Clean up resources."""
     return AutoCleanupResource(resource_manager, resource_type)
 
     def get_usage_stats(self) -> dict[str, Any]:
@@ -888,7 +839,7 @@ def auto_cleanup(resource_type: ResourceType):
 
             return stats
 
-    def list_resources(self, resource_type: ResourceType | None = None) -> list[dict[str, Any]]:
+    def list_resources(self, resource_type: ResourceType | None = None) -> list[dict[str, Any]]:  # noqa: D417
         """List managed resources.
 
         Args:
@@ -936,7 +887,7 @@ class FallbackHandler:
         self._setup_builtin_fallbacks()
 
     def _setup_builtin_fallbacks(self):
-        """Setup built-in fallback mechanisms."""
+        """Set up built-in fallback mechanisms."""
         # Binary analysis fallbacks
         self.fallback_registry["strings"] = self._strings_fallback
         self.fallback_registry["file"] = self._file_type_fallback
@@ -949,7 +900,6 @@ class FallbackHandler:
 
         # Virtualization fallbacks
         self.fallback_registry["qemu"] = self._qemu_fallback
-        self.fallback_registry["docker"] = self._docker_fallback
 
         # Debugging fallbacks
         self.fallback_registry["gdb"] = self._gdb_fallback
@@ -1242,18 +1192,6 @@ class FallbackHandler:
             ],
         }
 
-    def _docker_fallback(self, *args, **kwargs) -> dict[str, Any]:
-        """Docker fallback suggestions."""
-        return {
-            "status": "fallback",
-            "message": "Docker not available. Using process isolation.",
-            "alternatives": [
-                "Process-based isolation with subprocess",
-                "chroot jails on Linux",
-                "Windows Sandbox for Windows",
-            ],
-        }
-
     def _gdb_fallback(self, *args, **kwargs) -> dict[str, Any]:
         """GDB fallback for debugging."""
         return {
@@ -1374,7 +1312,7 @@ def validate_external_dependencies() -> dict[str, Any]:
 
 
 def setup_resource_monitoring():
-    """Setup comprehensive resource monitoring."""
+    """Set up comprehensive resource monitoring."""
 
     def log_resource_stats():
         """Periodic resource statistics logging."""

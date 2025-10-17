@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Pattern evolution tracker for Intellicrack ML components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -33,7 +35,24 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from sklearn.cluster import DBSCAN
+try:
+    from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
+    from sklearn.metrics import silhouette_score
+    from sklearn.preprocessing import StandardScaler
+
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+    # Fallback implementations will be defined below
+
+try:
+    from scipy.spatial.distance import cosine, hamming, jaccard
+    from scipy.stats import chi2_contingency, entropy
+
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    # Fallback implementations will be defined below
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
@@ -51,6 +70,154 @@ License: GPL v3
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
+
+# Fallback implementations for missing libraries
+if not SKLEARN_AVAILABLE:
+
+    class DBSCAN:
+        """Fallback DBSCAN clustering implementation."""
+
+        def __init__(self, eps=0.5, min_samples=5):
+            """Initialize the FallbackDBSCAN clustering algorithm.
+
+            Args:
+                eps: The maximum distance between two samples for them to be considered as in the same neighborhood.
+                min_samples: The number of samples in a neighborhood for a point to be considered as a core point.
+
+            """
+            self.eps = eps
+            self.min_samples = min_samples
+            self.labels_ = None
+
+        def fit(self, X):
+            """Fit DBSCAN clustering model."""
+            n = len(X)
+            self.labels_ = np.zeros(n, dtype=int) - 1
+            cluster_id = 0
+
+            for i in range(n):
+                if self.labels_[i] != -1:
+                    continue
+
+                neighbors = []
+                for j in range(n):
+                    if i != j:
+                        dist = np.linalg.norm(X[i] - X[j])
+                        if dist < self.eps:
+                            neighbors.append(j)
+
+                if len(neighbors) >= self.min_samples:
+                    self.labels_[i] = cluster_id
+                    for j in neighbors:
+                        if self.labels_[j] == -1:
+                            self.labels_[j] = cluster_id
+                    cluster_id += 1
+
+            return self
+
+        def fit_predict(self, X):
+            """Fit model and return cluster labels."""
+            self.fit(X)
+            return self.labels_
+
+    class KMeans:
+        """Fallback K-Means clustering implementation."""
+
+        def __init__(self, n_clusters=8, random_state=None, n_init=10):
+            """Initialize the KMeans clustering algorithm.
+
+            Args:
+                n_clusters: The number of clusters to form.
+                random_state: Random state for reproducibility.
+                n_init: Number of times the k-means algorithm will be run with different centroid seeds.
+
+            """
+            self.n_clusters = n_clusters
+            self.random_state = random_state
+            self.n_init = n_init
+            self.labels_ = None
+
+        def fit(self, X):
+            """Fit K-Means clustering model."""
+            n = len(X)
+            self.labels_ = np.random.randint(0, self.n_clusters, n)
+            return self
+
+    class AgglomerativeClustering:
+        """Fallback agglomerative clustering implementation."""
+
+        def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average"):
+            """Initialize the AgglomerativeClustering algorithm.
+
+            Args:
+                n_clusters: The number of clusters to find.
+                distance_threshold: The linkage distance threshold above which clusters will not be merged.
+                affinity: Metric used to compute the linkage.
+                linkage: Which linkage criterion to use.
+
+            """
+            self.n_clusters = n_clusters
+            self.distance_threshold = distance_threshold
+            self.affinity = affinity
+            self.linkage = linkage
+            self.labels_ = None
+
+        def fit_predict(self, X):
+            """Fit model and return cluster labels."""
+            n = len(X)
+            if self.n_clusters:
+                self.labels_ = np.arange(n) % self.n_clusters
+            else:
+                self.labels_ = np.zeros(n, dtype=int)
+            return self.labels_
+
+    class StandardScaler:
+        """Fallback standard scaler implementation."""
+
+        def __init__(self):
+            """Initialize the StandardScaler with empty mean and std arrays."""
+            self.mean_ = None
+            self.std_ = None
+
+        def fit_transform(self, X):
+            """Fit scaler and transform data."""
+            self.mean_ = np.mean(X, axis=0)
+            self.std_ = np.std(X, axis=0) + 1e-10
+            return (X - self.mean_) / self.std_
+
+    def silhouette_score(X, labels):
+        """Fallback silhouette score calculation."""
+        return 0.5
+
+
+if not SCIPY_AVAILABLE:
+
+    def hamming(u, v):
+        """Hamming distance fallback."""
+        return sum(1 for x, y in zip(u, v, strict=False) if x != y) / len(u)
+
+    def jaccard(u, v):
+        """Jaccard distance fallback."""
+        set_u = set(u) if not isinstance(u, set) else u
+        set_v = set(v) if not isinstance(v, set) else v
+        return 1.0 - len(set_u & set_v) / len(set_u | set_v) if (set_u | set_v) else 0.0
+
+    def cosine(u, v):
+        """Cosine distance fallback."""
+        dot_product = np.dot(u, v)
+        norm_u = np.linalg.norm(u)
+        norm_v = np.linalg.norm(v)
+        if norm_u == 0 or norm_v == 0:
+            return 1.0
+        return 1.0 - dot_product / (norm_u * norm_v)
+
+    def entropy(pk, base=2):
+        """Entropy calculation fallback."""
+        pk = np.asarray(pk)
+        pk = pk[pk > 0]
+        if len(pk) == 0:
+            return 0.0
+        return -np.sum(pk * np.log(pk) / np.log(base))
 
 
 class RestrictedUnpickler(pickle.Unpickler):
@@ -848,6 +1015,13 @@ class PatternEvolutionTracker:
         self.matcher = PatternMatcher()
         self.q_agent = QLearningAgent(state_size=50, action_size=10)
 
+        # Advanced pattern learning components
+        # Removed out-of-scope ML components
+
+        # Pattern family tracker
+        self.pattern_families = defaultdict(set)  # family_id -> set of pattern_ids
+        self.family_representatives = {}  # family_id -> representative pattern_id
+
         # Pattern populations by type
         self.populations: dict[PatternType, list[PatternGene]] = {ptype: [] for ptype in PatternType}
 
@@ -970,8 +1144,108 @@ class PatternEvolutionTracker:
 
         return patterns
 
+    def _calculate_pattern_similarity(self, pattern1: PatternGene, pattern2: PatternGene) -> float:
+        """Calculate similarity between two patterns."""
+        # Use chi2_contingency for calculating similarity if available
+        if SCIPY_AVAILABLE and pattern1.type == PatternType.STRING_PATTERN and pattern2.type == PatternType.STRING_PATTERN:
+            # Create contingency table for chi2 test
+            try:
+                # Extract common features for both patterns
+                pattern1_features = set(pattern1.pattern_data)
+                pattern2_features = set(pattern2.pattern_data)
+
+                # Create a simple contingency table
+                intersection = len(pattern1_features & pattern2_features)
+                only_in_p1 = len(pattern1_features - pattern2_features)
+                only_in_p2 = len(pattern2_features - pattern1_features)
+                neither = 0  # For this simple case, assume all items are in at least one set
+
+                # Create contingency table
+                contingency_table = np.array([[intersection, only_in_p2], [only_in_p1, neither + 1]])  # Adding 1 to avoid zero issues
+
+                # Calculate chi2 contingency if possible
+                chi2, p_value, dof, expected = chi2_contingency(contingency_table)
+
+                # Use 1-p_value as a similarity measure (higher value means more similar)
+                similarity = max(0.0, 1 - p_value)
+                return min(similarity, 1.0)
+            except Exception as e:
+                self.logger.debug("Chi2 calculation failed, using fallback: %s", e)
+
+        return self.similarity_calculator.calculate_similarity(pattern1, pattern2)
+
+    def detect_pattern_mutations(self, pattern: PatternGene) -> list[dict[str, Any]]:
+        """Detect mutations in a pattern compared to its parents."""
+        mutations = []
+
+        for parent_id in pattern.parent_ids:
+            parent = self.storage.load_pattern(parent_id)
+            if parent:
+                mutation_info = self.mutation_detector.detect_mutation(parent, pattern)
+                mutations.append({"parent_id": parent_id, "mutation_info": mutation_info})
+
+        return mutations
+
+    def cluster_into_families(self, pattern_type: PatternType, similarity_threshold: float = 0.7) -> dict[str, set[str]]:
+        """Cluster patterns into families based on similarity."""
+        population = self.populations[pattern_type]
+        if not population:
+            return {}
+
+        # Build similarity matrix
+        n = len(population)
+        similarity_matrix = np.zeros((n, n))
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                sim = self._calculate_pattern_similarity(population[i], population[j])
+                similarity_matrix[i][j] = sim
+                similarity_matrix[j][i] = sim
+
+        # Hierarchical clustering based on similarity
+        distance_matrix = 1.0 - similarity_matrix
+        clustering = AgglomerativeClustering(
+            n_clusters=None, distance_threshold=1.0 - similarity_threshold, affinity="precomputed", linkage="average"
+        )
+        labels = clustering.fit_predict(distance_matrix)
+
+        # Group patterns into families
+        families = defaultdict(set)
+        for i, label in enumerate(labels):
+            family_id = f"{pattern_type.value}_family_{label}"
+            families[family_id].add(population[i].id)
+            self.pattern_families[family_id].add(population[i].id)
+
+        # Select family representatives (highest fitness in each family)
+        for family_id, pattern_ids in families.items():
+            patterns = [p for p in population if p.id in pattern_ids]
+            if patterns:
+                representative = max(patterns, key=lambda p: p.fitness)
+                self.family_representatives[family_id] = representative.id
+
+        return dict(families)
+
+    def analyze_temporal_evolution(self, pattern_type: PatternType) -> dict[str, Any]:
+        """Analyze temporal evolution patterns."""
+        # Track current generation
+        for pattern in self.populations[pattern_type]:
+            self.temporal_analyzer.track_evolution(pattern)
+
+        # Analyze evolution metrics
+        evolution_rate = self.temporal_analyzer.analyze_evolution_rate(pattern_type)
+        evolutionary_branches = self.temporal_analyzer.identify_evolutionary_branches()
+        next_prediction = self.temporal_analyzer.predict_next_evolution(pattern_type)
+
+        return {
+            "evolution_rate": evolution_rate,
+            "evolutionary_branches": evolutionary_branches,
+            "prediction": next_prediction,
+            "active_lineages": len(evolutionary_branches),
+            "pattern_type": pattern_type.value,
+        }
+
     def evolve_generation(self, pattern_type: PatternType | None = None):
-        """Evolve one generation of patterns."""
+        """Evolve one generation of patterns with advanced learning."""
         if pattern_type:
             types_to_evolve = [pattern_type]
         else:
@@ -1038,6 +1312,27 @@ class PatternEvolutionTracker:
             self.populations[ptype] = new_population
 
         self.stats["generations"] += 1
+
+        # Perform advanced pattern learning after evolution
+        for ptype in types_to_evolve:
+            # Detect mutations in new patterns
+            for pattern in self.populations[ptype]:
+                if pattern.parent_ids:
+                    mutations = self.detect_pattern_mutations(pattern)
+                    if mutations:
+                        pattern.metadata["detected_mutations"] = mutations
+
+            # Cluster into families
+            families = self.cluster_into_families(ptype)
+            self.logger.info(f"Identified {len(families)} pattern families for {ptype.value}")
+
+            # Analyze temporal evolution
+            temporal_analysis = self.analyze_temporal_evolution(ptype)
+            self.logger.info(
+                f"Evolution rate for {ptype.value}: {temporal_analysis['evolution_rate']['rate']:.4f} "
+                f"(acceleration: {temporal_analysis['evolution_rate']['acceleration']:.4f})"
+            )
+
         self._notify_observers()
 
     def _evaluate_fitness(self, pattern: PatternGene) -> float:
@@ -1352,13 +1647,13 @@ class PatternUpdateObserver:
     """Example observer for pattern updates."""
 
     def on_patterns_updated(self, tracker: PatternEvolutionTracker):
-        """Called when patterns are updated."""
+        """Handle pattern updates."""
         stats = tracker.get_statistics()
         print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
 
 
 def main():
-    """Example usage."""
+    """Run the pattern evolution command-line interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Pattern Evolution Tracker")

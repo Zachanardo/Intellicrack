@@ -1,13 +1,15 @@
 """Symbolic execution engine for dynamic path analysis and constraint solving."""
 
+import hashlib
 import logging
 import os
+import random
 import struct
 import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Symbolic Execution Engine for Automatic Vulnerability Discovery
@@ -77,7 +79,7 @@ class SymbolicExecutionEngine:
         self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
 
     def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
-        """Setup angr project and initial state for symbolic execution."""
+        """Set up angr project and initial state for symbolic execution."""
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Create symbolic arguments
@@ -549,7 +551,6 @@ class SymbolicExecutionEngine:
 
     def _generate_uaf_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate use-after-free exploit with object lifecycle manipulation."""
-        import random
         import struct
 
         uaf_info = vulnerability.get("uaf_info", {})
@@ -571,10 +572,11 @@ class SymbolicExecutionEngine:
 
         # Create spray pattern with markers for heap feng shui
         for i in range(spray_count):
-            # Each spray object contains markers and potential fake vtables
+            # Each spray object contains markers and hijacked vtable pointers
             marker = struct.pack("<Q", 0x4141414141410000 + i)
             # Include potential gadget addresses from module
-            gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)
+            # Note: Using random module for generating memory addresses in simulation, not cryptographic purposes
+            gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)  # noqa: S311
             spray_payload += marker
             spray_payload += struct.pack("<Q", gadget_addr)
 
@@ -629,7 +631,7 @@ class SymbolicExecutionEngine:
             gadgets = process_info.get("gadgets", [])
             if gadgets:
                 # Use discovered gadgets for vtable entries
-                for i, gadget in enumerate(gadgets[:10]):
+                for _i, gadget in enumerate(gadgets[:10]):
                     vtable_data += struct.pack("<Q", gadget["address"])
             else:
                 # Generate vtable entries based on common patterns
@@ -893,7 +895,6 @@ int main() {{
 
     def _generate_type_confusion_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
         """Generate type confusion exploit with object type manipulation."""
-
         confusion_info = vulnerability.get("confusion_info", {})
         source_type = confusion_info.get("source_type", "TypeA")
         target_type = confusion_info.get("target_type", "TypeB")
@@ -1077,7 +1078,7 @@ int main() {{
             layout += struct.pack("<Q", base + vtable_offset)
 
         # Add type identifier based on class name hash
-        type_hash = int(hashlib.md5(class_data["type"].encode()).hexdigest()[:8], 16)
+        type_hash = int(hashlib.sha256(class_data["type"].encode()).hexdigest()[:8], 16)
         layout += struct.pack("<I", type_hash)
 
         # Add reference counter (common in many C++ objects)
@@ -1208,7 +1209,7 @@ int main() {{
         if ".rodata" in sections:
             rodata = sections[".rodata"]
             # Estimate based on class name hash
-            offset = int(hashlib.md5(class_name.encode()).hexdigest()[:4], 16)
+            offset = int(hashlib.sha256(class_name.encode()).hexdigest()[:4], 16)
             return rodata["address"] + (offset & 0xFFF0)
 
         # Fallback to base + offset
@@ -2001,7 +2002,7 @@ int main() {{
         return code_sections
 
     def _basic_pattern_analysis(self, binary_data: bytes) -> dict[str, Any]:
-        """Basic pattern analysis when disassembly is not available."""
+        """Perform basic pattern analysis when disassembly is not available."""
         patterns = {
             "instructions": [],
             "function_calls": [],
@@ -2566,7 +2567,7 @@ int main() {{
             pass
 
     def _malloc_hook(self, state):
-        """Hook for malloc to track allocations."""
+        """Track allocations by hooking malloc."""
         size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Perform the allocation
@@ -2584,7 +2585,7 @@ int main() {{
         state.regs.rax = addr
 
     def _free_hook(self, state):
-        """Hook for free to track deallocations and detect use-after-free."""
+        """Track deallocations and detect use-after-free by hooking free."""
         ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Check if already freed (double-free)
@@ -2670,7 +2671,7 @@ int main() {{
             return False
 
     def _setup_exploration_project(self, start_address: int) -> tuple[Any, Any]:
-        """Setup angr project and initial state for exploration."""
+        """Set up angr project and initial state for exploration."""
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
         # Verify start address is valid
@@ -3906,4 +3907,7 @@ class TaintTracker:
         return self.tainted_data.get(str(data), None)
 
 
-__all__ = ["SymbolicExecutionEngine"]
+# Create alias for compatibility
+SymbolicExecutor = SymbolicExecutionEngine
+
+__all__ = ["SymbolicExecutionEngine", "SymbolicExecutor"]

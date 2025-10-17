@@ -1,11 +1,24 @@
 """Simple Integration Script for Adding Radare2 UI to Existing Application.
 
+This script provides a simple way to integrate all radare2 functionality
+into the existing Intellicrack application without modifying core files.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
-This script provides a simple way to integrate all radare2 functionality
-into the existing Intellicrack application without modifying core files.
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sys
@@ -89,7 +102,8 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
 
 
 def integrate_with_main_app():
-    """Automatic integration function that tries to find and integrate with
+    """Automatic integration function that tries to find and integrate with.
+
     the main IntellicrackApp instance.
 
     This function can be called from the main application module to
@@ -200,7 +214,7 @@ def show_integration_status(app_instance=None) -> dict:
 
 # Example usage functions for documentation
 def example_manual_integration():
-    """Example of manual integration with existing app.
+    """Show example of manual integration with existing app.
 
     This shows how to manually integrate radare2 with an existing app instance.
     """
@@ -219,7 +233,7 @@ def example_manual_integration():
 
 
 def example_automatic_integration():
-    """Example of automatic integration.
+    """Show example of automatic integration.
 
     This shows how to automatically integrate radare2 without knowing the app instance.
     """
@@ -235,7 +249,7 @@ def example_automatic_integration():
 
 
 def example_standalone_app():
-    """Example of creating a standalone radare2 application.
+    """Show example of creating a standalone radare2 application.
 
     This shows how to create a dedicated radare2 analysis application.
     """

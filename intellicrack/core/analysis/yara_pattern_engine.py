@@ -78,6 +78,7 @@ class YaraScanResult:
     total_rules: int = 0
     scan_time: float = 0.0
     error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def has_protections(self) -> bool:
@@ -125,7 +126,9 @@ class YaraPatternEngine:
         self.custom_rules_path = custom_rules_path
         self.compiled_rules: yara.Rules | None = None
         self.rule_metadata: dict[str, dict[str, Any]] = {}
-        self.scanned_files: set[str] = set()  # Track scanned files for deduplication
+        self.rule_sources: dict[str, str] = {}  # Store rule source text for metadata extraction
+        # Track scanned files with modification time and size for smart deduplication
+        self.scanned_files: dict[str, tuple[float, int, str]] = {}  # path -> (mtime, size, hash)
         self._load_rules()
 
     def _load_rules(self):
@@ -145,6 +148,12 @@ class YaraPatternEngine:
             for rule_file in rules_dir.glob("*.yar"):
                 namespace = rule_file.stem
                 rule_files[namespace] = str(rule_file)
+                # Store rule source for metadata extraction
+                try:
+                    with open(rule_file, "r", encoding="utf-8") as f:
+                        self.rule_sources[namespace] = f.read()
+                except Exception as e:
+                    logger.debug(f"Could not read rule source from {rule_file}: {e}")
 
             # Load custom rules if specified
             if self.custom_rules_path:
@@ -153,11 +162,23 @@ class YaraPatternEngine:
                     for rule_file in custom_path.glob("*.yar"):
                         namespace = f"custom_{rule_file.stem}"
                         rule_files[namespace] = str(rule_file)
+                        # Store rule source for metadata extraction
+                        try:
+                            with open(rule_file, "r", encoding="utf-8") as f:
+                                self.rule_sources[namespace] = f.read()
+                        except Exception as e:
+                            logger.debug(f"Could not read rule source from {rule_file}: {e}")
 
             if not rule_files:
                 logger.warning("No YARA rules found - creating minimal rule set")
                 self._create_minimal_rules(rules_dir)
                 rule_files["basic"] = str(rules_dir / "basic.yar")
+                # Store the created minimal rules source
+                try:
+                    with open(rules_dir / "basic.yar", "r", encoding="utf-8") as f:
+                        self.rule_sources["basic"] = f.read()
+                except Exception as e:
+                    logger.warning(f"Failed to read basic.yar rule file: {e}")
 
             # Compile rules
             self.compiled_rules = yara.compile(filepaths=rule_files)
@@ -483,18 +504,68 @@ rule Basic_PE_Detection
         (rules_dir / "basic.yar").write_text(minimal_rules)
 
     def _extract_rule_metadata(self):
-        """Extract metadata from compiled rules."""
+        """Extract metadata from compiled rules by parsing rule sources."""
+        import re
+
         if not self.compiled_rules:
             return
 
-        # Note: yara-python doesn't provide direct access to rule metadata
-        # This is a simplified implementation
+        def parse_meta_from_source(rule_source, rule_name):
+            """Parse meta fields from a specific rule in the source."""
+            meta = {}
+
+            # Find the specific rule in the source
+            rule_pattern = rf"rule\s+{re.escape(rule_name)}\s*{{.*?^}}"
+            rule_match = re.search(rule_pattern, rule_source, re.MULTILINE | re.DOTALL)
+
+            if not rule_match:
+                return meta
+
+            rule_text = rule_match.group(0)
+
+            # Find the meta section
+            meta_pattern = r"meta:\s*((?:(?!\n\s*(?:strings:|condition:|tags:)).)*)"
+            meta_match = re.search(meta_pattern, rule_text, re.DOTALL)
+
+            if meta_match:
+                meta_section = meta_match.group(1)
+                # Parse individual meta fields
+                for line in meta_section.splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    # Match key = value pairs
+                    match = re.match(r'(\w+)\s*=\s*"?([^"\n]+)"?', line)
+                    if match:
+                        key, value = match.groups()
+                        # Try to convert confidence to float
+                        if key == "confidence":
+                            try:
+                                value = float(value)
+                            except ValueError:
+                                value = 0.5
+                        meta[key] = value
+
+            return meta
+
+        # Extract metadata for each rule
         for rule in self.compiled_rules:
+            # Find which namespace this rule belongs to
+            namespace = rule.namespace if hasattr(rule, "namespace") else "unknown"
+
+            # Parse metadata from source if available
+            meta = {}
+            if namespace in self.rule_sources:
+                meta = parse_meta_from_source(self.rule_sources[namespace], rule.identifier)
+
+            # Store the metadata with defaults for missing fields
             self.rule_metadata[rule.identifier] = {
-                "namespace": rule.namespace,
-                "tags": list(rule.tags),
-                "category": "unknown",
-                "confidence": 0.5,
+                "namespace": namespace,
+                "tags": list(rule.tags) if hasattr(rule, "tags") else [],
+                "category": meta.get("category", "unknown"),
+                "confidence": meta.get("confidence", 0.5),
+                "description": meta.get("description", ""),
+                "meta": meta,  # Store all parsed metadata
             }
 
     def _count_total_rules(self) -> int:
@@ -542,20 +613,65 @@ rule Basic_PE_Detection
             temp_dir = tempfile.mkdtemp(prefix="yara_scan_")
             logger.debug(f"Created temporary directory for large file scan: {temp_dir}")
 
-        # Track scanned files to avoid duplicate processing
+        # Track scanned files with modification time and size to detect changes
         abs_file_path = os.path.abspath(file_path)
-        if abs_file_path in self.scanned_files:
-            logger.debug(f"File already scanned: {abs_file_path}")
-        self.scanned_files.add(abs_file_path)
 
-        # Generate file hash for tracking and metadata
+        # Get file metadata for deduplication
+        try:
+            file_stat = os.stat(file_path)
+            file_mtime = file_stat.st_mtime
+            file_size = file_stat.st_size
+        except Exception:
+            file_mtime = 0
+            file_size = 0
+
+        # Check if file was already scanned and hasn't changed
+        if abs_file_path in self.scanned_files:
+            cached_mtime, cached_size, cached_hash = self.scanned_files[abs_file_path]
+            if file_mtime == cached_mtime and file_size == cached_size:
+                logger.debug(f"File already scanned and unchanged: {abs_file_path}")
+                # Return cached result structure to avoid duplicate scanning
+                return YaraScanResult(
+                    file_path=file_path,
+                    matches=[],
+                    total_rules=self._count_total_rules(),
+                    scan_time=0.0,
+                    error=f"File already scanned and unchanged: {file_path} (skipping duplicate scan)",
+                    metadata={"cached": True, "file_hash": cached_hash},
+                )
+            else:
+                logger.debug(f"File changed since last scan, rescanning: {abs_file_path}")
+
+        # Generate robust file hash for tracking and metadata
         file_hash = ""
         try:
+            hasher = hashlib.sha256()
             with open(file_path, "rb") as f:
-                file_data = f.read(8192)  # Read first 8KB for hash
-                file_hash = hashlib.sha256(file_data).hexdigest()[:16]
-        except Exception:
-            file_hash = "unknown"
+                # Hash multiple chunks for better uniqueness
+                # Read beginning, middle, and end of file
+                f.seek(0)
+                hasher.update(f.read(8192))  # First 8KB
+
+                # Hash middle chunk if file is large enough
+                if file_size > 32768:
+                    f.seek(file_size // 2)
+                    hasher.update(f.read(8192))  # Middle 8KB
+
+                # Hash end chunk if file is large enough
+                if file_size > 16384:
+                    f.seek(max(0, file_size - 8192))
+                    hasher.update(f.read(8192))  # Last 8KB
+
+                # Include file size in hash for additional uniqueness
+                hasher.update(str(file_size).encode())
+
+            file_hash = hasher.hexdigest()[:32]  # Use more hash bytes for better uniqueness
+        except Exception as e:
+            logger.debug(f"Could not generate file hash: {e}")
+            file_hash = f"unknown_{file_size}_{int(file_mtime)}"
+
+        # Update cache with new file info
+        self.scanned_files[abs_file_path] = (file_mtime, file_size, file_hash)
 
         try:
             # Scan file with timeout
@@ -574,16 +690,46 @@ rule Basic_PE_Detection
 
                 # Process string matches
                 for string_match in match.strings:
+                    # Handle string matches robustly across yara-python versions
+                    # String matches can be tuples or objects with attributes
+                    if isinstance(string_match, tuple):
+                        offset, identifier, matched_data = string_match
+                        length = len(matched_data) if matched_data else 0
+                    else:
+                        # Try to access as attributes first, fall back to indexing
+                        try:
+                            offset = string_match.offset if hasattr(string_match, "offset") else string_match[0]
+                            identifier = string_match.identifier if hasattr(string_match, "identifier") else string_match[1]
+                            # The matched data is typically at index 2
+                            if hasattr(string_match, "__getitem__"):
+                                matched_data = string_match[2] if len(string_match) > 2 else b""
+                            else:
+                                matched_data = b""
+                            length = len(matched_data) if matched_data else 0
+                        except (AttributeError, IndexError, TypeError):
+                            # Skip malformed matches
+                            logger.debug(f"Skipping malformed string match in file scan: {string_match}")
+                            continue
+
+                    # Convert bytes to string if necessary
+                    if isinstance(matched_data, bytes):
+                        try:
+                            string_data = matched_data.decode("utf-8", errors="replace")[:100]
+                        except UnicodeDecodeError:
+                            string_data = str(matched_data)[:100]  # Limit length for safety
+                    else:
+                        string_data = str(matched_data)[:100] if matched_data else ""
+
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace,
-                        tags=list(match.tags),
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
-                        offset=string_match.offset,
-                        length=string_match.length,
-                        identifier=string_match.identifier,
-                        string_data=string_match.instances[0] if string_match.instances else "",
+                        offset=offset,
+                        length=length,
+                        identifier=identifier,
+                        string_data=string_data,
                         metadata=dict(match.meta) if hasattr(match, "meta") else {},
                     )
                     matches.append(yara_match)
@@ -592,8 +738,8 @@ rule Basic_PE_Detection
                 if not match.strings:
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace,
-                        tags=list(match.tags),
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
                         offset=0,
@@ -610,11 +756,12 @@ rule Basic_PE_Detection
                 matches=matches,
                 total_rules=self._count_total_rules(),
                 scan_time=scan_time,
+                metadata={
+                    "file_hash": file_hash,
+                    "file_size": file_size,
+                    "file_mtime": file_mtime,
+                },
             )
-
-            # Add file hash to result metadata if available
-            if hasattr(result, "metadata"):
-                result.metadata = {"file_hash": file_hash}
 
             return result
 
@@ -723,16 +870,54 @@ rule Basic_PE_Detection
                 confidence = self._calculate_confidence(match)
 
                 for string_match in match.strings:
+                    # Handle string matches robustly across yara-python versions
+                    # String matches can be tuples or objects with attributes
+                    if isinstance(string_match, tuple):
+                        offset, identifier, matched_data = string_match
+                        length = len(matched_data) if matched_data else 0
+                    else:
+                        # Try to access as attributes first, fall back to indexing
+                        try:
+                            offset = string_match.offset
+                            identifier = string_match.identifier
+                            # Note: 'instances' is not a valid attribute in yara-python
+                            # The matched data is typically at index 2 of the tuple
+                            if hasattr(string_match, "__getitem__"):
+                                matched_data = string_match[2] if len(string_match) > 2 else b""
+                            else:
+                                matched_data = b""
+                            length = len(matched_data) if matched_data else 0
+                        except (AttributeError, IndexError):
+                            # Fall back to tuple unpacking
+                            try:
+                                offset = string_match[0]
+                                identifier = string_match[1]
+                                matched_data = string_match[2] if len(string_match) > 2 else b""
+                                length = len(matched_data) if matched_data else 0
+                            except (IndexError, ValueError):
+                                # Skip malformed matches
+                                logger.debug(f"Skipping malformed string match: {string_match}")
+                                continue
+
+                    # Convert bytes to string if necessary
+                    if isinstance(matched_data, bytes):
+                        try:
+                            string_data = matched_data.decode("utf-8", errors="replace")[:100]
+                        except UnicodeDecodeError:
+                            string_data = str(matched_data)[:100]
+                    else:
+                        string_data = str(matched_data)[:100] if matched_data else ""
+
                     yara_match = YaraMatch(
                         rule_name=match.rule,
-                        namespace=match.namespace,
-                        tags=list(match.tags),
+                        namespace=match.namespace if hasattr(match, "namespace") else "",
+                        tags=list(match.tags) if hasattr(match, "tags") else [],
                         category=category,
                         confidence=confidence,
-                        offset=string_match.offset,
-                        length=string_match.length,
-                        identifier=string_match.identifier,
-                        string_data=string_match.instances[0] if string_match.instances else "",
+                        offset=offset,
+                        length=length,
+                        identifier=identifier,
+                        string_data=string_data,
                         metadata=dict(match.meta) if hasattr(match, "meta") else {},
                     )
                     matches.append(yara_match)

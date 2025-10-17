@@ -41,7 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Binary Similarity Search Dialog
@@ -481,7 +481,7 @@ class BinarySimilaritySearchDialog(QDialog):
 
 
 def create_similarity_search_dialog(binary_path: str, parent=None) -> BinarySimilaritySearchDialog:
-    """Factory function to create a BinarySimilaritySearchDialog.
+    """Create a BinarySimilaritySearchDialog.
 
     Args:
         binary_path: Path to binary for similarity search

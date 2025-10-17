@@ -50,7 +50,7 @@ ANALYSIS_SCRIPTS_WHITELIST = [
 
 
 def on_frida_message(main_app, binary_path, message, data):
-    """Callback for handling messages from Frida scripts."""
+    """Handle messages from Frida scripts."""
     try:
         if message["type"] == "send":
             payload = message.get("payload", "")
@@ -64,7 +64,7 @@ def on_frida_message(main_app, binary_path, message, data):
 
 
 def run_frida_script_thread(main_app, binary_path, script_path):
-    """The actual Frida script execution logic that runs in a separate thread."""
+    """Execute Frida script logic in a separate thread."""
     session = None
     try:
         main_app.update_output.emit(
@@ -101,8 +101,9 @@ def run_frida_script_thread(main_app, binary_path, script_path):
 
 
 def run_frida_analysis(main_app):
-    """Presents a dialog for the user to select a whitelisted analysis script,
-    then runs it against the currently loaded binary.
+    """Present a dialog for the user to select a whitelisted analysis script,.
+
+    then run it against the currently loaded binary.
     """
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
@@ -143,7 +144,7 @@ def run_frida_analysis(main_app):
 
 
 def stop_frida_analysis(main_app):
-    """Stops a running Frida analysis session for the current binary."""
+    """Stop running Frida analysis session for the current binary."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
         return

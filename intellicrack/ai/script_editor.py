@@ -8,6 +8,23 @@ This module provides advanced script editing capabilities including:
 5. Performance-based optimization
 
 Production-ready AI-driven script editing system.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import hashlib
@@ -21,7 +38,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from intellicrack.logger import logger
+from intellicrack.ai.qemu_manager import QEMUManager
+from intellicrack.utils.logger import logger
 
 from .ai_script_generator import LLMScriptInterface, PromptEngineer, ScriptType
 
@@ -93,13 +111,11 @@ class ScriptVersion:
 class ScriptTester:
     """Automated testing framework for generated scripts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize script tester with LLM interface for validation."""
         self.llm_interface = LLMScriptInterface()
 
-    def validate_script(
-        self, script_content: str, script_type: str, binary_path: Optional[str] = None
-    ) -> Tuple[ValidationResult, Dict[str, Any]]:
+    def validate_script(self, script_content: str, script_type: str) -> Tuple[ValidationResult, Dict[str, Any]]:
         """Validate script using LLM for comprehensive analysis."""
         results = {
             "syntax_check": True,
@@ -143,12 +159,9 @@ Provide only the JSON response, no explanations."""
 
         try:
             # Use LLM for validation
-            from .ai_script_generator import ScriptGenerationRequest
-
-            dummy_request = ScriptGenerationRequest(prompt="validation", script_type=script_type, binary_path=binary_path)
 
             # Get LLM analysis
-            response, _ = self.llm_interface.generate_script(dummy_request, validation_prompt)
+            response, _ = self.llm_interface.generate_script(validation_prompt)
 
             # Parse LLM response
             try:
@@ -219,9 +232,10 @@ Provide only the JSON response, no explanations."""
             logger.error(f"Script execution test failed: {e}")
             return {"error": str(e), "success": False}
 
-    def _get_qemu_manager(self):
+    def _get_qemu_manager(self) -> QEMUManager:
         """Get or create QEMUManager instance."""
-        from intellicrack.ai.qemu_manager import QEMUManager
+        if not hasattr(self, "_qemu_manager"):
+            from intellicrack.ai.qemu_manager import QEMUManager
 
         if not hasattr(self, "_qemu_manager"):
             self._qemu_manager = QEMUManager()
@@ -276,7 +290,7 @@ Provide only the JSON response, no explanations."""
         except Exception:
             return ValidationResult.RUNTIME_ERROR
 
-    def _scan_security_issues(self, script: str, script_type: str) -> Dict[str, Any]:
+    def _scan_security_issues(self, script: str) -> Dict[str, Any]:
         """Scan for potential security issues."""
         issues = {"critical_issues": [], "warnings": [], "info": []}
 
@@ -304,7 +318,7 @@ Provide only the JSON response, no explanations."""
 
         return issues
 
-    def _analyze_performance(self, script: str, script_type: str) -> Dict[str, Any]:
+    def _analyze_performance(self, script: str) -> Dict[str, Any]:
         """Analyze script performance characteristics."""
         metrics = {
             "complexity_score": 0.0,
@@ -349,7 +363,6 @@ class ScriptVersionManager:
 
     def create_version(
         self,
-        script_path: str,
         content: str,
         edit_history: List[ScriptEdit],
         parent_version: Optional[str] = None,
@@ -383,7 +396,7 @@ class ScriptVersionManager:
         logger.info(f"Created script version: {version_id}")
         return version
 
-    def get_version_history(self, script_path: str) -> List[ScriptVersion]:
+    def get_version_history(self) -> List[ScriptVersion]:
         """Get version history for a script."""
         versions = []
 
@@ -465,12 +478,13 @@ class ScriptVersionManager:
 class AIScriptEditor:
     """Advanced AI-powered script editor with iterative improvement capabilities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize AI script editor with all necessary components for advanced editing."""
         self.llm_interface = LLMScriptInterface()
         self.prompt_engineer = PromptEngineer()
         self.tester = ScriptTester()
         import intellicrack
+
         root = Path(intellicrack.__file__).parent
         self.version_manager = ScriptVersionManager(str(root / "scripts"))
         self.edit_history = {}  # script_path -> List[ScriptEdit]
@@ -511,7 +525,7 @@ class AIScriptEditor:
             llm_prompt = self._build_edit_prompt(original_content, edit_request, script_type)
 
             # Generate modified script
-            modified_content = self.llm_interface.generate_script(edit_request, llm_prompt)
+            modified_content = self.llm_interface.generate_script(llm_prompt)
 
             # Validate modified script
             validation_result, validation_details = self.tester.validate_script(modified_content, script_type, test_binary)
@@ -579,7 +593,7 @@ class AIScriptEditor:
         max_iterations: int = 5,
         test_binary: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Iteratively improve a script through multiple edit cycles using QEMU feedback."""
+        """Improve a script iteratively through multiple edit cycles using QEMU feedback."""
         results = {
             "iterations": [],
             "final_success": False,
@@ -603,7 +617,7 @@ class AIScriptEditor:
             results["qemu_feedback"].append(qemu_result)
 
             # Analyze QEMU results to determine if goals are achieved
-            goals_achieved = self._analyze_qemu_results_for_goals(qemu_result, improvement_goals, current_content)
+            goals_achieved = self._analyze_qemu_results_for_goals(qemu_result, improvement_goals)
 
             # If goals are achieved, we're done
             if goals_achieved:
@@ -619,7 +633,7 @@ class AIScriptEditor:
                 break
 
             # Create improvement prompt with QEMU feedback
-            improvement_prompt = self._create_improvement_prompt_with_feedback(improvement_goals, qemu_result, current_content)
+            improvement_prompt = self._create_improvement_prompt_with_feedback(improvement_goals, qemu_result)
 
             # Edit script based on QEMU feedback
             edit_result = self.edit_script(script_path, improvement_prompt, EditType.OPTIMIZATION, test_binary)
@@ -718,7 +732,7 @@ class AIScriptEditor:
         script_type = self._detect_script_type(script_path, script_content)
 
         # Analyze current script
-        validation_result, validation_details = self.tester.validate_script(script_content, script_type)
+        _, validation_details = self.tester.validate_script(script_content, script_type)
 
         suggestions = []
 
@@ -854,75 +868,75 @@ Generate the complete modified script:"""
         """Generate unique edit ID."""
         return f"edit_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.urandom(4).hex()}"
 
-    def _analyze_qemu_results_for_goals(self, qemu_result: Dict[str, Any], goals: List[str], script_content: str) -> bool:
+    def _analyze_qemu_results_for_goals(self, qemu_result: Dict[str, Any], goals: List[str]) -> bool:
         """Analyze QEMU execution results to determine if improvement goals are met."""
         if not qemu_result.get("success"):
             return False
 
-        # Check each goal against QEMU output
-        goals_met = 0
         output = qemu_result.get("output", "").lower()
         errors = qemu_result.get("errors", [])
+        performance = qemu_result.get("performance", {})
 
-        for goal in goals:
-            goal_lower = goal.lower()
-
-            # Check for common goal patterns
-            if "no errors" in goal_lower or "error-free" in goal_lower:
-                if not errors or len(errors) == 0:
-                    goals_met += 1
-            elif "extract" in goal_lower or "find" in goal_lower:
-                # Check if extraction/finding was successful in output
-                if output and "found" in output or "extracted" in output:
-                    goals_met += 1
-            elif "patch" in goal_lower or "modify" in goal_lower:
-                # Check if patching/modification was successful
-                if output and ("patched" in output or "modified" in output or "success" in output):
-                    goals_met += 1
-            elif "performance" in goal_lower or "fast" in goal_lower:
-                # Check runtime performance
-                runtime = qemu_result.get("performance", {}).get("runtime_ms", float("inf"))
-                if runtime < 5000:  # Under 5 seconds is considered good
-                    goals_met += 1
-            elif "bypass" in goal_lower or "crack" in goal_lower:
-                # Check if bypass/crack was successful
-                if output and ("bypassed" in output or "cracked" in output or "success" in output):
-                    goals_met += 1
-            else:
-                # Generic success check
-                if qemu_result.get("success") and not errors:
-                    goals_met += 1
+        goals_met = sum(self._is_goal_met(goal.lower(), output, errors, performance) for goal in goals)
 
         # Consider goals achieved if 80% or more are met
         achievement_ratio = goals_met / len(goals) if goals else 0.0
         return achievement_ratio >= 0.8
 
-    def _create_improvement_prompt_with_feedback(self, goals: List[str], qemu_result: Dict[str, Any], current_content: str) -> str:
+    def _is_goal_met(self, goal: str, output: str, errors: List[str], performance: Dict[str, Any]) -> int:
+        """Check if a specific goal is met based on QEMU results."""
+        if "no errors" in goal or "error-free" in goal:
+            return int(not errors)
+        if "extract" in goal or "find" in goal:
+            return int("found" in output or "extracted" in output)
+        if "patch" in goal or "modify" in goal:
+            return int("patched" in output or "modified" in output or "success" in output)
+        if "performance" in goal or "fast" in goal:
+            runtime = performance.get("runtime_ms", float("inf"))
+            return int(runtime < 5000)  # Under 5 seconds is considered good
+        if "bypass" in goal or "crack" in goal:
+            return int("bypassed" in output or "cracked" in output or "success" in output)
+        # Generic success check
+        return int(not errors)
+
+    def _create_improvement_prompt_with_feedback(self, goals: List[str], qemu_result: Dict[str, Any]) -> str:
         """Create an improvement prompt that includes QEMU execution feedback."""
         prompt_parts = [
             f"Improve this script to achieve the following goals: {', '.join(goals)}",
             "\n\nCurrent script execution results from QEMU VM:",
         ]
 
-        # Add execution status
-        if qemu_result.get("success"):
-            prompt_parts.append("✓ Script executed successfully")
-        else:
-            prompt_parts.append("✗ Script execution failed")
+        self._add_execution_status(qemu_result, prompt_parts)
+        self._add_output_information(qemu_result, prompt_parts)
+        self._add_error_information(qemu_result, prompt_parts)
+        self._add_performance_metrics(qemu_result, prompt_parts)
+        self._add_specific_improvements(qemu_result, goals, prompt_parts)
 
-        # Add output information
+        return "\n".join(prompt_parts)
+
+    def _add_execution_status(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+        """Add execution status to the prompt."""
+        if qemu_result.get("success"):
+            prompt_parts.append("OK Script executed successfully")
+        else:
+            prompt_parts.append("FAIL Script execution failed")
+
+    def _add_output_information(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+        """Add output information to the prompt."""
         output = qemu_result.get("output", "")
         if output:
             prompt_parts.append(f"\nScript output:\n{output[:500]}")  # Limit output length
 
-        # Add error information
+    def _add_error_information(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+        """Add error information to the prompt."""
         errors = qemu_result.get("errors", [])
         if errors:
             prompt_parts.append("\nErrors encountered:")
             for error in errors[:5]:  # Limit to first 5 errors
                 prompt_parts.append(f"  - {error}")
 
-        # Add performance metrics
+    def _add_performance_metrics(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+        """Add performance metrics to the prompt."""
         performance = qemu_result.get("performance", {})
         if performance:
             runtime = performance.get("runtime_ms", 0)
@@ -931,39 +945,46 @@ Generate the complete modified script:"""
             prompt_parts.append(f"  - Runtime: {runtime}ms")
             prompt_parts.append(f"  - Exit code: {exit_code}")
 
-        # Add specific improvement suggestions based on results
+    def _add_specific_improvements(self, qemu_result: Dict[str, Any], goals: List[str], prompt_parts: List[str]) -> None:
+        """Add specific improvement suggestions to the prompt."""
         prompt_parts.append("\nSpecific improvements needed:")
 
         if not qemu_result.get("success"):
             prompt_parts.append("- Fix execution errors to make the script run successfully")
 
+        errors = qemu_result.get("errors", [])
         if errors:
-            if any("syntax" in str(e).lower() for e in errors):
-                prompt_parts.append("- Fix syntax errors in the script")
-            if any("import" in str(e).lower() or "module" in str(e).lower() for e in errors):
-                prompt_parts.append("- Fix import/module errors")
-            if any("permission" in str(e).lower() or "access" in str(e).lower() for e in errors):
-                prompt_parts.append("- Fix permission/access issues")
+            self._add_error_based_suggestions(errors, prompt_parts)
 
+        performance = qemu_result.get("performance", {})
         if performance.get("runtime_ms", 0) > 10000:
             prompt_parts.append("- Optimize performance to reduce runtime")
 
         if performance.get("exit_code", 0) != 0:
             prompt_parts.append(f"- Fix issues causing non-zero exit code ({performance.get('exit_code')})")
 
-        # Add goals that haven't been achieved yet
+        self._add_goal_based_suggestions(goals, qemu_result.get("output", ""), prompt_parts)
+
+    def _add_error_based_suggestions(self, errors: List[str], prompt_parts: List[str]) -> None:
+        """Add suggestions based on errors."""
+        if any("syntax" in str(e).lower() for e in errors):
+            prompt_parts.append("- Fix syntax errors in the script")
+        if any("import" in str(e).lower() or "module" in str(e).lower() for e in errors):
+            prompt_parts.append("- Fix import/module errors")
+        if any("permission" in str(e).lower() or "access" in str(e).lower() for e in errors):
+            prompt_parts.append("- Fix permission/access issues")
+
+    def _add_goal_based_suggestions(self, goals: List[str], output: str, prompt_parts: List[str]) -> None:
+        """Add suggestions based on unmet goals."""
+        output_lower = output.lower() if output else ""
         for goal in goals:
             goal_lower = goal.lower()
-            output_lower = output.lower() if output else ""
-
             if "extract" in goal_lower and "extracted" not in output_lower:
                 prompt_parts.append(f"- Ensure the script successfully {goal}")
             elif "patch" in goal_lower and "patched" not in output_lower:
                 prompt_parts.append(f"- Implement functionality to {goal}")
             elif "bypass" in goal_lower and "bypassed" not in output_lower:
                 prompt_parts.append(f"- Add logic to {goal}")
-
-        return "\n".join(prompt_parts)
 
     def _detect_script_type_from_path(self, script_path: str) -> str:
         """Detect script type from file path/extension."""

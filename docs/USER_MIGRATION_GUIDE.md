@@ -49,11 +49,6 @@ Before upgrading, you can manually backup your settings:
 xcopy "%APPDATA%\Intellicrack" "%USERPROFILE%\Desktop\Intellicrack_Backup" /E /I
 ```
 
-**Linux/Mac:**
-```bash
-cp -r ~/.config/intellicrack ~/Desktop/Intellicrack_Backup
-cp -r ~/.intellicrack ~/Desktop/Intellicrack_Backup_2
-```
 
 ### Step 2: Install Intellicrack v4.0
 
@@ -129,8 +124,7 @@ If the migration wizard doesn't find your settings:
 
 1. **Check the old location manually:**
    - Windows: `%APPDATA%\Intellicrack\`
-   - Linux: `~/.config/intellicrack/`
-   - Mac: `~/Library/Application Support/Intellicrack/`
+    - Mac: `~/Library/Application Support/Intellicrack/`
 
 2. **Point to your configuration:**
    ```
@@ -261,7 +255,6 @@ rmdir /s "%APPDATA%\Intellicrack\config.json"
 xcopy "%APPDATA%\Intellicrack\backups\pre_migration_*" "%APPDATA%\Intellicrack\" /E
 ```
 
-**Linux/Mac:**
 ```bash
 rm ~/.config/intellicrack/config.json
 cp ~/.intellicrack/backups/pre_migration_* ~/.config/intellicrack/
@@ -281,7 +274,6 @@ cp ~/.intellicrack/backups/pre_migration_* ~/.config/intellicrack/
 
 **A:**
 - **Windows:** `%APPDATA%\Intellicrack\config.json`
-- **Linux:** `~/.config/intellicrack/config.json`
 - **Mac:** `~/Library/Application Support/Intellicrack/config.json`
 
 ### Q: How do I backup my new configuration?
@@ -355,7 +347,7 @@ The migration to Intellicrack v4.0 is designed to be:
 - **🔒 Safe** - Full backups before any changes
 - **✨ Complete** - All settings transferred
 - **🔄 Reversible** - Can rollback if needed
-- **📱 Cross-platform** - Works on Windows, Linux, and Mac
+- **💻 Windows 11 Optimized** - Built specifically for Windows 11
 
 Welcome to Intellicrack v4.0! Enjoy the improved configuration system and enhanced features.
 

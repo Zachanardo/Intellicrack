@@ -1130,7 +1130,7 @@ def _is_suspicious_connection(src_ip, dst_ip, port):
     # Log connection details for debugging
     logger.debug(f"Checking connection from {src_ip} to {dst_ip}:{port}")
 
-    # Check for common C2 ports
+    # Check for common backdoor ports
     suspicious_ports = [4444, 4445, 8888, 9999, 1337, 31337]
     if port in suspicious_ports:
         return True
@@ -1150,7 +1150,7 @@ def _get_suspicious_reason(ip, port):
     """Get reason why connection is suspicious."""
     # Include IP in analysis for more specific reasons
     if port in [4444, 4445, 8888, 9999, 1337, 31337]:
-        return f"Common backdoor/C2 port {port} to {ip}"
+        return f"Common backdoor port {port} to {ip}"
     elif port > 49152:
         return f"High ephemeral port {port} to external IP {ip}"
     elif ip.startswith(("10.", "192.168.", "172.")):

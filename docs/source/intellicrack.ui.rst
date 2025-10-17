@@ -15,6 +15,14 @@ Subpackages
 Submodules
 ----------
 
+intellicrack.ui.cfg\_explorer\_inner module
+-------------------------------------------
+
+.. automodule:: intellicrack.ui.cfg_explorer_inner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.comprehensive\_integration module
 -------------------------------------------------
 
@@ -23,10 +31,34 @@ intellicrack.ui.comprehensive\_integration module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.config\_manager module
+--------------------------------------
+
+.. automodule:: intellicrack.ui.config_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.dashboard\_manager module
 -----------------------------------------
 
 .. automodule:: intellicrack.ui.dashboard_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.dialog\_utils module
+------------------------------------
+
+.. automodule:: intellicrack.ui.dialog_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.distributed\_processing module
+----------------------------------------------
+
+.. automodule:: intellicrack.ui.distributed_processing
    :members:
    :show-inheritance:
    :undoc-members:
@@ -55,6 +87,22 @@ intellicrack.ui.exploitation\_handlers module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.gpu\_analysis module
+------------------------------------
+
+.. automodule:: intellicrack.ui.gpu_analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.icon\_manager module
+------------------------------------
+
+.. automodule:: intellicrack.ui.icon_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.integrate\_radare2 module
 -----------------------------------------
 
@@ -70,7 +118,6 @@ intellicrack.ui.main\_app module
    :members:
    :show-inheritance:
    :undoc-members:
-
 
 intellicrack.ui.main\_window module
 -----------------------------------
@@ -128,10 +175,34 @@ intellicrack.ui.shared\_ui\_layouts module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.style\_manager module
+-------------------------------------
+
+.. automodule:: intellicrack.ui.style_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.style\_utils module
 -----------------------------------
 
 .. automodule:: intellicrack.ui.style_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.symbolic\_execution module
+------------------------------------------
+
+.. automodule:: intellicrack.ui.symbolic_execution
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.syntax\_highlighter module
+------------------------------------------
+
+.. automodule:: intellicrack.ui.syntax_highlighter
    :members:
    :show-inheritance:
    :undoc-members:
@@ -148,6 +219,14 @@ intellicrack.ui.tooltip\_helper module
 --------------------------------------
 
 .. automodule:: intellicrack.ui.tooltip_helper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.traffic\_analyzer module
+----------------------------------------
+
+.. automodule:: intellicrack.ui.traffic_analyzer
    :members:
    :show-inheritance:
    :undoc-members:

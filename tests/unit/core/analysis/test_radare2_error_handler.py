@@ -1,3 +1,18 @@
+"""
+Unit tests for Intellicrack's radare2 error handling system.
+
+This module contains comprehensive unit tests for the radare2 error handling system in Intellicrack,
+including ErrorSeverity enum validation, RecoveryStrategy enum validation, ErrorEvent data class testing,
+RecoveryAction configuration testing, R2ErrorHandler initialization and configuration testing,
+intelligent error classification and severity determination testing, sophisticated recovery strategy
+determination and execution testing, circuit breaker functionality for preventing cascading failures,
+performance monitoring and metrics collection testing, realistic radare2 error scenarios from
+security research testing, global error handling functions testing, advanced error handling
+features for production security research testing, and integration tests for real-world
+radare2 error handling scenarios. These tests ensure the error handling system works
+correctly with sophisticated error recovery patterns and meets production readiness criteria.
+"""
+
 import pytest
 import time
 import threading

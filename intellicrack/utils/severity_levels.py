@@ -18,8 +18,35 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from enum import Enum
 
-# Import the shared SeverityLevel enum to avoid duplication
-from .analysis.severity_levels import SeverityLevel
+
+class SeverityLevel(Enum):
+    """Enumeration for severity levels."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+
+class VulnerabilityLevel(Enum):
+    """Enumeration for vulnerability severity levels (alias for SeverityLevel)."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+
+class SecurityRelevance(Enum):
+    """Enumeration for security relevance levels (alias for SeverityLevel)."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
 
 
 class ThreatLevel(Enum):
@@ -219,8 +246,10 @@ __all__ = [
     "SEVERITY_COLORS",
     "SEVERITY_SCORES",
     "ConfidenceLevel",
+    "SecurityRelevance",
     "SeverityLevel",
     "ThreatLevel",
+    "VulnerabilityLevel",
     "aggregate_severity_stats",
     "calculate_risk_score",
     "format_severity_report",

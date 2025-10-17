@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides comprehensive documentation for Intellicrack's unified configuration system. The unified configuration consolidates all application settings into a single `config.json` file located at `C:/Intellicrack/config/config.json`.
+This document provides comprehensive documentation for Intellicrack's unified configuration system. The unified configuration consolidates all application settings into a single `config.json` file located at `<INTELLICRACK_ROOT>/config/config.json`.
 
 ## Configuration Structure
 
@@ -59,11 +59,11 @@ This document provides comprehensive documentation for Intellicrack's unified co
 {
   "directories": {
     "cache": "C:/Users/zachf/AppData/Roaming/Intellicrack/cache",
-    "config": "C:/Intellicrack/config",
+    "config": "<INTELLICRACK_ROOT>/config",
     "logs": "C:/Users/zachf/AppData/Roaming/Intellicrack/logs",
     "output": "C:/Users/zachf/AppData/Roaming/Intellicrack/output",
     "temp": "C:/Users/zachf/AppData/Local/Temp",
-    "plugins": "C:/Intellicrack/plugins",
+    "plugins": "<INTELLICRACK_ROOT>/plugins",
     "downloads": "C:/Users/zachf/AppData/Roaming/Intellicrack/downloads",
     "models": "C:/Users/zachf/AppData/Roaming/Intellicrack/models",
     "backup": "C:/Users/zachf/AppData/Roaming/Intellicrack/backup",
@@ -685,7 +685,7 @@ This document provides comprehensive documentation for Intellicrack's unified co
 
 - Migrates font settings from font_config.json
 - Adds size and fallback management
-- Supports cross-platform font selection
+- Supports Windows 11 font selection
 
 **Example:**
 

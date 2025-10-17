@@ -5,14 +5,58 @@ Performs startup checks and ensures paths are properly resolved.
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Configure TensorFlow environment ONCE at module level before any imports
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["MKL_THREADING_LAYER"] = "GNU"
+
+# Import TensorFlow handler ONCE at module level to avoid duplicate imports
+_tf_import_attempted = False
+_tf_module = None
+_tf_available = False
+
+
+def _get_tensorflow():
+    """Get TensorFlow module, importing only once."""
+    global _tf_import_attempted, _tf_module, _tf_available
+
+    if not _tf_import_attempted:
+        _tf_import_attempted = True
+        try:
+            from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+
+            _tf_module = tf
+            _tf_available = True
+            _tf_module.config.set_visible_devices([], "GPU")
+        except Exception as e:
+            logger.warning(f"TensorFlow import failed: {e}")
+            _tf_available = False
+            _tf_module = None
+
+    return _tf_module, _tf_available
 
 
 def check_dependencies() -> dict[str, bool]:
@@ -26,17 +70,17 @@ def check_dependencies() -> dict[str, bool]:
         import flask
         import flask_cors
 
-        # Test Flask by creating a minimal app
-        test_app = flask.Flask(__name__)
-        flask_cors.CORS(test_app)
+        # Validate Flask by creating a minimal app
+        validation_app = flask.Flask(__name__)
+        flask_cors.CORS(validation_app)
 
         # Verify Flask can handle basic routing
-        @test_app.route("/test")
-        def test_route():
+        @validation_app.route("/test")
+        def validation_route():
             return flask.jsonify({"status": "ok"})
 
-        # Test the app context
-        with test_app.app_context():
+        # Validate the app context
+        with validation_app.app_context():
             flask.current_app.config["TESTING"] = True
 
         dependencies["Flask"] = True
@@ -62,19 +106,10 @@ def check_dependencies() -> dict[str, bool]:
 
     # Check ML dependencies and test TensorFlow functionality
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Test TensorFlow by checking version and GPU availability
         tf_version = tf.__version__
@@ -90,7 +125,7 @@ def check_dependencies() -> dict[str, bool]:
 
         if abs(actual_sum - expected_sum) < 1e-6:
             dependencies["TensorFlow"] = True
-            logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: ✓)")
+            logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: OK)")
         else:
             dependencies["TensorFlow"] = False
             logger.error(f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}")
@@ -162,6 +197,7 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
         ensure_data_directories,
         get_qemu_images_dir,
     )
+    from ..utils.qemu_image_discovery import get_qemu_discovery
 
     # Ensure directories exist
     ensure_data_directories()
@@ -176,25 +212,24 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
 
     # Protection model files removed - using LLM-only approach
 
-    # Check for QEMU images
-    qemu_images = [
-        "windows_base.qcow2",
-        "linux_base.qcow2",
-        "rootfs-x86_64.img",
-    ]
+    # Dynamically discover QEMU images instead of hardcoding
+    discovery = get_qemu_discovery()
+    discovered_images = discovery.discover_images()
 
-    for image in qemu_images:
-        image_path = qemu_dir / image
-        paths[image] = (str(image_path), image_path.exists())
-        if not image_path.exists():
-            logger.info(f"QEMU image not found: {image_path} (optional)")
+    for image_info in discovered_images:
+        paths[f"qemu_image_{image_info.filename}"] = (str(image_info.path), True)
+
+    if not discovered_images:
+        logger.info("No QEMU images found in search directories (optional)")
+    else:
+        logger.info(f"Found {len(discovered_images)} QEMU images")
 
     return paths
 
 
 def check_qemu_setup() -> bool:
     """Check QEMU setup without auto-downloading."""
-    from ..utils.path_resolver import get_qemu_images_dir
+    from ..utils.qemu_image_discovery import get_qemu_discovery
 
     # Check if QEMU is installed
     try:
@@ -206,12 +241,12 @@ def check_qemu_setup() -> bool:
         logger.info("Install QEMU from: https://www.qemu.org/download/")
         qemu_available = False
 
-    # Check for existing images
-    qemu_dir = get_qemu_images_dir()
-    existing_images = list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
+    # Use dynamic image discovery
+    discovery = get_qemu_discovery()
+    discovered_images = discovery.discover_images()
 
-    if existing_images:
-        logger.info(f"Found {len(existing_images)} QEMU images")
+    if discovered_images:
+        logger.info(f"Found {len(discovered_images)} QEMU images")
         return True
     if qemu_available:
         logger.info("QEMU installed but no images found")
@@ -307,22 +342,14 @@ def validate_flask_server() -> dict[str, any]:
 def validate_tensorflow_models() -> dict[str, any]:
     """Validate TensorFlow and check model compatibility."""
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Silence TF warnings during validation
-        tf.get_logger().setLevel("ERROR")
+        if hasattr(tf, "get_logger"):
+            tf.get_logger().setLevel("ERROR")
 
         # Get TF info
         tf_info = {
@@ -354,16 +381,16 @@ def validate_tensorflow_models() -> dict[str, any]:
                 output_value = float(test_output.numpy()[0][0])
                 if 0.0 <= output_value <= 1.0:  # Valid sigmoid output
                     tf_info["model_building"] = True
-                    tf_info["model_prediction_test"] = f"✓ (output: {output_value:.3f})"
+                    tf_info["model_prediction_test"] = f"OK (output: {output_value:.3f})"
                 else:
                     tf_info["model_building"] = False
-                    tf_info["model_prediction_test"] = f"✗ Invalid output range: {output_value}"
+                    tf_info["model_prediction_test"] = f"FAIL Invalid output range: {output_value}"
             else:
                 tf_info["model_building"] = False
-                tf_info["model_prediction_test"] = f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
+                tf_info["model_prediction_test"] = f"FAIL Wrong output shape: {test_output.shape} vs {expected_shape}"
         else:
             tf_info["model_building"] = False
-            tf_info["model_prediction_test"] = "✗ No valid output"
+            tf_info["model_prediction_test"] = "FAIL No valid output"
 
         tf_info["status"] = tf_info["model_building"]
 
@@ -531,19 +558,10 @@ def get_system_health_report() -> dict[str, any]:
 
     # Check ML service health
     try:
-        # Configure TensorFlow to prevent GPU initialization issues
-        import os
+        tf, tf_available = _get_tensorflow()
 
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-
-        # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-        os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-        # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-        tf.config.set_visible_devices([], "GPU")
+        if not tf_available or tf is None:
+            raise ImportError("TensorFlow not available")
 
         # Get memory usage if available
         memory_info = {}

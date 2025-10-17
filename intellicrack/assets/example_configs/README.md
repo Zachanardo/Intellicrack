@@ -15,12 +15,14 @@ These JSON files serve as reference configurations for setting up LLM models in 
 ## Available Configurations
 
 ### API-Based Models
+
 - `openai_gpt4.json` - OpenAI GPT-4 for fast, reliable analysis
 - `anthropic_claude3.json` - Claude-3 for advanced reasoning
 - `frida_specialized.json` - Optimized for Frida script generation
 - `vulnerability_assessment.json` - Specialized for security analysis
 
 ### Local Models
+
 - `ollama_codellama.json` - Easy local setup with Ollama
 - `local_gguf_high_performance.json` - High-performance local inference
 - `gptq_fast_inference.json` - Quantized models for limited GPU memory
@@ -30,11 +32,13 @@ These JSON files serve as reference configurations for setting up LLM models in 
 ## Setup Requirements
 
 ### API Models
+
 1. Obtain API keys from the respective providers
 2. Replace `YOUR_API_KEY` placeholders with actual keys
 3. Test the configuration
 
 ### Local Models
+
 1. Download the specified model files
 2. Update `model_path` to point to your local model files
 3. Ensure required dependencies are installed
@@ -51,16 +55,19 @@ These JSON files serve as reference configurations for setting up LLM models in 
 ## Performance Tuning
 
 ### For Speed
+
 - Reduce `context_length` and `max_tokens`
 - Lower `temperature` to 0.1-0.3
 - Use quantized models (GPTQ, GGUF Q4)
 
 ### For Quality
+
 - Increase `context_length` and `max_tokens`
 - Use higher-quality models (GPT-4, Claude-3 Opus)
 - Adjust `temperature` to 0.6-0.8
 
 ### For Privacy
+
 - Use local models only (GGUF, PyTorch, ONNX)
 - Avoid API-based configurations
 - Check model licenses and data usage policies
@@ -68,6 +75,7 @@ These JSON files serve as reference configurations for setting up LLM models in 
 ## Troubleshooting
 
 ### Common Issues
+
 1. **API Key Errors**: Verify keys are correct and have sufficient credits
 2. **Model Not Found**: Check local model paths and file permissions
 3. **CUDA Errors**: Adjust GPU memory settings or use CPU fallback

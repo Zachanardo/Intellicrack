@@ -23,7 +23,7 @@ import pefile
 import psutil
 import win32con
 import win32process
-import wmi
+from intellicrack.handlers.wmi_handler import wmi
 
 logger = logging.getLogger(__name__)
 
@@ -844,7 +844,7 @@ def run_anti_detection_verification():
     verifier = AntiDetectionVerifier()
 
     # Create output directory
-    output_dir = Path(r"C:\Intellicrack\tests\validation_system\reports")
+    output_dir = Path(r"D:\Intellicrack\tests\validation_system\reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate report

@@ -23,7 +23,7 @@ import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
@@ -446,7 +446,7 @@ except ImportError as e:
 
         @staticmethod
         def draw_networkx(graph, pos=None, ax=None, **kwargs):
-            """Basic graph drawing functionality."""
+            """Draw graph with basic functionality."""
             # This would require matplotlib integration
             # For now, just log the drawing request
             logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
@@ -2240,7 +2240,7 @@ def run_cfg_explorer(app):
 
 
 def log_message(message: str) -> str:
-    """Helper function for log message formatting."""
+    """Format log message."""
     return message
 
 

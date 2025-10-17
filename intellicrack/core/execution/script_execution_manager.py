@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Script execution manager for Intellicrack core execution.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -31,6 +33,14 @@ from ..config_manager import get_config
 """Central script execution manager with QEMU testing options."""
 
 logger = logging.getLogger(__name__)
+
+try:
+    from ..terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for script execution")
 
 
 class ScriptExecutionManager(QObject):
@@ -352,17 +362,32 @@ class ScriptExecutionManager(QObject):
                 cmd.append("--no-pause")
 
             # Execute
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            if options.get("use_terminal") and HAS_TERMINAL_MANAGER:
+                logger.info(f"Executing Frida script in terminal: {target_binary}")
+                terminal_mgr = get_terminal_manager()
 
-            # Clean up
-            os.unlink(script_path)
+                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True)
 
-            return {
-                "success": result.returncode == 0,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode,
-            }
+                # Note: Don't clean up script_path immediately for terminal execution
+                return {
+                    "success": True,
+                    "terminal_session": session_id,
+                    "script_path": script_path,  # Caller should clean up after terminal session ends
+                    "message": "Frida script running in terminal",
+                }
+            else:
+                # Standard execution
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+
+                # Clean up
+                os.unlink(script_path)
+
+                return {
+                    "success": result.returncode == 0,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                    "returncode": result.returncode,
+                }
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -426,26 +451,41 @@ class ScriptExecutionManager(QObject):
                 timeout = 300
 
             # Execute with timeout support
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                cmd, check=False, capture_output=True, text=True, timeout=timeout
-            )
+            if options.get("use_terminal") and HAS_TERMINAL_MANAGER:
+                logger.info(f"Executing Ghidra script in terminal: {target_binary}")
+                terminal_mgr = get_terminal_manager()
 
-            # Clean up
-            os.unlink(script_path)
-            import shutil
+                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True)
 
-            shutil.rmtree(project_path, ignore_errors=True)
+                # Note: Don't clean up immediately for terminal execution
+                return {
+                    "success": True,
+                    "terminal_session": session_id,
+                    "script_path": script_path,
+                    "project_path": str(project_path),
+                    "message": "Ghidra script running in terminal",
+                }
+            else:
+                # Standard execution
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    cmd, check=False, capture_output=True, text=True, timeout=timeout
+                )
 
-            return {
-                "success": result.returncode == 0,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode,
-            }
+                # Clean up
+                os.unlink(script_path)
+                import shutil
+
+                shutil.rmtree(project_path, ignore_errors=True)
+
+                return {
+                    "success": result.returncode == 0,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                    "returncode": result.returncode,
+                }
 
         except Exception as e:
             return {"success": False, "error": str(e)}
-
 
     def _find_ghidra_installation(self) -> str | None:
         """Find Ghidra installation path."""
@@ -462,7 +502,6 @@ class ScriptExecutionManager(QObject):
             if path and os.path.exists(path):
                 return path
         return None
-
 
     def _save_qemu_preference(self, preference: str, script_type: str):
         """Save QEMU testing preference."""

@@ -4,7 +4,21 @@ Manages the generation of bypass scripts (Frida/Ghidra) based on
 detected protections using the ProtectionAwareScriptGenerator.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
@@ -79,7 +93,7 @@ class ScriptGenerationWorker(QRunnable):
         self.signals = ScriptGenerationWorkerSignals()
 
     def run(self):
-        """Generate the bypass script."""
+        """Generate the bypass script with AI enhancement."""
         try:
             self.signals.progress.emit(f"Generating {self.script_type} script...")
 
@@ -95,6 +109,33 @@ class ScriptGenerationWorker(QRunnable):
                     "success": False,
                     "error": f"Unknown script type: {self.script_type}",
                 }
+
+            # Apply AI enhancement if script generation was successful
+            if result.get("success", False):
+                self.signals.progress.emit("Applying AI enhancements...")
+
+                try:
+                    from ...ai.protection_aware_script_gen import enhance_ai_script_generation
+
+                    # Enhance the script with AI capabilities
+                    enhanced_result = enhance_ai_script_generation(None, self.file_path)
+
+                    # If enhanced script was generated, use it
+                    if enhanced_result.get("enhanced_script"):
+                        result["script"] = enhanced_result["enhanced_script"]
+                        result["ai_enhanced"] = True
+                        result["optimization_applied"] = enhanced_result.get("optimization_applied", [])
+                        self.signals.progress.emit("AI enhancement complete")
+
+                except ImportError:
+                    # AI enhancement not available, continue with base script
+                    self.signals.progress.emit("AI enhancement unavailable, using base script")
+                except Exception as ai_error:
+                    # Log AI enhancement error but continue with base script
+                    import logging
+
+                    logging.warning(f"AI enhancement failed: {ai_error}")
+                    self.signals.progress.emit("AI enhancement failed, using base script")
 
             self.signals.result.emit(result)
 
@@ -170,7 +211,7 @@ class ScriptDisplayDialog(QDialog):
 
         # Warnings section
         if self.script_data.get("warnings"):
-            warnings_label = QLabel("⚠️ Warnings:")
+            warnings_label = QLabel("WARNING️ Warnings:")
             warnings_label.setStyleSheet("color: orange; font-weight: bold;")
             layout.addWidget(warnings_label)
 
@@ -360,7 +401,7 @@ class ScriptGenerationHandler(QObject):
         self.parent_widget = parent
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes."""
+        """Handle slot when protection analysis completes."""
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 

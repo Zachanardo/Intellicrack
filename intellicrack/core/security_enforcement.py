@@ -1,4 +1,5 @@
-"""Security Enforcement Module for Intellicrack
+"""Security Enforcement Module for Intellicrack.
+
 Implements security policies defined in intellicrack_config.json.
 
 Copyright (C) 2025 Zachary Flint
@@ -18,10 +19,12 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import json
 import logging
 import os
 import pickle
 import subprocess
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +37,17 @@ formatter = logging.Formatter("[%(levelname)s] %(name)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder for datetime and date objects."""
+
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
 
 
 class SecurityEnforcement:
@@ -212,12 +226,10 @@ def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_ca
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dump attempted with restrict_pickle=True, consider using JSON")
-        # Try JSON serialization first
+        # Try JSON serialization first with custom encoder
         try:
-            import json
-
             if hasattr(file, "write"):
-                json.dump(obj, file)
+                json.dump(obj, file, cls=DateTimeEncoder)
                 logger.info("Successfully serialized to JSON instead of pickle")
                 return None
             raise TypeError("File object required for JSON dump")
@@ -236,9 +248,7 @@ def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callbac
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dumps attempted with restrict_pickle=True, consider using JSON")
         try:
-            import json
-
-            result = json.dumps(obj)
+            result = json.dumps(obj, cls=DateTimeEncoder)
             logger.info("Successfully serialized to JSON instead of pickle")
             return result.encode("utf-8")
         except (TypeError, ValueError) as e:

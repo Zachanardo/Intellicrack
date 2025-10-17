@@ -4,7 +4,21 @@ This module manages AI model integration, configuration, and lifecycle
 for the Intellicrack security research platform.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -102,7 +116,7 @@ class AIModelManager:
             logger.info(f"Set active model: {default_model}")
 
     def _setup_model(self, name: str, config: Dict[str, Any]):
-        """Setup individual model.
+        """Set up individual model.
 
         Args:
             name: Model name
@@ -129,7 +143,7 @@ class AIModelManager:
         }
 
     def _setup_openai_model(self, name: str, config: Dict[str, Any]):
-        """Setup OpenAI model."""
+        """Set up OpenAI model."""
         api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for OpenAI model {name}")
@@ -145,7 +159,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
 
     def _setup_anthropic_model(self, name: str, config: Dict[str, Any]):
-        """Setup Anthropic model."""
+        """Set up Anthropic model."""
         api_key = config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Anthropic model {name}")
@@ -161,7 +175,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
 
     def _setup_google_model(self, name: str, config: Dict[str, Any]):
-        """Setup Google model."""
+        """Set up Google model."""
         api_key = config.get("api_key") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Google model {name}")
@@ -177,7 +191,7 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)
 
     def _setup_local_model(self, name: str, config: Dict[str, Any]):
-        """Setup local model."""
+        """Set up local model."""
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
             logger.warning(f"Model path not found for {name}: {model_path}")

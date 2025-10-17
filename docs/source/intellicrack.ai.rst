@@ -1,6 +1,14 @@
 intellicrack.ai package
 =======================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   intellicrack.ai.templates
+
 Submodules
 ----------
 
@@ -76,14 +84,6 @@ intellicrack.ai.exploit\_chain\_builder module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ai.exploitation\_orchestrator module
--------------------------------------------------
-
-.. automodule:: intellicrack.ai.exploitation_orchestrator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ai.file\_reading\_helper module
 --------------------------------------------
 
@@ -112,6 +112,14 @@ intellicrack.ai.integration\_manager module
 -------------------------------------------
 
 .. automodule:: intellicrack.ai.integration_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ai.integration\_manager\_temp module
+-------------------------------------------------
+
+.. automodule:: intellicrack.ai.integration_manager_temp
    :members:
    :show-inheritance:
    :undoc-members:
@@ -349,7 +357,7 @@ intellicrack.ai.protection\_aware\_script\_gen module
    :undoc-members:
 
 intellicrack.ai.qemu\_manager module
---------------------------------------
+------------------------------------
 
 .. automodule:: intellicrack.ai.qemu_manager
    :members:
@@ -359,7 +367,7 @@ intellicrack.ai.qemu\_manager module
 intellicrack.ai.qemu\_test\_manager\_enhanced module
 ----------------------------------------------------
 
-.. automodule:: intellicrack.ai.qemu_manager
+.. automodule:: intellicrack.ai.qemu_test_manager_enhanced
    :members:
    :show-inheritance:
    :undoc-members:
@@ -392,6 +400,14 @@ intellicrack.ai.response\_parser module
 ---------------------------------------
 
 .. automodule:: intellicrack.ai.response_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ai.script\_editor module
+-------------------------------------
+
+.. automodule:: intellicrack.ai.script_editor
    :members:
    :show-inheritance:
    :undoc-members:
@@ -432,6 +448,14 @@ intellicrack.ai.vulnerability\_research\_integration module
 -----------------------------------------------------------
 
 .. automodule:: intellicrack.ai.vulnerability_research_integration
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ai.vulnerability\_research\_integration\_helper module
+-------------------------------------------------------------------
+
+.. automodule:: intellicrack.ai.vulnerability_research_integration_helper
    :members:
    :show-inheritance:
    :undoc-members:

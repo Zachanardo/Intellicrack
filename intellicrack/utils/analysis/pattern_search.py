@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Pattern search utilities for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -26,6 +28,7 @@ def find_all_pattern_occurrences(
     binary_data: bytes, pattern: bytes, base_address: int = 0, max_results: int = None
 ) -> list[dict[str, Any]]:
     """Find all occurrences of a single pattern in binary data.
+
     Common pattern finding loop to eliminate code duplication.
 
     Args:

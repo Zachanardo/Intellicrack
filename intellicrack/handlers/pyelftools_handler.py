@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""PyElfTools handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import struct
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 PyElfTools Import Handler with Production-Ready Fallbacks

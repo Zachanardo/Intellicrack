@@ -22,14 +22,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import wmi
-
+from intellicrack.handlers.wmi_handler import wmi
 from tests.validation_system.environment_validator import HardwareValidator
 
 logger = logging.getLogger(__name__)
 
 # Import our environment validator
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 @dataclass
 class TestEnvironment:
@@ -621,7 +620,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Hardware Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from tests.validation_system.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from tests.validation_system.'
                     'environment_validator import HardwareValidator; v = HardwareValidator(); '
                     'print(v.collect_hardware_info())"'
                 ),
@@ -631,7 +630,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'VM Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from tests.validation_system.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from tests.validation_system.'
                     'environment_validator import HardwareValidator; v = HardwareValidator(); '
                     'print(f\'Is VM: {v.is_virtual_machine()}\')"'
                 ),
@@ -641,7 +640,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Protection Analysis',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -m intellicrack '
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -m intellicrack '
                     '--analyze-protection notepad.exe'
                 ),
                 'expected_output_contains': ['Analysis complete'],
@@ -650,7 +649,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Binary Analysis',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from intellicrack.core.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from intellicrack.core.'
                     'binary_analyzer import BinaryAnalyzer; analyzer = BinaryAnalyzer(); '
                     'print(\'BinaryAnalyzer initialized\')"'
                 ),
@@ -660,7 +659,7 @@ class MultiEnvironmentTester:
             {
                 'name': 'Network License Detection',
                 'command': (
-                    'C:\\Intellicrack\\mamba_env\\python.exe -c "from intellicrack.core.'
+                    'C:\\Intellicrack\\.pixi\\envs\\default\\python.exe -c "from intellicrack.core.'
                     'network.license_server import NetworkLicenseDetector; '
                     'detector = NetworkLicenseDetector(); print(\'NetworkLicenseDetector ready\')"'
                 ),
@@ -862,7 +861,7 @@ def run_multi_environment_testing():
     print("=== Multi-Environment Testing Matrix ===")
     print("[*] Initializing multi-environment tester...")
 
-    tester = MultiEnvironmentTester(r"C:\Intellicrack\tests\validation_system")
+    tester = MultiEnvironmentTester(r"D:\Intellicrack\tests\validation_system")
 
     # Run compatibility check first
     print("\n[*] Running compatibility check...")

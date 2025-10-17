@@ -269,7 +269,7 @@ class PerformanceMonitor:
                 del self.active_operations[operation_id]
 
     def time_function(self, func_name: str = None):
-        """Decorator for timing function execution."""
+        """Time function execution with a decorator."""
 
         def decorator(func: Callable) -> Callable:
             name = func_name or f"{func.__module__}.{func.__name__}"
@@ -496,7 +496,7 @@ def get_performance_monitor():
 
 
 def profile_ai_operation(operation_name: str = None):
-    """Decorator for profiling AI operations."""
+    """Profile AI operations with a decorator."""
 
     def decorator(func: Callable) -> Callable:
         # Simplified version to avoid initialization issues
@@ -576,7 +576,7 @@ class AsyncPerformanceMonitor:
             self.base_monitor.profiles.append(profile)
 
     def profile_async(self, operation_name: str = None):
-        """Decorator for async functions."""
+        """Profile async functions with a decorator."""
 
         def decorator(func: Callable) -> Callable:
             name = operation_name or func.__name__

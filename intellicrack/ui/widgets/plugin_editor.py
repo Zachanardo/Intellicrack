@@ -45,7 +45,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 
@@ -133,7 +133,7 @@ class PluginEditor(QWidget):
         toolbar.addSeparator()
 
         # Validation action
-        validate_action = toolbar.addAction("✓ Validate")
+        validate_action = toolbar.addAction("OK Validate")
         validate_action.triggered.connect(self.perform_validation)
 
         layout.addWidget(toolbar)
@@ -324,7 +324,7 @@ class PluginEditor(QWidget):
         syntax_valid, syntax_errors = self.validator.validate_syntax(code)
         if not syntax_valid:
             for error in syntax_errors:
-                item = QListWidgetItem(f"❌ Syntax: {error}")
+                item = QListWidgetItem(f"ERROR Syntax: {error}")
                 item.setForeground(QColor(255, 0, 0))
                 self.validation_list.addItem(item)
 
@@ -332,14 +332,14 @@ class PluginEditor(QWidget):
         if syntax_valid:
             structure_valid, structure_errors = self.validator.validate_structure(code)
             for error in structure_errors:
-                item = QListWidgetItem(f"⚠️ Structure: {error}")
+                item = QListWidgetItem(f"WARNING️ Structure: {error}")
                 item.setForeground(QColor(255, 165, 0))
                 self.validation_list.addItem(item)
 
             # Import validation
             imports_valid, import_warnings = self.validator.validate_imports(code)
             for warning in import_warnings:
-                item = QListWidgetItem(f"⚠️ Import: {warning}")
+                item = QListWidgetItem(f"WARNING️ Import: {warning}")
                 item.setForeground(QColor(255, 165, 0))
                 self.validation_list.addItem(item)
 

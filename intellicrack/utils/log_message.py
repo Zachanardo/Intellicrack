@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Log message utility for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +23,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from intellicrack.logger import logger as main_logger
+from intellicrack.utils.logger import logger as main_logger
 
 
 class MessageLevel(Enum):
@@ -227,52 +229,52 @@ def log_message(
 
 
 def log_debug(message: str, **kwargs) -> None:
-    """Convenience function for debug logging."""
+    """Log for debug purposes."""
     log_message(message, level=MessageLevel.DEBUG, **kwargs)
 
 
 def log_info(message: str, **kwargs) -> None:
-    """Convenience function for info logging."""
+    """Log for info purposes."""
     log_message(message, level=MessageLevel.INFO, **kwargs)
 
 
 def log_warning(message: str, **kwargs) -> None:
-    """Convenience function for warning logging."""
+    """Log for warning purposes."""
     log_message(message, level=MessageLevel.WARNING, **kwargs)
 
 
 def log_error(message: str, **kwargs) -> None:
-    """Convenience function for error logging."""
+    """Log for error purposes."""
     log_message(message, level=MessageLevel.ERROR, **kwargs)
 
 
 def log_critical(message: str, **kwargs) -> None:
-    """Convenience function for critical logging."""
+    """Log for critical purposes."""
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
 def log_analysis(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
-    """Convenience function for analysis-related logging."""
+    """Log for analysis-related purposes."""
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
 def log_ui(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
-    """Convenience function for UI-related logging."""
+    """Log for UI-related purposes."""
     log_message(message, level=level, category=MessageCategory.UI, **kwargs)
 
 
 def log_security(message: str, level: Union[str, MessageLevel] = MessageLevel.WARNING, **kwargs) -> None:
-    """Convenience function for security-related logging."""
+    """Log for security-related purposes."""
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
 def log_performance(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
-    """Convenience function for performance-related logging."""
+    """Log for performance-related purposes."""
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
 def log_binary_processing(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
-    """Convenience function for binary processing logging."""
+    """Log for binary processing purposes."""
     log_message(message, level=level, category=MessageCategory.BINARY_PROCESSING, **kwargs)
 
 

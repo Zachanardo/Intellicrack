@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""PE file handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import struct
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Pefile Import Handler with Production-Ready Fallbacks
@@ -832,7 +834,7 @@ except ImportError as e:
             self.__data__ = None
 
         def __str__(self):
-            """String representation."""
+            """Return string representation."""
             return f"PE({self.name})"
 
     # Assign main class

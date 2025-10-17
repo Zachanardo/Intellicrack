@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Binary I/O utilities for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +24,7 @@ This module provides shared utilities for reading and analyzing binary files.
 import os
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:

@@ -29,7 +29,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from urllib3.util.retry import Retry
 
 from intellicrack.core.config_manager import ConfigManager
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 
 class SecureHTTPClient:
@@ -198,7 +198,7 @@ def get_http_client() -> SecureHTTPClient:
 
 
 def secure_request(method: str, url: str, verify: Optional[bool | str] = None, **kwargs) -> requests.Response:
-    """Convenience function for making secure HTTP requests.
+    """Make secure HTTP requests.
 
     This function uses the global HTTP client with proper SSL configuration.
 
@@ -217,10 +217,10 @@ def secure_request(method: str, url: str, verify: Optional[bool | str] = None, *
 
 
 def secure_get(url: str, **kwargs) -> requests.Response:
-    """Convenience function for GET requests."""
+    """Make secure GET requests."""
     return secure_request("GET", url, **kwargs)
 
 
 def secure_post(url: str, **kwargs) -> requests.Response:
-    """Convenience function for POST requests."""
+    """Make secure POST requests."""
     return secure_request("POST", url, **kwargs)

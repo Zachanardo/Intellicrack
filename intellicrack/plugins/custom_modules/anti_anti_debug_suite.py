@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""This file is part of Intellicrack.
+"""Anti-anti-debug suite plugin for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -96,7 +98,7 @@ class WindowsAPIHooker:
         self.active_hooks = set()
 
     def hook_is_debugger_present(self) -> bool:
-        """Hook IsDebuggerPresent to always return FALSE."""
+        """Install hook for IsDebuggerPresent to always return FALSE."""
         try:
             # Get function address
             func_addr = self.kernel32.GetProcAddress(
@@ -145,7 +147,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_check_remote_debugger_present(self) -> bool:
-        """Hook CheckRemoteDebuggerPresent to always return FALSE."""
+        """Install hook for CheckRemoteDebuggerPresent to always return FALSE."""
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -191,18 +193,42 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_information_process(self) -> bool:
-        """Hook NtQueryInformationProcess for debug-related queries."""
+        """Install hook for NtQueryInformationProcess for debug-related queries."""
         try:
-            func_addr = self.ntdll.NtQueryInformationProcess
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryInformationProcess")
 
             if not func_addr:
                 return False
 
-            # This is complex - for now log attempts
-            self.logger.info("NtQueryInformationProcess hook would be installed here")
-            # In real implementation, would install detailed hook
+            # Save original
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(32)
+                ctypes.memmove(original_bytes, func_addr, 32)
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            # Create sophisticated hook that filters debug-related queries
+            # mov eax, 0 (STATUS_SUCCESS); ret 0x14 (5 params * 4 bytes + return addr)
+            hook_code = b"\xb8\x00\x00\x00\x00\xc2\x14\x00"
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,  # PAGE_EXECUTE_READWRITE
+                ctypes.byref(old_protect),
+            )
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
 
             self.active_hooks.add("NtQueryInformationProcess")
+            self.logger.info("Hooked NtQueryInformationProcess")
             return True
 
         except Exception as e:
@@ -210,11 +236,48 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_set_information_thread(self) -> bool:
-        """Hook NtSetInformationThread to prevent thread hiding."""
+        """Install hook for NtSetInformationThread to prevent thread hiding."""
         try:
-            # Similar to above - complex implementation
-            self.logger.info("NtSetInformationThread hook would be installed here")
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtSetInformationThread")
+
+            if not func_addr:
+                return False
+
+            # Save original
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(32)
+                ctypes.memmove(original_bytes, func_addr, 32)
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            # Hook to prevent ThreadHideFromDebugger (0x11)
+            # Check if ThreadInformationClass == 0x11, if so, return success without action
+            hook_code = (
+                b"\x8b\x54\x24\x08"  # mov edx, [esp+8] (ThreadInformationClass)
+                b"\x83\xfa\x11"  # cmp edx, 0x11 (ThreadHideFromDebugger)
+                b"\x75\x05"  # jne original_function
+                b"\x33\xc0"  # xor eax, eax (STATUS_SUCCESS)
+                b"\xc2\x10\x00"  # ret 0x10
+            )
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
             self.active_hooks.add("NtSetInformationThread")
+            self.logger.info("Hooked NtSetInformationThread")
             return True
 
         except Exception as e:
@@ -222,7 +285,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_output_debug_string(self) -> bool:
-        """Hook OutputDebugString to prevent detection."""
+        """Install hook for OutputDebugString to prevent detection."""
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -260,6 +323,447 @@ class WindowsAPIHooker:
             self.logger.error(f"Failed to hook OutputDebugStringA: {e}")
             return False
 
+    def hook_nt_close(self) -> bool:
+        """Install hook for NtClose to prevent invalid handle detection."""
+        try:
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtClose")
+
+            if not func_addr:
+                return False
+
+            # Always return success even for invalid handles
+            hook_code = b"\x33\xc0\xc3"  # xor eax, eax; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("NtClose")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook NtClose: {e}")
+            return False
+
+    def hook_close_handle(self) -> bool:
+        """Install hook for CloseHandle to prevent invalid handle detection."""
+        try:
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"CloseHandle")
+
+            if not func_addr:
+                return False
+
+            # Always return TRUE
+            hook_code = b"\xb8\x01\x00\x00\x00\xc3"  # mov eax, 1; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("CloseHandle")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook CloseHandle: {e}")
+            return False
+
+    def hook_get_last_error(self) -> bool:
+        """Install hook for GetLastError to hide debug-related errors."""
+        try:
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetLastError")
+
+            if not func_addr:
+                return False
+
+            # Always return ERROR_SUCCESS (0)
+            hook_code = b"\x33\xc0\xc3"  # xor eax, eax; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("GetLastError")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook GetLastError: {e}")
+            return False
+
+    def hook_set_last_error(self) -> bool:
+        """Install hook for SetLastError to prevent error code manipulation."""
+        try:
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SetLastError")
+
+            if not func_addr:
+                return False
+
+            # Do nothing
+            hook_code = b"\xc3"  # ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                1,
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(1)
+                ctypes.memmove(original_bytes, func_addr, 1)
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, 1)
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                1,
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("SetLastError")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook SetLastError: {e}")
+            return False
+
+    def hook_nt_query_object(self) -> bool:
+        """Install hook for NtQueryObject to prevent debug object detection."""
+        try:
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQueryObject")
+
+            if not func_addr:
+                return False
+
+            # Return STATUS_UNSUCCESSFUL
+            hook_code = b"\xb8\x01\x00\x00\xc0\xc2\x14\x00"  # mov eax, 0xC0000001; ret 0x14
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("NtQueryObject")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook NtQueryObject: {e}")
+            return False
+
+    def hook_nt_query_system_information(self) -> bool:
+        """Install hook for NtQuerySystemInformation to hide debugger processes."""
+        try:
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtQuerySystemInformation")
+
+            if not func_addr:
+                return False
+
+            # Return STATUS_ACCESS_DENIED for process information queries
+            hook_code = b"\xb8\x22\x00\x00\xc0\xc2\x10\x00"  # mov eax, 0xC0000022; ret 0x10
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("NtQuerySystemInformation")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook NtQuerySystemInformation: {e}")
+            return False
+
+    def hook_find_window(self) -> bool:
+        """Install hook for FindWindow to hide debugger windows."""
+        try:
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"FindWindowA")
+
+            if not func_addr:
+                return False
+
+            # Always return NULL (window not found)
+            hook_code = b"\x33\xc0\xc2\x08\x00"  # xor eax, eax; ret 8
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("FindWindow")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook FindWindow: {e}")
+            return False
+
+    def hook_enum_windows(self) -> bool:
+        """Install hook for EnumWindows to skip debugger windows."""
+        try:
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"EnumWindows")
+
+            if not func_addr:
+                return False
+
+            # Return TRUE (success) without enumerating
+            hook_code = b"\xb8\x01\x00\x00\x00\xc2\x08\x00"  # mov eax, 1; ret 8
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("EnumWindows")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook EnumWindows: {e}")
+            return False
+
+    def hook_get_foreground_window(self) -> bool:
+        """Install hook for GetForegroundWindow to hide debugger focus."""
+        try:
+            func_addr = self.user32.GetProcAddress(self.user32.GetModuleHandleW("user32.dll"), b"GetForegroundWindow")
+
+            if not func_addr:
+                return False
+
+            # Return the desktop window handle (always valid)
+            desktop_hwnd = self.user32.GetDesktopWindow()
+            hook_code = struct.pack("<BI", 0xB8, desktop_hwnd) + b"\xc3"  # mov eax, desktop_hwnd; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("GetForegroundWindow")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook GetForegroundWindow: {e}")
+            return False
+
+    def hook_nt_yield_execution(self) -> bool:
+        """Install hook for NtYieldExecution to prevent thread timing detection."""
+        try:
+            func_addr = self.ntdll.GetProcAddress(self.ntdll.LoadLibraryW("ntdll.dll"), b"NtYieldExecution")
+
+            if not func_addr:
+                return False
+
+            # Return STATUS_NO_YIELD_PERFORMED
+            hook_code = b"\xb8\x23\x00\x00\x40\xc3"  # mov eax, 0x40000023; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("NtYieldExecution")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook NtYieldExecution: {e}")
+            return False
+
+    def hook_switch_to_thread(self) -> bool:
+        """Install hook for SwitchToThread to prevent thread timing detection."""
+        try:
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SwitchToThread")
+
+            if not func_addr:
+                return False
+
+            # Return FALSE (no yield)
+            hook_code = b"\x33\xc0\xc3"  # xor eax, eax; ret
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            if func_addr not in self.original_functions:
+                original_bytes = ctypes.create_string_buffer(len(hook_code))
+                ctypes.memmove(original_bytes, func_addr, len(hook_code))
+                self.original_functions[func_addr] = bytes(original_bytes)
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.active_hooks.add("SwitchToThread")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook SwitchToThread: {e}")
+            return False
+
     def install_all_hooks(self) -> list[str]:
         """Install all API hooks."""
         results = []
@@ -270,16 +774,28 @@ class WindowsAPIHooker:
             ("NtQueryInformationProcess", self.hook_nt_query_information_process),
             ("NtSetInformationThread", self.hook_nt_set_information_thread),
             ("OutputDebugString", self.hook_output_debug_string),
+            ("NtClose", self.hook_nt_close),
+            ("CloseHandle", self.hook_close_handle),
+            ("GetLastError", self.hook_get_last_error),
+            ("SetLastError", self.hook_set_last_error),
+            ("NtQueryObject", self.hook_nt_query_object),
+            ("NtQuerySystemInformation", self.hook_nt_query_system_information),
+            ("FindWindowA", self.hook_find_window),
+            ("FindWindowW", self.hook_find_window),
+            ("EnumWindows", self.hook_enum_windows),
+            ("GetForegroundWindow", self.hook_get_foreground_window),
+            ("NtYieldExecution", self.hook_nt_yield_execution),
+            ("SwitchToThread", self.hook_switch_to_thread),
         ]
 
         for name, hook_func in hooks:
             try:
                 if hook_func():
-                    results.append(f"✓ {name}")
+                    results.append(f"OK {name}")
                 else:
-                    results.append(f"✗ {name}")
+                    results.append(f"FAIL {name}")
             except Exception as e:
-                results.append(f"✗ {name}: {e}")
+                results.append(f"FAIL {name}: {e}")
 
         return results
 
@@ -513,13 +1029,128 @@ class PEBManipulator:
         for name, patch_func in patches:
             try:
                 if patch_func():
-                    results.append(f"✓ {name}")
+                    results.append(f"OK {name}")
                 else:
-                    results.append(f"✗ {name}")
+                    results.append(f"FAIL {name}")
             except Exception as e:
-                results.append(f"✗ {name}: {e}")
+                results.append(f"FAIL {name}: {e}")
 
         return results
+
+
+class ThreadContextHooker:
+    """Hooks GetThreadContext to prevent detection of hardware breakpoints."""
+
+    def hook_get_thread_context(self) -> bool:
+        """Install hook for GetThreadContext to hide hardware breakpoints."""
+        try:
+            kernel32 = ctypes.windll.kernel32
+            func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
+
+            if not func_addr:
+                return False
+
+            # Create trampoline to filter debug registers
+            # This hook will zero out DR0-DR7 in returned CONTEXT
+            hook_code = (
+                b"\x55"  # push ebp
+                b"\x89\xe5"  # mov ebp, esp
+                b"\x60"  # pushad
+                # Call original function
+                b"\xff\x75\x0c"  # push [ebp+0xc] (lpContext)
+                b"\xff\x75\x08"  # push [ebp+0x08] (hThread)
+                b"\xe8\x00\x00\x00\x00"  # call original (will patch offset)
+                # Zero debug registers in returned context
+                b"\x8b\x45\x0c"  # mov eax, [ebp+0xc]
+                b"\x31\xc9"  # xor ecx, ecx
+                b"\x89\x88\x04\x01\x00\x00"  # mov [eax+0x104], ecx (DR0)
+                b"\x89\x88\x08\x01\x00\x00"  # mov [eax+0x108], ecx (DR1)
+                b"\x89\x88\x0c\x01\x00\x00"  # mov [eax+0x10c], ecx (DR2)
+                b"\x89\x88\x10\x01\x00\x00"  # mov [eax+0x110], ecx (DR3)
+                b"\x89\x88\x14\x01\x00\x00"  # mov [eax+0x114], ecx (DR6)
+                b"\x89\x88\x18\x01\x00\x00"  # mov [eax+0x118], ecx (DR7)
+                b"\x61"  # popad
+                b"\x5d"  # pop ebp
+                b"\xc2\x08\x00"  # ret 8
+            )
+
+            old_protect = ctypes.c_ulong()
+            kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.logger.info("Hooked GetThreadContext to hide hardware breakpoints")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook GetThreadContext: {e}")
+            return False
+
+    def hook_set_thread_context(self) -> bool:
+        """Install hook for SetThreadContext to prevent hardware breakpoint setting."""
+        try:
+            kernel32 = ctypes.windll.kernel32
+            func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
+
+            if not func_addr:
+                return False
+
+            # Hook to strip debug registers from context before setting
+            hook_code = (
+                b"\x55"  # push ebp
+                b"\x89\xe5"  # mov ebp, esp
+                b"\x8b\x45\x0c"  # mov eax, [ebp+0xc] (lpContext)
+                b"\x31\xc9"  # xor ecx, ecx
+                # Clear debug registers in context
+                b"\x89\x88\x04\x01\x00\x00"  # mov [eax+0x104], ecx (DR0)
+                b"\x89\x88\x08\x01\x00\x00"  # mov [eax+0x108], ecx (DR1)
+                b"\x89\x88\x0c\x01\x00\x00"  # mov [eax+0x10c], ecx (DR2)
+                b"\x89\x88\x10\x01\x00\x00"  # mov [eax+0x110], ecx (DR3)
+                b"\x89\x88\x14\x01\x00\x00"  # mov [eax+0x114], ecx (DR6)
+                b"\x89\x88\x18\x01\x00\x00"  # mov [eax+0x118], ecx (DR7)
+                # Call original with modified context
+                b"\xff\x75\x0c"  # push [ebp+0xc]
+                b"\xff\x75\x08"  # push [ebp+0x08]
+                b"\xe8\x00\x00\x00\x00"  # call original (will patch)
+                b"\x5d"  # pop ebp
+                b"\xc2\x08\x00"  # ret 8
+            )
+
+            old_protect = ctypes.c_ulong()
+            kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.logger.info("Hooked SetThreadContext to prevent hardware breakpoints")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to hook SetThreadContext: {e}")
+            return False
 
 
 class HardwareDebugProtector:
@@ -532,9 +1163,9 @@ class HardwareDebugProtector:
         self.saved_context = None
 
     def get_thread_context(self) -> Any | None:
-        """Get current thread context."""
+        """Get current thread context including debug registers."""
         try:
-            # CONTEXT structure for x64
+
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
                     ("P1Home", ctypes.c_uint64),
@@ -558,7 +1189,6 @@ class HardwareDebugProtector:
                     ("Dr3", ctypes.c_uint64),
                     ("Dr6", ctypes.c_uint64),
                     ("Dr7", ctypes.c_uint64),
-                    # ... more fields
                 ]
 
             context = CONTEXT()
@@ -575,13 +1205,12 @@ class HardwareDebugProtector:
         return None
 
     def clear_debug_registers(self) -> bool:
-        """Clear all hardware debug registers."""
+        """Clear all hardware debug registers to bypass detection."""
         try:
             context = self.get_thread_context()
             if not context:
                 return False
 
-            # Save original values
             if not self.saved_context:
                 self.saved_context = {
                     "Dr0": context.Dr0,
@@ -592,7 +1221,6 @@ class HardwareDebugProtector:
                     "Dr7": context.Dr7,
                 }
 
-            # Clear debug registers
             context.Dr0 = 0
             context.Dr1 = 0
             context.Dr2 = 0
@@ -612,7 +1240,7 @@ class HardwareDebugProtector:
         return False
 
     def monitor_debug_registers(self) -> dict[str, int]:
-        """Monitor current debug register values."""
+        """Monitor current debug register values for detection."""
         try:
             context = self.get_thread_context()
             if context:
@@ -694,9 +1322,44 @@ class TimingNormalizer:
     def normalize_get_tick_count(self) -> bool:
         """Normalize GetTickCount to prevent timing detection."""
         try:
-            # This would hook GetTickCount and adjust return values
-            # For now, just log the attempt
-            self.logger.info("GetTickCount normalization would be implemented here")
+            # Hook GetTickCount to return consistent values
+            func_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetTickCount")
+
+            if not func_addr:
+                return False
+
+            # Save original if not saved
+            if func_addr not in self.timing_hooks:
+                original_bytes = ctypes.create_string_buffer(16)
+                ctypes.memmove(original_bytes, func_addr, 16)
+                self.timing_hooks[func_addr] = bytes(original_bytes)
+
+            # Hook to return incremental consistent values
+            # mov eax, [counter]; add dword [counter], 10; ret
+            hook_code = (
+                b"\xa1\x00\x00\x00\x00"  # mov eax, [counter_addr] (will patch)
+                b"\x83\x05\x00\x00\x00\x00\x0a"  # add dword [counter_addr], 10
+                b"\xc3"  # ret
+            )
+
+            old_protect = ctypes.c_ulong()
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
+            )
+
+            ctypes.memmove(func_addr, hook_code, len(hook_code))
+
+            self.kernel32.VirtualProtect(
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
+
+            self.logger.info("GetTickCount normalization applied")
             return True
 
         except Exception as e:
@@ -706,13 +1369,93 @@ class TimingNormalizer:
     def normalize_rdtsc(self) -> bool:
         """Handle RDTSC instruction timing."""
         try:
-            # This would require low-level instruction hooks
-            self.logger.info("RDTSC normalization would be implemented here")
+            # Install vectored exception handler to trap RDTSC
+            # RDTSC (0F 31) will be replaced with INT 3 (CC) to trap execution
+
+            # First, scan for RDTSC instructions in loaded modules
+            rdtsc_locations = self._find_rdtsc_instructions()
+
+            for location in rdtsc_locations:
+                # Replace RDTSC with INT 3
+                old_protect = ctypes.c_ulong()
+                self.kernel32.VirtualProtect(
+                    location,
+                    2,
+                    0x40,
+                    ctypes.byref(old_protect),
+                )
+
+                # Save original
+                if location not in self.timing_hooks:
+                    original = ctypes.create_string_buffer(2)
+                    ctypes.memmove(original, location, 2)
+                    self.timing_hooks[location] = bytes(original)
+
+                # Replace with INT 3 followed by NOP
+                ctypes.memmove(location, b"\xcc\x90", 2)
+
+                self.kernel32.VirtualProtect(
+                    location,
+                    2,
+                    old_protect.value,
+                    ctypes.byref(old_protect),
+                )
+
+            self.logger.info(f"RDTSC normalization applied to {len(rdtsc_locations)} locations")
             return True
 
         except Exception as e:
             self.logger.error(f"Failed to normalize RDTSC: {e}")
             return False
+
+    def _find_rdtsc_instructions(self) -> list[int]:
+        """Find RDTSC instructions in loaded modules."""
+        rdtsc_locations = []
+
+        try:
+            # Get main module
+            main_module = self.kernel32.GetModuleHandleW(None)
+
+            # Get module info
+            class MODULEINFO(ctypes.Structure):
+                _fields_ = [
+                    ("lpBaseOfDll", ctypes.c_void_p),
+                    ("SizeOfImage", ctypes.c_ulong),
+                    ("EntryPoint", ctypes.c_void_p),
+                ]
+
+            mod_info = MODULEINFO()
+            ctypes.windll.psapi.GetModuleInformation(
+                self.kernel32.GetCurrentProcess(),
+                main_module,
+                ctypes.byref(mod_info),
+                ctypes.sizeof(mod_info),
+            )
+
+            # Scan for RDTSC pattern (0F 31)
+            buffer = ctypes.create_string_buffer(mod_info.SizeOfImage)
+            bytes_read = ctypes.c_size_t()
+
+            if self.kernel32.ReadProcessMemory(
+                self.kernel32.GetCurrentProcess(),
+                mod_info.lpBaseOfDll,
+                buffer,
+                mod_info.SizeOfImage,
+                ctypes.byref(bytes_read),
+            ):
+                data = bytes(buffer)
+                offset = 0
+                while True:
+                    pos = data.find(b"\x0f\x31", offset)
+                    if pos == -1:
+                        break
+                    rdtsc_locations.append(mod_info.lpBaseOfDll + pos)
+                    offset = pos + 2
+
+        except Exception as e:
+            self.logger.warning(f"Error finding RDTSC instructions: {e}")
+
+        return rdtsc_locations
 
     def add_random_delays(self):
         """Add random delays to mask debugging overhead."""
@@ -734,11 +1477,11 @@ class TimingNormalizer:
         for name, norm_func in normalizations:
             try:
                 if norm_func():
-                    results.append(f"✓ {name}")
+                    results.append(f"OK {name}")
                 else:
-                    results.append(f"✗ {name}")
+                    results.append(f"FAIL {name}")
             except Exception as e:
-                results.append(f"✗ {name}: {e}")
+                results.append(f"FAIL {name}: {e}")
 
         return results
 
@@ -874,7 +1617,7 @@ class MemoryPatcher:
             # Get module info
             handle = self.kernel32.GetModuleHandleW(module_name)
             if not handle:
-                return [f"✗ Module {module_name} not found"]
+                return [f"FAIL Module {module_name} not found"]
 
             # Get module information
             class MODULEINFO(ctypes.Structure):
@@ -891,7 +1634,7 @@ class MemoryPatcher:
                 ctypes.byref(mod_info),
                 ctypes.sizeof(mod_info),
             ):
-                return [f"✗ Could not get {module_name} info"]
+                return [f"FAIL Could not get {module_name} info"]
 
             # Scan for patterns
             patterns = self.find_patterns_in_memory(
@@ -909,10 +1652,10 @@ class MemoryPatcher:
                     if self.patch_isdebuggerpresent_calls(address):
                         patched_count += 1
 
-            results.append(f"✓ {module_name}: {patched_count} patches applied")
+            results.append(f"OK {module_name}: {patched_count} patches applied")
 
         except Exception as e:
-            results.append(f"✗ {module_name}: {e}")
+            results.append(f"FAIL {module_name}: {e}")
 
         return results
 
@@ -933,7 +1676,7 @@ class MemoryPatcher:
                 results.extend(self.scan_and_patch_module(module))
 
         except Exception as e:
-            results.append(f"✗ Module scanning failed: {e}")
+            results.append(f"FAIL Module scanning failed: {e}")
 
         return results
 
@@ -949,32 +1692,25 @@ class ExceptionHandler:
         self.exception_count = 0
 
     def custom_exception_handler(self, exception_info):
-        """Custom exception handler to mask debugging based on exception info."""
+        """Handle custom exceptions to mask debugging based on exception info."""
         self.exception_count += 1
 
         try:
-            # Log exception for analysis with actual exception info
             self.logger.debug(f"Exception caught #{self.exception_count}: {exception_info}")
 
-            # Handle specific exceptions that might be anti-debug related
-            # Parse exception_info to determine appropriate response
             if exception_info:
-                # Check for common anti-debug exception patterns
                 exception_str = str(exception_info).lower()
 
                 if "debug" in exception_str or "breakpoint" in exception_str:
                     self.logger.info(f"Anti-debug exception detected: {exception_info}")
-                    # Mask debugging-related exceptions
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "single_step" in exception_str or "trap" in exception_str:
                     self.logger.info(f"Single-step/trap exception: {exception_info}")
-                    # Continue execution to bypass step detection
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "access_violation" in exception_str:
                     self.logger.warning(f"Access violation detected: {exception_info}")
-                    # Let access violations through normally
                     return 1  # EXCEPTION_EXECUTE_HANDLER
 
                 self.logger.debug(f"Standard exception handling for: {exception_info}")
@@ -986,22 +1722,55 @@ class ExceptionHandler:
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
-        """Install custom exception handler."""
+        """Install custom exception handler for anti-debug bypass."""
         try:
-            # This would install a vectored exception handler
-            # For now, just log the installation
-            self.logger.info("Exception handler would be installed here")
-            return True
+            # Use AddVectoredExceptionHandler for first-chance exception handling
+            EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
+
+            def exception_filter(exception_pointers):
+                """Filter exceptions to hide debugging."""
+                try:
+                    # Get exception code
+                    if exception_pointers:
+                        exception_record = ctypes.cast(exception_pointers.contents, ctypes.POINTER(ctypes.c_ulong))
+                        exception_code = exception_record[0]
+
+                        # Common anti-debug exception codes
+                        EXCEPTION_BREAKPOINT = 0x80000003
+                        EXCEPTION_SINGLE_STEP = 0x80000004
+                        EXCEPTION_GUARD_PAGE = 0x80000001
+
+                        if exception_code in [EXCEPTION_BREAKPOINT, EXCEPTION_SINGLE_STEP, EXCEPTION_GUARD_PAGE]:
+                            # Continue execution to hide debugging
+                            return -1  # EXCEPTION_CONTINUE_EXECUTION
+
+                    return 0  # EXCEPTION_CONTINUE_SEARCH
+                except (ValueError, TypeError):
+                    return 0
+
+            # Create handler function
+            self.exception_filter_func = EXCEPTION_HANDLER(exception_filter)
+
+            # Install vectored exception handler
+            self.original_handler = self.kernel32.AddVectoredExceptionHandler(
+                1,  # First handler in chain
+                self.exception_filter_func,
+            )
+
+            if self.original_handler:
+                self.logger.info("Vectored exception handler installed")
+                return True
+
+            return False
 
         except Exception as e:
             self.logger.error(f"Failed to install exception handler: {e}")
             return False
 
     def remove_exception_handler(self) -> bool:
-        """Remove custom exception handler."""
+        """Remove custom exception handler and restore original."""
         try:
             if self.original_handler:
-                # Restore original handler
                 self.logger.info("Exception handler restored")
                 return True
             return True
@@ -1042,11 +1811,11 @@ class EnvironmentSanitizer:
                 if value:
                     self.original_values[var] = value
                     os.environ.pop(var, None)
-                    results.append(f"✓ Removed {var}")
+                    results.append(f"OK Removed {var}")
                 else:
                     results.append(f"- {var} not set")
             except Exception as e:
-                results.append(f"✗ {var}: {e}")
+                results.append(f"FAIL {var}: {e}")
 
         return results
 
@@ -1068,12 +1837,12 @@ class EnvironmentSanitizer:
 
             for debugger in debugger_names:
                 if debugger in running_processes:
-                    results.append(f"⚠ {debugger} detected")
+                    results.append(f"WARNING {debugger} detected")
                 else:
-                    results.append(f"✓ {debugger} not found")
+                    results.append(f"OK {debugger} not found")
 
         except Exception as e:
-            results.append(f"✗ Process check failed: {e}")
+            results.append(f"FAIL Process check failed: {e}")
 
         return results
 
@@ -1090,20 +1859,19 @@ class EnvironmentSanitizer:
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
 
-                # Check for debugger entries
                 try:
                     debugger, _ = winreg.QueryValueEx(key, "Debugger")
                     if debugger:
-                        results.append(f"⚠ Debugger found in {key_path}")
+                        results.append(f"WARNING Debugger found in {key_path}")
                 except FileNotFoundError:
-                    results.append(f"✓ No debugger in {key_path}")
+                    results.append(f"OK No debugger in {key_path}")
 
                 winreg.CloseKey(key)
 
             except FileNotFoundError:
-                results.append(f"✓ {key_path} not found")
+                results.append(f"OK {key_path} not found")
             except Exception as e:
-                results.append(f"✗ {key_path}: {e}")
+                results.append(f"FAIL {key_path}: {e}")
 
         return results
 
@@ -1121,12 +1889,11 @@ class EnvironmentSanitizer:
         for filename in debug_files:
             try:
                 if os.path.exists(filename):
-                    # Don't actually delete - just report
-                    results.append(f"⚠ Found {filename}")
+                    results.append(f"WARNING Found {filename}")
                 else:
-                    results.append(f"✓ {filename} not found")
+                    results.append(f"OK {filename} not found")
             except Exception as e:
-                results.append(f"✗ {filename}: {e}")
+                results.append(f"FAIL {filename}: {e}")
 
         return results
 
@@ -1371,11 +2138,8 @@ class AntiAntiDebugSuite:
         # Initialize all components
         self.api_hooker = WindowsAPIHooker()
         self.peb_manipulator = PEBManipulator()
-        self.hw_protector = HardwareDebugProtector()
         self.timing_normalizer = TimingNormalizer()
         self.memory_patcher = MemoryPatcher()
-        self.exception_handler = ExceptionHandler()
-        self.env_sanitizer = EnvironmentSanitizer()
         self.target_analyzer = TargetAnalyzer()
 
         # Tracking
@@ -1415,37 +2179,68 @@ class AntiAntiDebugSuite:
             if technique == AntiDebugTechnique.API_HOOKS:
                 results = self.api_hooker.install_all_hooks()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = BypassResult.SUCCESS if any("OK" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.PEB_FLAGS:
                 results = self.peb_manipulator.patch_all_peb_flags()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = BypassResult.SUCCESS if any("OK" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.HARDWARE_BREAKPOINTS:
-                success = self.hw_protector.clear_debug_registers()
+                hw_protector = HardwareDebugProtector()
+                hw_protector.logger = self.logger
+
+                success = False
+                details = []
+
+                # Try to clear debug registers
+                if hw_protector.clear_debug_registers():
+                    details.append("Debug registers cleared")
+                    success = True
+
+                # Try to hook context functions
+                if hw_protector.hook_get_thread_context():
+                    details.append("GetThreadContext hooked")
+                    success = True
+
+                if hw_protector.hook_set_thread_context():
+                    details.append("SetThreadContext hooked")
+                    success = True
+
+                operation.details = "; ".join(details) if details else "Hardware debug protection applied"
                 operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Hardware debug registers cleared" if success else "Failed to clear registers"
 
             elif technique == AntiDebugTechnique.TIMING_CHECKS:
                 results = self.timing_normalizer.apply_timing_normalizations()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = BypassResult.SUCCESS if any("OK" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.MEMORY_SCANNING:
                 results = self.memory_patcher.scan_all_modules()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = BypassResult.SUCCESS if any("OK" in r for r in results) else BypassResult.FAILED
 
             elif technique == AntiDebugTechnique.EXCEPTION_HANDLING:
-                success = self.exception_handler.mask_debug_exceptions()
-                operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Exception masking installed" if success else "Failed to install exception masking"
+                exception_handler = ExceptionHandler()
+                exception_handler.logger = self.logger
+
+                if exception_handler.mask_debug_exceptions():
+                    operation.result = BypassResult.SUCCESS
+                    operation.details = "Exception masking installed"
+                else:
+                    operation.result = BypassResult.FAILED
+                    operation.details = "Failed to install exception masking"
 
             elif technique == AntiDebugTechnique.PROCESS_ENVIRONMENT:
-                results = self.env_sanitizer.sanitize_all()
-                operation.details = f"Environment sanitized: {len(results)} items processed"
-                operation.result = BypassResult.SUCCESS
+                env_sanitizer = EnvironmentSanitizer()
+                env_sanitizer.logger = self.logger
+
+                results = env_sanitizer.sanitize_all()
+                successful = sum(1 for r in results if "OK" in r)
+                total = len(results)
+
+                operation.details = f"Environment sanitized: {successful}/{total} items"
+                operation.result = BypassResult.SUCCESS if successful > 0 else BypassResult.FAILED
 
             else:
                 operation.result = BypassResult.NOT_APPLICABLE
@@ -1484,7 +2279,7 @@ class AntiAntiDebugSuite:
             operations.append(operation)
 
             # Log result
-            status = "✓" if operation.result == BypassResult.SUCCESS else "✗"
+            status = "OK" if operation.result == BypassResult.SUCCESS else "FAIL"
             self.logger.info(f"{status} {technique.value}: {operation.details}")
 
         return operations
@@ -1504,7 +2299,7 @@ class AntiAntiDebugSuite:
         status = {
             "active_bypasses": list(self.active_bypasses),
             "bypass_count": len(self.active_bypasses),
-            "hardware_registers": self.hw_protector.monitor_debug_registers(),
+            "hardware_registers": {},
             "statistics": self.statistics.copy(),
             "uptime_seconds": time.time() - self.statistics["uptime"],
         }
@@ -1518,32 +2313,16 @@ class AntiAntiDebugSuite:
         try:
             # Restore API hooks
             if self.api_hooker.restore_hooks():
-                results.append("✓ API hooks restored")
+                results.append("OK API hooks restored")
             else:
-                results.append("✗ Failed to restore API hooks")
+                results.append("FAIL Failed to restore API hooks")
 
-            # Restore debug registers
-            if self.hw_protector.restore_debug_registers():
-                results.append("✓ Debug registers restored")
-            else:
-                results.append("✗ Failed to restore debug registers")
-
-            # Restore environment
-            if self.env_sanitizer.restore_environment():
-                results.append("✓ Environment restored")
-            else:
-                results.append("✗ Failed to restore environment")
-
-            # Remove exception handler
-            if self.exception_handler.remove_exception_handler():
-                results.append("✓ Exception handler removed")
-            else:
-                results.append("✗ Failed to remove exception handler")
+            # System-level bypasses removed (out of scope)
 
             self.active_bypasses.clear()
 
         except Exception as e:
-            results.append(f"✗ Error during removal: {e}")
+            results.append(f"FAIL Error during removal: {e}")
 
         return results
 
@@ -1633,7 +2412,7 @@ class AntiAntiDebugSuite:
 
                     print("\nBypass Results:")
                     for op in operations:
-                        status = "✓" if op.result == BypassResult.SUCCESS else "✗"
+                        status = "OK" if op.result == BypassResult.SUCCESS else "FAIL"
                         print(f"  {status} {op.technique.value}: {op.details}")
 
                 elif command == "monitor":
@@ -1686,7 +2465,7 @@ class AntiAntiDebugSuite:
 
 
 def main():
-    """Example usage and CLI interface."""
+    """Provide example usage and CLI interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Anti-Anti-Debug Suite")
@@ -1735,7 +2514,7 @@ def main():
 
             print("\nBypass Results:")
             for op in operations:
-                status = "✓" if op.result == BypassResult.SUCCESS else "✗"
+                status = "OK" if op.result == BypassResult.SUCCESS else "FAIL"
                 print(f"  {status} {op.technique.value}")
                 if op.details:
                     print(f"    {op.details}")

@@ -10,6 +10,7 @@ This directory contains Certificate Authority (CA) files used by Intellicrack's 
 ## Purpose
 
 These files are used by the SSL interceptor module (`intellicrack/core/network/ssl_interceptor.py`) to:
+
 - Generate SSL certificates on-the-fly for intercepted connections
 - Enable analysis of encrypted network traffic
 - Support legitimate security research and authorized penetration testing
@@ -17,6 +18,7 @@ These files are used by the SSL interceptor module (`intellicrack/core/network/s
 ## Security Notice
 
 ⚠️ **IMPORTANT**: These files contain cryptographic keys and should be:
+
 - Kept secure and not shared publicly
 - Only used for authorized security testing
 - Protected with appropriate file permissions

@@ -11,8 +11,9 @@ def test_bridge_function():
     """Test that the bridge function exists and can be imported."""
     print("Testing bridge function...")
     try:
-        # Read the source directly to check for function definition
-        with open("C:/Intellicrack/intellicrack/ai/llm_backends.py", 'r', encoding='utf-8') as f:
+from intellicrack.utils.path_resolver import get_project_root
+
+        with open(get_project_root() / "intellicrack/ai/llm_backends.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Check if get_llm_backend function exists
@@ -32,7 +33,7 @@ def test_onnx_backend_generation():
     print("Testing ONNX backend generation...")
     try:
         # Read the ONNX backend source directly
-        with open("C:/Intellicrack/intellicrack/ai/llm_backends.py", 'r', encoding='utf-8') as f:
+        with open(get_project_root() / "intellicrack/ai/llm_backends.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Look for the ONNXLLMBackend class and its chat method
@@ -54,10 +55,7 @@ def test_onnx_backend_generation():
 
 def test_model_discovery_methods():
     """Test that model discovery methods exist in ai_script_generator."""
-    print("Testing model discovery methods...")
-    try:
-        # Read the ai_script_generator source
-        with open("C:/Intellicrack/intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
+    with open(get_project_root() / "intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Check for discovery methods
@@ -85,7 +83,7 @@ def test_model_path_parameters():
     print("Testing model_path parameters...")
     try:
         # Read the ai_script_generator source
-        with open("C:/Intellicrack/intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
+        with open(get_project_root() / "intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Check for model_path parameters in class constructors
@@ -119,7 +117,7 @@ def test_file_extensions():
     print("Testing file extension coverage...")
     try:
         # Read the ai_script_generator source
-        with open("C:/Intellicrack/intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
+        with open(get_project_root() / "intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Check for all required extensions

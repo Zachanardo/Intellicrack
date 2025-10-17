@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Parsing utilities for Intellicrack AI components.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -27,6 +29,7 @@ Shared utilities for parsing AI responses to eliminate code duplication.
 
 class ResponseLineParser:
     """Utility class for parsing AI responses line by line.
+
     Eliminates duplication across AI parsing modules.
     """
 

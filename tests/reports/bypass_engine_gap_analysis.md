@@ -7,7 +7,7 @@ I have created a comprehensive test suite for the `BypassEngine` module followin
 ## Test Suite Overview
 
 ### File Created
-- **Location**: `C:\Intellicrack\tests\unit\core\mitigation_bypass\test_bypass_engine.py`
+- **Location**: `D:\\Intellicrack\tests\unit\core\mitigation_bypass\test_bypass_engine.py`
 - **Lines of Code**: 1,041 lines
 - **Test Classes**: 12
 - **Test Methods**: 95
@@ -129,8 +129,8 @@ The test suite provides comprehensive coverage for:
 To run the tests with coverage:
 
 ```bash
-# Using mamba environment
-mamba activate C:\Intellicrack\mamba_env
+# Using pixi environment
+pixi shell
 python -m pytest tests\unit\core\mitigation_bypass\test_bypass_engine.py -v --cov=intellicrack.core.exploitation.bypass_engine --cov-report=term-missing
 
 # Or using the test runner scripts

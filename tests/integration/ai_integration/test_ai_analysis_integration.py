@@ -1,3 +1,15 @@
+"""
+Integration tests for Intellicrack's AI analysis capabilities.
+
+This module contains comprehensive integration tests for AI-driven analysis workflows in Intellicrack,
+including binary analysis feeding into AI insights generation, protection detection to AI bypass
+generation, multi-agent AI coordination for complex analysis, AI orchestrator managing complex
+workflows, AI learning from analysis results, AI script generation with context awareness,
+AI error handling and recovery mechanisms, AI performance optimization during workflows,
+and AI collaborative analysis with multiple models. These tests ensure the AI components
+work effectively together in real-world analysis scenarios.
+"""
+
 import pytest
 import tempfile
 import os

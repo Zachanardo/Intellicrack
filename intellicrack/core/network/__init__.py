@@ -4,7 +4,7 @@ This package contains networking components for communication protocols,
 C2 infrastructure, and network-based analysis capabilities.
 """
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Network analysis and protocol handling for Intellicrack.
@@ -47,7 +47,10 @@ except ImportError as e:
     ProtocolFingerprinter = None
 
 try:
-    from .license_server_emulator import NetworkLicenseServerEmulator as LicenseServerEmulator
+    from intellicrack.plugins.custom_modules.license_server_emulator import (
+        LicenseServerEmulator as NetworkLicenseServerEmulator,
+    )
+    LicenseServerEmulator = NetworkLicenseServerEmulator
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     LicenseServerEmulator = None

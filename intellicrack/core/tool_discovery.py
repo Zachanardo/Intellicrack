@@ -35,6 +35,14 @@ from intellicrack.core.config_manager import get_config
 
 logger = logging.getLogger(__name__)
 
+try:
+    from .terminal_manager import get_terminal_manager
+
+    HAS_TERMINAL_MANAGER = True
+except ImportError:
+    HAS_TERMINAL_MANAGER = False
+    logger.warning("Terminal manager not available for tool discovery")
+
 
 class ToolValidator:
     """Validates tool installations and capabilities."""
@@ -472,6 +480,14 @@ class AdvancedToolDiscovery:
         """Discover all supported tools."""
         logger.info("Starting comprehensive tool discovery")
 
+        # Report to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                terminal_manager.log_terminal_message("Starting comprehensive tool discovery")
+            except Exception as e:
+                logger.warning(f"Could not log to terminal manager: {e}")
+
         tool_configs = {
             "ghidra": {
                 "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
@@ -532,13 +548,31 @@ class AdvancedToolDiscovery:
                 results[tool_name] = tool_info
 
                 if tool_info["available"]:
-                    logger.info(f"✓ {tool_name} found: {tool_info['path']}")
+                    logger.info(f"OK {tool_name} found: {tool_info['path']}")
+                    # Report successful discovery to terminal manager
+                    if HAS_TERMINAL_MANAGER:
+                        try:
+                            terminal_manager.log_terminal_message(f"OK {tool_name} found: {tool_info['path']}")
+                        except Exception as e:
+                            logger.debug("Could not log to terminal manager: %s", e)
                 else:
                     level = logging.WARNING if config["required"] else logging.INFO
-                    logger.log(level, f"✗ {tool_name} not found")
+                    logger.log(level, f"FAIL {tool_name} not found")
+                    # Report failed discovery to terminal manager
+                    if HAS_TERMINAL_MANAGER:
+                        try:
+                            terminal_manager.log_terminal_message(f"FAIL {tool_name} not found", level="warning")
+                        except Exception as e:
+                            logger.debug("Could not log to terminal manager: %s", e)
 
             except Exception as e:
                 logger.error(f"Error discovering {tool_name}: {e}")
+                # Report error to terminal manager
+                if HAS_TERMINAL_MANAGER:
+                    try:
+                        terminal_manager.log_terminal_message(f"Error discovering {tool_name}: {e}", level="error")
+                    except Exception as e2:
+                        logger.debug("Could not log to terminal manager: %s", e2)
                 results[tool_name] = {
                     "available": False,
                     "error": str(e),
@@ -553,6 +587,15 @@ class AdvancedToolDiscovery:
         self.config.set("tools.last_discovery", time.time())
 
         # Configuration is auto-saved by the config manager
+
+        # Report completion to terminal manager
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager.log_terminal_message(
+                    f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}"
+                )
+            except Exception as e:
+                logger.debug("Could not log to terminal manager: %s", e)
 
         return results
 
@@ -706,8 +749,8 @@ class AdvancedToolDiscovery:
             import winreg
 
             registry_paths = [
-                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
+                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
             ]
 
             for registry_path in registry_paths:
@@ -787,7 +830,9 @@ class AdvancedToolDiscovery:
             if sys.platform == "win32":
                 paths.extend(
                     [
-                        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"),  # Primary location
+                        os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"
+                        ),  # Primary location
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",
@@ -1079,6 +1124,23 @@ class AdvancedToolDiscovery:
             if tool_name not in results:
                 results[tool_name] = self.health_check_tool(tool_name)
 
+        # Report health check summary to terminal manager if available
+        if HAS_TERMINAL_MANAGER:
+            try:
+                terminal_manager = get_terminal_manager()
+                healthy_count = len([tool_name for tool_name, status in results.items() if status.get("healthy", False)])
+                total_count = len(results)
+                terminal_manager.log_terminal_message(f"Health check completed: {healthy_count}/{total_count} tools healthy")
+
+                # Report unhealthy tools
+                for tool_name, status in results.items():
+                    if not status.get("healthy", False):
+                        issues = status.get("issues", [])
+                        if issues:
+                            terminal_manager.log_terminal_message(f"Unhealthy tool: {tool_name} - {', '.join(issues)}", level="warning")
+            except Exception as e:
+                logger.warning(f"Could not log health check to terminal manager: {e}")
+
         # Save health check results to config
         self.config.set("tools.last_health_check", results)
         self.config.set("tools.last_health_check_time", time.time())
@@ -1248,53 +1310,7 @@ class AdvancedToolDiscovery:
 
     def _try_container_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
         """Try containerized versions of tools."""
-        container_configs = {
-            "radare2": {"image": "radare/radare2:latest", "command": "r2"},
-            "ghidra": {"image": "ghidra/ghidra:latest", "command": "ghidraRun"},
-        }
-
-        if tool_name in container_configs:
-            # Check if Docker is available
-            docker_path = shutil.which("docker")
-            if docker_path:
-                container_cfg = container_configs[tool_name]
-                # Create wrapper script for containerized tool
-                wrapper_script = self._create_container_wrapper(tool_name, container_cfg)
-                if wrapper_script:
-                    return {
-                        "available": True,
-                        "path": wrapper_script,
-                        "containerized": True,
-                        "container_image": container_cfg["image"],
-                    }
-
         return None
-
-    def _create_container_wrapper(self, tool_name: str, container_cfg: dict) -> str | None:
-        """Create a wrapper script for containerized tools."""
-        wrapper_dir = Path.home() / ".intellicrack" / "container_wrappers"
-        wrapper_dir.mkdir(parents=True, exist_ok=True)
-
-        wrapper_ext = ".bat" if sys.platform == "win32" else ".sh"
-        wrapper_path = wrapper_dir / f"{tool_name}_container{wrapper_ext}"
-
-        if sys.platform == "win32":
-            wrapper_content = f"""@echo off
-docker run --rm -it -v "%cd%":/workspace {container_cfg["image"]} {container_cfg["command"]} %*
-"""
-        else:
-            wrapper_content = f"""#!/bin/bash
-docker run --rm -it -v "$(pwd)":/workspace {container_cfg["image"]} {container_cfg["command"]} "$@"
-"""
-
-        try:
-            wrapper_path.write_text(wrapper_content)
-            if sys.platform != "win32":
-                os.chmod(wrapper_path, 0o700)
-            return str(wrapper_path)
-        except Exception as e:
-            logger.debug(f"Failed to create container wrapper: {e}")
-            return None
 
     def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict]:
         """Get alternative tools for a given tool."""

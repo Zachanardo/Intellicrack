@@ -28,7 +28,7 @@ from intellicrack.config import get_config
 
 
 def get_cache_path(binary_path: str) -> Path:
-    """Generates a consistent cache file path for a given binary."""
+    """Generate a consistent cache file path for a given binary."""
     config = get_config()
     # Use a dedicated subdirectory for incremental analysis cache
     cache_dir = Path(config.get("directories.cache", ".cache")) / "incremental"
@@ -40,7 +40,8 @@ def get_cache_path(binary_path: str) -> Path:
 
 
 def run_incremental_analysis(main_app):
-    """Runs analysis on the target binary, using cached results if available
+    """Run analysis on the target binary, using cached results if available.
+
     to speed up the process. This is a production-ready implementation.
     """
     if not main_app.current_binary:

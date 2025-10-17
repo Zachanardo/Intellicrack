@@ -19,10 +19,10 @@ if (Test-Path "rust_launcher_env_test_results.json") {
     Write-Host ""
     Write-Host "=== Environment Variables Test Results ===" -ForegroundColor Cyan
     $results = Get-Content "rust_launcher_env_test_results.json" | ConvertFrom-Json
-    
+
     $successCount = 0
     $failCount = 0
-    
+
     foreach ($var in $results.environment_variables.PSObject.Properties) {
         if ($var.Value.set) {
             $successCount++
@@ -32,7 +32,7 @@ if (Test-Path "rust_launcher_env_test_results.json") {
             Write-Host "❌ $($var.Name): NOT SET" -ForegroundColor Red
         }
     }
-    
+
     Write-Host ""
     Write-Host "=== Summary ===" -ForegroundColor Cyan
     Write-Host "Total variables: $($successCount + $failCount)"

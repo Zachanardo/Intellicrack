@@ -710,7 +710,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
 
 def create_highlighter(document: QTextDocument, language: str = "python") -> SyntaxHighlighter:
-    """Factory function to create a syntax highlighter.
+    """Create a syntax highlighter.
 
     Args:
         document: Text document to highlight

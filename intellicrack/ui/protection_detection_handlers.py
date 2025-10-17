@@ -26,14 +26,14 @@ from ..core.analysis.core_analysis import decrypt_embedded_script
 from ..core.protection_bypass.dongle_emulator import HardwareDongleEmulator
 from ..core.protection_bypass.tpm_bypass import TPMProtectionBypass
 from ..core.protection_bypass.vm_bypass import VirtualizationDetectionBypass as VMDetectionBypass
-from ..utils.process_utils import detect_hardware_dongles, detect_tpm_protection
 
 # Import protection detection functions
-from ..utils.protection_detection import (
+from ..protection.protection_detector import (
     detect_checksum_verification,
     detect_commercial_protections,
     detect_self_healing_code,
 )
+from ..utils.system.process_utils import detect_hardware_dongles, detect_tpm_protection
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ class ProtectionDetectionHandlers:
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
             elif results["checksum_verification_detected"]:
-                output += "✓ Checksum/Integrity verification detected!\n\n"
+                output += "OK Checksum/Integrity verification detected!\n\n"
 
                 if results.get("algorithms_found"):
                     output += "Hash Algorithms Found:\n"
@@ -223,7 +223,7 @@ class ProtectionDetectionHandlers:
             if results.get("error"):
                 output += f"Error: {results['error']}\n"
             elif results["self_healing_detected"]:
-                output += "✓ Self-healing/self-modifying code detected!\n\n"
+                output += "OK Self-healing/self-modifying code detected!\n\n"
 
                 if results.get("techniques"):
                     output += "Techniques Found:\n"
@@ -270,9 +270,9 @@ class ProtectionDetectionHandlers:
             output = "=== TPM Bypass Results ===\n\n"
 
             if results["success"]:
-                output += "✓ TPM bypass successful!\n\n"
+                output += "OK TPM bypass successful!\n\n"
             else:
-                output += "⚠ TPM bypass partially successful.\n\n"
+                output += "WARNING TPM bypass partially successful.\n\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
@@ -317,9 +317,9 @@ class ProtectionDetectionHandlers:
             output = "=== VM Detection Bypass Results ===\n\n"
 
             if results["success"]:
-                output += "✓ VM detection bypass successful!\n\n"
+                output += "OK VM detection bypass successful!\n\n"
             else:
-                output += "⚠ VM detection bypass partially successful.\n\n"
+                output += "WARNING VM detection bypass partially successful.\n\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
@@ -360,9 +360,9 @@ class ProtectionDetectionHandlers:
             output = "=== Hardware Dongle Emulation Results ===\n\n"
 
             if results["success"]:
-                output += "✓ Hardware dongle emulation activated!\n\n"
+                output += "OK Hardware dongle emulation activated!\n\n"
             else:
-                output += "⚠ Hardware dongle emulation partially successful.\n\n"
+                output += "WARNING Hardware dongle emulation partially successful.\n\n"
 
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"

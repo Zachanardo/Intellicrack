@@ -66,7 +66,7 @@ from ..core.analysis.radare2_strings import R2StringAnalyzer
 from ..core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
 
 
-class R2AnalysisWorker(QThread):
+class R2AnalysisWorker(QThread if QThread is not None else object):
     """Worker thread for radare2 analysis operations."""
 
     progress_updated = pyqtSignal(int)
@@ -214,7 +214,7 @@ class R2AnalysisWorker(QThread):
         return engine.generate_comprehensive_bypass()
 
 
-class R2ConfigurationDialog(QDialog):
+class R2ConfigurationDialog(QDialog if QDialog is not None else object):
     """Dialog for configuring radare2 analysis options."""
 
     def __init__(self, parent=None):
@@ -290,11 +290,14 @@ class R2ConfigurationDialog(QDialog):
         advanced_layout = QFormLayout(advanced_group)
 
         self.radare2_path = QLineEdit()
-        self.radare2_path.setPlaceholderText("Leave empty for system PATH")
+        if hasattr(self.radare2_path, "setToolTip"):
+            self.radare2_path.setToolTip("Leave empty for system PATH")
         advanced_layout.addRow("Radare2 Path:", self.radare2_path)
 
         self.custom_flags = QLineEdit()
-        self.custom_flags.setPlaceholderText("-e anal.depth=3 -e anal.bb.maxsize=64")
+        self.custom_flags.setText("-e anal.depth=3 -e anal.bb.maxsize=64")
+        if hasattr(self.custom_flags, "setToolTip"):
+            self.custom_flags.setToolTip("Custom radare2 flags for analysis")
         advanced_layout.addRow("Custom Flags:", self.custom_flags)
 
         layout.addWidget(advanced_group)
@@ -323,7 +326,7 @@ class R2ConfigurationDialog(QDialog):
         }
 
 
-class R2ResultsViewer(QWidget):
+class R2ResultsViewer(QWidget if QWidget is not None else object):
     """Widget for displaying comprehensive radare2 analysis results."""
 
     def __init__(self, parent=None):
@@ -664,7 +667,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
                 QMessageBox.critical(self, "Export Error", f"Failed to export results: {e}")
 
 
-class R2IntegrationWidget(QWidget):
+class R2IntegrationWidget(QWidget if QWidget is not None else object):
     """Main widget for radare2 integration UI."""
 
     def __init__(self, parent=None):

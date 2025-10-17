@@ -1,5 +1,23 @@
 """Automated patch agent for real-time binary patching with exploitation capabilities.
+
 Production-ready implementation for security research.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
@@ -13,8 +31,7 @@ class AutomatedPatchAgent:
     """Real-time automated binary patching agent for exploitation."""
 
     def __init__(self):
-        """
-        Initialize the Automated Patch Agent.
+        """Initialize the Automated Patch Agent.
 
         Sets up the agent's core attributes including patch history tracking,
         bypass pattern initialization, and exploitation technique loading.
@@ -269,7 +286,7 @@ def generate_serial(name):
     # Common serial algorithm patterns
     name_hash = hashlib.md5(name.encode()).hexdigest()
 
-    # Format: XXXX-XXXX-XXXX-XXXX
+    # Format: 4char-4char-4char-4char hexadecimal groups
     serial_parts = []
     for i in range(0, 16, 4):
         part = name_hash[i:i+4].upper()

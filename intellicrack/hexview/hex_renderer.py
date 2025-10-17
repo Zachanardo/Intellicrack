@@ -6,7 +6,7 @@ import struct
 from enum import Enum, auto
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Hex data rendering module for the hex viewer/editor.

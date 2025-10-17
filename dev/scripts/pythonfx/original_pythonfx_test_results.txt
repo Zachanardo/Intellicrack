@@ -1,2 +1,0 @@
-Tests passed: 12
-Tests failed: 0

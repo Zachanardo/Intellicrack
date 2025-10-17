@@ -61,7 +61,7 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
         return False
 
     def get_load_priority(self, config: LLMConfig) -> int:
-        """Basic priority based on provider type."""
+        """Get load priority based on provider type."""
         # Give API models higher priority since they're faster to initialize
         if hasattr(config, "provider"):
             if config.provider.value in ["openai", "anthropic"]:

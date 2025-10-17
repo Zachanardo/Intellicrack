@@ -8,8 +8,8 @@ from pathlib import Path
 
 def analyze_test_coverage():
     """Analyze test file for coverage metrics."""
-    test_file = Path(r"C:\Intellicrack\tests\unit\core\analysis\test_dynamic_instrumentation.py")
-    source_file = Path(r"C:\Intellicrack\intellicrack\core\analysis\dynamic_instrumentation.py")
+    test_file = Path(r"D:\Intellicrack\tests\unit\core\analysis\test_dynamic_instrumentation.py")
+    source_file = Path(r"D:\Intellicrack\intellicrack\core\analysis\dynamic_instrumentation.py")
 
     # Parse test file
     with open(test_file, 'r') as f:

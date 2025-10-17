@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .base_network_analyzer import BaseNetworkAnalyzer
 
@@ -309,7 +309,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def _capture_loop(self):
-        """Main packet capture loop."""
+        """Run main packet capture loop."""
         try:
             if self.capture_backend == "scapy":
                 self._scapy_capture()
@@ -381,7 +381,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     # This provides better cross-platform compatibility and enhanced features
 
     def _socket_capture(self):
-        """Basic socket-based capture for localhost traffic."""
+        """Capture localhost traffic with basic socket-based approach."""
         try:
             # Create raw socket for local traffic monitoring
             if sys.platform == "win32":
@@ -531,7 +531,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.packet_queue.pop(0)
 
     def _analysis_loop(self):
-        """Main packet analysis loop."""
+        """Run main packet analysis loop."""
         while self.running:
             try:
                 packets_to_analyze = []
@@ -639,7 +639,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.analysis_callbacks.remove(callback)
 
     def set_dns_redirection(self, hostname: str, target_ip: str) -> bool:
-        """Setup DNS redirection for hostname."""
+        """Set up DNS redirection for hostname."""
         try:
             self.dns_redirections[hostname.lower()] = target_ip
             self.logger.info(f"DNS redirection setup: {hostname} -> {target_ip}")
@@ -649,7 +649,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
-        """Setup transparent proxy for target server."""
+        """Set up transparent proxy for target server."""
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)

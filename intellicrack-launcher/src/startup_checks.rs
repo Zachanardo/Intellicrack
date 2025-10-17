@@ -812,15 +812,14 @@ impl StartupValidator {
     }
 
     async fn get_linux_distribution(&self) -> String {
-        if cfg!(unix) {
-            if let Ok(content) = fs::read_to_string("/etc/os-release") {
+        if cfg!(unix)
+            && let Ok(content) = fs::read_to_string("/etc/os-release") {
                 for line in content.lines() {
                     if line.starts_with("PRETTY_NAME=") {
                         return line.replace("PRETTY_NAME=", "").replace('"', "");
                     }
                 }
             }
-        }
         "Unknown".to_string()
     }
 
@@ -835,15 +834,14 @@ impl StartupValidator {
                 Ok(output) if output.status.success() => {
                     let output_str = String::from_utf8_lossy(&output.stdout);
                     for line in output_str.lines() {
-                        if line.starts_with("TotalPhysicalMemory=") {
-                            if let Ok(bytes) = line
+                        if line.starts_with("TotalPhysicalMemory=")
+                            && let Ok(bytes) = line
                                 .replace("TotalPhysicalMemory=", "")
                                 .trim()
                                 .parse::<u64>()
                             {
                                 return Ok(bytes / (1024 * 1024)); // Convert to MB
                             }
-                        }
                     }
                     Err(anyhow!("Could not parse memory information"))
                 }

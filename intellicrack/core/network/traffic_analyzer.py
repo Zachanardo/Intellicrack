@@ -29,7 +29,7 @@ import time
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from .base_network_analyzer import BaseNetworkAnalyzer
 
@@ -277,6 +277,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         timeout: int | None = None,
     ) -> dict[str, Any]:
         """Capture packets using Python's native socket library.
+
         This is a fallback method when specialized packet capture libraries are not available.
 
         Args:
@@ -438,7 +439,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             raise
 
     def _process_captured_packet(self, packet_data: bytes):
-        """Simple packet processor for socket-captured packets."""
+        """Process socket-captured packets with simple processor."""
         try:
             # Very basic packet processing - extract IP header info
             if len(packet_data) >= 20:  # Minimum IP header size

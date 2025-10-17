@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Smart program selector dialog for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -34,7 +36,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     pyqtSignal,
 )
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """Smart program selector dialog for choosing target applications."""
 

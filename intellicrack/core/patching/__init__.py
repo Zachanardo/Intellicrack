@@ -25,27 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Import patching modules with error handling
 try:
-    from .payload_generator import (
-        PayloadGenerator,
-        apply_patch,
-        create_nop_sled,
-        generate_complete_api_hooking_script,
-        inject_shellcode,
-    )
-except ImportError as e:
-    logger.warning("Failed to import payload_generator: %s", e)
-
-try:
-    from .adobe_injector import (
-        AdobeInjector,
-        create_adobe_injector,
-        inject_running_adobe_processes,
-        start_adobe_monitoring,
-    )
-except ImportError as e:
-    logger.warning("Failed to import adobe_injector: %s", e)
-
-try:
     from .windows_activator import (
         ActivationMethod,
         ActivationStatus,
@@ -55,6 +34,17 @@ try:
         check_windows_activation,
         create_windows_activator,
     )
+
+    def activate_windows_interactive(output_callback=None):
+        """Launch Windows activation interactively."""
+        activator = create_windows_activator()
+        return activator.activate_windows_interactive(output_callback)
+
+    def activate_windows_in_terminal():
+        """Activate Windows using embedded terminal (recommended)."""
+        activator = create_windows_activator()
+        return activator.activate_windows_in_terminal()
+
 except ImportError as e:
     logger.warning("Failed to import windows_activator: %s", e)
 
@@ -63,19 +53,14 @@ try:
 except ImportError as e:
     logger.warning("Failed to import memory_patcher: %s", e)
 
+try:
+    from .radare2_patch_integration import R2PatchIntegrator
+except ImportError as e:
+    logger.warning("Failed to import radare2_patch_integration: %s", e)
+    R2PatchIntegrator = None
+
 # Define package exports
 __all__ = [
-    # From payload_generator
-    "PayloadGenerator",
-    "apply_patch",
-    "create_nop_sled",
-    "inject_shellcode",
-    "generate_complete_api_hooking_script",
-    # From adobe_injector
-    "AdobeInjector",
-    "create_adobe_injector",
-    "inject_running_adobe_processes",
-    "start_adobe_monitoring",
     # From windows_activator
     "WindowsActivator",
     "ActivationMethod",
@@ -84,9 +69,13 @@ __all__ = [
     "check_windows_activation",
     "activate_windows_hwid",
     "activate_windows_kms",
+    "activate_windows_interactive",
+    "activate_windows_in_terminal",
     # From memory_patcher
     "generate_launcher_script",
     "setup_memory_patching",
+    # From radare2_patch_integration
+    "R2PatchIntegrator",
 ]
 
 # Package metadata

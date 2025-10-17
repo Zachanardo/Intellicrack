@@ -30,7 +30,7 @@ from typing import Any
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
-from intellicrack.logger import get_logger
+from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

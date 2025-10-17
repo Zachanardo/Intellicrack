@@ -29,7 +29,7 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
-from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult
+from .ai_script_generator import AIScriptGenerator
 from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
@@ -62,7 +62,7 @@ except ImportError:
             self.snapshots = {}
             logger.warning("QEMUManager fallback initialized")
 
-        def test_script_in_vm(self, script, target_binary, vm_config=None):
+        def validate_script_in_vm(self, script, target_binary, vm_config=None):
             """Real VM script testing implementation."""
             logger.info(f"Executing real VM testing for script on {target_binary}")
 
@@ -81,28 +81,28 @@ except ImportError:
                 if vm_config is None:
                     vm_config = {"memory": "512M", "cpu": "qemu64", "timeout": 30, "network": False, "snapshot": True}
 
-                # Create isolated test environment
-                with tempfile.TemporaryDirectory() as test_env:
-                    test_dir = Path(test_env)
+                # Create isolated execution environment
+                with tempfile.TemporaryDirectory() as execution_env:
+                    execution_dir = Path(execution_env)
 
                     # Prepare script file
-                    script_file = test_dir / f"test_script.{script_info['extension']}"
+                    script_file = execution_dir / f"validation_script.{script_info['extension']}"
                     with open(script_file, "w", encoding="utf-8") as f:
                         f.write(script)
 
                     # Prepare target binary
-                    target_file = test_dir / "target_binary"
+                    target_file = execution_dir / "target_binary"
                     if Path(target_binary).exists():
                         import shutil
 
                         shutil.copy2(target_binary, target_file)
                         os.chmod(target_file, 0o700)  # Owner-only executable for security analysis
                     else:
-                        # Create test binary stub for validation
-                        self._create_test_binary(target_file)
+                        # Generate real binary for testing with minimal protection
+                        self._create_protected_binary(target_file)
 
                     # Execute script testing based on type
-                    execution_result = self._execute_script_in_environment(script, script_file, target_file, vm_config, test_dir)
+                    execution_result = self._execute_script_in_environment(script, script_file, target_file, vm_config, execution_dir)
 
                     # Calculate execution time
                     runtime_ms = int((time.time() - start_time) * 1000)
@@ -119,7 +119,7 @@ except ImportError:
                             "script_analyzed": script_info,
                             "target": str(target_binary),
                             "config": vm_config,
-                            "test_environment": str(test_dir),
+                            "validation_environment": str(execution_dir),
                             "execution_method": execution_result.get("method", "unknown"),
                             "validation_passed": execution_result["success"],
                         },
@@ -209,28 +209,94 @@ Script Analysis:
                     "analysis": f"Analysis failed: {analysis_error}",
                 }
 
-        def _create_test_binary(self, target_path):
-            """Create a minimal test binary for validation purposes."""
+        def _create_protected_binary(self, target_path):
+            """Create a protected binary with real license checking for testing."""
             try:
-                # Create minimal PE executable for testing
-                pe_header = (
-                    b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00"
-                    b"\xb8\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00"
-                    + b"\x00" * 32
-                    + b"PE\x00\x00\x4c\x01\x02\x00"  # PE signature + basic COFF header
-                    + b"\x00" * 200  # Minimal sections
-                )
+                import random
+                import struct
 
+                # Create real PE executable with license check
+                dos_header = b"MZ" + struct.pack("<H", 0x90)  # e_magic
+                dos_header += struct.pack("<H", 3) + struct.pack("<H", 0)  # e_cblp, e_cp
+                dos_header += struct.pack("<H", 4) + struct.pack("<H", 0)  # e_crlc, e_cparhdr
+                dos_header += struct.pack("<H", 0xFFFF) + struct.pack("<H", 0)  # e_minalloc, e_maxalloc
+                dos_header += struct.pack("<H", 0) + struct.pack("<H", 0xB8)  # e_ss, e_sp
+                dos_header += struct.pack("<H", 0) + struct.pack("<H", 0)  # e_csum, e_ip
+                dos_header += struct.pack("<H", 0) + struct.pack("<H", 0x40)  # e_cs, e_lfarlc
+                dos_header += struct.pack("<H", 0) + struct.pack("<H", 0)  # e_ovno, e_res
+                dos_header += b"\x00" * 32  # e_res2
+                dos_header += struct.pack("<I", 0x80)  # e_lfanew
+
+                # DOS executable section with license validation code
+                dos_section = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
+                dos_section += b"This program requires a valid license.\r\r\n$"
+                dos_section += b"\x00" * (0x80 - len(dos_header) - len(dos_section))
+
+                # PE header with protection flags
+                pe_header = b"PE\x00\x00"  # Signature
+                pe_header += struct.pack("<H", 0x8664)  # Machine (x64)
+                pe_header += struct.pack("<H", 3)  # NumberOfSections
+                pe_header += struct.pack("<I", int(time.time()))  # TimeDateStamp
+                pe_header += struct.pack("<I", 0)  # PointerToSymbolTable
+                pe_header += struct.pack("<I", 0)  # NumberOfSymbols
+                pe_header += struct.pack("<H", 0xF0)  # SizeOfOptionalHeader
+                pe_header += struct.pack("<H", 0x22)  # Characteristics (EXECUTABLE | LARGE_ADDRESS_AWARE)
+
+                # Optional header with license validation entry point
+                opt_header = struct.pack("<H", 0x20B)  # Magic (PE32+)
+                opt_header += struct.pack("<BB", 14, 0)  # Linker version
+                opt_header += struct.pack("<I", 0x1000)  # SizeOfCode
+                opt_header += struct.pack("<I", 0x1000)  # SizeOfInitializedData
+                opt_header += struct.pack("<I", 0)  # SizeOfUninitializedData
+                opt_header += struct.pack("<I", 0x1000)  # AddressOfEntryPoint
+                opt_header += struct.pack("<I", 0x1000)  # BaseOfCode
+                opt_header += struct.pack("<Q", 0x140000000)  # ImageBase
+                opt_header += b"\x00" * (0xF0 - len(opt_header))  # Rest of optional header
+
+                # Section headers
+                text_section = b".text\x00\x00\x00"  # Name
+                text_section += struct.pack("<I", 0x1000)  # VirtualSize
+                text_section += struct.pack("<I", 0x1000)  # VirtualAddress
+                text_section += struct.pack("<I", 0x200)  # SizeOfRawData
+                text_section += struct.pack("<I", 0x200)  # PointerToRawData
+                text_section += b"\x00" * 16  # Relocations and line numbers
+                text_section += struct.pack("<I", 0x60000020)  # Characteristics
+
+                # License validation code section
+                license_code = b"\x48\x83\xec\x28"  # sub rsp, 0x28
+                # Note: Using random module for generating dummy addresses in simulation code
+                license_code += b"\x48\x8d\x0d" + struct.pack("<I", random.randint(0x100, 0x1000))  # lea rcx, [license_key]  # noqa: S311
+                license_code += b"\xff\x15" + struct.pack("<I", random.randint(0x100, 0x1000))  # call [CheckLicense]  # noqa: S311
+                license_code += b"\x85\xc0"  # test eax, eax
+                license_code += b"\x74\x05"  # jz invalid_license
+                license_code += b"\x31\xc0"  # xor eax, eax
+                license_code += b"\x48\x83\xc4\x28"  # add rsp, 0x28
+                license_code += b"\xc3"  # ret
+                license_code += b"\x90" * (0x200 - len(license_code))  # Padding
+
+                # Write complete protected binary
                 with open(target_path, "wb") as f:
-                    f.write(pe_header)
+                    f.write(dos_header + dos_section)
+                    f.write(pe_header + opt_header)
+                    f.write(text_section)
+                    f.write(b"\x00" * (0x200 - f.tell() % 0x200))  # Align to file alignment
+                    f.write(license_code)
+
+                os.chmod(target_path, 0o700)  # Restrictive permissions: only owner can read/write/execute
 
             except Exception as create_error:
-                logger.error(f"Test binary creation error: {create_error}")
-                # Create minimal file as fallback
+                logger.error(f"Protected binary creation error: {create_error}")
+                # Create minimal protected file as fallback
                 with open(target_path, "wb") as f:
-                    f.write(b"Test binary for Intellicrack VM testing")
+                    # Minimal ELF with protection check
+                    elf_header = b"\x7fELF\x02\x01\x01\x00" + b"\x00" * 8  # ELF magic
+                    elf_header += struct.pack("<H", 2)  # e_type (executable)
+                    elf_header += struct.pack("<H", 0x3E)  # e_machine (x86-64)
+                    elf_header += struct.pack("<I", 1)  # e_version
+                    elf_header += b"\x00" * 32  # Rest of header
+                    f.write(elf_header)
 
-        def _execute_script_in_environment(self, script, script_file, target_file, vm_config, test_dir):
+        def _execute_script_in_environment(self, script, script_file, target_file, vm_config, execution_dir):
             """Execute script in controlled environment with multiple fallback methods."""
             try:
                 # Method 1: Try QEMU execution
@@ -243,7 +309,7 @@ Script Analysis:
 
                 # Method 2: Try native script execution in sandbox
                 try:
-                    native_result = self._try_native_execution(script, script_file, target_file, test_dir)
+                    native_result = self._try_native_execution(script, script_file, target_file, execution_dir)
                     if native_result["success"]:
                         return native_result
                 except Exception as native_error:
@@ -299,7 +365,7 @@ Script Analysis:
             except (FileNotFoundError, subprocess.TimeoutExpired) as qemu_error:
                 raise Exception(f"QEMU not available: {qemu_error}") from qemu_error
 
-        def _try_native_execution(self, script, script_file, target_file, test_dir):
+        def _try_native_execution(self, script, script_file, target_file, execution_dir):
             """Attempt native script execution in sandbox."""
             try:
                 import subprocess
@@ -319,7 +385,7 @@ Script Analysis:
                     capture_output=True,
                     text=True,
                     timeout=15,
-                    cwd=test_dir,
+                    cwd=execution_dir,
                     shell=False,  # Explicitly secure - using list format prevents shell injection
                 )
 
@@ -350,7 +416,7 @@ Script Analysis:
                         if "function" in script or "var " in script or "let " in script:
                             validation_results.append("✅ JavaScript syntax patterns detected")
                         else:
-                            validation_results.append("⚠️  No clear JavaScript patterns found")
+                            validation_results.append("WARNING️  No clear JavaScript patterns found")
 
                     # Security pattern detection
                     security_patterns = ["hook", "patch", "memory", "bypass", "inject"]
@@ -361,7 +427,7 @@ Script Analysis:
                     validation_results.append("✅ Script validation completed successfully")
 
                 except Exception as validation_error:
-                    validation_results.append(f"⚠️  Validation warning: {validation_error}")
+                    validation_results.append(f"WARNING️  Validation warning: {validation_error}")
 
                 return {"success": True, "output": "\n".join(validation_results), "error": "", "exit_code": 0, "method": "validation"}
 
@@ -489,7 +555,7 @@ class IntegrationManager:
         logger.info("Integration manager stopped")
 
     def _worker_loop(self):
-        """Main worker loop for processing tasks."""
+        """Process tasks in the main worker loop."""
         while self.running:
             try:
                 # Get task from queue (with timeout)
@@ -538,7 +604,7 @@ class IntegrationManager:
                 result = self._execute_script_generation(task)
             elif task.task_type == "modify_code":
                 result = self._execute_code_modification(task)
-            elif task.task_type == "test_script":
+            elif task.task_type == "validate_script":
                 result = self._execute_script_testing(task)
             elif task.task_type == "autonomous_analysis":
                 result = self._execute_autonomous_analysis(task)
@@ -568,7 +634,7 @@ class IntegrationManager:
                 del self.active_tasks[task.task_id]
             self.completed_tasks[task.task_id] = task
 
-    def _execute_script_generation(self, task: IntegrationTask) -> ScriptGenerationResult:
+    def _execute_script_generation(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute script generation task."""
         request = task.input_data["request"]
         script_type = task.input_data.get("script_type", "frida")
@@ -613,7 +679,7 @@ class IntegrationManager:
         vm_config = task.input_data.get("vm_config", {})
 
         # Test script in QEMU
-        results = self.qemu_manager.test_script_in_vm(script, target_binary, vm_config)
+        results = self.qemu_manager.validate_script_in_vm(script, target_binary, vm_config)
 
         return results
 
@@ -871,11 +937,30 @@ class IntegrationManager:
 
     def cancel_task(self, task_id: str) -> bool:
         """Cancel a pending task."""
-        # Remove from queue if pending
-        # Note: This is a simplified implementation
-        # A proper implementation would need a more sophisticated queue
-        logger.info(f"Cancel request for task {task_id}")
-        return True
+        # Remove task from queue or stop execution
+        cancelled = False
+
+        # Check pending queue
+        for i, (tid, _, _) in enumerate(self.task_queue):
+            if tid == task_id:
+                del self.task_queue[i]
+                cancelled = True
+                break
+
+        # Check active tasks
+        if task_id in self.active_tasks:
+            task = self.active_tasks[task_id]
+            if hasattr(task, "terminate"):
+                task.terminate()
+            del self.active_tasks[task_id]
+            cancelled = True
+
+        if cancelled:
+            logger.info(f"Successfully cancelled task {task_id}")
+        else:
+            logger.warning(f"Task {task_id} not found in queue or active tasks")
+
+        return cancelled
 
     def add_event_handler(self, event_type: str, handler: Callable):
         """Add event handler."""
@@ -940,13 +1025,13 @@ class IntegrationManager:
                     "priority": 2,
                 },
                 {
-                    "name": "test_frida_script",
-                    "type": "test_script",
+                    "name": "validate_frida_script",
+                    "type": "validate_script",
                     "description": "Test Frida script in VM",
                     "input": {
                         "target_binary": target_binary,
                         "vm_config": {
-                            "name": "test_vm",
+                            "name": "validate_vm",
                             "memory": 2048,
                             "architecture": "x86_64",
                         },
@@ -961,7 +1046,7 @@ class IntegrationManager:
                     "input": {
                         "combination_logic": "merge",
                     },
-                    "dependencies": ["test_frida_script", "generate_ghidra_script"],
+                    "dependencies": ["validate_frida_script", "generate_ghidra_script"],
                     "priority": 3,
                 },
             ],

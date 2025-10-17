@@ -24,7 +24,7 @@ import io
 class ReviewSeverity(Enum):
     """Code review issue severity levels."""
     CRITICAL = "CRITICAL"
-    HIGH = "HIGH" 
+    HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
     INFO = "INFO"
@@ -57,7 +57,7 @@ class CodeIssue:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-@dataclass 
+@dataclass
 class ComponentReview:
     """Review results for individual component."""
     component_name: str
@@ -69,11 +69,11 @@ class ComponentReview:
     test_coverage: float = 0.0
     pylint_score: float = 0.0
     production_ready: bool = False
-    
+
     @property
     def critical_issues(self) -> List[CodeIssue]:
         return [issue for issue in self.issues_found if issue.severity == ReviewSeverity.CRITICAL]
-    
+
     @property
     def high_issues(self) -> List[CodeIssue]:
         return [issue for issue in self.issues_found if issue.severity == ReviewSeverity.HIGH]
@@ -90,20 +90,20 @@ class PhaseReviewReport:
     high_issues: int = 0
     overall_grade: str = "F"
     production_ready: bool = False
-    
+
     def __post_init__(self):
         self._calculate_metrics()
-    
+
     def _calculate_metrics(self):
         """Calculate overall review metrics."""
         all_issues = []
         for component in self.components_reviewed:
             all_issues.extend(component.issues_found)
-        
+
         self.total_issues = len(all_issues)
         self.critical_issues = len([i for i in all_issues if i.severity == ReviewSeverity.CRITICAL])
         self.high_issues = len([i for i in all_issues if i.severity == ReviewSeverity.HIGH])
-        
+
         # Calculate overall grade
         if self.critical_issues > 0:
             self.overall_grade = "F"
@@ -115,7 +115,7 @@ class PhaseReviewReport:
             self.overall_grade = "B"
         else:
             self.overall_grade = "A"
-        
+
         # Determine production readiness
         self.production_ready = (
             self.critical_issues == 0 and
@@ -129,11 +129,11 @@ class EndOfPhaseCodeReviewer:
     Comprehensive code reviewer for Phase 6 validation components.
     Enforces production-ready standards with zero tolerance for placeholders.
     """
-    
+
     def __init__(self, phase_path: Path):
         self.phase_path = phase_path
         self.logger = self._setup_logging()
-        
+
         # Placeholder detection patterns - comprehensive list
         self.PLACEHOLDER_PATTERNS = [
             r'TODO',
@@ -162,7 +162,7 @@ class EndOfPhaseCodeReviewer:
             r'sample[_\s]*code',
             r'demo[_\s]*'
         ]
-        
+
         # Required Phase 6 components
         self.REQUIRED_COMPONENTS = [
             'detection_pass_criteria_validator.py',
@@ -173,7 +173,7 @@ class EndOfPhaseCodeReviewer:
             'reproducibility_requirements_checker.py',
             'final_verdict_algorithm.py'
         ]
-    
+
     def _setup_logging(self) -> logging.Logger:
         """Setup component logging."""
         logger = logging.getLogger(f"{__name__}.EndOfPhaseCodeReviewer")
@@ -186,16 +186,16 @@ class EndOfPhaseCodeReviewer:
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
-    
+
     def conduct_comprehensive_review(self) -> PhaseReviewReport:
         """
         Conduct comprehensive code review of all Phase 6 components.
-        
+
         Returns:
             Complete phase review report
         """
         self.logger.info("Starting comprehensive Phase 6 code review")
-        
+
         # Verify all required components exist
         missing_components = self._verify_component_completeness()
         if missing_components:
@@ -207,7 +207,7 @@ class EndOfPhaseCodeReviewer:
                 overall_grade="F",
                 production_ready=False
             )
-        
+
         # Review each component
         component_reviews = []
         for component_file in self.REQUIRED_COMPONENTS:
@@ -216,26 +216,26 @@ class EndOfPhaseCodeReviewer:
                 review = self._review_component(file_path)
                 component_reviews.append(review)
                 self.logger.info(f"Reviewed {component_file}: {len(review.issues_found)} issues found")
-        
+
         # Generate final report
         report = PhaseReviewReport(
             phase_name="Phase 6: Unambiguous Pass/Fail Criteria and Validation Gates",
             review_timestamp=datetime.now(),
             components_reviewed=component_reviews
         )
-        
+
         self.logger.info(
             f"Review complete: Grade {report.overall_grade}, "
             f"Production Ready: {report.production_ready}, "
             f"Issues: {report.total_issues} total ({report.critical_issues} critical)"
         )
-        
+
         return report
-    
+
     def _verify_component_completeness(self) -> List[str]:
         """
         Verify all required components are present.
-        
+
         Returns:
             List of missing component files
         """
@@ -245,19 +245,19 @@ class EndOfPhaseCodeReviewer:
             if not file_path.exists():
                 missing.append(component)
         return missing
-    
+
     def _review_component(self, file_path: Path) -> ComponentReview:
         """
         Review individual component file.
-        
+
         Args:
             file_path: Path to component file
-            
+
         Returns:
             Component review results
         """
         self.logger.debug(f"Reviewing component: {file_path}")
-        
+
         # Read source code
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -270,47 +270,47 @@ class EndOfPhaseCodeReviewer:
                 total_lines=0,
                 production_ready=False
             )
-        
+
         # Initialize review
         review = ComponentReview(
             component_name=file_path.stem,
             file_path=file_path,
             total_lines=len(source_code.splitlines())
         )
-        
+
         # Run all review checks
         review.issues_found.extend(self._detect_placeholders(file_path, source_code))
         review.issues_found.extend(self._check_production_readiness(file_path, source_code))
         review.issues_found.extend(self._analyze_code_quality(file_path, source_code))
         review.issues_found.extend(self._security_analysis(file_path, source_code))
         review.issues_found.extend(self._performance_analysis(file_path, source_code))
-        
+
         # Calculate metrics
         review.complexity_score = self._calculate_complexity(source_code)
         review.pylint_score = self._run_pylint(file_path)
-        
+
         # Determine production readiness
         review.production_ready = self._is_production_ready(review)
-        
+
         return review
-    
+
     def _detect_placeholders(self, file_path: Path, source_code: str) -> List[CodeIssue]:
         """
         Detect placeholder, stub, mock, or incomplete code.
-        
+
         Args:
             file_path: File being reviewed
             source_code: Source code content
-            
+
         Returns:
             List of placeholder-related issues
         """
         issues = []
         lines = source_code.splitlines()
-        
+
         for line_num, line in enumerate(lines, 1):
             line_stripped = line.strip()
-            
+
             # Check each placeholder pattern
             for pattern in self.PLACEHOLDER_PATTERNS:
                 if re.search(pattern, line, re.IGNORECASE):
@@ -325,7 +325,7 @@ class EndOfPhaseCodeReviewer:
                         code_snippet=line_stripped,
                         remediation="Replace with fully functional implementation"
                     ))
-            
+
             # Specific placeholder patterns
             if line_stripped == 'pass':
                 issues.append(CodeIssue(
@@ -339,7 +339,7 @@ class EndOfPhaseCodeReviewer:
                     code_snippet=line_stripped,
                     remediation="Implement actual functionality"
                 ))
-            
+
             if 'return None' in line_stripped and not line_stripped.startswith('#'):
                 # Check if this is a legitimate None return
                 if not any(keyword in line_stripped.lower() for keyword in ['optional', 'nullable', 'default']):
@@ -354,28 +354,28 @@ class EndOfPhaseCodeReviewer:
                         code_snippet=line_stripped,
                         remediation="Verify this is intentional or implement proper return value"
                     ))
-        
+
         return issues
-    
+
     def _check_production_readiness(self, file_path: Path, source_code: str) -> List[CodeIssue]:
         """
         Check production readiness indicators.
-        
+
         Args:
             file_path: File being reviewed
             source_code: Source code content
-            
+
         Returns:
             List of production readiness issues
         """
         issues = []
         lines = source_code.splitlines()
-        
+
         # Check for proper error handling
         has_try_except = 'try:' in source_code
         has_logging = any('logging' in line or 'logger' in line for line in lines)
         has_docstrings = '"""' in source_code or "'''" in source_code
-        
+
         if not has_try_except:
             issues.append(CodeIssue(
                 issue_id=f"NO_ERROR_HANDLING_{file_path.stem}",
@@ -388,7 +388,7 @@ class EndOfPhaseCodeReviewer:
                 code_snippet="",
                 remediation="Add proper exception handling for all operations"
             ))
-        
+
         if not has_logging:
             issues.append(CodeIssue(
                 issue_id=f"NO_LOGGING_{file_path.stem}",
@@ -401,7 +401,7 @@ class EndOfPhaseCodeReviewer:
                 code_snippet="",
                 remediation="Add logging for debugging and monitoring"
             ))
-        
+
         # Check for hardcoded values
         for line_num, line in enumerate(lines, 1):
             if re.search(r'["\'][^"\']*test[^"\']*["\']', line, re.IGNORECASE):
@@ -416,23 +416,23 @@ class EndOfPhaseCodeReviewer:
                     code_snippet=line.strip(),
                     remediation="Replace with proper configuration or computed value"
                 ))
-        
+
         return issues
-    
+
     def _analyze_code_quality(self, file_path: Path, source_code: str) -> List[CodeIssue]:
         """
         Analyze general code quality issues.
-        
+
         Args:
             file_path: File being reviewed
             source_code: Source code content
-            
+
         Returns:
             List of code quality issues
         """
         issues = []
         lines = source_code.splitlines()
-        
+
         # Check for very long lines
         for line_num, line in enumerate(lines, 1):
             if len(line) > 120:
@@ -447,11 +447,11 @@ class EndOfPhaseCodeReviewer:
                     code_snippet=line[:50] + "..." if len(line) > 50 else line,
                     remediation="Break long lines for better readability"
                 ))
-        
+
         # Check for proper class/function naming
         try:
             tree = ast.parse(source_code)
-            
+
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     if not node.name.islower() and '_' not in node.name:
@@ -466,7 +466,7 @@ class EndOfPhaseCodeReviewer:
                             code_snippet=f"def {node.name}(",
                             remediation="Use snake_case for function names"
                         ))
-                        
+
                 elif isinstance(node, ast.ClassDef):
                     if not node.name[0].isupper():
                         issues.append(CodeIssue(
@@ -480,7 +480,7 @@ class EndOfPhaseCodeReviewer:
                             code_snippet=f"class {node.name}:",
                             remediation="Use PascalCase for class names"
                         ))
-                        
+
         except SyntaxError as e:
             issues.append(CodeIssue(
                 issue_id=f"SYNTAX_ERROR_{file_path.stem}",
@@ -493,23 +493,23 @@ class EndOfPhaseCodeReviewer:
                 code_snippet="",
                 remediation="Fix syntax error"
             ))
-        
+
         return issues
-    
+
     def _security_analysis(self, file_path: Path, source_code: str) -> List[CodeIssue]:
         """
         Analyze security-related issues.
-        
+
         Args:
             file_path: File being reviewed
             source_code: Source code content
-            
+
         Returns:
             List of security issues
         """
         issues = []
         lines = source_code.splitlines()
-        
+
         # Check for potential security issues
         security_patterns = [
             (r'exec\s*\(', "Use of exec() function", ReviewSeverity.HIGH),
@@ -518,7 +518,7 @@ class EndOfPhaseCodeReviewer:
             (r'os\.system\s*\(', "Use of os.system()", ReviewSeverity.HIGH),
             (r'pickle\.loads?\s*\(', "Pickle deserialization risk", ReviewSeverity.MEDIUM),
         ]
-        
+
         for line_num, line in enumerate(lines, 1):
             for pattern, description, severity in security_patterns:
                 if re.search(pattern, line):
@@ -533,30 +533,30 @@ class EndOfPhaseCodeReviewer:
                         code_snippet=line.strip(),
                         remediation="Use safer alternatives or add proper input validation"
                     ))
-        
+
         return issues
-    
+
     def _performance_analysis(self, file_path: Path, source_code: str) -> List[CodeIssue]:
         """
         Analyze performance-related issues.
-        
+
         Args:
             file_path: File being reviewed
             source_code: Source code content
-            
+
         Returns:
             List of performance issues
         """
         issues = []
         lines = source_code.splitlines()
-        
+
         # Check for potential performance issues
         performance_patterns = [
             (r'for.*in.*\.keys\(\):', "Inefficient dict iteration"),
             (r'len\([^)]+\)\s*==\s*0', "Use 'not container' instead of 'len(container) == 0'"),
             (r'\.append\s*\([^)]+\)\s*$', "Consider list comprehension for better performance"),
         ]
-        
+
         for line_num, line in enumerate(lines, 1):
             for pattern, description in performance_patterns:
                 if re.search(pattern, line):
@@ -571,40 +571,40 @@ class EndOfPhaseCodeReviewer:
                         code_snippet=line.strip(),
                         remediation="Consider more efficient implementation"
                     ))
-        
+
         return issues
-    
+
     def _calculate_complexity(self, source_code: str) -> float:
         """
         Calculate cyclomatic complexity.
-        
+
         Args:
             source_code: Source code to analyze
-            
+
         Returns:
             Complexity score
         """
         try:
             tree = ast.parse(source_code)
             complexity = 1  # Base complexity
-            
+
             for node in ast.walk(tree):
                 if isinstance(node, (ast.If, ast.While, ast.For, ast.ExceptHandler)):
                     complexity += 1
                 elif isinstance(node, ast.BoolOp):
                     complexity += len(node.values) - 1
-            
+
             return complexity
         except:
             return 0.0
-    
+
     def _run_pylint(self, file_path: Path) -> float:
         """
         Run pylint analysis on file.
-        
+
         Args:
             file_path: File to analyze
-            
+
         Returns:
             Pylint score (0-10)
         """
@@ -612,55 +612,55 @@ class EndOfPhaseCodeReviewer:
             # Capture pylint output
             pylint_output = io.StringIO()
             reporter = TextReporter(pylint_output)
-            
+
             # Run pylint
-            pylint.lint.Run([str(file_path), '--output-format=text'], 
+            pylint.lint.Run([str(file_path), '--output-format=text'],
                           reporter=reporter, do_exit=False)
-            
+
             # Extract score from output
             output = pylint_output.getvalue()
             score_match = re.search(r'Your code has been rated at ([\d.]+)/10', output)
-            
+
             if score_match:
                 return float(score_match.group(1))
             else:
                 return 0.0
-                
+
         except Exception as e:
             self.logger.warning(f"Failed to run pylint on {file_path}: {e}")
             return 0.0
-    
+
     def _is_production_ready(self, review: ComponentReview) -> bool:
         """
         Determine if component is production ready.
-        
+
         Args:
             review: Component review results
-            
+
         Returns:
             True if production ready
         """
         # Zero tolerance for critical issues
         if review.critical_issues:
             return False
-        
+
         # Limited tolerance for high issues
         if len(review.high_issues) > 2:
             return False
-        
+
         # Minimum code quality requirements
         if review.pylint_score < 6.0:
             return False
-        
+
         return True
-    
+
     def generate_report(self, review_report: PhaseReviewReport) -> Dict[str, Any]:
         """
         Generate comprehensive review report.
-        
+
         Args:
             review_report: Phase review results
-            
+
         Returns:
             Detailed report data
         """
@@ -689,7 +689,7 @@ class EndOfPhaseCodeReviewer:
                 'overall_grade_acceptable': review_report.overall_grade in ['A', 'B']
             }
         }
-        
+
         # Add component details
         for component in review_report.components_reviewed:
             component_detail = {
@@ -704,37 +704,37 @@ class EndOfPhaseCodeReviewer:
                 'production_ready': component.production_ready
             }
             report['component_details'].append(component_detail)
-        
+
         # Calculate issue breakdowns
         all_issues = []
         for component in review_report.components_reviewed:
             all_issues.extend(component.issues_found)
-        
+
         # By severity
         severity_counts = {}
         for issue in all_issues:
             severity = issue.severity.value
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
         report['issue_breakdown']['by_severity'] = severity_counts
-        
+
         # By category
         category_counts = {}
         for issue in all_issues:
             category = issue.category.value
             category_counts[category] = category_counts.get(category, 0) + 1
         report['issue_breakdown']['by_category'] = category_counts
-        
+
         # Generate recommendations
         if review_report.critical_issues > 0:
             report['recommendations'].append(
                 "CRITICAL: Address all placeholder/stub code before deployment"
             )
-        
+
         if review_report.high_issues > 2:
             report['recommendations'].append(
                 "HIGH: Reduce high-severity issues to acceptable levels"
             )
-        
+
         if not review_report.production_ready:
             report['recommendations'].append(
                 "Phase 6 is NOT production ready - address all critical and high-priority issues"
@@ -743,31 +743,31 @@ class EndOfPhaseCodeReviewer:
             report['recommendations'].append(
                 "Phase 6 passes code review and is production ready"
             )
-        
+
         return report
-    
+
     def save_report(self, review_report: PhaseReviewReport, output_path: Path) -> bool:
         """
         Save review report to file.
-        
+
         Args:
             review_report: Review results to save
             output_path: Path to save report
-            
+
         Returns:
             True if saved successfully
         """
         try:
             report_data = self.generate_report(review_report)
-            
+
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(output_path, 'w') as f:
                 json.dump(report_data, f, indent=2, default=str)
-            
+
             self.logger.info(f"Review report saved to {output_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to save review report: {e}")
             return False
@@ -776,12 +776,14 @@ class EndOfPhaseCodeReviewer:
 # Example usage
 if __name__ == "__main__":
     # Set up paths
-    phase6_path = Path("C:/Intellicrack/tests/validation_system/phase6")
-    
+    from intellicrack.utils.path_resolver import get_project_root
+
+phase6_path = get_project_root() / "tests/validation_system/phase6"
+
     # Create reviewer and conduct review
     reviewer = EndOfPhaseCodeReviewer(phase6_path)
     review_report = reviewer.conduct_comprehensive_review()
-    
+
     # Display results
     print(f"Phase 6 Code Review Results:")
     print(f"Overall Grade: {review_report.overall_grade}")
@@ -789,7 +791,7 @@ if __name__ == "__main__":
     print(f"Total Issues: {review_report.total_issues}")
     print(f"Critical Issues: {review_report.critical_issues}")
     print(f"High Issues: {review_report.high_issues}")
-    
+
     # Save detailed report
     report_path = phase6_path / "code_review_report.json"
     reviewer.save_report(review_report, report_path)

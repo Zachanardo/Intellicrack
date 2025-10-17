@@ -1204,7 +1204,7 @@ class FindAllDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        """Setup the dialog UI."""
+        """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
         # Results info
@@ -1249,7 +1249,7 @@ class ReplaceDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        """Setup the dialog UI."""
+        """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
         # Find pattern

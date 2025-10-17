@@ -26,7 +26,7 @@ import subprocess
 import traceback
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
 
 from ...handlers.matplotlib_handler import MATPLOTLIB_AVAILABLE, plt

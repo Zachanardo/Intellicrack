@@ -145,7 +145,7 @@ class FailureType(Enum):
     DATA_CORRUPTION = "data_corruption"
 
     def __reduce__(self):
-        """Custom pickle serialization to avoid import issues."""
+        """Serialize with custom pickle to avoid import issues."""
         return (self.__class__, (self.value,))
 
     @classmethod
@@ -172,7 +172,7 @@ class RecoveryStrategy(Enum):
     EMERGENCY_SHUTDOWN = "emergency_shutdown"
 
     def __reduce__(self):
-        """Custom pickle serialization to avoid import issues."""
+        """Serialize with custom pickle to avoid import issues."""
         return (self.__class__, (self.value,))
 
     @classmethod
@@ -194,7 +194,7 @@ class HealthStatus(Enum):
     RECOVERY = "recovery"
 
     def __reduce__(self):
-        """Custom pickle serialization to avoid import issues."""
+        """Serialize with custom pickle to avoid import issues."""
         return (self.__class__, (self.value,))
 
     @classmethod

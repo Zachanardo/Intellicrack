@@ -36,7 +36,7 @@ class CommercialBinaryManager:
                 continue
             archive.extract(member, path)
 
-    def __init__(self, base_dir: str = r"C:\Intellicrack\tests\validation_system") -> None:
+    def __init__(self, base_dir: str = r"D:\Intellicrack\tests\validation_system") -> None:
         """Initialize the CommercialBinaryManager.
 
         Args:

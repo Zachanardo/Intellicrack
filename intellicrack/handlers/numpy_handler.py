@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Numpy handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -18,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import math
 import random as _random
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 NumPy Import Handler with Production-Ready Fallbacks
@@ -212,7 +214,7 @@ except ImportError as e:
             return self._shape[0] if self._shape else 0
 
         def __repr__(self):
-            """String representation."""
+            """Represent as string."""
             return f"FallbackArray({self.tolist()})"
 
         def __add__(self, other):
@@ -259,7 +261,7 @@ except ImportError as e:
             return sum(self.data) / len(self.data) if self.data else 0
 
         def std(self):
-            """Standard deviation of array elements."""
+            """Calculate standard deviation of array elements."""
             m = self.mean()
             variance = sum((x - m) ** 2 for x in self.data) / len(self.data)
             return math.sqrt(variance)
@@ -675,7 +677,7 @@ except ImportError as e:
         return sum(a) / len(a) if a else 0
 
     def std(a, axis=None):
-        """Standard deviation."""
+        """Calculate standard deviation."""
         if isinstance(a, FallbackArray):
             return a.std()
         m = mean(a)
@@ -839,7 +841,7 @@ except ImportError as e:
 
             @staticmethod
             def fft(a):
-                """Basic DFT implementation."""
+                """Implement basic DFT."""
                 if isinstance(a, FallbackArray):
                     data = a.data
                 else:
@@ -861,7 +863,7 @@ except ImportError as e:
 
             @staticmethod
             def ifft(a):
-                """Basic inverse DFT."""
+                """Implement basic inverse DFT."""
                 if isinstance(a, FallbackArray):
                     data = a.data
                 else:

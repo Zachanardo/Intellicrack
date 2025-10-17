@@ -347,17 +347,17 @@ class CustomICPHandler:
 
 **Optional Dependencies**:
 - psutil: System resource monitoring
-- asyncio: Enhanced async capabilities (Python 3.11+)
+- asyncio: Enhanced async capabilities (Python 3.12+)
 
 ### Environment Requirements
 
 **Development Environment**:
-- Python 3.11+ with asyncio support
+- Python 3.12+ with asyncio support
 - Virtual environment with die-python installed
 - Development tools for building extensions
 
 **Production Environment**:
-- Stable Python 3.11+ runtime
+- Stable Python 3.12+ runtime
 - die-python properly installed and accessible
 - Sufficient memory for concurrent analyses (8GB+ recommended)
 

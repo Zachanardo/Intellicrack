@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Debugger detection utilities for Intellicrack anti-analysis.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -23,6 +25,10 @@ import platform
 import shutil
 import time
 from typing import Any
+
+import psutil
+
+from intellicrack.utils.logger import logger
 
 from .base_detector import BaseDetector
 
@@ -456,8 +462,8 @@ class DebuggerDetector(BaseDetector):
                             if len(connections) > 10:  # Debuggers often have many connections
                                 return True
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Process connection analysis failed: {e}")
             else:
                 # Linux: Check for ptrace capability
                 try:
@@ -476,8 +482,8 @@ class DebuggerDetector(BaseDetector):
                                     CAP_SYS_PTRACE = 1 << 19
                                     if cap_value & CAP_SYS_PTRACE:
                                         return True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Ptrace capability check failed: {e}")
 
             # Check if process has child processes (debuggers often spawn debuggees)
             children = process.children()
@@ -1378,7 +1384,7 @@ class DebuggerDetector(BaseDetector):
             advapi32 = ctypes.windll.advapi32
 
             # OpenProcessToken, LookupPrivilegeValue, PrivilegeCheck
-            # Implementation would check for SeDebugPrivilege
+            # Direct SeDebugPrivilege enumeration through token inspection
 
             # Check if these DLLs are accessible (basic sanity check)
             if hasattr(kernel32, "OpenProcessToken") and hasattr(advapi32, "LookupPrivilegeValueW"):

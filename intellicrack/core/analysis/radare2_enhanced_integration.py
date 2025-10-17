@@ -31,8 +31,10 @@ from .radare2_bypass_generator import R2BypassGenerator
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_error_handler import get_error_handler, r2_error_context
 from .radare2_esil import ESILAnalysisEngine
+from .radare2_graph_view import R2GraphGenerator
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_json_standardizer import standardize_r2_result
+from .radare2_performance_metrics import create_performance_monitor
 from .radare2_scripting import R2ScriptingEngine
 from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
@@ -50,7 +52,8 @@ error_handler = get_error_handler()
 
 
 class EnhancedR2Integration:
-    """Enhanced radare2 integration with comprehensive error handling, recovery,
+    """Enhanced radare2 integration with comprehensive error handling, recovery,.
+
     performance optimization, and real-time capabilities.
 
     This class provides:
@@ -91,6 +94,10 @@ class EnhancedR2Integration:
             "recoveries_successful": 0,
         }
 
+        # Initialize performance monitor
+        self.performance_monitor = create_performance_monitor(enable_real_time=self.config.get("enable_performance_monitoring", True))
+        self.performance_monitor.start_session(f"r2_session_{binary_path}")
+
         # Thread safety
         self._lock = threading.RLock()
 
@@ -125,14 +132,15 @@ class EnhancedR2Integration:
             "bypass": R2BypassGenerator,
             "diff": R2BinaryDiff,
             "scripting": R2ScriptingEngine,
+            "graph": R2GraphGenerator,
         }
 
         for name, component_class in component_classes.items():
             try:
                 with r2_error_context(f"init_{name}_component", binary_path=self.binary_path):
                     if name == "diff":
-                        # Binary diff needs two binaries, initialize later
-                        self.components[name] = None
+                        # Initialize binary diff with primary binary only
+                        self.components[name] = R2BinaryDiff(self.binary_path)
                     else:
                         self.components[name] = component_class(self.binary_path)
                     self.logger.debug(f"Initialized {name} component")
@@ -243,9 +251,11 @@ class EnhancedR2Integration:
         cached_result = self._get_cached_result(cache_key)
         if cached_result:
             self.performance_stats["cache_hits"] += 1
+            self.performance_monitor.record_cache_hit()
             return cached_result
 
         self.performance_stats["cache_misses"] += 1
+        self.performance_monitor.record_cache_miss()
 
         # Check if component is available
         if analysis_type not in self.components or self.components[analysis_type] is None:
@@ -258,6 +268,9 @@ class EnhancedR2Integration:
             return {"degraded": True, "reason": "Circuit breaker open"}
 
         start_time = time.time()
+
+        # Start performance tracking
+        operation_metrics = self.performance_monitor.start_operation(f"analysis_{analysis_type}")
 
         try:
             with r2_error_context(f"r2_{analysis_type}", binary_path=self.binary_path):
@@ -289,6 +302,10 @@ class EnhancedR2Integration:
                 duration = time.time() - start_time
                 self._record_analysis_time(analysis_type, duration)
 
+                # End performance tracking with success
+                bytes_processed = len(str(result)) if result else 0
+                self.performance_monitor.end_operation(operation_metrics, success=True, bytes_processed=bytes_processed)
+
                 # Cache result
                 self._cache_result(cache_key, result)
 
@@ -297,6 +314,9 @@ class EnhancedR2Integration:
         except Exception as e:
             duration = time.time() - start_time
             self._record_analysis_time(analysis_type, duration, success=False)
+
+            # End performance tracking with failure
+            self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
 
             self.logger.error(f"Analysis {analysis_type} failed: {e}")
             self.performance_stats["errors_handled"] += 1
@@ -512,11 +532,289 @@ class EnhancedR2Integration:
 
         return health
 
+    def set_secondary_binary(self, secondary_path: str) -> bool:
+        """Set secondary binary for diff analysis.
+
+        Args:
+            secondary_path: Path to the secondary binary
+
+        Returns:
+            True if successfully set, False otherwise
+
+        """
+        try:
+            if self.components.get("diff"):
+                self.components["diff"].set_secondary_binary(secondary_path)
+                self.logger.info(f"Set secondary binary for diff: {secondary_path}")
+                return True
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return False
+        except Exception as e:
+            self.logger.error(f"Failed to set secondary binary: {e}")
+            return False
+
+    def get_function_diffs(self) -> list[dict[str, Any]]:
+        """Get function differences between primary and secondary binaries.
+
+        Returns:
+            List of function diff results
+
+        """
+        try:
+            if self.components.get("diff"):
+                diffs = self.components["diff"].get_function_diffs()
+                # Convert dataclass objects to dictionaries
+                return [
+                    {
+                        "name": d.name,
+                        "status": d.status,
+                        "primary_address": d.primary_address,
+                        "secondary_address": d.secondary_address,
+                        "primary_size": d.primary_size,
+                        "secondary_size": d.secondary_size,
+                        "size_diff": d.size_diff,
+                        "similarity_score": d.similarity_score,
+                        "opcodes_changed": d.opcodes_changed,
+                        "calls_changed": d.calls_changed,
+                        "basic_block_diff": d.basic_block_diff,
+                    }
+                    for d in diffs
+                ]
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return []
+        except Exception as e:
+            self.logger.error(f"Failed to get function diffs: {e}")
+            return []
+
+    def get_basic_block_diffs(self, function_name: str) -> list[dict[str, Any]]:
+        """Get basic block differences for a specific function.
+
+        Args:
+            function_name: Name of the function to analyze
+
+        Returns:
+            List of basic block diff results
+
+        """
+        try:
+            if self.components.get("diff"):
+                bb_diffs = self.components["diff"].get_basic_block_diffs(function_name)
+                # Convert dataclass objects to dictionaries
+                return [
+                    {
+                        "address": d.address,
+                        "status": d.status,
+                        "primary_size": d.primary_size,
+                        "secondary_size": d.secondary_size,
+                        "instruction_count_diff": d.instruction_count_diff,
+                        "edges_added": d.edges_added,
+                        "edges_removed": d.edges_removed,
+                        "jump_targets_changed": d.jump_targets_changed,
+                    }
+                    for d in bb_diffs
+                ]
+            else:
+                self.logger.error("Binary diff component not initialized")
+                return []
+        except Exception as e:
+            self.logger.error(f"Failed to get basic block diffs: {e}")
+            return []
+
+    def get_performance_metrics(self) -> dict[str, Any]:
+        """Get comprehensive performance metrics.
+
+        Returns:
+            Dictionary containing performance metrics and statistics
+
+        """
+        # Get metrics from the performance monitor
+        current_metrics = self.performance_monitor.get_current_metrics()
+        operation_stats = self.performance_monitor.get_operation_statistics()
+        full_report = self.performance_monitor.get_performance_report()
+
+        return {
+            "current_session": current_metrics,
+            "operation_statistics": operation_stats,
+            "performance_stats": self.performance_stats,
+            "full_report": full_report,
+        }
+
+    def export_performance_metrics(self, filepath: str):
+        """Export performance metrics to a file.
+
+        Args:
+            filepath: Path to export file
+
+        """
+        self.performance_monitor.export_metrics(filepath)
+        self.logger.info(f"Exported performance metrics to {filepath}")
+
+    def generate_control_flow_graph(self, function_name: str) -> dict[str, Any]:
+        """Generate control flow graph for a function.
+
+        Args:
+            function_name: Name of the function
+
+        Returns:
+            Dictionary containing graph data
+
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_control_flow_graph(function_name)
+                return {
+                    "nodes": [
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "size": n.size,
+                            "color": n.color,
+                            "attributes": n.attributes,
+                        }
+                        for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata,
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate CFG: {e}")
+            return {}
+
+    def generate_call_graph(self, max_depth: int = 3) -> dict[str, Any]:
+        """Generate function call graph.
+
+        Args:
+            max_depth: Maximum depth for traversal
+
+        Returns:
+            Dictionary containing graph data
+
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_call_graph(max_depth)
+                return {
+                    "nodes": [
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "size": n.size,
+                            "color": n.color,
+                            "attributes": n.attributes,
+                        }
+                        for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata,
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate call graph: {e}")
+            return {}
+
+    def generate_xref_graph(self, address: int) -> dict[str, Any]:
+        """Generate cross-reference graph for an address.
+
+        Args:
+            address: Address to analyze
+
+        Returns:
+            Dictionary containing graph data
+
+        """
+        try:
+            if self.components.get("graph"):
+                graph_data = self.components["graph"].generate_xref_graph(address)
+                return {
+                    "nodes": [
+                        {"id": n.id, "label": n.label, "type": n.type, "address": n.address, "color": n.color} for n in graph_data.nodes
+                    ],
+                    "edges": [
+                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        for e in graph_data.edges
+                    ],
+                    "metadata": graph_data.metadata,
+                }
+            else:
+                self.logger.error("Graph component not initialized")
+                return {}
+        except Exception as e:
+            self.logger.error(f"Failed to generate xref graph: {e}")
+            return {}
+
+    def visualize_graph(self, graph_type: str, **kwargs) -> bool:
+        """Visualize a graph.
+
+        Args:
+            graph_type: Type of graph ('cfg', 'call', 'xref', 'import')
+            **kwargs: Additional arguments for specific graph types
+
+        Returns:
+            True if successful
+
+        """
+        try:
+            if not self.components.get("graph"):
+                self.logger.error("Graph component not initialized")
+                return False
+
+            graph_gen = self.components["graph"]
+
+            if graph_type == "cfg":
+                function_name = kwargs.get("function_name", "main")
+                graph_data = graph_gen.generate_control_flow_graph(function_name)
+            elif graph_type == "call":
+                max_depth = kwargs.get("max_depth", 3)
+                graph_data = graph_gen.generate_call_graph(max_depth)
+            elif graph_type == "xref":
+                address = kwargs.get("address", 0)
+                graph_data = graph_gen.generate_xref_graph(address)
+            elif graph_type == "import":
+                graph_data = graph_gen.generate_import_dependency_graph()
+            else:
+                self.logger.error(f"Unknown graph type: {graph_type}")
+                return False
+
+            output_path = kwargs.get("output_path")
+            layout = kwargs.get("layout", "spring")
+
+            return graph_gen.visualize_graph(graph_data, output_path, layout)
+
+        except Exception as e:
+            self.logger.error(f"Failed to visualize graph: {e}")
+            return False
+
     def cleanup(self):
         """Cleanup resources."""
         try:
             self.stop_real_time_monitoring()
             self.clear_cache()
+
+            # End performance monitoring session
+            final_metrics = self.performance_monitor.end_session()
+            if final_metrics:
+                self.logger.info(f"Performance session ended: {final_metrics.session_id}")
+                self.logger.info(
+                    f"Total operations: {final_metrics.total_operations}, "
+                    f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}"
+                )
 
             # Cleanup components
             for component in self.components.values():

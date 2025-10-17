@@ -1,11 +1,11 @@
 intellicrack.cli package
-================================
+========================
 
 Submodules
 ----------
 
 intellicrack.cli.advanced\_export module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.advanced_export
    :members:
@@ -13,7 +13,7 @@ intellicrack.cli.advanced\_export module
    :undoc-members:
 
 intellicrack.cli.ai\_chat\_interface module
----------------------------------------------------
+-------------------------------------------
 
 .. automodule:: intellicrack.cli.ai_chat_interface
    :members:
@@ -21,7 +21,7 @@ intellicrack.cli.ai\_chat\_interface module
    :undoc-members:
 
 intellicrack.cli.ai\_integration module
------------------------------------------------
+---------------------------------------
 
 .. automodule:: intellicrack.cli.ai_integration
    :members:
@@ -29,23 +29,39 @@ intellicrack.cli.ai\_integration module
    :undoc-members:
 
 intellicrack.cli.ai\_wrapper module
--------------------------------------------
+-----------------------------------
 
 .. automodule:: intellicrack.cli.ai_wrapper
    :members:
    :show-inheritance:
    :undoc-members:
 
+intellicrack.cli.analysis\_cli module
+-------------------------------------
+
+.. automodule:: intellicrack.cli.analysis_cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.cli.ascii\_charts module
----------------------------------------------
+-------------------------------------
 
 .. automodule:: intellicrack.cli.ascii_charts
    :members:
    :show-inheritance:
    :undoc-members:
 
+intellicrack.cli.cli module
+---------------------------
+
+.. automodule:: intellicrack.cli.cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.cli.config\_manager module
------------------------------------------------
+---------------------------------------
 
 .. automodule:: intellicrack.cli.config_manager
    :members:
@@ -53,7 +69,7 @@ intellicrack.cli.config\_manager module
    :undoc-members:
 
 intellicrack.cli.config\_profiles module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.config_profiles
    :members:
@@ -61,7 +77,7 @@ intellicrack.cli.config\_profiles module
    :undoc-members:
 
 intellicrack.cli.enhanced\_runner module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.enhanced_runner
    :members:
@@ -69,7 +85,7 @@ intellicrack.cli.enhanced\_runner module
    :undoc-members:
 
 intellicrack.cli.hex\_viewer\_cli module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.hex_viewer_cli
    :members:
@@ -77,23 +93,15 @@ intellicrack.cli.hex\_viewer\_cli module
    :undoc-members:
 
 intellicrack.cli.interactive\_mode module
--------------------------------------------------
+-----------------------------------------
 
 .. automodule:: intellicrack.cli.interactive_mode
    :members:
    :show-inheritance:
    :undoc-members:
 
-intellicrack.cli.main module
-------------------------------------
-
-.. automodule:: intellicrack.cli.main
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.cli.pipeline module
-----------------------------------------
+--------------------------------
 
 .. automodule:: intellicrack.cli.pipeline
    :members:
@@ -101,7 +109,7 @@ intellicrack.cli.pipeline module
    :undoc-members:
 
 intellicrack.cli.progress\_manager module
--------------------------------------------------
+-----------------------------------------
 
 .. automodule:: intellicrack.cli.progress_manager
    :members:
@@ -109,7 +117,7 @@ intellicrack.cli.progress\_manager module
    :undoc-members:
 
 intellicrack.cli.project\_manager module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.project_manager
    :members:
@@ -117,7 +125,7 @@ intellicrack.cli.project\_manager module
    :undoc-members:
 
 intellicrack.cli.terminal\_dashboard module
----------------------------------------------------
+-------------------------------------------
 
 .. automodule:: intellicrack.cli.terminal_dashboard
    :members:
@@ -125,7 +133,7 @@ intellicrack.cli.terminal\_dashboard module
    :undoc-members:
 
 intellicrack.cli.tutorial\_system module
-------------------------------------------------
+----------------------------------------
 
 .. automodule:: intellicrack.cli.tutorial_system
    :members:

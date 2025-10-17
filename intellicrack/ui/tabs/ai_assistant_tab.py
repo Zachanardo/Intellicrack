@@ -31,126 +31,252 @@ logger = get_logger(__name__)
 
 
 class APIKeyConfigDialog(QDialog):
-    """Dialog for configuring API keys and model settings."""
+    """Enhanced dialog for configuring API providers with dynamic model discovery."""
 
-    def __init__(self, model_name, parent=None):
-        """
-        Initialize the API key configuration dialog.
+    def __init__(self, parent=None):
+        """Initialize the API configuration dialog.
 
         Args:
-            model_name: Name of the AI model to configure (e.g., "GPT-4", "Claude")
             parent: Parent widget for the dialog
+
         """
         super().__init__(parent)
-        self.model_name = model_name
-        self.setWindowTitle(f"Configure {model_name}")
+        self.setWindowTitle("Configure API Model")
         self.setModal(True)
+        self.setMinimumWidth(500)
+        self.current_provider_client = None
+        self.available_models = []
         self.setup_ui()
 
     def setup_ui(self):
-        """Set up the user interface for the API key configuration dialog.
-
-        Configures the dialog layout with form fields for API key, base URL,
-        model selection, temperature, and max tokens settings. Includes
-        standard dialog buttons for accepting or canceling the configuration.
-        """
+        """Set up the user interface with provider selection and dynamic model discovery."""
         layout = QVBoxLayout(self)
 
-        # Form layout for settings
         form_layout = QFormLayout()
 
-        # API Key
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItems(
+            [
+                "OpenAI",
+                "Anthropic",
+                "Ollama (Local)",
+                "LM Studio (Local)",
+                "Custom OpenAI-Compatible",
+            ]
+        )
+        self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
+        form_layout.addRow("Provider:", self.provider_combo)
+
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.api_key_edit.setPlaceholderText("Enter your API key here...")
-        form_layout.addRow("API Key:", self.api_key_edit)
+        self.api_key_label = QLabel("API Key:")
+        form_layout.addRow(self.api_key_label, self.api_key_edit)
 
-        # Base URL (for custom endpoints)
         self.base_url_edit = QLineEdit()
-        self.base_url_edit.setPlaceholderText("https://api.openai.com/v1 (leave empty for default)")
-        form_layout.addRow("Base URL:", self.base_url_edit)
+        self.base_url_edit.setPlaceholderText("https://api.openai.com/v1")
+        self.base_url_label = QLabel("Base URL:")
+        form_layout.addRow(self.base_url_label, self.base_url_edit)
 
-        # Model selection
-        self.model_edit = QLineEdit()
-        if "GPT" in self.model_name:
-            self.model_edit.setPlaceholderText("gpt-4o, gpt-4-turbo, gpt-3.5-turbo")
-        elif "Claude" in self.model_name:
-            self.model_edit.setPlaceholderText("claude-3-5-sonnet-20241022, claude-3-haiku-20240307")
-        elif "Gemini" in self.model_name:
-            self.model_edit.setPlaceholderText("gemini-pro, gemini-pro-vision")
-        else:
-            self.model_edit.setPlaceholderText("Model name")
-        form_layout.addRow("Model:", self.model_edit)
+        model_row_layout = QHBoxLayout()
+        self.model_combo = QComboBox()
+        self.model_combo.setEditable(True)
+        self.model_combo.setPlaceholderText("Select or enter model name")
+        model_row_layout.addWidget(self.model_combo, 1)
 
-        # Temperature
+        self.fetch_models_btn = QPushButton("Refresh Models")
+        self.fetch_models_btn.clicked.connect(self.fetch_available_models)
+        model_row_layout.addWidget(self.fetch_models_btn)
+
+        form_layout.addRow("Model:", model_row_layout)
+
+        self.model_info_label = QLabel("")
+        self.model_info_label.setWordWrap(True)
+        self.model_info_label.setStyleSheet("color: #666; font-size: 10px;")
+        form_layout.addRow("", self.model_info_label)
+
         self.temperature_spin = QSpinBox()
         self.temperature_spin.setRange(0, 200)
         self.temperature_spin.setValue(70)
         self.temperature_spin.setSuffix(" (0.7)")
         form_layout.addRow("Temperature:", self.temperature_spin)
 
-        # Max tokens
         self.max_tokens_spin = QSpinBox()
-        self.max_tokens_spin.setRange(100, 32000)
+        self.max_tokens_spin.setRange(100, 200000)
         self.max_tokens_spin.setValue(4000)
         form_layout.addRow("Max Tokens:", self.max_tokens_spin)
 
         layout.addLayout(form_layout)
 
-        # Buttons
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: #666; font-style: italic;")
+        layout.addWidget(self.status_label)
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+        self.model_combo.currentTextChanged.connect(self.on_model_selected)
+
+        self.on_provider_changed(self.provider_combo.currentText())
+
+    def on_provider_changed(self, provider_name: str):
+        """Handle provider selection change."""
+        self.model_combo.clear()
+        self.model_info_label.clear()
+        self.available_models = []
+
+        if "Ollama" in provider_name:
+            self.api_key_label.setVisible(False)
+            self.api_key_edit.setVisible(False)
+            self.base_url_label.setVisible(True)
+            self.base_url_edit.setVisible(True)
+            self.base_url_edit.setPlaceholderText("http://localhost:11434")
+            self.base_url_edit.setText("http://localhost:11434")
+        elif "LM Studio" in provider_name:
+            self.api_key_label.setVisible(False)
+            self.api_key_edit.setVisible(False)
+            self.base_url_label.setVisible(True)
+            self.base_url_edit.setVisible(True)
+            self.base_url_edit.setPlaceholderText("http://localhost:1234/v1")
+            self.base_url_edit.setText("http://localhost:1234/v1")
+        elif "Custom" in provider_name:
+            self.api_key_label.setVisible(True)
+            self.api_key_edit.setVisible(True)
+            self.base_url_label.setVisible(True)
+            self.base_url_edit.setVisible(True)
+            self.base_url_edit.setPlaceholderText("https://your-api-endpoint.com/v1")
+            self.base_url_edit.clear()
+        else:
+            self.api_key_label.setVisible(True)
+            self.api_key_edit.setVisible(True)
+            self.base_url_label.setVisible(False)
+            self.base_url_edit.setVisible(False)
+
+            if provider_name == "OpenAI":
+                self.base_url_edit.setText("https://api.openai.com/v1")
+            elif provider_name == "Anthropic":
+                self.base_url_edit.setText("https://api.anthropic.com")
+
+        self.status_label.setText("Click 'Refresh Models' to load available models")
+
+    def fetch_available_models(self):
+        """Fetch available models from the selected provider."""
+        provider_name = self.provider_combo.currentText()
+        api_key = self.api_key_edit.text() if self.api_key_edit.isVisible() else None
+        base_url = self.base_url_edit.text() if self.base_url_edit.text() else None
+
+        self.status_label.setText("Fetching models...")
+        self.fetch_models_btn.setEnabled(False)
+        self.model_combo.clear()
+
+        try:
+            from intellicrack.ai.api_provider_clients import (
+                AnthropicProviderClient,
+                LMStudioProviderClient,
+                OllamaProviderClient,
+                OpenAIProviderClient,
+            )
+
+            if "OpenAI" in provider_name or "Custom" in provider_name:
+                client = OpenAIProviderClient(api_key, base_url)
+            elif "Anthropic" in provider_name:
+                client = AnthropicProviderClient(api_key, base_url)
+            elif "Ollama" in provider_name:
+                client = OllamaProviderClient(None, base_url)
+            elif "LM Studio" in provider_name:
+                client = LMStudioProviderClient(None, base_url)
+            else:
+                self.status_label.setText("Unknown provider")
+                self.fetch_models_btn.setEnabled(True)
+                return
+
+            self.current_provider_client = client
+            models = client.fetch_models()
+
+            if not models:
+                self.status_label.setText("No models found or API connection failed")
+                self.fetch_models_btn.setEnabled(True)
+                return
+
+            self.available_models = models
+            self.model_combo.clear()
+
+            for model in models:
+                display_name = f"{model.name}"
+                if model.context_length and model.context_length != 4096:
+                    display_name += f" ({model.context_length // 1000}K)"
+                self.model_combo.addItem(display_name, model.id)
+
+            self.status_label.setText(f"Loaded {len(models)} models")
+            logger.info(f"Fetched {len(models)} models from {provider_name}")
+
+        except Exception as e:
+            logger.error(f"Error fetching models: {e}")
+            self.status_label.setText(f"Error: {str(e)}")
+
+        finally:
+            self.fetch_models_btn.setEnabled(True)
+
+    def on_model_selected(self, model_display_name: str):
+        """Handle model selection and show model information."""
+        if not self.available_models:
+            return
+
+        current_index = self.model_combo.currentIndex()
+        if current_index < 0 or current_index >= len(self.available_models):
+            return
+
+        model = self.available_models[current_index]
+
+        info_parts = []
+        if model.description:
+            info_parts.append(model.description)
+        if model.context_length:
+            info_parts.append(f"Context: {model.context_length:,} tokens")
+        if model.capabilities:
+            info_parts.append(f"Capabilities: {', '.join(model.capabilities)}")
+
+        self.model_info_label.setText(" • ".join(info_parts))
+
+        if model.context_length:
+            self.max_tokens_spin.setMaximum(min(model.context_length, 200000))
+
     def get_config(self):
-        """Retrieve the current configuration from the dialog form fields.
+        """Retrieve the current configuration."""
+        model_id = self.model_combo.currentData()
+        if not model_id:
+            model_id = self.model_combo.currentText()
 
-        Collects all the API configuration settings entered by the user,
-        including API key, base URL, model name, temperature, and max tokens.
-        Temperature is converted from integer (0-200) to float (0.0-2.0).
-
-        Returns:
-            dict: Configuration dictionary containing:
-                - api_key: The API key string
-                - base_url: Base URL string or None if empty
-                - model: Model name string
-                - temperature: Temperature as float (0.0-2.0)
-                - max_tokens: Maximum tokens as integer
-
-        """
         return {
-            "api_key": self.api_key_edit.text(),
-            "base_url": self.base_url_edit.text() or None,
-            "model": self.model_edit.text(),
+            "provider": self.provider_combo.currentText(),
+            "api_key": self.api_key_edit.text() if self.api_key_edit.isVisible() else None,
+            "base_url": self.base_url_edit.text() if self.base_url_edit.isVisible() else None,
+            "model": model_id,
             "temperature": self.temperature_spin.value() / 100.0,
             "max_tokens": self.max_tokens_spin.value(),
         }
 
     def set_config(self, config):
-        """Populate the dialog form fields with the provided configuration.
+        """Populate the dialog with existing configuration."""
+        if config.get("provider"):
+            index = self.provider_combo.findText(config["provider"])
+            if index >= 0:
+                self.provider_combo.setCurrentIndex(index)
 
-        Sets the API key, base URL, model name, temperature, and max tokens
-        fields based on the configuration dictionary. Temperature is converted
-        from float (0.0-2.0) to integer (0-200) for the spin box.
-
-        Args:
-            config: Configuration dictionary containing:
-                - api_key: API key string (optional)
-                - base_url: Base URL string (optional)
-                - model: Model name string (optional)
-                - temperature: Temperature as float (0.0-2.0, optional)
-                - max_tokens: Maximum tokens as integer (optional)
-
-        """
         if config.get("api_key"):
             self.api_key_edit.setText(config["api_key"])
+
         if config.get("base_url"):
             self.base_url_edit.setText(config["base_url"])
+
         if config.get("model"):
-            self.model_edit.setText(config["model"])
+            self.model_combo.setEditText(config["model"])
+
         if config.get("temperature") is not None:
             self.temperature_spin.setValue(int(config["temperature"] * 100))
+
         if config.get("max_tokens"):
             self.max_tokens_spin.setValue(config["max_tokens"])
 
@@ -286,69 +412,79 @@ class AIAssistantTab(BaseTab):
             self.status_label.setText(f"Error: {e}")
 
     def configure_model(self):
-        """Configure the selected AI model."""
+        """Configure API model with provider selection and dynamic model discovery."""
         model = self.model_combo.currentText()
 
-        # Handle special cases for local models and managers
         if "Upload Local Model" in model or "Local:" in model:
             self.upload_local_model()
             return
         elif "Model Manager" in model:
             self.open_model_manager()
             return
-        elif "Configure API Model" in model:
-            # Show API key configuration
-            dialog = APIKeyConfigDialog("API Model", self)
-            if dialog.exec() == QDialog.DialogCode.Accepted:
-                config = dialog.get_config()
-                try:
-                    # Register the API key with LLM manager
-                    from intellicrack.ai.llm_backends import get_llm_manager
 
-                    llm_manager = get_llm_manager()
+        dialog = APIKeyConfigDialog(self)
 
-                    # Configure API key based on model type
-                    if config["model"] and "gpt" in config["model"].lower():
-                        llm_manager.configure_openai_api(config["api_key"], config["base_url"])
-                    elif config["model"] and "claude" in config["model"].lower():
-                        llm_manager.configure_anthropic_api(config["api_key"])
-                    elif config["model"] and "gemini" in config["model"].lower():
-                        llm_manager.configure_gemini_api(config["api_key"])
-
-                    self.status_label.setText("API key configured successfully")
-                    # Refresh model list
-                    self.load_available_models()
-
-                except Exception as e:
-                    logger.error(f"Failed to configure API: {e}")
-                    QMessageBox.warning(self, "Configuration Error", f"Failed to configure API: {str(e)}")
-            return
-
-        # Standard model configuration
-        dialog = APIKeyConfigDialog(model, self)
-
-        # Load existing config if available
         if model in self.model_configs:
             dialog.set_config(self.model_configs[model])
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
             config = dialog.get_config()
-            self.model_configs[model] = config
 
-            # Validate API key
-            if config["api_key"]:
-                self.status_label.setText(f"{model} configured successfully")
-                logger.info(f"Model {model} configured with API key")
+            if not config.get("model"):
+                QMessageBox.warning(self, "Configuration Error", "No model selected. Please select a model.")
+                return
 
-                # Reinitialize AI assistant with new config
-                self.setup_ai_assistant()
-            else:
-                QMessageBox.warning(
-                    self, "Configuration Warning", "No API key provided. The model may not work without proper authentication."
+            model_key = f"{config['provider']}:{config['model']}"
+            self.model_configs[model_key] = config
+
+            try:
+                from intellicrack.ai.llm_backends import LLMConfig, LLMProvider, get_llm_manager
+
+                llm_manager = get_llm_manager()
+
+                provider_map = {
+                    "OpenAI": LLMProvider.OPENAI,
+                    "Anthropic": LLMProvider.ANTHROPIC,
+                    "Ollama (Local)": LLMProvider.OLLAMA,
+                    "LM Studio (Local)": LLMProvider.LOCAL_API,
+                    "Custom OpenAI-Compatible": LLMProvider.LOCAL_API,
+                }
+
+                provider = provider_map.get(config["provider"], LLMProvider.OPENAI)
+
+                llm_config = LLMConfig(
+                    provider=provider,
+                    model_name=config["model"],
+                    api_key=config.get("api_key"),
+                    api_base=config.get("base_url"),
+                    temperature=config.get("temperature", 0.7),
+                    max_tokens=config.get("max_tokens", 4000),
+                    tools_enabled=True,
                 )
-                self.status_label.setText(f"{model} configured (no API key)")
 
-        logger.info(f"Configuration dialog opened for: {model}")
+                if llm_manager.register_llm(model_key, llm_config):
+                    self.status_label.setText(f"{config['provider']} - {config['model']} configured successfully")
+                    logger.info(f"Model {model_key} configured and registered")
+
+                    self.model_combo.addItem(f"{config['provider']}: {config['model']}")
+                    self.model_combo.setCurrentText(f"{config['provider']}: {config['model']}")
+
+                    self.setup_ai_assistant()
+
+                    QMessageBox.information(
+                        self,
+                        "Success",
+                        f"Model '{config['model']}' from {config['provider']} has been configured successfully!",
+                    )
+                else:
+                    raise Exception("Failed to register model with LLM manager")
+
+            except Exception as e:
+                logger.error(f"Failed to configure model: {e}")
+                QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {str(e)}")
+                self.status_label.setText("Configuration failed")
+
+        logger.info("Model configuration dialog completed")
 
     def perform_analysis(self):
         """Perform AI-powered analysis on input."""
@@ -439,26 +575,40 @@ class AIAssistantTab(BaseTab):
         self.status_label.setText("Copied to clipboard")
 
     def load_available_models(self):
-        """Load all available AI models dynamically."""
+        """Load all available AI models dynamically from configured providers."""
         try:
             self.model_combo.clear()
             available_models = []
 
-            # Load API-based models from LLM backends
+            try:
+                from intellicrack.ai.api_provider_clients import get_provider_manager
+
+                provider_manager = get_provider_manager()
+
+                all_models = provider_manager.fetch_all_models()
+
+                for provider_name, models in all_models.items():
+                    for model_info in models:
+                        display_name = f"{model_info.provider}: {model_info.name}"
+                        available_models.append(display_name)
+                        logger.debug(f"Found model: {display_name}")
+
+            except Exception as e:
+                logger.warning(f"Could not load models from provider manager: {e}")
+
             try:
                 from intellicrack.ai.llm_backends import get_llm_manager
 
                 llm_manager = get_llm_manager()
 
-                # Get configured API models
                 api_models = llm_manager.list_models()
                 for model_id in api_models:
-                    available_models.append(f"API: {model_id}")
+                    if model_id not in available_models:
+                        available_models.append(f"Configured: {model_id}")
 
             except Exception as e:
-                logger.warning(f"Could not load API models: {e}")
+                logger.warning(f"Could not load configured API models: {e}")
 
-            # Load local GGUF models
             try:
                 from intellicrack.ai.local_gguf_server import gguf_manager
 
@@ -466,12 +616,12 @@ class AIAssistantTab(BaseTab):
 
                 for model_name, model_info in local_models.items():
                     size_mb = model_info.get("size_mb", 0)
-                    available_models.append(f"Local: {model_name} ({size_mb}MB)")
+                    display_name = f"Local GGUF: {model_name} ({size_mb}MB)"
+                    available_models.append(display_name)
 
             except Exception as e:
-                logger.warning(f"Could not load local models: {e}")
+                logger.warning(f"Could not load local GGUF models: {e}")
 
-            # Load models from model repositories
             try:
                 from intellicrack.models.model_manager import ModelManager
 
@@ -482,30 +632,27 @@ class AIAssistantTab(BaseTab):
                         repo_models = model_manager.list_available_models(repo_name)
                         for model_info in repo_models:
                             model_name = model_info.get("name", model_info.get("model_id", "Unknown"))
-                            available_models.append(f"{repo_name.title()}: {model_name}")
+                            display_name = f"{repo_name.title()}: {model_name}"
+                            available_models.append(display_name)
                     except Exception as repo_e:
                         logger.debug(f"Could not load {repo_name} models: {repo_e}")
 
             except Exception as e:
                 logger.warning(f"Could not load repository models: {e}")
 
-            # Add fallback models if no models found
             if not available_models:
-                available_models = [
-                    "Configure API Model...",
-                    "Upload Local Model...",
-                    "Download from Hugging Face...",
-                    "Connect to Ollama...",
-                    "Connect to LMStudio...",
-                ]
-
-            self.model_combo.addItems(available_models)
-            logger.info(f"Loaded {len(available_models)} AI models")
+                self.model_combo.addItem("⚠️ No models configured - Click 'Configure' to add")
+                self.model_combo.setEnabled(False)
+                logger.warning("No AI models found - user needs to configure models")
+            else:
+                self.model_combo.addItems(available_models)
+                self.model_combo.setEnabled(True)
+                logger.info(f"Loaded {len(available_models)} AI models dynamically")
 
         except Exception as e:
             logger.error(f"Failed to load available models: {e}")
-            # Fallback to basic options
-            self.model_combo.addItems(["Configure API Model...", "Upload Local Model...", "Open Model Manager..."])
+            self.model_combo.addItem("❌ Error loading models - Check configuration")
+            self.model_combo.setEnabled(False)
 
     def upload_local_model(self):
         """Upload a local model file."""

@@ -162,7 +162,7 @@ class RuntimeMonitor:
         logger.info("Runtime monitoring stopped")
 
     def _monitoring_loop(self):
-        """Main monitoring loop."""
+        """Monitor continuously in the main loop."""
         while self.active:
             try:
                 # Collect system metrics

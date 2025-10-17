@@ -230,7 +230,7 @@ class ModelLoadingDialog(BaseDialog):
             if info:
                 item_text = f"{model_id} ({info['provider']}) - {info['model_name']}"
                 if info.get("is_initialized"):
-                    item_text += " ✓"
+                    item_text += " OK"
 
                 item = QListWidgetItem(item_text)
                 self.models_list.addItem(item)

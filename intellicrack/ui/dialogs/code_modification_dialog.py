@@ -436,7 +436,7 @@ class CodeModificationDialog(QDialog):
 
         header = self.history_tree.header()
         header.setStretchLastSection(True)
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
 
         self.history_tree.setAlternatingRowColors(True)
         layout.addWidget(self.history_tree)

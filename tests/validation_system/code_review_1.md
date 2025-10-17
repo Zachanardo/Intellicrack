@@ -157,7 +157,7 @@ MOCK VIOLATIONS: "simulated", "dummy" data in test section
 
 ```bash
 # Actual linting performed
-C:\Intellicrack\mamba_env\python.exe -m ruff check tests\validation_system\*.py
+pixi run python -m ruff check tests\validation_system\*.py
 # Result: 852+ errors found
 
 # Check for mock/stub/simulated
@@ -165,7 +165,7 @@ rg -i "mock|stub|simulated|dummy|fake|placeholder|todo" tests\validation_system\
 # Result: Multiple violations found
 
 # Security check
-C:\Intellicrack\mamba_env\python.exe -m ruff check --select S tests\validation_system\
+pixi run python -m ruff check --select S tests\validation_system\
 # Result: 50+ security issues found
 ```
 

@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Tkinter handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -16,9 +18,11 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+import sys
 import time
+from pathlib import Path
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Tkinter Import Handler with Production-Ready Fallbacks
@@ -27,6 +31,72 @@ This module provides a centralized abstraction layer for tkinter imports.
 When tkinter is not available, it provides REAL, functional Python-based
 implementations for GUI operations used in Intellicrack dialogs and interfaces.
 """
+
+
+def _setup_tkinter_environment():
+    """Set up environment variables required for tkinter/TCL/TK on Windows.
+
+    This ensures DLLs can be found even when Python is not launched through the launcher.
+    """
+    try:
+        pixi_env = Path(r"D:\Intellicrack\.pixi\envs\default")
+
+        if "TCL_LIBRARY" not in os.environ:
+            launcher_tcl = None
+            if hasattr(sys, "_MEIPASS"):
+                launcher_tcl = Path(sys._MEIPASS) / "tcl8.6"
+            elif getattr(sys, "frozen", False):
+                exe_dir = Path(sys.executable).parent
+                launcher_tcl = exe_dir / "tcl8.6"
+
+            if launcher_tcl and launcher_tcl.exists():
+                os.environ["TCL_LIBRARY"] = str(launcher_tcl)
+                logger.debug("Set TCL_LIBRARY to launcher directory: %s", launcher_tcl)
+            else:
+                tcl_lib = pixi_env / "Library" / "lib" / "tcl8.6"
+                if tcl_lib.exists():
+                    os.environ["TCL_LIBRARY"] = str(tcl_lib)
+                    logger.debug("Set TCL_LIBRARY to pixi environment: %s", tcl_lib)
+
+        if "TK_LIBRARY" not in os.environ:
+            launcher_tk = None
+            if hasattr(sys, "_MEIPASS"):
+                launcher_tk = Path(sys._MEIPASS) / "tk8.6"
+            elif getattr(sys, "frozen", False):
+                exe_dir = Path(sys.executable).parent
+                launcher_tk = exe_dir / "tk8.6"
+
+            if launcher_tk and launcher_tk.exists():
+                os.environ["TK_LIBRARY"] = str(launcher_tk)
+                logger.debug("Set TK_LIBRARY to launcher directory: %s", launcher_tk)
+            else:
+                tk_lib = pixi_env / "Library" / "lib" / "tk8.6"
+                if tk_lib.exists():
+                    os.environ["TK_LIBRARY"] = str(tk_lib)
+                    logger.debug("Set TK_LIBRARY to pixi environment: %s", tk_lib)
+
+        dll_dirs = []
+        if getattr(sys, "frozen", False):
+            exe_dir = Path(sys.executable).parent
+            dll_dirs.append(str(exe_dir))
+
+        dll_dirs.extend(
+            [
+                str(pixi_env / "Library" / "bin"),
+                str(pixi_env / "DLLs"),
+            ]
+        )
+
+        for dll_dir in dll_dirs:
+            if Path(dll_dir).exists() and dll_dir not in os.environ.get("PATH", ""):
+                os.environ["PATH"] = dll_dir + os.pathsep + os.environ.get("PATH", "")
+                logger.debug("Added to PATH for tkinter DLLs: %s", dll_dir)
+
+    except Exception as e:
+        logger.debug("Could not set up tkinter environment (non-critical): %s", e)
+
+
+_setup_tkinter_environment()
 
 # Tkinter availability detection and import handling
 try:
@@ -48,8 +118,10 @@ try:
     # Alias for compatibility
     scrolledtext = ScrolledTextModule
 
+    logger.debug("Tkinter successfully loaded (version %s)", TKINTER_VERSION)
+
 except ImportError as e:
-    logger.error("Tkinter not available, using fallback implementations: %s", e)
+    logger.warning("Tkinter not available, using fallback implementations: %s", e)
     HAS_TKINTER = False
     TKINTER_VERSION = None
 

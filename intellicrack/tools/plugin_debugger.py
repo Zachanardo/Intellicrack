@@ -1,6 +1,6 @@
 """Plugin debugger for testing and debugging Intellicrack plugins."""
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 Advanced Plugin Debugger with Breakpoint Support for Intellicrack.

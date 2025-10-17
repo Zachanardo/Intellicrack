@@ -4,7 +4,21 @@ Provides tamper-resistant, structured logging for all exploitation attempts
 and security-sensitive operations.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -887,7 +901,7 @@ class TelemetryCollector:
         logger.info("Telemetry collection stopped")
 
     def _export_loop(self):
-        """Main export loop."""
+        """Run main export loop."""
         while self._running:
             try:
                 self._collect_and_export()
@@ -1108,7 +1122,7 @@ def create_contextual_logger(name: str, **context) -> ContextualLogger:
 
 
 def setup_comprehensive_logging():
-    """Setup comprehensive logging and monitoring system."""
+    """Set up comprehensive logging and monitoring system."""
     try:
         # Start telemetry collection
         telemetry_collector.start_collection()
@@ -1148,25 +1162,25 @@ def get_audit_logger() -> AuditLogger:
 
 
 def log_exploit_attempt(target: str, exploit_type: str, **kwargs):
-    """Convenience function to log exploit attempts."""
+    """Log exploit attempts."""
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
 def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
-    """Convenience function to log binary analysis."""
+    """Log binary analysis."""
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 
 
 def log_vm_operation(operation: str, vm_name: str, **kwargs):
-    """Convenience function to log VM operations."""
+    """Log VM operations."""
     get_audit_logger().log_vm_operation(operation, vm_name, **kwargs)
 
 
 def log_credential_access(credential_type: str, purpose: str, **kwargs):
-    """Convenience function to log credential access."""
+    """Log credential access."""
     get_audit_logger().log_credential_access(credential_type, purpose, **kwargs)
 
 
 def log_tool_execution(tool_name: str, command: str, **kwargs):
-    """Convenience function to log tool execution."""
+    """Log tool execution."""
     get_audit_logger().log_tool_execution(tool_name, command, **kwargs)

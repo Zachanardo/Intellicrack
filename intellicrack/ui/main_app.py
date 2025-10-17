@@ -1,5 +1,4 @@
-"""
-Intellicrack Main Application Module
+"""Intellicrack Main Application Module.
 
 This module provides the main graphical user interface for the Intellicrack application,
 a comprehensive binary analysis and security research toolkit. The application integrates
@@ -18,19 +17,23 @@ Key Features:
     - Exploitation framework with payload generation and testing
     - Plugin system for extensibility
     - Comprehensive logging and reporting capabilities
-    - Real-time analysis progress tracking
-    - Theme support and customizable UI
 
-Main Functions:
-    launch: Entry point for starting the Intellicrack application with proper
-            Qt event loop management and splash screen support.
+Copyright (C) 2025 Zachary Flint
 
-Dependencies:
-    - PyQt6: For GUI framework and widgets
-    - Multiple analysis engines (optional, with graceful fallbacks)
-    - AI/ML frameworks for intelligent analysis (optional)
-    - Network analysis libraries (optional)
-    - External tools integration (Frida, Ghidra, etc.)
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
@@ -39,7 +42,7 @@ import traceback
 from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
-from intellicrack.config import CONFIG, get_config
+from intellicrack.config import CONFIG
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
 from intellicrack.core.analysis.concolic_executor import (
     run_concolic_execution,
@@ -54,12 +57,10 @@ from intellicrack.core.analysis.rop_generator import ROPChainGenerator, run_rop_
 from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_taint_analysis
 from intellicrack.core.app_context import get_app_context
 from intellicrack.core.network.cloud_license_hooker import run_cloud_license_hooker
-from intellicrack.core.network.license_server_emulator import run_network_license_emulator
 from intellicrack.core.network.protocol_tool import (
     launch_protocol_tool,
     update_protocol_tool_description,
 )
-from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
 from intellicrack.core.patching.memory_patcher import setup_memory_patching
 from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
 from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
@@ -87,6 +88,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
 from intellicrack.plugins import run_frida_plugin_from_file, run_ghidra_plugin_from_file
+from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
 from intellicrack.ui.distributed_processing import DistributedProcessing
@@ -98,13 +100,14 @@ from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 from intellicrack.ui.tabs.dashboard_tab import DashboardTab
 from intellicrack.ui.tabs.exploitation_tab import ExploitationTab
 from intellicrack.ui.tabs.settings_tab import SettingsTab
+from intellicrack.ui.tabs.terminal_tab import TerminalTab
 from intellicrack.ui.tabs.tools_tab import ToolsTab
 from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 from intellicrack.ui.theme_manager import get_theme_manager
 from intellicrack.ui.traffic_analyzer import TrafficAnalyzer, clear_network_capture, start_network_capture, stop_network_capture
 from intellicrack.utils import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
 from intellicrack.utils.log_message import log_message
-from intellicrack.utils.protection.protection_utils import inject_comprehensive_api_hooks
+from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
@@ -137,7 +140,6 @@ class IntellicrackApp(QMainWindow):
             model_manager: AI/ML model management
             ai_orchestrator: AI-powered analysis orchestration
             autonomous_agent: Autonomous analysis agent
-            exploitation_orchestrator: AI-guided exploitation framework
             theme_manager: UI theming and styling
             icon_manager: Icon management system
             dashboard_manager: Dashboard monitoring and metrics
@@ -216,7 +218,6 @@ class IntellicrackApp(QMainWindow):
         # Initialize core components and managers
         self._initialize_core_components()
         self._initialize_ai_orchestrator()
-        self._initialize_adobe_compiler()
 
         # Set up connections and properties
         self._connect_signals()
@@ -334,9 +335,7 @@ class IntellicrackApp(QMainWindow):
             self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
 
             # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
-            from ..ai.exploitation_orchestrator import ExploitationOrchestrator
 
-            self.exploitation_orchestrator = ExploitationOrchestrator(ai_model=None)
             self.logger.info("Exploitation Orchestrator initialized successfully")
 
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
@@ -346,33 +345,7 @@ class IntellicrackApp(QMainWindow):
             self.logger.error(f"Exception details: {traceback.format_exc()}")
             self.ai_orchestrator = None
             self.ai_coordinator = None
-            self.exploitation_orchestrator = None
             self.logger.warning("Continuing without agentic AI system")
-
-    def _initialize_adobe_compiler(self):
-        """Initialize Adobe License Compiler and configuration."""
-        print("[INIT] Initializing Adobe License Compiler...")
-
-        try:
-            self.adobe_compiler = AdobeLicenseCompiler()
-
-            # Get Adobe configuration from unified config system
-            config = get_config()
-            adobe_config = config.get("adobe_license_compiler", {})
-            deployment_config = adobe_config.get("deployment", {})
-
-            # Store configurable service name and display elements
-            self.adobe_service_name = deployment_config.get("service_name", "AdobeLicenseX")
-            self.adobe_display_name = f"Adobe {self.adobe_service_name}"
-
-            self.logger.info("Adobe License Compiler initialized successfully")
-
-        except Exception as e:
-            self.logger.error(f"Failed to initialize Adobe License Compiler: {e}")
-            self.adobe_compiler = None
-            # Fallback to default names if config unavailable
-            self.adobe_service_name = "AdobeLicenseX"
-            self.adobe_display_name = "Adobe AdobeLicenseX"
 
     def _connect_signals(self):
         """Connect all Qt signals to their respective slots."""
@@ -521,27 +494,7 @@ class IntellicrackApp(QMainWindow):
 
         from . import exploitation_handlers
 
-        self.generate_advanced_payload = partial(exploitation_handlers.generate_advanced_payload, self)
-        self.test_generated_payload = partial(exploitation_handlers.test_generated_payload, self)
-        self.start_c2_server = partial(exploitation_handlers.start_c2_server, self)
-        self.stop_c2_server = partial(exploitation_handlers.stop_c2_server, self)
-        self.open_c2_management = partial(exploitation_handlers.open_c2_management, self)
-        self.establish_persistence = partial(exploitation_handlers.establish_persistence, self)
-        self.escalate_privileges = partial(exploitation_handlers.escalate_privileges, self)
-        self.perform_lateral_movement = partial(exploitation_handlers.perform_lateral_movement, self)
-        self.harvest_credentials = partial(exploitation_handlers.harvest_credentials, self)
-        self.collect_system_info = partial(exploitation_handlers.collect_system_info, self)
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
-        self.open_vulnerability_research = partial(exploitation_handlers.open_vulnerability_research, self)
-        self.run_quick_vulnerability_analysis = partial(exploitation_handlers.run_quick_vulnerability_analysis, self)
-        self.run_ai_guided_analysis = partial(exploitation_handlers.run_ai_guided_analysis, self)
-        self.test_aslr_bypass = partial(exploitation_handlers.test_aslr_bypass, self)
-        self.test_dep_bypass = partial(exploitation_handlers.test_dep_bypass, self)
-        self.test_cfi_bypass = partial(exploitation_handlers.test_cfi_bypass, self)
-        self.test_cet_bypass = partial(exploitation_handlers.test_cet_bypass, self)
-        self.test_stack_canary_bypass = partial(exploitation_handlers.test_stack_canary_bypass, self)
-        self.run_full_automated_exploitation = partial(exploitation_handlers.run_full_automated_exploitation, self)
-        self.run_ai_orchestrated_campaign = partial(exploitation_handlers.run_ai_orchestrated_campaign, self)
         self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
 
         print("[INIT] Exploitation handlers bound")
@@ -657,7 +610,7 @@ class IntellicrackApp(QMainWindow):
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
 
             self.network_license_server = NetworkLicenseServerEmulator()
-        except (OSError, ValueError, RuntimeError) as e:
+        except (OSError, ValueError, RuntimeError, ImportError, ModuleNotFoundError) as e:
             self.network_license_server = None
             logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
@@ -801,6 +754,7 @@ class IntellicrackApp(QMainWindow):
         self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
         self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
         self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
+        self.terminal_tab = TerminalTab(shared_context, self) if TerminalTab else QWidget()
         self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
         self.workspace_tab = WorkspaceTab(shared_context, self) if WorkspaceTab else QWidget()
 
@@ -815,6 +769,7 @@ class IntellicrackApp(QMainWindow):
         self.tabs.addTab(self.exploitation_tab, "Exploitation")
         self.tabs.addTab(self.ai_assistant_tab, "AI Assistant")
         self.tabs.addTab(self.tools_tab, "Tools")
+        self.tabs.addTab(self.terminal_tab, "Terminal")
         self.tabs.addTab(self.settings_tab, "Settings")
 
         # Set comprehensive tooltips for main tabs
@@ -824,7 +779,8 @@ class IntellicrackApp(QMainWindow):
         self.tabs.setTabToolTip(3, "Advanced exploitation toolkit for vulnerability research and security testing")
         self.tabs.setTabToolTip(4, "AI-powered assistant for code analysis, script generation, and intelligent guidance")
         self.tabs.setTabToolTip(5, "Collection of specialized security research and binary manipulation tools")
-        self.tabs.setTabToolTip(6, "Configure application preferences, model settings, and advanced options")
+        self.tabs.setTabToolTip(6, "Interactive terminal for running scripts and commands with full I/O support")
+        self.tabs.setTabToolTip(7, "Configure application preferences, model settings, and advanced options")
 
         # Initialize dashboard manager
         self.dashboard_manager = DashboardManager(self)
@@ -908,6 +864,13 @@ class IntellicrackApp(QMainWindow):
     def _finalize_ui_initialization(self):
         """Finalize UI initialization with tooltips, plugins, and final configuration."""
         print("[INIT] Finalizing UI initialization...")
+
+        # Register terminal manager with main app
+        from intellicrack.core.terminal_manager import get_terminal_manager
+
+        terminal_mgr = get_terminal_manager()
+        terminal_mgr.set_main_app(self)
+        self.logger.info("Terminal manager registered with main app")
 
         # Mark UI as initialized
         self._ui_initialized = True
@@ -1644,18 +1607,18 @@ def launch():
         from intellicrack.handlers.pyqt6_handler import QApplication, QIcon, QPixmap, QSplashScreen, Qt
         from intellicrack.utils.resource_helper import get_resource_path
 
+        # Fix Windows taskbar icon grouping by setting explicit App User Model ID BEFORE creating QApplication
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
+        except Exception as e:
+            logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")
+
         # Create QApplication instance if it doesn't exist
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
-
-            # Fix Windows taskbar icon grouping by setting explicit App User Model ID
-            try:
-                import ctypes
-
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
-            except Exception as e:
-                logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")
 
             # Set application metadata for better OS integration
             app.setApplicationName("Intellicrack")

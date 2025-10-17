@@ -53,20 +53,20 @@ This document provides detailed instructions for acquiring legitimate commercial
 1. **Create Clean Environment**:
    ```powershell
    # Create acquisition workspace
-   New-Item -Path "C:\Intellicrack\tests\validation_system\downloads" -ItemType Directory -Force
+   New-Item -Path "D:\\Intellicrack\tests\validation_system\downloads" -ItemType Directory -Force
 
    # Set up logging
-   $logFile = "C:\Intellicrack\tests\validation_system\logs\acquisition_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+   $logFile = "D:\\Intellicrack\tests\validation_system\logs\acquisition_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
    Start-Transcript -Path $logFile
    ```
 
 2. **Document System State**:
    ```powershell
    # Record system information
-   Get-ComputerInfo | Out-File "C:\Intellicrack\tests\validation_system\logs\system_info.txt"
+   Get-ComputerInfo | Out-File "D:\\Intellicrack\tests\validation_system\logs\system_info.txt"
 
    # Record network configuration
-   Get-NetIPConfiguration | Out-File "C:\Intellicrack\tests\validation_system\logs\network_config.txt"
+   Get-NetIPConfiguration | Out-File "D:\\Intellicrack\tests\validation_system\logs\network_config.txt"
    ```
 
 ### Step 2: Download Software
@@ -121,7 +121,7 @@ This document provides detailed instructions for acquiring legitimate commercial
    manager = CommercialBinaryManager()
 
    # Verify against vendor checksum
-   binary_path = Path("C:/Intellicrack/tests/validation_system/downloads/installer.exe")
+   binary_path = Path("<INTELLICRACK_ROOT>/tests/validation_system/downloads/installer.exe")
    vendor_checksum = "abc123..."  # From vendor website
 
    is_valid = manager.verify_vendor_checksum(
@@ -219,7 +219,7 @@ print(f"Missing software: {', '.join(report['missing_software'])}")
 1. **Access Control**:
    ```powershell
    # Set restrictive permissions
-   $acl = Get-Acl "C:\Intellicrack\tests\validation_system\commercial_binaries"
+   $acl = Get-Acl "D:\\Intellicrack\tests\validation_system\commercial_binaries"
    $acl.SetAccessRuleProtection($true, $false)
 
    # Remove inherited permissions
@@ -230,7 +230,7 @@ print(f"Missing software: {', '.join(report['missing_software'])}")
    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
    $acl.SetAccessRule($accessRule)
 
-   Set-Acl -Path "C:\Intellicrack\tests\validation_system\commercial_binaries" -AclObject $acl
+   Set-Acl -Path "D:\\Intellicrack\tests\validation_system\commercial_binaries" -AclObject $acl
    ```
 
 2. **Integrity Monitoring**:
@@ -294,7 +294,7 @@ def main():
     """Main acquisition workflow."""
     # Setup
     manager = CommercialBinaryManager()
-    downloads_dir = Path("C:/Intellicrack/tests/validation_system/downloads")
+    downloads_dir = Path("<INTELLICRACK_ROOT>/tests/validation_system/downloads")
 
     # Software to acquire
     software_list = [

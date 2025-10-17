@@ -1,9 +1,18 @@
+"""
+Simple validation check for Intellicrack module imports and basic functionality.
+
+This script performs basic validation of the Intellicrack project structure,
+import functionality, and core module availability. It's used to verify
+that the project can be properly imported and that key components are
+accessible.
+"""
+
 import sys
 import os
 
 # Set working directory and add to path
-os.chdir(r'C:\Intellicrack')
-sys.path.insert(0, r'C:\Intellicrack')
+os.chdir(r'D:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 print("Working directory:", os.getcwd())
 print("Python path includes project root")

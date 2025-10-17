@@ -1,3 +1,14 @@
+"""
+Functional tests for Intellicrack's plugin system operations.
+
+This module contains comprehensive tests for the plugin system functionality in Intellicrack,
+including plugin loading and initialization, plugin execution, debugging capabilities,
+Ghidra script operations, radare2 plugin operations, test generation, dependency management,
+hot reload functionality, sandboxing and security measures, and performance monitoring.
+These tests ensure the plugin system works correctly with real plugins and maintains
+proper security and performance standards.
+"""
+
 import pytest
 import tempfile
 import os

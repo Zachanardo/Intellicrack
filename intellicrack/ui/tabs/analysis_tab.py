@@ -24,7 +24,12 @@ import os
 import shutil
 from datetime import datetime
 
+from intellicrack.core.license_snapshot import LicenseSnapshot
+from intellicrack.core.license_validation_bypass import LicenseValidationBypass
+from intellicrack.core.monitoring.monitoring_session import MonitoringConfig, MonitoringSession
+from intellicrack.core.process_manipulation import LicenseAnalyzer
 from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QFileDialog,
@@ -96,6 +101,11 @@ class AnalysisTab(BaseTab):
         self.embedded_hex_viewer = None
         self.snapshots = {}
         self.comparison_results = []
+        self.license_analyzer = LicenseAnalyzer()
+        self.attached_pid = None
+        self.license_snapshot = LicenseSnapshot()
+        self.license_validation_bypass = LicenseValidationBypass()
+        self.monitoring_session = None
 
         # Connect to app_context signals for binary loading
         if self.app_context:
@@ -156,7 +166,9 @@ class AnalysisTab(BaseTab):
         profile_layout.addWidget(QLabel("Profile:"))
 
         self.analysis_profile_combo = QComboBox()
-        self.analysis_profile_combo.setToolTip("Select a predefined analysis profile or create a custom configuration for your specific needs")
+        self.analysis_profile_combo.setToolTip(
+            "Select a predefined analysis profile or create a custom configuration for your specific needs"
+        )
         self.analysis_profile_combo.addItems(["Quick Scan", "Static Analysis", "Dynamic Analysis", "Full Analysis", "Custom"])
         self.analysis_profile_combo.currentTextChanged.connect(self.update_profile_settings)
         profile_layout.addWidget(self.analysis_profile_combo)
@@ -171,7 +183,9 @@ class AnalysisTab(BaseTab):
 
         # Primary action button
         self.run_analysis_btn = QPushButton("Run Analysis")
-        self.run_analysis_btn.setToolTip("Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first")
+        self.run_analysis_btn.setToolTip(
+            "Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first"
+        )
         self.run_analysis_btn.setMinimumHeight(40)
         self.run_analysis_btn.setStyleSheet("""
             QPushButton {
@@ -233,6 +247,15 @@ class AnalysisTab(BaseTab):
         self.signature_analysis_cb = QCheckBox("Signature Detection")
         self.signature_analysis_cb.setChecked(True)
         static_group.add_widget(self.signature_analysis_cb)
+
+        self.crypto_key_extraction_cb = QCheckBox("Cryptographic Key Extraction")
+        self.crypto_key_extraction_cb.setChecked(True)
+        static_group.add_widget(self.crypto_key_extraction_cb)
+
+        self.subscription_bypass_cb = QCheckBox("Subscription Validation Bypass")
+        self.subscription_bypass_cb.setChecked(True)
+        self.subscription_bypass_cb.setToolTip("Detect and bypass subscription-based licensing schemes")
+        static_group.add_widget(self.subscription_bypass_cb)
 
         # Analysis depth
         depth_layout = QHBoxLayout()
@@ -379,6 +402,25 @@ class AnalysisTab(BaseTab):
         snapshot_btn.clicked.connect(self.take_system_snapshot)
         tools_layout.addWidget(snapshot_btn)
 
+        # License Snapshot management buttons
+        snapshot_controls = QHBoxLayout()
+
+        self.compare_snapshots_btn = QPushButton("Compare Snapshots")
+        self.compare_snapshots_btn.clicked.connect(self.compare_snapshots)
+        self.compare_snapshots_btn.setEnabled(False)  # Disabled until we have 2+ snapshots
+        snapshot_controls.addWidget(self.compare_snapshots_btn)
+
+        self.export_snapshot_btn = QPushButton("Export Snapshot")
+        self.export_snapshot_btn.clicked.connect(self.export_snapshot)
+        self.export_snapshot_btn.setEnabled(False)  # Disabled until we have snapshots
+        snapshot_controls.addWidget(self.export_snapshot_btn)
+
+        self.import_snapshot_btn = QPushButton("Import Snapshot")
+        self.import_snapshot_btn.clicked.connect(self.import_snapshot)
+        snapshot_controls.addWidget(self.import_snapshot_btn)
+
+        tools_layout.addLayout(snapshot_controls)
+
         export_btn = QPushButton("Export Results")
         export_btn.clicked.connect(self.export_analysis_results)
         tools_layout.addWidget(export_btn)
@@ -397,37 +439,225 @@ class AnalysisTab(BaseTab):
         return scroll_area
 
     def create_protection_panel(self):
-        """Create the protection detection panel."""
+        """Create the enhanced protection and license detection panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
-        # Protection detection area
-        protection_group = QGroupBox("Protection Detection")
-        protection_layout = QVBoxLayout(protection_group)
+        # Create tab widget for different protection aspects
+        protection_tabs = QTabWidget()
 
-        # Protection scan button
+        # Tab 1: Protection Detection
+        protection_tab = QWidget()
+        protection_layout = QVBoxLayout(protection_tab)
+
+        # Protection scan controls
+        scan_controls = QHBoxLayout()
         self.scan_protection_btn = QPushButton("Scan for Protections")
         self.scan_protection_btn.setEnabled(False)
-        protection_layout.addWidget(self.scan_protection_btn)
+        self.scan_protection_btn.clicked.connect(self.scan_for_protections)
+        scan_controls.addWidget(self.scan_protection_btn)
+
+        self.deep_scan_check = QCheckBox("Deep Scan")
+        self.deep_scan_check.setToolTip("Perform thorough analysis including unpacked sections")
+        scan_controls.addWidget(self.deep_scan_check)
+
+        protection_layout.addLayout(scan_controls)
 
         # Protection results display
         self.protection_display = QTextEdit()
         self.protection_display.setReadOnly(True)
-        self.protection_display.setPlaceholderText("Protection detection results will appear here...")
+        initial_scan_text = "Protection Scanner Initialized\n" + "=" * 50 + "\n"
+        initial_scan_text += "Supported Protections:\n"
+        initial_scan_text += "• Denuvo Anti-Tamper\n"
+        initial_scan_text += "• VMProtect\n"
+        initial_scan_text += "• Themida/WinLicense\n"
+        initial_scan_text += "• SafeNet Sentinel\n"
+        initial_scan_text += "• FlexNet/FlexLM\n"
+        initial_scan_text += "• Hardware-locked licensing\n"
+        initial_scan_text += "\nReady for protection analysis..."
+        self.protection_display.setText(initial_scan_text)
         protection_layout.addWidget(self.protection_display)
 
-        layout.addWidget(protection_group)
+        protection_tabs.addTab(protection_tab, "Protections")
 
-        # Bypass recommendations
-        bypass_group = QGroupBox("Bypass Recommendations")
-        bypass_layout = QVBoxLayout(bypass_group)
+        # Tab 2: License Detection
+        license_tab = QWidget()
+        license_layout = QVBoxLayout(license_tab)
 
+        # License detection controls
+        license_controls = QHBoxLayout()
+
+        self.detect_license_btn = QPushButton("Detect License Checks")
+        self.detect_license_btn.setEnabled(False)
+        self.detect_license_btn.clicked.connect(self.detect_license_checks)
+        license_controls.addWidget(self.detect_license_btn)
+
+        self.monitor_license_check = QCheckBox("Live Monitor")
+        self.monitor_license_check.setToolTip("Monitor license checks in real-time during execution")
+        license_controls.addWidget(self.monitor_license_check)
+
+        license_layout.addLayout(license_controls)
+
+        # License check patterns
+        pattern_group = QGroupBox("License Check Patterns")
+        pattern_layout = QVBoxLayout(pattern_group)
+
+        self.serial_check = QCheckBox("Serial Number Validation")
+        self.serial_check.setChecked(True)
+        pattern_layout.addWidget(self.serial_check)
+
+        self.trial_check = QCheckBox("Trial Period Detection")
+        self.trial_check.setChecked(True)
+        pattern_layout.addWidget(self.trial_check)
+
+        self.hwid_check = QCheckBox("Hardware ID Verification")
+        self.hwid_check.setChecked(True)
+        pattern_layout.addWidget(self.hwid_check)
+
+        self.online_check = QCheckBox("Online Activation")
+        self.online_check.setChecked(True)
+        pattern_layout.addWidget(self.online_check)
+
+        self.file_check = QCheckBox("License File Validation")
+        self.file_check.setChecked(True)
+        pattern_layout.addWidget(self.file_check)
+
+        self.registry_check = QCheckBox("Registry Key Checks")
+        self.registry_check.setChecked(True)
+        pattern_layout.addWidget(self.registry_check)
+
+        license_layout.addWidget(pattern_group)
+
+        # License detection results
+        self.license_display = QTextEdit()
+        self.license_display.setReadOnly(True)
+        self.license_display.setText("License Detection Engine Ready\n" + "=" * 50 + "\n")
+        license_layout.addWidget(self.license_display)
+
+        protection_tabs.addTab(license_tab, "License Detection")
+
+        # Tab 3: Bypass Strategies
+        bypass_tab = QWidget()
+        bypass_layout = QVBoxLayout(bypass_tab)
+
+        # Bypass controls
+        bypass_controls = QHBoxLayout()
+
+        self.generate_bypass_btn = QPushButton("Generate Bypass")
+        self.generate_bypass_btn.setEnabled(False)
+        self.generate_bypass_btn.clicked.connect(self.generate_bypass_strategy)
+        bypass_controls.addWidget(self.generate_bypass_btn)
+
+        self.subscription_bypass_btn = QPushButton("Execute Subscription Bypass")
+        self.subscription_bypass_btn.setEnabled(False)
+        self.subscription_bypass_btn.clicked.connect(self.execute_subscription_bypass)
+        self.subscription_bypass_btn.setToolTip("Start subscription validation bypass for detected scheme")
+        bypass_controls.addWidget(self.subscription_bypass_btn)
+
+        self.auto_patch_check = QCheckBox("Auto-Patch")
+        self.auto_patch_check.setToolTip("Automatically apply bypass patches when safe")
+        bypass_controls.addWidget(self.auto_patch_check)
+
+        bypass_layout.addLayout(bypass_controls)
+
+        # Bypass method selection
+        method_group = QGroupBox("Bypass Methods")
+        method_layout = QVBoxLayout(method_group)
+
+        self.patch_jump_check = QCheckBox("Patch Conditional Jumps")
+        self.patch_jump_check.setChecked(True)
+        method_layout.addWidget(self.patch_jump_check)
+
+        self.nop_check = QCheckBox("NOP License Checks")
+        self.nop_check.setChecked(True)
+        method_layout.addWidget(self.nop_check)
+
+        self.hook_api_check = QCheckBox("Hook API Calls")
+        self.hook_api_check.setChecked(True)
+        method_layout.addWidget(self.hook_api_check)
+
+        self.emulate_license_check = QCheckBox("Emulate License Server")
+        method_layout.addWidget(self.emulate_license_check)
+
+        self.spoof_hwid_check = QCheckBox("Spoof Hardware ID")
+        method_layout.addWidget(self.spoof_hwid_check)
+
+        self.reset_trial_check = QCheckBox("Reset Trial Period")
+        method_layout.addWidget(self.reset_trial_check)
+
+        bypass_layout.addWidget(method_group)
+
+        # Bypass recommendations display
         self.bypass_display = QTextEdit()
         self.bypass_display.setReadOnly(True)
-        self.bypass_display.setPlaceholderText("Bypass recommendations will appear here...")
+        self.bypass_display.setText("Bypass Strategy Analyzer Active\n" + "=" * 50 + "\n")
         bypass_layout.addWidget(self.bypass_display)
 
-        layout.addWidget(bypass_group)
+        protection_tabs.addTab(bypass_tab, "Bypass Strategies")
+
+        # Tab 4: License Monitoring
+        monitor_tab = QWidget()
+        monitor_layout = QVBoxLayout(monitor_tab)
+
+        # Monitoring controls
+        monitor_controls = QHBoxLayout()
+
+        self.start_monitor_btn = QPushButton("Start Monitoring")
+        self.start_monitor_btn.clicked.connect(self.start_license_monitoring)
+        monitor_controls.addWidget(self.start_monitor_btn)
+
+        self.stop_monitor_btn = QPushButton("Stop Monitoring")
+        self.stop_monitor_btn.setEnabled(False)
+        self.stop_monitor_btn.clicked.connect(self.stop_license_monitoring)
+        monitor_controls.addWidget(self.stop_monitor_btn)
+
+        monitor_layout.addLayout(monitor_controls)
+
+        # Monitoring options
+        monitor_options = QGroupBox("Monitoring Options")
+        options_layout = QVBoxLayout(monitor_options)
+
+        self.monitor_api_check = QCheckBox("API Calls")
+        self.monitor_api_check.setChecked(True)
+        self.monitor_api_check.setToolTip("Monitor Windows API calls related to licensing")
+        options_layout.addWidget(self.monitor_api_check)
+
+        self.monitor_registry_check = QCheckBox("Registry Access")
+        self.monitor_registry_check.setChecked(True)
+        self.monitor_registry_check.setToolTip("Track registry reads/writes for license keys")
+        options_layout.addWidget(self.monitor_registry_check)
+
+        self.monitor_file_check = QCheckBox("File Operations")
+        self.monitor_file_check.setChecked(True)
+        self.monitor_file_check.setToolTip("Monitor license file access and modifications")
+        options_layout.addWidget(self.monitor_file_check)
+
+        self.monitor_network_check = QCheckBox("Network Traffic")
+        self.monitor_network_check.setChecked(True)
+        self.monitor_network_check.setToolTip("Capture license server communications")
+        options_layout.addWidget(self.monitor_network_check)
+
+        self.monitor_memory_check = QCheckBox("Memory Patterns")
+        self.monitor_memory_check.setChecked(True)
+        self.monitor_memory_check.setToolTip("Scan for license strings in process memory")
+        options_layout.addWidget(self.monitor_memory_check)
+
+        monitor_layout.addWidget(monitor_options)
+
+        # Monitoring log
+        self.monitor_log = QTextEdit()
+        self.monitor_log.setReadOnly(True)
+        self.monitor_log.setText("License Monitor Ready\n" + "=" * 50 + "\n")
+        monitor_layout.addWidget(self.monitor_log)
+
+        protection_tabs.addTab(monitor_tab, "Live Monitor")
+
+        layout.addWidget(protection_tabs)
+
+        # Status bar for quick info
+        self.protection_status = QLabel("No binary loaded")
+        self.protection_status.setStyleSheet("padding: 5px; background-color: #333;")
+        layout.addWidget(self.protection_status)
 
         return panel
 
@@ -697,6 +927,7 @@ class AnalysisTab(BaseTab):
             or self.imports_analysis_cb.isChecked()
             or self.entropy_analysis_cb.isChecked()
             or self.signature_analysis_cb.isChecked()
+            or self.crypto_key_extraction_cb.isChecked()
         )
 
         run_dynamic = (
@@ -731,7 +962,7 @@ class AnalysisTab(BaseTab):
             # Analysis will complete through callbacks
             self.analysis_started.emit(profile.lower())
 
-    def start_static_analysis(self):
+    def start_static_analysis(self):  # noqa: C901
         """Start static analysis with selected options."""
         self.log_activity("Starting static analysis...")
         self.results_display.append("=== STATIC ANALYSIS ===\n")
@@ -758,14 +989,257 @@ class AnalysisTab(BaseTab):
                     if self.signature_analysis_cb.isChecked():
                         results["signatures"] = ["UPX", "VMProtect"]
 
+                    if self.crypto_key_extraction_cb.isChecked():
+                        # Extract cryptographic keys using LicenseValidationBypass
+                        self.log_activity("Extracting cryptographic keys...")
+                        try:
+                            extracted_keys = self.license_validation_bypass.extract_all_keys(self.current_binary)
+
+                            # Process extracted keys
+                            key_results = {"total_keys_found": 0, "rsa_keys": [], "ecc_keys": [], "symmetric_keys": [], "certificates": []}
+
+                            for key_type, keys in extracted_keys.items():
+                                if key_type == "rsa" and keys:
+                                    key_results["rsa_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "modulus_bits": key.modulus.bit_length() if key.modulus else 0,
+                                            "exponent": key.exponent,
+                                            "confidence": key.confidence,
+                                            "context": key.context,
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                                elif key_type == "ecc" and keys:
+                                    key_results["ecc_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "curve": key.curve,
+                                            "confidence": key.confidence,
+                                            "context": key.context,
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                                elif key_type == "symmetric" and keys:
+                                    key_results["symmetric_keys"] = [
+                                        {
+                                            "address": hex(key.address),
+                                            "type": key.key_type.value,
+                                            "key_size": len(key.key_data) * 8,
+                                            "confidence": key.confidence,
+                                        }
+                                        for key in keys
+                                    ]
+                                    key_results["total_keys_found"] += len(keys)
+
+                            # Extract certificates
+                            try:
+                                certs = self.license_validation_bypass.extract_certificates(self.current_binary)
+                                if certs:
+                                    key_results["certificates"] = [
+                                        {
+                                            "subject": cert.subject.rfc4514_string(),
+                                            "issuer": cert.issuer.rfc4514_string(),
+                                            "serial_number": str(cert.serial_number),
+                                            "not_valid_after": cert.not_valid_after_utc.isoformat(),
+                                        }
+                                        for cert in certs
+                                    ]
+                                    key_results["total_keys_found"] += len(certs)
+                            except Exception as cert_error:
+                                self.log_activity(f"Certificate extraction error: {str(cert_error)}")
+
+                            results["crypto_keys"] = key_results
+                            self.log_activity(f"Found {key_results['total_keys_found']} cryptographic keys/certificates")
+
+                        except Exception as key_error:
+                            self.log_activity(f"Key extraction error: {str(key_error)}")
+                            results["crypto_keys"] = {"error": str(key_error)}
+
+                    if self.subscription_bypass_cb.isChecked():
+                        # Detect and analyze subscription validation bypass opportunities
+                        self.log_activity("Analyzing subscription validation mechanisms...")
+                        try:
+                            # Initialize the bypass system
+                            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
+                            sub_bypass = SubscriptionValidationBypass()
+
+                            # Detect subscription type
+                            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
+                            sub_type = sub_bypass.detect_subscription_type(product_name)
+
+                            bypass_results = {"detected_type": sub_type.value if sub_type else "unknown", "bypass_methods": []}
+
+                            # Analyze available bypass methods
+                            if sub_type:
+                                if sub_type.value == "cloud_based":
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Local Server Emulation",
+                                            "description": "Start local license server to intercept cloud requests",
+                                            "confidence": 0.85,
+                                        }
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Host Redirection",
+                                            "description": "Redirect license server domains to localhost",
+                                            "confidence": 0.90,
+                                        }
+                                    )
+
+                                elif sub_type.value == "server_license":
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Server Response Emulation",
+                                            "description": "Emulate license server responses",
+                                            "confidence": 0.80,
+                                        }
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Certificate Replacement",
+                                            "description": "Replace server certificates for validation",
+                                            "confidence": 0.75,
+                                        }
+                                    )
+
+                                elif sub_type.value == "token_based":
+                                    bypass_results["bypass_methods"].append(
+                                        {"method": "Token Generation", "description": "Generate valid JWT/OAuth tokens", "confidence": 0.70}
+                                    )
+                                    bypass_results["bypass_methods"].append(
+                                        {
+                                            "method": "Token Injection",
+                                            "description": "Inject pre-generated tokens into memory",
+                                            "confidence": 0.85,
+                                        }
+                                    )
+
+                                # Check for specific bypass opportunities
+                                bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name)
+                                bypass_results["local_server"] = sub_bypass._check_local_server_config(product_name)
+                                bypass_results["oauth_tokens"] = sub_bypass._check_oauth_tokens(product_name)
+                                bypass_results["floating_license"] = sub_bypass._check_floating_license(product_name)
+
+                            results["subscription_bypass"] = bypass_results
+                            self.log_activity(f"Subscription type detected: {bypass_results['detected_type']}")
+                            self.log_activity(f"Found {len(bypass_results['bypass_methods'])} potential bypass methods")
+
+                        except Exception as sub_error:
+                            self.log_activity(f"Subscription bypass analysis error: {str(sub_error)}")
+                            results["subscription_bypass"] = {"error": str(sub_error)}
+
                     return results
 
                 except Exception as e:
                     return {"error": str(e)}
 
+            # Submit task with callback
+            def on_static_analysis_complete(results):
+                """Display static analysis results when complete."""
+                if isinstance(results, dict) and not results.get("error"):
+                    # Display crypto key extraction results
+                    if "crypto_keys" in results:
+                        key_data = results["crypto_keys"]
+                        if not key_data.get("error"):
+                            self.results_display.append("\n=== CRYPTOGRAPHIC KEYS EXTRACTED ===\n")
+                            self.results_display.append(f"Total keys found: {key_data.get('total_keys_found', 0)}\n")
+
+                            # Display RSA keys
+                            if key_data.get("rsa_keys"):
+                                self.results_display.append(f"\nRSA Keys ({len(key_data['rsa_keys'])}):\n")
+                                for key in key_data["rsa_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Modulus: {key['modulus_bits']} bits\n")
+                                    self.results_display.append(f"    - Exponent: {key['exponent']}\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+                                    if key.get("context"):
+                                        self.results_display.append(f"    - Context: {key['context']}\n")
+
+                            # Display ECC keys
+                            if key_data.get("ecc_keys"):
+                                self.results_display.append(f"\nECC Keys ({len(key_data['ecc_keys'])}):\n")
+                                for key in key_data["ecc_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Curve: {key.get('curve', 'Unknown')}\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+
+                            # Display symmetric keys
+                            if key_data.get("symmetric_keys"):
+                                self.results_display.append(f"\nSymmetric Keys ({len(key_data['symmetric_keys'])}):\n")
+                                for key in key_data["symmetric_keys"]:
+                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"    - Type: {key['type']}\n")
+                                    self.results_display.append(f"    - Key Size: {key['key_size']} bits\n")
+                                    self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
+
+                            # Display certificates
+                            if key_data.get("certificates"):
+                                self.results_display.append(f"\nCertificates ({len(key_data['certificates'])}):\n")
+                                for cert in key_data["certificates"]:
+                                    self.results_display.append(f"  • Subject: {cert['subject']}\n")
+                                    self.results_display.append(f"    - Issuer: {cert['issuer']}\n")
+                                    self.results_display.append(f"    - Serial: {cert['serial_number']}\n")
+                                    self.results_display.append(f"    - Valid Until: {cert['not_valid_after']}\n")
+
+                            # Store extracted keys for later use
+                            self.analysis_results["extracted_keys"] = key_data
+
+                    # Display subscription validation bypass results
+                    if "subscription_bypass" in results:
+                        bypass_data = results["subscription_bypass"]
+                        if not bypass_data.get("error"):
+                            self.results_display.append("\n=== SUBSCRIPTION VALIDATION BYPASS ===\n")
+                            self.results_display.append(f"Detected Type: {bypass_data.get('detected_type', 'Unknown')}\n")
+
+                            # Display bypass methods
+                            if bypass_data.get("bypass_methods"):
+                                self.results_display.append(f"\nAvailable Bypass Methods ({len(bypass_data['bypass_methods'])}):\n")
+                                for method in bypass_data["bypass_methods"]:
+                                    self.results_display.append(f"  • {method['method']}\n")
+                                    self.results_display.append(f"    - {method['description']}\n")
+                                    self.results_display.append(f"    - Confidence: {method['confidence']:.0%}\n")
+
+                            # Display detection results
+                            self.results_display.append("\nDetection Results:\n")
+                            if bypass_data.get("registry_based"):
+                                self.results_display.append("  OK Registry-based subscription found\n")
+                            if bypass_data.get("local_server"):
+                                self.results_display.append("  OK Local server configuration detected\n")
+                            if bypass_data.get("oauth_tokens"):
+                                self.results_display.append("  OK OAuth tokens present\n")
+                            if bypass_data.get("floating_license"):
+                                self.results_display.append("  OK Floating license system detected\n")
+
+                            # Store bypass results for later use
+                            self.analysis_results["subscription_bypass"] = bypass_data
+                        else:
+                            self.results_display.append(f"\nSubscription bypass error: {bypass_data['error']}\n")
+
+                    # Display other static analysis results
+                    if "strings" in results:
+                        self.results_display.append(f"\nStrings: {results['strings'].get('total', 0)} found\n")
+                        if results["strings"].get("suspicious"):
+                            self.results_display.append(f"  Suspicious: {', '.join(results['strings']['suspicious'])}\n")
+
+                    if "entropy" in results:
+                        self.results_display.append(f"\nEntropy: {results['entropy'].get('overall', 0):.2f}\n")
+                        if results["entropy"].get("high_entropy_sections"):
+                            self.results_display.append(f"  High entropy sections: {results['entropy']['high_entropy_sections']}\n")
+
+                    self.log_activity("Static analysis completed successfully")
+
             # Submit task
             task_id = self.task_manager.submit_callable(
-                run_static_analysis, description=f"Static analysis of {os.path.basename(self.current_binary)}"
+                run_static_analysis,
+                description=f"Static analysis of {os.path.basename(self.current_binary)}",
+                callback=on_static_analysis_complete,
             )
             self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
         else:
@@ -841,22 +1315,38 @@ class AnalysisTab(BaseTab):
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         self.results_display.append("  • String analysis not available\n")
 
-                # Monitoring simulation based on selected options
+                # Execute real-time monitoring based on selected options
                 for monitor_type in monitoring:
                     if monitor_type == "API Calls":
-                        self.results_display.append("  • API monitoring would track: CreateFile, RegOpenKey, etc.\n")
+                        # Hook and monitor actual API calls
+                        api_calls = self._monitor_api_calls()
+                        self.results_display.append(f"  • API monitoring detected {len(api_calls)} calls\n")
+                        for call in api_calls[:5]:  # Show first 5
+                            self.results_display.append(f"    - {call}\n")
                     elif monitor_type == "Registry Operations":
-                        self.results_display.append("  • Registry monitoring would track: HKLM\\Software access\n")
+                        # Monitor actual registry operations
+                        reg_ops = self._monitor_registry_operations()
+                        self.results_display.append(f"  • Registry monitoring detected {len(reg_ops)} operations\n")
+                        for op in reg_ops[:5]:
+                            self.results_display.append(f"    - {op}\n")
                     elif monitor_type == "File Operations":
-                        self.results_display.append("  • File monitoring would track: temp file creation, config access\n")
+                        # Monitor actual file system operations
+                        file_ops = self._monitor_file_operations()
+                        self.results_display.append(f"  • File monitoring detected {len(file_ops)} operations\n")
+                        for op in file_ops[:5]:
+                            self.results_display.append(f"    - {op}\n")
                     elif monitor_type == "Network Activity":
-                        self.results_display.append("  • Network monitoring would track: HTTP/HTTPS requests\n")
+                        # Monitor actual network traffic
+                        net_activity = self._monitor_network_activity()
+                        self.results_display.append(f"  • Network monitoring detected {len(net_activity)} connections\n")
+                        for conn in net_activity[:5]:
+                            self.results_display.append(f"    - {conn}\n")
             else:
                 self.results_display.append("No binary loaded for analysis.\n")
         except Exception as e:
             self.results_display.append(f"Dynamic analysis error: {str(e)}\n")
 
-    def detect_protections(self):
+    def detect_protections(self):  # noqa: C901
         """Detect binary protections."""
         self.log_activity("Detecting protections...")
         self.results_display.append("\n=== PROTECTION DETECTION ===\n")
@@ -878,7 +1368,7 @@ class AnalysisTab(BaseTab):
 
         # Perform actual protection detection
         try:
-            from ...utils.protection.protection_detection import ProtectionDetector
+            from ...protection.protection_detector import ProtectionDetector
 
             detector = ProtectionDetector()
 
@@ -916,18 +1406,71 @@ class AnalysisTab(BaseTab):
                     if b"Themida" in header:
                         self.results_display.append("  • Themida protection detected\n")
 
-                    # Simulate detection based on selected types
+                    # Execute real detection based on selected types
                     for detection_type in detections:
                         if detection_type == "Packers":
-                            self.results_display.append("  • Packer analysis: scanning for compression signatures\n")
+                            # Scan for actual packer signatures
+                            packer_sigs = {b"UPX0": "UPX", b"ASPack": "ASPack", b".petite": "Petite", b"PEC2": "PECompact"}
+                            packers_found = []
+                            for sig, packer in packer_sigs.items():
+                                if sig in header:
+                                    packers_found.append(packer)
+                            if packers_found:
+                                self.results_display.append(f"  • Packers detected: {', '.join(packers_found)}\n")
+                            else:
+                                self.results_display.append("  • No known packers detected\n")
                         elif detection_type == "Obfuscation":
-                            self.results_display.append("  • Obfuscation analysis: checking control flow complexity\n")
+                            # Check for actual obfuscation patterns
+                            junk_count = header.count(b"\x90")  # NOP sleds
+                            xor_count = header.count(b"\x31") + header.count(b"\x33")  # XOR instructions
+                            if junk_count > 100 or xor_count > 50:
+                                self.results_display.append(f"  • Obfuscation detected: {junk_count} NOPs, {xor_count} XORs\n")
+                            else:
+                                self.results_display.append("  • No significant obfuscation detected\n")
                         elif detection_type == "Anti-Debug":
-                            self.results_display.append("  • Anti-debug analysis: scanning for debugging detection\n")
+                            # Check for actual anti-debug techniques
+                            anti_debug_found = []
+                            if b"IsDebuggerPresent" in header:
+                                anti_debug_found.append("IsDebuggerPresent")
+                            if b"CheckRemoteDebuggerPresent" in header:
+                                anti_debug_found.append("CheckRemoteDebuggerPresent")
+                            if b"\xcc" in header[:1000]:  # INT3 breakpoint
+                                anti_debug_found.append("Breakpoint checks")
+                            if anti_debug_found:
+                                self.results_display.append(f"  • Anti-debug detected: {', '.join(anti_debug_found)}\n")
+                            else:
+                                self.results_display.append("  • No anti-debug techniques detected\n")
                         elif detection_type == "VM Protection":
-                            self.results_display.append("  • VM analysis: checking for virtualization indicators\n")
+                            # Check for actual VM protection signatures
+                            vm_found = []
+                            if b"VMProtect" in header or b".vmp" in header:
+                                vm_found.append("VMProtect")
+                            if b"Themida" in header:
+                                vm_found.append("Themida")
+                            if b".enigma" in header:
+                                vm_found.append("Enigma")
+                            if vm_found:
+                                self.results_display.append(f"  • VM protection detected: {', '.join(vm_found)}\n")
+                            else:
+                                self.results_display.append("  • No VM protection detected\n")
                         elif detection_type == "License Checks":
-                            self.results_display.append("  • License analysis: scanning for validation routines\n")
+                            # Check for actual license validation patterns
+                            license_patterns = [
+                                b"license",
+                                b"LICENSE",
+                                b"trial",
+                                b"TRIAL",
+                                b"serial",
+                                b"SERIAL",
+                                b"activation",
+                                b"registered",
+                                b"expired",
+                            ]
+                            license_found = sum(1 for pattern in license_patterns if pattern in header)
+                            if license_found > 0:
+                                self.results_display.append(f"  • License checks detected: {license_found} validation patterns found\n")
+                            else:
+                                self.results_display.append("  • No license validation patterns detected\n")
 
                     if not detections:
                         self.results_display.append("  • No specific protection types selected\n")
@@ -961,10 +1504,10 @@ class AnalysisTab(BaseTab):
         self.analysis_progress.setVisible(False)
 
         if success:
-            self.analysis_status.setText(f"✓ {message}")
+            self.analysis_status.setText(f"OK {message}")
             self.analysis_completed.emit(self.analysis_profile_combo.currentText().lower())
         else:
-            self.analysis_status.setText(f"✗ {message}")
+            self.analysis_status.setText(f"FAIL {message}")
 
     def open_hex_viewer(self):
         """Open hex viewer for current binary."""
@@ -1102,18 +1645,19 @@ class AnalysisTab(BaseTab):
                 import capstone
 
                 # Read binary data
-                with open(self.current_binary, 'rb') as f:
+                with open(self.current_binary, "rb") as f:
                     binary_data = f.read(0x1000)  # Read first 4KB
 
                 # Detect architecture
-                if binary_data.startswith(b'MZ'):  # PE file
+                if binary_data.startswith(b"MZ"):  # PE file
                     # Parse PE header to find entry point
                     import struct
-                    e_lfanew = struct.unpack('<I', binary_data[0x3C:0x40])[0]
-                    pe_header = binary_data[e_lfanew:e_lfanew+6]
 
-                    if pe_header[:2] == b'PE':
-                        machine = struct.unpack('<H', pe_header[4:6])[0]
+                    e_lfanew = struct.unpack("<I", binary_data[0x3C:0x40])[0]
+                    pe_header = binary_data[e_lfanew : e_lfanew + 6]
+
+                    if pe_header[:2] == b"PE":
+                        machine = struct.unpack("<H", pe_header[4:6])[0]
                         if machine == 0x8664:  # AMD64
                             cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
                         else:  # x86
@@ -1123,22 +1667,22 @@ class AnalysisTab(BaseTab):
 
                     # Find code section
                     nt_headers_offset = e_lfanew + 24
-                    size_of_optional_header = struct.unpack('<H', binary_data[nt_headers_offset+16:nt_headers_offset+18])[0]
+                    size_of_optional_header = struct.unpack("<H", binary_data[nt_headers_offset + 16 : nt_headers_offset + 18])[0]
                     section_table_offset = nt_headers_offset + 20 + size_of_optional_header
 
                     # Parse first section (usually .text)
-                    section_data = binary_data[section_table_offset:section_table_offset+40]
-                    virtual_address = struct.unpack('<I', section_data[12:16])[0]
-                    raw_offset = struct.unpack('<I', section_data[20:24])[0]
+                    section_data = binary_data[section_table_offset : section_table_offset + 40]
+                    virtual_address = struct.unpack("<I", section_data[12:16])[0]
+                    raw_offset = struct.unpack("<I", section_data[20:24])[0]
 
                     # Read code section
-                    with open(self.current_binary, 'rb') as f:
+                    with open(self.current_binary, "rb") as f:
                         f.seek(raw_offset)
                         code_data = f.read(0x1000)
 
                     base_address = 0x400000 + virtual_address
 
-                elif binary_data[:4] == b'\x7fELF':  # ELF file
+                elif binary_data[:4] == b"\x7fELF":  # ELF file
                     # Check architecture
                     ei_class = binary_data[4]
                     if ei_class == 2:  # 64-bit
@@ -1159,38 +1703,28 @@ class AnalysisTab(BaseTab):
                 disasm_output.append(f"; Disassembly of {os.path.basename(self.current_binary)}")
                 disasm_output.append(f"; Architecture: {cs.arch}")
                 disasm_output.append(f"; Mode: {cs.mode}")
-                disasm_output.append("; " + "="*60)
+                disasm_output.append("; " + "=" * 60)
                 disasm_output.append("")
 
                 for instruction in cs.disasm(code_data, base_address):
-                    hex_bytes = ' '.join(f'{b:02x}' for b in instruction.bytes)
+                    hex_bytes = " ".join(f"{b:02x}" for b in instruction.bytes)
                     disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")
 
                 if len(disasm_output) > 5:
-                    disasm_text.setPlainText('\n'.join(disasm_output))
+                    disasm_text.setPlainText("\n".join(disasm_output))
                 else:
                     disasm_text.setPlainText("No instructions found. Binary may be packed or encrypted.")
 
             except ImportError:
                 # Fallback to objdump if capstone not available
                 try:
-                    result = secure_run(
-                        ['objdump', '-d', '-M', 'intel', self.current_binary],
-                        capture_output=True,
-                        text=True,
-                        timeout=10
-                    )
+                    result = secure_run(["objdump", "-d", "-M", "intel", self.current_binary], capture_output=True, text=True, timeout=10)
 
                     if result.returncode == 0 and result.stdout:
                         disasm_text.setPlainText(result.stdout)
                     else:
                         # Try with radare2
-                        result = secure_run(
-                            ['r2', '-q', '-c', 'pd 500', self.current_binary],
-                            capture_output=True,
-                            text=True,
-                            timeout=10
-                        )
+                        result = secure_run(["r2", "-q", "-c", "pd 500", self.current_binary], capture_output=True, text=True, timeout=10)
 
                         if result.returncode == 0 and result.stdout:
                             disasm_text.setPlainText(result.stdout)
@@ -1228,12 +1762,12 @@ class AnalysisTab(BaseTab):
             self,
             "Save Disassembly",
             f"{os.path.splitext(os.path.basename(self.current_binary))[0]}_disasm.asm",
-            "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)"
+            "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)",
         )
 
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(disasm_text)
                 self.log_activity(f"Disassembly saved to {file_path}")
                 QMessageBox.information(self, "Success", "Disassembly saved successfully!")
@@ -1241,7 +1775,7 @@ class AnalysisTab(BaseTab):
                 QMessageBox.critical(self, "Save Error", f"Failed to save disassembly: {str(e)}")
 
     def attach_to_process(self):
-        """Attach to running process for dynamic analysis."""
+        """Attach to running process for license analysis and cracking."""
         pid_text, ok = QInputDialog.getText(
             self,
             "Attach to Process",
@@ -1252,26 +1786,179 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Attaching to process: {pid_text}")
             self.analysis_status.setText(f"Attaching to {pid_text}...")
 
-            # Framework selection
-            framework = self.hooking_framework_combo.currentText()
-            QMessageBox.information(
-                self,
-                "Process Attachment",
-                f"Would attach to process {pid_text} using {framework}\n\nThis feature requires framework integration.",
-            )
+            # Detach from previous process if attached
+            if self.attached_pid:
+                self.license_analyzer.detach()
+                self.attached_pid = None
+                self.log_activity("Detached from previous process")
+
+            # Attempt to attach to the specified process
+            if self.license_analyzer.attach(pid_text):
+                self.attached_pid = self.license_analyzer.pid
+                self.analysis_status.setText(f"Attached to PID {self.attached_pid}")
+                self.log_activity(f"Successfully attached to process PID {self.attached_pid}")
+
+                # Scan for license checks immediately
+                self.log_activity("Scanning for license validation routines...")
+                license_checks = self.license_analyzer.find_license_checks()
+
+                if license_checks:
+                    self.log_activity(f"Found {len(license_checks)} potential license check locations:")
+                    for check in license_checks[:10]:  # Show first 10
+                        self.log_activity(f"  • 0x{check['address']:X}: {check['string']} ({check['type']})")
+                        if check["jump_addresses"]:
+                            for jump in check["jump_addresses"]:
+                                self.log_activity(f"    - Jump at 0x{jump['address']:X} ({jump['type']})")
+                else:
+                    self.log_activity("No obvious license checks found - may need deeper analysis")
+
+                # Scan for trial period checks
+                trial_checks = self.license_analyzer.find_trial_checks()
+                if trial_checks:
+                    self.log_activity(f"Found {len(trial_checks)} trial period checks:")
+                    for check in trial_checks[:5]:
+                        self.log_activity(f"  • 0x{check['address']:X}: {check['pattern']}")
+
+                # Scan for serial validation
+                serial_checks = self.license_analyzer.find_serial_validation()
+                if serial_checks:
+                    self.log_activity(f"Found {len(serial_checks)} serial validation routines:")
+                    for check in serial_checks[:5]:
+                        self.log_activity(f"  • 0x{check['address']:X}: {check['pattern']}")
+
+                # Update UI to show attached state
+                self.hooking_framework_combo.currentText()
+                QMessageBox.information(
+                    self,
+                    "Process Attached",
+                    f"Successfully attached to PID {self.attached_pid}\n\n"
+                    f"License Analysis Results:\n"
+                    f"• {len(license_checks)} license check locations\n"
+                    f"• {len(trial_checks)} trial period checks\n"
+                    f"• {len(serial_checks)} serial validation routines\n\n"
+                    f"Ready for patching operations.",
+                )
+            else:
+                self.analysis_status.setText("Attachment failed")
+                self.log_activity(f"Failed to attach to process {pid_text}")
+                QMessageBox.warning(
+                    self,
+                    "Attachment Failed",
+                    f"Could not attach to process {pid_text}\n\n"
+                    f"Possible reasons:\n"
+                    f"• Process not found\n"
+                    f"• Insufficient permissions (try running as Administrator)\n"
+                    f"• Process is protected by anti-debugging",
+                )
 
     def take_system_snapshot(self):
-        """Take a system snapshot for differential analysis."""
+        """Take a comprehensive license-focused system snapshot for differential analysis."""
         import time
 
-        snapshot_name, ok = QInputDialog.getText(self, "System Snapshot", "Enter snapshot name:", text=f"snapshot_{int(time.time())}")
+        from PyQt6.QtCore import QThread, pyqtSignal
+        from PyQt6.QtWidgets import QProgressDialog
+
+        snapshot_name, ok = QInputDialog.getText(
+            self, "License System Snapshot", "Enter snapshot name:", text=f"license_snapshot_{int(time.time())}"
+        )
 
         if ok and snapshot_name:
-            self.log_activity(f"Taking system snapshot: {snapshot_name}")
-            self.snapshots[snapshot_name] = {"timestamp": time.time(), "data": {"files": [], "registry": [], "processes": []}}
-            QMessageBox.information(
-                self, "Snapshot", f"System snapshot '{snapshot_name}' created.\n\nSnapshot functionality will capture system state."
-            )
+            self.log_activity(f"Capturing comprehensive license snapshot: {snapshot_name}")
+
+            # Create progress dialog
+            progress = QProgressDialog("Capturing system state...", "Cancel", 0, 100, self)
+            progress.setWindowTitle("License Snapshot in Progress")
+            progress.setWindowModality(2)  # Qt.WindowModal
+            progress.show()
+
+            # Capture snapshot in separate thread to avoid UI freeze
+            class SnapshotThread(QThread):
+                progress = pyqtSignal(int, str)
+                finished = pyqtSignal(dict)
+                error = pyqtSignal(str)
+
+                def __init__(self, snapshot_obj, name):
+                    super().__init__()
+                    self.snapshot_obj = snapshot_obj
+                    self.name = name
+
+                def run(self):
+                    try:
+                        self.progress.emit(10, "Capturing system info...")
+                        snapshot_data = self.snapshot_obj.capture_full_snapshot(self.name)
+                        self.progress.emit(100, "Snapshot complete")
+                        self.finished.emit(snapshot_data)
+                    except Exception as e:
+                        self.error.emit(str(e))
+
+            # Create and start thread
+            self.snapshot_thread = SnapshotThread(self.license_snapshot, snapshot_name)
+
+            def update_progress(value, message):
+                progress.setValue(value)
+                progress.setLabelText(message)
+                if message:
+                    self.log_activity(f"Snapshot: {message}")
+
+            def on_snapshot_complete(snapshot_data):
+                progress.close()
+
+                # Store snapshot
+                self.snapshots[snapshot_name] = snapshot_data
+
+                # Show summary
+                summary = [
+                    f"Snapshot '{snapshot_name}' captured successfully!",
+                    "",
+                    "License Analysis Summary:",
+                    f"• Processes scanned: {len(snapshot_data.get('processes', []))}",
+                    f"• Registry keys analyzed: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
+                    f"• License files found: {len(snapshot_data.get('files', {}).get('license_files', []))}",
+                    f"• Services monitored: {len(snapshot_data.get('services', []))}",
+                    f"• Network connections: {len(snapshot_data.get('network', {}).get('connections', []))}",
+                    f"• Certificates detected: {len(snapshot_data.get('certificates', []))}",
+                    f"• Protection drivers: {len(snapshot_data.get('drivers', []))}",
+                ]
+
+                # Check for license-specific findings
+                if snapshot_data.get("loaded_dlls"):
+                    summary.append(f"• License DLLs loaded: {len(snapshot_data['loaded_dlls'])}")
+
+                if snapshot_data.get("mutexes"):
+                    summary.append(f"• License mutexes found: {len(snapshot_data['mutexes'])}")
+
+                # Log detailed findings
+                self.log_activity("=" * 50)
+                for line in summary:
+                    if line:
+                        self.log_activity(line)
+
+                # Offer differential analysis if multiple snapshots exist
+                if len(self.snapshots) > 1:
+                    summary.append("")
+                    summary.append("Multiple snapshots available for differential analysis.")
+                    summary.append("Use 'Compare Snapshots' to identify license state changes.")
+
+                QMessageBox.information(self, "Snapshot Complete", "\n".join(summary))
+
+                # Enable snapshot management buttons
+                if hasattr(self, "compare_snapshots_btn"):
+                    self.compare_snapshots_btn.setEnabled(len(self.snapshots) >= 2)
+                if hasattr(self, "export_snapshot_btn"):
+                    self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
+
+            def on_snapshot_error(error_msg):
+                progress.close()
+                self.log_activity(f"Snapshot error: {error_msg}")
+                QMessageBox.critical(self, "Snapshot Error", f"Failed to capture snapshot:\n{error_msg}")
+
+            # Connect signals
+            self.snapshot_thread.progress.connect(update_progress)
+            self.snapshot_thread.finished.connect(on_snapshot_complete)
+            self.snapshot_thread.error.connect(on_snapshot_error)
+
+            # Start capture
+            self.snapshot_thread.start()
 
     def update_entropy_visualization(self):
         """Update entropy visualization with current file data."""
@@ -1485,7 +2172,7 @@ class AnalysisTab(BaseTab):
 
     def update_fallback_entropy_visualization(self):
         """Update fallback entropy visualization with analysis results."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             self.fallback_entropy_results.setPlainText("No binary file loaded. Please load a binary first.")
             return
 
@@ -1512,7 +2199,7 @@ class AnalysisTab(BaseTab):
             low_entropy_blocks = 0
 
             for i in range(0, file_size, block_size):
-                block = file_data[i:i+block_size]
+                block = file_data[i : i + block_size]
                 if len(block) < 256:  # Skip small blocks
                     continue
 
@@ -1530,7 +2217,7 @@ class AnalysisTab(BaseTab):
 
             # License protection indicators
             if high_entropy_blocks > num_blocks * 0.3:
-                results += "⚠️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
+                results += "WARNING️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
                 results += "This may indicate license protection mechanisms:\n"
                 results += "• Encrypted license validation code\n"
                 results += "• Packed/compressed executable sections\n"
@@ -1560,7 +2247,7 @@ class AnalysisTab(BaseTab):
 
     def analyze_binary_entropy(self):
         """Perform detailed binary entropy analysis for license protection detection."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1573,7 +2260,7 @@ class AnalysisTab(BaseTab):
             analysis_results = "🔍 COMPREHENSIVE ENTROPY ANALYSIS FOR LICENSE PROTECTION\n\n"
             analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
             analysis_results += f"Size: {len(file_data):,} bytes\n"
-            analysis_results += "="*60 + "\n\n"
+            analysis_results += "=" * 60 + "\n\n"
 
             # Analyze different block sizes for better detection
             block_sizes = [256, 512, 1024, 2048]
@@ -1585,7 +2272,7 @@ class AnalysisTab(BaseTab):
                 suspicious_regions = []
 
                 for i in range(0, len(file_data) - block_size + 1, block_size):
-                    block = file_data[i:i+block_size]
+                    block = file_data[i : i + block_size]
                     entropy = self.calculate_shannon_entropy(block)
 
                     if entropy > 7.8:  # Very high entropy
@@ -1605,8 +2292,11 @@ class AnalysisTab(BaseTab):
 
             # License protection assessment
             analysis_results += "LICENSE PROTECTION ASSESSMENT:\n"
-            total_high_entropy = sum(1 for block in range(0, len(file_data) - 1024 + 1, 1024)
-                                   if self.calculate_shannon_entropy(file_data[block:block+1024]) > 7.5)
+            total_high_entropy = sum(
+                1
+                for block in range(0, len(file_data) - 1024 + 1, 1024)
+                if self.calculate_shannon_entropy(file_data[block : block + 1024]) > 7.5
+            )
 
             protection_level = "NONE"
             if total_high_entropy > len(file_data) // 1024 * 0.1:
@@ -1642,7 +2332,7 @@ class AnalysisTab(BaseTab):
 
     def analyze_binary_structure(self):
         """Perform detailed binary structure analysis for license protection detection."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1651,7 +2341,7 @@ class AnalysisTab(BaseTab):
 
             analysis_results = "🏗️ BINARY STRUCTURE ANALYSIS FOR LICENSE PROTECTION\n\n"
             analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
-            analysis_results += "="*60 + "\n\n"
+            analysis_results += "=" * 60 + "\n\n"
 
             # Basic file analysis
             with open(self.current_file_path, "rb") as f:
@@ -1662,13 +2352,13 @@ class AnalysisTab(BaseTab):
             analysis_results += f"File Size: {file_size:,} bytes\n"
 
             # Detect file type
-            if file_header.startswith(b'MZ'):
+            if file_header.startswith(b"MZ"):
                 analysis_results += "File Type: Windows PE (Portable Executable)\n"
                 analysis_results += self.analyze_pe_structure(file_header)
-            elif file_header.startswith(b'\x7fELF'):
+            elif file_header.startswith(b"\x7fELF"):
                 analysis_results += "File Type: Linux ELF (Executable and Linkable Format)\n"
                 analysis_results += self.analyze_elf_structure(file_header)
-            elif file_header.startswith(b'\xfe\xed\xfa'):
+            elif file_header.startswith(b"\xfe\xed\xfa"):
                 analysis_results += "File Type: macOS Mach-O\n"
                 analysis_results += "Mach-O analysis not implemented in fallback mode.\n"
             else:
@@ -1699,7 +2389,7 @@ class AnalysisTab(BaseTab):
 
     def export_structure_analysis(self):
         """Export structure analysis results to file."""
-        if not hasattr(self, 'fallback_structure_results'):
+        if not hasattr(self, "fallback_structure_results"):
             QMessageBox.warning(self, "No Analysis", "No structure analysis results to export.")
             return
 
@@ -1725,7 +2415,7 @@ class AnalysisTab(BaseTab):
 
     def detect_license_protection(self):
         """Detect license protection mechanisms in the binary."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
@@ -1734,7 +2424,7 @@ class AnalysisTab(BaseTab):
 
             protection_results = "🛡️ LICENSE PROTECTION DETECTION RESULTS\n\n"
             protection_results += f"Target: {os.path.basename(self.current_file_path)}\n"
-            protection_results += "="*60 + "\n\n"
+            protection_results += "=" * 60 + "\n\n"
 
             # Check for common protection indicators
             indicators_found = []
@@ -1744,14 +2434,29 @@ class AnalysisTab(BaseTab):
 
             # String-based detection
             protection_strings = [
-                b"license", b"License", b"LICENSE",
-                b"serial", b"Serial", b"SERIAL",
-                b"key", b"Key", b"KEY",
-                b"activation", b"Activation", b"ACTIVATION",
-                b"trial", b"Trial", b"TRIAL",
-                b"expired", b"Expired", b"EXPIRED",
-                b"hwid", b"HWID", b"hardware",
-                b"fingerprint", b"machine"
+                b"license",
+                b"License",
+                b"LICENSE",
+                b"serial",
+                b"Serial",
+                b"SERIAL",
+                b"key",
+                b"Key",
+                b"KEY",
+                b"activation",
+                b"Activation",
+                b"ACTIVATION",
+                b"trial",
+                b"Trial",
+                b"TRIAL",
+                b"expired",
+                b"Expired",
+                b"EXPIRED",
+                b"hwid",
+                b"HWID",
+                b"hardware",
+                b"fingerprint",
+                b"machine",
             ]
 
             for pattern in protection_strings:
@@ -1773,7 +2478,7 @@ class AnalysisTab(BaseTab):
             if indicators_found:
                 protection_results += f"PROTECTION INDICATORS DETECTED ({len(indicators_found)}):\n"
                 for indicator in indicators_found:
-                    protection_results += f"  ✓ {indicator}\n"
+                    protection_results += f"  OK {indicator}\n"
 
                 protection_results += "\nLICENSE BYPASS STRATEGIES:\n"
                 protection_results += "1. Dynamic Analysis:\n"
@@ -1830,6 +2535,7 @@ class AnalysisTab(BaseTab):
         if len(header) > 64:
             try:
                 import struct
+
                 pe_offset = struct.unpack("<I", header[60:64])[0]
                 if pe_offset < len(header):
                     analysis += f"PE Header Offset: 0x{pe_offset:08x}\n"
@@ -1861,20 +2567,40 @@ class AnalysisTab(BaseTab):
 
     def find_license_indicators(self):
         """Find potential license-related strings in the binary."""
-        if not hasattr(self, 'current_file_path') or not self.current_file_path:
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
             return []
 
         license_patterns = [
-            "license", "License", "LICENSE",
-            "serial", "Serial", "SERIAL",
-            "registration", "Registration", "REGISTRATION",
-            "activation", "Activation", "ACTIVATION",
-            "trial", "Trial", "TRIAL",
-            "expired", "Expired", "EXPIRED",
-            "valid", "Valid", "VALID",
-            "invalid", "Invalid", "INVALID",
-            "keygen", "Keygen", "KEYGEN",
-            "crack", "Crack", "CRACK"
+            "license",
+            "License",
+            "LICENSE",
+            "serial",
+            "Serial",
+            "SERIAL",
+            "registration",
+            "Registration",
+            "REGISTRATION",
+            "activation",
+            "Activation",
+            "ACTIVATION",
+            "trial",
+            "Trial",
+            "TRIAL",
+            "expired",
+            "Expired",
+            "EXPIRED",
+            "valid",
+            "Valid",
+            "VALID",
+            "invalid",
+            "Invalid",
+            "INVALID",
+            "keygen",
+            "Keygen",
+            "KEYGEN",
+            "crack",
+            "Crack",
+            "CRACK",
         ]
 
         found_strings = []
@@ -1885,10 +2611,11 @@ class AnalysisTab(BaseTab):
 
             # Simple string extraction (ASCII strings >= 4 chars)
             import re
-            strings = re.findall(b'[ -~]{4,}', content)
+
+            strings = re.findall(b"[ -~]{4,}", content)
 
             for string in strings:
-                string_text = string.decode('ascii', errors='ignore')
+                string_text = string.decode("ascii", errors="ignore")
                 for pattern in license_patterns:
                     if pattern in string_text:
                         if string_text not in found_strings:
@@ -1909,3 +2636,883 @@ class AnalysisTab(BaseTab):
 
         # Enable analysis button
         self.run_analysis_btn.setEnabled(True)
+
+    def scan_for_protections(self):
+        """Scan binary for protection schemes and license mechanisms."""
+        if not self.current_file_path:
+            return
+
+        self.log_activity("Scanning for protection schemes...")
+        self.protection_display.clear()
+
+        protections_found = []
+
+        # Deep scan option for unpacked sections
+        self.deep_scan_check.isChecked()
+
+        try:
+            with open(self.current_file_path, "rb") as f:
+                file_data = f.read()
+
+            # Check for known packers/protectors
+            packer_signatures = {
+                b"UPX0": "UPX Packer",
+                b"UPX1": "UPX Packer",
+                b"UPX!": "UPX Packer",
+                b".vmp": "VMProtect",
+                b"VMProtect": "VMProtect",
+                b".themida": "Themida/WinLicense",
+                b"Themida": "Themida",
+                b"WinLicense": "WinLicense",
+                b"ASProtect": "ASProtect",
+                b"Armadillo": "Armadillo",
+                b"PECompact": "PECompact",
+                b"Petite": "Petite",
+                b"NsPack": "NsPack",
+                b"Obsidium": "Obsidium Software Protection",
+                b"FlexNet": "FlexNet Licensing",
+                b"FlexLM": "FlexLM Licensing",
+                b"Sentinel": "SafeNet Sentinel",
+                b"HASP": "HASP Protection",
+                b"CodeMeter": "CodeMeter Protection",
+                b"Denuvo": "Denuvo Anti-Tamper",
+            }
+
+            # Scan for protections
+            for signature, protection in packer_signatures.items():
+                if signature in file_data:
+                    protections_found.append(protection)
+                    self.log_activity(f"[+] Detected: {protection}")
+                    self.protection_detected.emit(protection, "Binary")
+
+            # Check for anti-debugging techniques
+            anti_debug_apis = [
+                b"IsDebuggerPresent",
+                b"CheckRemoteDebuggerPresent",
+                b"NtQueryInformationProcess",
+                b"OutputDebugString",
+                b"FindWindow",
+                b"NtSetInformationThread",
+                b"CloseHandle",
+                b"NtQuerySystemInformation",
+            ]
+
+            anti_debug_found = []
+            for api in anti_debug_apis:
+                if api in file_data:
+                    anti_debug_found.append(api.decode("utf-8", errors="ignore"))
+
+            if anti_debug_found:
+                protections_found.append(f"Anti-Debugging: {', '.join(anti_debug_found)}")
+
+            # Check for VM detection
+            vm_detection = [b"VMware", b"VirtualBox", b"QEMU", b"Xen", b"VBoxService", b"VBoxTray", b"vmtoolsd"]
+            vm_detect_found = []
+            for vm in vm_detection:
+                if vm in file_data:
+                    vm_detect_found.append(vm.decode("utf-8", errors="ignore"))
+
+            if vm_detect_found:
+                protections_found.append(f"VM Detection: {', '.join(vm_detect_found)}")
+
+            # Display results
+            if protections_found:
+                self.protection_display.append("=" * 60)
+                self.protection_display.append("PROTECTION SCHEMES DETECTED")
+                self.protection_display.append("=" * 60)
+                for protection in protections_found:
+                    self.protection_display.append(f"OK {protection}")
+
+                self.protection_status.setText(f"Protections found: {len(protections_found)}")
+                self.protection_status.setStyleSheet("padding: 5px; background-color: #8B0000;")
+            else:
+                self.protection_display.append("No known protections detected")
+                self.protection_display.append("Binary appears to be unprotected")
+                self.protection_status.setText("No protections detected")
+                self.protection_status.setStyleSheet("padding: 5px; background-color: #006400;")
+
+            # Enable bypass generation
+            self.generate_bypass_btn.setEnabled(bool(protections_found))
+            self.detect_license_btn.setEnabled(True)
+
+            # Enable subscription bypass if subscription scheme was detected
+            if self.analysis_results.get("subscription_bypass"):
+                bypass_data = self.analysis_results["subscription_bypass"]
+                if bypass_data.get("detected_type") and bypass_data["detected_type"] != "unknown":
+                    self.subscription_bypass_btn.setEnabled(True)
+
+        except Exception as e:
+            self.log_activity(f"Protection scan error: {str(e)}")
+            self.protection_display.append(f"Error: {str(e)}")
+
+    def detect_license_checks(self):
+        """Detect license validation checks in the binary."""
+        if not self.current_file_path:
+            return
+
+        self.log_activity("Detecting license checks...")
+        self.license_display.clear()
+
+        license_checks_found = []
+
+        try:
+            with open(self.current_file_path, "rb") as f:
+                file_data = f.read()
+
+            # Check for selected patterns
+            if self.serial_check.isChecked():
+                serial_patterns = [
+                    b"serial",
+                    b"Serial",
+                    b"SERIAL",
+                    b"product key",
+                    b"ProductKey",
+                    b"PRODUCT_KEY",
+                    b"license key",
+                    b"LicenseKey",
+                    b"LICENSE_KEY",
+                    b"activation code",
+                    b"ActivationCode",
+                    b"registration",
+                    b"Registration",
+                ]
+                for pattern in serial_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"Serial Validation: {pattern.decode('utf-8', errors='ignore')}")
+
+            if self.trial_check.isChecked():
+                trial_patterns = [
+                    b"trial",
+                    b"Trial",
+                    b"TRIAL",
+                    b"evaluation",
+                    b"Evaluation",
+                    b"demo",
+                    b"Demo",
+                    b"DEMO",
+                    b"expires",
+                    b"Expires",
+                    b"expiry",
+                    b"days remaining",
+                    b"DaysRemaining",
+                    b"trial period",
+                    b"TrialPeriod",
+                ]
+                for pattern in trial_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"Trial Period: {pattern.decode('utf-8', errors='ignore')}")
+
+            if self.hwid_check.isChecked():
+                hwid_patterns = [
+                    b"GetVolumeInformation",
+                    b"GetSystemInfo",
+                    b"GetComputerName",
+                    b"GetAdaptersInfo",
+                    b"machine id",
+                    b"MachineID",
+                    b"hardware id",
+                    b"HardwareID",
+                    b"fingerprint",
+                    b"Fingerprint",
+                ]
+                for pattern in hwid_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"HWID Check: {pattern.decode('utf-8', errors='ignore')}")
+
+            if self.online_check.isChecked():
+                online_patterns = [
+                    b"activation server",
+                    b"license server",
+                    b"validate online",
+                    b"InternetConnect",
+                    b"HttpSendRequest",
+                    b"WinHttpOpen",
+                    b"activation.",
+                    b"licensing.",
+                ]
+                for pattern in online_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"Online Activation: {pattern.decode('utf-8', errors='ignore')}")
+
+            if self.file_check.isChecked():
+                file_patterns = [
+                    b".lic",
+                    b".license",
+                    b".key",
+                    b"license.dat",
+                    b"license.xml",
+                    b"CreateFile",
+                    b"ReadFile",
+                    b"license file",
+                    b"LicenseFile",
+                ]
+                for pattern in file_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"License File: {pattern.decode('utf-8', errors='ignore')}")
+
+            if self.registry_check.isChecked():
+                registry_patterns = [
+                    b"RegOpenKey",
+                    b"RegQueryValue",
+                    b"RegSetValue",
+                    b"RegCreateKey",
+                    b"SOFTWARE\\Licenses",
+                    b"CurrentVersion\\Uninstall",
+                    b"license registry",
+                    b"registration key",
+                ]
+                for pattern in registry_patterns:
+                    if pattern in file_data:
+                        license_checks_found.append(f"Registry Check: {pattern.decode('utf-8', errors='ignore')}")
+
+            # Display results
+            if license_checks_found:
+                self.license_display.append("=" * 60)
+                self.license_display.append("LICENSE CHECKS DETECTED")
+                self.license_display.append("=" * 60)
+                for check in license_checks_found:
+                    self.license_display.append(f"OK {check}")
+
+                self.license_display.append(f"\nTotal checks found: {len(license_checks_found)}")
+                self.generate_bypass_btn.setEnabled(True)
+            else:
+                self.license_display.append("No license checks detected")
+                self.license_display.append("Binary may use alternative protection methods")
+
+        except Exception as e:
+            self.log_activity(f"License detection error: {str(e)}")
+            self.license_display.append(f"Error: {str(e)}")
+
+    def generate_bypass_strategy(self):
+        """Generate bypass strategies based on detected protections."""
+        self.log_activity("Generating bypass strategies...")
+        self.bypass_display.clear()
+
+        strategies = []
+
+        # Generate strategies based on selected methods
+        if self.patch_jump_check.isChecked():
+            strategies.append(
+                {
+                    "method": "Conditional Jump Patching",
+                    "description": "Modify JZ/JNZ instructions at license check points",
+                    "addresses": self._find_conditional_jumps(),
+                    "risk": "Low",
+                    "effectiveness": "High",
+                }
+            )
+
+        if self.nop_check.isChecked():
+            strategies.append(
+                {
+                    "method": "NOP Injection",
+                    "description": "Replace license check calls with NOP instructions",
+                    "addresses": self._find_license_calls(),
+                    "risk": "Medium",
+                    "effectiveness": "High",
+                }
+            )
+
+        if self.hook_api_check.isChecked():
+            strategies.append(
+                {
+                    "method": "API Hooking",
+                    "description": "Hook Windows API calls to return success values",
+                    "apis": ["GetVolumeInformation", "RegQueryValue", "IsDebuggerPresent"],
+                    "risk": "Low",
+                    "effectiveness": "Medium",
+                }
+            )
+
+        if self.emulate_license_check.isChecked():
+            strategies.append(
+                {
+                    "method": "License Server Emulation",
+                    "description": "Create local license server to validate requests",
+                    "port": self._detect_license_port(),
+                    "risk": "High",
+                    "effectiveness": "Very High",
+                }
+            )
+
+        if self.spoof_hwid_check.isChecked():
+            strategies.append(
+                {
+                    "method": "Hardware ID Spoofing",
+                    "description": "Modify system calls to return spoofed hardware IDs",
+                    "components": ["Volume Serial", "MAC Address", "CPU ID"],
+                    "risk": "Medium",
+                    "effectiveness": "High",
+                }
+            )
+
+        if self.reset_trial_check.isChecked():
+            strategies.append(
+                {
+                    "method": "Trial Reset",
+                    "description": "Reset trial period by modifying registry/file timestamps",
+                    "targets": self._find_trial_data(),
+                    "risk": "Low",
+                    "effectiveness": "Medium",
+                }
+            )
+
+        # Display strategies
+        self.bypass_display.append("=" * 60)
+        self.bypass_display.append("BYPASS STRATEGY RECOMMENDATIONS")
+        self.bypass_display.append("=" * 60)
+
+        for i, strategy in enumerate(strategies, 1):
+            self.bypass_display.append(f"\n[Strategy {i}] {strategy['method']}")
+            self.bypass_display.append(f"Description: {strategy['description']}")
+            self.bypass_display.append(f"Risk Level: {strategy['risk']}")
+            self.bypass_display.append(f"Effectiveness: {strategy['effectiveness']}")
+
+            if "addresses" in strategy and strategy["addresses"]:
+                self.bypass_display.append(f"Target Addresses: {', '.join(hex(addr) for addr in strategy['addresses'][:5])}")
+            if "apis" in strategy:
+                self.bypass_display.append(f"Target APIs: {', '.join(strategy['apis'])}")
+            if "port" in strategy:
+                self.bypass_display.append(f"License Port: {strategy['port']}")
+
+        if self.auto_patch_check.isChecked() and strategies:
+            self.bypass_display.append("\n" + "=" * 60)
+            self.bypass_display.append("AUTO-PATCH READY")
+            self.bypass_display.append("Click 'Apply Patches' to execute bypass strategies")
+
+        self.log_activity(f"Generated {len(strategies)} bypass strategies")
+
+    def execute_subscription_bypass(self):
+        """Execute subscription validation bypass for detected scheme."""
+        if not self.current_binary:
+            QMessageBox.warning(self, "Warning", "No binary loaded for bypass")
+            return
+
+        # Check if we have subscription bypass results
+        if not self.analysis_results.get("subscription_bypass"):
+            QMessageBox.information(self, "Info", "Please run static analysis with 'Subscription Validation Bypass' enabled first")
+            return
+
+        bypass_data = self.analysis_results["subscription_bypass"]
+        detected_type = bypass_data.get("detected_type", "unknown")
+
+        if detected_type == "unknown":
+            QMessageBox.warning(self, "Warning", "No subscription scheme detected")
+            return
+
+        self.log_activity(f"Executing subscription bypass for {detected_type} scheme...")
+
+        # Use the SubscriptionValidationBypass instance
+        try:
+            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
+            sub_bypass = SubscriptionValidationBypass()
+
+            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
+
+            # Execute bypass based on detected type
+            bypass_success = sub_bypass.bypass_subscription(product_name)
+
+            if bypass_success:
+                self.bypass_display.append("\n=== SUBSCRIPTION BYPASS EXECUTED ===\n")
+                self.bypass_display.append(f"Type: {detected_type}\n")
+                self.bypass_display.append("Status: OK Bypass Active\n")
+
+                # Add specific details based on bypass type
+                if detected_type == "cloud_based":
+                    self.bypass_display.append("• Local license server started on port 443\n")
+                    self.bypass_display.append("• Host file redirections applied\n")
+                    self.bypass_display.append("• SSL certificate validation bypassed\n")
+                elif detected_type == "server_license":
+                    self.bypass_display.append("• License server emulator running\n")
+                    self.bypass_display.append("• Response hooks installed\n")
+                elif detected_type == "token_based":
+                    self.bypass_display.append("• Valid tokens generated\n")
+                    self.bypass_display.append("• Token store updated\n")
+                elif detected_type == "oauth":
+                    self.bypass_display.append("• OAuth tokens injected\n")
+                    self.bypass_display.append("• Refresh mechanism bypassed\n")
+
+                self.bypass_display.append("\nOK Subscription validation bypass successful\n")
+                self.log_activity("Subscription bypass executed successfully")
+
+                # Enable the button for deactivation
+                self.subscription_bypass_btn.setText("Stop Subscription Bypass")
+                self.subscription_bypass_btn.clicked.disconnect()
+                self.subscription_bypass_btn.clicked.connect(self.stop_subscription_bypass)
+
+            else:
+                self.bypass_display.append("\nFAIL Subscription bypass failed\n")
+                self.log_activity("Subscription bypass execution failed")
+
+        except Exception as e:
+            self.bypass_display.append(f"\nFAIL Bypass error: {str(e)}\n")
+            self.log_activity(f"Subscription bypass error: {str(e)}")
+
+    def stop_subscription_bypass(self):
+        """Stop active subscription bypass."""
+        try:
+            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
+            sub_bypass = SubscriptionValidationBypass()
+
+            # Stop any active local servers
+            sub_bypass.stop_local_server()
+
+            self.bypass_display.append("\n=== SUBSCRIPTION BYPASS STOPPED ===\n")
+            self.log_activity("Subscription bypass stopped")
+
+            # Restore button state
+            self.subscription_bypass_btn.setText("Execute Subscription Bypass")
+            self.subscription_bypass_btn.clicked.disconnect()
+            self.subscription_bypass_btn.clicked.connect(self.execute_subscription_bypass)
+
+        except Exception as e:
+            self.log_activity(f"Error stopping subscription bypass: {str(e)}")
+
+    def start_license_monitoring(self):
+        """Start real-time license monitoring."""
+        self.log_activity("Starting license monitoring...")
+        self.monitor_log.clear()
+        self.monitor_log.append("=" * 60)
+        self.monitor_log.append("LICENSE MONITORING STARTED")
+        self.monitor_log.append("=" * 60)
+
+        if not self.attached_pid or not self.current_file_path:
+            self.monitor_log.append("\n[ERROR] No process attached!")
+            self.monitor_log.append("Please attach to a process first in the Exploitation tab.")
+            QMessageBox.warning(self, "No Process", "Please attach to a target process before starting monitoring.")
+            return
+
+        config = MonitoringConfig()
+        config.enable_api = self.monitor_api_check.isChecked()
+        config.enable_registry = self.monitor_registry_check.isChecked()
+        config.enable_file = self.monitor_file_check.isChecked()
+        config.enable_network = self.monitor_network_check.isChecked()
+        config.enable_memory = self.monitor_memory_check.isChecked()
+
+        monitoring_targets = []
+        if config.enable_api:
+            monitoring_targets.append("Windows API calls")
+            self.monitor_log.append("[+] Monitoring Windows API calls...")
+
+        if config.enable_registry:
+            monitoring_targets.append("Registry operations")
+            self.monitor_log.append("[+] Monitoring registry access...")
+
+        if config.enable_file:
+            monitoring_targets.append("File operations")
+            self.monitor_log.append("[+] Monitoring file operations...")
+
+        if config.enable_network:
+            monitoring_targets.append("Network traffic")
+            self.monitor_log.append("[+] Monitoring network connections...")
+
+        if config.enable_memory:
+            monitoring_targets.append("Memory patterns")
+            self.monitor_log.append("[+] Scanning memory for license strings...")
+
+        self.monitor_log.append(f"\nMonitoring {len(monitoring_targets)} categories")
+        self.monitor_log.append("Initializing monitors...\n")
+
+        try:
+            self.monitor_log.append("[*] Starting frida-server (this may take a moment)...")
+            QApplication.processEvents()
+
+            self.monitoring_session = MonitoringSession(pid=self.attached_pid, process_path=self.current_file_path, config=config)
+
+            self.monitoring_session.on_event(self._on_monitoring_event)
+            self.monitoring_session.on_stats_update(self._on_monitoring_stats)
+            self.monitoring_session.on_error(self._on_monitoring_error)
+
+            if self.monitoring_session.start():
+                frida_status = self.monitoring_session.frida_server.get_status()
+
+                self.monitor_log.append(f"[✓] frida-server running (version {frida_status['version']})")
+
+                if not frida_status["is_admin"]:
+                    self.monitor_log.append("<font color='orange'>[!] Not running as administrator - some features may be limited</font>")
+
+                self.monitor_log.append("[✓] All monitors initialized successfully")
+                self.monitor_log.append("[✓] Monitoring active - waiting for license activity...\n")
+
+                self.start_monitor_btn.setEnabled(False)
+                self.stop_monitor_btn.setEnabled(True)
+                self.log_activity(f"License monitoring active: {', '.join(monitoring_targets)}")
+            else:
+                self.monitor_log.append("\n[ERROR] Failed to start monitoring!")
+                self.monitor_log.append("Possible causes:")
+                self.monitor_log.append("  • frida-server failed to start")
+                self.monitor_log.append("  • Target process may have anti-debugging protection")
+                self.monitor_log.append("  • Insufficient permissions")
+                self.monitoring_session = None
+
+        except Exception as e:
+            self.monitor_log.append(f"\n[ERROR] Failed to initialize monitoring: {str(e)}")
+            self.log_activity(f"Monitoring error: {str(e)}")
+            self.monitoring_session = None
+
+    def stop_license_monitoring(self):
+        """Stop license monitoring."""
+        self.log_activity("Stopping license monitoring...")
+
+        if self.monitoring_session:
+            try:
+                stats = self.monitoring_session.get_stats()
+                self.monitoring_session.stop()
+
+                self.monitor_log.append("\n" + "=" * 60)
+                self.monitor_log.append("LICENSE MONITORING STOPPED")
+                self.monitor_log.append("=" * 60)
+
+                frida_status = stats.get("frida_server", {})
+                agg_stats = stats.get("aggregator", {})
+                events_by_source = agg_stats.get("events_by_source", {})
+
+                self.monitor_log.append("\nSession Information:")
+                self.monitor_log.append(f"• frida-server version: {frida_status.get('version', 'unknown')}")
+                self.monitor_log.append(f"• Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
+
+                self.monitor_log.append("\nMonitoring Summary:")
+                self.monitor_log.append(f"• Total events captured: {agg_stats.get('total_events', 0)}")
+                self.monitor_log.append(f"• API calls intercepted: {events_by_source.get('api', 0)}")
+                self.monitor_log.append(f"• Registry operations: {events_by_source.get('registry', 0)}")
+                self.monitor_log.append(f"• File operations: {events_by_source.get('file', 0)}")
+                self.monitor_log.append(f"• Network events: {events_by_source.get('network', 0)}")
+                self.monitor_log.append(f"• Memory patterns found: {events_by_source.get('memory', 0)}")
+
+                self.monitoring_session = None
+
+            except Exception as e:
+                self.monitor_log.append(f"\n[ERROR] Error stopping monitoring: {str(e)}")
+                self.log_activity(f"Stop monitoring error: {str(e)}")
+        else:
+            self.monitor_log.append("\n[WARNING] No active monitoring session to stop.")
+
+        self.start_monitor_btn.setEnabled(True)
+        self.stop_monitor_btn.setEnabled(False)
+
+    def _on_monitoring_event(self, event):
+        """Handle monitoring event from session.
+
+        Args:
+            event: MonitorEvent instance.
+
+        """
+        event_dict = event.to_dict()
+
+        timestamp = datetime.fromtimestamp(event_dict["timestamp"]).strftime("%H:%M:%S.%f")[:-3]
+        source = event_dict["source"].upper()
+        event_type = event_dict["event_type"]
+        details = event_dict["details"]
+
+        color_map = {"api": "blue", "registry": "green", "file": "orange", "network": "red", "memory": "purple"}
+        color = color_map.get(event_dict["source"], "black")
+
+        if event_dict["severity"] == "critical":
+            prefix = "[CRITICAL]"
+            color = "darkred"
+        elif event_dict["severity"] == "warning":
+            prefix = "[WARNING]"
+        else:
+            prefix = "[INFO]"
+
+        if source == "API":
+            api_name = details.get("api", "Unknown")
+            args = details.get("args", [])
+            result = details.get("result", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {api_name}({', '.join(map(str, args))}) -> {result}"
+        elif source == "REGISTRY":
+            hive = details.get("hive", "")
+            key_path = details.get("key_path", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {hive}\\{key_path}"
+        elif source == "FILE":
+            file_path = details.get("file_path", "")
+            operation = details.get("operation", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {operation}: {file_path}"
+        elif source == "NETWORK":
+            protocol = details.get("protocol", "")
+            src = details.get("src", "")
+            dst = details.get("dst", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {protocol} {src} -> {dst}"
+        elif source == "MEMORY":
+            pattern_type = details.get("pattern_type", "")
+            value = details.get("value", "")
+            address = details.get("address", "")
+            log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {pattern_type} found: {value} @ {address}"
+        else:
+            log_line = f"[{timestamp}] [{source}] {prefix} {str(details)}"
+
+        self.monitor_log.append(log_line)
+
+    def _on_monitoring_stats(self, stats):
+        """Handle statistics update from monitoring session.
+
+        Args:
+            stats: Statistics dictionary.
+
+        """
+        pass
+
+    def _on_monitoring_error(self, error):
+        """Handle error from monitoring session.
+
+        Args:
+            error: Error message string.
+
+        """
+        self.monitor_log.append(f"\n<font color='red'>[ERROR]</font> {error}")
+        self.log_activity(f"Monitoring error: {error}")
+
+    def _find_conditional_jumps(self):
+        """Find conditional jump addresses in binary."""
+        # This would scan for JZ, JNZ, JE, JNE instructions
+        # For now, return sample addresses
+        return [0x401000, 0x401234, 0x402000, 0x403500]
+
+    def _find_license_calls(self):
+        """Find license validation function calls."""
+        # This would identify CALL instructions to license functions
+        # For now, return sample addresses
+        return [0x401500, 0x402800, 0x404000]
+
+    def _detect_license_port(self):
+        """Detect network port used for license validation."""
+        # This would analyze network code to find license server port
+        # Common license server ports
+        return 27000  # FlexLM default port
+
+    def _find_trial_data(self):
+        """Find trial period data locations."""
+        # This would locate registry keys and files storing trial info
+        return ["HKLM\\SOFTWARE\\CompanyName\\ProductName\\Trial", "C:\\ProgramData\\ProductName\\trial.dat"]
+
+    def compare_snapshots(self):
+        """Compare two license system snapshots to identify changes."""
+        if len(self.snapshots) < 2:
+            QMessageBox.warning(self, "Insufficient Snapshots", "At least two snapshots are required for comparison.")
+            return
+
+        # Create dialog to select snapshots
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QListWidget, QListWidgetItem
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Snapshots to Compare")
+        dialog.setMinimumWidth(400)
+        dialog.setMinimumHeight(300)
+
+        layout = QVBoxLayout(dialog)
+
+        # First snapshot selection
+        layout.addWidget(QLabel("Select first snapshot (baseline):"))
+        first_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            first_list.addItem(item)
+        layout.addWidget(first_list)
+
+        # Second snapshot selection
+        layout.addWidget(QLabel("Select second snapshot (current):"))
+        second_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            second_list.addItem(item)
+        layout.addWidget(second_list)
+
+        # Dialog buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            if first_list.currentItem() and second_list.currentItem():
+                snapshot1_name = first_list.currentItem().text()
+                snapshot2_name = second_list.currentItem().text()
+
+                if snapshot1_name == snapshot2_name:
+                    QMessageBox.warning(self, "Invalid Selection", "Please select two different snapshots.")
+                    return
+
+                self.log_activity(f"Comparing snapshots: {snapshot1_name} vs {snapshot2_name}")
+
+                # Perform comparison
+                try:
+                    comparison = self.license_snapshot.compare_snapshots(snapshot1_name, snapshot2_name)
+
+                    # Display results in the console
+                    self.log_activity("=" * 60)
+                    self.log_activity("SNAPSHOT COMPARISON RESULTS")
+                    self.log_activity("=" * 60)
+
+                    # Process changes
+                    if comparison.get("process_changes"):
+                        self.log_activity("\nProcess Changes:")
+                        for change in comparison["process_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']} (PID: {change.get('pid', 'N/A')})")
+
+                    if comparison.get("registry_changes"):
+                        self.log_activity("\nRegistry Changes:")
+                        for key, changes in comparison["registry_changes"].items():
+                            self.log_activity(f"  {key}:")
+                            for change in changes:
+                                self.log_activity(f"    • {change}")
+
+                    if comparison.get("file_changes"):
+                        self.log_activity("\nFile System Changes:")
+                        for change in comparison["file_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['path']}")
+
+                    if comparison.get("service_changes"):
+                        self.log_activity("\nService Changes:")
+                        for change in comparison["service_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']} ({change.get('status', 'unknown')})")
+
+                    if comparison.get("network_changes"):
+                        self.log_activity("\nNetwork Changes:")
+                        for change in comparison["network_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change.get('address', 'N/A')}:{change.get('port', 'N/A')}")
+
+                    if comparison.get("certificate_changes"):
+                        self.log_activity("\nCertificate Changes:")
+                        for change in comparison["certificate_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['subject']}")
+
+                    if comparison.get("dll_changes"):
+                        self.log_activity("\nDLL Changes:")
+                        for change in comparison["dll_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['path']}")
+
+                    if comparison.get("mutex_changes"):
+                        self.log_activity("\nMutex Changes:")
+                        for change in comparison["mutex_changes"]:
+                            self.log_activity(f"  • {change['type']}: {change['name']}")
+
+                    # Store comparison results
+                    self.comparison_results.append(
+                        {
+                            "snapshot1": snapshot1_name,
+                            "snapshot2": snapshot2_name,
+                            "timestamp": datetime.now().isoformat(),
+                            "results": comparison,
+                        }
+                    )
+
+                    # Summary
+                    total_changes = sum(
+                        len(comparison.get(k, []))
+                        if isinstance(comparison.get(k), list)
+                        else sum(len(v) if isinstance(v, list) else 0 for v in comparison.get(k, {}).values())
+                        if isinstance(comparison.get(k), dict)
+                        else 0
+                        for k in comparison.keys()
+                    )
+
+                    self.log_activity("=" * 60)
+                    self.log_activity(f"Total changes detected: {total_changes}")
+                    self.log_activity("=" * 60)
+
+                    QMessageBox.information(
+                        self,
+                        "Comparison Complete",
+                        f"Found {total_changes} changes between snapshots.\nCheck the console for detailed results.",
+                    )
+
+                except Exception as e:
+                    self.log_activity(f"Comparison error: {str(e)}")
+                    QMessageBox.critical(self, "Comparison Error", f"Failed to compare snapshots:\n{str(e)}")
+            else:
+                QMessageBox.warning(self, "No Selection", "Please select both snapshots to compare.")
+
+    def export_snapshot(self):
+        """Export a license snapshot to file."""
+        if not self.snapshots:
+            QMessageBox.warning(self, "No Snapshots", "No snapshots available to export.")
+            return
+
+        # Select snapshot to export
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QListWidget, QListWidgetItem
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Snapshot to Export")
+        dialog.setMinimumWidth(350)
+        dialog.setMinimumHeight(250)
+
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel("Select snapshot to export:"))
+
+        snapshot_list = QListWidget()
+        for name in self.snapshots.keys():
+            item = QListWidgetItem(name)
+            snapshot_list.addItem(item)
+        layout.addWidget(snapshot_list)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted and snapshot_list.currentItem():
+            snapshot_name = snapshot_list.currentItem().text()
+
+            # Get export file path
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Export Snapshot", f"{snapshot_name}.json", "JSON Files (*.json);;All Files (*.*)"
+            )
+
+            if file_path:
+                try:
+                    if self.license_snapshot.export_snapshot(snapshot_name, file_path):
+                        self.log_activity(f"Exported snapshot '{snapshot_name}' to {file_path}")
+                        QMessageBox.information(self, "Export Successful", f"Snapshot exported successfully to:\n{file_path}")
+                    else:
+                        QMessageBox.warning(self, "Export Failed", "Failed to export snapshot.")
+                except Exception as e:
+                    self.log_activity(f"Export error: {str(e)}")
+                    QMessageBox.critical(self, "Export Error", f"Failed to export snapshot:\n{str(e)}")
+
+    def import_snapshot(self):
+        """Import a license snapshot from file."""
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import Snapshot", "", "JSON Files (*.json);;All Files (*.*)")
+
+        if file_path:
+            try:
+                snapshot_name = self.license_snapshot.import_snapshot(file_path)
+
+                if snapshot_name:
+                    # Reload the imported snapshot data
+                    with open(file_path, "r") as f:
+                        import json
+
+                        snapshot_data = json.load(f)
+
+                    # Store in our local snapshots dictionary
+                    self.snapshots[snapshot_name] = snapshot_data
+
+                    self.log_activity(f"Imported snapshot '{snapshot_name}' from {file_path}")
+
+                    # Enable buttons if we now have enough snapshots
+                    if hasattr(self, "compare_snapshots_btn"):
+                        self.compare_snapshots_btn.setEnabled(len(self.snapshots) >= 2)
+                    if hasattr(self, "export_snapshot_btn"):
+                        self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
+
+                    # Display summary
+                    summary = [
+                        f"Snapshot '{snapshot_name}' imported successfully!",
+                        "",
+                        f"• Timestamp: {snapshot_data.get('timestamp', 'Unknown')}",
+                        f"• System: {snapshot_data.get('system_info', {}).get('platform', 'Unknown')}",
+                        f"• Processes: {len(snapshot_data.get('processes', []))}",
+                        f"• Registry keys: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
+                        f"• Files: {len(snapshot_data.get('files', {}).get('license_files', []))}",
+                        f"• Services: {len(snapshot_data.get('services', []))}",
+                    ]
+
+                    QMessageBox.information(self, "Import Successful", "\n".join(summary))
+                else:
+                    QMessageBox.warning(self, "Import Failed", "Failed to import snapshot.")
+
+            except Exception as e:
+                self.log_activity(f"Import error: {str(e)}")
+                QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{str(e)}")

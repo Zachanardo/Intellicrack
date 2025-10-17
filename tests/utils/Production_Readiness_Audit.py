@@ -505,7 +505,7 @@ class ProductionReadinessAuditor:
 
         # Add default exclusions if no config loaded
         if not default_config["allow_paths"]:
-            default_config["allow_paths"] = ["tests", "test", "mamba_env", "dev", "docs"]
+            default_config["allow_paths"] = ["tests", "test", ".pixi", "dev", "docs"]
 
         return default_config
 

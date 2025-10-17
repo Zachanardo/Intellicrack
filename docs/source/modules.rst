@@ -1,4 +1,4 @@
-Intellicrack
+intellicrack
 ============
 
 .. toctree::

@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Constants for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -20,29 +22,6 @@ This module contains constants that are used across multiple modules
 to avoid code duplication.
 """
 
-import os
-
-# Adobe process names used by multiple injection modules
-ADOBE_PROCESSES = [
-    "Photoshop.exe",
-    "Illustrator.exe",
-    "PremierePro.exe",
-    "AfterFX.exe",
-    "MediaEncoder.exe",
-    "InDesign.exe",
-    "Animate.exe",
-    "Audition.exe",
-    "CharacterAnimator.exe",
-    "Dreamweaver.exe",
-    "Lightroom.exe",
-    "LightroomClassic.exe",
-    "Substance 3D Designer.exe",
-    "Substance 3D Painter.exe",
-    "Substance 3D Sampler.exe",
-    "Substance 3D Stager.exe",
-    "Substance 3D Modeler.exe",
-]
-
 # Common file size formatting breakpoints
 SIZE_UNITS = [
     (1024**3, "GB"),
@@ -50,24 +29,3 @@ SIZE_UNITS = [
     (1024, "KB"),
     (1, "B"),
 ]
-
-# C2 Server default configuration
-C2_DEFAULTS = {
-    "http": {
-        "host": os.environ.get("C2_HTTP_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_HTTP_PORT", "8080")),
-    },
-    "https": {
-        "host": os.environ.get("C2_HTTPS_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_HTTPS_PORT", "8443")),
-    },
-    "dns": {
-        "host": os.environ.get("C2_DNS_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_DNS_PORT", "5353")),
-        "domain": os.environ.get("C2_DNS_DOMAIN", "localhost.localdomain"),
-    },
-    "tcp": {
-        "host": os.environ.get("C2_TCP_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("C2_TCP_PORT", "4444")),
-    },
-}

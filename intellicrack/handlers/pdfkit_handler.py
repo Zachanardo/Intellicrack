@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""PDFKit handler for Intellicrack.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -20,7 +22,7 @@ import os
 import re
 import sys
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 PDFKit Import Handler with Production-Ready Fallbacks

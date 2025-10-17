@@ -5,7 +5,9 @@ import sys
 import os
 
 # Add project root to path
-sys.path.insert(0, "C:/Intellicrack")
+from intellicrack.utils.path_resolver import get_project_root
+
+sys.path.insert(0, str(get_project_root()))
 
 print("Testing utils.logger import...")
 

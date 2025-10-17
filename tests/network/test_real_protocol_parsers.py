@@ -1,3 +1,16 @@
+"""
+Functional tests for Intellicrack's network protocol parsing capabilities.
+
+This module contains comprehensive tests for network protocol parsing operations in Intellicrack,
+including FlexLM protocol packet parsing, HASP protocol packet parsing, Adobe Creative Cloud
+protocol parsing, KMS (Key Management Service) protocol packet parsing, multi-protocol
+detection and routing, protocol state tracking across multiple packets, protocol error
+handling and malformed packet processing, protocol parsing performance with large
+packet volumes, protocol fragmentation handling, protocol encryption and obfuscation
+detection, and protocol signature validation and integrity checking. These tests
+ensure the network protocol parsers work correctly with real protocol packets.
+"""
+
 import pytest
 import struct
 import socket

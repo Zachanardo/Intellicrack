@@ -2,20 +2,36 @@
 
 ## Project Overview
 
-**Intellicrack** - Advanced binary analysis and security research platform designed to help software developers identify and strengthen vulnerabilities in their own licensing and protection systems.
+**Intellicrack** - Advanced binary analysis platform **SPECIFICALLY AND EXCLUSIVELY** designed for analyzing software and cracking licensing protections. This tool focuses **SOLELY** on defeating software licensing mechanisms, registration systems, trial limitations, and copy protection schemes.
+
+### EXPLICIT TOOL SCOPE - CRITICAL
+
+**What Intellicrack IS:**
+- **SOFTWARE LICENSING CRACKER** - Defeats licensing protections, serial validation, and registration systems
+- **PROTECTION ANALYZER** - Analyzes and bypasses copy protection, trial limitations, and activation mechanisms
+- **BINARY PATCHER** - Modifies binaries to remove licensing checks and protection routines
+- **LICENSE KEYGEN CREATOR** - Generates valid license keys and registration codes
+
+**What Intellicrack IS NOT:**
+- **NOT a malware creation tool** - No malware injection, payload delivery, or virus creation
+- **NOT a system exploit framework** - No OS exploitation, privilege escalation, or system compromise
+- **NOT a network attack tool** - No network intrusion, packet injection, or remote exploitation
+- **NOT a data theft tool** - No credential harvesting, data exfiltration, or information stealing
+
+**SCOPE LIMITATION:** This tool is **EXCLUSIVELY** for analyzing and defeating software licensing protections. Any functionality must be directly related to cracking software protections, NOT creating other types of exploits.
 
 ### Project Intent & Security Research Purpose
 
 This tool is developed for **defensive security research** to help software developers:
 
-- **Identify weaknesses** in their own licensing protection mechanisms by using Intellicrack in a controlled enviornment to exploit their software, so they can strengthen the licensing protections to prevent future attacks.
-- **Test robustness** of their protection implementations in controlled environments
-- **Strengthen defenses** against potential attacks by understanding attack vectors
-- **Validate security** of their own software before deployment
+- **Identify weaknesses** in their own licensing protection mechanisms by using Intellicrack in a controlled enviornment to crack their software, so they can strengthen the licensing protections to prevent future attacks.
+- **Test robustness** of licensing, registration, and activation systems in controlled environments
+- **Strengthen licensing defenses** against cracking attempts by understanding bypass techniques
+- **Validate protection effectiveness** of their own software's licensing mechanisms before deployment
 
-**Critical Context:** Intellicrack requires functionally real and robust analysis and exploitation capabilities to serve as an effective security research tool. All components must be production-ready to accurately assess protection mechanisms and provide meaningful security insights to developers working to improve their software's defensive posture.
+**Critical Context:** Intellicrack requires functionally real and robust licensing cracking capabilities to serve as an effective security research tool. All components must be production-ready to accurately defeat protection mechanisms and provide meaningful security insights to developers working to improve their software's licensing security.
 
-**Usage Environment:** This tool operates exclusively in controlled, isolated research environments for authorized security assessment of proprietary software by its own developers and security teams.
+**Usage Environment:** This tool operates exclusively in controlled, isolated research environments for authorized security assessment of proprietary software licensing systems by their own developers and security teams.
 
 **TOOLS**
 
@@ -28,8 +44,8 @@ This tool is developed for **defensive security research** to help software deve
 
 **Environment Usage:**
 
-- **Mamba environment location**: `C:\Intellicrack\mamba_env`
-- **Activation**: `mamba activate C:\Intellicrack\mamba_env`
+- **Pixi environment location**: `D:\Intellicrack\.pixi\envs\default`
+- **Activation**: `pixi shell` or use `pixi run <command>`
 - **Claude Code runs natively on Windows**
 
 ## 🔧 CRITICAL CODING RULES
@@ -39,29 +55,27 @@ This tool is developed for **defensive security research** to help software deve
 - **NEVER add unnecessary comments** - Keep code clean
 - **NO explanatory comments** about imports, fixes, or obvious code
 - **Comments ONLY when user explicitly requests**
+- **Follow common development principles (where relevant) including:**
+    • **SOLID** (Single Responsibility Principle, Open/Closed Principle, Liskov Substitution Principle, Interface Segregation Principle, and Dependency Inversion Principle)
+    • **DRY** (Don't Repeat Yourself)
+    • **KISS** (Keep It Simple, Stupid)
 
 ### Implementation Standards
 
 - **ALL CODE MUST BE WRITTEN FOR FULL COMPATIBLITY WITH WINDOWS PLATFORMS AS A PRIORITY.**
 - **NO STUBS, MOCKS, OR PLACEHOLDERS** - ALL code must be FULLY FUNCTIONAL
 - **NO TODO COMMENTS** - Implement REAL functionality immediately
-- **NO SIMULATION MODES** - Real exploitation tool only
+- **NO SIMULATION MODES** - Real licensing cracking tool only
 - **NEVER delete method bindings** - CREATE MISSING FUNCTIONS instead
-- **ALL METHODS MUST WORK ON REAL BINARIES** - No fake data
+- **ALL METHODS MUST WORK ON REAL BINARIES** - Specifically for cracking licensing protections
 - **MAINTAIN FUNCTIONALITY** - Never sacrifice features for "cleaner" code
-
-### Production-Ready Code Only
-
-***Claude MUST adhere to these absolute requirements when writing code:***
-
-- **NEVER write placeholder, stub, mock, fake, or simulated code under ANY circumstances**
-- **ALL code must be production-ready and fully functional**
-- **NO TODO comments or unimplemented sections**
-- **NO mock data, dummy data, or hardcoded values**
-- **NO placeholder functions or methods that don't actually work**
+- **SCOPE ENFORCEMENT** - Every feature must relate to SOFTWARE LICENSING CRACKING
+- **NO MALWARE CAPABILITIES** - No injection, payload delivery, or system exploitation code
+- **LICENSING FOCUS ONLY** - All analysis must target registration, activation, and licensing protection systems
 - **NO "example" implementations that would need to be replaced**
 - **NO simple implementations that would be ineffective in real world scenarios**
-- **NEVER use scripting to automate fixes unless explicitly requested by the user**
+
+### Production-Ready Code Only
 
 **When writing code, Claude must:**
 

@@ -7,7 +7,7 @@ import os
 import traceback
 
 # Add project to path
-sys.path.insert(0, r"C:\Intellicrack")
+sys.path.insert(0, r"D:\Intellicrack")
 
 print("Testing CFI Bypass Module")
 print("=" * 80)

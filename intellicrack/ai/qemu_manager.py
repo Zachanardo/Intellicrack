@@ -56,6 +56,9 @@ logger = get_logger(__name__)
 audit_logger = get_audit_logger()
 resource_manager = get_resource_manager()
 
+FAILED_START_VM = "Failed to start VM: %s"
+SUBPROCESS_TIMEOUT_MSG = "Subprocess timeout in qemu_manager: %s"
+
 
 @dataclass
 class QEMUSnapshot:
@@ -122,6 +125,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
 
 class QEMUManager:
     """Manages QEMU virtual machines for testing generated scripts.
+
     Real implementation - integrates with existing QEMU infrastructure.
     """
 
@@ -301,88 +305,92 @@ class QEMUManager:
         pool_key = (snapshot.vm_name, snapshot.ssh_port)
 
         with self.ssh_lock:
-            # Check circuit breaker
             if self._is_circuit_open(snapshot.vm_name):
                 logger.warning(
                     "Circuit breaker open for %s, skipping connection attempt",
                     snapshot.vm_name,
                 )
                 return None
-            # Check if we have an active connection in the pool
-            if pool_key in self.ssh_connection_pool:
-                client = self.ssh_connection_pool[pool_key]
-                try:
-                    # Test if connection is still alive
-                    transport = client.get_transport()
-                    if transport and transport.is_active():
-                        return client
-                    # Connection is dead, remove from pool
-                    del self.ssh_connection_pool[pool_key]
-                    client.close()
-                except Exception:
-                    # Connection is invalid, remove from pool
-                    if pool_key in self.ssh_connection_pool:
-                        del self.ssh_connection_pool[pool_key]
-                    try:
-                        client.close()
-                    except Exception as e:
-                        self.logger.debug("Error closing SSH client: %s", e)
 
-            # Create new connection with retries
-            for attempt in range(retries):
-                try:
-                    client = SSHClient()
-                    # Use secure host key policy with known_hosts file
-                    known_hosts_path = self.working_dir / "ssh" / "known_hosts"
-                    client.set_missing_host_key_policy(SecureHostKeyPolicy(known_hosts_path))
+            client = self._get_existing_connection(pool_key)
+            if client:
+                return client
 
-                    # Connect using our SSH key
-                    client.connect(
-                        hostname="localhost",
-                        port=snapshot.ssh_port,
-                        username="test",
-                        pkey=self.master_ssh_key,
-                        timeout=self.ssh_timeout,
-                        banner_timeout=self.ssh_timeout,
-                        auth_timeout=self.ssh_timeout,
-                    )
+            return self._create_new_connection(snapshot, pool_key, retries)
 
-                    # Store in connection pool
-                    self.ssh_connection_pool[pool_key] = client
-
-                    # Reset circuit breaker on success
-                    self._reset_circuit_breaker(snapshot.vm_name)
-
-                    logger.info(
-                        "SSH connection established to %s on port %s",
-                        snapshot.vm_name,
-                        snapshot.ssh_port,
-                    )
+    def _get_existing_connection(self, pool_key: tuple) -> SSHClient | None:
+        """Check if an active connection exists in the pool."""
+        if pool_key in self.ssh_connection_pool:
+            client = self.ssh_connection_pool[pool_key]
+            try:
+                transport = client.get_transport()
+                if transport and transport.is_active():
                     return client
+                self._remove_invalid_connection(pool_key, client)
+            except Exception:
+                self._remove_invalid_connection(pool_key, client)
+        return None
 
-                except TimeoutError as e:
-                    logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, e)
-                    self._record_connection_failure(snapshot.vm_name)
-                except paramiko.AuthenticationException as e:
-                    logger.error("SSH authentication failed for %s: %s", snapshot.vm_name, e)
-                    self._record_connection_failure(snapshot.vm_name)
-                    break  # No point retrying auth failures
-                except paramiko.SSHException as e:
-                    logger.warning("SSH connection error (attempt %s/%s): %s", attempt + 1, retries, e)
-                    self._record_connection_failure(snapshot.vm_name)
-                except Exception as e:
-                    logger.exception("Unexpected SSH connection error: %s", e)
-                    self._record_connection_failure(snapshot.vm_name)
+    def _remove_invalid_connection(self, pool_key: tuple, client: SSHClient):
+        """Remove invalid connection from the pool."""
+        if pool_key in self.ssh_connection_pool:
+            del self.ssh_connection_pool[pool_key]
+        try:
+            client.close()
+        except Exception as e:
+            self.logger.debug("Error closing SSH client: %s", e)
 
-                if attempt < retries - 1:
-                    time.sleep(self.ssh_retry_delay)
+    def _create_new_connection(self, snapshot: QEMUSnapshot, pool_key: tuple, retries: int) -> SSHClient | None:
+        """Attempt to create a new SSH connection with retries."""
+        for attempt in range(retries):
+            try:
+                client = self._initialize_ssh_client(snapshot)
+                self.ssh_connection_pool[pool_key] = client
+                self._reset_circuit_breaker(snapshot.vm_name)
+                logger.info(
+                    "SSH connection established to %s on port %s",
+                    snapshot.vm_name,
+                    snapshot.ssh_port,
+                )
+                return client
+            except Exception as e:
+                self._handle_connection_exception(snapshot.vm_name, e, attempt, retries)
+        logger.error(
+            "Failed to establish SSH connection to %s after %s attempts",
+            snapshot.vm_name,
+            retries,
+        )
+        return None
 
-            logger.error(
-                "Failed to establish SSH connection to %s after %s attempts",
-                snapshot.vm_name,
-                retries,
-            )
-            return None
+    def _initialize_ssh_client(self, snapshot: QEMUSnapshot) -> SSHClient:
+        """Initialize and connect an SSH client."""
+        client = SSHClient()
+        known_hosts_path = self.working_dir / "ssh" / "known_hosts"
+        client.set_missing_host_key_policy(SecureHostKeyPolicy(known_hosts_path))
+        client.connect(
+            hostname="localhost",
+            port=snapshot.ssh_port,
+            username="test",
+            pkey=self.master_ssh_key,
+            timeout=self.ssh_timeout,
+            banner_timeout=self.ssh_timeout,
+            auth_timeout=self.ssh_timeout,
+        )
+        return client
+
+    def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int):
+        """Handle exceptions during SSH connection attempts."""
+        if isinstance(exception, TimeoutError):
+            logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception)
+        elif isinstance(exception, paramiko.AuthenticationException):
+            logger.error("SSH authentication failed for %s: %s", vm_name, exception)
+        elif isinstance(exception, paramiko.SSHException):
+            logger.warning("SSH connection error (attempt %s/%s): %s", attempt + 1, retries, exception)
+        else:
+            logger.exception("Unexpected SSH connection error: %s", exception)
+        self._record_connection_failure(vm_name)
+        if attempt < retries - 1:
+            time.sleep(self.ssh_retry_delay)
 
     def download_file_from_vm(self, snapshot: QEMUSnapshot, remote_path: str, local_path: str) -> bool:
         """Download file from VM using SFTP.
@@ -643,8 +651,8 @@ class QEMUManager:
             # Wait a moment for VM to start
             time.sleep(5)
 
-            # Check if process is still running
-            if process.poll() is None or process.returncode == 0:
+            # If the process is still running, consider the VM started successfully
+            if process.poll() is None:
                 snapshot.vm_process = process
 
                 # Register VM with resource manager
@@ -656,15 +664,31 @@ class QEMUManager:
                 # Log VM operation
                 log_vm_operation("start", snapshot.vm_name, success=True)
 
-                # Wait for VM to be ready
-                self._wait_for_vm_ready(snapshot)
             else:
-                stdout, stderr = process.communicate()
-                logger.debug("VM startup stdout: %s", stdout.decode())
-                logger.error("Failed to start VM: %s", stderr.decode())
-                log_vm_operation("start", snapshot.vm_name, success=False, error=stderr.decode())
-                msg = f"VM startup failed: {stderr.decode()}"
-                raise RuntimeError(msg)
+                # Process exited early - gather output and report error
+                try:
+                    stdout, stderr = process.communicate(timeout=5)
+                except Exception:
+                    # Fallback if communicate fails or times out
+                    stdout, stderr = b"", b""
+
+                # Decode safely for logging
+                try:
+                    stdout_decoded = stdout.decode(errors="replace") if isinstance(stdout, (bytes, bytearray)) else str(stdout)
+                except Exception:
+                    stdout_decoded = "<unreadable stdout>"
+
+                try:
+                    stderr_decoded = stderr.decode(errors="replace") if isinstance(stderr, (bytes, bytearray)) else str(stderr)
+                except Exception:
+                    stderr_decoded = "<unreadable stderr>"
+
+                logger.debug("VM startup stdout: %s", stdout_decoded)
+                logger.error(FAILED_START_VM, stderr_decoded)
+                log_vm_operation("start", snapshot.vm_name, success=False, error=stderr_decoded)
+
+                # Raise an error to indicate startup failure
+                raise RuntimeError(f"VM startup failed: {stderr_decoded}")
 
         except Exception as e:
             logger.error("Error starting VM: %s", e)
@@ -907,18 +931,18 @@ class QEMUManager:
             # Close SSH connections first
             self._close_ssh_connection(snapshot)
             # Stop VM process if running
-            if snapshot.vm_process:
-                try:
-                    # Try graceful shutdown first
-                    snapshot.vm_process.terminate()
-                    snapshot.vm_process.wait(timeout=10)
-                except subprocess.TimeoutExpired as e:
-                    self.logger.error("Subprocess timeout in qemu_manager: %s", e)
-                    # Force kill if needed
-                    snapshot.vm_process.kill()
-                    snapshot.vm_process.wait()
+            try:
+                # Try graceful shutdown first
+                snapshot.vm_process.terminate()
+                snapshot.vm_process.wait(timeout=10)
+            except subprocess.TimeoutExpired as e:
+                self.logger.error(SUBPROCESS_TIMEOUT_MSG, e)
+                # Force kill if needed
+                snapshot.vm_process.kill()
+                snapshot.vm_process.wait()
+                snapshot.vm_process.wait()
 
-                logger.info("Stopped VM process for snapshot: %s", snapshot_id)
+            logger.info("Stopped VM process for snapshot: %s", snapshot_id)
 
             # Kill VM by PID file if exists
             pid_file = self.working_dir / f"{snapshot_id}.pid"
@@ -970,13 +994,13 @@ class QEMUManager:
         """Stop VM for a specific snapshot."""
         try:
             if snapshot.vm_process and snapshot.vm_process.poll() is None:
-                snapshot.vm_process.terminate()
                 try:
                     snapshot.vm_process.wait(timeout=10)
                 except subprocess.TimeoutExpired as e:
-                    self.logger.error("Subprocess timeout in qemu_manager: %s", e)
+                    self.logger.error(SUBPROCESS_TIMEOUT_MSG, e)
                     snapshot.vm_process.kill()
                     snapshot.vm_process.wait()
+                logger.info("Stopped VM process for snapshot %s", snapshot.snapshot_id)
                 logger.info("Stopped VM process for snapshot %s", snapshot.snapshot_id)
         except Exception as e:
             logger.error("Error stopping VM for snapshot %s: %s", snapshot.snapshot_id, e)
@@ -1147,34 +1171,31 @@ class QEMUManager:
             logger.debug("Error during destructor cleanup: %s", e)
 
     def _get_windows_base_image(self) -> Path:
-        """Get path to Windows base image."""
-        # Use project-relative paths
-        # Go up to project root
-        project_root = Path(__file__).parent.parent.parent
+        """Get path to Windows base image using dynamic discovery."""
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
-        # Get paths from config with fallback to default locations
+        # Use dynamic image discovery
+        discovery = get_qemu_discovery()
+        windows_images = discovery.get_images_by_os("windows")
+
+        if windows_images:
+            # Return the first Windows image found
+            selected_image = windows_images[0]
+            self.logger.info("Found Windows base image: %s", selected_image.path)
+            return selected_image.path
+
+        # Check config paths for backward compatibility
         config_paths = self.config.get("vm_framework.base_images.windows", [])
-        fallback_paths = [
-            "/var/lib/libvirt/images/windows_base.qcow2",
-            "~/VMs/windows_base.qcow2",
-            str(project_root / "data" / "qemu_images" / "windows_base.qcow2"),
-            "C:/VMs/windows_base.qcow2",
-            "D:/VMs/windows_base.qcow2",
-            "~/Documents/Virtual Machines/windows_base.qcow2",
-        ]
-
-        # Combine config paths with fallback paths
-        all_paths = config_paths + fallback_paths
-        possible_paths = [Path(path) for path in all_paths]
-
-        for path in possible_paths:
-            expanded_path = path.expanduser()
-            if expanded_path.exists():
-                self.logger.info("Found Windows base image at: %s", expanded_path)
-                return expanded_path
+        for path_str in config_paths:
+            path = Path(path_str).expanduser()
+            if path.exists():
+                self.logger.info("Found Windows image from config: %s", path)
+                return path
 
         # If no base image found, create a minimal test image
-        test_image_path = project_root / "data" / "qemu_images" / "windows_test_minimal.qcow2"
+        qemu_dir = get_qemu_images_dir()
+        test_image_path = qemu_dir / "windows_test_minimal.qcow2"
         test_image_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not test_image_path.exists():
@@ -1469,14 +1490,19 @@ class QEMUManager:
             logger.info("Starting QEMU VM: %s", " ".join(cmd))
 
             # Start the VM
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-
-            if result.returncode == 0:
+            # Launch QEMU process and capture output to determine success/failure
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            stdout, stderr = process.communicate()
+            if process.returncode == 0:
                 # Give VM time to start
                 time.sleep(5)
                 logger.info("Started VM for snapshot %s", snapshot.snapshot_id)
                 return True
-            logger.error("Failed to start VM: %s", result.stderr)
+
+            # Use the shared constant for the error message
+            logger.error(FAILED_START_VM, stderr.decode() if isinstance(stderr, (bytes, bytearray)) else str(stderr))
             return False
 
         except Exception as e:
@@ -2367,7 +2393,8 @@ exit 0
 
                         except subprocess.TimeoutExpired as e:
                             process_resource.process.kill()
-                            raise Exception("Optimization timeout (300s)") from e
+                            # Raise a more specific timeout error so callers can handle timeout cases explicitly
+                            raise TimeoutError("Optimization timeout (300s)") from e
 
                     optimization_results["snapshots_processed"] += 1
 
@@ -2817,14 +2844,43 @@ exit 0
     # === Migrated Essential Methods from qemu_emulator.py ===
 
     SUPPORTED_ARCHITECTURES = {
-        "x86_64": {"qemu": "qemu-system-x86_64", "rootfs": "rootfs-x86_64.img"},
-        "x86": {"qemu": "qemu-system-i386", "rootfs": "rootfs-i386.img"},
-        "arm64": {"qemu": "qemu-system-aarch64", "rootfs": "rootfs-arm64.img"},
-        "arm": {"qemu": "qemu-system-arm", "rootfs": "rootfs-arm.img"},
-        "mips": {"qemu": "qemu-system-mips", "rootfs": "rootfs-mips.img"},
-        "mips64": {"qemu": "qemu-system-mips64", "rootfs": "rootfs-mips64.img"},
-        "windows": {"qemu": "qemu-system-x86_64", "rootfs": "windows.qcow2"},
+        "x86_64": {"qemu": "qemu-system-x86_64"},
+        "x86": {"qemu": "qemu-system-i386"},
+        "arm64": {"qemu": "qemu-system-aarch64"},
+        "arm": {"qemu": "qemu-system-arm"},
+        "mips": {"qemu": "qemu-system-mips"},
+        "mips64": {"qemu": "qemu-system-mips64"},
+        "windows": {"qemu": "qemu-system-x86_64"},
     }
+
+    def _get_image_for_architecture(self, architecture: str) -> Path | None:
+        """Get image path for specific architecture using dynamic discovery."""
+        from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
+
+        discovery = get_qemu_discovery()
+        discovered_images = discovery.discover_images()
+
+        # Filter images by architecture
+        matching_images = [img for img in discovered_images if img.architecture == architecture]
+
+        if matching_images:
+            return matching_images[0].path
+
+        # Fallback: search by filename pattern
+        arch_patterns = {
+            "x86_64": ["x86_64", "amd64", "x64"],
+            "x86": ["i386", "i686", "x86"],
+            "arm64": ["arm64", "aarch64"],
+            "arm": ["arm", "armv7"],
+        }
+
+        if architecture in arch_patterns:
+            for img in discovered_images:
+                if any(pattern in img.filename.lower() for pattern in arch_patterns[architecture]):
+                    return img.path
+
+        self.logger.warning("No image found for architecture: %s", architecture)
+        return None
 
     def _set_default_config(self) -> None:
         """Set default configuration parameters from vm_framework config section."""
@@ -2845,7 +2901,7 @@ exit 0
             self.config.set(key, value)
 
     def _get_default_rootfs(self, architecture: str) -> str:
-        """Get default rootfs path for architecture.
+        """Get default rootfs path for architecture using dynamic discovery.
 
         Args:
             architecture: Target architecture
@@ -2854,28 +2910,46 @@ exit 0
             Path to default rootfs image
 
         """
-        # Use project-relative paths instead of absolute paths
-        from pathlib import Path
+        # Use dynamic image discovery
+        image_path = self._get_image_for_architecture(architecture)
 
-        project_root = Path(__file__).parent.parent.parent  # Go up to project root
+        if image_path:
+            return str(image_path)
 
-        # Get rootfs directory from config or use default
+        # Fallback: check config for backward compatibility
         rootfs_dir = self.config.get("rootfs_directory", None)
-        if not rootfs_dir:
-            # Use a subdirectory in the project root
-            rootfs_dir = project_root / "data" / "qemu_images"
-        else:
-            # Make sure it's a Path object
-            rootfs_dir = Path(rootfs_dir)
-            # If it's not absolute, make it relative to project root
-            if not rootfs_dir.is_absolute():
-                rootfs_dir = project_root / rootfs_dir
+        if rootfs_dir:
+            from pathlib import Path
 
-        # Ensure directory exists
-        rootfs_dir.mkdir(parents=True, exist_ok=True)
+            project_root = Path(__file__).parent.parent.parent
+            rootfs_path = Path(rootfs_dir)
 
-        arch_info = self.SUPPORTED_ARCHITECTURES[architecture]
-        return str(rootfs_dir / arch_info["rootfs"])
+            if not rootfs_path.is_absolute():
+                rootfs_path = project_root / rootfs_path
+
+            if rootfs_path.exists():
+                return str(rootfs_path)
+
+        # No image found - create minimal test image
+        from intellicrack.utils.path_resolver import get_qemu_images_dir
+
+        qemu_dir = get_qemu_images_dir()
+        test_image = qemu_dir / f"{architecture}_test.qcow2"
+
+        if not test_image.exists():
+            self.logger.warning("Creating minimal test image for %s", architecture)
+            try:
+                import subprocess
+
+                subprocess.run(
+                    ["qemu-img", "create", "-f", "qcow2", str(test_image), "1G"],
+                    check=True,
+                    capture_output=True,
+                )
+            except Exception as e:
+                self.logger.error("Failed to create test image: %s", e)
+
+        return str(test_image)
 
     def _validate_qemu_setup(self) -> None:
         """Validate QEMU installation and requirements.
@@ -2914,9 +2988,9 @@ exit 0
                 self.logger.info(f"QEMU available: {stdout_parts[0]} {stdout_parts[3]}")
             else:
                 self.logger.info(f"QEMU available: {result.stdout.strip()}")
-
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in qemu_manager: %s", e)
+            logger.error(SUBPROCESS_TIMEOUT_MSG, e)
+            raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
             raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
 
         # Check if rootfs exists (optional for some use cases)
@@ -3251,14 +3325,14 @@ exit 0
             # Force termination
             self.logger.info("Force terminating QEMU process")
             self.qemu_process.terminate()
-
             try:
                 import subprocess
 
                 self.qemu_process.wait(timeout=10)
             except subprocess.TimeoutExpired as e:
-                self.logger.error("Subprocess timeout in qemu_manager: %s", e)
+                self.logger.error(SUBPROCESS_TIMEOUT_MSG, e)
                 self.qemu_process.kill()
+                self.qemu_process.wait()
                 self.qemu_process.wait()
 
             self.logger.info("QEMU process terminated")

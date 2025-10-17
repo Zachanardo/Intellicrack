@@ -460,7 +460,7 @@ class ELFAnalyzer:
 
 
 def analyze_elf_file(file_path: Union[str, Path]) -> Dict[str, Any]:
-    """Convenience function to analyze an ELF file.
+    """Analyze an ELF file.
 
     Args:
         file_path: Path to ELF binary

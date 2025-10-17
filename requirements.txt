@@ -1,5 +1,0 @@
-# Main requirements file for Intellicrack
-# This file points to the actual requirements in the requirements directory
-# For GitHub Actions compatibility
-
--r requirements/base.txt

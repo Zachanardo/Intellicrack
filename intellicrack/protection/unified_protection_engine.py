@@ -3,15 +3,43 @@
 Seamlessly integrates protection detection and custom analysis into a single unified interface.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
+import bz2
 import concurrent.futures
+import math
 import os
+import zlib
+from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List
+
+import numpy as np
+
+try:
+    import lzma
+
+    HAS_LZMA = True
+except ImportError:
+    HAS_LZMA = False
+    lzma = None
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
@@ -22,6 +50,11 @@ from .intellicrack_protection_advanced import (
     IntellicrackAdvancedProtection,
     ScanMode,
 )
+
+logger = get_logger(__name__)
+
+if not HAS_LZMA:
+    logger.warning("LZMA module not available - using zlib compression fallback")
 
 logger = get_logger(__name__)
 
@@ -268,23 +301,37 @@ class UnifiedProtectionEngine:
             if found_patterns:
                 heuristics["suspicious_imports"] = found_patterns
 
-            # Check for high entropy sections (possible packing)
-            import math
+            # Advanced entropy analysis with multiple techniques
+            entropy_results = self._perform_advanced_entropy_analysis(header)
 
-            def calculate_entropy(data):
-                if not data:
-                    return 0
-                entropy = 0
-                for x in range(256):
-                    p_x = data.count(x) / len(data)
-                    if p_x > 0:
-                        entropy += -p_x * math.log2(p_x)
-                return entropy
+            # Determine if packed based on multiple factors
+            packing_indicators = 0
 
-            entropy = calculate_entropy(header)
-            if entropy > 7.5:
-                heuristics["high_entropy_header"] = True
+            if entropy_results["shannon_entropy"] > 7.5:
+                packing_indicators += 2
+                heuristics["high_shannon_entropy"] = entropy_results["shannon_entropy"]
+
+            if entropy_results["sliding_window_max"] > 7.8:
+                packing_indicators += 2
+                heuristics["sliding_window_peak"] = entropy_results["sliding_window_max"]
+
+            if entropy_results["kolmogorov_complexity"] > 0.85:
+                packing_indicators += 1
+                heuristics["high_kolmogorov"] = entropy_results["kolmogorov_complexity"]
+
+            if entropy_results["best_compression_ratio"] < 0.15:
+                packing_indicators += 2
+                heuristics["highly_compressible"] = entropy_results["best_compression_ratio"]
+
+            if not entropy_results["chi_square_random"]:
+                packing_indicators += 1
+                heuristics["chi_square_pvalue"] = entropy_results["chi_square_pvalue"]
+
+            # Multi-factor decision
+            if packing_indicators >= 4:
                 heuristics["likely_packed"] = True
+                heuristics["packing_confidence"] = min(100, packing_indicators * 15)
+                heuristics["entropy_analysis"] = entropy_results
 
             return heuristics
 
@@ -667,7 +714,8 @@ class UnifiedProtectionEngine:
         return removed
 
     def invalidate_cache_for_file(self, file_path: str) -> None:
-        """Invalidate cache entries for a specific file
+        """Invalidate cache entries for a specific file.
+
         This is useful when a file has been modified.
         """
         self.remove_from_cache(file_path)
@@ -681,6 +729,266 @@ class UnifiedProtectionEngine:
         """
         stats = self.cache.get_stats()
         return stats.total_entries, stats.total_size_bytes / (1024 * 1024)
+
+    def _perform_advanced_entropy_analysis(self, data: bytes) -> Dict[str, Any]:
+        """Perform comprehensive entropy analysis using multiple techniques.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            Dictionary containing results from multiple entropy analysis methods
+
+        """
+        results = {
+            "shannon_entropy": self._calculate_shannon_entropy(data),
+            "sliding_window_analysis": {},
+            "kolmogorov_complexity": 0.0,
+            "compression_ratios": {},
+            "chi_square_random": False,
+            "chi_square_pvalue": 1.0,
+            "byte_distribution": {},
+            "entropy_variance": 0.0,
+        }
+
+        # Sliding window entropy analysis
+        window_entropies = self._sliding_window_entropy(data)
+        if window_entropies:
+            results["sliding_window_max"] = max(window_entropies)
+            results["sliding_window_min"] = min(window_entropies)
+            results["sliding_window_avg"] = sum(window_entropies) / len(window_entropies)
+            results["sliding_window_std"] = np.std(window_entropies) if len(window_entropies) > 1 else 0
+            results["entropy_variance"] = np.var(window_entropies) if len(window_entropies) > 1 else 0
+
+        # Kolmogorov complexity estimation via compression
+        results["kolmogorov_complexity"] = self._estimate_kolmogorov_complexity(data)
+
+        # Compression ratio analysis
+        results["compression_ratios"] = self._analyze_compression_ratios(data)
+        results["best_compression_ratio"] = min(results["compression_ratios"].values()) if results["compression_ratios"] else 1.0
+
+        # Chi-square randomness test
+        chi_result = self._chi_square_test(data)
+        results["chi_square_random"] = chi_result["is_random"]
+        results["chi_square_pvalue"] = chi_result["p_value"]
+        results["chi_square_statistic"] = chi_result["statistic"]
+
+        # Byte frequency distribution analysis
+        results["byte_distribution"] = self._analyze_byte_distribution(data)
+
+        return results
+
+    def _calculate_shannon_entropy(self, data: bytes) -> float:
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            Shannon entropy value (0-8 bits)
+
+        """
+        if not data:
+            return 0.0
+
+        # Count byte frequencies
+        byte_counts = Counter(data)
+        data_len = len(data)
+
+        # Calculate entropy
+        entropy = 0.0
+        for count in byte_counts.values():
+            if count > 0:
+                probability = count / data_len
+                entropy -= probability * math.log2(probability)
+
+        return entropy
+
+    def _sliding_window_entropy(self, data: bytes, window_size: int = 256, step_size: int = 128) -> List[float]:
+        """Calculate entropy using sliding window technique.
+
+        Args:
+            data: Binary data to analyze
+            window_size: Size of sliding window
+            step_size: Step size for window movement
+
+        Returns:
+            List of entropy values for each window position
+
+        """
+        if len(data) < window_size:
+            return [self._calculate_shannon_entropy(data)]
+
+        entropies = []
+        for i in range(0, len(data) - window_size + 1, step_size):
+            window_data = data[i : i + window_size]
+            entropy = self._calculate_shannon_entropy(window_data)
+            entropies.append(entropy)
+
+        return entropies
+
+    def _estimate_kolmogorov_complexity(self, data: bytes) -> float:
+        """Estimate Kolmogorov complexity using compression ratio.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            Estimated complexity (0-1, higher means more complex/random)
+
+        """
+        if not data:
+            return 0.0
+
+        try:
+            if HAS_LZMA:
+                compressed = lzma.compress(data, preset=9)
+                complexity = len(compressed) / len(data)
+                return min(1.0, complexity)
+            else:
+                compressed = zlib.compress(data, level=9)
+                complexity = len(compressed) / len(data)
+                return min(1.0, complexity)
+        except Exception:
+            try:
+                compressed = zlib.compress(data, level=9)
+                complexity = len(compressed) / len(data)
+                return min(1.0, complexity)
+            except Exception:
+                return 1.0
+
+    def _analyze_compression_ratios(self, data: bytes) -> Dict[str, float]:
+        """Analyze compression ratios using multiple algorithms.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            Dictionary of compression algorithm names to compression ratios
+
+        """
+        if not data:
+            return {}
+
+        original_size = len(data)
+        ratios = {}
+
+        compression_methods = [
+            ("zlib", lambda d: zlib.compress(d, level=9)),
+            ("gzip", lambda d: zlib.compress(d, level=9)),
+            ("bz2", lambda d: bz2.compress(d, compresslevel=9)),
+        ]
+
+        if HAS_LZMA:
+            compression_methods.append(("lzma", lambda d: lzma.compress(d, preset=9)))
+
+        for name, compress_func in compression_methods:
+            try:
+                compressed = compress_func(data)
+                ratio = len(compressed) / original_size
+                ratios[name] = ratio
+            except Exception:
+                ratios[name] = 1.0
+
+        return ratios
+
+    def _chi_square_test(self, data: bytes, significance_level: float = 0.05) -> Dict[str, Any]:
+        """Perform chi-square test for randomness.
+
+        Args:
+            data: Binary data to analyze
+            significance_level: Significance level for hypothesis testing
+
+        Returns:
+            Dictionary containing test results
+
+        """
+        if not data:
+            return {"is_random": False, "p_value": 1.0, "statistic": 0.0}
+
+        # Expected frequency for uniform distribution
+        expected_freq = len(data) / 256
+
+        # Count observed frequencies
+        observed = Counter(data)
+
+        # Calculate chi-square statistic
+        chi_square = 0.0
+        for byte_val in range(256):
+            observed_freq = observed.get(byte_val, 0)
+            chi_square += ((observed_freq - expected_freq) ** 2) / expected_freq
+
+        # Degrees of freedom = 256 - 1 = 255
+        degrees_of_freedom = 255
+
+        # Critical value for significance level (approximation)
+        # For df=255 and alpha=0.05, critical value ≈ 293
+        critical_value = 293
+
+        # Simple p-value approximation
+        # For large df, chi-square distribution approaches normal
+        mean = degrees_of_freedom
+        std_dev = math.sqrt(2 * degrees_of_freedom)
+        z_score = (chi_square - mean) / std_dev
+
+        # Approximate p-value using normal distribution
+        # This is a simplified calculation
+        if z_score > 3:
+            p_value = 0.001
+        elif z_score > 2:
+            p_value = 0.05
+        elif z_score > 1:
+            p_value = 0.16
+        else:
+            p_value = 0.5
+
+        is_random = chi_square < critical_value
+
+        return {
+            "is_random": is_random,
+            "p_value": p_value,
+            "statistic": chi_square,
+            "critical_value": critical_value,
+            "degrees_of_freedom": degrees_of_freedom,
+        }
+
+    def _analyze_byte_distribution(self, data: bytes) -> Dict[str, Any]:
+        """Analyze byte value distribution characteristics.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            Dictionary containing distribution statistics
+
+        """
+        if not data:
+            return {}
+
+        byte_counts = Counter(data)
+
+        # Calculate distribution statistics
+        frequencies = list(byte_counts.values())
+        unique_bytes = len(byte_counts)
+
+        # Calculate uniformity score (0-1, 1 = perfectly uniform)
+        expected_freq = len(data) / 256
+        deviations = [abs(byte_counts.get(i, 0) - expected_freq) for i in range(256)]
+        max_deviation = max(deviations)
+        uniformity = 1 - (max_deviation / expected_freq) if expected_freq > 0 else 0
+
+        # Find most and least common bytes
+        most_common = byte_counts.most_common(5)
+        least_common_bytes = [b for b in range(256) if byte_counts.get(b, 0) == 0]
+
+        return {
+            "unique_bytes": unique_bytes,
+            "uniformity_score": max(0, min(1, uniformity)),
+            "most_common_bytes": [(byte, count / len(data)) for byte, count in most_common],
+            "zero_frequency_bytes": len(least_common_bytes),
+            "byte_coverage": unique_bytes / 256,
+            "frequency_variance": np.var(frequencies) if frequencies else 0,
+        }
 
 
 # Singleton instance for easy access

@@ -42,8 +42,8 @@ The Protection Analysis tab is located in the main window tab bar:
 
 **Supported File Types:**
 - Windows PE (Portable Executable): .exe, .dll, .sys
-- Linux ELF (Executable and Linkable Format): executables, shared objects
-- macOS Mach-O: executables, dylibs
+- Windows drivers and kernel modules
+- .NET assemblies
 - Generic binary files
 
 ## Manual Analysis

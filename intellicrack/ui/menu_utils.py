@@ -1,4 +1,6 @@
-"""This file is part of Intellicrack.
+"""Menu utilities for Intellicrack UI.
+
+This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
@@ -21,7 +23,7 @@ Menu Utilities
 Common functionality for menu operations to eliminate code duplication.
 """
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 try:
     from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar

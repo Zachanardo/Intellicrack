@@ -10,7 +10,7 @@ This guide covers best practices and recommendations for deploying Intellicrack 
 - CPU: 8 cores (Intel/AMD x64)
 - RAM: 16GB
 - Storage: 100GB SSD
-- OS: Ubuntu 20.04 LTS, RHEL 8+, Windows Server 2019+
+- OS: Windows 11 Pro/Enterprise or Windows Server 2022+
 
 ### Recommended Requirements
 - CPU: 16+ cores
@@ -22,13 +22,12 @@ This guide covers best practices and recommendations for deploying Intellicrack 
 ## Pre-Deployment Checklist
 
 ### Security Hardening
-- [ ] Update all system packages
-- [ ] Configure firewall rules
-- [ ]Configure firewall rules
+- [ ] Update all Windows components
+- [ ] Configure Windows Defender Firewall
 - [ ] Set up SSL/TLS certificates
-- [ ] Enable audit logging
-- [ ] Configure SELinux/AppArmor
-- [ ] Set up intrusion detection
+- [ ] Enable Windows audit logging
+- [ ] Configure Windows Defender
+- [ ] Set up Windows Advanced Threat Protection
 - [ ] Implement rate limiting
 - [ ] Configure backup strategy
 
@@ -44,57 +43,37 @@ This guide covers best practices and recommendations for deploying Intellicrack 
 
 ## Installation Methods
 
-### System Package Installation
+### Windows Installation
 
-#### Ubuntu/Debian
-```bash
-# Add repository
-wget -qO - https://intellicrack.io/gpg.key | apt-key add -
-echo "deb https://intellicrack.io/apt stable main" > /etc/apt/sources.list.d/intellicrack.list
+#### Using Windows Installer
+```batch
+REM Download installer
+curl -O https://github.com/yourusername/intellicrack/releases/latest/download/intellicrack-windows-x64.msi
 
-# Install
-apt update
-apt install intellicrack
+REM Run installer silently
+msiexec /i intellicrack-windows-x64.msi /quiet
 
-# Configure
-intellicrack-config setup
+REM Configure
+intellicrack-config.exe setup
 ```
 
-#### RHEL/CentOS
-```bash
-# Add repository
-cat > /etc/yum.repos.d/intellicrack.repo << EOF
-[intellicrack]
-name=Intellicrack Repository
-baseurl=https://intellicrack.io/rpm/stable
-gpgcheck=1
-gpgkey=https://intellicrack.io/gpg.key
-EOF
+#### Manual Installation
 
-# Install
-yum install intellicrack
+```batch
+REM Download release
+curl -O https://github.com/yourusername/intellicrack/releases/latest/download/intellicrack-windows-x64.zip
 
-# Configure
-intellicrack-config setup
-```
+REM Extract
+Expand-Archive -Path intellicrack-windows-x64.zip -DestinationPath D:\\Intellicrack
 
-### Manual Installation
+REM Install dependencies
+cd D:\\Intellicrack
+pip install -r requirements\base.txt
 
-```bash
-# Download release
-wget https://github.com/yourusername/intellicrack/releases/latest/download/intellicrack-linux-amd64.tar.gz
-
-# Extract
-tar -xzf intellicrack-linux-amd64.tar.gz -C /opt/
-
-# Install dependencies
-cd /opt/intellicrack
-pip install -r requirements/base.txt
-
-# Set up systemd service
-cp contrib/systemd/intellicrack.service /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable intellicrack
+REM Install as Windows Service
+sc create Intellicrack binPath= "D:\\Intellicrack\intellicrack-service.exe"
+sc config Intellicrack start= auto
+sc start Intellicrack
 ```
 
 ## Configuration

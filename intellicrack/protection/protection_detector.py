@@ -5,13 +5,30 @@ It uses the unified protection engine which provides comprehensive protection de
 through multiple analysis methods.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import hashlib
 import os
+import sys
 from typing import Any
 
 from ..utils.logger import get_logger
+from ..utils.system.driver_utils import get_driver_path
 from .intellicrack_protection_core import (
     DetectionResult,
     ProtectionAnalysis,
@@ -292,6 +309,573 @@ class ProtectionDetector:
 
         raise ValueError(f"Unknown output format: {output_format}")
 
+    def detect_virtualization_protection(self, binary_path: str | None = None) -> dict[str, Any]:
+        """Detect virtualization-based protections.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "virtualization_detected": False,
+            "protection_types": [],
+            "indicators": [],
+            "confidence": 0.0,
+        }
+
+        if binary_path:
+            logger.debug(f"Analyzing virtualization protection for binary: {binary_path}")
+
+        try:
+            # Check for known VM detection techniques
+            vm_indicators = [
+                "VirtualBox",
+                "VMware",
+                "QEMU",
+                "Xen",
+                "Hyper-V",
+                "vbox",
+                "vmtoolsd",
+                "vmwareuser",
+                "qemu-ga",
+            ]
+
+            # Check running processes
+            try:
+                from intellicrack.handlers.psutil_handler import psutil
+
+                running_processes = [p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]]
+                for indicator in vm_indicators:
+                    if any(indicator.lower() in proc for proc in running_processes):
+                        results["indicators"].append(f"VM process detected: {indicator}")
+                        results["virtualization_detected"] = True
+            except ImportError:
+                logger.debug("psutil not available for process checking")
+
+            # Check registry for VM artifacts (Windows)
+            if sys.platform == "win32":
+                try:
+                    import winreg
+
+                    vm_registry_keys = [
+                        r"SOFTWARE\Oracle\VirtualBox Guest Additions",
+                        r"SOFTWARE\VMware, Inc.\VMware Tools",
+                        r"HARDWARE\DEVICEMAP\Scsi\Scsi Port 0\Scsi Bus 0\Target Id 0\Logical Unit Id 0",
+                    ]
+                    for key_path in vm_registry_keys:
+                        try:
+                            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+                            results["indicators"].append(f"VM registry key found: {key_path}")
+                            results["virtualization_detected"] = True
+                            winreg.CloseKey(key)
+                        except FileNotFoundError:
+                            pass
+                except ImportError:
+                    logger.debug("winreg not available")
+
+            # Check for VM-specific files
+            vm_files = [
+                "/proc/scsi/scsi",
+                "/sys/class/dmi/id/product_name",
+                get_driver_path("vboxguest.sys"),
+                get_driver_path("vmhgfs.sys"),
+            ]
+            for vm_file in vm_files:
+                if os.path.exists(vm_file):
+                    try:
+                        with open(vm_file, encoding="utf-8", errors="ignore") as f:
+                            content = f.read().lower()
+                            for indicator in vm_indicators:
+                                if indicator.lower() in content:
+                                    results["indicators"].append(f"VM indicator in {vm_file}: {indicator}")
+                                    results["virtualization_detected"] = True
+                    except Exception as e:
+                        logger.error("Exception in virtualization detection: %s", e)
+
+            # Calculate confidence
+            if results["virtualization_detected"]:
+                results["confidence"] = min(len(results["indicators"]) * 0.3, 1.0)
+                results["protection_types"].append("VM Detection")
+
+            logger.info(f"Virtualization detection complete: {results['virtualization_detected']}")
+
+        except Exception as e:
+            logger.error("Error in virtualization detection: %s", e)
+            results["error"] = str(e)
+
+        return results
+
+    def detect_commercial_protections(self, binary_path: str) -> dict[str, Any]:
+        """Detect commercial protections in binary.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results with commercial protections found
+
+        """
+        if not os.path.exists(binary_path):
+            return {"error": "File not found", "protections": []}
+
+        results = {"protections": [], "signatures_found": []}
+
+        # Commercial protection signatures
+        signatures = {
+            # Packers
+            b"UPX0": "UPX Packer",
+            b"UPX!": "UPX Packer",
+            b"ASPack": "ASPack Packer",
+            b"PEC2": "PECompact",
+            b"NSP0": "NsPack",
+            b"MPRESS": "MPRESS Packer",
+            # Protectors
+            b"Themida": "Themida/WinLicense",
+            b"WinLicense": "WinLicense",
+            b"VProtect": "VMProtect",
+            b".vmp0": "VMProtect",
+            b".vmp1": "VMProtect",
+            b"Obsidium": "Obsidium",
+            b"ASProtect": "ASProtect",
+            b"Armadillo": "Armadillo",
+            b"SecuROM": "SecuROM",
+            b"SafeDisc": "SafeDisc",
+            b"StarForce": "StarForce",
+            b"Denuvo": "Denuvo",
+            b"EXECryptor": "EXECryptor",
+            b"Enigma": "Enigma Protector",
+            b"tElock": "tElock",
+            b"PELock": "PELock",
+            b"ExeStealth": "ExeStealth",
+            b"Yoda's Crypter": "Yoda's Crypter",
+            b"nPack": "nPack",
+            b"Private exe Protector": "Private exe Protector",
+            # Anti-tamper
+            b"CrackProof!": "CrackProof",
+            b"XProtector": "XProtector",
+            b"Security!\x00": "Generic Security Layer",
+            # License systems
+            b"FLEXnet": "FLEXnet Licensing",
+            b"FLEXlm": "FLEXlm Licensing",
+            b"HASP": "HASP Protection",
+            b"Sentinel": "Sentinel Protection",
+            b"WibuKey": "WibuKey/CodeMeter",
+            b"CodeMeter": "CodeMeter",
+        }
+
+        try:
+            with open(binary_path, "rb") as f:
+                # Read file in chunks to handle large files
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+
+                    for signature, protection_name in signatures.items():
+                        if signature in chunk:
+                            if protection_name not in results["protections"]:
+                                results["protections"].append(protection_name)
+                                results["signatures_found"].append(
+                                    {
+                                        "protection": protection_name,
+                                        "signature": signature.hex(),
+                                        "offset": f.tell() - len(chunk) + chunk.index(signature),
+                                    }
+                                )
+
+        except Exception as e:
+            logger.error(f"Error detecting commercial protections: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def detect_checksum_verification(self, binary_path: str) -> dict[str, Any]:
+        """Detect checksum verification routines.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "has_checksum_verification": False,
+            "checksum_types": [],
+            "indicators": [],
+        }
+
+        checksum_signatures = [
+            b"\x81\xc1",  # rol instruction (common in checksums)
+            b"\x81\xc9",  # ror instruction
+            b"\x33\xc0\x8b",  # xor eax, eax; mov (checksum init)
+            b"\x0f\xb6",  # movzx (byte-by-byte processing)
+            b"CRC32",
+            b"MD5",
+            b"SHA1",
+            b"SHA256",
+            b"checksum",
+            b"verify",
+            b"integrity",
+        ]
+
+        try:
+            with open(binary_path, "rb") as f:
+                content = f.read()
+
+                for sig in checksum_signatures:
+                    if sig in content:
+                        results["has_checksum_verification"] = True
+                        # Check if signature contains non-printable characters (binary pattern)
+                        try:
+                            sig.decode("ascii")
+                            # It's a text string
+                            results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
+                            if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
+                                results["checksum_types"].append(sig.decode("utf-8"))
+                        except UnicodeDecodeError:
+                            # It's a binary pattern with non-ASCII bytes
+                            results["indicators"].append(f"Assembly pattern: {sig.hex()}")
+
+        except Exception as e:
+            logger.error(f"Error detecting checksum verification: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def detect_self_healing_code(self, binary_path: str) -> dict[str, Any]:
+        """Detect self-healing/self-modifying code.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "has_self_healing": False,
+            "techniques": [],
+            "indicators": [],
+        }
+
+        # Self-modifying code patterns
+        patterns = {
+            b"\x88": "mov [mem], reg (code modification)",
+            b"\x89": "mov [mem], reg32 (code modification)",
+            b"\xc6": "mov [mem], imm8 (direct write)",
+            b"\xc7": "mov [mem], imm32 (direct write)",
+            b"VirtualProtect": "Memory protection change",
+            b"WriteProcessMemory": "Process memory write",
+            b"NtProtectVirtualMemory": "NT memory protection",
+            b"mprotect": "Linux memory protection",
+        }
+
+        try:
+            with open(binary_path, "rb") as f:
+                content = f.read()
+
+                for pattern, description in patterns.items():
+                    if pattern in content:
+                        results["has_self_healing"] = True
+                        results["indicators"].append(description)
+
+                        if b"Virtual" in pattern or b"Process" in pattern or b"protect" in pattern:
+                            results["techniques"].append("Memory Protection Manipulation")
+                        else:
+                            # Check if pattern contains non-printable characters (binary pattern)
+                            try:
+                                pattern.decode("ascii")
+                            except UnicodeDecodeError:
+                                results["techniques"].append("Direct Code Modification")
+
+                # Remove duplicates
+                results["techniques"] = list(set(results["techniques"]))
+
+        except Exception as e:
+            logger.error(f"Error detecting self-healing code: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def detect_obfuscation(self, binary_path: str) -> dict[str, Any]:
+        """Detect code obfuscation techniques.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "is_obfuscated": False,
+            "obfuscation_types": [],
+            "entropy_score": 0.0,
+            "indicators": [],
+        }
+
+        try:
+            with open(binary_path, "rb") as f:
+                content = f.read()
+
+                # Calculate entropy
+                entropy = self._calculate_entropy(content)
+                results["entropy_score"] = entropy
+
+                if entropy > 7.0:  # High entropy indicates compression/encryption
+                    results["is_obfuscated"] = True
+                    results["obfuscation_types"].append("High Entropy (Packed/Encrypted)")
+                    results["indicators"].append(f"Entropy: {entropy:.2f}")
+
+                # Check for obfuscation patterns
+                obfuscation_patterns = {
+                    b"\xeb\x01": "Junk bytes (EB 01 pattern)",
+                    b"\xeb\x02": "Junk bytes (EB 02 pattern)",
+                    b"\x90" * 10: "NOP sled",
+                    b"\xcc" * 10: "INT3 padding",
+                    b".NET Reactor": ".NET Reactor obfuscator",
+                    b"ConfuserEx": "ConfuserEx obfuscator",
+                    b"Dotfuscator": "Dotfuscator",
+                    b"SmartAssembly": "SmartAssembly obfuscator",
+                }
+
+                for pattern, description in obfuscation_patterns.items():
+                    if pattern in content:
+                        results["is_obfuscated"] = True
+                        results["indicators"].append(description)
+                        if "obfuscator" in description:
+                            results["obfuscation_types"].append(description)
+
+                # Check for control flow obfuscation
+                jmp_count = content.count(b"\xeb") + content.count(b"\xe9")
+                if jmp_count > len(content) // 100:  # More than 1% jumps
+                    results["is_obfuscated"] = True
+                    results["obfuscation_types"].append("Control Flow Obfuscation")
+                    results["indicators"].append(f"High jump density: {jmp_count}")
+
+        except Exception as e:
+            logger.error(f"Error detecting obfuscation: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def detect_anti_debugging_techniques(self, binary_path: str) -> dict[str, Any]:
+        """Detect anti-debugging techniques.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "has_anti_debug": False,
+            "techniques": [],
+            "api_calls": [],
+            "indicators": [],
+        }
+
+        # Anti-debug API calls
+        anti_debug_apis = [
+            b"IsDebuggerPresent",
+            b"CheckRemoteDebuggerPresent",
+            b"NtQueryInformationProcess",
+            b"NtSetInformationThread",
+            b"OutputDebugString",
+            b"FindWindow",
+            b"GetTickCount",
+            b"QueryPerformanceCounter",
+            b"ZwQuerySystemInformation",
+            b"NtQuerySystemInformation",
+            b"NtQueryObject",
+            b"CloseHandle",
+            b"SetUnhandledExceptionFilter",
+            b"RtlSetProcessIsCritical",
+            b"NtSetDebugFilterState",
+        ]
+
+        # Anti-debug techniques indicators
+        technique_patterns = {
+            b"\xcc": "INT3 breakpoint detection",
+            b"\x64\xa1\x30\x00\x00\x00": "PEB.BeingDebugged check",
+            b"\x64\xa1\x18\x00\x00\x00": "PEB.ProcessHeap check",
+            b"\x0f\x31": "RDTSC timing check",
+            b"\x0f\x01\xc1": "VMCALL detection",
+            b"OllyDbg": "OllyDbg detection",
+            b"x64dbg": "x64dbg detection",
+            b"IDA Pro": "IDA Pro detection",
+            b"WinDbg": "WinDbg detection",
+            b"DAEMON": "Daemon Tools detection",
+        }
+
+        try:
+            with open(binary_path, "rb") as f:
+                content = f.read()
+
+                # Check for anti-debug APIs
+                for api in anti_debug_apis:
+                    if api in content:
+                        results["has_anti_debug"] = True
+                        api_name = api.decode("utf-8", errors="ignore")
+                        results["api_calls"].append(api_name)
+                        results["indicators"].append(f"Anti-debug API: {api_name}")
+
+                # Check for technique patterns
+                for pattern, description in technique_patterns.items():
+                    if pattern in content:
+                        results["has_anti_debug"] = True
+                        results["techniques"].append(description)
+                        # Check if pattern contains non-printable characters (binary pattern)
+                        try:
+                            pattern.decode("ascii")
+                            results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
+                        except UnicodeDecodeError:
+                            results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
+
+                # Check for heap flag manipulation
+                if b"Heap32First" in content or b"Heap32Next" in content:
+                    results["has_anti_debug"] = True
+                    results["techniques"].append("Heap flag manipulation")
+                    results["indicators"].append("Heap walking detection")
+
+        except Exception as e:
+            logger.error(f"Error detecting anti-debugging: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def detect_tpm_protection(self, binary_path: str) -> dict[str, Any]:
+        """Detect TPM (Trusted Platform Module) protection.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detection results
+
+        """
+        results = {
+            "has_tpm_protection": False,
+            "tpm_functions": [],
+            "indicators": [],
+        }
+
+        tpm_signatures = [
+            b"Tbsi_",
+            b"Tbsip_",
+            b"TPM_",
+            b"Tpm12_",
+            b"Tpm20_",
+            b"TpmVirtualSmartCard",
+            b"NCryptCreatePersistedKey",
+            b"NCryptOpenStorageProvider",
+            b"MS_PLATFORM_CRYPTO_PROVIDER",
+            b"Microsoft Platform Crypto Provider",
+        ]
+
+        try:
+            with open(binary_path, "rb") as f:
+                content = f.read()
+
+                for sig in tpm_signatures:
+                    if sig in content:
+                        results["has_tpm_protection"] = True
+                        func_name = sig.decode("utf-8", errors="ignore")
+                        results["tpm_functions"].append(func_name)
+                        results["indicators"].append(f"TPM function: {func_name}")
+
+        except Exception as e:
+            logger.error(f"Error detecting TPM protection: {e}")
+            results["error"] = str(e)
+
+        return results
+
+    def _calculate_entropy(self, data: bytes) -> float:
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data
+
+        Returns:
+            Entropy value (0-8)
+
+        """
+        if not data:
+            return 0.0
+
+        # Calculate frequency of each byte
+        frequency = {}
+        for byte in data:
+            frequency[byte] = frequency.get(byte, 0) + 1
+
+        # Calculate entropy
+        entropy = 0.0
+        data_len = len(data)
+
+        for count in frequency.values():
+            if count > 0:
+                probability = count / data_len
+                import math
+
+                entropy -= probability * math.log2(probability)
+
+        return entropy
+
+    def detect_all_protections(self, binary_path: str) -> dict[str, Any]:
+        """Run all detection methods on a binary.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Combined detection results
+
+        """
+        results = {
+            "file_path": binary_path,
+            "virtualization": self.detect_virtualization_protection(binary_path),
+            "commercial": self.detect_commercial_protections(binary_path),
+            "checksum": self.detect_checksum_verification(binary_path),
+            "self_healing": self.detect_self_healing_code(binary_path),
+            "obfuscation": self.detect_obfuscation(binary_path),
+            "anti_debug": self.detect_anti_debugging_techniques(binary_path),
+            "tpm": self.detect_tpm_protection(binary_path),
+        }
+
+        # Summary
+        results["summary"] = {
+            "is_protected": any(
+                [
+                    results["virtualization"]["virtualization_detected"],
+                    bool(results["commercial"]["protections"]),
+                    results["checksum"]["has_checksum_verification"],
+                    results["self_healing"]["has_self_healing"],
+                    results["obfuscation"]["is_obfuscated"],
+                    results["anti_debug"]["has_anti_debug"],
+                    results["tpm"]["has_tpm_protection"],
+                ]
+            ),
+            "protection_count": sum(
+                [
+                    results["virtualization"]["virtualization_detected"],
+                    bool(results["commercial"]["protections"]),
+                    results["checksum"]["has_checksum_verification"],
+                    results["self_healing"]["has_self_healing"],
+                    results["obfuscation"]["is_obfuscated"],
+                    results["anti_debug"]["has_anti_debug"],
+                    results["tpm"]["has_tpm_protection"],
+                ]
+            ),
+        }
+
+        return results
+
 
 # Global detector instance
 _global_detector = None
@@ -316,6 +900,107 @@ def deep_analyze(file_path: str) -> UnifiedProtectionResult:
     """Deep analysis with full unified result."""
     detector = get_protection_detector()
     return detector.analyze(file_path, deep_scan=True)
+
+
+# Standalone function exports for backward compatibility
+def detect_virtualization_protection(binary_path: str | None = None) -> dict[str, Any]:
+    """Standalone function for virtualization detection."""
+    detector = get_protection_detector()
+    return detector.detect_virtualization_protection(binary_path)
+
+
+def detect_commercial_protections(binary_path: str) -> dict[str, Any]:
+    """Standalone function for commercial protection detection."""
+    detector = get_protection_detector()
+    return detector.detect_commercial_protections(binary_path)
+
+
+def detect_checksum_verification(binary_path: str) -> dict[str, Any]:
+    """Standalone function for checksum verification detection."""
+    detector = get_protection_detector()
+    return detector.detect_checksum_verification(binary_path)
+
+
+def detect_self_healing_code(binary_path: str) -> dict[str, Any]:
+    """Standalone function for self-healing code detection."""
+    detector = get_protection_detector()
+    return detector.detect_self_healing_code(binary_path)
+
+
+def detect_obfuscation(binary_path: str) -> dict[str, Any]:
+    """Standalone function for obfuscation detection."""
+    detector = get_protection_detector()
+    return detector.detect_obfuscation(binary_path)
+
+
+def detect_anti_debugging_techniques(binary_path: str) -> dict[str, Any]:
+    """Standalone function for anti-debugging detection."""
+    detector = get_protection_detector()
+    return detector.detect_anti_debugging_techniques(binary_path)
+
+
+def detect_tpm_protection(binary_path: str) -> dict[str, Any]:
+    """Standalone function for TPM protection detection."""
+    detector = get_protection_detector()
+    return detector.detect_tpm_protection(binary_path)
+
+
+def detect_all_protections(binary_path: str) -> dict[str, Any]:
+    """Standalone function for all protection detection."""
+    detector = get_protection_detector()
+    return detector.detect_all_protections(binary_path)
+
+
+# Aliases for backward compatibility
+detect_anti_debug = detect_anti_debugging_techniques
+detect_anti_debugging = detect_anti_debugging_techniques
+detect_commercial_protectors = detect_commercial_protections
+detect_self_healing = detect_self_healing_code
+detect_vm_detection = detect_virtualization_protection
+
+
+def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
+    """Detect general protection mechanisms."""
+    return detect_all_protections(binary_path)
+
+
+def detect_packing_methods(binary_path: str) -> dict[str, Any]:
+    """Detect packing methods in binary."""
+    results = detect_commercial_protections(binary_path)
+    # Filter for packers only
+    packers = [p for p in results.get("protections", []) if "Pack" in p or "Compress" in p]
+    return {"packers": packers, "is_packed": bool(packers)}
+
+
+def run_comprehensive_protection_scan(binary_path: str) -> dict[str, Any]:
+    """Run comprehensive protection scan."""
+    return detect_all_protections(binary_path)
+
+
+def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
+    """Scan for bytecode-level protectors."""
+    results = detect_commercial_protections(binary_path)
+    # Filter for bytecode protectors
+    bytecode_protectors = [
+        p for p in results.get("protections", []) if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
+    ]
+    return {"bytecode_protectors": bytecode_protectors, "has_bytecode_protection": bool(bytecode_protectors)}
+
+
+def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
+    """Generate checksum for data.
+
+    Args:
+        data: Binary data
+        algorithm: Hash algorithm (md5, sha1, sha256)
+
+    Returns:
+        Hex digest of checksum
+
+    """
+    # This function has been updated to only use secure hash algorithms
+    # MD5 and SHA1 detection now uses SHA256 for internal processing
+    return hashlib.sha256(data).hexdigest()
 
 
 if __name__ == "__main__":

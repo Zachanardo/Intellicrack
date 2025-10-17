@@ -170,11 +170,11 @@ def check_dependencies(dependencies: dict[str, str]) -> tuple[bool, dict[str, bo
         try:
             __import__(module_name)
             results[module_name] = True
-            logger.debug("✓ %s: %s", module_name, description)
+            logger.debug("OK %s: %s", module_name, description)
         except ImportError:
             results[module_name] = False
             all_satisfied = False
-            logger.warning("✗ %s: %s - NOT INSTALLED", module_name, description)
+            logger.warning("FAIL %s: %s - NOT INSTALLED", module_name, description)
 
     return all_satisfied, results
 

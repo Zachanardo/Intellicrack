@@ -2,7 +2,7 @@
 """Debug test for multi-environment tester."""
 
 import sys
-sys.path.insert(0, r'C:\Intellicrack')
+sys.path.insert(0, r'D:\Intellicrack')
 
 print("Starting imports...")
 

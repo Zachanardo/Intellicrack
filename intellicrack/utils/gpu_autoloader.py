@@ -61,7 +61,7 @@ class GPUAutoLoader:
         for method in methods:
             try:
                 if method():
-                    logger.info(f"✓ GPU configured: {self.gpu_type}")
+                    logger.info(f"OK GPU configured: {self.gpu_type}")
                     logger.info(f"  Device: {self._device_string}")
                     if self.gpu_info:
                         for key, value in self.gpu_info.items():
@@ -107,7 +107,7 @@ class GPUAutoLoader:
                     self._inject_conda_packages(conda_env["path"])
 
             # Use thread-safe PyTorch import
-            from ..utils.torch_gil_safety import safe_torch_import
+            from .torch_gil_safety import safe_torch_import
 
             torch = safe_torch_import()
             if torch is None:
@@ -117,34 +117,18 @@ class GPUAutoLoader:
 
             # Check for Intel Extension with GIL safety handling
             try:
-                # Import with caution due to potential GIL issues
-                # Suppress C++ kernel override warnings during Intel Extension import
-                import warnings
+                from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
 
-                # Set environment variable to suppress PyTorch C++ warnings
-                old_cpp_min_log_level = os.environ.get("TORCH_CPP_LOG_LEVEL")
-                os.environ["TORCH_CPP_LOG_LEVEL"] = "3"  # Only show errors
-
-                # Suppress Python warnings during import
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=UserWarning, message=".*operator.*overridden.*")
-                    warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*deprecated.*")
-                    warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*pkg_resources.*")
-
-                    import intel_extension_for_pytorch as ipex
-
+                if HAS_IPEX:
                     self._ipex = ipex
-                    logger.debug("Intel Extension for PyTorch imported successfully")
-
-                # Restore original C++ log level
-                if old_cpp_min_log_level is not None:
-                    os.environ["TORCH_CPP_LOG_LEVEL"] = old_cpp_min_log_level
+                    logger.debug("Intel Extension for PyTorch imported successfully via handler")
                 else:
-                    os.environ.pop("TORCH_CPP_LOG_LEVEL", None)
+                    logger.debug("Intel Extension for PyTorch not available (see ipex_handler logs)")
+                    self._ipex = None
+                    return False
 
-            except (ImportError, RuntimeError) as e:
-                logger.debug(f"Intel Extension for PyTorch not available or failed to load: {e}")
-                # Continue with regular PyTorch without IPEX optimizations
+            except Exception as e:
+                logger.warning(f"Failed to import Intel Extension handler: {e}")
                 self._ipex = None
 
             # Check XPU availability with defensive programming
@@ -197,7 +181,7 @@ class GPUAutoLoader:
         """Try to use NVIDIA CUDA."""
         try:
             # Use thread-safe PyTorch import
-            from ..utils.torch_gil_safety import safe_torch_import
+            from .torch_gil_safety import safe_torch_import
 
             torch = safe_torch_import()
             if torch is None:
@@ -238,7 +222,7 @@ class GPUAutoLoader:
         """Try to use AMD ROCm."""
         try:
             # Use thread-safe PyTorch import
-            from ..utils.torch_gil_safety import safe_torch_import
+            from .torch_gil_safety import safe_torch_import
 
             torch = safe_torch_import()
             if torch is None:
@@ -281,7 +265,7 @@ class GPUAutoLoader:
         """Try to use DirectML (works with Intel Arc on Windows)."""
         try:
             # Use thread-safe PyTorch import
-            from ..utils.torch_gil_safety import safe_torch_import
+            from .torch_gil_safety import safe_torch_import
 
             torch = safe_torch_import()
             if torch is None:
@@ -309,7 +293,7 @@ class GPUAutoLoader:
         """Fallback to CPU."""
         try:
             # Use thread-safe PyTorch import
-            from ..utils.torch_gil_safety import safe_torch_import
+            from .torch_gil_safety import safe_torch_import
 
             torch = safe_torch_import()
 
@@ -636,18 +620,19 @@ def detect_gpu_frameworks() -> dict[str, Any]:
 
     # Check for Intel XPU
     try:
-        import intel_extension_for_pytorch as ipex
         import torch
 
-        if hasattr(torch, "xpu") and torch.xpu.is_available():
+        from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
+
+        if HAS_IPEX and hasattr(torch, "xpu") and torch.xpu.is_available():
             frameworks["intel_xpu"] = True
             frameworks["ipex_version"] = ipex.__version__
             frameworks["available_frameworks"].append("Intel XPU")
             # Get XPU device info
             for i in range(torch.xpu.device_count()):
                 frameworks["gpu_devices"].append({"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)})
-    except ImportError:
-        pass
+    except (ImportError, Exception) as e:
+        logger.debug(f"XPU device detection failed: {e}")
 
     # Check for Vulkan compute
     try:

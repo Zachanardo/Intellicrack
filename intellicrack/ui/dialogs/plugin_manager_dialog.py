@@ -2504,32 +2504,32 @@ if __name__ == '__main__':
 
                 # Try to compile the code
                 compile(content, plugin_file, "exec")
-                self.test_output.append("✓ Syntax check passed")
+                self.test_output.append("OK Syntax check passed")
 
                 # Check for required components
                 if "class " in content and "Plugin" in content:
-                    self.test_output.append("✓ Plugin class found")
+                    self.test_output.append("OK Plugin class found")
                 else:
-                    self.test_output.append("⚠ Warning: No plugin class found")
+                    self.test_output.append("WARNING Warning: No plugin class found")
 
                 if "def execute(" in content:
-                    self.test_output.append("✓ Execute method found")
+                    self.test_output.append("OK Execute method found")
                 else:
-                    self.test_output.append("⚠ Warning: No execute method found")
+                    self.test_output.append("WARNING Warning: No execute method found")
 
                 if "PLUGIN_INFO" in content:
-                    self.test_output.append("✓ Plugin metadata found")
+                    self.test_output.append("OK Plugin metadata found")
                 else:
-                    self.test_output.append("⚠ Warning: No plugin metadata found")
+                    self.test_output.append("WARNING Warning: No plugin metadata found")
 
                 self.test_output.append("\n✅ Plugin test completed successfully")
 
             except SyntaxError as e:
                 logger.error("SyntaxError in plugin_manager_dialog: %s", e)
-                self.test_output.append(f"❌ Syntax error: {e}")
+                self.test_output.append(f"ERROR Syntax error: {e}")
             except Exception as e:
                 logger.error("Exception in plugin_manager_dialog: %s", e)
-                self.test_output.append(f"❌ Test failed: {e}")
+                self.test_output.append(f"ERROR Test failed: {e}")
 
         def refresh_plugins(self):
             """Refresh installed plugin lists."""

@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 import yaml
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 """
 CI/CD Integration for Intellicrack Plugin Development.
@@ -96,7 +96,7 @@ class CICDPipeline:
                 self.results["stages"][stage] = stage_result
 
                 if not stage_result["success"]:
-                    print(f"❌ Stage '{stage}' failed!")
+                    print(f"ERROR Stage '{stage}' failed!")
                     self.results["overall_status"] = "failed"
                     break
                 else:
@@ -541,7 +541,7 @@ Stage Results:
 """
 
         for stage, result in self.results["stages"].items():
-            status = "✅ PASSED" if result["success"] else "❌ FAILED"
+            status = "✅ PASSED" if result["success"] else "ERROR FAILED"
             report_text += f"\n{stage}: {status}"
 
             if result.get("errors"):

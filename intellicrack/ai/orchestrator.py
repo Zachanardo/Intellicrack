@@ -29,7 +29,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from intellicrack.logger import logger
+from intellicrack.utils.logger import logger
 
 from ..utils.logger import get_logger
 
@@ -413,7 +413,7 @@ class AIOrchestrator:
         logger.info("Task processing stopped")
 
     def _process_tasks(self):
-        """Main task processing loop."""
+        """Process tasks in the main loop."""
         while self.is_running:
             try:
                 # Get next task (blocking with timeout)
@@ -954,8 +954,8 @@ class AIOrchestrator:
             # Import QEMU test manager
             from .qemu_manager import QEMUManager
 
-            # Create test manager
-            test_manager = QEMUManager()
+            # Create QEMU execution manager
+            qemu_manager = QEMUManager()
             components_used.append("qemu_manager")
 
             # Extract task parameters
@@ -964,32 +964,32 @@ class AIOrchestrator:
             binary_path = task.input_data.get("binary_path", "unknown")
 
             # Create QEMU snapshot
-            snapshot_id = test_manager.create_snapshot(binary_path)
+            snapshot_id = qemu_manager.create_snapshot(binary_path)
 
             # Test script based on type
             if script_type.lower() == "frida":
-                test_result = test_manager.test_frida_script(snapshot_id, script_content, binary_path)
+                execution_result = qemu_manager.validate_frida_script(snapshot_id, script_content, binary_path)
             else:
-                test_result = test_manager.test_ghidra_script(snapshot_id, script_content, binary_path)
+                execution_result = qemu_manager.validate_ghidra_script(snapshot_id, script_content, binary_path)
 
-            result_data["test_result"] = {
-                "success": test_result.success,
-                "output": test_result.output,
-                "error": test_result.error,
-                "exit_code": test_result.exit_code,
-                "runtime_ms": test_result.runtime_ms,
+            result_data["execution_result"] = {
+                "success": execution_result.success,
+                "output": execution_result.output,
+                "error": execution_result.error,
+                "exit_code": execution_result.exit_code,
+                "runtime_ms": execution_result.runtime_ms,
                 "snapshot_id": snapshot_id,
             }
 
-            confidence = 0.9 if test_result.success else 0.3
+            confidence = 0.9 if execution_result.success else 0.3
 
             # Cleanup snapshot
-            test_manager.cleanup_snapshot(snapshot_id)
+            qemu_manager.cleanup_snapshot(snapshot_id)
 
             logger.info(
                 "Script testing completed for %s: %s",
                 binary_path,
-                "SUCCESS" if test_result.success else "FAILED",
+                "SUCCESS" if execution_result.success else "FAILED",
             )
 
         except Exception as e:
@@ -1015,11 +1015,11 @@ class AIOrchestrator:
 
             # Extract task parameters
             original_script = task.input_data.get("original_script", "")
-            test_results = task.input_data.get("test_results", {})
+            execution_results = task.input_data.get("test_results", {})
             analysis_data = task.input_data.get("analysis_data", {})
 
-            # Refine script based on test results
-            refined_script = script_generator.refine_script(original_script, test_results, analysis_data)
+            # Refine script based on execution results
+            refined_script = script_generator.refine_script(original_script, execution_results, analysis_data)
 
             if refined_script:
                 result_data["refined_script"] = refined_script.content

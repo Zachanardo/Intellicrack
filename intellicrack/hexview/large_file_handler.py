@@ -242,7 +242,7 @@ class MemoryMonitor:
         logger.debug("Memory monitoring stopped")
 
     def _monitor_loop(self):
-        """Main monitoring loop."""
+        """Run main monitoring loop."""
         while self.monitoring:
             try:
                 if PSUTIL_AVAILABLE:
@@ -316,7 +316,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                 logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
     def run(self):
-        """Main loading loop."""
+        """Run main loading loop."""
         try:
             with open(self.file_path, "rb") as file:
                 while not self.should_stop:

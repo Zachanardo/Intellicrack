@@ -27,7 +27,7 @@ import frida
 
 
 def on_message(main_app, message, data):
-    """Callback for handling messages from Frida scripts."""
+    """Handle messages from Frida scripts."""
     if message["type"] == "send":
         payload = message["payload"]
         main_app.update_output.emit(f"[Frida] {payload}")
@@ -36,7 +36,8 @@ def on_message(main_app, message, data):
 
 
 def run_instrumentation_thread(main_app, binary_path, script_source):
-    """The actual instrumentation logic that runs in a separate thread
+    """Run instrumentation logic in a separate thread.
+
     to avoid blocking the main UI.
     """
     try:
@@ -78,7 +79,8 @@ def run_instrumentation_thread(main_app, binary_path, script_source):
 
 
 def run_dynamic_instrumentation(main_app):
-    """Launches a dynamic instrumentation session using Frida. This function
+    """Launch dynamic instrumentation session using Frida. This function.
+
     is designed to be called from the main UI thread.
     """
     if not main_app.current_binary:

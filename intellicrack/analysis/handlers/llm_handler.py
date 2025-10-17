@@ -4,10 +4,24 @@ Manages the integration between protection analysis results and LLM tools,
 allowing AI models to answer questions about detected protections.
 
 Copyright (C) 2025 Zachary Flint
-Licensed under GNU General Public License v3.0
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
@@ -217,7 +231,7 @@ class LLMHandler(QObject):
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: UnifiedProtectionResult | None = None
+        self.current_result: Optional["UnifiedProtectionResult"] = None
         self.icp_tool = ICPAnalysisTool()
 
         # Register the tool with LLM manager
@@ -235,7 +249,7 @@ class LLMHandler(QObject):
             logger.error(f"Failed to register LLM tool: {e}")
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes.
+        """Handle slot when protection analysis completes.
 
         This method runs in the main thread and kicks off background
         LLM operations.
@@ -277,7 +291,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def get_cached_result(self) -> UnifiedProtectionResult | None:
+    def get_cached_result(self) -> Optional["UnifiedProtectionResult"]:
         """Get the current cached analysis result."""
         return self.current_result
 

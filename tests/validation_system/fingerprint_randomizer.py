@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import psutil
-import wmi
+from intellicrack.handlers.wmi_handler import wmi
 
 logger = logging.getLogger(__name__)
 
@@ -611,7 +611,6 @@ class FingerprintRandomizer:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as key:
                 original = winreg.QueryValueEx(key, 'ProductId')[0]
 
-                # Generate new product ID format: XXXXX-XXXXX-XXXXX-XXXXX
                 new_id = '-'.join([''.join(secrets.SystemRandom().choices(string.digits, k=5)) for _ in range(4)])
 
                 winreg.SetValueEx(key, 'ProductId', 0, winreg.REG_SZ, new_id)
@@ -793,15 +792,27 @@ class FingerprintRandomizer:
 
             try:
                 if change.revert_method == 'registry':
-                    # Revert registry changes
-                    # Implementation would restore original values
+                    key_path, value_name = change.item.rsplit('\\', 1)
+                    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as key:
+                        if isinstance(change.original_value, str):
+                            winreg.SetValueEx(key, value_name, 0, winreg.REG_SZ, change.original_value)
+                        elif isinstance(change.original_value, int):
+                            winreg.SetValueEx(key, value_name, 0, winreg.REG_DWORD, change.original_value)
+                        else:
+                            winreg.SetValueEx(key, value_name, 0, winreg.REG_BINARY, bytes(change.original_value))
+                    logger.debug("Reverted registry change: %s", change.item)
                     results['reverted'] += 1
                 elif change.revert_method == 'command':
-                    # Revert command-based changes
+                    if hasattr(change, 'revert_command') and change.revert_command:
+                        subprocess.run(change.revert_command, shell=True, check=True,
+                                     capture_output=True, timeout=30)
+                        logger.debug("Reverted command-based change: %s", change.item)
                     results['reverted'] += 1
                 else:
+                    logger.warning("Unknown revert method for %s: %s", change.item, change.revert_method)
                     results['failed'] += 1
             except Exception as e:
+                logger.error("Failed to revert %s: %s", change.item, str(e))
                 results['failed'] += 1
                 results['errors'].append(f"{change.item}: {str(e)}")
 
@@ -955,7 +966,7 @@ def run_fingerprint_randomization():
         print(f"  Overall: {report['effectiveness']['overall']:.1f}%")
 
     # Save report
-    output_dir = Path(r"C:\Intellicrack\tests\validation_system\reports")
+    output_dir = Path(r"D:\Intellicrack\tests\validation_system\reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")

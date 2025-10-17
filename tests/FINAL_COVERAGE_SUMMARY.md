@@ -88,8 +88,8 @@
 ### Immediate Actions Required
 1. **Install Dependencies**:
    ```bash
-   mamba activate C:\Intellicrack\mamba_env
-   mamba install pyqt frida yara-python onnx ray dask cupy keyring paramiko aiohttp pynvml
+   pixi shell
+   pixi add pyqt frida yara-python onnx ray dask cupy keyring paramiko aiohttp pynvml
    ```
 
 2. **Configure AI Services**:

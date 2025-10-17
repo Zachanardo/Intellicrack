@@ -85,6 +85,36 @@ except ImportError as e:
     create_gguf_config = create_ollama_config = None
 
 try:
+    from .api_provider_clients import (
+        AnthropicProviderClient,
+        BaseProviderClient,
+        LMStudioProviderClient,
+        LocalProviderClient,
+        ModelInfo,
+        OllamaProviderClient,
+        OpenAIProviderClient,
+        ProviderManager,
+        get_provider_manager,
+    )
+except ImportError as e:
+    logger.warning("Failed to import api_provider_clients: %s", e)
+    BaseProviderClient = OpenAIProviderClient = AnthropicProviderClient = None
+    OllamaProviderClient = LMStudioProviderClient = LocalProviderClient = None
+    ModelInfo = ProviderManager = get_provider_manager = None
+
+try:
+    from .model_discovery_service import ModelDiscoveryService, get_model_discovery_service
+except ImportError as e:
+    logger.warning("Failed to import model_discovery_service: %s", e)
+    ModelDiscoveryService = get_model_discovery_service = None
+
+try:
+    from .llm_config_manager import LLMConfigManager, get_llm_config_manager
+except ImportError as e:
+    logger.warning("Failed to import llm_config_manager: %s", e)
+    LLMConfigManager = get_llm_config_manager = None
+
+try:
     from .orchestrator import (
         AIEventBus,
         AIOrchestrator,
@@ -126,18 +156,12 @@ except ImportError as e:
     logger.warning("Failed to import parsing_utils: %s", e)
     ResponseLineParser = None
 
-# Import new exploitation AI modules
+# Import licensing protection analysis AI modules
 try:
-    from .vulnerability_research_integration import VulnerabilityResearchAI
+    from .vulnerability_research_integration import LicensingProtectionAnalyzer
 except ImportError as e:
     logger.warning("Failed to import vulnerability_research_integration: %s", e)
-    VulnerabilityResearchAI = None
-
-try:
-    from .exploitation_orchestrator import ExploitationOrchestrator
-except ImportError as e:
-    logger.warning("Failed to import exploitation_orchestrator: %s", e)
-    ExploitationOrchestrator = None
+    LicensingProtectionAnalyzer = None
 
 # Import advanced AI system components
 try:
@@ -191,26 +215,6 @@ except ImportError as e:
     SemanticCodeAnalyzer = SemanticIntent = BusinessLogicPattern = None
     SemanticNode = SemanticRelationship = None
 
-try:
-    from .exploit_chain_builder import (
-        AutomatedExploitChainBuilder,
-        ChainComplexity,
-        ExploitChain,
-        ExploitChainFramework,
-        ExploitPrimitive,
-        ExploitPrimitiveLibrary,
-        ExploitStep,
-        ExploitType,
-        SafetyVerificationSystem,
-        Vulnerability,
-        exploit_chain_builder,
-    )
-except ImportError as e:
-    logger.warning("Failed to import exploit_chain_builder: %s", e)
-    AutomatedExploitChainBuilder = ExploitChainFramework = None
-    ExploitPrimitiveLibrary = SafetyVerificationSystem = None
-    Vulnerability = ExploitType = ExploitPrimitive = None
-    ExploitStep = ExploitChain = ChainComplexity = exploit_chain_builder = None
 
 try:
     from .performance_optimization_layer import (
@@ -281,10 +285,10 @@ except ImportError as e:
 
 # Import AI script generation system components
 try:
-    from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult, ScriptType
+    from .ai_script_generator import AIScriptGenerator, ScriptType
 except ImportError as e:
     logger.warning("Failed to import ai_script_generator: %s", e)
-    AIScriptGenerator = ScriptType = ScriptGenerationResult = None
+    AIScriptGenerator = ScriptType = None
 
 try:
     from .autonomous_agent import AutonomousAgent
@@ -390,9 +394,8 @@ __all__ = [
     "IntellicrackAIAssistant",
     "Tool",
     "ToolCategory",
-    # From exploitation modules
-    "VulnerabilityResearchAI",
-    "ExploitationOrchestrator",
+    # From licensing protection analysis modules
+    "LicensingProtectionAnalyzer",
     # From advanced AI system components
     "AILearningEngine",
     "LearningRecord",
@@ -415,21 +418,9 @@ __all__ = [
     "BusinessLogicPattern",
     "SemanticNode",
     "SemanticRelationship",
-    "AutomatedExploitChainBuilder",
-    "ExploitChainFramework",
-    "ExploitPrimitiveLibrary",
-    "SafetyVerificationSystem",
-    "Vulnerability",
-    "ExploitType",
-    "ExploitPrimitive",
-    "ExploitStep",
-    "ExploitChain",
-    "ChainComplexity",
-    "exploit_chain_builder",
     # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
-    "ScriptGenerationResult",
     "AutonomousAgent",
     "IntelligentCodeModifier",
     "CodeChange",
@@ -466,6 +457,22 @@ __all__ = [
     "create_anthropic_config",
     "create_gguf_config",
     "create_ollama_config",
+    # From api_provider_clients (Dynamic Model Discovery)
+    "BaseProviderClient",
+    "OpenAIProviderClient",
+    "AnthropicProviderClient",
+    "OllamaProviderClient",
+    "LMStudioProviderClient",
+    "LocalProviderClient",
+    "ModelInfo",
+    "ProviderManager",
+    "get_provider_manager",
+    # From model_discovery_service
+    "ModelDiscoveryService",
+    "get_model_discovery_service",
+    # From llm_config_manager
+    "LLMConfigManager",
+    "get_llm_config_manager",
     # From parsing_utils
     "ResponseLineParser",
 ]

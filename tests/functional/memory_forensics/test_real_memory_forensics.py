@@ -1,3 +1,15 @@
+"""
+Functional tests for Intellicrack's memory forensics capabilities.
+
+This module contains comprehensive tests for memory forensics operations in Intellicrack,
+including memory dump analysis, credential extraction, network artifact extraction,
+code injection detection, registry artifact analysis, encryption key extraction,
+process memory analysis, timeline reconstruction, volatility profile detection,
+memory carving operations, memory diffing analysis, and live memory acquisition.
+These tests ensure the memory forensics engine works correctly with real memory dumps
+containing various artifacts and indicators of compromise.
+"""
+
 import pytest
 import tempfile
 import os
