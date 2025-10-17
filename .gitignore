@@ -397,6 +397,8 @@ tools/icp_engine/
 tools/icp_engine/**
 *.dll
 *.exe
+!tools/AdobeInjector/AdobeInjector.exe
+!tools/AdobeInjector/wintrust.dll
 *.ini
 Qt*.dll
 vcruntime*.dll
