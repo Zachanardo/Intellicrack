@@ -72,13 +72,41 @@ impl SecurityManager {
     fn load_security_config() -> Result<SecurityConfig> {
         info!("Loading security configuration");
 
-        let config_paths = [
-            PathBuf::from("config/intellicrack_config.json"),
-            dirs::home_dir()
-                .unwrap_or_else(|| PathBuf::from("."))
-                .join(".intellicrack/intellicrack_config.json"),
-            PathBuf::from("../config/intellicrack_config.json"),
-        ];
+        let mut config_paths = Vec::new();
+
+        if let Ok(exe_path) = env::current_exe()
+            && let Some(exe_dir) = exe_path.parent()
+        {
+            debug!("Executable directory: {:?}", exe_dir);
+
+            config_paths.push(exe_dir.join("config/intellicrack_config.json"));
+            config_paths.push(exe_dir.join("../config/intellicrack_config.json"));
+
+            let mut current_dir = exe_dir;
+            for _ in 0..5 {
+                let potential_config = current_dir.join("config/intellicrack_config.json");
+                config_paths.push(potential_config);
+
+                if let Some(parent) = current_dir.parent() {
+                    current_dir = parent;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if let Ok(cwd) = env::current_dir() {
+            debug!("Current working directory: {:?}", cwd);
+            config_paths.push(cwd.join("config/intellicrack_config.json"));
+            config_paths.push(cwd.join("../config/intellicrack_config.json"));
+        }
+
+        config_paths.push(PathBuf::from("config/intellicrack_config.json"));
+        config_paths.push(PathBuf::from("../config/intellicrack_config.json"));
+
+        if let Some(home_dir) = dirs::home_dir() {
+            config_paths.push(home_dir.join(".intellicrack/intellicrack_config.json"));
+        }
 
         for config_path in &config_paths {
             if config_path.exists() {
@@ -105,6 +133,8 @@ impl SecurityManager {
                                         );
                                     }
                                 }
+                            } else {
+                                debug!("No 'security' section found in config at: {:?}", config_path);
                             }
                         }
                         Err(e) => {
@@ -123,6 +153,7 @@ impl SecurityManager {
         }
 
         warn!("No valid security configuration found, using defaults");
+        debug!("Searched paths: {:#?}", config_paths);
         Ok(Self::get_default_security_config())
     }
 
@@ -684,7 +715,13 @@ mod tests {
 
         // Disallowed extension should fail
         let exe_file = temp_dir.path().join("malware.exe");
-        fs::write(&exe_file, "fake exe").unwrap();
+        let pe_header: Vec<u8> = vec![
+            0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00,
+            0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
+            0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ];
+        fs::write(&exe_file, pe_header).unwrap();
         assert!(manager.validate_file_input(&exe_file, "read").is_err());
     }
 

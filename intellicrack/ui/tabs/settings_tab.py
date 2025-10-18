@@ -127,12 +127,12 @@ class SettingsTab(BaseTab):
         save_btn = QPushButton("Save Settings")
         save_btn.setToolTip("Save all current settings and preferences to the configuration file")
         save_btn.clicked.connect(self.save_settings)
-        save_btn.setStyleSheet("font-weight: bold; color: green;")
+        save_btn.setObjectName("saveButton")
 
         reset_btn = QPushButton("Reset to Defaults")
         reset_btn.setToolTip("Reset all settings to their default values. This action cannot be undone")
         reset_btn.clicked.connect(self.reset_to_defaults)
-        reset_btn.setStyleSheet("color: red;")
+        reset_btn.setObjectName("resetButton")
 
         export_btn = QPushButton("Export Settings")
         export_btn.setToolTip("Export current settings to a JSON file for backup or sharing")
@@ -174,7 +174,8 @@ class SettingsTab(BaseTab):
         color_layout.addWidget(QLabel("Accent Color:"))
         self.accent_color_btn = QPushButton("Select Color")
         self.accent_color_btn.clicked.connect(self.select_accent_color)
-        self.accent_color_btn.setStyleSheet(f"background-color: {self.settings.get('accent_color', '#0078d4')};")
+        current_color = self.settings.get('accent_color', '#0078d4')
+        self.accent_color_btn.setStyleSheet(f"background-color: {current_color}; color: white; border: 2px solid #888888;")
         color_layout.addWidget(self.accent_color_btn)
         color_layout.addStretch()
 
@@ -248,13 +249,19 @@ class SettingsTab(BaseTab):
 
         # Show tooltips
         self.show_tooltips_cb = QCheckBox("Show Tooltips")
-        self.show_tooltips_cb.setChecked(self.settings.get("show_tooltips", True))
+        current_tooltip_state = self.settings.get("show_tooltips", True)
+        self.show_tooltips_cb.setChecked(current_tooltip_state)
         self.show_tooltips_cb.stateChanged.connect(self.on_tooltips_toggled)
 
+        QTimer.singleShot(500, lambda: self.apply_tooltip_settings(current_tooltip_state))
+
         # Animations
-        self.enable_animations_cb = QCheckBox("Enable Animations")
-        self.enable_animations_cb.setChecked(self.settings.get("enable_animations", True))
+        self.enable_animations_cb = QCheckBox("Enable Smooth Animations")
+        current_animation_state = self.settings.get("enable_animations", True)
+        self.enable_animations_cb.setChecked(current_animation_state)
         self.enable_animations_cb.stateChanged.connect(self.on_animations_toggled)
+
+        QTimer.singleShot(100, lambda: self.apply_animation_settings(current_animation_state))
 
         icon_layout.addLayout(icon_size_layout)
         icon_layout.addWidget(self.show_tooltips_cb)
@@ -1224,30 +1231,41 @@ class SettingsTab(BaseTab):
         if color.isValid():
             color_hex = color.name()
             self.settings["accent_color"] = color_hex
-            self.accent_color_btn.setStyleSheet(f"background-color: {color_hex};")
+            self.accent_color_btn.setStyleSheet(f"background-color: {color_hex}; color: white; border: 2px solid #888888;")
             self.apply_accent_color(color_hex)
             self.update_preview()
 
     def apply_accent_color(self, color_hex):
-        """Apply accent color dynamically to the application stylesheet by replacing the previous accent color."""
+        """Apply accent color by re-applying the theme and replacing default accent colors."""
+        import re
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()
         if not app:
             return
 
+        from intellicrack.ui.theme_manager import get_theme_manager
+
+        theme_manager = get_theme_manager()
+        theme_manager._apply_theme()
+
         current_stylesheet = app.styleSheet()
 
-        old_color_upper = self._current_accent_color.upper()
-        old_color_lower = self._current_accent_color.lower()
-        new_color_upper = color_hex.upper()
-        new_color_lower = color_hex.lower()
+        default_accent_colors = ["#0078D4", "#0078d4"]
 
-        updated_stylesheet = current_stylesheet.replace(old_color_upper, new_color_upper).replace(old_color_lower, new_color_lower)
+        updated_stylesheet = current_stylesheet
+        for default_color in default_accent_colors:
+            pattern = re.compile(re.escape(default_color), re.IGNORECASE)
+            updated_stylesheet = pattern.sub(color_hex, updated_stylesheet)
+
+        if self._current_accent_color and self._current_accent_color not in default_accent_colors:
+            old_color_pattern = re.compile(re.escape(self._current_accent_color), re.IGNORECASE)
+            updated_stylesheet = old_color_pattern.sub(color_hex, updated_stylesheet)
 
         app.setStyleSheet(updated_stylesheet)
-
         self._current_accent_color = color_hex
+
+        self.logger.info(f"Applied accent color: {color_hex}")
 
     def on_ui_font_changed(self, font):
         """Handle UI font change."""
@@ -1321,28 +1339,48 @@ class SettingsTab(BaseTab):
         self.update_preview()
 
     def apply_tooltip_settings(self, enabled):
-        """Apply tooltip settings to all widgets in the application using WeakKeyDictionary."""
+        """Apply tooltip settings to all widgets in the application.
+
+        Args:
+            enabled: Boolean indicating whether tooltips should be shown.
+                    When False, stores current tooltips and clears them from all widgets.
+                    When True, restores previously stored tooltips to all widgets.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()
         if not app:
             return
 
+        all_widgets = app.allWidgets()
+
         if not enabled:
-            for widget in app.allWidgets():
+            for widget in all_widgets:
+                if widget is None:
+                    continue
                 tooltip = widget.toolTip()
                 if tooltip:
                     try:
                         self._original_tooltips[widget] = tooltip
-                    except TypeError:
+                        widget.setToolTip("")
+                    except (TypeError, RuntimeError):
                         pass
-                widget.setToolTip("")
                 widget.setToolTipDuration(0)
+            self.logger.info(f"Tooltips disabled. Stored {len(self._original_tooltips)} tooltips.")
         else:
-            for widget in app.allWidgets():
-                if widget in self._original_tooltips:
-                    widget.setToolTip(self._original_tooltips[widget])
-                widget.setToolTipDuration(-1)
+            restored_count = 0
+            for widget in all_widgets:
+                if widget is None:
+                    continue
+                try:
+                    if widget in self._original_tooltips:
+                        widget.setToolTip(self._original_tooltips[widget])
+                        restored_count += 1
+                    widget.setToolTipDuration(-1)
+                except (TypeError, RuntimeError):
+                    pass
+            self.logger.info(f"Tooltips enabled. Restored {restored_count} tooltips.")
 
     def on_animations_toggled(self, state):
         """Handle animations toggle."""
@@ -1352,7 +1390,14 @@ class SettingsTab(BaseTab):
         self.update_preview()
 
     def apply_animation_settings(self, enabled):
-        """Apply animation settings by adding instant-transition style override to stylesheet."""
+        """Apply smooth animation settings to UI elements.
+
+        Args:
+            enabled: Boolean indicating whether smooth animations should be active.
+                    When True, injects CSS transitions (0.2s ease-in-out) into the application stylesheet.
+                    When False, disables all transitions by setting duration to 0s.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()
@@ -1361,7 +1406,7 @@ class SettingsTab(BaseTab):
 
         current_stylesheet = app.styleSheet()
 
-        animations_override = """
+        disable_animations = """
 /* Disable all animations - instant transitions */
 * {
     transition-duration: 0s !important;
@@ -1369,17 +1414,50 @@ class SettingsTab(BaseTab):
 }
 """
 
-        if not enabled:
-            if "/* Disable all animations - instant transitions */" not in current_stylesheet:
-                app.setStyleSheet(current_stylesheet + animations_override)
+        enable_animations = """
+/* Enable smooth animations and transitions */
+QPushButton, QComboBox, QCheckBox::indicator, QRadioButton::indicator,
+QSlider::handle, QTabBar::tab {
+    transition: all 0.2s ease-in-out;
+}
+
+QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
+    transition: all 0.15s ease-in-out;
+}
+"""
+
+        marker_disable = "/* Disable all animations - instant transitions */"
+        marker_enable = "/* Enable smooth animations and transitions */"
+
+        has_disable = marker_disable in current_stylesheet
+        has_enable = marker_enable in current_stylesheet
+
+        if enabled:
+            if has_disable:
+                start_idx = current_stylesheet.find(marker_disable)
+                end_idx = current_stylesheet.find("}", start_idx)
+                if end_idx != -1:
+                    end_idx += 1
+                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+
+            if not has_enable:
+                current_stylesheet = current_stylesheet + enable_animations
+
+            self.logger.info("Smooth animations enabled")
         else:
-            if "/* Disable all animations - instant transitions */" in current_stylesheet:
-                start_marker = "/* Disable all animations - instant transitions */"
-                start_idx = current_stylesheet.find(start_marker)
-                if start_idx != -1:
-                    end_idx = current_stylesheet.find("}", start_idx) + 1
-                    updated_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
-                    app.setStyleSheet(updated_stylesheet)
+            if has_enable:
+                start_idx = current_stylesheet.find(marker_enable)
+                end_idx = current_stylesheet.find("}", start_idx)
+                if end_idx != -1:
+                    end_idx = current_stylesheet.find("}", end_idx + 1) + 1
+                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+
+            if not has_disable:
+                current_stylesheet = current_stylesheet + disable_animations
+
+            self.logger.info("Animations disabled")
+
+        app.setStyleSheet(current_stylesheet)
 
     def populate_ai_providers(self):
         """Populate AI provider dropdown with dynamically detected providers."""

@@ -98,18 +98,14 @@ class SystemMonitorWorker(QObject):
         self.running = False
 
     def _collect_metrics(self) -> SystemMetrics:
-        """Collect current system metrics."""
-        # CPU metrics - use single call to get both total and per-core data
         cpu_percent = psutil.cpu_percent(interval=0.1)
         cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
 
-        # Memory metrics
         memory = psutil.virtual_memory()
         memory_percent = memory.percent
         memory_used_gb = memory.used / (1024**3)
         memory_total_gb = memory.total / (1024**3)
 
-        # GPU metrics (if available)
         gpu_percent = None
         gpu_memory_percent = None
         gpu_temp = None
@@ -118,32 +114,40 @@ class SystemMonitorWorker(QObject):
             try:
                 gpus = GPUtil.getGPUs()
                 if gpus:
-                    gpu = gpus[0]  # Use first GPU
-                    gpu_percent = gpu.load * 100
-                    gpu_memory_percent = gpu.memoryUtil * 100
-                    gpu_temp = gpu.temperature
+                    gpu = gpus[0]
+                    
+                    gpu_load = gpu.load * 100 if gpu.load is not None else 0.0
+                    gpu_percent = min(max(float(gpu_load), 0.0), 100.0)
+                    
+                    gpu_mem_util = gpu.memoryUtil * 100 if gpu.memoryUtil is not None else 0.0
+                    gpu_memory_percent = min(max(float(gpu_mem_util), 0.0), 100.0)
+                    
+                    gpu_temperature = gpu.temperature if gpu.temperature is not None else 0.0
+                    gpu_temp = min(max(float(gpu_temperature), 0.0), 150.0)
             except (ImportError, AttributeError, Exception) as e:
                 logger.debug(f"Failed to get GPU metrics: {e}")
 
-        # Network I/O
         net_io = psutil.net_io_counters()
         network_sent_mb = 0.0
         network_recv_mb = 0.0
 
         if self.last_net_io:
-            network_sent_mb = (net_io.bytes_sent - self.last_net_io.bytes_sent) / (1024**2)
-            network_recv_mb = (net_io.bytes_recv - self.last_net_io.bytes_recv) / (1024**2)
+            sent_delta = (net_io.bytes_sent - self.last_net_io.bytes_sent) / (1024**2)
+            recv_delta = (net_io.bytes_recv - self.last_net_io.bytes_recv) / (1024**2)
+            network_sent_mb = max(sent_delta, 0.0)
+            network_recv_mb = max(recv_delta, 0.0)
 
         self.last_net_io = net_io
 
-        # Disk I/O
         disk_io = psutil.disk_io_counters()
         disk_read_mb = 0.0
         disk_write_mb = 0.0
 
         if self.last_disk_io:
-            disk_read_mb = (disk_io.read_bytes - self.last_disk_io.read_bytes) / (1024**2)
-            disk_write_mb = (disk_io.write_bytes - self.last_disk_io.write_bytes) / (1024**2)
+            read_delta = (disk_io.read_bytes - self.last_disk_io.read_bytes) / (1024**2)
+            write_delta = (disk_io.write_bytes - self.last_disk_io.write_bytes) / (1024**2)
+            disk_read_mb = max(read_delta, 0.0)
+            disk_write_mb = max(write_delta, 0.0)
 
         self.last_disk_io = disk_io
 

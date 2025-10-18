@@ -44,6 +44,14 @@ intellicrack.ai.ai\_tools module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ai.api\_provider\_clients module
+---------------------------------------------
+
+.. automodule:: intellicrack.ai.api_provider_clients
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ai.autonomous\_agent module
 ----------------------------------------
 
@@ -72,14 +80,6 @@ intellicrack.ai.enhanced\_training\_interface module
 ----------------------------------------------------
 
 .. automodule:: intellicrack.ai.enhanced_training_interface
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ai.exploit\_chain\_builder module
-----------------------------------------------
-
-.. automodule:: intellicrack.ai.exploit_chain_builder
    :members:
    :show-inheritance:
    :undoc-members:
@@ -232,6 +232,14 @@ intellicrack.ai.model\_comparison module
 ----------------------------------------
 
 .. automodule:: intellicrack.ai.model_comparison
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ai.model\_discovery\_service module
+------------------------------------------------
+
+.. automodule:: intellicrack.ai.model_discovery_service
    :members:
    :show-inheritance:
    :undoc-members:

@@ -124,6 +124,14 @@ intellicrack.cli.project\_manager module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.cli.run\_analysis\_cli module
+------------------------------------------
+
+.. automodule:: intellicrack.cli.run_analysis_cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.cli.terminal\_dashboard module
 -------------------------------------------
 

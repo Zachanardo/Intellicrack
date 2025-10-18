@@ -82,7 +82,7 @@ class TerminalTab(BaseTab):
 
             self.terminal_widget = TerminalSessionWidget(self)
             self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            self.terminal_widget.setMinimumSize(600, 400)
+            self.terminal_widget.setMinimumSize(640, 500)
             layout.addWidget(self.terminal_widget, stretch=1)
 
             status_bar = self._create_status_bar()

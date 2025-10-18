@@ -482,6 +482,39 @@ QStatusBar {
     color: #FFFFFF;
     border-top: 1px solid #4A4A4A;
 }
+
+/* Special Button Styling */
+QPushButton#saveButton {
+    background-color: #1B5E20;
+    color: #FFFFFF;
+    font-weight: bold;
+    border: 1px solid #2E7D32;
+}
+
+QPushButton#saveButton:hover {
+    background-color: #2E7D32;
+    border-color: #43A047;
+}
+
+QPushButton#saveButton:pressed {
+    background-color: #0D3B10;
+}
+
+QPushButton#resetButton {
+    background-color: #B71C1C;
+    color: #FFFFFF;
+    font-weight: bold;
+    border: 1px solid #C62828;
+}
+
+QPushButton#resetButton:hover {
+    background-color: #C62828;
+    border-color: #E53935;
+}
+
+QPushButton#resetButton:pressed {
+    background-color: #7F0000;
+}
 """
 
     def _get_builtin_light_stylesheet(self):
@@ -851,6 +884,39 @@ QStatusBar {
     background-color: #E0E0E0;
     color: #1A1A1A;
     border-top: 2px solid #999999;
+}
+
+/* Special Button Styling */
+QPushButton#saveButton {
+    background-color: #2E7D32;
+    color: #FFFFFF;
+    font-weight: bold;
+    border: 2px solid #1B5E20;
+}
+
+QPushButton#saveButton:hover {
+    background-color: #43A047;
+    border-color: #2E7D32;
+}
+
+QPushButton#saveButton:pressed {
+    background-color: #1B5E20;
+}
+
+QPushButton#resetButton {
+    background-color: #C62828;
+    color: #FFFFFF;
+    font-weight: bold;
+    border: 2px solid #B71C1C;
+}
+
+QPushButton#resetButton:hover {
+    background-color: #E53935;
+    border-color: #C62828;
+}
+
+QPushButton#resetButton:pressed {
+    background-color: #B71C1C;
 }
 """
 

@@ -92,11 +92,12 @@ class TerminalSessionWidget(QWidget):
         self.tab_widget.tabCloseRequested.connect(self._close_tab_at_index)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
         self.tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.tab_widget.setMinimumSize(450, 350)
+        self.tab_widget.setMinimumSize(620, 450)
 
         layout.addWidget(self.tab_widget, stretch=1)
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMinimumSize(620, 480)
 
         self.create_new_session()
 

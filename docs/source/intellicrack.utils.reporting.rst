@@ -20,14 +20,6 @@ intellicrack.utils.reporting.report\_common module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.reporting.report\_generator module
------------------------------------------------------
-
-.. automodule:: intellicrack.utils.reporting.report_generator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 

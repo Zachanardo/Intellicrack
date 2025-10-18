@@ -44,14 +44,6 @@ intellicrack.ui.dialogs.common\_imports module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.dialogs.common\_imports\_old module
----------------------------------------------------
-
-.. automodule:: intellicrack.ui.dialogs.common_imports_old
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ui.dialogs.debugger\_dialog module
 -----------------------------------------------
 

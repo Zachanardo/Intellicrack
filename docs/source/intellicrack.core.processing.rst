@@ -28,14 +28,6 @@ intellicrack.core.processing.distributed\_manager module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.processing.docker\_container module
------------------------------------------------------
-
-.. automodule:: intellicrack.core.processing.docker_container
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.core.processing.emulator\_manager module
 -----------------------------------------------------
 
@@ -68,10 +60,10 @@ intellicrack.core.processing.memory\_optimizer module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.processing.qemu\_emulator\_backup module
-----------------------------------------------------------
+intellicrack.core.processing.qemu\_emulator module
+--------------------------------------------------
 
-.. automodule:: intellicrack.core.processing.qemu_emulator_backup
+.. automodule:: intellicrack.core.processing.qemu_emulator
    :members:
    :show-inheritance:
    :undoc-members:

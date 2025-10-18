@@ -52,14 +52,6 @@ intellicrack.utils.analysis.security\_analysis module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.analysis.severity\_levels module
----------------------------------------------------
-
-.. automodule:: intellicrack.utils.analysis.severity_levels
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 

@@ -294,7 +294,6 @@ security_scan_results_*.json
 # AI/LLM TOOLS AND CONFIGS
 # ==============================================================================
 # Claude and AI assistants
-.claude/
 ClaudeCode.ps1
 claude*.ps1
 Claude*.ps1

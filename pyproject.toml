@@ -652,3 +652,10 @@ build-rust-launcher = "cd intellicrack-launcher && cargo build --release"
 install-linters = { depends-on = ["install-eslint", "install-markdownlint"] }
 install-eslint = "npm install -g eslint@9.18.0 eslint-config-standard@17.1.0"
 install-markdownlint = "npm install -g markdownlint-cli@0.43.0"
+
+# Documentation generation tasks (requires dev environment)
+docs-apidoc = "sphinx-apidoc -f -o docs/source intellicrack"
+docs-build = "sphinx-build -b html docs/source docs/_build/html"
+docs-clean = "rm -rf docs/_build"
+docs-generate = { depends-on = ["docs-apidoc", "docs-build"] }
+docs-rebuild = { depends-on = ["docs-clean", "docs-generate"] }

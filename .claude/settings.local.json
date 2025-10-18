@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(awk:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(where:*)",
+      "Bash(jq:*)",
+      "Bash(diff:*)",
+      "Bash(comm:*)",
+      "Bash(git log:*)",
+      "Bash(git status)",
+      "Bash(git --version)",
+      "Bash(Get-ExecutionPolicy)",
+      "Bash(set PATH)",
+      "Bash(winget list:*)",
+      "Bash(choco search:*)",
+      "Bash(scoop search:*)",
+      "Bash(mamba search:*)",
+      "Bash(mamba env:*)",
+      "Bash(conda env list)",
+      "Bash(pip3 list:*)",
+      "Bash(npm search:*)",
+      "Bash(ps:*)",
+      "Bash(wmic:*)",
+      "Grep",
+      "WebSearch",
+      "WebFetch",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:*)",
+      "LS",
+      "TodoRead",
+      "mcp__brave-search__brave_web_search",
+      "mcp__brave-search__brave_local_search",
+      "mcp__brave-search__*",
+      "mcp__memory__read_graph",
+      "mcp__memory__search_nodes",
+      "mcp__memory__open_nodes",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__read_file",
+      "mcp__serena__find_symbol",
+      "mcp__serena__list_dir",
+      "mcp__serena__find_file",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__get_current_config",
+      "mcp__serena__list_memories",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__read_memory",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__think_about_task_adherence",
+      "mcp__serena__think_about_whether_you_are_done",
+      "mcp__MCPControl__get_screenshot",
+      "mcp__MCPControl__get_screen_size",
+      "mcp__MCPControl__get_cursor_position",
+      "mcp__MCPControl__get_clipboard_content",
+      "mcp__MCPControl__get_active_window",
+      "Bash(fd:*)",
+      "Bash(claude --mcp-list)",
+      "Bash(claude --doctor)",
+      "Bash(claude doctor)",
+      "Bash(echo:*)",
+      "Bash(uv help:*)",
+      "Bash(pyright-langserver:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch)",
+      "Bash(git remote -v)",
+      "mcp__e2b__run_code",
+      "Bash(python -m pytest tests/test_basic.py -v --tb=short)",
+      "Bash(python -m pytest:*)",
+      "Bash(mamba activate:*)",
+      "Bash(test:*)",
+      "Bash(pixi run python:*)",
+      "Bash(pixi run pytest:*)",
+      "Bash(pixi run ruff check:*)",
+      "Bash(ruff check:*)"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+    "serena",
+    "brave-search",
+    "memory",
+    "sequential-thinking",
+    "context7",
+    "e2b",
+    "MCPControl"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file|mcp__filesystem__create_directory|mcp__desktop-commander__write_file|mcp__desktop-commander__edit_block|mcp__desktop-commander__create_directory|mcp__serena__create_text_file|mcp__serena__replace_regex|mcp__serena__replace_symbol_body|mcp__serena__insert_after_symbol|mcp__serena__insert_before_symbol|mcp__serena__delete_lines|mcp__serena__insert_at_line|mcp__serena__replace_lines",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node D:/Intellicrack/.claude/hooks/post-tool-use.js"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node D:/Intellicrack/.claude/hooks/sessionstart.js"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node D:/Intellicrack/.claude/hooks/principles.js"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node D:/Intellicrack/.claude/statusline.js"
+  },
+  "outputStyle": "Intellicrack-Developer"
+}

@@ -4,14 +4,6 @@ intellicrack.utils.tools package
 Submodules
 ----------
 
-intellicrack.utils.tools.ghidra\_common module
-----------------------------------------------
-
-.. automodule:: intellicrack.utils.tools.ghidra_common
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.utils.tools.ghidra\_script\_manager module
 -------------------------------------------------------
 

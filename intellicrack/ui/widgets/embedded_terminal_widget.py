@@ -265,7 +265,7 @@ class EmbeddedTerminalWidget(QWidget):
         """)
 
         self.terminal_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.terminal_display.setMinimumSize(400, 300)
+        self.terminal_display.setMinimumSize(600, 400)
 
         self.terminal_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.terminal_display.customContextMenuRequested.connect(self._show_context_menu)
@@ -273,6 +273,8 @@ class EmbeddedTerminalWidget(QWidget):
         self.terminal_display.keyPressEvent = self._handle_keyboard_input
 
         layout.addWidget(self.terminal_display, stretch=1)
+
+        self.setMinimumSize(600, 400)
 
     def _show_context_menu(self, position):
         """Show context menu for copy/paste operations."""

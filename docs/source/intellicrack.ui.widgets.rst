@@ -52,6 +52,14 @@ intellicrack.ui.widgets.drop\_zone\_widget module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.ui.widgets.embedded\_terminal\_widget module
+---------------------------------------------------------
+
+.. automodule:: intellicrack.ui.widgets.embedded_terminal_widget
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.widgets.entropy\_graph\_widget module
 -----------------------------------------------------
 
@@ -192,6 +200,14 @@ intellicrack.ui.widgets.system\_monitor\_widget module
 ------------------------------------------------------
 
 .. automodule:: intellicrack.ui.widgets.system_monitor_widget
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.widgets.terminal\_session\_widget module
+--------------------------------------------------------
+
+.. automodule:: intellicrack.ui.widgets.terminal_session_widget
    :members:
    :show-inheritance:
    :undoc-members:

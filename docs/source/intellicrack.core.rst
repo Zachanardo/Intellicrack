@@ -9,10 +9,10 @@ Subpackages
 
    intellicrack.core.analysis
    intellicrack.core.anti_analysis
-   intellicrack.core.dashboard
    intellicrack.core.execution
    intellicrack.core.exploitation
    intellicrack.core.logging
+   intellicrack.core.monitoring
    intellicrack.core.network
    intellicrack.core.patching
    intellicrack.core.processing
@@ -25,6 +25,14 @@ Subpackages
 
 Submodules
 ----------
+
+intellicrack.core.adobe\_injector\_integration module
+-----------------------------------------------------
+
+.. automodule:: intellicrack.core.adobe_injector_integration
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 intellicrack.core.ai\_model\_manager module
 -------------------------------------------
@@ -54,14 +62,6 @@ intellicrack.core.config\_manager module
 ----------------------------------------
 
 .. automodule:: intellicrack.core.config_manager
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.config\_manager\_clean module
------------------------------------------------
-
-.. automodule:: intellicrack.core.config_manager_clean
    :members:
    :show-inheritance:
    :undoc-members:
@@ -230,6 +230,14 @@ intellicrack.core.task\_manager module
 --------------------------------------
 
 .. automodule:: intellicrack.core.task_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.core.terminal\_manager module
+------------------------------------------
+
+.. automodule:: intellicrack.core.terminal_manager
    :members:
    :show-inheritance:
    :undoc-members:

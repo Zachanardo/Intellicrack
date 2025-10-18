@@ -11,6 +11,7 @@ Subpackages
    intellicrack.analysis
    intellicrack.cli
    intellicrack.core
+   intellicrack.dashboard
    intellicrack.data
    intellicrack.handlers
    intellicrack.hexview

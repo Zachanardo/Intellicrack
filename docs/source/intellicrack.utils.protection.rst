@@ -28,14 +28,6 @@ intellicrack.utils.protection.protection\_helpers module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.protection.protection\_utils module
-------------------------------------------------------
-
-.. automodule:: intellicrack.utils.protection.protection_utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 

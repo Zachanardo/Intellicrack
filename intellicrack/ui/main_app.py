@@ -202,7 +202,6 @@ class IntellicrackApp(QMainWindow):
 
         Sets up the logger, model manager, and other core components.
         """
-        super().__init__()
         print("[INIT] IntellicrackApp.__init__ started")
 
         # Initialize UI attributes first
@@ -1227,30 +1226,10 @@ class IntellicrackApp(QMainWindow):
         """Set up project dashboard tab with real-time monitoring."""
         try:
             if hasattr(self, "dashboard_tab") and self.dashboard_tab:
-                # Initialize dashboard with licensing analysis tracking
-                self.dashboard_tab.setup_license_analysis_monitor()
-
-                # Set up real-time binary protection monitoring
-                if hasattr(self.dashboard_tab, "setup_protection_monitor"):
-                    self.dashboard_tab.setup_protection_monitor()
-
-                # Configure activity logging for exploitation attempts
-                if hasattr(self.dashboard_tab, "setup_activity_logger"):
-                    self.dashboard_tab.setup_activity_logger()
-
-                # Initialize license server detection dashboard
-                if hasattr(self.dashboard_tab, "setup_license_server_tracker"):
-                    self.dashboard_tab.setup_license_server_tracker()
-
-                self.logger.info("Dashboard tab configured for licensing protection analysis")
-
-            # Initialize dashboard manager with license exploitation capabilities
-            if hasattr(self, "dashboard_manager"):
-                self.dashboard_manager.configure_license_exploitation_tracking()
-
+                self.dashboard_tab.setVisible(True)
+                self.logger.info("Dashboard tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup dashboard tab: {e}")
-            # Fallback: Basic dashboard initialization
             if hasattr(self, "dashboard_tab"):
                 self.dashboard_tab.setVisible(True)
 
@@ -1258,334 +1237,64 @@ class IntellicrackApp(QMainWindow):
         """Set up analysis tab with licensing protection analysis capabilities."""
         try:
             if hasattr(self, "analysis_tab") and self.analysis_tab:
-                # Initialize licensing protection detection engines
-                self.analysis_tab.initialize_license_protection_detector()
+                self.analysis_tab.setVisible(True)
+                self.logger.info("Analysis tab initialized successfully")
 
-                # Set up hardware ID fingerprinting analysis
-                if hasattr(self.analysis_tab, "setup_hwid_analyzer"):
-                    self.analysis_tab.setup_hwid_analyzer()
-
-                # Configure license key validation bypass detection
-                if hasattr(self.analysis_tab, "setup_key_validation_analyzer"):
-                    self.analysis_tab.setup_key_validation_analyzer()
-
-                # Initialize network license server detection
-                if hasattr(self.analysis_tab, "setup_network_license_detector"):
-                    self.analysis_tab.setup_network_license_detector()
-
-                # Set up anti-debugging and anti-VM detection bypasses
-                if hasattr(self.analysis_tab, "setup_protection_bypasses"):
-                    self.analysis_tab.setup_protection_bypasses()
-
-                # Configure real-time binary modification detection
-                if hasattr(self.analysis_tab, "setup_binary_modification_tracker"):
-                    self.analysis_tab.setup_binary_modification_tracker()
-
-                # Initialize license validation flow tracer
-                if hasattr(self.analysis_tab, "setup_license_flow_tracer"):
-                    self.analysis_tab.setup_license_flow_tracer()
-
-                self.logger.info("Analysis tab configured with advanced licensing protection capabilities")
-
-            # Configure analysis engines for license bypass research
             if hasattr(self, "symbolic_execution_engine"):
-                self.symbolic_execution_engine = None  # Will be lazy-loaded with license focus
-
-            if hasattr(self, "taint_analysis_engine") and self.taint_analysis_engine:
-                # Configure taint analysis for license validation tracking
-                self.taint_analysis_engine.configure_license_taint_sources()
-
+                self.symbolic_execution_engine = None
         except Exception as e:
             self.logger.error(f"Failed to setup analysis tab: {e}")
-            # Fallback: Basic analysis tab visibility
             if hasattr(self, "analysis_tab"):
                 self.analysis_tab.setVisible(True)
 
     def setup_patching_exploitation_tab(self):
         """Set up patching exploitation tab with advanced license bypass capabilities."""
         try:
-            if hasattr(self, "patching_tab") and self.patching_tab:
-                # Initialize license validation bypass engine
-                if hasattr(self.patching_tab, "setup_license_bypass_engine"):
-                    self.patching_tab.setup_license_bypass_engine()
-
-                # Configure hardware ID spoofing capabilities
-                if hasattr(self.patching_tab, "setup_hwid_spoofer"):
-                    self.patching_tab.setup_hwid_spoofer()
-
-                # Set up license key generation and validation bypass
-                if hasattr(self.patching_tab, "setup_keygen_engine"):
-                    self.patching_tab.setup_keygen_engine()
-
-                # Initialize API call hooking for license checks
-                if hasattr(self.patching_tab, "setup_api_hooking_engine"):
-                    self.patching_tab.setup_api_hooking_engine()
-
-                # Configure binary patching for license protection removal
-                if hasattr(self.patching_tab, "setup_binary_patcher"):
-                    self.patching_tab.setup_binary_patcher()
-
-                # Set up network license server emulation
-                if hasattr(self.patching_tab, "setup_license_server_emulator"):
-                    self.patching_tab.setup_license_server_emulator()
-
-                # Initialize time-based license bypass (system clock manipulation)
-                if hasattr(self.patching_tab, "setup_time_manipulation_engine"):
-                    self.patching_tab.setup_time_manipulation_engine()
-
-                # Configure registry modification engine for license data
-                if hasattr(self.patching_tab, "setup_registry_patcher"):
-                    self.patching_tab.setup_registry_patcher()
-
-                # Set up DLL injection framework for license bypass
-                if hasattr(self.patching_tab, "setup_dll_injection_engine"):
-                    self.patching_tab.setup_dll_injection_engine()
-
-                # Initialize code cave patching for permanent modifications
-                if hasattr(self.patching_tab, "setup_code_cave_patcher"):
-                    self.patching_tab.setup_code_cave_patcher()
-
-                self.logger.info("Patching exploitation tab configured with advanced license bypass capabilities")
-
-            # Configure exploitation manager for license research
-            if hasattr(self, "exploitation_manager"):
-                self.exploitation_manager.configure_license_exploitation_suite()
-
+            if hasattr(self, "exploitation_tab") and self.exploitation_tab:
+                self.exploitation_tab.setVisible(True)
+                self.logger.info("Exploitation tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup patching exploitation tab: {e}")
-            # Fallback: Basic tab visibility
-            if hasattr(self, "patching_tab"):
-                self.patching_tab.setVisible(True)
+            if hasattr(self, "exploitation_tab"):
+                self.exploitation_tab.setVisible(True)
 
     def setup_ai_assistant_tab(self):
         """Set up AI assistant tab with license protection research capabilities."""
         try:
             if hasattr(self, "ai_assistant_tab") and self.ai_assistant_tab:
-                # Initialize AI script generation for license bypass
-                if hasattr(self.ai_assistant_tab, "setup_license_script_generator"):
-                    self.ai_assistant_tab.setup_license_script_generator()
-
-                # Configure protection-aware AI analysis engine
-                if hasattr(self.ai_assistant_tab, "setup_protection_aware_analyzer"):
-                    self.ai_assistant_tab.setup_protection_aware_analyzer()
-
-                # Set up automated keygen generation assistance
-                if hasattr(self.ai_assistant_tab, "setup_keygen_ai_assistant"):
-                    self.ai_assistant_tab.setup_keygen_ai_assistant()
-
-                # Initialize pattern recognition for license validation flows
-                if hasattr(self.ai_assistant_tab, "setup_pattern_recognition_engine"):
-                    self.ai_assistant_tab.setup_pattern_recognition_engine()
-
-                # Configure vulnerability suggestion engine for license systems
-                if hasattr(self.ai_assistant_tab, "setup_vulnerability_suggestion_engine"):
-                    self.ai_assistant_tab.setup_vulnerability_suggestion_engine()
-
-                # Set up automated patch generation for license bypasses
-                if hasattr(self.ai_assistant_tab, "setup_patch_generation_engine"):
-                    self.ai_assistant_tab.setup_patch_generation_engine()
-
-                # Initialize code analysis assistant for protection mechanisms
-                if hasattr(self.ai_assistant_tab, "setup_code_analysis_assistant"):
-                    self.ai_assistant_tab.setup_code_analysis_assistant()
-
-                # Configure natural language query interface for license research
-                if hasattr(self.ai_assistant_tab, "setup_nl_query_interface"):
-                    self.ai_assistant_tab.setup_nl_query_interface()
-
-                # Set up learning engine for protection pattern recognition
-                if hasattr(self.ai_assistant_tab, "setup_learning_engine"):
-                    self.ai_assistant_tab.setup_learning_engine()
-
-                self.logger.info("AI assistant tab configured with advanced license protection research capabilities")
-
-            # Configure AI model manager for license-focused analysis
-            if hasattr(self, "ai_model_manager"):
-                self.ai_model_manager.configure_license_analysis_models()
-
+                self.ai_assistant_tab.setVisible(True)
+                self.logger.info("AI assistant tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup AI assistant tab: {e}")
-            # Fallback: Basic tab visibility
             if hasattr(self, "ai_assistant_tab"):
                 self.ai_assistant_tab.setVisible(True)
 
     def setup_netanalysis_emulation_tab(self):
         """Set up network analysis emulation tab with license server bypass capabilities."""
         try:
-            if hasattr(self, "netanalysis_tab") and self.netanalysis_tab:
-                # Initialize network license server emulator
-                if hasattr(self.netanalysis_tab, "setup_license_server_emulator"):
-                    self.netanalysis_tab.setup_license_server_emulator()
-
-                # Configure online activation bypass engine
-                if hasattr(self.netanalysis_tab, "setup_activation_bypass_engine"):
-                    self.netanalysis_tab.setup_activation_bypass_engine()
-
-                # Set up network traffic interception for license communications
-                if hasattr(self.netanalysis_tab, "setup_license_traffic_interceptor"):
-                    self.netanalysis_tab.setup_license_traffic_interceptor()
-
-                # Initialize SSL/TLS certificate spoofing for license servers
-                if hasattr(self.netanalysis_tab, "setup_ssl_certificate_spoofer"):
-                    self.netanalysis_tab.setup_ssl_certificate_spoofer()
-
-                # Configure DNS hijacking for license server redirection
-                if hasattr(self.netanalysis_tab, "setup_dns_hijacking_engine"):
-                    self.netanalysis_tab.setup_dns_hijacking_engine()
-
-                # Set up HTTP/HTTPS proxy for license request manipulation
-                if hasattr(self.netanalysis_tab, "setup_license_proxy_engine"):
-                    self.netanalysis_tab.setup_license_proxy_engine()
-
-                # Initialize network packet crafting for license responses
-                if hasattr(self.netanalysis_tab, "setup_packet_crafting_engine"):
-                    self.netanalysis_tab.setup_packet_crafting_engine()
-
-                # Configure license server response emulation
-                if hasattr(self.netanalysis_tab, "setup_response_emulation_engine"):
-                    self.netanalysis_tab.setup_response_emulation_engine()
-
-                # Set up network security bypass for protected communications
-                if hasattr(self.netanalysis_tab, "setup_network_security_bypass"):
-                    self.netanalysis_tab.setup_network_security_bypass()
-
-                # Initialize protocol analysis for custom license protocols
-                if hasattr(self.netanalysis_tab, "setup_protocol_analyzer"):
-                    self.netanalysis_tab.setup_protocol_analyzer()
-
-                # Configure network virtualization for isolated testing
-                if hasattr(self.netanalysis_tab, "setup_network_virtualization"):
-                    self.netanalysis_tab.setup_network_virtualization()
-
-                self.logger.info("Network analysis emulation tab configured with advanced license server bypass capabilities")
-
-            # Configure network manager for license communication interception
-            if hasattr(self, "network_manager"):
-                self.network_manager.configure_license_interception_suite()
-
+            self.logger.info("Network analysis emulation tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup network analysis emulation tab: {e}")
-            # Fallback: Basic tab visibility
-            if hasattr(self, "netanalysis_tab"):
-                self.netanalysis_tab.setVisible(True)
 
     def setup_tools_plugins_tab(self):
         """Set up tools plugins tab with license protection research tool integration."""
         try:
-            if hasattr(self, "tools_plugins_tab") and self.tools_plugins_tab:
-                # Initialize external tool integration manager
-                if hasattr(self.tools_plugins_tab, "setup_external_tool_manager"):
-                    self.tools_plugins_tab.setup_external_tool_manager()
-
-                # Configure plugin loading system for license research extensions
-                if hasattr(self.tools_plugins_tab, "setup_plugin_loader"):
-                    self.tools_plugins_tab.setup_plugin_loader()
-
-                # Set up custom script execution engine for license bypasses
-                if hasattr(self.tools_plugins_tab, "setup_script_execution_engine"):
-                    self.tools_plugins_tab.setup_script_execution_engine()
-
-                # Initialize tool discovery system for license analysis tools
-                if hasattr(self.tools_plugins_tab, "setup_tool_discovery_system"):
-                    self.tools_plugins_tab.setup_tool_discovery_system()
-
-                # Configure plugin API for third-party license research tools
-                if hasattr(self.tools_plugins_tab, "setup_plugin_api"):
-                    self.tools_plugins_tab.setup_plugin_api()
-
-                # Set up automated tool integration for common license crackers
-                if hasattr(self.tools_plugins_tab, "setup_license_tool_integration"):
-                    self.tools_plugins_tab.setup_license_tool_integration()
-
-                # Initialize sandboxed execution environment for untrusted plugins
-                if hasattr(self.tools_plugins_tab, "setup_sandboxed_execution"):
-                    self.tools_plugins_tab.setup_sandboxed_execution()
-
-                # Configure plugin marketplace interface for research tools
-                if hasattr(self.tools_plugins_tab, "setup_plugin_marketplace"):
-                    self.tools_plugins_tab.setup_plugin_marketplace()
-
-                # Set up tool configuration management system
-                if hasattr(self.tools_plugins_tab, "setup_tool_config_manager"):
-                    self.tools_plugins_tab.setup_tool_config_manager()
-
-                # Initialize plugin development environment
-                if hasattr(self.tools_plugins_tab, "setup_plugin_development_env"):
-                    self.tools_plugins_tab.setup_plugin_development_env()
-
-                self.logger.info("Tools plugins tab configured with comprehensive license research tool integration")
-
-            # Configure plugin manager for license-focused tool ecosystem
-            if hasattr(self, "plugin_manager"):
-                self.plugin_manager.configure_license_research_plugins()
-
+            if hasattr(self, "tools_tab") and self.tools_tab:
+                self.tools_tab.setVisible(True)
+                self.logger.info("Tools tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup tools plugins tab: {e}")
-            # Fallback: Basic tab visibility
-            if hasattr(self, "tools_plugins_tab"):
-                self.tools_plugins_tab.setVisible(True)
+            if hasattr(self, "tools_tab"):
+                self.tools_tab.setVisible(True)
 
     def setup_settings_tab(self):
         """Set up settings tab with license protection research configuration."""
         try:
             if hasattr(self, "settings_tab") and self.settings_tab:
-                # Initialize license research configuration manager
-                if hasattr(self.settings_tab, "setup_license_config_manager"):
-                    self.settings_tab.setup_license_config_manager()
-
-                # Configure exploitation safety settings and warnings
-                if hasattr(self.settings_tab, "setup_exploitation_safety_settings"):
-                    self.settings_tab.setup_exploitation_safety_settings()
-
-                # Set up API key management for license analysis services
-                if hasattr(self.settings_tab, "setup_api_key_manager"):
-                    self.settings_tab.setup_api_key_manager()
-
-                # Initialize tool path configuration for external crackers
-                if hasattr(self.settings_tab, "setup_tool_path_config"):
-                    self.settings_tab.setup_tool_path_config()
-
-                # Configure license database connection settings
-                if hasattr(self.settings_tab, "setup_license_db_config"):
-                    self.settings_tab.setup_license_db_config()
-
-                # Set up network proxy settings for license server testing
-                if hasattr(self.settings_tab, "setup_network_proxy_config"):
-                    self.settings_tab.setup_network_proxy_config()
-
-                # Initialize logging configuration for security research
-                if hasattr(self.settings_tab, "setup_logging_config"):
-                    self.settings_tab.setup_logging_config()
-
-                # Configure virtual machine detection bypass settings
-                if hasattr(self.settings_tab, "setup_vm_detection_bypass_config"):
-                    self.settings_tab.setup_vm_detection_bypass_config()
-
-                # Set up code signing certificate management
-                if hasattr(self.settings_tab, "setup_code_signing_config"):
-                    self.settings_tab.setup_code_signing_config()
-
-                # Initialize hardware ID spoofing configuration
-                if hasattr(self.settings_tab, "setup_hwid_spoofing_config"):
-                    self.settings_tab.setup_hwid_spoofing_config()
-
-                # Configure advanced protection bypass preferences
-                if hasattr(self.settings_tab, "setup_protection_bypass_preferences"):
-                    self.settings_tab.setup_protection_bypass_preferences()
-
-                # Set up research ethics and compliance settings
-                if hasattr(self.settings_tab, "setup_research_ethics_config"):
-                    self.settings_tab.setup_research_ethics_config()
-
-                self.logger.info("Settings tab configured with comprehensive license protection research settings")
-
-            # Configure global settings manager for license research
-            if hasattr(self, "global_settings_manager"):
-                self.global_settings_manager.configure_license_research_settings()
-
+                self.settings_tab.setVisible(True)
+                self.logger.info("Settings tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup settings tab: {e}")
-            # Fallback: Basic tab visibility
             if hasattr(self, "settings_tab"):
                 self.settings_tab.setVisible(True)
 

@@ -4,14 +4,6 @@ intellicrack.core.network.protocols package
 Submodules
 ----------
 
-intellicrack.core.network.protocols.adobe\_parser module
---------------------------------------------------------
-
-.. automodule:: intellicrack.core.network.protocols.adobe_parser
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.core.network.protocols.autodesk\_parser module
 -----------------------------------------------------------
 

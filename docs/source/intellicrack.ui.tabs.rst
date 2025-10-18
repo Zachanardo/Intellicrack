@@ -4,6 +4,14 @@ intellicrack.ui.tabs package
 Submodules
 ----------
 
+intellicrack.ui.tabs.adobe\_injector\_tab module
+------------------------------------------------
+
+.. automodule:: intellicrack.ui.tabs.adobe_injector_tab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.ui.tabs.ai\_assistant\_tab module
 ----------------------------------------------
 
@@ -56,6 +64,14 @@ intellicrack.ui.tabs.settings\_tab module
 -----------------------------------------
 
 .. automodule:: intellicrack.ui.tabs.settings_tab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.ui.tabs.terminal\_tab module
+-----------------------------------------
+
+.. automodule:: intellicrack.ui.tabs.terminal_tab
    :members:
    :show-inheritance:
    :undoc-members:

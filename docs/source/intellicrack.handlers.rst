@@ -36,6 +36,14 @@ intellicrack.handlers.frida\_handler module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.handlers.ipex\_handler module
+------------------------------------------
+
+.. automodule:: intellicrack.handlers.ipex_handler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.handlers.lief\_handler module
 ------------------------------------------
 
@@ -144,6 +152,14 @@ intellicrack.handlers.torch\_handler module
 -------------------------------------------
 
 .. automodule:: intellicrack.handlers.torch_handler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+intellicrack.handlers.wmi\_handler module
+-----------------------------------------
+
+.. automodule:: intellicrack.handlers.wmi_handler
    :members:
    :show-inheritance:
    :undoc-members:

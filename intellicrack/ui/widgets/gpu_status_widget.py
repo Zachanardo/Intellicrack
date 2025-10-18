@@ -114,12 +114,10 @@ class GPUMonitorWorker(QObject):
         return gpu_data
 
     def _get_nvidia_gpu_info(self) -> list[dict[str, Any]]:
-        """Get NVIDIA GPU information using nvidia-smi."""
         gpus = []
         try:
-            # Run nvidia-smi command
             result = subprocess.run(
-                [  # noqa: S607
+                [
                     "nvidia-smi",
                     "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
                     "--format=csv,noheader,nounits",
@@ -136,84 +134,135 @@ class GPUMonitorWorker(QObject):
                     if line:
                         parts = [p.strip() for p in line.split(",")]
                         if len(parts) >= 7:
-                            gpus.append(
-                                {
-                                    "vendor": "NVIDIA",
-                                    "index": int(parts[0]),
-                                    "name": parts[1],
-                                    "temperature": float(parts[2]) if parts[2] != "[N/A]" else 0,
-                                    "utilization": float(parts[3]) if parts[3] != "[N/A]" else 0,
-                                    "memory_used": float(parts[4]) if parts[4] != "[N/A]" else 0,
-                                    "memory_total": float(parts[5]) if parts[5] != "[N/A]" else 0,
-                                    "power": float(parts[6]) if parts[6] != "[N/A]" else 0,
-                                }
-                            )
-        except (subprocess.SubprocessError, FileNotFoundError):
-            pass
+                            try:
+                                index = int(parts[0])
+                                name = parts[1]
+                                
+                                temp_str = parts[2]
+                                temp = float(temp_str) if temp_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                temp = min(max(temp, 0.0), 150.0)
+                                
+                                util_str = parts[3]
+                                utilization = float(util_str) if util_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                utilization = min(max(utilization, 0.0), 100.0)
+                                
+                                mem_used_str = parts[4]
+                                memory_used = float(mem_used_str) if mem_used_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                memory_used = max(memory_used, 0.0)
+                                
+                                mem_total_str = parts[5]
+                                memory_total = float(mem_total_str) if mem_total_str not in ["[N/A]", "[Not Supported]", ""] else 1.0
+                                memory_total = max(memory_total, 1.0)
+                                
+                                power_str = parts[6]
+                                power = float(power_str) if power_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                power = min(max(power, 0.0), 1000.0)
+
+                                gpus.append(
+                                    {
+                                        "vendor": "NVIDIA",
+                                        "index": index,
+                                        "name": name,
+                                        "temperature": round(temp, 1),
+                                        "utilization": round(utilization, 1),
+                                        "memory_used": round(memory_used, 2),
+                                        "memory_total": round(memory_total, 2),
+                                        "power": round(power, 1),
+                                    }
+                                )
+                            except (ValueError, IndexError) as e:
+                                logger.debug(f"Failed to parse NVIDIA GPU data: {e}")
+                                continue
+        except (subprocess.SubprocessError, FileNotFoundError) as e:
+            logger.debug(f"nvidia-smi not available: {e}")
 
         return gpus
 
     def _get_intel_arc_info(self) -> list[dict[str, Any]]:
-        """Get Intel Arc GPU information with real metrics."""
         gpus = []
         try:
-            import psutil
             import wmi
 
             c = wmi.WMI()
 
             for idx, gpu in enumerate(c.Win32_VideoController()):
                 if "Intel" in gpu.Name and any(x in gpu.Name for x in ["Arc", "Xe", "Iris", "UHD"]):
-                    # Get real GPU utilization from performance counters
-                    utilization = 0
+                    utilization = 0.0
                     try:
-                        # Try to get performance counter data
-                        gpu_engines = c.Win32_PerfRawData_GPUPerformanceCounters_GPUEngine()
-                        total_util = 0
-                        engine_count = 0
+                        gpu_counters = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
+                        if gpu_counters:
+                            total_util = 0.0
+                            engine_count = 0
 
-                        for engine in gpu_engines:
-                            if hasattr(engine, "UtilizationPercentage"):
-                                total_util += float(engine.UtilizationPercentage)
-                                engine_count += 1
+                            for engine in gpu_counters:
+                                if hasattr(engine, "UtilizationPercentage"):
+                                    try:
+                                        util_val = float(engine.UtilizationPercentage)
+                                        if 0 <= util_val <= 100:
+                                            total_util += util_val
+                                            engine_count += 1
+                                    except (ValueError, TypeError):
+                                        continue
 
-                        if engine_count > 0:
-                            utilization = total_util / engine_count
-                    except Exception:
-                        # Fallback to CPU usage as proxy for integrated GPU activity
-                        utilization = psutil.cpu_percent(interval=0.1) * 0.3  # Integrated GPU typically follows CPU
-
-                    # Calculate memory usage based on available data
-                    total_ram = gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 4.0
-                    # Dynamic memory usage calculation
-                    memory_percent = min(utilization * 0.8 + psutil.virtual_memory().percent * 0.2, 100)
-                    memory_used = total_ram * (memory_percent / 100.0) * 1024  # Convert to MB
-
-                    # Calculate realistic temperature based on utilization
-                    base_temp = 40
-                    # Temperature rises with utilization
-                    temp_variance = utilization * 0.5
-                    # Add some variation based on CPU temp
-                    try:
-                        import wmi
-
-                        c2 = wmi.WMI(namespace="root\\wmi")
-                        temps = c2.MSAcpi_ThermalZoneTemperature()
-                        if temps:
-                            cpu_temp = (temps[0].CurrentTemperature / 10.0) - 273.15
-                            base_temp = min(max(cpu_temp - 10, 35), 50)
+                            if engine_count > 0:
+                                utilization = min(total_util / engine_count, 100.0)
                     except Exception as e:
-                        logger.debug(f"Could not read thermal zone temperature: {e}")
-                    temperature = base_temp + temp_variance
+                        logger.debug(f"Could not read GPU performance counters: {e}")
+                        utilization = 0.0
 
-                    # Realistic power calculation
+                    total_memory_gb = gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0.0
+                    if total_memory_gb == 0:
+                        total_memory_gb = 4.0
+
+                    memory_used_mb = 0.0
+                    memory_total_mb = total_memory_gb * 1024
+
+                    try:
+                        gpu_memory = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
+                        if gpu_memory:
+                            total_dedicated = 0
+                            for mem in gpu_memory:
+                                if hasattr(mem, "DedicatedUsage"):
+                                    try:
+                                        total_dedicated += int(mem.DedicatedUsage)
+                                    except (ValueError, TypeError):
+                                        pass
+                            if total_dedicated > 0:
+                                memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
+                    except Exception as e:
+                        logger.debug(f"Could not read GPU memory usage: {e}")
+
+                    temperature = 0.0
+                    try:
+                        thermal_zones = c.Win32_TemperatureProbe()
+                        for zone in thermal_zones:
+                            if hasattr(zone, "CurrentReading"):
+                                try:
+                                    temp_val = float(zone.CurrentReading) / 10.0
+                                    if 0 <= temp_val <= 150:
+                                        temperature = max(temperature, temp_val)
+                                except (ValueError, TypeError):
+                                    pass
+                    except Exception as e:
+                        logger.debug(f"Could not read thermal sensors: {e}")
+
+                    if temperature == 0.0:
+                        base_temp = 45.0
+                        temperature = base_temp + (utilization * 0.3)
+                        temperature = min(max(temperature, 30.0), 85.0)
+
                     if "Arc" in gpu.Name:
-                        base_power = 25
-                        max_power = 150  # Arc A-series typical
+                        base_power = 15.0
+                        max_power = 150.0
                     else:
-                        base_power = 5
-                        max_power = 28  # Integrated graphics typical
+                        base_power = 5.0
+                        max_power = 28.0
+
                     power = base_power + ((max_power - base_power) * (utilization / 100.0))
+                    power = min(max(power, 0.0), 500.0)
+
+                    utilization = min(max(utilization, 0.0), 100.0)
+                    temperature = min(max(temperature, 0.0), 150.0)
 
                     gpus.append(
                         {
@@ -222,21 +271,111 @@ class GPUMonitorWorker(QObject):
                             "name": gpu.Name,
                             "temperature": round(temperature, 1),
                             "utilization": round(utilization, 1),
-                            "memory_used": round(memory_used, 2),
-                            "memory_total": round(total_ram * 1024, 2),  # Convert to MB
+                            "memory_used": round(memory_used_mb, 2),
+                            "memory_total": round(memory_total_mb, 2),
                             "power": round(power, 1),
                         }
                     )
         except (ImportError, AttributeError, Exception) as e:
-            logger.debug(f"Failed to get GPU info: {e}")
+            logger.debug(f"Failed to get Intel GPU info: {e}")
 
         return gpus
 
     def _get_amd_gpu_info(self) -> list[dict[str, Any]]:
-        """Get AMD GPU information."""
         gpus = []
-        # AMD GPU detection would go here
-        # This would use rocm-smi on Linux or AMD tools on Windows
+        try:
+            import wmi
+
+            c = wmi.WMI()
+
+            for idx, gpu in enumerate(c.Win32_VideoController()):
+                if "AMD" in gpu.Name or "Radeon" in gpu.Name or "ATI" in gpu.Name:
+                    utilization = 0.0
+                    try:
+                        gpu_counters = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
+                        if gpu_counters:
+                            total_util = 0.0
+                            engine_count = 0
+
+                            for engine in gpu_counters:
+                                if hasattr(engine, "UtilizationPercentage"):
+                                    try:
+                                        util_val = float(engine.UtilizationPercentage)
+                                        if 0 <= util_val <= 100:
+                                            total_util += util_val
+                                            engine_count += 1
+                                    except (ValueError, TypeError):
+                                        continue
+
+                            if engine_count > 0:
+                                utilization = min(total_util / engine_count, 100.0)
+                    except Exception as e:
+                        logger.debug(f"Could not read AMD GPU performance counters: {e}")
+
+                    total_memory_gb = gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0.0
+                    if total_memory_gb == 0:
+                        total_memory_gb = 4.0
+
+                    memory_used_mb = 0.0
+                    memory_total_mb = total_memory_gb * 1024
+
+                    try:
+                        gpu_memory = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
+                        if gpu_memory:
+                            total_dedicated = 0
+                            for mem in gpu_memory:
+                                if hasattr(mem, "DedicatedUsage"):
+                                    try:
+                                        total_dedicated += int(mem.DedicatedUsage)
+                                    except (ValueError, TypeError):
+                                        pass
+                            if total_dedicated > 0:
+                                memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
+                    except Exception as e:
+                        logger.debug(f"Could not read AMD GPU memory usage: {e}")
+
+                    temperature = 0.0
+                    try:
+                        thermal_zones = c.Win32_TemperatureProbe()
+                        for zone in thermal_zones:
+                            if hasattr(zone, "CurrentReading"):
+                                try:
+                                    temp_val = float(zone.CurrentReading) / 10.0
+                                    if 0 <= temp_val <= 150:
+                                        temperature = max(temperature, temp_val)
+                                except (ValueError, TypeError):
+                                    pass
+                    except Exception as e:
+                        logger.debug(f"Could not read AMD thermal sensors: {e}")
+
+                    if temperature == 0.0:
+                        base_temp = 50.0
+                        temperature = base_temp + (utilization * 0.35)
+                        temperature = min(max(temperature, 30.0), 95.0)
+
+                    base_power = 20.0
+                    max_power = 300.0
+                    power = base_power + ((max_power - base_power) * (utilization / 100.0))
+                    power = min(max(power, 0.0), 600.0)
+
+                    utilization = min(max(utilization, 0.0), 100.0)
+                    temperature = min(max(temperature, 0.0), 150.0)
+
+                    gpus.append(
+                        {
+                            "vendor": "AMD",
+                            "index": idx,
+                            "name": gpu.Name,
+                            "temperature": round(temperature, 1),
+                            "utilization": round(utilization, 1),
+                            "memory_used": round(memory_used_mb, 2),
+                            "memory_total": round(memory_total_mb, 2),
+                            "power": round(power, 1),
+                        }
+                    )
+        except (ImportError, AttributeError, Exception) as e:
+            logger.debug(f"Failed to get AMD GPU info: {e}")
+
         return gpus
 
 

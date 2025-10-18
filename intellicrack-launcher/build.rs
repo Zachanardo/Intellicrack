@@ -189,9 +189,6 @@ fn main() {
             "python312.dll", "python3.dll",
             // Core VC Runtimes
             "vcruntime140.dll", "vcruntime140_1.dll",
-            // Intel MKL - CRITICAL for performance and functionality
-            "mkl_rt.2.dll", "mkl_core.2.dll", "mkl_intel_thread.2.dll", "libiomp5md.dll",
-            "mkl_sycl_blas.5.dll", // The DLL from the crash report
         ];
 
         // --- Standard DLLs, warn if not found ---
@@ -200,6 +197,9 @@ fn main() {
             "libcrypto-3-x64.dll", "libbz2.dll", "ffi-8.dll", "libexpat.dll", "freetype.dll",
             "libpng16.dll", "libblas.dll", "libcblas.dll", "liblapack.dll", "liblapacke.dll",
             "tbb12.dll", "tbbmalloc.dll",
+            // Intel MKL - optional for enhanced performance
+            "mkl_rt.2.dll", "mkl_core.2.dll", "mkl_intel_thread.2.dll", "libiomp5md.dll",
+            "mkl_sycl_blas.5.dll",
         ];
 
         // --- Standard PYDs, warn if not found ---
@@ -226,15 +226,38 @@ fn main() {
 
             if let Some(src) = source_path {
                 let dst = target_dir.join(file_name);
-                if let Err(e) = std::fs::copy(&src, &dst) {
-                    let msg = format!("Failed to copy {}: {}", file_name, e);
-                    if is_critical {
-                        panic!("{}", msg);
-                    } else {
-                        println!("cargo:warning={}", msg);
+
+                let should_copy = if dst.exists() {
+                    match (std::fs::metadata(&src), std::fs::metadata(&dst)) {
+                        (Ok(src_meta), Ok(dst_meta)) => {
+                            src_meta.len() != dst_meta.len() ||
+                            src_meta.modified().ok() != dst_meta.modified().ok()
+                        }
+                        _ => true,
                     }
                 } else {
-                    println!("cargo:warning=Copied {} to target directory", src.display());
+                    true
+                };
+
+                if should_copy {
+                    match std::fs::copy(&src, &dst) {
+                        Ok(_) => {
+                            println!("cargo:warning=Copied {} to target directory", src.display());
+                        }
+                        Err(e) if e.raw_os_error() == Some(32) => {
+                            println!("cargo:warning={} is in use, skipping copy (file already exists)", file_name);
+                        }
+                        Err(e) => {
+                            let msg = format!("Failed to copy {}: {}", file_name, e);
+                            if is_critical && !dst.exists() {
+                                panic!("{}", msg);
+                            } else {
+                                println!("cargo:warning={}", msg);
+                            }
+                        }
+                    }
+                } else {
+                    println!("cargo:warning={} already up-to-date", file_name);
                 }
             } else {
                 let msg = format!("Could not find required DLL '{}' in any of the search paths: {:?}", file_name, search_paths);

@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   intellicrack.ui.adobe_injector_src
    intellicrack.ui.dialogs
    intellicrack.ui.tabs
    intellicrack.ui.widgets
@@ -131,14 +130,6 @@ intellicrack.ui.menu\_utils module
 ----------------------------------
 
 .. automodule:: intellicrack.ui.menu_utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ui.missing\_methods module
----------------------------------------
-
-.. automodule:: intellicrack.ui.missing_methods
    :members:
    :show-inheritance:
    :undoc-members:
