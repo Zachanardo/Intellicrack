@@ -29,6 +29,7 @@ import time
 import traceback
 from typing import Any
 
+from intellicrack.utils.core.plugin_paths import get_visualizations_dir
 from intellicrack.utils.logger import logger
 
 from .base_network_analyzer import BaseNetworkAnalyzer

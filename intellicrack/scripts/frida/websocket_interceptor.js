@@ -3786,7 +3786,7 @@ const websocketInterceptor = {
     },
 
     // Process webhook request for license validation bypass
-    processWebhookRequest: function (request, headers) {
+    processWebhookRequest: function (request, _headers) {
         var _self = this;
 
         try {
