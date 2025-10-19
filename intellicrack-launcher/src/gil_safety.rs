@@ -17,7 +17,7 @@ use tracing::{debug, info};
 pub struct GilSafetyManager;
 
 impl GilSafetyManager {
-    /// Initialize comprehensive GIL safety (replicates torch_gil_safety functionality)
+    /// Initialize comprehensive GIL safety (replicates `torch_gil_safety` functionality)
     pub fn initialize_gil_safety() -> Result<()> {
         info!("Initializing GIL safety and threading configuration");
 
@@ -37,7 +37,7 @@ impl GilSafetyManager {
         Ok(())
     }
 
-    /// Configure PyBind11 GIL safety environment
+    /// Configure `PyBind11` GIL safety environment
     fn configure_pybind11_gil_safety() -> Result<()> {
         debug!("Configuring PyBind11 GIL safety");
 
@@ -56,17 +56,14 @@ impl GilSafetyManager {
     /// Initialize torch GIL safety module if available (replicates Python import)
     fn initialize_torch_gil_safety() -> Result<()> {
         Python::attach(|py| -> Result<()> {
-            match py.import("intellicrack.utils.torch_gil_safety") {
-                Ok(gil_module) => {
-                    debug!("Found torch_gil_safety module, initializing...");
-                    gil_module.call_method0("initialize_gil_safety")?;
-                    info!("Torch GIL safety initialized via Python module");
-                }
-                Err(_) => {
-                    debug!("torch_gil_safety module not available, using fallback");
-                    // Fallback to manual environment variable configuration
-                    Self::configure_manual_gil_safety()?;
-                }
+            if let Ok(gil_module) = py.import("intellicrack.utils.torch_gil_safety") {
+                debug!("Found torch_gil_safety module, initializing...");
+                gil_module.call_method0("initialize_gil_safety")?;
+                info!("Torch GIL safety initialized via Python module");
+            } else {
+                debug!("torch_gil_safety module not available, using fallback");
+                // Fallback to manual environment variable configuration
+                Self::configure_manual_gil_safety()?;
             }
             Ok(())
         })
@@ -205,7 +202,8 @@ pub struct GilSafetyStatus {
 }
 
 impl GilSafetyStatus {
-    pub fn is_fully_configured(&self) -> bool {
+    #[must_use] 
+    pub const fn is_fully_configured(&self) -> bool {
         self.pybind11_assertions_disabled
             && (self.thread_check_configured || self.torch_gil_safety_available)
     }

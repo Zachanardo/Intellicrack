@@ -74,7 +74,7 @@ impl IntellicrackLauncher {
         let environment = EnvironmentManager::new(&platform);
         let dependencies = DependencyValidator::new();
 
-        Ok(IntellicrackLauncher {
+        Ok(Self {
             platform,
             environment,
             python: None,
@@ -166,12 +166,15 @@ impl IntellicrackLauncher {
         tracing::debug!("Dependencies HashMap size: {}", results.dependencies.len());
 
         // Only show dependency status if we actually validated dependencies
-        if !results.dependencies.is_empty() {
+        if results.dependencies.is_empty() {
+            // Fast launch mode - skipped dependency validation
+            println!("\nFast launch mode - launching Intellicrack...\n");
+        } else {
             println!("\nDependency Status:");
             for (name, status) in &results.dependencies {
                 let status_symbol = if status.available { "OK" } else { "MISSING" };
                 let version = status.version.as_deref().unwrap_or("unknown");
-                println!("  [{}] {}: {}", status_symbol, name, version);
+                println!("  [{status_symbol}] {name}: {version}");
             }
 
             if results.all_critical_available() {
@@ -179,9 +182,6 @@ impl IntellicrackLauncher {
             } else {
                 println!("\nSome dependencies unavailable - functionality may be limited\n");
             }
-        } else {
-            // Fast launch mode - skipped dependency validation
-            println!("\nFast launch mode - launching Intellicrack...\n");
         }
     }
 }

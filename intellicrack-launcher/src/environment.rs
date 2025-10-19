@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 */
 
 use anyhow::Result;
-use once_cell::sync::Lazy;
 
 use std::env;
 use std::path::PathBuf;
@@ -17,8 +16,8 @@ use tracing::{debug, info, warn};
 
 use crate::platform::{GpuVendor, OsType, PlatformInfo};
 
-pub static PROJECT_ROOT: Lazy<String> =
-    Lazy::new(|| env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string()));
+pub static PROJECT_ROOT: std::sync::LazyLock<String> =
+    std::sync::LazyLock::new(|| env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string()));
 
 pub struct EnvironmentManager {
     platform: PlatformInfo,
@@ -26,8 +25,9 @@ pub struct EnvironmentManager {
 
 impl EnvironmentManager {
     /// Create a new environment manager for the detected platform
+    #[must_use] 
     pub fn new(platform: &PlatformInfo) -> Self {
-        EnvironmentManager {
+        Self {
             platform: platform.clone(),
         }
     }
@@ -71,7 +71,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set Intel GPU environment variables (from RUN_INTELLICRACK.bat)
+    /// Set Intel GPU environment variables (from `RUN_INTELLICRACK.bat`)
     fn set_intel_gpu_environment(&self) -> Result<()> {
         debug!("Setting Intel GPU environment variables");
 
@@ -97,7 +97,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set threading environment variables (from launch_intellicrack.py)
+    /// Set threading environment variables (from `launch_intellicrack.py`)
     fn set_threading_environment(&self) -> Result<()> {
         debug!("Setting threading environment variables");
 
@@ -116,7 +116,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set PyBind11 GIL safety environment (from launch_intellicrack.py)
+    /// Set `PyBind11` GIL safety environment (from `launch_intellicrack.py`)
     fn set_pybind11_environment(&self) -> Result<()> {
         debug!("Setting PyBind11 GIL safety environment");
 
@@ -270,7 +270,7 @@ impl EnvironmentManager {
         let new_path = dll_directories.join(";");
         let old_path = env::var("PATH").unwrap_or_default();
         unsafe {
-            env::set_var("PATH", format!("{};{}", new_path, old_path));
+            env::set_var("PATH", format!("{new_path};{old_path}"));
         }
 
         info!(
@@ -320,7 +320,7 @@ impl EnvironmentManager {
 
         let new_path = new_path_parts.join(";");
         unsafe {
-            env::set_var("PATH", format!("{};{}", new_path, current_path));
+            env::set_var("PATH", format!("{new_path};{current_path}"));
         }
 
         info!(
@@ -472,7 +472,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set PyTorch specific environment variables (from launch_intellicrack.py)
+    /// Set `PyTorch` specific environment variables (from `launch_intellicrack.py`)
     pub fn set_pytorch_environment(&self) -> Result<()> {
         debug!("Setting PyTorch environment variables");
 
@@ -508,10 +508,10 @@ impl EnvironmentManager {
             }
         }
 
-        if !missing_vars.is_empty() {
-            warn!("Missing environment variables: {:?}", missing_vars);
-        } else {
+        if missing_vars.is_empty() {
             info!("All required environment variables are set");
+        } else {
+            warn!("Missing environment variables: {:?}", missing_vars);
         }
 
         Ok(())
@@ -540,8 +540,8 @@ impl EnvironmentManager {
         println!("\nKey Environment Variables:");
         for var in &important_vars {
             match env::var(var) {
-                Ok(value) => println!("  {} = {}", var, value),
-                Err(_) => println!("  {} = <not set>", var),
+                Ok(value) => println!("  {var} = {value}"),
+                Err(_) => println!("  {var} = <not set>"),
             }
         }
         println!("========================================\n");

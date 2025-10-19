@@ -14,13 +14,13 @@ use std::path::PathBuf;
 use std::{env, fs};
 use tracing::{debug, info, warn};
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OsType {
     Windows,
     Unix,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GpuVendor {
     Intel,
     Nvidia,
@@ -33,10 +33,10 @@ impl std::str::FromStr for GpuVendor {
 
     fn from_str(s: &str) -> Result<Self> {
         match s.to_lowercase().as_str() {
-            "intel" => Ok(GpuVendor::Intel),
-            "nvidia" => Ok(GpuVendor::Nvidia),
-            "amd" => Ok(GpuVendor::Amd),
-            _ => Ok(GpuVendor::Unknown),
+            "intel" => Ok(Self::Intel),
+            "nvidia" => Ok(Self::Nvidia),
+            "amd" => Ok(Self::Amd),
+            _ => Ok(Self::Unknown),
         }
     }
 }
@@ -98,7 +98,7 @@ impl PlatformInfo {
         let version = Self::detect_version();
         debug!("Version detected: {}", version);
 
-        Ok(PlatformInfo {
+        Ok(Self {
             os_type,
             is_wsl,
             gpu_vendor,
@@ -266,7 +266,7 @@ impl PlatformInfo {
                     if line.starts_with("PRETTY_NAME=") {
                         return line
                             .trim_start_matches("PRETTY_NAME=\"")
-                            .trim_end_matches("\"")
+                            .trim_end_matches('"')
                             .to_string();
                     }
                 }

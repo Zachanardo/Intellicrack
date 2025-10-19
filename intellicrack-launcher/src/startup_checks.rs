@@ -8,7 +8,7 @@ use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 use tracing::{debug, error, info, warn};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct StartupCheckResult {
     pub component: String,
     pub status: StartupStatus,
@@ -17,7 +17,7 @@ pub struct StartupCheckResult {
     pub severity: CheckSeverity,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum StartupStatus {
     Pass,
     Warning,
@@ -25,7 +25,7 @@ pub enum StartupStatus {
     Critical,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CheckSeverity {
     Info,
     Low,
@@ -72,6 +72,7 @@ impl Default for StartupValidator {
 }
 
 impl StartupValidator {
+    #[must_use] 
     pub fn new() -> Self {
         Self {
             requirements: SystemRequirements::default(),
@@ -79,7 +80,8 @@ impl StartupValidator {
         }
     }
 
-    pub fn with_requirements(requirements: SystemRequirements) -> Self {
+    #[must_use] 
+    pub const fn with_requirements(requirements: SystemRequirements) -> Self {
         Self {
             requirements,
             check_results: Vec::new(),
@@ -87,7 +89,7 @@ impl StartupValidator {
     }
 
     pub async fn perform_comprehensive_checks() -> Result<Vec<StartupCheckResult>> {
-        let mut validator = StartupValidator::new();
+        let mut validator = Self::new();
         validator.run_all_checks().await?;
         Ok(validator.check_results)
     }
@@ -153,7 +155,7 @@ impl StartupValidator {
             ),
             _ => (
                 StartupStatus::Fail,
-                format!("Unsupported operating system: {}", os),
+                format!("Unsupported operating system: {os}"),
                 CheckSeverity::High,
             ),
         };
@@ -177,7 +179,7 @@ impl StartupValidator {
         let (status, message, severity) = match arch {
             "x86_64" | "aarch64" => (
                 StartupStatus::Pass,
-                format!("Supported architecture: {}", arch),
+                format!("Supported architecture: {arch}"),
                 CheckSeverity::Info,
             ),
             "x86" => (
@@ -187,7 +189,7 @@ impl StartupValidator {
             ),
             _ => (
                 StartupStatus::Fail,
-                format!("Unsupported architecture: {}", arch),
+                format!("Unsupported architecture: {arch}"),
                 CheckSeverity::High,
             ),
         };
@@ -326,7 +328,7 @@ impl StartupValidator {
                 "file_write" => self.test_file_write_permission().await,
                 "process_create" => self.test_process_create_permission().await,
                 _ => {
-                    warnings.push(format!("Unknown permission: {}", permission));
+                    warnings.push(format!("Unknown permission: {permission}"));
                     false
                 }
             };
@@ -374,20 +376,17 @@ impl StartupValidator {
         let mut missing_vars = Vec::new();
 
         for var in &self.requirements.required_environment_vars {
-            match env::var(var) {
-                Ok(value) => {
-                    details.insert(var.clone(), "present".to_string());
-                    if var == "PATH" {
-                        details.insert(
-                            "path_entries".to_string(),
-                            value.split(';').count().to_string(),
-                        );
-                    }
+            if let Ok(value) = env::var(var) {
+                details.insert(var.clone(), "present".to_string());
+                if var == "PATH" {
+                    details.insert(
+                        "path_entries".to_string(),
+                        value.split(';').count().to_string(),
+                    );
                 }
-                Err(_) => {
-                    details.insert(var.clone(), "missing".to_string());
-                    missing_vars.push(var.clone());
-                }
+            } else {
+                details.insert(var.clone(), "missing".to_string());
+                missing_vars.push(var.clone());
             }
         }
 
@@ -426,21 +425,17 @@ impl StartupValidator {
         let mut python_executable = String::new();
 
         for cmd in &python_commands {
-            match timeout(
+            if let Ok(Ok(output)) = timeout(
                 Duration::from_secs(10),
                 Command::new(cmd).arg("--version").output(),
             )
-            .await
-            {
-                Ok(Ok(output)) => {
-                    if output.status.success() {
-                        python_found = true;
-                        python_executable = cmd.to_string();
-                        python_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                        break;
-                    }
+            .await {
+                if output.status.success() {
+                    python_found = true;
+                    python_executable = (*cmd).to_string();
+                    python_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    break;
                 }
-                _ => {}
             }
         }
 
@@ -893,7 +888,7 @@ impl StartupValidator {
                             let parts: Vec<&str> = line.split_whitespace().collect();
                             for (i, part) in parts.iter().enumerate() {
                                 if *part == "bytes" && i > 0 {
-                                    let bytes_str = parts[i - 1].replace(",", "");
+                                    let bytes_str = parts[i - 1].replace(',', "");
                                     if let Ok(bytes) = bytes_str.parse::<u64>() {
                                         return Ok(bytes / (1024 * 1024)); // Convert to MB
                                     }
@@ -1105,22 +1100,26 @@ impl StartupValidator {
         }
     }
 
+    #[must_use] 
     pub fn get_results(&self) -> &[StartupCheckResult] {
         &self.check_results
     }
 
+    #[must_use] 
     pub fn has_critical_failures(&self) -> bool {
         self.check_results
             .iter()
             .any(|r| r.status == StartupStatus::Critical)
     }
 
+    #[must_use] 
     pub fn has_failures(&self) -> bool {
         self.check_results
             .iter()
             .any(|r| matches!(r.status, StartupStatus::Fail | StartupStatus::Critical))
     }
 
+    #[must_use] 
     pub fn get_summary_report(&self) -> String {
         let total = self.check_results.len();
         let passed = self
@@ -1146,12 +1145,11 @@ impl StartupValidator {
 
         format!(
             "Startup Validation Summary:\n\
-            Total Checks: {}\n\
-            Passed: {}\n\
-            Warnings: {}\n\
-            Failures: {}\n\
-            Critical: {}",
-            total, passed, warnings, failures, critical
+            Total Checks: {total}\n\
+            Passed: {passed}\n\
+            Warnings: {warnings}\n\
+            Failures: {failures}\n\
+            Critical: {critical}"
         )
     }
 }

@@ -37,26 +37,26 @@ async fn main() -> Result<()> {
                 std::env::set_var(
                     "PYO3_PYTHON",
                     format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
-                )
+                );
             });
             s.spawn(|_| {
                 std::env::set_var(
                     "PYTHON_SYS_EXECUTABLE",
                     format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
-                )
+                );
             });
             s.spawn(|_| {
                 std::env::set_var(
                     "PIXI_PREFIX",
                     format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
-                )
+                );
             });
             s.spawn(|_| std::env::set_var("PYTHONPATH", PROJECT_ROOT.clone()));
             s.spawn(|_| {
                 std::env::set_var(
                     "PYTHONHOME",
                     format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
-                )
+                );
             });
             s.spawn(|_| std::env::set_var("RUST_LAUNCHER_MODE", "1"));
             s.spawn(|_| std::env::set_var("PYTHON_SUBPROCESS_MODE", "1"));
@@ -135,7 +135,7 @@ async fn main() -> Result<()> {
 
     // Initialize logging system
     if let Err(e) = initialize_logging().await {
-        eprintln!("Failed to initialize logging: {}", e);
+        eprintln!("Failed to initialize logging: {e}");
         std::process::exit(1);
     }
 
@@ -144,7 +144,7 @@ async fn main() -> Result<()> {
     // Set up panic hook for better error reporting
     std::panic::set_hook(Box::new(|panic_info| {
         error!("Panic occurred: {}", panic_info);
-        eprintln!("Fatal error: {}", panic_info);
+        eprintln!("Fatal error: {panic_info}");
         eprintln!("Please check logs/intellicrack-launcher.* for details");
     }));
 
@@ -157,13 +157,13 @@ async fn main() -> Result<()> {
                 Ok(exit_code) => std::process::exit(exit_code),
                 Err(e) => {
                     error!("Launcher failed: {:?}", e);
-                    eprintln!("Launch failed: {}", e);
+                    eprintln!("Launch failed: {e}");
                     std::process::exit(1);
                 }
             },
             Err(e) => {
                 error!("Failed to initialize launcher: {:?}", e);
-                eprintln!("Initialization failed: {}", e);
+                eprintln!("Initialization failed: {e}");
                 std::process::exit(1);
             }
         }

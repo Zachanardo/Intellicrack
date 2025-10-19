@@ -26,7 +26,7 @@ impl TensorFlowValidator {
                 warn!("Python not available: {}", e);
                 details.insert(
                     "error".to_string(),
-                    serde_json::Value::String(format!("Python not available: {}", e)),
+                    serde_json::Value::String(format!("Python not available: {e}")),
                 );
                 return Ok(DependencyStatus {
                     available: false,
@@ -107,8 +107,7 @@ impl TensorFlowValidator {
                                                 details.insert(
                                                     "intel_extension_test".to_string(),
                                                     serde_json::Value::String(format!(
-                                                        "not_available: {}",
-                                                        e
+                                                        "not_available: {e}"
                                                     )),
                                                 );
                                             }
@@ -124,7 +123,7 @@ impl TensorFlowValidator {
                                         warn!("TensorFlow device test failed: {}", e);
                                         details.insert(
                                             "device_test".to_string(),
-                                            serde_json::Value::String(format!("failed: {}", e)),
+                                            serde_json::Value::String(format!("failed: {e}")),
                                         );
                                     }
                                 }
@@ -133,7 +132,7 @@ impl TensorFlowValidator {
                                 warn!("TensorFlow operations test failed: {}", e);
                                 details.insert(
                                     "operations_test".to_string(),
-                                    serde_json::Value::String(format!("failed: {}", e)),
+                                    serde_json::Value::String(format!("failed: {e}")),
                                 );
                             }
                         }
@@ -142,7 +141,7 @@ impl TensorFlowValidator {
                         warn!("TensorFlow import test failed: {}", e);
                         details.insert(
                             "import_test".to_string(),
-                            serde_json::Value::String(format!("failed: {}", e)),
+                            serde_json::Value::String(format!("failed: {e}")),
                         );
                     }
                 }
@@ -188,7 +187,7 @@ impl TensorFlowValidator {
                         let version_output = String::from_utf8_lossy(&result.stdout);
                         let version_line = version_output.trim();
                         debug!("Found Python for TensorFlow: {} -> {}", cmd, version_line);
-                        return Ok(format!("{}: {}", cmd, version_line));
+                        return Ok(format!("{cmd}: {version_line}"));
                     }
                 }
                 Err(e) => {

@@ -1,7 +1,7 @@
 /*!
 # Python Integration Module
 
-Native Python interpreter integration using PyO3 that replicates and enhances
+Native Python interpreter integration using `PyO3` that replicates and enhances
 all Python configuration from the current launch system including ctypes-based
 library loading and GIL safety configuration.
 
@@ -27,7 +27,7 @@ pub struct PythonIntegration {
 }
 
 impl PythonIntegration {
-    /// Initialize Python integration with full PyO3 support
+    /// Initialize Python integration with full `PyO3` support
     pub fn initialize() -> Result<Self> {
         println!("DEBUG: PythonIntegration::initialize() starting");
         info!("Initializing Python integration with PyO3 embedding");
@@ -52,7 +52,7 @@ impl PythonIntegration {
         info!("PyO3 will auto-initialize with standard GIL-enabled Python");
 
         // Create initial integration struct
-        let mut integration = PythonIntegration {
+        let mut integration = Self {
             interpreter_path,
             virtual_env_path,
             python_lib: None,
@@ -123,7 +123,7 @@ impl PythonIntegration {
         }
     }
 
-    /// Configure PyBind11 compatibility (subprocess-only mode)
+    /// Configure `PyBind11` compatibility (subprocess-only mode)
     pub fn configure_pybind11_compatibility(&mut self) -> Result<()> {
         info!("Configuring PyBind11 compatibility (subprocess-only mode)");
 
@@ -136,7 +136,7 @@ impl PythonIntegration {
         Ok(())
     }
 
-    /// Verify Python library is loaded (PyO3 handles the actual loading)
+    /// Verify Python library is loaded (`PyO3` handles the actual loading)
     fn load_python_library(&mut self, py: Python) -> Result<()> {
         let version_info = py.version_info();
         info!(
@@ -247,7 +247,7 @@ impl PythonIntegration {
         Ok(())
     }
 
-    /// Execute Intellicrack main module using PyO3 embedding
+    /// Execute Intellicrack main module using `PyO3` embedding
     pub fn run_intellicrack_main(&self) -> Result<i32> {
         self.run_via_subprocess()
     }
@@ -472,7 +472,7 @@ impl PythonIntegration {
             let new_pythonpath = if current_pythonpath.is_empty() {
                 exe_dir_str.to_string()
             } else {
-                format!("{};{}", exe_dir_str, current_pythonpath)
+                format!("{exe_dir_str};{current_pythonpath}")
             };
             cmd.env("PYTHONPATH", &new_pythonpath);
             info!(
@@ -502,14 +502,14 @@ impl PythonIntegration {
         if !output.stdout.is_empty() {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines() {
-                println!("{}", line);
+                println!("{line}");
             }
         }
 
         if !output.stderr.is_empty() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             for line in stderr.lines() {
-                eprintln!("{}", line);
+                eprintln!("{line}");
             }
         }
 
@@ -520,7 +520,7 @@ impl PythonIntegration {
             error!("Intellicrack launcher exited with code: {}", exit_code);
 
             eprintln!("\n========================================");
-            eprintln!("Intellicrack crashed with exit code: {}", exit_code);
+            eprintln!("Intellicrack crashed with exit code: {exit_code}");
             eprintln!("========================================");
             eprintln!("Press Enter to close this window...");
 
@@ -605,7 +605,7 @@ impl PythonIntegration {
                 CString::new(test_script).context("Test script contains interior null bytes")?;
 
             match py.run(c_test_script.as_c_str(), None, None) {
-                Ok(_) => {
+                Ok(()) => {
                     info!("Environment test completed successfully");
                     Ok(0)
                 }
@@ -618,17 +618,20 @@ impl PythonIntegration {
     }
 
     /// Get Python interpreter path
-    pub fn get_interpreter_path(&self) -> &PathBuf {
+    #[must_use] 
+    pub const fn get_interpreter_path(&self) -> &PathBuf {
         &self.interpreter_path
     }
 
     /// Get virtual environment path
-    pub fn get_virtual_env_path(&self) -> &PathBuf {
+    #[must_use] 
+    pub const fn get_virtual_env_path(&self) -> &PathBuf {
         &self.virtual_env_path
     }
 
     /// Check if Python library is loaded
-    pub fn is_library_loaded(&self) -> bool {
+    #[must_use] 
+    pub const fn is_library_loaded(&self) -> bool {
         self.python_lib.is_some()
     }
 
@@ -651,7 +654,7 @@ impl PythonIntegration {
                 version_info.major,
                 version_info.minor,
                 version_info.patch,
-                version_info.suffix.map(|s| s.to_string()),
+                version_info.suffix.map(std::string::ToString::to_string),
             ))
         })
     }

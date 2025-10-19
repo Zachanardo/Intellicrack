@@ -64,6 +64,7 @@ pub struct SystemHealthReport {
 }
 
 impl ValidationSummary {
+    #[must_use] 
     pub fn all_critical_available(&self) -> bool {
         let critical_deps = ["Flask", "TensorFlow"];
         critical_deps.iter().all(|dep| {
@@ -73,10 +74,12 @@ impl ValidationSummary {
         })
     }
 
+    #[must_use] 
     pub fn total(&self) -> usize {
         self.dependencies.len()
     }
 
+    #[must_use] 
     pub fn successful(&self) -> usize {
         self.dependencies
             .values()
@@ -84,6 +87,7 @@ impl ValidationSummary {
             .count()
     }
 
+    #[must_use] 
     pub fn failed(&self) -> usize {
         self.dependencies
             .values()
@@ -91,6 +95,7 @@ impl ValidationSummary {
             .count()
     }
 
+    #[must_use] 
     pub fn success_rate(&self) -> f64 {
         if self.total() == 0 {
             0.0
@@ -106,8 +111,9 @@ pub struct DependencyValidator {
 }
 
 impl DependencyValidator {
+    #[must_use] 
     pub fn new() -> Self {
-        DependencyValidator {
+        Self {
             results: HashMap::new(),
         }
     }
@@ -377,27 +383,24 @@ impl DependencyValidator {
     async fn check_qemu_dependency(&mut self) -> Result<()> {
         info!("Checking QEMU dependency");
 
-        let qemu_status = match Command::new("qemu-system-x86_64").arg("--version").output() {
-            Ok(_) => {
-                info!("QEMU system emulator found");
-                DependencyStatus {
-                    available: true,
-                    version: None,
-                    details: {
-                        let mut details = HashMap::new();
-                        details
-                            .insert("system_emulator".to_string(), serde_json::Value::Bool(true));
-                        details
-                    },
-                }
+        let qemu_status = if let Ok(_) = Command::new("qemu-system-x86_64").arg("--version").output() {
+            info!("QEMU system emulator found");
+            DependencyStatus {
+                available: true,
+                version: None,
+                details: {
+                    let mut details = HashMap::new();
+                    details
+                        .insert("system_emulator".to_string(), serde_json::Value::Bool(true));
+                    details
+                },
             }
-            Err(_) => {
-                warn!("QEMU not found - QEMU functionality will be limited");
-                DependencyStatus {
-                    available: false,
-                    version: None,
-                    details: HashMap::new(),
-                }
+        } else {
+            warn!("QEMU not found - QEMU functionality will be limited");
+            DependencyStatus {
+                available: false,
+                version: None,
+                details: HashMap::new(),
             }
         };
 
@@ -560,9 +563,9 @@ impl DependencyValidator {
                     && let Some(output_value) = first_row.first()
                 {
                     if *output_value >= 0.0 && *output_value <= 1.0 {
-                        model_prediction_test = format!("✓ (output: {:.3})", output_value);
+                        model_prediction_test = format!("✓ (output: {output_value:.3})");
                     } else {
-                        model_prediction_test = format!("✗ Invalid output range: {}", output_value);
+                        model_prediction_test = format!("✗ Invalid output range: {output_value}");
                     }
                 }
             }

@@ -112,7 +112,7 @@ pub struct ProcessStatistics {
 
 impl Default for ProcessConfig {
     fn default() -> Self {
-        ProcessConfig {
+        Self {
             max_processes: 32,
             default_timeout: Duration::from_secs(300), // 5 minutes
             enable_stdout_capture: true,
@@ -130,7 +130,7 @@ impl ProcessManager {
         let config = ProcessConfig::default();
         let worker_pool = Self::initialize_worker_pool(config.worker_pool_size)?;
 
-        Ok(ProcessManager {
+        Ok(Self {
             platform: platform.clone(),
             config,
             security,
@@ -149,7 +149,7 @@ impl ProcessManager {
     ) -> Result<Self> {
         let worker_pool = Self::initialize_worker_pool(config.worker_pool_size)?;
 
-        Ok(ProcessManager {
+        Ok(Self {
             platform: platform.clone(),
             config,
             security,
@@ -284,7 +284,7 @@ impl ProcessManager {
         // Start the process
         let child = cmd
             .spawn()
-            .with_context(|| format!("Failed to start process: {}", command))?;
+            .with_context(|| format!("Failed to start process: {command}"))?;
 
         let pid = child.id();
         let timeout_duration = timeout.unwrap_or(self.config.default_timeout);
@@ -542,7 +542,7 @@ impl ProcessManager {
                                 ProcessStatus::Completed => stats.successful_processes += 1,
                                 ProcessStatus::Failed => stats.failed_processes += 1,
                                 ProcessStatus::SecurityBlocked => {
-                                    stats.security_blocked_processes += 1
+                                    stats.security_blocked_processes += 1;
                                 }
                                 _ => {}
                             }
@@ -596,11 +596,13 @@ impl ProcessManager {
         }
     }
 
+    #[must_use] 
     pub fn get_process_info(&self, process_id: u32) -> Option<ProcessInfo> {
         let processes = self.processes.lock().unwrap();
         processes.get(&process_id).map(|p| p.info.clone())
     }
 
+    #[must_use] 
     pub fn list_processes(&self) -> Vec<ProcessInfo> {
         let processes = self.processes.lock().unwrap();
         processes.values().map(|p| p.info.clone()).collect()
@@ -676,7 +678,7 @@ impl ProcessManager {
         // Kill all running processes
         let process_ids: Vec<u32> = {
             let processes = self.processes.lock().unwrap();
-            processes.keys().cloned().collect()
+            processes.keys().copied().collect()
         };
 
         for process_id in process_ids {
@@ -712,6 +714,7 @@ impl ProcessManager {
         Ok(())
     }
 
+    #[must_use] 
     pub fn get_statistics(&self) -> ProcessStatistics {
         let stats = self.process_stats.lock().unwrap();
         ProcessStatistics {
@@ -725,6 +728,7 @@ impl ProcessManager {
         }
     }
 
+    #[must_use] 
     pub fn get_worker_status(&self) -> Vec<WorkerInfo> {
         let workers = self.worker_pool.lock().unwrap();
         workers.clone()
@@ -794,10 +798,12 @@ impl ProcessManager {
         })
     }
 
+    #[must_use] 
     pub fn is_running(&self) -> bool {
         !*self.shutdown_flag.lock().unwrap()
     }
 
+    #[must_use] 
     pub fn get_active_process_count(&self) -> usize {
         let processes = self.processes.lock().unwrap();
         processes

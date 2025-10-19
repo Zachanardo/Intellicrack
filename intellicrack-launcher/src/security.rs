@@ -62,7 +62,7 @@ impl SecurityManager {
     pub fn new() -> Result<Self> {
         let config = Self::load_security_config()?;
 
-        Ok(SecurityManager {
+        Ok(Self {
             config,
             enforcement_active: false,
             bypass_enabled: false,
@@ -252,14 +252,11 @@ impl SecurityManager {
         info!("Initializing Python security patches");
 
         // Check if Python is initialized before trying to use it
-        match Python::attach(|_| -> Result<(), anyhow::Error> { Ok(()) }) {
-            Ok(_) => {
-                // Python is initialized, proceed
-            }
-            Err(_) => {
-                warn!("Python not initialized yet - deferring security patches");
-                return Ok(());
-            }
+        if let Ok(()) = Python::attach(|_| -> Result<(), anyhow::Error> { Ok(()) }) {
+            // Python is initialized, proceed
+        } else {
+            warn!("Python not initialized yet - deferring security patches");
+            return Ok(());
         }
 
         Python::attach(|py| -> Result<()> {
@@ -447,6 +444,7 @@ impl SecurityManager {
         Ok(algorithm.to_string())
     }
 
+    #[must_use] 
     pub fn get_security_status(&self) -> SecurityStatus {
         let mut patches_applied = HashMap::new();
 
@@ -471,14 +469,17 @@ impl SecurityManager {
         }
     }
 
-    pub fn is_sandbox_mode(&self) -> bool {
+    #[must_use] 
+    pub const fn is_sandbox_mode(&self) -> bool {
         self.config.sandbox_analysis
     }
 
-    pub fn is_network_access_allowed(&self) -> bool {
+    #[must_use] 
+    pub const fn is_network_access_allowed(&self) -> bool {
         self.config.allow_network_access
     }
 
+    #[must_use] 
     pub fn get_default_hash_algorithm(&self) -> &str {
         &self.config.hashing.default_algorithm
     }
@@ -488,8 +489,8 @@ impl Default for SecurityManager {
     fn default() -> Self {
         Self::new().unwrap_or_else(|e| {
             warn!("Failed to create SecurityManager: {}", e);
-            SecurityManager {
-                config: SecurityManager::get_default_security_config(),
+            Self {
+                config: Self::get_default_security_config(),
                 enforcement_active: false,
                 bypass_enabled: false,
             }

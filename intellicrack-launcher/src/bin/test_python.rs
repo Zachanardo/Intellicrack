@@ -26,16 +26,16 @@ fn main() {
 
         // Get Python version
         let version = py.version();
-        println!("Python version: {}", version);
+        println!("Python version: {version}");
 
         // Test simple evaluation
         let code = std::ffi::CString::new("2 + 2").unwrap();
         let result: i32 = py.eval(code.as_c_str(), None, None)?.extract()?;
-        println!("2 + 2 = {}", result);
+        println!("2 + 2 = {result}");
 
         Ok(())
     }) {
         Ok(()) => println!("Test successful!"),
-        Err(e) => eprintln!("Test failed: {}", e),
+        Err(e) => eprintln!("Test failed: {e}"),
     }
 }

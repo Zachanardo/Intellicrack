@@ -40,6 +40,7 @@ impl Default for PerformanceMetrics {
 }
 
 impl PerformanceMetrics {
+    #[must_use] 
     pub fn new() -> Self {
         Self::default()
     }
@@ -380,10 +381,12 @@ impl PerformanceMetrics {
         Err(anyhow!("Failed to measure network latency"))
     }
 
+    #[must_use] 
     pub fn get_total_runtime(&self) -> Duration {
         self.startup_time + self.validation_time + self.dependency_check_time
     }
 
+    #[must_use] 
     pub fn format_summary(&self) -> String {
         format!(
             "Performance Summary:\n\
@@ -409,8 +412,7 @@ impl PerformanceMetrics {
             self.process_count,
             self.system_uptime_hours,
             self.network_latency_ms
-                .map(|ms| format!("{} ms", ms))
-                .unwrap_or("N/A".to_string())
+                .map_or("N/A".to_string(), |ms| format!("{ms} ms"))
         )
     }
 }
@@ -426,6 +428,7 @@ pub struct DiagnosticEntry {
 }
 
 impl DiagnosticEntry {
+    #[must_use] 
     pub fn new(level: String, category: String, message: String) -> Self {
         Self {
             timestamp: SystemTime::now()
@@ -440,12 +443,14 @@ impl DiagnosticEntry {
         }
     }
 
+    #[must_use] 
     pub fn with_details(mut self, details: HashMap<String, String>) -> Self {
         self.details = details;
         self
     }
 
-    pub fn with_metrics(mut self, metrics: PerformanceMetrics) -> Self {
+    #[must_use] 
+    pub const fn with_metrics(mut self, metrics: PerformanceMetrics) -> Self {
         self.metrics = Some(metrics);
         self
     }
@@ -476,7 +481,7 @@ impl DiagnosticsManager {
             log_path
         );
 
-        Ok(DiagnosticsManager {
+        Ok(Self {
             log_path,
             metrics: PerformanceMetrics::new(),
             entries: Vec::new(),
@@ -497,7 +502,7 @@ impl DiagnosticsManager {
             log_path
         );
 
-        Ok(DiagnosticsManager {
+        Ok(Self {
             log_path,
             metrics: PerformanceMetrics::new(),
             entries: Vec::new(),
@@ -523,15 +528,17 @@ impl DiagnosticsManager {
         );
     }
 
-    pub fn is_enabled(&self) -> bool {
+    #[must_use] 
+    pub const fn is_enabled(&self) -> bool {
         self.enabled
     }
 
-    pub fn get_metrics(&self) -> &PerformanceMetrics {
+    #[must_use] 
+    pub const fn get_metrics(&self) -> &PerformanceMetrics {
         &self.metrics
     }
 
-    pub fn get_metrics_mut(&mut self) -> &mut PerformanceMetrics {
+    pub const fn get_metrics_mut(&mut self) -> &mut PerformanceMetrics {
         &mut self.metrics
     }
 
@@ -580,10 +587,10 @@ impl DiagnosticsManager {
 
         // Add details for each dependency
         for (i, (name, status)) in results.dependencies.iter().enumerate() {
-            details.insert(format!("dep_{}_name", i), name.clone());
-            details.insert(format!("dep_{}_available", i), status.available.to_string());
+            details.insert(format!("dep_{i}_name"), name.clone());
+            details.insert(format!("dep_{i}_available"), status.available.to_string());
             if let Some(version) = &status.version {
-                details.insert(format!("dep_{}_version", i), version.clone());
+                details.insert(format!("dep_{i}_version"), version.clone());
             }
         }
 
@@ -622,7 +629,7 @@ impl DiagnosticsManager {
         let entry = DiagnosticEntry::new(
             "INFO".to_string(),
             "STARTUP".to_string(),
-            format!("Startup completed in {:?}", startup_time),
+            format!("Startup completed in {startup_time:?}"),
         )
         .with_details(details);
 
@@ -638,13 +645,13 @@ impl DiagnosticsManager {
 
         let mut details = HashMap::new();
         details.insert("error_type".to_string(), error.to_string());
-        details.insert("error_debug".to_string(), format!("{:?}", error));
+        details.insert("error_debug".to_string(), format!("{error:?}"));
 
         // Try to get error chain
         let mut source = error.source();
         let mut chain_index = 0;
         while let Some(err) = source {
-            details.insert(format!("error_chain_{}", chain_index), err.to_string());
+            details.insert(format!("error_chain_{chain_index}"), err.to_string());
             source = err.source();
             chain_index += 1;
         }
@@ -652,7 +659,7 @@ impl DiagnosticsManager {
         let entry = DiagnosticEntry::new(
             "ERROR".to_string(),
             category.to_uppercase(),
-            format!("{}: {}", message, error),
+            format!("{message}: {error}"),
         )
         .with_details(details);
 
@@ -710,9 +717,7 @@ impl DiagnosticsManager {
             .append(true)
             .open(&self.log_path)?;
 
-        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0)
-            .map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
-            .unwrap_or_else(|| entry.timestamp.to_string());
+        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0).map_or_else(|| entry.timestamp.to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string());
 
         writeln!(
             file,
@@ -723,7 +728,7 @@ impl DiagnosticsManager {
         // Write details if present
         if !entry.details.is_empty() {
             for (key, value) in &entry.details {
-                writeln!(file, "  {}: {}", key, value)?;
+                writeln!(file, "  {key}: {value}")?;
             }
         }
 
@@ -741,7 +746,8 @@ impl DiagnosticsManager {
         Ok(())
     }
 
-    pub fn get_entries(&self) -> &Vec<DiagnosticEntry> {
+    #[must_use] 
+    pub const fn get_entries(&self) -> &Vec<DiagnosticEntry> {
         &self.entries
     }
 
@@ -769,6 +775,7 @@ impl DiagnosticsManager {
         Ok(())
     }
 
+    #[must_use] 
     pub fn get_summary_report(&self) -> String {
         if !self.enabled {
             return "Diagnostics disabled".to_string();
@@ -781,9 +788,9 @@ impl DiagnosticsManager {
         let mut report = String::new();
         report.push_str("=== DIAGNOSTICS SUMMARY ===\n");
         report.push_str(&format!("Total Entries: {}\n", self.entries.len()));
-        report.push_str(&format!("Errors: {}\n", error_count));
-        report.push_str(&format!("Warnings: {}\n", warning_count));
-        report.push_str(&format!("Info: {}\n", info_count));
+        report.push_str(&format!("Errors: {error_count}\n"));
+        report.push_str(&format!("Warnings: {warning_count}\n"));
+        report.push_str(&format!("Info: {info_count}\n"));
         report.push('\n');
         report.push_str(&self.metrics.format_summary());
         report.push_str("\n\n=== RECENT ENTRIES ===\n");
@@ -791,9 +798,7 @@ impl DiagnosticsManager {
         // Show last 10 entries
         let recent_entries = self.entries.iter().rev().take(10);
         for entry in recent_entries {
-            let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0)
-                .map(|dt| dt.format("%H:%M:%S").to_string())
-                .unwrap_or_else(|| entry.timestamp.to_string());
+            let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0).map_or_else(|| entry.timestamp.to_string(), |dt| dt.format("%H:%M:%S").to_string());
             report.push_str(&format!(
                 "[{}] [{}] {}\n",
                 timestamp, entry.level, entry.message

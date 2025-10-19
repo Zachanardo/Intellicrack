@@ -26,7 +26,7 @@ impl FlaskValidator {
                 warn!("Python not available: {}", e);
                 details.insert(
                     "error".to_string(),
-                    serde_json::Value::String(format!("Python not available: {}", e)),
+                    serde_json::Value::String(format!("Python not available: {e}")),
                 );
                 return Ok(DependencyStatus {
                     available: false,
@@ -92,7 +92,7 @@ impl FlaskValidator {
                                         warn!("Flask routing test failed: {}", e);
                                         details.insert(
                                             "routing_test".to_string(),
-                                            serde_json::Value::String(format!("failed: {}", e)),
+                                            serde_json::Value::String(format!("failed: {e}")),
                                         );
                                     }
                                 }
@@ -101,7 +101,7 @@ impl FlaskValidator {
                                 warn!("Flask app creation test failed: {}", e);
                                 details.insert(
                                     "app_creation_test".to_string(),
-                                    serde_json::Value::String(format!("failed: {}", e)),
+                                    serde_json::Value::String(format!("failed: {e}")),
                                 );
                             }
                         }
@@ -110,7 +110,7 @@ impl FlaskValidator {
                         warn!("Flask import test failed: {}", e);
                         details.insert(
                             "import_test".to_string(),
-                            serde_json::Value::String(format!("failed: {}", e)),
+                            serde_json::Value::String(format!("failed: {e}")),
                         );
                     }
                 }
@@ -153,7 +153,7 @@ impl FlaskValidator {
                         let version_output = String::from_utf8_lossy(&result.stdout);
                         let version_line = version_output.trim();
                         debug!("Found Python: {} -> {}", cmd, version_line);
-                        return Ok(format!("{}: {}", cmd, version_line));
+                        return Ok(format!("{cmd}: {version_line}"));
                     }
                 }
                 Err(e) => {
