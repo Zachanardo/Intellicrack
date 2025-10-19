@@ -17,8 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .script_execution_manager import ScriptExecutionManager
+try:
+    from .script_execution_manager import ScriptExecutionManager
+except ImportError:
+    # Don't set variable if import fails
+    pass
 
 """Script execution management module."""
 
 __all__ = ["ScriptExecutionManager"]
+
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]

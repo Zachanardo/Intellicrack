@@ -95,137 +95,139 @@ except ImportError as e:
     EXPLOITATION_MODULES_AVAILABLE = False
 
 # Import individual core modules for Sphinx documentation
-try:
-    from . import binary_analyzer
-except ImportError as e:
-    logger.warning(f"binary_analyzer not available: {e}")
-    binary_analyzer = None
+# Only set attributes when imports succeed to avoid None attribute errors
+if True:  # Always attempt imports
+    try:
+        from . import binary_analyzer
+    except ImportError as e:
+        logger.warning(f"binary_analyzer not available: {e}")
+        # Don't set binary_analyzer = None
 
-try:
-    from . import config_migration_handler
-except ImportError as e:
-    logger.warning(f"config_migration_handler not available: {e}")
-    config_migration_handler = None
+    try:
+        from . import config_migration_handler
+    except ImportError as e:
+        logger.warning(f"config_migration_handler not available: {e}")
+        # Don't set config_migration_handler = None
 
-try:
-    from . import debugging_engine
-except ImportError as e:
-    logger.warning(f"debugging_engine not available: {e}")
-    debugging_engine = None
+    try:
+        from . import debugging_engine
+    except ImportError as e:
+        logger.warning(f"debugging_engine not available: {e}")
+        # Don't set debugging_engine = None
 
-try:
-    from . import frida_bypass_wizard
-except ImportError as e:
-    logger.warning(f"frida_bypass_wizard not available: {e}")
-    frida_bypass_wizard = None
+    try:
+        from . import frida_bypass_wizard
+    except ImportError as e:
+        logger.warning(f"frida_bypass_wizard not available: {e}")
+        # Don't set frida_bypass_wizard = None
 
-try:
-    from . import frida_constants
-except ImportError as e:
-    logger.warning(f"frida_constants not available: {e}")
-    frida_constants = None
+    try:
+        from . import frida_constants
+    except ImportError as e:
+        logger.warning(f"frida_constants not available: {e}")
+        # Don't set frida_constants = None
 
-try:
-    from . import frida_manager
-except ImportError as e:
-    logger.warning(f"frida_manager not available: {e}")
-    frida_manager = None
+    try:
+        from . import frida_manager
+    except ImportError as e:
+        logger.warning(f"frida_manager not available: {e}")
+        # Don't set frida_manager = None
 
-try:
-    from . import frida_presets
-except ImportError as e:
-    logger.warning(f"frida_presets not available: {e}")
-    frida_presets = None
+    try:
+        from . import frida_presets
+    except ImportError as e:
+        logger.warning(f"frida_presets not available: {e}")
+        # Don't set frida_presets = None
 
-try:
-    from . import gpu_acceleration
-except ImportError as e:
-    logger.warning(f"gpu_acceleration not available: {e}")
-    gpu_acceleration = None
+    try:
+        from . import gpu_acceleration
+    except ImportError as e:
+        logger.warning(f"gpu_acceleration not available: {e}")
+        # Don't set gpu_acceleration = None
 
-try:
-    from . import hardware_spoofer
-except ImportError as e:
-    logger.warning(f"hardware_spoofer not available: {e}")
-    hardware_spoofer = None
+    try:
+        from . import hardware_spoofer
+    except ImportError as e:
+        logger.warning(f"hardware_spoofer not available: {e}")
+        # Don't set hardware_spoofer = None
 
-try:
-    from . import license_snapshot
-except ImportError as e:
-    logger.warning(f"license_snapshot not available: {e}")
-    license_snapshot = None
+    try:
+        from . import license_snapshot
+    except ImportError as e:
+        logger.warning(f"license_snapshot not available: {e}")
+        # Don't set license_snapshot = None
 
-try:
-    from . import license_validation_bypass
-except ImportError as e:
-    logger.warning(f"license_validation_bypass not available: {e}")
-    license_validation_bypass = None
+    try:
+        from . import license_validation_bypass
+    except ImportError as e:
+        logger.warning(f"license_validation_bypass not available: {e}")
+        # Don't set license_validation_bypass = None
 
-try:
-    from . import network_capture
-except ImportError as e:
-    logger.warning(f"network_capture not available: {e}")
-    network_capture = None
+    try:
+        from . import network_capture
+    except ImportError as e:
+        logger.warning(f"network_capture not available: {e}")
+        # Don't set network_capture = None
 
-try:
-    from . import offline_activation_emulator
-except ImportError as e:
-    logger.warning(f"offline_activation_emulator not available: {e}")
-    offline_activation_emulator = None
+    try:
+        from . import offline_activation_emulator
+    except ImportError as e:
+        logger.warning(f"offline_activation_emulator not available: {e}")
+        # Don't set offline_activation_emulator = None
 
-try:
-    from . import process_manipulation
-except ImportError as e:
-    logger.warning(f"process_manipulation not available: {e}")
-    process_manipulation = None
+    try:
+        from . import process_manipulation
+    except ImportError as e:
+        logger.warning(f"process_manipulation not available: {e}")
+        # Don't set process_manipulation = None
 
-try:
-    from . import protection_analyzer
-except ImportError as e:
-    logger.warning(f"protection_analyzer not available: {e}")
-    protection_analyzer = None
+    try:
+        from . import protection_analyzer
+    except ImportError as e:
+        logger.warning(f"protection_analyzer not available: {e}")
+        # Don't set protection_analyzer = None
 
-try:
-    from . import security_utils
-except ImportError as e:
-    logger.warning(f"security_utils not available: {e}")
-    security_utils = None
+    try:
+        from . import security_utils
+    except ImportError as e:
+        logger.warning(f"security_utils not available: {e}")
+        # Don't set security_utils = None
 
-try:
-    from . import serial_generator
-except ImportError as e:
-    logger.warning(f"serial_generator not available: {e}")
-    serial_generator = None
+    try:
+        from . import serial_generator
+    except ImportError as e:
+        logger.warning(f"serial_generator not available: {e}")
+        # Don't set serial_generator = None
 
-try:
-    from . import startup_checks
-except ImportError as e:
-    logger.warning(f"startup_checks not available: {e}")
-    startup_checks = None
+    try:
+        from . import startup_checks
+    except ImportError as e:
+        logger.warning(f"startup_checks not available: {e}")
+        # Don't set startup_checks = None
 
-try:
-    from . import subscription_validation_bypass
-except ImportError as e:
-    logger.warning(f"subscription_validation_bypass not available: {e}")
-    subscription_validation_bypass = None
+    try:
+        from . import subscription_validation_bypass
+    except ImportError as e:
+        logger.warning(f"subscription_validation_bypass not available: {e}")
+        # Don't set subscription_validation_bypass = None
 
-try:
-    from . import task_manager
-except ImportError as e:
-    logger.warning(f"task_manager not available: {e}")
-    task_manager = None
+    try:
+        from . import task_manager
+    except ImportError as e:
+        logger.warning(f"task_manager not available: {e}")
+        # Don't set task_manager = None
 
-try:
-    from . import tool_discovery
-except ImportError as e:
-    logger.warning(f"tool_discovery not available: {e}")
-    tool_discovery = None
+    try:
+        from . import tool_discovery
+    except ImportError as e:
+        logger.warning(f"tool_discovery not available: {e}")
+        # Don't set tool_discovery = None
 
-try:
-    from . import trial_reset_engine
-except ImportError as e:
-    logger.warning(f"trial_reset_engine not available: {e}")
-    trial_reset_engine = None
+    try:
+        from . import trial_reset_engine
+    except ImportError as e:
+        logger.warning(f"trial_reset_engine not available: {e}")
+        # Don't set trial_reset_engine = None
 
 # Import shared modules
 try:
@@ -389,42 +391,5 @@ __all__ = [
     "vulnerability_research",
 ]
 
-# Update __all__ to exclude None modules
-__all__ = [
-    item
-    for item in __all__
-    if item
-    not in [
-        "analysis",
-        "network",
-        "patching",
-        "processing",
-        "protection_bypass",
-        "reporting",
-        "binary_analyzer",
-        "config_migration_handler",
-        "debugging_engine",
-        "frida_bypass_wizard",
-        "frida_constants",
-        "frida_manager",
-        "frida_presets",
-        "gpu_acceleration",
-        "hardware_spoofer",
-        "license_snapshot",
-        "license_validation_bypass",
-        "network_capture",
-        "offline_activation_emulator",
-        "process_manipulation",
-        "protection_analyzer",
-        "security_utils",
-        "serial_generator",
-        "startup_checks",
-        "subscription_validation_bypass",
-        "task_manager",
-        "tool_discovery",
-        "trial_reset_engine",
-        "shared",
-        "protocols",
-    ]
-    or locals().get(item) is not None
-]
+# Update __all__ to only include modules that are actually available
+__all__ = [item for item in __all__ if item in locals() and locals().get(item) is not None]

@@ -17,7 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .bypass_config import BypassConfig
+try:
+    from .bypass_config import BypassConfig
+except ImportError:
+    # Don't set variable if import fails
+    pass
 
 """
 Shared Core Components
@@ -28,3 +32,6 @@ Common utilities and configurations used across multiple core modules.
 __all__ = [
     "BypassConfig",
 ]
+
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]

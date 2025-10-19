@@ -193,7 +193,6 @@ impl TensorFlowValidator {
                 }
                 Err(e) => {
                     debug!("Failed to execute {}: {}", cmd, e);
-                    continue;
                 }
             }
         }
@@ -242,7 +241,6 @@ except Exception as e:
                 }
                 Err(e) => {
                     debug!("Failed to execute {} for TensorFlow version: {}", cmd, e);
-                    continue;
                 }
             }
         }
@@ -347,17 +345,15 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("TensorFlow import test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("TensorFlow import test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!(
                         "Failed to execute {} for TensorFlow import test: {}",
                         cmd, e
                     );
-                    continue;
                 }
             }
         }
@@ -467,17 +463,15 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("TensorFlow operations test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("TensorFlow operations test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!(
                         "Failed to execute {} for TensorFlow operations test: {}",
                         cmd, e
                     );
-                    continue;
                 }
             }
         }
@@ -578,17 +572,15 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("TensorFlow device test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("TensorFlow device test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!(
                         "Failed to execute {} for TensorFlow device test: {}",
                         cmd, e
                     );
-                    continue;
                 }
             }
         }
@@ -706,14 +698,12 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("Intel extension test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("Intel extension test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!("Failed to execute {} for Intel extension test: {}", cmd, e);
-                    continue;
                 }
             }
         }

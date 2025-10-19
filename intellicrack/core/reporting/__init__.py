@@ -36,6 +36,9 @@ __all__ = [
     "run_report_generation",
 ]
 
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]
+
 # Package metadata
 __version__ = "0.1.0"
 __author__ = "Intellicrack Development Team"

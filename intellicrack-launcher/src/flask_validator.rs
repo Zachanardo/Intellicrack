@@ -158,7 +158,6 @@ impl FlaskValidator {
                 }
                 Err(e) => {
                     debug!("Failed to execute {}: {}", cmd, e);
-                    continue;
                 }
             }
         }
@@ -207,7 +206,6 @@ except Exception as e:
                 }
                 Err(e) => {
                     debug!("Failed to execute {} for Flask version: {}", cmd, e);
-                    continue;
                 }
             }
         }
@@ -290,14 +288,12 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("Flask import test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("Flask import test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!("Failed to execute {} for Flask import test: {}", cmd, e);
-                    continue;
                 }
             }
         }
@@ -369,17 +365,15 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("Flask app creation test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("Flask app creation test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!(
                         "Failed to execute {} for Flask app creation test: {}",
                         cmd, e
                     );
-                    continue;
                 }
             }
         }
@@ -479,14 +473,12 @@ except Exception as e:
                                 continue;
                             }
                         }
-                    } else {
-                        let stderr = String::from_utf8_lossy(&result.stderr);
-                        debug!("Flask routing test failed via {}: {}", cmd, stderr);
                     }
+                    let stderr = String::from_utf8_lossy(&result.stderr);
+                    debug!("Flask routing test failed via {}: {}", cmd, stderr);
                 }
                 Err(e) => {
                     debug!("Failed to execute {} for Flask routing test: {}", cmd, e);
-                    continue;
                 }
             }
         }

@@ -1,764 +1,764 @@
-[ ] WARNING: Failed to import intellicrack.core.binary_analyzer.
+[x] WARNING: Failed to import intellicrack.core.binary_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'binary_analyzer'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.config_migration_handler.
+[x] WARNING: Failed to import intellicrack.core.config_migration_handler.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'config_migration_handler'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.debugging_engine.
+[x] WARNING: Failed to import intellicrack.core.debugging_engine.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'debugging_engine'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.frida_bypass_wizard.
+[x] WARNING: Failed to import intellicrack.core.frida_bypass_wizard.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'frida_bypass_wizard'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.frida_constants.
+[x] WARNING: Failed to import intellicrack.core.frida_constants.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'frida_constants'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.frida_manager.
+[x] WARNING: Failed to import intellicrack.core.frida_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'frida_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.frida_presets.
+[x] WARNING: Failed to import intellicrack.core.frida_presets.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'frida_presets'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.gpu_acceleration.
+[x] WARNING: Failed to import intellicrack.core.gpu_acceleration.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'gpu_acceleration'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.hardware_spoofer.
+[x] WARNING: Failed to import intellicrack.core.hardware_spoofer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'hardware_spoofer'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.license_snapshot.
+[x] WARNING: Failed to import intellicrack.core.license_snapshot.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'license_snapshot'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.license_validation_bypass.
+[x] WARNING: Failed to import intellicrack.core.license_validation_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'license_validation_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network_capture.
+[x] WARNING: Failed to import intellicrack.core.network_capture.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network_capture'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.offline_activation_emulator.
+[x] WARNING: Failed to import intellicrack.core.offline_activation_emulator.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'offline_activation_emulator'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.process_manipulation.
+[x] WARNING: Failed to import intellicrack.core.process_manipulation.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'process_manipulation'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_analyzer.
+[x] WARNING: Failed to import intellicrack.core.protection_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_analyzer'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.security_utils.
+[x] WARNING: Failed to import intellicrack.core.security_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'security_utils'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.serial_generator.
+[x] WARNING: Failed to import intellicrack.core.serial_generator.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'serial_generator'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.startup_checks.
+[x] WARNING: Failed to import intellicrack.core.startup_checks.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'startup_checks'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.subscription_validation_bypass.
+[x] WARNING: Failed to import intellicrack.core.subscription_validation_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'subscription_validation_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.task_manager.
+[x] WARNING: Failed to import intellicrack.core.task_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'task_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.tool_discovery.
+[x] WARNING: Failed to import intellicrack.core.tool_discovery.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tool_discovery'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.trial_reset_engine.
+[x] WARNING: Failed to import intellicrack.core.trial_reset_engine.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'trial_reset_engine'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.base_analyzer.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.base_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.binary_differ.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.binary_differ.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.common_enums.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.common_enums.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.fuzzing_engine.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.fuzzing_engine.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.patch_analyzer.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.patch_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.research_manager.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.research_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.vulnerability_analyzer.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.vulnerability_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.vulnerability_research.
+[x] WARNING: Failed to import intellicrack.core.vulnerability_research.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'vulnerability_research'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.cloud_license.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.cloud_license.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.cloud_license_analyzer.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.cloud_license_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.dongle_emulator.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.dongle_emulator.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.hardware_id_spoofer.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.hardware_id_spoofer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.hardware_token.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.hardware_token.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.integrity_check_defeat.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.integrity_check_defeat.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.tpm_bypass.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.tpm_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.tpm_secure_enclave_bypass.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.tpm_secure_enclave_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.vm_bypass.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.vm_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.protection_bypass.
+[x] WARNING: Failed to import intellicrack.core.protection_bypass.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_bypass'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.cfg_explorer_inner.
+[x] WARNING: Failed to import intellicrack.ui.cfg_explorer_inner.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'cfg_explorer_inner'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.comprehensive_integration.
+[x] WARNING: Failed to import intellicrack.ui.comprehensive_integration.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'comprehensive_integration'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.config_manager.
+[x] WARNING: Failed to import intellicrack.ui.config_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'config_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dashboard_manager.
+[x] WARNING: Failed to import intellicrack.ui.dashboard_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dashboard_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialog_utils.
+[x] WARNING: Failed to import intellicrack.ui.dialog_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialog_utils'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.distributed_processing.
+[x] WARNING: Failed to import intellicrack.ui.distributed_processing.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'distributed_processing'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.emulator_ui_enhancements.
+[x] WARNING: Failed to import intellicrack.ui.emulator_ui_enhancements.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'emulator_ui_enhancements'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.enhanced_ui_integration.
+[x] WARNING: Failed to import intellicrack.ui.enhanced_ui_integration.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'enhanced_ui_integration'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.exploitation_handlers.
+[x] WARNING: Failed to import intellicrack.ui.exploitation_handlers.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'exploitation_handlers'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.gpu_analysis.
+[x] WARNING: Failed to import intellicrack.ui.gpu_analysis.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'gpu_analysis'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.icon_manager.
+[x] WARNING: Failed to import intellicrack.ui.icon_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'icon_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.integrate_radare2.
+[x] WARNING: Failed to import intellicrack.ui.integrate_radare2.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'integrate_radare2'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.main_app.
+[x] WARNING: Failed to import intellicrack.ui.main_app.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'main_app'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.main_window.
+[x] WARNING: Failed to import intellicrack.ui.main_window.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'main_window'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.menu_utils.
+[x] WARNING: Failed to import intellicrack.ui.menu_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'menu_utils'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.protection_detection_handlers.
+[x] WARNING: Failed to import intellicrack.ui.protection_detection_handlers.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'protection_detection_handlers'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.radare2_integration_ui.
+[x] WARNING: Failed to import intellicrack.ui.radare2_integration_ui.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'radare2_integration_ui'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.radare2_ui_manager.
+[x] WARNING: Failed to import intellicrack.ui.radare2_ui_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'radare2_ui_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.shared_ui_layouts.
+[x] WARNING: Failed to import intellicrack.ui.shared_ui_layouts.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'shared_ui_layouts'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.style_manager.
+[x] WARNING: Failed to import intellicrack.ui.style_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'style_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.style_utils.
+[x] WARNING: Failed to import intellicrack.ui.style_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'style_utils'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.symbolic_execution.
+[x] WARNING: Failed to import intellicrack.ui.symbolic_execution.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'symbolic_execution'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.syntax_highlighter.
+[x] WARNING: Failed to import intellicrack.ui.syntax_highlighter.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'syntax_highlighter'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.theme_manager.
+[x] WARNING: Failed to import intellicrack.ui.theme_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'theme_manager'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tooltip_helper.
+[x] WARNING: Failed to import intellicrack.ui.tooltip_helper.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tooltip_helper'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.traffic_analyzer.
+[x] WARNING: Failed to import intellicrack.ui.traffic_analyzer.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'traffic_analyzer'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.window_sizing.
+[x] WARNING: Failed to import intellicrack.ui.window_sizing.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'window_sizing'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.adobe_injector_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.adobe_injector_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.ai_assistant_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.ai_assistant_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.analysis_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.analysis_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.base_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.base_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.dashboard_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.dashboard_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.exploitation_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.exploitation_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.project_workspace_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.project_workspace_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.settings_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.settings_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.terminal_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.terminal_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.tools_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.tools_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.workspace_tab.
+[x] WARNING: Failed to import intellicrack.ui.tabs.workspace_tab.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.tabs.
+[x] WARNING: Failed to import intellicrack.ui.tabs.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'tabs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.analysis_cache.
+[x] WARNING: Failed to import intellicrack.protection.analysis_cache.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.commercial_protectors_database.
+[x] WARNING: Failed to import intellicrack.protection.commercial_protectors_database.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.icp_backend.
+[x] WARNING: Failed to import intellicrack.protection.icp_backend.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.icp_report_generator.
+[x] WARNING: Failed to import intellicrack.protection.icp_report_generator.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.intellicrack_protection_advanced.
+[x] WARNING: Failed to import intellicrack.protection.intellicrack_protection_advanced.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.intellicrack_protection_core.
+[x] WARNING: Failed to import intellicrack.protection.intellicrack_protection_core.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.protection_detector.
+[x] WARNING: Failed to import intellicrack.protection.protection_detector.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.unified_protection_engine.
+[x] WARNING: Failed to import intellicrack.protection.unified_protection_engine.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.protection.
+[x] WARNING: Failed to import intellicrack.protection.
 Possible hints:
 * AttributeError: module 'intellicrack' has no attribute 'protection'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.shared.bypass_config.
+[x] WARNING: Failed to import intellicrack.core.shared.bypass_config.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'shared'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.shared.result_types.
+[x] WARNING: Failed to import intellicrack.core.shared.result_types.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'shared'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.shared.result_utils.
+[x] WARNING: Failed to import intellicrack.core.shared.result_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'shared'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.shared.
+[x] WARNING: Failed to import intellicrack.core.shared.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'shared'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network.protocols.autodesk_parser.
+[x] WARNING: Failed to import intellicrack.core.network.protocols.autodesk_parser.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network.protocols.codemeter_parser.
+[x] WARNING: Failed to import intellicrack.core.network.protocols.codemeter_parser.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network.protocols.flexlm_parser.
+[x] WARNING: Failed to import intellicrack.core.network.protocols.flexlm_parser.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network.protocols.hasp_parser.
+[x] WARNING: Failed to import intellicrack.core.network.protocols.hasp_parser.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.network.protocols.
+[x] WARNING: Failed to import intellicrack.core.network.protocols.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'network'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.ai_coding_assistant_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.ai_coding_assistant_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.base_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.base_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.ci_cd_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.ci_cd_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.code_modification_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.code_modification_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.common_imports.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.common_imports.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.debugger_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.debugger_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.dialog_base_utils.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.dialog_base_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.distributed_config_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.distributed_config_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.event_handler_utils.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.event_handler_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.export_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.export_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.first_run_setup.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.first_run_setup.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.frida_bypass_wizard_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.frida_bypass_wizard_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.frida_manager_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.frida_manager_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.ghidra_script_selector.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.ghidra_script_selector.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.guided_workflow_wizard.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.guided_workflow_wizard.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.hardware_spoofer_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.hardware_spoofer_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.help_documentation_widget.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.help_documentation_widget.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.keygen_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.keygen_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.llm_config_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.llm_config_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.model_finetuning_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.model_finetuning_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.model_loading_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.model_loading_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.model_manager_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.model_manager_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.nodejs_setup_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.nodejs_setup_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.offline_activation_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.offline_activation_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.plugin_browser_utils.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.plugin_browser_utils.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.plugin_creation_wizard.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.plugin_creation_wizard.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.plugin_dialog_base.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.plugin_dialog_base.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.plugin_editor_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.plugin_editor_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.plugin_manager_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.plugin_manager_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.preferences_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.preferences_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.program_selector_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.program_selector_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.qemu_test_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.qemu_test_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.qemu_test_results_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.qemu_test_results_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.report_manager_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.report_manager_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.script_generator_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.script_generator_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.serial_generator_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.serial_generator_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.signature_editor_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.signature_editor_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.similarity_search_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.similarity_search_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.smart_program_selector_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.smart_program_selector_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.splash_screen.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.splash_screen.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.system_utilities_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.system_utilities_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.test_generator_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.test_generator_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.text_editor_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.text_editor_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.trial_reset_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.trial_reset_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.visual_patch_editor.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.visual_patch_editor.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.vm_manager_dialog.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.vm_manager_dialog.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ui.dialogs.
+[x] WARNING: Failed to import intellicrack.ui.dialogs.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'dialogs'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.resources.resource_manager.
+[x] WARNING: Failed to import intellicrack.core.resources.resource_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'resources'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.resources.
+[x] WARNING: Failed to import intellicrack.core.resources.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'resources'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.ai.templates.ghidra_analysis.
+[x] WARNING: Failed to import intellicrack.ai.templates.ghidra_analysis.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'templates'
 * TypeError: unsupported operand type(s) for *: 'cpu_count' and 'int'
 
-[ ] WARNING: Failed to import intellicrack.ai.templates.
+[x] WARNING: Failed to import intellicrack.ai.templates.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'templates'
 * TypeError: unsupported operand type(s) for *: 'cpu_count' and 'int'
 
-[ ] WARNING: Failed to import intellicrack.core.reporting.pdf_generator.
+[x] WARNING: Failed to import intellicrack.core.reporting.pdf_generator.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'reporting'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.reporting.report_generator.
+[x] WARNING: Failed to import intellicrack.core.reporting.report_generator.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'reporting'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.reporting.
+[x] WARNING: Failed to import intellicrack.core.reporting.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'reporting'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.execution.script_execution_manager.
+[x] WARNING: Failed to import intellicrack.core.execution.script_execution_manager.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'execution'
 * TypeError: __type_params__ must be set to a tuple
 
-[ ] WARNING: Failed to import intellicrack.core.execution.
+[x] WARNING: Failed to import intellicrack.core.execution.
 Possible hints:
 * AttributeError: 'NoneType' object has no attribute 'execution'
 * TypeError: __type_params__ must be set to a tuple

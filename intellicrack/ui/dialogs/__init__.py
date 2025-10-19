@@ -24,17 +24,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Import dialog modules with error handling
+# Only set attributes when imports succeed
 try:
     from .distributed_config_dialog import DistributedProcessingConfigDialog
 except ImportError as e:
     logger.warning("Failed to import distributed_config_dialog: %s", e)
-    DistributedProcessingConfigDialog = None
 
 try:
     from .guided_workflow_wizard import GuidedWorkflowWizard
 except ImportError as e:
     logger.warning("Failed to import guided_workflow_wizard: %s", e)
-    GuidedWorkflowWizard = None
 
 try:
     from .model_finetuning_dialog import (
@@ -45,90 +44,69 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import model_finetuning_dialog: %s", e)
-    ModelFinetuningDialog = None
-    TrainingConfig = None
-    AugmentationConfig = None
-    TrainingThread = None
 
 try:
     from .plugin_manager_dialog import PluginManagerDialog
 except (ImportError, IndentationError, SyntaxError) as e:
     logger.warning("Failed to import plugin_manager_dialog: %s", e)
-    PluginManagerDialog = None
 
 try:
     from .report_manager_dialog import ReportGenerationThread, ReportManagerDialog
 except ImportError as e:
     logger.warning("Failed to import report_manager_dialog: %s", e)
-    ReportManagerDialog = None
-    ReportGenerationThread = None
 
 try:
     from .similarity_search_dialog import BinarySimilaritySearchDialog
 except ImportError as e:
     logger.warning("Failed to import similarity_search_dialog: %s", e)
-    BinarySimilaritySearchDialog = None
 
 # BaseTemplateDialog and BinarySelectionDialog don't exist in base_dialog
-BinarySelectionDialog = None
-BaseTemplateDialog = None
+# Don't set them to None
 
 try:
     from .splash_screen import SplashScreen
 except ImportError as e:
     logger.warning("Failed to import splash_screen: %s", e)
-    SplashScreen = None
 
 try:
     from .text_editor_dialog import FindReplaceDialog, PythonSyntaxHighlighter, TextEditorDialog
 except ImportError as e:
     logger.warning("Failed to import text_editor_dialog: %s", e)
-    TextEditorDialog = None
-    PythonSyntaxHighlighter = None
-    FindReplaceDialog = None
 
 try:
     from .visual_patch_editor import VisualPatchEditorDialog
 except ImportError as e:
     logger.warning("Failed to import visual_patch_editor: %s", e)
-    VisualPatchEditorDialog = None
-
 
 try:
     from .frida_manager_dialog import FridaManagerDialog
 except ImportError as e:
     logger.warning("Failed to import frida_manager_dialog: %s", e)
-    FridaManagerDialog = None
 
 try:
     from .plugin_creation_wizard import PluginCreationWizard
 except ImportError as e:
     logger.warning("Failed to import plugin_creation_wizard: %s", e)
-    PluginCreationWizard = None
 
 try:
     from .plugin_editor_dialog import PluginEditorDialog
 except ImportError as e:
     logger.warning("Failed to import plugin_editor_dialog: %s", e)
-    PluginEditorDialog = None
 
 try:
     from .test_generator_dialog import TestGeneratorDialog
 except ImportError as e:
     logger.warning("Failed to import test_generator_dialog: %s", e)
-    TestGeneratorDialog = None
 
 try:
     from .ci_cd_dialog import CICDDialog
 except ImportError as e:
     logger.warning("Failed to import ci_cd_dialog: %s", e)
-    CICDDialog = None
 
 try:
     from .debugger_dialog import DebuggerDialog
 except ImportError as e:
     logger.warning("Failed to import debugger_dialog: %s", e)
-    DebuggerDialog = None
 
 try:
     from .program_selector_dialog import (
@@ -138,64 +116,60 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import program_selector_dialog: %s", e)
-    ProgramSelectorDialog = None
-    show_program_selector = None
-    show_smart_program_selector = None
 
 # Define package exports - only include successfully imported items
 __all__ = []
 
 # Add successfully imported classes to __all__
-if DistributedProcessingConfigDialog is not None:
+if "DistributedProcessingConfigDialog" in locals():
     __all__.append("DistributedProcessingConfigDialog")
 
-if GuidedWorkflowWizard is not None:
+if "GuidedWorkflowWizard" in locals():
     __all__.append("GuidedWorkflowWizard")
 
-if ModelFinetuningDialog is not None:
+if "ModelFinetuningDialog" in locals():
     __all__.extend(["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"])
 
-if PluginManagerDialog is not None:
+if "PluginManagerDialog" in locals():
     __all__.append("PluginManagerDialog")
 
-if ReportManagerDialog is not None:
+if "ReportManagerDialog" in locals():
     __all__.extend(["ReportGenerationThread", "ReportManagerDialog"])
 
-if BinarySimilaritySearchDialog is not None:
+if "BinarySimilaritySearchDialog" in locals():
     __all__.append("BinarySimilaritySearchDialog")
 
-if BinarySelectionDialog is not None and BaseTemplateDialog is not None:
+if "BinarySelectionDialog" in locals() and "BaseTemplateDialog" in locals():
     __all__.extend(["BaseTemplateDialog", "BinarySelectionDialog"])
 
-if SplashScreen is not None:
+if "SplashScreen" in locals():
     __all__.append("SplashScreen")
 
-if TextEditorDialog is not None:
+if "TextEditorDialog" in locals():
     __all__.extend(["FindReplaceDialog", "PythonSyntaxHighlighter", "TextEditorDialog"])
 
-if VisualPatchEditorDialog is not None:
+if "VisualPatchEditorDialog" in locals():
     __all__.append("VisualPatchEditorDialog")
 
-
-if FridaManagerDialog is not None:
+if "FridaManagerDialog" in locals():
     __all__.append("FridaManagerDialog")
 
-if PluginCreationWizard is not None:
+if "PluginCreationWizard" in locals():
     __all__.append("PluginCreationWizard")
 
-if PluginEditorDialog is not None:
+if "PluginEditorDialog" in locals():
     __all__.append("PluginEditorDialog")
 
-if TestGeneratorDialog is not None:
+if "TestGeneratorDialog" in locals():
     __all__.append("TestGeneratorDialog")
 
-if CICDDialog is not None:
+if "CICDDialog" in locals():
     __all__.append("CICDDialog")
 
-if DebuggerDialog is not None:
+if "DebuggerDialog" in locals():
     __all__.append("DebuggerDialog")
 
-if ProgramSelectorDialog is not None:
+if "ProgramSelectorDialog" in locals():
     __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
 
 # Package metadata

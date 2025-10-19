@@ -103,7 +103,7 @@ except ImportError as e:
     def cleanup_integration():
         """Fallback for cleanup integration."""
 
-    ComprehensiveR2Integration = None
+    # Don't set ComprehensiveR2Integration = None
 
 # Import radare2 UI components
 try:
@@ -117,10 +117,7 @@ try:
     logger.info("Radare2 UI components loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import radare2 UI components: %s", e)
-    R2IntegrationWidget = None
-    R2ConfigurationDialog = None
-    R2ResultsViewer = None
-    create_radare2_tab = None
+    # Don't set variables to None
 
 # Import enhanced UI features
 try:
@@ -133,9 +130,7 @@ try:
     logger.info("Enhanced UI features loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import enhanced UI features: %s", e)
-    EnhancedAnalysisDashboard = None
-    EnhancedMainWindow = None
-    create_enhanced_application = None
+    # Don't set variables to None
 
 # Import UI manager
 try:
@@ -144,8 +139,7 @@ try:
     logger.info("Radare2 UI manager loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import radare2 UI manager: %s", e)
-    R2UIManager = None
-    create_r2_ui_manager = None
+    # Don't set variables to None
 
 # Import subpackages
 try:
@@ -181,6 +175,9 @@ __all__ = [
     "dialogs",
     "widgets",
 ]
+
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]
 
 # Package metadata
 __version__ = "0.1.0"

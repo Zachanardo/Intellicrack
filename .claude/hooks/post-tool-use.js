@@ -223,7 +223,7 @@ function main() {
             if (input.tool_input) {
                 filePath = input.tool_input.file_path || input.tool_input.path || '';
             }
-        } catch (error) {
+        } catch (_parseError) {
             // Fallback parsing if JSON parsing fails
             if (jsonInput.includes('"tool_name":"Edit"')) {
                 toolName = 'Edit';
@@ -286,6 +286,7 @@ function main() {
                 }
             };
 
+            // eslint-disable-next-line no-console
             console.log(JSON.stringify(response));
 
             logToFile(`STOPPING Claude workflow due to production code violations: ${violationString}`);

@@ -23,9 +23,11 @@ process.stdin.on('end', () => {
         const formattedCost = `$${cost.toFixed(4)}`;
 
         // Output the status line with colors
+        // eslint-disable-next-line no-console
         console.log(`${brightMagenta}${projectName}${reset} ${brightRed}|${reset} ${cyan}[${model}]${reset} ${brightRed}|${reset} ${green}${formattedCost}${reset}`);
-    } catch (error) {
+    } catch (_parseError) {
         // Fallback output if JSON parsing fails
+        // eslint-disable-next-line no-console
         console.log('[Claude] Intellicrack | $0.0000');
     }
 });

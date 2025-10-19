@@ -440,7 +440,7 @@ impl StartupValidator {
                         break;
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

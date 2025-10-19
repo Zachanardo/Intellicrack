@@ -24,6 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Import protection bypass modules with error handling
+# Only set attributes when imports succeed
 try:
     from .tpm_bypass import (
         TPMBypassEngine,
@@ -37,8 +38,6 @@ try:
     TPMAnalyzer = TPMBypassEngine  # Alias for backward compatibility
 except ImportError as e:
     logger.warning("Failed to import tpm_bypass: %s", e)
-    TPMAnalyzer = TPMBypassEngine = TPMProtectionBypass = None
-    analyze_tpm_protection = bypass_tpm_protection = detect_tpm_usage = tpm_research_tools = None
 
 try:
     from .vm_bypass import (
@@ -68,7 +67,6 @@ try:
     IntegrityCheckDefeat = IntegrityCheckDefeatSystem  # Alias for backward compatibility
 except ImportError as e:
     logger.warning("Failed to import integrity_check_defeat: %s", e)
-    IntegrityCheckDefeat = IntegrityCheckDefeatSystem = None
 
 # Define package exports
 __all__ = [
@@ -94,6 +92,9 @@ __all__ = [
     # From integrity_check_defeat
     "IntegrityCheckDefeat",
 ]
+
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]
 
 # Package metadata
 __version__ = "0.1.0"

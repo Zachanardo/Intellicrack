@@ -8,7 +8,7 @@ handling, and advanced system integration.
 ## Features
 
 - **Platform Detection**: Automatic Windows/WSL/Linux detection with appropriate configuration
-- **Python Integration**: Native PyO3 integration with GIL safety and threading configuration
+- **Python Integration**: Native `PyO3` integration with GIL safety and threading configuration
 - **Dependency Validation**: Comprehensive testing of Flask, TensorFlow, QEMU, and system dependencies
 - **Security Integration**: Full integration with Intellicrack's security enforcement system
 - **Process Management**: Sophisticated Python process lifecycle management with signal handling

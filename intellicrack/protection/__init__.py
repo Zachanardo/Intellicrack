@@ -17,24 +17,38 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-# Local imports
-from .intellicrack_protection_core import (
-    DetectionResult,
-    IntellicrackProtectionCore,
-    ProtectionAnalysis,
-    ProtectionType,
-)
-from .protection_detector import (
-    ProtectionDetector,
-    deep_analyze,
-    get_protection_detector,
-    quick_analyze,
-)
-from .unified_protection_engine import (
-    UnifiedProtectionEngine,
-    UnifiedProtectionResult,
-    get_unified_engine,
-)
+# Local imports with error handling
+try:
+    from .intellicrack_protection_core import (
+        DetectionResult,
+        IntellicrackProtectionCore,
+        ProtectionAnalysis,
+        ProtectionType,
+    )
+except ImportError:
+    # Don't set variables if import fails
+    pass
+
+try:
+    from .protection_detector import (
+        ProtectionDetector,
+        deep_analyze,
+        get_protection_detector,
+        quick_analyze,
+    )
+except ImportError:
+    # Don't set variables if import fails
+    pass
+
+try:
+    from .unified_protection_engine import (
+        UnifiedProtectionEngine,
+        UnifiedProtectionResult,
+        get_unified_engine,
+    )
+except ImportError:
+    # Don't set variables if import fails
+    pass
 
 """
 Protection Detection Module
@@ -56,3 +70,6 @@ __all__ = [
     "get_unified_engine",
     "quick_analyze",
 ]
+
+# Filter out items that are not available
+__all__ = [item for item in __all__ if item in locals()]

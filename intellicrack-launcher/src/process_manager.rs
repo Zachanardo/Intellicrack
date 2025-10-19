@@ -273,10 +273,10 @@ impl ProcessManager {
         {
             use std::os::windows::process::CommandExt;
             let priority_flag = match self.config.process_priority {
-                ProcessPriority::Low => 0x00000040, // BELOW_NORMAL_PRIORITY_CLASS
-                ProcessPriority::Normal => 0x00000020, // NORMAL_PRIORITY_CLASS
-                ProcessPriority::High => 0x00000080, // ABOVE_NORMAL_PRIORITY_CLASS
-                ProcessPriority::Realtime => 0x00000100, // HIGH_PRIORITY_CLASS
+                ProcessPriority::Low => 0x0000_0040, // BELOW_NORMAL_PRIORITY_CLASS
+                ProcessPriority::Normal => 0x0000_0020, // NORMAL_PRIORITY_CLASS
+                ProcessPriority::High => 0x0000_0080, // ABOVE_NORMAL_PRIORITY_CLASS
+                ProcessPriority::Realtime => 0x0000_0100, // HIGH_PRIORITY_CLASS
             };
             cmd.creation_flags(priority_flag);
         }
