@@ -28,7 +28,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -785,7 +785,7 @@ class CacheManager:
 
         logger.info(f"Cache manager initialized with {max_size_mb}MB limit")
 
-    def get(self, key: str) -> Any | None:
+    def get(self, key: str) -> Union[Any, None]:
         """Get value from cache."""
         if key in self.cache:
             # Update access statistics

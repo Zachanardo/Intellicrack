@@ -22,6 +22,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
+import re
 
 from intellicrack.core.config_manager import IntellicrackConfig
 from intellicrack.handlers.pyqt6_handler import (
@@ -174,7 +175,7 @@ class SettingsTab(BaseTab):
         color_layout.addWidget(QLabel("Accent Color:"))
         self.accent_color_btn = QPushButton("Select Color")
         self.accent_color_btn.clicked.connect(self.select_accent_color)
-        current_color = self.settings.get('accent_color', '#0078d4')
+        current_color = self.settings.get("accent_color", "#0078d4")
         self.accent_color_btn.setStyleSheet(f"background-color: {current_color}; color: white; border: 2px solid #888888;")
         color_layout.addWidget(self.accent_color_btn)
         color_layout.addStretch()
@@ -1237,7 +1238,6 @@ class SettingsTab(BaseTab):
 
     def apply_accent_color(self, color_hex):
         """Apply accent color by re-applying the theme and replacing default accent colors."""
-        import re
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()

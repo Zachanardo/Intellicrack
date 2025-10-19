@@ -115,13 +115,13 @@ class SystemMonitorWorker(QObject):
                 gpus = GPUtil.getGPUs()
                 if gpus:
                     gpu = gpus[0]
-                    
+
                     gpu_load = gpu.load * 100 if gpu.load is not None else 0.0
                     gpu_percent = min(max(float(gpu_load), 0.0), 100.0)
-                    
+
                     gpu_mem_util = gpu.memoryUtil * 100 if gpu.memoryUtil is not None else 0.0
                     gpu_memory_percent = min(max(float(gpu_mem_util), 0.0), 100.0)
-                    
+
                     gpu_temperature = gpu.temperature if gpu.temperature is not None else 0.0
                     gpu_temp = min(max(float(gpu_temperature), 0.0), 150.0)
             except (ImportError, AttributeError, Exception) as e:

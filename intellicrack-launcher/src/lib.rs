@@ -212,7 +212,8 @@ pub async fn initialize_logging() -> Result<()> {
             )
             .init();
         guard
-    }).await?;
+    })
+    .await?;
 
     std::mem::forget(guard);
 

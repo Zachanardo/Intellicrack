@@ -1,0 +1,176 @@
+   Compiling intellicrack-launcher v0.1.0 (D:\Intellicrack\intellicrack-launcher)
+    Checking windows v0.52.0
+warning: the function has a cognitive complexity of (26/25)
+ --> build.rs:5:4
+  |
+5 | fn main() {
+  |    ^^^^
+  |
+  = help: you could split it up into multiple smaller functions
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cognitive_complexity
+  = note: `-W clippy::cognitive-complexity` implied by `-W clippy::nursery`
+  = help: to override `-W clippy::nursery` add `#[allow(clippy::cognitive_complexity)]`
+
+warning: this function has too many lines (311/100)
+   --> build.rs:5:1
+    |
+  5 | / fn main() {
+  6 | |     #[cfg(target_os = "windows")]
+  7 | |     {
+  8 | |         println!("cargo:rerun-if-changed=intellicrack.rc");
+...   |
+385 | | }
+    | |_^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#too_many_lines
+    = note: `-W clippy::too-many-lines` implied by `-W clippy::pedantic`
+    = help: to override `-W clippy::pedantic` add `#[allow(clippy::too_many_lines)]`
+
+warning: use Option::map_or_else instead of an if let/else
+   --> build.rs:95:22
+    |
+ 95 |       let python_exe = if let Ok(pyo3_python) = env::var("PYO3_PYTHON") {
+    |  ______________________^
+ 96 | |         // CI or custom Python path
+ 97 | |         println!("cargo:warning=Using PYO3_PYTHON from environment: {pyo3_python}");
+ 98 | |         PathBuf::from(pyo3_python)
+...   |
+141 | |         pixi_python
+142 | |     };
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#option_if_let_else
+    = note: `-W clippy::option-if-let-else` implied by `-W clippy::nursery`
+    = help: to override `-W clippy::nursery` add `#[allow(clippy::option_if_let_else)]`
+help: try
+    |
+ 95 ~     let python_exe = env::var("PYO3_PYTHON").map_or_else(|_| if env::var("CI").is_ok() || env::var("GITHUB_ACTIONS").is_ok() {
+ 96 +         // Running in CI, try to find Python
+ 97 +         let python_candidates = vec![
+ 98 +             env::var("pythonLocation")
+ 99 +                 .ok()
+100 +                 .map(|p| PathBuf::from(p).join("python.exe")),
+101 +             env::var("Python_ROOT_DIR")
+102 +                 .ok()
+103 +                 .map(|p| PathBuf::from(p).join("python.exe")),
+104 +             Some(PathBuf::from("python.exe")),
+105 +             Some(PathBuf::from("python3.exe")),
+106 +         ];
+107 + 
+108 +         let mut found_python = None;
+109 +         for candidate in python_candidates.into_iter().flatten() {
+110 +             if candidate.exists() || Command::new(&candidate).arg("--version").output().is_ok() {
+111 +                 found_python = Some(candidate);
+112 +                 break;
+113 +             }
+114 +         }
+115 + 
+116 +         #[allow(non_snake_case)]
+117 +         match found_python {
+118 +             Some(p) => {
+119 +                 let p_display = p.display();
+120 +                 println!("cargo:warning=CI environment detected, using Python: {p_display}");
+121 +                 p
+122 +             }
+123 +             None => panic!(
+124 +                 "CI environment detected but Python not found. Set PYO3_PYTHON environment variable."
+125 +             ),
+126 +         }
+127 +     } else {
+128 +         // Local development with Pixi
+129 +         let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");
+130 +         assert!(
+131 +             pixi_python.exists(),
+132 +             "Local development: Pixi Python not found at: {}. For CI, set PYO3_PYTHON.",
+133 +             pixi_python.display()
+134 +         );
+135 +         let pixi_python_str = pixi_python.display();
+136 +         println!("cargo:warning=Using local Pixi Python: {pixi_python_str}");
+137 +         pixi_python
+138 +     }, |pyo3_python| {
+139 +         // CI or custom Python path
+140 +         println!("cargo:warning=Using PYO3_PYTHON from environment: {pyo3_python}");
+141 +         PathBuf::from(pyo3_python)
+142 ~     });
+    |
+
+warning: use Option::map_or_else instead of an if let/else
+   --> build.rs:121:9
+    |
+121 | /         match found_python {
+122 | |             Some(p) => {
+123 | |                 let p_display = p.display();
+124 | |                 println!("cargo:warning=CI environment detected, using Python: {p_display}");
+...   |
+129 | |             ),
+130 | |         }
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#option_if_let_else
+help: try
+    |
+121 ~         found_python.map_or_else(|| panic!(
+122 +                 "CI environment detected but Python not found. Set PYO3_PYTHON environment variable."
+123 +             ), |p| {
+124 +                 let p_display = p.display();
+125 +                 println!("cargo:warning=CI environment detected, using Python: {p_display}");
+126 +                 p
+127 +             })
+    |
+
+warning: `intellicrack-launcher` (build script) generated 4 warnings
+warning: intellicrack-launcher@0.1.0: Windows manifest embedded
+warning: intellicrack-launcher@0.1.0: Windows manifest embedded
+warning: intellicrack-launcher@0.1.0: Using PYO3_PYTHON from environment: D:\Intellicrack\.pixi\envs\default\python.exe
+warning: intellicrack-launcher@0.1.0: Detected Python version: Python 3.12.12
+warning: intellicrack-launcher@0.1.0: Configuring PyO3 for Python at: D:\Intellicrack\.pixi\envs\default\python.exe
+warning: intellicrack-launcher@0.1.0: python312.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: python3.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: vcruntime140.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: vcruntime140_1.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: msvcp140.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: ucrtbase.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: zlib.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: sqlite3.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libssl-3-x64.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libcrypto-3-x64.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libbz2.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: ffi-8.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libexpat.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'freetype.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libpng16.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libblas.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libcblas.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'liblapack.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'liblapacke.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'tbb12.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'tbbmalloc.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_rt.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_core.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_intel_thread.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libiomp5md.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_sycl_blas.5.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: _ctypes.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _sqlite3.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _bz2.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _ssl.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _hashlib.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: select.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _socket.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: unicodedata.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _lzma.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: pyexpat.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _elementtree.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _asyncio.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _decimal.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _multiprocessing.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _overlapped.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _queue.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _uuid.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _zoneinfo.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: winsound.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _tkinter.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: tcl86t.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: tk86t.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: Copied tcl8.6 directory to target
+warning: intellicrack-launcher@0.1.0: Copied tk8.6 directory to target

@@ -16,7 +16,17 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from intellicrack.handlers.pyqt6_handler import QGroupBox, QHBoxLayout, QLabel, QPushButton, Qt, QVBoxLayout, QWidget, pyqtSignal
+from intellicrack.handlers.pyqt6_handler import (
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    Qt,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
+    PYQT6_AVAILABLE,
+)
 
 # Win32 API constants
 GWL_STYLE = -16
@@ -206,11 +216,15 @@ class AdobeInjectorProcess:
             self.hwnd = None
 
 
-class AdobeInjectorWidget(QWidget):
+class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
     """Qt widget that hosts the embedded Adobe Injector."""
 
-    status_updated = pyqtSignal(str)
-    patch_completed = pyqtSignal(bool, str)
+    if PYQT6_AVAILABLE:
+        status_updated = pyqtSignal(str)
+        patch_completed = pyqtSignal(bool, str)
+    else:
+        status_updated = None
+        patch_completed = None
 
     def __init__(self, parent=None):
         """Initialize the AdobeInjectorWidget.
@@ -219,6 +233,9 @@ class AdobeInjectorWidget(QWidget):
             parent: Parent widget for this widget. Defaults to None.
 
         """
+        if not PYQT6_AVAILABLE:
+            raise ImportError("PyQt6 not available - AdobeInjectorWidget requires PyQt6")
+
         super().__init__(parent)
         self.adobe_injector_process = None
         self.setup_ui()

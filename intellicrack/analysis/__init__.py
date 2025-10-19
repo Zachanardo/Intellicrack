@@ -47,6 +47,16 @@ except ImportError as e:
     ProtectionWorkflow = None
     HAS_PROTECTION_WORKFLOW = False
 
+# Import from core.analysis for additional functionality
+try:
+    from intellicrack.core.analysis import *
+
+    CORE_ANALYSIS_AVAILABLE = True
+    logger.debug("Core analysis modules loaded successfully")
+except ImportError as e:
+    logger.warning("Core analysis modules not available: %s", e)
+    CORE_ANALYSIS_AVAILABLE = False
+
 # Import analysis handlers
 _handlers = {}
 _handler_modules = [
@@ -87,9 +97,19 @@ __all__ = [
     "is_capability_available",
     "HAS_ORCHESTRATOR",
     "HAS_PROTECTION_WORKFLOW",
+    "CORE_ANALYSIS_AVAILABLE",
 ]
 
 if AnalysisResultOrchestrator:
     __all__.append("AnalysisResultOrchestrator")
 if ProtectionWorkflow:
     __all__.append("ProtectionWorkflow")
+
+# Add core analysis modules to __all__ if available
+if CORE_ANALYSIS_AVAILABLE:
+    try:
+        from intellicrack.core.analysis import __all__ as core_all
+
+        __all__.extend(core_all)
+    except (ImportError, AttributeError):
+        pass

@@ -32,17 +32,61 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-from PyQt6.QtCore import QObject, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
-    QApplication,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QSizePolicy,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+try:
+    from PyQt6.QtCore import QObject, Qt, pyqtSignal
+    from PyQt6.QtWidgets import (
+        QApplication,
+        QHBoxLayout,
+        QLabel,
+        QLineEdit,
+        QPushButton,
+        QSizePolicy,
+        QTextEdit,
+        QVBoxLayout,
+        QWidget,
+    )
+    PYQT6_AVAILABLE = True
+except ImportError:
+    # Fallback classes when PyQt6 is not available
+    class QObject:
+        pass
+
+    class Qt:
+        class AlignmentFlag:
+            AlignLeft = 0
+            AlignTop = 0
+
+    def pyqtSignal(*args):
+        return None
+
+    class QApplication:
+        pass
+
+    class QHBoxLayout:
+        pass
+
+    class QLabel:
+        pass
+
+    class QLineEdit:
+        pass
+
+    class QPushButton:
+        pass
+
+    class QSizePolicy:
+        pass
+
+    class QTextEdit:
+        pass
+
+    class QVBoxLayout:
+        pass
+
+    class QWidget:
+        pass
+
+    PYQT6_AVAILABLE = False
 )
 
 # Import protocol parsers for real functionality

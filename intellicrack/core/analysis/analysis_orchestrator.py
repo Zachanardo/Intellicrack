@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
 
 from ...ai.qemu_manager import QEMUManager
 from ...utils.tools.ghidra_script_manager import GhidraScriptManager

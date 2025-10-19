@@ -19,43 +19,92 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from intellicrack.utils.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Core components
-from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
+try:
+    from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
+except ImportError as e:
+    logger.warning("Failed to import ai_bridge: %s", e)
+    AIBinaryBridge = None
+    BinaryContextBuilder = None
 
 # API functions
-from .api import (  # Analysis operations; Utility operations; UI operations; Integration operations; File operations
-    add_hex_viewer_to_application,
-    analyze_binary_data,
-    bytes_to_hex_string,
-    create_binary_context,
-    create_hex_viewer_dialog,
-    create_hex_viewer_widget,
-    hex_string_to_bytes,
-    integrate_with_intellicrack,
-    launch_hex_viewer,
-    open_hex_file,
-    read_hex_region,
-    register_ai_tools,
-    search_binary_pattern,
-    suggest_binary_edits,
-    write_hex_region,
-)
-from .file_handler import ChunkManager, VirtualFileAccess
-from .hex_dialog import HexViewerDialog
-from .hex_highlighter import HexHighlighter, HighlightType
-from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
-from .hex_widget import HexViewerWidget
+try:
+    from .api import (  # Analysis operations; Utility operations; UI operations; Integration operations; File operations
+        add_hex_viewer_to_application,
+        analyze_binary_data,
+        bytes_to_hex_string,
+        create_binary_context,
+        create_hex_viewer_dialog,
+        create_hex_viewer_widget,
+        hex_string_to_bytes,
+        integrate_with_intellicrack,
+        launch_hex_viewer,
+        open_hex_file,
+        read_hex_region,
+        register_ai_tools,
+        search_binary_pattern,
+        suggest_binary_edits,
+        write_hex_region,
+    )
+except ImportError as e:
+    logger.warning("Failed to import api: %s", e)
+    # Set all API functions to None
+    add_hex_viewer_to_application = analyze_binary_data = bytes_to_hex_string = create_binary_context = None
+    create_hex_viewer_dialog = create_hex_viewer_widget = hex_string_to_bytes = integrate_with_intellicrack = None
+    launch_hex_viewer = open_hex_file = read_hex_region = register_ai_tools = search_binary_pattern = None
+    suggest_binary_edits = write_hex_region = None
+
+try:
+    from .file_handler import ChunkManager, VirtualFileAccess
+except ImportError as e:
+    logger.warning("Failed to import file_handler: %s", e)
+    ChunkManager = None
+    VirtualFileAccess = None
+
+try:
+    from .hex_dialog import HexViewerDialog
+except ImportError as e:
+    logger.warning("Failed to import hex_dialog: %s", e)
+    HexViewerDialog = None
+
+try:
+    from .hex_highlighter import HexHighlighter, HighlightType
+except ImportError as e:
+    logger.warning("Failed to import hex_highlighter: %s", e)
+    HexHighlighter = None
+    HighlightType = None
+
+try:
+    from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
+except ImportError as e:
+    logger.warning("Failed to import hex_renderer: %s", e)
+    HexViewRenderer = None
+    ViewMode = None
+    parse_hex_view = None
+
+try:
+    from .hex_widget import HexViewerWidget
+except ImportError as e:
+    logger.warning("Failed to import hex_widget: %s", e)
+    HexViewerWidget = None
 
 # Integration functions
-from .integration import (
-    initialize_hex_viewer,
-    integrate_enhanced_hex_viewer,
-    register_hex_viewer_ai_tools,
-    restore_standard_hex_viewer,
-    show_enhanced_hex_viewer,
-)
+try:
+    from .integration import (
+        initialize_hex_viewer,
+        integrate_enhanced_hex_viewer,
+        register_hex_viewer_ai_tools,
+        restore_standard_hex_viewer,
+        show_enhanced_hex_viewer,
+    )
+except ImportError as e:
+    logger.warning("Failed to import integration: %s", e)
+    initialize_hex_viewer = integrate_enhanced_hex_viewer = register_hex_viewer_ai_tools = None
+    restore_standard_hex_viewer = show_enhanced_hex_viewer = None
 
 """
 Enhanced Hex Viewer/Editor module for Intellicrack.
@@ -137,6 +186,9 @@ __all__ = [
     "LARGE_FILE_SUPPORT",
 ]
 
+# Filter out None values from __all__
+__all__ = [item for item in __all__ if item not in ["LARGE_FILE_SUPPORT"] and locals().get(item) is not None]
+
 # Conditionally add large file components to __all__ if available
 if LARGE_FILE_SUPPORT:
     __all__.extend(
@@ -150,8 +202,8 @@ if LARGE_FILE_SUPPORT:
     )
 
 # Convenience aliases
-show_hex_viewer = show_enhanced_hex_viewer
-integrate = integrate_with_intellicrack
+show_hex_viewer = show_enhanced_hex_viewer if show_enhanced_hex_viewer else None
+integrate = integrate_with_intellicrack if integrate_with_intellicrack else None
 
 # Main hex viewer class (alias for compatibility)
-HexViewer = HexViewerWidget
+HexViewer = HexViewerWidget if HexViewerWidget else None

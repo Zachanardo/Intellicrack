@@ -142,3 +142,6 @@ __all__ = [
     "IncrementalAnalysisManager",
     "SimilaritySearcher",
 ]
+
+# Filter out None values from __all__
+__all__ = [item for item in __all__ if locals().get(item) is not None]

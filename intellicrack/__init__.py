@@ -202,12 +202,95 @@ def _lazy_import_app():
     return _IntellicrackApp if _IntellicrackApp is not False else None
 
 
-# Export lazy-loaded references
-main = property(lambda self: _lazy_import_main())
-IntellicrackApp = property(lambda self: _lazy_import_app())
+# Core modules will be imported when accessed via __getattr__
+_dashboard = None
+_ai = None
 
-# Core modules will be imported when accessed
-ai = core = utils = ui = plugins = hexview = None
+
+def _lazy_import_dashboard():
+    """Lazy import of dashboard module."""
+    global _dashboard
+    if _dashboard is None:
+        try:
+            import intellicrack.dashboard as _imported_dashboard
+
+            _dashboard = _imported_dashboard
+        except ImportError as e:
+            logger.warning("Dashboard module not available: %s", e)
+            _dashboard = False
+    return _dashboard if _dashboard is not False else None
+
+
+def _lazy_import_ai():
+    """Lazy import of ai module."""
+    global _ai
+    if _ai is None:
+        try:
+            import intellicrack.ai as _imported_ai
+
+            _ai = _imported_ai
+        except ImportError as e:
+            logger.warning("AI module not available: %s", e)
+            _ai = False
+    return _ai if _ai is not False else None
+
+
+def _lazy_import_core():
+    """Lazy import of core module."""
+    try:
+        import intellicrack.core as _imported_core
+
+        return _imported_core
+    except ImportError as e:
+        logger.warning("Core module not available: %s", e)
+        return None
+
+
+def _lazy_import_ui():
+    """Lazy import of ui module."""
+    try:
+        import intellicrack.ui as _imported_ui
+
+        return _imported_ui
+    except ImportError as e:
+        logger.warning("UI module not available: %s", e)
+        return None
+
+
+def _lazy_import_utils():
+    """Lazy import of utils module."""
+    try:
+        import intellicrack.utils as _imported_utils
+
+        return _imported_utils
+    except ImportError as e:
+        logger.warning("Utils module not available: %s", e)
+        return None
+
+
+def _lazy_import_plugins():
+    """Lazy import of plugins module."""
+    try:
+        import intellicrack.plugins as _imported_plugins
+
+        return _imported_plugins
+    except ImportError as e:
+        logger.warning("Plugins module not available: %s", e)
+        return None
+
+
+def _lazy_import_hexview():
+    """Lazy import of hexview module."""
+    try:
+        import intellicrack.hexview as _imported_hexview
+
+        return _imported_hexview
+    except ImportError as e:
+        logger.warning("Hexview module not available: %s", e)
+        return None
+
+
+# Lazy-loaded references are handled by __getattr__
 
 # Version info
 
@@ -322,6 +405,29 @@ def get_default_device():
     return _initialize_gpu()
 
 
+def __getattr__(name):
+    """Lazy loading for module attributes."""
+    if name == "ai":
+        return _lazy_import_ai()
+    elif name == "core":
+        return _lazy_import_core()
+    elif name == "ui":
+        return _lazy_import_ui()
+    elif name == "utils":
+        return _lazy_import_utils()
+    elif name == "plugins":
+        return _lazy_import_plugins()
+    elif name == "hexview":
+        return _lazy_import_hexview()
+    elif name == "dashboard":
+        return _lazy_import_dashboard()
+    elif name == "CONFIG":
+        return _lazy_import_config()
+    elif name == "get_config":
+        return _lazy_import_get_config()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
 __all__ = [
     "CONFIG",
     "IntellicrackApp",
@@ -331,6 +437,7 @@ __all__ = [
     "ai",
     "core",
     "create_app",
+    "dashboard",
     "get_default_device",
     "get_version",
     "hexview",

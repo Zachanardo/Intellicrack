@@ -11,29 +11,97 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from intellicrack.dashboard.dashboard_manager import DashboardLayout, DashboardManager, DataSource, DataSourceType, create_dashboard_manager
-from intellicrack.dashboard.dashboard_widgets import (
-    DashboardWidget,
-    GaugeWidget,
-    HeatmapWidget,
-    LineChartWidget,
-    NetworkGraphWidget,
-    ProgressWidget,
-    TableWidget,
-    TimelineWidget,
-    WidgetConfig,
-    WidgetData,
-    WidgetFactory,
-    WidgetType,
-    create_widget,
-)
-from intellicrack.dashboard.real_time_dashboard import (
-    AnalysisMetrics,
-    DashboardEvent,
-    DashboardEventType,
-    RealTimeDashboard,
-    create_dashboard,
-)
+import logging
+
+logger = logging.getLogger(__name__)
+
+__version__ = "1.0.0"
+
+# Lazy imports to prevent circular import issues
+_dashboard_manager = None
+_dashboard_widgets = None
+_real_time_dashboard = None
+
+
+def _lazy_import_dashboard_manager():
+    """Lazy import of dashboard manager module."""
+    global _dashboard_manager
+    if _dashboard_manager is None:
+        try:
+            from . import dashboard_manager as _imported_dashboard_manager
+
+            _dashboard_manager = _imported_dashboard_manager
+        except ImportError as e:
+            logger.warning("Dashboard manager not available: %s", e)
+            _dashboard_manager = False
+    return _dashboard_manager if _dashboard_manager is not False else None
+
+
+def _lazy_import_dashboard_widgets():
+    """Lazy import of dashboard widgets module."""
+    global _dashboard_widgets
+    if _dashboard_widgets is None:
+        try:
+            from . import dashboard_widgets as _imported_dashboard_widgets
+
+            _dashboard_widgets = _imported_dashboard_widgets
+        except ImportError as e:
+            logger.warning("Dashboard widgets not available: %s", e)
+            _dashboard_widgets = False
+    return _dashboard_widgets if _dashboard_widgets is not False else None
+
+
+def _lazy_import_real_time_dashboard():
+    """Lazy import of real-time dashboard module."""
+    global _real_time_dashboard
+    if _real_time_dashboard is None:
+        try:
+            from . import real_time_dashboard as _imported_real_time_dashboard
+
+            _real_time_dashboard = _imported_real_time_dashboard
+        except ImportError as e:
+            logger.warning("Real-time dashboard not available: %s", e)
+            _real_time_dashboard = False
+    return _real_time_dashboard if _real_time_dashboard is not False else None
+
+
+# Create properties for lazy loading
+dashboard_manager = property(lambda self: _lazy_import_dashboard_manager())
+dashboard_widgets = property(lambda self: _lazy_import_dashboard_widgets())
+real_time_dashboard = property(lambda self: _lazy_import_real_time_dashboard())
+
+
+# For backwards compatibility, expose the classes and functions
+def __getattr__(name):
+    """Lazy attribute access for dashboard components."""
+    if name in ("DashboardLayout", "DashboardManager", "DataSource", "DataSourceType", "create_dashboard_manager"):
+        dm = _lazy_import_dashboard_manager()
+        if dm:
+            return getattr(dm, name)
+    elif name in (
+        "DashboardWidget",
+        "GaugeWidget",
+        "HeatmapWidget",
+        "LineChartWidget",
+        "NetworkGraphWidget",
+        "ProgressWidget",
+        "TableWidget",
+        "TimelineWidget",
+        "WidgetConfig",
+        "WidgetData",
+        "WidgetFactory",
+        "WidgetType",
+        "create_widget",
+    ):
+        dw = _lazy_import_dashboard_widgets()
+        if dw:
+            return getattr(dw, name)
+    elif name in ("AnalysisMetrics", "DashboardEvent", "DashboardEventType", "RealTimeDashboard", "create_dashboard"):
+        rtd = _lazy_import_real_time_dashboard()
+        if rtd:
+            return getattr(rtd, name)
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     # Real-time dashboard
@@ -63,5 +131,3 @@ __all__ = [
     "DashboardLayout",
     "create_dashboard_manager",
 ]
-
-__version__ = "1.0.0"

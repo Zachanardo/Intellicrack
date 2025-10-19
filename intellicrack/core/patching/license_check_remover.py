@@ -18,9 +18,29 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-import capstone
-import keystone
-import pefile
+try:
+    import capstone
+
+    CAPSTONE_AVAILABLE = True
+except ImportError:
+    capstone = None
+    CAPSTONE_AVAILABLE = False
+
+try:
+    import keystone
+
+    KEYSTONE_AVAILABLE = True
+except ImportError:
+    keystone = None
+    KEYSTONE_AVAILABLE = False
+
+try:
+    import pefile
+
+    PEFILE_AVAILABLE = True
+except ImportError:
+    pefile = None
+    PEFILE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 

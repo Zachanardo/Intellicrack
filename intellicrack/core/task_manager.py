@@ -28,7 +28,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
+from intellicrack.handlers.pyqt6_handler import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
 from intellicrack.utils.logger import get_logger
 
@@ -45,7 +45,19 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
 
 
-class TaskSignals(QObject):
+# Fallback signal class for when PyQt6 is not available
+class FallbackSignals:
+    """Fallback signals implementation when PyQt6 is not available."""
+
+    def __init__(self):
+        self.started = None
+        self.progress = None
+        self.result = None
+        self.error = None
+        self.finished = None
+
+
+class TaskSignals(QObject if QObject is not None else object):
     """Signals for task communication."""
 
     #: Signal emitted when task starts (type: task_id: str)

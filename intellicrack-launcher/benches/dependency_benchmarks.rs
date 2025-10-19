@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use intellicrack_launcher::{DependencyValidator, ValidationSummary};
 use std::time::Duration;
 use tokio::runtime::Runtime;

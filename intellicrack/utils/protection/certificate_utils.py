@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import logging
+from typing import Union
 
 from intellicrack.utils.logger import logger
 
@@ -34,6 +35,11 @@ except ImportError as e:
     logger.error("Import error in certificate_utils: %s", e)
     HAS_CRYPTOGRAPHY = False
 
+    # Define dummy classes for type annotations when cryptography is not available
+    class x509:
+        class Certificate:
+            pass
+
 
 def generate_self_signed_cert(
     common_name: str = "localhost",
@@ -42,7 +48,7 @@ def generate_self_signed_cert(
     state: str = "State",
     locality: str = "City",
     valid_days: int = 365,
-) -> tuple[bytes, bytes] | None:
+) -> Union[tuple[bytes, bytes], None]:
     """Generate a self-signed certificate for SSL/TLS operations.
 
     Args:

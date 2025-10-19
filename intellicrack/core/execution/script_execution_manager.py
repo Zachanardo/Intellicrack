@@ -24,8 +24,7 @@ import os
 import subprocess
 from typing import Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal, QDialog, QMessageBox
 
 from ...utils.logger import get_logger
 from ..config_manager import get_config

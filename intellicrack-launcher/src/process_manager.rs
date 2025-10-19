@@ -235,8 +235,10 @@ impl ProcessManager {
             id
         };
 
-        info!("Starting process {} on {:?}: {} {:?}",
-             process_id, self.platform.os_type, command, args);
+        info!(
+            "Starting process {} on {:?}: {} {:?}",
+            process_id, self.platform.os_type, command, args
+        );
 
         // Set up command
         let mut cmd = Command::new(command);
@@ -357,27 +359,29 @@ impl ProcessManager {
                         if let Some(child) = &mut managed_process.child {
                             // Read stdout
                             if config.enable_stdout_capture
-                                && let Some(stdout) = child.stdout.as_mut() {
-                                    let reader = BufReader::new(stdout);
-                                    for line in reader.lines().map_while(Result::ok) {
-                                        if config.log_process_output {
-                                            debug!("Process {} stdout: {}", process_id, line);
-                                        }
-                                        managed_process.info.stdout_lines.push(line);
+                                && let Some(stdout) = child.stdout.as_mut()
+                            {
+                                let reader = BufReader::new(stdout);
+                                for line in reader.lines().map_while(Result::ok) {
+                                    if config.log_process_output {
+                                        debug!("Process {} stdout: {}", process_id, line);
                                     }
+                                    managed_process.info.stdout_lines.push(line);
                                 }
+                            }
 
                             // Read stderr
                             if config.enable_stderr_capture
-                                && let Some(stderr) = child.stderr.as_mut() {
-                                    let reader = BufReader::new(stderr);
-                                    for line in reader.lines().map_while(Result::ok) {
-                                        if config.log_process_output {
-                                            debug!("Process {} stderr: {}", process_id, line);
-                                        }
-                                        managed_process.info.stderr_lines.push(line);
+                                && let Some(stderr) = child.stderr.as_mut()
+                            {
+                                let reader = BufReader::new(stderr);
+                                for line in reader.lines().map_while(Result::ok) {
+                                    if config.log_process_output {
+                                        debug!("Process {} stderr: {}", process_id, line);
                                     }
+                                    managed_process.info.stderr_lines.push(line);
                                 }
+                            }
 
                             // Check if process is still running
                             match child.try_wait() {
@@ -431,15 +435,16 @@ impl ProcessManager {
             // Helper function to update worker status
             let update_worker_status = |status: WorkerStatus, current_task: Option<u32>| {
                 if let Ok(mut workers) = workers_arc.lock()
-                    && let Some(worker) = workers.get_mut(worker_id) {
-                        worker.status = status;
-                        worker.current_task = current_task;
-                        worker.last_activity = Instant::now();
+                    && let Some(worker) = workers.get_mut(worker_id)
+                {
+                    worker.status = status;
+                    worker.current_task = current_task;
+                    worker.last_activity = Instant::now();
 
-                        if current_task.is_none() && worker.current_task.is_some() {
-                            worker.processes_completed += 1;
-                        }
+                    if current_task.is_none() && worker.current_task.is_some() {
+                        worker.processes_completed += 1;
                     }
+                }
             };
 
             loop {
@@ -506,17 +511,15 @@ impl ProcessManager {
                     {
                         let mut processes = processes_arc.lock().unwrap();
                         if let Some(managed_process) = processes.get_mut(&process_id)
-                            && let Some(child) = &mut managed_process.child {
-                                if let Err(e) = child.kill() {
-                                    error!(
-                                        "Failed to kill timed out process {}: {}",
-                                        process_id, e
-                                    );
-                                } else {
-                                    managed_process.info.status = ProcessStatus::Timeout;
-                                    info!("Process {} killed due to timeout", process_id);
-                                }
+                            && let Some(child) = &mut managed_process.child
+                        {
+                            if let Err(e) = child.kill() {
+                                error!("Failed to kill timed out process {}: {}", process_id, e);
+                            } else {
+                                managed_process.info.status = ProcessStatus::Timeout;
+                                info!("Process {} killed due to timeout", process_id);
                             }
+                        }
                     }
 
                     // Update statistics
@@ -728,7 +731,12 @@ impl ProcessManager {
     }
 
     /// Update worker status based on process activity
-    fn update_worker_status(&self, worker_id: usize, new_status: WorkerStatus, current_task: Option<u32>) {
+    fn update_worker_status(
+        &self,
+        worker_id: usize,
+        new_status: WorkerStatus,
+        current_task: Option<u32>,
+    ) {
         let mut workers = self.worker_pool.lock().unwrap();
         if let Some(worker) = workers.get_mut(worker_id) {
             worker.status = new_status;

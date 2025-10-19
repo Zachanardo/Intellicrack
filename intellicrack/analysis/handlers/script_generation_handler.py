@@ -21,18 +21,73 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QTextDocument
-from PyQt6.QtWidgets import (
-    QDialog,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-)
+try:
+    from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
+    from PyQt6.QtGui import QFont, QTextDocument
+    from PyQt6.QtWidgets import (
+        QDialog,
+        QFileDialog,
+        QHBoxLayout,
+        QLabel,
+        QMessageBox,
+        QPushButton,
+        QTextEdit,
+        QVBoxLayout,
+    )
+
+    PYQT6_AVAILABLE = True
+except ImportError:
+    # Fallback classes when PyQt6 is not available
+    class QObject:
+        pass
+
+    class QRunnable:
+        def run(self):
+            pass
+
+    class QThreadPool:
+        @staticmethod
+        def globalInstance():
+            return None
+
+    class QTimer:
+        pass
+
+    def pyqtSignal(*args):
+        return None
+
+    class QFont:
+        pass
+
+    class QTextDocument:
+        pass
+
+    # Fallback widget classes
+    class QDialog:
+        pass
+
+    class QFileDialog:
+        pass
+
+    class QHBoxLayout:
+        pass
+
+    class QLabel:
+        pass
+
+    class QMessageBox:
+        pass
+
+    class QPushButton:
+        pass
+
+    class QTextEdit:
+        pass
+
+    class QVBoxLayout:
+        pass
+
+    PYQT6_AVAILABLE = False
 
 try:
     from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator

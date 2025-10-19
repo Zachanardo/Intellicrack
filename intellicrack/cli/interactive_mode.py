@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.utils.logger import get_logger
-from intellicrack.utils.runner_functions import run_comprehensive_analysis
+from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
 
 logger = get_logger(__name__)
 
@@ -73,7 +73,7 @@ class IntellicrackShell(cmd.Cmd):
 
         try:
             print(f"Analyzing {self.current_file}...")
-            self.analysis_results = run_comprehensive_analysis(str(self.current_file), verbose=True)
+            self.analysis_results = run_comprehensive_analysis(str(self.current_file))
             print("Analysis complete!")
         except Exception as e:
             print(f"Analysis failed: {e}")

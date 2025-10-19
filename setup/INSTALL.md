@@ -22,23 +22,23 @@ Intellicrack is an advanced binary analysis and security research platform optim
 
 Intellicrack uses **Pixi** to manage its environment and dependencies. This ensures a consistent and reproducible setup.
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
     ```bash
     git clone https://github.com/Zachanardo/Intellicrack.git
     cd Intellicrack
     ```
 
-2.  **Install dependencies with Pixi:**
+2. **Install dependencies with Pixi:**
     ```bash
     pixi install
     ```
 
-3.  **Activate the environment:**
+3. **Activate the environment:**
     ```bash
     pixi shell
     ```
 
-4.  **Launch Intellicrack:**
+4. **Launch Intellicrack:**
     ```bash
     pixi run start
     ```
@@ -58,12 +58,12 @@ pixi run pip check
 
 To update your existing Intellicrack installation:
 
-1.  **Pull the latest changes:**
+1. **Pull the latest changes:**
     ```bash
     git pull
     ```
 
-2.  **Update the environment:**
+2. **Update the environment:**
     ```bash
     pixi install
     ```

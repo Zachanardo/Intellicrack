@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
@@ -369,7 +369,7 @@ class ModelCache:
             self.logger.error("Error in model_manager_module: %s", e)
             return hashlib.sha256(model_path.encode()).hexdigest()
 
-    def get(self, model_path: str) -> Any | None:
+    def get(self, model_path: str) -> Union[Any, None]:
         """Get model from cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
@@ -2816,7 +2816,7 @@ class ModelFineTuner:
 
         return results
 
-    def get_training_history(self, model_id: str) -> dict[str, Any] | None:
+    def get_training_history(self, model_id: str) -> Union[dict[str, Any], None]:
         """Get training history for a fine-tuned model."""
         return self.training_history.get(model_id)
 
@@ -2871,7 +2871,7 @@ def import_custom_model(model_path: str, model_type: str = None, model_id: str =
 # Standalone convenience functions for backward compatibility
 
 
-def load_model(model_id: str, model_path: str | None = None):
+def load_model(model_id: str, model_path: Union[str, None] = None):
     """Load a model using the global model manager.
 
     Args:

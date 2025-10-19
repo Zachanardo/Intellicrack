@@ -15,10 +15,10 @@ use libloading::Library;
 use pyo3::prelude::*;
 use std::env;
 use std::ffi::CString;
-use std::path::PathBuf;
 use std::os::windows::process::CommandExt;
-use winapi::um::winbase::CREATE_NEW_PROCESS_GROUP;
+use std::path::PathBuf;
 use tracing::{debug, error, info, warn};
+use winapi::um::winbase::CREATE_NEW_PROCESS_GROUP;
 
 pub struct PythonIntegration {
     interpreter_path: PathBuf,
@@ -114,7 +114,9 @@ impl PythonIntegration {
                         Ok(python3)
                     }
                     Err(_) => {
-                        anyhow::bail!("No Python interpreter found. Please ensure Python is installed and accessible.");
+                        anyhow::bail!(
+                            "No Python interpreter found. Please ensure Python is installed and accessible."
+                        );
                     }
                 }
             }
@@ -299,19 +301,25 @@ impl PythonIntegration {
             );
         }
 
-                // Set environment for subprocess with ABSOLUTE PATHS
-                cmd.env("PYTHONPATH", PROJECT_ROOT.clone());
-                cmd.env("PYTHONIOENCODING", "utf-8");
-                cmd.env("PYTHONDONTWRITEBYTECODE", "1");
-                cmd.env("PYTHONUNBUFFERED", "1");
+        // Set environment for subprocess with ABSOLUTE PATHS
+        cmd.env("PYTHONPATH", PROJECT_ROOT.clone());
+        cmd.env("PYTHONIOENCODING", "utf-8");
+        cmd.env("PYTHONDONTWRITEBYTECODE", "1");
+        cmd.env("PYTHONUNBUFFERED", "1");
 
-                // Set conda environment variables
-                cmd.env("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
-                cmd.env(
-                    "PIXI_PYTHON_EXE",
-                    format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
-                );
-                cmd.env("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
+        // Set conda environment variables
+        cmd.env(
+            "PIXI_PREFIX",
+            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+        );
+        cmd.env(
+            "PIXI_PYTHON_EXE",
+            format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
+        );
+        cmd.env(
+            "PYTHONHOME",
+            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+        );
         // Set TCL/TK library paths for _tkinter functionality
         // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
         // This ensures _tkinter.pyd can find the runtime scripts in the same directory as the DLLs
@@ -455,7 +463,9 @@ impl PythonIntegration {
             }
 
             cmd.env("PATH", final_path);
-            info!("Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system");
+            info!(
+                "Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system"
+            );
 
             // Also add to PYTHONPATH to help Python find the DLLs
             let current_pythonpath = std::env::var("PYTHONPATH").unwrap_or_default();
@@ -474,7 +484,10 @@ impl PythonIntegration {
             // This helps launch_intellicrack.py add the correct directory to DLL search path
             // CRITICAL: Must point to target/release where tcl86t.dll and tk86t.dll are located
             cmd.env("INTEL_LAUNCHER_DLL_DIR", exe_dir_str.as_ref());
-            info!("Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading", exe_dir_str);
+            info!(
+                "Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading",
+                exe_dir_str
+            );
         }
         cmd.env_remove("PYTHONSTARTUP");
         cmd.env_remove("PYTHONUSERBASE");
@@ -588,8 +601,8 @@ impl PythonIntegration {
             let test_script = std::fs::read_to_string("test_rust_launcher_env.py")
                 .context("Failed to read test script")?;
 
-            let c_test_script = CString::new(test_script)
-                .context("Test script contains interior null bytes")?;
+            let c_test_script =
+                CString::new(test_script).context("Test script contains interior null bytes")?;
 
             match py.run(c_test_script.as_c_str(), None, None) {
                 Ok(_) => {
@@ -842,10 +855,12 @@ mod tests {
 
         let result = python_integration.validate_python_environment();
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Python interpreter not found"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Python interpreter not found")
+        );
     }
 
     #[test]
@@ -964,7 +979,7 @@ mod tests {
         assert_eq!(version_str, "3.12.0");
 
         // Test alternative paths are constructed correctly
-        let alternative_paths = vec![
+        let alternative_paths = [
             python_integration.virtual_env_path.join(&expected_dll),
             python_integration
                 .virtual_env_path
@@ -978,9 +993,11 @@ mod tests {
         ];
 
         // Verify paths are constructed correctly
-        assert!(alternative_paths[0]
-            .to_string_lossy()
-            .contains("python312.dll"));
+        assert!(
+            alternative_paths[0]
+                .to_string_lossy()
+                .contains("python312.dll")
+        );
         assert!(alternative_paths[1].to_string_lossy().contains("Scripts"));
         assert!(alternative_paths[2].to_string_lossy().contains("DLLs"));
         assert!(alternative_paths[3].to_string_lossy().contains("System32"));
@@ -1110,7 +1127,7 @@ mod tests {
 
         // Check for actual Python library availability
         for lib_name in &lib_names {
-            if let Ok(_) = env::var("PYTHONHOME") {
+            if env::var("PYTHONHOME").is_ok() {
                 // Production environment with Python installed
                 let python_home = PathBuf::from(env::var("PYTHONHOME").unwrap_or_default());
                 let lib_path = python_home.join(lib_name);

@@ -23,13 +23,4 @@ Intellicrack Scripts Package
 This package contains various utility scripts for the Intellicrack platform.
 """
 
-# Import main CLI modules to make them accessible
-try:
-    from . import run_analysis_cli
-except ImportError as e:
-    import logging
-
-    logging.getLogger(__name__).warning(f"Could not import run_analysis_cli: {e}")
-    run_analysis_cli = None
-
-__all__ = ["run_analysis_cli"]
+# Scripts package - modules are available for direct import

@@ -134,7 +134,10 @@ impl SecurityManager {
                                     }
                                 }
                             } else {
-                                debug!("No 'security' section found in config at: {:?}", config_path);
+                                debug!(
+                                    "No 'security' section found in config at: {:?}",
+                                    config_path
+                                );
                             }
                         }
                         Err(e) => {
@@ -299,9 +302,10 @@ impl SecurityManager {
         Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
                 && let Ok(security_obj) = security_module.getattr("_security")
-                    && let Ok(enable_bypass) = security_obj.getattr("enable_bypass") {
-                        let _ = enable_bypass.call0();
-                    }
+                && let Ok(enable_bypass) = security_obj.getattr("enable_bypass")
+            {
+                let _ = enable_bypass.call0();
+            }
         });
     }
 
@@ -317,9 +321,10 @@ impl SecurityManager {
         Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
                 && let Ok(security_obj) = security_module.getattr("_security")
-                    && let Ok(disable_bypass) = security_obj.getattr("disable_bypass") {
-                        let _ = disable_bypass.call0();
-                    }
+                && let Ok(disable_bypass) = security_obj.getattr("disable_bypass")
+            {
+                let _ = disable_bypass.call0();
+            }
         });
     }
 
@@ -337,38 +342,40 @@ impl SecurityManager {
         // Check file size if configured
         if let Some(max_size) = validation_config.max_file_size
             && file_path.exists()
-                && let Ok(metadata) = file_path.metadata() {
-                    let file_size = metadata.len();
-                    if file_size > max_size {
-                        warn!(
-                            "File {} exceeds max size: {} > {}",
-                            file_path.display(),
-                            file_size,
-                            max_size
-                        );
-                        anyhow::bail!(
-                            "File exceeds maximum size limit: {} > {}",
-                            file_size,
-                            max_size
-                        );
-                    }
-                }
+            && let Ok(metadata) = file_path.metadata()
+        {
+            let file_size = metadata.len();
+            if file_size > max_size {
+                warn!(
+                    "File {} exceeds max size: {} > {}",
+                    file_path.display(),
+                    file_size,
+                    max_size
+                );
+                anyhow::bail!(
+                    "File exceeds maximum size limit: {} > {}",
+                    file_size,
+                    max_size
+                );
+            }
+        }
 
         // Check allowed extensions if configured
         if let Some(allowed_extensions) = &validation_config.allowed_extensions
-            && let Some(extension) = file_path.extension() {
-                let ext_str = extension.to_string_lossy().to_lowercase();
-                if !allowed_extensions
-                    .iter()
-                    .any(|allowed| allowed.to_lowercase() == ext_str)
-                {
-                    warn!(
-                        "File extension {} not in allowed list: {:?}",
-                        ext_str, allowed_extensions
-                    );
-                    anyhow::bail!("File extension {} not allowed", ext_str);
-                }
+            && let Some(extension) = file_path.extension()
+        {
+            let ext_str = extension.to_string_lossy().to_lowercase();
+            if !allowed_extensions
+                .iter()
+                .any(|allowed| allowed.to_lowercase() == ext_str)
+            {
+                warn!(
+                    "File extension {} not in allowed list: {:?}",
+                    ext_str, allowed_extensions
+                );
+                anyhow::bail!("File extension {} not allowed", ext_str);
             }
+        }
 
         // Check for path traversal
         let path_str = file_path.to_string_lossy();
@@ -447,14 +454,13 @@ impl SecurityManager {
         Python::attach(|py| {
             if let Ok(security_module) = py.import("intellicrack.core.security_enforcement")
                 && let Ok(status_func) = security_module.getattr("get_security_status")
-                    && let Ok(status) = status_func.call0()
-                        && let Ok(status_dict) = status.extract::<HashMap<String, Py<PyAny>>>()
-                            && let Some(patches) = status_dict.get("patches_applied")
-                                && let Ok(patches_dict) =
-                                    patches.extract::<HashMap<String, bool>>(py)
-                                {
-                                    patches_applied.extend(patches_dict);
-                                }
+                && let Ok(status) = status_func.call0()
+                && let Ok(status_dict) = status.extract::<HashMap<String, Py<PyAny>>>()
+                && let Some(patches) = status_dict.get("patches_applied")
+                && let Ok(patches_dict) = patches.extract::<HashMap<String, bool>>(py)
+            {
+                patches_applied.extend(patches_dict);
+            }
         });
 
         SecurityStatus {
@@ -716,10 +722,9 @@ mod tests {
         // Disallowed extension should fail
         let exe_file = temp_dir.path().join("malware.exe");
         let pe_header: Vec<u8> = vec![
-            0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
-            0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF,
+            0x00, 0x00, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
         ];
         fs::write(&exe_file, pe_header).unwrap();
         assert!(manager.validate_file_input(&exe_file, "read").is_err());
@@ -732,14 +737,18 @@ mod tests {
         let safe_command = vec!["echo".to_string(), "hello".to_string()];
 
         // Should pass without shell
-        assert!(manager
-            .validate_subprocess_command(&safe_command, false)
-            .is_ok());
+        assert!(
+            manager
+                .validate_subprocess_command(&safe_command, false)
+                .is_ok()
+        );
 
         // Should fail with shell=true by default
-        assert!(manager
-            .validate_subprocess_command(&safe_command, true)
-            .is_err());
+        assert!(
+            manager
+                .validate_subprocess_command(&safe_command, true)
+                .is_err()
+        );
     }
 
     #[test]
@@ -758,14 +767,18 @@ mod tests {
         let non_whitelisted_command = vec!["rm".to_string(), "-rf".to_string(), "/".to_string()];
 
         // Whitelisted command should pass
-        assert!(manager
-            .validate_subprocess_command(&whitelisted_command, true)
-            .is_ok());
+        assert!(
+            manager
+                .validate_subprocess_command(&whitelisted_command, true)
+                .is_ok()
+        );
 
         // Non-whitelisted command should fail
-        assert!(manager
-            .validate_subprocess_command(&non_whitelisted_command, true)
-            .is_err());
+        assert!(
+            manager
+                .validate_subprocess_command(&non_whitelisted_command, true)
+                .is_err()
+        );
     }
 
     #[test]
@@ -776,9 +789,11 @@ mod tests {
         let dangerous_command = vec!["rm".to_string(), "-rf".to_string(), "/".to_string()];
 
         // Should pass with bypass enabled
-        assert!(manager
-            .validate_subprocess_command(&dangerous_command, true)
-            .is_ok());
+        assert!(
+            manager
+                .validate_subprocess_command(&dangerous_command, true)
+                .is_ok()
+        );
 
         manager.disable_bypass();
     }
@@ -981,9 +996,9 @@ mod tests {
         let status = manager.get_security_status();
 
         // Verify SecurityStatus structure
-        assert_eq!(status.initialized, false);
-        assert_eq!(status.bypass_enabled, false);
-        assert_eq!(status.config.sandbox_analysis, true);
+        assert!(!status.initialized);
+        assert!(!status.bypass_enabled);
+        assert!(status.config.sandbox_analysis);
 
         // patches_applied should be a HashMap
         assert!(status.patches_applied.is_empty() || !status.patches_applied.is_empty());

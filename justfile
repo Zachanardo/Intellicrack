@@ -122,21 +122,29 @@ lint-all-extended:
     -@just lint-rust-all
     @echo "All extended linting complete ✓"
 
-# Lint Rust code with clippy
+# Lint Rust code with clippy (comprehensive - all lints)
 lint-rust:
-    pixi run cargo clippy --manifest-path intellicrack-launcher/Cargo.toml -- -D warnings
+    cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::nursery
+
+# Lint Rust code with clippy (basic - default warnings only)
+lint-rust-basic:
+    cargo clippy --manifest-path intellicrack-launcher/Cargo.toml -- -D warnings
 
 # Format Rust code with rustfmt
+# NOTE: Requires modern Rust toolchain via rustup (https://rustup.rs/)
+# If you see "deprecated rustfmt" error, install rustup and run: rustup component add rustfmt
 lint-rust-fmt:
-    cd intellicrack-launcher; pixi run cargo fmt
+    @echo "Formatting Rust code..."
+    rustup run stable cargo fmt --manifest-path intellicrack-launcher/Cargo.toml
 
 # Check Rust formatting without applying changes
 lint-rust-fmt-check:
-    cd intellicrack-launcher; pixi run cargo fmt -- --write-mode=diff
+    @echo "Checking Rust formatting..."
+    rustup run stable cargo fmt --manifest-path intellicrack-launcher/Cargo.toml -- --check
 
 # Fix Rust linting issues automatically
 lint-rust-fix:
-    pixi run cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --fix --allow-dirty --allow-staged -- -D warnings
+    cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --fix --allow-dirty --allow-staged -- -D warnings
 
 # All Rust linting and formatting
 lint-rust-all: lint-rust lint-rust-fmt-check

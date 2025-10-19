@@ -277,9 +277,10 @@ impl PlatformInfo {
             if let Ok(output) = std::process::Command::new("sw_vers")
                 .arg("-productVersion")
                 .output()
-                && let Ok(version) = String::from_utf8(output.stdout) {
-                    return format!("macOS {}", version.trim());
-                }
+                && let Ok(version) = String::from_utf8(output.stdout)
+            {
+                return format!("macOS {}", version.trim());
+            }
             "macOS".to_string()
         } else {
             "Unknown".to_string()

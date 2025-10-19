@@ -1,0 +1,311 @@
+    Blocking waiting for file lock on build directory
+   Compiling intellicrack-launcher v0.1.0 (D:\Intellicrack\intellicrack-launcher)
+warning: intellicrack-launcher@0.1.0: Windows manifest embedded
+warning: intellicrack-launcher@0.1.0: Windows manifest embedded
+warning: intellicrack-launcher@0.1.0: Using PYO3_PYTHON from environment: D:\Intellicrack\.pixi\envs\default\python.exe
+warning: intellicrack-launcher@0.1.0: Detected Python version: Python 3.12.12
+warning: intellicrack-launcher@0.1.0: Configuring PyO3 for Python at: D:\Intellicrack\.pixi\envs\default\python.exe
+warning: intellicrack-launcher@0.1.0: python312.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: python3.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: vcruntime140.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: vcruntime140_1.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: msvcp140.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: ucrtbase.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: zlib.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: sqlite3.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libssl-3-x64.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libcrypto-3-x64.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libbz2.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: ffi-8.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: libexpat.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'freetype.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libpng16.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libblas.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libcblas.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'liblapack.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'liblapacke.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'tbb12.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'tbbmalloc.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_rt.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_core.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_intel_thread.2.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'libiomp5md.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: Could not find required DLL 'mkl_sycl_blas.5.dll' in any of the search paths: ["D:\\Intellicrack\\.pixi/envs/default", "D:\\Intellicrack\\.pixi/envs/default\\Library/bin", "D:\\Intellicrack\\.pixi/envs/default\\DLLs"]
+warning: intellicrack-launcher@0.1.0: _ctypes.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _sqlite3.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _bz2.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _ssl.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _hashlib.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: select.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _socket.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: unicodedata.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _lzma.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: pyexpat.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _elementtree.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _asyncio.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _decimal.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _multiprocessing.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _overlapped.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _queue.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _uuid.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _zoneinfo.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: winsound.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: _tkinter.pyd already up-to-date
+warning: intellicrack-launcher@0.1.0: tcl86t.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: tk86t.dll already up-to-date
+warning: intellicrack-launcher@0.1.0: Copied tcl8.6 directory to target
+warning: intellicrack-launcher@0.1.0: Copied tk8.6 directory to target
+warning: this import is redundant
+ --> tests\integration.rs:5:1
+  |
+5 | use tokio;
+  | ^^^^^^^^^^ help: remove it entirely
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_component_path_imports
+  = note: `#[warn(clippy::single_component_path_imports)]` on by default
+
+warning[E0133]: call to unsafe function `std::alloc::GlobalAlloc::alloc` is unsafe and requires unsafe block
+   --> benches\performance_benchmarks.rs:101:23
+    |
+101 |             let ptr = System.alloc(layout);
+    |                       ^^^^^^^^^^^^^^^^^^^^ call to unsafe function
+    |
+    = note: for more information, see <https://doc.rust-lang.org/nightly/edition-guide/rust-2024/unsafe-op-in-unsafe-fn.html>
+    = note: consult the function's documentation for information on how to avoid undefined behavior
+note: an unsafe function restricts its caller, but its body is safe by default
+   --> benches\performance_benchmarks.rs:100:9
+    |
+100 |         unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(unsafe_op_in_unsafe_fn)]` on by default
+
+warning[E0133]: call to unsafe function `std::alloc::GlobalAlloc::dealloc` is unsafe and requires unsafe block
+   --> benches\performance_benchmarks.rs:109:13
+    |
+109 |             System.dealloc(ptr, layout);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^ call to unsafe function
+    |
+    = note: for more information, see <https://doc.rust-lang.org/nightly/edition-guide/rust-2024/unsafe-op-in-unsafe-fn.html>
+    = note: consult the function's documentation for information on how to avoid undefined behavior
+note: an unsafe function restricts its caller, but its body is safe by default
+   --> benches\performance_benchmarks.rs:108:9
+    |
+108 |         unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0133`.
+warning: `intellicrack-launcher` (bench "performance_benchmarks") generated 2 warnings (run `cargo clippy --fix --bench "performance_benchmarks"` to apply 2 suggestions)
+warning: length comparison to zero
+  --> tests\integration.rs:97:13
+   |
+97 |     assert!(results.dependencies.len() > 0);
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!results.dependencies.is_empty()`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+   = note: `#[warn(clippy::len_zero)]` on by default
+
+warning: useless use of `vec!`
+   --> tests\integration.rs:188:21
+    |
+188 |     let safe_args = vec!["test".to_string()];
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^ help: you can use an array directly: `["test".to_string()]`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_vec
+    = note: `#[warn(clippy::useless_vec)]` on by default
+
+warning: `intellicrack-launcher` (test "integration") generated 3 warnings (run `cargo clippy --fix --test "integration"` to apply 3 suggestions)
+warning: `assert!(true)` will be optimized out by the compiler
+   --> src\flask_validator.rs:638:9
+    |
+638 |         assert!(true);
+    |         ^^^^^^^^^^^^^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+    = note: `#[warn(clippy::assertions_on_constants)]` on by default
+
+warning: used `assert_eq!` with a literal bool
+   --> src\flask_validator.rs:671:9
+    |
+671 |         assert_eq!(deserialized.available, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#bool_assert_comparison
+    = note: `#[warn(clippy::bool_assert_comparison)]` on by default
+help: replace it with `assert!(..)`
+    |
+671 -         assert_eq!(deserialized.available, true);
+671 +         assert!(deserialized.available);
+    |
+
+warning: length comparison to zero
+   --> src\flask_validator.rs:730:17
+    |
+730 |         assert!(status.details.len() > 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!status.details.is_empty()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+    = note: `#[warn(clippy::len_zero)]` on by default
+
+warning: length comparison to zero
+   --> src\flask_validator.rs:781:21
+    |
+781 |             assert!(status.details.len() > 0);
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!status.details.is_empty()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+
+warning: redundant pattern matching, consider using `is_ok()`
+    --> src\python_integration.rs:1113:20
+     |
+1113 |             if let Ok(_) = env::var("PYTHONHOME") {
+     |             -------^^^^^------------------------- help: try: `if env::var("PYTHONHOME").is_ok()`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#redundant_pattern_matching
+     = note: `#[warn(clippy::redundant_pattern_matching)]` on by default
+
+warning: used `assert_eq!` with a literal bool
+   --> src\security.rs:984:9
+    |
+984 |         assert_eq!(status.initialized, false);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+984 -         assert_eq!(status.initialized, false);
+984 +         assert!(!status.initialized);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src\security.rs:985:9
+    |
+985 |         assert_eq!(status.bypass_enabled, false);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+985 -         assert_eq!(status.bypass_enabled, false);
+985 +         assert!(!status.bypass_enabled);
+    |
+
+warning: used `assert_eq!` with a literal bool
+   --> src\security.rs:986:9
+    |
+986 |         assert_eq!(status.config.sandbox_analysis, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+986 -         assert_eq!(status.config.sandbox_analysis, true);
+986 +         assert!(status.config.sandbox_analysis);
+    |
+
+warning: you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+    --> src\startup_checks.rs:1589:9
+     |
+1589 | /         match memory_result {
+1590 | |             Ok(mb) => assert!(mb > 0),
+1591 | |             Err(_) => {} // Expected on some platforms
+1592 | |         }
+     | |_________^ help: try: `if let Ok(mb) = memory_result { assert!(mb > 0) }`
+     |
+     = note: you might want to preserve the comments from inside the `match`
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_match
+     = note: `#[warn(clippy::single_match)]` on by default
+
+warning: you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+    --> src\startup_checks.rs:1598:9
+     |
+1598 | /         match disk_result {
+1599 | |             Ok(mb) => {
+1600 | |                 // Verify disk space is greater than zero (meaningful non-zero space detected)
+1601 | |                 assert!(mb > 0);
+...    |
+1605 | |             Err(_) => {} // Expected on some platforms
+1606 | |         }
+     | |_________^
+     |
+     = note: you might want to preserve the comments from inside the `match`
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_match
+help: try
+     |
+1598 ~         if let Ok(mb) = disk_result {
+1599 +             // Verify disk space is greater than zero (meaningful non-zero space detected)
+1600 +             assert!(mb > 0);
+1601 +             // Additional validation: ensure reasonable disk space for testing
+1602 +             assert!(mb < 100 * 1024 * 1024); // Less than 100TB, reasonable for test systems
+1603 +         }
+     |
+
+warning: `assert!(true)` will be optimized out by the compiler
+   --> src\tensorflow_validator.rs:888:9
+    |
+888 |         assert!(true);
+    |         ^^^^^^^^^^^^^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+warning: used `assert_eq!` with a literal bool
+   --> src\tensorflow_validator.rs:926:9
+    |
+926 |         assert_eq!(deserialized.available, true);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#bool_assert_comparison
+help: replace it with `assert!(..)`
+    |
+926 -         assert_eq!(deserialized.available, true);
+926 +         assert!(deserialized.available);
+    |
+
+warning: length comparison to zero
+   --> src\tensorflow_validator.rs:990:17
+    |
+990 |         assert!(status.details.len() > 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!status.details.is_empty()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+
+warning: length comparison to zero
+    --> src\tensorflow_validator.rs:1043:21
+     |
+1043 |             assert!(status.details.len() > 0);
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^ help: using `!is_empty` is clearer and more explicit: `!status.details.is_empty()`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+
+warning: useless use of `vec!`
+   --> src\python_integration.rs:967:33
+    |
+967 |           let alternative_paths = vec![
+    |  _________________________________^
+968 | |             python_integration.virtual_env_path.join(&expected_dll),
+969 | |             python_integration
+970 | |                 .virtual_env_path
+...   |
+977 | |             PathBuf::from(format!(r"C:\Windows\System32\{}", expected_dll)),
+978 | |         ];
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_vec
+    = note: `#[warn(clippy::useless_vec)]` on by default
+help: you can use an array directly
+    |
+967 ~         let alternative_paths = [python_integration.virtual_env_path.join(&expected_dll),
+968 +             python_integration
+969 +                 .virtual_env_path
+970 +                 .join("Scripts")
+971 +                 .join(&expected_dll),
+972 +             python_integration
+973 +                 .virtual_env_path
+974 +                 .join("DLLs")
+975 +                 .join(&expected_dll),
+976 ~             PathBuf::from(format!(r"C:\Windows\System32\{}", expected_dll))];
+    |
+
+warning: `intellicrack-launcher` (lib test) generated 15 warnings (run `cargo clippy --fix --lib -p intellicrack-launcher --tests` to apply 11 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 05s

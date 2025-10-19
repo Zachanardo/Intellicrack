@@ -16,10 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .embedded_terminal_widget import EmbeddedTerminalWidget
-from .terminal_session_widget import TerminalSessionWidget
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Import widgets with error handling
+try:
+    from .embedded_terminal_widget import EmbeddedTerminalWidget
+except ImportError as e:
+    logger.warning("Failed to import embedded_terminal_widget: %s", e)
+    EmbeddedTerminalWidget = None
+
+try:
+    from .terminal_session_widget import TerminalSessionWidget
+except ImportError as e:
+    logger.warning("Failed to import terminal_session_widget: %s", e)
+    TerminalSessionWidget = None
 
 __all__ = [
     "EmbeddedTerminalWidget",
     "TerminalSessionWidget",
 ]
+
+# Filter out None values from __all__
+__all__ = [item for item in __all__ if locals().get(item) is not None]

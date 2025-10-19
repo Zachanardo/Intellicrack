@@ -1,5 +1,5 @@
 use crate::dependencies::ValidationSummary;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
@@ -329,9 +329,7 @@ impl PerformanceMetrics {
 
         #[cfg(windows)]
         {
-            let output = Command::new("ping")
-                .args(["-n", "1", "8.8.8.8"])
-                .output()?;
+            let output = Command::new("ping").args(["-n", "1", "8.8.8.8"]).output()?;
 
             if output.status.success() {
                 let ping_output = String::from_utf8_lossy(&output.stdout);

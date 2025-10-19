@@ -1,5 +1,5 @@
 use crate::dependencies::DependencyStatus;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde_json;
 use std::collections::HashMap;
 use std::process::Command;
@@ -100,7 +100,10 @@ impl TensorFlowValidator {
                                                 }
                                             }
                                             Err(e) => {
-                                                debug!("Intel extension test failed (expected on non-Intel systems): {}", e);
+                                                debug!(
+                                                    "Intel extension test failed (expected on non-Intel systems): {}",
+                                                    e
+                                                );
                                                 details.insert(
                                                     "intel_extension_test".to_string(),
                                                     serde_json::Value::String(format!(
@@ -883,9 +886,6 @@ mod tests {
     fn test_tensorflow_validator_structure() {
         // Test that TensorFlowValidator can be instantiated
         let _validator = TensorFlowValidator;
-
-        // This is a basic structural test
-        assert!(true);
     }
 
     #[tokio::test]
@@ -923,7 +923,7 @@ mod tests {
         assert!(deserialize_result.is_ok());
 
         let deserialized = deserialize_result.unwrap();
-        assert_eq!(deserialized.available, true);
+        assert!(deserialized.available);
         assert_eq!(deserialized.version, Some("2.13.0".to_string()));
         assert_eq!(
             deserialized.details.get("test_key"),
@@ -960,21 +960,27 @@ mod tests {
     async fn test_tensorflow_validation_with_missing_python() {
         setup_test_environment();
 
-        // Temporarily modify PATH to simulate missing Python
+        // Temporarily modify PATH to test behavior when Python is not in PATH
         let original_path = env::var("PATH").unwrap_or_default();
-        unsafe { env::set_var("PATH", ""); }
+        unsafe {
+            env::set_var("PATH", "");
+        }
 
         let result = TensorFlowValidator::check_python_availability().await;
 
         // Restore original PATH
-        unsafe { env::set_var("PATH", &original_path); }
+        unsafe {
+            env::set_var("PATH", &original_path);
+        }
 
         // Should fail when Python is not available
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("No Python executable found"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("No Python executable found")
+        );
     }
 
     #[tokio::test]
@@ -987,7 +993,7 @@ mod tests {
         let status = result.unwrap();
 
         // Test that the result has proper structure regardless of TensorFlow availability
-        assert!(status.details.len() > 0);
+        assert!(!status.details.is_empty());
 
         if status.available {
             // If TensorFlow is available, ensure comprehensive validation occurred
@@ -1040,13 +1046,13 @@ mod tests {
         // Ensure error cases are handled gracefully
         if !status.available {
             assert!(status.version.is_none());
-            assert!(status.details.len() > 0);
+            assert!(!status.details.is_empty());
 
             // Should contain either an error message or some diagnostic info
             let has_error_info = status.details.values().any(|v| {
-                v.as_str().unwrap_or("").contains("error") ||
-                v.as_str().unwrap_or("").contains("failed") ||
-                v.as_str().unwrap_or("").contains("not available")
+                v.as_str().unwrap_or("").contains("error")
+                    || v.as_str().unwrap_or("").contains("failed")
+                    || v.as_str().unwrap_or("").contains("not available")
             });
             assert!(has_error_info);
         }

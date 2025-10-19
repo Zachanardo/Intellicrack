@@ -535,9 +535,10 @@ class ResourceManager:
             from intellicrack.handlers.psutil_handler import psutil
 
             process = psutil.Process()
+            mem_info = process.memory_info()
             return {
-                "rss_mb": process.memory_info().rss // 1024 // 1024,
-                "vms_mb": process.memory_info().vms // 1024 // 1024,
+                "rss_mb": int(mem_info.rss) // 1024 // 1024,
+                "vms_mb": int(mem_info.vms) // 1024 // 1024,
                 "percent": process.memory_percent(),
             }
         except ImportError:

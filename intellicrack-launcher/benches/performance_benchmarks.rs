@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use intellicrack_launcher::{
     EnvironmentManager, GilSafetyManager, PlatformInfo, PythonIntegration, SecurityManager,
 };
@@ -98,7 +98,7 @@ fn benchmark_memory_usage_tracking(c: &mut Criterion) {
 
     unsafe impl GlobalAlloc for TrackingAllocator {
         unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-            let ptr = System.alloc(layout);
+            let ptr = unsafe { System.alloc(layout) };
             if !ptr.is_null() {
                 ALLOCATED.fetch_add(layout.size(), Ordering::SeqCst);
             }
@@ -106,7 +106,7 @@ fn benchmark_memory_usage_tracking(c: &mut Criterion) {
         }
 
         unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-            System.dealloc(ptr, layout);
+            unsafe { System.dealloc(ptr, layout) };
             ALLOCATED.fetch_sub(layout.size(), Ordering::SeqCst);
         }
     }

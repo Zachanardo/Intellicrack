@@ -2,7 +2,6 @@ use anyhow::Result;
 use intellicrack_launcher::*;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio;
 
 #[tokio::test]
 async fn test_platform_detection_comprehensive() -> Result<()> {
@@ -94,7 +93,6 @@ async fn test_dependency_validation_comprehensive() -> Result<()> {
 
     // Verify results structure
     assert!(!results.dependencies.is_empty());
-    assert!(results.dependencies.len() > 0);
 
     // Verify required dependencies are checked
     assert!(results.dependencies.contains_key("python"));
@@ -102,12 +100,21 @@ async fn test_dependency_validation_comprehensive() -> Result<()> {
     // Verify dependency status information
     for (name, dep_info) in &results.dependencies {
         assert!(!name.is_empty());
-        assert!(dep_info.version.is_none() || dep_info.version.as_ref().map(|v| !v.is_empty()).unwrap_or(true));
+        assert!(
+            dep_info.version.is_none()
+                || dep_info
+                    .version
+                    .as_ref()
+                    .map(|v| !v.is_empty())
+                    .unwrap_or(true)
+        );
 
         // Dependencies should have details when not available
         if !dep_info.available {
             // Check if details contain error information
-            assert!(dep_info.details.contains_key("error") || dep_info.details.contains_key("status"));
+            assert!(
+                dep_info.details.contains_key("error") || dep_info.details.contains_key("status")
+            );
         }
     }
 
@@ -185,9 +192,10 @@ async fn test_security_manager_validation() -> Result<()> {
 
     // Test command validation
     let safe_command = "echo";
-    let safe_args = vec!["test".to_string()];
+    let safe_args = ["test".to_string()];
 
-    let validation_result = security.validate_subprocess_command(&[safe_command.to_string(), safe_args[0].clone()], false);
+    let validation_result = security
+        .validate_subprocess_command(&[safe_command.to_string(), safe_args[0].clone()], false);
     assert!(validation_result.is_ok() || validation_result.is_err());
 
     Ok(())
@@ -221,8 +229,14 @@ async fn test_process_manager_statistics() -> Result<()> {
 
     // Test worker status
     let worker_status = manager.get_worker_status();
-    let available_workers = worker_status.iter().filter(|w| matches!(w.status, crate::process_manager::WorkerStatus::Idle)).count();
-    let active_workers = worker_status.iter().filter(|w| matches!(w.status, crate::process_manager::WorkerStatus::Busy)).count();
+    let available_workers = worker_status
+        .iter()
+        .filter(|w| matches!(w.status, crate::process_manager::WorkerStatus::Idle))
+        .count();
+    let active_workers = worker_status
+        .iter()
+        .filter(|w| matches!(w.status, crate::process_manager::WorkerStatus::Busy))
+        .count();
     assert!(available_workers > 0);
     assert_eq!(active_workers, 0);
 

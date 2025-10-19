@@ -32,6 +32,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.utils.logger import logger
 
+from ...ai.model_discovery_service import get_model_discovery_service
 from ...utils.env_file_manager import EnvFileManager
 from ...utils.secrets_manager import get_secret
 from .base_dialog import BaseDialog
@@ -211,6 +212,11 @@ class LLMConfigDialog(BaseDialog):
         self.gptq_max_tokens = None
 
         # AWQ attributes
+        self.awq_model_path = None
+        self.awq_model_name = None
+        self.awq_device = None
+        self.awq_temp = None
+        self.awq_max_tokens = None
 
         # Hugging Face Local attributes
         self.huggingface_model_path = None
@@ -1669,6 +1675,18 @@ class LLMConfigDialog(BaseDialog):
             if api_keys:
                 self.env_manager.update_keys(api_keys)
                 self.status_text.append(f"OK Saved {len(api_keys)} API keys to .env file")
+
+                # Trigger model discovery refresh after saving keys
+                try:
+                    discovery_service = get_model_discovery_service()
+                    discovery_service.clear_cache()
+                    self.status_text.append("OK Refreshing available models from API providers...")
+                    discovered = discovery_service.discover_all_models(force_refresh=True)
+                    total_models = sum(len(models) for models in discovered.values())
+                    self.status_text.append(f"OK Discovered {total_models} models from {len(discovered)} providers")
+                except Exception as e:
+                    logger.error(f"Failed to refresh model discovery: {e}")
+                    self.status_text.append(f"WARNING Could not refresh models: {str(e)}")
 
             # Save model configurations
             if self.current_configs:

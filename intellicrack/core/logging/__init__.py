@@ -20,18 +20,29 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .audit_logger import (
-    AuditEvent,
-    AuditEventType,
-    AuditLogger,
-    AuditSeverity,
-    get_audit_logger,
-    log_binary_analysis,
-    log_credential_access,
-    log_exploit_attempt,
-    log_tool_execution,
-    log_vm_operation,
-)
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Import audit logger with error handling
+try:
+    from .audit_logger import (
+        AuditEvent,
+        AuditEventType,
+        AuditLogger,
+        AuditSeverity,
+        get_audit_logger,
+        log_binary_analysis,
+        log_credential_access,
+        log_exploit_attempt,
+        log_tool_execution,
+        log_vm_operation,
+    )
+except ImportError as e:
+    logger.warning("Failed to import audit_logger: %s", e)
+    # Set all imports to None
+    AuditEvent = AuditEventType = AuditLogger = AuditSeverity = get_audit_logger = None
+    log_binary_analysis = log_credential_access = log_exploit_attempt = log_tool_execution = log_vm_operation = None
 
 __all__ = [
     "AuditEvent",
@@ -45,3 +56,6 @@ __all__ = [
     "log_tool_execution",
     "log_vm_operation",
 ]
+
+# Filter out None values from __all__
+__all__ = [item for item in __all__ if locals().get(item) is not None]

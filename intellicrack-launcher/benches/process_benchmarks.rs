@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use intellicrack_launcher::{PlatformInfo, ProcessManager, SecurityManager};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -84,8 +84,11 @@ fn benchmark_concurrent_process_execution(c: &mut Criterion) {
                     .map(|i| {
                         tokio::spawn(async move {
                             let local_platform = PlatformInfo::detect().unwrap();
-                            let local_security = Arc::new(Mutex::new(SecurityManager::new().unwrap()));
-                            let local_manager = ProcessManager::new(&local_platform, Arc::clone(&local_security)).unwrap();
+                            let local_security =
+                                Arc::new(Mutex::new(SecurityManager::new().unwrap()));
+                            let local_manager =
+                                ProcessManager::new(&local_platform, Arc::clone(&local_security))
+                                    .unwrap();
                             #[cfg(windows)]
                             let result = local_manager.execute_command(
                                 "cmd",
@@ -338,7 +341,6 @@ fn benchmark_process_security_validation(c: &mut Criterion) {
 }
 
 fn benchmark_process_manager_under_load(c: &mut Criterion) {
-
     let mut group = c.benchmark_group("process_manager_under_load");
     group.measurement_time(Duration::from_secs(20));
     // Create a dedicated multi-threaded runtime once and reuse it for the whole group.
@@ -415,14 +417,20 @@ fn benchmark_process_manager_under_load(c: &mut Criterion) {
                     rt.block_on(async move {
                         let platform = PlatformInfo::detect().unwrap();
                         let security = Arc::new(Mutex::new(SecurityManager::new().unwrap()));
-                        let manager = ProcessManager::new(&platform, Arc::clone(&security)).unwrap();
+                        let manager =
+                            ProcessManager::new(&platform, Arc::clone(&security)).unwrap();
 
                         let tasks: Vec<_> = (0..concurrent_processes)
                             .map(|i| {
                                 tokio::spawn(async move {
                                     let local_platform = PlatformInfo::detect().unwrap();
-                                    let local_security = Arc::new(Mutex::new(SecurityManager::new().unwrap()));
-                                    let local_manager = ProcessManager::new(&local_platform, Arc::clone(&local_security)).unwrap();
+                                    let local_security =
+                                        Arc::new(Mutex::new(SecurityManager::new().unwrap()));
+                                    let local_manager = ProcessManager::new(
+                                        &local_platform,
+                                        Arc::clone(&local_security),
+                                    )
+                                    .unwrap();
                                     #[cfg(windows)]
                                     let result = local_manager.execute_command(
                                         "cmd",

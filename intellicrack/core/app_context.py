@@ -24,14 +24,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
-
+from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal, PYQT6_AVAILABLE
 from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-class AppContext(QObject):
+class AppContext(QObject if PYQT6_AVAILABLE else object):
     """Centralized application state manager.
 
     Manages global application state and provides signals for state changes,
@@ -39,40 +38,67 @@ class AppContext(QObject):
     """
 
     # State change signals
-    #: Emitted when a binary is loaded (type: dict)
-    binary_loaded = pyqtSignal(dict)
-    #: Signal emitted when binary is unloaded (type: no parameters)
-    binary_unloaded = pyqtSignal()
-    #: analysis_type, options (type: str, dict)
-    analysis_started = pyqtSignal(str, dict)
-    #: analysis_type, results (type: str, dict)
-    analysis_completed = pyqtSignal(str, dict)
-    #: analysis_type, error_message (type: str, str)
-    analysis_failed = pyqtSignal(str, str)
-    #: project_info (type: dict)
-    project_loaded = pyqtSignal(dict)
-    #: project_path (type: str)
-    project_saved = pyqtSignal(str)
-    #: Signal emitted when project is closed (type: no parameters)
-    project_closed = pyqtSignal()
-    #: plugin_name, plugin_info (type: str, dict)
-    plugin_loaded = pyqtSignal(str, dict)
-    #: plugin_name (type: str)
-    plugin_unloaded = pyqtSignal(str)
-    #: setting_key, new_value (type: str, Any)
-    settings_changed = pyqtSignal(str, Any)
-    #: task_id, task_description (type: str, str)
-    task_started = pyqtSignal(str, str)
-    #: task_id, progress_percentage (type: str, int)
-    task_progress = pyqtSignal(str, int)
-    #: task_id, result (type: str, Any)
-    task_completed = pyqtSignal(str, Any)
-    #: task_id, error_message (type: str, str)
-    task_failed = pyqtSignal(str, str)
-    #: model_name, model_info (type: str, dict)
-    model_loaded = pyqtSignal(str, dict)
-    #: model_name (type: str)
-    model_unloaded = pyqtSignal(str)
+    if PYQT6_AVAILABLE:
+        #: Emitted when a binary is loaded (type: dict)
+        binary_loaded = pyqtSignal(dict)
+        #: Signal emitted when binary is unloaded (type: no parameters)
+        binary_unloaded = pyqtSignal()
+        #: project_info (type: dict)
+        project_loaded = pyqtSignal(dict)
+        #: project_path (type: str)
+        project_saved = pyqtSignal(str)
+        #: Signal emitted when project is closed (type: no parameters)
+        project_closed = pyqtSignal()
+        #: plugin_name, plugin_info (type: str, dict)
+        plugin_loaded = pyqtSignal(str, dict)
+        #: plugin_name (type: str)
+        plugin_unloaded = pyqtSignal(str)
+        #: setting_key, new_value (type: str, Any)
+        settings_changed = pyqtSignal(str, Any)
+        #: task_id, task_description (type: str, str)
+        task_started = pyqtSignal(str, str)
+        #: task_id, progress_percentage (type: str, int)
+        task_progress = pyqtSignal(str, int)
+        #: task_id, result (type: str, Any)
+        task_completed = pyqtSignal(str, Any)
+        #: task_id, error_message (type: str, str)
+        task_failed = pyqtSignal(str, str)
+        #: message, level (type: str, str)
+        log_message = pyqtSignal(str, str)
+        #: Emitted when application is about to quit (type: no parameters)
+        application_quitting = pyqtSignal()
+        #: analysis_type, options (type: str, dict)
+        analysis_started = pyqtSignal(str, dict)
+        #: analysis_type, results (type: str, dict)
+        analysis_completed = pyqtSignal(str, dict)
+        #: analysis_type, error_message (type: str, str)
+        analysis_failed = pyqtSignal(str, str)
+    else:
+        binary_loaded = None
+        binary_unloaded = None
+        project_loaded = None
+        project_saved = None
+        project_closed = None
+        plugin_loaded = None
+        plugin_unloaded = None
+        settings_changed = None
+        task_started = None
+        task_progress = None
+        task_completed = None
+        task_failed = None
+        log_message = None
+        application_quitting = None
+        analysis_started = None
+        analysis_completed = None
+        analysis_failed = None
+        #: task_id, result (type: str, Any)
+        task_completed = pyqtSignal(str, Any)
+        #: task_id, error_message (type: str, str)
+        task_failed = pyqtSignal(str, str)
+        #: model_name, model_info (type: str, dict)
+        model_loaded = pyqtSignal(str, dict)
+        #: model_name (type: str)
+        model_unloaded = pyqtSignal(str)
 
     def __init__(self):
         """Initialize the application context.
@@ -82,7 +108,8 @@ class AppContext(QObject):
         tasks. Initializes signal-slot connections and observer patterns
         for communication between different components of the application.
         """
-        super().__init__()
+        if PYQT6_AVAILABLE:
+            super().__init__()
         self._state = {
             "current_binary": None,
             "current_project": None,

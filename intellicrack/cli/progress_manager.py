@@ -30,7 +30,7 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Union
 
 from rich import box
 from rich.console import Console
@@ -266,7 +266,7 @@ class ProgressManager:
 class MultiStageProgress:
     """Progress tracker for multi-stage operations."""
 
-    def __init__(self, console: Console | None = None):
+    def __init__(self, console: Union[Console, None] = None):
         """Initialize multi-stage progress tracker with console and stage tracking."""
         self.console = console or Console()
         self.stages: list[dict[str, Any]] = []

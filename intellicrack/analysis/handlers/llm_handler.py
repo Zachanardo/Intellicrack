@@ -23,7 +23,28 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from typing import Any, Optional
 
-from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+try:
+    from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+
+    PYQT6_AVAILABLE = True
+except ImportError:
+    # Fallback classes when PyQt6 is not available
+    class QObject:
+        pass
+
+    class QRunnable:
+        def run(self):
+            pass
+
+    class QThreadPool:
+        @staticmethod
+        def globalInstance():
+            return None
+
+    def pyqtSignal(*args):
+        return None
+
+    PYQT6_AVAILABLE = False
 
 try:
     from ...ai.llm_backends import LLMManager

@@ -69,19 +69,18 @@ class APIKeyConfigDialog(QDialog):
 
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.api_key_edit.setPlaceholderText("Enter your API key here...")
+        self.api_key_edit.setText("")
         self.api_key_label = QLabel("API Key:")
         form_layout.addRow(self.api_key_label, self.api_key_edit)
 
         self.base_url_edit = QLineEdit()
-        self.base_url_edit.setPlaceholderText("https://api.openai.com/v1")
+        self.base_url_edit.setText("")
         self.base_url_label = QLabel("Base URL:")
         form_layout.addRow(self.base_url_label, self.base_url_edit)
 
         model_row_layout = QHBoxLayout()
         self.model_combo = QComboBox()
         self.model_combo.setEditable(True)
-        self.model_combo.setPlaceholderText("Select or enter model name")
         model_row_layout.addWidget(self.model_combo, 1)
 
         self.fetch_models_btn = QPushButton("Refresh Models")
@@ -132,22 +131,19 @@ class APIKeyConfigDialog(QDialog):
             self.api_key_edit.setVisible(False)
             self.base_url_label.setVisible(True)
             self.base_url_edit.setVisible(True)
-            self.base_url_edit.setPlaceholderText("http://localhost:11434")
             self.base_url_edit.setText("http://localhost:11434")
         elif "LM Studio" in provider_name:
             self.api_key_label.setVisible(False)
             self.api_key_edit.setVisible(False)
             self.base_url_label.setVisible(True)
             self.base_url_edit.setVisible(True)
-            self.base_url_edit.setPlaceholderText("http://localhost:1234/v1")
             self.base_url_edit.setText("http://localhost:1234/v1")
         elif "Custom" in provider_name:
             self.api_key_label.setVisible(True)
             self.api_key_edit.setVisible(True)
             self.base_url_label.setVisible(True)
             self.base_url_edit.setVisible(True)
-            self.base_url_edit.setPlaceholderText("https://your-api-endpoint.com/v1")
-            self.base_url_edit.clear()
+            self.base_url_edit.setText("https://your-api-endpoint.com/v1")
         else:
             self.api_key_label.setVisible(True)
             self.api_key_edit.setVisible(True)
@@ -335,7 +331,6 @@ class AIAssistantTab(BaseTab):
         input_layout = QVBoxLayout()
 
         self.input_text = QTextEdit()
-        self.input_text.setPlaceholderText("Enter your query or paste code/binary analysis here...")
         self.input_text.setToolTip(
             "Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats"
         )
@@ -581,20 +576,17 @@ class AIAssistantTab(BaseTab):
             available_models = []
 
             try:
-                from intellicrack.ai.api_provider_clients import get_provider_manager
+                from intellicrack.ai.model_discovery_service import get_model_discovery_service
 
-                provider_manager = get_provider_manager()
+                discovery_service = get_model_discovery_service()
+                flat_models = discovery_service.get_flat_model_list(force_refresh=False)
 
-                all_models = provider_manager.fetch_all_models()
-
-                for _provider_name, models in all_models.items():
-                    for model_info in models:
-                        display_name = f"{model_info.provider}: {model_info.name}"
-                        available_models.append(display_name)
-                        logger.debug(f"Found model: {display_name}")
+                for display_name, _model_info in flat_models:
+                    available_models.append(display_name)
+                    logger.debug(f"Found model: {display_name}")
 
             except Exception as e:
-                logger.warning(f"Could not load models from provider manager: {e}")
+                logger.warning(f"Could not load models from ModelDiscoveryService: {e}")
 
             try:
                 from intellicrack.ai.llm_backends import get_llm_manager

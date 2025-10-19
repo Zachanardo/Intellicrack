@@ -17,10 +17,8 @@ use tracing::{debug, info, warn};
 
 use crate::platform::{GpuVendor, OsType, PlatformInfo};
 
-pub static PROJECT_ROOT: Lazy<String> = Lazy::new(|| {
-    env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string())
-});
-
+pub static PROJECT_ROOT: Lazy<String> =
+    Lazy::new(|| env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string()));
 
 pub struct EnvironmentManager {
     platform: PlatformInfo,
@@ -47,16 +45,22 @@ impl EnvironmentManager {
         // Parallelize environment variable settings
         let _ = rayon::join(
             || self.set_intel_gpu_environment(),
-            || rayon::join(
-                || self.set_threading_environment(),
-                || rayon::join(
-                    || self.set_pybind11_environment(),
-                    || rayon::join(
-                        || self.set_tensorflow_environment(),
-                        || self.set_pytorch_environment(),
-                    )
+            || {
+                rayon::join(
+                    || self.set_threading_environment(),
+                    || {
+                        rayon::join(
+                            || self.set_pybind11_environment(),
+                            || {
+                                rayon::join(
+                                    || self.set_tensorflow_environment(),
+                                    || self.set_pytorch_environment(),
+                                )
+                            },
+                        )
+                    },
                 )
-            )
+            },
         );
 
         // Qt and platform-specific settings are sequential
@@ -248,12 +252,20 @@ impl EnvironmentManager {
         debug!("Configuring Windows DLL search paths");
 
         // Critical DLL directories for Ray and other native modules
-        let dll_directories = [format!("{}/.pixi/envs/default/Lib/site-packages/h5py", &*PROJECT_ROOT),
-            format!("{}/.pixi/envs/default/Lib/site-packages/torchvision", &*PROJECT_ROOT),
+        let dll_directories = [
+            format!(
+                "{}/.pixi/envs/default/Lib/site-packages/h5py",
+                &*PROJECT_ROOT
+            ),
+            format!(
+                "{}/.pixi/envs/default/Lib/site-packages/torchvision",
+                &*PROJECT_ROOT
+            ),
             format!("{}/.pixi/envs/default/Scripts", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default/DLLs", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
-            format!("{}/.pixi/envs/default", &*PROJECT_ROOT)];
+            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+        ];
 
         let new_path = dll_directories.join(";");
         let old_path = env::var("PATH").unwrap_or_default();
@@ -283,16 +295,20 @@ impl EnvironmentManager {
 
         // CRITICAL: Add launcher directory FIRST for _tkinter DLL loading
         if let Ok(exe_path) = env::current_exe()
-            && let Some(exe_dir) = exe_path.parent() {
-                let launcher_dir = exe_dir.to_string_lossy().to_string();
-                new_path_parts.push(launcher_dir.clone());
-                info!("Added launcher directory to PATH first: {}", launcher_dir);
-            }
+            && let Some(exe_dir) = exe_path.parent()
+        {
+            let launcher_dir = exe_dir.to_string_lossy().to_string();
+            new_path_parts.push(launcher_dir.clone());
+            info!("Added launcher directory to PATH first: {}", launcher_dir);
+        }
 
         // Pixi environment paths that need to be in PATH
         let pixi_paths = vec![
             format!("{}/.pixi/envs/default/DLLs", &*PROJECT_ROOT),
-            format!("{}/.pixi/envs/default/Library/mingw-w64/bin", &*PROJECT_ROOT),
+            format!(
+                "{}/.pixi/envs/default/Library/mingw-w64/bin",
+                &*PROJECT_ROOT
+            ),
             format!("{}/.pixi/envs/default/Library/mingw64/bin", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default/Library/usr/bin", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
@@ -321,7 +337,10 @@ impl EnvironmentManager {
 
         unsafe {
             // Set PIXI environment variables for proper activation
-            env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
+            env::set_var(
+                "PIXI_PREFIX",
+                format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+            );
             env::set_var("PIXI_DEFAULT_ENV", "default");
             env::set_var(
                 "PIXI_PYTHON_EXE",
@@ -333,11 +352,17 @@ impl EnvironmentManager {
 
             // CRITICAL: PyO3 REQUIRES PYTHONHOME to be set for embedding Python
             // This tells PyO3 where to find the Python runtime and standard library
-            env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT));
+            env::set_var(
+                "PYTHONHOME",
+                format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+            );
 
             // Set PYTHONPATH to include both pixi site-packages and Intellicrack source
             // This ensures all packages and local modules are importable
-            let pythonpath = format!("{};{}/.pixi/envs/default/Lib/site-packages", &*PROJECT_ROOT, &*PROJECT_ROOT);
+            let pythonpath = format!(
+                "{};{}/.pixi/envs/default/Lib/site-packages",
+                &*PROJECT_ROOT, &*PROJECT_ROOT
+            );
             env::set_var("PYTHONPATH", &pythonpath);
         }
 
@@ -350,32 +375,33 @@ impl EnvironmentManager {
 
         // FIRST: Try launcher directory (prioritized for DLL compatibility)
         if let Ok(exe_path) = env::current_exe()
-            && let Some(exe_dir) = exe_path.parent() {
-                let launcher_tcl = exe_dir.join("tcl8.6");
-                let launcher_tk = exe_dir.join("tk8.6");
+            && let Some(exe_dir) = exe_path.parent()
+        {
+            let launcher_tcl = exe_dir.join("tcl8.6");
+            let launcher_tk = exe_dir.join("tk8.6");
 
-                if launcher_tcl.exists() {
-                    unsafe {
-                        env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                    }
-                    info!(
-                        "Set TCL_LIBRARY to launcher directory: {}",
-                        launcher_tcl.display()
-                    );
-                    tcl_set = true;
+            if launcher_tcl.exists() {
+                unsafe {
+                    env::set_var("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
                 }
-
-                if launcher_tk.exists() {
-                    unsafe {
-                        env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                    }
-                    info!(
-                        "Set TK_LIBRARY to launcher directory: {}",
-                        launcher_tk.display()
-                    );
-                    tk_set = true;
-                }
+                info!(
+                    "Set TCL_LIBRARY to launcher directory: {}",
+                    launcher_tcl.display()
+                );
+                tcl_set = true;
             }
+
+            if launcher_tk.exists() {
+                unsafe {
+                    env::set_var("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
+                }
+                info!(
+                    "Set TK_LIBRARY to launcher directory: {}",
+                    launcher_tk.display()
+                );
+                tk_set = true;
+            }
+        }
 
         // FALLBACK: Use pixi environment paths only if launcher paths don't exist
         if !tcl_set {
@@ -538,11 +564,15 @@ mod tests {
 
     #[allow(dead_code)]
     fn unsafe_set_var(key: &str, value: &str) {
-        unsafe { env::set_var(key, value); }
+        unsafe {
+            env::set_var(key, value);
+        }
     }
 
     fn unsafe_remove_var(key: &str) {
-        unsafe { env::remove_var(key); }
+        unsafe {
+            env::remove_var(key);
+        }
     }
 
     fn create_test_platform() -> PlatformInfo {
@@ -617,9 +647,15 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear threading environment variables
-        unsafe { env::remove_var("OMP_NUM_THREADS"); }
-        unsafe { env::remove_var("MKL_NUM_THREADS"); }
-        unsafe { env::remove_var("NUMEXPR_NUM_THREADS"); }
+        unsafe {
+            env::remove_var("OMP_NUM_THREADS");
+        }
+        unsafe {
+            env::remove_var("MKL_NUM_THREADS");
+        }
+        unsafe {
+            env::remove_var("NUMEXPR_NUM_THREADS");
+        }
 
         let result = env_manager.set_threading_environment();
         assert!(result.is_ok());
@@ -640,7 +676,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear PyBind11 environment variable
-        unsafe { env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"); }
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        }
 
         let result = env_manager.set_pybind11_environment();
         assert!(result.is_ok());
@@ -659,8 +697,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear TensorFlow environment variables
-        unsafe { env::remove_var("TF_CPP_MIN_LOG_LEVEL"); }
-        unsafe { env::remove_var("MKL_THREADING_LAYER"); }
+        unsafe {
+            env::remove_var("TF_CPP_MIN_LOG_LEVEL");
+        }
+        unsafe {
+            env::remove_var("MKL_THREADING_LAYER");
+        }
 
         let result = env_manager.set_tensorflow_environment();
         assert!(result.is_ok());
@@ -678,7 +720,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt environment variables
-        unsafe { env::remove_var("QT_LOGGING_RULES"); }
+        unsafe {
+            env::remove_var("QT_LOGGING_RULES");
+        }
 
         let result = env_manager.set_qt_environment();
         assert!(result.is_ok());
@@ -697,7 +741,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt font directory
-        unsafe { env::remove_var("QT_QPA_FONTDIR"); }
+        unsafe {
+            env::remove_var("QT_QPA_FONTDIR");
+        }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());
@@ -720,7 +766,9 @@ mod tests {
 
         // Set existing font directory
         let existing_font_dir = "C:\\CustomFonts";
-        unsafe { env::set_var("QT_QPA_FONTDIR", existing_font_dir); }
+        unsafe {
+            env::set_var("QT_QPA_FONTDIR", existing_font_dir);
+        }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());
@@ -736,8 +784,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Windows-specific environment variables
-        unsafe { env::remove_var("PYTHONIOENCODING"); }
-        unsafe { env::remove_var("PYTHONUTF8"); }
+        unsafe {
+            env::remove_var("PYTHONIOENCODING");
+        }
+        unsafe {
+            env::remove_var("PYTHONUTF8");
+        }
 
         let result = env_manager.set_native_windows_environment();
         assert!(result.is_ok());
@@ -755,8 +807,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear WSL-specific environment variables
-        unsafe { env::remove_var("LC_ALL"); }
-        unsafe { env::remove_var("LANG"); }
+        unsafe {
+            env::remove_var("LC_ALL");
+        }
+        unsafe {
+            env::remove_var("LANG");
+        }
 
         let result = env_manager.set_wsl_environment();
         assert!(result.is_ok());
@@ -773,7 +829,9 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt platform variable
-        unsafe { env::remove_var("QT_QPA_PLATFORM"); }
+        unsafe {
+            env::remove_var("QT_QPA_PLATFORM");
+        }
 
         let result = env_manager.set_wsl_environment();
         assert!(result.is_ok());
@@ -789,8 +847,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Linux-specific environment variables
-        unsafe { env::remove_var("LC_ALL"); }
-        unsafe { env::remove_var("LANG"); }
+        unsafe {
+            env::remove_var("LC_ALL");
+        }
+        unsafe {
+            env::remove_var("LANG");
+        }
 
         let result = env_manager.set_native_linux_environment();
         assert!(result.is_ok());
@@ -807,8 +869,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set existing locale variables
-        unsafe { env::set_var("LC_ALL", "en_US.UTF-8"); }
-        unsafe { env::set_var("LANG", "en_US.UTF-8"); }
+        unsafe {
+            env::set_var("LC_ALL", "en_US.UTF-8");
+        }
+        unsafe {
+            env::set_var("LANG", "en_US.UTF-8");
+        }
 
         let result = env_manager.set_native_linux_environment();
         assert!(result.is_ok());
@@ -825,8 +891,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear PyTorch environment variables
-        unsafe { env::remove_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM"); }
-        unsafe { env::remove_var("CUDA_LAUNCH_BLOCKING"); }
+        unsafe {
+            env::remove_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM");
+        }
+        unsafe {
+            env::remove_var("CUDA_LAUNCH_BLOCKING");
+        }
 
         let result = env_manager.set_pytorch_environment();
         assert!(result.is_ok());
@@ -843,8 +913,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        unsafe { env::remove_var("PYTHONIOENCODING"); }
-        unsafe { env::remove_var("PYTHONUTF8"); }
+        unsafe {
+            env::remove_var("PYTHONIOENCODING");
+        }
+        unsafe {
+            env::remove_var("PYTHONUTF8");
+        }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -861,9 +935,15 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        unsafe { env::remove_var("LC_ALL"); }
-        unsafe { env::remove_var("LANG"); }
-        unsafe { env::remove_var("QT_QPA_PLATFORM"); }
+        unsafe {
+            env::remove_var("LC_ALL");
+        }
+        unsafe {
+            env::remove_var("LANG");
+        }
+        unsafe {
+            env::remove_var("QT_QPA_PLATFORM");
+        }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -881,8 +961,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear environment variables
-        unsafe { env::remove_var("LC_ALL"); }
-        unsafe { env::remove_var("LANG"); }
+        unsafe {
+            env::remove_var("LC_ALL");
+        }
+        unsafe {
+            env::remove_var("LANG");
+        }
 
         let result = env_manager.set_platform_specific_environment();
         assert!(result.is_ok());
@@ -899,13 +983,27 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear all environment variables
-        unsafe { env::remove_var("CUDA_VISIBLE_DEVICES"); }
-        unsafe { env::remove_var("INTELLICRACK_GPU_TYPE"); }
-        unsafe { env::remove_var("OMP_NUM_THREADS"); }
-        unsafe { env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"); }
-        unsafe { env::remove_var("TF_CPP_MIN_LOG_LEVEL"); }
-        unsafe { env::remove_var("QT_LOGGING_RULES"); }
-        unsafe { env::remove_var("PYTHONIOENCODING"); }
+        unsafe {
+            env::remove_var("CUDA_VISIBLE_DEVICES");
+        }
+        unsafe {
+            env::remove_var("INTELLICRACK_GPU_TYPE");
+        }
+        unsafe {
+            env::remove_var("OMP_NUM_THREADS");
+        }
+        unsafe {
+            env::remove_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF");
+        }
+        unsafe {
+            env::remove_var("TF_CPP_MIN_LOG_LEVEL");
+        }
+        unsafe {
+            env::remove_var("QT_LOGGING_RULES");
+        }
+        unsafe {
+            env::remove_var("PYTHONIOENCODING");
+        }
 
         let result = env_manager.configure_complete_environment();
         assert!(result.is_ok());
@@ -933,12 +1031,24 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set all required environment variables
-        unsafe { env::set_var("CUDA_VISIBLE_DEVICES", "-1"); }
-        unsafe { env::set_var("INTELLICRACK_GPU_TYPE", "intel"); }
-        unsafe { env::set_var("QT_OPENGL", "software"); }
-        unsafe { env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1"); }
-        unsafe { env::set_var("OMP_NUM_THREADS", "1"); }
-        unsafe { env::set_var("TF_CPP_MIN_LOG_LEVEL", "2"); }
+        unsafe {
+            env::set_var("CUDA_VISIBLE_DEVICES", "-1");
+        }
+        unsafe {
+            env::set_var("INTELLICRACK_GPU_TYPE", "intel");
+        }
+        unsafe {
+            env::set_var("QT_OPENGL", "software");
+        }
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
+        unsafe {
+            env::set_var("OMP_NUM_THREADS", "1");
+        }
+        unsafe {
+            env::set_var("TF_CPP_MIN_LOG_LEVEL", "2");
+        }
 
         let result = env_manager.validate_environment();
         assert!(result.is_ok());
@@ -951,8 +1061,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear some required environment variables
-        unsafe { env::remove_var("CUDA_VISIBLE_DEVICES"); }
-        unsafe { env::remove_var("INTELLICRACK_GPU_TYPE"); }
+        unsafe {
+            env::remove_var("CUDA_VISIBLE_DEVICES");
+        }
+        unsafe {
+            env::remove_var("INTELLICRACK_GPU_TYPE");
+        }
 
         // Validation should still succeed but log warnings
         let result = env_manager.validate_environment();
@@ -966,8 +1080,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Set some environment variables for testing
-        unsafe { env::set_var("CUDA_VISIBLE_DEVICES", "-1"); }
-        unsafe { env::set_var("INTELLICRACK_GPU_TYPE", "intel"); }
+        unsafe {
+            env::set_var("CUDA_VISIBLE_DEVICES", "-1");
+        }
+        unsafe {
+            env::set_var("INTELLICRACK_GPU_TYPE", "intel");
+        }
 
         // This test just verifies the function doesn't panic
         // The actual output goes to stdout so we can't easily assert on it
@@ -982,8 +1100,12 @@ mod tests {
         let env_manager = EnvironmentManager::new(&platform);
 
         // Clear Qt environment variables
-        unsafe { env::remove_var("QT_OPENGL"); }
-        unsafe { env::remove_var("QT_QUICK_BACKEND"); }
+        unsafe {
+            env::remove_var("QT_OPENGL");
+        }
+        unsafe {
+            env::remove_var("QT_QUICK_BACKEND");
+        }
 
         let result = env_manager.set_windows_qt_environment();
         assert!(result.is_ok());

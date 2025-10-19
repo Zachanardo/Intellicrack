@@ -32,8 +32,42 @@ except ImportError as e:
     security_enforcement = None
     SECURITY_ENFORCEMENT_AVAILABLE = False
 
-# Import all core modules
-from . import analysis, network, patching, processing, protection_bypass, reporting
+# Import all core modules with error handling
+try:
+    from . import analysis
+except ImportError as e:
+    logger.warning(f"Analysis module not available: {e}")
+    analysis = None
+
+try:
+    from . import network
+except ImportError as e:
+    logger.warning(f"Network module not available: {e}")
+    network = None
+
+try:
+    from . import patching
+except ImportError as e:
+    logger.warning(f"Patching module not available: {e}")
+    patching = None
+
+try:
+    from . import processing
+except ImportError as e:
+    logger.warning(f"Processing module not available: {e}")
+    processing = None
+
+try:
+    from . import protection_bypass
+except ImportError as e:
+    logger.warning(f"Protection bypass module not available: {e}")
+    protection_bypass = None
+
+try:
+    from . import reporting
+except ImportError as e:
+    logger.warning(f"Reporting module not available: {e}")
+    reporting = None
 
 # Import protection analyzer
 try:
@@ -59,6 +93,153 @@ except ImportError as e:
     exploitation = None
     vulnerability_research = None
     EXPLOITATION_MODULES_AVAILABLE = False
+
+# Import individual core modules for Sphinx documentation
+try:
+    from . import binary_analyzer
+except ImportError as e:
+    logger.warning(f"binary_analyzer not available: {e}")
+    binary_analyzer = None
+
+try:
+    from . import config_migration_handler
+except ImportError as e:
+    logger.warning(f"config_migration_handler not available: {e}")
+    config_migration_handler = None
+
+try:
+    from . import debugging_engine
+except ImportError as e:
+    logger.warning(f"debugging_engine not available: {e}")
+    debugging_engine = None
+
+try:
+    from . import frida_bypass_wizard
+except ImportError as e:
+    logger.warning(f"frida_bypass_wizard not available: {e}")
+    frida_bypass_wizard = None
+
+try:
+    from . import frida_constants
+except ImportError as e:
+    logger.warning(f"frida_constants not available: {e}")
+    frida_constants = None
+
+try:
+    from . import frida_manager
+except ImportError as e:
+    logger.warning(f"frida_manager not available: {e}")
+    frida_manager = None
+
+try:
+    from . import frida_presets
+except ImportError as e:
+    logger.warning(f"frida_presets not available: {e}")
+    frida_presets = None
+
+try:
+    from . import gpu_acceleration
+except ImportError as e:
+    logger.warning(f"gpu_acceleration not available: {e}")
+    gpu_acceleration = None
+
+try:
+    from . import hardware_spoofer
+except ImportError as e:
+    logger.warning(f"hardware_spoofer not available: {e}")
+    hardware_spoofer = None
+
+try:
+    from . import license_snapshot
+except ImportError as e:
+    logger.warning(f"license_snapshot not available: {e}")
+    license_snapshot = None
+
+try:
+    from . import license_validation_bypass
+except ImportError as e:
+    logger.warning(f"license_validation_bypass not available: {e}")
+    license_validation_bypass = None
+
+try:
+    from . import network_capture
+except ImportError as e:
+    logger.warning(f"network_capture not available: {e}")
+    network_capture = None
+
+try:
+    from . import offline_activation_emulator
+except ImportError as e:
+    logger.warning(f"offline_activation_emulator not available: {e}")
+    offline_activation_emulator = None
+
+try:
+    from . import process_manipulation
+except ImportError as e:
+    logger.warning(f"process_manipulation not available: {e}")
+    process_manipulation = None
+
+try:
+    from . import protection_analyzer
+except ImportError as e:
+    logger.warning(f"protection_analyzer not available: {e}")
+    protection_analyzer = None
+
+try:
+    from . import security_utils
+except ImportError as e:
+    logger.warning(f"security_utils not available: {e}")
+    security_utils = None
+
+try:
+    from . import serial_generator
+except ImportError as e:
+    logger.warning(f"serial_generator not available: {e}")
+    serial_generator = None
+
+try:
+    from . import startup_checks
+except ImportError as e:
+    logger.warning(f"startup_checks not available: {e}")
+    startup_checks = None
+
+try:
+    from . import subscription_validation_bypass
+except ImportError as e:
+    logger.warning(f"subscription_validation_bypass not available: {e}")
+    subscription_validation_bypass = None
+
+try:
+    from . import task_manager
+except ImportError as e:
+    logger.warning(f"task_manager not available: {e}")
+    task_manager = None
+
+try:
+    from . import tool_discovery
+except ImportError as e:
+    logger.warning(f"tool_discovery not available: {e}")
+    tool_discovery = None
+
+try:
+    from . import trial_reset_engine
+except ImportError as e:
+    logger.warning(f"trial_reset_engine not available: {e}")
+    trial_reset_engine = None
+
+# Import shared modules
+try:
+    from . import shared
+except ImportError as e:
+    logger.warning(f"shared not available: {e}")
+    shared = None
+
+# Import network.protocols
+try:
+    from .network import protocols
+except ImportError as e:
+    logger.warning(f"network.protocols not available: {e}")
+    protocols = None
 
 # Frida modules - lazy import to avoid cycles
 FRIDA_MODULES_AVAILABLE = False
@@ -170,17 +351,80 @@ __all__ = [
     "PROTECTION_ANALYZER_AVAILABLE",
     "SECURITY_ENFORCEMENT_AVAILABLE",
     "analysis",
+    "binary_analyzer",
+    "config_migration_handler",
+    "debugging_engine",
     "exploitation",
+    "frida_bypass_wizard",
+    "frida_constants",
+    "frida_manager",
+    "frida_presets",
     "get_frida_bypass_wizard",
     "get_frida_manager",
     "get_frida_presets",
+    "gpu_acceleration",
+    "hardware_spoofer",
+    "license_snapshot",
+    "license_validation_bypass",
     "network",
+    "network_capture",
+    "offline_activation_emulator",
     "patching",
+    "process_manipulation",
     "processing",
     "protection_analyzer",
     "protection_bypass",
     "ProtectionAnalyzer",
+    "protocols",
     "reporting",
     "security_enforcement",
+    "security_utils",
+    "serial_generator",
+    "shared",
+    "startup_checks",
+    "subscription_validation_bypass",
+    "task_manager",
+    "tool_discovery",
+    "trial_reset_engine",
     "vulnerability_research",
+]
+
+# Update __all__ to exclude None modules
+__all__ = [
+    item
+    for item in __all__
+    if item
+    not in [
+        "analysis",
+        "network",
+        "patching",
+        "processing",
+        "protection_bypass",
+        "reporting",
+        "binary_analyzer",
+        "config_migration_handler",
+        "debugging_engine",
+        "frida_bypass_wizard",
+        "frida_constants",
+        "frida_manager",
+        "frida_presets",
+        "gpu_acceleration",
+        "hardware_spoofer",
+        "license_snapshot",
+        "license_validation_bypass",
+        "network_capture",
+        "offline_activation_emulator",
+        "process_manipulation",
+        "protection_analyzer",
+        "security_utils",
+        "serial_generator",
+        "startup_checks",
+        "subscription_validation_bypass",
+        "task_manager",
+        "tool_discovery",
+        "trial_reset_engine",
+        "shared",
+        "protocols",
+    ]
+    or locals().get(item) is not None
 ]

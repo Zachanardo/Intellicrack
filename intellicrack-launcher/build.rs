@@ -30,17 +30,26 @@ fn main() {
                 let o_file = PathBuf::from(&output_dir).join("intellicrack.o");
 
                 let windres_result = Command::new("windres")
-                    .args(["intellicrack.rc", "-O", "coff", "-o", o_file.to_str().unwrap()])
+                    .args([
+                        "intellicrack.rc",
+                        "-O",
+                        "coff",
+                        "-o",
+                        o_file.to_str().unwrap(),
+                    ])
                     .output();
 
                 if windres_result.is_ok() {
-                    println!("cargo:rustc-link-arg={}", o_file.to_str().unwrap());
+                    let o_file_str = o_file.to_str().unwrap();
+                    println!("cargo:rustc-link-arg={o_file_str}");
                     println!("cargo:warning=Windows manifest embedded (windres)");
                 } else {
                     println!("cargo:warning=windres failed, skipping resource compilation");
                 }
             } else {
-                println!("cargo:warning=windres not found, skipping resource compilation for GNU target");
+                println!(
+                    "cargo:warning=windres not found, skipping resource compilation for GNU target"
+                );
             }
         } else {
             // MSVC toolchain - use llvm-rc or embed-resource
@@ -53,7 +62,8 @@ fn main() {
                     .output();
 
                 if llvm_rc_result.is_ok() {
-                    println!("cargo:rustc-link-arg={}", res_file.to_str().unwrap());
+                    let res_file_str = res_file.to_str().unwrap();
+                    println!("cargo:rustc-link-arg={res_file_str}");
                     true
                 } else {
                     false
@@ -78,18 +88,23 @@ fn main() {
     }
 
     // Determine project root for all scenarios
-    let project_root = env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
+    let project_root =
+        env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string());
 
     // Detect CI environment or use PYO3_PYTHON if set
     let python_exe = if let Ok(pyo3_python) = env::var("PYO3_PYTHON") {
         // CI or custom Python path
-        println!("cargo:warning=Using PYO3_PYTHON from environment: {}", pyo3_python);
+        println!("cargo:warning=Using PYO3_PYTHON from environment: {pyo3_python}");
         PathBuf::from(pyo3_python)
     } else if env::var("CI").is_ok() || env::var("GITHUB_ACTIONS").is_ok() {
         // Running in CI, try to find Python
         let python_candidates = vec![
-            env::var("pythonLocation").ok().map(|p| PathBuf::from(p).join("python.exe")),
-            env::var("Python_ROOT_DIR").ok().map(|p| PathBuf::from(p).join("python.exe")),
+            env::var("pythonLocation")
+                .ok()
+                .map(|p| PathBuf::from(p).join("python.exe")),
+            env::var("Python_ROOT_DIR")
+                .ok()
+                .map(|p| PathBuf::from(p).join("python.exe")),
             Some(PathBuf::from("python.exe")),
             Some(PathBuf::from("python3.exe")),
         ];
@@ -105,18 +120,24 @@ fn main() {
         #[allow(non_snake_case)]
         match found_python {
             Some(p) => {
-                println!("cargo:warning=CI environment detected, using Python: {}", p.display());
+                let p_display = p.display();
+                println!("cargo:warning=CI environment detected, using Python: {p_display}");
                 p
             }
-            None => panic!("CI environment detected but Python not found. Set PYO3_PYTHON environment variable.")
+            None => panic!(
+                "CI environment detected but Python not found. Set PYO3_PYTHON environment variable."
+            ),
         }
     } else {
         // Local development with Pixi
         let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");
-        if !pixi_python.exists() {
-            panic!("Local development: Pixi Python not found at: {}. For CI, set PYO3_PYTHON.", pixi_python.display());
-        }
-        println!("cargo:warning=Using local Pixi Python: {}", pixi_python.display());
+        assert!(
+            pixi_python.exists(),
+            "Local development: Pixi Python not found at: {}. For CI, set PYO3_PYTHON.",
+            pixi_python.display()
+        );
+        let pixi_python_str = pixi_python.display();
+        println!("cargo:warning=Using local Pixi Python: {pixi_python_str}");
         pixi_python
     };
 
@@ -127,11 +148,13 @@ fn main() {
         .expect("Failed to run Python");
 
     let version_str = String::from_utf8_lossy(&output.stdout);
-    println!("cargo:warning=Detected Python version: {}", version_str.trim());
+    let version_trimmed = version_str.trim();
+    println!("cargo:warning=Detected Python version: {version_trimmed}");
 
     // Ensure we're using Python 3.12
     if !version_str.contains("3.12") {
-        println!("cargo:warning=Warning: Expected Python 3.12.x, got: {}", version_str.trim());
+        let version_trimmed = version_str.trim();
+        println!("cargo:warning=Warning: Expected Python 3.12.x, got: {version_trimmed}");
     }
 
     // Only set environment variables if not already set (allows CI to override)
@@ -145,7 +168,8 @@ fn main() {
     }
 
     // Print diagnostics
-    println!("cargo:warning=Configuring PyO3 for Python at: {}", python_exe.display());
+    let python_exe_display = python_exe.display();
+    println!("cargo:warning=Configuring PyO3 for Python at: {python_exe_display}");
 
     // Configure PyO3 build
     // The correct function for pyo3-build-config 0.20 is just to use environment variables
@@ -155,9 +179,18 @@ fn main() {
     // Only add pixi-specific paths in local development
     if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
         // Local development paths
-        println!("cargo:rustc-link-search=native={}/.pixi/envs/default/libs", &project_root);
-        println!("cargo:rustc-link-search=native={}/.pixi/envs/default/DLLs", &project_root);
-        println!("cargo:rustc-link-search=native={}/.pixi/envs/default", &project_root);
+        println!(
+            "cargo:rustc-link-search=native={}/.pixi/envs/default/libs",
+            &project_root
+        );
+        println!(
+            "cargo:rustc-link-search=native={}/.pixi/envs/default/DLLs",
+            &project_root
+        );
+        println!(
+            "cargo:rustc-link-search=native={}/.pixi/envs/default",
+            &project_root
+        );
     }
 
     // Link against Python 3.12 DLL
@@ -172,7 +205,14 @@ fn main() {
     // Copy critical DLLs to output directory for runtime access (local development only)
     if env::var("CI").is_err() && env::var("GITHUB_ACTIONS").is_err() {
         let target_dir = env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
-        let target_dir = PathBuf::from(target_dir).parent().unwrap().parent().unwrap().parent().unwrap().to_path_buf();
+        let target_dir = PathBuf::from(target_dir)
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
         let project_root_path = PathBuf::from(&project_root);
         let pixi_env_path = project_root_path.join(".pixi/envs/default");
 
@@ -186,32 +226,66 @@ fn main() {
         // --- Critical DLLs that MUST exist, otherwise the build fails ---
         let critical_dlls = [
             // Core Python
-            "python312.dll", "python3.dll",
+            "python312.dll",
+            "python3.dll",
             // Core VC Runtimes
-            "vcruntime140.dll", "vcruntime140_1.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll",
         ];
 
         // --- Standard DLLs, warn if not found ---
         let standard_dlls = [
-            "msvcp140.dll", "ucrtbase.dll", "zlib.dll", "sqlite3.dll", "libssl-3-x64.dll",
-            "libcrypto-3-x64.dll", "libbz2.dll", "ffi-8.dll", "libexpat.dll", "freetype.dll",
-            "libpng16.dll", "libblas.dll", "libcblas.dll", "liblapack.dll", "liblapacke.dll",
-            "tbb12.dll", "tbbmalloc.dll",
+            "msvcp140.dll",
+            "ucrtbase.dll",
+            "zlib.dll",
+            "sqlite3.dll",
+            "libssl-3-x64.dll",
+            "libcrypto-3-x64.dll",
+            "libbz2.dll",
+            "ffi-8.dll",
+            "libexpat.dll",
+            "freetype.dll",
+            "libpng16.dll",
+            "libblas.dll",
+            "libcblas.dll",
+            "liblapack.dll",
+            "liblapacke.dll",
+            "tbb12.dll",
+            "tbbmalloc.dll",
             // Intel MKL - optional for enhanced performance
-            "mkl_rt.2.dll", "mkl_core.2.dll", "mkl_intel_thread.2.dll", "libiomp5md.dll",
+            "mkl_rt.2.dll",
+            "mkl_core.2.dll",
+            "mkl_intel_thread.2.dll",
+            "libiomp5md.dll",
             "mkl_sycl_blas.5.dll",
         ];
 
         // --- Standard PYDs, warn if not found ---
         let standard_pyds = [
-            "_ctypes.pyd", "_sqlite3.pyd", "_bz2.pyd", "_ssl.pyd", "_hashlib.pyd", "select.pyd",
-            "_socket.pyd", "unicodedata.pyd", "_lzma.pyd", "pyexpat.pyd", "_elementtree.pyd",
-            "_asyncio.pyd", "_decimal.pyd", "_multiprocessing.pyd", "_overlapped.pyd",
-            "_queue.pyd", "_uuid.pyd", "_zoneinfo.pyd", "winsound.pyd", "_tkinter.pyd",
+            "_ctypes.pyd",
+            "_sqlite3.pyd",
+            "_bz2.pyd",
+            "_ssl.pyd",
+            "_hashlib.pyd",
+            "select.pyd",
+            "_socket.pyd",
+            "unicodedata.pyd",
+            "_lzma.pyd",
+            "pyexpat.pyd",
+            "_elementtree.pyd",
+            "_asyncio.pyd",
+            "_decimal.pyd",
+            "_multiprocessing.pyd",
+            "_overlapped.pyd",
+            "_queue.pyd",
+            "_uuid.pyd",
+            "_zoneinfo.pyd",
+            "winsound.pyd",
+            "_tkinter.pyd",
         ];
 
         // --- Tcl/Tk libraries ---
-        let tcl_tk_libs = [ "tcl86t.dll", "tk86t.dll" ];
+        let tcl_tk_libs = ["tcl86t.dll", "tk86t.dll"];
 
         // --- Copy functions ---
         let copy_file = |file_name: &str, is_critical: bool| {
@@ -230,8 +304,8 @@ fn main() {
                 let should_copy = if dst.exists() {
                     match (std::fs::metadata(&src), std::fs::metadata(&dst)) {
                         (Ok(src_meta), Ok(dst_meta)) => {
-                            src_meta.len() != dst_meta.len() ||
-                            src_meta.modified().ok() != dst_meta.modified().ok()
+                            src_meta.len() != dst_meta.len()
+                                || src_meta.modified().ok() != dst_meta.modified().ok()
                         }
                         _ => true,
                     }
@@ -242,38 +316,51 @@ fn main() {
                 if should_copy {
                     match std::fs::copy(&src, &dst) {
                         Ok(_) => {
-                            println!("cargo:warning=Copied {} to target directory", src.display());
+                            let src_display = src.display();
+                            println!("cargo:warning=Copied {src_display} to target directory");
                         }
                         Err(e) if e.raw_os_error() == Some(32) => {
-                            println!("cargo:warning={} is in use, skipping copy (file already exists)", file_name);
+                            println!(
+                                "cargo:warning={file_name} is in use, skipping copy (file already exists)"
+                            );
                         }
                         Err(e) => {
-                            let msg = format!("Failed to copy {}: {}", file_name, e);
+                            let msg = format!("Failed to copy {file_name}: {e}");
                             if is_critical && !dst.exists() {
-                                panic!("{}", msg);
+                                panic!("{msg}");
                             } else {
-                                println!("cargo:warning={}", msg);
+                                println!("cargo:warning={msg}");
                             }
                         }
                     }
                 } else {
-                    println!("cargo:warning={} already up-to-date", file_name);
+                    println!("cargo:warning={file_name} already up-to-date");
                 }
             } else {
-                let msg = format!("Could not find required DLL '{}' in any of the search paths: {:?}", file_name, search_paths);
+                let msg = format!(
+                    "Could not find required DLL '{file_name}' in any of the search paths: {search_paths:?}"
+                );
                 if is_critical {
-                    panic!("{}", msg);
+                    panic!("{msg}");
                 } else {
-                    println!("cargo:warning={}", msg);
+                    println!("cargo:warning={msg}");
                 }
             }
         };
 
         // Process all DLLs and PYDs
-        for dll in critical_dlls.iter() { copy_file(dll, true); }
-        for dll in standard_dlls.iter() { copy_file(dll, false); }
-        for pyd in standard_pyds.iter() { copy_file(pyd, false); }
-        for lib in tcl_tk_libs.iter() { copy_file(lib, false); }
+        for dll in &critical_dlls {
+            copy_file(dll, true);
+        }
+        for dll in &standard_dlls {
+            copy_file(dll, false);
+        }
+        for pyd in &standard_pyds {
+            copy_file(pyd, false);
+        }
+        for lib in &tcl_tk_libs {
+            copy_file(lib, false);
+        }
 
         // Copy Tcl/Tk library directories for _tkinter functionality
         let tcl_tk_dirs = [
@@ -285,12 +372,13 @@ fn main() {
             let dst = target_dir.join(dir_name);
             if src_path.exists() && src_path.is_dir() {
                 if let Err(e) = copy_dir_all(src_path, &dst) {
-                    println!("cargo:warning=Failed to copy directory {}: {}", dir_name, e);
+                    println!("cargo:warning=Failed to copy directory {dir_name}: {e}");
                 } else {
-                    println!("cargo:warning=Copied {} directory to target", dir_name);
+                    println!("cargo:warning=Copied {dir_name} directory to target");
                 }
             } else {
-                println!("cargo:warning=Directory {} not found at {}", dir_name, src_path.display());
+                let src_path_str = src_path.display();
+                println!("cargo:warning=Directory {dir_name} not found at {src_path_str}");
             }
         }
     }

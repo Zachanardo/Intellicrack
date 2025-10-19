@@ -1,11 +1,11 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::process::Command;
-use tokio::time::{timeout, Duration};
+use tokio::time::{Duration, timeout};
 use tracing::{debug, error, info, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -813,13 +813,14 @@ impl StartupValidator {
 
     async fn get_linux_distribution(&self) -> String {
         if cfg!(unix)
-            && let Ok(content) = fs::read_to_string("/etc/os-release") {
-                for line in content.lines() {
-                    if line.starts_with("PRETTY_NAME=") {
-                        return line.replace("PRETTY_NAME=", "").replace('"', "");
-                    }
+            && let Ok(content) = fs::read_to_string("/etc/os-release")
+        {
+            for line in content.lines() {
+                if line.starts_with("PRETTY_NAME=") {
+                    return line.replace("PRETTY_NAME=", "").replace('"', "");
                 }
             }
+        }
         "Unknown".to_string()
     }
 
@@ -839,9 +840,9 @@ impl StartupValidator {
                                 .replace("TotalPhysicalMemory=", "")
                                 .trim()
                                 .parse::<u64>()
-                            {
-                                return Ok(bytes / (1024 * 1024)); // Convert to MB
-                            }
+                        {
+                            return Ok(bytes / (1024 * 1024)); // Convert to MB
+                        }
                     }
                     Err(anyhow!("Could not parse memory information"))
                 }
@@ -968,9 +969,7 @@ impl StartupValidator {
             Command::new(command).arg("--help").output(),
         )
         .await
-        .is_ok_and(|result| {
-            result.is_ok_and(|output| output.status.success())
-        })
+        .is_ok_and(|result| result.is_ok_and(|output| output.status.success()))
     }
 
     async fn test_network_connection(&self) -> Result<bool> {
@@ -1214,15 +1213,21 @@ mod tests {
         let requirements = SystemRequirements::default();
         assert_eq!(requirements.min_memory_mb, 2048);
         assert_eq!(requirements.min_disk_space_mb, 5120);
-        assert!(requirements
-            .required_permissions
-            .contains(&"file_read".to_string()));
-        assert!(requirements
-            .required_environment_vars
-            .contains(&"PATH".to_string()));
-        assert!(requirements
-            .critical_dependencies
-            .contains(&"python".to_string()));
+        assert!(
+            requirements
+                .required_permissions
+                .contains(&"file_read".to_string())
+        );
+        assert!(
+            requirements
+                .required_environment_vars
+                .contains(&"PATH".to_string())
+        );
+        assert!(
+            requirements
+                .critical_dependencies
+                .contains(&"python".to_string())
+        );
     }
 
     #[test]
@@ -1464,18 +1469,17 @@ mod tests {
         let echo_available = validator.check_command_available("echo").await;
         assert!(echo_available);
 
-        // Test with a command that probably doesn't exist
-        let fake_available = validator
+        // Test with a command that doesn't exist
+        let nonexistent_available = validator
             .check_command_available("this_command_definitely_does_not_exist_12345")
             .await;
-        assert!(!fake_available);
+        assert!(!nonexistent_available);
     }
 
     #[test]
     async fn test_validator_summary_methods() {
         let mut validator = StartupValidator::new();
 
-        // Add some mock results
         validator.check_results.push(StartupCheckResult {
             component: "Test Pass".to_string(),
             status: StartupStatus::Pass,
@@ -1586,23 +1590,19 @@ mod tests {
         // Test get_available_memory error handling
         let memory_result = validator.get_available_memory().await;
         // Should either succeed or fail gracefully
-        match memory_result {
-            Ok(mb) => assert!(mb > 0),
-            Err(_) => {} // Expected on some platforms
+        if let Ok(mb) = memory_result {
+            assert!(mb > 0)
         }
 
         // Test get_available_disk_space error handling
         let disk_result = validator
             .get_available_disk_space(&PathBuf::from("."))
             .await;
-        match disk_result {
-            Ok(mb) => {
-                // Verify disk space is greater than zero (meaningful non-zero space detected)
-                assert!(mb > 0);
-                // Additional validation: ensure reasonable disk space for testing
-                assert!(mb < 100 * 1024 * 1024); // Less than 100TB, reasonable for test systems
-            }
-            Err(_) => {} // Expected on some platforms
+        if let Ok(mb) = disk_result {
+            // Verify disk space is greater than zero (meaningful non-zero space detected)
+            assert!(mb > 0);
+            // Additional validation: ensure reasonable disk space for testing
+            assert!(mb < 100 * 1024 * 1024);
         }
     }
 

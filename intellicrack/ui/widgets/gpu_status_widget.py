@@ -137,23 +137,23 @@ class GPUMonitorWorker(QObject):
                             try:
                                 index = int(parts[0])
                                 name = parts[1]
-                                
+
                                 temp_str = parts[2]
                                 temp = float(temp_str) if temp_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 temp = min(max(temp, 0.0), 150.0)
-                                
+
                                 util_str = parts[3]
                                 utilization = float(util_str) if util_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 utilization = min(max(utilization, 0.0), 100.0)
-                                
+
                                 mem_used_str = parts[4]
                                 memory_used = float(mem_used_str) if mem_used_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 memory_used = max(memory_used, 0.0)
-                                
+
                                 mem_total_str = parts[5]
                                 memory_total = float(mem_total_str) if mem_total_str not in ["[N/A]", "[Not Supported]", ""] else 1.0
                                 memory_total = max(memory_total, 1.0)
-                                
+
                                 power_str = parts[6]
                                 power = float(power_str) if power_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 power = min(max(power, 0.0), 1000.0)

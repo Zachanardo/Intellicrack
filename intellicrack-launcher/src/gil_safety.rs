@@ -161,21 +161,13 @@ impl GilSafetyManager {
             dict.set_item("category", user_warning)?;
             dict.set_item("module", pkg_resources_eval)?;
 
-            warnings.call_method(
-                "filterwarnings",
-                ("ignore",),
-                Some(&dict),
-            )?;
+            warnings.call_method("filterwarnings", ("ignore",), Some(&dict))?;
 
             // Suppress pkg_resources deprecated message
             let message_eval = py.eval(c"'.*pkg_resources is deprecated.*'", None, None)?;
             let message_dict = pyo3::types::PyDict::new(py);
             message_dict.set_item("message", message_eval)?;
-            warnings.call_method(
-                "filterwarnings",
-                ("ignore",),
-                Some(&message_dict),
-            )?;
+            warnings.call_method("filterwarnings", ("ignore",), Some(&message_dict))?;
 
             info!("Warning suppression configured");
             Ok(())

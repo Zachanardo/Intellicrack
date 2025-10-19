@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 */
 
 use anyhow::Result;
-use intellicrack_launcher::{initialize_logging, IntellicrackLauncher, environment::PROJECT_ROOT};
+use intellicrack_launcher::{IntellicrackLauncher, environment::PROJECT_ROOT, initialize_logging};
 use tracing::{error, info};
 
 use dotenv::dotenv;
@@ -33,11 +33,31 @@ async fn main() -> Result<()> {
     // CRITICAL: Configure pixi environment BEFORE any Python operations
     unsafe {
         rayon::scope(|s| {
-            s.spawn(|_| std::env::set_var("PYO3_PYTHON", format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT)));
-            s.spawn(|_| std::env::set_var("PYTHON_SYS_EXECUTABLE", format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT)));
-            s.spawn(|_| std::env::set_var("PIXI_PREFIX", format!("{}/.pixi/envs/default", &*PROJECT_ROOT)));
+            s.spawn(|_| {
+                std::env::set_var(
+                    "PYO3_PYTHON",
+                    format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
+                )
+            });
+            s.spawn(|_| {
+                std::env::set_var(
+                    "PYTHON_SYS_EXECUTABLE",
+                    format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
+                )
+            });
+            s.spawn(|_| {
+                std::env::set_var(
+                    "PIXI_PREFIX",
+                    format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+                )
+            });
             s.spawn(|_| std::env::set_var("PYTHONPATH", PROJECT_ROOT.clone()));
-            s.spawn(|_| std::env::set_var("PYTHONHOME", format!("{}/.pixi/envs/default", &*PROJECT_ROOT)));
+            s.spawn(|_| {
+                std::env::set_var(
+                    "PYTHONHOME",
+                    format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
+                )
+            });
             s.spawn(|_| std::env::set_var("RUST_LAUNCHER_MODE", "1"));
             s.spawn(|_| std::env::set_var("PYTHON_SUBPROCESS_MODE", "1"));
         });
@@ -52,12 +72,15 @@ async fn main() -> Result<()> {
 
         // Get launcher directory
         let exe_path = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("."));
-        let exe_dir = exe_path.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+        let exe_dir = exe_path
+            .parent()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
 
         // Build new PATH with launcher and pixi directories FIRST
         let dll_path = format!(
             "{};{}/.pixi/envs/default;{}/.pixi/envs/default/Library/bin;{}/.pixi/envs/default/DLLs;{}/.pixi/envs/default/Scripts;{}",
-            exe_dir,  // Launcher directory FIRST (contains copied MKL DLLs)
+            exe_dir, // Launcher directory FIRST (contains copied MKL DLLs)
             &*PROJECT_ROOT,
             &*PROJECT_ROOT,
             &*PROJECT_ROOT,

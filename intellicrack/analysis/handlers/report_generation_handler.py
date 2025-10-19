@@ -23,17 +23,63 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from datetime import datetime
 
-from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QPushButton,
-    QVBoxLayout,
-)
+try:
+    from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+    from PyQt6.QtWidgets import (
+        QCheckBox,
+        QComboBox,
+        QDialog,
+        QFileDialog,
+        QGroupBox,
+        QHBoxLayout,
+        QPushButton,
+        QVBoxLayout,
+    )
+
+    PYQT6_AVAILABLE = True
+except ImportError:
+    # Fallback classes when PyQt6 is not available
+    class QObject:
+        pass
+
+    class QRunnable:
+        def run(self):
+            pass
+
+    class QThreadPool:
+        @staticmethod
+        def globalInstance():
+            return None
+
+    def pyqtSignal(*args):
+        return None
+
+    # Fallback widget classes
+    class QCheckBox:
+        pass
+
+    class QComboBox:
+        pass
+
+    class QDialog:
+        pass
+
+    class QFileDialog:
+        pass
+
+    class QGroupBox:
+        pass
+
+    class QHBoxLayout:
+        pass
+
+    class QPushButton:
+        pass
+
+    class QVBoxLayout:
+        pass
+
+    PYQT6_AVAILABLE = False
 
 try:
     from ...protection.icp_report_generator import ICPReportGenerator, ReportOptions
