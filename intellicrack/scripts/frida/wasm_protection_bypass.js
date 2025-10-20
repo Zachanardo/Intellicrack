@@ -483,7 +483,7 @@ const wasmProtectionBypass = {
                 pos += 2;
             }
         } catch (e) {
-            // Continue on error
+            send({ type: "debug", target: "wasm_bypass", action: "export_parse_error", error: e.toString(), stack: e.stack || "No stack" });
         }
     },
 

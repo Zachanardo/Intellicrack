@@ -460,7 +460,14 @@ const DotnetBypassSuite = {
                                     self.stats.stringsDecrypted++;
                                 }
                             } catch (e) {
-                                // Not a string
+                                send({
+                                    type: 'debug',
+                                    target: 'dotnet_bypass',
+                                    action: 'string_read_failed',
+                                    function: 'hookStringDecryption',
+                                    error: e.toString(),
+                                    stack: e.stack || 'No stack trace available',
+                                });
                             }
                         }
                     },
@@ -1048,11 +1055,21 @@ const DotnetBypassSuite = {
     // Helper: Get method name from metadata
     getMethodName: function (methodDef) {
         try {
-            // Simplified - actual implementation would use metadata APIs
             var nameRva = methodDef.add(0x8).readU32();
             if (nameRva > 0 && nameRva < this.clrModule.size) {
                 var namePtr = this.clrModule.base.add(nameRva);
                 return namePtr.readUtf8String();
+            }
+
+            var methodTablePtr = methodDef.readPointer();
+            if (methodTablePtr && !methodTablePtr.isNull()) {
+                var methodDescPtr = methodTablePtr.add(0x10).readPointer();
+                if (methodDescPtr && !methodDescPtr.isNull()) {
+                    var namePtr = methodDescPtr.add(0x0).readPointer();
+                    if (namePtr && !namePtr.isNull()) {
+                        return namePtr.readUtf8String();
+                    }
+                }
             }
         } catch (e) {
             send({
@@ -1100,11 +1117,10 @@ const DotnetBypassSuite = {
     isLicenseString: function (str) {
         if (!str || str.length < 4) return false;
 
-        // Check for license patterns
         var patterns = [
-            /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/, // XXXX-XXXX pattern
-            /\d{4}-\d{4}-\d{4}-\d{4}/, // Number groups
-            /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/, // GUID-like
+            /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/,
+            /\d{4}-\d{4}-\d{4}-\d{4}/,
+            /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/,
             /licen[sc]e|serial|key|activation/i,
         ];
 

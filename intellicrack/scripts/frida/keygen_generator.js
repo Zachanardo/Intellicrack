@@ -2509,6 +2509,13 @@ const KeygenGenerator = {
 
                 return true;
             } catch (error) {
+                send({
+                    type: 'error',
+                    component: 'KeygenGenerator.initializeWithDependencies',
+                    message: error.message,
+                    stack: error.stack,
+                    timestamp: Date.now()
+                });
                 console.error(
                     `[KeygenGenerator] Integration framework initialization failed: ${error.message}`,
                 );
@@ -2550,6 +2557,13 @@ const KeygenGenerator = {
                         };
                         console.log('[KeygenGenerator] Telemetry blocking activated');
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.telemetryBlocker',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.telemetryBlocker = {
                             success: false,
                             error: error.message,
@@ -2576,6 +2590,13 @@ const KeygenGenerator = {
                             '[KeygenGenerator] Hardware fingerprint spoofing activated',
                         );
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.hardwareSpoofer',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.hardwareSpoofer = {
                             success: false,
                             error: error.message,
@@ -2597,6 +2618,13 @@ const KeygenGenerator = {
                         };
                         console.log('[KeygenGenerator] HWID spoofing activated');
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.hwidSpoofer',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.hwidSpoofer = {
                             success: false,
                             error: error.message,
@@ -2623,6 +2651,13 @@ const KeygenGenerator = {
                             '[KeygenGenerator] Cloud license validation bypass activated',
                         );
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.cloudBypass',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.cloudBypass = {
                             success: false,
                             error: error.message,
@@ -2661,6 +2696,13 @@ const KeygenGenerator = {
                         };
                         console.log('[KeygenGenerator] Algorithm extraction completed');
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.algorithmExtractor',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.algorithmExtractor = {
                             success: false,
                             error: error.message,
@@ -2703,6 +2745,13 @@ const KeygenGenerator = {
                             coordinationSession.algorithms = analysisResult;
                         }
                     } catch (error) {
+                        send({
+                            type: 'warning',
+                            component: 'KeygenGenerator.coordinateKeyGeneration.runtimeAnalyzer',
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: Date.now()
+                        });
                         coordinationSession.modules.runtimeAnalyzer = {
                             success: false,
                             error: error.message,
@@ -2743,6 +2792,14 @@ const KeygenGenerator = {
 
                 return coordinationSession;
             } catch (error) {
+                send({
+                    type: 'error',
+                    component: 'KeygenGenerator.coordinateKeyGeneration',
+                    message: error.message,
+                    stack: error.stack,
+                    target: targetApplication,
+                    timestamp: Date.now()
+                });
                 console.error(
                     `[KeygenGenerator] Key generation coordination failed: ${error.message}`,
                 );
@@ -2783,6 +2840,14 @@ const KeygenGenerator = {
                 KeygenGenerator.neuralNetwork.predict(neuralInput);
                             keySet.neural = this.convertNeuralOutputToKey(neuralOutput);
                         } catch (error) {
+                            send({
+                                type: 'warning',
+                                component: 'KeygenGenerator.generateAdvancedKeys.neural',
+                                message: error.message,
+                                stack: error.stack,
+                                keyIndex: i,
+                                timestamp: Date.now()
+                            });
                             console.warn(
                                 `[KeygenGenerator] Neural key generation failed: ${error.message}`,
                             );
@@ -2799,6 +2864,14 @@ const KeygenGenerator = {
                     securityLevel: 128,
                 });
                         } catch (error) {
+                            send({
+                                type: 'warning',
+                                component: 'KeygenGenerator.generateAdvancedKeys.quantum',
+                                message: error.message,
+                                stack: error.stack,
+                                keyIndex: i,
+                                timestamp: Date.now()
+                            });
                             console.warn(
                                 `[KeygenGenerator] Quantum key generation failed: ${error.message}`,
                             );
@@ -2818,6 +2891,15 @@ const KeygenGenerator = {
                     },
                 );
                         } catch (error) {
+                            send({
+                                type: 'warning',
+                                component: 'KeygenGenerator.generateAdvancedKeys.mathematical',
+                                message: error.message,
+                                stack: error.stack,
+                                keyIndex: i,
+                                algorithm: algorithms?.mathematical || 'rsa',
+                                timestamp: Date.now()
+                            });
                             console.warn(
                                 `[KeygenGenerator] Mathematical key generation failed: ${error.message}`,
                             );
@@ -2839,6 +2921,15 @@ const KeygenGenerator = {
                 }) ||
                 KeygenGenerator.licenseFormats.traditional.generateSerial();
                         } catch (error) {
+                            send({
+                                type: 'warning',
+                                component: 'KeygenGenerator.generateAdvancedKeys.format',
+                                message: error.message,
+                                stack: error.stack,
+                                keyIndex: i,
+                                format: options.licenseFormat || algorithms?.preferredFormat || 'traditional',
+                                timestamp: Date.now()
+                            });
                             console.warn(
                                 `[KeygenGenerator] Format key generation failed: ${error.message}`,
                             );
@@ -2857,6 +2948,14 @@ const KeygenGenerator = {
                 );
                 return keyBatch;
             } catch (error) {
+                send({
+                    type: 'error',
+                    component: 'KeygenGenerator.generateAdvancedKeys',
+                    message: error.message,
+                    stack: error.stack,
+                    batchSize: options.batchSize || 100,
+                    timestamp: Date.now()
+                });
                 console.error(
                     `[KeygenGenerator] Advanced key generation failed: ${error.message}`,
                 );
@@ -2889,6 +2988,13 @@ const KeygenGenerator = {
                     },
                 };
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.mergeAlgorithmData',
+                    message: error.message,
+                    stack: error.stack,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Algorithm data merge failed: ${error.message}`,
                 );
@@ -2949,6 +3055,13 @@ const KeygenGenerator = {
 
                 return correlation;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.correlateResults',
+                    message: error.message,
+                    stack: error.stack,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Result correlation failed: ${error.message}`,
                 );
@@ -2999,6 +3112,14 @@ const KeygenGenerator = {
 
                 return input;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.prepareNeuralInput',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Neural input preparation failed: ${error.message}`,
                 );
@@ -3029,6 +3150,14 @@ const KeygenGenerator = {
                 const checksum = this.calculateKeyChecksum(key);
                 return `${key}-${checksum}`;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.convertNeuralOutputToKey',
+                    message: error.message,
+                    stack: error.stack,
+                    outputLength: output?.length || 0,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Neural output conversion failed: ${error.message}`,
                 );
@@ -3071,6 +3200,14 @@ const KeygenGenerator = {
 
                 return consolidation;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.consolidateKeySet',
+                    message: error.message,
+                    stack: error.stack,
+                    keyTypes: Object.keys(keySet || {}),
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Key consolidation failed: ${error.message}`,
                 );
@@ -3135,6 +3272,13 @@ const KeygenGenerator = {
                 console.log('[KeygenGenerator] Integration framework reset completed');
                 return true;
             } catch (error) {
+                send({
+                    type: 'error',
+                    component: 'KeygenGenerator.integrationFramework.reset',
+                    message: error.message,
+                    stack: error.stack,
+                    timestamp: Date.now()
+                });
                 console.error(
                     `[KeygenGenerator] Integration framework reset failed: ${error.message}`,
                 );
@@ -3232,6 +3376,14 @@ const KeygenGenerator = {
 
                 return batchSession;
             } catch (error) {
+                send({
+                    type: 'error',
+                    component: 'KeygenGenerator.performanceEngine.generateKeyBatch',
+                    message: error.message,
+                    stack: error.stack,
+                    batchSize: batchSize,
+                    timestamp: Date.now()
+                });
                 console.error(
                     `[KeygenGenerator] Batch generation failed: ${error.message}`,
                 );
@@ -3296,6 +3448,15 @@ const KeygenGenerator = {
 
                 return threadKeys;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateKeysInThread',
+                    message: error.message,
+                    stack: error.stack,
+                    threadId: threadId,
+                    keyCount: keyCount,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Thread ${threadId} failed: ${error.message}`,
                 );
@@ -3340,6 +3501,14 @@ const KeygenGenerator = {
                 const entropy = ((index * 7919) % 9999).toString().padStart(4, '0');
                 return `FMK-${keyBase.substr(0, 12)}-${entropy}`;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateFastMathematicalKey',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    timestamp: Date.now()
+                });
                 return this.generateFallbackKey('FAST');
             }
         },
@@ -3369,6 +3538,15 @@ const KeygenGenerator = {
 
                 return key;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateNeuralOptimizedKey',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    trained: KeygenGenerator.state.neuralNetworkTrained,
+                    timestamp: Date.now()
+                });
                 return this.generateFallbackKey('NEURAL');
             }
         },
@@ -3393,6 +3571,14 @@ const KeygenGenerator = {
 
                 return key + '-' + ((index * 1009) % 9999).toString().padStart(4, '0');
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateQuantumLightKey',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    timestamp: Date.now()
+                });
                 return this.generateFallbackKey('QUANTUM');
             }
         },
@@ -3413,6 +3599,15 @@ const KeygenGenerator = {
 
                 return `HCK-${baseKey}`;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateHybridCachedKey',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    cacheSize: KeygenGenerator.state.cache.size,
+                    timestamp: Date.now()
+                });
                 return this.generateFallbackKey('HYBRID');
             }
         },
@@ -3430,6 +3625,14 @@ const KeygenGenerator = {
 
                 return `OTK-${entropy}-${checksum}`;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.generateOptimizedTraditionalKey',
+                    message: error.message,
+                    stack: error.stack,
+                    index: index,
+                    timestamp: Date.now()
+                });
                 return this.generateFallbackKey('TRAD');
             }
         },
@@ -3518,6 +3721,14 @@ const KeygenGenerator = {
 
                 return optimization.final;
             } catch (error) {
+                send({
+                    type: 'warning',
+                    component: 'KeygenGenerator.performanceEngine.optimizeKeyBatch',
+                    message: error.message,
+                    stack: error.stack,
+                    batchSize: keyBatch?.length || 0,
+                    timestamp: Date.now()
+                });
                 console.warn(
                     `[KeygenGenerator] Batch optimization failed: ${error.message}`,
                 );
@@ -4854,6 +5065,13 @@ const KeygenGenerator = {
                     );
                     return environment;
                 } catch (error) {
+                    send({
+                        type: 'error',
+                        component: 'KeygenGenerator.securitySystem.createSecureEnvironment',
+                        message: error.message,
+                        stack: error.stack,
+                        timestamp: Date.now()
+                    });
                     console.error(
                         `[SecuritySystem] Secure environment creation failed: ${error.message}`,
                     );
@@ -5040,7 +5258,15 @@ const KeygenGenerator = {
                             try {
                                 throw new Error('Debug check');
                             } catch (e) {
-                                return e.stack && e.stack.includes('debugger');
+                                const hasDebugger = e.stack && e.stack.includes('debugger');
+                                send({
+                                    type: 'debug',
+                                    component: 'KeygenGenerator.securitySystem.debuggerDetection.exceptionCheck',
+                                    hasDebugger: hasDebugger,
+                                    stack: e.stack,
+                                    timestamp: Date.now()
+                                });
+                                return hasDebugger;
                             }
                         },
                         () => {
@@ -5061,6 +5287,14 @@ const KeygenGenerator = {
                                 );
                             }
                         } catch (e) {
+                            send({
+                                type: 'debug',
+                                component: 'KeygenGenerator.securitySystem.performDebuggerDetection',
+                                message: e.message,
+                                stack: e.stack,
+                                methodIndex: i,
+                                timestamp: Date.now()
+                            });
                             // Silent handling for security
                         }
                     }
@@ -5573,6 +5807,14 @@ const KeygenGenerator = {
                                 patterns.confidence = Math.min(100, patterns.confidence + 10);
                             }
                         } catch (e) {
+                            send({
+                                type: 'debug',
+                                component: 'KeygenGenerator.securitySystem.scanMemoryPatterns',
+                                message: e.message,
+                                stack: e.stack,
+                                address: addr,
+                                timestamp: Date.now()
+                            });
                             // Memory not accessible
                         }
                     }
@@ -5601,6 +5843,13 @@ const KeygenGenerator = {
                                     patterns.confidence += 0.05;
                                 }
                             } catch (e) {
+                                send({
+                                    type: 'debug',
+                                    component: 'KeygenGenerator.securitySystem.scanMemoryPatterns.environmentCheck',
+                                    message: e.message,
+                                    stack: e.stack,
+                                    timestamp: Date.now()
+                                });
                                 // Environment check failed
                             }
                         }
@@ -5639,6 +5888,14 @@ const KeygenGenerator = {
                             detection.monitoredFunctions.set(funcName, func);
                         }
                     } catch (e) {
+                        send({
+                            type: 'debug',
+                            component: 'KeygenGenerator.securitySystem.setupHookDetection',
+                            message: e.message,
+                            stack: e.stack,
+                            functionName: funcName,
+                            timestamp: Date.now()
+                        });
                         // Silent handling
                     }
                 }
@@ -5686,6 +5943,14 @@ const KeygenGenerator = {
                             }
                         }
                     } catch (e) {
+                        send({
+                            type: 'debug',
+                            component: 'KeygenGenerator.securitySystem.detectHooks',
+                            message: e.message,
+                            stack: e.stack,
+                            functionName: funcName,
+                            timestamp: Date.now()
+                        });
                         // Silent handling
                     }
                 }

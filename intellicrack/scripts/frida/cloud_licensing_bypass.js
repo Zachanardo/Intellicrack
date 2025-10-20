@@ -306,16 +306,30 @@ const CloudLicensingBypass = {
                                 );
                                 details.body = body;
                             } catch (e) {
-                                // Binary data, convert to hex
                                 var bodyBytes = this.lpOptional.readByteArray(
                                     Math.min(this.dwOptionalLength, 1024),
                                 );
                                 details.body = '[Binary: ' + bodyBytes.byteLength + ' bytes]';
+                                send({
+                                    type: 'error',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'request_body_binary_data_detected',
+                                    error: e.message,
+                                    stack: e.stack,
+                                    size: this.dwOptionalLength,
+                                });
                             }
                         }
 
                         return details;
                     } catch (e) {
+                        send({
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'request_details_extraction_failed',
+                            error: e.message,
+                            stack: e.stack,
+                        });
                         return {};
                     }
                 },
@@ -464,8 +478,6 @@ const CloudLicensingBypass = {
                 },
 
                 generateSpoofedResponse: function (originalResponse) {
-                    var config = this.parent.parent.config;
-
                     try {
                         // Try to parse as JSON first
                         var jsonResponse = JSON.parse(originalResponse);
@@ -501,12 +513,20 @@ const CloudLicensingBypass = {
 
                         return JSON.stringify(jsonResponse);
                     } catch (e) {
-                        // Not JSON, try XML
+                        send({
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'response_not_json_trying_alternatives',
+                            error: e.message,
+                            response_type: originalResponse.includes('<?xml')
+                                ? 'xml'
+                                : 'text',
+                        });
+
                         if (originalResponse.includes('<?xml')) {
                             return this.spoofXmlResponse(originalResponse);
                         }
 
-                        // Plain text response
                         return this.spoofTextResponse(originalResponse);
                     }
                 },
@@ -584,7 +604,13 @@ const CloudLicensingBypass = {
                                 this.parent.parent.interceptedRequests++;
                             }
                         } catch (e) {
-                            // Headers not readable
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'wininet_headers_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     }
                 },
@@ -689,7 +715,13 @@ const CloudLicensingBypass = {
 
                         return JSON.stringify(jsonResponse);
                     } catch (e) {
-                        // Fallback to template response
+                        var config = this.parent.parent.parent.config;
+                        send({
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'wininet_response_json_parse_failed_using_template',
+                            error: e.message,
+                        });
                         return JSON.stringify(config.responseTemplates.license_valid);
                     }
                 },
@@ -733,7 +765,13 @@ const CloudLicensingBypass = {
                                 this.parent.parent.interceptedRequests++;
                             }
                         } catch (e) {
-                            // URL not readable
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'curl_url_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     }
                 },
@@ -820,7 +858,14 @@ const CloudLicensingBypass = {
                     this.hookGenericHttpFunction(module.name, funcName);
                 }
             } catch (e) {
-                // Module scanning failed
+                send({
+                    type: 'error',
+                    target: 'cloud_licensing_bypass',
+                    action: 'generic_http_module_scan_failed',
+                    module: module.name,
+                    error: e.message,
+                    stack: e.stack,
+                });
                 continue;
             }
         }
@@ -832,12 +877,24 @@ const CloudLicensingBypass = {
             if (httpFunc) {
                 Interceptor.attach(httpFunc, {
                     onEnter: function (args) {
+                        var argData = [];
+                        for (var i = 0; i < Math.min(args.length, 4); i++) {
+                            try {
+                                if (args[i] && !args[i].isNull()) {
+                                    var strVal = args[i].readUtf8String(256);
+                                    if (strVal) argData.push(strVal);
+                                }
+                            } catch (_e) {
+                                argData.push('[ptr:' + args[i] + ']');
+                            }
+                        }
                         send({
                             type: 'info',
                             target: 'cloud_licensing_bypass',
                             action: 'generic_http_function_called',
                             function_name: functionName,
                             module_name: moduleName,
+                            arguments: argData,
                         });
                         this.parent.parent.parent.interceptedRequests++;
                     },
@@ -853,7 +910,15 @@ const CloudLicensingBypass = {
                 });
             }
         } catch (e) {
-            // Function not found or hook failed
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'generic_http_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -912,7 +977,13 @@ const CloudLicensingBypass = {
                                 this.parent.parent.interceptedRequests++;
                             }
                         } catch (e) {
-                            // Data not readable as UTF-8
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'ssl_write_data_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     }
                 },
@@ -1010,7 +1081,13 @@ const CloudLicensingBypass = {
                         Object.assign(jsonResponse, config.responseTemplates.license_valid);
                         return JSON.stringify(jsonResponse);
                     } catch (e) {
-                        // Return default valid response
+                        var config = this.parent.parent.parent.config;
+                        send({
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'ssl_response_json_parse_failed_using_template',
+                            error: e.message,
+                        });
                         return JSON.stringify(config.responseTemplates.license_valid);
                     }
                 },
@@ -1036,7 +1113,12 @@ const CloudLicensingBypass = {
 
                                 return lines.join('\r\n');
                             } catch (e) {
-                                // Not JSON body
+                                send({
+                                    type: 'info',
+                                    target: 'cloud_licensing_bypass',
+                                    action: 'http_response_body_not_json',
+                                    error: e.message,
+                                });
                                 return httpResponse;
                             }
                         }
@@ -1065,10 +1147,29 @@ const CloudLicensingBypass = {
         if (encryptMessage) {
             Interceptor.attach(encryptMessage, {
                 onEnter: function (args) {
+                    var contextHandle = args[0];
+                    var qualityOfProtection = args[1].toInt32();
+                    var messageBuffer = args[2];
+                    var sequenceNumber = args[3].toInt32();
+
+                    var bufferInfo = 'null';
+                    if (messageBuffer && !messageBuffer.isNull()) {
+                        try {
+                            var bufferCount = messageBuffer.readU32();
+                            bufferInfo = 'buffers:' + bufferCount;
+                        } catch (_e) {
+                            bufferInfo = 'ptr:' + messageBuffer;
+                        }
+                    }
+
                     send({
                         type: 'info',
                         target: 'cloud_licensing_bypass',
                         action: 'schannel_encrypt_message_called',
+                        context: contextHandle.toString(),
+                        qop: qualityOfProtection,
+                        seq: sequenceNumber,
+                        message_buffer: bufferInfo,
                     });
                 },
             });
@@ -1165,6 +1266,14 @@ const CloudLicensingBypass = {
                     this.hookTokenFunction(module.name, funcName);
                 }
             } catch (e) {
+                send({
+                    type: 'error',
+                    target: 'cloud_licensing_bypass',
+                    action: 'token_generation_module_scan_failed',
+                    module: module.name,
+                    error: e.message,
+                    stack: e.stack,
+                });
                 continue;
             }
         }
@@ -1201,7 +1310,14 @@ const CloudLicensingBypass = {
                                 });
                             }
                         } catch (e) {
-                            // Token spoofing failed
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'oauth_token_spoof_failed',
+                                function_name: functionName,
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     },
 
@@ -1220,7 +1336,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'token_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1249,7 +1373,13 @@ const CloudLicensingBypass = {
                             this.spoofTokenComparison = true;
                         }
                     } catch (e) {
-                        // String read failed
+                        send({
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'strcmp_token_string_read_failed',
+                            error: e.message,
+                            stack: e.stack,
+                        });
                     }
                 },
 
@@ -1397,7 +1527,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'jwt_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1448,7 +1586,13 @@ const CloudLicensingBypass = {
                                 this.isJwtDecode = true;
                             }
                         } catch (e) {
-                            // Input not readable
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'base64_decode_input_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     },
 
@@ -1492,7 +1636,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'base64_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1503,11 +1655,29 @@ const CloudLicensingBypass = {
             action: 'installing_json_parsing_hooks_for_jwt',
         });
 
-        // Hook JSON parsing functions
         var jsonFunctions = ['json_parse', 'JSON.parse', 'parseJSON', 'ParseJSON'];
+        var modules = Process.enumerateModules();
 
-        // This is complex to hook at the JavaScript level
-        // Instead, we'll focus on the HTTP response spoofing which handles most JWT cases
+        for (var i = 0; i < modules.length; i++) {
+            var module = modules[i];
+            for (var j = 0; j < jsonFunctions.length; j++) {
+                try {
+                    var jsonFunc = Module.findExportByName(module.name, jsonFunctions[j]);
+                    if (jsonFunc) {
+                        send({
+                            type: 'info',
+                            target: 'cloud_licensing_bypass',
+                            action: 'json_parse_function_found',
+                            function: jsonFunctions[j],
+                            module: module.name,
+                        });
+                    }
+                } catch (_e) {
+                    continue;
+                }
+            }
+        }
+
         send({
             type: 'info',
             target: 'cloud_licensing_bypass',
@@ -1583,7 +1753,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'validation_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1639,7 +1817,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'activation_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1697,7 +1883,15 @@ const CloudLicensingBypass = {
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch (e) {
-            // Function not found
+            send({
+                type: 'error',
+                target: 'cloud_licensing_bypass',
+                action: 'subscription_function_hook_failed',
+                function: functionName,
+                module: moduleName,
+                error: e.message,
+                stack: e.stack,
+            });
         }
     },
 
@@ -1837,6 +2031,13 @@ const CloudLicensingBypass = {
 
                         return null;
                     } catch (e) {
+                        send({
+                            type: 'error',
+                            target: 'cloud_licensing_bypass',
+                            action: 'socket_address_parse_failed',
+                            error: e.message,
+                            stack: e.stack,
+                        });
                         return null;
                     }
                 },
@@ -1844,18 +2045,21 @@ const CloudLicensingBypass = {
                 isLicenseServerConnection: function (connInfo) {
                     if (!connInfo) return false;
 
-                    var config = this.parent.parent.config;
-
-                    // Check for common license server ports
                     var licensePorts = [80, 443, 8080, 8443, 9443];
                     if (!licensePorts.includes(connInfo.port)) {
                         return false;
                     }
 
-                    // This is a basic check - in practice, we'd need DNS resolution to map IPs to hostnames
-                    // For now, we'll block based on the HTTP/HTTPS content analysis
+                    send({
+                        type: 'info',
+                        target: 'cloud_licensing_bypass',
+                        action: 'potential_license_server_port_detected',
+                        ip: connInfo.ip,
+                        port: connInfo.port,
+                        family: connInfo.family,
+                    });
 
-                    return false; // Let HTTP hooks handle the filtering
+                    return false;
                 },
             });
 
@@ -1894,7 +2098,13 @@ const CloudLicensingBypass = {
                                 this.blockDnsLookup = true;
                             }
                         } catch (e) {
-                            // Hostname not readable
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'dns_hostname_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     }
                 },
@@ -1944,7 +2154,13 @@ const CloudLicensingBypass = {
                                 this.blockLegacyDns = true;
                             }
                         } catch (e) {
-                            // Hostname not readable
+                            send({
+                                type: 'error',
+                                target: 'cloud_licensing_bypass',
+                                action: 'legacy_dns_hostname_read_failed',
+                                error: e.message,
+                                stack: e.stack,
+                            });
                         }
                     }
                 },
